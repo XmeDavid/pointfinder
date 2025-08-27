@@ -16,7 +16,21 @@ func GenerateToken(secret, adminID string) (string, error) {
 	claims := jwt.MapClaims{
 		"sub":  adminID,
 		"role": "admin",
-		"exp":  time.Now().Add(24 * time.Hour).Unix(),
+		"exp":  time.Now().Add(15 * time.Minute).Unix(), // Shortened to 15 minutes
+		"iat":  time.Now().Unix(),
+		"type": "access",
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(secret))
+}
+
+func GenerateRefreshToken(secret, adminID string) (string, error) {
+	claims := jwt.MapClaims{
+		"sub":  adminID,
+		"role": "admin",
+		"exp":  time.Now().Add(7 * 24 * time.Hour).Unix(), // 7 days
+		"iat":  time.Now().Unix(),
+		"type": "refresh",
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(secret))

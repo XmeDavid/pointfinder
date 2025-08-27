@@ -12,6 +12,8 @@ type Config struct {
 	DatabaseURL string
 	JWTSecret   string
 	CORSOrigins string
+	AdminEmail  string
+	AdminPassword string
 }
 
 func Load() (*Config, error) {
@@ -20,13 +22,21 @@ func Load() (*Config, error) {
 		Port:        getenv("PORT", "4000"),
 		DatabaseURL: os.Getenv("DATABASE_URL"),
 		JWTSecret:   os.Getenv("JWT_SECRET"),
-		CORSOrigins: getenv("CORS_ORIGINS", "*"),
+		CORSOrigins: getenv("CORS_ORIGINS", "http://localhost:3000"),
+		AdminEmail:  os.Getenv("ADMIN_EMAIL"),
+		AdminPassword: os.Getenv("ADMIN_PASSWORD"),
 	}
 	if cfg.DatabaseURL == "" {
 		return nil, errors.New("DATABASE_URL is required")
 	}
 	if cfg.JWTSecret == "" {
 		return nil, errors.New("JWT_SECRET is required")
+	}
+	if cfg.AdminEmail == "" {
+		return nil, errors.New("ADMIN_EMAIL is required")
+	}
+	if cfg.AdminPassword == "" {
+		return nil, errors.New("ADMIN_PASSWORD is required")
 	}
 	return cfg, nil
 }

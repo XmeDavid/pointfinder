@@ -4,13 +4,16 @@ import (
 	"context"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/helmet"
 
 	"backend/internal/config"
 	"backend/internal/db"
+	"backend/internal/middleware"
 	"backend/internal/routes"
 )
 
@@ -30,9 +33,26 @@ func main() {
 		log.Fatalf("failed to run migrations: %v", err)
 	}
 
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		DisableStartupMessage: false,
+		ServerHeader:          "dbvnfc-api",
+		AppName:               "DBVNFC API v1.0",
+	})
+	
+	// Security middleware
+	app.Use(helmet.New())
+	app.Use(middleware.GeneralRateLimit())
 	app.Use(logger.New())
-	app.Use(cors.New(cors.Config{AllowOrigins: cfg.CORSOrigins, AllowHeaders: "*", AllowCredentials: true}))
+	
+	// CORS configuration
+	corsOrigins := strings.Split(cfg.CORSOrigins, ",")
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: strings.Join(corsOrigins, ","),
+		AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
+		AllowHeaders: "Origin,Content-Type,Accept,Authorization,X-Requested-With",
+		AllowCredentials: false, // Changed to false for security
+		MaxAge: 86400, // 24 hours
+	}))
 
 	routes.Register(app, cfg, pool)
 

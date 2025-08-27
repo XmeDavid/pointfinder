@@ -5,6 +5,7 @@ import (
 	"backend/internal/middleware"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type loginRequest struct {
@@ -14,7 +15,7 @@ type loginRequest struct {
 
 func RegisterAuth(api fiber.Router, cfg *config.Config) {
 	// Admin login endpoint (matches iOS client expectation)
-	api.Post("/auth/admin/login", func(c *fiber.Ctx) error {
+	api.Post("/auth/admin/login", middleware.AuthRateLimit(), middleware.ValidateLoginRequest(), func(c *fiber.Ctx) error {
 		var req struct {
 			Username string `json:"username"`
 			Password string `json:"password"`
@@ -23,36 +24,72 @@ func RegisterAuth(api fiber.Router, cfg *config.Config) {
 			return fiber.ErrBadRequest
 		}
 		
-		// TODO: Replace with proper credential validation before production
-		// For now, require specific admin credentials
-		if req.Username != "admin" || req.Password != "secure_admin_password_2024!" {
+		// Sanitize input
+		req.Username = middleware.SanitizeString(req.Username)
+		req.Password = middleware.SanitizeString(req.Password)
+		
+		// Validate input format
+		if !middleware.ValidateEmail(req.Username) || !middleware.ValidatePassword(req.Password) {
 			return fiber.ErrUnauthorized
 		}
 		
-		token, err := middleware.GenerateToken(cfg.JWTSecret, "admin-1")
+		// Validate credentials from environment variables
+		if req.Username != cfg.AdminEmail || req.Password != cfg.AdminPassword {
+			return fiber.ErrUnauthorized
+		}
+		
+		accessToken, err := middleware.GenerateToken(cfg.JWTSecret, "admin-1")
 		if err != nil {
 			return fiber.ErrInternalServerError
 		}
-		return c.JSON(fiber.Map{"token": token})
+		
+		refreshToken, err := middleware.GenerateRefreshToken(cfg.JWTSecret, "admin-1")
+		if err != nil {
+			return fiber.ErrInternalServerError
+		}
+		
+		return c.JSON(fiber.Map{
+			"token": accessToken,
+			"refresh_token": refreshToken,
+		})
 	})
 
 	// Keep legacy endpoint for web admin compatibility
-	api.Post("/auth/login", func(c *fiber.Ctx) error {
+	api.Post("/auth/login", middleware.AuthRateLimit(), middleware.ValidateLoginRequest(), func(c *fiber.Ctx) error {
 		var req loginRequest
 		if err := c.BodyParser(&req); err != nil {
 			return fiber.ErrBadRequest
 		}
 		
-		// TODO: Replace with proper credential validation before production
-		if req.Email != "admin@example.com" || req.Password != "secure_admin_password_2024!" {
+		// Sanitize input
+		req.Email = middleware.SanitizeString(req.Email)
+		req.Password = middleware.SanitizeString(req.Password)
+		
+		// Validate input format
+		if !middleware.ValidateEmail(req.Email) || !middleware.ValidatePassword(req.Password) {
 			return fiber.ErrUnauthorized
 		}
 		
-		token, err := middleware.GenerateToken(cfg.JWTSecret, "admin-1")
+		// Validate credentials from environment variables
+		if req.Email != cfg.AdminEmail || req.Password != cfg.AdminPassword {
+			return fiber.ErrUnauthorized
+		}
+		
+		accessToken, err := middleware.GenerateToken(cfg.JWTSecret, "admin-1")
 		if err != nil {
 			return fiber.ErrInternalServerError
 		}
-		return c.JSON(fiber.Map{"token": token, "user": fiber.Map{"id": "admin-1", "email": req.Email, "role": "admin"}})
+		
+		refreshToken, err := middleware.GenerateRefreshToken(cfg.JWTSecret, "admin-1")
+		if err != nil {
+			return fiber.ErrInternalServerError
+		}
+		
+		return c.JSON(fiber.Map{
+			"token": accessToken,
+			"refresh_token": refreshToken,
+			"user": fiber.Map{"id": "admin-1", "email": req.Email, "role": "admin"},
+		})
 	})
 
 	// Team join endpoint for mobile clients
@@ -86,5 +123,37 @@ func RegisterAuth(api fiber.Router, cfg *config.Config) {
 		}
 		
 		return c.JSON(fiber.Map{"token": token, "team": team})
+	})
+
+	// Token refresh endpoint
+	api.Post("/auth/refresh", middleware.ValidateLoginRequest(), func(c *fiber.Ctx) error {
+		var req struct {
+			RefreshToken string `json:"refresh_token"`
+		}
+		if err := c.BodyParser(&req); err != nil {
+			return fiber.ErrBadRequest
+		}
+		
+		// Validate refresh token
+		token, err := jwt.Parse(req.RefreshToken, func(t *jwt.Token) (interface{}, error) {
+			return []byte(cfg.JWTSecret), nil
+		})
+		if err != nil || !token.Valid {
+			return fiber.ErrUnauthorized
+		}
+		
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok || claims["type"] != "refresh" {
+			return fiber.ErrUnauthorized
+		}
+		
+		// Generate new access token
+		userID := claims["sub"].(string)
+		newAccessToken, err := middleware.GenerateToken(cfg.JWTSecret, userID)
+		if err != nil {
+			return fiber.ErrInternalServerError
+		}
+		
+		return c.JSON(fiber.Map{"token": newAccessToken})
 	})
 }

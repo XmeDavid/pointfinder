@@ -2,6 +2,7 @@ package routes
 
 import (
 	"backend/internal/config"
+	"backend/internal/middleware"
 	"backend/internal/transport/http"
 
 	"github.com/gofiber/fiber/v2"
@@ -10,6 +11,12 @@ import (
 
 func Register(app *fiber.App, cfg *config.Config, pool *pgxpool.Pool) {
 	api := app.Group("/api")
+	
+	// CSRF token endpoint
+	api.Get("/csrf-token", middleware.CSRFToken())
+	
+	// Apply CSRF protection to all endpoints except auth
+	api.Use(middleware.CSRF())
 
 	http.RegisterAuth(api, cfg)
 	http.RegisterGames(api, pool, cfg)
