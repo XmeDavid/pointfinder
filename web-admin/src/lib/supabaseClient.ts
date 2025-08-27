@@ -4,6 +4,6 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export const supabase =
-  url && anonKey ? createClient(url, anonKey) : (undefined as any);
+  url && anonKey ? createClient(url, anonKey) : undefined;
 
 

@@ -29,14 +29,17 @@ export default function LoginPage() {
     }
     setLoading(true);
     try {
-      const res = (await api.post("api/auth/login", { json: { email, password } }).json()) as any;
-      const token = res?.token as string;
-      const user = res?.user as any;
+      const res = (await api.post("api/auth/login", { json: { email, password } }).json()) as {
+        token: string;
+        user: { id: string; email: string; role: string };
+      };
+      const token = res?.token;
+      const user = res?.user;
       if (!token) throw new Error("No token received");
-      setAuth(token, { id: user?.id ?? "admin", email: user?.email, role: user?.role });
+      setAuth(token, { id: user?.id ?? "admin", email: user?.email, role: user?.role as "admin" | "operator" | "viewer" });
       router.replace("/dashboard");
-    } catch (err: any) {
-      setError(err?.message || "Login failed");
+    } catch (err: unknown) {
+      setError((err as Error)?.message || "Login failed");
     } finally {
       setLoading(false);
     }

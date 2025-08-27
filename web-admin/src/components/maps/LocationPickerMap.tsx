@@ -13,17 +13,14 @@ const TileLayer = dynamic(async () => (await import("react-leaflet")).TileLayer,
 const Marker = dynamic(async () => (await import("react-leaflet")).Marker, {
   ssr: false,
 });
-const useMapEvents = dynamic(
-  async () => (await import("react-leaflet")).useMapEvents,
-  { ssr: false }
-);
+// Import hook directly since it's not a component
+import { useMapEvents } from "react-leaflet";
 
 export type LatLng = { lat: number; lng: number };
 
 function ClickHandler({ onSelect }: { onSelect: (p: LatLng) => void }) {
-  // @ts-ignore - dynamic hook typing with next/dynamic
-  const map = useMapEvents({
-    click: (e: any) => onSelect({ lat: e.latlng.lat, lng: e.latlng.lng }),
+  useMapEvents({
+    click: (e) => onSelect({ lat: e.latlng.lat, lng: e.latlng.lng }),
   });
   return null;
 }

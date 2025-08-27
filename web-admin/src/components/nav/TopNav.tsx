@@ -30,7 +30,7 @@ export default function TopNav() {
           </Link>
           <nav className="hidden sm:flex items-center gap-4">
             {navItems.map((item) => {
-              const Icon = item.icon as any;
+              const Icon = item.icon;
               const active = pathname?.startsWith(item.href);
               return (
                 <Link
