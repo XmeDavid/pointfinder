@@ -14,6 +14,39 @@ func RegisterGames(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) {
 	adminGrp := api.Group("/games")
 	adminGrp.Use(middleware.RequireAdmin(middleware.JWTConfig{Secret: cfg.JWTSecret}))
 
+	// List all games (admin)
+	adminGrp.Get("/", func(c *fiber.Ctx) error {
+		rows, err := pool.Query(context.Background(), `
+			select g.id, g.name, g.status, g.bases_linked, g.created_at,
+			       count(distinct t.id) as team_count,
+			       count(distinct b.value->>'id') as base_count
+			from games g
+			left join teams t on t.game_id = g.id
+			left join jsonb_array_elements(g.bases) as b on true
+			group by g.id, g.name, g.status, g.bases_linked, g.created_at
+			order by g.created_at desc`)
+		if err != nil {
+			return fiber.ErrInternalServerError
+		}
+		defer rows.Close()
+
+		var games []fiber.Map
+		for rows.Next() {
+			var id, name, status, createdAt string
+			var basesLinked bool
+			var teamCount, baseCount int
+			if err := rows.Scan(&id, &name, &status, &basesLinked, &createdAt, &teamCount, &baseCount); err != nil {
+				return fiber.ErrInternalServerError
+			}
+			games = append(games, fiber.Map{
+				"id": id, "name": name, "status": status,
+				"basesLinked": basesLinked, "createdAt": createdAt,
+				"teamCount": teamCount, "baseCount": baseCount,
+			})
+		}
+		return c.JSON(games)
+	})
+
 	adminGrp.Get("/:id", func(c *fiber.Ctx) error {
 		id := c.Params("id")
 		var json string
