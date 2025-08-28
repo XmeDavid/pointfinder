@@ -2,7 +2,7 @@ import ky from "ky";
 import { useAuthStore } from "./authStore";
 
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
+  process.env.NEXT_PUBLIC_API_BASE_URL || "https://dbvnfc-api.davidsbatista.com";
 
 export const createApiClient = (getToken?: () => string | null) =>
   ky.create({

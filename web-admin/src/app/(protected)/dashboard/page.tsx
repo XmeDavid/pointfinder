@@ -39,13 +39,31 @@ export default function DashboardPage() {
   async function fetchGames() {
     try {
       setLoading(true);
+      setError(null);
+      
       // Use the correct endpoint based on user role
       const endpoint = user?.role === "admin" ? "api/games" : "api/operator/games";
+      console.log("Fetching games from:", endpoint);
+      
       const gamesData = await api.get(endpoint).json() as Game[];
+      console.log("Games data:", gamesData);
       setGames(gamesData);
-    } catch (err) {
-      setError("Failed to load games");
-      console.error(err);
+    } catch (err: any) {
+      console.error("Error fetching games:", err);
+      
+      // Handle specific error cases
+      if (err.response?.status === 404) {
+        setError("Games endpoint not found. The admin endpoint may not be deployed yet.");
+      } else if (err.response?.status === 401) {
+        setError("Authentication failed. Please log in again.");
+        // Clear auth and redirect to login
+        useAuthStore.getState().clearAuth();
+        window.location.href = "/login";
+      } else if (err.response?.status === 405) {
+        setError("Method not allowed. The admin endpoint may not be properly configured.");
+      } else {
+        setError(`Failed to load games: ${err.message || "Unknown error"}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -91,6 +109,14 @@ export default function DashboardPage() {
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
             <p className="text-red-600">{error}</p>
+            {user?.role === "admin" && error.includes("admin endpoint") && (
+              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
+                <p className="text-blue-800 text-sm">
+                  <strong>Note:</strong> The admin games endpoint needs to be deployed to the production backend. 
+                  For now, you can test with operator functionality or contact the development team.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
