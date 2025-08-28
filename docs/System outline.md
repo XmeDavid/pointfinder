@@ -1,3 +1,5 @@
+If you are an agent, don't touch this file
+
 ### Overall System Description
 
 The platform is like a customizable adventure game organizer for groups (e.g., scouts events), where teams physically go to different spots ("bases") to solve challenges ("enigmas") and compete or progress. Everything is managed through a web admin panel for setup and oversight, a mobile app for players (and some setup tasks), and a backend that stores and syncs all the data securely on your server. It's built for small events (up to 100 people, one game at a time to start), with built-in rules to make sure teams actually show up and play fair. No one can just sign up randomly—it's all invite-based to keep things controlled.
