@@ -50,6 +50,32 @@ func GenerateTeamToken(secret, teamID, deviceID string) (string, error) {
 	return token.SignedString([]byte(secret))
 }
 
+// GenerateOperatorToken issues a token for an operator
+func GenerateOperatorToken(secret, operatorID string) (string, error) {
+	claims := jwt.MapClaims{
+		"sub":  operatorID,
+		"role": "operator",
+		"exp":  time.Now().Add(24 * time.Hour).Unix(),
+		"iat":  time.Now().Unix(),
+		"type": "access",
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(secret))
+}
+
+// GenerateOperatorRefreshToken issues a refresh token for an operator
+func GenerateOperatorRefreshToken(secret, operatorID string) (string, error) {
+	claims := jwt.MapClaims{
+		"sub":  operatorID,
+		"role": "operator",
+		"exp":  time.Now().Add(7 * 24 * time.Hour).Unix(),
+		"iat":  time.Now().Unix(),
+		"type": "refresh",
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(secret))
+}
+
 func RequireAdmin(cfg JWTConfig) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		h := c.Get("Authorization")
@@ -100,6 +126,31 @@ func RequireAuth(cfg JWTConfig) fiber.Handler {
 		if d, ok := claims["device_id"]; ok {
 			c.Locals("device_id", d)
 		}
+		return c.Next()
+	}
+}
+
+func RequireOperator(cfg JWTConfig) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		h := c.Get("Authorization")
+		if h == "" {
+			return fiber.ErrUnauthorized
+		}
+		parts := strings.SplitN(h, " ", 2)
+		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
+			return fiber.ErrUnauthorized
+		}
+		token, err := jwt.Parse(parts[1], func(t *jwt.Token) (interface{}, error) {
+			return []byte(cfg.Secret), nil
+		})
+		if err != nil || !token.Valid {
+			return fiber.ErrUnauthorized
+		}
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok || claims["role"] != "operator" {
+			return fiber.ErrUnauthorized
+		}
+		c.Locals("operatorID", claims["sub"])
 		return c.Next()
 	}
 }

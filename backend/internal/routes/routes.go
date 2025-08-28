@@ -19,9 +19,12 @@ func Register(app *fiber.App, cfg *config.Config, pool *pgxpool.Pool) {
 	api.Use(middleware.CSRF())
 
 	http.RegisterAuth(api, pool, cfg)
+	http.RegisterOperators(api, pool, cfg)
 	http.RegisterGames(api, pool, cfg)
 	http.RegisterTeams(api, pool, cfg)
 	http.RegisterProgress(api, pool, cfg)
 	http.RegisterTeamProgress(api, pool, cfg) // Team progress for mobile clients
+	http.RegisterTeamGame(api, pool, cfg)     // Team game state and enigma solving
+	http.RegisterMonitoring(api, pool, cfg)   // Real-time monitoring for operators
 	http.RegisterEvents(api, pool, cfg)
 }
