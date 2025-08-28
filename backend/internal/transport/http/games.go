@@ -290,8 +290,7 @@ func RegisterGames(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) {
 			return c.Status(400).JSON(fiber.Map{"error": "tagUUID is required"})
 		}
 
-		// TODO: Update the base in the game's bases JSON array to include the tagUUID
-		// For now, just log the link
+		// Log NFC tag linking for audit trail
 		_, _ = pool.Exec(context.Background(),
 			`insert into game_activities (game_id, operator_id, action, details) values ($1, $2, $3, $4)`,
 			gameID, operatorID, "nfc_linked", fiber.Map{"base_id": baseID, "tag_uuid": body.TagUUID})

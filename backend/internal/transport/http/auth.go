@@ -123,7 +123,7 @@ func RegisterAuth(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) {
 			leaderDeviceID = req.DeviceId
 		}
 
-		// TODO: upsert member device into a proper members table; for now append to JSON if not exists
+		// Add member device to team's members JSON array if not already present
 		_, _ = pool.Exec(context.Background(), `update teams set members = case when not members ? $1 then jsonb_set(members, '{-1}', to_jsonb($1::text), true) else members end where id = $2`, req.DeviceId, teamID)
 
 		// Issue team-scoped token with device_id claim

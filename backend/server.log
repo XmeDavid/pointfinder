@@ -1,0 +1,28 @@
+2025/08/28 20:47:39 applied migration: 0001_init.sql
+2025/08/28 20:47:39 applied migration: 0002_teams_game_invite.sql
+2025/08/28 20:47:40 applied migration: 0003_operators_and_game_enhancements.sql
+2025/08/28 20:47:40 listening on :4000
+
+ ┌───────────────────────────────────────────────────┐ 
+ │                  DBVNFC API v1.0                  │ 
+ │                   Fiber v2.52.1                   │ 
+ │               http://127.0.0.1:4000               │ 
+ │       (bound on host 0.0.0.0 and port 4000)       │ 
+ │                                                   │ 
+ │ Handlers ............ 71  Processes ........... 1 │ 
+ │ Prefork ....... Disabled  PID ............ 131881 │ 
+ └───────────────────────────────────────────────────┘ 
+
+20:49:42 | 200 |    2.937135ms | 127.0.0.1 | GET | /health | -
+20:49:55 | 200 |      95.687µs | 127.0.0.1 | GET | /api/csrf-token | -
+20:51:02 | 204 |      33.432µs | 127.0.0.1 | OPTIONS | /api/admin/games | -
+20:51:02 | 404 |      73.779µs | 127.0.0.1 | GET | /api/admin/games | Cannot GET /api/admin/games
+20:51:06 | 204 |      17.433µs | 127.0.0.1 | OPTIONS | /api/operators/login | -
+20:51:06 | 401 |    8.897585ms | 127.0.0.1 | POST | /api/operators/login | Unauthorized
+20:51:13 | 204 |      11.194µs | 127.0.0.1 | OPTIONS | /api/auth/login | -
+20:51:13 | 200 |     683.228µs | 127.0.0.1 | POST | /api/auth/login | -
+20:51:13 | 404 |       62.23µs | 127.0.0.1 | GET | /api/admin/games | Cannot GET /api/admin/games
+20:51:23 | 404 |      26.698µs | 127.0.0.1 | GET | /api/admin/games | Cannot GET /api/admin/games
+20:51:26 | 200 |     177.302µs | 127.0.0.1 | POST | /api/auth/login | -
+20:51:26 | 404 |      36.229µs | 127.0.0.1 | GET | /api/admin/games | Cannot GET /api/admin/games
+20:52:41 | 404 |      53.932µs | 127.0.0.1 | GET | /api/admin/games | Cannot GET /api/admin/games

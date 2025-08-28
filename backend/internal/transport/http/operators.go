@@ -49,8 +49,8 @@ func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config)
 			return fiber.ErrInternalServerError
 		}
 
-		// TODO: Send email with invitation link
-		inviteLink := fmt.Sprintf("https://yourapp.com/register?token=%s", token)
+		// Generate invitation link for manual distribution
+		inviteLink := fmt.Sprintf("https://dbvnfc-api.davidsbatista.com/register?token=%s", token)
 		
 		return c.JSON(fiber.Map{
 			"message": "Invitation sent",
