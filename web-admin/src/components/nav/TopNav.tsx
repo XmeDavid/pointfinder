@@ -22,10 +22,10 @@ export default function TopNav() {
   const clearAuth = useAuthStore((s) => s.clearAuth);
 
   return (
-    <div className="w-full border-b bg-background">
-      <div className="max-w-6xl mx-auto flex items-center justify-between p-4">
+    <div className="w-full border-b border-gray-200 bg-white shadow-sm">
+      <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center gap-6">
-          <Link href="/dashboard" className="font-semibold">
+          <Link href="/dashboard" className="font-semibold text-gray-900">
             Admin Panel
           </Link>
           <nav className="hidden sm:flex items-center gap-4">
@@ -38,8 +38,8 @@ export default function TopNav() {
                   href={item.href}
                   className={
                     active
-                      ? "text-foreground font-medium"
-                      : "text-foreground/70 hover:text-foreground"
+                      ? "text-blue-600 font-medium"
+                      : "text-gray-600 hover:text-gray-900"
                   }
                 >
                   <div className="flex items-center gap-2">
@@ -52,7 +52,7 @@ export default function TopNav() {
           </nav>
         </div>
         <button
-          className="text-sm text-foreground/80 hover:text-foreground flex items-center gap-2"
+          className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-2"
           onClick={() => {
             clearAuth();
             router.replace("/login");

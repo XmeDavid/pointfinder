@@ -22,7 +22,7 @@ export default function ProtectedLayout({
   return (
     <div className="min-h-screen flex flex-col">
       <TopNav />
-      <main className="max-w-6xl mx-auto w-full p-4">{children}</main>
+      <main className="flex-1">{children}</main>
     </div>
   );
 }

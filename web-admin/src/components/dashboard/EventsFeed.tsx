@@ -12,8 +12,8 @@ export default function EventsFeed({ events }: { events: EventItem[] }) {
       {events.map((e) => (
         <div key={e.id} className="text-sm">
           <div className="flex items-center justify-between">
-            <span className="font-mono text-xs text-foreground/60">{new Date(e.createdAt).toLocaleTimeString()}</span>
-            <span className="text-xs bg-foreground/10 px-2 py-0.5 rounded">{e.type}</span>
+            <span className="font-mono text-xs text-gray-500">{new Date(e.createdAt).toLocaleTimeString()}</span>
+                          <span className="text-xs bg-gray-100 px-2 py-0.5 rounded">{e.type}</span>
           </div>
           <div>{e.message}</div>
         </div>

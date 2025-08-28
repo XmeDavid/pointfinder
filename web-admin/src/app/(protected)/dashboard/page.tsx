@@ -39,7 +39,8 @@ export default function DashboardPage() {
   async function fetchGames() {
     try {
       setLoading(true);
-      const endpoint = user?.role === "admin" ? "api/admin/games" : "api/operator/games";
+      // Use the correct endpoint based on user role
+      const endpoint = user?.role === "admin" ? "api/games" : "api/operator/games";
       const gamesData = await api.get(endpoint).json() as Game[];
       setGames(gamesData);
     } catch (err) {
