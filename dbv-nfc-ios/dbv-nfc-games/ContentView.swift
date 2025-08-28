@@ -13,13 +13,19 @@ struct ContentView: View {
     @EnvironmentObject private var appState: AppState
 
     var body: some View {
-        TabView {
-            HomeView()
-                .tabItem { Label("Home", systemImage: "house") }
-            ProgressViewScreen()
-                .tabItem { Label("Progress", systemImage: "list.bullet.rectangle") }
-            SettingsViewScreen()
-                .tabItem { Label("Settings", systemImage: "gearshape") }
+        Group {
+            if appState.authToken == nil {
+                LoginView()
+            } else {
+                TabView {
+                    HomeView()
+                        .tabItem { Label("Home", systemImage: "house") }
+                    ProgressViewScreen()
+                        .tabItem { Label("Progress", systemImage: "list.bullet.rectangle") }
+                    SettingsViewScreen()
+                        .tabItem { Label("Settings", systemImage: "gearshape") }
+                }
+            }
         }
     }
 }

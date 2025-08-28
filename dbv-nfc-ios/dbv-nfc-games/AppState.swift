@@ -40,9 +40,8 @@ final class AppState: ObservableObject {
     // Device identifier used for leader-only enforcement
     let deviceId: String
 
-    // API base URL (editable in Settings)
-    @Published var apiBaseURLString: String = "https://example.invalid"
-    var apiBaseURL: URL { URL(string: apiBaseURLString) ?? URL(string: "https://example.invalid")! }
+    // API base URL (hardcoded)
+    var apiBaseURL: URL { URL(string: "https://dbvnfc-api.davidsbatista.com")! }
     var isAdmin: Bool { adminToken != nil }
 
     // MARK: - Init

@@ -9,7 +9,6 @@ struct SettingsViewScreen: View {
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var locationService: LocationService
 
-    @State private var apiBase: String = "https://example.invalid"
     @State private var wantsPings: Bool = false
 
     var body: some View {
@@ -32,11 +31,7 @@ struct SettingsViewScreen: View {
                     }
                 }
 
-                Section(header: Text("API")) {
-                    TextField("Base URL", text: $apiBase)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                }
+                
 
                 Section(header: Text("Location")) {
                     Toggle(isOn: $wantsPings) {
@@ -65,10 +60,6 @@ struct SettingsViewScreen: View {
                     }
                 }
             }
-        }
-        .onAppear { apiBase = appState.apiBaseURLString }
-        .onChange(of: apiBase) { newValue in
-            appState.apiBaseURLString = newValue
         }
         .onAppear { wantsPings = locationService.isPinging }
     }

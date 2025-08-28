@@ -87,7 +87,15 @@ struct APIClient {
     // MARK: - Internals
 
     private func makeRequest<T: Encodable>(path: String, method: String, body: T?, token: String?) throws -> URLRequest {
-        guard let url = URL(string: path, relativeTo: baseURL) else { throw APIError.invalidURL }
+        let normalizedPath: String
+        if path.hasPrefix("/api") {
+            normalizedPath = path
+        } else if path.hasPrefix("/") {
+            normalizedPath = "/api" + path
+        } else {
+            normalizedPath = "/api/" + path
+        }
+        guard let url = URL(string: normalizedPath, relativeTo: baseURL) else { throw APIError.invalidURL }
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
