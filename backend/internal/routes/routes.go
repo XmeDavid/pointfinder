@@ -11,14 +11,14 @@ import (
 
 func Register(app *fiber.App, cfg *config.Config, pool *pgxpool.Pool) {
 	api := app.Group("/api")
-	
+
 	// CSRF token endpoint
 	api.Get("/csrf-token", middleware.CSRFToken())
-	
+
 	// Apply CSRF protection to all endpoints except auth
 	api.Use(middleware.CSRF())
 
-	http.RegisterAuth(api, cfg)
+	http.RegisterAuth(api, pool, cfg)
 	http.RegisterGames(api, pool, cfg)
 	http.RegisterTeams(api, pool, cfg)
 	http.RegisterProgress(api, pool, cfg)

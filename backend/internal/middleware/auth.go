@@ -36,6 +36,20 @@ func GenerateRefreshToken(secret, adminID string) (string, error) {
 	return token.SignedString([]byte(secret))
 }
 
+// GenerateTeamToken issues a short-lived access token for a team member device
+func GenerateTeamToken(secret, teamID, deviceID string) (string, error) {
+	claims := jwt.MapClaims{
+		"sub":       teamID,
+		"role":      "team",
+		"device_id": deviceID,
+		"exp":       time.Now().Add(60 * time.Minute).Unix(),
+		"iat":       time.Now().Unix(),
+		"type":      "access",
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(secret))
+}
+
 func RequireAdmin(cfg JWTConfig) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		h := c.Get("Authorization")
@@ -83,6 +97,9 @@ func RequireAuth(cfg JWTConfig) fiber.Handler {
 		}
 		c.Locals("userID", claims["sub"])
 		c.Locals("role", claims["role"])
+		if d, ok := claims["device_id"]; ok {
+			c.Locals("device_id", d)
+		}
 		return c.Next()
 	}
 }

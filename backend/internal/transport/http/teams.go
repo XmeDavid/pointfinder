@@ -32,7 +32,9 @@ func RegisterTeams(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) {
 
 	grp.Post("/", func(c *fiber.Ctx) error {
 		var body struct {
-			Name string `json:"name"`
+			Name       string  `json:"name"`
+			InviteCode *string `json:"invite_code"`
+			GameID     *string `json:"game_id"`
 		}
 		if err := c.BodyParser(&body); err != nil {
 			return fiber.ErrBadRequest
@@ -40,7 +42,14 @@ func RegisterTeams(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) {
 		if body.Name == "" {
 			return fiber.ErrBadRequest
 		}
-		if _, err := pool.Exec(context.Background(), `insert into teams (name) values ($1)`, body.Name); err != nil {
+		if body.InviteCode == nil {
+			// simple default code generation: use first 8 of uuid
+			var code string
+			if err := pool.QueryRow(context.Background(), `select substring(uuid_generate_v4()::text,1,8)`).Scan(&code); err == nil {
+				body.InviteCode = &code
+			}
+		}
+		if _, err := pool.Exec(context.Background(), `insert into teams (name, invite_code, game_id) values ($1,$2,$3)`, body.Name, body.InviteCode, body.GameID); err != nil {
 			return fiber.ErrInternalServerError
 		}
 		return c.SendStatus(fiber.StatusCreated)

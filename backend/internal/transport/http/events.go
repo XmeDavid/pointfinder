@@ -49,4 +49,29 @@ func RegisterEvents(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) {
 		}
 		return c.SendStatus(fiber.StatusCreated)
 	})
+
+	// Authenticated event posting (e.g., locationPing) for team/admin tokens
+	api.Post("/events", middleware.RequireAuth(middleware.JWTConfig{Secret: cfg.JWTSecret}), func(c *fiber.Ctx) error {
+		var body struct {
+			Type    string  `json:"type"`
+			TeamId  *string `json:"teamId"`
+			Message string  `json:"message"`
+		}
+		if err := c.BodyParser(&body); err != nil {
+			return fiber.ErrBadRequest
+		}
+		if body.Type == "" {
+			return fiber.ErrBadRequest
+		}
+		// Derive teamId for team tokens
+		if role, _ := c.Locals("role").(string); role == "team" {
+			if teamSub, _ := c.Locals("userID").(string); teamSub != "" {
+				body.TeamId = &teamSub
+			}
+		}
+		if _, err := pool.Exec(context.Background(), `insert into events (type, team_id, message) values ($1,$2,$3)`, body.Type, body.TeamId, body.Message); err != nil {
+			return fiber.ErrInternalServerError
+		}
+		return c.SendStatus(fiber.StatusCreated)
+	})
 }
