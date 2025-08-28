@@ -26,9 +26,10 @@ The backend is now fully implemented and supports all features outlined in the [
 | **Real-time Monitoring** | ✅ Complete | 8 endpoints | Live locations, progress, events, overrides |
 | **Progress Tracking** | ✅ Complete | 6 endpoints | Team progress for admin and mobile |
 | **Events System** | ✅ Complete | 3 endpoints | Activity logging and monitoring |
+| **Health Check** | ✅ Complete | 1 endpoint | Server and database health monitoring |
 | **Anti-cheating** | ✅ Complete | Built-in | Leader validation, location tracking, input sanitization |
 
-**Total: 69 HTTP handlers implemented**
+**Total: 71 HTTP handlers implemented**
 
 ## 🔐 Authentication Flow
 
@@ -234,9 +235,23 @@ Common HTTP status codes:
 ## 🚦 Server Status
 
 **Current Status**: Running on port 4000  
-**Health Check**: `GET /api/csrf-token` (should return CSRF token)  
-**Handlers**: 69 total endpoints implemented  
-**Database**: PostgreSQL with all migrations applied  
+**Health Check**: `GET /health` (returns server and database status)  
+**Handlers**: 71 total endpoints implemented  
+**Database**: PostgreSQL with all migrations applied
+
+### Health Endpoint
+```bash
+GET /health
+# Response:
+{
+  "status": "ok",
+  "message": "Server is healthy", 
+  "timestamp": "2025-08-28T20:35:28Z",
+  "version": "1.0.0"
+}
+```
+
+**Note**: Health endpoint has no CSRF protection and tests database connectivity. Returns `503` if database is unavailable.  
 
 ## 📞 Support
 
