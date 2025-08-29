@@ -4,6 +4,7 @@ import (
 	"backend/internal/config"
 	"backend/internal/middleware"
 	"context"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
@@ -220,6 +221,81 @@ func RegisterAuth(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) {
 			"token":         accessToken,
 			"refresh_token": refreshToken,
 			"operator":      fiber.Map{"id": operatorID, "email": req.Email, "name": name},
+		})
+	})
+
+	// Operator registration endpoint (no CSRF protection)
+	api.Post("/auth/operators/register", middleware.AuthRateLimit(), func(c *fiber.Ctx) error {
+		var req struct {
+			Token    string `json:"token"`
+			Email    string `json:"email"`
+			Password string `json:"password"`
+			Name     string `json:"name"`
+		}
+		if err := c.BodyParser(&req); err != nil {
+			return fiber.ErrBadRequest
+		}
+
+		req.Token = middleware.SanitizeString(req.Token)
+		req.Email = middleware.SanitizeString(req.Email)
+		req.Name = middleware.SanitizeString(req.Name)
+
+		if !middleware.ValidateEmail(req.Email) || !middleware.ValidatePassword(req.Password) || req.Name == "" {
+			return c.Status(400).JSON(fiber.Map{"error": "Invalid input"})
+		}
+
+		// Validate invite token
+		var inviteEmail string
+		var expiresAt time.Time
+		err := pool.QueryRow(context.Background(),
+			`select email, expires_at from operator_invites where token = $1 and used_at is null`,
+			req.Token).Scan(&inviteEmail, &expiresAt)
+		if err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "Invalid or expired token"})
+		}
+
+		if time.Now().After(expiresAt) {
+			return c.Status(400).JSON(fiber.Map{"error": "Token expired"})
+		}
+
+		if inviteEmail != req.Email {
+			return c.Status(400).JSON(fiber.Map{"error": "Email mismatch"})
+		}
+
+		// Hash password
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return fiber.ErrInternalServerError
+		}
+
+		// Create operator
+		var operatorID string
+		err = pool.QueryRow(context.Background(),
+			`insert into operators (email, password_hash, name) values ($1, $2, $3) returning id`,
+			req.Email, string(hashedPassword), req.Name).Scan(&operatorID)
+		if err != nil {
+			return fiber.ErrInternalServerError
+		}
+
+		// Mark invite as used
+		_, _ = pool.Exec(context.Background(),
+			`update operator_invites set used_at = now() where token = $1`, req.Token)
+
+		// Generate tokens
+		accessToken, err := middleware.GenerateOperatorToken(cfg.JWTSecret, operatorID)
+		if err != nil {
+			return fiber.ErrInternalServerError
+		}
+
+		refreshToken, err := middleware.GenerateOperatorRefreshToken(cfg.JWTSecret, operatorID)
+		if err != nil {
+			return fiber.ErrInternalServerError
+		}
+
+		return c.JSON(fiber.Map{
+			"token":         accessToken,
+			"refresh_token": refreshToken,
+			"operator":      fiber.Map{"id": operatorID, "email": req.Email, "name": req.Name},
 		})
 	})
 }
