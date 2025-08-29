@@ -44,7 +44,7 @@ export interface Team {
     longitude: number;
     timestamp: string;
   };
-  progress: TeamProgress[];
+  progress?: TeamProgress[];
 }
 
 export interface TeamProgress {
@@ -67,6 +67,8 @@ export interface Game {
   enigmas: Enigma[];
   createdAt: string;
   role?: string; // For operator access
+  teamCount?: number;
+  baseCount?: number;
 }
 
 // User Management Types
@@ -108,7 +110,7 @@ export interface TeamLocation {
 }
 
 // API Response Types
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
   message?: string;

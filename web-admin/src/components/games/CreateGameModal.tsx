@@ -366,7 +366,6 @@ export default function CreateGameModal({ onClose, onGameCreated }: CreateGameMo
         <EnigmaManagementModal
           isOpen={showEnigmaManagement}
           onClose={() => setShowEnigmaManagement(false)}
-          gameId="new"
           enigmas={enigmas}
           bases={bases}
           onEnigmasUpdate={setEnigmas}

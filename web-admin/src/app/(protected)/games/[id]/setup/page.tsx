@@ -4,55 +4,11 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, MapPin, Users, Settings, Play, FileText } from "lucide-react";
 import { api } from "@/lib/apiClient";
+import { Game } from "@/types";
 import BaseManagementModal from "@/components/games/BaseManagementModal";
 import TeamManagementModal from "@/components/games/TeamManagementModal";
 import EnigmaManagementModal from "@/components/games/EnigmaManagementModal";
 
-interface Base {
-  id: string;
-  name: string;
-  description?: string;
-  latitude: number;
-  longitude: number;
-  uuid: string;
-  isLocationDependent: boolean;
-  nfcLinked: boolean;
-  enigmaId?: string;
-}
-
-interface Team {
-  id: string;
-  name: string;
-  number: number;
-  inviteCode: string;
-  members: string[];
-  leaderId?: string;
-}
-
-interface Enigma {
-  id: string;
-  title: string;
-  content: string;
-  answer: string;
-  points: number;
-  isLocationDependent: boolean;
-  baseId?: string;
-  baseName?: string;
-  mediaType?: "image" | "video" | "youtube";
-  mediaUrl?: string;
-  createdAt: string;
-}
-
-interface Game {
-  id: string;
-  name: string;
-  status: "setup" | "ready" | "live" | "finished";
-  rulesHtml?: string;
-  bases: Base[];
-  teams: Team[];
-  enigmas: Enigma[];
-  createdAt: string;
-}
 
 export default function GameSetupPage() {
   const params = useParams();
@@ -585,7 +541,6 @@ export default function GameSetupPage() {
         <EnigmaManagementModal
           isOpen={showEnigmaManagement}
           onClose={() => setShowEnigmaManagement(false)}
-          gameId={gameId}
           enigmas={game.enigmas}
           bases={game.bases}
           onEnigmasUpdate={(newEnigmas) => {

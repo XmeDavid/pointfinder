@@ -3,21 +3,10 @@
 import { useState, useCallback } from "react";
 import { X, MapPin, Plus, Edit, Trash2, Link, Unlink } from "lucide-react";
 import dynamic from "next/dynamic";
+import { Base } from "@/types";
 
 // Dynamically import the map component to avoid SSR issues
-const MapPicker = dynamic(() => import("./MapPicker"), { ssr: false });
-
-interface Base {
-  id: string;
-  name: string;
-  description?: string;
-  latitude: number;
-  longitude: number;
-  uuid: string;
-  isLocationDependent: boolean;
-  nfcLinked: boolean;
-  enigmaId?: string;
-}
+const MapPicker = dynamic(() => import("../maps/MapPicker"), { ssr: false });
 
 interface BaseManagementModalProps {
   isOpen: boolean;
@@ -35,15 +24,14 @@ export default function BaseManagementModal({
 }: BaseManagementModalProps) {
   const [selectedBase, setSelectedBase] = useState<Base | null>(null);
   const [editingBase, setEditingBase] = useState<Base | null>(null);
-  const [mapCenter, setMapCenter] = useState({ lat: 38.7223, lng: -9.1393 }); // Lisbon default
 
-  const handleCreateBase = useCallback((location: { lat: number; lng: number }) => {
+  const handleLocationSelect = useCallback((lat: number, lng: number) => {
     const newBase: Base = {
       id: crypto.randomUUID(),
       name: `Base ${bases.length + 1}`,
       description: "",
-      latitude: location.lat,
-      longitude: location.lng,
+      latitude: lat,
+      longitude: lng,
       uuid: crypto.randomUUID(),
       isLocationDependent: true,
       nfcLinked: false,
@@ -51,7 +39,6 @@ export default function BaseManagementModal({
     
     onBasesUpdate([...bases, newBase]);
     setSelectedBase(newBase);
-    setIsCreating(false);
   }, [bases, onBasesUpdate]);
 
   const handleUpdateBase = useCallback((baseId: string, updates: Partial<Base>) => {
@@ -113,12 +100,9 @@ export default function BaseManagementModal({
           <div className="flex-1 p-6">
             <div className="h-full rounded-lg border border-gray-200 overflow-hidden">
               <MapPicker
-                bases={bases}
-                selectedBase={selectedBase}
-                onBaseSelect={setSelectedBase}
-                onLocationSelect={handleCreateBase}
-                center={mapCenter}
-                onCenterChange={setMapCenter}
+                onLocationSelect={handleLocationSelect}
+                initialLocation={selectedBase ? { lat: selectedBase.latitude, lng: selectedBase.longitude } : undefined}
+                height="400px"
               />
             </div>
           </div>
@@ -128,7 +112,7 @@ export default function BaseManagementModal({
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Bases</h3>
               <button
-                onClick={() => setIsCreating(true)}
+                onClick={() => {/* Open create mode */}}
                 className="inline-flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
               >
                 <Plus className="w-4 h-4" />

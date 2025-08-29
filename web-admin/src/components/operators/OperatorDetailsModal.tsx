@@ -33,12 +33,6 @@ export default function OperatorDetailsModal({ isOpen, onClose, operator, onOper
   const [loading, setLoading] = useState(false);
   const [statusLoading, setStatusLoading] = useState(false);
 
-  useEffect(() => {
-    if (isOpen && operator) {
-      fetchOperatorGames();
-    }
-  }, [isOpen, operator, fetchOperatorGames]);
-
   const fetchOperatorGames = useCallback(async () => {
     if (!operator) return;
     
@@ -53,6 +47,12 @@ export default function OperatorDetailsModal({ isOpen, onClose, operator, onOper
       setLoading(false);
     }
   }, [operator]);
+
+  useEffect(() => {
+    if (isOpen && operator) {
+      fetchOperatorGames();
+    }
+  }, [isOpen, operator, fetchOperatorGames]);
 
   const handleStatusUpdate = async (newStatus: "active" | "inactive" | "pending") => {
     if (!operator) return;

@@ -3,32 +3,7 @@
 import { useState, useCallback } from "react";
 import { X, Plus, Edit, Trash2, MapPin, Unlink, Image, Video, Youtube, FileText } from "lucide-react";
 import NextImage from "next/image";
-
-interface Enigma {
-  id: string;
-  title: string;
-  content: string;
-  answer: string;
-  points: number;
-  isLocationDependent: boolean;
-  baseId?: string;
-  baseName?: string;
-  mediaType?: "image" | "video" | "youtube";
-  mediaUrl?: string;
-  createdAt: string;
-}
-
-interface Base {
-  id: string;
-  name: string;
-  description?: string;
-  latitude: number;
-  longitude: number;
-  uuid: string;
-  isLocationDependent: boolean;
-  nfcLinked: boolean;
-  enigmaId?: string;
-}
+import { Base, Enigma } from "@/types";
 
 interface EnigmaManagementModalProps {
   isOpen: boolean;
