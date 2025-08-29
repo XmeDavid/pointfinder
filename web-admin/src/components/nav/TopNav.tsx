@@ -13,7 +13,7 @@ import {
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/games/new", label: "New Game", icon: MapIcon },
-  { href: "/teams", label: "Teams", icon: Users },
+  { href: "/operators", label: "Operators", icon: Users },
 ];
 
 export default function TopNav() {

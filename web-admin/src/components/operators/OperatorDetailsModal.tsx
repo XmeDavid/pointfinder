@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Mail, Calendar, Users, MapPin, Clock, Eye } from "lucide-react";
+import { X, Mail, Calendar, Users, MapPin, Clock, Eye, Settings } from "lucide-react";
 import { api } from "@/lib/apiClient";
 
 interface Game {
@@ -25,11 +25,13 @@ interface OperatorDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   operator: Operator | null;
+  onOperatorUpdate?: () => void;
 }
 
-export default function OperatorDetailsModal({ isOpen, onClose, operator }: OperatorDetailsModalProps) {
+export default function OperatorDetailsModal({ isOpen, onClose, operator, onOperatorUpdate }: OperatorDetailsModalProps) {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(false);
+  const [statusLoading, setStatusLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen && operator) {
@@ -49,6 +51,32 @@ export default function OperatorDetailsModal({ isOpen, onClose, operator }: Oper
       setGames([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleStatusUpdate = async (newStatus: "active" | "inactive" | "pending") => {
+    if (!operator) return;
+    
+    setStatusLoading(true);
+    try {
+      await api.patch(`api/admin/operators/${operator.id}`, {
+        json: { status: newStatus }
+      });
+      
+      // Update the operator object locally
+      if (operator) {
+        operator.status = newStatus;
+      }
+      
+      // Notify parent component to refresh the operators list
+      if (onOperatorUpdate) {
+        onOperatorUpdate();
+      }
+    } catch (error) {
+      console.error("Failed to update operator status:", error);
+      alert("Failed to update operator status");
+    } finally {
+      setStatusLoading(false);
     }
   };
 
@@ -101,7 +129,7 @@ export default function OperatorDetailsModal({ isOpen, onClose, operator }: Oper
                     Joined {new Date(operator.createdAt).toLocaleDateString()}
                   </div>
                 </div>
-                <div className="mt-2">
+                <div className="mt-2 flex items-center gap-3">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                     operator.status === "active" ? "bg-green-100 text-green-800" :
                     operator.status === "pending" ? "bg-yellow-100 text-yellow-800" :
@@ -109,6 +137,22 @@ export default function OperatorDetailsModal({ isOpen, onClose, operator }: Oper
                   }`}>
                     {operator.status}
                   </span>
+                  <div className="flex items-center gap-2">
+                    <Settings className="w-4 h-4 text-gray-400" />
+                    <select
+                      value={operator.status}
+                      onChange={(e) => handleStatusUpdate(e.target.value as "active" | "inactive" | "pending")}
+                      disabled={statusLoading}
+                      className="text-xs border border-gray-300 rounded px-2 py-1 bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                    {statusLoading && (
+                      <div className="w-3 h-3 border border-blue-600 border-t-transparent rounded-full animate-spin" />
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
