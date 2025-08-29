@@ -5,6 +5,7 @@ import { api } from "@/lib/apiClient";
 import OperatorsTable from "@/components/operators/OperatorsTable";
 import InviteOperatorModal from "@/components/operators/InviteOperatorModal";
 import OperatorDetailsModal from "@/components/operators/OperatorDetailsModal";
+import PendingInvitationsTable from "@/components/operators/PendingInvitationsTable";
 
 interface Operator {
   id: string;
@@ -15,9 +16,20 @@ interface Operator {
   status: "active" | "pending" | "inactive";
 }
 
+interface Invitation {
+  email: string;
+  token: string;
+  createdAt: string;
+  expiresAt: string;
+  usedAt: string | null;
+  status: "pending" | "used" | "expired";
+}
+
 export default function OperatorsPage() {
   const [operators, setOperators] = useState<Operator[]>([]);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [invitationsLoading, setInvitationsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [selectedOperator, setSelectedOperator] = useState<Operator | null>(null);
@@ -37,12 +49,26 @@ export default function OperatorsPage() {
     }
   };
 
+  const fetchInvitations = async () => {
+    setInvitationsLoading(true);
+    try {
+      const data = await api.get("api/admin/operators/invitations").json() as Invitation[];
+      setInvitations(data);
+    } catch (err) {
+      console.error("Failed to fetch invitations:", err);
+    } finally {
+      setInvitationsLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchOperators();
+    fetchInvitations();
   }, []);
 
   const handleInviteSuccess = () => {
     fetchOperators();
+    fetchInvitations();
   };
 
   const handleViewOperator = (operator: Operator) => {
@@ -95,6 +121,20 @@ export default function OperatorsPage() {
           onInviteOperator={() => setShowInviteModal(true)}
           onViewOperator={handleViewOperator}
         />
+
+        {invitationsLoading ? (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="text-center py-8">
+              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading invitations...</p>
+            </div>
+          </div>
+        ) : (
+          <PendingInvitationsTable
+            invitations={invitations}
+            onRefresh={fetchInvitations}
+          />
+        )}
       </div>
 
       <InviteOperatorModal

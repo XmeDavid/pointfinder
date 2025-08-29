@@ -73,6 +73,59 @@ func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config)
 		})
 	})
 
+	// List pending invitations (admin only)
+	adminGrp.Get("/invitations", func(c *fiber.Ctx) error {
+		rows, err := pool.Query(context.Background(), `
+			select email, token, created_at, expires_at, used_at
+			from operator_invites 
+			order by created_at desc`)
+		if err != nil {
+			return fiber.ErrInternalServerError
+		}
+		defer rows.Close()
+
+		var invitations []fiber.Map
+		for rows.Next() {
+			var email, token string
+			var createdAt, expiresAt time.Time
+			var usedAt *time.Time
+			if err := rows.Scan(&email, &token, &createdAt, &expiresAt, &usedAt); err != nil {
+				return fiber.ErrInternalServerError
+			}
+
+			status := "pending"
+			if usedAt != nil {
+				status = "used"
+			} else if time.Now().After(expiresAt) {
+				status = "expired"
+			}
+
+			invitations = append(invitations, fiber.Map{
+				"email": email, "token": token, "createdAt": createdAt,
+				"expiresAt": expiresAt, "usedAt": usedAt, "status": status,
+			})
+		}
+		return c.JSON(invitations)
+	})
+
+	// Cancel invitation (admin only)
+	adminGrp.Delete("/invitations/:token", func(c *fiber.Ctx) error {
+		token := middleware.SanitizeString(c.Params("token"))
+		
+		result, err := pool.Exec(context.Background(),
+			`delete from operator_invites where token = $1 and used_at is null`, token)
+		if err != nil {
+			return fiber.ErrInternalServerError
+		}
+		
+		rowsAffected := result.RowsAffected()
+		if rowsAffected == 0 {
+			return c.Status(404).JSON(fiber.Map{"error": "Invitation not found or already used"})
+		}
+
+		return c.JSON(fiber.Map{"message": "Invitation cancelled"})
+	})
+
 	// List operators (admin only)
 	adminGrp.Get("/", func(c *fiber.Ctx) error {
 		rows, err := pool.Query(context.Background(), `
