@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Plus, Users, Shield, Eye, UserPlus } from "lucide-react";
 import { api } from "@/lib/apiClient";
 import { useAuthStore } from "@/lib/authStore";
@@ -68,7 +68,6 @@ export default function DashboardPage() {
           setIsAdminMode(true);
         } catch (err) {
           // If admin endpoints fail, try to fetch games as operator
-          console.log("Admin endpoints failed, trying operator endpoints");
           setIsAdminMode(false);
           await fetchGames();
         }
@@ -89,11 +88,9 @@ export default function DashboardPage() {
 
   async function fetchGames() {
     const endpoint = user?.role === "admin" ? "api/games" : "api/operator/games";
-    console.log("Fetching games from:", endpoint);
     
     try {
       const gamesData = await api.get(endpoint).json() as Game[];
-      console.log("Games data:", gamesData);
       setGames(gamesData || []);
     } catch (err) {
       console.error("Failed to fetch games:", err);
@@ -109,10 +106,8 @@ export default function DashboardPage() {
   }
 
   async function fetchOperators() {
-    console.log("Fetching operators");
     try {
       const operatorsData = await api.get("api/admin/operators").json() as Operator[];
-      console.log("Operators data:", operatorsData);
       setOperators(operatorsData);
     } catch (err) {
       console.error("Failed to fetch operators:", err);
@@ -127,17 +122,17 @@ export default function DashboardPage() {
     }
   }
 
-  const activeGames = games?.filter(g => g.status === "live") || [];
-  const setupGames = games?.filter(g => g.status === "setup") || [];
-  const finishedGames = games?.filter(g => g.status === "finished") || [];
+  const activeGames = useMemo(() => games?.filter(g => g.status === "live") || [], [games]);
+  const setupGames = useMemo(() => games?.filter(g => g.status === "setup") || [], [games]);
+  const finishedGames = useMemo(() => games?.filter(g => g.status === "finished") || [], [games]);
 
-  const activeOperators = operators?.filter(o => o.status === "active") || [];
-  const pendingOperators = operators?.filter(o => o.status === "pending") || [];
+  const activeOperators = useMemo(() => operators?.filter(o => o.status === "active") || [], [operators]);
+  const pendingOperators = useMemo(() => operators?.filter(o => o.status === "pending") || [], [operators]);
 
-  const handleViewOperator = (operator: Operator) => {
+  const handleViewOperator = useCallback((operator: Operator) => {
     setSelectedOperator(operator);
     setShowOperatorDetails(true);
-  };
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">

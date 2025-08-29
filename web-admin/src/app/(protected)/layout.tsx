@@ -25,16 +25,10 @@ export default function ProtectedLayout({
   useEffect(() => {
     if (!isHydrated) return; // Wait for hydration
     
-    console.log("Protected layout - Token:", token ? "***" : null, "User:", user);
-    
     const authenticated = isAuthenticated();
-    console.log("Is authenticated:", authenticated);
     
     if (!authenticated) {
-      console.log("Not authenticated, redirecting to login");
       router.replace("/login");
-    } else {
-      console.log("Authenticated, allowing access");
     }
     setIsLoading(false);
   }, [token, user, isAuthenticated, router, isHydrated]);

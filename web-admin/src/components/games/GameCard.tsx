@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { MapPin, Users, Calendar, Play, Pause, Settings, Eye, Edit } from "lucide-react";
 import { api } from "@/lib/apiClient";
+import Link from "next/link";
 
 interface Game {
   id: string;
@@ -167,13 +168,13 @@ export default function GameCard({ game, onUpdate }: GameCardProps) {
           Monitor
         </button>
 
-        <button
-          onClick={() => window.location.href = `/games/${game.id}/edit`}
+        <Link
+          href={`/games/${game.id}/setup`}
           className="inline-flex items-center justify-center gap-2 bg-gray-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors"
         >
-          <Edit className="w-4 h-4" />
-          Edit
-        </button>
+          <Settings className="w-4 h-4" />
+          Setup
+        </Link>
       </div>
     </div>
   );

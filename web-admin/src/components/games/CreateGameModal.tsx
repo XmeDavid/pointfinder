@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { X, Save, Loader2 } from "lucide-react";
+import { X, Save, Loader2, MapPin } from "lucide-react";
 import { api } from "@/lib/apiClient";
+import BaseManagementModal from "./BaseManagementModal";
 
 interface CreateGameModalProps {
   onClose: () => void;
@@ -12,6 +13,18 @@ export default function CreateGameModal({ onClose, onGameCreated }: CreateGameMo
   const [rulesHtml, setRulesHtml] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [bases, setBases] = useState<Array<{
+    id: string;
+    name: string;
+    description?: string;
+    latitude: number;
+    longitude: number;
+    uuid: string;
+    isLocationDependent: boolean;
+    nfcLinked: boolean;
+    enigmaId?: string;
+  }>>([]);
+  const [showBaseManagement, setShowBaseManagement] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +41,7 @@ export default function CreateGameModal({ onClose, onGameCreated }: CreateGameMo
         json: {
           name: name.trim(),
           rulesHtml: rulesHtml.trim() || "<p>Game rules will be added here.</p>",
+          bases: bases, // Include bases in the creation
         },
       });
       
@@ -72,6 +86,57 @@ export default function CreateGameModal({ onClose, onGameCreated }: CreateGameMo
               placeholder="e.g., Night Quest 2025, Scout Adventure"
               required
             />
+          </div>
+
+          {/* Base Management */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Bases *
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowBaseManagement(true)}
+                className="inline-flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+              >
+                <MapPin className="w-4 h-4" />
+                Manage Bases ({bases.length})
+              </button>
+            </div>
+            
+            {bases.length === 0 ? (
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <MapPin className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-gray-600">No bases created yet</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Click "Manage Bases" to create bases for your game
+                </p>
+              </div>
+            ) : (
+              <div className="border border-gray-300 rounded-lg p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {bases.map((base) => (
+                    <div key={base.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <h4 className="font-medium text-gray-900">{base.name}</h4>
+                        <p className="text-sm text-gray-600">
+                          {base.latitude.toFixed(4)}, {base.longitude.toFixed(4)}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          base.nfcLinked 
+                            ? "bg-green-100 text-green-800" 
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}>
+                          {base.nfcLinked ? "Linked" : "Unlinked"}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Game Rules */}
@@ -133,7 +198,7 @@ export default function CreateGameModal({ onClose, onGameCreated }: CreateGameMo
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || bases.length === 0}
               className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-3 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
             >
               {loading ? (
@@ -151,6 +216,17 @@ export default function CreateGameModal({ onClose, onGameCreated }: CreateGameMo
           </div>
         </form>
       </div>
+
+      {/* Base Management Modal */}
+      {showBaseManagement && (
+        <BaseManagementModal
+          isOpen={showBaseManagement}
+          onClose={() => setShowBaseManagement(false)}
+          gameId="new"
+          bases={bases}
+          onBasesUpdate={setBases}
+        />
+      )}
     </div>
   );
 }

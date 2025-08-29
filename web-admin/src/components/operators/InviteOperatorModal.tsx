@@ -48,10 +48,15 @@ export default function InviteOperatorModal({ isOpen, onClose, onSuccess }: Invi
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div 
+      className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="invite-operator-title"
+    >
       <div className="bg-white rounded-2xl shadow-xl max-w-md w-full">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">Invite Operator</h2>
+          <h2 id="invite-operator-title" className="text-xl font-semibold text-gray-900">Invite Operator</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
