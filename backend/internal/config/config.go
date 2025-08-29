@@ -14,6 +14,10 @@ type Config struct {
 	CORSOrigins string
 	AdminEmail  string
 	AdminPassword string
+	SMTPHost    string
+	SMTPPort    string
+	SMTPUser    string
+	SMTPPass    string
 }
 
 func Load() (*Config, error) {
@@ -25,6 +29,10 @@ func Load() (*Config, error) {
 		CORSOrigins: getenv("CORS_ORIGINS", "http://localhost:3000"),
 		AdminEmail:  os.Getenv("ADMIN_EMAIL"),
 		AdminPassword: os.Getenv("ADMIN_PASSWORD"),
+		SMTPHost:    getenv("SMTP_HOST", "smtp.gmail.com"),
+		SMTPPort:    getenv("SMTP_PORT", "587"),
+		SMTPUser:    os.Getenv("SMTP_USER"),
+		SMTPPass:    os.Getenv("SMTP_PASS"),
 	}
 	if cfg.DatabaseURL == "" {
 		return nil, errors.New("DATABASE_URL is required")

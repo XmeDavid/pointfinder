@@ -2,6 +2,7 @@ package http
 
 import (
 	"backend/internal/config"
+	"backend/internal/email"
 	"backend/internal/middleware"
 	"context"
 	"crypto/rand"
@@ -15,6 +16,9 @@ import (
 )
 
 func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) {
+	// Initialize email service
+	emailService := email.NewService(cfg)
+	
 	// Admin-only endpoints for operator management
 	adminGrp := api.Group("/admin/operators")
 	adminGrp.Use(middleware.RequireAdmin(middleware.JWTConfig{Secret: cfg.JWTSecret}))
@@ -49,11 +53,22 @@ func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config)
 			return fiber.ErrInternalServerError
 		}
 
-		// Generate invitation link for manual distribution
+		// Generate invitation link
 		inviteLink := fmt.Sprintf("https://dbvnfc-api.davidsbatista.com/register?token=%s", token)
 		
+		// Send invitation email
+		if err := emailService.SendOperatorInvite(req.Email, req.Name, inviteLink); err != nil {
+			// Log the error but don't fail the request - admin can use the link manually
+			fmt.Printf("Failed to send invitation email to %s: %v\n", req.Email, err)
+			return c.JSON(fiber.Map{
+				"message": "Invitation created (email failed to send)",
+				"invite_link": inviteLink,
+				"error": "Email service unavailable - please send the link manually",
+			})
+		}
+		
 		return c.JSON(fiber.Map{
-			"message": "Invitation sent",
+			"message": "Invitation sent successfully",
 			"invite_link": inviteLink,
 		})
 	})
