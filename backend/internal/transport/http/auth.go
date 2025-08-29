@@ -24,7 +24,7 @@ func RegisterAuth(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) {
 	// Admin login endpoint (matches iOS client expectation)
 	api.Post("/auth/admin/login", middleware.AuthRateLimit(), middleware.ValidateLoginRequest(), func(c *fiber.Ctx) error {
 		var req struct {
-			Username string `json:"username"`
+			Email    string `json:"email"`
 			Password string `json:"password"`
 		}
 		if err := c.BodyParser(&req); err != nil {
@@ -32,16 +32,16 @@ func RegisterAuth(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) {
 		}
 
 		// Sanitize input
-		req.Username = middleware.SanitizeString(req.Username)
+		req.Email = middleware.SanitizeString(req.Email)
 		req.Password = middleware.SanitizeString(req.Password)
 
 		// Validate input format
-		if !middleware.ValidateEmail(req.Username) || !middleware.ValidatePassword(req.Password) {
+		if !middleware.ValidateEmail(req.Email) || !middleware.ValidatePassword(req.Password) {
 			return fiber.ErrUnauthorized
 		}
 
 		// Validate credentials from environment variables
-		if req.Username != cfg.AdminEmail || req.Password != cfg.AdminPassword {
+		if req.Email != cfg.AdminEmail || req.Password != cfg.AdminPassword {
 			return fiber.ErrUnauthorized
 		}
 

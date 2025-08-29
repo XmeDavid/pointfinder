@@ -55,7 +55,7 @@ func RegisterGames(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) {
 
 		// Get paginated results
 		rows, err := pool.Query(context.Background(), `
-			select g.id, g.name, g.status, g.bases_linked, g.created_at,
+			select g.id::text, g.name, g.status, g.bases_linked, g.created_at::text,
 			       count(distinct t.id) as team_count,
 			       count(distinct b.value->>'id') as base_count
 			from games g
@@ -217,7 +217,7 @@ func RegisterGames(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) {
 
 		// Get paginated operator games with stats
 		rows, err := pool.Query(context.Background(), `
-			select g.id, g.name, g.status, g.bases_linked, g.created_at,
+			select g.id::text, g.name, g.status, g.bases_linked, g.created_at::text,
 			       og.role,
 			       count(distinct t.id) as team_count,
 			       count(distinct b.value->>'id') as base_count

@@ -54,12 +54,14 @@ alter table operators add constraint chk_operators_status_valid
     check (status in ('active', 'inactive', 'suspended', 'pending'));
 
 -- Ensure operator invitation tokens are not empty
-alter table operator_invites add constraint chk_operator_invites_token_not_empty 
-    check (length(trim(token)) > 0);
+ALTER TABLE operator_invites DROP CONSTRAINT IF EXISTS chk_operator_invites_token_not_empty;
+ALTER TABLE operator_invites ADD CONSTRAINT chk_operator_invites_token_not_empty 
+    CHECK (length(trim(token)) > 0);
 
 -- Add constraint to prevent expired invitations from being used
-alter table operator_invites add constraint chk_operator_invites_not_used_when_expired
-    check (used_at is null or used_at <= expires_at);
+ALTER TABLE operator_invites DROP CONSTRAINT IF EXISTS chk_operator_invites_not_used_when_expired;
+ALTER TABLE operator_invites ADD CONSTRAINT chk_operator_invites_not_used_when_expired
+    CHECK (used_at IS NULL OR used_at <= expires_at);
 
 -- Fix events table to include all valid event types from the spec
 alter table events drop constraint if exists chk_events_type_valid;
@@ -70,8 +72,9 @@ alter table events add constraint chk_events_type_valid
 create index if not exists idx_events_team_type_created on events (team_id, type, created_at desc);
 
 -- Ensure game activities have valid action types
-alter table game_activities add constraint chk_game_activities_action_not_empty
-    check (length(trim(action)) > 0);
+ALTER TABLE game_activities DROP CONSTRAINT IF EXISTS chk_game_activities_action_not_empty;
+ALTER TABLE game_activities ADD CONSTRAINT chk_game_activities_action_not_empty
+    CHECK (length(trim(action)) > 0);
 
 -- Add index for game activities querying
 create index if not exists idx_game_activities_action on game_activities (action);
@@ -86,8 +89,9 @@ create index if not exists idx_team_locations_device_created on team_locations (
 create index if not exists idx_team_locations_coordinates on team_locations (latitude, longitude);
 
 -- Add constraint to ensure enigma solutions reference valid data
-alter table enigma_solutions add constraint chk_enigma_solutions_base_id_not_empty 
-    check (length(trim(base_id::text)) > 0);
+ALTER TABLE enigma_solutions DROP CONSTRAINT IF EXISTS chk_enigma_solutions_base_id_not_empty;
+ALTER TABLE enigma_solutions ADD CONSTRAINT chk_enigma_solutions_base_id_not_empty 
+    CHECK (length(trim(base_id::text)) > 0);
 
 -- Performance index for enigma solution queries
 create index if not exists idx_enigma_solutions_correct_solved on enigma_solutions (is_correct, solved_at desc);

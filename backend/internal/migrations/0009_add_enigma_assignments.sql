@@ -15,7 +15,9 @@ create index if not exists idx_team_enigma_assignments_enigma on team_enigma_ass
 create index if not exists idx_team_enigma_assignments_base on team_enigma_assignments (base_id);
 
 -- Add constraints for data integrity
-alter table team_enigma_assignments add constraint chk_team_enigma_assignments_base_id_not_empty 
-    check (length(trim(base_id)) > 0);
-alter table team_enigma_assignments add constraint chk_team_enigma_assignments_enigma_id_not_empty 
-    check (length(trim(enigma_id)) > 0);
+ALTER TABLE team_enigma_assignments DROP CONSTRAINT IF EXISTS chk_team_enigma_assignments_base_id_not_empty;
+ALTER TABLE team_enigma_assignments ADD CONSTRAINT chk_team_enigma_assignments_base_id_not_empty 
+    CHECK (length(trim(base_id)) > 0);
+ALTER TABLE team_enigma_assignments DROP CONSTRAINT IF EXISTS chk_team_enigma_assignments_enigma_id_not_empty;
+ALTER TABLE team_enigma_assignments ADD CONSTRAINT chk_team_enigma_assignments_enigma_id_not_empty 
+    CHECK (length(trim(enigma_id)) > 0);

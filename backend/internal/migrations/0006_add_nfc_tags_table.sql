@@ -10,11 +10,13 @@ create table if not exists nfc_tags (
     created_at timestamptz not null default now()
 );
 
--- Add constraints
-alter table nfc_tags add constraint chk_nfc_tags_tag_uuid_not_empty 
-    check (length(trim(tag_uuid)) > 0);
-alter table nfc_tags add constraint chk_nfc_tags_base_id_not_empty 
-    check (length(trim(base_id)) > 0);
+-- Add constraints (idempotent)
+ALTER TABLE nfc_tags DROP CONSTRAINT IF EXISTS chk_nfc_tags_tag_uuid_not_empty;
+ALTER TABLE nfc_tags ADD CONSTRAINT chk_nfc_tags_tag_uuid_not_empty 
+    CHECK (length(trim(tag_uuid)) > 0);
+ALTER TABLE nfc_tags DROP CONSTRAINT IF EXISTS chk_nfc_tags_base_id_not_empty;
+ALTER TABLE nfc_tags ADD CONSTRAINT chk_nfc_tags_base_id_not_empty 
+    CHECK (length(trim(base_id)) > 0);
 
 -- Add indexes for performance
 create index if not exists idx_nfc_tags_game_id on nfc_tags (game_id);

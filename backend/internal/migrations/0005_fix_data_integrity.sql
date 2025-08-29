@@ -1,60 +1,75 @@
 -- Fix data integrity issues and add missing constraints
 
--- Add foreign key constraint for teams.game_id (was missing)
-alter table teams add constraint fk_teams_game_id 
-    foreign key (game_id) references games(id) on delete cascade;
+-- Add foreign key constraint for teams.game_id (was missing) - with IF NOT EXISTS safety
+ALTER TABLE teams DROP CONSTRAINT IF EXISTS fk_teams_game_id;
+ALTER TABLE teams ADD CONSTRAINT fk_teams_game_id 
+    FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE;
 
 -- Add constraint to ensure teams must have a game assigned
 alter table teams alter column game_id set not null;
 
 -- Add constraint to ensure invite codes are not empty
-alter table teams add constraint chk_teams_invite_code_not_empty 
-    check (invite_code is not null and length(trim(invite_code)) > 0);
+ALTER TABLE teams DROP CONSTRAINT IF EXISTS chk_teams_invite_code_not_empty;
+ALTER TABLE teams ADD CONSTRAINT chk_teams_invite_code_not_empty 
+    CHECK (invite_code IS NOT NULL AND length(trim(invite_code)) > 0);
 
 -- Add constraint for team names
-alter table teams add constraint chk_teams_name_not_empty 
-    check (length(trim(name)) > 0);
+ALTER TABLE teams DROP CONSTRAINT IF EXISTS chk_teams_name_not_empty;
+ALTER TABLE teams ADD CONSTRAINT chk_teams_name_not_empty 
+    CHECK (length(trim(name)) > 0);
 
 -- Add constraint for game names  
-alter table games add constraint chk_games_name_not_empty 
-    check (length(trim(name)) > 0);
+ALTER TABLE games DROP CONSTRAINT IF EXISTS chk_games_name_not_empty;
+ALTER TABLE games ADD CONSTRAINT chk_games_name_not_empty 
+    CHECK (length(trim(name)) > 0);
 
 -- Add constraint for game status validation
-alter table games add constraint chk_games_status_valid 
-    check (status in ('setup', 'live', 'finished'));
+ALTER TABLE games DROP CONSTRAINT IF EXISTS chk_games_status_valid;
+ALTER TABLE games ADD CONSTRAINT chk_games_status_valid 
+    CHECK (status IN ('setup', 'live', 'finished'));
 
 -- Add constraint for operator names and emails
-alter table operators add constraint chk_operators_name_not_empty 
-    check (length(trim(name)) > 0);
-alter table operators add constraint chk_operators_email_not_empty 
-    check (length(trim(email)) > 0);
-alter table operators add constraint chk_operators_status_valid 
-    check (status in ('active', 'inactive', 'suspended'));
+ALTER TABLE operators DROP CONSTRAINT IF EXISTS chk_operators_name_not_empty;
+ALTER TABLE operators ADD CONSTRAINT chk_operators_name_not_empty 
+    CHECK (length(trim(name)) > 0);
+ALTER TABLE operators DROP CONSTRAINT IF EXISTS chk_operators_email_not_empty;
+ALTER TABLE operators ADD CONSTRAINT chk_operators_email_not_empty 
+    CHECK (length(trim(email)) > 0);
+ALTER TABLE operators DROP CONSTRAINT IF EXISTS chk_operators_status_valid;
+ALTER TABLE operators ADD CONSTRAINT chk_operators_status_valid 
+    CHECK (status IN ('active', 'inactive', 'suspended'));
 
 -- Add constraint for operator game roles (will be updated in later migration)
 -- NOTE: This constraint is handled in migration 0008 to avoid conflicts
 
 -- Add constraints for location data
-alter table team_locations add constraint chk_team_locations_latitude_valid 
-    check (latitude >= -90 and latitude <= 90);
-alter table team_locations add constraint chk_team_locations_longitude_valid 
-    check (longitude >= -180 and longitude <= 180);
-alter table team_locations add constraint chk_team_locations_accuracy_positive 
-    check (accuracy >= 0);
+ALTER TABLE team_locations DROP CONSTRAINT IF EXISTS chk_team_locations_latitude_valid;
+ALTER TABLE team_locations ADD CONSTRAINT chk_team_locations_latitude_valid 
+    CHECK (latitude >= -90 AND latitude <= 90);
+ALTER TABLE team_locations DROP CONSTRAINT IF EXISTS chk_team_locations_longitude_valid;
+ALTER TABLE team_locations ADD CONSTRAINT chk_team_locations_longitude_valid 
+    CHECK (longitude >= -180 AND longitude <= 180);
+ALTER TABLE team_locations DROP CONSTRAINT IF EXISTS chk_team_locations_accuracy_positive;
+ALTER TABLE team_locations ADD CONSTRAINT chk_team_locations_accuracy_positive 
+    CHECK (accuracy >= 0);
 
 -- Add constraint for events types
-alter table events add constraint chk_events_type_valid 
-    check (type in ('team_joined', 'base_arrived', 'base_completed', 'enigma_solved', 'locationPing', 'game_started', 'game_finished'));
+ALTER TABLE events DROP CONSTRAINT IF EXISTS chk_events_type_valid;
+ALTER TABLE events ADD CONSTRAINT chk_events_type_valid 
+    CHECK (type IN ('team_joined', 'base_arrived', 'base_completed', 'enigma_solved', 'locationPing', 'game_started', 'game_finished'));
 
 -- Add constraint for progress scores
-alter table progress add constraint chk_progress_score_non_negative 
-    check (score >= 0);
+ALTER TABLE progress DROP CONSTRAINT IF EXISTS chk_progress_score_non_negative;
+ALTER TABLE progress ADD CONSTRAINT chk_progress_score_non_negative 
+    CHECK (score >= 0);
 
 -- Add constraint for enigma solution answers
-alter table enigma_solutions add constraint chk_enigma_solutions_answer_not_empty 
-    check (length(trim(answer_given)) > 0);
-alter table enigma_solutions add constraint chk_enigma_solutions_enigma_id_not_empty 
-    check (length(trim(enigma_id)) > 0);
+ALTER TABLE enigma_solutions DROP CONSTRAINT IF EXISTS chk_enigma_solutions_answer_not_empty;
+ALTER TABLE enigma_solutions ADD CONSTRAINT chk_enigma_solutions_answer_not_empty 
+    CHECK (length(trim(answer_given)) > 0);
+ALTER TABLE enigma_solutions DROP CONSTRAINT IF EXISTS chk_enigma_solutions_enigma_id_not_empty;
+ALTER TABLE enigma_solutions ADD CONSTRAINT chk_enigma_solutions_enigma_id_not_empty 
+    CHECK (length(trim(enigma_id)) > 0);
 
 -- Add composite unique constraint to prevent duplicate base arrivals
 -- NOTE: This constraint is handled in migration 0008 with proper base_id type
