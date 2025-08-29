@@ -5,6 +5,7 @@ import (
 	"backend/internal/middleware"
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -107,58 +108,54 @@ func RegisterGames(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) {
 	operatorGrp := api.Group("/operator/games")
 	operatorGrp.Use(middleware.RequireOperator(middleware.JWTConfig{Secret: cfg.JWTSecret}))
 
+	// JWT debug endpoint
+	api.Get("/operator/debug-jwt", func(c *fiber.Ctx) error {
+		h := c.Get("Authorization")
+		if h == "" {
+			return c.JSON(fiber.Map{"error": "no auth header"})
+		}
+		parts := strings.SplitN(h, " ", 2)
+		if len(parts) != 2 {
+			return c.JSON(fiber.Map{"error": "invalid auth format", "header": h})
+		}
+		
+		return c.JSON(fiber.Map{
+			"message": "JWT debug",
+			"prefix": parts[0],
+			"tokenLength": len(parts[1]),
+			"tokenStart": parts[1][:20] + "...",
+		})
+	})
+
+	// Test endpoint - super simple  
+	operatorGrp.Get("/test", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{"message": "test works with middleware", "operatorID": c.Locals("operatorID")})
+	})
+
 	// List operator's games
 	operatorGrp.Get("/", func(c *fiber.Ctx) error {
-		// Debug: Check if operatorID exists in locals
-		operatorIDRaw := c.Locals("operatorID")
-		if operatorIDRaw == nil {
-			return c.JSON(fiber.Map{"error": "operatorID not found in locals"})
-		}
-		
-		operatorID, ok := operatorIDRaw.(string)
-		if !ok {
-			return c.JSON(fiber.Map{"error": "operatorID not a string", "type": fmt.Sprintf("%T", operatorIDRaw)})
-		}
-		
-		// Return empty array if no games found - this is a valid case
-		games := make([]fiber.Map, 0)
-		
-		// Debug: First check if operator_games entries exist
-		var count int
-		err := pool.QueryRow(context.Background(), `
-			select count(*) from operator_games where operator_id = $1`, operatorID).Scan(&count)
-		if err != nil {
-			return c.JSON(fiber.Map{"error": "Failed to check operator_games", "operatorID": operatorID})
-		}
-		
-		if count == 0 {
-			return c.JSON(fiber.Map{"message": "No games found for operator", "operatorID": operatorID, "count": count})
-		}
-		
-		rows, err := pool.Query(context.Background(), `
-			select g.id, g.name, g.status, g.bases_linked, g.created_at, og.role
-			from games g
-			join operator_games og on g.id = og.game_id
-			where og.operator_id = $1
-			order by g.created_at desc`, operatorID)
-		if err != nil {
-			return c.JSON(fiber.Map{"error": "Query failed", "operatorID": operatorID, "sqlError": err.Error()})
-		}
-		defer rows.Close()
-
-		for rows.Next() {
-			var id, name, status, role string
-			var basesLinked bool
-			var createdAt time.Time
-			if err := rows.Scan(&id, &name, &status, &basesLinked, &createdAt, &role); err != nil {
-				return c.JSON(fiber.Map{"error": "Scan failed", "scanError": err.Error()})
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Printf("PANIC in operator games endpoint: %v\n", r)
 			}
-			games = append(games, fiber.Map{
-				"id": id, "name": name, "status": status,
-				"basesLinked": basesLinked, "createdAt": createdAt, "role": role,
-			})
+		}()
+
+		// Debug what's in c.Locals
+		raw := c.Locals("operatorID")
+		fmt.Printf("Raw operatorID from locals: %v (type: %T)\n", raw, raw)
+		
+		operatorID, ok := raw.(string)
+		if !ok {
+			return c.Status(500).JSON(fiber.Map{"error": "operatorID is not a string", "type": fmt.Sprintf("%T", raw), "value": raw})
 		}
-		return c.JSON(games)
+		
+		fmt.Printf("operatorID as string: %s\n", operatorID)
+		
+		// Simple test response first
+		return c.JSON(fiber.Map{
+			"message": "Endpoint working",
+			"operatorID": operatorID,
+		})
 	})
 
 	// Create new game

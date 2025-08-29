@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -140,17 +141,41 @@ func RequireOperator(cfg JWTConfig) fiber.Handler {
 		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
 			return fiber.ErrUnauthorized
 		}
+		
 		token, err := jwt.Parse(parts[1], func(t *jwt.Token) (interface{}, error) {
+			// Validate the signing method
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+			}
 			return []byte(cfg.Secret), nil
 		})
 		if err != nil || !token.Valid {
 			return fiber.ErrUnauthorized
 		}
+		
 		claims, ok := token.Claims.(jwt.MapClaims)
-		if !ok || claims["role"] != "operator" {
+		if !ok {
 			return fiber.ErrUnauthorized
 		}
-		c.Locals("operatorID", claims["sub"])
+		
+		// Check role
+		role, ok := claims["role"].(string)
+		if !ok || role != "operator" {
+			return fiber.ErrUnauthorized
+		}
+		
+		// Check subject exists
+		sub, ok := claims["sub"].(string)
+		if !ok || sub == "" {
+			return fiber.ErrUnauthorized
+		}
+		
+		// Debug UUID handling
+		if strings.Contains(sub, "-") {
+			fmt.Printf("Processing UUID operator: %s\n", sub)
+		}
+		
+		c.Locals("operatorID", sub)
 		return c.Next()
 	}
 }
