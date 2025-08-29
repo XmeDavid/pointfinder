@@ -256,7 +256,7 @@ export default function EnigmaManagementModal({
                       {selectedEnigma.mediaType === "image" && (
                         <img 
                           src={selectedEnigma.mediaUrl} 
-                          alt="Enigma media content" 
+                          alt={`Media for enigma: ${selectedEnigma.title}`}
                           className="max-w-full h-auto rounded-lg"
                         />
                       )}

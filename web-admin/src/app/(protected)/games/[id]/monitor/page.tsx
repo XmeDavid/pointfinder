@@ -11,8 +11,11 @@ import EventsFeed from "@/components/monitoring/EventsFeed";
 interface Team {
   id: string;
   name: string;
+  number: number;
+  inviteCode: string;
   members: string[];
-  leaderDeviceId: string;
+  leaderId?: string;
+  createdAt: string;
   lastLocation?: {
     latitude: number;
     longitude: number;
@@ -69,7 +72,7 @@ export default function GameMonitorPage() {
     }
   }, [gameId, autoRefresh]);
 
-  async function fetchGameData() {
+  const fetchGameData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -91,7 +94,7 @@ export default function GameMonitorPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [gameId]);
 
   const totalTeams = teams.length;
   const activeTeams = teams.filter(t => t.lastLocation && 
@@ -254,7 +257,7 @@ export default function GameMonitorPage() {
         <div className="mt-8">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Team Progress</h2>
-            <TeamProgressTable teams={teams} bases={game.bases} />
+            <TeamProgressTable teams={teams} bases={game.bases} onViewTeam={(team) => console.log('View team:', team)} />
           </div>
         </div>
       </div>

@@ -49,11 +49,7 @@ export default function DashboardPage() {
   const [isAdminMode, setIsAdminMode] = useState(false);
   const user = useAuthStore((s) => s.user);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  async function fetchData() {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -66,11 +62,11 @@ export default function DashboardPage() {
             fetchGames()
           ]);
           setIsAdminMode(true);
-            } catch {
-      // If admin endpoints fail, try to fetch games as operator
-      setIsAdminMode(false);
-      await fetchGames();
-    }
+        } catch {
+          // If admin endpoints fail, try to fetch games as operator
+          setIsAdminMode(false);
+          await fetchGames();
+        }
       } else {
         // Operator: Only fetch games
         setIsAdminMode(false);
@@ -84,7 +80,11 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [user?.role, fetchOperators, fetchGames]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   async function fetchGames() {
     const endpoint = user?.role === "admin" ? "api/games" : "api/operator/games";

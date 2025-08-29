@@ -39,7 +39,7 @@ export default function GameEditPage() {
     fetchGame();
   }, [gameId, fetchGame]);
 
-  async function fetchGame() {
+  const fetchGame = useCallback(async () => {
     try {
       setLoading(true);
       const gameData = await api.get(`api/operator/games/${gameId}`).json() as Game;
@@ -52,7 +52,7 @@ export default function GameEditPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [gameId]);
 
   async function handleSave() {
     if (!game) return;

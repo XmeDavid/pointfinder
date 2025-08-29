@@ -72,7 +72,7 @@ export default function GameSetupPage() {
     fetchGame();
   }, [gameId, fetchGame]);
 
-  async function fetchGame() {
+  const fetchGame = useCallback(async () => {
     try {
       setLoading(true);
       const gameData = await api.get(`api/operator/games/${gameId}`).json() as Game;
@@ -83,7 +83,7 @@ export default function GameSetupPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [gameId]);
 
   async function handleGoLive() {
     if (!game) return;

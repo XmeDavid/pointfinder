@@ -11,6 +11,19 @@ interface Team {
   members: string[];
   leaderId?: string;
   createdAt: string;
+  lastLocation?: {
+    latitude: number;
+    longitude: number;
+    timestamp: string;
+  };
+  progress: Array<{
+    baseId: string;
+    baseName: string;
+    arrivedAt?: string;
+    solvedAt?: string;
+    completedAt?: string;
+    score: number;
+  }>;
 }
 
 interface Base {
@@ -25,46 +38,32 @@ interface Base {
   enigmaId?: string;
 }
 
-interface TeamProgress {
-  teamId: string;
-  completedBases: string[];
-  currentBase?: string;
-  lastActivity: string;
-  totalTime?: number; // in minutes
-  score?: number;
-}
+
 
 interface TeamProgressTableProps {
   teams: Team[];
   bases: Base[];
-  teamProgress: TeamProgress[];
-  onViewTeam: (team: Team) => void;
+  onViewTeam?: (team: Team) => void;
 }
 
 export default function TeamProgressTable({
   teams,
   bases,
-  teamProgress,
   onViewTeam,
 }: TeamProgressTableProps) {
   const [sortBy, setSortBy] = useState<"name" | "progress" | "time" | "score">("progress");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
-  const getTeamProgress = (teamId: string): TeamProgress | undefined => {
-    return teamProgress.find(progress => progress.teamId === teamId);
+  const getProgressPercentage = (team: Team): number => {
+    const completedBases = team.progress?.filter(p => p.completedAt) || [];
+    return Math.round((completedBases.length / bases.length) * 100);
   };
 
-  const getProgressPercentage = (teamId: string): number => {
-    const progress = getTeamProgress(teamId);
-    if (!progress) return 0;
-    return Math.round((progress.completedBases.length / bases.length) * 100);
-  };
-
-  const getTeamStatus = (teamId: string): "active" | "completed" | "waiting" => {
-    const progress = getTeamProgress(teamId);
-    if (!progress) return "waiting";
-    if (progress.completedBases.length === bases.length) return "completed";
-    return "active";
+  const getTeamStatus = (team: Team): "active" | "completed" | "waiting" => {
+    const completedBases = team.progress?.filter(p => p.completedAt) || [];
+    if (completedBases.length === bases.length) return "completed";
+    if (team.lastLocation) return "active";
+    return "waiting";
   };
 
   const getStatusIcon = (status: "active" | "completed" | "waiting") => {
@@ -99,18 +98,18 @@ export default function TeamProgressTable({
         bValue = b.name;
         break;
       case "progress":
-        aValue = getProgressPercentage(a.id);
-        bValue = getProgressPercentage(b.id);
+        aValue = getProgressPercentage(a);
+        bValue = getProgressPercentage(b);
         break;
       case "time":
-        const aProgress = getTeamProgress(a.id);
-        const bProgress = getTeamProgress(b.id);
-        aValue = aProgress?.totalTime || 0;
-        bValue = bProgress?.totalTime || 0;
+        const aCompletedBases = a.progress?.filter(p => p.completedAt) || [];
+        const bCompletedBases = b.progress?.filter(p => p.completedAt) || [];
+        aValue = aCompletedBases.length;
+        bValue = bCompletedBases.length;
         break;
       case "score":
-        const aScore = getTeamProgress(a.id)?.score || 0;
-        const bScore = getTeamProgress(b.id)?.score || 0;
+        const aScore = a.progress?.reduce((sum, p) => sum + (p.score || 0), 0) || 0;
+        const bScore = b.progress?.reduce((sum, p) => sum + (p.score || 0), 0) || 0;
         aValue = aScore;
         bValue = bScore;
         break;
@@ -234,10 +233,9 @@ export default function TeamProgressTable({
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {sortedTeams.map((team) => {
-              const progress = getTeamProgress(team.id);
-              const progressPercentage = getProgressPercentage(team.id);
-              const status = getTeamStatus(team.id);
-              const completedBases = progress?.completedBases.length || 0;
+              const progressPercentage = getProgressPercentage(team);
+              const status = getTeamStatus(team);
+              const completedBases = team.progress?.filter(p => p.completedAt).length || 0;
 
               return (
                 <tr key={team.id} className="hover:bg-gray-50 transition-colors">
@@ -279,12 +277,12 @@ export default function TeamProgressTable({
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {formatTime(progress?.totalTime)}
+                    {formatTime(team.progress?.reduce((sum, p) => sum + (p.score || 0), 0) || 0)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     <div className="flex items-center gap-1">
                       <Award className="w-4 h-4 text-yellow-500" />
-                      {progress?.score || 0} pts
+                      {team.progress?.reduce((sum, p) => sum + (p.score || 0), 0) || 0} pts
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -294,16 +292,18 @@ export default function TeamProgressTable({
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {progress?.lastActivity ? formatLastActivity(progress.lastActivity) : "Never"}
+                    {team.lastLocation?.timestamp ? formatLastActivity(team.lastLocation.timestamp) : "Never"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => onViewTeam(team)}
-                      className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-900 transition-colors"
-                    >
-                      <Eye className="w-4 h-4" />
-                      View
-                    </button>
+                    {onViewTeam && (
+                      <button
+                        onClick={() => onViewTeam(team)}
+                        className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-900 transition-colors"
+                      >
+                        <Eye className="w-4 h-4" />
+                        View
+                      </button>
+                    )}
                   </td>
                 </tr>
               );
