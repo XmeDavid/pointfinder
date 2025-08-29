@@ -217,10 +217,10 @@ function RegisterForm() {
                       : 'border-gray-300'
                   }`}
                   placeholder="Enter your email"
-                  readOnly={formData.email && tokenValid}
+                  readOnly={!!(formData.email && tokenValid)}
                 />
               </div>
-              {formData.email && tokenValid && (
+              {!!(formData.email && tokenValid) && (
                 <p className="mt-1 text-xs text-gray-500">
                   Email address from your invitation
                 </p>
