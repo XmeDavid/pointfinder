@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Lock, Mail, User, CheckCircle, AlertCircle } from "lucide-react";
 import { api } from "@/lib/apiClient";
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -92,10 +92,16 @@ export default function RegisterPage() {
     } catch (err: unknown) {
       console.error("Registration error:", err);
       
-      const error = err as { response?: { json: () => Promise<{ error?: string }> }; message?: string };
-      if (error.response) {
-        const errorData = await error.response.json().catch(() => ({})) as { error?: string };
-        setError(errorData.error || "Registration failed");
+      // Handle API errors with proper type checking
+      if (err && typeof err === 'object' && 'response' in err) {
+        const response = (err as { response: { json: () => Promise<Record<string, unknown>> } }).response;
+        try {
+          const errorData = await response.json();
+          const errorMessage = typeof errorData.error === 'string' ? errorData.error : "Registration failed";
+          setError(errorMessage);
+        } catch {
+          setError("Registration failed");
+        }
       } else {
         setError("Network error. Please try again.");
       }
@@ -322,5 +328,20 @@ export default function RegisterPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8 text-center">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-gray-600">Loading registration page...</p>
+        </div>
+      </div>
+    }>
+      <RegisterForm />
+    </Suspense>
   );
 }

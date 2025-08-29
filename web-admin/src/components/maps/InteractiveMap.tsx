@@ -85,7 +85,7 @@ interface InteractiveMapProps {
 
 export default function InteractiveMap({
   bases = [],
-  teams = [], // Used for potential future features
+  teams: _teams = [], // Used for potential future features
   teamLocations = [],
   onMapClick,
   height = "400px",
