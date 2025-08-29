@@ -121,40 +121,6 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
-    const endpoint = user?.role === "admin" ? "api/games" : "api/operator/games";
-    
-    try {
-      const gamesData = await api.get(endpoint).json() as Game[];
-      setGames(gamesData || []);
-    } catch (err) {
-      console.error("Failed to fetch games:", err);
-      const error = err as { response?: { status?: number }; message?: string };
-      
-      if (error.response?.status === 401) {
-        setError("You don't have permission to access games. Please log in again.");
-      } else {
-        setError("Failed to load games. Please try again.");
-      }
-      setGames([]);
-    }
-  }, [user?.role]);
-
-  const fetchOperators = useCallback(async () => {
-    try {
-      const operatorsData = await api.get("api/admin/operators").json() as Operator[];
-      setOperators(operatorsData);
-    } catch (err) {
-      console.error("Failed to fetch operators:", err);
-      const error = err as { response?: { status?: number }; message?: string };
-      
-      if (error.response?.status === 401) {
-        setError("You don't have admin privileges. Please log in as an administrator.");
-      } else {
-        setError("Failed to load operators. Please try again.");
-      }
-      setOperators([]);
-    }
-  }, []);
 
   const activeGames = useMemo(() => games?.filter(g => g.status === "live") || [], [games]);
   const setupGames = useMemo(() => games?.filter(g => g.status === "setup") || [], [games]);
