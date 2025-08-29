@@ -41,7 +41,7 @@ function LoginForm() {
     }
     setLoading(true);
     try {
-      const endpoint = loginType === "admin" ? "api/auth/login" : "api/operators/login";
+      const endpoint = loginType === "admin" ? "api/auth/admin/login" : "api/auth/operators/login";
       const res = (await api.post(endpoint, { json: { email, password } }).json()) as {
         token: string;
         user: { id: string; email: string; role: string };

@@ -90,7 +90,7 @@ function RegisterForm() {
     setError(null);
 
     try {
-      await api.post("api/operators/register", {
+      await api.post("api/auth/operators/register", {
         json: {
           token,
           email: formData.email,
