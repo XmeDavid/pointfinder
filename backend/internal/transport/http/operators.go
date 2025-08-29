@@ -292,6 +292,34 @@ func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config)
 		return c.JSON(fiber.Map{"message": "Operator marked as inactive", "operatorId": operatorID})
 	})
 
+	// Token validation endpoint (public) - returns email for pre-filling
+	api.Get("/operators/validate-token/:token", func(c *fiber.Ctx) error {
+		token := middleware.SanitizeString(c.Params("token"))
+
+		if token == "" {
+			return c.Status(400).JSON(fiber.Map{"error": "Token is required"})
+		}
+
+		// Validate invite token and get associated email
+		var inviteEmail string
+		var expiresAt time.Time
+		err := pool.QueryRow(context.Background(),
+			`select email, expires_at from operator_invites where token = $1 and used_at is null`,
+			token).Scan(&inviteEmail, &expiresAt)
+		if err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "Invalid or expired token"})
+		}
+
+		if time.Now().After(expiresAt) {
+			return c.Status(400).JSON(fiber.Map{"error": "Token expired"})
+		}
+
+		return c.JSON(fiber.Map{
+			"email": inviteEmail,
+			"valid": true,
+		})
+	})
+
 	// Operator registration endpoint (public, token-protected)
 	api.Post("/operators/register", func(c *fiber.Ctx) error {
 		var req struct {

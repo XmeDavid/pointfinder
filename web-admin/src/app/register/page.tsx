@@ -26,15 +26,32 @@ function RegisterForm() {
 
   const validateToken = useCallback(async () => {
     try {
-      // We can't directly validate the token without the email, 
-      // so we'll just check if it looks valid (32 hex characters)
-      if (token && token.length === 64 && /^[a-f0-9]+$/i.test(token)) {
-        setTokenValid(true);
-      } else {
+      if (!token || token.length !== 64 || !/^[a-f0-9]+$/i.test(token)) {
         setError("Invalid registration token format.");
+        setValidatingToken(false);
+        return;
       }
-    } catch {
-      setError("Invalid or expired registration link.");
+
+      // Call backend to validate token and get associated email
+      const response = await api.get(`api/operators/validate-token/${token}`).json() as { 
+        email: string; 
+        valid: boolean; 
+      };
+      
+      if (response.valid && response.email) {
+        setTokenValid(true);
+        // Pre-fill the email field
+        setFormData(prev => ({ ...prev, email: response.email }));
+      } else {
+        setError("Invalid or expired registration token.");
+      }
+    } catch (err: unknown) {
+      const error = err as { response?: { status?: number } };
+      if (error.response?.status === 400) {
+        setError("Invalid or expired registration token.");
+      } else {
+        setError("Unable to validate registration link. Please try again.");
+      }
     } finally {
       setValidatingToken(false);
     }
@@ -185,10 +202,20 @@ function RegisterForm() {
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  className={`block w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 ${
+                    formData.email && tokenValid 
+                      ? 'border-gray-300 bg-gray-50 text-gray-700' 
+                      : 'border-gray-300'
+                  }`}
                   placeholder="Enter your email"
+                  readOnly={formData.email && tokenValid}
                 />
               </div>
+              {formData.email && tokenValid && (
+                <p className="mt-1 text-xs text-gray-500">
+                  Email address from your invitation
+                </p>
+              )}
             </div>
 
             {/* Name */}
