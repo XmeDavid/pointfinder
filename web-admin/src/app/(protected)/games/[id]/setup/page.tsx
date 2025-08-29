@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, MapPin, Users, Settings, Play, Save } from "lucide-react";
 import { api } from "@/lib/apiClient";
 import BaseManagementModal from "@/components/games/BaseManagementModal";
+import TeamManagementModal from "@/components/games/TeamManagementModal";
 
 interface Base {
   id: string;
@@ -47,6 +48,7 @@ export default function GameSetupPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showBaseManagement, setShowBaseManagement] = useState(false);
+  const [showTeamManagement, setShowTeamManagement] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "bases" | "teams" | "settings">("overview");
 
   useEffect(() => {
@@ -379,11 +381,11 @@ export default function GameSetupPage() {
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">Team Management</h3>
               <button
-                onClick={() => {/* TODO: Implement team creation */}}
+                onClick={() => setShowTeamManagement(true)}
                 className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
               >
                 <Users className="w-4 h-4" />
-                Create Team
+                Manage Teams
               </button>
             </div>
 
@@ -395,7 +397,7 @@ export default function GameSetupPage() {
                   Create teams for players to join your game
                 </p>
                 <button
-                  onClick={() => {/* TODO: Implement team creation */}}
+                  onClick={() => setShowTeamManagement(true)}
                   className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
                 >
                   <Users className="w-5 h-5" />
@@ -446,6 +448,19 @@ export default function GameSetupPage() {
           bases={game.bases}
           onBasesUpdate={(newBases) => {
             setGame(prev => prev ? { ...prev, bases: newBases } : null);
+          }}
+        />
+      )}
+
+      {/* Team Management Modal */}
+      {showTeamManagement && (
+        <TeamManagementModal
+          isOpen={showTeamManagement}
+          onClose={() => setShowTeamManagement(false)}
+          gameId={gameId}
+          teams={game.teams}
+          onTeamsUpdate={(newTeams) => {
+            setGame(prev => prev ? { ...prev, teams: newTeams } : null);
           }}
         />
       )}

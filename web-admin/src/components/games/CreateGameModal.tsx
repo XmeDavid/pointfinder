@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { X, Save, Loader2, MapPin } from "lucide-react";
+import { X, Save, Loader2, MapPin, Users } from "lucide-react";
 import { api } from "@/lib/apiClient";
 import BaseManagementModal from "./BaseManagementModal";
+import TeamManagementModal from "./TeamManagementModal";
 
 interface CreateGameModalProps {
   onClose: () => void;
@@ -24,7 +25,17 @@ export default function CreateGameModal({ onClose, onGameCreated }: CreateGameMo
     nfcLinked: boolean;
     enigmaId?: string;
   }>>([]);
+  const [teams, setTeams] = useState<Array<{
+    id: string;
+    name: string;
+    number: number;
+    inviteCode: string;
+    members: string[];
+    leaderId?: string;
+    createdAt: string;
+  }>>([]);
   const [showBaseManagement, setShowBaseManagement] = useState(false);
+  const [showTeamManagement, setShowTeamManagement] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +53,7 @@ export default function CreateGameModal({ onClose, onGameCreated }: CreateGameMo
           name: name.trim(),
           rulesHtml: rulesHtml.trim() || "<p>Game rules will be added here.</p>",
           bases: bases, // Include bases in the creation
+          teams: teams, // Include teams in the creation
         },
       });
       
@@ -139,6 +151,53 @@ export default function CreateGameModal({ onClose, onGameCreated }: CreateGameMo
             )}
           </div>
 
+          {/* Team Management */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Teams *
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowTeamManagement(true)}
+                className="inline-flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+              >
+                <Users className="w-4 h-4" />
+                Manage Teams ({teams.length})
+              </button>
+            </div>
+            
+            {teams.length === 0 ? (
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <Users className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-gray-600">No teams created yet</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Click "Manage Teams" to create teams for players to join
+                </p>
+              </div>
+            ) : (
+              <div className="border border-gray-300 rounded-lg p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {teams.map((team) => (
+                    <div key={team.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <h4 className="font-medium text-gray-900">{team.name}</h4>
+                        <p className="text-sm text-gray-600">
+                          {team.members.length} members • Code: {team.inviteCode}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          #{team.number}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Game Rules */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -198,7 +257,7 @@ export default function CreateGameModal({ onClose, onGameCreated }: CreateGameMo
             </button>
             <button
               type="submit"
-              disabled={loading || bases.length === 0}
+              disabled={loading || bases.length === 0 || teams.length === 0}
               className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-3 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
             >
               {loading ? (
@@ -225,6 +284,17 @@ export default function CreateGameModal({ onClose, onGameCreated }: CreateGameMo
           gameId="new"
           bases={bases}
           onBasesUpdate={setBases}
+        />
+      )}
+
+      {/* Team Management Modal */}
+      {showTeamManagement && (
+        <TeamManagementModal
+          isOpen={showTeamManagement}
+          onClose={() => setShowTeamManagement(false)}
+          gameId="new"
+          teams={teams}
+          onTeamsUpdate={setTeams}
         />
       )}
     </div>
