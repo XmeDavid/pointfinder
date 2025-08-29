@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Lock, Mail, User, CheckCircle, AlertCircle } from "lucide-react";
 import { api } from "@/lib/apiClient";
@@ -24,6 +24,22 @@ export default function RegisterPage() {
   const [validatingToken, setValidatingToken] = useState(true);
   const [tokenValid, setTokenValid] = useState(false);
 
+  const validateToken = useCallback(async () => {
+    try {
+      // We can't directly validate the token without the email, 
+      // so we'll just check if it looks valid (32 hex characters)
+      if (token && token.length === 64 && /^[a-f0-9]+$/i.test(token)) {
+        setTokenValid(true);
+      } else {
+        setError("Invalid registration token format.");
+      }
+    } catch {
+      setError("Invalid or expired registration link.");
+    } finally {
+      setValidatingToken(false);
+    }
+  }, [token]);
+
   useEffect(() => {
     if (!token) {
       setError("Invalid registration link. Please check your invitation email.");
@@ -33,23 +49,7 @@ export default function RegisterPage() {
 
     // Validate token by attempting to get invite details
     validateToken();
-  }, [token]);
-
-  const validateToken = async () => {
-    try {
-      // We can't directly validate the token without the email, 
-      // so we'll just check if it looks valid (32 hex characters)
-      if (token && token.length === 64 && /^[a-f0-9]+$/i.test(token)) {
-        setTokenValid(true);
-      } else {
-        setError("Invalid registration token format.");
-      }
-    } catch (err) {
-      setError("Invalid or expired registration link.");
-    } finally {
-      setValidatingToken(false);
-    }
-  };
+  }, [token, validateToken]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,11 +89,12 @@ export default function RegisterPage() {
         router.push("/login?message=Registration successful! Please log in.");
       }, 3000);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Registration error:", err);
       
-      if (err.response) {
-        const errorData = await err.response.json().catch(() => ({}));
+      const error = err as { response?: { json: () => Promise<{ error?: string }> }; message?: string };
+      if (error.response) {
+        const errorData = await error.response.json().catch(() => ({}));
         setError(errorData.error || "Registration failed");
       } else {
         setError("Network error. Please try again.");
