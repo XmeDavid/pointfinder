@@ -3,8 +3,11 @@ import { MapPin, Users, Navigation } from "lucide-react";
 interface Team {
   id: string;
   name: string;
+  number: number;
+  inviteCode: string;
   members: string[];
-  leaderDeviceId: string;
+  leaderId?: string;
+  createdAt: string;
   lastLocation?: {
     latitude: number;
     longitude: number;
@@ -22,9 +25,14 @@ interface Team {
 
 interface Base {
   id: string;
-  displayName: string;
+  name: string;
+  description?: string;
   latitude: number;
   longitude: number;
+  uuid: string;
+  isLocationDependent: boolean;
+  nfcLinked: boolean;
+  enigmaId?: string;
 }
 
 interface LiveMapProps {
@@ -132,7 +140,7 @@ export default function LiveMap({ bases, teams, gameStatus }: LiveMapProps) {
             <div key={base.id} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-center gap-3 mb-2">
                 <MapPin className="w-5 h-5 text-blue-600" />
-                <h5 className="font-medium text-gray-900">{base.displayName}</h5>
+                                  <h5 className="font-medium text-gray-900">{base.name}</h5>
               </div>
               <div className="text-sm text-gray-600">
                 <p>📍 {base.latitude.toFixed(4)}, {base.longitude.toFixed(4)}</p>

@@ -18,8 +18,14 @@ interface Game {
   basesLinked: boolean;
   bases: Array<{
     id: string;
-    displayName: string;
-    nfcTagUUID?: string;
+    name: string;
+    description?: string;
+    latitude: number;
+    longitude: number;
+    uuid: string;
+    isLocationDependent: boolean;
+    nfcLinked: boolean;
+    enigmaId?: string;
   }>;
   teams: Array<{
     id: string;

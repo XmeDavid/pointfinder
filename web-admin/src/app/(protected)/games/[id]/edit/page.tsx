@@ -12,9 +12,14 @@ interface Game {
   rulesHtml?: string;
   bases: Array<{
     id: string;
-    displayName: string;
+    name: string;
+    description?: string;
     latitude: number;
     longitude: number;
+    uuid: string;
+    isLocationDependent: boolean;
+    nfcLinked: boolean;
+    enigmaId?: string;
   }>;
   teams: Array<{
     id: string;

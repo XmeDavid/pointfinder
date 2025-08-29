@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { MapPin, Users, Trophy, RefreshCw, Eye, Activity } from "lucide-react";
 import { api } from "@/lib/apiClient";
@@ -31,16 +31,23 @@ interface Team {
   }>;
 }
 
+interface Base {
+  id: string;
+  name: string;
+  description?: string;
+  latitude: number;
+  longitude: number;
+  uuid: string;
+  isLocationDependent: boolean;
+  nfcLinked: boolean;
+  enigmaId?: string;
+}
+
 interface Game {
   id: string;
   name: string;
   status: "setup" | "live" | "finished";
-  bases: Array<{
-    id: string;
-    displayName: string;
-    latitude: number;
-    longitude: number;
-  }>;
+  bases: Base[];
 }
 
 interface Event {
@@ -62,15 +69,6 @@ export default function GameMonitorPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
-
-  useEffect(() => {
-    fetchGameData();
-    
-    if (autoRefresh) {
-      const interval = setInterval(fetchGameData, 10000); // Refresh every 10 seconds
-      return () => clearInterval(interval);
-    }
-  }, [gameId, autoRefresh, fetchGameData]);
 
   const fetchGameData = useCallback(async () => {
     try {
@@ -95,6 +93,15 @@ export default function GameMonitorPage() {
       setLoading(false);
     }
   }, [gameId]);
+
+  useEffect(() => {
+    fetchGameData();
+    
+    if (autoRefresh) {
+      const interval = setInterval(fetchGameData, 10000); // Refresh every 10 seconds
+      return () => clearInterval(interval);
+    }
+  }, [gameId, autoRefresh, fetchGameData]);
 
   const totalTeams = teams.length;
   const activeTeams = teams.filter(t => t.lastLocation && 

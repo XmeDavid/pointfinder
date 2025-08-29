@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, MapPin, Users, Settings, Play, FileText } from "lucide-react";
 import { api } from "@/lib/apiClient";

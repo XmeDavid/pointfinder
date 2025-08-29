@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { X, Mail, Calendar, Users, MapPin, Clock, Eye, Settings } from "lucide-react";
 import { api } from "@/lib/apiClient";
 
