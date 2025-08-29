@@ -39,7 +39,7 @@ export default function OperatorDetailsModal({ isOpen, onClose, operator, onOper
     setLoading(true);
     try {
       const gamesData = await api.get(`api/admin/operators/${operator.id}/games`).json() as Game[];
-      setGames(gamesData);
+      setGames(Array.isArray(gamesData) ? gamesData : []);
     } catch (error) {
       console.error("Failed to fetch operator games:", error);
       setGames([]);
@@ -163,7 +163,7 @@ export default function OperatorDetailsModal({ isOpen, onClose, operator, onOper
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Games</h3>
               <div className="text-sm text-gray-500">
-                {games.length} total games
+                {(games || []).length} total games
               </div>
             </div>
 
@@ -172,9 +172,9 @@ export default function OperatorDetailsModal({ isOpen, onClose, operator, onOper
                 <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                 <p className="text-gray-600">Loading games...</p>
               </div>
-            ) : games.length > 0 ? (
+            ) : (games || []).length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {games.map((game) => (
+                {(games || []).map((game) => (
                   <div key={game.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                     <div className="flex items-start justify-between mb-3">
                       <h4 className="font-medium text-gray-900">{game.name}</h4>

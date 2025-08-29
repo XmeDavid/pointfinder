@@ -26,22 +26,17 @@ function RegisterForm() {
 
   const validateToken = useCallback(async () => {
     try {
-      console.log("validateToken called with token:", token);
-      
       if (!token || token.length !== 64 || !/^[a-f0-9]+$/i.test(token)) {
-        console.log("Token validation failed:", { token, length: token?.length });
         setError("Invalid registration token format.");
         setValidatingToken(false);
         return;
       }
 
-      console.log("Making API call to validate token:", token);
       // Call backend to validate token and get associated email
       const response = await api.get(`api/operators/validate-token/${token}`).json() as { 
         email: string; 
         valid: boolean; 
       };
-      console.log("API response:", response);
       
       if (response.valid && response.email) {
         setTokenValid(true);
@@ -63,16 +58,12 @@ function RegisterForm() {
   }, [token]);
 
   useEffect(() => {
-    console.log("useEffect called with token:", token);
-    
     if (!token) {
-      console.log("No token found in URL");
       setError("Invalid registration link. Please check your invitation email.");
       setValidatingToken(false);
       return;
     }
 
-    console.log("Calling validateToken from useEffect");
     // Validate token by attempting to get invite details
     validateToken();
   }, [token, validateToken]);
