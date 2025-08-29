@@ -55,6 +55,7 @@ func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config)
 
 		// Generate invitation link - point to frontend registration page
 		inviteLink := fmt.Sprintf("https://dbvnfc-games-web-neon.vercel.app/register?token=%s", token)
+		fmt.Println("Sending invite to", req.Email, "with link: ", inviteLink)
 
 		// Send invitation email
 		if err := emailService.SendOperatorInvite(req.Email, req.Name, inviteLink); err != nil {
