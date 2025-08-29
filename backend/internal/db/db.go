@@ -9,6 +9,7 @@ import (
 	"backend/internal/config"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -79,10 +80,9 @@ func Connect(cfg *config.Config) (*pgxpool.Pool, error) {
 
 	// Configure connection timeouts
 	poolConfig.ConnConfig.ConnectTimeout = time.Second * 30
-	poolConfig.ConnConfig.CommandTimeout = time.Second * 60
-
-	// Configure logging level (only errors in production)
-	poolConfig.ConnConfig.LogLevel = pgx.LogLevelError
+	// Note: CommandTimeout removed in pgx v5 - use context timeouts instead
+	
+	// Note: LogLevel configuration changed in pgx v5 - handled differently
 
 	// Create the pool with our configuration
 	pool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
@@ -121,7 +121,7 @@ func QueryRowWithTimeout(ctx context.Context, pool *pgxpool.Pool, query string, 
 }
 
 // ExecWithTimeout executes a query with a default timeout
-func ExecWithTimeout(ctx context.Context, pool *pgxpool.Pool, query string, args ...interface{}) (pgx.CommandTag, error) {
+func ExecWithTimeout(ctx context.Context, pool *pgxpool.Pool, query string, args ...interface{}) (pgconn.CommandTag, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*30)
 	defer cancel()
 	return pool.Exec(ctx, query, args...)

@@ -59,7 +59,7 @@ export interface TeamProgress {
 export interface Game {
   id: string;
   name: string;
-  status: "setup" | "ready" | "live" | "finished";
+  status: "setup" | "live" | "finished";
   rulesHtml?: string;
   basesLinked: boolean;
   bases: Base[];

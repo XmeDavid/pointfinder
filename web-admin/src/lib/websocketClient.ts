@@ -5,7 +5,7 @@ export interface WSMessage {
   type: string;
   gameId?: string;
   teamId?: string;
-  data: any;
+  data: Record<string, unknown>;
   timestamp: string;
 }
 
@@ -25,7 +25,7 @@ export interface UseWebSocketReturn {
   isConnected: boolean;
   isConnecting: boolean;
   error: string | null;
-  sendMessage: (message: any) => void;
+  sendMessage: (message: Record<string, unknown>) => void;
   disconnect: () => void;
   reconnect: () => void;
 }
@@ -136,7 +136,7 @@ export function useWebSocket({
     }
   }, [getWebSocketUrl, gameId, onConnect, onDisconnect, onError, onMessage, autoReconnect, maxReconnectAttempts, reconnectInterval]);
 
-  const sendMessage = useCallback((message: any) => {
+  const sendMessage = useCallback((message: Record<string, unknown>) => {
     if (ws.current?.readyState === WebSocket.OPEN) {
       ws.current.send(JSON.stringify(message));
     } else {

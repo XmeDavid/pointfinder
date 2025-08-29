@@ -31,9 +31,8 @@ alter table operators add constraint chk_operators_email_not_empty
 alter table operators add constraint chk_operators_status_valid 
     check (status in ('active', 'inactive', 'suspended'));
 
--- Add constraint for operator game roles
-alter table operator_games add constraint chk_operator_games_role_valid 
-    check (role in ('owner', 'collaborator'));
+-- Add constraint for operator game roles (will be updated in later migration)
+-- NOTE: This constraint is handled in migration 0008 to avoid conflicts
 
 -- Add constraints for location data
 alter table team_locations add constraint chk_team_locations_latitude_valid 
@@ -58,15 +57,10 @@ alter table enigma_solutions add constraint chk_enigma_solutions_enigma_id_not_e
     check (length(trim(enigma_id)) > 0);
 
 -- Add composite unique constraint to prevent duplicate base arrivals
-alter table progress add constraint uq_progress_team_base unique (team_id, base_id);
+-- NOTE: This constraint is handled in migration 0008 with proper base_id type
 
 -- Add constraint to ensure chronological order of progress timestamps
-alter table progress add constraint chk_progress_timestamps_order 
-    check (
-        (arrived_at is null or solved_at is null or arrived_at <= solved_at) and
-        (solved_at is null or completed_at is null or solved_at <= completed_at) and
-        (arrived_at is null or completed_at is null or arrived_at <= completed_at)
-    );
+-- NOTE: This constraint is handled in migration 0008 to avoid conflicts
 
 -- Add index for better query performance on frequently accessed fields
 create index if not exists idx_teams_invite_code on teams (invite_code);

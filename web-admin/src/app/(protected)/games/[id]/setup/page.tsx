@@ -72,6 +72,14 @@ export default function GameSetupPage() {
   const totalBasesCount = game?.bases.length || 0;
   const totalTeamsCount = game?.teams.length || 0;
   const totalEnigmasCount = game?.enigmas.length || 0;
+  
+  // Check if all requirements are met for going live (based on spec)
+  const allRequirementsMet = game ? 
+    totalBasesCount > 0 && 
+    totalTeamsCount > 0 && 
+    totalEnigmasCount > 0 && 
+    linkedBasesCount === totalBasesCount 
+    : false;
 
   if (loading) {
     return (
@@ -122,12 +130,11 @@ export default function GameSetupPage() {
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                 game.status === "live" ? "bg-green-100 text-green-800" :
                 game.status === "finished" ? "bg-purple-100 text-purple-800" :
-                game.status === "ready" ? "bg-blue-100 text-blue-800" :
                 "bg-yellow-100 text-yellow-800"
               }`}>
                 {game.status.charAt(0).toUpperCase() + game.status.slice(1)}
               </span>
-              {(game.status === "ready" || game.status === "setup") && (
+              {game.status === "setup" && (
                 <button
                   onClick={handleGoLiveClick}
                   disabled={saving}
@@ -234,7 +241,7 @@ export default function GameSetupPage() {
                     <p className="text-sm font-medium text-gray-600">Status</p>
                     <p className="text-2xl font-bold text-gray-900 capitalize">{game.status}</p>
                     <p className="text-sm text-gray-500">
-                      {game.status === "ready" ? "Ready to go live" : "Setup in progress"}
+                      {game.status === "setup" ? "Setup in progress" : game.status === "live" ? "Game is live" : "Game finished"}
                     </p>
                   </div>
                 </div>
@@ -306,7 +313,7 @@ export default function GameSetupPage() {
                 </div>
               </div>
 
-              {game.status === "ready" && (
+              {game.status === "setup" && allRequirementsMet && (
                 <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
                   <p className="text-green-800 font-medium">✅ Game is ready to go live!</p>
                   <p className="text-green-700 text-sm mt-1">

@@ -5,12 +5,13 @@ import (
 	"backend/internal/db"
 	"backend/internal/middleware"
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -178,28 +179,85 @@ func RegisterGames(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) {
 
 	// List operator's games
 	operatorGrp.Get("/", func(c *fiber.Ctx) error {
-		defer func() {
-			if r := recover(); r != nil {
-				fmt.Printf("PANIC in operator games endpoint: %v\n", r)
-			}
-		}()
-
-		// Debug what's in c.Locals
-		raw := c.Locals("operatorID")
-		fmt.Printf("Raw operatorID from locals: %v (type: %T)\n", raw, raw)
+		operatorID := c.Locals("operatorID").(string)
 		
-		operatorID, ok := raw.(string)
-		if !ok {
-			return c.Status(500).JSON(fiber.Map{"error": "operatorID is not a string", "type": fmt.Sprintf("%T", raw), "value": raw})
+		// Parse pagination parameters
+		params := &db.PaginationParams{
+			Page:     1,
+			PageSize: 20,
 		}
 		
-		fmt.Printf("operatorID as string: %s\n", operatorID)
+		if pageStr := c.Query("page"); pageStr != "" {
+			if page, err := strconv.Atoi(pageStr); err == nil {
+				params.Page = page
+			}
+		}
 		
-		// Simple test response first
-		return c.JSON(fiber.Map{
-			"message": "Endpoint working",
-			"operatorID": operatorID,
-		})
+		if sizeStr := c.Query("pageSize"); sizeStr != "" {
+			if size, err := strconv.Atoi(sizeStr); err == nil {
+				params.PageSize = size
+			}
+		}
+		
+		params.Validate()
+
+		// Get total count of operator's games
+		var total int
+		err := pool.QueryRow(context.Background(), `
+			select count(distinct g.id) 
+			from games g
+			join operator_games og on g.id = og.game_id
+			where og.operator_id = $1`, operatorID).Scan(&total)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{
+				"error":   "database_error",
+				"message": "Failed to count games",
+			})
+		}
+
+		// Get paginated operator games with stats
+		rows, err := pool.Query(context.Background(), `
+			select g.id, g.name, g.status, g.bases_linked, g.created_at,
+			       og.role,
+			       count(distinct t.id) as team_count,
+			       count(distinct b.value->>'id') as base_count
+			from games g
+			join operator_games og on g.id = og.game_id
+			left join teams t on t.game_id = g.id
+			left join jsonb_array_elements(g.bases) as b on true
+			where og.operator_id = $1
+			group by g.id, g.name, g.status, g.bases_linked, g.created_at, og.role
+			order by g.created_at desc
+			limit $2 offset $3`, operatorID, params.PageSize, params.GetOffset())
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{
+				"error":   "database_error",
+				"message": "Failed to fetch games",
+			})
+		}
+		defer rows.Close()
+
+		var games []fiber.Map
+		for rows.Next() {
+			var id, name, status, role, createdAt string
+			var basesLinked bool
+			var teamCount, baseCount int
+			if err := rows.Scan(&id, &name, &status, &basesLinked, &createdAt, &role, &teamCount, &baseCount); err != nil {
+				return c.Status(500).JSON(fiber.Map{
+					"error":   "database_error",
+					"message": "Failed to parse game data",
+				})
+			}
+			games = append(games, fiber.Map{
+				"id": id, "name": name, "status": status,
+				"basesLinked": basesLinked, "createdAt": createdAt,
+				"role": role, "teamCount": teamCount, "baseCount": baseCount,
+			})
+		}
+
+		// Return paginated result
+		result := db.NewPaginatedResult(games, total, params)
+		return c.JSON(result)
 	})
 
 	// Create new game
@@ -227,9 +285,9 @@ func RegisterGames(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) {
 			return fiber.ErrInternalServerError
 		}
 
-		// Add operator as creator
+		// Add operator to game
 		_, err = pool.Exec(context.Background(),
-			`insert into operator_games (operator_id, game_id, role) values ($1, $2, 'creator')`,
+			`insert into operator_games (operator_id, game_id) values ($1, $2)`,
 			operatorID, gameID)
 		if err != nil {
 			return fiber.ErrInternalServerError
@@ -342,7 +400,7 @@ func RegisterGames(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) {
 
 		// Get current status to validate transitions
 		var currentStatus string
-		err := pool.QueryRow(context.Background(), 
+		err = pool.QueryRow(context.Background(), 
 			`select status from games where id = $1`, gameID).Scan(&currentStatus)
 		if err != nil {
 			return c.Status(404).JSON(fiber.Map{
@@ -364,11 +422,14 @@ func RegisterGames(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) {
 			})
 		}
 
+		// Initialize variables for transaction
+		var basesLinked bool
+		var bases []map[string]interface{}
+
 		// Enhanced validation for going live
 		if body.Status == "live" {
 			// Get current game status and details
 			var currentStatus, basesJSON string
-			var basesLinked bool
 			err := pool.QueryRow(context.Background(), `
 				select status, bases::text, bases_linked 
 				from games where id = $1`, gameID).Scan(&currentStatus, &basesJSON, &basesLinked)
@@ -394,7 +455,6 @@ func RegisterGames(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) {
 			}
 
 			// Parse and validate bases
-			var bases []map[string]interface{}
 			if err := json.Unmarshal([]byte(basesJSON), &bases); err != nil {
 				return c.Status(500).JSON(fiber.Map{
 					"error":   "data_parsing_error",
@@ -447,6 +507,42 @@ func RegisterGames(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) {
 				return c.Status(400).JSON(fiber.Map{
 					"error":   "no_teams_configured",
 					"message": "Game must have at least one team",
+				})
+			}
+
+			// Validate and assign enigmas
+			var enigmasJSON string
+			err = pool.QueryRow(context.Background(), `
+				select enigmas::text from games where id = $1`, gameID).Scan(&enigmasJSON)
+			if err != nil {
+				return c.Status(500).JSON(fiber.Map{
+					"error":   "database_error",
+					"message": "Failed to fetch game enigmas",
+				})
+			}
+
+			// Parse enigmas
+			var enigmas []map[string]interface{}
+			if err := json.Unmarshal([]byte(enigmasJSON), &enigmas); err != nil {
+				return c.Status(500).JSON(fiber.Map{
+					"error":   "data_parsing_error",
+					"message": "Failed to parse game enigmas",
+				})
+			}
+
+			if len(enigmas) == 0 {
+				return c.Status(400).JSON(fiber.Map{
+					"error":   "no_enigmas_configured",
+					"message": "Game must have at least one enigma",
+				})
+			}
+
+			// Perform dynamic enigma assignment for location-independent enigmas
+			err = assignEnigmasToTeams(pool, gameID, bases, enigmas, teamCount)
+			if err != nil {
+				return c.Status(500).JSON(fiber.Map{
+					"error":   "enigma_assignment_failed",
+					"message": "Failed to assign enigmas to teams",
 				})
 			}
 
@@ -583,12 +679,97 @@ func RegisterGames(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) {
 			return c.Status(400).JSON(fiber.Map{"error": "tagUUID is required"})
 		}
 
-		// Log NFC tag linking for audit trail
-		_, _ = pool.Exec(context.Background(),
-			`insert into game_activities (game_id, operator_id, action, details) values ($1, $2, $3, $4)`,
-			gameID, operatorID, "nfc_linked", fiber.Map{"base_id": baseID, "tag_uuid": body.TagUUID})
+		// Validate that the base exists in the game
+		var basesJSON string
+		err = pool.QueryRow(context.Background(), `
+			select bases::text from games where id = $1`, gameID).Scan(&basesJSON)
+		if err != nil {
+			return c.Status(404).JSON(fiber.Map{
+				"error":   "game_not_found",
+				"message": "Game not found",
+			})
+		}
 
-		return c.JSON(fiber.Map{"message": "NFC tag linked"})
+		// Parse bases to validate baseID exists
+		var bases []map[string]interface{}
+		if err := json.Unmarshal([]byte(basesJSON), &bases); err != nil {
+			return c.Status(500).JSON(fiber.Map{
+				"error":   "data_parsing_error", 
+				"message": "Failed to parse game bases",
+			})
+		}
+
+		// Check if baseID exists in bases array
+		baseExists := false
+		for _, base := range bases {
+			if baseId, ok := base["id"].(string); ok && baseId == baseID {
+				baseExists = true
+				break
+			}
+		}
+
+		if !baseExists {
+			return c.Status(400).JSON(fiber.Map{
+				"error":   "base_not_found",
+				"message": "Base not found in game",
+			})
+		}
+
+		// Use transaction to link NFC tag
+		err = db.WithTransaction(context.Background(), pool, func(tx pgx.Tx) error {
+			// Check if tag is already linked
+			var existingGameID, existingBaseID string
+			err := tx.QueryRow(context.Background(), `
+				select game_id::text, base_id 
+				from nfc_tags 
+				where tag_uuid = $1`, body.TagUUID).Scan(&existingGameID, &existingBaseID)
+			
+			if err == nil {
+				// Tag exists - check if it's the same base
+				if existingGameID == gameID && existingBaseID == baseID {
+					// Already linked to this base - return success
+					return nil
+				}
+				// Tag linked to different base - return error
+				return c.Status(409).JSON(fiber.Map{
+					"error":   "tag_already_linked",
+					"message": "NFC tag is already linked to a different base",
+				})
+			}
+
+			// Insert new NFC tag link
+			_, err = tx.Exec(context.Background(), `
+				insert into nfc_tags (game_id, base_id, tag_uuid, linked_by_operator_id) 
+				values ($1, $2, $3, $4)
+				on conflict (game_id, base_id) do update set
+					tag_uuid = excluded.tag_uuid,
+					linked_by_operator_id = excluded.linked_by_operator_id,
+					linked_at = now()`,
+				gameID, baseID, body.TagUUID, operatorID)
+			if err != nil {
+				return err
+			}
+
+			// Log NFC tag linking for audit trail
+			_, _ = tx.Exec(context.Background(),
+				`insert into game_activities (game_id, operator_id, action, details) values ($1, $2, $3, $4)`,
+				gameID, operatorID, "nfc_linked", fiber.Map{"base_id": baseID, "tag_uuid": body.TagUUID})
+
+			return nil
+		})
+
+		if err != nil {
+			// Check if response was already sent (from the transaction)
+			if c.Response().StatusCode() != 200 {
+				return nil
+			}
+			return c.Status(500).JSON(fiber.Map{
+				"error":   "database_error",
+				"message": "Failed to link NFC tag",
+			})
+		}
+
+		return c.JSON(fiber.Map{"message": "NFC tag linked successfully", "linked": true})
 	})
 }
 
@@ -633,4 +814,111 @@ func getValidTransitions(currentStatus string) []string {
 		return transitions
 	}
 	return []string{}
+}
+
+// assignEnigmasToTeams implements the dynamic enigma assignment algorithm
+// Location-dependent enigmas stay with their assigned bases
+// Location-independent enigmas are randomly distributed across teams and bases
+func assignEnigmasToTeams(pool *pgxpool.Pool, gameID string, bases []map[string]interface{}, enigmas []map[string]interface{}, teamCount int) error {
+	// Separate location-dependent from location-independent enigmas
+	var locationDependent []map[string]interface{}
+	var locationIndependent []map[string]interface{}
+	
+	for _, enigma := range enigmas {
+		isLocationDependent, _ := enigma["isLocationDependent"].(bool)
+		if isLocationDependent {
+			locationDependent = append(locationDependent, enigma)
+		} else {
+			locationIndependent = append(locationIndependent, enigma)
+		}
+	}
+
+	// Get all teams for this game
+	rows, err := pool.Query(context.Background(), `
+		select id::text, name from teams where game_id = $1 order by created_at`, gameID)
+	if err != nil {
+		return fmt.Errorf("failed to fetch teams: %w", err)
+	}
+	defer rows.Close()
+
+	var teams []map[string]string
+	for rows.Next() {
+		var teamID, teamName string
+		if err := rows.Scan(&teamID, &teamName); err != nil {
+			return fmt.Errorf("failed to scan team: %w", err)
+		}
+		teams = append(teams, map[string]string{
+			"id":   teamID,
+			"name": teamName,
+		})
+	}
+
+	// Create team-specific enigma assignments
+	return db.WithTransaction(context.Background(), pool, func(tx pgx.Tx) error {
+		// For each team, create their unique enigma-to-base assignments
+		for i, team := range teams {
+			teamID := team["id"]
+			
+			// Create assignment map for this team
+			teamAssignments := make(map[string]string) // baseID -> enigmaID
+			
+			// 1. Assign location-dependent enigmas to their specific bases
+			for _, enigma := range locationDependent {
+				enigmaID, _ := enigma["id"].(string)
+				baseID, _ := enigma["baseId"].(string)
+				if baseID != "" {
+					teamAssignments[baseID] = enigmaID
+				}
+			}
+			
+			// 2. Distribute location-independent enigmas randomly across remaining bases
+			if len(locationIndependent) > 0 {
+				// Get bases that don't have location-dependent enigmas assigned
+				var availableBases []string
+				for _, base := range bases {
+					baseID, _ := base["id"].(string)
+					if _, hasAssignment := teamAssignments[baseID]; !hasAssignment {
+						availableBases = append(availableBases, baseID)
+					}
+				}
+				
+				// Create a different assignment for each team by rotating through enigmas
+				enigmaOffset := i % len(locationIndependent) // Different starting point per team
+				
+				for j, baseID := range availableBases {
+					if j < len(locationIndependent) {
+						enigmaIndex := (j + enigmaOffset) % len(locationIndependent)
+						enigmaID, _ := locationIndependent[enigmaIndex]["id"].(string)
+						teamAssignments[baseID] = enigmaID
+					}
+				}
+				
+				// If more bases than enigmas, assign enigmas cyclically
+				if len(availableBases) > len(locationIndependent) {
+					for j := len(locationIndependent); j < len(availableBases); j++ {
+						baseID := availableBases[j]
+						enigmaIndex := (j + enigmaOffset) % len(locationIndependent)
+						enigmaID, _ := locationIndependent[enigmaIndex]["id"].(string)
+						teamAssignments[baseID] = enigmaID
+					}
+				}
+			}
+			
+			// Store assignments in team_enigma_assignments table
+			for baseID, enigmaID := range teamAssignments {
+				_, err := tx.Exec(context.Background(), `
+					insert into team_enigma_assignments (team_id, base_id, enigma_id, assigned_at)
+					values ($1, $2, $3, now())
+					on conflict (team_id, base_id) do update set
+						enigma_id = excluded.enigma_id,
+						assigned_at = now()`,
+					teamID, baseID, enigmaID)
+				if err != nil {
+					return fmt.Errorf("failed to assign enigma %s to base %s for team %s: %w", enigmaID, baseID, teamID, err)
+				}
+			}
+		}
+		
+		return nil
+	})
 }

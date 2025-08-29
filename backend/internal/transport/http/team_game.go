@@ -5,12 +5,14 @@ import (
 	"backend/internal/db"
 	"backend/internal/middleware"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -114,6 +116,101 @@ func RegisterTeamGame(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) 
 		})
 	})
 
+	// Get assigned enigma for team at base
+	teamGrp.Get("/bases/:baseId/enigma", middleware.RequireTeam(middleware.JWTConfig{Secret: cfg.JWTSecret}), func(c *fiber.Ctx) error {
+		teamID := c.Locals("teamID").(string)
+		baseID := c.Params("baseId")
+
+		// Validate team has access to game and base
+		var gameID, gameStatus string
+		var teamName string
+		err := pool.QueryRow(context.Background(), `
+			select g.id::text, g.status, t.name
+			from teams t
+			join games g on t.game_id = g.id
+			where t.id = $1`, teamID).Scan(&gameID, &gameStatus, &teamName)
+		if err != nil {
+			return c.Status(404).JSON(fiber.Map{
+				"error":   "team_not_found",
+				"message": "Team not found",
+			})
+		}
+
+		// Check if game is live
+		if gameStatus != "live" {
+			return c.Status(400).JSON(fiber.Map{
+				"error":   "game_not_live",
+				"message": "Game is not currently live",
+			})
+		}
+
+		// Get assigned enigma for this team and base
+		var enigmaID string
+		err = pool.QueryRow(context.Background(), `
+			select enigma_id from team_enigma_assignments 
+			where team_id = $1 and base_id = $2`, teamID, baseID).Scan(&enigmaID)
+		if err != nil {
+			return c.Status(404).JSON(fiber.Map{
+				"error":   "no_enigma_assigned",
+				"message": "No enigma assigned for this base",
+			})
+		}
+
+		// Get enigma details from game data
+		var enigmasJSON string
+		err = pool.QueryRow(context.Background(), `
+			select enigmas::text from games where id = $1`, gameID).Scan(&enigmasJSON)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{
+				"error":   "database_error",
+				"message": "Failed to fetch game data",
+			})
+		}
+
+		// Parse enigmas and find the assigned one
+		var enigmas []map[string]interface{}
+		if err := json.Unmarshal([]byte(enigmasJSON), &enigmas); err != nil {
+			return c.Status(500).JSON(fiber.Map{
+				"error":   "data_parsing_error",
+				"message": "Failed to parse enigmas",
+			})
+		}
+
+		var assignedEnigma map[string]interface{}
+		for _, enigma := range enigmas {
+			if enigma["id"] == enigmaID {
+				assignedEnigma = enigma
+				break
+			}
+		}
+
+		if assignedEnigma == nil {
+			return c.Status(404).JSON(fiber.Map{
+				"error":   "enigma_not_found",
+				"message": "Assigned enigma not found in game data",
+			})
+		}
+
+		// Return enigma details (without the answer)
+		enigmaResponse := fiber.Map{
+			"id":       assignedEnigma["id"],
+			"title":    assignedEnigma["title"],
+			"content":  assignedEnigma["content"],
+			"points":   assignedEnigma["points"],
+			"baseId":   baseID,
+		}
+
+		// Add media info if present
+		if mediaType, ok := assignedEnigma["mediaType"].(string); ok && mediaType != "" {
+			enigmaResponse["mediaType"] = mediaType
+			if mediaUrl, ok := assignedEnigma["mediaUrl"].(string); ok {
+				enigmaResponse["mediaUrl"] = mediaUrl
+			}
+		}
+
+		return c.JSON(enigmaResponse)
+	})
+
 	// Solve enigma at base - requires team leader
 	teamGrp.Post("/enigma/solve", middleware.RequireTeamLeader(pool, middleware.JWTConfig{Secret: cfg.JWTSecret}), func(c *fiber.Ctx) error {
 		teamID := c.Locals("teamID").(string)
@@ -172,6 +269,25 @@ func RegisterTeamGame(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) 
 			})
 		}
 
+		// Validate that this enigma is assigned to this team for this base
+		var assignedEnigmaID string
+		err = pool.QueryRow(context.Background(), `
+			select enigma_id from team_enigma_assignments 
+			where team_id = $1 and base_id = $2`, teamID, req.BaseID).Scan(&assignedEnigmaID)
+		if err != nil {
+			return c.Status(400).JSON(fiber.Map{
+				"error":   "no_enigma_assigned",
+				"message": "No enigma assigned for this base",
+			})
+		}
+
+		if assignedEnigmaID != req.EnigmaID {
+			return c.Status(400).JSON(fiber.Map{
+				"error":   "wrong_enigma",
+				"message": "This enigma is not assigned to your team for this base",
+			})
+		}
+
 		// Get enigma details from game
 		var gameEnigmas string
 		err = pool.QueryRow(context.Background(),
@@ -189,9 +305,21 @@ func RegisterTeamGame(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) 
 		}
 
 		var correctAnswer string
+		var enigmaPoints int
 		for _, enigma := range enigmas {
 			if enigma["id"] == req.EnigmaID {
-				if template, ok := enigma["answerTemplate"].(string); ok {
+				// Get points
+				if points, ok := enigma["points"].(float64); ok {
+					enigmaPoints = int(points)
+				}
+
+				// Get correct answer
+				if answer, ok := enigma["answer"].(string); ok {
+					correctAnswer = answer
+				}
+				
+				// Apply team-specific template if answerTemplate exists
+				if template, ok := enigma["answerTemplate"].(string); ok && template != "" {
 					// Apply team-specific template if needed
 					if strings.Contains(template, "+") {
 						parts := strings.Split(template, "+")
@@ -204,6 +332,13 @@ func RegisterTeamGame(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) 
 				}
 				break
 			}
+		}
+
+		if correctAnswer == "" {
+			return c.Status(500).JSON(fiber.Map{
+				"error":   "enigma_not_found",
+				"message": "Enigma not found in game data",
+			})
 		}
 
 		isCorrect := strings.EqualFold(req.Answer, correctAnswer)
@@ -221,10 +356,11 @@ func RegisterTeamGame(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) 
 		}
 
 		if isCorrect {
-			// Mark enigma as solved in progress
+			// Mark enigma as solved in progress and update score
 			_, err = pool.Exec(context.Background(),
-				`update progress set solved_at = now() where team_id = $1 and base_id = $2`,
-				teamID, req.BaseID)
+				`update progress set solved_at = now(), score = score + $3 
+				 where team_id = $1 and base_id = $2`,
+				teamID, req.BaseID, enigmaPoints)
 			if err != nil {
 				return fiber.ErrInternalServerError
 			}
@@ -252,6 +388,115 @@ func RegisterTeamGame(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) 
 				}
 				return "Incorrect answer. Try again."
 			}(),
+		})
+	})
+
+	// Get offline validation data for enigma - enables offline answer checking
+	teamGrp.Get("/enigma/:enigmaId/validation", middleware.RequireTeam(middleware.JWTConfig{Secret: cfg.JWTSecret}), func(c *fiber.Ctx) error {
+		teamID := c.Locals("teamID").(string)
+		enigmaID := c.Params("enigmaId")
+
+		// Validate team has access and game is live
+		var gameID, gameStatus string
+		err := pool.QueryRow(context.Background(), `
+			select g.id::text, g.status
+			from teams t
+			join games g on t.game_id = g.id
+			where t.id = $1`, teamID).Scan(&gameID, &gameStatus)
+		if err != nil {
+			return c.Status(404).JSON(fiber.Map{
+				"error":   "team_not_found",
+				"message": "Team not found",
+			})
+		}
+
+		if gameStatus != "live" {
+			return c.Status(400).JSON(fiber.Map{
+				"error":   "game_not_live",
+				"message": "Game is not currently live",
+			})
+		}
+
+		// Verify enigma is assigned to this team
+		var baseID string
+		err = pool.QueryRow(context.Background(), `
+			select base_id from team_enigma_assignments 
+			where team_id = $1 and enigma_id = $2`, teamID, enigmaID).Scan(&baseID)
+		if err != nil {
+			return c.Status(404).JSON(fiber.Map{
+				"error":   "enigma_not_assigned",
+				"message": "This enigma is not assigned to your team",
+			})
+		}
+
+		// Get enigma details from game
+		var gameEnigmas string
+		err = pool.QueryRow(context.Background(), `
+			select enigmas::text from games where id = $1`, gameID).Scan(&gameEnigmas)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{
+				"error":   "database_error",
+				"message": "Failed to fetch game data",
+			})
+		}
+
+		// Parse enigmas to find the validation data
+		var enigmas []map[string]interface{}
+		if err := json.Unmarshal([]byte(gameEnigmas), &enigmas); err != nil {
+			return c.Status(500).JSON(fiber.Map{
+				"error":   "data_parsing_error",
+				"message": "Failed to parse enigmas",
+			})
+		}
+
+		var correctAnswer string
+		var enigmaPoints int
+		for _, enigma := range enigmas {
+			if enigma["id"] == enigmaID {
+				// Get points
+				if points, ok := enigma["points"].(float64); ok {
+					enigmaPoints = int(points)
+				}
+
+				// Get correct answer for validation
+				if answer, ok := enigma["answer"].(string); ok {
+					correctAnswer = answer
+				}
+				
+				// Apply team-specific template if needed
+				if template, ok := enigma["answerTemplate"].(string); ok && template != "" {
+					if strings.Contains(template, "+") {
+						parts := strings.Split(template, "+")
+						if len(parts) == 2 && strings.TrimSpace(parts[1]) == "<teamId>" {
+							correctAnswer = strings.TrimSpace(parts[0]) + teamID
+						}
+					} else {
+						correctAnswer = template
+					}
+				}
+				break
+			}
+		}
+
+		if correctAnswer == "" {
+			return c.Status(404).JSON(fiber.Map{
+				"error":   "enigma_not_found",
+				"message": "Enigma not found",
+			})
+		}
+
+		// Create validation hash for offline checking (simple approach)
+		// In production, you'd want more sophisticated encryption
+		answerHash := fmt.Sprintf("%x", sha256.Sum256([]byte(strings.ToLower(correctAnswer))))
+		answerLength := len(correctAnswer)
+		
+		return c.JSON(fiber.Map{
+			"enigmaId":     enigmaID,
+			"baseId":       baseID,
+			"points":       enigmaPoints,
+			"answerHash":   answerHash,
+			"answerLength": answerLength,
+			"message":      "Validation data for offline checking",
 		})
 	})
 
@@ -298,7 +543,6 @@ func RegisterTeamGame(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) 
 	// NFC-based base check-in - requires team leader
 	teamGrp.Post("/base/checkin", middleware.RequireTeamLeader(pool, middleware.JWTConfig{Secret: cfg.JWTSecret}), middleware.ValidateJSONRequest(1024), func(c *fiber.Ctx) error {
 		teamID := c.Locals("teamID").(string)
-		deviceID, _ := c.Locals("deviceID").(string)
 
 		var req struct {
 			TagUUID string `json:"tagUuid"`
@@ -477,7 +721,6 @@ func RegisterTeamGame(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) 
 	// NFC-based base completion - requires team leader
 	teamGrp.Post("/base/complete", middleware.RequireTeamLeader(pool, middleware.JWTConfig{Secret: cfg.JWTSecret}), middleware.ValidateJSONRequest(1024), func(c *fiber.Ctx) error {
 		teamID := c.Locals("teamID").(string)
-		deviceID, _ := c.Locals("deviceID").(string)
 
 		var req struct {
 			TagUUID string `json:"tagUuid"`

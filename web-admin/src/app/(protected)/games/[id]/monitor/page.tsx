@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { MapPin, Users, Trophy, RefreshCw, Eye, Activity } from "lucide-react";
 import { api } from "@/lib/apiClient";
+import { WSMessage, useWebSocket } from "@/lib/websocketClient";
 import LiveMap from "@/components/monitoring/LiveMap";
 import TeamProgressTable from "@/components/monitoring/TeamProgressTable";
 import EventsFeed from "@/components/monitoring/EventsFeed";
@@ -108,9 +109,9 @@ export default function GameMonitorPage() {
             ? {
                 ...team,
                 lastLocation: {
-                  latitude: message.data.latitude,
-                  longitude: message.data.longitude,
-                  timestamp: message.timestamp,
+                  latitude: message.data.latitude as number,
+                  longitude: message.data.longitude as number,
+                  timestamp: message.timestamp.toString(),
                 }
               }
             : team
@@ -128,11 +129,11 @@ export default function GameMonitorPage() {
         // Add new event to the feed
         const newEvent: Event = {
           id: Date.now().toString(),
-          type: message.data.action || message.type,
+          type: (message.data.action as string) || message.type,
           teamId: message.teamId || '',
-          teamName: message.data.teamName || '',
-          message: message.data.message || 'Game event occurred',
-          createdAt: message.timestamp,
+          teamName: (message.data.teamName as string) || '',
+          message: (message.data.message as string) || 'Game event occurred',
+          createdAt: message.timestamp.toString(),
         };
         setEvents(prevEvents => [newEvent, ...prevEvents.slice(0, 49)]); // Keep last 50 events
         break;

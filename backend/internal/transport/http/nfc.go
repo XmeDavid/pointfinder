@@ -181,6 +181,76 @@ func RegisterNFC(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) {
 		return nil
 	})
 
+	// Get NFC tags for a game (frontend compatibility)
+	nfcGrp.Get("/games/:gameId/tags", middleware.RequireOperator(middleware.JWTConfig{Secret: cfg.JWTSecret}), func(c *fiber.Ctx) error {
+		operatorID := c.Locals("operatorID").(string)
+		gameID := middleware.SanitizeStringWithLimit(c.Params("gameId"), 36)
+
+		if !middleware.ValidateUUID(gameID) {
+			return c.Status(400).JSON(fiber.Map{
+				"error":   "invalid_game_id",
+				"message": "Game ID is invalid",
+			})
+		}
+
+		// Verify operator has access to this game
+		var hasAccess bool
+		err := db.QueryRowWithTimeout(context.Background(), pool, `
+			select exists(
+				select 1 from operator_games og 
+				where og.operator_id = $1 and og.game_id = $2
+			)`, operatorID, gameID).Scan(&hasAccess)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{
+				"error":   "database_error",
+				"message": "Failed to verify game access",
+			})
+		}
+		if !hasAccess {
+			return c.Status(403).JSON(fiber.Map{
+				"error":   "game_access_denied",
+				"message": "You don't have access to this game",
+			})
+		}
+
+		// Get NFC tags for this game
+		rows, err := db.QueryWithTimeout(context.Background(), pool, `
+			select nt.id::text, nt.base_id, nt.tag_uuid, nt.linked_at, 
+				   coalesce(o.name, 'Unknown') as linked_by_name
+			from nfc_tags nt
+			left join operators o on nt.linked_by_operator_id = o.id
+			where nt.game_id = $1
+			order by nt.linked_at desc`, gameID)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{
+				"error":   "database_error",
+				"message": "Failed to fetch NFC tags",
+			})
+		}
+		defer rows.Close()
+
+		var tags []fiber.Map
+		for rows.Next() {
+			var id, baseID, tagUUID, linkedByName string
+			var linkedAt time.Time
+			if err := rows.Scan(&id, &baseID, &tagUUID, &linkedAt, &linkedByName); err != nil {
+				return c.Status(500).JSON(fiber.Map{
+					"error":   "database_error",
+					"message": "Failed to parse NFC tag data",
+				})
+			}
+			tags = append(tags, fiber.Map{
+				"id":         id,
+				"baseId":     baseID,
+				"tagUUID":    tagUUID,
+				"linkedAt":   linkedAt,
+				"linkedBy":   linkedByName,
+			})
+		}
+
+		return c.JSON(tags)
+	})
+
 	// Get NFC setup status for a game
 	nfcGrp.Get("/game/:gameId/status", middleware.RequireOperator(middleware.JWTConfig{Secret: cfg.JWTSecret}), func(c *fiber.Ctx) error {
 		operatorID := c.Locals("operatorID").(string)

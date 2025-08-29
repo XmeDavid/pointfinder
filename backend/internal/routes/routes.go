@@ -32,6 +32,13 @@ func Register(app *fiber.App, cfg *config.Config, pool *pgxpool.Pool) {
 
 	api := app.Group("/api")
 
+	// Initialize and make WebSocket hub available to API routes
+	wsHub := http.InitWebSocketHub()
+	api.Use(func(c *fiber.Ctx) error {
+		c.Locals("wsHub", wsHub)
+		return c.Next()
+	})
+
 	// CSRF token endpoint
 	api.Get("/csrf-token", middleware.CSRFToken())
 

@@ -4,9 +4,7 @@ import (
 	"backend/internal/config"
 	"backend/internal/middleware"
 	"context"
-	"encoding/json"
 	"log"
-	"net/http"
 	"sync"
 	"time"
 
@@ -63,8 +61,8 @@ type WSHub struct {
 // Global WebSocket hub
 var wsHub *WSHub
 
-// Initialize WebSocket hub
-func initWebSocketHub() *WSHub {
+// InitWebSocketHub initializes and returns the WebSocket hub
+func InitWebSocketHub() *WSHub {
 	if wsHub == nil {
 		wsHub = &WSHub{
 			gameClients: make(map[string]map[string]*WSClient),
@@ -249,7 +247,7 @@ func (c *WSClient) writePump() {
 
 func RegisterWebSocket(app *fiber.App, pool *pgxpool.Pool, cfg *config.Config) {
 	// Initialize WebSocket hub
-	hub := initWebSocketHub()
+	hub := InitWebSocketHub()
 
 	// WebSocket upgrade handler
 	app.Use("/ws", func(c *fiber.Ctx) error {
