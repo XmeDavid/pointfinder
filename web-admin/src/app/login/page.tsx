@@ -43,7 +43,16 @@ export default function LoginPage() {
       setAuth(token, { id: user?.id ?? "admin", email: user?.email, role: user?.role as "admin" | "operator" | "viewer" });
       router.replace("/dashboard");
     } catch (err: unknown) {
-      setError((err as Error)?.message || "Login failed. Please check your credentials.");
+      console.error("Login error:", err);
+      const error = err as { response?: { status?: number }; message?: string };
+      
+      if (error.response?.status === 401) {
+        setError("Invalid credentials. Please check your email and password.");
+      } else if (error.response?.status === 500) {
+        setError("Server error. Please try again later.");
+      } else {
+        setError((error as Error)?.message || "Login failed. Please check your credentials.");
+      }
     } finally {
       setLoading(false);
     }

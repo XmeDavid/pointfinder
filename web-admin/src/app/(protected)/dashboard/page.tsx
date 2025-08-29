@@ -46,6 +46,7 @@ export default function DashboardPage() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [selectedOperator, setSelectedOperator] = useState<Operator | null>(null);
   const [showOperatorDetails, setShowOperatorDetails] = useState(false);
+  const [isAdminMode, setIsAdminMode] = useState(false);
   const user = useAuthStore((s) => s.user);
 
   useEffect(() => {
@@ -59,18 +60,28 @@ export default function DashboardPage() {
       
       if (user?.role === "admin") {
         // Admin: Fetch operators and games
-        await Promise.all([
-          fetchOperators(),
-          fetchGames()
-        ]);
+        try {
+          await Promise.all([
+            fetchOperators(),
+            fetchGames()
+          ]);
+          setIsAdminMode(true);
+        } catch (err) {
+          // If admin endpoints fail, try to fetch games as operator
+          console.log("Admin endpoints failed, trying operator endpoints");
+          setIsAdminMode(false);
+          await fetchGames();
+        }
       } else {
         // Operator: Only fetch games
+        setIsAdminMode(false);
         await fetchGames();
       }
     } catch (err: unknown) {
       console.error("Error fetching data:", err);
       const error = err as { response?: { status?: number }; message?: string };
       setError(`Failed to load data: ${error.message || "Unknown error"}`);
+      setIsAdminMode(false);
     } finally {
       setLoading(false);
     }
@@ -80,24 +91,48 @@ export default function DashboardPage() {
     const endpoint = user?.role === "admin" ? "api/games" : "api/operator/games";
     console.log("Fetching games from:", endpoint);
     
-    const gamesData = await api.get(endpoint).json() as Game[];
-    console.log("Games data:", gamesData);
-    setGames(gamesData);
+    try {
+      const gamesData = await api.get(endpoint).json() as Game[];
+      console.log("Games data:", gamesData);
+      setGames(gamesData || []);
+    } catch (err) {
+      console.error("Failed to fetch games:", err);
+      const error = err as { response?: { status?: number }; message?: string };
+      
+      if (error.response?.status === 401) {
+        setError("You don't have permission to access games. Please log in again.");
+      } else {
+        setError("Failed to load games. Please try again.");
+      }
+      setGames([]);
+    }
   }
 
   async function fetchOperators() {
     console.log("Fetching operators");
-    const operatorsData = await api.get("api/admin/operators").json() as Operator[];
-    console.log("Operators data:", operatorsData);
-    setOperators(operatorsData);
+    try {
+      const operatorsData = await api.get("api/admin/operators").json() as Operator[];
+      console.log("Operators data:", operatorsData);
+      setOperators(operatorsData);
+    } catch (err) {
+      console.error("Failed to fetch operators:", err);
+      const error = err as { response?: { status?: number }; message?: string };
+      
+      if (error.response?.status === 401) {
+        setError("You don't have admin privileges. Please log in as an administrator.");
+      } else {
+        setError("Failed to load operators. Please try again.");
+      }
+      setOperators([]);
+    }
   }
 
-  const activeGames = games.filter(g => g.status === "live");
-  const setupGames = games.filter(g => g.status === "setup");
-  const finishedGames = games.filter(g => g.status === "finished");
+  const activeGames = games?.filter(g => g.status === "live") || [];
+  const setupGames = games?.filter(g => g.status === "setup") || [];
+  const finishedGames = games?.filter(g => g.status === "finished") || [];
 
-  const activeOperators = operators.filter(o => o.status === "active");
-  const pendingOperators = operators.filter(o => o.status === "pending");
+  const activeOperators = operators?.filter(o => o.status === "active") || [];
+  const pendingOperators = operators?.filter(o => o.status === "pending") || [];
 
   const handleViewOperator = (operator: Operator) => {
     setSelectedOperator(operator);
@@ -112,13 +147,16 @@ export default function DashboardPage() {
           <div className="flex justify-between items-center py-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                {user?.role === "admin" ? "Admin Dashboard" : "Game Dashboard"}
+                {isAdminMode ? "Admin Dashboard" : "Game Dashboard"}
               </h1>
               <p className="text-gray-600 mt-1">
-                Welcome back, {user?.email} • {user?.role === "admin" ? "System Administrator" : "Game Operator"}
+                Welcome back, {user?.email} • {isAdminMode ? "System Administrator" : "Game Operator"}
+                {user?.role === "admin" && !isAdminMode && (
+                  <span className="text-yellow-600"> (Admin mode unavailable - using operator mode)</span>
+                )}
               </p>
             </div>
-            {user?.role === "admin" ? (
+            {isAdminMode ? (
               <button
                 onClick={() => setShowInviteModal(true)}
                 className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all transform hover:scale-105"
@@ -141,19 +179,19 @@ export default function DashboardPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Overview */}
-        {user?.role === "admin" ? (
+        {isAdminMode ? (
           <StatsOverview 
-            totalGames={games.length}
+            totalGames={games?.length || 0}
             activeGames={activeGames.length}
             setupGames={setupGames.length}
             finishedGames={finishedGames.length}
-            totalOperators={operators.length}
+            totalOperators={operators?.length || 0}
             activeOperators={activeOperators.length}
             pendingOperators={pendingOperators.length}
           />
         ) : (
           <StatsOverview 
-            totalGames={games.length}
+            totalGames={games?.length || 0}
             activeGames={activeGames.length}
             setupGames={setupGames.length}
             finishedGames={finishedGames.length}
@@ -181,10 +219,10 @@ export default function DashboardPage() {
         ) : (
           <>
             {/* Admin View: Operators First */}
-            {user?.role === "admin" && (
+            {isAdminMode && (
               <div className="mb-8">
                 <OperatorsTable 
-                  operators={operators} 
+                  operators={operators || []} 
                   onRefresh={fetchData}
                   onInviteOperator={() => setShowInviteModal(true)}
                   onViewOperator={handleViewOperator}
@@ -268,17 +306,17 @@ export default function DashboardPage() {
               )}
 
               {/* Empty State */}
-              {games.length === 0 && (
+              {(!games || games.length === 0) && (
                 <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
                   <Shield className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No games yet</h3>
                   <p className="text-gray-600 mb-6">
-                    {user?.role === "admin" 
+                    {isAdminMode 
                       ? "Operators will create games here once they&apos;re invited and active."
                       : "Create your first game to get started"
                     }
                   </p>
-                  {user?.role !== "admin" && (
+                  {!isAdminMode && (
                     <button
                       onClick={() => setShowCreateModal(true)}
                       className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all"
