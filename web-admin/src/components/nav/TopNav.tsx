@@ -12,7 +12,6 @@ import {
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/games/new", label: "New Game", icon: MapIcon },
   { href: "/operators", label: "Operators", icon: Users },
 ];
 
