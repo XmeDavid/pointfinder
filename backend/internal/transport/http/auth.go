@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type loginRequest struct {
@@ -171,5 +172,54 @@ func RegisterAuth(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) {
 		}
 
 		return c.JSON(fiber.Map{"token": newAccessToken})
+	})
+
+	// Operator login endpoint (no CSRF protection)
+	api.Post("/auth/operators/login", middleware.AuthRateLimit(), middleware.ValidateLoginRequest(), func(c *fiber.Ctx) error {
+		var req struct {
+			Email    string `json:"email"`
+			Password string `json:"password"`
+		}
+		if err := c.BodyParser(&req); err != nil {
+			return fiber.ErrBadRequest
+		}
+
+		req.Email = middleware.SanitizeString(req.Email)
+		req.Password = middleware.SanitizeString(req.Password)
+		
+		if !middleware.ValidateEmail(req.Email) || !middleware.ValidatePassword(req.Password) {
+			return fiber.ErrUnauthorized
+		}
+
+		// Get operator
+		var operatorID, name, hashedPassword string
+		err := pool.QueryRow(context.Background(),
+			`select id, name, password_hash from operators where email = $1`,
+			req.Email).Scan(&operatorID, &name, &hashedPassword)
+		if err != nil {
+			return fiber.ErrUnauthorized
+		}
+
+		// Verify password
+		if err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(req.Password)); err != nil {
+			return fiber.ErrUnauthorized
+		}
+
+		// Generate tokens
+		accessToken, err := middleware.GenerateOperatorToken(cfg.JWTSecret, operatorID)
+		if err != nil {
+			return fiber.ErrInternalServerError
+		}
+
+		refreshToken, err := middleware.GenerateOperatorRefreshToken(cfg.JWTSecret, operatorID)
+		if err != nil {
+			return fiber.ErrInternalServerError
+		}
+
+		return c.JSON(fiber.Map{
+			"token":         accessToken,
+			"refresh_token": refreshToken,
+			"operator":      fiber.Map{"id": operatorID, "email": req.Email, "name": name},
+		})
 	})
 }
