@@ -18,7 +18,7 @@ import (
 func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) {
 	// Initialize email service
 	emailService := email.NewService(cfg)
-	
+
 	// Admin-only endpoints for operator management
 	adminGrp := api.Group("/admin/operators")
 	adminGrp.Use(middleware.RequireAdmin(middleware.JWTConfig{Secret: cfg.JWTSecret}))
@@ -35,7 +35,7 @@ func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config)
 
 		req.Email = middleware.SanitizeString(req.Email)
 		req.Name = middleware.SanitizeString(req.Name)
-		
+
 		if !middleware.ValidateEmail(req.Email) || req.Name == "" {
 			return c.Status(400).JSON(fiber.Map{"error": "Invalid email or name"})
 		}
@@ -53,22 +53,22 @@ func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config)
 			return fiber.ErrInternalServerError
 		}
 
-		// Generate invitation link
-		inviteLink := fmt.Sprintf("https://dbvnfc-api.davidsbatista.com/register?token=%s", token)
-		
+		// Generate invitation link - point to frontend registration page
+		inviteLink := fmt.Sprintf("https://dbvnfc-games-web-neon.vercel.app/register?token=%s", token)
+
 		// Send invitation email
 		if err := emailService.SendOperatorInvite(req.Email, req.Name, inviteLink); err != nil {
 			// Log the error but don't fail the request - admin can use the link manually
 			fmt.Printf("Failed to send invitation email to %s: %v\n", req.Email, err)
 			return c.JSON(fiber.Map{
-				"message": "Invitation created (email failed to send)",
+				"message":     "Invitation created (email failed to send)",
 				"invite_link": inviteLink,
-				"error": "Email service unavailable - please send the link manually",
+				"error":       "Email service unavailable - please send the link manually",
 			})
 		}
-		
+
 		return c.JSON(fiber.Map{
-			"message": "Invitation sent successfully",
+			"message":     "Invitation sent successfully",
 			"invite_link": inviteLink,
 		})
 	})
@@ -96,7 +96,7 @@ func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config)
 				return fiber.ErrInternalServerError
 			}
 			operators = append(operators, fiber.Map{
-				"id": id, "email": email, "name": name, "status": status, 
+				"id": id, "email": email, "name": name, "status": status,
 				"createdAt": createdAt, "gameCount": gameCount,
 			})
 		}
@@ -106,7 +106,7 @@ func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config)
 	// Get operator details (admin only)
 	adminGrp.Get("/:id", func(c *fiber.Ctx) error {
 		operatorID := c.Params("id")
-		
+
 		// Get operator basic info
 		var operator struct {
 			ID        string    `json:"id"`
@@ -115,7 +115,7 @@ func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config)
 			Status    string    `json:"status"`
 			CreatedAt time.Time `json:"createdAt"`
 		}
-		
+
 		err := pool.QueryRow(context.Background(),
 			`select id, email, name, status, created_at from operators where id = $1`,
 			operatorID).Scan(&operator.ID, &operator.Email, &operator.Name, &operator.Status, &operator.CreatedAt)
@@ -162,7 +162,7 @@ func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config)
 	// Get operator's games (admin only)
 	adminGrp.Get("/:id/games", func(c *fiber.Ctx) error {
 		operatorID := c.Params("id")
-		
+
 		// Verify operator exists
 		var exists bool
 		err := pool.QueryRow(context.Background(),
@@ -208,14 +208,14 @@ func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config)
 	// Update operator status (admin only)
 	adminGrp.Patch("/:id", func(c *fiber.Ctx) error {
 		operatorID := c.Params("id")
-		
+
 		var req struct {
 			Status string `json:"status"`
 		}
 		if err := c.BodyParser(&req); err != nil {
 			return fiber.ErrBadRequest
 		}
-		
+
 		req.Status = middleware.SanitizeString(req.Status)
 		if req.Status != "active" && req.Status != "inactive" && req.Status != "pending" {
 			return c.Status(400).JSON(fiber.Map{"error": "Invalid status. Must be 'active', 'inactive', or 'pending'"})
@@ -228,7 +228,7 @@ func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config)
 		if err != nil {
 			return fiber.ErrInternalServerError
 		}
-		
+
 		rowsAffected := result.RowsAffected()
 		if rowsAffected == 0 {
 			return fiber.ErrNotFound
@@ -243,10 +243,10 @@ func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config)
 			CreatedAt time.Time `json:"createdAt"`
 			UpdatedAt time.Time `json:"updatedAt"`
 		}
-		
+
 		err = pool.QueryRow(context.Background(),
 			`select id, email, name, status, created_at, updated_at from operators where id = $1`,
-			operatorID).Scan(&operator.ID, &operator.Email, &operator.Name, 
+			operatorID).Scan(&operator.ID, &operator.Email, &operator.Name,
 			&operator.Status, &operator.CreatedAt, &operator.UpdatedAt)
 		if err != nil {
 			return fiber.ErrInternalServerError
@@ -258,7 +258,7 @@ func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config)
 	// Delete operator (admin only)
 	adminGrp.Delete("/:id", func(c *fiber.Ctx) error {
 		operatorID := c.Params("id")
-		
+
 		// Check if operator has active games
 		var activeGameCount int
 		err := pool.QueryRow(context.Background(), `
@@ -268,7 +268,7 @@ func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config)
 		if err != nil {
 			return fiber.ErrInternalServerError
 		}
-		
+
 		if activeGameCount > 0 {
 			return c.Status(400).JSON(fiber.Map{
 				"error": fmt.Sprintf("Cannot delete operator with %d active games. Please finish or transfer the games first.", activeGameCount),
@@ -282,7 +282,7 @@ func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config)
 		if err != nil {
 			return fiber.ErrInternalServerError
 		}
-		
+
 		rowsAffected := result.RowsAffected()
 		if rowsAffected == 0 {
 			return fiber.ErrNotFound
@@ -306,7 +306,7 @@ func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config)
 		req.Token = middleware.SanitizeString(req.Token)
 		req.Email = middleware.SanitizeString(req.Email)
 		req.Name = middleware.SanitizeString(req.Name)
-		
+
 		if !middleware.ValidateEmail(req.Email) || !middleware.ValidatePassword(req.Password) || req.Name == "" {
 			return c.Status(400).JSON(fiber.Map{"error": "Invalid input"})
 		}
@@ -378,7 +378,7 @@ func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config)
 
 		req.Email = middleware.SanitizeString(req.Email)
 		req.Password = middleware.SanitizeString(req.Password)
-		
+
 		if !middleware.ValidateEmail(req.Email) || !middleware.ValidatePassword(req.Password) {
 			return fiber.ErrUnauthorized
 		}

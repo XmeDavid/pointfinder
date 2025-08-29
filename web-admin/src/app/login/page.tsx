@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { z } from "zod";
 import { useAuthStore } from "@/lib/authStore";
 import { api } from "@/lib/apiClient";
@@ -19,8 +19,17 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [loginType, setLoginType] = useState<"admin" | "operator">("operator");
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const setAuth = useAuthStore((s) => s.setAuth);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const message = searchParams.get("message");
+    if (message) {
+      setSuccessMessage(message);
+    }
+  }, [searchParams]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -141,6 +150,12 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
+
+            {successMessage && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <p className="text-sm text-green-600">{successMessage}</p>
+              </div>
+            )}
 
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
