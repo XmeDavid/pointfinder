@@ -211,7 +211,7 @@ export default function OperatorDetailsModal({ isOpen, onClose, operator, onOper
               <div className="text-center py-8 bg-gray-50 rounded-lg">
                 <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h4 className="text-lg font-medium text-gray-900 mb-2">No games yet</h4>
-                <p className="text-gray-500">This operator hasn't created any games yet.</p>
+                <p className="text-gray-500">This operator hasn&apos;t created any games yet.</p>
               </div>
             )}
           </div>

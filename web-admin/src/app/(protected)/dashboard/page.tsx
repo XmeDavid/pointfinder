@@ -274,7 +274,7 @@ export default function DashboardPage() {
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No games yet</h3>
                   <p className="text-gray-600 mb-6">
                     {user?.role === "admin" 
-                      ? "Operators will create games here once they're invited and active."
+                      ? "Operators will create games here once they&apos;re invited and active."
                       : "Create your first game to get started"
                     }
                   </p>
