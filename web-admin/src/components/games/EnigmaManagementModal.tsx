@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { X, Plus, Edit, Trash2, MapPin, Link, Unlink, Image, Video, Youtube, FileText, Save } from "lucide-react";
+import { X, Plus, Edit, Trash2, MapPin, Unlink, Image, Video, Youtube, FileText } from "lucide-react";
 
 interface Enigma {
   id: string;
@@ -32,7 +32,6 @@ interface Base {
 interface EnigmaManagementModalProps {
   isOpen: boolean;
   onClose: () => void;
-  gameId: string;
   enigmas: Enigma[];
   bases: Base[];
   onEnigmasUpdate: (enigmas: Enigma[]) => void;
@@ -41,7 +40,6 @@ interface EnigmaManagementModalProps {
 export default function EnigmaManagementModal({
   isOpen,
   onClose,
-  gameId,
   enigmas,
   bases,
   onEnigmasUpdate,
@@ -153,7 +151,7 @@ export default function EnigmaManagementModal({
                 <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-600">No enigmas created yet</p>
                 <p className="text-sm text-gray-500 mt-1">
-                  Click "Add Enigma" to create challenges for teams
+                  Click &quot;Add Enigma&quot; to create challenges for teams
                 </p>
               </div>
             ) : (
@@ -258,7 +256,7 @@ export default function EnigmaManagementModal({
                       {selectedEnigma.mediaType === "image" && (
                         <img 
                           src={selectedEnigma.mediaUrl} 
-                          alt="Enigma media" 
+                          alt="Enigma media content" 
                           className="max-w-full h-auto rounded-lg"
                         />
                       )}
@@ -392,11 +390,6 @@ function CreateEnigmaModal({ onCreate, onCancel, bases }: CreateEnigmaModalProps
     }
   };
 
-  const getYouTubeEmbedUrl = (url: string) => {
-    const videoId = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
-    return videoId ? `https://www.youtube.com/embed/${videoId[1]}` : url;
-  };
-
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
       <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -504,7 +497,7 @@ function CreateEnigmaModal({ onCreate, onCancel, bases }: CreateEnigmaModalProps
               </label>
               <select
                 value={mediaType || ""}
-                onChange={(e) => setMediaType(e.target.value as any || undefined)}
+                onChange={(e) => setMediaType(e.target.value as "image" | "video" | "youtube" | undefined || undefined)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">No media</option>
@@ -699,7 +692,7 @@ function EditEnigmaModal({ enigma, bases, onSave, onCancel }: EditEnigmaModalPro
               </label>
               <select
                 value={mediaType || ""}
-                onChange={(e) => setMediaType(e.target.value as any || undefined)}
+                onChange={(e) => setMediaType(e.target.value as "image" | "video" | "youtube" | undefined || undefined)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">No media</option>

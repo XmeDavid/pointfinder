@@ -5,7 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/authStore";
 import {
   LogOut,
-  Map as MapIcon,
   LayoutDashboard,
   Users,
 } from "lucide-react";

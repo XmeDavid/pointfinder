@@ -37,7 +37,7 @@ export default function GameEditPage() {
 
   useEffect(() => {
     fetchGame();
-  }, [gameId]);
+  }, [gameId, fetchGame]);
 
   async function fetchGame() {
     try {

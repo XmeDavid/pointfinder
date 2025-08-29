@@ -1,4 +1,4 @@
-import { MapPin, Users, Trophy, Clock, Zap, CheckCircle, AlertCircle } from "lucide-react";
+import { MapPin, Clock, Zap, CheckCircle, AlertCircle } from "lucide-react";
 
 interface Event {
   id: string;

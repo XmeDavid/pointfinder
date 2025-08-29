@@ -137,7 +137,7 @@ export default function CreateGameModal({ onClose, onGameCreated }: CreateGameMo
                 <MapPin className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                 <p className="text-gray-600">No bases created yet</p>
                 <p className="text-sm text-gray-500 mt-1">
-                  Click "Manage Bases" to create bases for your game
+                  Click &quot;Manage Bases&quot; to create bases for your game
                 </p>
               </div>
             ) : (
@@ -188,7 +188,7 @@ export default function CreateGameModal({ onClose, onGameCreated }: CreateGameMo
                 <Users className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                 <p className="text-gray-600">No teams created yet</p>
                 <p className="text-sm text-gray-500 mt-1">
-                  Click "Manage Teams" to create teams for players to join
+                  Click &quot;Manage Teams&quot; to create teams for players to join
                 </p>
               </div>
             ) : (
@@ -235,7 +235,7 @@ export default function CreateGameModal({ onClose, onGameCreated }: CreateGameMo
                 <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                 <p className="text-gray-600">No enigmas created yet</p>
                 <p className="text-sm text-gray-500 mt-1">
-                  Click "Manage Enigmas" to create challenges for teams
+                  Click &quot;Manage Enigmas&quot; to create challenges for teams
                 </p>
               </div>
             ) : (

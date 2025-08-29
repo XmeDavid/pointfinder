@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MapPin, Users, Calendar, Play, Pause, Settings, Eye, Edit } from "lucide-react";
+import { MapPin, Users, Calendar, Play, Pause, Settings, Eye } from "lucide-react";
 import { api } from "@/lib/apiClient";
 import Link from "next/link";
 

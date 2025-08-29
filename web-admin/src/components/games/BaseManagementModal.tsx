@@ -30,12 +30,10 @@ interface BaseManagementModalProps {
 export default function BaseManagementModal({
   isOpen,
   onClose,
-  gameId,
   bases,
   onBasesUpdate,
 }: BaseManagementModalProps) {
   const [selectedBase, setSelectedBase] = useState<Base | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
   const [editingBase, setEditingBase] = useState<Base | null>(null);
   const [mapCenter, setMapCenter] = useState({ lat: 38.7223, lng: -9.1393 }); // Lisbon default
 
@@ -143,7 +141,7 @@ export default function BaseManagementModal({
                 <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-600">No bases created yet</p>
                 <p className="text-sm text-gray-500 mt-1">
-                  Click on the map or use the "Add Base" button to create your first base
+                  Click on the map or use the &quot;Add Base&quot; button to create your first base
                 </p>
               </div>
             ) : (

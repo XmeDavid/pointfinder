@@ -37,7 +37,7 @@ export default function OperatorDetailsModal({ isOpen, onClose, operator, onOper
     if (isOpen && operator) {
       fetchOperatorGames();
     }
-  }, [isOpen, operator]);
+  }, [isOpen, operator, fetchOperatorGames]);
 
   const fetchOperatorGames = async () => {
     if (!operator) return;

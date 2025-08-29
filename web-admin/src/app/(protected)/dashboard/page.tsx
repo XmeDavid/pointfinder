@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Plus, Users, Shield, Eye, UserPlus } from "lucide-react";
+import { Plus, Shield, UserPlus } from "lucide-react";
 import { api } from "@/lib/apiClient";
 import { useAuthStore } from "@/lib/authStore";
 import CreateGameModal from "@/components/games/CreateGameModal";
@@ -51,7 +51,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   async function fetchData() {
     try {
@@ -66,11 +66,11 @@ export default function DashboardPage() {
             fetchGames()
           ]);
           setIsAdminMode(true);
-        } catch (err) {
-          // If admin endpoints fail, try to fetch games as operator
-          setIsAdminMode(false);
-          await fetchGames();
-        }
+            } catch {
+      // If admin endpoints fail, try to fetch games as operator
+      setIsAdminMode(false);
+      await fetchGames();
+    }
       } else {
         // Operator: Only fetch games
         setIsAdminMode(false);

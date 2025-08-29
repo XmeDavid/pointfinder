@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Users, MapPin, CheckCircle, Clock, Award, Eye } from "lucide-react";
+import { Users, CheckCircle, Clock, Award, Eye } from "lucide-react";
 
 interface Team {
   id: string;

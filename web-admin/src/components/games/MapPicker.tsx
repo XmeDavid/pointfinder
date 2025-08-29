@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
-import { Icon, LatLng } from "leaflet";
+import { Icon } from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 interface Base {
@@ -70,7 +70,7 @@ export default function MapPicker({
   center,
   onCenterChange,
 }: MapPickerProps) {
-  const mapRef = useRef<any>(null);
+  const mapRef = useRef<{ fitBounds: (bounds: [number, number][], options: { padding: [number, number] }) => void } | null>(null);
 
   // Auto-center map when bases are added
   useEffect(() => {

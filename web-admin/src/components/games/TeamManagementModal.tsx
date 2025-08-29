@@ -24,7 +24,6 @@ interface TeamManagementModalProps {
 export default function TeamManagementModal({
   isOpen,
   onClose,
-  gameId,
   teams,
   onTeamsUpdate,
 }: TeamManagementModalProps) {
@@ -138,7 +137,7 @@ export default function TeamManagementModal({
                 <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-600">No teams created yet</p>
                 <p className="text-sm text-gray-500 mt-1">
-                  Click "Add Teams" to create teams for players to join
+                  Click &quot;Add Teams&quot; to create teams for players to join
                 </p>
               </div>
             ) : (

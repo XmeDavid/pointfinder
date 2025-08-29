@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { MapPin, Users, Trophy, Clock, RefreshCw, Eye, Activity } from "lucide-react";
+import { MapPin, Users, Trophy, RefreshCw, Eye, Activity } from "lucide-react";
 import { api } from "@/lib/apiClient";
 import LiveMap from "@/components/monitoring/LiveMap";
 import TeamProgressTable from "@/components/monitoring/TeamProgressTable";

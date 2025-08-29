@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, MapPin, Users, Settings, Play, Save, FileText } from "lucide-react";
+import { ArrowLeft, MapPin, Users, Settings, Play, FileText } from "lucide-react";
 import { api } from "@/lib/apiClient";
 import BaseManagementModal from "@/components/games/BaseManagementModal";
 import TeamManagementModal from "@/components/games/TeamManagementModal";
@@ -70,7 +70,7 @@ export default function GameSetupPage() {
 
   useEffect(() => {
     fetchGame();
-  }, [gameId]);
+  }, [gameId, fetchGame]);
 
   async function fetchGame() {
     try {
@@ -206,7 +206,7 @@ export default function GameSetupPage() {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
+                  onClick={() => setActiveTab(tab.id as "overview" | "bases" | "teams" | "enigmas" | "settings")}
                   className={`flex items-center gap-2 py-2 px-1 border-b-2 font-medium text-sm ${
                     isActive
                       ? "border-blue-500 text-blue-600"
@@ -384,7 +384,7 @@ export default function GameSetupPage() {
                 <MapPin className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No bases created yet</h3>
                 <p className="text-gray-600 mb-6">
-                  Create bases for your game by clicking "Manage Bases"
+                  Create bases for your game by clicking &quot;Manage Bases&quot;
                 </p>
                 <button
                   onClick={() => setShowBaseManagement(true)}
