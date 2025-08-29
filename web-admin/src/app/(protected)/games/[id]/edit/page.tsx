@@ -35,10 +35,6 @@ export default function GameEditPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchGame();
-  }, [gameId, fetchGame]);
-
   const fetchGame = useCallback(async () => {
     try {
       setLoading(true);
@@ -53,6 +49,10 @@ export default function GameEditPage() {
       setLoading(false);
     }
   }, [gameId]);
+
+  useEffect(() => {
+    fetchGame();
+  }, [fetchGame]);
 
   async function handleSave() {
     if (!game) return;

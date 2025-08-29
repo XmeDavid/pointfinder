@@ -70,7 +70,7 @@ export default function GameMonitorPage() {
       const interval = setInterval(fetchGameData, 10000); // Refresh every 10 seconds
       return () => clearInterval(interval);
     }
-  }, [gameId, autoRefresh]);
+  }, [gameId, autoRefresh, fetchGameData]);
 
   const fetchGameData = useCallback(async () => {
     try {

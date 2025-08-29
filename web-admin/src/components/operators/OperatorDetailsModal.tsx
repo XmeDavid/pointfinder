@@ -52,7 +52,7 @@ export default function OperatorDetailsModal({ isOpen, onClose, operator, onOper
     } finally {
       setLoading(false);
     }
-  }, [operator?.id]);
+  }, [operator]);
 
   const handleStatusUpdate = async (newStatus: "active" | "inactive" | "pending") => {
     if (!operator) return;
