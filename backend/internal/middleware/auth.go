@@ -9,6 +9,76 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// RequireTeam middleware for mobile team authentication
+func RequireTeam(cfg JWTConfig) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		h := c.Get("Authorization")
+		if h == "" {
+			return c.Status(401).JSON(fiber.Map{
+				"error":   "authentication_required",
+				"message": "Authorization header is required",
+			})
+		}
+		
+		parts := strings.SplitN(h, " ", 2)
+		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
+			return c.Status(401).JSON(fiber.Map{
+				"error":   "invalid_token_format",
+				"message": "Authorization must be Bearer token",
+			})
+		}
+		
+		token, err := jwt.Parse(parts[1], func(t *jwt.Token) (interface{}, error) {
+			// Validate the signing method
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+			}
+			return []byte(cfg.Secret), nil
+		})
+		
+		if err != nil || !token.Valid {
+			return c.Status(401).JSON(fiber.Map{
+				"error":   "invalid_token",
+				"message": "Token is invalid or expired",
+			})
+		}
+		
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			return c.Status(401).JSON(fiber.Map{
+				"error":   "invalid_token",
+				"message": "Token claims are invalid",
+			})
+		}
+		
+		// Check role
+		role, ok := claims["role"].(string)
+		if !ok || role != "team" {
+			return c.Status(403).JSON(fiber.Map{
+				"error":   "insufficient_permissions",
+				"message": "Team access required",
+			})
+		}
+		
+		// Check subject exists
+		sub, ok := claims["sub"].(string)
+		if !ok || sub == "" {
+			return c.Status(401).JSON(fiber.Map{
+				"error":   "invalid_token",
+				"message": "Token subject is invalid",
+			})
+		}
+		
+		// Extract device ID
+		deviceID, _ := claims["device_id"].(string)
+		
+		c.Locals("teamID", sub)
+		c.Locals("role", "team")
+		c.Locals("deviceID", deviceID)
+		return c.Next()
+	}
+}
+
 type JWTConfig struct {
 	Secret string
 }
@@ -81,22 +151,43 @@ func RequireAdmin(cfg JWTConfig) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		h := c.Get("Authorization")
 		if h == "" {
-			return fiber.ErrUnauthorized
+			return c.Status(401).JSON(fiber.Map{
+				"error":   "authentication_required",
+				"message": "Authorization header is required",
+			})
 		}
+		
 		parts := strings.SplitN(h, " ", 2)
 		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
-			return fiber.ErrUnauthorized
+			return c.Status(401).JSON(fiber.Map{
+				"error":   "invalid_token_format",
+				"message": "Authorization must be Bearer token",
+			})
 		}
+		
 		token, err := jwt.Parse(parts[1], func(t *jwt.Token) (interface{}, error) {
+			// Validate the signing method
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+			}
 			return []byte(cfg.Secret), nil
 		})
+		
 		if err != nil || !token.Valid {
-			return fiber.ErrUnauthorized
+			return c.Status(401).JSON(fiber.Map{
+				"error":   "invalid_token",
+				"message": "Token is invalid or expired",
+			})
 		}
+		
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok || claims["role"] != "admin" {
-			return fiber.ErrUnauthorized
+			return c.Status(403).JSON(fiber.Map{
+				"error":   "insufficient_permissions",
+				"message": "Admin access required",
+			})
 		}
+		
 		c.Locals("adminID", claims["sub"])
 		return c.Next()
 	}
@@ -106,22 +197,43 @@ func RequireAuth(cfg JWTConfig) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		h := c.Get("Authorization")
 		if h == "" {
-			return fiber.ErrUnauthorized
+			return c.Status(401).JSON(fiber.Map{
+				"error":   "authentication_required",
+				"message": "Authorization header is required",
+			})
 		}
+		
 		parts := strings.SplitN(h, " ", 2)
 		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
-			return fiber.ErrUnauthorized
+			return c.Status(401).JSON(fiber.Map{
+				"error":   "invalid_token_format",
+				"message": "Authorization must be Bearer token",
+			})
 		}
+		
 		token, err := jwt.Parse(parts[1], func(t *jwt.Token) (interface{}, error) {
+			// Validate the signing method
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+			}
 			return []byte(cfg.Secret), nil
 		})
+		
 		if err != nil || !token.Valid {
-			return fiber.ErrUnauthorized
+			return c.Status(401).JSON(fiber.Map{
+				"error":   "invalid_token",
+				"message": "Token is invalid or expired",
+			})
 		}
+		
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
-			return fiber.ErrUnauthorized
+			return c.Status(401).JSON(fiber.Map{
+				"error":   "invalid_token",
+				"message": "Token claims are invalid",
+			})
 		}
+		
 		c.Locals("userID", claims["sub"])
 		c.Locals("role", claims["role"])
 		if d, ok := claims["device_id"]; ok {
@@ -135,11 +247,18 @@ func RequireOperator(cfg JWTConfig) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		h := c.Get("Authorization")
 		if h == "" {
-			return fiber.ErrUnauthorized
+			return c.Status(401).JSON(fiber.Map{
+				"error":   "authentication_required",
+				"message": "Authorization header is required",
+			})
 		}
+		
 		parts := strings.SplitN(h, " ", 2)
 		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
-			return fiber.ErrUnauthorized
+			return c.Status(401).JSON(fiber.Map{
+				"error":   "invalid_token_format",
+				"message": "Authorization must be Bearer token",
+			})
 		}
 		
 		token, err := jwt.Parse(parts[1], func(t *jwt.Token) (interface{}, error) {
@@ -149,30 +268,38 @@ func RequireOperator(cfg JWTConfig) fiber.Handler {
 			}
 			return []byte(cfg.Secret), nil
 		})
+		
 		if err != nil || !token.Valid {
-			return fiber.ErrUnauthorized
+			return c.Status(401).JSON(fiber.Map{
+				"error":   "invalid_token",
+				"message": "Token is invalid or expired",
+			})
 		}
 		
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
-			return fiber.ErrUnauthorized
+			return c.Status(401).JSON(fiber.Map{
+				"error":   "invalid_token",
+				"message": "Token claims are invalid",
+			})
 		}
 		
 		// Check role
 		role, ok := claims["role"].(string)
 		if !ok || role != "operator" {
-			return fiber.ErrUnauthorized
+			return c.Status(403).JSON(fiber.Map{
+				"error":   "insufficient_permissions",
+				"message": "Operator access required",
+			})
 		}
 		
 		// Check subject exists
 		sub, ok := claims["sub"].(string)
 		if !ok || sub == "" {
-			return fiber.ErrUnauthorized
-		}
-		
-		// Debug UUID handling
-		if strings.Contains(sub, "-") {
-			fmt.Printf("Processing UUID operator: %s\n", sub)
+			return c.Status(401).JSON(fiber.Map{
+				"error":   "invalid_token",
+				"message": "Token subject is invalid",
+			})
 		}
 		
 		c.Locals("operatorID", sub)

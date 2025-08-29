@@ -76,7 +76,7 @@ export default function GameCard({ game, onUpdate }: GameCardProps) {
     
     setLoading(true);
     try {
-      await api.post(`api/operator/games/${game.id}/status`, {
+      await api.patch(`api/games/${game.id}`, {
         json: { status: "live" }
       });
       onUpdate();
@@ -91,7 +91,7 @@ export default function GameCard({ game, onUpdate }: GameCardProps) {
   const handlePauseGame = async () => {
     setLoading(true);
     try {
-      await api.post(`api/operator/games/${game.id}/status`, {
+      await api.patch(`api/games/${game.id}`, {
         json: { status: "finished" }
       });
       onUpdate();

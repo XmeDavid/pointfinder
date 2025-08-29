@@ -47,4 +47,6 @@ func Register(app *fiber.App, cfg *config.Config, pool *pgxpool.Pool) {
 	http.RegisterTeamGame(api, pool, cfg)     // Team game state and enigma solving
 	http.RegisterMonitoring(api, pool, cfg)   // Real-time monitoring for operators
 	http.RegisterEvents(api, pool, cfg)
+	http.RegisterNFC(api, pool, cfg)          // NFC tag management for operators and teams
+	http.RegisterWebSocket(app, pool, cfg)    // WebSocket for real-time monitoring
 }

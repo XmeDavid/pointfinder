@@ -56,11 +56,11 @@ export default function DashboardPage() {
   const user = useAuthStore((s) => s.user);
 
   const fetchGames = useCallback(async () => {
-    const endpoint = user?.role === "admin" ? "api/games" : "api/operator/games";
+    const endpoint = user?.role === "admin" ? "api/games?limit=100" : "api/operator/games?limit=100";
     
     try {
-      const gamesData = await api.get(endpoint).json() as Game[];
-      setGames(gamesData || []);
+      const response = await api.get(endpoint).json() as { games: Game[], total: number, hasMore: boolean };
+      setGames(response.games || []);
     } catch (err) {
       console.error("Failed to fetch games:", err);
       const error = err as { response?: { status?: number }; message?: string };
@@ -76,8 +76,8 @@ export default function DashboardPage() {
 
   const fetchOperators = useCallback(async () => {
     try {
-      const operatorsData = await api.get("api/admin/operators").json() as Operator[];
-      setOperators(operatorsData);
+      const response = await api.get("api/admin/operators?limit=100").json() as { operators: Operator[], total: number, hasMore: boolean };
+      setOperators(response.operators || []);
     } catch (err) {
       console.error("Failed to fetch operators:", err);
       const error = err as { response?: { status?: number }; message?: string };

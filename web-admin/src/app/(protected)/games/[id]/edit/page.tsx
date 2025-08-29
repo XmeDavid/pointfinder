@@ -66,7 +66,7 @@ export default function GameEditPage() {
     setError(null);
     
     try {
-      await api.patch(`api/operator/games/${gameId}`, {
+      await api.patch(`api/games/${gameId}`, {
         json: {
           name: name.trim(),
           rulesHtml: rulesHtml.trim(),

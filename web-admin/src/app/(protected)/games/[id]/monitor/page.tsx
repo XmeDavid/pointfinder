@@ -68,7 +68,9 @@ export default function GameMonitorPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [autoRefresh, setAutoRefresh] = useState(false); // Disabled by default since we're using WebSocket
+  const [wsConnected, setWsConnected] = useState(false);
+  const [wsError, setWsError] = useState<string | null>(null);
 
   const fetchGameData = useCallback(async () => {
     try {
@@ -79,11 +81,11 @@ export default function GameMonitorPage() {
       setGame(gameData);
       
       // Fetch teams with progress
-      const teamsData = await api.get(`api/operator/monitor/games/${gameId}/teams`).json() as Team[];
+      const teamsData = await api.get(`api/monitoring/games/${gameId}/teams`).json() as Team[];
       setTeams(teamsData);
       
       // Fetch recent events
-      const eventsData = await api.get(`api/operator/monitor/games/${gameId}/events?limit=50`).json() as Event[];
+      const eventsData = await api.get(`api/events?gameId=${gameId}&limit=50`).json() as Event[];
       setEvents(eventsData);
       
     } catch (err) {
@@ -94,14 +96,83 @@ export default function GameMonitorPage() {
     }
   }, [gameId]);
 
+  // WebSocket message handler
+  const handleWebSocketMessage = useCallback((message: WSMessage) => {
+    console.log('WebSocket message received:', message);
+    
+    switch (message.type) {
+      case 'team_location':
+        // Update team location in real-time
+        setTeams(prevTeams => prevTeams.map(team => 
+          team.id === message.teamId 
+            ? {
+                ...team,
+                lastLocation: {
+                  latitude: message.data.latitude,
+                  longitude: message.data.longitude,
+                  timestamp: message.timestamp,
+                }
+              }
+            : team
+        ));
+        break;
+        
+      case 'base_arrival':
+      case 'base_complete':
+      case 'enigma_solved':
+        // Refresh team progress when base events occur
+        fetchGameData();
+        break;
+        
+      case 'game_event':
+        // Add new event to the feed
+        const newEvent: Event = {
+          id: Date.now().toString(),
+          type: message.data.action || message.type,
+          teamId: message.teamId || '',
+          teamName: message.data.teamName || '',
+          message: message.data.message || 'Game event occurred',
+          createdAt: message.timestamp,
+        };
+        setEvents(prevEvents => [newEvent, ...prevEvents.slice(0, 49)]); // Keep last 50 events
+        break;
+    }
+  }, [fetchGameData]);
+
+  // WebSocket connection
+  const { isConnected, isConnecting, error: wsErrorFromHook, reconnect } = useWebSocket({
+    gameId,
+    onMessage: handleWebSocketMessage,
+    onConnect: () => {
+      console.log('WebSocket connected successfully');
+      setWsConnected(true);
+      setWsError(null);
+    },
+    onDisconnect: () => {
+      console.log('WebSocket disconnected');
+      setWsConnected(false);
+    },
+    onError: (error) => {
+      console.error('WebSocket error:', error);
+      setWsConnected(false);
+      setWsError('WebSocket connection failed');
+    },
+  });
+
+  // Update wsError from hook
+  useEffect(() => {
+    setWsError(wsErrorFromHook);
+  }, [wsErrorFromHook]);
+
   useEffect(() => {
     fetchGameData();
     
-    if (autoRefresh) {
-      const interval = setInterval(fetchGameData, 10000); // Refresh every 10 seconds
+    // Only use polling as fallback if WebSocket is not connected and auto-refresh is enabled
+    if (autoRefresh && !isConnected) {
+      const interval = setInterval(fetchGameData, 10000);
       return () => clearInterval(interval);
     }
-  }, [gameId, autoRefresh, fetchGameData]);
+  }, [gameId, autoRefresh, isConnected, fetchGameData]);
 
   const totalTeams = teams.length;
   const activeTeams = teams.filter(t => t.lastLocation && 
@@ -236,6 +307,23 @@ export default function GameMonitorPage() {
             </div>
           </div>
         </div>
+
+        {/* Error State */}
+        {(error || wsError) && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            {error && <p className="text-red-600 mb-2">{error}</p>}
+            {wsError && <p className="text-red-600">WebSocket Error: {wsError}</p>}
+          </div>
+        )}
+        
+        {/* WebSocket Status Warning */}
+        {!isConnected && !isConnecting && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+            <p className="text-yellow-800">
+              Real-time updates are unavailable. Data will refresh manually or using polling mode.
+            </p>
+          </div>
+        )}
 
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

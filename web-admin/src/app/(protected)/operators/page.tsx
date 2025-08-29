@@ -39,8 +39,8 @@ export default function OperatorsPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.get("api/admin/operators").json() as Operator[];
-      setOperators(data);
+      const response = await api.get("api/admin/operators?limit=100").json() as { operators: Operator[], total: number, hasMore: boolean };
+      setOperators(response.operators || []);
     } catch (err) {
       console.error("Failed to fetch operators:", err);
       setError("Failed to load operators. Please try again.");
@@ -52,8 +52,8 @@ export default function OperatorsPage() {
   const fetchInvitations = async () => {
     setInvitationsLoading(true);
     try {
-      const data = await api.get("api/admin/operators/invitations").json() as Invitation[];
-      setInvitations(data);
+      const response = await api.get("api/admin/operators/invitations?limit=100").json() as { invitations: Invitation[], total: number, hasMore: boolean };
+      setInvitations(response.invitations || []);
     } catch (err) {
       console.error("Failed to fetch invitations:", err);
     } finally {

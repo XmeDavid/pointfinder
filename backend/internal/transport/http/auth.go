@@ -2,12 +2,15 @@ package http
 
 import (
 	"backend/internal/config"
+	"backend/internal/db"
 	"backend/internal/middleware"
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -97,50 +100,171 @@ func RegisterAuth(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) {
 	})
 
 	// Team join endpoint for mobile clients (invite_code-based)
-	api.Post("/auth/team/join", func(c *fiber.Ctx) error {
+	api.Post("/auth/team/join", middleware.ValidateJSONRequest(1024), func(c *fiber.Ctx) error {
 		var req struct {
 			Code     string `json:"code"`
 			DeviceId string `json:"deviceId"`
+			Name     string `json:"name"` // Optional player name
 		}
 		if err := c.BodyParser(&req); err != nil {
-			return fiber.ErrBadRequest
+			return c.Status(400).JSON(fiber.Map{
+				"error":   "invalid_request",
+				"message": "Invalid request body",
+			})
 		}
 
-		req.Code = middleware.SanitizeString(req.Code)
-		req.DeviceId = middleware.SanitizeString(req.DeviceId)
-		if req.Code == "" || req.DeviceId == "" {
-			return c.Status(400).JSON(fiber.Map{"error": "Missing code or deviceId"})
+		// Validate and sanitize input
+		req.Code = middleware.SanitizeStringWithLimit(req.Code, middleware.MaxInviteCodeLength)
+		req.DeviceId = middleware.SanitizeStringWithLimit(req.DeviceId, middleware.MaxDeviceIDLength) 
+		req.Name = middleware.SanitizeStringWithLimit(req.Name, middleware.MaxNameLength)
+		
+		if !middleware.ValidateInviteCode(req.Code) {
+			return c.Status(400).JSON(fiber.Map{
+				"error":   "invalid_invite_code",
+				"message": "Invite code is invalid or too short",
+			})
+		}
+		
+		if !middleware.ValidateDeviceID(req.DeviceId) {
+			return c.Status(400).JSON(fiber.Map{
+				"error":   "invalid_device_id",
+				"message": "Device ID is invalid",
+			})
 		}
 
-		// Lookup team by invite_code
-		var teamID, teamName, leaderDeviceID string
-		err := pool.QueryRow(context.Background(), `select id::text, name, coalesce(leader_device_id,'') from teams where invite_code = $1`, req.Code).Scan(&teamID, &teamName, &leaderDeviceID)
+		// Use transaction for atomic operation
+		err := db.WithTransaction(context.Background(), pool, func(tx pgx.Tx) error {
+			// Lookup team and game information
+			var teamID, teamName, gameID, gameName, gameStatus string
+			var leaderDeviceID *string
+			var membersJSON string
+			
+			err := tx.QueryRow(context.Background(), `
+				select t.id::text, t.name, t.game_id::text, g.name, g.status,
+				       t.leader_device_id, t.members::text
+				from teams t
+				join games g on t.game_id = g.id
+				where t.invite_code = $1`, req.Code).Scan(
+				&teamID, &teamName, &gameID, &gameName, &gameStatus,
+				&leaderDeviceID, &membersJSON)
+			
+			if err != nil {
+				if err == pgx.ErrNoRows {
+					return c.Status(404).JSON(fiber.Map{
+						"error":   "invalid_invite_code",
+						"message": "Team not found with this invite code",
+					})
+				}
+				return err
+			}
+
+			// Check if device is already a member
+			var existingMembers []string
+			if membersJSON != "" && membersJSON != "[]" {
+				if err := json.Unmarshal([]byte(membersJSON), &existingMembers); err == nil {
+					for _, member := range existingMembers {
+						if member == req.DeviceId {
+							// Device already joined - just issue new token
+							token, err := middleware.GenerateTeamToken(cfg.JWTSecret, teamID, req.DeviceId)
+							if err != nil {
+								return c.Status(500).JSON(fiber.Map{
+									"error":   "token_generation_failed",
+									"message": "Failed to generate authentication token",
+								})
+							}
+							
+							isLeader := (leaderDeviceID != nil && *leaderDeviceID == req.DeviceId)
+							
+							return c.JSON(fiber.Map{
+								"token":   token,
+								"team":    fiber.Map{
+									"id":             teamID,
+									"name":           teamName,
+									"memberCount":    len(existingMembers),
+									"leaderDeviceId": leaderDeviceID,
+									"isLeader":       isLeader,
+								},
+								"game":    fiber.Map{
+									"id":     gameID,
+									"name":   gameName,
+									"status": gameStatus,
+								},
+								"message": "Welcome back to the team!",
+							})
+						}
+					}
+				}
+			}
+
+			// Set leader if not set (first joiner becomes leader)
+			if leaderDeviceID == nil || *leaderDeviceID == "" {
+				_, err = tx.Exec(context.Background(), 
+					`update teams set leader_device_id = $1 where id = $2`, 
+					req.DeviceId, teamID)
+				if err != nil {
+					return err
+				}
+				leaderDeviceID = &req.DeviceId
+			}
+
+			// Add device to members array
+			existingMembers = append(existingMembers, req.DeviceId)
+			newMembersJSON, _ := json.Marshal(existingMembers)
+			
+			_, err = tx.Exec(context.Background(), 
+				`update teams set members = $1 where id = $2`,
+				string(newMembersJSON), teamID)
+			if err != nil {
+				return err
+			}
+
+			// Log join event
+			message := "Player joined team"
+			if req.Name != "" {
+				message = "Player " + req.Name + " joined team"
+			}
+			_, _ = tx.Exec(context.Background(),
+				`insert into events (type, team_id, message) values ($1, $2, $3)`,
+				"team_joined", teamID, message)
+
+			// Generate team token
+			token, err := middleware.GenerateTeamToken(cfg.JWTSecret, teamID, req.DeviceId)
+			if err != nil {
+				return err
+			}
+
+			isLeader := (leaderDeviceID != nil && *leaderDeviceID == req.DeviceId)
+			
+			return c.JSON(fiber.Map{
+				"token":   token,
+				"team":    fiber.Map{
+					"id":             teamID,
+					"name":           teamName,
+					"memberCount":    len(existingMembers),
+					"leaderDeviceId": leaderDeviceID,
+					"isLeader":       isLeader,
+				},
+				"game":    fiber.Map{
+					"id":     gameID,
+					"name":   gameName,
+					"status": gameStatus,
+				},
+				"message": "Successfully joined team!",
+			})
+		})
+
 		if err != nil {
-			return c.Status(404).JSON(fiber.Map{"error": "Invalid invite code"})
+			// Check if this is already a response (status was set)
+			if c.Response().StatusCode() != 200 {
+				return nil // Response was already sent
+			}
+			return c.Status(500).JSON(fiber.Map{
+				"error":   "database_error",
+				"message": "Failed to join team",
+			})
 		}
 
-		// Set leader if not set
-		if leaderDeviceID == "" {
-			_, _ = pool.Exec(context.Background(), `update teams set leader_device_id = $1 where id = $2`, req.DeviceId, teamID)
-			leaderDeviceID = req.DeviceId
-		}
-
-		// Add member device to team's members JSON array if not already present
-		_, _ = pool.Exec(context.Background(), `update teams set members = case when not members ? $1 then jsonb_set(members, '{-1}', to_jsonb($1::text), true) else members end where id = $2`, req.DeviceId, teamID)
-
-		// Issue team-scoped token with device_id claim
-		token, err := middleware.GenerateTeamToken(cfg.JWTSecret, teamID, req.DeviceId)
-		if err != nil {
-			return fiber.ErrInternalServerError
-		}
-
-		team := fiber.Map{
-			"id":             teamID,
-			"name":           teamName,
-			"members":        []string{req.DeviceId},
-			"leaderDeviceId": leaderDeviceID,
-		}
-		return c.JSON(fiber.Map{"token": token, "team": team})
+		return nil // Success response already sent in transaction
 	})
 
 	// Token refresh endpoint

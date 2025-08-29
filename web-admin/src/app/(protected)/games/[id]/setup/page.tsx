@@ -2,12 +2,14 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, MapPin, Users, Settings, Play, FileText } from "lucide-react";
+import { ArrowLeft, MapPin, Users, Settings, Play, FileText, Tag } from "lucide-react";
 import { api } from "@/lib/apiClient";
 import { Game } from "@/types";
 import BaseManagementModal from "@/components/games/BaseManagementModal";
 import TeamManagementModal from "@/components/games/TeamManagementModal";
 import EnigmaManagementModal from "@/components/games/EnigmaManagementModal";
+import NFCStatusModal from "@/components/nfc/NFCStatusModal";
+import GoLiveValidationModal from "@/components/games/GoLiveValidationModal";
 
 
 export default function GameSetupPage() {
@@ -22,6 +24,8 @@ export default function GameSetupPage() {
   const [showBaseManagement, setShowBaseManagement] = useState(false);
   const [showTeamManagement, setShowTeamManagement] = useState(false);
   const [showEnigmaManagement, setShowEnigmaManagement] = useState(false);
+  const [showNFCStatus, setShowNFCStatus] = useState(false);
+  const [showGoLiveValidation, setShowGoLiveValidation] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "bases" | "teams" | "enigmas" | "settings">("overview");
 
   const fetchGame = useCallback(async () => {
@@ -41,28 +45,20 @@ export default function GameSetupPage() {
     fetchGame();
   }, [fetchGame]);
 
-  async function handleGoLive() {
-    if (!game) return;
-    
-    // Check if all bases are linked
-    const unlinkedBases = game.bases.filter(base => !base.nfcLinked);
-    if (unlinkedBases.length > 0) {
-      alert(`Cannot go live: ${unlinkedBases.length} bases are not linked to NFC tags. Please complete NFC setup first.`);
-      return;
-    }
+  function handleGoLiveClick() {
+    setShowGoLiveValidation(true);
+  }
 
-    // Check if teams exist
-    if (game.teams.length === 0) {
-      alert("Cannot go live: No teams have been created. Please create at least one team first.");
-      return;
-    }
+  async function handleConfirmGoLive() {
+    if (!game) return;
 
     setSaving(true);
     try {
-      await api.patch(`api/operator/games/${gameId}`, {
+      await api.patch(`api/games/${gameId}`, {
         json: { status: "live" }
       });
       
+      setShowGoLiveValidation(false);
       router.push(`/games/${gameId}/monitor`);
     } catch (err) {
       setError("Failed to start game");
@@ -131,9 +127,9 @@ export default function GameSetupPage() {
               }`}>
                 {game.status.charAt(0).toUpperCase() + game.status.slice(1)}
               </span>
-              {game.status === "ready" && (
+              {(game.status === "ready" || game.status === "setup") && (
                 <button
-                  onClick={handleGoLive}
+                  onClick={handleGoLiveClick}
                   disabled={saving}
                   className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 transition-colors"
                 >
@@ -326,13 +322,22 @@ export default function GameSetupPage() {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">Base Management</h3>
-              <button
-                onClick={() => setShowBaseManagement(true)}
-                className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-              >
-                <MapPin className="w-4 h-4" />
-                Manage Bases
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setShowNFCStatus(true)}
+                  className="inline-flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors"
+                >
+                  <Tag className="w-4 h-4" />
+                  NFC Status
+                </button>
+                <button
+                  onClick={() => setShowBaseManagement(true)}
+                  className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                >
+                  <MapPin className="w-4 h-4" />
+                  Manage Bases
+                </button>
+              </div>
             </div>
 
             {game.bases.length === 0 ? (
@@ -359,9 +364,9 @@ export default function GameSetupPage() {
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                         base.nfcLinked 
                           ? "bg-green-100 text-green-800" 
-                          : "bg-yellow-100 text-yellow-800"
+                          : "bg-red-100 text-red-800"
                       }`}>
-                        {base.nfcLinked ? "Linked" : "Unlinked"}
+                        {base.nfcLinked ? "NFC Linked" : "NFC Missing"}
                       </span>
                     </div>
                     
@@ -546,6 +551,34 @@ export default function GameSetupPage() {
           onEnigmasUpdate={(newEnigmas) => {
             setGame(prev => prev ? { ...prev, enigmas: newEnigmas } : null);
           }}
+        />
+      )}
+
+      {/* NFC Status Modal */}
+      {showNFCStatus && (
+        <NFCStatusModal
+          isOpen={showNFCStatus}
+          onClose={() => setShowNFCStatus(false)}
+          gameId={gameId}
+          gameName={game.name}
+          bases={game.bases}
+          onUpdate={() => {
+            fetchGame(); // Refresh game data when NFC status updates
+          }}
+        />
+      )}
+
+      {/* Go Live Validation Modal */}
+      {showGoLiveValidation && (
+        <GoLiveValidationModal
+          isOpen={showGoLiveValidation}
+          onClose={() => setShowGoLiveValidation(false)}
+          onConfirm={handleConfirmGoLive}
+          bases={game.bases}
+          teams={game.teams}
+          enigmas={game.enigmas}
+          isLoading={saving}
+          gameName={game.name}
         />
       )}
     </div>

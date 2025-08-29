@@ -2,12 +2,14 @@ package http
 
 import (
 	"backend/internal/config"
+	"backend/internal/db"
 	"backend/internal/email"
 	"backend/internal/middleware"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -73,14 +75,50 @@ func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config)
 		})
 	})
 
-	// List pending invitations (admin only)
+	// List pending invitations (admin only) - with pagination
 	adminGrp.Get("/invitations", func(c *fiber.Ctx) error {
+		// Parse pagination parameters
+		params := &db.PaginationParams{
+			Page:     1,
+			PageSize: 20,
+		}
+		
+		if pageStr := c.Query("page"); pageStr != "" {
+			if page, err := strconv.Atoi(pageStr); err == nil {
+				params.Page = page
+			}
+		}
+		
+		if sizeStr := c.Query("pageSize"); sizeStr != "" {
+			if size, err := strconv.Atoi(sizeStr); err == nil {
+				params.PageSize = size
+			}
+		}
+		
+		params.Validate()
+
+		// Get total count
+		var total int
+		err := pool.QueryRow(context.Background(), 
+			"select count(*) from operator_invites").Scan(&total)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{
+				"error":   "database_error",
+				"message": "Failed to count invitations",
+			})
+		}
+
+		// Get paginated results
 		rows, err := pool.Query(context.Background(), `
 			select email, token, created_at, expires_at, used_at
 			from operator_invites 
-			order by created_at desc`)
+			order by created_at desc
+			limit $1 offset $2`, params.PageSize, params.GetOffset())
 		if err != nil {
-			return fiber.ErrInternalServerError
+			return c.Status(500).JSON(fiber.Map{
+				"error":   "database_error",
+				"message": "Failed to fetch invitations",
+			})
 		}
 		defer rows.Close()
 
@@ -90,7 +128,10 @@ func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config)
 			var createdAt, expiresAt time.Time
 			var usedAt *time.Time
 			if err := rows.Scan(&email, &token, &createdAt, &expiresAt, &usedAt); err != nil {
-				return fiber.ErrInternalServerError
+				return c.Status(500).JSON(fiber.Map{
+					"error":   "database_error",
+					"message": "Failed to parse invitation data",
+				})
 			}
 
 			status := "pending"
@@ -105,7 +146,10 @@ func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config)
 				"expiresAt": expiresAt, "usedAt": usedAt, "status": status,
 			})
 		}
-		return c.JSON(invitations)
+
+		// Return paginated result
+		result := db.NewPaginatedResult(invitations, total, params)
+		return c.JSON(result)
 	})
 
 	// Cancel invitation (admin only)
@@ -126,17 +170,53 @@ func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config)
 		return c.JSON(fiber.Map{"message": "Invitation cancelled"})
 	})
 
-	// List operators (admin only)
+	// List operators (admin only) - with pagination
 	adminGrp.Get("/", func(c *fiber.Ctx) error {
+		// Parse pagination parameters
+		params := &db.PaginationParams{
+			Page:     1,
+			PageSize: 20,
+		}
+		
+		if pageStr := c.Query("page"); pageStr != "" {
+			if page, err := strconv.Atoi(pageStr); err == nil {
+				params.Page = page
+			}
+		}
+		
+		if sizeStr := c.Query("pageSize"); sizeStr != "" {
+			if size, err := strconv.Atoi(sizeStr); err == nil {
+				params.PageSize = size
+			}
+		}
+		
+		params.Validate()
+
+		// Get total count
+		var total int
+		err := pool.QueryRow(context.Background(), 
+			"select count(*) from operators").Scan(&total)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{
+				"error":   "database_error",
+				"message": "Failed to count operators",
+			})
+		}
+
+		// Get paginated results
 		rows, err := pool.Query(context.Background(), `
 			select o.id, o.email, o.name, o.status, o.created_at,
 			       count(distinct og.game_id) as game_count
 			from operators o
 			left join operator_games og on o.id = og.operator_id
 			group by o.id, o.email, o.name, o.status, o.created_at
-			order by o.created_at desc`)
+			order by o.created_at desc
+			limit $1 offset $2`, params.PageSize, params.GetOffset())
 		if err != nil {
-			return fiber.ErrInternalServerError
+			return c.Status(500).JSON(fiber.Map{
+				"error":   "database_error",
+				"message": "Failed to fetch operators",
+			})
 		}
 		defer rows.Close()
 
@@ -146,14 +226,20 @@ func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config)
 			var createdAt time.Time
 			var gameCount int
 			if err := rows.Scan(&id, &email, &name, &status, &createdAt, &gameCount); err != nil {
-				return fiber.ErrInternalServerError
+				return c.Status(500).JSON(fiber.Map{
+					"error":   "database_error",
+					"message": "Failed to parse operator data",
+				})
 			}
 			operators = append(operators, fiber.Map{
 				"id": id, "email": email, "name": name, "status": status,
 				"createdAt": createdAt, "gameCount": gameCount,
 			})
 		}
-		return c.JSON(operators)
+
+		// Return paginated result
+		result := db.NewPaginatedResult(operators, total, params)
+		return c.JSON(result)
 	})
 
 	// Get operator details (admin only)
