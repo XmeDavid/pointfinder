@@ -4,6 +4,8 @@ import (
 	"backend/internal/config"
 	"backend/internal/middleware"
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -107,7 +109,32 @@ func RegisterGames(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) {
 
 	// List operator's games
 	operatorGrp.Get("/", func(c *fiber.Ctx) error {
-		operatorID := c.Locals("operatorID").(string)
+		// Debug: Check if operatorID exists in locals
+		operatorIDRaw := c.Locals("operatorID")
+		if operatorIDRaw == nil {
+			return c.JSON(fiber.Map{"error": "operatorID not found in locals"})
+		}
+		
+		operatorID, ok := operatorIDRaw.(string)
+		if !ok {
+			return c.JSON(fiber.Map{"error": "operatorID not a string", "type": fmt.Sprintf("%T", operatorIDRaw)})
+		}
+		
+		// Return empty array if no games found - this is a valid case
+		games := make([]fiber.Map, 0)
+		
+		// Debug: First check if operator_games entries exist
+		var count int
+		err := pool.QueryRow(context.Background(), `
+			select count(*) from operator_games where operator_id = $1`, operatorID).Scan(&count)
+		if err != nil {
+			return c.JSON(fiber.Map{"error": "Failed to check operator_games", "operatorID": operatorID})
+		}
+		
+		if count == 0 {
+			return c.JSON(fiber.Map{"message": "No games found for operator", "operatorID": operatorID, "count": count})
+		}
+		
 		rows, err := pool.Query(context.Background(), `
 			select g.id, g.name, g.status, g.bases_linked, g.created_at, og.role
 			from games g
@@ -115,17 +142,16 @@ func RegisterGames(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config) {
 			where og.operator_id = $1
 			order by g.created_at desc`, operatorID)
 		if err != nil {
-			return fiber.ErrInternalServerError
+			return c.JSON(fiber.Map{"error": "Query failed", "operatorID": operatorID, "sqlError": err.Error()})
 		}
 		defer rows.Close()
 
-		var games []fiber.Map
 		for rows.Next() {
 			var id, name, status, role string
 			var basesLinked bool
-			var createdAt string
+			var createdAt time.Time
 			if err := rows.Scan(&id, &name, &status, &basesLinked, &createdAt, &role); err != nil {
-				return fiber.ErrInternalServerError
+				return c.JSON(fiber.Map{"error": "Scan failed", "scanError": err.Error()})
 			}
 			games = append(games, fiber.Map{
 				"id": id, "name": name, "status": status,
