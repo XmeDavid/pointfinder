@@ -94,7 +94,7 @@ export default function RegisterPage() {
       
       const error = err as { response?: { json: () => Promise<{ error?: string }> }; message?: string };
       if (error.response) {
-        const errorData = await error.response.json().catch(() => ({}));
+        const errorData = await error.response.json().catch(() => ({})) as { error?: string };
         setError(errorData.error || "Registration failed");
       } else {
         setError("Network error. Please try again.");
