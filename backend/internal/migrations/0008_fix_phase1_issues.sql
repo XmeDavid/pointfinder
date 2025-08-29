@@ -2,18 +2,10 @@
 -- This migration addresses schema inconsistencies and missing constraints
 
 -- Fix teams.game_id foreign key constraint (was missing)
--- First check if constraint already exists to avoid duplicate constraint errors
-do $$
-begin
-    if not exists (
-        select 1 from information_schema.table_constraints 
-        where constraint_name = 'fk_teams_game_id' 
-        and table_name = 'teams'
-    ) then
-        alter table teams add constraint fk_teams_game_id 
-            foreign key (game_id) references games(id) on delete cascade;
-    end if;
-end $$;
+-- Add constraint if it doesn't exist (PostgreSQL will ignore if exists)
+alter table teams drop constraint if exists fk_teams_game_id;
+alter table teams add constraint fk_teams_game_id 
+    foreign key (game_id) references games(id) on delete cascade;
 
 -- Ensure teams.game_id is not null (required for proper operation)
 alter table teams alter column game_id set not null;
