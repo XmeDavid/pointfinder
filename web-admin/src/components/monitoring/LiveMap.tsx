@@ -1,39 +1,13 @@
 import { MapPin, Users, Navigation } from "lucide-react";
+import dynamic from "next/dynamic";
+import { Base, Team, TeamLocation } from "@/types";
 
-interface Team {
-  id: string;
-  name: string;
-  number: number;
-  inviteCode: string;
-  members: string[];
-  leaderId?: string;
-  createdAt: string;
-  lastLocation?: {
-    latitude: number;
-    longitude: number;
-    timestamp: string;
-  };
-  progress: Array<{
-    baseId: string;
-    baseName: string;
-    arrivedAt?: string;
-    solvedAt?: string;
-    completedAt?: string;
-    score: number;
-  }>;
-}
+// Dynamically import the map to avoid SSR issues
+const InteractiveMap = dynamic(() => import("@/components/maps/InteractiveMap"), {
+  ssr: false,
+  loading: () => <div className="bg-gray-100 animate-pulse rounded-lg" style={{ height: "400px" }} />,
+});
 
-interface Base {
-  id: string;
-  name: string;
-  description?: string;
-  latitude: number;
-  longitude: number;
-  uuid: string;
-  isLocationDependent: boolean;
-  nfcLinked: boolean;
-  enigmaId?: string;
-}
 
 interface LiveMapProps {
   bases: Base[];
@@ -58,49 +32,61 @@ export default function LiveMap({ bases, teams, gameStatus }: LiveMapProps) {
     return date.toLocaleTimeString();
   };
 
+  // Convert team last locations to TeamLocation format
+  const teamLocations: TeamLocation[] = teams
+    .filter(team => team.lastLocation)
+    .map(team => ({
+      teamId: team.id,
+      teamName: team.name,
+      latitude: team.lastLocation!.latitude,
+      longitude: team.lastLocation!.longitude,
+      accuracy: 10, // Default accuracy
+      deviceId: "unknown", // Could be enhanced with actual device tracking
+      timestamp: team.lastLocation!.timestamp,
+    }));
+
   return (
     <div className="space-y-6">
-      {/* Map Placeholder */}
-      <div className="bg-gray-100 rounded-lg p-8 text-center border-2 border-dashed border-gray-300">
-        <Navigation className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Interactive Map</h3>
-        <p className="text-gray-600 mb-4">
-          {gameStatus === "live" 
-            ? "Real-time team locations and base status will be displayed here"
-            : "Map will be available when the game goes live"
-          }
-        </p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          <div className="bg-white rounded-lg p-3">
-            <div className="flex items-center gap-2 mb-1">
-              <MapPin className="w-4 h-4 text-blue-600" />
-              <span className="font-medium">Bases</span>
-            </div>
-            <span className="text-2xl font-bold text-gray-900">{bases.length}</span>
+      {/* Map Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+        <div className="bg-white rounded-lg p-3 border border-gray-200">
+          <div className="flex items-center gap-2 mb-1">
+            <MapPin className="w-4 h-4 text-blue-600" />
+            <span className="font-medium">Bases</span>
           </div>
-          <div className="bg-white rounded-lg p-3">
-            <div className="flex items-center gap-2 mb-1">
-              <Users className="w-4 h-4 text-green-600" />
-              <span className="font-medium">Teams</span>
-            </div>
-            <span className="text-2xl font-bold text-gray-900">{teams.length}</span>
+          <span className="text-2xl font-bold text-gray-900">{bases.length}</span>
+        </div>
+        <div className="bg-white rounded-lg p-3 border border-gray-200">
+          <div className="flex items-center gap-2 mb-1">
+            <Users className="w-4 h-4 text-green-600" />
+            <span className="font-medium">Teams</span>
           </div>
-          <div className="bg-white rounded-lg p-3">
-            <div className="flex items-center gap-2 mb-1">
-              <Navigation className="w-4 h-4 text-purple-600" />
-              <span className="font-medium">Active</span>
-            </div>
-            <span className="text-2xl font-bold text-gray-900">{activeTeams.length}</span>
+          <span className="text-2xl font-bold text-gray-900">{teams.length}</span>
+        </div>
+        <div className="bg-white rounded-lg p-3 border border-gray-200">
+          <div className="flex items-center gap-2 mb-1">
+            <Navigation className="w-4 h-4 text-purple-600" />
+            <span className="font-medium">Active</span>
           </div>
-          <div className="bg-white rounded-lg p-3">
-            <div className="flex items-center gap-2 mb-1">
-              <MapPin className="w-4 h-4 text-yellow-600" />
-              <span className="font-medium">Status</span>
-            </div>
-            <span className="text-sm font-medium text-gray-900 capitalize">{gameStatus}</span>
+          <span className="text-2xl font-bold text-gray-900">{activeTeams.length}</span>
+        </div>
+        <div className="bg-white rounded-lg p-3 border border-gray-200">
+          <div className="flex items-center gap-2 mb-1">
+            <MapPin className="w-4 h-4 text-yellow-600" />
+            <span className="font-medium">Status</span>
           </div>
+          <span className="text-sm font-medium text-gray-900 capitalize">{gameStatus}</span>
         </div>
       </div>
+
+      {/* Interactive Map */}
+      <InteractiveMap
+        bases={bases}
+        teams={teams}
+        teamLocations={teamLocations}
+        height="400px"
+        className="rounded-lg overflow-hidden border border-gray-200"
+      />
 
       {/* Active Teams */}
       {gameStatus === "live" && activeTeams.length > 0 && (

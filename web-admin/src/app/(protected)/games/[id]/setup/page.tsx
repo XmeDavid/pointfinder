@@ -68,10 +68,6 @@ export default function GameSetupPage() {
   const [showEnigmaManagement, setShowEnigmaManagement] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "bases" | "teams" | "enigmas" | "settings">("overview");
 
-  useEffect(() => {
-    fetchGame();
-  }, [gameId, fetchGame]);
-
   const fetchGame = useCallback(async () => {
     try {
       setLoading(true);
@@ -84,6 +80,10 @@ export default function GameSetupPage() {
       setLoading(false);
     }
   }, [gameId]);
+
+  useEffect(() => {
+    fetchGame();
+  }, [fetchGame]);
 
   async function handleGoLive() {
     if (!game) return;

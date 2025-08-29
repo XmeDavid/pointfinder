@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { X, Plus, Edit, Trash2, MapPin, Unlink, Image, Video, Youtube, FileText } from "lucide-react";
+import NextImage from "next/image";
 
 interface Enigma {
   id: string;
@@ -254,9 +255,11 @@ export default function EnigmaManagementModal({
                     <h4 className="font-medium text-gray-900 mb-2">Media</h4>
                     <div className="bg-gray-50 rounded-lg p-4">
                       {selectedEnigma.mediaType === "image" && (
-                        <img 
+                        <NextImage 
                           src={selectedEnigma.mediaUrl} 
                           alt={`Media for enigma: ${selectedEnigma.title}`}
+                          width={800}
+                          height={600}
                           className="max-w-full h-auto rounded-lg"
                         />
                       )}
