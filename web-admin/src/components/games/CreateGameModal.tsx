@@ -120,7 +120,7 @@ export default function CreateGameModal({ onClose, onGameCreated }: CreateGameMo
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium text-gray-700">
-                Bases *
+                Bases (Optional)
               </label>
               <button
                 type="button"
@@ -137,7 +137,7 @@ export default function CreateGameModal({ onClose, onGameCreated }: CreateGameMo
                 <MapPin className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                 <p className="text-gray-600">No bases created yet</p>
                 <p className="text-sm text-gray-500 mt-1">
-                  Click &quot;Manage Bases&quot; to create bases for your game
+                  You can add bases now or after creating the game
                 </p>
               </div>
             ) : (
@@ -171,7 +171,7 @@ export default function CreateGameModal({ onClose, onGameCreated }: CreateGameMo
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium text-gray-700">
-                Teams *
+                Teams (Optional)
               </label>
               <button
                 type="button"
@@ -188,7 +188,7 @@ export default function CreateGameModal({ onClose, onGameCreated }: CreateGameMo
                 <Users className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                 <p className="text-gray-600">No teams created yet</p>
                 <p className="text-sm text-gray-500 mt-1">
-                  Click &quot;Manage Teams&quot; to create teams for players to join
+                  You can create teams now or set them up later
                 </p>
               </div>
             ) : (
@@ -218,7 +218,7 @@ export default function CreateGameModal({ onClose, onGameCreated }: CreateGameMo
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium text-gray-700">
-                Enigmas *
+                Enigmas (Optional)
               </label>
               <button
                 type="button"
@@ -235,7 +235,7 @@ export default function CreateGameModal({ onClose, onGameCreated }: CreateGameMo
                 <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                 <p className="text-gray-600">No enigmas created yet</p>
                 <p className="text-sm text-gray-500 mt-1">
-                  Click &quot;Manage Enigmas&quot; to create challenges for teams
+                  You can design challenges now or add them later
                 </p>
               </div>
             ) : (
@@ -320,7 +320,7 @@ export default function CreateGameModal({ onClose, onGameCreated }: CreateGameMo
             </button>
             <button
               type="submit"
-              disabled={loading || bases.length === 0 || teams.length === 0 || enigmas.length === 0}
+              disabled={loading || !name.trim()}
               className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-3 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
             >
               {loading ? (
