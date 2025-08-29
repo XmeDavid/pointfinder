@@ -110,7 +110,7 @@ func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config)
 
 		// Get paginated results
 		rows, err := pool.Query(context.Background(), `
-			select email, token, created_at, expires_at, used_at
+			select email, token, created_at::text, expires_at::text, used_at::text
 			from operator_invites 
 			order by created_at desc
 			limit $1 offset $2`, params.PageSize, params.GetOffset())
@@ -124,9 +124,8 @@ func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config)
 
 		var invitations []fiber.Map
 		for rows.Next() {
-			var email, token string
-			var createdAt, expiresAt time.Time
-			var usedAt *time.Time
+			var email, token, createdAt, expiresAt string
+			var usedAt *string
 			if err := rows.Scan(&email, &token, &createdAt, &expiresAt, &usedAt); err != nil {
 				return c.Status(500).JSON(fiber.Map{
 					"error":   "database_error",
@@ -135,10 +134,15 @@ func RegisterOperators(api fiber.Router, pool *pgxpool.Pool, cfg *config.Config)
 			}
 
 			status := "pending"
-			if usedAt != nil {
+			if usedAt != nil && *usedAt != "" {
 				status = "used"
-			} else if time.Now().After(expiresAt) {
-				status = "expired"
+			} else {
+				// Parse expiration time to check if expired
+				if expiresAtTime, err := time.Parse("2006-01-02 15:04:05.999999-07", expiresAt); err == nil {
+					if time.Now().After(expiresAtTime) {
+						status = "expired"
+					}
+				}
 			}
 
 			invitations = append(invitations, fiber.Map{
