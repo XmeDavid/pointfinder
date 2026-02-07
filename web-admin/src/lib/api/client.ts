@@ -66,8 +66,9 @@ apiClient.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return apiClient(originalRequest);
       } catch {
-        // Refresh failed - clear auth and redirect to login
-        localStorage.removeItem("scout-auth");
+        // Refresh failed - clear auth via store to keep state in sync
+        const { useAuthStore } = await import("@/hooks/useAuth");
+        useAuthStore.getState().logout();
         window.location.href = "/login";
         return Promise.reject(error);
       }

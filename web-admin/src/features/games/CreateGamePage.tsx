@@ -44,11 +44,11 @@ export function CreateGamePage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="startDate">{t("games.startDate")}</Label>
-                <Input id="startDate" type="datetime-local" value={form.startDate} onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))} required />
+                <Input id="startDate" type="datetime-local" value={form.startDate} onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="endDate">{t("games.endDate")}</Label>
-                <Input id="endDate" type="datetime-local" value={form.endDate} onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))} required />
+                <Input id="endDate" type="datetime-local" value={form.endDate} onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))} />
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-4">

@@ -69,7 +69,7 @@ function GameCard({ gameId }: { gameId: string }) {
 
   if (!game) return null;
 
-  const statusVariant: Record<GameStatus, "default" | "secondary" | "warning" | "success"> = { draft: "secondary", setup: "warning", live: "success", ended: "default" };
+  const statusVariant: Record<GameStatus, "default" | "secondary" | "warning" | "success"> = { draft: "secondary", live: "success", ended: "default" };
 
   return (
     <Card className="cursor-pointer transition-shadow hover:shadow-md" onClick={() => navigate(`/games/${game.id}/overview`)}>
@@ -82,7 +82,7 @@ function GameCard({ gameId }: { gameId: string }) {
       </CardHeader>
       <CardContent>
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{formatDate(game.startDate)}</span>
+          <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{game.startDate ? formatDate(game.startDate) : "—"}</span>
           <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{t("games.base", { count: bases.length })}</span>
           <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{t("games.team", { count: teams.length })}</span>
         </div>

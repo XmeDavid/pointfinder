@@ -4,8 +4,8 @@ import apiClient from "./client";
 export interface CreateGameDto {
   name: string;
   description: string;
-  startDate: string;
-  endDate: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface GameImportData {
@@ -28,16 +28,18 @@ export const gamesApi = {
   create: async (dto: CreateGameDto): Promise<Game> => {
     const { data } = await apiClient.post("/games", {
       ...dto,
-      startDate: new Date(dto.startDate).toISOString(),
-      endDate: new Date(dto.endDate).toISOString(),
+      startDate: dto.startDate ? new Date(dto.startDate).toISOString() : null,
+      endDate: dto.endDate ? new Date(dto.endDate).toISOString() : null,
     });
     return data;
   },
 
   update: async (id: string, dto: Partial<CreateGameDto>): Promise<Game> => {
-    const payload = { ...dto };
-    if (payload.startDate) payload.startDate = new Date(payload.startDate).toISOString();
-    if (payload.endDate) payload.endDate = new Date(payload.endDate).toISOString();
+    const payload: Record<string, unknown> = { ...dto };
+    if (payload.startDate) payload.startDate = new Date(payload.startDate as string).toISOString();
+    else if (payload.startDate === "") payload.startDate = null;
+    if (payload.endDate) payload.endDate = new Date(payload.endDate as string).toISOString();
+    else if (payload.endDate === "") payload.endDate = null;
     const { data } = await apiClient.put(`/games/${id}`, payload);
     return data;
   },

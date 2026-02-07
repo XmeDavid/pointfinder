@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
-import { Calendar, MapPin, Puzzle, Users, Play, Square, Settings, AlertTriangle, CheckCircle2, Wifi, Download } from "lucide-react";
+import { Calendar, MapPin, Puzzle, Users, Play, Square, AlertTriangle, CheckCircle2, Wifi, Download } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -56,10 +56,9 @@ export function OverviewPage() {
 
   if (!game) return null;
 
-  const statusVariant: Record<GameStatus, "default" | "secondary" | "warning" | "success"> = { draft: "secondary", setup: "warning", live: "success", ended: "default" };
+  const statusVariant: Record<GameStatus, "default" | "secondary" | "warning" | "success"> = { draft: "secondary", live: "success", ended: "default" };
   const transitions: Record<GameStatus, { next: GameStatus; label: string; icon: React.ReactNode } | null> = {
-    draft: { next: "setup", label: t("lifecycle.startSetup"), icon: <Settings className="mr-2 h-4 w-4" /> },
-    setup: { next: "live", label: t("lifecycle.goLive"), icon: <Play className="mr-2 h-4 w-4" /> },
+    draft: { next: "live", label: t("lifecycle.goLive"), icon: <Play className="mr-2 h-4 w-4" /> },
     live: { next: "ended", label: t("lifecycle.endGame"), icon: <Square className="mr-2 h-4 w-4" /> },
     ended: null,
   };
@@ -110,12 +109,12 @@ export function OverviewPage() {
         <Card>
           <CardHeader><CardTitle className="text-lg">{t("overview.details")}</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex items-center gap-2 text-sm"><Calendar className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">{t("overview.starts")}</span><span>{formatDateTime(game.startDate)}</span></div>
-            <div className="flex items-center gap-2 text-sm"><Calendar className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">{t("overview.ends")}</span><span>{formatDateTime(game.endDate)}</span></div>
+            <div className="flex items-center gap-2 text-sm"><Calendar className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">{t("overview.starts")}</span><span>{game.startDate ? formatDateTime(game.startDate) : t("overview.notSet")}</span></div>
+            <div className="flex items-center gap-2 text-sm"><Calendar className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">{t("overview.ends")}</span><span>{game.endDate ? formatDateTime(game.endDate) : t("overview.notSet")}</span></div>
           </CardContent>
         </Card>
 
-        {(game.status === "setup" || game.status === "draft") && (
+        {game.status === "draft" && (
           <Card>
             <CardHeader><CardTitle className="text-lg">{t("overview.readinessChecklist")}</CardTitle><CardDescription>{t("overview.readinessDescription")}</CardDescription></CardHeader>
             <CardContent>

@@ -8,14 +8,14 @@ export interface User {
   createdAt: string;
 }
 
-export type GameStatus = "draft" | "setup" | "live" | "ended";
+export type GameStatus = "draft" | "live" | "ended";
 
 export interface Game {
   id: string;
   name: string;
   description: string;
-  startDate: string;
-  endDate: string;
+  startDate: string | null;
+  endDate: string | null;
   status: GameStatus;
   createdBy: string;
   operatorIds: string[];

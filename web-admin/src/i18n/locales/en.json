@@ -123,12 +123,10 @@
   },
   "status": {
     "draft": "Draft",
-    "setup": "Setup",
     "live": "Live",
     "ended": "Ended"
   },
   "lifecycle": {
-    "startSetup": "Start Setup",
     "goLive": "Go Live",
     "endGame": "End Game"
   },
@@ -150,7 +148,8 @@
     "nfcMissing_other": "{{count}} bases missing NFC link",
     "allBasesHaveChallenges": "All bases have challenges",
     "basesWithoutChallenges_one": "{{count}} base without challenges",
-    "basesWithoutChallenges_other": "{{count}} bases without challenges"
+    "basesWithoutChallenges_other": "{{count}} bases without challenges",
+    "notSet": "Not set"
   },
   "gameOperators": {
     "title": "Game Operators",

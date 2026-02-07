@@ -7,7 +7,7 @@ struct Game: Codable, Identifiable {
     let status: String
 
     var isActive: Bool {
-        status == "live" || status == "setup"
+        status == "live"
     }
 }
 

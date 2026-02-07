@@ -18,10 +18,11 @@ export function DashboardPage() {
   if (!stats || !game) return null;
 
   const now = new Date();
-  const endDate = new Date(game.endDate);
-  const timeRemaining = game.status === "live" ? Math.max(0, endDate.getTime() - now.getTime()) : 0;
+  const endDate = game.endDate ? new Date(game.endDate) : null;
+  const timeRemaining = game.status === "live" && endDate ? Math.max(0, endDate.getTime() - now.getTime()) : 0;
   const hoursLeft = Math.floor(timeRemaining / (1000 * 60 * 60));
   const minsLeft = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+  const hasEndDate = game.status === "live" && endDate;
 
   return (
     <div className="space-y-6">
@@ -30,7 +31,7 @@ export function DashboardPage() {
         <Card><CardContent className="flex items-center gap-3 p-4"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10"><Users className="h-5 w-5 text-blue-500" /></div><div><p className="text-2xl font-bold">{stats.totalTeams}</p><p className="text-sm text-muted-foreground">{t("monitor.activeTeams")}</p></div></CardContent></Card>
         <Card><CardContent className="flex items-center gap-3 p-4"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-500/10"><ClipboardCheck className="h-5 w-5 text-yellow-500" /></div><div><p className="text-2xl font-bold">{stats.pendingSubmissions}</p><p className="text-sm text-muted-foreground">{t("monitor.pendingReview")}</p></div></CardContent></Card>
         <Card><CardContent className="flex items-center gap-3 p-4"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10"><CheckCircle2 className="h-5 w-5 text-green-500" /></div><div><p className="text-2xl font-bold">{stats.completedSubmissions}/{stats.totalSubmissions}</p><p className="text-sm text-muted-foreground">{t("monitor.completed")}</p></div></CardContent></Card>
-        <Card><CardContent className="flex items-center gap-3 p-4"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10"><Clock className="h-5 w-5 text-purple-500" /></div><div><p className="text-2xl font-bold">{game.status === "live" ? `${hoursLeft}h ${minsLeft}m` : "—"}</p><p className="text-sm text-muted-foreground">{t("monitor.timeRemaining")}</p></div></CardContent></Card>
+        <Card><CardContent className="flex items-center gap-3 p-4"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10"><Clock className="h-5 w-5 text-purple-500" /></div><div><p className="text-2xl font-bold">{hasEndDate ? `${hoursLeft}h ${minsLeft}m` : "—"}</p><p className="text-sm text-muted-foreground">{t("monitor.timeRemaining")}</p></div></CardContent></Card>
       </div>
       <div className="grid gap-6 md:grid-cols-2">
         <Card>

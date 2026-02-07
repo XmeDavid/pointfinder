@@ -123,12 +123,10 @@
   },
   "status": {
     "draft": "Rascunho",
-    "setup": "Configuração",
     "live": "Em Direto",
     "ended": "Terminado"
   },
   "lifecycle": {
-    "startSetup": "Iniciar Configuração",
     "goLive": "Iniciar Jogo",
     "endGame": "Terminar Jogo"
   },
@@ -150,7 +148,8 @@
     "nfcMissing_other": "{{count}} bases sem NFC",
     "allBasesHaveChallenges": "Todas as bases têm desafios",
     "basesWithoutChallenges_one": "{{count}} base sem desafios",
-    "basesWithoutChallenges_other": "{{count}} bases sem desafios"
+    "basesWithoutChallenges_other": "{{count}} bases sem desafios",
+    "notSet": "Não definido"
   },
   "gameOperators": {
     "title": "Operadores do Jogo",

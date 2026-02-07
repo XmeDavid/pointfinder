@@ -10,6 +10,7 @@ interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
+  hasHydrated: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (token: string, name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
@@ -22,6 +23,7 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
+      hasHydrated: false,
 
       login: async (email: string, password: string) => {
         const { data } = await axios.post(`${API_URL}/auth/login`, {
@@ -66,6 +68,13 @@ export const useAuthStore = create<AuthState>()(
         });
       },
     }),
-    { name: "scout-auth" }
+    {
+      name: "scout-auth",
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.hasHydrated = true;
+        }
+      },
+    }
   )
 );

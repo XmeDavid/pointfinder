@@ -110,6 +110,21 @@ public class GameService {
         }
 
         validateStatusTransition(game.getStatus(), target);
+
+        // Handle transition to live
+        if (target == GameStatus.live) {
+            // Validate start date
+            if (game.getStartDate() != null && game.getStartDate().isAfter(Instant.now())) {
+                throw new BadRequestException("Cannot go live before the scheduled start date");
+            }
+            // Set start date to now if not set
+            if (game.getStartDate() == null) {
+                game.setStartDate(Instant.now());
+            }
+            // Auto-assign challenges
+            autoAssignChallenges(game);
+        }
+
         game.setStatus(target);
         game = gameRepository.save(game);
         return toResponse(game);
@@ -136,10 +151,69 @@ public class GameService {
         gameRepository.save(game);
     }
 
+    private void autoAssignChallenges(Game game) {
+        UUID gameId = game.getId();
+        List<Base> bases = baseRepository.findByGameId(gameId);
+        List<Team> teams = teamRepository.findByGameId(gameId);
+        List<Challenge> challenges = challengeRepository.findByGameId(gameId);
+        List<Assignment> existingAssignments = assignmentRepository.findByGameId(gameId);
+
+        if (teams.isEmpty() || challenges.isEmpty()) {
+            return; // Nothing to auto-assign
+        }
+
+        // Build pool of non-location-bound challenges for random assignment
+        List<Challenge> randomPool = challenges.stream()
+                .filter(c -> !c.getLocationBound())
+                .collect(Collectors.toList());
+
+        Random random = new Random();
+
+        for (Base base : bases) {
+            // Check if this base already has assignments
+            boolean hasAssignments = existingAssignments.stream()
+                    .anyMatch(a -> a.getBase().getId().equals(base.getId()));
+
+            if (base.getFixedChallenge() != null) {
+                // Base has a fixed challenge - create per-team assignments if none exist
+                if (!hasAssignments) {
+                    for (Team team : teams) {
+                        Assignment assignment = Assignment.builder()
+                                .game(game)
+                                .base(base)
+                                .challenge(base.getFixedChallenge())
+                                .team(team)
+                                .build();
+                        assignmentRepository.save(assignment);
+                    }
+                }
+            } else if (!hasAssignments && !randomPool.isEmpty()) {
+                // No fixed challenge, no existing assignments - assign random challenges per team
+                List<Challenge> availablePool = new ArrayList<>(randomPool);
+
+                for (Team team : teams) {
+                    if (availablePool.isEmpty()) {
+                        // Refill pool if exhausted (allows cycling through challenges)
+                        availablePool = new ArrayList<>(randomPool);
+                    }
+                    int idx = random.nextInt(availablePool.size());
+                    Challenge selected = availablePool.remove(idx);
+
+                    Assignment assignment = Assignment.builder()
+                            .game(game)
+                            .base(base)
+                            .challenge(selected)
+                            .team(team)
+                            .build();
+                    assignmentRepository.save(assignment);
+                }
+            }
+        }
+    }
+
     private void validateStatusTransition(GameStatus current, GameStatus target) {
         boolean valid = switch (current) {
-            case draft -> target == GameStatus.setup;
-            case setup -> target == GameStatus.live;
+            case draft -> target == GameStatus.live;
             case live -> target == GameStatus.ended;
             case ended -> false;
         };
@@ -287,8 +361,9 @@ public class GameService {
             throw new BadRequestException("Assignments data is required");
         }
 
-        // Validate date range
-        if (request.getEndDate().isBefore(request.getStartDate())) {
+        // Validate date range if both dates are provided
+        if (request.getStartDate() != null && request.getEndDate() != null
+                && request.getEndDate().isBefore(request.getStartDate())) {
             throw new BadRequestException("End date must be after start date");
         }
 
