@@ -14,6 +14,10 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>;
   register: (token: string, name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
+  /** Called by the API client when tokens are refreshed successfully */
+  setTokens: (accessToken: string, refreshToken: string, user: User) => void;
+  /** Called by the API client on unrecoverable auth failure */
+  handleAuthFailure: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -67,11 +71,41 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
         });
       },
+
+      setTokens: (accessToken: string, refreshToken: string, user: User) => {
+        set({ accessToken, refreshToken, user, isAuthenticated: true });
+      },
+
+      handleAuthFailure: () => {
+        // Only trigger if we think we're authenticated (avoid loops)
+        if (get().isAuthenticated) {
+          set({
+            user: null,
+            accessToken: null,
+            refreshToken: null,
+            isAuthenticated: false,
+          });
+        }
+      },
     }),
     {
       name: "scout-auth",
+      partialize: (state) => ({
+        // Only persist data fields, not computed/transient ones
+        user: state.user,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
+        isAuthenticated: state.isAuthenticated,
+      }),
       onRehydrateStorage: () => (state) => {
         if (state) {
+          // Validate: if isAuthenticated but tokens are missing, reset
+          if (state.isAuthenticated && !state.accessToken) {
+            state.isAuthenticated = false;
+            state.user = null;
+            state.accessToken = null;
+            state.refreshToken = null;
+          }
           state.hasHydrated = true;
         }
       },

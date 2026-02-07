@@ -39,7 +39,7 @@ public class PlayerService {
                 .orElseThrow(() -> new BadRequestException("Invalid join code"));
 
         Game game = team.getGame();
-        if (game.getStatus() != GameStatus.live && game.getStatus() != GameStatus.setup) {
+        if (game.getStatus() != GameStatus.live) {
             throw new BadRequestException("Game is not active");
         }
 
