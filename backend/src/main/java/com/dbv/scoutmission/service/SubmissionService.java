@@ -26,6 +26,7 @@ public class SubmissionService {
     private final TeamRepository teamRepository;
     private final ChallengeRepository challengeRepository;
     private final BaseRepository baseRepository;
+    private final UserRepository userRepository;
     private final ActivityEventRepository activityEventRepository;
     private final GameEventBroadcaster eventBroadcaster;
 
@@ -125,6 +126,10 @@ public class SubmissionService {
         }
 
         User currentUser = SecurityUtils.getCurrentUser();
+        // Re-fetch user within transaction to get fresh entity with proper session
+        currentUser = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("User", currentUser.getId()));
+
         submission.setStatus(newStatus);
         submission.setReviewedBy(currentUser);
         submission.setFeedback(request.getFeedback());

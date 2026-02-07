@@ -9,6 +9,7 @@ import com.dbv.scoutmission.entity.User;
 import com.dbv.scoutmission.exception.ResourceNotFoundException;
 import com.dbv.scoutmission.repository.GameRepository;
 import com.dbv.scoutmission.repository.OperatorInviteRepository;
+import com.dbv.scoutmission.repository.UserRepository;
 import com.dbv.scoutmission.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ public class InviteService {
 
     private final OperatorInviteRepository inviteRepository;
     private final GameRepository gameRepository;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public List<InviteResponse> getGlobalInvites() {
@@ -42,6 +44,9 @@ public class InviteService {
     @Transactional
     public InviteResponse createInvite(CreateInviteRequest request) {
         User currentUser = SecurityUtils.getCurrentUser();
+        // Re-fetch user within transaction to get fresh entity with proper session
+        currentUser = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("User", currentUser.getId()));
 
         Game game = null;
         if (request.getGameId() != null) {

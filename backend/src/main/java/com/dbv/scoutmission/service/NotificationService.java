@@ -10,6 +10,7 @@ import com.dbv.scoutmission.exception.ResourceNotFoundException;
 import com.dbv.scoutmission.repository.GameNotificationRepository;
 import com.dbv.scoutmission.repository.GameRepository;
 import com.dbv.scoutmission.repository.TeamRepository;
+import com.dbv.scoutmission.repository.UserRepository;
 import com.dbv.scoutmission.security.SecurityUtils;
 import com.dbv.scoutmission.websocket.GameEventBroadcaster;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ public class NotificationService {
     private final GameNotificationRepository notificationRepository;
     private final GameRepository gameRepository;
     private final TeamRepository teamRepository;
+    private final UserRepository userRepository;
     private final GameEventBroadcaster eventBroadcaster;
 
     @Transactional(readOnly = true)
@@ -42,6 +44,9 @@ public class NotificationService {
         Game game = gameRepository.findById(gameId)
                 .orElseThrow(() -> new ResourceNotFoundException("Game", gameId));
         User currentUser = SecurityUtils.getCurrentUser();
+        // Re-fetch user within transaction to get fresh entity with proper session
+        currentUser = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("User", currentUser.getId()));
 
         Team targetTeam = null;
         if (request.getTargetTeamId() != null) {

@@ -29,6 +29,10 @@ public class GameService {
     @Transactional(readOnly = true)
     public List<GameResponse> getAllGames() {
         User currentUser = SecurityUtils.getCurrentUser();
+        // Re-fetch user within transaction to get fresh entity with proper session
+        currentUser = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("User", currentUser.getId()));
+
         List<Game> games;
         if (currentUser.getRole().name().equals("admin")) {
             games = gameRepository.findAll();
@@ -48,6 +52,9 @@ public class GameService {
     @Transactional
     public GameResponse createGame(CreateGameRequest request) {
         User currentUser = SecurityUtils.getCurrentUser();
+        // Re-fetch user within transaction to get fresh entity with proper session
+        currentUser = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("User", currentUser.getId()));
 
         Game game = Game.builder()
                 .name(request.getName())
