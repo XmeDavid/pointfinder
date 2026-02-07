@@ -52,6 +52,12 @@ public class SubmissionService {
         Base base = baseRepository.findById(request.getBaseId())
                 .orElseThrow(() -> new ResourceNotFoundException("Base", request.getBaseId()));
 
+        // Force initialization of lazy proxies within this transaction
+        team.getName();
+        team.getGame().getId();
+        challenge.getTitle();
+        base.getName();
+
         // Determine initial status - auto-validate text answers if configured
         SubmissionStatus status = SubmissionStatus.pending;
         if (challenge.getAutoValidate() && challenge.getAnswerType() == AnswerType.text
@@ -100,6 +106,12 @@ public class SubmissionService {
     public SubmissionResponse reviewSubmission(UUID gameId, UUID submissionId, ReviewSubmissionRequest request) {
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Submission", submissionId));
+
+        // Force initialization of lazy proxies within this transaction
+        submission.getTeam().getName();
+        submission.getTeam().getGame().getId();
+        submission.getBase().getName();
+        submission.getChallenge().getTitle();
 
         SubmissionStatus newStatus;
         try {

@@ -95,6 +95,9 @@ public class PlayerService {
     @Transactional
     public CheckInResponse checkIn(UUID gameId, UUID baseId, Player player) {
         Team team = player.getTeam();
+        // Force initialization of lazy proxy within this transaction
+        team.getId();
+        team.getName();
 
         Base base = baseRepository.findById(baseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Base", baseId));
@@ -145,6 +148,9 @@ public class PlayerService {
     @Transactional(readOnly = true)
     public List<BaseProgressResponse> getProgress(UUID gameId, Player player) {
         Team team = player.getTeam();
+        // Force initialization of lazy proxy within this transaction
+        team.getId();
+
         List<Base> bases = baseRepository.findByGameId(gameId);
         List<CheckIn> checkIns = checkInRepository.findByGameIdAndTeamId(gameId, team.getId());
         List<Submission> submissions = submissionRepository.findByTeamId(team.getId());
@@ -224,6 +230,8 @@ public class PlayerService {
     @Transactional
     public SubmissionResponse submitAnswer(UUID gameId, PlayerSubmissionRequest request, Player player) {
         Team team = player.getTeam();
+        // Force initialization of lazy proxy within this transaction
+        team.getId();
 
         // Verify the team has checked in to this base
         if (!checkInRepository.existsByTeamIdAndBaseId(team.getId(), request.getBaseId())) {
