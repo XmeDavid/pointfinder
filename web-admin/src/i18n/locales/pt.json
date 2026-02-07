@@ -92,6 +92,7 @@
     "importError": "Falha ao importar jogo",
     "importGame": "Importar Jogo",
     "importDescription": "Carregue um ficheiro de exportação de jogo para criar um novo jogo com todas as bases, desafios e equipas",
+    "importDatesNote": "As datas do jogo são opcionais e podem ser definidas mais tarde na página de visão geral",
     "invalidJsonFile": "Ficheiro JSON inválido",
     "invalidFileType": "Por favor selecione um ficheiro JSON",
     "fileTooLarge": "O tamanho do ficheiro excede o limite de 5MB",

@@ -100,8 +100,6 @@ interface ImportGameDialogProps {
 function ImportGameDialog({ open, onOpenChange, navigate }: ImportGameDialogProps) {
   const { t } = useTranslation();
   const [file, setFile] = useState<File | null>(null);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState("");
 
@@ -137,12 +135,8 @@ function ImportGameDialog({ open, onOpenChange, navigate }: ImportGameDialogProp
       const content = await file.text();
       const gameData = JSON.parse(content);
 
-      // Import game
-      const result = await gamesApi.importGame({
-        gameData,
-        startDate: new Date(startDate).toISOString(),
-        endDate: new Date(endDate).toISOString(),
-      });
+      // Import game (dates will be set later if needed)
+      const result = await gamesApi.importGame({ gameData });
 
       onOpenChange(false);
       navigate(`/games/${result.id}/overview`);
@@ -185,28 +179,9 @@ function ImportGameDialog({ open, onOpenChange, navigate }: ImportGameDialogProp
                 {t("game.selectedFile")}: {file.name}
               </p>
             )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="startDate">{t("game.startDate")}</Label>
-            <Input
-              id="startDate"
-              type="datetime-local"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="endDate">{t("game.endDate")}</Label>
-            <Input
-              id="endDate"
-              type="datetime-local"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              required
-            />
+            <p className="text-sm text-muted-foreground">
+              {t("game.importDatesNote")}
+            </p>
           </div>
 
           <DialogFooter>

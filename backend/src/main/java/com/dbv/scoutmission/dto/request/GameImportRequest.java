@@ -13,9 +13,7 @@ public class GameImportRequest {
     @Valid
     private GameExportDto gameData;
 
-    @NotNull
     private Instant startDate;
 
-    @NotNull
     private Instant endDate;
 }

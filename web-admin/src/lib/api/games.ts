@@ -10,8 +10,8 @@ export interface CreateGameDto {
 
 export interface GameImportData {
   gameData: any;
-  startDate: string;
-  endDate: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export const gamesApi = {
