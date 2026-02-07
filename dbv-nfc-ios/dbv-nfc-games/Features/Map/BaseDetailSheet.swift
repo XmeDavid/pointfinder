@@ -4,11 +4,20 @@ struct BaseDetailSheet: View {
     @Environment(AppState.self) private var appState
     @Environment(\.dismiss) private var dismiss
 
-    let base: BaseProgress
+    let baseId: UUID
 
     @State private var challenge: CheckInResponse.ChallengeInfo?
     @State private var isLoading = true
     @State private var showSolve = false
+
+    /// Live progress data from AppState -- always current.
+    private var base: BaseProgress? {
+        appState.progressForBase(baseId)
+    }
+
+    private var status: BaseStatus {
+        base?.baseStatus ?? .notVisited
+    }
 
     var body: some View {
         NavigationStack {
@@ -16,8 +25,8 @@ struct BaseDetailSheet: View {
                 VStack(alignment: .leading, spacing: 16) {
                     // Status banner
                     HStack {
-                        Image(systemName: base.baseStatus.systemImage)
-                        Text(base.baseStatus.label)
+                        Image(systemName: status.systemImage)
+                        Text(status.label)
                             .fontWeight(.medium)
                         Spacer()
                         if let points = challenge?.points {
@@ -27,7 +36,7 @@ struct BaseDetailSheet: View {
                         }
                     }
                     .padding()
-                    .background(base.baseStatus.color.opacity(0.15))
+                    .background(status.color.opacity(0.15))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
 
                     if isLoading {
@@ -53,9 +62,9 @@ struct BaseDetailSheet: View {
                         }
 
                         // Solve button (only for checked-in or rejected bases)
-                        if base.baseStatus == .checkedIn || base.baseStatus == .rejected {
+                        if status == .checkedIn || status == .rejected {
                             Button {
-                                appState.startSolving(baseId: base.baseId, challengeId: challenge.id)
+                                appState.startSolving(baseId: baseId, challengeId: challenge.id)
                                 showSolve = true
                             } label: {
                                 Label("Solve Challenge", systemImage: "lightbulb.fill")
@@ -66,20 +75,20 @@ struct BaseDetailSheet: View {
                                     .foregroundStyle(.white)
                                     .clipShape(RoundedRectangle(cornerRadius: 14))
                             }
-                        } else if base.baseStatus == .completed {
+                        } else if status == .completed {
                             Label("Challenge completed!", systemImage: "checkmark.seal.fill")
                                 .font(.headline)
                                 .foregroundStyle(.green)
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .padding()
-                        } else if base.baseStatus == .submitted {
+                        } else if status == .submitted {
                             Label("Awaiting review...", systemImage: "clock.fill")
                                 .font(.headline)
                                 .foregroundStyle(.orange)
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .padding()
                         }
-                    } else if base.baseStatus == .notVisited {
+                    } else if status == .notVisited {
                         VStack(spacing: 12) {
                             Image(systemName: "sensor.tag.radiowaves.forward")
                                 .font(.system(size: 48))
@@ -100,7 +109,7 @@ struct BaseDetailSheet: View {
                 }
                 .padding()
             }
-            .navigationTitle(base.baseName)
+            .navigationTitle(base?.baseName ?? "Base")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -109,7 +118,7 @@ struct BaseDetailSheet: View {
             }
             .navigationDestination(isPresented: $showSolve) {
                 if let challengeId = challenge?.id {
-                    SolveView(baseId: base.baseId, challengeId: challengeId, baseName: base.baseName)
+                    SolveView(baseId: baseId, challengeId: challengeId, baseName: base?.baseName ?? "Base")
                 }
             }
         }
@@ -121,7 +130,7 @@ struct BaseDetailSheet: View {
 
     private func loadChallenge() async {
         // Try to load from cache
-        if let cached = await appState.getCachedChallenge(forBaseId: base.baseId) {
+        if let cached = await appState.getCachedChallenge(forBaseId: baseId) {
             challenge = cached
             isLoading = false
             return

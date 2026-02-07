@@ -3,7 +3,7 @@ import MapKit
 
 struct GameMapView: View {
     @Environment(AppState.self) private var appState
-    @State private var selectedBase: BaseProgress?
+    @State private var selectedBaseId: UUID?
     @State private var showBaseDetail = false
     @State private var cameraPosition: MapCameraPosition = .automatic
 
@@ -21,7 +21,7 @@ struct GameMapView: View {
                                 name: base.baseName
                             )
                             .onTapGesture {
-                                selectedBase = base
+                                selectedBaseId = base.baseId
                                 showBaseDetail = true
                             }
                         }
@@ -53,8 +53,8 @@ struct GameMapView: View {
                 }
             }
             .sheet(isPresented: $showBaseDetail) {
-                if let base = selectedBase {
-                    BaseDetailSheet(base: base)
+                if let baseId = selectedBaseId {
+                    BaseDetailSheet(baseId: baseId)
                 }
             }
             .refreshable {

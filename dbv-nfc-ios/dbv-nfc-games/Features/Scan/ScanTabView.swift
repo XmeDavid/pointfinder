@@ -3,10 +3,10 @@ import SwiftUI
 struct ScanTabView: View {
     @Environment(AppState.self) private var appState
     @State private var nfcReader = NFCReaderService()
-    @State private var checkInResult: CheckInResponse?
-    @State private var showCheckInResult = false
     @State private var isScanning = false
     @State private var scanError: String?
+    @State private var checkedInBaseId: UUID?
+    @State private var navigateToBase = false
 
     var body: some View {
         NavigationStack {
@@ -94,9 +94,9 @@ struct ScanTabView: View {
                 .padding(.bottom, 24)
             }
             .navigationTitle("Scan")
-            .sheet(isPresented: $showCheckInResult) {
-                if let result = checkInResult {
-                    CheckInResultView(checkInResponse: result)
+            .navigationDestination(isPresented: $navigateToBase) {
+                if let baseId = checkedInBaseId {
+                    ScanBaseDetailView(baseId: baseId)
                 }
             }
         }
@@ -111,10 +111,8 @@ struct ScanTabView: View {
 
             // Check if we're in a solve session
             if let solvingBaseId = appState.solvingBaseId,
-               let challengeId = appState.solvingChallengeId {
+               let _ = appState.solvingChallengeId {
                 if baseId == solvingBaseId {
-                    // This is the confirmation scan for submission - handled by SolveView
-                    // Notify via a notification or callback
                     NotificationCenter.default.post(
                         name: .nfcScanConfirmed,
                         object: nil,
@@ -126,9 +124,10 @@ struct ScanTabView: View {
             } else {
                 // Regular check-in scan
                 let result = await appState.checkIn(baseId: baseId)
-                if let result = result {
-                    checkInResult = result
-                    showCheckInResult = true
+                if result != nil {
+                    // Navigate to the base detail view
+                    checkedInBaseId = baseId
+                    navigateToBase = true
                 }
             }
         } catch let error as NFCError {
