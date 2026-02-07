@@ -119,6 +119,17 @@ export interface TeamLocation {
   updatedAt: string;
 }
 
+export type BaseStatus = "not_visited" | "checked_in" | "submitted" | "completed" | "rejected";
+
+export interface TeamBaseProgress {
+  baseId: string;
+  teamId: string;
+  status: BaseStatus;
+  checkedInAt?: string;
+  challengeId?: string;
+  submissionStatus?: string;
+}
+
 export interface ActivityEvent {
   id: string;
   gameId: string;

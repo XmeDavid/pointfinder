@@ -103,6 +103,12 @@ actor APIClient {
         try await post("/api/player/games/\(gameId)/submissions", body: request, token: token)
     }
 
+    func updateLocation(gameId: UUID, lat: Double, lng: Double, token: String) async throws {
+        try await postVoid("/api/player/games/\(gameId)/location",
+                           body: LocationUpdateBody(lat: lat, lng: lng),
+                           token: token)
+    }
+
     // MARK: - Operator Endpoints
 
     func getGames(token: String) async throws -> [Game] {
@@ -129,6 +135,13 @@ actor APIClient {
         request.httpBody = try JSONEncoder().encode(body)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         return try await execute(request)
+    }
+
+    private func postVoid<B: Encodable>(_ path: String, body: B, token: String? = nil) async throws {
+        var request = try buildRequest(path: path, method: "POST", token: token)
+        request.httpBody = try JSONEncoder().encode(body)
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        try await executeVoid(request)
     }
 
     private func put<T: Decodable, B: Encodable>(_ path: String, body: B, token: String? = nil) async throws -> T {
@@ -195,6 +208,26 @@ actor APIClient {
             return try decoder.decode(T.self, from: data)
         } catch {
             throw APIError.decodingError(error)
+        }
+    }
+
+    private func executeVoid(_ request: URLRequest) async throws {
+        let data: Data
+        let response: URLResponse
+
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch {
+            throw APIError.networkError(error)
+        }
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+
+        guard (200...299).contains(httpResponse.statusCode) else {
+            let message = String(data: data, encoding: .utf8) ?? "Unknown error"
+            throw APIError.httpError(statusCode: httpResponse.statusCode, message: message)
         }
     }
 
@@ -293,4 +326,9 @@ private struct EmptyBody: Encodable {}
 
 private struct RefreshTokenBody: Encodable {
     let refreshToken: String
+}
+
+private struct LocationUpdateBody: Encodable {
+    let lat: Double
+    let lng: Double
 }

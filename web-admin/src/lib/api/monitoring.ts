@@ -1,4 +1,4 @@
-import type { ActivityEvent, TeamLocation } from "@/types";
+import type { ActivityEvent, TeamLocation, TeamBaseProgress } from "@/types";
 import apiClient from "./client";
 
 export const monitoringApi = {
@@ -9,6 +9,11 @@ export const monitoringApi = {
 
   getTeamLocations: async (gameId: string): Promise<TeamLocation[]> => {
     const { data } = await apiClient.get(`/games/${gameId}/monitoring/locations`);
+    return data;
+  },
+
+  getProgress: async (gameId: string): Promise<TeamBaseProgress[]> => {
+    const { data } = await apiClient.get(`/games/${gameId}/monitoring/progress`);
     return data;
   },
 

@@ -36,6 +36,7 @@ final class AppState {
     // MARK: - API Client
 
     let apiClient = APIClient()
+    let locationService = LocationService()
 
     // MARK: - Init
 
@@ -74,6 +75,9 @@ final class AppState {
             currentGame = response.game
             currentTeam = response.team
             currentPlayer = response.player
+
+            // Start location tracking
+            locationService.startTracking(apiClient: apiClient, gameId: response.game.id, token: response.token)
 
             // Load initial progress
             await loadProgress()
@@ -192,6 +196,8 @@ final class AppState {
     // MARK: - Logout
 
     func logout() {
+        locationService.stopTracking()
+
         KeychainService.deleteAll()
         let defaults = UserDefaults.standard
         defaults.removeObject(forKey: AppConfiguration.playerIdKey)
@@ -229,6 +235,9 @@ final class AppState {
            let gameId = UUID(uuidString: gameIdStr) {
 
             authType = .player(token: token, playerId: playerId, teamId: teamId, gameId: gameId)
+
+            // Resume location tracking
+            locationService.startTracking(apiClient: apiClient, gameId: gameId, token: token)
 
             // Restore game/team info will happen when progress loads
             Task { await loadProgress() }

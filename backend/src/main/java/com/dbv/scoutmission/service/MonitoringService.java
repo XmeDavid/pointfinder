@@ -22,6 +22,8 @@ public class MonitoringService {
     private final SubmissionRepository submissionRepository;
     private final ActivityEventRepository activityEventRepository;
     private final TeamLocationRepository teamLocationRepository;
+    private final CheckInRepository checkInRepository;
+    private final AssignmentRepository assignmentRepository;
 
     @Transactional(readOnly = true)
     public DashboardResponse getDashboard(UUID gameId) {
@@ -98,6 +100,97 @@ public class MonitoringService {
                         .timestamp(e.getTimestamp())
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<TeamBaseProgressResponse> getProgress(UUID gameId) {
+        List<Team> teams = teamRepository.findByGameId(gameId);
+        List<Base> bases = baseRepository.findByGameId(gameId);
+        List<CheckIn> checkIns = checkInRepository.findByGameId(gameId);
+        List<Submission> submissions = submissionRepository.findByGameId(gameId);
+        List<Assignment> assignments = assignmentRepository.findByGameId(gameId);
+
+        // Group check-ins by team+base
+        Map<UUID, Map<UUID, CheckIn>> checkInsByTeamBase = checkIns.stream()
+                .collect(Collectors.groupingBy(
+                        ci -> ci.getTeam().getId(),
+                        Collectors.toMap(ci -> ci.getBase().getId(), ci -> ci)
+                ));
+
+        // Group submissions by team+base (keep latest per base)
+        Map<UUID, Map<UUID, Submission>> submissionsByTeamBase = submissions.stream()
+                .collect(Collectors.groupingBy(
+                        s -> s.getTeam().getId(),
+                        Collectors.toMap(
+                                s -> s.getBase().getId(),
+                                s -> s,
+                                (a, b) -> a.getSubmittedAt().isAfter(b.getSubmittedAt()) ? a : b
+                        )
+                ));
+
+        // Group assignments: team-specific take priority, then global (team==null)
+        // Key: teamId -> baseId -> Assignment
+        Map<UUID, Map<UUID, Assignment>> teamAssignments = new HashMap<>();
+        Map<UUID, Assignment> globalAssignments = new HashMap<>();
+        for (Assignment a : assignments) {
+            if (a.getTeam() != null) {
+                teamAssignments
+                        .computeIfAbsent(a.getTeam().getId(), k -> new HashMap<>())
+                        .putIfAbsent(a.getBase().getId(), a);
+            } else {
+                globalAssignments.putIfAbsent(a.getBase().getId(), a);
+            }
+        }
+
+        List<TeamBaseProgressResponse> result = new ArrayList<>();
+
+        for (Team team : teams) {
+            UUID teamId = team.getId();
+            Map<UUID, CheckIn> teamCheckIns = checkInsByTeamBase.getOrDefault(teamId, Map.of());
+            Map<UUID, Submission> teamSubs = submissionsByTeamBase.getOrDefault(teamId, Map.of());
+            Map<UUID, Assignment> teamSpecific = teamAssignments.getOrDefault(teamId, Map.of());
+
+            for (Base base : bases) {
+                UUID baseId = base.getId();
+                CheckIn ci = teamCheckIns.get(baseId);
+                Submission sub = teamSubs.get(baseId);
+
+                // Resolve assignment: team-specific first, then global
+                Assignment assignment = teamSpecific.get(baseId);
+                if (assignment == null) {
+                    assignment = globalAssignments.get(baseId);
+                }
+
+                String status;
+                String submissionStatus = null;
+
+                if (sub != null) {
+                    submissionStatus = sub.getStatus().name();
+                    if (sub.getStatus() == SubmissionStatus.approved || sub.getStatus() == SubmissionStatus.correct) {
+                        status = "completed";
+                    } else if (sub.getStatus() == SubmissionStatus.rejected) {
+                        status = "rejected";
+                    } else {
+                        status = "submitted";
+                    }
+                } else if (ci != null) {
+                    status = "checked_in";
+                } else {
+                    status = "not_visited";
+                }
+
+                result.add(TeamBaseProgressResponse.builder()
+                        .baseId(baseId)
+                        .teamId(teamId)
+                        .status(status)
+                        .checkedInAt(ci != null ? ci.getCheckedInAt() : null)
+                        .challengeId(assignment != null ? assignment.getChallenge().getId() : null)
+                        .submissionStatus(submissionStatus)
+                        .build());
+            }
+        }
+
+        return result;
     }
 
     @Transactional(readOnly = true)

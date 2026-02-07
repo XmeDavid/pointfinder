@@ -16,4 +16,6 @@ public interface CheckInRepository extends JpaRepository<CheckIn, UUID> {
     Optional<CheckIn> findByTeamIdAndBaseId(UUID teamId, UUID baseId);
 
     boolean existsByTeamIdAndBaseId(UUID teamId, UUID baseId);
+
+    List<CheckIn> findByGameId(UUID gameId);
 }

@@ -2,6 +2,7 @@ package com.dbv.scoutmission.controller;
 
 import com.dbv.scoutmission.dto.request.PlayerJoinRequest;
 import com.dbv.scoutmission.dto.request.PlayerSubmissionRequest;
+import com.dbv.scoutmission.dto.request.UpdateLocationRequest;
 import com.dbv.scoutmission.dto.response.*;
 import com.dbv.scoutmission.entity.Player;
 import com.dbv.scoutmission.security.SecurityUtils;
@@ -53,5 +54,13 @@ public class PlayerController {
         Player player = SecurityUtils.getCurrentPlayer();
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(playerService.submitAnswer(gameId, request, player));
+    }
+
+    @PostMapping("/api/player/games/{gameId}/location")
+    public ResponseEntity<Void> updateLocation(@PathVariable UUID gameId,
+                                                @Valid @RequestBody UpdateLocationRequest request) {
+        Player player = SecurityUtils.getCurrentPlayer();
+        playerService.updateLocation(gameId, player, request.getLat(), request.getLng());
+        return ResponseEntity.ok().build();
     }
 }

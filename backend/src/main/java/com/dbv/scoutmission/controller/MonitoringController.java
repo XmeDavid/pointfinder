@@ -35,4 +35,9 @@ public class MonitoringController {
     public ResponseEntity<List<TeamLocationResponse>> getLocations(@PathVariable UUID gameId) {
         return ResponseEntity.ok(monitoringService.getLocations(gameId));
     }
+
+    @GetMapping("/progress")
+    public ResponseEntity<List<TeamBaseProgressResponse>> getProgress(@PathVariable UUID gameId) {
+        return ResponseEntity.ok(monitoringService.getProgress(gameId));
+    }
 }

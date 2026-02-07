@@ -32,6 +32,7 @@ public class PlayerService {
     private final GameEventBroadcaster eventBroadcaster;
     private final JwtTokenProvider tokenProvider;
     private final SubmissionService submissionService;
+    private final TeamLocationRepository teamLocationRepository;
 
     @Transactional
     public PlayerAuthResponse joinTeam(PlayerJoinRequest request) {
@@ -260,6 +261,40 @@ public class PlayerService {
         submissionRequest.setAnswer(request.getAnswer());
 
         return submissionService.createSubmission(gameId, submissionRequest);
+    }
+
+    @Transactional
+    public void updateLocation(UUID gameId, Player player, Double lat, Double lng) {
+        UUID playerId = player.getId();
+        player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
+
+        Team team = player.getTeam();
+        team.getId(); // force initialization
+
+        if (!team.getGame().getId().equals(gameId)) {
+            throw new BadRequestException("Player does not belong to this game");
+        }
+
+        TeamLocation location = teamLocationRepository.findById(team.getId()).orElse(null);
+        if (location == null) {
+            location = TeamLocation.builder()
+                    .team(team)
+                    .lat(lat)
+                    .lng(lng)
+                    .build();
+        } else {
+            location.setLat(lat);
+            location.setLng(lng);
+        }
+        teamLocationRepository.save(location);
+
+        eventBroadcaster.broadcastLocationUpdate(gameId, Map.of(
+                "teamId", team.getId(),
+                "lat", lat,
+                "lng", lng,
+                "updatedAt", Instant.now().toString()
+        ));
     }
 
     private CheckInResponse buildCheckInResponse(CheckIn checkIn, Base base, Team team) {

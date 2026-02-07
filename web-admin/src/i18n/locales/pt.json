@@ -279,7 +279,17 @@
     "description": "Seguir bases e localizações das equipas em tempo real",
     "liveMapView": "Vista do Mapa em Direto",
     "mapDescription": "Mapa com localizações das bases e posições das equipas. As bases aparecem como marcadores, as equipas como pontos coloridos.",
-    "teamLocations": "Localizações das Equipas"
+    "teamLocations": "Localizações das Equipas",
+    "allTeams": "Todas as Equipas",
+    "viewingTeam": "A ver: {{team}}",
+    "selectTeamView": "Selecione uma equipa para ver o progresso individual",
+    "notVisited": "Não Visitado",
+    "checkedIn": "Check-in",
+    "submitted": "Submetido",
+    "completed": "Concluído",
+    "rejected": "Rejeitado",
+    "challenge": "Desafio",
+    "noChallenge": "Sem desafio atribuído"
   },
   "leaderboard": {
     "title": "Classificação",
