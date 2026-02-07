@@ -1,4 +1,5 @@
 import axios from "axios";
+import { useAuthStore } from "@/hooks/useAuth";
 
 const API_URL = import.meta.env.VITE_API_URL || "/api";
 
@@ -9,69 +10,96 @@ const apiClient = axios.create({
   },
 });
 
-// Request interceptor: attach access token
+// Track if we're currently refreshing to avoid concurrent refresh calls
+let isRefreshing = false;
+let failedQueue: { resolve: (token: string) => void; reject: (err: unknown) => void }[] = [];
+
+function processQueue(error: unknown, token: string | null) {
+  failedQueue.forEach((p) => {
+    if (token) p.resolve(token);
+    else p.reject(error);
+  });
+  failedQueue = [];
+}
+
+function forceLogout() {
+  useAuthStore.getState().handleAuthFailure();
+  // Small delay to let state propagate before redirect
+  setTimeout(() => {
+    window.location.href = "/login";
+  }, 50);
+}
+
+// Request interceptor: attach access token from Zustand store
 apiClient.interceptors.request.use((config) => {
-  const authData = localStorage.getItem("scout-auth");
-  if (authData) {
-    try {
-      const parsed = JSON.parse(authData);
-      const token = parsed.state?.accessToken;
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-    } catch {
-      // ignore parse errors
-    }
+  const token = useAuthStore.getState().accessToken;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-// Response interceptor: handle 401 and refresh token
+// Response interceptor: handle auth errors and refresh token
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    const status = error.response?.status;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // 401 = invalid/expired token -> attempt refresh
+    if (status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      try {
-        const authData = localStorage.getItem("scout-auth");
-        if (!authData) throw new Error("No auth data");
+      // If already refreshing, queue this request
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({
+            resolve: (token: string) => {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              resolve(apiClient(originalRequest));
+            },
+            reject,
+          });
+        });
+      }
 
-        const parsed = JSON.parse(authData);
-        const refreshToken = parsed.state?.refreshToken;
+      isRefreshing = true;
+
+      try {
+        const refreshToken = useAuthStore.getState().refreshToken;
         if (!refreshToken) throw new Error("No refresh token");
 
-        // Call refresh endpoint directly (no interceptor to avoid loops)
+        // Call refresh endpoint directly (bypass interceptors to avoid loops)
         const response = await axios.post(`${API_URL}/auth/refresh`, {
           refreshToken,
         });
 
         const { accessToken: newAccessToken, refreshToken: newRefreshToken, user } = response.data;
 
-        // Update stored tokens
-        const updatedState = {
-          ...parsed,
-          state: {
-            ...parsed.state,
-            accessToken: newAccessToken,
-            refreshToken: newRefreshToken,
-            user,
-          },
-        };
-        localStorage.setItem("scout-auth", JSON.stringify(updatedState));
+        // Update Zustand store (this also persists to localStorage)
+        useAuthStore.getState().setTokens(newAccessToken, newRefreshToken, user);
+
+        // Process any queued requests with the new token
+        processQueue(null, newAccessToken);
 
         // Retry original request with new token
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return apiClient(originalRequest);
       } catch {
-        // Refresh failed - clear auth via store to keep state in sync
-        const { useAuthStore } = await import("@/hooks/useAuth");
-        useAuthStore.getState().logout();
-        window.location.href = "/login";
+        // Refresh failed - kick to login
+        processQueue(error, null);
+        forceLogout();
         return Promise.reject(error);
+      } finally {
+        isRefreshing = false;
       }
+    }
+
+    // 403 = forbidden - token is valid but user lacks permissions
+    // This shouldn't normally trigger logout, but if it happens on basic endpoints
+    // it might mean the user's role changed
+    if (status === 403) {
+      console.warn("Forbidden request:", originalRequest.url);
     }
 
     return Promise.reject(error);
