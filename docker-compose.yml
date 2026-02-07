@@ -1,0 +1,50 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: scoutmission-db
+    environment:
+      POSTGRES_DB: scoutmission
+      POSTGRES_USER: scout
+      POSTGRES_PASSWORD: scout
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scout -d scoutmission"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: scoutmission-api
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/scoutmission?stringtype=unspecified
+      SPRING_DATASOURCE_USERNAME: scout
+      SPRING_DATASOURCE_PASSWORD: scout
+      SPRING_PROFILES_ACTIVE: dev
+      CORS_ORIGINS: http://localhost:5173
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./web-admin
+      dockerfile: Dockerfile
+    container_name: scoutmission-web
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:8080/api
+      VITE_WS_URL: http://localhost:8080/ws
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

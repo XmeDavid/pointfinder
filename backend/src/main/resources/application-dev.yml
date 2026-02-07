@@ -1,0 +1,13 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/scoutmission?stringtype=unspecified}
+    username: ${SPRING_DATASOURCE_USERNAME:scout}
+    password: ${SPRING_DATASOURCE_PASSWORD:scout}
+
+  jpa:
+    show-sql: true
+
+logging:
+  level:
+    com.dbv.scoutmission: DEBUG
+    org.springframework.security: DEBUG

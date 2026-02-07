@@ -1,0 +1,28 @@
+package com.dbv.scoutmission.dto.request;
+
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+
+@Data
+public class CreateChallengeRequest {
+    @NotBlank
+    private String title;
+
+    private String description = "";
+
+    private String content = "";
+
+    @NotBlank
+    private String answerType;
+
+    private Boolean autoValidate = false;
+
+    private String correctAnswer;
+
+    @NotNull @Min(0)
+    private Integer points;
+
+    private Boolean locationBound = false;
+}

@@ -1,0 +1,53 @@
+package com.dbv.scoutmission.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.Instant;
+import java.util.UUID;
+
+@Entity
+@Table(name = "challenges")
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
+@Builder
+public class Challenge {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "game_id", nullable = false)
+    private Game game;
+
+    @Column(nullable = false)
+    private String title;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String description;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String content;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "answer_type", nullable = false, columnDefinition = "answer_type")
+    private AnswerType answerType;
+
+    @Column(name = "auto_validate", nullable = false)
+    private Boolean autoValidate;
+
+    @Column(name = "correct_answer", length = 1000)
+    private String correctAnswer;
+
+    @Column(nullable = false)
+    private Integer points;
+
+    @Column(name = "location_bound", nullable = false)
+    private Boolean locationBound;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+}

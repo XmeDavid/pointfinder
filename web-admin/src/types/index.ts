@@ -1,169 +1,129 @@
-// Core Game Types
-export interface Base {
-  id: string;
-  name: string;
-  description?: string;
-  latitude: number;
-  longitude: number;
-  uuid: string;
-  isLocationDependent: boolean;
-  nfcLinked: boolean;
-  enigmaId?: string;
-}
+export type UserRole = "admin" | "operator";
 
-export interface Enigma {
-  id: string;
-  title: string;
-  content: string;
-  answer: string;
-  points: number;
-  isLocationDependent: boolean;
-  baseId?: string;
-  baseName?: string;
-  mediaType?: "image" | "video" | "youtube";
-  mediaUrl?: string;
-  createdAt: string;
-}
-
-export interface TeamMember {
-  id: string;
-  name: string;
-  deviceId?: string;
-}
-
-export interface Team {
-  id: string;
-  name: string;
-  number: number;
-  inviteCode: string;
-  members: string[]; // Array of member names for now
-  leaderId?: string;
-  createdAt: string;
-  lastLocation?: {
-    latitude: number;
-    longitude: number;
-    timestamp: string;
-  };
-  progress?: TeamProgress[];
-}
-
-export interface TeamProgress {
-  baseId: string;
-  baseName: string;
-  arrivedAt?: string;
-  solvedAt?: string;
-  completedAt?: string;
-  score: number;
-}
-
-export interface Game {
-  id: string;
-  name: string;
-  status: "setup" | "live" | "finished";
-  rulesHtml?: string;
-  basesLinked: boolean;
-  bases: Base[];
-  teams: Team[];
-  enigmas: Enigma[];
-  createdAt: string;
-  role?: string; // For operator access
-  teamCount?: number;
-  baseCount?: number;
-}
-
-// User Management Types
 export interface User {
   id: string;
   email: string;
   name: string;
-  role: "admin" | "operator";
+  role: UserRole;
+  createdAt: string;
 }
 
-export interface Operator {
+export type GameStatus = "draft" | "setup" | "live" | "ended";
+
+export interface Game {
   id: string;
-  email: string;
   name: string;
-  createdAt: string;
-  gameCount: number;
-  status: "active" | "pending" | "inactive";
+  description: string;
+  startDate: string;
+  endDate: string;
+  status: GameStatus;
+  createdBy: string;
+  operatorIds: string[];
 }
 
-// Event Types
-export interface GameEvent {
+export interface Base {
   id: string;
-  type: string;
+  gameId: string;
+  name: string;
+  description: string;
+  lat: number;
+  lng: number;
+  nfcLinked: boolean;
+  fixedChallengeId?: string;
+}
+
+export type AnswerType = "text" | "file";
+
+export interface Challenge {
+  id: string;
+  gameId: string;
+  title: string;
+  description: string;
+  content: string;
+  answerType: AnswerType;
+  autoValidate: boolean;
+  correctAnswer?: string;
+  points: number;
+  locationBound: boolean;
+}
+
+export interface Team {
+  id: string;
+  gameId: string;
+  name: string;
+  joinCode: string;
+  color: string;
+}
+
+export interface Player {
+  id: string;
   teamId: string;
-  teamName: string;
+  deviceId: string;
+  displayName: string;
+}
+
+export interface Assignment {
+  id: string;
+  gameId: string;
+  baseId: string;
+  challengeId: string;
+  teamId?: string; // null = all teams
+}
+
+export type SubmissionStatus =
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "correct"
+  | "incorrect";
+
+export interface Submission {
+  id: string;
+  teamId: string;
+  challengeId: string;
+  baseId: string;
+  answer: string;
+  status: SubmissionStatus;
+  submittedAt: string;
+  reviewedBy?: string;
+  feedback?: string;
+}
+
+export interface GameNotification {
+  id: string;
+  gameId: string;
   message: string;
+  targetTeamId?: string;
+  sentAt: string;
+  sentBy: string;
+}
+
+export type InviteStatus = "pending" | "accepted" | "expired";
+
+export interface OperatorInvite {
+  id: string;
+  gameId?: string;
+  email: string;
+  token: string;
+  status: InviteStatus;
+  invitedBy: string;
   createdAt: string;
 }
 
-// Location Tracking
 export interface TeamLocation {
   teamId: string;
-  teamName: string;
-  latitude: number;
-  longitude: number;
-  accuracy: number;
-  deviceId: string;
-  timestamp: string;
+  lat: number;
+  lng: number;
+  updatedAt: string;
 }
 
-// API Response Types
-export interface ApiResponse<T = unknown> {
-  data?: T;
-  error?: string;
-  message?: string;
-}
-
-export interface GameStats {
-  totalGames: number;
-  activeGames: number;
-  setupGames: number;
-  finishedGames: number;
-  totalOperators?: number;
-  activeOperators?: number;
-  pendingOperators?: number;
-}
-
-// Form Types
-export interface CreateGameForm {
-  name: string;
-  rulesHtml?: string;
-}
-
-export interface CreateBaseForm {
-  name: string;
-  description?: string;
-  latitude: number;
-  longitude: number;
-  isLocationDependent: boolean;
-}
-
-export interface CreateTeamForm {
-  name: string;
-  number?: number;
-  inviteCode?: string;
-}
-
-export interface CreateEnigmaForm {
-  title: string;
-  content: string;
-  answer: string;
-  points: number;
-  isLocationDependent: boolean;
+export interface ActivityEvent {
+  id: string;
+  gameId: string;
+  type: "check_in" | "submission" | "approval" | "rejection";
+  teamId: string;
   baseId?: string;
-  mediaType?: "image" | "video" | "youtube";
-  mediaUrl?: string;
-}
-
-export interface InviteOperatorForm {
-  email: string;
-  name: string;
-}
-
-// Modal Props Types
-export interface BaseModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  challengeId?: string;
+  message: string;
+  timestamp: string;
 }

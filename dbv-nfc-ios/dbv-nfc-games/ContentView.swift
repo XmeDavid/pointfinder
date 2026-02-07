@@ -13,19 +13,16 @@ struct ContentView: View {
     @EnvironmentObject private var appState: AppState
 
     var body: some View {
-        Group {
-            if appState.authToken == nil {
-                LoginView()
-            } else {
-                TabView {
-                    HomeView()
-                        .tabItem { Label("Home", systemImage: "house") }
-                    ProgressViewScreen()
-                        .tabItem { Label("Progress", systemImage: "list.bullet.rectangle") }
-                    SettingsViewScreen()
-                        .tabItem { Label("Settings", systemImage: "gearshape") }
-                }
-            }
+        // Temporarily bypassing login for NFC testing
+        TabView {
+            HomeView()
+                .tabItem { Label("Home", systemImage: "house") }
+            NFCProofOfConceptView()
+                .tabItem { Label("NFC POC", systemImage: "antenna.radiowaves.left.and.right") }
+            ProgressViewScreen()
+                .tabItem { Label("Progress", systemImage: "list.bullet.rectangle") }
+            SettingsViewScreen()
+                .tabItem { Label("Settings", systemImage: "gearshape") }
         }
     }
 }
