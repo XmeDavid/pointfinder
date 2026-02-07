@@ -46,8 +46,8 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config;
     const status = error.response?.status;
 
-    // 401 = invalid/expired token -> attempt refresh
-    if (status === 401 && !originalRequest._retry) {
+    // 401/403 = invalid/expired token -> attempt refresh
+    if ((status === 401 || status === 403) && !originalRequest._retry) {
       originalRequest._retry = true;
 
       // If already refreshing, queue this request
@@ -93,13 +93,6 @@ apiClient.interceptors.response.use(
       } finally {
         isRefreshing = false;
       }
-    }
-
-    // 403 = forbidden - token is valid but user lacks permissions
-    // This shouldn't normally trigger logout, but if it happens on basic endpoints
-    // it might mean the user's role changed
-    if (status === 403) {
-      console.warn("Forbidden request:", originalRequest.url);
     }
 
     return Promise.reject(error);

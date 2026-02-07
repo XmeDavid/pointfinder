@@ -98,6 +98,9 @@ final class AppState {
                 refreshToken: response.refreshToken,
                 userId: response.user.id
             )
+
+            // Enable automatic token refresh on the API client
+            await configureApiClientAuth(refreshToken: response.refreshToken)
         } catch {
             setError(error.localizedDescription)
         }
@@ -205,6 +208,7 @@ final class AppState {
         solvingChallengeId = nil
 
         Task {
+            await apiClient.clearAuth()
             await CacheManager.shared.clearAll()
         }
     }
@@ -235,7 +239,37 @@ final class AppState {
 
             // We don't persist userId for operators; they can re-fetch from /me
             authType = .userOperator(accessToken: token, refreshToken: refreshToken, userId: UUID())
+
+            Task { await configureApiClientAuth(refreshToken: refreshToken) }
         }
+    }
+
+    // MARK: - API Client Auth
+
+    /// Wire up automatic token refresh on the API client for operator sessions.
+    private func configureApiClientAuth(refreshToken: String) async {
+        await apiClient.configureOperatorAuth(
+            refreshToken: refreshToken,
+            onTokensRefreshed: { [weak self] accessToken, refreshToken, userId in
+                await MainActor.run {
+                    guard let self else { return }
+                    // Update in-memory auth state with fresh tokens
+                    self.authType = .userOperator(
+                        accessToken: accessToken,
+                        refreshToken: refreshToken,
+                        userId: userId
+                    )
+                    // Persist to keychain
+                    KeychainService.save(key: AppConfiguration.operatorTokenKey, value: accessToken)
+                    KeychainService.save(key: AppConfiguration.operatorRefreshTokenKey, value: refreshToken)
+                }
+            },
+            onAuthFailure: { [weak self] in
+                await MainActor.run {
+                    self?.logout()
+                }
+            }
+        )
     }
 
     // MARK: - Error

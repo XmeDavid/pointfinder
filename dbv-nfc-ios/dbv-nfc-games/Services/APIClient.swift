@@ -6,6 +6,7 @@ enum APIError: LocalizedError {
     case httpError(statusCode: Int, message: String)
     case decodingError(Error)
     case networkError(Error)
+    case authExpired
 
     var errorDescription: String? {
         switch self {
@@ -19,6 +20,8 @@ enum APIError: LocalizedError {
             return "Failed to decode response: \(error.localizedDescription)"
         case .networkError(let error):
             return error.localizedDescription
+        case .authExpired:
+            return "Session expired. Please log in again."
         }
     }
 }
@@ -29,10 +32,45 @@ actor APIClient {
     private let session: URLSession
     private let decoder: JSONDecoder
 
+    // MARK: - Token Refresh State
+
+    private var storedRefreshToken: String?
+    private var onTokensRefreshed: (@Sendable (String, String, UUID) async -> Void)?
+    private var onAuthFailure: (@Sendable () async -> Void)?
+    private var isRefreshing = false
+    private var refreshWaiters: [CheckedContinuation<String, any Error>] = []
+
     init(baseURL: String = AppConfiguration.apiBaseURL, session: URLSession = .shared) {
         self.baseURL = baseURL
         self.session = session
         self.decoder = JSONDecoder()
+    }
+
+    // MARK: - Auth Configuration
+
+    /// Configure automatic token refresh for operator sessions.
+    /// - Parameters:
+    ///   - refreshToken: The current refresh token
+    ///   - onTokensRefreshed: Called with (accessToken, refreshToken, userId) when tokens are refreshed
+    ///   - onAuthFailure: Called when refresh fails and the session is unrecoverable
+    func configureOperatorAuth(
+        refreshToken: String,
+        onTokensRefreshed: @escaping @Sendable (String, String, UUID) async -> Void,
+        onAuthFailure: @escaping @Sendable () async -> Void
+    ) {
+        self.storedRefreshToken = refreshToken
+        self.onTokensRefreshed = onTokensRefreshed
+        self.onAuthFailure = onAuthFailure
+    }
+
+    func updateRefreshToken(_ token: String) {
+        self.storedRefreshToken = token
+    }
+
+    func clearAuth() {
+        self.storedRefreshToken = nil
+        self.onTokensRefreshed = nil
+        self.onAuthFailure = nil
     }
 
     // MARK: - Auth
@@ -137,6 +175,106 @@ actor APIClient {
         }
 
         guard (200...299).contains(httpResponse.statusCode) else {
+            // If 401/403 on an authenticated request and we have a refresh token, attempt refresh
+            if (httpResponse.statusCode == 401 || httpResponse.statusCode == 403),
+               request.value(forHTTPHeaderField: "Authorization") != nil,
+               storedRefreshToken != nil {
+                let newAccessToken = try await getRefreshedAccessToken()
+
+                // Retry with the new token
+                var retryRequest = request
+                retryRequest.setValue("Bearer \(newAccessToken)", forHTTPHeaderField: "Authorization")
+                return try await executeWithoutRetry(retryRequest)
+            }
+
+            let message = String(data: data, encoding: .utf8) ?? "Unknown error"
+            throw APIError.httpError(statusCode: httpResponse.statusCode, message: message)
+        }
+
+        do {
+            return try decoder.decode(T.self, from: data)
+        } catch {
+            throw APIError.decodingError(error)
+        }
+    }
+
+    // MARK: - Token Refresh
+
+    /// Refreshes the access token, queuing concurrent callers so only one refresh happens at a time.
+    private func getRefreshedAccessToken() async throws -> String {
+        // If a refresh is already in progress, wait for it
+        if isRefreshing {
+            return try await withCheckedThrowingContinuation { continuation in
+                refreshWaiters.append(continuation)
+            }
+        }
+
+        isRefreshing = true
+
+        do {
+            guard let refreshToken = storedRefreshToken else {
+                throw APIError.authExpired
+            }
+
+            var request = try buildRequest(path: "/api/auth/refresh", method: "POST", token: nil)
+            request.httpBody = try JSONEncoder().encode(RefreshTokenBody(refreshToken: refreshToken))
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+            let (data, response) = try await session.data(for: request)
+
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200...299).contains(httpResponse.statusCode) else {
+                throw APIError.authExpired
+            }
+
+            let authResponse = try decoder.decode(OperatorAuthResponse.self, from: data)
+
+            // Update stored refresh token for next cycle
+            storedRefreshToken = authResponse.refreshToken
+
+            // Notify AppState of new tokens
+            await onTokensRefreshed?(authResponse.accessToken, authResponse.refreshToken, authResponse.user.id)
+
+            // Resume all queued requests with the new access token
+            let newToken = authResponse.accessToken
+            for waiter in refreshWaiters {
+                waiter.resume(returning: newToken)
+            }
+            refreshWaiters.removeAll()
+            isRefreshing = false
+
+            return newToken
+        } catch {
+            // Refresh failed — session is unrecoverable
+            storedRefreshToken = nil
+            await onAuthFailure?()
+
+            for waiter in refreshWaiters {
+                waiter.resume(throwing: APIError.authExpired)
+            }
+            refreshWaiters.removeAll()
+            isRefreshing = false
+
+            throw APIError.authExpired
+        }
+    }
+
+    /// Execute a request without token-refresh retry (used for the retry after refresh to avoid infinite loops).
+    private func executeWithoutRetry<T: Decodable>(_ request: URLRequest) async throws -> T {
+        let data: Data
+        let response: URLResponse
+
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch {
+            throw APIError.networkError(error)
+        }
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+
+        guard (200...299).contains(httpResponse.statusCode) else {
             let message = String(data: data, encoding: .utf8) ?? "Unknown error"
             throw APIError.httpError(statusCode: httpResponse.statusCode, message: message)
         }
@@ -152,3 +290,7 @@ actor APIClient {
 // MARK: - Helper Types
 
 private struct EmptyBody: Encodable {}
+
+private struct RefreshTokenBody: Encodable {
+    let refreshToken: String
+}
