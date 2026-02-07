@@ -2,7 +2,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { Calendar, MapPin, Puzzle, Users, Play, Square, Settings, AlertTriangle, CheckCircle2, Wifi, Download } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -47,11 +46,9 @@ export function OverviewPage() {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-
-      toast.success(t("game.exportSuccess"));
     } catch (error) {
-      toast.error(t("game.exportError"));
       console.error("Export failed:", error);
+      alert(t("game.exportError"));
     } finally {
       setExporting(false);
     }

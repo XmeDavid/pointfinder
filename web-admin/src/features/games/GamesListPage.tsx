@@ -13,7 +13,6 @@ import { basesApi } from "@/lib/api/bases";
 import { teamsApi } from "@/lib/api/teams";
 import { formatDate } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
 import type { GameStatus } from "@/types";
 
 export function GamesListPage() {
@@ -104,22 +103,24 @@ function ImportGameDialog({ open, onOpenChange, navigate }: ImportGameDialogProp
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [importing, setImporting] = useState(false);
+  const [error, setError] = useState("");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       // Validate file type
       if (!selectedFile.name.endsWith('.json')) {
-        toast.error(t("game.invalidFileType"));
+        setError(t("game.invalidFileType"));
         return;
       }
 
       // Validate file size (max 5MB)
       if (selectedFile.size > 5 * 1024 * 1024) {
-        toast.error(t("game.fileTooLarge"));
+        setError(t("game.fileTooLarge"));
         return;
       }
 
+      setError("");
       setFile(selectedFile);
     }
   };
@@ -130,6 +131,7 @@ function ImportGameDialog({ open, onOpenChange, navigate }: ImportGameDialogProp
 
     try {
       setImporting(true);
+      setError("");
 
       // Read and parse file
       const content = await file.text();
@@ -142,16 +144,15 @@ function ImportGameDialog({ open, onOpenChange, navigate }: ImportGameDialogProp
         endDate: new Date(endDate).toISOString(),
       });
 
-      toast.success(t("game.importSuccess"));
       onOpenChange(false);
       navigate(`/games/${result.id}/overview`);
     } catch (error: any) {
       if (error instanceof SyntaxError) {
-        toast.error(t("game.invalidJsonFile"));
+        setError(t("game.invalidJsonFile"));
       } else if (error.response?.data?.message) {
-        toast.error(error.response.data.message);
+        setError(error.response.data.message);
       } else {
-        toast.error(t("game.importError"));
+        setError(t("game.importError"));
       }
       console.error("Import failed:", error);
     } finally {
@@ -167,6 +168,9 @@ function ImportGameDialog({ open, onOpenChange, navigate }: ImportGameDialogProp
           <DialogDescription>{t("game.importDescription")}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleImport} className="space-y-4">
+          {error && (
+            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="file">{t("game.selectFile")}</Label>
             <Input
