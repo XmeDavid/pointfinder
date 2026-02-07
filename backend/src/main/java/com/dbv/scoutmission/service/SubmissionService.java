@@ -84,6 +84,12 @@ public class SubmissionService {
                 .build();
         activityEventRepository.save(event);
 
+        // Initialize lazy relationships before broadcasting (fixes LazyInitializationException)
+        event.getGame().getId();
+        event.getTeam().getId();
+        if (event.getBase() != null) event.getBase().getId();
+        if (event.getChallenge() != null) event.getChallenge().getId();
+
         // Broadcast via WebSocket
         eventBroadcaster.broadcastActivityEvent(gameId, event);
 
@@ -129,6 +135,12 @@ public class SubmissionService {
                 .timestamp(Instant.now())
                 .build();
         activityEventRepository.save(event);
+
+        // Initialize lazy relationships before broadcasting (fixes LazyInitializationException)
+        event.getGame().getId();
+        event.getTeam().getId();
+        if (event.getBase() != null) event.getBase().getId();
+        if (event.getChallenge() != null) event.getChallenge().getId();
 
         eventBroadcaster.broadcastActivityEvent(gameId, event);
 

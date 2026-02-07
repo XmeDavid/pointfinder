@@ -130,6 +130,13 @@ public class PlayerService {
                 .timestamp(Instant.now())
                 .build();
         activityEventRepository.save(event);
+
+        // Initialize lazy relationships before broadcasting (fixes LazyInitializationException)
+        event.getGame().getId();
+        event.getTeam().getId();
+        if (event.getBase() != null) event.getBase().getId();
+        if (event.getChallenge() != null) event.getChallenge().getId();
+
         eventBroadcaster.broadcastActivityEvent(gameId, event);
 
         return buildCheckInResponse(checkIn, base, team);

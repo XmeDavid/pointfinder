@@ -60,6 +60,16 @@ struct GameMapView: View {
             .refreshable {
                 await appState.loadProgress()
             }
+            .alert("Error", isPresented: Binding(
+                get: { appState.showError },
+                set: { if !$0 { appState.showError = false } }
+            )) {
+                Button("OK") {
+                    appState.showError = false
+                }
+            } message: {
+                Text(appState.errorMessage ?? "An unknown error occurred")
+            }
         }
     }
 }

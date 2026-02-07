@@ -101,10 +101,19 @@ struct BaseDetailSheet: View {
                         .frame(maxWidth: .infinity)
                         .padding(.top, 40)
                     } else {
-                        Text("No challenge assigned to this base")
-                            .foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .padding(.top, 40)
+                        VStack(spacing: 12) {
+                            Image(systemName: "exclamationmark.triangle")
+                                .font(.system(size: 48))
+                                .foregroundStyle(.orange)
+                            Text("No challenge assigned to this base")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                            Text("Please contact your game operator")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.top, 40)
                     }
                 }
                 .padding()
