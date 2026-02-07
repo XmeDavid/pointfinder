@@ -75,6 +75,8 @@ export function OverviewPage() {
     { ok: unassignedBases.length === 0, label: unassignedBases.length === 0 ? t("overview.allBasesHaveChallenges") : t("overview.basesWithoutChallenges", { count: unassignedBases.length }) },
   ];
 
+  const canGoLive = game.status !== "draft" || readinessChecks.every((check) => check.ok);
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between">
@@ -91,7 +93,7 @@ export function OverviewPage() {
             {exporting ? t("game.exporting") : t("game.export")}
           </Button>
           {nextStep && (
-            <Button onClick={() => transition.mutate(nextStep.next)} disabled={transition.isPending} variant={nextStep.next === "ended" ? "destructive" : "default"}>
+            <Button onClick={() => transition.mutate(nextStep.next)} disabled={transition.isPending || !canGoLive} variant={nextStep.next === "ended" ? "destructive" : "default"}>
               {nextStep.icon}{nextStep.label}
             </Button>
           )}

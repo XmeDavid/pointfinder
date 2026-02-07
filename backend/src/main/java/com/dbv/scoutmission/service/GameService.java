@@ -117,6 +117,27 @@ public class GameService {
             if (game.getStartDate() != null && game.getStartDate().isAfter(Instant.now())) {
                 throw new BadRequestException("Cannot go live before the scheduled start date");
             }
+
+            // Validate game has bases
+            long baseCount = baseRepository.countByGameId(game.getId());
+            if (baseCount == 0) {
+                throw new BadRequestException("Game must have at least one base before going live");
+            }
+
+            // Validate all bases have NFC tags linked
+            long nfcLinkedCount = baseRepository.countByGameIdAndNfcLinkedTrue(game.getId());
+            if (nfcLinkedCount < baseCount) {
+                throw new BadRequestException(
+                        String.format("All bases must have NFC tags linked before going live. %d of %d bases linked",
+                                nfcLinkedCount, baseCount));
+            }
+
+            // Validate game has teams
+            long teamCount = teamRepository.countByGameId(game.getId());
+            if (teamCount == 0) {
+                throw new BadRequestException("Game must have at least one team before going live");
+            }
+
             // Set start date to now if not set
             if (game.getStartDate() == null) {
                 game.setStartDate(Instant.now());
