@@ -81,6 +81,25 @@
     "accepted": "Accepted",
     "pending": "Pending"
   },
+  "game": {
+    "export": "Export Game",
+    "exporting": "Exporting...",
+    "exportSuccess": "Game exported successfully",
+    "exportError": "Failed to export game",
+    "import": "Import Game",
+    "importing": "Importing...",
+    "importSuccess": "Game imported successfully",
+    "importError": "Failed to import game",
+    "importGame": "Import Game",
+    "importDescription": "Upload a game export file to create a new game with all bases, challenges, and teams",
+    "invalidJsonFile": "Invalid JSON file",
+    "invalidFileType": "Please select a JSON file",
+    "fileTooLarge": "File size exceeds 5MB limit",
+    "selectFile": "Select game export file",
+    "selectedFile": "Selected file",
+    "startDate": "Start Date",
+    "endDate": "End Date"
+  },
   "games": {
     "title": "Games",
     "description": "Manage your scout games and events",

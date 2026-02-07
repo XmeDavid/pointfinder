@@ -1,12 +1,15 @@
 package com.dbv.scoutmission.controller;
 
+import com.dbv.scoutmission.dto.export.GameExportDto;
 import com.dbv.scoutmission.dto.request.CreateGameRequest;
+import com.dbv.scoutmission.dto.request.GameImportRequest;
 import com.dbv.scoutmission.dto.request.UpdateGameRequest;
 import com.dbv.scoutmission.dto.request.UpdateGameStatusRequest;
 import com.dbv.scoutmission.dto.response.GameResponse;
 import com.dbv.scoutmission.service.GameService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -64,5 +67,20 @@ public class GameController {
     public ResponseEntity<Void> removeOperator(@PathVariable UUID id, @PathVariable UUID userId) {
         gameService.removeOperator(id, userId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/export")
+    public ResponseEntity<GameExportDto> exportGame(@PathVariable UUID id) {
+        GameExportDto export = gameService.exportGame(id);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"game-" + id + ".json\"")
+                .body(export);
+    }
+
+    @PostMapping("/import")
+    public ResponseEntity<GameResponse> importGame(@Valid @RequestBody GameImportRequest request) {
+        GameResponse game = gameService.importGame(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(game);
     }
 }

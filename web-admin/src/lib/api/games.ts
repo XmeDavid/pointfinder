@@ -8,6 +8,12 @@ export interface CreateGameDto {
   endDate: string;
 }
 
+export interface GameImportData {
+  gameData: any;
+  startDate: string;
+  endDate: string;
+}
+
 export const gamesApi = {
   list: async (): Promise<Game[]> => {
     const { data } = await apiClient.get("/games");
@@ -51,5 +57,17 @@ export const gamesApi = {
 
   removeOperator: async (gameId: string, userId: string): Promise<void> => {
     await apiClient.delete(`/games/${gameId}/operators/${userId}`);
+  },
+
+  exportGame: async (id: string): Promise<Blob> => {
+    const { data } = await apiClient.get(`/games/${id}/export`, {
+      responseType: 'blob',
+    });
+    return data;
+  },
+
+  importGame: async (importData: GameImportData): Promise<Game> => {
+    const { data } = await apiClient.post("/games/import", importData);
+    return data;
   },
 };

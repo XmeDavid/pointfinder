@@ -81,6 +81,25 @@
     "accepted": "Aceite",
     "pending": "Pendente"
   },
+  "game": {
+    "export": "Exportar Jogo",
+    "exporting": "A exportar...",
+    "exportSuccess": "Jogo exportado com sucesso",
+    "exportError": "Falha ao exportar jogo",
+    "import": "Importar Jogo",
+    "importing": "A importar...",
+    "importSuccess": "Jogo importado com sucesso",
+    "importError": "Falha ao importar jogo",
+    "importGame": "Importar Jogo",
+    "importDescription": "Carregue um ficheiro de exportação de jogo para criar um novo jogo com todas as bases, desafios e equipas",
+    "invalidJsonFile": "Ficheiro JSON inválido",
+    "invalidFileType": "Por favor selecione um ficheiro JSON",
+    "fileTooLarge": "O tamanho do ficheiro excede o limite de 5MB",
+    "selectFile": "Selecionar ficheiro de exportação",
+    "selectedFile": "Ficheiro selecionado",
+    "startDate": "Data de Início",
+    "endDate": "Data de Fim"
+  },
   "games": {
     "title": "Jogos",
     "description": "Gerir os seus jogos e eventos de desbravadores",

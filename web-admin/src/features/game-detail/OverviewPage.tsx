@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
-import { Calendar, MapPin, Puzzle, Users, Play, Square, Settings, AlertTriangle, CheckCircle2, Wifi } from "lucide-react";
+import { Calendar, MapPin, Puzzle, Users, Play, Square, Settings, AlertTriangle, CheckCircle2, Wifi, Download } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -28,6 +30,32 @@ export function OverviewPage() {
     mutationFn: (status: GameStatus) => gamesApi.updateStatus(gameId!, status),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["game", gameId] }),
   });
+
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+      const blob = await gamesApi.exportGame(gameId!);
+
+      // Trigger download
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${game!.name.replace(/[^a-z0-9]/gi, '-')}-export.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success(t("game.exportSuccess"));
+    } catch (error) {
+      toast.error(t("game.exportError"));
+      console.error("Export failed:", error);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   if (!game) return null;
 
@@ -61,11 +89,17 @@ export function OverviewPage() {
           </div>
           <p className="mt-1 text-muted-foreground">{game.description}</p>
         </div>
-        {nextStep && (
-          <Button onClick={() => transition.mutate(nextStep.next)} disabled={transition.isPending} variant={nextStep.next === "ended" ? "destructive" : "default"}>
-            {nextStep.icon}{nextStep.label}
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={handleExport} disabled={exporting}>
+            <Download className="mr-2 h-4 w-4" />
+            {exporting ? t("game.exporting") : t("game.export")}
           </Button>
-        )}
+          {nextStep && (
+            <Button onClick={() => transition.mutate(nextStep.next)} disabled={transition.isPending} variant={nextStep.next === "ended" ? "destructive" : "default"}>
+              {nextStep.icon}{nextStep.label}
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
