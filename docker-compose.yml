@@ -21,14 +21,14 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: scoutmission-api
-    ports:
-      - "8080:8080"
+    expose:
+      - "8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/scoutmission?stringtype=unspecified
       SPRING_DATASOURCE_USERNAME: scout
       SPRING_DATASOURCE_PASSWORD: scout
       SPRING_PROFILES_ACTIVE: dev
-      CORS_ORIGINS: http://localhost:5173
+      CORS_ORIGINS: http://localhost
     depends_on:
       postgres:
         condition: service_healthy
@@ -38,13 +38,24 @@ services:
       context: ./web-admin
       dockerfile: Dockerfile
     container_name: scoutmission-web
-    ports:
-      - "5173:5173"
+    expose:
+      - "5173"
     environment:
-      VITE_API_URL: http://localhost:8080/api
-      VITE_WS_URL: http://localhost:8080/ws
+      VITE_API_URL: /api
+      VITE_WS_URL: /ws
     depends_on:
       - backend
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: scoutmission-nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+      - frontend
 
 volumes:
   pgdata:
