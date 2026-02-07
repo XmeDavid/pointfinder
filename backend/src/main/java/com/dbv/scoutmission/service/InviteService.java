@@ -97,9 +97,9 @@ public class InviteService {
 
     @Transactional
     public void acceptInvite(UUID inviteId) {
-        User currentUser = SecurityUtils.getCurrentUser();
-        currentUser = userRepository.findById(currentUser.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("User", currentUser.getId()));
+        UUID userId = SecurityUtils.getCurrentUser().getId();
+        User currentUser = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
 
         OperatorInvite invite = inviteRepository.findById(inviteId)
                 .orElseThrow(() -> new ResourceNotFoundException("Invite", inviteId));
