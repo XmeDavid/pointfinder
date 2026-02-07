@@ -28,7 +28,7 @@ services:
       SPRING_DATASOURCE_USERNAME: scout
       SPRING_DATASOURCE_PASSWORD: scout
       SPRING_PROFILES_ACTIVE: dev
-      CORS_ORIGINS: http://localhost
+      CORS_ORIGINS: http://localhost,http://dbvnfc.davidsbatista.com
     depends_on:
       postgres:
         condition: service_healthy

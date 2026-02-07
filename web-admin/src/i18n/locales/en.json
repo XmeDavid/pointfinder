@@ -32,7 +32,7 @@
   "auth": {
     "signIn": "Sign In",
     "signingIn": "Signing in...",
-    "signInDescription": "Sign in to manage your scout games",
+    "signInDescription": "Sign in to manage your pathfinder games",
     "email": "Email",
     "password": "Password",
     "enterPassword": "Enter password",
@@ -40,7 +40,7 @@
     "demoAccounts": "Demo accounts:",
     "demoAdmin": "Admin: admin@scout.dev / admin",
     "demoOperator": "Operator: operator@scout.dev / operator",
-    "joinTitle": "Join Scout HQ",
+    "joinTitle": "Join Pathfinder HQ",
     "joinDescription": "You've been invited to be a game operator. Create your account to get started.",
     "fullName": "Full Name",
     "yourName": "Your name",

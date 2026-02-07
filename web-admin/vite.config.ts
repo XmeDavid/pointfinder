@@ -13,4 +13,12 @@ export default defineConfig({
   define: {
     global: 'globalThis',
   },
+  server: {
+    host: true,
+    allowedHosts: [
+      'localhost',
+      '127.0.0.1',
+      'dbvnfc.davidsbatista.com',
+    ],
+  },
 })
