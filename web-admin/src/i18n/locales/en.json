@@ -157,9 +157,16 @@
     "description": "Manage who can operate this game",
     "inviteOperator": "Invite Operator",
     "inviteTitle": "Invite Operator to Game",
-    "inviteDescription": "The operator will receive access to manage this game. If they don't have an account yet, they'll be invited to register.",
+    "inviteDescription": "Enter the email of an existing operator to invite them to this game. They will be notified by email and can accept the invitation on the platform.",
     "owner": "Owner",
-    "pendingInvitations": "Pending Invitations"
+    "pendingInvitations": "Pending Invitations",
+    "inviteError": "Failed to send invitation. Please try again."
+  },
+  "invitations": {
+    "title": "Invitations",
+    "noInvitations": "No pending invitations",
+    "invitedYouTo": "invited you to",
+    "accept": "Accept"
   },
   "bases": {
     "title": "Bases",

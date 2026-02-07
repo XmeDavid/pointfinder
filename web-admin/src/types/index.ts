@@ -103,10 +103,12 @@ export type InviteStatus = "pending" | "accepted" | "expired";
 export interface OperatorInvite {
   id: string;
   gameId?: string;
+  gameName?: string;
   email: string;
   token: string;
   status: InviteStatus;
   invitedBy: string;
+  inviterName?: string;
   createdAt: string;
 }
 

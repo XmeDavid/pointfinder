@@ -1,14 +1,14 @@
 #!/bin/bash
 
-# Initialize Let's Encrypt SSL certificates for dbvnfc.davidsbatista.com
+# Initialize Let's Encrypt SSL certificates for desbravadores.dev
 # This script should be run once before starting the application
 
 set -e
 
-domains=(dbvnfc.davidsbatista.com)
+domains=(desbravadores.dev)
 rsa_key_size=4096
 data_path="./certbot"
-email="info@davidsbatista.com" # Replace with your email
+email="info@desbravadores.dev" # Replace with your email
 staging=0 # Set to 1 for testing with Let's Encrypt staging server
 
 echo "### Preparing directories..."

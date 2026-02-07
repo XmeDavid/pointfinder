@@ -20,6 +20,7 @@ export function GameOperatorsPage() {
   const { gameId } = useParams<{ gameId: string }>();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteError, setInviteError] = useState("");
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((s) => s.user);
 
@@ -29,7 +30,16 @@ export function GameOperatorsPage() {
 
   const sendInvite = useMutation({
     mutationFn: (email: string) => invitesApi.create({ email, gameId }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["game-invites", gameId] }); setInviteOpen(false); setInviteEmail(""); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["game-invites", gameId] });
+      setInviteOpen(false);
+      setInviteEmail("");
+      setInviteError("");
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || t("gameOperators.inviteError");
+      setInviteError(message);
+    },
   });
 
   const removeOperator = useMutation({
@@ -74,11 +84,15 @@ export function GameOperatorsPage() {
         </Card>
       )}
 
-      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
-        <DialogContent onClose={() => setInviteOpen(false)}>
+      <Dialog open={inviteOpen} onOpenChange={(open) => { setInviteOpen(open); if (!open) { setInviteError(""); setInviteEmail(""); } }}>
+        <DialogContent onClose={() => { setInviteOpen(false); setInviteError(""); setInviteEmail(""); }}>
           <DialogHeader><DialogTitle>{t("gameOperators.inviteTitle")}</DialogTitle><DialogDescription>{t("gameOperators.inviteDescription")}</DialogDescription></DialogHeader>
-          <form onSubmit={(e) => { e.preventDefault(); sendInvite.mutate(inviteEmail); }}>
-            <div className="space-y-2"><Label htmlFor="game-invite-email">{t("admin.emailAddress")}</Label><Input id="game-invite-email" type="email" placeholder={t("admin.emailPlaceholder")} value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} required /></div>
+          <form onSubmit={(e) => { e.preventDefault(); setInviteError(""); sendInvite.mutate(inviteEmail); }}>
+            <div className="space-y-2">
+              <Label htmlFor="game-invite-email">{t("admin.emailAddress")}</Label>
+              <Input id="game-invite-email" type="email" placeholder={t("admin.emailPlaceholder")} value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} required />
+              {inviteError && <p className="text-sm text-destructive">{inviteError}</p>}
+            </div>
             <DialogFooter><Button type="button" variant="outline" onClick={() => setInviteOpen(false)}>{t("common.cancel")}</Button><Button type="submit" disabled={sendInvite.isPending}>{sendInvite.isPending ? t("common.sending") : t("admin.sendInvite")}</Button></DialogFooter>
           </form>
         </DialogContent>

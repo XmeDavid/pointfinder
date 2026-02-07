@@ -1,4 +1,4 @@
-import { Moon, Sun, LogOut, User, ChevronRight, Globe } from "lucide-react";
+import { Moon, Sun, LogOut, User, ChevronRight, Globe, Bell, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,6 +11,8 @@ import { useAuthStore } from "@/hooks/useAuth";
 import { useThemeStore } from "@/hooks/useTheme";
 import { Link, useMatches } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { invitesApi } from "@/lib/api/invites";
 
 interface BreadcrumbItem {
   label: string;
@@ -61,6 +63,7 @@ export function Header() {
   const { dark, toggle } = useThemeStore();
   const crumbs = useBreadcrumbs();
   const { t, i18n } = useTranslation();
+  const queryClient = useQueryClient();
 
   const currentLang = i18n.language?.startsWith("pt") ? "pt" : "en";
 
@@ -68,6 +71,20 @@ export function Header() {
     const next = currentLang === "en" ? "pt" : "en";
     i18n.changeLanguage(next);
   }
+
+  const { data: myInvites = [] } = useQuery({
+    queryKey: ["my-invites"],
+    queryFn: invitesApi.getMyInvites,
+    refetchInterval: 30000,
+  });
+
+  const acceptInvite = useMutation({
+    mutationFn: (inviteId: string) => invitesApi.accept(inviteId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-invites"] });
+      queryClient.invalidateQueries({ queryKey: ["games"] });
+    },
+  });
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/95 backdrop-blur px-6">
@@ -95,6 +112,48 @@ export function Header() {
         <Button variant="ghost" size="icon" onClick={toggle}>
           {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger className="relative flex items-center justify-center rounded-md p-2 hover:bg-accent transition-colors">
+            <Bell className="h-4 w-4" />
+            {myInvites.length > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
+                {myInvites.length}
+              </span>
+            )}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-80">
+            <div className="px-2 py-1.5 text-sm font-medium">{t("invitations.title")}</div>
+            <DropdownMenuSeparator />
+            {myInvites.length === 0 ? (
+              <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                {t("invitations.noInvitations")}
+              </div>
+            ) : (
+              myInvites.map((invite) => (
+                <div key={invite.id} className="flex items-start gap-3 px-2 py-2.5">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm">
+                      <span className="font-medium">{invite.inviterName}</span>{" "}
+                      {t("invitations.invitedYouTo")}{" "}
+                      <span className="font-medium">{invite.gameName}</span>
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="default"
+                    className="shrink-0 h-7 gap-1 text-xs"
+                    disabled={acceptInvite.isPending}
+                    onClick={() => acceptInvite.mutate(invite.id)}
+                  >
+                    <Check className="h-3 w-3" />
+                    {t("invitations.accept")}
+                  </Button>
+                </div>
+              ))
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-accent transition-colors">

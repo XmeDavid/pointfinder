@@ -1,5 +1,6 @@
 package com.dbv.scoutmission.repository;
 
+import com.dbv.scoutmission.entity.InviteStatus;
 import com.dbv.scoutmission.entity.OperatorInvite;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -14,4 +15,6 @@ public interface OperatorInviteRepository extends JpaRepository<OperatorInvite, 
     List<OperatorInvite> findByGameId(UUID gameId);
 
     List<OperatorInvite> findByGameIdIsNull();
+
+    List<OperatorInvite> findByEmailAndStatusAndGameIdIsNotNull(String email, InviteStatus status);
 }

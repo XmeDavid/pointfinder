@@ -18,7 +18,7 @@ export default defineConfig({
     allowedHosts: [
       'localhost',
       '127.0.0.1',
-      'dbvnfc.davidsbatista.com',
+      'desbravadores.dev',
     ],
   },
 })

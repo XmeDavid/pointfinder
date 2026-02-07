@@ -157,9 +157,16 @@
     "description": "Gerir quem pode operar este jogo",
     "inviteOperator": "Convidar Operador",
     "inviteTitle": "Convidar Operador para o Jogo",
-    "inviteDescription": "O operador receberá acesso para gerir este jogo. Se ainda não tiver conta, será convidado a registar-se.",
+    "inviteDescription": "Introduza o email de um operador existente para convidá-lo para este jogo. Será notificado por email e poderá aceitar o convite na plataforma.",
     "owner": "Dono",
-    "pendingInvitations": "Convites Pendentes"
+    "pendingInvitations": "Convites Pendentes",
+    "inviteError": "Falha ao enviar convite. Tente novamente."
+  },
+  "invitations": {
+    "title": "Convites",
+    "noInvitations": "Sem convites pendentes",
+    "invitedYouTo": "convidou-te para",
+    "accept": "Aceitar"
   },
   "bases": {
     "title": "Bases",

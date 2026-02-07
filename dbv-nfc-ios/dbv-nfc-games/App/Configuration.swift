@@ -2,9 +2,9 @@ import Foundation
 
 enum AppConfiguration {
     #if DEBUG
-    static let apiBaseURL = "https://dbvnfc.davidsbatista.com"
+    static let apiBaseURL = "https://desbravadores.dev"
     #else
-    static let apiBaseURL = "https://dbvnfc.davidsbatista.com"
+    static let apiBaseURL = "https://desbravadores.dev"
     #endif
 
     static let appName = "Scout Mission"

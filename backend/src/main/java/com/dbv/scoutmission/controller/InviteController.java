@@ -29,8 +29,19 @@ public class InviteController {
         return ResponseEntity.ok(inviteService.getGameInvites(gameId));
     }
 
+    @GetMapping("/my")
+    public ResponseEntity<List<InviteResponse>> getMyInvites() {
+        return ResponseEntity.ok(inviteService.getMyInvites());
+    }
+
     @PostMapping
     public ResponseEntity<InviteResponse> createInvite(@Valid @RequestBody CreateInviteRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(inviteService.createInvite(request));
+    }
+
+    @PostMapping("/{inviteId}/accept")
+    public ResponseEntity<Void> acceptInvite(@PathVariable UUID inviteId) {
+        inviteService.acceptInvite(inviteId);
+        return ResponseEntity.ok().build();
     }
 }

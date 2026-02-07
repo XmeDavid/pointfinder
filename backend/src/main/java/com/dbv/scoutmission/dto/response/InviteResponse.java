@@ -13,9 +13,11 @@ import java.util.UUID;
 public class InviteResponse {
     private UUID id;
     private UUID gameId;
+    private String gameName;
     private String email;
     private String token;
     private String status;
     private UUID invitedBy;
+    private String inviterName;
     private Instant createdAt;
 }

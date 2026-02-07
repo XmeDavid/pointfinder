@@ -28,7 +28,13 @@ services:
       SPRING_DATASOURCE_USERNAME: scout
       SPRING_DATASOURCE_PASSWORD: scout
       SPRING_PROFILES_ACTIVE: dev
-      CORS_ORIGINS: http://localhost,https://dbvnfc.davidsbatista.com
+      CORS_ORIGINS: http://localhost,https://desbravadores.dev
+      MAIL_HOST: smtp.resend.com
+      MAIL_USERNAME: resend
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM: info@desbravadores.dev
+      MAIL_ENABLED: ${MAIL_ENABLED:-false}
+      FRONTEND_URL: https://desbravadores.dev
     depends_on:
       postgres:
         condition: service_healthy
