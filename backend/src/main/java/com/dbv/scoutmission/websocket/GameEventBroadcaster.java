@@ -21,16 +21,19 @@ public class GameEventBroadcaster {
     public void broadcastActivityEvent(UUID gameId, ActivityEvent event) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "activity");
-        payload.put("data", Map.of(
-            "id", event.getId(),
-            "gameId", event.getGame().getId(),
-            "type", event.getType().name(),
-            "teamId", event.getTeam().getId(),
-            "baseId", event.getBase() != null ? event.getBase().getId() : null,
-            "challengeId", event.getChallenge() != null ? event.getChallenge().getId() : null,
-            "message", event.getMessage(),
-            "timestamp", event.getTimestamp().toString()
-        ));
+
+        // Use HashMap instead of Map.of() to allow null values
+        Map<String, Object> data = new HashMap<>();
+        data.put("id", event.getId());
+        data.put("gameId", event.getGame().getId());
+        data.put("type", event.getType().name());
+        data.put("teamId", event.getTeam().getId());
+        data.put("baseId", event.getBase() != null ? event.getBase().getId() : null);
+        data.put("challengeId", event.getChallenge() != null ? event.getChallenge().getId() : null);
+        data.put("message", event.getMessage());
+        data.put("timestamp", event.getTimestamp().toString());
+
+        payload.put("data", data);
 
         String destination = "/topic/games/" + gameId;
         log.debug("Broadcasting activity event to {}", destination);
