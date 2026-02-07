@@ -1,0 +1,17 @@
+package com.dbv.scoutmission.dto.request;
+
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+
+import java.util.UUID;
+
+@Data
+public class PlayerSubmissionRequest {
+    @NotNull
+    private UUID baseId;
+
+    @NotNull
+    private UUID challengeId;
+
+    private String answer = "";
+}

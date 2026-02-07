@@ -28,6 +28,9 @@ public class Player {
     @Column(name = "display_name", nullable = false)
     private String displayName;
 
+    @Column(unique = true)
+    private String token;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

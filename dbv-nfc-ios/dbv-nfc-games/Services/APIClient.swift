@@ -1,0 +1,154 @@
+import Foundation
+
+enum APIError: LocalizedError {
+    case invalidURL
+    case invalidResponse
+    case httpError(statusCode: Int, message: String)
+    case decodingError(Error)
+    case networkError(Error)
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidURL:
+            return "Invalid URL"
+        case .invalidResponse:
+            return "Invalid server response"
+        case .httpError(let code, let message):
+            return "Server error (\(code)): \(message)"
+        case .decodingError(let error):
+            return "Failed to decode response: \(error.localizedDescription)"
+        case .networkError(let error):
+            return error.localizedDescription
+        }
+    }
+}
+
+actor APIClient {
+
+    private let baseURL: String
+    private let session: URLSession
+    private let decoder: JSONDecoder
+
+    init(baseURL: String = AppConfiguration.apiBaseURL, session: URLSession = .shared) {
+        self.baseURL = baseURL
+        self.session = session
+        self.decoder = JSONDecoder()
+    }
+
+    // MARK: - Auth
+
+    func playerJoin(request: PlayerJoinRequest) async throws -> PlayerAuthResponse {
+        try await post("/api/auth/player/join", body: request)
+    }
+
+    func operatorLogin(request: OperatorLoginRequest) async throws -> OperatorAuthResponse {
+        try await post("/api/auth/login", body: request)
+    }
+
+    // MARK: - Player Endpoints
+
+    func checkIn(gameId: UUID, baseId: UUID, token: String) async throws -> CheckInResponse {
+        try await post("/api/player/games/\(gameId)/bases/\(baseId)/check-in",
+                       body: EmptyBody(),
+                       token: token)
+    }
+
+    func getProgress(gameId: UUID, token: String) async throws -> [BaseProgress] {
+        try await get("/api/player/games/\(gameId)/progress", token: token)
+    }
+
+    func getBases(gameId: UUID, token: String) async throws -> [Base] {
+        try await get("/api/player/games/\(gameId)/bases", token: token)
+    }
+
+    func submitAnswer(gameId: UUID, request: PlayerSubmissionRequest, token: String) async throws -> SubmissionResponse {
+        try await post("/api/player/games/\(gameId)/submissions", body: request, token: token)
+    }
+
+    // MARK: - Operator Endpoints
+
+    func getGames(token: String) async throws -> [Game] {
+        try await get("/api/games", token: token)
+    }
+
+    func getGameBases(gameId: UUID, token: String) async throws -> [Base] {
+        try await get("/api/games/\(gameId)/bases", token: token)
+    }
+
+    func linkBaseNfc(gameId: UUID, baseId: UUID, token: String) async throws -> Base {
+        try await patch("/api/games/\(gameId)/bases/\(baseId)/nfc-link", token: token)
+    }
+
+    // MARK: - HTTP Methods
+
+    private func get<T: Decodable>(_ path: String, token: String? = nil) async throws -> T {
+        let request = try buildRequest(path: path, method: "GET", token: token)
+        return try await execute(request)
+    }
+
+    private func post<T: Decodable, B: Encodable>(_ path: String, body: B, token: String? = nil) async throws -> T {
+        var request = try buildRequest(path: path, method: "POST", token: token)
+        request.httpBody = try JSONEncoder().encode(body)
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        return try await execute(request)
+    }
+
+    private func put<T: Decodable, B: Encodable>(_ path: String, body: B, token: String? = nil) async throws -> T {
+        var request = try buildRequest(path: path, method: "PUT", token: token)
+        request.httpBody = try JSONEncoder().encode(body)
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        return try await execute(request)
+    }
+
+    private func patch<T: Decodable>(_ path: String, token: String? = nil) async throws -> T {
+        let request = try buildRequest(path: path, method: "PATCH", token: token)
+        return try await execute(request)
+    }
+
+    // MARK: - Helpers
+
+    private func buildRequest(path: String, method: String, token: String?) throws -> URLRequest {
+        guard let url = URL(string: baseURL + path) else {
+            throw APIError.invalidURL
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = method
+        request.timeoutInterval = 30
+
+        if let token = token {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        return request
+    }
+
+    private func execute<T: Decodable>(_ request: URLRequest) async throws -> T {
+        let data: Data
+        let response: URLResponse
+
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch {
+            throw APIError.networkError(error)
+        }
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+
+        guard (200...299).contains(httpResponse.statusCode) else {
+            let message = String(data: data, encoding: .utf8) ?? "Unknown error"
+            throw APIError.httpError(statusCode: httpResponse.statusCode, message: message)
+        }
+
+        do {
+            return try decoder.decode(T.self, from: data)
+        } catch {
+            throw APIError.decodingError(error)
+        }
+    }
+}
+
+// MARK: - Helper Types
+
+private struct EmptyBody: Encodable {}

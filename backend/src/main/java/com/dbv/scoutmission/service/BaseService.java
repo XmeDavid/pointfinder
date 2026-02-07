@@ -85,6 +85,15 @@ public class BaseService {
     }
 
     @Transactional
+    public BaseResponse setNfcLinked(UUID gameId, UUID baseId, boolean linked) {
+        Base base = baseRepository.findById(baseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Base", baseId));
+        base.setNfcLinked(linked);
+        base = baseRepository.save(base);
+        return toResponse(base);
+    }
+
+    @Transactional
     public void deleteBase(UUID gameId, UUID baseId) {
         if (!baseRepository.existsById(baseId)) {
             throw new ResourceNotFoundException("Base", baseId);

@@ -38,6 +38,23 @@ public class JwtTokenProvider {
                 .subject(userId.toString())
                 .claim("email", email)
                 .claim("role", role)
+                .claim("type", "user")
+                .issuedAt(now)
+                .expiration(expiry)
+                .signWith(key)
+                .compact();
+    }
+
+    public String generatePlayerToken(UUID playerId, UUID teamId, UUID gameId) {
+        Date now = new Date();
+        Date expiry = new Date(now.getTime() + refreshTokenExpirationMs); // longer-lived for players
+
+        return Jwts.builder()
+                .subject(playerId.toString())
+                .claim("teamId", teamId.toString())
+                .claim("gameId", gameId.toString())
+                .claim("type", "player")
+                .claim("role", "player")
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(key)
@@ -53,12 +70,22 @@ public class JwtTokenProvider {
     }
 
     public UUID getUserIdFromToken(String token) {
-        Claims claims = Jwts.parser()
+        Claims claims = getClaims(token);
+        return UUID.fromString(claims.getSubject());
+    }
+
+    public String getTokenType(String token) {
+        Claims claims = getClaims(token);
+        String type = claims.get("type", String.class);
+        return type != null ? type : "user";
+    }
+
+    public Claims getClaims(String token) {
+        return Jwts.parser()
                 .verifyWith(key)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-        return UUID.fromString(claims.getSubject());
     }
 
     public boolean validateToken(String token) {

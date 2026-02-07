@@ -38,6 +38,12 @@ public class BaseController {
         return ResponseEntity.ok(baseService.updateBase(gameId, baseId, request));
     }
 
+    @PatchMapping("/{baseId}/nfc-link")
+    public ResponseEntity<BaseResponse> linkNfc(@PathVariable UUID gameId,
+                                                 @PathVariable UUID baseId) {
+        return ResponseEntity.ok(baseService.setNfcLinked(gameId, baseId, true));
+    }
+
     @DeleteMapping("/{baseId}")
     public ResponseEntity<Void> deleteBase(@PathVariable UUID gameId, @PathVariable UUID baseId) {
         baseService.deleteBase(gameId, baseId);

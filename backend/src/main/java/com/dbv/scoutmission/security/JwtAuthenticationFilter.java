@@ -1,6 +1,8 @@
 package com.dbv.scoutmission.security;
 
+import com.dbv.scoutmission.entity.Player;
 import com.dbv.scoutmission.entity.User;
+import com.dbv.scoutmission.repository.PlayerRepository;
 import com.dbv.scoutmission.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -27,6 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider tokenProvider;
     private final UserRepository userRepository;
+    private final PlayerRepository playerRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -36,26 +39,53 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String jwt = extractJwtFromRequest(request);
 
             if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
-                UUID userId = tokenProvider.getUserIdFromToken(jwt);
-                User user = userRepository.findById(userId).orElse(null);
+                String tokenType = tokenProvider.getTokenType(jwt);
 
-                if (user != null) {
-                    var authorities = List.of(
-                        new SimpleGrantedAuthority("ROLE_" + user.getRole().name().toUpperCase())
-                    );
-
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(user, null, authorities);
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                if ("player".equals(tokenType)) {
+                    authenticatePlayer(jwt, request);
+                } else {
+                    authenticateUser(jwt, request);
                 }
             }
         } catch (Exception ex) {
-            log.error("Could not set user authentication in security context", ex);
+            log.error("Could not set authentication in security context", ex);
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void authenticateUser(String jwt, HttpServletRequest request) {
+        UUID userId = tokenProvider.getUserIdFromToken(jwt);
+        User user = userRepository.findById(userId).orElse(null);
+
+        if (user != null) {
+            var authorities = List.of(
+                new SimpleGrantedAuthority("ROLE_" + user.getRole().name().toUpperCase())
+            );
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(user, null, authorities);
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
+    }
+
+    private void authenticatePlayer(String jwt, HttpServletRequest request) {
+        UUID playerId = tokenProvider.getUserIdFromToken(jwt);
+        Player player = playerRepository.findById(playerId).orElse(null);
+
+        if (player != null) {
+            var authorities = List.of(
+                new SimpleGrantedAuthority("ROLE_PLAYER")
+            );
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(player, null, authorities);
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
     }
 
     private String extractJwtFromRequest(HttpServletRequest request) {
