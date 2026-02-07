@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,18 +7,34 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
+import axios from "axios";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
 export function RegisterPage() {
   const { t } = useTranslation();
   const { token } = useParams<{ token: string }>();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [emailLocked, setEmailLocked] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const register = useAuthStore((s) => s.register);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!token) return;
+    axios.get(`${API_URL}/auth/invite/${token}`)
+      .then(({ data }) => {
+        setEmail(data.email);
+        setEmailLocked(true);
+      })
+      .catch(() => {
+        // Token invalid or expired — let the form submit handle the error
+      });
+  }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +75,7 @@ export function RegisterPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">{t("auth.email")}</Label>
-              <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={emailLocked} className={emailLocked ? "bg-muted" : ""} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">{t("auth.password")}</Label>
