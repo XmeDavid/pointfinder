@@ -14,7 +14,7 @@ struct PlayerJoinView: View {
             VStack(spacing: 8) {
                 Image(systemName: "qrcode.viewfinder")
                     .font(.system(size: 60))
-                    .foregroundStyle(.accent)
+                    .foregroundStyle(.secondary)
 
                 Text("Join Your Team")
                     .font(.title2)

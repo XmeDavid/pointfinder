@@ -26,7 +26,7 @@ struct ScanTabView: View {
 
                         Image(systemName: "sensor.tag.radiowaves.forward")
                             .font(.system(size: 48))
-                            .foregroundStyle(.accent)
+                            .foregroundStyle(.secondary)
                             .symbolEffect(.pulse, isActive: isScanning)
                     }
 

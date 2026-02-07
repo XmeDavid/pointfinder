@@ -28,7 +28,7 @@ services:
       SPRING_DATASOURCE_USERNAME: scout
       SPRING_DATASOURCE_PASSWORD: scout
       SPRING_PROFILES_ACTIVE: dev
-      CORS_ORIGINS: http://localhost,http://dbvnfc.davidsbatista.com
+      CORS_ORIGINS: http://localhost,https://dbvnfc.davidsbatista.com
     depends_on:
       postgres:
         condition: service_healthy
@@ -53,9 +53,22 @@ services:
     container_name: scoutmission-nginx
     ports:
       - "80:80"
+      - "443:443"
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
     depends_on:
       - backend
       - frontend
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+
+  certbot:
+    image: certbot/certbot
+    container_name: scoutmission-certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
 volumes:
   pgdata:

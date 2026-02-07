@@ -14,7 +14,7 @@ struct OperatorLoginView: View {
             VStack(spacing: 8) {
                 Image(systemName: "gearshape.circle.fill")
                     .font(.system(size: 60))
-                    .foregroundStyle(.accent)
+                    .foregroundStyle(.secondary)
 
                 Text("Operator Login")
                     .font(.title2)

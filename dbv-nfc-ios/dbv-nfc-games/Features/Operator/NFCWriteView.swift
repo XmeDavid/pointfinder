@@ -17,7 +17,7 @@ struct NFCWriteView: View {
             VStack(spacing: 8) {
                 Image(systemName: "mappin.circle.fill")
                     .font(.system(size: 48))
-                    .foregroundStyle(.accent)
+                    .foregroundStyle(.secondary)
 
                 Text(base.name)
                     .font(.title2)
