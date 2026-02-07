@@ -127,8 +127,9 @@ public class SubmissionService {
 
         User currentUser = SecurityUtils.getCurrentUser();
         // Re-fetch user within transaction to get fresh entity with proper session
-        currentUser = userRepository.findById(currentUser.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("User", currentUser.getId()));
+        UUID userId = currentUser.getId();
+        currentUser = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
 
         submission.setStatus(newStatus);
         submission.setReviewedBy(currentUser);

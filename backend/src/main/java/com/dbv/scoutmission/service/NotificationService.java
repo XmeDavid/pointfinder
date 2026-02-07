@@ -45,8 +45,9 @@ public class NotificationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Game", gameId));
         User currentUser = SecurityUtils.getCurrentUser();
         // Re-fetch user within transaction to get fresh entity with proper session
-        currentUser = userRepository.findById(currentUser.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("User", currentUser.getId()));
+        UUID userId = currentUser.getId();
+        currentUser = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
 
         Team targetTeam = null;
         if (request.getTargetTeamId() != null) {

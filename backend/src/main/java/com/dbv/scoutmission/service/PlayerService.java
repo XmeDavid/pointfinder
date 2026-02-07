@@ -95,8 +95,9 @@ public class PlayerService {
     @Transactional
     public CheckInResponse checkIn(UUID gameId, UUID baseId, Player player) {
         // Re-fetch player within transaction to get fresh entity with proper session
-        player = playerRepository.findById(player.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Player", player.getId()));
+        UUID playerId = player.getId();
+        player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
 
         Team team = player.getTeam();
         // Force initialization of lazy proxy within this transaction
@@ -152,8 +153,9 @@ public class PlayerService {
     @Transactional(readOnly = true)
     public List<BaseProgressResponse> getProgress(UUID gameId, Player player) {
         // Re-fetch player within transaction to get fresh entity with proper session
-        player = playerRepository.findById(player.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Player", player.getId()));
+        UUID playerId = player.getId();
+        player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
 
         Team team = player.getTeam();
         // Force initialization of lazy proxy within this transaction
@@ -238,8 +240,9 @@ public class PlayerService {
     @Transactional
     public SubmissionResponse submitAnswer(UUID gameId, PlayerSubmissionRequest request, Player player) {
         // Re-fetch player within transaction to get fresh entity with proper session
-        player = playerRepository.findById(player.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Player", player.getId()));
+        UUID playerId = player.getId();
+        player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
 
         Team team = player.getTeam();
         // Force initialization of lazy proxy within this transaction
