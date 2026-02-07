@@ -4,7 +4,7 @@
 
 -- Enums
 CREATE TYPE user_role AS ENUM ('admin', 'operator');
-CREATE TYPE game_status AS ENUM ('draft', 'setup', 'live', 'ended');
+CREATE TYPE game_status AS ENUM ('draft', 'live', 'ended');
 CREATE TYPE answer_type AS ENUM ('text', 'file');
 CREATE TYPE submission_status AS ENUM ('pending', 'approved', 'rejected', 'correct', 'incorrect');
 CREATE TYPE invite_status AS ENUM ('pending', 'accepted', 'expired');
@@ -31,8 +31,8 @@ CREATE TABLE games (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name        VARCHAR(255) NOT NULL,
     description TEXT NOT NULL DEFAULT '',
-    start_date  TIMESTAMPTZ NOT NULL,
-    end_date    TIMESTAMPTZ NOT NULL,
+    start_date  TIMESTAMPTZ,
+    end_date    TIMESTAMPTZ,
     status      game_status NOT NULL DEFAULT 'draft',
     created_by  UUID NOT NULL REFERENCES users(id),
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
