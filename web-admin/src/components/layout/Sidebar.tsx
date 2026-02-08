@@ -32,7 +32,7 @@ function SidebarLink({ item }: { item: NavItem }) {
   return (
     <NavLink
       to={item.to}
-      end={item.to.split("/").length <= 3}
+      end={true}
       className={({ isActive }) =>
         cn(
           "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
