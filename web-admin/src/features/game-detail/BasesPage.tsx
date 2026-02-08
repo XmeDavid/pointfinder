@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, MapPin, Wifi, WifiOff, Trash2, Pencil, List, Map as MapIcon } from "lucide-react";
@@ -26,6 +26,21 @@ export function BasesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Base | null>(null);
   const [form, setForm] = useState<Partial<CreateBaseDto>>({});
+  const [defaultLocation, setDefaultLocation] = useState<{ lat: number; lng: number }>({ lat: 40.08789650218038, lng: -8.869461715221407 });
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setDefaultLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
+        },
+        () => {
+          // Geolocation failed, use fallback
+          setDefaultLocation({ lat: 40.08789650218038, lng: -8.869461715221407 });
+        }
+      );
+    }
+  }, []);
 
   const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!) });
   const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!) });
@@ -47,7 +62,11 @@ export function BasesPage() {
 
   function openCreate() {
     setEditing(null);
-    setForm({ gameId, name: "", description: "", lat: 38.7223, lng: -9.1393 });
+    // Use last base location, or fallback to current location/default
+    const lastBase = bases.length > 0 ? bases[bases.length - 1] : null;
+    const lat = lastBase ? lastBase.lat : defaultLocation.lat;
+    const lng = lastBase ? lastBase.lng : defaultLocation.lng;
+    setForm({ gameId, name: "", description: "", lat, lng });
     setDialogOpen(true);
   }
 
@@ -136,7 +155,7 @@ export function BasesPage() {
             <div className="space-y-2">
               <Label>{t("bases.clickMapToSelect")}</Label>
               <MapPicker
-                value={{ lat: form.lat ?? 38.7223, lng: form.lng ?? -9.1393 }}
+                value={{ lat: form.lat ?? defaultLocation.lat, lng: form.lng ?? defaultLocation.lng }}
                 onChange={(lat, lng) => setForm((f) => ({ ...f, lat, lng }))}
                 className="h-[250px] rounded-md overflow-hidden border border-input"
               />

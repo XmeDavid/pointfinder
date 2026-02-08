@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -85,9 +85,25 @@ const greenIcon = new L.Icon({
 });
 
 export function BaseMapView({ bases, className }: BaseMapViewProps) {
+  const [userLocation, setUserLocation] = useState<[number, number]>([40.08789650218038, -8.869461715221407]);
+
+  useEffect(() => {
+    if (bases.length === 0 && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation([position.coords.latitude, position.coords.longitude]);
+        },
+        () => {
+          // Geolocation failed, use fallback
+          setUserLocation([40.08789650218038, -8.869461715221407]);
+        }
+      );
+    }
+  }, [bases.length]);
+
   const center: [number, number] = bases.length > 0
     ? [bases.reduce((s, b) => s + b.lat, 0) / bases.length, bases.reduce((s, b) => s + b.lng, 0) / bases.length]
-    : [38.7223, -9.1393];
+    : userLocation;
 
   return (
     <div className={className}>

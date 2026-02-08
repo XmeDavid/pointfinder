@@ -146,10 +146,27 @@ export function MapPage() {
 
   const now = Date.now();
 
-  // Default center (Europe) if no bases
+  // Get user's current location or fallback (only if no bases)
+  const [userLocation, setUserLocation] = useState<[number, number]>([40.08789650218038, -8.869461715221407]);
+
+  useEffect(() => {
+    if (bases.length === 0 && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation([position.coords.latitude, position.coords.longitude]);
+        },
+        () => {
+          // Geolocation failed, use fallback
+          setUserLocation([40.08789650218038, -8.869461715221407]);
+        }
+      );
+    }
+  }, [bases.length]);
+
+  // Default center - will be overridden by FitBounds when bases exist
   const defaultCenter: [number, number] = bases.length > 0
     ? [bases.reduce((s, b) => s + b.lat, 0) / bases.length, bases.reduce((s, b) => s + b.lng, 0) / bases.length]
-    : [48.8, 9.2];
+    : userLocation;
 
   // Compute aggregate status for a base (lowest common denominator across all teams)
   const getAggregateStatus = (baseId: string): BaseStatus => {
