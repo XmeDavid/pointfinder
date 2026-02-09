@@ -37,3 +37,11 @@ struct Assignment: Codable, Identifiable {
     let challengeId: UUID
     let teamId: UUID?
 }
+
+/// Complete game data response for offline caching
+struct GameDataResponse: Codable {
+    let bases: [Base]
+    let challenges: [Challenge]
+    let assignments: [Assignment]
+    let progress: [BaseProgress]
+}

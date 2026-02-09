@@ -99,6 +99,11 @@ actor APIClient {
         try await get("/api/player/games/\(gameId)/bases", token: token)
     }
 
+    /// Fetch all game data at once for offline caching
+    func getGameData(gameId: UUID, token: String) async throws -> GameDataResponse {
+        try await get("/api/player/games/\(gameId)/data", token: token)
+    }
+
     func submitAnswer(gameId: UUID, request: PlayerSubmissionRequest, token: String) async throws -> SubmissionResponse {
         try await post("/api/player/games/\(gameId)/submissions", body: request, token: token)
     }

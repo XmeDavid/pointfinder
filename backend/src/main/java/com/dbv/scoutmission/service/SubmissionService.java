@@ -46,6 +46,19 @@ public class SubmissionService {
 
     @Transactional
     public SubmissionResponse createSubmission(UUID gameId, CreateSubmissionRequest request) {
+        // Check for idempotency - if submission with this key exists, return it
+        if (request.getIdempotencyKey() != null) {
+            var existing = submissionRepository.findByIdempotencyKey(request.getIdempotencyKey());
+            if (existing.isPresent()) {
+                Submission sub = existing.get();
+                // Initialize lazy proxies before returning
+                sub.getTeam().getId();
+                sub.getChallenge().getId();
+                sub.getBase().getId();
+                return toResponse(sub);
+            }
+        }
+
         Team team = teamRepository.findById(request.getTeamId())
                 .orElseThrow(() -> new ResourceNotFoundException("Team", request.getTeamId()));
         Challenge challenge = challengeRepository.findById(request.getChallengeId())
@@ -75,6 +88,7 @@ public class SubmissionService {
                 .answer(request.getAnswer() != null ? request.getAnswer() : "")
                 .status(status)
                 .submittedAt(Instant.now())
+                .idempotencyKey(request.getIdempotencyKey())
                 .build();
 
         submission = submissionRepository.save(submission);

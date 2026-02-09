@@ -25,6 +25,7 @@ public class PlayerService {
     private final PlayerRepository playerRepository;
     private final TeamRepository teamRepository;
     private final BaseRepository baseRepository;
+    private final ChallengeRepository challengeRepository;
     private final AssignmentRepository assignmentRepository;
     private final CheckInRepository checkInRepository;
     private final SubmissionRepository submissionRepository;
@@ -238,6 +239,75 @@ public class PlayerService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Returns all game data needed for offline caching in a single call.
+     * Includes: bases, assigned challenges, assignments, and current progress.
+     */
+    @Transactional(readOnly = true)
+    public GameDataResponse getGameData(UUID gameId, Player player) {
+        // Re-fetch player within transaction
+        UUID playerId = player.getId();
+        player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
+
+        Team team = player.getTeam();
+        team.getId(); // Force initialization
+
+        // Get all bases
+        List<BaseResponse> bases = getBases(gameId);
+
+        // Get all assignments for this game (both team-specific and global)
+        List<Assignment> assignmentEntities = assignmentRepository.findByGameId(gameId);
+        List<AssignmentResponse> assignments = assignmentEntities.stream()
+                .filter(a -> a.getTeam() == null || a.getTeam().getId().equals(team.getId()))
+                .map(a -> AssignmentResponse.builder()
+                        .id(a.getId())
+                        .gameId(gameId)
+                        .baseId(a.getBase().getId())
+                        .challengeId(a.getChallenge().getId())
+                        .teamId(a.getTeam() != null ? a.getTeam().getId() : null)
+                        .build())
+                .collect(Collectors.toList());
+
+        // Collect all challenge IDs from assignments and fixed challenges
+        Set<UUID> challengeIds = new HashSet<>();
+        for (AssignmentResponse a : assignments) {
+            challengeIds.add(a.getChallengeId());
+        }
+        for (BaseResponse b : bases) {
+            if (b.getFixedChallengeId() != null) {
+                challengeIds.add(b.getFixedChallengeId());
+            }
+        }
+
+        // Load all relevant challenges
+        List<ChallengeResponse> challenges = challengeRepository.findByGameId(gameId).stream()
+                .filter(c -> challengeIds.contains(c.getId()))
+                .map(c -> ChallengeResponse.builder()
+                        .id(c.getId())
+                        .gameId(gameId)
+                        .title(c.getTitle())
+                        .description(c.getDescription())
+                        .content(c.getContent())
+                        .answerType(c.getAnswerType().name())
+                        .autoValidate(c.getAutoValidate())
+                        .correctAnswer(null) // Don't expose correct answer to players
+                        .points(c.getPoints())
+                        .locationBound(c.getLocationBound())
+                        .build())
+                .collect(Collectors.toList());
+
+        // Get current progress
+        List<BaseProgressResponse> progress = getProgress(gameId, player);
+
+        return GameDataResponse.builder()
+                .bases(bases)
+                .challenges(challenges)
+                .assignments(assignments)
+                .progress(progress)
+                .build();
+    }
+
     @Transactional
     public SubmissionResponse submitAnswer(UUID gameId, PlayerSubmissionRequest request, Player player) {
         // Re-fetch player within transaction to get fresh entity with proper session
@@ -259,6 +329,7 @@ public class PlayerService {
         submissionRequest.setChallengeId(request.getChallengeId());
         submissionRequest.setBaseId(request.getBaseId());
         submissionRequest.setAnswer(request.getAnswer());
+        submissionRequest.setIdempotencyKey(request.getIdempotencyKey());
 
         return submissionService.createSubmission(gameId, submissionRequest);
     }

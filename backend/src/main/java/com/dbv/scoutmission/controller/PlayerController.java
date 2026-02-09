@@ -48,6 +48,12 @@ public class PlayerController {
         return ResponseEntity.ok(playerService.getBases(gameId));
     }
 
+    @GetMapping("/api/player/games/{gameId}/data")
+    public ResponseEntity<GameDataResponse> getGameData(@PathVariable UUID gameId) {
+        Player player = SecurityUtils.getCurrentPlayer();
+        return ResponseEntity.ok(playerService.getGameData(gameId, player));
+    }
+
     @PostMapping("/api/player/games/{gameId}/submissions")
     public ResponseEntity<SubmissionResponse> submitAnswer(@PathVariable UUID gameId,
                                                             @Valid @RequestBody PlayerSubmissionRequest request) {

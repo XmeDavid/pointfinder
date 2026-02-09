@@ -14,4 +14,10 @@ public class PlayerSubmissionRequest {
     private UUID challengeId;
 
     private String answer = "";
+
+    /**
+     * Optional idempotency key for offline sync.
+     * If provided and a submission with this key exists, returns the existing submission.
+     */
+    private UUID idempotencyKey;
 }

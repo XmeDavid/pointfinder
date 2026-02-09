@@ -9,7 +9,9 @@ struct SolveView: View {
     let baseName: String
 
     @State private var answer = ""
-    @State private var showSubmitScan = false
+    @State private var isSubmitting = false
+    @State private var showResult = false
+    @State private var submissionResult: SubmissionResponse?
 
     var body: some View {
         ScrollView {
@@ -20,9 +22,20 @@ struct SolveView: View {
                         .font(.title3)
                         .fontWeight(.bold)
 
-                    Text("Enter your answer below. You'll need to scan the NFC tag at \(baseName) to confirm your submission.")
+                    Text("Enter your answer below and tap submit when ready.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+                }
+
+                // Offline indicator
+                if !appState.isOnline {
+                    HStack(spacing: 8) {
+                        Image(systemName: "wifi.slash")
+                            .foregroundStyle(.orange)
+                        Text("You're offline. Submission will sync when connected.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
                 // Answer input
@@ -37,24 +50,32 @@ struct SolveView: View {
 
                 // Submit button
                 Button {
-                    appState.startSolving(baseId: baseId, challengeId: challengeId)
-                    showSubmitScan = true
+                    Task { await submitAnswer() }
                 } label: {
-                    Label("Scan Tag to Submit", systemImage: "sensor.tag.radiowaves.forward")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(canSubmit ? Color.accentColor : Color.gray)
-                        .foregroundStyle(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                    if isSubmitting {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.gray)
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                    } else {
+                        Label("Submit Answer", systemImage: "paperplane.fill")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(canSubmit ? Color.accentColor : Color.gray)
+                            .foregroundStyle(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                    }
                 }
-                .disabled(!canSubmit)
+                .disabled(!canSubmit || isSubmitting)
 
                 // Help text
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: "info.circle")
                         .foregroundStyle(.blue)
-                    Text("After tapping the button above, hold your phone near the NFC tag to confirm and submit your answer.")
+                    Text("Your answer will be reviewed and you'll earn points if correct.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -63,17 +84,29 @@ struct SolveView: View {
         }
         .navigationTitle("Solve: \(baseName)")
         .navigationBarTitleDisplayMode(.inline)
-        .navigationDestination(isPresented: $showSubmitScan) {
-            SubmitScanView(
-                baseId: baseId,
-                challengeId: challengeId,
-                baseName: baseName,
-                answer: answer
-            )
+        .navigationDestination(isPresented: $showResult) {
+            if let result = submissionResult {
+                SubmissionResultView(submission: result, baseName: baseName)
+            }
         }
     }
 
     private var canSubmit: Bool {
         !answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private func submitAnswer() async {
+        isSubmitting = true
+
+        if let result = await appState.submitAnswer(
+            baseId: baseId,
+            challengeId: challengeId,
+            answer: answer.trimmingCharacters(in: .whitespacesAndNewlines)
+        ) {
+            submissionResult = result
+            showResult = true
+        }
+
+        isSubmitting = false
     }
 }

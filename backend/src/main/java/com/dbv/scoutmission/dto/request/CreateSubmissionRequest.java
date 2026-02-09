@@ -17,4 +17,9 @@ public class CreateSubmissionRequest {
     private UUID baseId;
 
     private String answer = "";
+
+    /**
+     * Optional idempotency key for offline sync deduplication.
+     */
+    private UUID idempotencyKey;
 }

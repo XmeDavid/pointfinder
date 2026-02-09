@@ -46,6 +46,9 @@ public class Submission {
     @Column(columnDefinition = "TEXT")
     private String feedback;
 
+    @Column(name = "idempotency_key", unique = true)
+    private UUID idempotencyKey;
+
     @PrePersist
     protected void onCreate() {
         if (submittedAt == null) submittedAt = Instant.now();

@@ -7,9 +7,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
+
+    Optional<Submission> findByIdempotencyKey(UUID idempotencyKey);
 
     @Query("SELECT s FROM Submission s WHERE s.team.game.id = :gameId")
     List<Submission> findByGameId(@Param("gameId") UUID gameId);

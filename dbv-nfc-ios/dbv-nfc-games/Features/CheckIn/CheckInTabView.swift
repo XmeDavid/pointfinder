@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct ScanTabView: View {
+struct CheckInTabView: View {
     @Environment(AppState.self) private var appState
     @State private var nfcReader = NFCReaderService()
     @State private var isScanning = false
@@ -13,7 +13,7 @@ struct ScanTabView: View {
             VStack(spacing: 24) {
                 Spacer()
 
-                // NFC illustration
+                // Check-in illustration
                 VStack(spacing: 16) {
                     ZStack {
                         Circle()
@@ -24,17 +24,17 @@ struct ScanTabView: View {
                             .fill(Color.accentColor.opacity(0.2))
                             .frame(width: 120, height: 120)
 
-                        Image(systemName: "sensor.tag.radiowaves.forward")
+                        Image(systemName: "mappin.and.ellipse")
                             .font(.system(size: 48))
                             .foregroundStyle(.secondary)
                             .symbolEffect(.pulse, isActive: isScanning)
                     }
 
-                    Text("Scan NFC Tag")
+                    Text("Base Check-In")
                         .font(.title2)
                         .fontWeight(.bold)
 
-                    Text("Hold your phone near the NFC tag at a base to check in")
+                    Text("Hold your phone near the marker at a base to check in")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -48,39 +48,27 @@ struct ScanTabView: View {
                         .padding(.horizontal)
                 }
 
-                // Active solve session indicator
-                if let solvingBaseId = appState.solvingBaseId {
-                    let baseName = appState.progressForBase(solvingBaseId)?.baseName ?? "Unknown Base"
-                    VStack(spacing: 8) {
-                        Divider()
-                        HStack {
-                            Image(systemName: "lightbulb.fill")
-                                .foregroundStyle(.orange)
-                            Text("Solving: \(baseName)")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                            Spacer()
-                            Button("Cancel") {
-                                appState.clearSolveSession()
-                            }
-                            .font(.caption)
-                        }
-                        .padding(.horizontal)
-                        Text("Scan the tag at this base to submit your answer")
+                // Pending sync indicator
+                if appState.pendingActionsCount > 0 {
+                    HStack(spacing: 8) {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .foregroundStyle(.orange)
+                        Text("\(appState.pendingActionsCount) pending \(appState.pendingActionsCount == 1 ? "action" : "actions") to sync")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
+                    .padding(.horizontal)
                 }
 
                 Spacer()
 
-                // Scan button
+                // Check-in button
                 Button {
-                    Task { await performScan() }
+                    Task { await performCheckIn() }
                 } label: {
                     Label(
-                        isScanning ? "Scanning..." : "Start Scan",
-                        systemImage: "wave.3.right"
+                        isScanning ? "Checking In..." : "Check In at Base",
+                        systemImage: "location.circle.fill"
                     )
                     .font(.headline)
                     .frame(maxWidth: .infinity)
@@ -93,10 +81,10 @@ struct ScanTabView: View {
                 .padding(.horizontal, 24)
                 .padding(.bottom, 24)
             }
-            .navigationTitle("Scan")
+            .navigationTitle("Check In")
             .navigationDestination(isPresented: $navigateToBase) {
                 if let baseId = checkedInBaseId {
-                    ScanBaseDetailView(baseId: baseId)
+                    BaseCheckInDetailView(baseId: baseId)
                 }
             }
             .alert("Error", isPresented: Binding(
@@ -112,33 +100,19 @@ struct ScanTabView: View {
         }
     }
 
-    private func performScan() async {
+    private func performCheckIn() async {
         isScanning = true
         scanError = nil
 
         do {
             let baseId = try await nfcReader.scanForBaseId()
 
-            // Check if we're in a solve session
-            if let solvingBaseId = appState.solvingBaseId,
-               let _ = appState.solvingChallengeId {
-                if baseId == solvingBaseId {
-                    NotificationCenter.default.post(
-                        name: .nfcScanConfirmed,
-                        object: nil,
-                        userInfo: ["baseId": baseId]
-                    )
-                } else {
-                    scanError = "Wrong base! You need to scan the tag at \(appState.progressForBase(solvingBaseId)?.baseName ?? "the correct base")"
-                }
-            } else {
-                // Regular check-in scan
-                let result = await appState.checkIn(baseId: baseId)
-                if result != nil {
-                    // Navigate to the base detail view
-                    checkedInBaseId = baseId
-                    navigateToBase = true
-                }
+            // Regular check-in
+            let result = await appState.checkIn(baseId: baseId)
+            if result != nil {
+                // Navigate to the base detail view
+                checkedInBaseId = baseId
+                navigateToBase = true
             }
         } catch let error as NFCError {
             if case .cancelled = error {
@@ -154,11 +128,7 @@ struct ScanTabView: View {
     }
 }
 
-extension Notification.Name {
-    static let nfcScanConfirmed = Notification.Name("nfcScanConfirmed")
-}
-
 #Preview {
-    ScanTabView()
+    CheckInTabView()
         .environment(AppState())
 }

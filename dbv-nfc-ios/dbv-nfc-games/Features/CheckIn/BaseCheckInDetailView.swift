@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// Full-screen base detail pushed after an NFC check-in scan.
+/// Full-screen base detail pushed after a check-in.
 /// Shows the challenge and lets the player start solving.
-struct ScanBaseDetailView: View {
+struct BaseCheckInDetailView: View {
     @Environment(AppState.self) private var appState
 
     let baseId: UUID
@@ -47,6 +47,18 @@ struct ScanBaseDetailView: View {
                 .padding()
                 .background(Color.green.opacity(0.08))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                // Offline indicator
+                if !appState.isOnline {
+                    HStack(spacing: 8) {
+                        Image(systemName: "wifi.slash")
+                            .foregroundStyle(.orange)
+                        Text("You're offline. Check-in will sync when connected.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal)
+                }
 
                 if isLoading {
                     ProgressView("Loading challenge...")

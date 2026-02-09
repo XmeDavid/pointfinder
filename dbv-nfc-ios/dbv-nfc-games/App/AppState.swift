@@ -33,15 +33,42 @@ final class AppState {
     var errorMessage: String?
     var showError = false
 
+    // MARK: - Network Status
+
+    let networkMonitor = NetworkMonitor.shared
+
+    /// Whether the device currently has network connectivity
+    var isOnline: Bool { networkMonitor.isOnline }
+
+    /// Number of pending offline actions waiting to be synced
+    var pendingActionsCount: Int = 0
+
     // MARK: - API Client
 
     let apiClient = APIClient()
     let locationService = LocationService()
+    let syncEngine = SyncEngine.shared
 
     // MARK: - Init
 
     init() {
         restoreSession()
+        configureSyncEngine()
+    }
+
+    private func configureSyncEngine() {
+        // Wire up sync engine to refresh progress after sync completes
+        syncEngine.onSyncComplete = { [weak self] in
+            await self?.loadProgress()
+        }
+
+        // Start periodic pending count updates
+        Task {
+            while true {
+                pendingActionsCount = await OfflineQueue.shared.pendingCount
+                try? await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
+            }
+        }
     }
 
     // MARK: - Player Auth
@@ -112,63 +139,193 @@ final class AppState {
 
     // MARK: - Player Game Actions
 
+    /// Load game progress. If online, fetches from server and caches.
+    /// If offline, loads from cache.
     func loadProgress() async {
-        guard case .player(let token, _, _, let gameId) = authType else { return }
+        guard case .player(let token, _, let teamId, let gameId) = authType else { return }
         isLoadingProgress = true
-        do {
-            baseProgress = try await apiClient.getProgress(gameId: gameId, token: token)
-        } catch {
-            setError(error.localizedDescription)
+
+        if isOnline {
+            do {
+                // Fetch complete game data and cache it
+                let gameData = try await apiClient.getGameData(gameId: gameId, token: token)
+                await GameDataCache.shared.cacheGameData(gameData, gameId: gameId)
+                baseProgress = gameData.progress
+            } catch {
+                // Fall back to cache on network error
+                if let cached = await GameDataCache.shared.getCachedProgress(gameId: gameId) {
+                    baseProgress = cached
+                } else {
+                    setError(error.localizedDescription)
+                }
+            }
+        } else {
+            // Offline: load from cache
+            if let cached = await GameDataCache.shared.getCachedProgress(gameId: gameId) {
+                baseProgress = cached
+            }
         }
+
+        // Update pending count
+        pendingActionsCount = await OfflineQueue.shared.pendingCount
+
         isLoadingProgress = false
     }
 
+    /// Check in at a base. If online, calls API directly.
+    /// If offline, queues the action and returns a locally-constructed response.
     func checkIn(baseId: UUID) async -> CheckInResponse? {
-        guard case .player(let token, _, _, let gameId) = authType else { return nil }
-        do {
-            let response = try await apiClient.checkIn(gameId: gameId, baseId: baseId, token: token)
+        guard case .player(let token, _, let teamId, let gameId) = authType else { return nil }
 
-            // Cache the challenge
-            if let challenge = response.challenge {
-                await CacheManager.shared.cacheChallenge(challenge, forBaseId: baseId)
+        if isOnline {
+            do {
+                let response = try await apiClient.checkIn(gameId: gameId, baseId: baseId, token: token)
+
+                // Cache the challenge
+                if let challenge = response.challenge {
+                    await GameDataCache.shared.cacheChallenge(challenge, forBaseId: baseId)
+                }
+
+                // Refresh progress
+                await loadProgress()
+
+                return response
+            } catch {
+                // If network error, fall through to offline handling
+                if !isNetworkError(error) {
+                    setError(error.localizedDescription)
+                    return nil
+                }
             }
-
-            // Refresh progress
-            await loadProgress()
-
-            return response
-        } catch {
-            setError(error.localizedDescription)
-            return nil
         }
+
+        // Offline path: enqueue action and return local response
+        await OfflineQueue.shared.enqueueCheckIn(gameId: gameId, baseId: baseId)
+
+        // Update local cache
+        await GameDataCache.shared.updateBaseStatus(baseId: baseId, status: "checked_in", gameId: gameId)
+
+        // Update local progress state
+        updateLocalBaseStatus(baseId: baseId, status: .checkedIn)
+
+        // Get cached challenge info
+        let challenge = await GameDataCache.shared.getCachedChallenge(forBaseId: baseId, teamId: teamId, gameId: gameId)
+
+        pendingActionsCount = await OfflineQueue.shared.pendingCount
+
+        // Construct local response
+        let baseName = baseProgress.first { $0.baseId == baseId }?.baseName ?? "Base"
+        return CheckInResponse(
+            checkInId: UUID(), // Temporary local ID
+            baseId: baseId,
+            baseName: baseName,
+            checkedInAt: ISO8601DateFormatter().string(from: Date()),
+            challenge: challenge
+        )
     }
 
+    /// Submit an answer. If online, calls API directly.
+    /// If offline, queues the action and returns a locally-constructed response.
     func submitAnswer(baseId: UUID, challengeId: UUID, answer: String) async -> SubmissionResponse? {
-        guard case .player(let token, _, _, let gameId) = authType else { return nil }
-        do {
-            let request = PlayerSubmissionRequest(
-                baseId: baseId,
-                challengeId: challengeId,
-                answer: answer
-            )
-            let response = try await apiClient.submitAnswer(
-                gameId: gameId,
-                request: request,
-                token: token
-            )
+        guard case .player(let token, _, let teamId, let gameId) = authType else { return nil }
 
-            // Refresh progress
-            await loadProgress()
+        if isOnline {
+            do {
+                let request = PlayerSubmissionRequest(
+                    baseId: baseId,
+                    challengeId: challengeId,
+                    answer: answer
+                )
+                let response = try await apiClient.submitAnswer(
+                    gameId: gameId,
+                    request: request,
+                    token: token
+                )
 
-            return response
-        } catch {
-            setError(error.localizedDescription)
-            return nil
+                // Refresh progress
+                await loadProgress()
+
+                return response
+            } catch {
+                // If network error, fall through to offline handling
+                if !isNetworkError(error) {
+                    setError(error.localizedDescription)
+                    return nil
+                }
+            }
         }
+
+        // Offline path: enqueue action with idempotency key
+        let idempotencyKey = await OfflineQueue.shared.enqueueSubmission(
+            gameId: gameId,
+            baseId: baseId,
+            challengeId: challengeId,
+            answer: answer
+        )
+
+        // Update local cache
+        await GameDataCache.shared.updateBaseStatus(baseId: baseId, status: "submitted", gameId: gameId)
+
+        // Update local progress state
+        updateLocalBaseStatus(baseId: baseId, status: .submitted)
+
+        pendingActionsCount = await OfflineQueue.shared.pendingCount
+
+        // Construct local response
+        return SubmissionResponse(
+            id: idempotencyKey,
+            teamId: teamId,
+            challengeId: challengeId,
+            baseId: baseId,
+            answer: answer,
+            status: "pending",
+            submittedAt: ISO8601DateFormatter().string(from: Date()),
+            reviewedBy: nil,
+            feedback: nil
+        )
     }
 
     func getCachedChallenge(forBaseId baseId: UUID) async -> CheckInResponse.ChallengeInfo? {
-        return await CacheManager.shared.getCachedChallenge(forBaseId: baseId)
+        guard case .player(_, _, let teamId, let gameId) = authType else {
+            return await GameDataCache.shared.getCachedChallenge(forBaseId: baseId)
+        }
+        // Try the new cache method first, fall back to legacy
+        if let challenge = await GameDataCache.shared.getCachedChallenge(forBaseId: baseId, teamId: teamId, gameId: gameId) {
+            return challenge
+        }
+        return await GameDataCache.shared.getCachedChallenge(forBaseId: baseId)
+    }
+
+    // MARK: - Offline Helpers
+
+    private func isNetworkError(_ error: Error) -> Bool {
+        if let apiError = error as? APIError {
+            switch apiError {
+            case .networkError:
+                return true
+            default:
+                return false
+            }
+        }
+        let nsError = error as NSError
+        return nsError.domain == NSURLErrorDomain
+    }
+
+    private func updateLocalBaseStatus(baseId: UUID, status: BaseStatus) {
+        if let index = baseProgress.firstIndex(where: { $0.baseId == baseId }) {
+            let old = baseProgress[index]
+            baseProgress[index] = BaseProgress(
+                baseId: old.baseId,
+                baseName: old.baseName,
+                lat: old.lat,
+                lng: old.lng,
+                nfcLinked: old.nfcLinked,
+                status: status.rawValue,
+                checkedInAt: status == .checkedIn ? ISO8601DateFormatter().string(from: Date()) : old.checkedInAt,
+                challengeId: old.challengeId,
+                submissionStatus: status == .submitted ? "pending" : old.submissionStatus
+            )
+        }
     }
 
     // MARK: - Solve Session
@@ -212,10 +369,12 @@ final class AppState {
         baseProgress = []
         solvingBaseId = nil
         solvingChallengeId = nil
+        pendingActionsCount = 0
 
         Task {
             await apiClient.clearAuth()
-            await CacheManager.shared.clearAll()
+            await GameDataCache.shared.clearAll()
+            await OfflineQueue.shared.clearAll()
         }
     }
 

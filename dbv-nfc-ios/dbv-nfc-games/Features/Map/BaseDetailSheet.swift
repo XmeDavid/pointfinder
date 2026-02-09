@@ -90,10 +90,10 @@ struct BaseDetailSheet: View {
                         }
                     } else if status == .notVisited {
                         VStack(spacing: 12) {
-                            Image(systemName: "sensor.tag.radiowaves.forward")
+                            Image(systemName: "mappin.and.ellipse")
                                 .font(.system(size: 48))
                                 .foregroundStyle(.secondary)
-                            Text("Scan the NFC tag at this base to check in and see the challenge")
+                            Text("Check in at this base to see the challenge")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                                 .multilineTextAlignment(.center)
