@@ -41,7 +41,7 @@ struct OperatorGameView: View {
 
                     // Bases / NFC Setup tab
                     NavigationStack {
-                        BasesListView(game: game, bases: bases)
+                        BasesListView(game: game, bases: $bases)
                             .navigationTitle("Bases")
                             .navigationBarTitleDisplayMode(.inline)
                     }
@@ -127,12 +127,12 @@ struct OperatorSettingsView: View {
 
 struct BasesListView: View {
     let game: Game
-    let bases: [Base]
+    @Binding var bases: [Base]
 
     var body: some View {
-        List(bases) { base in
+        List($bases) { $base in
             NavigationLink {
-                BaseDetailView(game: game, base: base)
+                BaseDetailView(game: game, base: $base)
             } label: {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {

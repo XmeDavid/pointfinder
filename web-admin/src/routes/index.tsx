@@ -22,6 +22,7 @@ import { AssignmentsPage } from "@/features/game-detail/AssignmentsPage";
 import { TeamsPage } from "@/features/game-detail/TeamsPage";
 import { NotificationsPage } from "@/features/game-detail/NotificationsPage";
 import { ResultsPage } from "@/features/game-detail/ResultsPage";
+import { SettingsPage } from "@/features/game-detail/SettingsPage";
 
 // Monitoring
 import { DashboardPage } from "@/features/monitoring/DashboardPage";
@@ -97,6 +98,7 @@ export const router = createBrowserRouter([
       { path: "assignments", element: <AssignmentsPage />, handle: { breadcrumb: "Assignments" } },
       { path: "teams", element: <TeamsPage />, handle: { breadcrumb: "Teams" } },
       { path: "notifications", element: <NotificationsPage />, handle: { breadcrumb: "Notifications" } },
+      { path: "settings", element: <SettingsPage />, handle: { breadcrumb: "Settings" } },
       { path: "results", element: <ResultsPage />, handle: { breadcrumb: "Results" } },
       {
         path: "monitor",

@@ -14,6 +14,7 @@ import {
   Shield,
   Link2,
   Settings,
+  SlidersHorizontal,
   ClipboardCheck,
   UserCog,
 } from "lucide-react";
@@ -76,6 +77,7 @@ export function Sidebar({ gameStatus }: { gameStatus?: GameStatus }) {
         { label: t("nav.assignments"), to: `/games/${gameId}/assignments`, icon: <Link2 className="h-4 w-4" /> },
         { label: t("nav.teams"), to: `/games/${gameId}/teams`, icon: <Users className="h-4 w-4" /> },
         { label: t("nav.notifications"), to: `/games/${gameId}/notifications`, icon: <Bell className="h-4 w-4" /> },
+        { label: t("nav.settings"), to: `/games/${gameId}/settings`, icon: <SlidersHorizontal className="h-4 w-4" /> },
       ]
     : [];
 

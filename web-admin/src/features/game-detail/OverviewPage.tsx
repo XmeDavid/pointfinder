@@ -65,14 +65,24 @@ export function OverviewPage() {
 
   const nextStep = transitions[game.status];
   const basesWithoutNfc = bases.filter((b) => !b.nfcLinked);
-  const unassignedBases = bases.filter((b) => !b.fixedChallengeId && !assignments.some((a) => a.baseId === b.id));
+
+  // Only location-bound challenges MUST be manually assigned (they are excluded from random auto-assignment)
+  const locationBoundChallenges = challenges.filter((c) => c.locationBound);
+  const unassignedLocationBound = locationBoundChallenges.filter((c) =>
+    !bases.some((b) => b.fixedChallengeId === c.id) &&
+    !assignments.some((a) => a.challengeId === c.id)
+  );
+
+  // Enough challenges so every team gets a unique challenge at every base
+  const enoughChallenges = challenges.length >= bases.length;
 
   const readinessChecks = [
     { ok: bases.length > 0, label: t("overview.basesCreated", { count: bases.length }) },
     { ok: challenges.length > 0, label: t("overview.challengesCreated", { count: challenges.length }) },
     { ok: teams.length > 0, label: t("overview.teamsCreated", { count: teams.length }) },
     { ok: basesWithoutNfc.length === 0, label: basesWithoutNfc.length === 0 ? t("overview.allNfcLinked") : t("overview.nfcMissing", { count: basesWithoutNfc.length }) },
-    { ok: unassignedBases.length === 0, label: unassignedBases.length === 0 ? t("overview.allBasesHaveChallenges") : t("overview.basesWithoutChallenges", { count: unassignedBases.length }) },
+    { ok: unassignedLocationBound.length === 0, label: unassignedLocationBound.length === 0 ? t("overview.allLocationBoundAssigned") : t("overview.locationBoundUnassigned", { count: unassignedLocationBound.length }) },
+    { ok: enoughChallenges, label: enoughChallenges ? t("overview.enoughChallenges") : t("overview.notEnoughChallenges", { bases: bases.length, challenges: challenges.length }) },
   ];
 
   const canGoLive = game.status !== "draft" || readinessChecks.every((check) => check.ok);

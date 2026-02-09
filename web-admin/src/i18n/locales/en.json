@@ -27,7 +27,8 @@
     "resetDemoData": "Reset Demo Data",
     "pts": "pts",
     "points": "points",
-    "noSignal": "No signal"
+    "noSignal": "No signal",
+    "saving": "Saving..."
   },
   "auth": {
     "signIn": "Sign In",
@@ -65,7 +66,8 @@
     "map": "Map",
     "leaderboard": "Leaderboard",
     "activity": "Activity",
-    "submissions": "Submissions"
+    "submissions": "Submissions",
+    "settings": "Settings"
   },
   "admin": {
     "title": "Operators",
@@ -150,6 +152,11 @@
     "allBasesHaveChallenges": "All bases have challenges",
     "basesWithoutChallenges_one": "{{count}} base without challenges",
     "basesWithoutChallenges_other": "{{count}} bases without challenges",
+    "allLocationBoundAssigned": "All location-bound challenges assigned",
+    "locationBoundUnassigned_one": "{{count}} location-bound challenge not assigned",
+    "locationBoundUnassigned_other": "{{count}} location-bound challenges not assigned",
+    "enoughChallenges": "Enough challenges for unique assignment",
+    "notEnoughChallenges": "Not enough challenges: {{bases}} bases but only {{challenges}} challenges",
     "notSet": "Not set"
   },
   "gameOperators": {
@@ -236,6 +243,9 @@
     "assign": "Assign",
     "base": "Base",
     "challenge": "Challenge",
+    "team": "Team",
+    "selectTeam": "Select team...",
+    "allTeams": "All Teams",
     "unassignedNote_one": "{{count}} base without assignments will receive random challenges per team when the game starts.",
     "unassignedNote_other": "{{count}} bases without assignments will receive random challenges per team when the game starts."
   },
@@ -344,5 +354,19 @@
     "finalStandings": "Final Standings",
     "finalStandingsDesc": "All teams ranked by total points",
     "challengesOfTotal": "{{completed}} of {{total}} challenges"
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Manage game configuration",
+    "gameDetails": "Game Details",
+    "gameDetailsDescription": "Update the game name, description, and schedule",
+    "saveChanges": "Save Changes",
+    "saved": "Changes saved",
+    "dangerZone": "Danger Zone",
+    "dangerZoneDescription": "Irreversible actions that affect the entire game",
+    "deleteGame": "Delete Game",
+    "deleteConfirmTitle": "Are you sure you want to delete this game?",
+    "deleteConfirmDescription": "This action cannot be undone. All bases, challenges, teams, and assignments will be permanently deleted.",
+    "confirmDelete": "Yes, Delete Game"
   }
 }

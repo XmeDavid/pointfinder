@@ -5,7 +5,7 @@ struct BaseDetailView: View {
     @State private var nfcWriter = NFCWriterService()
 
     let game: Game
-    let base: Base
+    @Binding var base: Base
 
     @State private var isWriting = false
     @State private var writeSuccess = false
@@ -346,12 +346,13 @@ struct BaseDetailView: View {
             try await nfcWriter.writeBaseId(base.id)
 
             guard let token = token else { return }
-            _ = try await appState.apiClient.linkBaseNfc(
+            let updated = try await appState.apiClient.linkBaseNfc(
                 gameId: game.id,
                 baseId: base.id,
                 token: token
             )
 
+            base.nfcLinked = true
             writeSuccess = true
         } catch let error as NFCError {
             if case .cancelled = error {

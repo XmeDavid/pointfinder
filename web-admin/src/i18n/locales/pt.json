@@ -27,7 +27,8 @@
     "resetDemoData": "Repor Dados Demo",
     "pts": "pts",
     "points": "pontos",
-    "noSignal": "Sem sinal"
+    "noSignal": "Sem sinal",
+    "saving": "A guardar..."
   },
   "auth": {
     "signIn": "Entrar",
@@ -65,7 +66,8 @@
     "map": "Mapa",
     "leaderboard": "Classificação",
     "activity": "Atividade",
-    "submissions": "Submissões"
+    "submissions": "Submissões",
+    "settings": "Definições"
   },
   "admin": {
     "title": "Operadores",
@@ -150,6 +152,11 @@
     "allBasesHaveChallenges": "Todas as bases têm desafios",
     "basesWithoutChallenges_one": "{{count}} base sem desafios",
     "basesWithoutChallenges_other": "{{count}} bases sem desafios",
+    "allLocationBoundAssigned": "Todos os desafios de localização atribuídos",
+    "locationBoundUnassigned_one": "{{count}} desafio de localização não atribuído",
+    "locationBoundUnassigned_other": "{{count}} desafios de localização não atribuídos",
+    "enoughChallenges": "Desafios suficientes para atribuição única",
+    "notEnoughChallenges": "Desafios insuficientes: {{bases}} bases mas apenas {{challenges}} desafios",
     "notSet": "Não definido"
   },
   "gameOperators": {
@@ -236,6 +243,9 @@
     "assign": "Atribuir",
     "base": "Base",
     "challenge": "Desafio",
+    "team": "Equipa",
+    "selectTeam": "Selecionar equipa...",
+    "allTeams": "Todas as Equipas",
     "unassignedNote_one": "{{count}} base sem atribuição receberá desafios aleatórios por equipa ao iniciar o jogo.",
     "unassignedNote_other": "{{count}} bases sem atribuição receberão desafios aleatórios por equipa ao iniciar o jogo."
   },
@@ -344,5 +354,19 @@
     "finalStandings": "Classificação Final",
     "finalStandingsDesc": "Todas as equipas ordenadas por pontos totais",
     "challengesOfTotal": "{{completed}} de {{total}} desafios"
+  },
+  "settings": {
+    "title": "Definições",
+    "description": "Gerir a configuração do jogo",
+    "gameDetails": "Detalhes do Jogo",
+    "gameDetailsDescription": "Atualizar o nome, descrição e horário do jogo",
+    "saveChanges": "Guardar Alterações",
+    "saved": "Alterações guardadas",
+    "dangerZone": "Zona de Perigo",
+    "dangerZoneDescription": "Ações irreversíveis que afetam todo o jogo",
+    "deleteGame": "Eliminar Jogo",
+    "deleteConfirmTitle": "Tem a certeza que deseja eliminar este jogo?",
+    "deleteConfirmDescription": "Esta ação não pode ser revertida. Todas as bases, desafios, equipas e atribuições serão permanentemente eliminados.",
+    "confirmDelete": "Sim, Eliminar Jogo"
   }
 }

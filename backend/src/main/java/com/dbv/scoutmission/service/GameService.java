@@ -138,6 +138,14 @@ public class GameService {
                 throw new BadRequestException("Game must have at least one team before going live");
             }
 
+            // Validate enough challenges for unique assignment per base
+            long challengeCount = challengeRepository.countByGameId(game.getId());
+            if (baseCount > challengeCount) {
+                throw new BadRequestException(
+                        String.format("Not enough challenges for unique assignment. %d bases but only %d challenges. " +
+                                "Each team must have a unique challenge at every base.", baseCount, challengeCount));
+            }
+
             // Set start date to now if not set
             if (game.getStartDate() == null) {
                 game.setStartDate(Instant.now());
@@ -183,12 +191,37 @@ public class GameService {
             return; // Nothing to auto-assign
         }
 
-        // Build pool of non-location-bound challenges for random assignment
+        // Collect IDs of challenges used as fixed challenges on any base
+        Set<UUID> fixedChallengeIds = bases.stream()
+                .filter(b -> b.getFixedChallenge() != null)
+                .map(b -> b.getFixedChallenge().getId())
+                .collect(Collectors.toSet());
+
+        // Build pool: non-location-bound and not already used as fixed challenges
         List<Challenge> randomPool = challenges.stream()
                 .filter(c -> !c.getLocationBound())
+                .filter(c -> !fixedChallengeIds.contains(c.getId()))
                 .collect(Collectors.toList());
 
         Random random = new Random();
+
+        // Initialize per-team tracking of assigned challenge IDs
+        Map<UUID, Set<UUID>> teamAssignedChallenges = new HashMap<>();
+        for (Team team : teams) {
+            Set<UUID> usedChallenges = new HashSet<>();
+
+            // Track challenges from existing manual assignments for this team
+            for (Assignment a : existingAssignments) {
+                if (a.getTeam() != null && a.getTeam().getId().equals(team.getId())) {
+                    usedChallenges.add(a.getChallenge().getId());
+                } else if (a.getTeam() == null) {
+                    // Global assignment applies to all teams
+                    usedChallenges.add(a.getChallenge().getId());
+                }
+            }
+
+            teamAssignedChallenges.put(team.getId(), usedChallenges);
+        }
 
         for (Base base : bases) {
             // Check if this base already has assignments
@@ -206,27 +239,32 @@ public class GameService {
                                 .team(team)
                                 .build();
                         assignmentRepository.save(assignment);
+                        teamAssignedChallenges.get(team.getId()).add(base.getFixedChallenge().getId());
                     }
                 }
-            } else if (!hasAssignments && !randomPool.isEmpty()) {
+            } else if (!hasAssignments) {
                 // No fixed challenge, no existing assignments - assign random challenges per team
-                List<Challenge> availablePool = new ArrayList<>(randomPool);
-
                 for (Team team : teams) {
-                    if (availablePool.isEmpty()) {
-                        // Refill pool if exhausted (allows cycling through challenges)
-                        availablePool = new ArrayList<>(randomPool);
-                    }
-                    int idx = random.nextInt(availablePool.size());
-                    Challenge selected = availablePool.remove(idx);
+                    Set<UUID> usedByTeam = teamAssignedChallenges.get(team.getId());
 
-                    Assignment assignment = Assignment.builder()
-                            .game(game)
-                            .base(base)
-                            .challenge(selected)
-                            .team(team)
-                            .build();
-                    assignmentRepository.save(assignment);
+                    // Filter pool: exclude challenges already assigned to this team
+                    List<Challenge> teamPool = randomPool.stream()
+                            .filter(c -> !usedByTeam.contains(c.getId()))
+                            .collect(Collectors.toList());
+
+                    if (!teamPool.isEmpty()) {
+                        int idx = random.nextInt(teamPool.size());
+                        Challenge selected = teamPool.get(idx);
+
+                        Assignment assignment = Assignment.builder()
+                                .game(game)
+                                .base(base)
+                                .challenge(selected)
+                                .team(team)
+                                .build();
+                        assignmentRepository.save(assignment);
+                        usedByTeam.add(selected.getId());
+                    }
                 }
             }
         }

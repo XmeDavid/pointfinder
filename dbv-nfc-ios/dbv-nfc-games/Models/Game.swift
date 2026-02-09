@@ -18,7 +18,7 @@ struct Base: Codable, Identifiable {
     let description: String
     let lat: Double
     let lng: Double
-    let nfcLinked: Bool
+    var nfcLinked: Bool
     let requirePresenceToSubmit: Bool
     let fixedChallengeId: UUID?
 }
