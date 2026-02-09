@@ -44,8 +44,8 @@ export const gamesApi = {
     return data;
   },
 
-  updateStatus: async (id: string, status: GameStatus): Promise<Game> => {
-    const { data } = await apiClient.patch(`/games/${id}/status`, { status });
+  updateStatus: async (id: string, status: GameStatus, resetProgress = false): Promise<Game> => {
+    const { data } = await apiClient.patch(`/games/${id}/status`, { status, resetProgress });
     return data;
   },
 

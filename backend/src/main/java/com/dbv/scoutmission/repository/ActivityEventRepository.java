@@ -9,4 +9,6 @@ import java.util.UUID;
 public interface ActivityEventRepository extends JpaRepository<ActivityEvent, UUID> {
 
     List<ActivityEvent> findByGameIdOrderByTimestampDesc(UUID gameId);
+
+    void deleteByGameId(UUID gameId);
 }

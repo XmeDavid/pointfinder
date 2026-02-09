@@ -54,7 +54,7 @@ public class GameController {
     @PatchMapping("/{id}/status")
     public ResponseEntity<GameResponse> updateStatus(@PathVariable UUID id,
                                                       @Valid @RequestBody UpdateGameStatusRequest request) {
-        return ResponseEntity.ok(gameService.updateStatus(id, request.getStatus()));
+        return ResponseEntity.ok(gameService.updateStatus(id, request.getStatus(), request.isResetProgress()));
     }
 
     @PostMapping("/{id}/operators/{userId}")

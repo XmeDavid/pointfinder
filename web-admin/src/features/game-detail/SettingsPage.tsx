@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Trash2 } from "lucide-react";
+import { Trash2, RotateCcw, Play, AlertTriangle, Database, Eraser, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { gamesApi } from "@/lib/api/games";
 import { useTranslation } from "react-i18next";
+import type { GameStatus } from "@/types";
 
 function toLocalDatetime(iso: string | null): string {
   if (!iso) return "";
@@ -16,6 +19,12 @@ function toLocalDatetime(iso: string | null): string {
   const pad = (n: number) => n.toString().padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
+
+const statusColors: Record<GameStatus, string> = {
+  draft: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+  live: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
+  ended: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
+};
 
 export function SettingsPage() {
   const { t } = useTranslation();
@@ -28,6 +37,11 @@ export function SettingsPage() {
   const [form, setForm] = useState({ name: "", description: "", startDate: "", endDate: "" });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  // State override dialog
+  const [stateTarget, setStateTarget] = useState<GameStatus | null>(null);
+  const [progressChoice, setProgressChoice] = useState<"keep" | "erase" | null>(null);
 
   useEffect(() => {
     if (game) {
@@ -58,7 +72,66 @@ export function SettingsPage() {
     },
   });
 
+  const changeStatus = useMutation({
+    mutationFn: ({ status, resetProgress }: { status: GameStatus; resetProgress: boolean }) =>
+      gamesApi.updateStatus(gameId!, status, resetProgress),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["game", gameId] });
+      queryClient.invalidateQueries({ queryKey: ["games"] });
+      setStateTarget(null);
+      setProgressChoice(null);
+    },
+  });
+
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+      const blob = await gamesApi.exportGame(gameId!);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${game!.name.replace(/[^a-z0-9]/gi, "-")}-export.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Export failed:", error);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (!game) return null;
+
+  const currentStatus = game.status as GameStatus;
+
+  // Determine which backward transitions are available
+  const canRevertToDraft = currentStatus === "live" || currentStatus === "ended";
+  const canRevertToLive = currentStatus === "ended";
+
+  // Does going to this target require asking about progress?
+  // live/ended -> draft: ask about progress
+  // ended -> live: always keep progress
+  function handleStateChange(target: GameStatus) {
+    if (target === "draft") {
+      setStateTarget(target);
+      setProgressChoice(null); // User must choose
+    } else if (target === "live" && currentStatus === "ended") {
+      setStateTarget(target);
+      setProgressChoice("keep"); // Always keep when ended -> live
+    }
+  }
+
+  function confirmStateChange() {
+    if (!stateTarget) return;
+    const resetProgress = stateTarget === "draft" && progressChoice === "erase";
+    changeStatus.mutate({ status: stateTarget, resetProgress });
+  }
+
+  // For the draft dialog: need to pick keep or erase before confirming
+  const needsProgressChoice = stateTarget === "draft";
+  const canConfirm = needsProgressChoice ? progressChoice !== null : true;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -101,6 +174,142 @@ export function SettingsPage() {
           </form>
         </CardContent>
       </Card>
+
+      {/* Export */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("game.export")}</CardTitle>
+          <CardDescription>{t("settings.exportDescription")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button variant="outline" onClick={handleExport} disabled={exporting}>
+            <Download className="mr-2 h-4 w-4" />
+            {exporting ? t("game.exporting") : t("game.export")}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Game State Override */}
+      {(canRevertToDraft || canRevertToLive) && (
+        <Card className="border-amber-500/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <RotateCcw className="h-5 w-5 text-amber-500" />
+              {t("settings.gameState")}
+            </CardTitle>
+            <CardDescription>{t("settings.gameStateDescription")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">{t("settings.currentStatus")}:</span>
+              <Badge className={statusColors[currentStatus]}>{currentStatus.toUpperCase()}</Badge>
+            </div>
+
+            <div className="space-y-3">
+              {canRevertToLive && (
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">{t("settings.revertToLive")}</p>
+                    <p className="text-xs text-muted-foreground">{t("settings.revertToLiveDesc")}</p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => handleStateChange("live")}>
+                    <Play className="mr-1.5 h-3.5 w-3.5" />
+                    Live
+                  </Button>
+                </div>
+              )}
+
+              {canRevertToDraft && (
+                <div className="flex items-center justify-between rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">{t("settings.revertToDraft")}</p>
+                    <p className="text-xs text-muted-foreground">{t("settings.revertToDraftDesc")}</p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => handleStateChange("draft")}>
+                    <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                    Draft
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* State Change Confirmation Dialog */}
+      <Dialog open={!!stateTarget} onOpenChange={() => { setStateTarget(null); setProgressChoice(null); }}>
+        {stateTarget && (
+          <DialogContent onClose={() => { setStateTarget(null); setProgressChoice(null); }}>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+                {t("settings.changeStateTo")} {stateTarget.toUpperCase()}
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {needsProgressChoice ? (
+                <>
+                  <p className="text-sm text-muted-foreground">{t("settings.progressQuestion")}</p>
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => setProgressChoice("keep")}
+                      className={`w-full rounded-lg border p-4 text-left transition-colors ${
+                        progressChoice === "keep"
+                          ? "border-primary bg-primary/5 ring-1 ring-primary"
+                          : "hover:bg-muted/50"
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <Database className="h-5 w-5 mt-0.5 text-blue-500" />
+                        <div>
+                          <p className="text-sm font-medium">{t("settings.keepProgress")}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{t("settings.keepProgressDesc")}</p>
+                        </div>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => setProgressChoice("erase")}
+                      className={`w-full rounded-lg border p-4 text-left transition-colors ${
+                        progressChoice === "erase"
+                          ? "border-destructive bg-destructive/5 ring-1 ring-destructive"
+                          : "hover:bg-muted/50"
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <Eraser className="h-5 w-5 mt-0.5 text-red-500" />
+                        <div>
+                          <p className="text-sm font-medium">{t("settings.eraseProgress")}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{t("settings.eraseProgressDesc")}</p>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">{t("settings.revertToLiveDesc")}</p>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { setStateTarget(null); setProgressChoice(null); }}>
+                {t("common.cancel")}
+              </Button>
+              <Button
+                onClick={confirmStateChange}
+                disabled={!canConfirm || changeStatus.isPending}
+                variant={progressChoice === "erase" ? "destructive" : "default"}
+              >
+                {changeStatus.isPending
+                  ? t("common.loading")
+                  : stateTarget === "draft"
+                    ? t("settings.confirmRevertDraft")
+                    : t("settings.confirmRevertLive")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
 
       <Card className="border-destructive/50">
         <CardHeader>

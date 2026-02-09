@@ -28,6 +28,10 @@ public class GameService {
     private final ChallengeRepository challengeRepository;
     private final TeamRepository teamRepository;
     private final AssignmentRepository assignmentRepository;
+    private final CheckInRepository checkInRepository;
+    private final SubmissionRepository submissionRepository;
+    private final TeamLocationRepository teamLocationRepository;
+    private final ActivityEventRepository activityEventRepository;
 
     @Transactional(readOnly = true)
     public List<GameResponse> getAllGames() {
@@ -98,7 +102,7 @@ public class GameService {
     }
 
     @Transactional
-    public GameResponse updateStatus(UUID id, String newStatus) {
+    public GameResponse updateStatus(UUID id, String newStatus, boolean resetProgress) {
         Game game = gameRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Game", id));
 
@@ -110,6 +114,19 @@ public class GameService {
         }
 
         validateStatusTransition(game.getStatus(), target);
+
+        // Handle backward transition to draft
+        if (target == GameStatus.draft) {
+            if (resetProgress) {
+                // Erase all progress data (order matters for FK constraints)
+                submissionRepository.deleteByGameId(id);
+                checkInRepository.deleteByGameId(id);
+                teamLocationRepository.deleteByGameId(id);
+                activityEventRepository.deleteByGameId(id);
+            }
+            // Always clear auto-assigned challenge assignments when going back to draft
+            assignmentRepository.deleteByGameId(id);
+        }
 
         // Handle transition to live
         if (target == GameStatus.live) {
@@ -271,10 +288,15 @@ public class GameService {
     }
 
     private void validateStatusTransition(GameStatus current, GameStatus target) {
+        if (current == target) {
+            throw new BadRequestException("Game is already in " + current + " state");
+        }
+        // Forward transitions: draft -> live -> ended
+        // Backward transitions: live -> draft, ended -> live, ended -> draft
         boolean valid = switch (current) {
             case draft -> target == GameStatus.live;
-            case live -> target == GameStatus.ended;
-            case ended -> false;
+            case live -> target == GameStatus.ended || target == GameStatus.draft;
+            case ended -> target == GameStatus.live || target == GameStatus.draft;
         };
         if (!valid) {
             throw new BadRequestException("Cannot transition from " + current + " to " + target);

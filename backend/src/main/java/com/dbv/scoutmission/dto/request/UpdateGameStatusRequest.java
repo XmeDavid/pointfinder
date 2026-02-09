@@ -7,4 +7,10 @@ import lombok.Data;
 public class UpdateGameStatusRequest {
     @NotBlank
     private String status;
+
+    /**
+     * When true and transitioning to draft, all progress data
+     * (check-ins, submissions, activity events, team locations) is erased.
+     */
+    private boolean resetProgress;
 }

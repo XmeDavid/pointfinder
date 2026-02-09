@@ -27,4 +27,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
 
     @Query("SELECT COUNT(s) FROM Submission s WHERE s.team.game.id = :gameId")
     long countByGameId(@Param("gameId") UUID gameId);
+
+    @Query("DELETE FROM Submission s WHERE s.team.game.id = :gameId")
+    @org.springframework.data.jpa.repository.Modifying
+    void deleteByGameId(@Param("gameId") UUID gameId);
 }

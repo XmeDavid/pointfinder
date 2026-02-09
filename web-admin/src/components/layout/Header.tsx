@@ -1,4 +1,4 @@
-import { Moon, Sun, LogOut, User, ChevronRight, Globe, Bell, Check } from "lucide-react";
+import { Moon, Sun, LogOut, User, ChevronRight, Globe, Bell, Check, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -58,7 +58,7 @@ function useBreadcrumbs(): BreadcrumbItem[] {
   return crumbs;
 }
 
-export function Header() {
+export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
   const { user, logout } = useAuthStore();
   const { dark, toggle } = useThemeStore();
   const crumbs = useBreadcrumbs();
@@ -87,8 +87,13 @@ export function Header() {
   });
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/95 backdrop-blur px-6">
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/95 backdrop-blur px-4 md:px-6">
       <nav className="flex items-center gap-1 text-sm">
+        {onMenuToggle && (
+          <Button variant="ghost" size="icon" className="md:hidden mr-1" onClick={onMenuToggle}>
+            <Menu className="h-5 w-5" />
+          </Button>
+        )}
         {crumbs.map((crumb, i) => (
           <span key={i} className="flex items-center gap-1">
             {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
