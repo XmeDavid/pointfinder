@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct NFCWriteView: View {
+struct BaseDetailView: View {
     @Environment(AppState.self) private var appState
     @State private var nfcWriter = NFCWriterService()
 
@@ -9,67 +9,112 @@ struct NFCWriteView: View {
 
     @State private var isWriting = false
     @State private var writeSuccess = false
-    @State private var errorMessage: String?
+    @State private var writeError: String?
+
+    // Challenge & assignment data
+    @State private var challenges: [Challenge] = []
+    @State private var assignments: [Assignment] = []
+    @State private var teams: [Team] = []
+    @State private var isLoadingData = true
+
+    private let apiClient = APIClient()
+
+    private var token: String? {
+        if case .userOperator(let token, _, _) = appState.authType {
+            return token
+        }
+        return nil
+    }
 
     var body: some View {
-        VStack(spacing: 24) {
-            // Base info
-            VStack(spacing: 8) {
-                Image(systemName: "mappin.circle.fill")
-                    .font(.system(size: 48))
-                    .foregroundStyle(.secondary)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                // MARK: - Section 1: Base Info
+                baseInfoSection
 
-                Text(base.name)
-                    .font(.title2)
-                    .fontWeight(.bold)
+                // MARK: - Section 2: NFC Linking
+                nfcLinkingSection
 
+                // MARK: - Section 3: Challenge Assignment
+                challengeAssignmentSection
+            }
+            .padding()
+        }
+        .navigationTitle(base.name)
+        .navigationBarTitleDisplayMode(.inline)
+        .task {
+            await loadData()
+        }
+    }
+
+    // MARK: - Base Info Section
+
+    private var baseInfoSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Name and description
+            if !base.description.isEmpty {
                 Text(base.description)
-                    .font(.subheadline)
+                    .font(.body)
                     .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 20)
+            }
 
+            // Location
+            Label(
+                String(format: "%.5f, %.5f", base.lat, base.lng),
+                systemImage: "location"
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+
+            // Status badges
+            HStack(spacing: 12) {
                 // NFC status
-                HStack {
+                HStack(spacing: 4) {
                     Image(systemName: base.nfcLinked ? "checkmark.circle.fill" : "circle.dashed")
-                        .foregroundStyle(base.nfcLinked ? .green : .orange)
-                    Text(base.nfcLinked ? "NFC Tag Linked" : "NFC Tag Not Linked")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
+                    Text(base.nfcLinked ? "NFC Linked" : "NFC Not Linked")
                 }
-                .padding(.top, 8)
-            }
-            .padding(.top, 20)
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundStyle(base.nfcLinked ? .green : .orange)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background((base.nfcLinked ? Color.green : Color.orange).opacity(0.15))
+                .clipShape(Capsule())
 
-            Divider()
-
-            // Write section
-            VStack(spacing: 12) {
-                Text("Write NFC Tag")
-                    .font(.headline)
-
-                Text("This will write the base ID to the NFC tag. Players will scan this tag to check in at this base.")
+                // Require presence
+                if base.requirePresenceToSubmit {
+                    HStack(spacing: 4) {
+                        Image(systemName: "location.circle.fill")
+                        Text("Presence Required")
+                    }
                     .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 20)
-
-                // Base ID display
-                VStack(spacing: 4) {
-                    Text("Base ID")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Text(base.id.uuidString)
-                        .font(.caption2)
-                        .monospaced()
-                        .foregroundStyle(.secondary)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.blue)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.blue.opacity(0.15))
+                    .clipShape(Capsule())
                 }
-                .padding()
-                .background(Color(.systemGray6))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
             }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.systemGray6))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
 
-            if let error = errorMessage {
+    // MARK: - NFC Linking Section
+
+    private var nfcLinkingSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("NFC Tag", systemImage: "sensor.tag.radiowaves.forward")
+                .font(.headline)
+
+            Text("Write the base ID to an NFC tag so players can check in here.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            if let error = writeError {
                 Text(error)
                     .font(.caption)
                     .foregroundStyle(.red)
@@ -77,13 +122,10 @@ struct NFCWriteView: View {
 
             if writeSuccess {
                 Label("Tag written and linked successfully!", systemImage: "checkmark.circle.fill")
-                    .font(.subheadline)
+                    .font(.caption)
                     .foregroundStyle(.green)
             }
 
-            Spacer()
-
-            // Write button
             Button {
                 Task { await writeTag() }
             } label: {
@@ -91,31 +133,219 @@ struct NFCWriteView: View {
                     isWriting ? "Writing..." : "Write to NFC Tag",
                     systemImage: "sensor.tag.radiowaves.forward"
                 )
-                .font(.headline)
+                .font(.subheadline)
+                .fontWeight(.semibold)
                 .frame(maxWidth: .infinity)
-                .padding()
+                .padding(.vertical, 12)
                 .background(isWriting ? Color.gray : Color.accentColor)
                 .foregroundStyle(.white)
-                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
             }
             .disabled(isWriting)
-            .padding(.horizontal, 24)
-            .padding(.bottom, 24)
         }
-        .navigationTitle("Link NFC Tag")
-        .navigationBarTitleDisplayMode(.inline)
+        .padding()
+        .background(Color(.systemGray6))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
+
+    // MARK: - Challenge Assignment Section
+
+    @ViewBuilder
+    private var challengeAssignmentSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Challenge", systemImage: "lightbulb.fill")
+                .font(.headline)
+
+            if isLoadingData {
+                HStack {
+                    Spacer()
+                    ProgressView("Loading challenge info...")
+                    Spacer()
+                }
+                .padding(.vertical)
+            } else if let fixedChallengeId = base.fixedChallengeId {
+                // Fixed challenge
+                fixedChallengeView(challengeId: fixedChallengeId)
+            } else if game.status == "draft" || game.status == "setup" {
+                // Random, game not started
+                randomNotStartedView
+            } else {
+                // Random, game live/ended -- show per-team assignments
+                perTeamAssignmentsView
+            }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    @ViewBuilder
+    private func fixedChallengeView(challengeId: UUID) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: "pin.fill")
+            Text("Fixed Challenge")
+        }
+        .font(.caption)
+        .fontWeight(.medium)
+        .foregroundStyle(.purple)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(Color.purple.opacity(0.15))
+        .clipShape(Capsule())
+
+        if let challenge = challenges.first(where: { $0.id == challengeId }) {
+            ChallengeCardView(challenge: challenge)
+        } else {
+            Text("Challenge not found")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var randomNotStartedView: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "shuffle")
+                .font(.title2)
+                .foregroundStyle(.secondary)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Random Assignment")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                Text("Challenges will be randomly assigned to teams when the game goes live.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+
+    @ViewBuilder
+    private var perTeamAssignmentsView: some View {
+        let baseAssignments = assignments.filter { $0.baseId == base.id }
+
+        HStack(spacing: 6) {
+            Image(systemName: "shuffle")
+            Text("Randomly Assigned")
+        }
+        .font(.caption)
+        .fontWeight(.medium)
+        .foregroundStyle(.indigo)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(Color.indigo.opacity(0.15))
+        .clipShape(Capsule())
+
+        if baseAssignments.isEmpty {
+            Text("No challenges assigned to this base yet.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .padding(.vertical, 8)
+        } else {
+            ForEach(baseAssignments) { assignment in
+                teamAssignmentRow(assignment: assignment)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func teamAssignmentRow(assignment: Assignment) -> some View {
+        let team = teams.first(where: { $0.id == assignment.teamId })
+        let challenge = challenges.first(where: { $0.id == assignment.challengeId })
+        let teamColor = team.flatMap { Color(hex: $0.color) } ?? .gray
+
+        DisclosureGroup {
+            if let challenge = challenge {
+                ChallengeCardView(challenge: challenge)
+                    .padding(.top, 4)
+            } else {
+                Text("Challenge not found")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        } label: {
+            HStack(spacing: 10) {
+                Circle()
+                    .fill(teamColor)
+                    .frame(width: 10, height: 10)
+
+                Text(team?.name ?? "All Teams")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+
+                Spacer()
+
+                if let challenge = challenge {
+                    Text("\(challenge.points) pts")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                        .fontWeight(.medium)
+                }
+            }
+        }
+        .padding(12)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+
+    // MARK: - Data Loading
+
+    private func loadData() async {
+        guard let token = token else { return }
+        isLoadingData = true
+
+        async let challengesTask: () = loadChallenges(token: token)
+        async let teamsTask: () = loadTeams(token: token)
+
+        // Only load assignments if there's no fixed challenge and game is live/ended
+        if base.fixedChallengeId == nil && (game.status == "live" || game.status == "ended") {
+            async let assignmentsTask: () = loadAssignments(token: token)
+            _ = await (challengesTask, teamsTask, assignmentsTask)
+        } else {
+            _ = await (challengesTask, teamsTask)
+        }
+
+        isLoadingData = false
+    }
+
+    private func loadChallenges(token: String) async {
+        do {
+            challenges = try await apiClient.getChallenges(gameId: game.id, token: token)
+        } catch {
+            print("Failed to load challenges: \(error)")
+        }
+    }
+
+    private func loadAssignments(token: String) async {
+        do {
+            assignments = try await apiClient.getAssignments(gameId: game.id, token: token)
+        } catch {
+            print("Failed to load assignments: \(error)")
+        }
+    }
+
+    private func loadTeams(token: String) async {
+        do {
+            teams = try await apiClient.getTeams(gameId: game.id, token: token)
+        } catch {
+            print("Failed to load teams: \(error)")
+        }
+    }
+
+    // MARK: - NFC Writing
 
     private func writeTag() async {
         isWriting = true
-        errorMessage = nil
+        writeError = nil
         writeSuccess = false
 
         do {
             try await nfcWriter.writeBaseId(base.id)
 
-            // Mark base as NFC-linked in backend
-            guard case .userOperator(let token, _, _) = appState.authType else { return }
+            guard let token = token else { return }
             _ = try await appState.apiClient.linkBaseNfc(
                 gameId: game.id,
                 baseId: base.id,
@@ -127,12 +357,53 @@ struct NFCWriteView: View {
             if case .cancelled = error {
                 // User cancelled
             } else {
-                errorMessage = error.localizedDescription
+                writeError = error.localizedDescription
             }
         } catch {
-            errorMessage = error.localizedDescription
+            writeError = error.localizedDescription
         }
 
         isWriting = false
+    }
+}
+
+// MARK: - Challenge Card View
+
+struct ChallengeCardView: View {
+    let challenge: Challenge
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(challenge.title)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+
+                Spacer()
+
+                Label("\(challenge.points) pts", systemImage: "star.fill")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
+
+            if !challenge.description.isEmpty {
+                Text(challenge.description)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(3)
+            }
+
+            HStack(spacing: 12) {
+                HStack(spacing: 4) {
+                    Image(systemName: "doc.text")
+                    Text(challenge.answerType.capitalized)
+                }
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            }
+        }
+        .padding(12)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 }

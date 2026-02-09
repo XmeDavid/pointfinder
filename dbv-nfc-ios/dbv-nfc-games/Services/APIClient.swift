@@ -128,6 +128,14 @@ actor APIClient {
         try await patch("/api/games/\(gameId)/bases/\(baseId)/nfc-link", token: token)
     }
 
+    func getChallenges(gameId: UUID, token: String) async throws -> [Challenge] {
+        try await get("/api/games/\(gameId)/challenges", token: token)
+    }
+
+    func getAssignments(gameId: UUID, token: String) async throws -> [Assignment] {
+        try await get("/api/games/\(gameId)/assignments", token: token)
+    }
+
     // MARK: - Operator Monitoring Endpoints
 
     func getTeams(gameId: UUID, token: String) async throws -> [Team] {

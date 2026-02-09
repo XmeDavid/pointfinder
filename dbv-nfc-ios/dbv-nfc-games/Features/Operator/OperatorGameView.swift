@@ -132,7 +132,7 @@ struct BasesListView: View {
     var body: some View {
         List(bases) { base in
             NavigationLink {
-                NFCWriteView(game: game, base: base)
+                BaseDetailView(game: game, base: base)
             } label: {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {

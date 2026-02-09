@@ -25,18 +25,38 @@ struct Base: Codable, Identifiable {
 
 struct Challenge: Codable, Identifiable {
     let id: UUID
+    let gameId: UUID?
     let title: String
     let description: String
     let content: String
     let answerType: String
     let points: Int
+    
+    init(id: UUID, gameId: UUID? = nil, title: String, description: String, content: String, answerType: String, points: Int) {
+        self.id = id
+        self.gameId = gameId
+        self.title = title
+        self.description = description
+        self.content = content
+        self.answerType = answerType
+        self.points = points
+    }
 }
 
 struct Assignment: Codable, Identifiable {
     let id: UUID
+    let gameId: UUID?
     let baseId: UUID
     let challengeId: UUID
     let teamId: UUID?
+    
+    init(id: UUID, gameId: UUID? = nil, baseId: UUID, challengeId: UUID, teamId: UUID? = nil) {
+        self.id = id
+        self.gameId = gameId
+        self.baseId = baseId
+        self.challengeId = challengeId
+        self.teamId = teamId
+    }
 }
 
 /// Complete game data response for offline caching
