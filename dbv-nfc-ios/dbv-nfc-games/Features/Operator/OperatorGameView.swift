@@ -1,18 +1,13 @@
 import SwiftUI
 
-enum OperatorViewMode: String, CaseIterable {
-    case liveMap = "Live Map"
-    case bases = "Bases"
-}
-
 struct OperatorGameView: View {
     @Environment(AppState.self) private var appState
 
     let game: Game
+    let onBack: () -> Void
 
     @State private var bases: [Base] = []
     @State private var isLoading = true
-    @State private var viewMode: OperatorViewMode = .liveMap
 
     private var token: String? {
         if case .userOperator(let token, _, _) = appState.authType {
@@ -22,42 +17,46 @@ struct OperatorGameView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Segmented picker
-            Picker("View Mode", selection: $viewMode) {
-                ForEach(OperatorViewMode.allCases, id: \.self) { mode in
-                    Text(mode.rawValue).tag(mode)
-                }
-            }
-            .pickerStyle(.segmented)
-            .padding()
-
-            // Content based on selected mode
-            Group {
-                if isLoading {
-                    Spacer()
+        Group {
+            if isLoading {
+                VStack {
                     ProgressView("Loading...")
-                    Spacer()
-                } else if bases.isEmpty {
-                    ContentUnavailableView(
-                        "No Bases",
-                        systemImage: "mappin.slash",
-                        description: Text("This game doesn't have any bases yet. Create bases in the web admin.")
-                    )
-                } else {
-                    switch viewMode {
-                    case .liveMap:
-                        if let token = token {
-                            OperatorMapView(gameId: game.id, token: token, bases: bases)
-                        }
-                    case .bases:
-                        BasesListView(game: game, bases: bases)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if bases.isEmpty {
+                ContentUnavailableView(
+                    "No Bases",
+                    systemImage: "mappin.slash",
+                    description: Text("This game doesn't have any bases yet. Create bases in the web admin.")
+                )
+            } else {
+                TabView {
+                    // Live Map tab
+                    if let token = token {
+                        OperatorMapView(gameId: game.id, token: token, bases: bases)
+                            .tabItem {
+                                Label("Live Map", systemImage: "map.fill")
+                            }
                     }
+
+                    // Bases / NFC Setup tab
+                    NavigationStack {
+                        BasesListView(game: game, bases: bases)
+                            .navigationTitle("Bases")
+                            .navigationBarTitleDisplayMode(.inline)
+                    }
+                    .tabItem {
+                        Label("Bases", systemImage: "mappin.and.ellipse")
+                    }
+
+                    // Settings tab (back to game list, logout)
+                    OperatorSettingsView(game: game, onBack: onBack)
+                        .tabItem {
+                            Label("Settings", systemImage: "gearshape.fill")
+                        }
                 }
             }
         }
-        .navigationTitle(game.name)
-        .navigationBarTitleDisplayMode(.inline)
         .task {
             await loadBases()
         }
@@ -72,6 +71,55 @@ struct OperatorGameView: View {
             appState.setError(error.localizedDescription)
         }
         isLoading = false
+    }
+}
+
+// MARK: - Operator Settings View
+
+struct OperatorSettingsView: View {
+    @Environment(AppState.self) private var appState
+
+    let game: Game
+    let onBack: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    HStack {
+                        Label("Game", systemImage: "gamecontroller")
+                        Spacer()
+                        Text(game.name)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    HStack {
+                        Label("Status", systemImage: "circle.fill")
+                        Spacer()
+                        Text(game.status.capitalized)
+                            .foregroundStyle(.secondary)
+                    }
+                } header: {
+                    Text("Current Game")
+                }
+
+                Section {
+                    Button {
+                        onBack()
+                    } label: {
+                        Label("Switch Game", systemImage: "arrow.left.circle")
+                    }
+
+                    Button(role: .destructive) {
+                        appState.logout()
+                    } label: {
+                        Label("Logout", systemImage: "rectangle.portrait.and.arrow.right")
+                    }
+                }
+            }
+            .navigationTitle("Settings")
+            .navigationBarTitleDisplayMode(.inline)
+        }
     }
 }
 

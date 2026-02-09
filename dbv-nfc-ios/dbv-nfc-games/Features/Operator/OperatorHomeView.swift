@@ -6,8 +6,20 @@ struct OperatorHomeView: View {
     @State private var games: [Game] = []
     @State private var isLoading = true
     @State private var errorMessage: String?
+    @State private var selectedGame: Game?
 
     var body: some View {
+        if let game = selectedGame {
+            OperatorGameView(game: game, onBack: { selectedGame = nil })
+        } else {
+            gameListView
+                .task {
+                    await loadGames()
+                }
+        }
+    }
+
+    private var gameListView: some View {
         NavigationStack {
             Group {
                 if isLoading {
@@ -20,8 +32,8 @@ struct OperatorHomeView: View {
                     )
                 } else {
                     List(games) { game in
-                        NavigationLink {
-                            OperatorGameView(game: game)
+                        Button {
+                            selectedGame = game
                         } label: {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
@@ -43,12 +55,17 @@ struct OperatorHomeView: View {
                                     .background(statusColor(for: game.status).opacity(0.2))
                                     .foregroundStyle(statusColor(for: game.status))
                                     .clipShape(Capsule())
+
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundStyle(.tertiary)
                             }
                         }
+                        .foregroundStyle(.primary)
                     }
                 }
             }
-            .navigationTitle("Operator")
+            .navigationTitle("My Games")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -61,9 +78,6 @@ struct OperatorHomeView: View {
             .refreshable {
                 await loadGames()
             }
-        }
-        .task {
-            await loadGames()
         }
     }
 
