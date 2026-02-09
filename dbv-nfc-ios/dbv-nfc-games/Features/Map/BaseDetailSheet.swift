@@ -131,6 +131,7 @@ struct BaseDetailSheet: View {
                         challengeId: challengeId,
                         baseName: base?.baseName ?? "Base",
                         requirePresenceToSubmit: base?.requirePresenceToSubmit ?? false,
+                        answerType: challenge?.answerType ?? "text",
                         dismissToMap: { dismiss() }
                     )
                 }

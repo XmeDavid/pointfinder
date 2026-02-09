@@ -331,6 +331,7 @@ public class PlayerService {
         submissionRequest.setChallengeId(request.getChallengeId());
         submissionRequest.setBaseId(request.getBaseId());
         submissionRequest.setAnswer(request.getAnswer());
+        submissionRequest.setFileUrl(request.getFileUrl());
         submissionRequest.setIdempotencyKey(request.getIdempotencyKey());
 
         return submissionService.createSubmission(gameId, submissionRequest);

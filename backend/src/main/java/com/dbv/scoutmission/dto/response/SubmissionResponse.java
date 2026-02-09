@@ -16,6 +16,7 @@ public class SubmissionResponse {
     private UUID challengeId;
     private UUID baseId;
     private String answer;
+    private String fileUrl;
     private String status;
     private Instant submittedAt;
     private UUID reviewedBy;

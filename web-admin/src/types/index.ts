@@ -84,6 +84,7 @@ export interface Submission {
   challengeId: string;
   baseId: string;
   answer: string;
+  fileUrl?: string;
   status: SubmissionStatus;
   submittedAt: string;
   reviewedBy?: string;

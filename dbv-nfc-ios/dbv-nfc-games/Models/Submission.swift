@@ -20,6 +20,7 @@ struct SubmissionResponse: Codable, Identifiable {
     let challengeId: UUID
     let baseId: UUID
     let answer: String
+    let fileUrl: String?
     let status: String
     let submittedAt: String
     let reviewedBy: UUID?

@@ -18,6 +18,9 @@ public class CreateSubmissionRequest {
 
     private String answer = "";
 
+    /** URL of uploaded file for photo submissions. */
+    private String fileUrl;
+
     /**
      * Optional idempotency key for offline sync deduplication.
      */

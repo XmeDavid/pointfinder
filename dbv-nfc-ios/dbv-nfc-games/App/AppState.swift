@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import UIKit
 
 @MainActor
 @Observable
@@ -284,11 +285,50 @@ final class AppState {
             challengeId: challengeId,
             baseId: baseId,
             answer: answer,
+            fileUrl: nil,
             status: "pending",
             submittedAt: ISO8601DateFormatter().string(from: Date()),
             reviewedBy: nil,
             feedback: nil
         )
+    }
+
+    /// Submit a photo answer. Requires online connectivity (no offline support for photos).
+    func submitAnswerWithPhoto(baseId: UUID, challengeId: UUID, image: UIImage, notes: String) async -> SubmissionResponse? {
+        guard case .player(let token, _, _, let gameId) = authType else { return nil }
+
+        guard isOnline else {
+            setError("Photo submissions require an internet connection.")
+            return nil
+        }
+
+        // Compress to JPEG at 0.7 quality
+        guard let imageData = image.jpegData(compressionQuality: 0.7) else {
+            setError("Failed to process photo.")
+            return nil
+        }
+
+        do {
+            let response = try await apiClient.submitAnswerWithFile(
+                gameId: gameId,
+                baseId: baseId,
+                challengeId: challengeId,
+                imageData: imageData,
+                notes: notes,
+                token: token
+            )
+
+            // Send location immediately so operators see the update
+            await locationService.sendLocationNow()
+
+            // Refresh progress
+            await loadProgress()
+
+            return response
+        } catch {
+            setError(error.localizedDescription)
+            return nil
+        }
     }
 
     func getCachedChallenge(forBaseId baseId: UUID) async -> CheckInResponse.ChallengeInfo? {

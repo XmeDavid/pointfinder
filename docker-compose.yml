@@ -35,6 +35,9 @@ services:
       MAIL_FROM: info@desbravadores.dev
       MAIL_ENABLED: ${MAIL_ENABLED:-false}
       FRONTEND_URL: https://desbravadores.dev
+      APP_UPLOADS_PATH: /uploads
+    volumes:
+      - uploads:/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -63,6 +66,7 @@ services:
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
+      - uploads:/uploads:ro
     depends_on:
       - backend
       - frontend
@@ -78,3 +82,4 @@ services:
 
 volumes:
   pgdata:
+  uploads:

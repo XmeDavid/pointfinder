@@ -46,6 +46,9 @@ public class Submission {
     @Column(columnDefinition = "TEXT")
     private String feedback;
 
+    @Column(name = "file_url", columnDefinition = "TEXT")
+    private String fileUrl;
+
     @Column(name = "idempotency_key", unique = true)
     private UUID idempotencyKey;
 

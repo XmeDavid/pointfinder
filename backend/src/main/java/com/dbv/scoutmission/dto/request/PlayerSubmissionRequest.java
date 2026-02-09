@@ -15,6 +15,9 @@ public class PlayerSubmissionRequest {
 
     private String answer = "";
 
+    /** URL of uploaded file for photo submissions. */
+    private String fileUrl;
+
     /**
      * Optional idempotency key for offline sync.
      * If provided and a submission with this key exists, returns the existing submission.

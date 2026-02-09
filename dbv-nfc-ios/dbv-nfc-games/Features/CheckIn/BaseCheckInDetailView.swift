@@ -107,6 +107,7 @@ struct BaseCheckInDetailView: View {
                                 challengeId: challenge.id,
                                 baseName: base?.baseName ?? "Base",
                                 requirePresenceToSubmit: base?.requirePresenceToSubmit ?? false,
+                                answerType: challenge.answerType,
                                 dismissToMap: popToRoot
                             )
                         } label: {

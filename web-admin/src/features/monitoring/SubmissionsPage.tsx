@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle, XCircle, Clock, FileText, Image, Filter } from "lucide-react";
+import { CheckCircle, XCircle, Clock, FileText, Filter, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,6 +26,7 @@ export function SubmissionsPage() {
   const [filter, setFilter] = useState<"all" | "pending">("all");
   const [reviewingSub, setReviewingSub] = useState<Submission | null>(null);
   const [feedback, setFeedback] = useState("");
+  const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
 
   const { data: submissions = [] } = useQuery({ queryKey: ["submissions", gameId], queryFn: () => submissionsApi.listByGame(gameId!) });
   const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!) });
@@ -71,7 +72,16 @@ export function SubmissionsPage() {
                     <span className="text-sm font-medium">{challenge?.title}</span>
                     {base && <span className="text-xs text-muted-foreground">@ {base.name}</span>}
                   </div>
-                  <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">{challenge?.answerType === "file" ? <Image className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}<span className="truncate max-w-md">{sub.answer}</span></div>
+                  <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                    {sub.fileUrl ? (
+                      <>
+                        <img src={sub.fileUrl} alt="Submission" className="h-10 w-10 rounded object-cover cursor-pointer" onClick={(e) => { e.stopPropagation(); setFullScreenImage(sub.fileUrl!); }} />
+                        {sub.answer && <span className="truncate max-w-md">{sub.answer}</span>}
+                      </>
+                    ) : (
+                      <><FileText className="h-3.5 w-3.5" /><span className="truncate max-w-md">{sub.answer}</span></>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground mt-1">{formatDateTime(sub.submittedAt)}</p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -91,7 +101,18 @@ export function SubmissionsPage() {
             <div className="space-y-4">
               <div><p className="text-sm font-medium mb-1">{t("submissions.team")}</p><p className="text-sm text-muted-foreground">{teams.find((tm) => tm.id === reviewingSub.teamId)?.name}</p></div>
               <div><p className="text-sm font-medium mb-1">{t("submissions.challenge")}</p><p className="text-sm text-muted-foreground">{challenges.find((c) => c.id === reviewingSub.challengeId)?.title}</p></div>
-              <div><p className="text-sm font-medium mb-1">{t("submissions.answer")}</p><div className="rounded-md bg-muted p-3 text-sm">{reviewingSub.answer}</div></div>
+              {reviewingSub.fileUrl && (
+                <div>
+                  <p className="text-sm font-medium mb-1">{t("submissions.answer")}</p>
+                  <div className="relative group">
+                    <img src={reviewingSub.fileUrl} alt="Submission photo" className="rounded-md max-h-64 w-full object-contain bg-muted cursor-pointer" onClick={() => setFullScreenImage(reviewingSub.fileUrl!)} />
+                    <button className="absolute top-2 right-2 p-1 rounded bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setFullScreenImage(reviewingSub.fileUrl!)}><Maximize2 className="h-4 w-4" /></button>
+                  </div>
+                </div>
+              )}
+              {(!reviewingSub.fileUrl || reviewingSub.answer) && (
+                <div><p className="text-sm font-medium mb-1">{reviewingSub.fileUrl ? "Notes" : t("submissions.answer")}</p><div className="rounded-md bg-muted p-3 text-sm">{reviewingSub.answer || <span className="text-muted-foreground italic">No notes</span>}</div></div>
+              )}
               <div className="space-y-2"><p className="text-sm font-medium">{t("submissions.feedbackLabel")}</p><Textarea value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder={t("submissions.feedbackPlaceholder")} rows={2} /></div>
             </div>
             <DialogFooter>
@@ -100,6 +121,15 @@ export function SubmissionsPage() {
             </DialogFooter>
           </DialogContent>
         )}
+      </Dialog>
+
+      {/* Full-screen image viewer */}
+      <Dialog open={!!fullScreenImage} onOpenChange={() => setFullScreenImage(null)}>
+        <DialogContent className="max-w-4xl p-2" onClose={() => setFullScreenImage(null)}>
+          {fullScreenImage && (
+            <img src={fullScreenImage} alt="Submission photo" className="w-full h-auto max-h-[85vh] object-contain rounded" />
+          )}
+        </DialogContent>
       </Dialog>
     </div>
   );
