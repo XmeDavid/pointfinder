@@ -31,6 +31,8 @@ final class LocationService: NSObject, ObservableObject {
         self.apiClient = apiClient
         self.gameId = gameId
         self.token = token
+        // Reset lastLocation so we send on first update
+        self.lastLocation = nil
 
         locationManager.requestWhenInUseAuthorization()
         locationManager.startUpdatingLocation()
@@ -100,7 +102,12 @@ extension LocationService: CLLocationManagerDelegate {
     nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
         Task { @MainActor in
+            // If this is the first location we're receiving, send it immediately
+            let isFirstLocation = self.lastLocation == nil
             self.lastLocation = location
+            if isFirstLocation {
+                await self.sendLocationNow()
+            }
         }
     }
 
