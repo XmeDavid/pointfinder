@@ -42,14 +42,14 @@ public class EmailService {
                     </p>
                     <div style="text-align: center; margin: 32px 0;">
                         <a href="%s"
-                           style="background-color: #171717; color: #ffffff; padding: 12px 32px;
+                           style="background-color: #16a34a; color: #ffffff; padding: 12px 32px;
                                   text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: 500;">
                             Create Account
                         </a>
                     </div>
                     <p style="color: #8a8a8a; font-size: 14px;">
                         Or copy and paste this link into your browser:<br/>
-                        <a href="%s" style="color: #6366f1;">%s</a>
+                        <a href="%s" style="color: #16a34a;">%s</a>
                     </p>
                     <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 24px 0;"/>
                     <p style="color: #8a8a8a; font-size: 12px;">
@@ -77,7 +77,7 @@ public class EmailService {
                     </p>
                     <div style="text-align: center; margin: 32px 0;">
                         <a href="%s"
-                           style="background-color: #171717; color: #ffffff; padding: 12px 32px;
+                           style="background-color: #16a34a; color: #ffffff; padding: 12px 32px;
                                   text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: 500;">
                             Go to Scout HQ
                         </a>

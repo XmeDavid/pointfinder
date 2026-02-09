@@ -128,6 +128,20 @@ actor APIClient {
         try await patch("/api/games/\(gameId)/bases/\(baseId)/nfc-link", token: token)
     }
 
+    // MARK: - Operator Monitoring Endpoints
+
+    func getTeams(gameId: UUID, token: String) async throws -> [Team] {
+        try await get("/api/games/\(gameId)/teams", token: token)
+    }
+
+    func getTeamLocations(gameId: UUID, token: String) async throws -> [TeamLocationResponse] {
+        try await get("/api/games/\(gameId)/monitoring/locations", token: token)
+    }
+
+    func getTeamProgress(gameId: UUID, token: String) async throws -> [TeamBaseProgressResponse] {
+        try await get("/api/games/\(gameId)/monitoring/progress", token: token)
+    }
+
     // MARK: - HTTP Methods
 
     private func get<T: Decodable>(_ path: String, token: String? = nil) async throws -> T {
