@@ -23,8 +23,8 @@ struct OperatorMapView: View {
                 ForEach(bases) { base in
                     Annotation(base.name, coordinate: CLLocationCoordinate2D(latitude: base.lat, longitude: base.lng)) {
                         BaseAnnotationView(
-                            base: base,
-                            aggregateStatus: aggregateStatus(for: base)
+                            status: aggregateStatus(for: base).toBaseStatus,
+                            name: base.name
                         )
                         .onTapGesture {
                             selectedBase = base
@@ -53,14 +53,8 @@ struct OperatorMapView: View {
             // Legend overlay
             VStack {
                 Spacer()
-                HStack {
-                    MapLegendView()
-                        .padding(8)
-                        .background(.ultraThinMaterial)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                    Spacer()
-                }
-                .padding()
+                MapLegendView()
+                    .padding(.bottom, 8)
             }
         }
         .sheet(item: $selectedBase) { base in
@@ -165,45 +159,6 @@ struct OperatorMapView: View {
     }
 }
 
-// MARK: - Base Annotation View
-
-struct BaseAnnotationView: View {
-    let base: Base
-    let aggregateStatus: AggregateBaseStatus
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            ZStack {
-                Circle()
-                    .fill(aggregateStatus.color)
-                    .frame(width: 36, height: 36)
-                
-                Image(systemName: "mappin")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(.white)
-            }
-            
-            // Triangle pointer
-            Triangle()
-                .fill(aggregateStatus.color)
-                .frame(width: 12, height: 8)
-                .offset(y: -2)
-        }
-        .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
-    }
-}
-
-struct Triangle: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.move(to: CGPoint(x: rect.midX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.minX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
-        path.closeSubpath()
-        return path
-    }
-}
-
 // MARK: - Team Location Annotation View
 
 struct TeamLocationAnnotationView: View {
@@ -221,14 +176,14 @@ struct TeamLocationAnnotationView: View {
                     .fill(location.isStale ? .gray : teamColor)
                     .frame(width: 24, height: 24)
                 
-                Circle()
-                    .strokeBorder(location.isStale ? .gray.opacity(0.5) : teamColor.opacity(0.5), lineWidth: location.isStale ? 2 : 0)
-                    .frame(width: 32, height: 32)
-                
                 if location.isStale {
                     Image(systemName: "wifi.slash")
                         .font(.system(size: 10))
                         .foregroundStyle(.white)
+                } else {
+                    Circle()
+                        .strokeBorder(teamColor.opacity(0.4), lineWidth: 3)
+                        .frame(width: 32, height: 32)
                 }
             }
             .opacity(location.isStale ? 0.6 : 1.0)
@@ -241,41 +196,6 @@ struct TeamLocationAnnotationView: View {
                 .background(.ultraThinMaterial)
                 .clipShape(RoundedRectangle(cornerRadius: 4))
                 .opacity(location.isStale ? 0.6 : 1.0)
-        }
-    }
-}
-
-// MARK: - Map Legend View
-
-struct MapLegendView: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Status")
-                .font(.caption2)
-                .fontWeight(.semibold)
-                .foregroundStyle(.secondary)
-            
-            LegendItem(color: .gray, label: "Not Visited")
-            LegendItem(color: .blue, label: "Checked In")
-            LegendItem(color: .orange, label: "Pending Review")
-            LegendItem(color: .red, label: "Rejected")
-            LegendItem(color: .green, label: "Completed")
-        }
-    }
-}
-
-struct LegendItem: View {
-    let color: Color
-    let label: String
-    
-    var body: some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(color)
-                .frame(width: 10, height: 10)
-            Text(label)
-                .font(.caption2)
-                .foregroundStyle(.primary)
         }
     }
 }

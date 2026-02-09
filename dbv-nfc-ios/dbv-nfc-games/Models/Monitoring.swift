@@ -74,6 +74,17 @@ enum AggregateBaseStatus {
         }
     }
     
+    /// Convert back to BaseStatus for reuse with existing annotation views
+    var toBaseStatus: BaseStatus {
+        switch self {
+        case .notVisited: return .notVisited
+        case .checkedIn: return .checkedIn
+        case .submitted: return .submitted
+        case .rejected: return .rejected
+        case .completed: return .completed
+        }
+    }
+    
     static func from(_ status: BaseStatus) -> AggregateBaseStatus {
         switch status {
         case .notVisited: return .notVisited
