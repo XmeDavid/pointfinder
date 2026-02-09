@@ -17,14 +17,21 @@ enum BaseStatus: String, Codable {
         }
     }
 
-    var label: String {
+    /// Translation key for use with `locale.t()` in views.
+    var translationKey: String {
         switch self {
-        case .notVisited: return "Not Visited"
-        case .checkedIn: return "Checked In"
-        case .submitted: return "Pending Review"
-        case .completed: return "Completed"
-        case .rejected: return "Rejected"
+        case .notVisited: return "status.notVisited"
+        case .checkedIn: return "status.checkedIn"
+        case .submitted: return "status.pendingReview"
+        case .completed: return "status.completed"
+        case .rejected: return "status.rejected"
         }
+    }
+
+    /// Localized label using the current language from UserDefaults.
+    /// For use in non-view code where LocaleManager environment isn't available.
+    var label: String {
+        Translations.string(translationKey)
     }
 
     var systemImage: String {

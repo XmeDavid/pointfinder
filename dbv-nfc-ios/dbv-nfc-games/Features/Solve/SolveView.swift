@@ -3,6 +3,7 @@ import PhotosUI
 
 struct SolveView: View {
     @Environment(AppState.self) private var appState
+    @Environment(LocaleManager.self) private var locale
     @Environment(\.dismiss) private var dismiss
 
     let baseId: UUID
@@ -34,21 +35,21 @@ struct SolveView: View {
             VStack(alignment: .leading, spacing: 20) {
                 // Instructions
                 VStack(alignment: .leading, spacing: 8) {
-                    Label(isPhotoType ? "Submit Your Photo" : "Submit Your Answer",
+                    Label(isPhotoType ? locale.t("solve.submitPhoto") : locale.t("solve.submitAnswer"),
                           systemImage: isPhotoType ? "camera.fill" : "lightbulb.fill")
                         .font(.title3)
                         .fontWeight(.bold)
 
                     if isPhotoType {
-                        Text("Take a photo or choose one from your library.")
+                        Text(locale.t("solve.photoInstructions"))
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     } else if requirePresenceToSubmit {
-                        Text("Enter your answer below. You'll need to confirm at the base to submit.")
+                        Text(locale.t("solve.presenceInstructions"))
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     } else {
-                        Text("Enter your answer below and tap submit when ready.")
+                        Text(locale.t("solve.answerInstructions"))
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -60,8 +61,8 @@ struct SolveView: View {
                         Image(systemName: "wifi.slash")
                             .foregroundStyle(.orange)
                         Text(isPhotoType
-                             ? "You're offline. Photo submissions require an internet connection."
-                             : "You're offline. Submission will sync when connected.")
+                             ? locale.t("offline.photoRequired")
+                             : locale.t("offline.submissionSync"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -73,10 +74,10 @@ struct SolveView: View {
                 } else {
                     // Text answer input
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Your Answer")
+                        Text(locale.t("solve.yourAnswer"))
                             .font(.headline)
 
-                        TextField("Type your answer here...", text: $answer, axis: .vertical)
+                        TextField(locale.t("solve.typeAnswer"), text: $answer, axis: .vertical)
                             .textFieldStyle(.roundedBorder)
                             .lineLimit(3...8)
                     }
@@ -102,7 +103,9 @@ struct SolveView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 14))
                     } else {
                         Label(
-                            requirePresenceToSubmit ? "Confirm at Base to Submit" : (isPhotoType ? "Submit Photo" : "Submit Answer"),
+                            requirePresenceToSubmit
+                                ? locale.t("solve.confirmAtBase")
+                                : (isPhotoType ? locale.t("solve.submitPhotoBtn") : locale.t("solve.submitAnswerBtn")),
                             systemImage: requirePresenceToSubmit ? "location.circle.fill" : "paperplane.fill"
                         )
                         .font(.headline)
@@ -120,15 +123,15 @@ struct SolveView: View {
                     Image(systemName: "info.circle")
                         .foregroundStyle(.blue)
                     if requirePresenceToSubmit {
-                        Text("Return to this base and tap the button to confirm your presence and submit.")
+                        Text(locale.t("solve.presenceHelp"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     } else if isPhotoType {
-                        Text("Your photo will be reviewed by an operator.")
+                        Text(locale.t("solve.photoHelp"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     } else {
-                        Text("Your answer will be reviewed and you'll earn points if correct.")
+                        Text(locale.t("solve.answerHelp"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -136,7 +139,7 @@ struct SolveView: View {
             }
             .padding()
         }
-        .navigationTitle("Solve: \(baseName)")
+        .navigationTitle(locale.t("solve.navTitle", baseName))
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $showResult) {
             if let result = submissionResult {
@@ -162,7 +165,7 @@ struct SolveView: View {
     @ViewBuilder
     private var photoInputSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Photo")
+            Text(locale.t("solve.photo"))
                 .font(.headline)
 
             if let image = selectedImage {
@@ -190,7 +193,7 @@ struct SolveView: View {
             // Picker buttons
             HStack(spacing: 12) {
                 PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                    Label("Library", systemImage: "photo.on.rectangle")
+                    Label(locale.t("solve.library"), systemImage: "photo.on.rectangle")
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .frame(maxWidth: .infinity)
@@ -202,7 +205,7 @@ struct SolveView: View {
                 Button {
                     showCamera = true
                 } label: {
-                    Label("Camera", systemImage: "camera")
+                    Label(locale.t("solve.camera"), systemImage: "camera")
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .frame(maxWidth: .infinity)
@@ -214,11 +217,11 @@ struct SolveView: View {
 
             // Notes (optional)
             VStack(alignment: .leading, spacing: 4) {
-                Text("Notes (optional)")
+                Text(locale.t("solve.notesOptional"))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
 
-                TextField("Add a note about the photo...", text: $answer, axis: .vertical)
+                TextField(locale.t("solve.addNote"), text: $answer, axis: .vertical)
                     .textFieldStyle(.roundedBorder)
                     .lineLimit(2...4)
             }
@@ -254,7 +257,7 @@ struct SolveView: View {
 
             // Verify the scanned base matches
             guard scannedBaseId == baseId else {
-                scanError = "Wrong base! You need to be at \(baseName) to submit."
+                scanError = locale.t("solve.wrongBase", baseName)
                 isSubmitting = false
                 return
             }

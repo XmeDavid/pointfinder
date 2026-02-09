@@ -3,6 +3,7 @@ import MapKit
 
 struct GameMapView: View {
     @Environment(AppState.self) private var appState
+    @Environment(LocaleManager.self) private var locale
     @State private var selectedBaseId: UUID?
     @State private var showBaseDetail = false
     @State private var cameraPosition: MapCameraPosition = .automatic
@@ -41,7 +42,7 @@ struct GameMapView: View {
                         .padding(.bottom, 8)
                 }
             }
-            .navigationTitle(appState.currentGame?.name ?? "Map")
+            .navigationTitle(appState.currentGame?.name ?? locale.t("map.defaultTitle"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -60,15 +61,15 @@ struct GameMapView: View {
             .refreshable {
                 await appState.loadProgress()
             }
-            .alert("Error", isPresented: Binding(
+            .alert(locale.t("common.error"), isPresented: Binding(
                 get: { appState.showError },
                 set: { if !$0 { appState.showError = false } }
             )) {
-                Button("OK") {
+                Button(locale.t("common.ok")) {
                     appState.showError = false
                 }
             } message: {
-                Text(appState.errorMessage ?? "An unknown error occurred")
+                Text(appState.errorMessage ?? locale.t("common.unknownError"))
             }
         }
     }
@@ -77,12 +78,14 @@ struct GameMapView: View {
 // MARK: - Legend
 
 struct MapLegendView: View {
+    @Environment(LocaleManager.self) private var locale
+
     var body: some View {
         HStack(spacing: 12) {
-            legendItem(color: .gray, label: "Not Visited")
-            legendItem(color: .blue, label: "Checked In")
-            legendItem(color: .orange, label: "Pending")
-            legendItem(color: .green, label: "Completed")
+            legendItem(color: .gray, label: locale.t("map.notVisited"))
+            legendItem(color: .blue, label: locale.t("map.checkedIn"))
+            legendItem(color: .orange, label: locale.t("map.pending"))
+            legendItem(color: .green, label: locale.t("map.completed"))
         }
         .font(.caption2)
         .padding(.horizontal, 12)
@@ -105,4 +108,5 @@ struct MapLegendView: View {
 #Preview {
     GameMapView()
         .environment(AppState())
+        .environment(LocaleManager())
 }

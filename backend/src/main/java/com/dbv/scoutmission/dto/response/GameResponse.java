@@ -20,4 +20,5 @@ public class GameResponse {
     private String status;
     private UUID createdBy;
     private List<UUID> operatorIds;
+    private Boolean uniformAssignment;
 }

@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct SubmissionResultView: View {
+    @Environment(LocaleManager.self) private var locale
     @Environment(\.dismiss) private var dismiss
 
     let submission: SubmissionResponse
@@ -35,7 +36,7 @@ struct SubmissionResultView: View {
                     .padding(.horizontal, 40)
 
                 if let feedback = submission.feedback, !feedback.isEmpty {
-                    Text("Feedback: \(feedback)")
+                    Text(locale.t("result.feedback", feedback))
                         .font(.subheadline)
                         .foregroundStyle(.primary)
                         .padding()
@@ -55,7 +56,7 @@ struct SubmissionResultView: View {
                     dismiss()
                 }
             } label: {
-                Text("Back to Map")
+                Text(locale.t("result.backToMap"))
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding()
@@ -89,21 +90,21 @@ struct SubmissionResultView: View {
 
     private var resultTitle: String {
         switch submission.status {
-        case "correct": return "Correct!"
-        case "approved": return "Approved!"
-        case "incorrect": return "Incorrect"
-        case "rejected": return "Rejected"
-        default: return "Submitted"
+        case "correct": return locale.t("result.correct")
+        case "approved": return locale.t("result.approved")
+        case "incorrect": return locale.t("result.incorrect")
+        case "rejected": return locale.t("result.rejected")
+        default: return locale.t("result.submitted")
         }
     }
 
     private var resultMessage: String {
         switch submission.status {
-        case "correct": return "Great job! Your answer is correct."
-        case "approved": return "Your submission has been approved."
-        case "incorrect": return "Sorry, that's not the right answer. You can try again."
-        case "rejected": return "Your submission was rejected. Check the feedback and try again."
-        default: return "Your answer has been submitted and is awaiting review by an operator."
+        case "correct": return locale.t("result.correctMsg")
+        case "approved": return locale.t("result.approvedMsg")
+        case "incorrect": return locale.t("result.incorrectMsg")
+        case "rejected": return locale.t("result.rejectedMsg")
+        default: return locale.t("result.submittedMsg")
         }
     }
 }

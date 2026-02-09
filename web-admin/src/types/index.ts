@@ -19,6 +19,7 @@ export interface Game {
   status: GameStatus;
   createdBy: string;
   operatorIds: string[];
+  uniformAssignment: boolean;
 }
 
 export interface Base {

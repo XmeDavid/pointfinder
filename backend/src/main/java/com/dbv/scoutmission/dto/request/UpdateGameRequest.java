@@ -15,4 +15,6 @@ public class UpdateGameRequest {
     private Instant startDate;
 
     private Instant endDate;
+
+    private Boolean uniformAssignment;
 }

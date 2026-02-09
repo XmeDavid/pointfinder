@@ -26,7 +26,7 @@ final class NFCReaderService: NSObject {
             self.isReading = true
 
             self.session = NFCNDEFReaderSession(delegate: self, queue: .main, invalidateAfterFirstRead: true)
-            self.session?.alertMessage = "Hold your iPhone near the NFC tag"
+            self.session?.alertMessage = Translations.string("nfc.holdToRead")
             self.session?.begin()
         }
         #endif
@@ -73,7 +73,7 @@ extension NFCReaderService: NFCNDEFReaderSessionDelegate {
 
     func readerSession(_ session: NFCNDEFReaderSession, didDetect tags: [any NFCNDEFTag]) {
         guard let tag = tags.first else {
-            session.invalidate(errorMessage: "No tag found")
+            session.invalidate(errorMessage: Translations.string("nfc.noTagFound"))
             return
         }
 
@@ -90,7 +90,7 @@ extension NFCReaderService: NFCNDEFReaderSessionDelegate {
                 }
 
                 guard let message = message, let record = message.records.first else {
-                    session.invalidate(errorMessage: "No data on tag")
+                    session.invalidate(errorMessage: Translations.string("nfc.noDataOnTag"))
                     return
                 }
 
@@ -106,7 +106,7 @@ extension NFCReaderService: NFCNDEFReaderSessionDelegate {
         if let json = try? JSONSerialization.jsonObject(with: payload) as? [String: Any],
            let baseIdString = json["baseId"] as? String,
            let baseId = UUID(uuidString: baseIdString) {
-            session.alertMessage = "Tag read successfully!"
+            session.alertMessage = Translations.string("nfc.readSuccess")
             session.invalidate()
             DispatchQueue.main.async { [weak self] in
                 self?.lastReadBaseId = baseId
@@ -132,7 +132,7 @@ extension NFCReaderService: NFCNDEFReaderSessionDelegate {
                let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                let baseIdString = json["baseId"] as? String,
                let baseId = UUID(uuidString: baseIdString) {
-                session.alertMessage = "Tag read successfully!"
+                session.alertMessage = Translations.string("nfc.readSuccess")
                 session.invalidate()
                 DispatchQueue.main.async { [weak self] in
                     self?.lastReadBaseId = baseId
@@ -144,7 +144,7 @@ extension NFCReaderService: NFCNDEFReaderSessionDelegate {
             }
         }
 
-        session.invalidate(errorMessage: "Invalid tag data")
+        session.invalidate(errorMessage: Translations.string("nfc.invalidTagData"))
         DispatchQueue.main.async { [weak self] in
             self?.isReading = false
             self?.continuation?.resume(throwing: NFCError.invalidData)
@@ -165,12 +165,12 @@ enum NFCError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .notAvailable: return "NFC is not available on this device"
-        case .cancelled: return "NFC scan was cancelled"
-        case .readFailed(let msg): return "NFC read failed: \(msg)"
-        case .noData: return "No data found on tag"
-        case .invalidData: return "Tag does not contain valid base data"
-        case .writeFailed(let msg): return "NFC write failed: \(msg)"
+        case .notAvailable: return Translations.string("nfcError.notAvailable")
+        case .cancelled: return Translations.string("nfcError.cancelled")
+        case .readFailed(let msg): return String(format: Translations.string("nfcError.readFailed"), msg)
+        case .noData: return Translations.string("nfcError.noData")
+        case .invalidData: return Translations.string("nfcError.invalidData")
+        case .writeFailed(let msg): return String(format: Translations.string("nfcError.writeFailed"), msg)
         }
     }
 }

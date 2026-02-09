@@ -2,6 +2,7 @@ import SwiftUI
 
 struct OperatorLoginView: View {
     @Environment(AppState.self) private var appState
+    @Environment(LocaleManager.self) private var locale
 
     @State private var email = ""
     @State private var password = ""
@@ -16,25 +17,25 @@ struct OperatorLoginView: View {
                     .font(.system(size: 60))
                     .foregroundStyle(.secondary)
 
-                Text("Operator Login")
+                Text(locale.t("auth.operatorLogin"))
                     .font(.title2)
                     .fontWeight(.bold)
 
-                Text("Sign in with your operator account")
+                Text(locale.t("auth.signInSubtitle"))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
             .padding(.top, 20)
 
             VStack(spacing: 16) {
-                TextField("Email", text: $email)
+                TextField(locale.t("auth.email"), text: $email)
                     .textFieldStyle(.roundedBorder)
                     .textContentType(.emailAddress)
                     .keyboardType(.emailAddress)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
 
-                SecureField("Password", text: $password)
+                SecureField(locale.t("auth.password"), text: $password)
                     .textFieldStyle(.roundedBorder)
                     .textContentType(.password)
             }
@@ -52,7 +53,7 @@ struct OperatorLoginView: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                 } else {
-                    Text("Sign In")
+                    Text(locale.t("auth.signIn"))
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding()
@@ -66,12 +67,12 @@ struct OperatorLoginView: View {
 
             Spacer()
         }
-        .navigationTitle("Operator Login")
+        .navigationTitle(locale.t("auth.operatorLogin"))
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Error", isPresented: $appState.showError) {
-            Button("OK") {}
+        .alert(locale.t("common.error"), isPresented: $appState.showError) {
+            Button(locale.t("common.ok")) {}
         } message: {
-            Text(appState.errorMessage ?? "An unknown error occurred")
+            Text(appState.errorMessage ?? locale.t("common.unknownError"))
         }
     }
 
@@ -85,4 +86,5 @@ struct OperatorLoginView: View {
         OperatorLoginView()
     }
     .environment(AppState())
+    .environment(LocaleManager())
 }

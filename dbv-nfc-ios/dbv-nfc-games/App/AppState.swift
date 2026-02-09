@@ -218,7 +218,7 @@ final class AppState {
         pendingActionsCount = await OfflineQueue.shared.pendingCount
 
         // Construct local response
-        let baseName = baseProgress.first { $0.baseId == baseId }?.baseName ?? "Base"
+        let baseName = baseProgress.first { $0.baseId == baseId }?.baseName ?? Translations.string("base.defaultName")
         return CheckInResponse(
             checkInId: UUID(), // Temporary local ID
             baseId: baseId,
@@ -298,13 +298,13 @@ final class AppState {
         guard case .player(let token, _, _, let gameId) = authType else { return nil }
 
         guard isOnline else {
-            setError("Photo submissions require an internet connection.")
+            setError(Translations.string("error.photoOffline"))
             return nil
         }
 
         // Compress to JPEG at 0.7 quality
         guard let imageData = image.jpegData(compressionQuality: 0.7) else {
-            setError("Failed to process photo.")
+            setError(Translations.string("error.photoProcessing"))
             return nil
         }
 

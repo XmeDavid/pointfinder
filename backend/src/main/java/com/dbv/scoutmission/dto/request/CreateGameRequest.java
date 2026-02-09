@@ -15,4 +15,6 @@ public class CreateGameRequest {
     private Instant startDate;
 
     private Instant endDate;
+
+    private Boolean uniformAssignment = false;
 }

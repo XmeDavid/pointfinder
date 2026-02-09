@@ -2,6 +2,7 @@ import SwiftUI
 
 struct OperatorGameView: View {
     @Environment(AppState.self) private var appState
+    @Environment(LocaleManager.self) private var locale
 
     let game: Game
     let onBack: () -> Void
@@ -20,14 +21,14 @@ struct OperatorGameView: View {
         Group {
             if isLoading {
                 VStack {
-                    ProgressView("Loading...")
+                    ProgressView(locale.t("operator.loading"))
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if bases.isEmpty {
                 ContentUnavailableView(
-                    "No Bases",
+                    locale.t("operator.noBases"),
                     systemImage: "mappin.slash",
-                    description: Text("This game doesn't have any bases yet. Create bases in the web admin.")
+                    description: Text(locale.t("operator.noBasesDesc"))
                 )
             } else {
                 TabView {
@@ -35,24 +36,24 @@ struct OperatorGameView: View {
                     if let token = token {
                         OperatorMapView(gameId: game.id, token: token, bases: bases)
                             .tabItem {
-                                Label("Live Map", systemImage: "map.fill")
+                                Label(locale.t("operator.liveMap"), systemImage: "map.fill")
                             }
                     }
 
                     // Bases / NFC Setup tab
                     NavigationStack {
                         BasesListView(game: game, bases: $bases)
-                            .navigationTitle("Bases")
+                            .navigationTitle(locale.t("operator.bases"))
                             .navigationBarTitleDisplayMode(.inline)
                     }
                     .tabItem {
-                        Label("Bases", systemImage: "mappin.and.ellipse")
+                        Label(locale.t("operator.bases"), systemImage: "mappin.and.ellipse")
                     }
 
                     // Settings tab (back to game list, logout)
                     OperatorSettingsView(game: game, onBack: onBack)
                         .tabItem {
-                            Label("Settings", systemImage: "gearshape.fill")
+                            Label(locale.t("tabs.settings"), systemImage: "gearshape.fill")
                         }
                 }
             }
@@ -78,6 +79,7 @@ struct OperatorGameView: View {
 
 struct OperatorSettingsView: View {
     @Environment(AppState.self) private var appState
+    @Environment(LocaleManager.self) private var locale
 
     let game: Game
     let onBack: () -> Void
@@ -85,39 +87,50 @@ struct OperatorSettingsView: View {
     var body: some View {
         NavigationStack {
             List {
+                // Language picker
+                Section(locale.t("settings.language")) {
+                    Picker(locale.t("settings.language"), selection: Binding(
+                        get: { locale.currentLanguage },
+                        set: { locale.setLanguage($0) }
+                    )) {
+                        Text("English").tag("en")
+                        Text("Português").tag("pt")
+                    }
+                }
+
                 Section {
                     HStack {
-                        Label("Game", systemImage: "gamecontroller")
+                        Label(locale.t("settings.game"), systemImage: "gamecontroller")
                         Spacer()
                         Text(game.name)
                             .foregroundStyle(.secondary)
                     }
 
                     HStack {
-                        Label("Status", systemImage: "circle.fill")
+                        Label(locale.t("settings.status"), systemImage: "circle.fill")
                         Spacer()
                         Text(game.status.capitalized)
                             .foregroundStyle(.secondary)
                     }
                 } header: {
-                    Text("Current Game")
+                    Text(locale.t("settings.currentGame"))
                 }
 
                 Section {
                     Button {
                         onBack()
                     } label: {
-                        Label("Switch Game", systemImage: "arrow.left.circle")
+                        Label(locale.t("operator.switchGame"), systemImage: "arrow.left.circle")
                     }
 
                     Button(role: .destructive) {
                         appState.logout()
                     } label: {
-                        Label("Logout", systemImage: "rectangle.portrait.and.arrow.right")
+                        Label(locale.t("operator.logout"), systemImage: "rectangle.portrait.and.arrow.right")
                     }
                 }
             }
-            .navigationTitle("Settings")
+            .navigationTitle(locale.t("settings.title"))
             .navigationBarTitleDisplayMode(.inline)
         }
     }
@@ -126,6 +139,8 @@ struct OperatorSettingsView: View {
 // MARK: - Bases List View (NFC Setup)
 
 struct BasesListView: View {
+    @Environment(LocaleManager.self) private var locale
+
     let game: Game
     @Binding var bases: [Base]
 
@@ -150,11 +165,11 @@ struct BasesListView: View {
                     Spacer()
 
                     if base.nfcLinked {
-                        Label("Linked", systemImage: "checkmark.circle.fill")
+                        Label(locale.t("operator.linked"), systemImage: "checkmark.circle.fill")
                             .font(.caption)
                             .foregroundStyle(.green)
                     } else {
-                        Label("Not Linked", systemImage: "circle.dashed")
+                        Label(locale.t("operator.notLinked"), systemImage: "circle.dashed")
                             .font(.caption)
                             .foregroundStyle(.orange)
                     }

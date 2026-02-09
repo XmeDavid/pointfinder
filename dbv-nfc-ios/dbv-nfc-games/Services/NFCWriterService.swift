@@ -38,7 +38,7 @@ final class NFCWriterService: NSObject {
             self.isWriting = true
 
             self.session = NFCNDEFReaderSession(delegate: self, queue: .main, invalidateAfterFirstRead: false)
-            self.session?.alertMessage = "Hold your iPhone near the NFC tag to write"
+            self.session?.alertMessage = Translations.string("nfc.holdToWrite")
             self.session?.begin()
         }
         #endif
@@ -70,7 +70,7 @@ extension NFCWriterService: NFCNDEFReaderSessionDelegate {
 
     func readerSession(_ session: NFCNDEFReaderSession, didDetect tags: [any NFCNDEFTag]) {
         guard let tag = tags.first, let payload = payloadToWrite else {
-            session.invalidate(errorMessage: "No tag found")
+            session.invalidate(errorMessage: Translations.string("nfc.noTagFound"))
             return
         }
 
@@ -82,12 +82,12 @@ extension NFCWriterService: NFCNDEFReaderSessionDelegate {
 
             tag.queryNDEFStatus { status, _, error in
                 guard error == nil else {
-                    session.invalidate(errorMessage: "Failed to query tag status")
+                    session.invalidate(errorMessage: Translations.string("nfc.failedQueryStatus"))
                     return
                 }
 
                 guard status == .readWrite else {
-                    session.invalidate(errorMessage: "Tag is not writable")
+                    session.invalidate(errorMessage: Translations.string("nfc.tagNotWritable"))
                     return
                 }
 
@@ -96,11 +96,11 @@ extension NFCWriterService: NFCNDEFReaderSessionDelegate {
                     if let error = error {
                         session.invalidate(errorMessage: error.localizedDescription)
                     } else {
-                        session.alertMessage = "Tag written successfully!"
+                        session.alertMessage = Translations.string("nfc.writeSuccessAlert")
                         session.invalidate()
                         DispatchQueue.main.async {
                             self?.isWriting = false
-                            self?.successMessage = "NFC tag written successfully"
+                            self?.successMessage = Translations.string("nfc.writeSuccessMessage")
                             self?.continuation?.resume()
                             self?.continuation = nil
                         }

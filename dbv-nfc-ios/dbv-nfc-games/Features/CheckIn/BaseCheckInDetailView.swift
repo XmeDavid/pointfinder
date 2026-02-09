@@ -4,6 +4,7 @@ import SwiftUI
 /// Shows the challenge and lets the player start solving.
 struct BaseCheckInDetailView: View {
     @Environment(AppState.self) private var appState
+    @Environment(LocaleManager.self) private var locale
 
     let baseId: UUID
     /// Closure to pop back to root of the navigation stack
@@ -29,15 +30,15 @@ struct BaseCheckInDetailView: View {
                         .foregroundStyle(.green)
                         .font(.title)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Checked In!")
+                        Text(locale.t("base.checkedInBanner"))
                             .font(.headline)
-                        Text(base?.baseName ?? "Base")
+                        Text(base?.baseName ?? locale.t("base.defaultName"))
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
                     // Status pill
-                    Text(status.label)
+                    Text(locale.t(status.translationKey))
                         .font(.caption)
                         .fontWeight(.medium)
                         .padding(.horizontal, 10)
@@ -55,7 +56,7 @@ struct BaseCheckInDetailView: View {
                     HStack(spacing: 8) {
                         Image(systemName: "wifi.slash")
                             .foregroundStyle(.orange)
-                        Text("You're offline. Check-in will sync when connected.")
+                        Text(locale.t("offline.checkInSync"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -63,7 +64,7 @@ struct BaseCheckInDetailView: View {
                 }
 
                 if isLoading {
-                    ProgressView("Loading challenge...")
+                    ProgressView(locale.t("base.loadingChallenge"))
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding(.top, 40)
                 } else if let challenge = challenge {
@@ -74,7 +75,7 @@ struct BaseCheckInDetailView: View {
                                 .font(.title3)
                                 .fontWeight(.bold)
                             Spacer()
-                            Label("\(challenge.points) pts", systemImage: "star.fill")
+                            Label("\(challenge.points) \(locale.t("common.pts"))", systemImage: "star.fill")
                                 .font(.subheadline)
                                 .foregroundStyle(.orange)
                         }
@@ -92,7 +93,7 @@ struct BaseCheckInDetailView: View {
                         HStack {
                             Image(systemName: "info.circle")
                                 .foregroundStyle(.blue)
-                            Text("Answer type: \(challenge.answerType)")
+                            Text(locale.t("base.answerType", challenge.answerType))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -105,13 +106,13 @@ struct BaseCheckInDetailView: View {
                             SolveView(
                                 baseId: baseId,
                                 challengeId: challenge.id,
-                                baseName: base?.baseName ?? "Base",
+                                baseName: base?.baseName ?? locale.t("base.defaultName"),
                                 requirePresenceToSubmit: base?.requirePresenceToSubmit ?? false,
                                 answerType: challenge.answerType,
                                 dismissToMap: popToRoot
                             )
                         } label: {
-                            Label("Solve Challenge", systemImage: "lightbulb.fill")
+                            Label(locale.t("base.solveChallenge"), systemImage: "lightbulb.fill")
                                 .font(.headline)
                                 .frame(maxWidth: .infinity)
                                 .padding()
@@ -121,13 +122,13 @@ struct BaseCheckInDetailView: View {
                         }
                         .padding(.top, 8)
                     } else if status == .completed {
-                        Label("Challenge completed!", systemImage: "checkmark.seal.fill")
+                        Label(locale.t("base.challengeCompleted"), systemImage: "checkmark.seal.fill")
                             .font(.headline)
                             .foregroundStyle(.green)
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding()
                     } else if status == .submitted {
-                        Label("Awaiting review...", systemImage: "clock.fill")
+                        Label(locale.t("base.awaitingReview"), systemImage: "clock.fill")
                             .font(.headline)
                             .foregroundStyle(.orange)
                             .frame(maxWidth: .infinity, alignment: .center)
@@ -138,7 +139,7 @@ struct BaseCheckInDetailView: View {
                         Image(systemName: "questionmark.circle")
                             .font(.largeTitle)
                             .foregroundStyle(.secondary)
-                        Text("No challenge assigned to this base yet")
+                        Text(locale.t("base.noChallengeYet"))
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -148,7 +149,7 @@ struct BaseCheckInDetailView: View {
             }
             .padding()
         }
-        .navigationTitle(base?.baseName ?? "Base")
+        .navigationTitle(base?.baseName ?? locale.t("base.defaultName"))
         .navigationBarTitleDisplayMode(.inline)
         .task {
             await loadChallenge()

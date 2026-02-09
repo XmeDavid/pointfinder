@@ -59,6 +59,10 @@ public class Game {
     @Builder.Default
     private List<Team> teams = new ArrayList<>();
 
+    @Column(name = "uniform_assignment", nullable = false)
+    @Builder.Default
+    private Boolean uniformAssignment = false;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

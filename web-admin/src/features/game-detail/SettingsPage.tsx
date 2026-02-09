@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -34,7 +35,7 @@ export function SettingsPage() {
 
   const { data: game } = useQuery({ queryKey: ["game", gameId], queryFn: () => gamesApi.getById(gameId!) });
 
-  const [form, setForm] = useState({ name: "", description: "", startDate: "", endDate: "" });
+  const [form, setForm] = useState({ name: "", description: "", startDate: "", endDate: "", uniformAssignment: false });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [saved, setSaved] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -50,6 +51,7 @@ export function SettingsPage() {
         description: game.description,
         startDate: toLocalDatetime(game.startDate),
         endDate: toLocalDatetime(game.endDate),
+        uniformAssignment: game.uniformAssignment ?? false,
       });
     }
   }, [game]);
@@ -164,6 +166,13 @@ export function SettingsPage() {
                 <Label htmlFor="endDate">{t("games.endDate")}</Label>
                 <Input id="endDate" type="datetime-local" value={form.endDate} onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))} />
               </div>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <Label>{t("settings.uniformAssignment")}</Label>
+                <p className="text-xs text-muted-foreground">{t("settings.uniformAssignmentDescription")}</p>
+              </div>
+              <Switch checked={form.uniformAssignment} onCheckedChange={(v) => setForm((f) => ({ ...f, uniformAssignment: v }))} />
             </div>
             <div className="flex items-center justify-end gap-2 pt-4">
               {saved && <span className="text-sm text-green-500">{t("settings.saved")}</span>}

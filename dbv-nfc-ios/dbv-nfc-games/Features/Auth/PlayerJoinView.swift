@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PlayerJoinView: View {
     @Environment(AppState.self) private var appState
+    @Environment(LocaleManager.self) private var locale
 
     @State private var joinCode = ""
     @State private var displayName = ""
@@ -16,11 +17,11 @@ struct PlayerJoinView: View {
                     .font(.system(size: 60))
                     .foregroundStyle(.secondary)
 
-                Text("Join Your Team")
+                Text(locale.t("join.title"))
                     .font(.title2)
                     .fontWeight(.bold)
 
-                Text("Enter the code your team leader gave you")
+                Text(locale.t("join.subtitle"))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -28,14 +29,14 @@ struct PlayerJoinView: View {
             .padding(.top, 20)
 
             VStack(spacing: 16) {
-                TextField("Join Code", text: $joinCode)
+                TextField(locale.t("join.joinCode"), text: $joinCode)
                     .textFieldStyle(.roundedBorder)
                     .font(.title3)
                     .multilineTextAlignment(.center)
                     .textInputAutocapitalization(.characters)
                     .autocorrectionDisabled()
 
-                TextField("Your Name", text: $displayName)
+                TextField(locale.t("join.yourName"), text: $displayName)
                     .textFieldStyle(.roundedBorder)
                     .textContentType(.name)
             }
@@ -56,7 +57,7 @@ struct PlayerJoinView: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                 } else {
-                    Text("Join Game")
+                    Text(locale.t("join.joinGame"))
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding()
@@ -70,12 +71,12 @@ struct PlayerJoinView: View {
 
             Spacer()
         }
-        .navigationTitle("Join Game")
+        .navigationTitle(locale.t("join.joinGame"))
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Error", isPresented: $appState.showError) {
-            Button("OK") {}
+        .alert(locale.t("common.error"), isPresented: $appState.showError) {
+            Button(locale.t("common.ok")) {}
         } message: {
-            Text(appState.errorMessage ?? "An unknown error occurred")
+            Text(appState.errorMessage ?? locale.t("common.unknownError"))
         }
     }
 
@@ -90,4 +91,5 @@ struct PlayerJoinView: View {
         PlayerJoinView()
     }
     .environment(AppState())
+    .environment(LocaleManager())
 }

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct BaseDetailSheet: View {
     @Environment(AppState.self) private var appState
+    @Environment(LocaleManager.self) private var locale
     @Environment(\.dismiss) private var dismiss
 
     let baseId: UUID
@@ -26,11 +27,11 @@ struct BaseDetailSheet: View {
                     // Status banner
                     HStack {
                         Image(systemName: status.systemImage)
-                        Text(status.label)
+                        Text(locale.t(status.translationKey))
                             .fontWeight(.medium)
                         Spacer()
                         if let points = challenge?.points {
-                            Label("\(points) pts", systemImage: "star.fill")
+                            Label("\(points) \(locale.t("common.pts"))", systemImage: "star.fill")
                                 .font(.subheadline)
                                 .foregroundStyle(.orange)
                         }
@@ -40,7 +41,7 @@ struct BaseDetailSheet: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
 
                     if isLoading {
-                        ProgressView("Loading challenge...")
+                        ProgressView(locale.t("base.loadingChallenge"))
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.top, 40)
                     } else if let challenge = challenge {
@@ -66,7 +67,7 @@ struct BaseDetailSheet: View {
                                 appState.startSolving(baseId: baseId, challengeId: challenge.id)
                                 showSolve = true
                             } label: {
-                                Label("Solve Challenge", systemImage: "lightbulb.fill")
+                                Label(locale.t("base.solveChallenge"), systemImage: "lightbulb.fill")
                                     .font(.headline)
                                     .frame(maxWidth: .infinity)
                                     .padding()
@@ -75,13 +76,13 @@ struct BaseDetailSheet: View {
                                     .clipShape(RoundedRectangle(cornerRadius: 14))
                             }
                         } else if status == .completed {
-                            Label("Challenge completed!", systemImage: "checkmark.seal.fill")
+                            Label(locale.t("base.challengeCompleted"), systemImage: "checkmark.seal.fill")
                                 .font(.headline)
                                 .foregroundStyle(.green)
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .padding()
                         } else if status == .submitted {
-                            Label("Awaiting review...", systemImage: "clock.fill")
+                            Label(locale.t("base.awaitingReview"), systemImage: "clock.fill")
                                 .font(.headline)
                                 .foregroundStyle(.orange)
                                 .frame(maxWidth: .infinity, alignment: .center)
@@ -92,7 +93,7 @@ struct BaseDetailSheet: View {
                             Image(systemName: "mappin.and.ellipse")
                                 .font(.system(size: 48))
                                 .foregroundStyle(.secondary)
-                            Text("Check in at this base to see the challenge")
+                            Text(locale.t("base.checkInToSee"))
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                                 .multilineTextAlignment(.center)
@@ -104,10 +105,10 @@ struct BaseDetailSheet: View {
                             Image(systemName: "exclamationmark.triangle")
                                 .font(.system(size: 48))
                                 .foregroundStyle(.orange)
-                            Text("No challenge assigned to this base")
+                            Text(locale.t("base.noChallengeAssigned"))
                                 .font(.subheadline)
                                 .fontWeight(.medium)
-                            Text("Please contact your game operator")
+                            Text(locale.t("base.contactOperator"))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -117,11 +118,11 @@ struct BaseDetailSheet: View {
                 }
                 .padding()
             }
-            .navigationTitle(base?.baseName ?? "Base")
+            .navigationTitle(base?.baseName ?? locale.t("base.defaultName"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
+                    Button(locale.t("common.done")) { dismiss() }
                 }
             }
             .navigationDestination(isPresented: $showSolve) {
@@ -129,7 +130,7 @@ struct BaseDetailSheet: View {
                     SolveView(
                         baseId: baseId,
                         challengeId: challengeId,
-                        baseName: base?.baseName ?? "Base",
+                        baseName: base?.baseName ?? locale.t("base.defaultName"),
                         requirePresenceToSubmit: base?.requirePresenceToSubmit ?? false,
                         answerType: challenge?.answerType ?? "text",
                         dismissToMap: { dismiss() }

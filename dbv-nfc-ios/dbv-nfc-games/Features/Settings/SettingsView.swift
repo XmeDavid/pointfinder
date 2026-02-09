@@ -2,30 +2,42 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(AppState.self) private var appState
+    @Environment(LocaleManager.self) private var locale
 
     var body: some View {
         NavigationStack {
             List {
+                // Language picker
+                Section(locale.t("settings.language")) {
+                    Picker(locale.t("settings.language"), selection: Binding(
+                        get: { locale.currentLanguage },
+                        set: { locale.setLanguage($0) }
+                    )) {
+                        Text("English").tag("en")
+                        Text("Português").tag("pt")
+                    }
+                }
+
                 // Team info section
                 if let team = appState.currentTeam, let game = appState.currentGame {
-                    Section("Current Game") {
+                    Section(locale.t("settings.currentGame")) {
                         HStack {
-                            Text("Game")
+                            Text(locale.t("settings.game"))
                             Spacer()
                             Text(game.name)
                                 .foregroundStyle(.secondary)
                         }
                         HStack {
-                            Text("Status")
+                            Text(locale.t("settings.status"))
                             Spacer()
                             Text(game.status.capitalized)
                                 .foregroundStyle(.secondary)
                         }
                     }
 
-                    Section("Your Team") {
+                    Section(locale.t("settings.yourTeam")) {
                         HStack {
-                            Text("Team")
+                            Text(locale.t("settings.team"))
                             Spacer()
                             HStack(spacing: 6) {
                                 Circle()
@@ -39,9 +51,9 @@ struct SettingsView: View {
                 }
 
                 if let player = appState.currentPlayer {
-                    Section("Your Profile") {
+                    Section(locale.t("settings.yourProfile")) {
                         HStack {
-                            Text("Name")
+                            Text(locale.t("settings.name"))
                             Spacer()
                             Text(player.displayName)
                                 .foregroundStyle(.secondary)
@@ -51,32 +63,32 @@ struct SettingsView: View {
 
                 // Progress summary
                 if !appState.baseProgress.isEmpty {
-                    Section("Progress") {
+                    Section(locale.t("settings.progress")) {
                         let total = appState.baseProgress.count
                         let completed = appState.baseProgress.filter { $0.baseStatus == .completed }.count
                         let checkedIn = appState.baseProgress.filter { $0.baseStatus == .checkedIn }.count
                         let submitted = appState.baseProgress.filter { $0.baseStatus == .submitted }.count
 
                         HStack {
-                            Text("Total Bases")
+                            Text(locale.t("settings.totalBases"))
                             Spacer()
                             Text("\(total)")
                                 .foregroundStyle(.secondary)
                         }
                         HStack {
-                            Text("Completed")
+                            Text(locale.t("settings.completed"))
                             Spacer()
                             Text("\(completed)")
                                 .foregroundStyle(.green)
                         }
                         HStack {
-                            Text("Checked In")
+                            Text(locale.t("settings.checkedIn"))
                             Spacer()
                             Text("\(checkedIn)")
                                 .foregroundStyle(.blue)
                         }
                         HStack {
-                            Text("Pending Review")
+                            Text(locale.t("settings.pendingReview"))
                             Spacer()
                             Text("\(submitted)")
                                 .foregroundStyle(.orange)
@@ -85,9 +97,9 @@ struct SettingsView: View {
                 }
 
                 // Device info
-                Section("Device") {
+                Section(locale.t("settings.device")) {
                     HStack {
-                        Text("Device ID")
+                        Text(locale.t("settings.deviceId"))
                         Spacer()
                         Text(AppConfiguration.deviceId.prefix(8) + "...")
                             .font(.caption)
@@ -102,13 +114,13 @@ struct SettingsView: View {
                     } label: {
                         HStack {
                             Spacer()
-                            Text("Leave Game")
+                            Text(locale.t("settings.leaveGame"))
                             Spacer()
                         }
                     }
                 }
             }
-            .navigationTitle("Settings")
+            .navigationTitle(locale.t("settings.title"))
         }
     }
 }
@@ -136,4 +148,5 @@ extension Color {
 #Preview {
     SettingsView()
         .environment(AppState())
+        .environment(LocaleManager())
 }

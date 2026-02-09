@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CheckInTabView: View {
     @Environment(AppState.self) private var appState
+    @Environment(LocaleManager.self) private var locale
     @State private var nfcReader = NFCReaderService()
     @State private var isScanning = false
     @State private var scanError: String?
@@ -29,11 +30,11 @@ struct CheckInTabView: View {
                             .symbolEffect(.pulse, isActive: isScanning)
                     }
 
-                    Text("Base Check-In")
+                    Text(locale.t("checkIn.title"))
                         .font(.title2)
                         .fontWeight(.bold)
 
-                    Text("Hold your phone near the marker at a base to check in")
+                    Text(locale.t("checkIn.instructions"))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -52,7 +53,10 @@ struct CheckInTabView: View {
                     HStack(spacing: 8) {
                         Image(systemName: "arrow.triangle.2.circlepath")
                             .foregroundStyle(.orange)
-                        Text("\(appState.pendingActionsCount) pending \(appState.pendingActionsCount == 1 ? "action" : "actions") to sync")
+                        let key = appState.pendingActionsCount == 1
+                            ? "checkIn.pendingSyncOne"
+                            : "checkIn.pendingSyncOther"
+                        Text(locale.t(key, appState.pendingActionsCount))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -66,7 +70,7 @@ struct CheckInTabView: View {
                     Task { await performCheckIn() }
                 } label: {
                     Label(
-                        isScanning ? "Checking In..." : "Check In at Base",
+                        isScanning ? locale.t("checkIn.checkingIn") : locale.t("checkIn.checkInAtBase"),
                         systemImage: "location.circle.fill"
                     )
                     .font(.headline)
@@ -80,19 +84,19 @@ struct CheckInTabView: View {
                 .padding(.horizontal, 24)
                 .padding(.bottom, 24)
             }
-            .navigationTitle("Check In")
+            .navigationTitle(locale.t("checkIn.navTitle"))
             .navigationDestination(for: UUID.self) { baseId in
                 BaseCheckInDetailView(baseId: baseId, popToRoot: popToRoot)
             }
-            .alert("Error", isPresented: Binding(
+            .alert(locale.t("common.error"), isPresented: Binding(
                 get: { appState.showError },
                 set: { if !$0 { appState.showError = false } }
             )) {
-                Button("OK") {
+                Button(locale.t("common.ok")) {
                     appState.showError = false
                 }
             } message: {
-                Text(appState.errorMessage ?? "An unknown error occurred")
+                Text(appState.errorMessage ?? locale.t("common.unknownError"))
             }
         }
     }
@@ -131,4 +135,5 @@ struct CheckInTabView: View {
 #Preview {
     CheckInTabView()
         .environment(AppState())
+        .environment(LocaleManager())
 }

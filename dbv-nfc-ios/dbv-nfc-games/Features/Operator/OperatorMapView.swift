@@ -2,6 +2,8 @@ import SwiftUI
 import MapKit
 
 struct OperatorMapView: View {
+    @Environment(LocaleManager.self) private var locale
+
     let gameId: UUID
     let token: String
     let bases: [Base]
@@ -50,7 +52,7 @@ struct OperatorMapView: View {
             .id(progressVersion)
             
             if isLoading && teams.isEmpty {
-                ProgressView("Loading...")
+                ProgressView(locale.t("operator.loading"))
                     .padding()
                     .background(.ultraThinMaterial)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -173,6 +175,7 @@ struct OperatorMapView: View {
 /// A version of the base progress sheet that fetches its own data
 /// and polls for updates while open, so it always shows live status.
 struct LiveBaseProgressSheet: View {
+    @Environment(LocaleManager.self) private var locale
     @Environment(\.dismiss) private var dismiss
     
     let gameId: UUID
@@ -207,11 +210,11 @@ struct LiveBaseProgressSheet: View {
                                 .foregroundStyle(.secondary)
                             
                             if base.nfcLinked {
-                                Label("NFC Linked", systemImage: "checkmark.circle.fill")
+                                Label(locale.t("nfc.nfcLinked"), systemImage: "checkmark.circle.fill")
                                     .font(.caption)
                                     .foregroundStyle(.green)
                             } else {
-                                Label("NFC Not Linked", systemImage: "xmark.circle")
+                                Label(locale.t("nfc.nfcNotLinked"), systemImage: "xmark.circle")
                                     .font(.caption)
                                     .foregroundStyle(.orange)
                             }
@@ -235,11 +238,11 @@ struct LiveBaseProgressSheet: View {
                         
                         // Team status list
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("Team Status")
+                            Text(locale.t("operator.teamStatus"))
                                 .font(.headline)
                             
                             if teams.isEmpty {
-                                Text("No teams in this game yet")
+                                Text(locale.t("operator.noTeams"))
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                                     .frame(maxWidth: .infinity, alignment: .center)
@@ -257,11 +260,11 @@ struct LiveBaseProgressSheet: View {
                 }
                 .padding()
             }
-            .navigationTitle("Base Details")
+            .navigationTitle(locale.t("operator.baseDetails"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
+                    Button(locale.t("common.done")) {
                         dismiss()
                     }
                 }

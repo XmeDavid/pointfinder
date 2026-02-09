@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct OperatorBaseProgressSheet: View {
+    @Environment(LocaleManager.self) private var locale
     @Environment(\.dismiss) private var dismiss
     
     let base: Base
@@ -29,11 +30,11 @@ struct OperatorBaseProgressSheet: View {
                                 .foregroundStyle(.secondary)
                             
                             if base.nfcLinked {
-                                Label("NFC Linked", systemImage: "checkmark.circle.fill")
+                                Label(locale.t("nfc.nfcLinked"), systemImage: "checkmark.circle.fill")
                                     .font(.caption)
                                     .foregroundStyle(.green)
                             } else {
-                                Label("NFC Not Linked", systemImage: "xmark.circle")
+                                Label(locale.t("nfc.nfcNotLinked"), systemImage: "xmark.circle")
                                     .font(.caption)
                                     .foregroundStyle(.orange)
                             }
@@ -49,11 +50,11 @@ struct OperatorBaseProgressSheet: View {
                     
                     // Team status list
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Team Status")
+                        Text(locale.t("operator.teamStatus"))
                             .font(.headline)
                         
                         if teams.isEmpty {
-                            Text("No teams in this game yet")
+                            Text(locale.t("operator.noTeams"))
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                                 .frame(maxWidth: .infinity, alignment: .center)
@@ -70,11 +71,11 @@ struct OperatorBaseProgressSheet: View {
                 }
                 .padding()
             }
-            .navigationTitle("Base Details")
+            .navigationTitle(locale.t("operator.baseDetails"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
+                    Button(locale.t("common.done")) {
                         dismiss()
                     }
                 }
@@ -86,6 +87,8 @@ struct OperatorBaseProgressSheet: View {
 // MARK: - Summary Stats View
 
 struct SummaryStatsView: View {
+    @Environment(LocaleManager.self) private var locale
+
     let teams: [Team]
     let progress: [TeamBaseProgressResponse]
     
@@ -111,10 +114,10 @@ struct SummaryStatsView: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            StatBadge(count: completedCount, label: "Completed", color: .green)
-            StatBadge(count: pendingCount, label: "Pending", color: .orange)
-            StatBadge(count: checkedInCount, label: "Checked In", color: .blue)
-            StatBadge(count: notVisitedCount + rejectedCount, label: "Remaining", color: .gray)
+            StatBadge(count: completedCount, label: locale.t("status.completed"), color: .green)
+            StatBadge(count: pendingCount, label: locale.t("map.pending"), color: .orange)
+            StatBadge(count: checkedInCount, label: locale.t("status.checkedIn"), color: .blue)
+            StatBadge(count: notVisitedCount + rejectedCount, label: locale.t("operator.remaining"), color: .gray)
         }
     }
 }
@@ -145,6 +148,8 @@ struct StatBadge: View {
 // MARK: - Team Status Row
 
 struct TeamStatusRow: View {
+    @Environment(LocaleManager.self) private var locale
+
     let team: Team
     let progress: TeamBaseProgressResponse?
     
@@ -174,7 +179,7 @@ struct TeamStatusRow: View {
             HStack(spacing: 4) {
                 Image(systemName: status.systemImage)
                     .font(.caption)
-                Text(status.label)
+                Text(locale.t(status.translationKey))
                     .font(.caption)
                     .fontWeight(.medium)
             }
@@ -214,4 +219,5 @@ struct TeamStatusRow: View {
         ],
         progress: []
     )
+    .environment(LocaleManager())
 }

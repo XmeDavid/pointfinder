@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct WelcomeView: View {
+    @Environment(LocaleManager.self) private var locale
     @State private var showPlayerJoin = false
     @State private var showOperatorLogin = false
 
@@ -17,11 +18,11 @@ struct WelcomeView: View {
                         .frame(width: 120, height: 120)
                         .clipShape(RoundedRectangle(cornerRadius: 24))
 
-                    Text("Scout Mission")
+                    Text(locale.t("welcome.title"))
                         .font(.largeTitle)
                         .fontWeight(.bold)
 
-                    Text("Explore, discover, and complete challenges with your team")
+                    Text(locale.t("welcome.subtitle"))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -35,7 +36,7 @@ struct WelcomeView: View {
                     Button {
                         showPlayerJoin = true
                     } label: {
-                        Label("Join a Game", systemImage: "person.3.fill")
+                        Label(locale.t("welcome.joinGame"), systemImage: "person.3.fill")
                             .font(.headline)
                             .frame(maxWidth: .infinity)
                             .padding()
@@ -47,7 +48,7 @@ struct WelcomeView: View {
                     Button {
                         showOperatorLogin = true
                     } label: {
-                        Label("Operator Login", systemImage: "gearshape.fill")
+                        Label(locale.t("welcome.operatorLogin"), systemImage: "gearshape.fill")
                             .font(.subheadline)
                             .frame(maxWidth: .infinity)
                             .padding()
@@ -72,4 +73,5 @@ struct WelcomeView: View {
 #Preview {
     WelcomeView()
         .environment(AppState())
+        .environment(LocaleManager())
 }

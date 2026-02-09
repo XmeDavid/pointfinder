@@ -381,6 +381,8 @@
     "dangerZone": "Zona de Perigo",
     "dangerZoneDescription": "Ações irreversíveis que afetam todo o jogo",
     "deleteGame": "Eliminar Jogo",
+    "uniformAssignment": "Atribuição uniforme",
+    "uniformAssignmentDescription": "Quando ativado, todas as equipas recebem o mesmo desafio em cada base. Quando desativado, cada equipa recebe um desafio aleatório diferente por base.",
     "deleteConfirmTitle": "Tem a certeza que deseja eliminar este jogo?",
     "deleteConfirmDescription": "Esta ação não pode ser revertida. Todas as bases, desafios, equipas e atribuições serão permanentemente eliminados.",
     "confirmDelete": "Sim, Eliminar Jogo"

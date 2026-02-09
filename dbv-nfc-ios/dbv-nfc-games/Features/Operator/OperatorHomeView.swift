@@ -2,6 +2,7 @@ import SwiftUI
 
 struct OperatorHomeView: View {
     @Environment(AppState.self) private var appState
+    @Environment(LocaleManager.self) private var locale
 
     @State private var games: [Game] = []
     @State private var isLoading = true
@@ -23,12 +24,12 @@ struct OperatorHomeView: View {
         NavigationStack {
             Group {
                 if isLoading {
-                    ProgressView("Loading games...")
+                    ProgressView(locale.t("operator.loadingGames"))
                 } else if games.isEmpty {
                     ContentUnavailableView(
-                        "No Games",
+                        locale.t("operator.noGames"),
                         systemImage: "gamecontroller",
-                        description: Text("You don't have any games assigned yet.")
+                        description: Text(locale.t("operator.noGamesDesc"))
                     )
                 } else {
                     List(games) { game in
@@ -65,13 +66,13 @@ struct OperatorHomeView: View {
                     }
                 }
             }
-            .navigationTitle("My Games")
+            .navigationTitle(locale.t("operator.myGames"))
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         appState.logout()
                     } label: {
-                        Text("Logout")
+                        Text(locale.t("operator.logout"))
                     }
                 }
             }
@@ -106,4 +107,5 @@ struct OperatorHomeView: View {
 #Preview {
     OperatorHomeView()
         .environment(AppState())
+        .environment(LocaleManager())
 }

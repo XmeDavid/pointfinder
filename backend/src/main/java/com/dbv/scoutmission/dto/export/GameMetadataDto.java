@@ -12,4 +12,5 @@ import lombok.NoArgsConstructor;
 public class GameMetadataDto {
     private String name;
     private String description;
+    private Boolean uniformAssignment;
 }

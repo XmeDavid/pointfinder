@@ -3,11 +3,13 @@ import SwiftUI
 @main
 struct dbv_nfc_gamesApp: App {
     @State private var appState = AppState()
+    @State private var localeManager = LocaleManager()
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environment(appState)
+                .environment(localeManager)
         }
     }
 }

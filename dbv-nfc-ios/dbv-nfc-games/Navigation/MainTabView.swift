@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MainTabView: View {
     @Environment(AppState.self) private var appState
+    @Environment(LocaleManager.self) private var locale
 
     var body: some View {
         VStack(spacing: 0) {
@@ -13,17 +14,17 @@ struct MainTabView: View {
             TabView {
                 GameMapView()
                     .tabItem {
-                        Label("Map", systemImage: "map.fill")
+                        Label(locale.t("tabs.map"), systemImage: "map.fill")
                     }
 
                 CheckInTabView()
                     .tabItem {
-                        Label("Check In", systemImage: "mappin.and.ellipse")
+                        Label(locale.t("tabs.checkIn"), systemImage: "mappin.and.ellipse")
                     }
 
                 SettingsView()
                     .tabItem {
-                        Label("Settings", systemImage: "gearshape.fill")
+                        Label(locale.t("tabs.settings"), systemImage: "gearshape.fill")
                     }
             }
         }
@@ -33,11 +34,13 @@ struct MainTabView: View {
 // MARK: - Offline Banner
 
 struct OfflineBanner: View {
+    @Environment(LocaleManager.self) private var locale
+
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "wifi.slash")
                 .font(.subheadline)
-            Text("You're offline. Changes will sync when connected.")
+            Text(locale.t("offline.banner"))
                 .font(.caption)
             Spacer()
         }
@@ -51,4 +54,5 @@ struct OfflineBanner: View {
 #Preview {
     MainTabView()
         .environment(AppState())
+        .environment(LocaleManager())
 }

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct BaseDetailView: View {
     @Environment(AppState.self) private var appState
+    @Environment(LocaleManager.self) private var locale
     @State private var nfcWriter = NFCWriterService()
 
     let game: Game
@@ -71,7 +72,7 @@ struct BaseDetailView: View {
                 // NFC status
                 HStack(spacing: 4) {
                     Image(systemName: base.nfcLinked ? "checkmark.circle.fill" : "circle.dashed")
-                    Text(base.nfcLinked ? "NFC Linked" : "NFC Not Linked")
+                    Text(base.nfcLinked ? locale.t("nfc.nfcLinked") : locale.t("nfc.nfcNotLinked"))
                 }
                 .font(.caption)
                 .fontWeight(.medium)
@@ -85,7 +86,7 @@ struct BaseDetailView: View {
                 if base.requirePresenceToSubmit {
                     HStack(spacing: 4) {
                         Image(systemName: "location.circle.fill")
-                        Text("Presence Required")
+                        Text(locale.t("nfc.presenceRequired"))
                     }
                     .font(.caption)
                     .fontWeight(.medium)
@@ -107,10 +108,10 @@ struct BaseDetailView: View {
 
     private var nfcLinkingSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("NFC Tag", systemImage: "sensor.tag.radiowaves.forward")
+            Label(locale.t("nfc.tag"), systemImage: "sensor.tag.radiowaves.forward")
                 .font(.headline)
 
-            Text("Write the base ID to an NFC tag so players can check in here.")
+            Text(locale.t("nfc.writeInstructions"))
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
@@ -121,7 +122,7 @@ struct BaseDetailView: View {
             }
 
             if writeSuccess {
-                Label("Tag written and linked successfully!", systemImage: "checkmark.circle.fill")
+                Label(locale.t("nfc.writeSuccess"), systemImage: "checkmark.circle.fill")
                     .font(.caption)
                     .foregroundStyle(.green)
             }
@@ -130,7 +131,7 @@ struct BaseDetailView: View {
                 Task { await writeTag() }
             } label: {
                 Label(
-                    isWriting ? "Writing..." : "Write to NFC Tag",
+                    isWriting ? locale.t("nfc.writing") : locale.t("nfc.writeToTag"),
                     systemImage: "sensor.tag.radiowaves.forward"
                 )
                 .font(.subheadline)
@@ -153,13 +154,13 @@ struct BaseDetailView: View {
     @ViewBuilder
     private var challengeAssignmentSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("Challenge", systemImage: "lightbulb.fill")
+            Label(locale.t("nfc.challenge"), systemImage: "lightbulb.fill")
                 .font(.headline)
 
             if isLoadingData {
                 HStack {
                     Spacer()
-                    ProgressView("Loading challenge info...")
+                    ProgressView(locale.t("nfc.loadingChallengeInfo"))
                     Spacer()
                 }
                 .padding(.vertical)
@@ -183,7 +184,7 @@ struct BaseDetailView: View {
     private func fixedChallengeView(challengeId: UUID) -> some View {
         HStack(spacing: 6) {
             Image(systemName: "pin.fill")
-            Text("Fixed Challenge")
+            Text(locale.t("nfc.fixedChallenge"))
         }
         .font(.caption)
         .fontWeight(.medium)
@@ -196,7 +197,7 @@ struct BaseDetailView: View {
         if let challenge = challenges.first(where: { $0.id == challengeId }) {
             ChallengeCardView(challenge: challenge)
         } else {
-            Text("Challenge not found")
+            Text(locale.t("nfc.challengeNotFound"))
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -209,10 +210,10 @@ struct BaseDetailView: View {
                 .foregroundStyle(.secondary)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("Random Assignment")
+                Text(locale.t("nfc.randomAssignment"))
                     .font(.subheadline)
                     .fontWeight(.medium)
-                Text("Challenges will be randomly assigned to teams when the game goes live.")
+                Text(locale.t("nfc.randomDesc"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -229,7 +230,7 @@ struct BaseDetailView: View {
 
         HStack(spacing: 6) {
             Image(systemName: "shuffle")
-            Text("Randomly Assigned")
+            Text(locale.t("nfc.randomlyAssigned"))
         }
         .font(.caption)
         .fontWeight(.medium)
@@ -240,7 +241,7 @@ struct BaseDetailView: View {
         .clipShape(Capsule())
 
         if baseAssignments.isEmpty {
-            Text("No challenges assigned to this base yet.")
+            Text(locale.t("nfc.noChallengesYet"))
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .padding(.vertical, 8)
@@ -262,7 +263,7 @@ struct BaseDetailView: View {
                 ChallengeCardView(challenge: challenge)
                     .padding(.top, 4)
             } else {
-                Text("Challenge not found")
+                Text(locale.t("nfc.challengeNotFound"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -279,7 +280,7 @@ struct BaseDetailView: View {
                 Spacer()
 
                 if let challenge = challenge {
-                    Text("\(challenge.points) pts")
+                    Text("\(challenge.points) \(locale.t("common.pts"))")
                         .font(.caption)
                         .foregroundStyle(.orange)
                         .fontWeight(.medium)

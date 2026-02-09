@@ -70,6 +70,7 @@ public class GameService {
                 .description(request.getDescription() != null ? request.getDescription() : "")
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
+                .uniformAssignment(request.getUniformAssignment() != null ? request.getUniformAssignment() : false)
                 .status(GameStatus.draft)
                 .createdBy(currentUser)
                 .build();
@@ -88,6 +89,9 @@ public class GameService {
         game.setDescription(request.getDescription() != null ? request.getDescription() : "");
         game.setStartDate(request.getStartDate());
         game.setEndDate(request.getEndDate());
+        if (request.getUniformAssignment() != null) {
+            game.setUniformAssignment(request.getUniformAssignment());
+        }
 
         game = gameRepository.save(game);
         return toResponse(game);
@@ -222,6 +226,12 @@ public class GameService {
 
         Random random = new Random();
 
+        // Track globally used challenges (for uniform assignment mode)
+        Set<UUID> usedGlobally = new HashSet<>(fixedChallengeIds);
+        for (Assignment a : existingAssignments) {
+            usedGlobally.add(a.getChallenge().getId());
+        }
+
         // Initialize per-team tracking of assigned challenge IDs
         Map<UUID, Set<UUID>> teamAssignedChallenges = new HashMap<>();
         for (Team team : teams) {
@@ -260,27 +270,52 @@ public class GameService {
                     }
                 }
             } else if (!hasAssignments) {
-                // No fixed challenge, no existing assignments - assign random challenges per team
-                for (Team team : teams) {
-                    Set<UUID> usedByTeam = teamAssignedChallenges.get(team.getId());
-
-                    // Filter pool: exclude challenges already assigned to this team
-                    List<Challenge> teamPool = randomPool.stream()
-                            .filter(c -> !usedByTeam.contains(c.getId()))
+                if (Boolean.TRUE.equals(game.getUniformAssignment())) {
+                    // Uniform mode: pick one challenge for this base, assign to all teams
+                    // Use a shared pool that excludes already-used challenges across all teams
+                    List<Challenge> sharedPool = randomPool.stream()
+                            .filter(c -> !usedGlobally.contains(c.getId()))
                             .collect(Collectors.toList());
 
-                    if (!teamPool.isEmpty()) {
-                        int idx = random.nextInt(teamPool.size());
-                        Challenge selected = teamPool.get(idx);
+                    if (!sharedPool.isEmpty()) {
+                        int idx = random.nextInt(sharedPool.size());
+                        Challenge selected = sharedPool.get(idx);
+                        usedGlobally.add(selected.getId());
 
-                        Assignment assignment = Assignment.builder()
-                                .game(game)
-                                .base(base)
-                                .challenge(selected)
-                                .team(team)
-                                .build();
-                        assignmentRepository.save(assignment);
-                        usedByTeam.add(selected.getId());
+                        for (Team team : teams) {
+                            Assignment assignment = Assignment.builder()
+                                    .game(game)
+                                    .base(base)
+                                    .challenge(selected)
+                                    .team(team)
+                                    .build();
+                            assignmentRepository.save(assignment);
+                            teamAssignedChallenges.get(team.getId()).add(selected.getId());
+                        }
+                    }
+                } else {
+                    // Per-team mode: each team gets a different random challenge
+                    for (Team team : teams) {
+                        Set<UUID> usedByTeam = teamAssignedChallenges.get(team.getId());
+
+                        // Filter pool: exclude challenges already assigned to this team
+                        List<Challenge> teamPool = randomPool.stream()
+                                .filter(c -> !usedByTeam.contains(c.getId()))
+                                .collect(Collectors.toList());
+
+                        if (!teamPool.isEmpty()) {
+                            int idx = random.nextInt(teamPool.size());
+                            Challenge selected = teamPool.get(idx);
+
+                            Assignment assignment = Assignment.builder()
+                                    .game(game)
+                                    .base(base)
+                                    .challenge(selected)
+                                    .team(team)
+                                    .build();
+                            assignmentRepository.save(assignment);
+                            usedByTeam.add(selected.getId());
+                        }
                     }
                 }
             }
@@ -317,6 +352,7 @@ public class GameService {
                 .status(game.getStatus().name())
                 .createdBy(game.getCreatedBy().getId())
                 .operatorIds(operatorIds)
+                .uniformAssignment(game.getUniformAssignment())
                 .build();
     }
 
@@ -357,6 +393,7 @@ public class GameService {
         GameMetadataDto gameMetadata = GameMetadataDto.builder()
                 .name(game.getName())
                 .description(game.getDescription())
+                .uniformAssignment(game.getUniformAssignment())
                 .build();
 
         List<BaseExportDto> baseExportDtos = bases.stream()
@@ -522,6 +559,7 @@ public class GameService {
                 .description(data.getGame().getDescription() != null ? data.getGame().getDescription() : "")
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
+                .uniformAssignment(data.getGame().getUniformAssignment() != null ? data.getGame().getUniformAssignment() : false)
                 .status(GameStatus.draft)
                 .createdBy(currentUser)
                 .build();
