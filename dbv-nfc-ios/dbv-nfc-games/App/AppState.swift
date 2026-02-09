@@ -186,6 +186,9 @@ final class AppState {
                     await GameDataCache.shared.cacheChallenge(challenge, forBaseId: baseId)
                 }
 
+                // Send location immediately so operators see the team near the base
+                await locationService.sendLocationNow()
+
                 // Refresh progress
                 await loadProgress()
 
@@ -241,6 +244,9 @@ final class AppState {
                     request: request,
                     token: token
                 )
+
+                // Send location immediately so operators see the update
+                await locationService.sendLocationNow()
 
                 // Refresh progress
                 await loadProgress()

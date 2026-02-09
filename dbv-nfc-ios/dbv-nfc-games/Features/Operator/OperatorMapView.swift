@@ -13,6 +13,9 @@ struct OperatorMapView: View {
     @State private var selectedBase: Base?
     @State private var cameraPosition: MapCameraPosition = .automatic
     
+    /// Incremented on each poll to force the Map to re-render annotations
+    @State private var progressVersion: Int = 0
+    
     private let apiClient = APIClient()
     private let pollInterval: TimeInterval = 5.0
     
@@ -21,9 +24,10 @@ struct OperatorMapView: View {
             Map(position: $cameraPosition) {
                 // Base annotations
                 ForEach(bases) { base in
+                    let status = aggregateStatus(for: base).toBaseStatus
                     Annotation(base.name, coordinate: CLLocationCoordinate2D(latitude: base.lat, longitude: base.lng)) {
                         BaseAnnotationView(
-                            status: aggregateStatus(for: base).toBaseStatus,
+                            status: status,
                             name: base.name
                         )
                         .onTapGesture {
@@ -42,6 +46,8 @@ struct OperatorMapView: View {
                 }
             }
             .mapStyle(.standard)
+            // Force the entire Map to re-render when progress or locations change
+            .id(progressVersion)
             
             if isLoading && teams.isEmpty {
                 ProgressView("Loading...")
@@ -58,10 +64,10 @@ struct OperatorMapView: View {
             }
         }
         .sheet(item: $selectedBase) { base in
-            OperatorBaseProgressSheet(
-                base: base,
-                teams: teams,
-                progress: teamProgress.filter { $0.baseId == base.id }
+            LiveBaseProgressSheet(
+                gameId: gameId,
+                token: token,
+                base: base
             )
             .presentationDetents([.medium, .large])
         }
@@ -116,9 +122,12 @@ struct OperatorMapView: View {
         while !Task.isCancelled {
             try? await Task.sleep(for: .seconds(pollInterval))
             
-            // Poll locations and progress (teams rarely change)
+            // Poll locations and progress
             await loadLocations()
             await loadProgress()
+            
+            // Bump version to force Map re-render
+            progressVersion += 1
         }
     }
     
@@ -156,6 +165,139 @@ struct OperatorMapView: View {
         )
         
         cameraPosition = .region(MKCoordinateRegion(center: center, span: span))
+    }
+}
+
+// MARK: - Live Base Progress Sheet (self-refreshing)
+
+/// A version of the base progress sheet that fetches its own data
+/// and polls for updates while open, so it always shows live status.
+struct LiveBaseProgressSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    
+    let gameId: UUID
+    let token: String
+    let base: Base
+    
+    @State private var teams: [Team] = []
+    @State private var progress: [TeamBaseProgressResponse] = []
+    @State private var isLoading = true
+    
+    private let apiClient = APIClient()
+    
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    // Base info header
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(base.name)
+                            .font(.title2)
+                            .fontWeight(.bold)
+                        
+                        if !base.description.isEmpty {
+                            Text(base.description)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                        
+                        HStack(spacing: 16) {
+                            Label(String(format: "%.4f, %.4f", base.lat, base.lng), systemImage: "location")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            
+                            if base.nfcLinked {
+                                Label("NFC Linked", systemImage: "checkmark.circle.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(.green)
+                            } else {
+                                Label("NFC Not Linked", systemImage: "xmark.circle")
+                                    .font(.caption)
+                                    .foregroundStyle(.orange)
+                            }
+                        }
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color(.systemGray6))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    
+                    if isLoading {
+                        HStack {
+                            Spacer()
+                            ProgressView()
+                            Spacer()
+                        }
+                        .padding()
+                    } else {
+                        // Summary stats
+                        SummaryStatsView(teams: teams, progress: progress)
+                        
+                        // Team status list
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Team Status")
+                                .font(.headline)
+                            
+                            if teams.isEmpty {
+                                Text("No teams in this game yet")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .padding()
+                            } else {
+                                ForEach(teams) { team in
+                                    TeamStatusRow(
+                                        team: team,
+                                        progress: progress.first { $0.teamId == team.id }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                .padding()
+            }
+            .navigationTitle("Base Details")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .task {
+            await loadData()
+            await pollWhileOpen()
+        }
+    }
+    
+    private func loadData() async {
+        do {
+            async let teamsResult = apiClient.getTeams(gameId: gameId, token: token)
+            async let progressResult = apiClient.getTeamProgress(gameId: gameId, token: token)
+            
+            let (fetchedTeams, allProgress) = try await (teamsResult, progressResult)
+            teams = fetchedTeams
+            progress = allProgress.filter { $0.baseId == base.id }
+        } catch {
+            print("Failed to load sheet data: \(error)")
+        }
+        isLoading = false
+    }
+    
+    private func pollWhileOpen() async {
+        while !Task.isCancelled {
+            try? await Task.sleep(for: .seconds(5))
+            
+            do {
+                let allProgress = try await apiClient.getTeamProgress(gameId: gameId, token: token)
+                progress = allProgress.filter { $0.baseId == base.id }
+            } catch {
+                // Silently continue polling
+            }
+        }
     }
 }
 

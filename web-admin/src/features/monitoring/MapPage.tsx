@@ -144,7 +144,8 @@ export function MapPage() {
     return idx;
   }, [progress]);
 
-  const now = Date.now();
+  // Re-derive `now` from the locations data so stale detection updates on refetch
+  const now = useMemo(() => Date.now(), [locations]);
 
   // Get user's current location or fallback (only if no bases)
   const [userLocation, setUserLocation] = useState<[number, number]>([40.08789650218038, -8.869461715221407]);
@@ -261,7 +262,7 @@ export function MapPage() {
 
               return (
                 <Marker
-                  key={`${base.id}-${viewMode}`}
+                  key={`${base.id}-${viewMode}-${color}`}
                   position={[base.lat, base.lng]}
                   icon={createColoredIcon(color)}
                 >
@@ -358,7 +359,7 @@ export function MapPage() {
 
               return (
                 <CircleMarker
-                  key={team.id}
+                  key={`${team.id}-${loc.lat}-${loc.lng}-${isStale}`}
                   center={[loc.lat, loc.lng]}
                   radius={10}
                   pathOptions={{

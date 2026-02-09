@@ -56,6 +56,23 @@ final class LocationService: NSObject, ObservableObject {
         lastLocation = nil
     }
 
+    /// Send the current location immediately (e.g. after a check-in or submission).
+    /// Also resets the timer so the next periodic send is a full interval later.
+    func sendLocationNow() async {
+        await sendCurrentLocation()
+
+        // Reset the timer so we don't double-send shortly after
+        sendTimer?.invalidate()
+        if apiClient != nil && gameId != nil && token != nil {
+            sendTimer = Timer.scheduledTimer(withTimeInterval: sendInterval, repeats: true) { [weak self] _ in
+                guard let self else { return }
+                Task { @MainActor in
+                    await self.sendCurrentLocation()
+                }
+            }
+        }
+    }
+
     // MARK: - Sending
 
     private func sendCurrentLocation() async {
