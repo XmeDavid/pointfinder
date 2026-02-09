@@ -16,6 +16,7 @@ public class BaseProgressResponse {
     private Double lat;
     private Double lng;
     private Boolean nfcLinked;
+    private Boolean requirePresenceToSubmit;
     private String status; // not_visited, checked_in, submitted, completed, rejected
     private Instant checkedInAt;
     private UUID challengeId;

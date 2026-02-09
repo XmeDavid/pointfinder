@@ -5,11 +5,10 @@ struct CheckInTabView: View {
     @State private var nfcReader = NFCReaderService()
     @State private var isScanning = false
     @State private var scanError: String?
-    @State private var checkedInBaseId: UUID?
-    @State private var navigateToBase = false
+    @State private var navigationPath = NavigationPath()
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             VStack(spacing: 24) {
                 Spacer()
 
@@ -82,10 +81,8 @@ struct CheckInTabView: View {
                 .padding(.bottom, 24)
             }
             .navigationTitle("Check In")
-            .navigationDestination(isPresented: $navigateToBase) {
-                if let baseId = checkedInBaseId {
-                    BaseCheckInDetailView(baseId: baseId)
-                }
+            .navigationDestination(for: UUID.self) { baseId in
+                BaseCheckInDetailView(baseId: baseId, popToRoot: popToRoot)
             }
             .alert("Error", isPresented: Binding(
                 get: { appState.showError },
@@ -100,6 +97,10 @@ struct CheckInTabView: View {
         }
     }
 
+    private func popToRoot() {
+        navigationPath.removeLast(navigationPath.count)
+    }
+
     private func performCheckIn() async {
         isScanning = true
         scanError = nil
@@ -111,8 +112,7 @@ struct CheckInTabView: View {
             let result = await appState.checkIn(baseId: baseId)
             if result != nil {
                 // Navigate to the base detail view
-                checkedInBaseId = baseId
-                navigateToBase = true
+                navigationPath.append(baseId)
             }
         } catch let error as NFCError {
             if case .cancelled = error {

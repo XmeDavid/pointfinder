@@ -29,6 +29,7 @@ export interface Base {
   lat: number;
   lng: number;
   nfcLinked: boolean;
+  requirePresenceToSubmit: boolean;
   fixedChallengeId?: string;
 }
 

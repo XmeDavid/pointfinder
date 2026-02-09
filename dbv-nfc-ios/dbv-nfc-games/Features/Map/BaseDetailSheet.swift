@@ -56,8 +56,7 @@ struct BaseDetailSheet: View {
 
                             if !challenge.content.isEmpty {
                                 Divider()
-                                Text(challenge.content)
-                                    .font(.body)
+                                AutoSizingHTMLView(html: challenge.content)
                             }
                         }
 
@@ -127,7 +126,13 @@ struct BaseDetailSheet: View {
             }
             .navigationDestination(isPresented: $showSolve) {
                 if let challengeId = challenge?.id {
-                    SolveView(baseId: baseId, challengeId: challengeId, baseName: base?.baseName ?? "Base")
+                    SolveView(
+                        baseId: baseId,
+                        challengeId: challengeId,
+                        baseName: base?.baseName ?? "Base",
+                        requirePresenceToSubmit: base?.requirePresenceToSubmit ?? false,
+                        dismissToMap: { dismiss() }
+                    )
                 }
             }
         }

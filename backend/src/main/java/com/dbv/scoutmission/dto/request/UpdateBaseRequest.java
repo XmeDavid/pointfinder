@@ -21,5 +21,7 @@ public class UpdateBaseRequest {
 
     private Boolean nfcLinked;
 
+    private Boolean requirePresenceToSubmit;
+
     private UUID fixedChallengeId;
 }

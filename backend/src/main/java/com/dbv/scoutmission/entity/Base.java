@@ -37,6 +37,10 @@ public class Base {
     @Column(name = "nfc_linked", nullable = false)
     private Boolean nfcLinked;
 
+    @Column(name = "require_presence_to_submit", nullable = false)
+    @Builder.Default
+    private Boolean requirePresenceToSubmit = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "fixed_challenge_id")
     private Challenge fixedChallenge;

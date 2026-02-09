@@ -7,11 +7,16 @@ struct SolveView: View {
     let baseId: UUID
     let challengeId: UUID
     let baseName: String
+    let requirePresenceToSubmit: Bool
+    /// Optional closure to dismiss all the way back to the map (dismisses the sheet)
+    var dismissToMap: (() -> Void)?
 
     @State private var answer = ""
     @State private var isSubmitting = false
     @State private var showResult = false
     @State private var submissionResult: SubmissionResponse?
+    @State private var nfcReader = NFCReaderService()
+    @State private var scanError: String?
 
     var body: some View {
         ScrollView {
@@ -22,13 +27,19 @@ struct SolveView: View {
                         .font(.title3)
                         .fontWeight(.bold)
 
-                    Text("Enter your answer below and tap submit when ready.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    if requirePresenceToSubmit {
+                        Text("Enter your answer below. You'll need to confirm at the base to submit.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("Enter your answer below and tap submit when ready.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
                 // Offline indicator
-                if !appState.isOnline {
+                if !appState.isOnline && !requirePresenceToSubmit {
                     HStack(spacing: 8) {
                         Image(systemName: "wifi.slash")
                             .foregroundStyle(.orange)
@@ -48,9 +59,16 @@ struct SolveView: View {
                         .lineLimit(3...8)
                 }
 
+                if let error = scanError {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .padding(.horizontal)
+                }
+
                 // Submit button
                 Button {
-                    Task { await submitAnswer() }
+                    Task { await handleSubmit() }
                 } label: {
                     if isSubmitting {
                         ProgressView()
@@ -60,13 +78,16 @@ struct SolveView: View {
                             .background(Color.gray)
                             .clipShape(RoundedRectangle(cornerRadius: 14))
                     } else {
-                        Label("Submit Answer", systemImage: "paperplane.fill")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(canSubmit ? Color.accentColor : Color.gray)
-                            .foregroundStyle(.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                        Label(
+                            requirePresenceToSubmit ? "Confirm at Base to Submit" : "Submit Answer",
+                            systemImage: requirePresenceToSubmit ? "location.circle.fill" : "paperplane.fill"
+                        )
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(canSubmit ? Color.accentColor : Color.gray)
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
                     }
                 }
                 .disabled(!canSubmit || isSubmitting)
@@ -75,9 +96,15 @@ struct SolveView: View {
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: "info.circle")
                         .foregroundStyle(.blue)
-                    Text("Your answer will be reviewed and you'll earn points if correct.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    if requirePresenceToSubmit {
+                        Text("Return to this base and tap the button to confirm your presence and submit.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("Your answer will be reviewed and you'll earn points if correct.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
             .padding()
@@ -86,7 +113,7 @@ struct SolveView: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $showResult) {
             if let result = submissionResult {
-                SubmissionResultView(submission: result, baseName: baseName)
+                SubmissionResultView(submission: result, baseName: baseName, dismissToMap: dismissToMap)
             }
         }
     }
@@ -95,7 +122,53 @@ struct SolveView: View {
         !answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
-    private func submitAnswer() async {
+    private func handleSubmit() async {
+        scanError = nil
+
+        if requirePresenceToSubmit {
+            await submitWithPresenceCheck()
+        } else {
+            await submitDirectly()
+        }
+    }
+
+    private func submitWithPresenceCheck() async {
+        isSubmitting = true
+
+        do {
+            // Scan NFC to verify presence
+            let scannedBaseId = try await nfcReader.scanForBaseId()
+
+            // Verify the scanned base matches
+            guard scannedBaseId == baseId else {
+                scanError = "Wrong base! You need to be at \(baseName) to submit."
+                isSubmitting = false
+                return
+            }
+
+            // NFC confirmed, now submit
+            if let result = await appState.submitAnswer(
+                baseId: baseId,
+                challengeId: challengeId,
+                answer: answer.trimmingCharacters(in: .whitespacesAndNewlines)
+            ) {
+                submissionResult = result
+                showResult = true
+            }
+        } catch let error as NFCError {
+            if case .cancelled = error {
+                // User cancelled, no error to show
+            } else {
+                scanError = error.localizedDescription
+            }
+        } catch {
+            scanError = error.localizedDescription
+        }
+
+        isSubmitting = false
+    }
+
+    private func submitDirectly() async {
         isSubmitting = true
 
         if let result = await appState.submitAnswer(

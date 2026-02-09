@@ -215,6 +215,7 @@ public class PlayerService {
                     .lat(base.getLat())
                     .lng(base.getLng())
                     .nfcLinked(base.getNfcLinked())
+                    .requirePresenceToSubmit(base.getRequirePresenceToSubmit())
                     .status(status)
                     .checkedInAt(ci != null ? ci.getCheckedInAt() : null)
                     .challengeId(assignment != null ? assignment.getChallenge().getId() : null)
@@ -234,6 +235,7 @@ public class PlayerService {
                         .lat(base.getLat())
                         .lng(base.getLng())
                         .nfcLinked(base.getNfcLinked())
+                        .requirePresenceToSubmit(base.getRequirePresenceToSubmit())
                         .fixedChallengeId(base.getFixedChallenge() != null ? base.getFixedChallenge().getId() : null)
                         .build())
                 .collect(Collectors.toList());

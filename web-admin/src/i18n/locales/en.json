@@ -190,7 +190,9 @@
     "summary": "{{count}} base(s) · {{linked}} NFC linked",
     "clickMapToSelect": "Click on the map to select location",
     "mapView": "Map view",
-    "listView": "List view"
+    "listView": "List view",
+    "requirePresence": "Require presence to submit",
+    "requirePresenceHint": "Players must be physically at this base to submit their answer"
   },
   "challenges": {
     "title": "Challenges",

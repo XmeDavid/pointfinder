@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { basesApi, type CreateBaseDto } from "@/lib/api/bases";
 import { challengesApi } from "@/lib/api/challenges";
@@ -66,13 +67,13 @@ export function BasesPage() {
     const lastBase = bases.length > 0 ? bases[bases.length - 1] : null;
     const lat = lastBase ? lastBase.lat : defaultLocation.lat;
     const lng = lastBase ? lastBase.lng : defaultLocation.lng;
-    setForm({ gameId, name: "", description: "", lat, lng });
+    setForm({ gameId, name: "", description: "", lat, lng, requirePresenceToSubmit: false });
     setDialogOpen(true);
   }
 
   function openEdit(base: Base) {
     setEditing(base);
-    setForm({ gameId: base.gameId, name: base.name, description: base.description, lat: base.lat, lng: base.lng, fixedChallengeId: base.fixedChallengeId });
+    setForm({ gameId: base.gameId, name: base.name, description: base.description, lat: base.lat, lng: base.lng, fixedChallengeId: base.fixedChallengeId, requirePresenceToSubmit: base.requirePresenceToSubmit });
     setDialogOpen(true);
   }
 
@@ -177,6 +178,17 @@ export function BasesPage() {
                 {challenges.map((ch) => <option key={ch.id} value={ch.id}>{ch.title} ({ch.points} {t("common.pts")})</option>)}
               </Select>
               <p className="text-xs text-muted-foreground">{t("bases.fixedChallengeHint")}</p>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <Label htmlFor="requirePresence">{t("bases.requirePresence")}</Label>
+                <p className="text-xs text-muted-foreground">{t("bases.requirePresenceHint")}</p>
+              </div>
+              <Switch
+                id="requirePresence"
+                checked={form.requirePresenceToSubmit ?? false}
+                onCheckedChange={(checked) => setForm((f) => ({ ...f, requirePresenceToSubmit: checked }))}
+              />
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={closeDialog}>{t("common.cancel")}</Button>

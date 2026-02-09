@@ -20,4 +20,6 @@ public class CreateBaseRequest {
     private Double lng;
 
     private UUID fixedChallengeId;
+
+    private Boolean requirePresenceToSubmit = false;
 }

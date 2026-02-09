@@ -6,6 +6,8 @@ struct BaseCheckInDetailView: View {
     @Environment(AppState.self) private var appState
 
     let baseId: UUID
+    /// Closure to pop back to root of the navigation stack
+    var popToRoot: (() -> Void)?
 
     @State private var challenge: CheckInResponse.ChallengeInfo?
     @State private var isLoading = true
@@ -83,8 +85,7 @@ struct BaseCheckInDetailView: View {
 
                         if !challenge.content.isEmpty {
                             Divider()
-                            Text(challenge.content)
-                                .font(.body)
+                            AutoSizingHTMLView(html: challenge.content)
                         }
 
                         // Answer type hint
@@ -104,7 +105,9 @@ struct BaseCheckInDetailView: View {
                             SolveView(
                                 baseId: baseId,
                                 challengeId: challenge.id,
-                                baseName: base?.baseName ?? "Base"
+                                baseName: base?.baseName ?? "Base",
+                                requirePresenceToSubmit: base?.requirePresenceToSubmit ?? false,
+                                dismissToMap: popToRoot
                             )
                         } label: {
                             Label("Solve Challenge", systemImage: "lightbulb.fill")

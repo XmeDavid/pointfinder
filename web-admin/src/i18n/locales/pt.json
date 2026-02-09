@@ -190,7 +190,9 @@
     "summary": "{{count}} base(s) · {{linked}} NFC ligado",
     "clickMapToSelect": "Clique no mapa para selecionar localização",
     "mapView": "Vista de mapa",
-    "listView": "Vista de lista"
+    "listView": "Vista de lista",
+    "requirePresence": "Requer presença para submeter",
+    "requirePresenceHint": "Os jogadores precisam estar fisicamente nesta base para submeter a resposta"
   },
   "challenges": {
     "title": "Desafios",

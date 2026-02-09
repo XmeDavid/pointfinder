@@ -131,6 +131,7 @@ actor GameDataCache {
                 lat: old.lat,
                 lng: old.lng,
                 nfcLinked: old.nfcLinked,
+                requirePresenceToSubmit: old.requirePresenceToSubmit,
                 status: status,
                 checkedInAt: status == "checked_in" ? ISO8601DateFormatter().string(from: Date()) : old.checkedInAt,
                 challengeId: old.challengeId,

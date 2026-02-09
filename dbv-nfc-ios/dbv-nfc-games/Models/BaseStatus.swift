@@ -44,6 +44,7 @@ struct BaseProgress: Codable, Identifiable {
     let lat: Double
     let lng: Double
     let nfcLinked: Bool
+    let requirePresenceToSubmit: Bool
     let status: String
     let checkedInAt: String?
     let challengeId: UUID?

@@ -320,6 +320,7 @@ final class AppState {
                 lat: old.lat,
                 lng: old.lng,
                 nfcLinked: old.nfcLinked,
+                requirePresenceToSubmit: old.requirePresenceToSubmit,
                 status: status.rawValue,
                 checkedInAt: status == .checkedIn ? ISO8601DateFormatter().string(from: Date()) : old.checkedInAt,
                 challengeId: old.challengeId,

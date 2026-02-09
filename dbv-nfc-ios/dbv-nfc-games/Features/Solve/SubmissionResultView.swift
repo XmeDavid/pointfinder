@@ -5,6 +5,8 @@ struct SubmissionResultView: View {
 
     let submission: SubmissionResponse
     let baseName: String
+    /// Optional closure to dismiss all the way back to the map (dismisses the sheet)
+    var dismissToMap: (() -> Void)?
 
     var body: some View {
         VStack(spacing: 24) {
@@ -45,8 +47,13 @@ struct SubmissionResultView: View {
             Spacer()
 
             Button {
-                // Pop back to root of this navigation
-                dismiss()
+                // If we have a dismissToMap closure, use it to dismiss the entire sheet
+                // Otherwise fall back to regular dismiss (pops one level)
+                if let dismissToMap = dismissToMap {
+                    dismissToMap()
+                } else {
+                    dismiss()
+                }
             } label: {
                 Text("Back to Map")
                     .font(.headline)
