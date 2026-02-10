@@ -246,17 +246,34 @@ The project includes automated Let's Encrypt certificate generation and renewal:
 
 ## 🧪 Testing
 
-**Backend Tests**
+Use the root `Makefile` to run all suites from one place.
+
+**Dockerized Tests (Backend + Web Admin)**
 ```bash
-cd backend
-./gradlew test
+make test-docker
 ```
 
-**Frontend Tests**
+**Run Suites Individually**
 ```bash
-cd web-admin
-npm run test
+make test-backend-docker
+make test-frontend-docker
 ```
+
+**iOS Tests (macOS Host)**
+```bash
+make test-ios
+```
+
+**Run Everything**
+```bash
+make test-all
+```
+
+Notes:
+- `test-docker` uses `docker-compose.test.yml` and runs backend + frontend tests in containers.
+- `test-ios` runs via `xcodebuild` on the host machine (requires macOS + Xcode).
+- You can override iOS defaults, for example:
+  - `make test-ios IOS_DESTINATION="platform=iOS Simulator,name=iPhone 15"`
 
 ## 📝 Legacy Components
 

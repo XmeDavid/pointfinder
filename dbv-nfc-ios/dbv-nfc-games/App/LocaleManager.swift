@@ -7,7 +7,7 @@ final class LocaleManager {
     static let shared = LocaleManager()
 
     private static let languageKey = "com.dbvnfc.preferredLanguage"
-    static let supportedLanguages = ["en", "pt"]
+    static let supportedLanguages = ["en", "pt", "de"]
 
     var currentLanguage: String = "en"
 

@@ -1,7 +1,7 @@
 {
   "common": {
-    "appName": "Scout HQ",
-    "missionControl": "Scout Mission Control",
+    "appName": "PointFinder",
+    "missionControl": "PointFinder",
     "save": "Guardar",
     "cancel": "Cancelar",
     "create": "Criar",
@@ -34,15 +34,15 @@
   "auth": {
     "signIn": "Entrar",
     "signingIn": "A entrar...",
-    "signInDescription": "Inicie sessão para gerir os seus jogos dos desbravadores",
+    "signInDescription": "Inicie sessão para gerir os seus jogos PointFinder",
     "email": "Email",
     "password": "Palavra-passe",
     "enterPassword": "Introduza a palavra-passe",
     "invalidCredentials": "Email ou palavra-passe inválidos",
     "demoAccounts": "Contas de demonstração:",
-    "demoAdmin": "Admin: admin@scout.dev / admin",
-    "demoOperator": "Operador: operator@scout.dev / operator",
-    "joinTitle": "Junte-se ao Scout HQ",
+    "demoAdmin": "Admin: admin@pointfinder.dev / admin",
+    "demoOperator": "Operador: operator@pointfinder.dev / operator",
+    "joinTitle": "Junte-se ao PointFinder",
     "joinDescription": "Foi convidado para ser operador de jogo. Crie a sua conta para começar.",
     "fullName": "Nome Completo",
     "yourName": "O seu nome",
@@ -107,7 +107,7 @@
   },
   "games": {
     "title": "Jogos",
-    "description": "Gerir os seus jogos e eventos de desbravadores",
+    "description": "Gerir os seus jogos e eventos PointFinder",
     "newGame": "Novo Jogo",
     "createGame": "Criar Jogo",
     "noGames": "Ainda não há jogos. Crie o primeiro!",

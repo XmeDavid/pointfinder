@@ -64,12 +64,16 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
   const crumbs = useBreadcrumbs();
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
+  const languages = [
+    { code: "en", label: "English" },
+    { code: "pt", label: "Português" },
+    { code: "de", label: "Deutsch" },
+  ] as const;
 
-  const currentLang = i18n.language?.startsWith("pt") ? "pt" : "en";
+  const currentLang = (i18n.resolvedLanguage ?? i18n.language ?? "en").slice(0, 2);
 
-  function toggleLanguage() {
-    const next = currentLang === "en" ? "pt" : "en";
-    i18n.changeLanguage(next);
+  function changeLanguage(language: (typeof languages)[number]["code"]) {
+    i18n.changeLanguage(language);
   }
 
   const { data: myInvites = [] } = useQuery({
@@ -109,10 +113,26 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
       </nav>
 
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1.5 text-xs font-medium">
-          <Globe className="h-4 w-4" />
-          {currentLang.toUpperCase()}
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="gap-1.5 text-xs font-medium">
+              <Globe className="h-4 w-4" />
+              {currentLang.toUpperCase()}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {languages.map((language) => (
+              <DropdownMenuItem
+                key={language.code}
+                onClick={() => changeLanguage(language.code)}
+                className="flex items-center justify-between gap-2"
+              >
+                {language.label}
+                {currentLang === language.code ? <Check className="h-3.5 w-3.5" /> : null}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <Button variant="ghost" size="icon" onClick={toggle}>
           {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}

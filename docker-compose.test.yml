@@ -1,0 +1,24 @@
+services:
+  backend-test:
+    image: eclipse-temurin:21-jdk
+    working_dir: /workspace/backend
+    command: ./gradlew test --no-daemon
+    volumes:
+      - ./backend:/workspace/backend
+      - gradle-cache:/root/.gradle
+
+  frontend-test:
+    image: node:22-alpine
+    working_dir: /workspace/web-admin
+    command: sh -lc "npm ci && npm run test"
+    environment:
+      CI: "true"
+    volumes:
+      - ./web-admin:/workspace/web-admin
+      - npm-cache:/root/.npm
+      - web-node-modules:/workspace/web-admin/node_modules
+
+volumes:
+  gradle-cache:
+  npm-cache:
+  web-node-modules:

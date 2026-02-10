@@ -403,6 +403,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = PointFinder;
 				INFOPLIST_KEY_NFCReaderUsageDescription = "Scan NFC tags at bases to register progress.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Scan QR codes to join your team and take photos for challenges.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Share your location to verify presence at bases.";
@@ -450,6 +451,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = PointFinder;
 				INFOPLIST_KEY_NFCReaderUsageDescription = "Scan NFC tags at bases to register progress.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Scan QR codes to join your team and take photos for challenges.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Share your location to verify presence at bases.";

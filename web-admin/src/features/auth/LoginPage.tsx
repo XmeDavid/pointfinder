@@ -48,7 +48,7 @@ export function LoginPage() {
             )}
             <div className="space-y-2">
               <Label htmlFor="email">{t("auth.email")}</Label>
-              <Input id="email" type="email" placeholder="admin@scout.dev" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <Input id="email" type="email" placeholder="admin@pointfinder.dev" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">{t("auth.password")}</Label>

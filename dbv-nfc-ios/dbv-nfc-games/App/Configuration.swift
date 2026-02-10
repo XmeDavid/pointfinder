@@ -7,7 +7,7 @@ enum AppConfiguration {
     static let apiBaseURL = "https://desbravadores.dev"
     #endif
 
-    static let appName = "Scout Mission"
+    static let appName = "PointFinder"
 
     // Keychain keys
     static let playerTokenKey = "com.dbvnfc.playerToken"

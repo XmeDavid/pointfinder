@@ -15,6 +15,7 @@ struct SettingsView: View {
                     )) {
                         Text("English").tag("en")
                         Text("Português").tag("pt")
+                        Text("Deutsch").tag("de")
                     }
                 }
 

@@ -11,7 +11,9 @@ function pad2(value: number): string {
 }
 
 function getDateLocale(): string {
-  return i18n.language?.startsWith("pt") ? "pt-PT" : "en-GB";
+  if (i18n.language?.startsWith("pt")) return "pt-PT";
+  if (i18n.language?.startsWith("de")) return "de-DE";
+  return "en-GB";
 }
 
 export function formatDate(date: Date | string): string {

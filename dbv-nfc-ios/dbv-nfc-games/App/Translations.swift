@@ -20,13 +20,13 @@ enum Translations {
         return String(format: template, arguments: args)
     }
 
-    static let all: [String: [String: String]] = ["en": en, "pt": pt]
+    static let all: [String: [String: String]] = ["en": en, "pt": pt, "de": de]
 
     // MARK: - English
 
     static let en: [String: String] = [
         // Welcome
-        "welcome.title": "Scout Mission",
+        "welcome.title": "PointFinder",
         "welcome.subtitle": "Explore, discover, and complete challenges with your team",
         "welcome.joinGame": "Join a Game",
         "welcome.operatorLogin": "Operator Login",
@@ -231,7 +231,7 @@ enum Translations {
 
     static let pt: [String: String] = [
         // Welcome
-        "welcome.title": "Missão Scout",
+        "welcome.title": "PointFinder",
         "welcome.subtitle": "Explora, descobre e completa desafios com a tua equipa",
         "welcome.joinGame": "Entrar num Jogo",
         "welcome.operatorLogin": "Login Operador",
@@ -430,5 +430,210 @@ enum Translations {
         // App Errors
         "error.photoOffline": "As submissões de fotos requerem ligação à internet.",
         "error.photoProcessing": "Falha ao processar foto.",
+    ]
+
+    // MARK: - German
+
+    static let de: [String: String] = [
+        // Welcome
+        "welcome.title": "PointFinder",
+        "welcome.subtitle": "Erkunde, entdecke und meistere Challenges mit deinem Team",
+        "welcome.joinGame": "Einem Spiel beitreten",
+        "welcome.operatorLogin": "Operator-Anmeldung",
+
+        // Auth (Operator Login)
+        "auth.operatorLogin": "Operator-Anmeldung",
+        "auth.signInSubtitle": "Melde dich mit deinem Operator-Konto an",
+        "auth.email": "E-Mail",
+        "auth.password": "Passwort",
+        "auth.signIn": "Anmelden",
+
+        // Join (Player Join)
+        "join.title": "Deinem Team beitreten",
+        "join.subtitle": "Gib den Code ein, den dir dein Teamleiter gegeben hat",
+        "join.joinCode": "Beitrittscode",
+        "join.yourName": "Dein Name",
+        "join.joinGame": "Spiel beitreten",
+        "join.orEnterCode": "Oder den Code manuell eingeben",
+        "join.next": "Weiter",
+        "join.enterYourName": "Gib deinen Namen ein",
+        "join.cameraDisabled": "Kamerazugriff wird benötigt, um QR-Codes zu scannen",
+
+        // Common
+        "common.error": "Fehler",
+        "common.ok": "OK",
+        "common.unknownError": "Ein unbekannter Fehler ist aufgetreten",
+        "common.done": "Fertig",
+        "common.pts": "Pkt",
+
+        // Tabs
+        "tabs.map": "Karte",
+        "tabs.checkIn": "Check-in",
+        "tabs.settings": "Einstellungen",
+
+        // Offline
+        "offline.banner": "Du bist offline. Änderungen werden synchronisiert, sobald du wieder verbunden bist.",
+        "offline.checkInSync": "Du bist offline. Der Check-in wird synchronisiert, sobald du wieder verbunden bist.",
+        "offline.photoRequired": "Du bist offline. Foto-Einreichungen benötigen eine Internetverbindung.",
+        "offline.submissionSync": "Du bist offline. Die Einreichung wird synchronisiert, sobald du wieder verbunden bist.",
+
+        // Map legend
+        "map.defaultTitle": "Karte",
+        "map.notVisited": "Nicht besucht",
+        "map.checkedIn": "Eingecheckt",
+        "map.pending": "Ausstehend",
+        "map.completed": "Abgeschlossen",
+
+        // Status (BaseStatus labels)
+        "status.notVisited": "Nicht besucht",
+        "status.checkedIn": "Eingecheckt",
+        "status.pendingReview": "Prüfung ausstehend",
+        "status.completed": "Abgeschlossen",
+        "status.rejected": "Abgelehnt",
+
+        // Base detail
+        "base.defaultName": "Station",
+        "base.loadingChallenge": "Challenge wird geladen...",
+        "base.solveChallenge": "Challenge lösen",
+        "base.challengeCompleted": "Challenge abgeschlossen!",
+        "base.awaitingReview": "Warte auf Prüfung...",
+        "base.checkInToSee": "Checke an dieser Station ein, um die Challenge zu sehen",
+        "base.noChallengeAssigned": "Dieser Station ist keine Challenge zugewiesen",
+        "base.contactOperator": "Bitte kontaktiere deinen Spiel-Operator",
+        "base.checkedInBanner": "Eingecheckt!",
+        "base.noChallengeYet": "Dieser Station ist noch keine Challenge zugewiesen",
+        "base.answerType": "Antworttyp: %@",
+        "base.completionContent": "Abschlussinfos",
+
+        // Check In
+        "checkIn.title": "Stations-Check-in",
+        "checkIn.instructions": "Halte dein Telefon an den Marker einer Station, um einzuchecken",
+        "checkIn.checkingIn": "Check-in läuft...",
+        "checkIn.checkInAtBase": "An Station einchecken",
+        "checkIn.pendingSyncOne": "%d ausstehende Aktion zur Synchronisierung",
+        "checkIn.pendingSyncOther": "%d ausstehende Aktionen zur Synchronisierung",
+        "checkIn.navTitle": "Check-in",
+
+        // Solve
+        "solve.submitPhoto": "Foto einreichen",
+        "solve.submitAnswer": "Antwort einreichen",
+        "solve.photoInstructions": "Mache ein Foto oder wähle eines aus deiner Mediathek.",
+        "solve.presenceInstructions": "Gib unten deine Antwort ein. Du musst die Antwort an der Station bestätigen, um sie einzureichen.",
+        "solve.answerInstructions": "Gib unten deine Antwort ein und tippe auf Senden, wenn du bereit bist.",
+        "solve.yourAnswer": "Deine Antwort",
+        "solve.typeAnswer": "Antwort hier eingeben...",
+        "solve.confirmAtBase": "An Station bestätigen und einreichen",
+        "solve.submitPhotoBtn": "Foto senden",
+        "solve.submitAnswerBtn": "Antwort senden",
+        "solve.presenceHelp": "Kehre zu dieser Station zurück und tippe auf den Button, um deine Anwesenheit zu bestätigen und einzureichen.",
+        "solve.photoHelp": "Dein Foto wird von einem Operator geprüft.",
+        "solve.answerHelp": "Deine Antwort wird geprüft und du erhältst Punkte, wenn sie korrekt ist.",
+        "solve.wrongBase": "Falsche Station! Du musst bei %@ sein, um einzureichen.",
+        "solve.navTitle": "Lösen: %@",
+        "solve.photo": "Foto",
+        "solve.library": "Mediathek",
+        "solve.camera": "Kamera",
+        "solve.notesOptional": "Notizen (optional)",
+        "solve.addNote": "Notiz zum Foto hinzufügen...",
+
+        // Submission result
+        "result.correct": "Richtig!",
+        "result.approved": "Freigegeben!",
+        "result.incorrect": "Falsch",
+        "result.rejected": "Abgelehnt",
+        "result.submitted": "Eingereicht",
+        "result.correctMsg": "Super gemacht! Deine Antwort ist richtig.",
+        "result.approvedMsg": "Deine Einreichung wurde freigegeben.",
+        "result.incorrectMsg": "Leider ist das nicht die richtige Antwort. Du kannst es erneut versuchen.",
+        "result.rejectedMsg": "Deine Einreichung wurde abgelehnt. Prüfe das Feedback und versuche es erneut.",
+        "result.submittedMsg": "Deine Antwort wurde eingereicht und wartet auf Prüfung durch einen Operator.",
+        "result.feedback": "Feedback: %@",
+        "result.completionContent": "Abschlussinfos",
+        "result.backToMap": "Zurück zur Karte",
+
+        // Settings
+        "settings.title": "Einstellungen",
+        "settings.language": "Sprache",
+        "settings.currentGame": "Aktuelles Spiel",
+        "settings.game": "Spiel",
+        "settings.status": "Status",
+        "settings.yourTeam": "Dein Team",
+        "settings.team": "Team",
+        "settings.yourProfile": "Dein Profil",
+        "settings.name": "Name",
+        "settings.progress": "Fortschritt",
+        "settings.totalBases": "Stationen gesamt",
+        "settings.completed": "Abgeschlossen",
+        "settings.checkedIn": "Eingecheckt",
+        "settings.pendingReview": "Prüfung ausstehend",
+        "settings.device": "Gerät",
+        "settings.deviceId": "Geräte-ID",
+        "settings.leaveGame": "Spiel verlassen",
+
+        // Operator
+        "operator.loadingGames": "Spiele werden geladen...",
+        "operator.noGames": "Keine Spiele",
+        "operator.noGamesDesc": "Dir sind noch keine Spiele zugewiesen.",
+        "operator.logout": "Abmelden",
+        "operator.myGames": "Meine Spiele",
+        "operator.loading": "Wird geladen...",
+        "operator.noBases": "Keine Stationen",
+        "operator.noBasesDesc": "Dieses Spiel hat noch keine Stationen. Erstelle Stationen im Web-Admin.",
+        "operator.liveMap": "Live-Karte",
+        "operator.bases": "Stationen",
+        "operator.switchGame": "Spiel wechseln",
+        "operator.linked": "Verknüpft",
+        "operator.notLinked": "Nicht verknüpft",
+        "operator.baseDetails": "Stationsdetails",
+        "operator.teamStatus": "Team-Status",
+        "operator.noTeams": "Noch keine Teams in diesem Spiel",
+        "operator.remaining": "Verbleibend",
+
+        // NFC
+        "nfc.tag": "NFC-Tag",
+        "nfc.writeInstructions": "Schreibe die Stations-ID auf ein NFC-Tag, damit Spieler hier einchecken können.",
+        "nfc.writeSuccess": "Tag erfolgreich beschrieben und verknüpft!",
+        "nfc.nfcLinked": "NFC verknüpft",
+        "nfc.nfcNotLinked": "NFC nicht verknüpft",
+        "nfc.presenceRequired": "Anwesenheit erforderlich",
+        "nfc.writing": "Wird geschrieben...",
+        "nfc.writeToTag": "Auf NFC-Tag schreiben",
+        "nfc.fixedChallenge": "Feste Challenge",
+        "nfc.randomAssignment": "Zufällige Zuweisung",
+        "nfc.randomlyAssigned": "Zufällig zugewiesen",
+        "nfc.randomDesc": "Challenges werden beim Spielstart den Teams zufällig zugewiesen.",
+        "nfc.noChallengesYet": "Dieser Station sind noch keine Challenges zugewiesen.",
+        "nfc.challengeNotFound": "Challenge nicht gefunden",
+        "nfc.loadingChallengeInfo": "Challenge-Info wird geladen...",
+        "nfc.challenge": "Challenge",
+        "nfc.holdToRead": "Halte dein iPhone in die Nähe des NFC-Tags",
+        "nfc.readSuccess": "Tag erfolgreich gelesen!",
+        "nfc.holdToWrite": "Halte dein iPhone in die Nähe des NFC-Tags, um zu schreiben",
+        "nfc.writeSuccessAlert": "Tag erfolgreich beschrieben!",
+        "nfc.writeSuccessMessage": "NFC-Tag erfolgreich beschrieben",
+        "nfc.noTagFound": "Kein Tag gefunden",
+        "nfc.noDataOnTag": "Keine Daten auf dem Tag",
+        "nfc.invalidTagData": "Ungültige Tag-Daten",
+        "nfc.failedQueryStatus": "Tag-Status konnte nicht abgefragt werden",
+        "nfc.tagNotWritable": "Tag ist nicht beschreibbar",
+
+        // NFC Errors
+        "nfcError.notAvailable": "NFC ist auf diesem Gerät nicht verfügbar",
+        "nfcError.cancelled": "NFC-Scan wurde abgebrochen",
+        "nfcError.readFailed": "NFC-Lesen fehlgeschlagen: %@",
+        "nfcError.noData": "Keine Daten auf dem Tag gefunden",
+        "nfcError.invalidData": "Tag enthält keine gültigen Stationsdaten",
+        "nfcError.writeFailed": "NFC-Schreiben fehlgeschlagen: %@",
+
+        // API Errors
+        "apiError.invalidURL": "Ungültige URL",
+        "apiError.invalidResponse": "Ungültige Serverantwort",
+        "apiError.httpError": "Serverfehler (%d): %@",
+        "apiError.decodingError": "Antwort konnte nicht dekodiert werden: %@",
+        "apiError.authExpired": "Sitzung abgelaufen. Bitte erneut anmelden.",
+
+        // App Errors
+        "error.photoOffline": "Foto-Einreichungen benötigen eine Internetverbindung.",
+        "error.photoProcessing": "Foto konnte nicht verarbeitet werden.",
     ]
 }
