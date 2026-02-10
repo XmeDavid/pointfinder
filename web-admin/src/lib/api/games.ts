@@ -1,4 +1,4 @@
-import type { Game, GameStatus, User } from "@/types";
+import type { AnswerType, Game, GameStatus, User } from "@/types";
 import apiClient from "./client";
 
 export interface CreateGameDto {
@@ -9,9 +9,77 @@ export interface CreateGameDto {
 }
 
 export interface GameImportData {
-  gameData: any;
+  gameData: GameExportDto;
   startDate?: string;
   endDate?: string;
+}
+
+export interface GameMetadataExportDto {
+  name: string;
+  description: string;
+  uniformAssignment?: boolean;
+}
+
+export interface BaseExportDto {
+  tempId: string;
+  name: string;
+  description?: string;
+  lat: number;
+  lng: number;
+  hidden?: boolean;
+  requirePresenceToSubmit?: boolean;
+  fixedChallengeTempId?: string | null;
+}
+
+export interface ChallengeExportDto {
+  tempId: string;
+  title: string;
+  description?: string;
+  content?: string;
+  completionContent?: string;
+  answerType: AnswerType;
+  autoValidate?: boolean;
+  correctAnswer?: string;
+  points: number;
+  locationBound?: boolean;
+}
+
+export interface TeamExportDto {
+  tempId: string;
+  name: string;
+  color: string;
+}
+
+export interface AssignmentExportDto {
+  baseTempId: string;
+  challengeTempId: string;
+  teamTempId?: string | null;
+}
+
+export interface GameExportDto {
+  exportVersion: string;
+  exportedAt?: string;
+  game: GameMetadataExportDto;
+  bases: BaseExportDto[];
+  challenges: ChallengeExportDto[];
+  assignments: AssignmentExportDto[];
+  teams?: TeamExportDto[];
+}
+
+export function isGameExportDto(value: unknown): value is GameExportDto {
+  if (!value || typeof value !== "object") return false;
+
+  const data = value as Record<string, unknown>;
+  const game = data.game as Record<string, unknown> | undefined;
+
+  return (
+    typeof data.exportVersion === "string" &&
+    !!game &&
+    typeof game.name === "string" &&
+    Array.isArray(data.bases) &&
+    Array.isArray(data.challenges) &&
+    Array.isArray(data.assignments)
+  );
 }
 
 export const gamesApi = {

@@ -392,6 +392,7 @@ public class GameService {
                         .lat(base.getLat())
                         .lng(base.getLng())
                         .hidden(base.getHidden())
+                        .requirePresenceToSubmit(base.getRequirePresenceToSubmit())
                         .fixedChallengeTempId(base.getFixedChallenge() != null ?
                                 challengeIdMap.get(base.getFixedChallenge().getId()) : null)
                         .build())
@@ -500,9 +501,16 @@ public class GameService {
         Set<String> teamTempIds = new HashSet<>();
 
         // Validate base tempIds
-        for (BaseExportDto base : data.getBases()) {
-            if (base.getTempId() == null) {
-                throw new BadRequestException("Base missing tempId");
+        for (int i = 0; i < data.getBases().size(); i++) {
+            BaseExportDto base = data.getBases().get(i);
+            String fieldPrefix = "bases[" + i + "]";
+
+            requireNotBlank(base.getTempId(), fieldPrefix + ".tempId");
+            requireNotBlank(base.getName(), fieldPrefix + ".name");
+            requireNotNull(base.getLat(), fieldPrefix + ".lat");
+            requireNotNull(base.getLng(), fieldPrefix + ".lng");
+            if (base.getFixedChallengeTempId() != null && base.getFixedChallengeTempId().isBlank()) {
+                throw new BadRequestException(fieldPrefix + ".fixedChallengeTempId cannot be blank");
             }
             if (!baseTempIds.add(base.getTempId())) {
                 throw new BadRequestException("Duplicate base tempId: " + base.getTempId());
@@ -510,9 +518,16 @@ public class GameService {
         }
 
         // Validate challenge tempIds
-        for (ChallengeExportDto challenge : data.getChallenges()) {
-            if (challenge.getTempId() == null) {
-                throw new BadRequestException("Challenge missing tempId");
+        for (int i = 0; i < data.getChallenges().size(); i++) {
+            ChallengeExportDto challenge = data.getChallenges().get(i);
+            String fieldPrefix = "challenges[" + i + "]";
+
+            requireNotBlank(challenge.getTempId(), fieldPrefix + ".tempId");
+            requireNotBlank(challenge.getTitle(), fieldPrefix + ".title");
+            requireNotNull(challenge.getAnswerType(), fieldPrefix + ".answerType");
+            requireNotNull(challenge.getPoints(), fieldPrefix + ".points");
+            if (challenge.getPoints() < 0) {
+                throw new BadRequestException(fieldPrefix + ".points must be greater than or equal to 0");
             }
             if (!challengeTempIds.add(challenge.getTempId())) {
                 throw new BadRequestException("Duplicate challenge tempId: " + challenge.getTempId());
@@ -521,9 +536,15 @@ public class GameService {
 
         // Validate team tempIds if teams are included
         if (data.getTeams() != null) {
-            for (TeamExportDto team : data.getTeams()) {
-                if (team.getTempId() == null) {
-                    throw new BadRequestException("Team missing tempId");
+            for (int i = 0; i < data.getTeams().size(); i++) {
+                TeamExportDto team = data.getTeams().get(i);
+                String fieldPrefix = "teams[" + i + "]";
+
+                requireNotBlank(team.getTempId(), fieldPrefix + ".tempId");
+                requireNotBlank(team.getName(), fieldPrefix + ".name");
+                requireNotBlank(team.getColor(), fieldPrefix + ".color");
+                if (team.getColor().length() > 7) {
+                    throw new BadRequestException(fieldPrefix + ".color must be at most 7 characters");
                 }
                 if (!teamTempIds.add(team.getTempId())) {
                     throw new BadRequestException("Duplicate team tempId: " + team.getTempId());
@@ -532,7 +553,16 @@ public class GameService {
         }
 
         // Validate assignment references
-        for (AssignmentExportDto assignment : data.getAssignments()) {
+        for (int i = 0; i < data.getAssignments().size(); i++) {
+            AssignmentExportDto assignment = data.getAssignments().get(i);
+            String fieldPrefix = "assignments[" + i + "]";
+
+            requireNotBlank(assignment.getBaseTempId(), fieldPrefix + ".baseTempId");
+            requireNotBlank(assignment.getChallengeTempId(), fieldPrefix + ".challengeTempId");
+            if (assignment.getTeamTempId() != null && assignment.getTeamTempId().isBlank()) {
+                throw new BadRequestException(fieldPrefix + ".teamTempId cannot be blank");
+            }
+
             if (!baseTempIds.contains(assignment.getBaseTempId())) {
                 throw new BadRequestException("Assignment references non-existent base: " + assignment.getBaseTempId());
             }
@@ -547,10 +577,12 @@ public class GameService {
         validateImportAssignmentConflicts(data.getAssignments());
 
         // Validate fixed challenge references
-        for (BaseExportDto base : data.getBases()) {
+        for (int i = 0; i < data.getBases().size(); i++) {
+            BaseExportDto base = data.getBases().get(i);
             if (base.getFixedChallengeTempId() != null &&
                 !challengeTempIds.contains(base.getFixedChallengeTempId())) {
-                throw new BadRequestException("Base references non-existent fixed challenge: " + base.getFixedChallengeTempId());
+                throw new BadRequestException("Base at index " + i
+                        + " references non-existent fixed challenge: " + base.getFixedChallengeTempId());
             }
         }
 
@@ -577,14 +609,14 @@ public class GameService {
             Challenge challenge = Challenge.builder()
                     .game(newGame)
                     .title(chDto.getTitle())
-                    .description(chDto.getDescription())
-                    .content(chDto.getContent())
+                    .description(chDto.getDescription() != null ? chDto.getDescription() : "")
+                    .content(chDto.getContent() != null ? chDto.getContent() : "")
                     .completionContent(chDto.getCompletionContent() != null ? chDto.getCompletionContent() : "")
                     .answerType(chDto.getAnswerType())
-                    .autoValidate(chDto.getAutoValidate())
+                    .autoValidate(chDto.getAutoValidate() != null ? chDto.getAutoValidate() : false)
                     .correctAnswer(chDto.getCorrectAnswer())
                     .points(chDto.getPoints())
-                    .locationBound(chDto.getLocationBound())
+                    .locationBound(chDto.getLocationBound() != null ? chDto.getLocationBound() : false)
                     .build();
             challenge = challengeRepository.save(challenge);
             challengeIdMap.put(chDto.getTempId(), challenge.getId());
@@ -602,11 +634,13 @@ public class GameService {
             Base base = Base.builder()
                     .game(newGame)
                     .name(baseDto.getName())
-                    .description(baseDto.getDescription())
+                    .description(baseDto.getDescription() != null ? baseDto.getDescription() : "")
                     .lat(baseDto.getLat())
                     .lng(baseDto.getLng())
                     .nfcLinked(false)
                     .hidden(baseDto.getHidden() != null ? baseDto.getHidden() : false)
+                    .requirePresenceToSubmit(baseDto.getRequirePresenceToSubmit() != null
+                            ? baseDto.getRequirePresenceToSubmit() : false)
                     .fixedChallenge(fixedChallenge)
                     .build();
             base = baseRepository.save(base);
@@ -702,5 +736,17 @@ public class GameService {
                 .mapToObj(chars::charAt)
                 .map(String::valueOf)
                 .collect(Collectors.joining());
+    }
+
+    private void requireNotBlank(String value, String fieldName) {
+        if (value == null || value.isBlank()) {
+            throw new BadRequestException(fieldName + " is required");
+        }
+    }
+
+    private void requireNotNull(Object value, String fieldName) {
+        if (value == null) {
+            throw new BadRequestException(fieldName + " is required");
+        }
     }
 }

@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { gamesApi } from "@/lib/api/games";
+import { gamesApi, isGameExportDto } from "@/lib/api/games";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { formatDate } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
@@ -126,10 +126,14 @@ function ImportGameDialog({ open, onOpenChange, navigate }: ImportGameDialogProp
 
       // Read and parse file
       const content = await file.text();
-      const gameData = JSON.parse(content);
+      const parsedData = JSON.parse(content) as unknown;
+      if (!isGameExportDto(parsedData)) {
+        setError(t("game.invalidJsonFile"));
+        return;
+      }
 
       // Import game (dates will be set later if needed)
-      const result = await gamesApi.importGame({ gameData });
+      const result = await gamesApi.importGame({ gameData: parsedData });
 
       onOpenChange(false);
       navigate(`/games/${result.id}/overview`);
