@@ -15,9 +15,6 @@ struct OperatorMapView: View {
     @State private var selectedBase: Base?
     @State private var cameraPosition: MapCameraPosition = .automatic
     
-    /// Incremented on each poll to force the Map to re-render annotations
-    @State private var progressVersion: Int = 0
-    
     private let apiClient = APIClient()
     private let pollInterval: TimeInterval = 5.0
     
@@ -48,8 +45,6 @@ struct OperatorMapView: View {
                 }
             }
             .mapStyle(.standard)
-            // Force the entire Map to re-render when progress or locations change
-            .id(progressVersion)
             
             if isLoading && teams.isEmpty {
                 ProgressView(locale.t("operator.loading"))
@@ -127,9 +122,6 @@ struct OperatorMapView: View {
             // Poll locations and progress
             await loadLocations()
             await loadProgress()
-            
-            // Bump version to force Map re-render
-            progressVersion += 1
         }
     }
     

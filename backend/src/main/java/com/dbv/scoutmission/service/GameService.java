@@ -71,7 +71,7 @@ public class GameService {
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .uniformAssignment(request.getUniformAssignment() != null ? request.getUniformAssignment() : false)
-                .status(GameStatus.draft)
+                .status(GameStatus.setup)
                 .createdBy(currentUser)
                 .build();
         game.getOperators().add(currentUser);
@@ -119,8 +119,8 @@ public class GameService {
 
         validateStatusTransition(game.getStatus(), target);
 
-        // Handle backward transition to draft
-        if (target == GameStatus.draft) {
+        // Handle backward transition to setup
+        if (target == GameStatus.setup) {
             if (resetProgress) {
                 // Erase all progress data (order matters for FK constraints)
                 submissionRepository.deleteByGameId(id);
@@ -128,7 +128,7 @@ public class GameService {
                 teamLocationRepository.deleteByGameId(id);
                 activityEventRepository.deleteByGameId(id);
             }
-            // Always clear auto-assigned challenge assignments when going back to draft
+            // Always clear auto-assigned challenge assignments when going back to setup
             assignmentRepository.deleteByGameId(id);
         }
 
@@ -326,12 +326,12 @@ public class GameService {
         if (current == target) {
             throw new BadRequestException("Game is already in " + current + " state");
         }
-        // Forward transitions: draft -> live -> ended
-        // Backward transitions: live -> draft, ended -> live, ended -> draft
+        // Forward transitions: setup -> live -> ended
+        // Backward transitions: live -> setup, ended -> live, ended -> setup
         boolean valid = switch (current) {
-            case draft -> target == GameStatus.live;
-            case live -> target == GameStatus.ended || target == GameStatus.draft;
-            case ended -> target == GameStatus.live || target == GameStatus.draft;
+            case setup -> target == GameStatus.live;
+            case live -> target == GameStatus.ended || target == GameStatus.setup;
+            case ended -> target == GameStatus.live || target == GameStatus.setup;
         };
         if (!valid) {
             throw new BadRequestException("Cannot transition from " + current + " to " + target);
@@ -560,7 +560,7 @@ public class GameService {
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .uniformAssignment(data.getGame().getUniformAssignment() != null ? data.getGame().getUniformAssignment() : false)
-                .status(GameStatus.draft)
+                .status(GameStatus.setup)
                 .createdBy(currentUser)
                 .build();
         newGame.getOperators().add(currentUser);

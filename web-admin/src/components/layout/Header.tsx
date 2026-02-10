@@ -173,11 +173,6 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
               <p className="text-muted-foreground text-xs">{user?.email}</p>
             </div>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              {t("common.profile")}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout} destructive>
               <LogOut className="mr-2 h-4 w-4" />
               {t("common.logOut")}

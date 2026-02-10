@@ -22,7 +22,7 @@ function toLocalDatetime(iso: string | null): string {
 }
 
 const statusColors: Record<GameStatus, string> = {
-  draft: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+  setup: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
   live: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
   ended: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
 };
@@ -109,14 +109,14 @@ export function SettingsPage() {
   const currentStatus = game.status as GameStatus;
 
   // Determine which backward transitions are available
-  const canRevertToDraft = currentStatus === "live" || currentStatus === "ended";
+  const canRevertToSetup = currentStatus === "live" || currentStatus === "ended";
   const canRevertToLive = currentStatus === "ended";
 
   // Does going to this target require asking about progress?
-  // live/ended -> draft: ask about progress
+  // live/ended -> setup: ask about progress
   // ended -> live: always keep progress
   function handleStateChange(target: GameStatus) {
-    if (target === "draft") {
+    if (target === "setup") {
       setStateTarget(target);
       setProgressChoice(null); // User must choose
     } else if (target === "live" && currentStatus === "ended") {
@@ -127,12 +127,12 @@ export function SettingsPage() {
 
   function confirmStateChange() {
     if (!stateTarget) return;
-    const resetProgress = stateTarget === "draft" && progressChoice === "erase";
+    const resetProgress = stateTarget === "setup" && progressChoice === "erase";
     changeStatus.mutate({ status: stateTarget, resetProgress });
   }
 
-  // For the draft dialog: need to pick keep or erase before confirming
-  const needsProgressChoice = stateTarget === "draft";
+  // For the setup dialog: need to pick keep or erase before confirming
+  const needsProgressChoice = stateTarget === "setup";
   const canConfirm = needsProgressChoice ? progressChoice !== null : true;
 
   return (
@@ -199,7 +199,7 @@ export function SettingsPage() {
       </Card>
 
       {/* Game State Override */}
-      {(canRevertToDraft || canRevertToLive) && (
+      {(canRevertToSetup || canRevertToLive) && (
         <Card className="border-amber-500/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -228,15 +228,15 @@ export function SettingsPage() {
                 </div>
               )}
 
-              {canRevertToDraft && (
+              {canRevertToSetup && (
                 <div className="flex items-center justify-between rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
                   <div className="space-y-1">
-                    <p className="text-sm font-medium">{t("settings.revertToDraft")}</p>
-                    <p className="text-xs text-muted-foreground">{t("settings.revertToDraftDesc")}</p>
+                    <p className="text-sm font-medium">{t("settings.revertToSetup")}</p>
+                    <p className="text-xs text-muted-foreground">{t("settings.revertToSetupDesc")}</p>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => handleStateChange("draft")}>
+                  <Button variant="outline" size="sm" onClick={() => handleStateChange("setup")}>
                     <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-                    Draft
+                    Setup
                   </Button>
                 </div>
               )}
@@ -311,8 +311,8 @@ export function SettingsPage() {
               >
                 {changeStatus.isPending
                   ? t("common.loading")
-                  : stateTarget === "draft"
-                    ? t("settings.confirmRevertDraft")
+                  : stateTarget === "setup"
+                    ? t("settings.confirmRevertSetup")
                     : t("settings.confirmRevertLive")}
               </Button>
             </DialogFooter>

@@ -125,7 +125,7 @@
     "team_other": "{{count}} teams"
   },
   "status": {
-    "draft": "Draft",
+    "setup": "Setup",
     "live": "Live",
     "ended": "Ended"
   },
@@ -367,8 +367,8 @@
     "gameStateDescription": "Override the current game status",
     "currentStatus": "Current status",
     "changeStateTo": "Change state to",
-    "revertToDraft": "Revert to Draft",
-    "revertToDraftDesc": "Move the game back to draft mode. Assignments will be cleared and re-generated when going live again.",
+    "revertToSetup": "Revert to Setup",
+    "revertToSetupDesc": "Move the game back to setup mode. Assignments will be cleared and re-generated when going live again.",
     "revertToLive": "Revert to Live",
     "revertToLiveDesc": "Re-open the game so teams can continue playing. All progress is preserved.",
     "progressQuestion": "What should happen to team progress?",
@@ -377,7 +377,7 @@
     "eraseProgress": "Erase Progress",
     "eraseProgressDesc": "All check-ins, submissions, activity logs, and team locations are permanently deleted. Teams start fresh.",
     "confirmRevertLive": "Yes, Revert to Live",
-    "confirmRevertDraft": "Yes, Revert to Draft",
+    "confirmRevertSetup": "Yes, Revert to Setup",
     "dangerZone": "Danger Zone",
     "dangerZoneDescription": "Irreversible actions that affect the entire game",
     "deleteGame": "Delete Game",

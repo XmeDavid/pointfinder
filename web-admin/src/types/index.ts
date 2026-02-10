@@ -8,7 +8,7 @@ export interface User {
   createdAt: string;
 }
 
-export type GameStatus = "draft" | "live" | "ended";
+export type GameStatus = "setup" | "live" | "ended";
 
 export interface Game {
   id: string;

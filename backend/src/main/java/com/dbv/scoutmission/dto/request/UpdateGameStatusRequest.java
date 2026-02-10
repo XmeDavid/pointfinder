@@ -9,7 +9,7 @@ public class UpdateGameStatusRequest {
     private String status;
 
     /**
-     * When true and transitioning to draft, all progress data
+     * When true and transitioning to setup, all progress data
      * (check-ins, submissions, activity events, team locations) is erased.
      */
     private boolean resetProgress;

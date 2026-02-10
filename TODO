@@ -1,7 +1,13 @@
+!Profile cleanup
+!Order nfc tags to portugal to quicker testing
+!Rename draft state to setup
+!Change settings icon to gear icon, and overview to dashboard icon
+!Dates on EU format (switch mm and dd)
+!iOS operator map bug
 ~Get a name: PointFinder 
 ~Get domain for the platform
 ~Create an email for the platform might change but working
-!Order nfc tags to portugal to quicker testing
+Check import failures
 QR Codes for the teams
 German language translation
 Push notifications

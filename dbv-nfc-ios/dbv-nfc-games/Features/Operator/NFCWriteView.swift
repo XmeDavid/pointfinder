@@ -167,7 +167,7 @@ struct BaseDetailView: View {
             } else if let fixedChallengeId = base.fixedChallengeId {
                 // Fixed challenge
                 fixedChallengeView(challengeId: fixedChallengeId)
-            } else if game.status == "draft" || game.status == "setup" {
+            } else if game.status == "setup" {
                 // Random, game not started
                 randomNotStartedView
             } else {

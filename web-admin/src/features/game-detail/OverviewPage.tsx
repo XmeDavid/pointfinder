@@ -31,9 +31,9 @@ export function OverviewPage() {
 
   if (!game) return null;
 
-  const statusVariant: Record<GameStatus, "default" | "secondary" | "warning" | "success"> = { draft: "secondary", live: "success", ended: "default" };
+  const statusVariant: Record<GameStatus, "default" | "secondary" | "warning" | "success"> = { setup: "secondary", live: "success", ended: "default" };
   const transitions: Record<GameStatus, { next: GameStatus; label: string; icon: React.ReactNode } | null> = {
-    draft: { next: "live", label: t("lifecycle.goLive"), icon: <Play className="mr-2 h-4 w-4" /> },
+    setup: { next: "live", label: t("lifecycle.goLive"), icon: <Play className="mr-2 h-4 w-4" /> },
     live: { next: "ended", label: t("lifecycle.endGame"), icon: <Square className="mr-2 h-4 w-4" /> },
     ended: null,
   };
@@ -60,7 +60,7 @@ export function OverviewPage() {
     { ok: enoughChallenges, label: enoughChallenges ? t("overview.enoughChallenges") : t("overview.notEnoughChallenges", { bases: bases.length, challenges: challenges.length }) },
   ];
 
-  const canGoLive = game.status !== "draft" || readinessChecks.every((check) => check.ok);
+  const canGoLive = game.status !== "setup" || readinessChecks.every((check) => check.ok);
 
   return (
     <div className="space-y-6">
@@ -97,7 +97,7 @@ export function OverviewPage() {
           </CardContent>
         </Card>
 
-        {game.status === "draft" && (
+        {game.status === "setup" && (
           <Card>
             <CardHeader><CardTitle className="text-lg">{t("overview.readinessChecklist")}</CardTitle><CardDescription>{t("overview.readinessDescription")}</CardDescription></CardHeader>
             <CardContent>

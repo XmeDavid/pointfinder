@@ -97,7 +97,6 @@ struct OperatorHomeView: View {
         switch status {
         case "live": return .green
         case "setup": return .orange
-        case "draft": return .gray
         case "ended": return .red
         default: return .gray
         }

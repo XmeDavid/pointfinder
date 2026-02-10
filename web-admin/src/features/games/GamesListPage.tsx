@@ -69,7 +69,7 @@ function GameCard({ gameId }: { gameId: string }) {
 
   if (!game) return null;
 
-  const statusVariant: Record<GameStatus, "default" | "secondary" | "warning" | "success"> = { draft: "secondary", live: "success", ended: "default" };
+  const statusVariant: Record<GameStatus, "default" | "secondary" | "warning" | "success"> = { setup: "secondary", live: "success", ended: "default" };
 
   return (
     <Card className="cursor-pointer transition-shadow hover:shadow-md" onClick={() => navigate(`/games/${game.id}/overview`)}>
