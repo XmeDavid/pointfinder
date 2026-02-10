@@ -31,6 +31,7 @@ export interface Base {
   lng: number;
   nfcLinked: boolean;
   requirePresenceToSubmit: boolean;
+  hidden: boolean;
   fixedChallengeId?: string;
 }
 

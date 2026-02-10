@@ -3,6 +3,7 @@ import SwiftUI
 struct BaseAnnotationView: View {
     let status: BaseStatus
     let name: String
+    var isHidden: Bool = false
 
     var body: some View {
         VStack(spacing: 2) {
@@ -12,7 +13,14 @@ struct BaseAnnotationView: View {
                     .frame(width: 36, height: 36)
                     .shadow(color: status.color.opacity(0.4), radius: 4, y: 2)
 
-                Image(systemName: iconName)
+                if isHidden {
+                    Circle()
+                        .strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [4, 3]))
+                        .foregroundStyle(.white.opacity(0.8))
+                        .frame(width: 36, height: 36)
+                }
+
+                Image(systemName: isHidden ? "eye.slash" : iconName)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.white)
             }
@@ -22,6 +30,7 @@ struct BaseAnnotationView: View {
                 .fill(status.color)
                 .frame(width: 10, height: 6)
         }
+        .opacity(isHidden ? 0.7 : 1.0)
     }
 
     private var iconName: String {

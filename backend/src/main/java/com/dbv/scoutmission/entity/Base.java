@@ -41,6 +41,10 @@ public class Base {
     @Builder.Default
     private Boolean requirePresenceToSubmit = false;
 
+    @Column(name = "hidden", nullable = false)
+    @Builder.Default
+    private Boolean hidden = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "fixed_challenge_id")
     private Challenge fixedChallenge;

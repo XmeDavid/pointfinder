@@ -199,7 +199,10 @@
     "mapView": "Map view",
     "listView": "List view",
     "requirePresence": "Require presence to submit",
-    "requirePresenceHint": "Players must be physically at this base to submit their answer"
+    "requirePresenceHint": "Players must be physically at this base to submit their answer",
+    "hidden": "Hidden from map",
+    "hiddenHint": "Players won't see this base on the map until they check in (e.g. via NFC scan)",
+    "hiddenTag": "Hidden"
   },
   "challenges": {
     "title": "Challenges",

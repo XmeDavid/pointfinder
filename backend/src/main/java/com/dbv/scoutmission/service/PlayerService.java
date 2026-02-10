@@ -209,6 +209,11 @@ public class PlayerService {
                 status = "not_visited";
             }
 
+            // Hide bases marked as hidden that the team hasn't visited yet
+            if (Boolean.TRUE.equals(base.getHidden()) && "not_visited".equals(status)) {
+                return null;
+            }
+
             return BaseProgressResponse.builder()
                     .baseId(bId)
                     .baseName(base.getName())
@@ -221,7 +226,7 @@ public class PlayerService {
                     .challengeId(assignment != null ? assignment.getChallenge().getId() : null)
                     .submissionStatus(submissionStatus)
                     .build();
-        }).collect(Collectors.toList());
+        }).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -236,6 +241,7 @@ public class PlayerService {
                         .lng(base.getLng())
                         .nfcLinked(base.getNfcLinked())
                         .requirePresenceToSubmit(base.getRequirePresenceToSubmit())
+                        .hidden(base.getHidden())
                         .fixedChallengeId(base.getFixedChallenge() != null ? base.getFixedChallenge().getId() : null)
                         .build())
                 .collect(Collectors.toList());
@@ -255,13 +261,24 @@ public class PlayerService {
         Team team = player.getTeam();
         team.getId(); // Force initialization
 
-        // Get all bases
-        List<BaseResponse> bases = getBases(gameId);
+        // Get current progress (already filters hidden+not_visited bases)
+        List<BaseProgressResponse> progress = getProgress(gameId, player);
 
-        // Get all assignments for this game (both team-specific and global)
+        // Collect visible base IDs from progress to filter other lists
+        Set<UUID> visibleBaseIds = progress.stream()
+                .map(BaseProgressResponse::getBaseId)
+                .collect(Collectors.toSet());
+
+        // Get all bases, then filter to only visible ones
+        List<BaseResponse> bases = getBases(gameId).stream()
+                .filter(b -> visibleBaseIds.contains(b.getId()))
+                .collect(Collectors.toList());
+
+        // Get all assignments for this game (both team-specific and global), filtered to visible bases
         List<Assignment> assignmentEntities = assignmentRepository.findByGameId(gameId);
         List<AssignmentResponse> assignments = assignmentEntities.stream()
                 .filter(a -> a.getTeam() == null || a.getTeam().getId().equals(team.getId()))
+                .filter(a -> visibleBaseIds.contains(a.getBase().getId()))
                 .map(a -> AssignmentResponse.builder()
                         .id(a.getId())
                         .gameId(gameId)
@@ -298,9 +315,6 @@ public class PlayerService {
                         .locationBound(c.getLocationBound())
                         .build())
                 .collect(Collectors.toList());
-
-        // Get current progress
-        List<BaseProgressResponse> progress = getProgress(gameId, player);
 
         return GameDataResponse.builder()
                 .bases(bases)

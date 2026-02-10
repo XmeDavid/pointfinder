@@ -52,6 +52,7 @@ public class BaseService {
                 .lng(request.getLng())
                 .nfcLinked(false)
                 .requirePresenceToSubmit(request.getRequirePresenceToSubmit() != null ? request.getRequirePresenceToSubmit() : false)
+                .hidden(request.getHidden() != null ? request.getHidden() : false)
                 .fixedChallenge(fixedChallenge)
                 .build();
 
@@ -75,6 +76,10 @@ public class BaseService {
 
         if (request.getRequirePresenceToSubmit() != null) {
             base.setRequirePresenceToSubmit(request.getRequirePresenceToSubmit());
+        }
+
+        if (request.getHidden() != null) {
+            base.setHidden(request.getHidden());
         }
 
         if (request.getFixedChallengeId() != null) {
@@ -116,6 +121,7 @@ public class BaseService {
                 .lng(base.getLng())
                 .nfcLinked(base.getNfcLinked())
                 .requirePresenceToSubmit(base.getRequirePresenceToSubmit())
+                .hidden(base.getHidden())
                 .fixedChallengeId(base.getFixedChallenge() != null ? base.getFixedChallenge().getId() : null)
                 .build();
     }

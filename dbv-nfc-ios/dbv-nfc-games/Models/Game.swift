@@ -20,7 +20,22 @@ struct Base: Codable, Identifiable {
     let lng: Double
     var nfcLinked: Bool
     let requirePresenceToSubmit: Bool
+    let hidden: Bool
     let fixedChallengeId: UUID?
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        gameId = try container.decodeIfPresent(UUID.self, forKey: .gameId)
+        name = try container.decode(String.self, forKey: .name)
+        description = try container.decode(String.self, forKey: .description)
+        lat = try container.decode(Double.self, forKey: .lat)
+        lng = try container.decode(Double.self, forKey: .lng)
+        nfcLinked = try container.decode(Bool.self, forKey: .nfcLinked)
+        requirePresenceToSubmit = try container.decode(Bool.self, forKey: .requirePresenceToSubmit)
+        hidden = try container.decodeIfPresent(Bool.self, forKey: .hidden) ?? false
+        fixedChallengeId = try container.decodeIfPresent(UUID.self, forKey: .fixedChallengeId)
+    }
 }
 
 struct Challenge: Codable, Identifiable {

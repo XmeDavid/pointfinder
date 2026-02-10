@@ -15,5 +15,6 @@ public class BaseExportDto {
     private String description;
     private Double lat;
     private Double lng;
+    private Boolean hidden;
     private String fixedChallengeTempId;
 }

@@ -24,4 +24,6 @@ public class UpdateBaseRequest {
     private Boolean requirePresenceToSubmit;
 
     private UUID fixedChallengeId;
+
+    private Boolean hidden;
 }

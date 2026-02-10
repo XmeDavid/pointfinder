@@ -27,7 +27,8 @@ struct OperatorMapView: View {
                     Annotation(base.name, coordinate: CLLocationCoordinate2D(latitude: base.lat, longitude: base.lng)) {
                         BaseAnnotationView(
                             status: status,
-                            name: base.name
+                            name: base.name,
+                            isHidden: base.hidden
                         )
                         .onTapGesture {
                             selectedBase = base

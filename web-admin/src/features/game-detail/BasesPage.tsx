@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, MapPin, Wifi, WifiOff, Trash2, Pencil, List, Map as MapIcon } from "lucide-react";
+import { Plus, MapPin, Wifi, WifiOff, Trash2, Pencil, List, Map as MapIcon, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -67,13 +67,13 @@ export function BasesPage() {
     const lastBase = bases.length > 0 ? bases[bases.length - 1] : null;
     const lat = lastBase ? lastBase.lat : defaultLocation.lat;
     const lng = lastBase ? lastBase.lng : defaultLocation.lng;
-    setForm({ gameId, name: "", description: "", lat, lng, requirePresenceToSubmit: false });
+    setForm({ gameId, name: "", description: "", lat, lng, requirePresenceToSubmit: false, hidden: false });
     setDialogOpen(true);
   }
 
   function openEdit(base: Base) {
     setEditing(base);
-    setForm({ gameId: base.gameId, name: base.name, description: base.description, lat: base.lat, lng: base.lng, fixedChallengeId: base.fixedChallengeId, requirePresenceToSubmit: base.requirePresenceToSubmit });
+    setForm({ gameId: base.gameId, name: base.name, description: base.description, lat: base.lat, lng: base.lng, fixedChallengeId: base.fixedChallengeId, requirePresenceToSubmit: base.requirePresenceToSubmit, hidden: base.hidden });
     setDialogOpen(true);
   }
 
@@ -114,6 +114,7 @@ export function BasesPage() {
                     <div className="flex items-center gap-2">
                       <p className="font-medium">{base.name}</p>
                       {base.fixedChallengeId && <Badge variant="outline" className="text-xs">{t("bases.fixedChallengeTag")}</Badge>}
+                      {base.hidden && <Badge variant="outline" className="text-xs gap-1"><EyeOff className="h-3 w-3" />{t("bases.hiddenTag")}</Badge>}
                     </div>
                     <p className="text-sm text-muted-foreground truncate">{base.description}</p>
                     <p className="text-xs text-muted-foreground mt-1">{base.lat.toFixed(4)}, {base.lng.toFixed(4)}</p>
@@ -188,6 +189,17 @@ export function BasesPage() {
                 id="requirePresence"
                 checked={form.requirePresenceToSubmit ?? false}
                 onCheckedChange={(checked) => setForm((f) => ({ ...f, requirePresenceToSubmit: checked }))}
+              />
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <Label htmlFor="hidden">{t("bases.hidden")}</Label>
+                <p className="text-xs text-muted-foreground">{t("bases.hiddenHint")}</p>
+              </div>
+              <Switch
+                id="hidden"
+                checked={form.hidden ?? false}
+                onCheckedChange={(checked) => setForm((f) => ({ ...f, hidden: checked }))}
               />
             </div>
             <DialogFooter>

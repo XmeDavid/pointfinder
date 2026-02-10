@@ -199,7 +199,10 @@
     "mapView": "Vista de mapa",
     "listView": "Vista de lista",
     "requirePresence": "Requer presença para submeter",
-    "requirePresenceHint": "Os jogadores precisam estar fisicamente nesta base para submeter a resposta"
+    "requirePresenceHint": "Os jogadores precisam estar fisicamente nesta base para submeter a resposta",
+    "hidden": "Oculta no mapa",
+    "hiddenHint": "Os jogadores não verão esta base no mapa até fazerem check-in (ex. via NFC)",
+    "hiddenTag": "Oculta"
   },
   "challenges": {
     "title": "Desafios",

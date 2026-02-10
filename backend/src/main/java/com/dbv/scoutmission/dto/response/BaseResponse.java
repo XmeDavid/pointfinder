@@ -18,5 +18,6 @@ public class BaseResponse {
     private Double lng;
     private Boolean nfcLinked;
     private Boolean requirePresenceToSubmit;
+    private Boolean hidden;
     private UUID fixedChallengeId;
 }

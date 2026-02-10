@@ -8,6 +8,7 @@ export interface CreateBaseDto {
   lng: number;
   fixedChallengeId?: string;
   requirePresenceToSubmit?: boolean;
+  hidden?: boolean;
 }
 
 export const basesApi = {
@@ -22,7 +23,7 @@ export const basesApi = {
     return result;
   },
 
-  update: async (id: string, data: Partial<CreateBaseDto> & { nfcLinked?: boolean; requirePresenceToSubmit?: boolean; gameId: string }): Promise<Base> => {
+  update: async (id: string, data: Partial<CreateBaseDto> & { nfcLinked?: boolean; requirePresenceToSubmit?: boolean; hidden?: boolean; gameId: string }): Promise<Base> => {
     const { gameId, ...body } = data;
     const { data: result } = await apiClient.put(`/games/${gameId}/bases/${id}`, body);
     return result;
