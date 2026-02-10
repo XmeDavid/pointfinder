@@ -147,21 +147,18 @@ final class SyncEngine {
         // URLSession network errors
         let nsError = error as NSError
         guard nsError.domain == NSURLErrorDomain else { return false }
-        guard let code = URLError.Code(rawValue: nsError.code) else { return false }
-        switch code {
-        case .notConnectedToInternet,
-             .networkConnectionLost,
-             .timedOut,
-             .cannotFindHost,
-             .cannotConnectToHost,
-             .dnsLookupFailed,
-             .internationalRoamingOff,
-             .callIsActive,
-             .dataNotAllowed:
-            return true
-        default:
-            return false
-        }
+        let transientNetworkCodes: Set<Int> = [
+            NSURLErrorNotConnectedToInternet,
+            NSURLErrorNetworkConnectionLost,
+            NSURLErrorTimedOut,
+            NSURLErrorCannotFindHost,
+            NSURLErrorCannotConnectToHost,
+            NSURLErrorDNSLookupFailed,
+            NSURLErrorInternationalRoamingOff,
+            NSURLErrorCallIsActive,
+            NSURLErrorDataNotAllowed
+        ]
+        return transientNetworkCodes.contains(nsError.code)
     }
 }
 
