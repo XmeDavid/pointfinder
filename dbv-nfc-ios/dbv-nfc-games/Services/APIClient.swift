@@ -140,6 +140,12 @@ actor APIClient {
                            token: token)
     }
 
+    func registerPushToken(_ pushToken: String, token: String) async throws {
+        try await putVoid("/api/player/push-token",
+                          body: PushTokenBody(pushToken: pushToken),
+                          token: token)
+    }
+
     // MARK: - Operator Endpoints
 
     func getGames(token: String) async throws -> [Game] {
@@ -202,6 +208,13 @@ actor APIClient {
         request.httpBody = try JSONEncoder().encode(body)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         return try await execute(request)
+    }
+
+    private func putVoid<B: Encodable>(_ path: String, body: B, token: String? = nil) async throws {
+        var request = try buildRequest(path: path, method: "PUT", token: token)
+        request.httpBody = try JSONEncoder().encode(body)
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        try await executeVoid(request)
     }
 
     private func patch<T: Decodable>(_ path: String, token: String? = nil) async throws -> T {
@@ -384,6 +397,10 @@ private struct RefreshTokenBody: Encodable {
 private struct LocationUpdateBody: Encodable {
     let lat: Double
     let lng: Double
+}
+
+private struct PushTokenBody: Encodable {
+    let pushToken: String
 }
 
 // MARK: - Multipart Helpers

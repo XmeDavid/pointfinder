@@ -352,6 +352,15 @@ public class PlayerService {
     }
 
     @Transactional
+    public void updatePushToken(Player player, String pushToken) {
+        UUID playerId = player.getId();
+        player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
+        player.setPushToken(pushToken);
+        playerRepository.save(player);
+    }
+
+    @Transactional
     public void updateLocation(UUID gameId, Player player, Double lat, Double lng) {
         UUID playerId = player.getId();
         player = playerRepository.findById(playerId)

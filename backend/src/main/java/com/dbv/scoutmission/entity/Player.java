@@ -31,6 +31,9 @@ public class Player {
     @Column(unique = true)
     private String token;
 
+    @Column(name = "push_token")
+    private String pushToken;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

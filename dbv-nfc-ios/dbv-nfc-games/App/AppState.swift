@@ -107,6 +107,10 @@ final class AppState {
             // Start location tracking
             locationService.startTracking(apiClient: apiClient, gameId: response.game.id, token: response.token)
 
+            // Register for push notifications
+            PushNotificationService.shared.configure(apiClient: apiClient, playerToken: response.token)
+            PushNotificationService.shared.requestPermissionAndRegister()
+
             // Load initial progress
             await loadProgress()
         } catch {
@@ -401,6 +405,7 @@ final class AppState {
 
     func logout() {
         locationService.stopTracking()
+        PushNotificationService.shared.reset()
 
         KeychainService.deleteAll()
         let defaults = UserDefaults.standard
@@ -444,6 +449,10 @@ final class AppState {
 
             // Resume location tracking
             locationService.startTracking(apiClient: apiClient, gameId: gameId, token: token)
+
+            // Re-register for push notifications (token may have changed)
+            PushNotificationService.shared.configure(apiClient: apiClient, playerToken: token)
+            PushNotificationService.shared.requestPermissionAndRegister()
 
             // Restore game/team info will happen when progress loads
             Task { await loadProgress() }

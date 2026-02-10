@@ -3,6 +3,7 @@ package com.dbv.scoutmission.controller;
 import com.dbv.scoutmission.dto.request.PlayerJoinRequest;
 import com.dbv.scoutmission.dto.request.PlayerSubmissionRequest;
 import com.dbv.scoutmission.dto.request.UpdateLocationRequest;
+import com.dbv.scoutmission.dto.request.UpdatePushTokenRequest;
 import com.dbv.scoutmission.dto.response.*;
 import com.dbv.scoutmission.entity.Player;
 import com.dbv.scoutmission.security.SecurityUtils;
@@ -96,6 +97,13 @@ public class PlayerController {
                                                 @Valid @RequestBody UpdateLocationRequest request) {
         Player player = SecurityUtils.getCurrentPlayer();
         playerService.updateLocation(gameId, player, request.getLat(), request.getLng());
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/api/player/push-token")
+    public ResponseEntity<Void> updatePushToken(@Valid @RequestBody UpdatePushTokenRequest request) {
+        Player player = SecurityUtils.getCurrentPlayer();
+        playerService.updatePushToken(player, request.getPushToken());
         return ResponseEntity.ok().build();
     }
 }

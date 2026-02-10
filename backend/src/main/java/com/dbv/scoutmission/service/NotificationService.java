@@ -4,11 +4,13 @@ import com.dbv.scoutmission.dto.request.CreateNotificationRequest;
 import com.dbv.scoutmission.dto.response.NotificationResponse;
 import com.dbv.scoutmission.entity.Game;
 import com.dbv.scoutmission.entity.GameNotification;
+import com.dbv.scoutmission.entity.Player;
 import com.dbv.scoutmission.entity.Team;
 import com.dbv.scoutmission.entity.User;
 import com.dbv.scoutmission.exception.ResourceNotFoundException;
 import com.dbv.scoutmission.repository.GameNotificationRepository;
 import com.dbv.scoutmission.repository.GameRepository;
+import com.dbv.scoutmission.repository.PlayerRepository;
 import com.dbv.scoutmission.repository.TeamRepository;
 import com.dbv.scoutmission.repository.UserRepository;
 import com.dbv.scoutmission.security.SecurityUtils;
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -30,7 +33,9 @@ public class NotificationService {
     private final GameRepository gameRepository;
     private final TeamRepository teamRepository;
     private final UserRepository userRepository;
+    private final PlayerRepository playerRepository;
     private final GameEventBroadcaster eventBroadcaster;
+    private final ApnsPushService apnsPushService;
 
     @Transactional(readOnly = true)
     public List<NotificationResponse> getNotificationsByGame(UUID gameId) {
@@ -66,9 +71,30 @@ public class NotificationService {
         notification = notificationRepository.save(notification);
 
         // Broadcast via WebSocket
-        eventBroadcaster.broadcastNotification(gameId, toResponse(notification));
+        NotificationResponse response = toResponse(notification);
+        eventBroadcaster.broadcastNotification(gameId, response);
 
-        return toResponse(notification);
+        // Send push notifications to players on teams with registered push tokens
+        List<Player> pushTargets;
+        if (targetTeam != null) {
+            pushTargets = playerRepository.findByTeamIdAndPushTokenIsNotNull(targetTeam.getId());
+        } else {
+            pushTargets = playerRepository.findByTeamGameIdAndPushTokenIsNotNull(gameId);
+        }
+
+        if (!pushTargets.isEmpty()) {
+            List<String> tokens = pushTargets.stream()
+                    .map(Player::getPushToken)
+                    .toList();
+            apnsPushService.sendPush(
+                    tokens,
+                    game.getName(),
+                    request.getMessage(),
+                    Map.of("gameId", gameId.toString())
+            );
+        }
+
+        return response;
     }
 
     private NotificationResponse toResponse(GameNotification n) {
