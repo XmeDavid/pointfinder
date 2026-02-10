@@ -10,54 +10,56 @@ struct SubmissionResultView: View {
     var dismissToMap: (() -> Void)?
 
     var body: some View {
-        VStack(spacing: 24) {
-            Spacer()
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: 16) {
+                    // Result icon
+                    ZStack {
+                        Circle()
+                            .fill(resultColor.opacity(0.15))
+                            .frame(width: 120, height: 120)
 
-            // Result icon
-            VStack(spacing: 16) {
-                ZStack {
-                    Circle()
-                        .fill(resultColor.opacity(0.15))
-                        .frame(width: 120, height: 120)
+                        Image(systemName: resultIcon)
+                            .font(.system(size: 48))
+                            .foregroundStyle(resultColor)
+                    }
 
-                    Image(systemName: resultIcon)
-                        .font(.system(size: 48))
-                        .foregroundStyle(resultColor)
-                }
+                    Text(resultTitle)
+                        .font(.title2)
+                        .fontWeight(.bold)
 
-                Text(resultTitle)
-                    .font(.title2)
-                    .fontWeight(.bold)
-
-                Text(resultMessage)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
-
-                if let feedback = submission.feedback, !feedback.isEmpty {
-                    Text(locale.t("result.feedback", feedback))
+                    Text(resultMessage)
                         .font(.subheadline)
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 16)
+
+                    if let feedback = submission.feedback, !feedback.isEmpty {
+                        Text(locale.t("result.feedback", feedback))
+                            .font(.subheadline)
+                            .foregroundStyle(.primary)
+                            .padding()
+                            .background(Color(.systemGray6))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+
+                    if showCompletionContent {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(locale.t("result.completionContent"))
+                                .font(.headline)
+                            AutoSizingHTMLView(html: completionContent)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .padding()
                         .background(Color(.systemGray6))
                         .clipShape(RoundedRectangle(cornerRadius: 8))
-                }
-
-                if showCompletionContent {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(locale.t("result.completionContent"))
-                            .font(.headline)
-                        AutoSizingHTMLView(html: completionContent)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 24)
+                .padding(.top, 24)
+                .padding(.bottom, 12)
             }
-
-            Spacer()
 
             Button {
                 // If we have a dismissToMap closure, use it to dismiss the entire sheet
@@ -77,6 +79,7 @@ struct SubmissionResultView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 14))
             }
             .padding(.horizontal, 24)
+            .padding(.top, 8)
             .padding(.bottom, 24)
         }
         .navigationTitle(baseName)
