@@ -6,9 +6,9 @@ import com.dbv.scoutmission.dto.response.ChallengeResponse;
 import com.dbv.scoutmission.entity.AnswerType;
 import com.dbv.scoutmission.entity.Challenge;
 import com.dbv.scoutmission.entity.Game;
+import com.dbv.scoutmission.exception.BadRequestException;
 import com.dbv.scoutmission.exception.ResourceNotFoundException;
 import com.dbv.scoutmission.repository.ChallengeRepository;
-import com.dbv.scoutmission.repository.GameRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,10 +22,11 @@ import java.util.stream.Collectors;
 public class ChallengeService {
 
     private final ChallengeRepository challengeRepository;
-    private final GameRepository gameRepository;
+    private final GameAccessService gameAccessService;
 
     @Transactional(readOnly = true)
     public List<ChallengeResponse> getChallengesByGame(UUID gameId) {
+        gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         return challengeRepository.findByGameId(gameId).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -33,8 +34,7 @@ public class ChallengeService {
 
     @Transactional
     public ChallengeResponse createChallenge(UUID gameId, CreateChallengeRequest request) {
-        Game game = gameRepository.findById(gameId)
-                .orElseThrow(() -> new ResourceNotFoundException("Game", gameId));
+        Game game = gameAccessService.getAccessibleGame(gameId);
 
         Challenge challenge = Challenge.builder()
                 .game(game)
@@ -54,8 +54,10 @@ public class ChallengeService {
 
     @Transactional
     public ChallengeResponse updateChallenge(UUID gameId, UUID challengeId, UpdateChallengeRequest request) {
+        gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         Challenge challenge = challengeRepository.findById(challengeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Challenge", challengeId));
+        ensureChallengeBelongsToGame(challenge, gameId);
 
         challenge.setTitle(request.getTitle());
         challenge.setDescription(request.getDescription() != null ? request.getDescription() : "");
@@ -72,10 +74,17 @@ public class ChallengeService {
 
     @Transactional
     public void deleteChallenge(UUID gameId, UUID challengeId) {
-        if (!challengeRepository.existsById(challengeId)) {
-            throw new ResourceNotFoundException("Challenge", challengeId);
+        gameAccessService.ensureCurrentUserCanAccessGame(gameId);
+        Challenge challenge = challengeRepository.findById(challengeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Challenge", challengeId));
+        ensureChallengeBelongsToGame(challenge, gameId);
+        challengeRepository.delete(challenge);
+    }
+
+    private void ensureChallengeBelongsToGame(Challenge challenge, UUID gameId) {
+        if (!challenge.getGame().getId().equals(gameId)) {
+            throw new BadRequestException("Challenge does not belong to this game");
         }
-        challengeRepository.deleteById(challengeId);
     }
 
     private ChallengeResponse toResponse(Challenge c) {

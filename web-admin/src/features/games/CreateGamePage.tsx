@@ -8,24 +8,26 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { gamesApi } from "@/lib/api/games";
-import { useAuthStore } from "@/hooks/useAuth";
+import { getApiErrorMessage } from "@/lib/api/errors";
 import { useTranslation } from "react-i18next";
 
 export function CreateGamePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const user = useAuthStore((s) => s.user);
   const [form, setForm] = useState({ name: "", description: "", startDate: "", endDate: "" });
+  const [actionError, setActionError] = useState("");
 
   const createGame = useMutation({
     mutationFn: () => gamesApi.create(form),
-    onSuccess: (game) => { queryClient.invalidateQueries({ queryKey: ["games"] }); navigate(`/games/${game.id}/overview`); },
+    onSuccess: (game) => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["games"] }); navigate(`/games/${game.id}/overview`); },
+    onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <Button variant="ghost" onClick={() => navigate("/games")}><ArrowLeft className="mr-2 h-4 w-4" /> {t("games.backToGames")}</Button>
+      {actionError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{actionError}</div>}
       <Card>
         <CardHeader>
           <CardTitle>{t("games.createTitle")}</CardTitle>

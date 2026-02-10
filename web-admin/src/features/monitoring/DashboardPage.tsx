@@ -10,7 +10,7 @@ import { useGameWebSocket } from "@/hooks/useGameWebSocket";
 export function DashboardPage() {
   const { t } = useTranslation();
   const { gameId } = useParams<{ gameId: string }>();
-  useGameWebSocket(gameId);
+  const websocketError = useGameWebSocket(gameId);
   const { data: game } = useQuery({ queryKey: ["game", gameId], queryFn: () => gamesApi.getById(gameId!) });
   const { data: stats } = useQuery({ queryKey: ["dashboard-stats", gameId], queryFn: () => monitoringApi.getDashboardStats(gameId!) });
   const { data: leaderboard = [] } = useQuery({ queryKey: ["leaderboard", gameId], queryFn: () => monitoringApi.getLeaderboard(gameId!) });
@@ -27,6 +27,7 @@ export function DashboardPage() {
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold">{t("monitor.liveDashboard")}</h1><p className="text-muted-foreground">{game.name}</p></div>
+      {websocketError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{websocketError}</div>}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card><CardContent className="flex items-center gap-3 p-4"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10"><Users className="h-5 w-5 text-blue-500" /></div><div><p className="text-2xl font-bold">{stats.totalTeams}</p><p className="text-sm text-muted-foreground">{t("monitor.activeTeams")}</p></div></CardContent></Card>
         <Card><CardContent className="flex items-center gap-3 p-4"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-500/10"><ClipboardCheck className="h-5 w-5 text-yellow-500" /></div><div><p className="text-2xl font-bold">{stats.pendingSubmissions}</p><p className="text-sm text-muted-foreground">{t("monitor.pendingReview")}</p></div></CardContent></Card>

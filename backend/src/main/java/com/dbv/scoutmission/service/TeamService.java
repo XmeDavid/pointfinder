@@ -6,8 +6,8 @@ import com.dbv.scoutmission.dto.response.PlayerResponse;
 import com.dbv.scoutmission.dto.response.TeamResponse;
 import com.dbv.scoutmission.entity.Game;
 import com.dbv.scoutmission.entity.Team;
+import com.dbv.scoutmission.exception.BadRequestException;
 import com.dbv.scoutmission.exception.ResourceNotFoundException;
-import com.dbv.scoutmission.repository.GameRepository;
 import com.dbv.scoutmission.repository.PlayerRepository;
 import com.dbv.scoutmission.repository.TeamRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,13 +27,15 @@ public class TeamService {
         "#3b82f6", "#ef4444", "#f59e0b", "#8b5cf6",
         "#10b981", "#ec4899", "#f97316", "#06b6d4"
     };
+    private static final int MAX_JOIN_CODE_ATTEMPTS = 20;
 
     private final TeamRepository teamRepository;
-    private final GameRepository gameRepository;
     private final PlayerRepository playerRepository;
+    private final GameAccessService gameAccessService;
 
     @Transactional(readOnly = true)
     public List<TeamResponse> getTeamsByGame(UUID gameId) {
+        gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         return teamRepository.findByGameId(gameId).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -41,12 +43,11 @@ public class TeamService {
 
     @Transactional
     public TeamResponse createTeam(UUID gameId, CreateTeamRequest request) {
-        Game game = gameRepository.findById(gameId)
-                .orElseThrow(() -> new ResourceNotFoundException("Game", gameId));
+        Game game = gameAccessService.getAccessibleGame(gameId);
 
         long teamCount = teamRepository.countByGameId(gameId);
         String color = TEAM_COLORS[(int) (teamCount % TEAM_COLORS.length)];
-        String joinCode = generateJoinCode();
+        String joinCode = generateUniqueJoinCode();
 
         Team team = Team.builder()
                 .game(game)
@@ -61,11 +62,12 @@ public class TeamService {
 
     @Transactional
     public TeamResponse updateTeam(UUID gameId, UUID teamId, UpdateTeamRequest request) {
+        gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new ResourceNotFoundException("Team", teamId));
 
         if (!team.getGame().getId().equals(gameId)) {
-            throw new ResourceNotFoundException("Team", teamId);
+            throw new BadRequestException("Team does not belong to this game");
         }
 
         team.setName(request.getName());
@@ -75,14 +77,24 @@ public class TeamService {
 
     @Transactional
     public void deleteTeam(UUID gameId, UUID teamId) {
-        if (!teamRepository.existsById(teamId)) {
-            throw new ResourceNotFoundException("Team", teamId);
+        gameAccessService.ensureCurrentUserCanAccessGame(gameId);
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new ResourceNotFoundException("Team", teamId));
+        if (!team.getGame().getId().equals(gameId)) {
+            throw new BadRequestException("Team does not belong to this game");
         }
-        teamRepository.deleteById(teamId);
+        teamRepository.delete(team);
     }
 
     @Transactional(readOnly = true)
-    public List<PlayerResponse> getPlayers(UUID teamId) {
+    public List<PlayerResponse> getPlayers(UUID gameId, UUID teamId) {
+        gameAccessService.ensureCurrentUserCanAccessGame(gameId);
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new ResourceNotFoundException("Team", teamId));
+        if (!team.getGame().getId().equals(gameId)) {
+            throw new BadRequestException("Team does not belong to this game");
+        }
+
         return playerRepository.findByTeamId(teamId).stream()
                 .map(p -> PlayerResponse.builder()
                         .id(p.getId())
@@ -91,6 +103,16 @@ public class TeamService {
                         .displayName(p.getDisplayName())
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    private String generateUniqueJoinCode() {
+        for (int attempt = 0; attempt < MAX_JOIN_CODE_ATTEMPTS; attempt++) {
+            String code = generateJoinCode();
+            if (teamRepository.findByJoinCode(code).isEmpty()) {
+                return code;
+            }
+        }
+        throw new IllegalStateException("Unable to generate unique team join code");
     }
 
     private String generateJoinCode() {

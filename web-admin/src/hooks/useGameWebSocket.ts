@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { connectWebSocket, disconnectWebSocket } from "@/lib/api/websocket";
 
@@ -7,13 +7,15 @@ import { connectWebSocket, disconnectWebSocket } from "@/lib/api/websocket";
  * relevant React Query caches when real-time events arrive.
  * Use this in any monitoring page to get live updates.
  */
-export function useGameWebSocket(gameId: string | undefined) {
+export function useGameWebSocket(gameId: string | undefined): string | null {
   const queryClient = useQueryClient();
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!gameId) return;
 
     const client = connectWebSocket(gameId, (payload) => {
+      setConnectionError(null);
       switch (payload.type) {
         case "activity":
           queryClient.invalidateQueries({ queryKey: ["activity", gameId] });
@@ -38,10 +40,14 @@ export function useGameWebSocket(gameId: string | undefined) {
           queryClient.invalidateQueries({ queryKey: ["dashboard-stats", gameId] });
           queryClient.invalidateQueries({ queryKey: ["leaderboard", gameId] });
       }
+    }, (errorMessage) => {
+      setConnectionError(errorMessage);
     });
 
     return () => {
       disconnectWebSocket();
     };
   }, [gameId, queryClient]);
+
+  return connectionError;
 }

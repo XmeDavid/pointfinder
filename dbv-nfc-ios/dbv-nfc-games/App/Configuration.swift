@@ -19,6 +19,7 @@ enum AppConfiguration {
     static let playerIdKey = "com.dbvnfc.playerId"
     static let teamIdKey = "com.dbvnfc.teamId"
     static let gameIdKey = "com.dbvnfc.gameId"
+    static let operatorUserIdKey = "com.dbvnfc.operatorUserId"
     static let authTypeKey = "com.dbvnfc.authType"
 
     static var deviceId: String {

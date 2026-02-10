@@ -1,5 +1,6 @@
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
+import { useAuthStore } from "@/hooks/useAuth";
 
 const WS_URL = import.meta.env.VITE_WS_URL || "/ws";
 
@@ -7,15 +8,23 @@ let stompClient: Client | null = null;
 
 export function connectWebSocket(
   gameId: string,
-  onMessage: (payload: { type: string; data: unknown }) => void
+  onMessage: (payload: { type: string; data: unknown }) => void,
+  onError?: (message: string) => void
 ): Client {
   // Disconnect existing client if any
   if (stompClient?.active) {
     stompClient.deactivate();
   }
 
+  const accessToken = useAuthStore.getState().accessToken;
+
   const client = new Client({
     webSocketFactory: () => new SockJS(WS_URL) as WebSocket,
+    connectHeaders: accessToken
+      ? {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      : {},
     reconnectDelay: 5000,
     heartbeatIncoming: 10000,
     heartbeatOutgoing: 10000,
@@ -30,7 +39,14 @@ export function connectWebSocket(
       });
     },
     onStompError: (frame) => {
-      console.error("STOMP error:", frame.headers["message"]);
+      const message = frame.headers["message"] || "WebSocket connection error";
+      console.error("STOMP error:", message);
+      onError?.(message);
+    },
+    onWebSocketError: () => {
+      const message = "WebSocket transport error";
+      console.error(message);
+      onError?.(message);
     },
   });
 

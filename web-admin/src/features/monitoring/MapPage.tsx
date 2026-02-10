@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { basesApi } from "@/lib/api/bases";
 import { teamsApi } from "@/lib/api/teams";
-import { assignmentsApi } from "@/lib/api/assignments";
 import { challengesApi } from "@/lib/api/challenges";
 import { monitoringApi } from "@/lib/api/monitoring";
 import { useTranslation } from "react-i18next";
@@ -112,9 +111,8 @@ export function MapPage() {
   const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!) });
   const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!) });
   const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!) });
-  const { data: assignments = [] } = useQuery({ queryKey: ["assignments", gameId], queryFn: () => assignmentsApi.listByGame(gameId!) });
   const { data: progress = [] } = useQuery({ queryKey: ["progress", gameId], queryFn: () => monitoringApi.getProgress(gameId!) });
-  useGameWebSocket(gameId);
+  const websocketError = useGameWebSocket(gameId);
   const { data: locations = [] } = useQuery({ queryKey: ["team-locations", gameId], queryFn: () => monitoringApi.getTeamLocations(gameId!) });
 
   const [showBases, setShowBases] = useState(true);
@@ -225,6 +223,7 @@ export function MapPage() {
           </Button>
         </div>
       </div>
+      {websocketError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{websocketError}</div>}
 
       {/* View mode indicator */}
       {selectedTeam && (

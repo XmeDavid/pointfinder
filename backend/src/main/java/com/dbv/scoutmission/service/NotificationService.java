@@ -7,6 +7,7 @@ import com.dbv.scoutmission.entity.GameNotification;
 import com.dbv.scoutmission.entity.Player;
 import com.dbv.scoutmission.entity.Team;
 import com.dbv.scoutmission.entity.User;
+import com.dbv.scoutmission.exception.BadRequestException;
 import com.dbv.scoutmission.exception.ResourceNotFoundException;
 import com.dbv.scoutmission.repository.GameNotificationRepository;
 import com.dbv.scoutmission.repository.GameRepository;
@@ -36,9 +37,11 @@ public class NotificationService {
     private final PlayerRepository playerRepository;
     private final GameEventBroadcaster eventBroadcaster;
     private final ApnsPushService apnsPushService;
+    private final GameAccessService gameAccessService;
 
     @Transactional(readOnly = true)
     public List<NotificationResponse> getNotificationsByGame(UUID gameId) {
+        gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         return notificationRepository.findByGameIdOrderBySentAtDesc(gameId).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -46,8 +49,7 @@ public class NotificationService {
 
     @Transactional
     public NotificationResponse createNotification(UUID gameId, CreateNotificationRequest request) {
-        Game game = gameRepository.findById(gameId)
-                .orElseThrow(() -> new ResourceNotFoundException("Game", gameId));
+        Game game = gameAccessService.getAccessibleGame(gameId);
         User currentUser = SecurityUtils.getCurrentUser();
         // Re-fetch user within transaction to get fresh entity with proper session
         UUID userId = currentUser.getId();
@@ -58,6 +60,9 @@ public class NotificationService {
         if (request.getTargetTeamId() != null) {
             targetTeam = teamRepository.findById(request.getTargetTeamId())
                     .orElseThrow(() -> new ResourceNotFoundException("Team", request.getTargetTeamId()));
+            if (!targetTeam.getGame().getId().equals(gameId)) {
+                throw new BadRequestException("Target team does not belong to this game");
+            }
         }
 
         GameNotification notification = GameNotification.builder()

@@ -24,9 +24,11 @@ public class MonitoringService {
     private final TeamLocationRepository teamLocationRepository;
     private final CheckInRepository checkInRepository;
     private final AssignmentRepository assignmentRepository;
+    private final GameAccessService gameAccessService;
 
     @Transactional(readOnly = true)
     public DashboardResponse getDashboard(UUID gameId) {
+        gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         Game game = gameRepository.findById(gameId)
                 .orElseThrow(() -> new ResourceNotFoundException("Game", gameId));
 
@@ -51,6 +53,7 @@ public class MonitoringService {
 
     @Transactional(readOnly = true)
     public List<LeaderboardEntry> getLeaderboard(UUID gameId) {
+        gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         List<Team> teams = teamRepository.findByGameId(gameId);
         List<Submission> submissions = submissionRepository.findByGameId(gameId);
 
@@ -61,18 +64,20 @@ public class MonitoringService {
         return teams.stream().map(team -> {
             List<Submission> teamSubs = byTeam.getOrDefault(team.getId(), List.of());
 
-            int points = teamSubs.stream()
+            Map<UUID, Submission> scoredByChallenge = teamSubs.stream()
                     .filter(s -> s.getStatus() == SubmissionStatus.correct
                             || s.getStatus() == SubmissionStatus.approved)
+                    .collect(Collectors.toMap(
+                            s -> s.getChallenge().getId(),
+                            s -> s,
+                            (first, second) -> first.getSubmittedAt().isAfter(second.getSubmittedAt()) ? first : second
+                    ));
+
+            int points = scoredByChallenge.values().stream()
                     .mapToInt(s -> s.getChallenge().getPoints())
                     .sum();
 
-            int completed = (int) teamSubs.stream()
-                    .filter(s -> s.getStatus() == SubmissionStatus.correct
-                            || s.getStatus() == SubmissionStatus.approved)
-                    .map(s -> s.getChallenge().getId())
-                    .distinct()
-                    .count();
+            int completed = scoredByChallenge.size();
 
             return LeaderboardEntry.builder()
                     .teamId(team.getId())
@@ -88,6 +93,7 @@ public class MonitoringService {
 
     @Transactional(readOnly = true)
     public List<ActivityEventResponse> getActivity(UUID gameId) {
+        gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         return activityEventRepository.findByGameIdOrderByTimestampDesc(gameId).stream()
                 .map(e -> ActivityEventResponse.builder()
                         .id(e.getId())
@@ -104,11 +110,21 @@ public class MonitoringService {
 
     @Transactional(readOnly = true)
     public List<TeamBaseProgressResponse> getProgress(UUID gameId) {
+        gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         List<Team> teams = teamRepository.findByGameId(gameId);
         List<Base> bases = baseRepository.findByGameId(gameId);
         List<CheckIn> checkIns = checkInRepository.findByGameId(gameId);
         List<Submission> submissions = submissionRepository.findByGameId(gameId);
         List<Assignment> assignments = assignmentRepository.findByGameId(gameId);
+        List<Assignment> sortedAssignments = assignments.stream()
+                .sorted(
+                        Comparator.comparing(
+                                        Assignment::getCreatedAt,
+                                        Comparator.nullsLast(Comparator.reverseOrder())
+                                )
+                                .thenComparing(a -> a.getId().toString(), Comparator.reverseOrder())
+                )
+                .toList();
 
         // Group check-ins by team+base
         Map<UUID, Map<UUID, CheckIn>> checkInsByTeamBase = checkIns.stream()
@@ -132,7 +148,7 @@ public class MonitoringService {
         // Key: teamId -> baseId -> Assignment
         Map<UUID, Map<UUID, Assignment>> teamAssignments = new HashMap<>();
         Map<UUID, Assignment> globalAssignments = new HashMap<>();
-        for (Assignment a : assignments) {
+        for (Assignment a : sortedAssignments) {
             if (a.getTeam() != null) {
                 teamAssignments
                         .computeIfAbsent(a.getTeam().getId(), k -> new HashMap<>())
@@ -195,6 +211,7 @@ public class MonitoringService {
 
     @Transactional(readOnly = true)
     public List<TeamLocationResponse> getLocations(UUID gameId) {
+        gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         return teamLocationRepository.findByGameId(gameId).stream()
                 .map(tl -> TeamLocationResponse.builder()
                         .teamId(tl.getTeamId())

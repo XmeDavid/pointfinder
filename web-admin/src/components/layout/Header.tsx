@@ -1,4 +1,4 @@
-import { Moon, Sun, LogOut, User, ChevronRight, Globe, Bell, Check, Menu } from "lucide-react";
+import { Moon, Sun, LogOut, ChevronRight, Globe, Bell, Check, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -28,7 +28,7 @@ function useBreadcrumbs(): BreadcrumbItem[] {
     Home: t("common.appName"),
     Games: t("nav.games"),
     "New Game": t("games.newGame"),
-    Admin: "Admin",
+    Admin: t("nav.admin"),
     Operators: t("nav.operators"),
     Overview: t("nav.overview"),
     Bases: t("nav.bases"),

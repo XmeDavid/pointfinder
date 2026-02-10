@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { gamesApi } from "@/lib/api/games";
+import { getApiErrorMessage } from "@/lib/api/errors";
 import { useTranslation } from "react-i18next";
 import type { GameStatus } from "@/types";
 
@@ -39,6 +40,7 @@ export function SettingsPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [saved, setSaved] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [actionError, setActionError] = useState("");
 
   // State override dialog
   const [stateTarget, setStateTarget] = useState<GameStatus | null>(null);
@@ -59,30 +61,36 @@ export function SettingsPage() {
   const updateGame = useMutation({
     mutationFn: () => gamesApi.update(gameId!, form),
     onSuccess: () => {
+      setActionError("");
       queryClient.invalidateQueries({ queryKey: ["game", gameId] });
       queryClient.invalidateQueries({ queryKey: ["games"] });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     },
+    onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
   const deleteGame = useMutation({
     mutationFn: () => gamesApi.delete(gameId!),
     onSuccess: () => {
+      setActionError("");
       queryClient.invalidateQueries({ queryKey: ["games"] });
       navigate("/games");
     },
+    onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
   const changeStatus = useMutation({
     mutationFn: ({ status, resetProgress }: { status: GameStatus; resetProgress: boolean }) =>
       gamesApi.updateStatus(gameId!, status, resetProgress),
     onSuccess: () => {
+      setActionError("");
       queryClient.invalidateQueries({ queryKey: ["game", gameId] });
       queryClient.invalidateQueries({ queryKey: ["games"] });
       setStateTarget(null);
       setProgressChoice(null);
     },
+    onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
   const handleExport = async () => {
@@ -98,6 +106,7 @@ export function SettingsPage() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
+      setActionError(getApiErrorMessage(error, t("game.exportError")));
       console.error("Export failed:", error);
     } finally {
       setExporting(false);
@@ -141,6 +150,7 @@ export function SettingsPage() {
         <h1 className="text-2xl font-bold">{t("settings.title")}</h1>
         <p className="text-muted-foreground">{t("settings.description")}</p>
       </div>
+      {actionError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{actionError}</div>}
 
       <Card>
         <CardHeader>
@@ -211,7 +221,7 @@ export function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">{t("settings.currentStatus")}:</span>
-              <Badge className={statusColors[currentStatus]}>{currentStatus.toUpperCase()}</Badge>
+              <Badge className={statusColors[currentStatus]}>{t(`status.${currentStatus}`)}</Badge>
             </div>
 
             <div className="space-y-3">
@@ -223,7 +233,7 @@ export function SettingsPage() {
                   </div>
                   <Button variant="outline" size="sm" onClick={() => handleStateChange("live")}>
                     <Play className="mr-1.5 h-3.5 w-3.5" />
-                    Live
+                    {t("status.live")}
                   </Button>
                 </div>
               )}
@@ -236,7 +246,7 @@ export function SettingsPage() {
                   </div>
                   <Button variant="outline" size="sm" onClick={() => handleStateChange("setup")}>
                     <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-                    Setup
+                    {t("status.setup")}
                   </Button>
                 </div>
               )}
@@ -252,7 +262,7 @@ export function SettingsPage() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-amber-500" />
-                {t("settings.changeStateTo")} {stateTarget.toUpperCase()}
+                {t("settings.changeStateTo")} {t(`status.${stateTarget}`)}
               </DialogTitle>
             </DialogHeader>
 

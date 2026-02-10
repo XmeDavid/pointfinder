@@ -50,7 +50,8 @@ public class PlayerController {
 
     @GetMapping("/api/player/games/{gameId}/bases")
     public ResponseEntity<List<BaseResponse>> getBases(@PathVariable UUID gameId) {
-        return ResponseEntity.ok(playerService.getBases(gameId));
+        Player player = SecurityUtils.getCurrentPlayer();
+        return ResponseEntity.ok(playerService.getBases(gameId, player));
     }
 
     @GetMapping("/api/player/games/{gameId}/data")

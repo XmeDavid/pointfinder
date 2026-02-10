@@ -8,7 +8,6 @@ import com.dbv.scoutmission.entity.OperatorInvite;
 import com.dbv.scoutmission.entity.User;
 import com.dbv.scoutmission.exception.BadRequestException;
 import com.dbv.scoutmission.exception.ResourceNotFoundException;
-import com.dbv.scoutmission.repository.GameRepository;
 import com.dbv.scoutmission.repository.OperatorInviteRepository;
 import com.dbv.scoutmission.repository.UserRepository;
 import com.dbv.scoutmission.security.SecurityUtils;
@@ -25,12 +24,13 @@ import java.util.stream.Collectors;
 public class InviteService {
 
     private final OperatorInviteRepository inviteRepository;
-    private final GameRepository gameRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private final GameAccessService gameAccessService;
 
     @Transactional(readOnly = true)
     public List<InviteResponse> getGlobalInvites() {
+        gameAccessService.ensureCurrentUserIsAdmin();
         return inviteRepository.findByGameIdIsNull().stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -38,6 +38,7 @@ public class InviteService {
 
     @Transactional(readOnly = true)
     public List<InviteResponse> getGameInvites(UUID gameId) {
+        gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         return inviteRepository.findByGameId(gameId).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -61,8 +62,7 @@ public class InviteService {
 
         Game game = null;
         if (request.getGameId() != null) {
-            game = gameRepository.findById(request.getGameId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Game", request.getGameId()));
+            game = gameAccessService.getAccessibleGame(request.getGameId());
 
             // Game invites must target an existing operator
             User targetUser = userRepository.findByEmail(request.getEmail())
@@ -70,9 +70,13 @@ public class InviteService {
                             "No operator found with this email. Game invitations can only be sent to existing operators."));
 
             // Check if already an operator on this game
-            if (game.getOperators().contains(targetUser)) {
+            boolean alreadyOperator = game.getOperators().stream()
+                    .anyMatch(operator -> operator.getId().equals(targetUser.getId()));
+            if (alreadyOperator) {
                 throw new BadRequestException("This operator is already assigned to the game.");
             }
+        } else {
+            gameAccessService.ensureCurrentUserIsAdmin();
         }
 
         OperatorInvite invite = OperatorInvite.builder()
@@ -129,7 +133,6 @@ public class InviteService {
                 .gameId(inv.getGame() != null ? inv.getGame().getId() : null)
                 .gameName(inv.getGame() != null ? inv.getGame().getName() : null)
                 .email(inv.getEmail())
-                .token(inv.getToken())
                 .status(inv.getStatus().name())
                 .invitedBy(inv.getInvitedBy().getId())
                 .inviterName(inv.getInvitedBy().getName())

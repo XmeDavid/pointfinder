@@ -14,6 +14,7 @@ struct OperatorMapView: View {
     @State private var isLoading = true
     @State private var selectedBase: Base?
     @State private var cameraPosition: MapCameraPosition = .automatic
+    @State private var pollingTask: Task<Void, Never>?
     
     private let apiClient = APIClient()
     private let pollInterval: TimeInterval = 5.0
@@ -71,10 +72,14 @@ struct OperatorMapView: View {
         }
         .task {
             await loadInitialData()
-            await startPolling()
+            startPolling()
         }
         .onAppear {
             updateCameraPosition()
+        }
+        .onDisappear {
+            pollingTask?.cancel()
+            pollingTask = nil
         }
     }
     
@@ -116,13 +121,14 @@ struct OperatorMapView: View {
         }
     }
     
-    private func startPolling() async {
-        while !Task.isCancelled {
-            try? await Task.sleep(for: .seconds(pollInterval))
-            
-            // Poll locations and progress
-            await loadLocations()
-            await loadProgress()
+    private func startPolling() {
+        pollingTask?.cancel()
+        pollingTask = Task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(pollInterval))
+                await loadLocations()
+                await loadProgress()
+            }
         }
     }
     
@@ -178,6 +184,7 @@ struct LiveBaseProgressSheet: View {
     @State private var teams: [Team] = []
     @State private var progress: [TeamBaseProgressResponse] = []
     @State private var isLoading = true
+    @State private var pollingTask: Task<Void, Never>?
     
     private let apiClient = APIClient()
     
@@ -265,7 +272,11 @@ struct LiveBaseProgressSheet: View {
         }
         .task {
             await loadData()
-            await pollWhileOpen()
+            startPolling()
+        }
+        .onDisappear {
+            pollingTask?.cancel()
+            pollingTask = nil
         }
     }
     
@@ -283,15 +294,18 @@ struct LiveBaseProgressSheet: View {
         isLoading = false
     }
     
-    private func pollWhileOpen() async {
-        while !Task.isCancelled {
-            try? await Task.sleep(for: .seconds(5))
-            
-            do {
-                let allProgress = try await apiClient.getTeamProgress(gameId: gameId, token: token)
-                progress = allProgress.filter { $0.baseId == base.id }
-            } catch {
-                // Silently continue polling
+    private func startPolling() {
+        pollingTask?.cancel()
+        pollingTask = Task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(5))
+
+                do {
+                    let allProgress = try await apiClient.getTeamProgress(gameId: gameId, token: token)
+                    progress = allProgress.filter { $0.baseId == base.id }
+                } catch {
+                    // Silently continue polling
+                }
             }
         }
     }

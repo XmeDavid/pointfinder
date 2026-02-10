@@ -54,6 +54,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/api/player/**").hasRole("PLAYER")
+                .requestMatchers("/api/games/**", "/api/invites/**", "/api/users/**")
+                .hasAnyRole("ADMIN", "OPERATOR")
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

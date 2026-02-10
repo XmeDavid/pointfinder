@@ -46,16 +46,16 @@ enum BaseStatus: String, Codable {
 }
 
 struct BaseProgress: Codable, Identifiable {
-    let baseId: UUID
-    let baseName: String
-    let lat: Double
-    let lng: Double
-    let nfcLinked: Bool
-    let requirePresenceToSubmit: Bool
-    let status: String
-    let checkedInAt: String?
-    let challengeId: UUID?
-    let submissionStatus: String?
+    var baseId: UUID
+    var baseName: String
+    var lat: Double
+    var lng: Double
+    var nfcLinked: Bool
+    var requirePresenceToSubmit: Bool
+    var status: String
+    var checkedInAt: String?
+    var challengeId: UUID?
+    var submissionStatus: String?
 
     var id: UUID { baseId }
 

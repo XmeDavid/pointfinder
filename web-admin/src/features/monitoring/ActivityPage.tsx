@@ -19,13 +19,14 @@ const EVENT_ICONS: Record<string, React.ReactNode> = {
 export function ActivityPage() {
   const { t } = useTranslation();
   const { gameId } = useParams<{ gameId: string }>();
-  useGameWebSocket(gameId);
+  const websocketError = useGameWebSocket(gameId);
   const { data: events = [] } = useQuery({ queryKey: ["activity", gameId], queryFn: () => monitoringApi.getActivityEvents(gameId!) });
   const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!) });
 
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold">{t("activityFeed.title")}</h1><p className="text-muted-foreground">{t("activityFeed.description")}</p></div>
+      {websocketError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{websocketError}</div>}
       <Card>
         <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Activity className="h-4 w-4" /> {t("activityFeed.recentEvents")}</CardTitle></CardHeader>
         <CardContent>

@@ -9,6 +9,7 @@
     "delete": "Delete",
     "edit": "Edit",
     "add": "Add",
+    "copy": "Copy",
     "back": "Back",
     "loading": "Loading...",
     "sending": "Sending...",
@@ -53,6 +54,7 @@
   },
   "nav": {
     "games": "Games",
+    "admin": "Admin",
     "operators": "Operators",
     "overview": "Overview",
     "bases": "Bases",
@@ -122,7 +124,9 @@
     "base_one": "{{count}} base",
     "base_other": "{{count}} bases",
     "team_one": "{{count}} team",
-    "team_other": "{{count}} teams"
+    "team_other": "{{count}} teams",
+    "operator_one": "{{count}} operator",
+    "operator_other": "{{count}} operators"
   },
   "status": {
     "setup": "Setup",
@@ -249,6 +253,11 @@
     "team": "Team",
     "selectTeam": "Select team...",
     "allTeams": "All Teams",
+    "addForBase": "Add or manage assignments for this base.",
+    "fullyAssigned": "This base is fully assigned for all teams.",
+    "modeLockedAllTeams": "This base uses an \"All Teams\" assignment. Remove it before adding team-specific assignments.",
+    "noTeamsAvailable": "No teams available for additional assignments on this base.",
+    "conflictGeneric": "This assignment conflicts with existing data.",
     "unassignedNote_one": "{{count}} base without assignments will receive random challenges per team when the game starts.",
     "unassignedNote_other": "{{count}} bases without assignments will receive random challenges per team when the game starts."
   },
@@ -331,6 +340,8 @@
     "team": "Team",
     "challenge": "Challenge",
     "answer": "Answer",
+    "notes": "Notes",
+    "noNotes": "No notes",
     "feedbackLabel": "Feedback (optional)",
     "feedbackPlaceholder": "Optional feedback for the team...",
     "reject": "Reject",

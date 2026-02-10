@@ -6,6 +6,7 @@ import com.dbv.scoutmission.dto.request.GameImportRequest;
 import com.dbv.scoutmission.dto.request.UpdateGameRequest;
 import com.dbv.scoutmission.dto.request.UpdateGameStatusRequest;
 import com.dbv.scoutmission.dto.response.GameResponse;
+import com.dbv.scoutmission.dto.response.UserResponse;
 import com.dbv.scoutmission.service.GameService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -67,6 +68,11 @@ public class GameController {
     public ResponseEntity<Void> removeOperator(@PathVariable UUID id, @PathVariable UUID userId) {
         gameService.removeOperator(id, userId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/operators")
+    public ResponseEntity<List<UserResponse>> listOperators(@PathVariable UUID id) {
+        return ResponseEntity.ok(gameService.getGameOperators(id));
     }
 
     @GetMapping("/{id}/export")

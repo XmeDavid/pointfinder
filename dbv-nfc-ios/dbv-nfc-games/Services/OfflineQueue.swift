@@ -58,9 +58,9 @@ actor OfflineQueue {
         pendingActions.contains { $0.id == id }
     }
 
-    /// Check if there's a pending check-in for a base
-    func hasPendingCheckIn(baseId: UUID) -> Bool {
-        pendingActions.contains { $0.type == .checkIn && $0.baseId == baseId }
+    /// Check if there's a pending check-in for a base in a specific game.
+    func hasPendingCheckIn(gameId: UUID, baseId: UUID) -> Bool {
+        pendingActions.contains { $0.type == .checkIn && $0.gameId == gameId && $0.baseId == baseId }
     }
 
     /// Check if there's a pending submission for a challenge at a base

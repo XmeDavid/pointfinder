@@ -1,4 +1,4 @@
-import type { Game, GameStatus } from "@/types";
+import type { Game, GameStatus, User } from "@/types";
 import apiClient from "./client";
 
 export interface CreateGameDto {
@@ -59,6 +59,11 @@ export const gamesApi = {
 
   removeOperator: async (gameId: string, userId: string): Promise<void> => {
     await apiClient.delete(`/games/${gameId}/operators/${userId}`);
+  },
+
+  getOperators: async (gameId: string): Promise<User[]> => {
+    const { data } = await apiClient.get(`/games/${gameId}/operators`);
+    return data;
   },
 
   exportGame: async (id: string): Promise<Blob> => {

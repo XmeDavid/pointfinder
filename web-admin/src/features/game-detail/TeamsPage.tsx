@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { teamsApi } from "@/lib/api/teams";
+import { getApiErrorMessage } from "@/lib/api/errors";
 import { useTranslation } from "react-i18next";
 import type { Team } from "@/types";
 
@@ -19,22 +20,26 @@ export function TeamsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [teamName, setTeamName] = useState("");
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [actionError, setActionError] = useState("");
 
   const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!) });
 
   const createTeam = useMutation({
     mutationFn: () => teamsApi.create({ gameId: gameId!, name: teamName }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["teams", gameId] }); setCreateOpen(false); setTeamName(""); },
+    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["teams", gameId] }); setCreateOpen(false); setTeamName(""); },
+    onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
   const updateTeam = useMutation({
     mutationFn: ({ id, name }: { id: string; name: string }) => teamsApi.update(id, gameId!, { name }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["teams", gameId] }),
+    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["teams", gameId] }); },
+    onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
   const deleteTeam = useMutation({
     mutationFn: (id: string) => teamsApi.delete(id, gameId!),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["teams", gameId] }),
+    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["teams", gameId] }); },
+    onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
   function copyCode(code: string) {
@@ -52,6 +57,7 @@ export function TeamsPage() {
         </div>
         <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-4 w-4" />{t("teams.createTeam")}</Button>
       </div>
+      {actionError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{actionError}</div>}
 
       {teams.length === 0 ? (
         <Card className="py-12"><CardContent className="text-center"><Users className="mx-auto h-8 w-8 text-muted-foreground mb-2" /><p className="text-muted-foreground">{t("teams.noTeamsDescription")}</p></CardContent></Card>

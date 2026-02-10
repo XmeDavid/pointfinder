@@ -9,13 +9,14 @@ import { useGameWebSocket } from "@/hooks/useGameWebSocket";
 export function LeaderboardPage() {
   const { t } = useTranslation();
   const { gameId } = useParams<{ gameId: string }>();
-  useGameWebSocket(gameId);
+  const websocketError = useGameWebSocket(gameId);
   const { data: leaderboard = [] } = useQuery({ queryKey: ["leaderboard", gameId], queryFn: () => monitoringApi.getLeaderboard(gameId!) });
   const topPoints = leaderboard[0]?.points || 1;
 
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold">{t("leaderboard.title")}</h1><p className="text-muted-foreground">{t("leaderboard.description")}</p></div>
+      {websocketError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{websocketError}</div>}
       {leaderboard.length === 0 ? (
         <Card className="py-12"><CardContent className="text-center"><Trophy className="mx-auto h-8 w-8 text-muted-foreground mb-2" /><p className="text-muted-foreground">{t("leaderboard.noScores")}</p></CardContent></Card>
       ) : (

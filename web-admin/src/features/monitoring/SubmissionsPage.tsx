@@ -20,7 +20,7 @@ import type { Submission, SubmissionStatus } from "@/types";
 export function SubmissionsPage() {
   const { t } = useTranslation();
   const { gameId } = useParams<{ gameId: string }>();
-  useGameWebSocket(gameId);
+  const websocketError = useGameWebSocket(gameId);
   const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const [filter, setFilter] = useState<"all" | "pending">("all");
@@ -55,6 +55,7 @@ export function SubmissionsPage() {
           <Button variant={filter === "pending" ? "secondary" : "ghost"} size="sm" onClick={() => setFilter("pending")}><Filter className="mr-1 h-3 w-3" />{t("submissions.statusPending")} ({pendingCount})</Button>
         </div>
       </div>
+      {websocketError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{websocketError}</div>}
 
       {sorted.length === 0 ? (
         <Card className="py-12"><CardContent className="text-center"><FileText className="mx-auto h-8 w-8 text-muted-foreground mb-2" /><p className="text-muted-foreground">{filter === "pending" ? t("submissions.noPending") : t("submissions.noSubmissions")}</p></CardContent></Card>
@@ -111,7 +112,7 @@ export function SubmissionsPage() {
                 </div>
               )}
               {(!reviewingSub.fileUrl || reviewingSub.answer) && (
-                <div><p className="text-sm font-medium mb-1">{reviewingSub.fileUrl ? "Notes" : t("submissions.answer")}</p><div className="rounded-md bg-muted p-3 text-sm">{reviewingSub.answer || <span className="text-muted-foreground italic">No notes</span>}</div></div>
+                <div><p className="text-sm font-medium mb-1">{reviewingSub.fileUrl ? t("submissions.notes") : t("submissions.answer")}</p><div className="rounded-md bg-muted p-3 text-sm">{reviewingSub.answer || <span className="text-muted-foreground italic">{t("submissions.noNotes")}</span>}</div></div>
               )}
               <div className="space-y-2"><p className="text-sm font-medium">{t("submissions.feedbackLabel")}</p><Textarea value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder={t("submissions.feedbackPlaceholder")} rows={2} /></div>
             </div>

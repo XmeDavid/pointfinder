@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { notificationsApi } from "@/lib/api/notifications";
 import { teamsApi } from "@/lib/api/teams";
-import { useAuthStore } from "@/hooks/useAuth";
+import { getApiErrorMessage } from "@/lib/api/errors";
 import { formatDateTime } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
@@ -18,16 +18,17 @@ export function NotificationsPage() {
   const { t } = useTranslation();
   const { gameId } = useParams<{ gameId: string }>();
   const queryClient = useQueryClient();
-  const user = useAuthStore((s) => s.user);
   const [message, setMessage] = useState("");
   const [targetTeamId, setTargetTeamId] = useState("");
+  const [actionError, setActionError] = useState("");
 
   const { data: notifications = [] } = useQuery({ queryKey: ["notifications", gameId], queryFn: () => notificationsApi.listByGame(gameId!) });
   const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!) });
 
   const sendNotification = useMutation({
     mutationFn: () => notificationsApi.send({ gameId: gameId!, message, targetTeamId: targetTeamId || undefined }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["notifications", gameId] }); setMessage(""); setTargetTeamId(""); },
+    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["notifications", gameId] }); setMessage(""); setTargetTeamId(""); },
+    onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
   const sorted = [...notifications].sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime());
@@ -35,6 +36,7 @@ export function NotificationsPage() {
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold">{t("notifications.title")}</h1><p className="text-muted-foreground">{t("notifications.description")}</p></div>
+      {actionError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{actionError}</div>}
       <Card>
         <CardHeader><CardTitle className="text-lg">{t("notifications.compose")}</CardTitle><CardDescription>{t("notifications.composeDescription")}</CardDescription></CardHeader>
         <CardContent>

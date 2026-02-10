@@ -5,12 +5,15 @@ import com.dbv.scoutmission.dto.request.ReviewSubmissionRequest;
 import com.dbv.scoutmission.dto.response.SubmissionResponse;
 import com.dbv.scoutmission.entity.*;
 import com.dbv.scoutmission.exception.BadRequestException;
+import com.dbv.scoutmission.exception.ForbiddenException;
 import com.dbv.scoutmission.exception.ResourceNotFoundException;
 import com.dbv.scoutmission.repository.*;
 import com.dbv.scoutmission.security.SecurityUtils;
 import com.dbv.scoutmission.websocket.GameEventBroadcaster;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
@@ -29,9 +32,11 @@ public class SubmissionService {
     private final UserRepository userRepository;
     private final ActivityEventRepository activityEventRepository;
     private final GameEventBroadcaster eventBroadcaster;
+    private final GameAccessService gameAccessService;
 
     @Transactional(readOnly = true)
     public List<SubmissionResponse> getSubmissionsByGame(UUID gameId) {
+        gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         return submissionRepository.findByGameId(gameId).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -46,11 +51,14 @@ public class SubmissionService {
 
     @Transactional
     public SubmissionResponse createSubmission(UUID gameId, CreateSubmissionRequest request) {
+        ensureCallerCanCreateSubmission(gameId, request.getTeamId());
+
         // Check for idempotency - if submission with this key exists, return it
         if (request.getIdempotencyKey() != null) {
             var existing = submissionRepository.findByIdempotencyKey(request.getIdempotencyKey());
             if (existing.isPresent()) {
                 Submission sub = existing.get();
+                ensureBelongsToGame(sub.getTeam().getGame().getId(), gameId, "Submission");
                 // Initialize lazy proxies before returning
                 sub.getTeam().getId();
                 sub.getChallenge().getId();
@@ -65,6 +73,9 @@ public class SubmissionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Challenge", request.getChallengeId()));
         Base base = baseRepository.findById(request.getBaseId())
                 .orElseThrow(() -> new ResourceNotFoundException("Base", request.getBaseId()));
+        ensureBelongsToGame(team.getGame().getId(), gameId, "Team");
+        ensureBelongsToGame(challenge.getGame().getId(), gameId, "Challenge");
+        ensureBelongsToGame(base.getGame().getId(), gameId, "Base");
 
         // Force initialization of lazy proxies within this transaction
         team.getName();
@@ -76,7 +87,8 @@ public class SubmissionService {
         SubmissionStatus status = SubmissionStatus.pending;
         if (challenge.getAutoValidate() && challenge.getAnswerType() == AnswerType.text
                 && challenge.getCorrectAnswer() != null) {
-            status = challenge.getCorrectAnswer().equalsIgnoreCase(request.getAnswer().trim())
+            String providedAnswer = request.getAnswer() != null ? request.getAnswer().trim() : "";
+            status = challenge.getCorrectAnswer().equalsIgnoreCase(providedAnswer)
                     ? SubmissionStatus.correct
                     : SubmissionStatus.incorrect;
         }
@@ -120,8 +132,10 @@ public class SubmissionService {
 
     @Transactional
     public SubmissionResponse reviewSubmission(UUID gameId, UUID submissionId, ReviewSubmissionRequest request) {
+        gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Submission", submissionId));
+        ensureBelongsToGame(submission.getTeam().getGame().getId(), gameId, "Submission");
 
         // Force initialization of lazy proxies within this transaction
         submission.getTeam().getName();
@@ -178,6 +192,35 @@ public class SubmissionService {
         eventBroadcaster.broadcastActivityEvent(gameId, event);
 
         return toResponse(submission);
+    }
+
+    private void ensureCallerCanCreateSubmission(UUID gameId, UUID teamId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) {
+            throw new ForbiddenException("Authentication is required");
+        }
+
+        Object principal = auth.getPrincipal();
+        if (principal instanceof User) {
+            gameAccessService.ensureCurrentUserCanAccessGame(gameId);
+            return;
+        }
+
+        if (principal instanceof Player player) {
+            gameAccessService.ensurePlayerBelongsToGame(player, gameId);
+            if (!player.getTeam().getId().equals(teamId)) {
+                throw new ForbiddenException("Player cannot create submissions for another team");
+            }
+            return;
+        }
+
+        throw new ForbiddenException("Unauthorized principal for submission creation");
+    }
+
+    private void ensureBelongsToGame(UUID entityGameId, UUID expectedGameId, String entityName) {
+        if (!entityGameId.equals(expectedGameId)) {
+            throw new BadRequestException(entityName + " does not belong to this game");
+        }
     }
 
     private SubmissionResponse toResponse(Submission s) {

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Plus, Calendar, Users, MapPin, Upload } from "lucide-react";
+import { Plus, Calendar, Users, Upload } from "lucide-react";
 import { useState, FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,11 +9,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { gamesApi } from "@/lib/api/games";
-import { basesApi } from "@/lib/api/bases";
-import { teamsApi } from "@/lib/api/teams";
+import { getApiErrorMessage } from "@/lib/api/errors";
 import { formatDate } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
-import type { GameStatus } from "@/types";
+import type { Game, GameStatus } from "@/types";
 
 export function GamesListPage() {
   const { t } = useTranslation();
@@ -53,21 +52,16 @@ export function GamesListPage() {
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {games.map((game) => <GameCard key={game.id} gameId={game.id} />)}
+          {games.map((game) => <GameCard key={game.id} game={game} />)}
         </div>
       )}
     </div>
   );
 }
 
-function GameCard({ gameId }: { gameId: string }) {
+function GameCard({ game }: { game: Game }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { data: game } = useQuery({ queryKey: ["game", gameId], queryFn: () => gamesApi.getById(gameId) });
-  const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId) });
-  const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId) });
-
-  if (!game) return null;
 
   const statusVariant: Record<GameStatus, "default" | "secondary" | "warning" | "success"> = { setup: "secondary", live: "success", ended: "default" };
 
@@ -83,8 +77,7 @@ function GameCard({ gameId }: { gameId: string }) {
       <CardContent>
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{game.startDate ? formatDate(game.startDate) : "—"}</span>
-          <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{t("games.base", { count: bases.length })}</span>
-          <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{t("games.team", { count: teams.length })}</span>
+          <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{t("games.operator", { count: game.operatorIds.length })}</span>
         </div>
       </CardContent>
     </Card>
@@ -143,10 +136,8 @@ function ImportGameDialog({ open, onOpenChange, navigate }: ImportGameDialogProp
     } catch (error: any) {
       if (error instanceof SyntaxError) {
         setError(t("game.invalidJsonFile"));
-      } else if (error.response?.data?.message) {
-        setError(error.response.data.message);
       } else {
-        setError(t("game.importError"));
+        setError(getApiErrorMessage(error, t("game.importError")));
       }
       console.error("Import failed:", error);
     } finally {

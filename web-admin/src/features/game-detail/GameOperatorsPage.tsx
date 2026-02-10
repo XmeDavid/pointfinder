@@ -9,11 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { gamesApi } from "@/lib/api/games";
-import { usersApi } from "@/lib/api/users";
 import { invitesApi } from "@/lib/api/invites";
-import { useAuthStore } from "@/hooks/useAuth";
 import { formatDate } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { getApiErrorMessage } from "@/lib/api/errors";
 
 export function GameOperatorsPage() {
   const { t } = useTranslation();
@@ -22,10 +21,9 @@ export function GameOperatorsPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteError, setInviteError] = useState("");
   const queryClient = useQueryClient();
-  const currentUser = useAuthStore((s) => s.user);
 
   const { data: game } = useQuery({ queryKey: ["game", gameId], queryFn: () => gamesApi.getById(gameId!) });
-  const { data: operators = [] } = useQuery({ queryKey: ["game-operators", gameId], queryFn: () => usersApi.getByIds(game?.operatorIds ?? []), enabled: !!game });
+  const { data: operators = [] } = useQuery({ queryKey: ["game-operators", gameId], queryFn: () => gamesApi.getOperators(gameId!), enabled: !!gameId });
   const { data: invites = [] } = useQuery({ queryKey: ["game-invites", gameId], queryFn: () => invitesApi.listByGame(gameId!) });
 
   const sendInvite = useMutation({
@@ -36,9 +34,8 @@ export function GameOperatorsPage() {
       setInviteEmail("");
       setInviteError("");
     },
-    onError: (error: any) => {
-      const message = error?.response?.data?.message || t("gameOperators.inviteError");
-      setInviteError(message);
+    onError: (error: unknown) => {
+      setInviteError(getApiErrorMessage(error, t("gameOperators.inviteError")));
     },
   });
 

@@ -37,14 +37,7 @@ final class LocationService: NSObject, ObservableObject {
         locationManager.requestWhenInUseAuthorization()
         locationManager.startUpdatingLocation()
 
-        // Send location on a fixed timer
-        sendTimer?.invalidate()
-        sendTimer = Timer.scheduledTimer(withTimeInterval: sendInterval, repeats: true) { [weak self] _ in
-            guard let self else { return }
-            Task { @MainActor in
-                await self.sendCurrentLocation()
-            }
-        }
+        scheduleSendTimer()
     }
 
     /// Stop tracking and sending location.
@@ -61,23 +54,17 @@ final class LocationService: NSObject, ObservableObject {
     /// Send the current location immediately (e.g. after a check-in or submission).
     /// Also resets the timer so the next periodic send is a full interval later.
     func sendLocationNow() async {
+        guard NetworkMonitor.shared.isOnline else { return }
         await sendCurrentLocation()
 
         // Reset the timer so we don't double-send shortly after
-        sendTimer?.invalidate()
-        if apiClient != nil && gameId != nil && token != nil {
-            sendTimer = Timer.scheduledTimer(withTimeInterval: sendInterval, repeats: true) { [weak self] _ in
-                guard let self else { return }
-                Task { @MainActor in
-                    await self.sendCurrentLocation()
-                }
-            }
-        }
+        scheduleSendTimer()
     }
 
     // MARK: - Sending
 
     private func sendCurrentLocation() async {
+        guard NetworkMonitor.shared.isOnline else { return }
         guard let location = lastLocation,
               let apiClient, let gameId, let token else { return }
 
@@ -91,6 +78,21 @@ final class LocationService: NSObject, ObservableObject {
         } catch {
             // Silently ignore location update failures — not critical
             print("[LocationService] Failed to send location: \(error.localizedDescription)")
+        }
+    }
+
+    private func scheduleSendTimer() {
+        sendTimer?.invalidate()
+        guard apiClient != nil, gameId != nil, token != nil else {
+            sendTimer = nil
+            return
+        }
+
+        sendTimer = Timer.scheduledTimer(withTimeInterval: sendInterval, repeats: true) { [weak self] _ in
+            guard let self else { return }
+            Task { @MainActor in
+                await self.sendCurrentLocation()
+            }
         }
     }
 }

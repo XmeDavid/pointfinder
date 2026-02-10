@@ -48,6 +48,6 @@ public class TeamController {
     @GetMapping("/{teamId}/players")
     public ResponseEntity<List<PlayerResponse>> getPlayers(@PathVariable UUID gameId,
                                                             @PathVariable UUID teamId) {
-        return ResponseEntity.ok(teamService.getPlayers(teamId));
+        return ResponseEntity.ok(teamService.getPlayers(gameId, teamId));
     }
 }

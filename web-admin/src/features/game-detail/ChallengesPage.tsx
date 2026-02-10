@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { RichTextEditor } from "@/components/common/RichTextEditor";
 import { challengesApi, type CreateChallengeDto } from "@/lib/api/challenges";
+import { getApiErrorMessage } from "@/lib/api/errors";
 import { useTranslation } from "react-i18next";
 import type { Challenge } from "@/types";
 
@@ -21,22 +22,26 @@ export function ChallengesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Challenge | null>(null);
   const [form, setForm] = useState<Partial<CreateChallengeDto>>({});
+  const [actionError, setActionError] = useState("");
 
   const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!) });
 
   const createChallenge = useMutation({
     mutationFn: (data: CreateChallengeDto) => challengesApi.create({ ...data, gameId: gameId! }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["challenges", gameId] }); closeDialog(); },
+    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["challenges", gameId] }); closeDialog(); },
+    onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
   const updateChallenge = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<CreateChallengeDto> }) => challengesApi.update(id, { ...data, gameId: gameId! }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["challenges", gameId] }); closeDialog(); },
+    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["challenges", gameId] }); closeDialog(); },
+    onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
   const deleteChallenge = useMutation({
     mutationFn: (id: string) => challengesApi.delete(id, gameId!),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["challenges", gameId] }),
+    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["challenges", gameId] }); },
+    onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
   function openCreate() {
@@ -64,6 +69,7 @@ export function ChallengesPage() {
         </div>
         <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />{t("challenges.addChallenge")}</Button>
       </div>
+      {actionError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{actionError}</div>}
 
       {challenges.length === 0 ? (
         <Card className="py-12"><CardContent className="text-center"><Puzzle className="mx-auto h-8 w-8 text-muted-foreground mb-2" /><p className="text-muted-foreground">{t("challenges.noChallengesDescription")}</p></CardContent></Card>

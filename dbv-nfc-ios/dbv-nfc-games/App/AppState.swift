@@ -49,6 +49,7 @@ final class AppState {
     let apiClient = APIClient()
     let locationService = LocationService()
     let syncEngine = SyncEngine.shared
+    private var pendingCountTask: Task<Void, Never>?
 
     // MARK: - Init
 
@@ -64,9 +65,11 @@ final class AppState {
         }
 
         // Start periodic pending count updates
-        Task {
-            while true {
-                pendingActionsCount = await OfflineQueue.shared.pendingCount
+        pendingCountTask?.cancel()
+        pendingCountTask = Task { [weak self] in
+            while !Task.isCancelled {
+                guard let self else { return }
+                self.pendingActionsCount = await OfflineQueue.shared.pendingCount
                 try? await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
             }
         }
@@ -128,6 +131,7 @@ final class AppState {
             KeychainService.save(key: AppConfiguration.operatorTokenKey, value: response.accessToken)
             KeychainService.save(key: AppConfiguration.operatorRefreshTokenKey, value: response.refreshToken)
             UserDefaults.standard.set("operator", forKey: AppConfiguration.authTypeKey)
+            UserDefaults.standard.set(response.user.id.uuidString, forKey: AppConfiguration.operatorUserIdKey)
 
             authType = .userOperator(
                 accessToken: response.accessToken,
@@ -207,8 +211,11 @@ final class AppState {
             }
         }
 
-        // Offline path: enqueue action and return local response
-        await OfflineQueue.shared.enqueueCheckIn(gameId: gameId, baseId: baseId)
+        // Offline path: enqueue action once and return local response
+        let alreadyQueued = await OfflineQueue.shared.hasPendingCheckIn(gameId: gameId, baseId: baseId)
+        if !alreadyQueued {
+            await OfflineQueue.shared.enqueueCheckIn(gameId: gameId, baseId: baseId)
+        }
 
         // Update local cache
         await GameDataCache.shared.updateBaseStatus(baseId: baseId, status: "checked_in", gameId: gameId)
@@ -242,7 +249,8 @@ final class AppState {
                 let request = PlayerSubmissionRequest(
                     baseId: baseId,
                     challengeId: challengeId,
-                    answer: answer
+                    answer: answer,
+                    idempotencyKey: UUID()
                 )
                 let response = try await apiClient.submitAnswer(
                     gameId: gameId,
@@ -313,12 +321,14 @@ final class AppState {
         }
 
         do {
+            let idempotencyKey = UUID()
             let response = try await apiClient.submitAnswerWithFile(
                 gameId: gameId,
                 baseId: baseId,
                 challengeId: challengeId,
                 imageData: imageData,
                 notes: notes,
+                idempotencyKey: idempotencyKey,
                 token: token
             )
 
@@ -358,24 +368,34 @@ final class AppState {
             }
         }
         let nsError = error as NSError
-        return nsError.domain == NSURLErrorDomain
+        guard nsError.domain == NSURLErrorDomain else { return false }
+        guard let code = URLError.Code(rawValue: nsError.code) else { return false }
+
+        switch code {
+        case .notConnectedToInternet,
+             .networkConnectionLost,
+             .timedOut,
+             .cannotFindHost,
+             .cannotConnectToHost,
+             .dnsLookupFailed,
+             .internationalRoamingOff,
+             .callIsActive,
+             .dataNotAllowed:
+            return true
+        default:
+            return false
+        }
     }
 
     private func updateLocalBaseStatus(baseId: UUID, status: BaseStatus) {
         if let index = baseProgress.firstIndex(where: { $0.baseId == baseId }) {
-            let old = baseProgress[index]
-            baseProgress[index] = BaseProgress(
-                baseId: old.baseId,
-                baseName: old.baseName,
-                lat: old.lat,
-                lng: old.lng,
-                nfcLinked: old.nfcLinked,
-                requirePresenceToSubmit: old.requirePresenceToSubmit,
-                status: status.rawValue,
-                checkedInAt: status == .checkedIn ? ISO8601DateFormatter().string(from: Date()) : old.checkedInAt,
-                challengeId: old.challengeId,
-                submissionStatus: status == .submitted ? "pending" : old.submissionStatus
-            )
+            baseProgress[index].status = status.rawValue
+            if status == .checkedIn {
+                baseProgress[index].checkedInAt = ISO8601DateFormatter().string(from: Date())
+            }
+            if status == .submitted {
+                baseProgress[index].submissionStatus = "pending"
+            }
         }
     }
 
@@ -412,6 +432,7 @@ final class AppState {
         defaults.removeObject(forKey: AppConfiguration.playerIdKey)
         defaults.removeObject(forKey: AppConfiguration.teamIdKey)
         defaults.removeObject(forKey: AppConfiguration.gameIdKey)
+        defaults.removeObject(forKey: AppConfiguration.operatorUserIdKey)
         defaults.removeObject(forKey: AppConfiguration.authTypeKey)
 
         authType = .none
@@ -422,6 +443,8 @@ final class AppState {
         solvingBaseId = nil
         solvingChallengeId = nil
         pendingActionsCount = 0
+        pendingCountTask?.cancel()
+        pendingCountTask = nil
 
         Task {
             await apiClient.clearAuth()
@@ -461,8 +484,25 @@ final class AppState {
                   let token = KeychainService.load(key: AppConfiguration.operatorTokenKey),
                   let refreshToken = KeychainService.load(key: AppConfiguration.operatorRefreshTokenKey) {
 
-            // We don't persist userId for operators; they can re-fetch from /me
-            authType = .userOperator(accessToken: token, refreshToken: refreshToken, userId: UUID())
+            if let userIdString = defaults.string(forKey: AppConfiguration.operatorUserIdKey),
+               let userId = UUID(uuidString: userIdString) {
+                authType = .userOperator(accessToken: token, refreshToken: refreshToken, userId: userId)
+            } else {
+                // Backward compatibility for sessions saved before operator user ID persistence.
+                authType = .userOperator(accessToken: token, refreshToken: refreshToken, userId: UUID())
+                Task {
+                    if let user = try? await apiClient.getCurrentUser(token: token) {
+                        UserDefaults.standard.set(user.id.uuidString, forKey: AppConfiguration.operatorUserIdKey)
+                        if case .userOperator(let accessToken, let currentRefreshToken, _) = authType {
+                            authType = .userOperator(
+                                accessToken: accessToken,
+                                refreshToken: currentRefreshToken,
+                                userId: user.id
+                            )
+                        }
+                    }
+                }
+            }
 
             Task { await configureApiClientAuth(refreshToken: refreshToken) }
         }
@@ -486,6 +526,7 @@ final class AppState {
                     // Persist to keychain
                     KeychainService.save(key: AppConfiguration.operatorTokenKey, value: accessToken)
                     KeychainService.save(key: AppConfiguration.operatorRefreshTokenKey, value: refreshToken)
+                    UserDefaults.standard.set(userId.uuidString, forKey: AppConfiguration.operatorUserIdKey)
                 }
             },
             onAuthFailure: { [weak self] in

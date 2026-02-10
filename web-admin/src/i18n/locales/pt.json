@@ -9,6 +9,7 @@
     "delete": "Eliminar",
     "edit": "Editar",
     "add": "Adicionar",
+    "copy": "Copiar",
     "back": "Voltar",
     "loading": "A carregar...",
     "sending": "A enviar...",
@@ -53,6 +54,7 @@
   },
   "nav": {
     "games": "Jogos",
+    "admin": "Admin",
     "operators": "Operadores",
     "overview": "Visão Geral",
     "bases": "Bases",
@@ -122,7 +124,9 @@
     "base_one": "{{count}} base",
     "base_other": "{{count}} bases",
     "team_one": "{{count}} equipa",
-    "team_other": "{{count}} equipas"
+    "team_other": "{{count}} equipas",
+    "operator_one": "{{count}} operador",
+    "operator_other": "{{count}} operadores"
   },
   "status": {
     "setup": "Configuração",
@@ -249,6 +253,11 @@
     "team": "Equipa",
     "selectTeam": "Selecionar equipa...",
     "allTeams": "Todas as Equipas",
+    "addForBase": "Adicionar ou gerir atribuições para esta base.",
+    "fullyAssigned": "Esta base já está totalmente atribuída para todas as equipas.",
+    "modeLockedAllTeams": "Esta base usa uma atribuição para \"Todas as Equipas\". Remova-a antes de adicionar atribuições por equipa.",
+    "noTeamsAvailable": "Não há equipas disponíveis para novas atribuições nesta base.",
+    "conflictGeneric": "Esta atribuição entra em conflito com dados existentes.",
     "unassignedNote_one": "{{count}} base sem atribuição receberá desafios aleatórios por equipa ao iniciar o jogo.",
     "unassignedNote_other": "{{count}} bases sem atribuição receberão desafios aleatórios por equipa ao iniciar o jogo."
   },
@@ -331,6 +340,8 @@
     "team": "Equipa",
     "challenge": "Desafio",
     "answer": "Resposta",
+    "notes": "Notas",
+    "noNotes": "Sem notas",
     "feedbackLabel": "Feedback (opcional)",
     "feedbackPlaceholder": "Feedback opcional para a equipa...",
     "reject": "Rejeitar",

@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { basesApi, type CreateBaseDto } from "@/lib/api/bases";
 import { challengesApi } from "@/lib/api/challenges";
+import { getApiErrorMessage } from "@/lib/api/errors";
 import { MapPicker, BaseMapView } from "@/components/common/MapPicker";
 import { useTranslation } from "react-i18next";
 import type { Base } from "@/types";
@@ -27,6 +28,7 @@ export function BasesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Base | null>(null);
   const [form, setForm] = useState<Partial<CreateBaseDto>>({});
+  const [actionError, setActionError] = useState("");
   const [defaultLocation, setDefaultLocation] = useState<{ lat: number; lng: number }>({ lat: 40.08789650218038, lng: -8.869461715221407 });
 
   useEffect(() => {
@@ -48,17 +50,20 @@ export function BasesPage() {
 
   const createBase = useMutation({
     mutationFn: (data: CreateBaseDto) => basesApi.create({ ...data, gameId: gameId! }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["bases", gameId] }); closeDialog(); },
+    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["bases", gameId] }); closeDialog(); },
+    onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
   const updateBase = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<CreateBaseDto> }) => basesApi.update(id, { ...data, gameId: gameId! }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["bases", gameId] }); closeDialog(); },
+    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["bases", gameId] }); closeDialog(); },
+    onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
   const deleteBase = useMutation({
     mutationFn: basesApi.delete,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["bases", gameId] }),
+    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["bases", gameId] }); },
+    onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
   function openCreate() {
@@ -100,6 +105,7 @@ export function BasesPage() {
           <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />{t("bases.addBase")}</Button>
         </div>
       </div>
+      {actionError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{actionError}</div>}
 
       {view === "list" ? (
         <div className="space-y-3">

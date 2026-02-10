@@ -11,6 +11,17 @@ final class NFCReaderService: NSObject {
     private var session: NFCNDEFReaderSession?
     private var continuation: CheckedContinuation<UUID, Error>?
 
+    private func resolveContinuation(_ result: Result<UUID, Error>) {
+        guard let continuation else { return }
+        self.continuation = nil
+        switch result {
+        case .success(let baseId):
+            continuation.resume(returning: baseId)
+        case .failure(let error):
+            continuation.resume(throwing: error)
+        }
+    }
+
     /// Start an NFC read session and return the base ID found on the tag.
     func scanForBaseId() async throws -> UUID {
         #if targetEnvironment(simulator)
@@ -47,24 +58,26 @@ extension NFCReaderService: NFCNDEFReaderSessionDelegate {
 
     func readerSession(_ session: NFCNDEFReaderSession, didInvalidateWithError error: Error) {
         DispatchQueue.main.async { [weak self] in
-            self?.isReading = false
+            guard let self else { return }
+            self.isReading = false
+            self.session = nil
             if let nfcError = error as? NFCReaderError,
                nfcError.code == .readerSessionInvalidationErrorUserCanceled {
-                self?.continuation?.resume(throwing: NFCError.cancelled)
-            } else if self?.continuation != nil {
-                self?.errorMessage = error.localizedDescription
-                self?.continuation?.resume(throwing: NFCError.readFailed(error.localizedDescription))
+                self.resolveContinuation(.failure(NFCError.cancelled))
+            } else if self.continuation != nil {
+                self.errorMessage = error.localizedDescription
+                self.resolveContinuation(.failure(NFCError.readFailed(error.localizedDescription)))
             }
-            self?.continuation = nil
         }
     }
 
     func readerSession(_ session: NFCNDEFReaderSession, didDetectNDEFs messages: [NFCNDEFMessage]) {
         guard let message = messages.first,
               let record = message.records.first else {
-            continuation?.resume(throwing: NFCError.noData)
-            continuation = nil
-            isReading = false
+            DispatchQueue.main.async { [weak self] in
+                self?.isReading = false
+                self?.resolveContinuation(.failure(NFCError.noData))
+            }
             return
         }
 
@@ -111,8 +124,8 @@ extension NFCReaderService: NFCNDEFReaderSessionDelegate {
             DispatchQueue.main.async { [weak self] in
                 self?.lastReadBaseId = baseId
                 self?.isReading = false
-                self?.continuation?.resume(returning: baseId)
-                self?.continuation = nil
+                self?.session = nil
+                self?.resolveContinuation(.success(baseId))
             }
             return
         }
@@ -137,8 +150,8 @@ extension NFCReaderService: NFCNDEFReaderSessionDelegate {
                 DispatchQueue.main.async { [weak self] in
                     self?.lastReadBaseId = baseId
                     self?.isReading = false
-                    self?.continuation?.resume(returning: baseId)
-                    self?.continuation = nil
+                    self?.session = nil
+                    self?.resolveContinuation(.success(baseId))
                 }
                 return
             }
@@ -147,8 +160,8 @@ extension NFCReaderService: NFCNDEFReaderSessionDelegate {
         session.invalidate(errorMessage: Translations.string("nfc.invalidTagData"))
         DispatchQueue.main.async { [weak self] in
             self?.isReading = false
-            self?.continuation?.resume(throwing: NFCError.invalidData)
-            self?.continuation = nil
+            self?.session = nil
+            self?.resolveContinuation(.failure(NFCError.invalidData))
         }
     }
 }

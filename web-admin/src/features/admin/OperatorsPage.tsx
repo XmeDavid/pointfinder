@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { usersApi } from "@/lib/api/users";
 import { invitesApi } from "@/lib/api/invites";
-import { useAuthStore } from "@/hooks/useAuth";
+import { getApiErrorMessage } from "@/lib/api/errors";
 import { formatDate } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
@@ -17,8 +17,8 @@ export function OperatorsPage() {
   const { t } = useTranslation();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteError, setInviteError] = useState("");
   const queryClient = useQueryClient();
-  const currentUser = useAuthStore((s) => s.user);
 
   const { data: operators = [] } = useQuery({ queryKey: ["operators"], queryFn: usersApi.listOperators });
   const { data: invites = [] } = useQuery({ queryKey: ["invites"], queryFn: invitesApi.list });
@@ -26,7 +26,8 @@ export function OperatorsPage() {
 
   const sendInvite = useMutation({
     mutationFn: (email: string) => invitesApi.create({ email }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["invites"] }); setInviteOpen(false); setInviteEmail(""); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["invites"] }); setInviteOpen(false); setInviteEmail(""); setInviteError(""); },
+    onError: (error: unknown) => setInviteError(getApiErrorMessage(error)),
   });
 
   return (
@@ -40,6 +41,7 @@ export function OperatorsPage() {
           <Plus className="mr-2 h-4 w-4" />{t("admin.inviteOperator")}
         </Button>
       </div>
+      {inviteError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{inviteError}</div>}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {operators.map((op) => (
@@ -91,6 +93,7 @@ export function OperatorsPage() {
               <div className="space-y-2">
                 <Label htmlFor="invite-email">{t("admin.emailAddress")}</Label>
                 <Input id="invite-email" type="email" placeholder={t("admin.emailPlaceholder")} value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} required />
+                {inviteError && <p className="text-sm text-destructive">{inviteError}</p>}
               </div>
             </div>
             <DialogFooter>

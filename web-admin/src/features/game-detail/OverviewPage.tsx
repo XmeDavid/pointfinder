@@ -9,14 +9,17 @@ import { basesApi } from "@/lib/api/bases";
 import { challengesApi } from "@/lib/api/challenges";
 import { teamsApi } from "@/lib/api/teams";
 import { assignmentsApi } from "@/lib/api/assignments";
+import { getApiErrorMessage } from "@/lib/api/errors";
 import { formatDateTime } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import type { GameStatus } from "@/types";
+import { useState } from "react";
 
 export function OverviewPage() {
   const { t } = useTranslation();
   const { gameId } = useParams<{ gameId: string }>();
   const queryClient = useQueryClient();
+  const [actionError, setActionError] = useState("");
 
   const { data: game } = useQuery({ queryKey: ["game", gameId], queryFn: () => gamesApi.getById(gameId!) });
   const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!) });
@@ -26,7 +29,8 @@ export function OverviewPage() {
 
   const transition = useMutation({
     mutationFn: (status: GameStatus) => gamesApi.updateStatus(gameId!, status),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["game", gameId] }),
+    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["game", gameId] }); },
+    onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
   if (!game) return null;
@@ -80,6 +84,7 @@ export function OverviewPage() {
           )}
         </div>
       </div>
+      {actionError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{actionError}</div>}
 
       <div className="grid gap-4 md:grid-cols-4">
         <Card><CardContent className="flex items-center gap-3 p-4"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10"><MapPin className="h-5 w-5 text-blue-500" /></div><div><p className="text-2xl font-bold">{bases.length}</p><p className="text-sm text-muted-foreground">{t("nav.bases")}</p></div></CardContent></Card>

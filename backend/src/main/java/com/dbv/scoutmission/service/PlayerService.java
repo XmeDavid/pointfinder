@@ -22,6 +22,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PlayerService {
 
+    private static final Comparator<Assignment> ASSIGNMENT_RECENCY_COMPARATOR =
+            Comparator.comparing(
+                            Assignment::getCreatedAt,
+                            Comparator.nullsLast(Comparator.reverseOrder())
+                    )
+                    .thenComparing(a -> a.getId().toString(), Comparator.reverseOrder());
+
     private final PlayerRepository playerRepository;
     private final TeamRepository teamRepository;
     private final BaseRepository baseRepository;
@@ -34,6 +41,7 @@ public class PlayerService {
     private final JwtTokenProvider tokenProvider;
     private final SubmissionService submissionService;
     private final TeamLocationRepository teamLocationRepository;
+    private final GameAccessService gameAccessService;
 
     @Transactional
     public PlayerAuthResponse joinTeam(PlayerJoinRequest request) {
@@ -59,17 +67,10 @@ public class PlayerService {
             player.setDisplayName(request.getDisplayName());
         }
 
-        // Generate JWT token for the player
-        String jwt = tokenProvider.generatePlayerToken(
-                player.getId() != null ? player.getId() : UUID.randomUUID(),
-                team.getId(),
-                game.getId()
-        );
-
         player = playerRepository.save(player);
 
-        // Re-generate with actual ID if it was new
-        jwt = tokenProvider.generatePlayerToken(player.getId(), team.getId(), game.getId());
+        // Generate JWT token using the persisted player ID
+        String jwt = tokenProvider.generatePlayerToken(player.getId(), team.getId(), game.getId());
         player.setToken(jwt);
         playerRepository.save(player);
 
@@ -105,6 +106,7 @@ public class PlayerService {
         // Force initialization of lazy proxy within this transaction
         team.getId();
         team.getName();
+        gameAccessService.ensurePlayerBelongsToGame(player, gameId);
 
         Base base = baseRepository.findById(baseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Base", baseId));
@@ -162,6 +164,7 @@ public class PlayerService {
         Team team = player.getTeam();
         // Force initialization of lazy proxy within this transaction
         team.getId();
+        gameAccessService.ensurePlayerBelongsToGame(player, gameId);
 
         List<Base> bases = baseRepository.findByGameId(gameId);
         List<CheckIn> checkIns = checkInRepository.findByGameIdAndTeamId(gameId, team.getId());
@@ -177,13 +180,27 @@ public class PlayerService {
                         s -> s,
                         (a, b) -> a.getSubmittedAt().isAfter(b.getSubmittedAt()) ? a : b
                 ));
-        Map<UUID, Assignment> assignmentByBase = assignments.stream()
-                .filter(a -> a.getTeam() == null || a.getTeam().getId().equals(team.getId()))
+
+        List<Assignment> sortedAssignments = assignments.stream()
+                .sorted(ASSIGNMENT_RECENCY_COMPARATOR)
+                .toList();
+
+        Map<UUID, Assignment> teamSpecificByBase = sortedAssignments.stream()
+                .filter(a -> a.getTeam() != null && a.getTeam().getId().equals(team.getId()))
                 .collect(Collectors.toMap(
                         a -> a.getBase().getId(),
                         a -> a,
-                        (a, b) -> a // take first if multiple
+                        (first, ignored) -> first
                 ));
+        Map<UUID, Assignment> globalByBase = sortedAssignments.stream()
+                .filter(a -> a.getTeam() == null)
+                .collect(Collectors.toMap(
+                        a -> a.getBase().getId(),
+                        a -> a,
+                        (first, ignored) -> first
+                ));
+        Map<UUID, Assignment> assignmentByBase = new HashMap<>(globalByBase);
+        assignmentByBase.putAll(teamSpecificByBase);
 
         return bases.stream().map(base -> {
             UUID bId = base.getId();
@@ -230,7 +247,12 @@ public class PlayerService {
     }
 
     @Transactional(readOnly = true)
-    public List<BaseResponse> getBases(UUID gameId) {
+    public List<BaseResponse> getBases(UUID gameId, Player player) {
+        UUID playerId = player.getId();
+        player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
+        gameAccessService.ensurePlayerBelongsToGame(player, gameId);
+
         return baseRepository.findByGameId(gameId).stream()
                 .map(base -> BaseResponse.builder()
                         .id(base.getId())
@@ -260,6 +282,7 @@ public class PlayerService {
 
         Team team = player.getTeam();
         team.getId(); // Force initialization
+        gameAccessService.ensurePlayerBelongsToGame(player, gameId);
 
         // Get current progress (already filters hidden+not_visited bases)
         List<BaseProgressResponse> progress = getProgress(gameId, player);
@@ -270,7 +293,7 @@ public class PlayerService {
                 .collect(Collectors.toSet());
 
         // Get all bases, then filter to only visible ones
-        List<BaseResponse> bases = getBases(gameId).stream()
+        List<BaseResponse> bases = getBases(gameId, player).stream()
                 .filter(b -> visibleBaseIds.contains(b.getId()))
                 .collect(Collectors.toList());
 
@@ -334,10 +357,25 @@ public class PlayerService {
         Team team = player.getTeam();
         // Force initialization of lazy proxy within this transaction
         team.getId();
+        gameAccessService.ensurePlayerBelongsToGame(player, gameId);
+
+        Base base = baseRepository.findById(request.getBaseId())
+                .orElseThrow(() -> new ResourceNotFoundException("Base", request.getBaseId()));
+        if (!base.getGame().getId().equals(gameId)) {
+            throw new BadRequestException("Base does not belong to this game");
+        }
 
         // Verify the team has checked in to this base
         if (!checkInRepository.existsByTeamIdAndBaseId(team.getId(), request.getBaseId())) {
             throw new BadRequestException("Team has not checked in to this base");
+        }
+
+        Challenge assignedChallenge = resolveAssignedChallenge(base, team);
+        if (assignedChallenge == null) {
+            throw new BadRequestException("No challenge is assigned for this base");
+        }
+        if (!assignedChallenge.getId().equals(request.getChallengeId())) {
+            throw new BadRequestException("Submitted challenge is not assigned to this team for this base");
         }
 
         CreateSubmissionRequest submissionRequest = new CreateSubmissionRequest();
@@ -395,15 +433,7 @@ public class PlayerService {
     }
 
     private CheckInResponse buildCheckInResponse(CheckIn checkIn, Base base, Team team) {
-        // Find the challenge for this base and team
-        List<Assignment> assignments = assignmentRepository.findByBaseId(base.getId());
-        Assignment assignment = assignments.stream()
-                .filter(a -> a.getTeam() == null || a.getTeam().getId().equals(team.getId()))
-                .findFirst()
-                .orElse(null);
-
-        // Fall back to fixed challenge if no assignment
-        Challenge challenge = assignment != null ? assignment.getChallenge() : base.getFixedChallenge();
+        Challenge challenge = resolveAssignedChallenge(base, team);
 
         CheckInResponse.ChallengeInfo challengeInfo = null;
         if (challenge != null) {
@@ -424,5 +454,23 @@ public class PlayerService {
                 .checkedInAt(checkIn.getCheckedInAt())
                 .challenge(challengeInfo)
                 .build();
+    }
+
+    private Challenge resolveAssignedChallenge(Base base, Team team) {
+        List<Assignment> assignments = assignmentRepository.findByBaseId(base.getId());
+        List<Assignment> sortedAssignments = assignments.stream()
+                .sorted(ASSIGNMENT_RECENCY_COMPARATOR)
+                .toList();
+
+        Assignment teamSpecificAssignment = sortedAssignments.stream()
+                .filter(a -> a.getTeam() != null && a.getTeam().getId().equals(team.getId()))
+                .findFirst()
+                .orElse(null);
+        Assignment globalAssignment = sortedAssignments.stream()
+                .filter(a -> a.getTeam() == null)
+                .findFirst()
+                .orElse(null);
+        Assignment assignment = teamSpecificAssignment != null ? teamSpecificAssignment : globalAssignment;
+        return assignment != null ? assignment.getChallenge() : base.getFixedChallenge();
     }
 }

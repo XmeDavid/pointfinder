@@ -83,6 +83,10 @@ actor APIClient {
         try await post("/api/auth/login", body: request)
     }
 
+    func getCurrentUser(token: String) async throws -> UserResponse {
+        try await get("/api/users/me", token: token)
+    }
+
     // MARK: - Player Endpoints
 
     func checkIn(gameId: UUID, baseId: UUID, token: String) async throws -> CheckInResponse {
@@ -108,7 +112,15 @@ actor APIClient {
         try await post("/api/player/games/\(gameId)/submissions", body: request, token: token)
     }
 
-    func submitAnswerWithFile(gameId: UUID, baseId: UUID, challengeId: UUID, imageData: Data, notes: String, token: String) async throws -> SubmissionResponse {
+    func submitAnswerWithFile(
+        gameId: UUID,
+        baseId: UUID,
+        challengeId: UUID,
+        imageData: Data,
+        notes: String,
+        idempotencyKey: UUID? = nil,
+        token: String
+    ) async throws -> SubmissionResponse {
         let boundary = "Boundary-\(UUID().uuidString)"
         var request = try buildRequest(path: "/api/player/games/\(gameId)/submissions/upload", method: "POST", token: token)
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
@@ -126,6 +138,11 @@ actor APIClient {
 
         // answer (notes) field
         body.appendMultipart(boundary: boundary, name: "answer", value: notes)
+
+        // idempotency key field
+        if let idempotencyKey {
+            body.appendMultipart(boundary: boundary, name: "idempotencyKey", value: idempotencyKey.uuidString)
+        }
 
         // closing boundary
         body.append("--\(boundary)--\r\n".data(using: .utf8)!)
@@ -292,6 +309,16 @@ actor APIClient {
         }
 
         guard (200...299).contains(httpResponse.statusCode) else {
+            if (httpResponse.statusCode == 401 || httpResponse.statusCode == 403),
+               request.value(forHTTPHeaderField: "Authorization") != nil,
+               storedRefreshToken != nil {
+                let newAccessToken = try await getRefreshedAccessToken()
+                var retryRequest = request
+                retryRequest.setValue("Bearer \(newAccessToken)", forHTTPHeaderField: "Authorization")
+                try await executeVoidWithoutRetry(retryRequest)
+                return
+            }
+
             let message = String(data: data, encoding: .utf8) ?? "Unknown error"
             throw APIError.httpError(statusCode: httpResponse.statusCode, message: message)
         }
@@ -382,6 +409,26 @@ actor APIClient {
             return try decoder.decode(T.self, from: data)
         } catch {
             throw APIError.decodingError(error)
+        }
+    }
+
+    private func executeVoidWithoutRetry(_ request: URLRequest) async throws {
+        let data: Data
+        let response: URLResponse
+
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch {
+            throw APIError.networkError(error)
+        }
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+
+        guard (200...299).contains(httpResponse.statusCode) else {
+            let message = String(data: data, encoding: .utf8) ?? "Unknown error"
+            throw APIError.httpError(statusCode: httpResponse.statusCode, message: message)
         }
     }
 }

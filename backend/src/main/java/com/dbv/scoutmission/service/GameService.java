@@ -5,8 +5,10 @@ import com.dbv.scoutmission.dto.request.CreateGameRequest;
 import com.dbv.scoutmission.dto.request.GameImportRequest;
 import com.dbv.scoutmission.dto.request.UpdateGameRequest;
 import com.dbv.scoutmission.dto.response.GameResponse;
+import com.dbv.scoutmission.dto.response.UserResponse;
 import com.dbv.scoutmission.entity.*;
 import com.dbv.scoutmission.exception.BadRequestException;
+import com.dbv.scoutmission.exception.ConflictException;
 import com.dbv.scoutmission.exception.ResourceNotFoundException;
 import com.dbv.scoutmission.repository.*;
 import com.dbv.scoutmission.security.SecurityUtils;
@@ -32,6 +34,7 @@ public class GameService {
     private final SubmissionRepository submissionRepository;
     private final TeamLocationRepository teamLocationRepository;
     private final ActivityEventRepository activityEventRepository;
+    private final GameAccessService gameAccessService;
 
     @Transactional(readOnly = true)
     public List<GameResponse> getAllGames() {
@@ -52,8 +55,7 @@ public class GameService {
 
     @Transactional(readOnly = true)
     public GameResponse getGame(UUID id) {
-        Game game = gameRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Game", id));
+        Game game = gameAccessService.getAccessibleGame(id);
         return toResponse(game);
     }
 
@@ -82,8 +84,7 @@ public class GameService {
 
     @Transactional
     public GameResponse updateGame(UUID id, UpdateGameRequest request) {
-        Game game = gameRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Game", id));
+        Game game = gameAccessService.getAccessibleGame(id);
 
         game.setName(request.getName());
         game.setDescription(request.getDescription() != null ? request.getDescription() : "");
@@ -99,16 +100,13 @@ public class GameService {
 
     @Transactional
     public void deleteGame(UUID id) {
-        if (!gameRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Game", id);
-        }
+        gameAccessService.ensureCurrentUserCanAccessGame(id);
         gameRepository.deleteById(id);
     }
 
     @Transactional
     public GameResponse updateStatus(UUID id, String newStatus, boolean resetProgress) {
-        Game game = gameRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Game", id));
+        Game game = gameAccessService.getAccessibleGame(id);
 
         GameStatus target;
         try {
@@ -182,8 +180,7 @@ public class GameService {
 
     @Transactional
     public void addOperator(UUID gameId, UUID userId) {
-        Game game = gameRepository.findById(gameId)
-                .orElseThrow(() -> new ResourceNotFoundException("Game", gameId));
+        Game game = gameAccessService.getAccessibleGame(gameId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
         game.getOperators().add(user);
@@ -192,8 +189,7 @@ public class GameService {
 
     @Transactional
     public void removeOperator(UUID gameId, UUID userId) {
-        Game game = gameRepository.findById(gameId)
-                .orElseThrow(() -> new ResourceNotFoundException("Game", gameId));
+        Game game = gameAccessService.getAccessibleGame(gameId);
         if (game.getCreatedBy().getId().equals(userId)) {
             throw new BadRequestException("Cannot remove the game creator as operator");
         }
@@ -358,15 +354,7 @@ public class GameService {
 
     @Transactional(readOnly = true)
     public GameExportDto exportGame(UUID gameId) {
-        User currentUser = SecurityUtils.getCurrentUser();
-        Game game = gameRepository.findById(gameId)
-                .orElseThrow(() -> new ResourceNotFoundException("Game", gameId));
-
-        // Authorization check: user must be admin or game operator
-        if (!currentUser.getRole().name().equals("admin") &&
-            !game.getOperators().contains(currentUser)) {
-            throw new BadRequestException("You must be a game operator to export this game");
-        }
+        Game game = gameAccessService.getAccessibleGame(gameId);
 
         // Fetch all related entities
         List<Base> bases = baseRepository.findByGameId(gameId);
@@ -449,6 +437,20 @@ public class GameService {
                 .assignments(assignmentExportDtos)
                 .teams(teamExportDtos)
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserResponse> getGameOperators(UUID gameId) {
+        Game game = gameAccessService.getAccessibleGame(gameId);
+        return game.getOperators().stream()
+                .map(user -> UserResponse.builder()
+                        .id(user.getId())
+                        .email(user.getEmail())
+                        .name(user.getName())
+                        .role(user.getRole().name())
+                        .createdAt(user.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     @Transactional
@@ -540,6 +542,8 @@ public class GameService {
                 throw new BadRequestException("Assignment references non-existent team: " + assignment.getTeamTempId());
             }
         }
+
+        validateImportAssignmentConflicts(data.getAssignments());
 
         // Validate fixed challenge references
         for (BaseExportDto base : data.getBases()) {
@@ -643,6 +647,37 @@ public class GameService {
         }
 
         return toResponse(newGame);
+    }
+
+    private void validateImportAssignmentConflicts(List<AssignmentExportDto> assignments) {
+        Set<String> seenTeamSpecific = new HashSet<>();
+        Set<String> basesWithAllTeams = new HashSet<>();
+        Set<String> basesWithTeamSpecific = new HashSet<>();
+
+        for (AssignmentExportDto assignment : assignments) {
+            String baseTempId = assignment.getBaseTempId();
+            String teamTempId = assignment.getTeamTempId();
+
+            if (teamTempId == null) {
+                if (basesWithTeamSpecific.contains(baseTempId)) {
+                    throw new ConflictException("Cannot mix 'All Teams' and team-specific assignments for base: " + baseTempId);
+                }
+                if (!basesWithAllTeams.add(baseTempId)) {
+                    throw new ConflictException("Duplicate 'All Teams' assignment for base: " + baseTempId);
+                }
+                continue;
+            }
+
+            if (basesWithAllTeams.contains(baseTempId)) {
+                throw new ConflictException("Cannot mix team-specific and 'All Teams' assignments for base: " + baseTempId);
+            }
+
+            String key = baseTempId + ":" + teamTempId;
+            if (!seenTeamSpecific.add(key)) {
+                throw new ConflictException("Duplicate assignment for base/team: " + key);
+            }
+            basesWithTeamSpecific.add(baseTempId);
+        }
     }
 
     private String generateUniqueJoinCode() {

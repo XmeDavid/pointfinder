@@ -109,7 +109,6 @@ export interface OperatorInvite {
   gameId?: string;
   gameName?: string;
   email: string;
-  token: string;
   status: InviteStatus;
   invitedBy: string;
   inviterName?: string;
