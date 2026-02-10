@@ -263,7 +263,8 @@
     "members": "Membros",
     "noMembers": "Sem membros ainda",
     "member_one": "{{count}} membro",
-    "member_other": "{{count}} membros"
+    "member_other": "{{count}} membros",
+    "downloadQr": "Descarregar Código QR"
   },
   "notifications": {
     "title": "Notificações",

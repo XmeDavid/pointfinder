@@ -1,88 +1,99 @@
 import SwiftUI
+import AVFoundation
 
 struct PlayerJoinView: View {
-    @Environment(AppState.self) private var appState
     @Environment(LocaleManager.self) private var locale
 
     @State private var joinCode = ""
-    @State private var displayName = ""
-    @State private var isLoading = false
+    @State private var showNameScreen = false
+    @State private var cameraPermission: AVAuthorizationStatus = AVCaptureDevice.authorizationStatus(for: .video)
 
     var body: some View {
-        @Bindable var appState = appState
-
         VStack(spacing: 24) {
-            VStack(spacing: 8) {
-                Image(systemName: "qrcode.viewfinder")
-                    .font(.system(size: 60))
-                    .foregroundStyle(.secondary)
-
-                Text(locale.t("join.title"))
-                    .font(.title2)
-                    .fontWeight(.bold)
-
-                Text(locale.t("join.subtitle"))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+            // QR Scanner area
+            ZStack {
+                if cameraPermission == .authorized {
+                    QRScannerView { code in
+                        joinCode = code
+                        showNameScreen = true
+                    }
+                } else if cameraPermission == .notDetermined {
+                    ProgressView()
+                } else {
+                    VStack(spacing: 12) {
+                        Image(systemName: "camera.fill")
+                            .font(.system(size: 36))
+                            .foregroundStyle(.secondary)
+                        Text(locale.t("join.cameraDisabled"))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding()
+                }
             }
-            .padding(.top, 20)
+            .frame(maxWidth: .infinity)
+            .frame(height: 260)
+            .background(Color(.systemGray6))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .padding(.horizontal, 24)
+            .padding(.top, 8)
 
-            VStack(spacing: 16) {
-                TextField(locale.t("join.joinCode"), text: $joinCode)
-                    .textFieldStyle(.roundedBorder)
-                    .font(.title3)
-                    .multilineTextAlignment(.center)
-                    .textInputAutocapitalization(.characters)
-                    .autocorrectionDisabled()
-
-                TextField(locale.t("join.yourName"), text: $displayName)
-                    .textFieldStyle(.roundedBorder)
-                    .textContentType(.name)
+            // Divider with "or"
+            HStack {
+                Rectangle().frame(height: 1).foregroundStyle(.secondary.opacity(0.3))
+                Text(locale.t("join.orEnterCode"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .layoutPriority(1)
+                Rectangle().frame(height: 1).foregroundStyle(.secondary.opacity(0.3))
             }
             .padding(.horizontal, 24)
 
+            // Manual code input
+            TextField(locale.t("join.joinCode"), text: $joinCode)
+                .textFieldStyle(.roundedBorder)
+                .font(.title3)
+                .multilineTextAlignment(.center)
+                .textInputAutocapitalization(.characters)
+                .autocorrectionDisabled()
+                .padding(.horizontal, 24)
+
+            // Next button
             Button {
-                Task {
-                    isLoading = true
-                    await appState.playerJoin(
-                        joinCode: joinCode.trimmingCharacters(in: .whitespacesAndNewlines),
-                        displayName: displayName.trimmingCharacters(in: .whitespacesAndNewlines)
-                    )
-                    isLoading = false
-                }
+                showNameScreen = true
             } label: {
-                if isLoading {
-                    ProgressView()
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                } else {
-                    Text(locale.t("join.joinGame"))
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                }
+                Text(locale.t("join.next"))
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding()
             }
-            .background(canJoin ? Color.accentColor : Color.gray)
+            .background(canProceed ? Color.accentColor : Color.gray)
             .foregroundStyle(.white)
             .clipShape(RoundedRectangle(cornerRadius: 14))
-            .disabled(!canJoin || isLoading)
+            .disabled(!canProceed)
             .padding(.horizontal, 24)
 
             Spacer()
         }
         .navigationTitle(locale.t("join.joinGame"))
         .navigationBarTitleDisplayMode(.inline)
-        .alert(locale.t("common.error"), isPresented: $appState.showError) {
-            Button(locale.t("common.ok")) {}
-        } message: {
-            Text(appState.errorMessage ?? locale.t("common.unknownError"))
+        .navigationDestination(isPresented: $showNameScreen) {
+            PlayerNameView(joinCode: joinCode.trimmingCharacters(in: .whitespacesAndNewlines))
+        }
+        .onAppear {
+            if cameraPermission == .notDetermined {
+                AVCaptureDevice.requestAccess(for: .video) { granted in
+                    DispatchQueue.main.async {
+                        cameraPermission = granted ? .authorized : .denied
+                    }
+                }
+            }
         }
     }
 
-    private var canJoin: Bool {
-        !joinCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        !displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    private var canProceed: Bool {
+        !joinCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 }
 

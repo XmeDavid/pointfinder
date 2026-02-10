@@ -263,7 +263,8 @@
     "members": "Members",
     "noMembers": "No members yet",
     "member_one": "{{count}} member",
-    "member_other": "{{count}} members"
+    "member_other": "{{count}} members",
+    "downloadQr": "Download QR Code"
   },
   "notifications": {
     "title": "Notifications",

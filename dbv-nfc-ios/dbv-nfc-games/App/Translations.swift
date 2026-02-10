@@ -44,6 +44,10 @@ enum Translations {
         "join.joinCode": "Join Code",
         "join.yourName": "Your Name",
         "join.joinGame": "Join Game",
+        "join.orEnterCode": "Or enter the code manually",
+        "join.next": "Continue",
+        "join.enterYourName": "Enter Your Name",
+        "join.cameraDisabled": "Camera access is needed to scan QR codes",
 
         // Common
         "common.error": "Error",
@@ -243,6 +247,10 @@ enum Translations {
         "join.joinCode": "Código de Entrada",
         "join.yourName": "O teu Nome",
         "join.joinGame": "Entrar no Jogo",
+        "join.orEnterCode": "Ou introduz o código manualmente",
+        "join.next": "Continuar",
+        "join.enterYourName": "Introduz o teu Nome",
+        "join.cameraDisabled": "O acesso à câmara é necessário para ler códigos QR",
 
         // Common
         "common.error": "Erro",

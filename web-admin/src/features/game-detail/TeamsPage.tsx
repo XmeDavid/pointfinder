@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Users, Copy, Trash2, Check, Pencil } from "lucide-react";
+import { Plus, Users, Copy, Trash2, Check, Pencil, QrCode } from "lucide-react";
+import QRCode from "qrcode";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -108,6 +109,14 @@ function TeamCard({ team, onCopy, copiedCode, onDelete, onUpdate }: { team: Team
     }
   };
 
+  const downloadQr = async () => {
+    const url = await QRCode.toDataURL(team.joinCode, { width: 512, margin: 2 });
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${team.name}-qr.png`;
+    a.click();
+  };
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -141,8 +150,11 @@ function TeamCard({ team, onCopy, copiedCode, onDelete, onUpdate }: { team: Team
       <CardContent className="space-y-3">
         <div className="flex items-center gap-2">
           <div className="flex-1 rounded-md bg-muted px-3 py-2 font-mono text-sm tracking-wider">{team.joinCode}</div>
-          <Button variant="outline" size="icon" onClick={(e) => { e.stopPropagation(); onCopy(team.joinCode); }}>
+          <Button variant="outline" size="icon" onClick={(e) => { e.stopPropagation(); onCopy(team.joinCode); }} title={t("common.copy") ?? undefined}>
             {copiedCode === team.joinCode ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+          </Button>
+          <Button variant="outline" size="icon" onClick={(e) => { e.stopPropagation(); downloadQr(); }} title={t("teams.downloadQr") ?? undefined}>
+            <QrCode className="h-4 w-4" />
           </Button>
         </div>
 
