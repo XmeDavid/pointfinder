@@ -14,6 +14,8 @@ public class UpdateChallengeRequest {
 
     private String content = "";
 
+    private String completionContent = "";
+
     @NotBlank
     private String answerType;
 

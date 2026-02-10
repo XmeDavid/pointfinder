@@ -15,6 +15,7 @@ public class ChallengeExportDto {
     private String title;
     private String description;
     private String content;
+    private String completionContent;
     private AnswerType answerType;
     private Boolean autoValidate;
     private String correctAnswer;

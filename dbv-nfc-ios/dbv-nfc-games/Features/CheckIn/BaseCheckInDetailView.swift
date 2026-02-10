@@ -21,6 +21,10 @@ struct BaseCheckInDetailView: View {
         base?.baseStatus ?? .notVisited
     }
 
+    private var completionContent: String {
+        challenge?.completionContent?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
@@ -84,7 +88,12 @@ struct BaseCheckInDetailView: View {
                             .font(.body)
                             .foregroundStyle(.secondary)
 
-                        if !challenge.content.isEmpty {
+                        if status == .completed && !completionContent.isEmpty {
+                            Divider()
+                            Text(locale.t("base.completionContent"))
+                                .font(.headline)
+                            AutoSizingHTMLView(html: completionContent)
+                        } else if !challenge.content.isEmpty {
                             Divider()
                             AutoSizingHTMLView(html: challenge.content)
                         }

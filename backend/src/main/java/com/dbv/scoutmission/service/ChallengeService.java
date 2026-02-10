@@ -41,6 +41,7 @@ public class ChallengeService {
                 .title(request.getTitle())
                 .description(request.getDescription() != null ? request.getDescription() : "")
                 .content(request.getContent() != null ? request.getContent() : "")
+                .completionContent(request.getCompletionContent() != null ? request.getCompletionContent() : "")
                 .answerType(AnswerType.valueOf(request.getAnswerType()))
                 .autoValidate(request.getAutoValidate() != null ? request.getAutoValidate() : false)
                 .correctAnswer(request.getCorrectAnswer())
@@ -62,6 +63,7 @@ public class ChallengeService {
         challenge.setTitle(request.getTitle());
         challenge.setDescription(request.getDescription() != null ? request.getDescription() : "");
         challenge.setContent(request.getContent() != null ? request.getContent() : "");
+        challenge.setCompletionContent(request.getCompletionContent() != null ? request.getCompletionContent() : "");
         challenge.setAnswerType(AnswerType.valueOf(request.getAnswerType()));
         challenge.setAutoValidate(request.getAutoValidate() != null ? request.getAutoValidate() : false);
         challenge.setCorrectAnswer(request.getCorrectAnswer());
@@ -94,6 +96,7 @@ public class ChallengeService {
                 .title(c.getTitle())
                 .description(c.getDescription())
                 .content(c.getContent())
+                .completionContent(c.getCompletionContent())
                 .answerType(c.getAnswerType().name())
                 .autoValidate(c.getAutoValidate())
                 .correctAnswer(c.getCorrectAnswer())

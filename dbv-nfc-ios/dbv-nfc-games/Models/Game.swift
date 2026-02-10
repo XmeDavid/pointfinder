@@ -68,15 +68,26 @@ struct Challenge: Codable, Identifiable {
     let title: String
     let description: String
     let content: String
+    let completionContent: String?
     let answerType: String
     let points: Int
     
-    init(id: UUID, gameId: UUID? = nil, title: String, description: String, content: String, answerType: String, points: Int) {
+    init(
+        id: UUID,
+        gameId: UUID? = nil,
+        title: String,
+        description: String,
+        content: String,
+        completionContent: String? = nil,
+        answerType: String,
+        points: Int
+    ) {
         self.id = id
         self.gameId = gameId
         self.title = title
         self.description = description
         self.content = content
+        self.completionContent = completionContent
         self.answerType = answerType
         self.points = points
     }

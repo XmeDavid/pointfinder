@@ -76,6 +76,7 @@ struct CheckInResponse: Codable {
         let title: String
         let description: String
         let content: String
+        let completionContent: String?
         let answerType: String
         let points: Int
     }

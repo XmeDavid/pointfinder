@@ -15,6 +15,7 @@ public class ChallengeResponse {
     private String title;
     private String description;
     private String content;
+    private String completionContent;
     private String answerType;
     private Boolean autoValidate;
     private String correctAnswer;

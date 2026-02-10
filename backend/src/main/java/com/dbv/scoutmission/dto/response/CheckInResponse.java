@@ -25,6 +25,7 @@ public class CheckInResponse {
         private String title;
         private String description;
         private String content;
+        private String completionContent;
         private String answerType;
         private Integer points;
     }

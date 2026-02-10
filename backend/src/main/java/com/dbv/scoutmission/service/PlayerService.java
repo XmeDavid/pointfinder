@@ -331,6 +331,7 @@ public class PlayerService {
                         .title(c.getTitle())
                         .description(c.getDescription())
                         .content(c.getContent())
+                        .completionContent(c.getCompletionContent())
                         .answerType(c.getAnswerType().name())
                         .autoValidate(c.getAutoValidate())
                         .correctAnswer(null) // Don't expose correct answer to players
@@ -442,6 +443,7 @@ public class PlayerService {
                     .title(challenge.getTitle())
                     .description(challenge.getDescription())
                     .content(challenge.getContent())
+                    .completionContent(challenge.getCompletionContent())
                     .answerType(challenge.getAnswerType().name())
                     .points(challenge.getPoints())
                     .build();

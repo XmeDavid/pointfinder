@@ -5,6 +5,7 @@ export interface CreateChallengeDto {
   title: string;
   description: string;
   content: string;
+  completionContent: string;
   answerType: "text" | "file";
   autoValidate: boolean;
   correctAnswer?: string;

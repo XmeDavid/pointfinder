@@ -235,6 +235,7 @@ public class SubmissionService {
                 .submittedAt(s.getSubmittedAt())
                 .reviewedBy(s.getReviewedBy() != null ? s.getReviewedBy().getId() : null)
                 .feedback(s.getFeedback())
+                .completionContent(s.getChallenge().getCompletionContent())
                 .build();
     }
 }

@@ -43,6 +43,7 @@ export interface Challenge {
   title: string;
   description: string;
   content: string;
+  completionContent: string;
   answerType: AnswerType;
   autoValidate: boolean;
   correctAnswer?: string;

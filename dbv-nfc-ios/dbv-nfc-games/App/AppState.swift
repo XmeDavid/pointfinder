@@ -301,7 +301,8 @@ final class AppState {
             status: "pending",
             submittedAt: ISO8601DateFormatter().string(from: Date()),
             reviewedBy: nil,
-            feedback: nil
+            feedback: nil,
+            completionContent: nil
         )
     }
 

@@ -93,6 +93,7 @@ actor GameDataCache {
             title: challenge.title,
             description: challenge.description,
             content: challenge.content,
+            completionContent: challenge.completionContent,
             answerType: challenge.answerType,
             points: challenge.points
         )

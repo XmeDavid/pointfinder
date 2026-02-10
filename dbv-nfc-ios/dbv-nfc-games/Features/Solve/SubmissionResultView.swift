@@ -43,6 +43,18 @@ struct SubmissionResultView: View {
                         .background(Color(.systemGray6))
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
+
+                if showCompletionContent {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(locale.t("result.completionContent"))
+                            .font(.headline)
+                        AutoSizingHTMLView(html: completionContent)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
             }
 
             Spacer()
@@ -106,5 +118,13 @@ struct SubmissionResultView: View {
         case "rejected": return locale.t("result.rejectedMsg")
         default: return locale.t("result.submittedMsg")
         }
+    }
+
+    private var completionContent: String {
+        submission.completionContent?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    }
+
+    private var showCompletionContent: Bool {
+        (submission.status == "correct" || submission.status == "approved") && !completionContent.isEmpty
     }
 }

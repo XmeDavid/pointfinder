@@ -46,7 +46,17 @@ export function ChallengesPage() {
 
   function openCreate() {
     setEditing(null);
-    setForm({ gameId, title: "", description: "", content: "", answerType: "text", autoValidate: false, points: 100, locationBound: false });
+    setForm({
+      gameId,
+      title: "",
+      description: "",
+      content: "",
+      completionContent: "",
+      answerType: "text",
+      autoValidate: false,
+      points: 100,
+      locationBound: false,
+    });
     setDialogOpen(true);
   }
 
@@ -111,6 +121,14 @@ export function ChallengesPage() {
             <div className="space-y-2">
               <Label>{t("challenges.content")}</Label>
               <RichTextEditor value={form.content ?? ""} onChange={(html) => setForm((f) => ({ ...f, content: html }))} placeholder={t("challenges.contentPlaceholder")} />
+            </div>
+            <div className="space-y-2">
+              <Label>{t("challenges.completionContent")}</Label>
+              <RichTextEditor
+                value={form.completionContent ?? ""}
+                onChange={(html) => setForm((f) => ({ ...f, completionContent: html }))}
+                placeholder={t("challenges.completionContentPlaceholder")}
+              />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">

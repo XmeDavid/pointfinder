@@ -93,6 +93,7 @@ enum Translations {
         "base.checkedInBanner": "Checked In!",
         "base.noChallengeYet": "No challenge assigned to this base yet",
         "base.answerType": "Answer type: %@",
+        "base.completionContent": "Completion Info",
 
         // Check In
         "checkIn.title": "Base Check-In",
@@ -137,6 +138,7 @@ enum Translations {
         "result.rejectedMsg": "Your submission was rejected. Check the feedback and try again.",
         "result.submittedMsg": "Your answer has been submitted and is awaiting review by an operator.",
         "result.feedback": "Feedback: %@",
+        "result.completionContent": "Completion Info",
         "result.backToMap": "Back to Map",
 
         // Settings
@@ -296,6 +298,7 @@ enum Translations {
         "base.checkedInBanner": "Check-in feito!",
         "base.noChallengeYet": "Nenhum desafio atribuído a esta base ainda",
         "base.answerType": "Tipo de resposta: %@",
+        "base.completionContent": "Informação de conclusão",
 
         // Check In
         "checkIn.title": "Check-In de Base",
@@ -340,6 +343,7 @@ enum Translations {
         "result.rejectedMsg": "A tua submissão foi rejeitada. Verifica o feedback e tenta novamente.",
         "result.submittedMsg": "A tua resposta foi submetida e está a aguardar revisão por um operador.",
         "result.feedback": "Feedback: %@",
+        "result.completionContent": "Informação de conclusão",
         "result.backToMap": "Voltar ao Mapa",
 
         // Settings

@@ -31,6 +31,9 @@ public class Challenge {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    @Column(name = "completion_content", nullable = false, columnDefinition = "TEXT")
+    private String completionContent;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "answer_type", nullable = false, columnDefinition = "answer_type")
     private AnswerType answerType;

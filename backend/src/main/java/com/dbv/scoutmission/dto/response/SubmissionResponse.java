@@ -21,4 +21,5 @@ public class SubmissionResponse {
     private Instant submittedAt;
     private UUID reviewedBy;
     private String feedback;
+    private String completionContent;
 }
