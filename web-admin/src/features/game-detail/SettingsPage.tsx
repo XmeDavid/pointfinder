@@ -12,15 +12,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { gamesApi } from "@/lib/api/games";
 import { getApiErrorMessage } from "@/lib/api/errors";
+import { formatDateTimeInputValue, parseDateTimeInputValue } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import type { GameStatus } from "@/types";
-
-function toLocalDatetime(iso: string | null): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  const pad = (n: number) => n.toString().padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
 
 const statusColors: Record<GameStatus, string> = {
   setup: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
@@ -51,15 +45,31 @@ export function SettingsPage() {
       setForm({
         name: game.name,
         description: game.description,
-        startDate: toLocalDatetime(game.startDate),
-        endDate: toLocalDatetime(game.endDate),
+        startDate: formatDateTimeInputValue(game.startDate),
+        endDate: formatDateTimeInputValue(game.endDate),
         uniformAssignment: game.uniformAssignment ?? false,
       });
     }
   }, [game]);
 
   const updateGame = useMutation({
-    mutationFn: () => gamesApi.update(gameId!, form),
+    mutationFn: () => {
+      const parsedStartDate = parseDateTimeInputValue(form.startDate);
+      const parsedEndDate = parseDateTimeInputValue(form.endDate);
+
+      if (form.startDate.trim() && !parsedStartDate) {
+        throw new Error(t("games.invalidDateFormat"));
+      }
+      if (form.endDate.trim() && !parsedEndDate) {
+        throw new Error(t("games.invalidDateFormat"));
+      }
+
+      return gamesApi.update(gameId!, {
+        ...form,
+        startDate: parsedStartDate ? parsedStartDate.toISOString() : "",
+        endDate: parsedEndDate ? parsedEndDate.toISOString() : "",
+      });
+    },
     onSuccess: () => {
       setActionError("");
       queryClient.invalidateQueries({ queryKey: ["game", gameId] });
@@ -67,7 +77,7 @@ export function SettingsPage() {
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     },
-    onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
+    onError: (error: unknown) => setActionError(error instanceof Error ? error.message : getApiErrorMessage(error)),
   });
 
   const deleteGame = useMutation({
@@ -170,13 +180,28 @@ export function SettingsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="startDate">{t("games.startDate")}</Label>
-                <Input id="startDate" type="datetime-local" value={form.startDate} onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))} />
+                <Input
+                  id="startDate"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder={t("games.dateFormatPlaceholder")}
+                  value={form.startDate}
+                  onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="endDate">{t("games.endDate")}</Label>
-                <Input id="endDate" type="datetime-local" value={form.endDate} onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))} />
+                <Input
+                  id="endDate"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder={t("games.dateFormatPlaceholder")}
+                  value={form.endDate}
+                  onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))}
+                />
               </div>
             </div>
+            <p className="text-xs text-muted-foreground">{t("games.dateFormatHint")}</p>
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div className="space-y-0.5">
                 <Label>{t("settings.uniformAssignment")}</Label>

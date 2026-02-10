@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { gamesApi } from "@/lib/api/games";
 import { getApiErrorMessage } from "@/lib/api/errors";
+import { parseDateTimeInputValue } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
 export function CreateGamePage() {
@@ -19,9 +20,25 @@ export function CreateGamePage() {
   const [actionError, setActionError] = useState("");
 
   const createGame = useMutation({
-    mutationFn: () => gamesApi.create(form),
+    mutationFn: () => {
+      const parsedStartDate = parseDateTimeInputValue(form.startDate);
+      const parsedEndDate = parseDateTimeInputValue(form.endDate);
+
+      if (form.startDate.trim() && !parsedStartDate) {
+        throw new Error(t("games.invalidDateFormat"));
+      }
+      if (form.endDate.trim() && !parsedEndDate) {
+        throw new Error(t("games.invalidDateFormat"));
+      }
+
+      return gamesApi.create({
+        ...form,
+        startDate: parsedStartDate ? parsedStartDate.toISOString() : "",
+        endDate: parsedEndDate ? parsedEndDate.toISOString() : "",
+      });
+    },
     onSuccess: (game) => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["games"] }); navigate(`/games/${game.id}/overview`); },
-    onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
+    onError: (error: unknown) => setActionError(error instanceof Error ? error.message : getApiErrorMessage(error)),
   });
 
   return (
@@ -46,13 +63,28 @@ export function CreateGamePage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="startDate">{t("games.startDate")}</Label>
-                <Input id="startDate" type="datetime-local" value={form.startDate} onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))} />
+                <Input
+                  id="startDate"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder={t("games.dateFormatPlaceholder")}
+                  value={form.startDate}
+                  onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="endDate">{t("games.endDate")}</Label>
-                <Input id="endDate" type="datetime-local" value={form.endDate} onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))} />
+                <Input
+                  id="endDate"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder={t("games.dateFormatPlaceholder")}
+                  value={form.endDate}
+                  onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))}
+                />
               </div>
             </div>
+            <p className="text-xs text-muted-foreground">{t("games.dateFormatHint")}</p>
             <div className="flex justify-end gap-2 pt-4">
               <Button type="button" variant="outline" onClick={() => navigate("/games")}>{t("common.cancel")}</Button>
               <Button type="submit" disabled={createGame.isPending}>{createGame.isPending ? t("games.creating") : t("games.createGame")}</Button>
