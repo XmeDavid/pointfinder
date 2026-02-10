@@ -23,6 +23,30 @@ struct Base: Codable, Identifiable {
     let hidden: Bool
     let fixedChallengeId: UUID?
 
+    init(
+        id: UUID,
+        gameId: UUID? = nil,
+        name: String,
+        description: String,
+        lat: Double,
+        lng: Double,
+        nfcLinked: Bool,
+        requirePresenceToSubmit: Bool,
+        hidden: Bool = false,
+        fixedChallengeId: UUID? = nil
+    ) {
+        self.id = id
+        self.gameId = gameId
+        self.name = name
+        self.description = description
+        self.lat = lat
+        self.lng = lng
+        self.nfcLinked = nfcLinked
+        self.requirePresenceToSubmit = requirePresenceToSubmit
+        self.hidden = hidden
+        self.fixedChallengeId = fixedChallengeId
+    }
+
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
