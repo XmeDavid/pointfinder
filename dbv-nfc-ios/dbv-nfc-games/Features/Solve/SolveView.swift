@@ -20,6 +20,7 @@ struct SolveView: View {
     @State private var submissionResult: SubmissionResponse?
     @State private var nfcReader = NFCReaderService()
     @State private var scanError: String?
+    @State private var submissionErrorMessage: String?
 
     // Photo state
     @State private var selectedPhoto: PhotosPickerItem?
@@ -158,6 +159,16 @@ struct SolveView: View {
                 }
             }
         }
+        .alert(locale.t("common.error"), isPresented: Binding(
+            get: { submissionErrorMessage != nil },
+            set: { if !$0 { submissionErrorMessage = nil } }
+        )) {
+            Button(locale.t("common.ok")) {
+                submissionErrorMessage = nil
+            }
+        } message: {
+            Text(submissionErrorMessage ?? locale.t("common.unknownError"))
+        }
     }
 
     // MARK: - Photo Input Section
@@ -240,6 +251,7 @@ struct SolveView: View {
 
     private func handleSubmit() async {
         scanError = nil
+        submissionErrorMessage = nil
 
         if requirePresenceToSubmit {
             await submitWithPresenceCheck()
@@ -282,6 +294,8 @@ struct SolveView: View {
             if let result {
                 submissionResult = result
                 showResult = true
+            } else {
+                showSubmissionError()
             }
         } catch let error as NFCError {
             if case .cancelled = error {
@@ -318,9 +332,21 @@ struct SolveView: View {
         if let result {
             submissionResult = result
             showResult = true
+        } else {
+            showSubmissionError()
         }
 
         isSubmitting = false
+    }
+
+    private func showSubmissionError() {
+        if appState.showError, let message = appState.errorMessage {
+            submissionErrorMessage = message
+        } else {
+            submissionErrorMessage = locale.t("common.unknownError")
+        }
+        // Prevent delayed parent-level alerts from appearing after this local error.
+        appState.showError = false
     }
 }
 

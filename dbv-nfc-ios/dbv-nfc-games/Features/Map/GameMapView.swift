@@ -4,8 +4,7 @@ import MapKit
 struct GameMapView: View {
     @Environment(AppState.self) private var appState
     @Environment(LocaleManager.self) private var locale
-    @State private var selectedBaseId: UUID?
-    @State private var showBaseDetail = false
+    @State private var selectedBase: BaseProgress?
     @State private var cameraPosition: MapCameraPosition = .automatic
 
     var body: some View {
@@ -22,8 +21,7 @@ struct GameMapView: View {
                                 name: base.baseName
                             )
                             .onTapGesture {
-                                selectedBaseId = base.baseId
-                                showBaseDetail = true
+                                selectedBase = base
                             }
                         }
                     }
@@ -52,10 +50,8 @@ struct GameMapView: View {
                     }
                 }
             }
-            .sheet(isPresented: $showBaseDetail) {
-                if let baseId = selectedBaseId {
-                    BaseDetailSheet(baseId: baseId)
-                }
+            .sheet(item: $selectedBase) { base in
+                BaseDetailSheet(baseId: base.baseId)
             }
             .refreshable {
                 await appState.loadProgress()

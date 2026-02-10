@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import UIKit
+import os
 
 @MainActor
 @Observable
@@ -49,6 +50,10 @@ final class AppState {
     let apiClient = APIClient()
     let locationService = LocationService()
     let syncEngine = SyncEngine.shared
+    private let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "com.dbv.nfcgames",
+        category: "AppState"
+    )
     private var pendingCountTask: Task<Void, Never>?
 
     // MARK: - Init
@@ -308,21 +313,29 @@ final class AppState {
 
     /// Submit a photo answer. Requires online connectivity (no offline support for photos).
     func submitAnswerWithPhoto(baseId: UUID, challengeId: UUID, image: UIImage, notes: String) async -> SubmissionResponse? {
-        guard case .player(let token, _, _, let gameId) = authType else { return nil }
+        guard case .player(let token, _, _, let gameId) = authType else {
+            logger.error("Photo submission blocked: missing player auth context")
+            return nil
+        }
 
         guard isOnline else {
+            logger.info("Photo submission blocked while offline")
             setError(Translations.string("error.photoOffline"))
             return nil
         }
 
         // Compress to JPEG at 0.7 quality
         guard let imageData = image.jpegData(compressionQuality: 0.7) else {
+            logger.error("Photo submission failed: JPEG conversion returned nil")
             setError(Translations.string("error.photoProcessing"))
             return nil
         }
 
         do {
             let idempotencyKey = UUID()
+            logger.debug(
+                "Submitting photo answer for base \(baseId, privacy: .public) challenge \(challengeId, privacy: .public)"
+            )
             let response = try await apiClient.submitAnswerWithFile(
                 gameId: gameId,
                 baseId: baseId,
@@ -341,6 +354,7 @@ final class AppState {
 
             return response
         } catch {
+            logger.error("Photo submission request failed: \(error.localizedDescription, privacy: .public)")
             setError(error.localizedDescription)
             return nil
         }

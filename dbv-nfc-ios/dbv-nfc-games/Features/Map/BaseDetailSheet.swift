@@ -151,6 +151,16 @@ struct BaseDetailSheet: View {
         .task {
             await loadChallenge()
         }
+        .alert(locale.t("common.error"), isPresented: Binding(
+            get: { appState.showError },
+            set: { if !$0 { appState.showError = false } }
+        )) {
+            Button(locale.t("common.ok")) {
+                appState.showError = false
+            }
+        } message: {
+            Text(appState.errorMessage ?? locale.t("common.unknownError"))
+        }
     }
 
     private func loadChallenge() async {

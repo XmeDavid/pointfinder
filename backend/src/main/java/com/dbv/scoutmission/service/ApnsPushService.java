@@ -95,6 +95,7 @@ public class ApnsPushService {
         for (String token : tokens) {
             try {
                 String sanitizedToken = TokenUtil.sanitizeTokenString(token);
+                String maskedToken = maskToken(token);
 
                 SimpleApnsPayloadBuilder payloadBuilder = new SimpleApnsPayloadBuilder();
                 payloadBuilder.setAlertTitle(title);
@@ -120,22 +121,36 @@ public class ApnsPushService {
 
                 future.whenComplete((response, throwable) -> {
                     if (throwable != null) {
-                        log.error("Failed to send push notification to token {}: {}", token, throwable.getMessage());
+                        log.error("Failed to send push notification to token {}: {}", maskedToken, throwable.getMessage());
                     } else if (!response.isAccepted()) {
                         log.warn("Push notification rejected for token {}: {} (reason: {})",
-                                token, response.getRejectionReason().orElse("unknown"),
+                                maskedToken, response.getRejectionReason().orElse("unknown"),
                                 response.getTokenInvalidationTimestamp().orElse(null));
 
                         // If token is invalid, it should be cleaned up
                         response.getTokenInvalidationTimestamp().ifPresent(ts ->
-                                log.info("Token {} was invalidated at {}, should be removed", token, ts));
+                                log.info("Token {} was invalidated at {}, should be removed", maskedToken, ts));
                     } else {
-                        log.debug("Push notification accepted for token {}", token);
+                        log.debug("Push notification accepted for token {}", maskedToken);
                     }
                 });
             } catch (Exception e) {
-                log.error("Error sending push to token {}: {}", token, e.getMessage(), e);
+                log.error("Error sending push to token {}: {}", maskToken(token), e.getMessage(), e);
             }
         }
+    }
+
+    private String maskToken(String token) {
+        if (token == null || token.isBlank()) {
+            return "unknown";
+        }
+
+        int prefixLength = Math.min(8, token.length());
+        int suffixLength = token.length() > 12 ? 4 : 0;
+        if (suffixLength == 0) {
+            return token.substring(0, prefixLength) + "***";
+        }
+
+        return token.substring(0, prefixLength) + "..." + token.substring(token.length() - suffixLength);
     }
 }

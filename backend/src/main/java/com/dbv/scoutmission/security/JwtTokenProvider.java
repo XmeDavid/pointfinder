@@ -4,6 +4,8 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -14,6 +16,9 @@ import java.util.UUID;
 @Component
 public class JwtTokenProvider {
 
+    private static final String INSECURE_DEFAULT_SECRET =
+            "scout-mission-dev-secret-key-that-is-at-least-256-bits-long-for-hs256";
+
     @Value("${app.jwt.secret}")
     private String jwtSecret;
 
@@ -23,10 +28,19 @@ public class JwtTokenProvider {
     @Value("${app.jwt.refresh-token-expiration-ms}")
     private long refreshTokenExpirationMs;
 
+    @Value("${app.jwt.enforce-prod-secret:true}")
+    private boolean enforceProdSecret;
+
     private SecretKey key;
+    private final Environment environment;
+
+    public JwtTokenProvider(Environment environment) {
+        this.environment = environment;
+    }
 
     @PostConstruct
     public void init() {
+        validateSecretConfiguration();
         this.key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
@@ -94,6 +108,22 @@ public class JwtTokenProvider {
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             return false;
+        }
+    }
+
+    private void validateSecretConfiguration() {
+        if (jwtSecret == null || jwtSecret.isBlank()) {
+            throw new IllegalStateException("JWT secret must not be empty");
+        }
+
+        if (jwtSecret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException("JWT secret must be at least 32 bytes");
+        }
+
+        if (enforceProdSecret
+                && environment.acceptsProfiles(Profiles.of("prod", "production"))
+                && INSECURE_DEFAULT_SECRET.equals(jwtSecret)) {
+            throw new IllegalStateException("JWT_SECRET must be configured in production");
         }
     }
 }

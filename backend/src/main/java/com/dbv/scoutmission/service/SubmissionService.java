@@ -11,6 +11,7 @@ import com.dbv.scoutmission.repository.*;
 import com.dbv.scoutmission.security.SecurityUtils;
 import com.dbv.scoutmission.websocket.GameEventBroadcaster;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,6 +34,7 @@ public class SubmissionService {
     private final ActivityEventRepository activityEventRepository;
     private final GameEventBroadcaster eventBroadcaster;
     private final GameAccessService gameAccessService;
+    private final FileStorageService fileStorageService;
 
     @Transactional(readOnly = true)
     public List<SubmissionResponse> getSubmissionsByGame(UUID gameId) {
@@ -66,6 +68,9 @@ public class SubmissionService {
                 return toResponse(sub);
             }
         }
+
+        // Reject arbitrary URLs and ensure referenced files belong to this game.
+        request.setFileUrl(fileStorageService.validateStoredFileUrl(request.getFileUrl(), gameId));
 
         Team team = teamRepository.findById(request.getTeamId())
                 .orElseThrow(() -> new ResourceNotFoundException("Team", request.getTeamId()));
@@ -104,7 +109,23 @@ public class SubmissionService {
                 .idempotencyKey(request.getIdempotencyKey())
                 .build();
 
-        submission = submissionRepository.save(submission);
+        try {
+            submission = submissionRepository.save(submission);
+        } catch (DataIntegrityViolationException ex) {
+            // Race-safe idempotency: return existing submission if another request created it first.
+            if (request.getIdempotencyKey() != null) {
+                var existing = submissionRepository.findByIdempotencyKey(request.getIdempotencyKey());
+                if (existing.isPresent()) {
+                    Submission sub = existing.get();
+                    ensureBelongsToGame(sub.getTeam().getGame().getId(), gameId, "Submission");
+                    sub.getTeam().getId();
+                    sub.getChallenge().getId();
+                    sub.getBase().getId();
+                    return toResponse(sub);
+                }
+            }
+            throw ex;
+        }
 
         // Create activity event
         ActivityEvent event = ActivityEvent.builder()

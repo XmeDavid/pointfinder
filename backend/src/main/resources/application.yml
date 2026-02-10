@@ -44,6 +44,7 @@ server:
 app:
   jwt:
     secret: ${JWT_SECRET:scout-mission-dev-secret-key-that-is-at-least-256-bits-long-for-hs256}
+    enforce-prod-secret: ${JWT_ENFORCE_PROD_SECRET:true}
     access-token-expiration-ms: 900000       # 15 minutes
     refresh-token-expiration-ms: 604800000   # 7 days
   cors:
