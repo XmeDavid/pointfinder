@@ -35,6 +35,7 @@ public class SubmissionService {
     private final GameEventBroadcaster eventBroadcaster;
     private final GameAccessService gameAccessService;
     private final FileStorageService fileStorageService;
+    private final PlayerRepository playerRepository;
 
     @Transactional(readOnly = true)
     public List<SubmissionResponse> getSubmissionsByGame(UUID gameId) {
@@ -228,6 +229,11 @@ public class SubmissionService {
         }
 
         if (principal instanceof Player player) {
+            // Re-fetch player within current transaction to avoid LazyInitializationException.
+            // The Player stored in SecurityContext was loaded in the JwtAuthenticationFilter
+            // outside any transaction, so its lazy proxies (team, etc.) are detached.
+            player = playerRepository.findById(player.getId())
+                    .orElseThrow(() -> new ForbiddenException("Player not found"));
             gameAccessService.ensurePlayerBelongsToGame(player, gameId);
             if (!player.getTeam().getId().equals(teamId)) {
                 throw new ForbiddenException("Player cannot create submissions for another team");

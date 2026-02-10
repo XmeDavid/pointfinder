@@ -49,6 +49,8 @@ class SubmissionServiceTest {
     private GameAccessService gameAccessService;
     @Mock
     private FileStorageService fileStorageService;
+    @Mock
+    private PlayerRepository playerRepository;
 
     @InjectMocks
     private SubmissionService submissionService;
