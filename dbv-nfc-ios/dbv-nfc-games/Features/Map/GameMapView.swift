@@ -30,7 +30,6 @@ struct GameMapView: View {
                 }
                 .mapStyle(.standard(elevation: .flat))
                 .mapControls {
-                    MapUserLocationButton()
                     MapCompass()
                     MapScaleView()
                 }
