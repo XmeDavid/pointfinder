@@ -96,10 +96,10 @@ public class ApnsPushService {
             try {
                 String sanitizedToken = TokenUtil.sanitizeTokenString(token);
 
-                SimpleApnsPayloadBuilder payloadBuilder = new SimpleApnsPayloadBuilder()
-                        .setAlertTitle(title)
-                        .setAlertBody(body)
-                        .setSound("default");
+                SimpleApnsPayloadBuilder payloadBuilder = new SimpleApnsPayloadBuilder();
+                payloadBuilder.setAlertTitle(title);
+                payloadBuilder.setAlertBody(body);
+                payloadBuilder.setSound("default");
 
                 if (customData != null) {
                     for (Map.Entry<String, String> entry : customData.entrySet()) {
