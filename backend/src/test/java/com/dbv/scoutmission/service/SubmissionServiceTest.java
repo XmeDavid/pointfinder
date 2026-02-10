@@ -21,6 +21,7 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -194,5 +195,47 @@ class SubmissionServiceTest {
         assertEquals(normalizedFileUrl, submissionCaptor.getValue().getFileUrl());
         assertEquals(createdSubmissionId, response.getId());
         verify(fileStorageService).validateStoredFileUrl(eq(rawFileUrl), eq(gameId));
+    }
+
+    @Test
+    void createSubmissionWithDetachedPlayerPrincipalRefetchesPlayerBeforeTeamAccess() {
+        UUID playerId = UUID.randomUUID();
+        UUID createdSubmissionId = UUID.randomUUID();
+
+        Player detachedPrincipal = Player.builder()
+                .id(playerId)
+                .build();
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(detachedPrincipal, null)
+        );
+
+        Player hydratedPlayer = Player.builder()
+                .id(playerId)
+                .team(team)
+                .deviceId("device-1")
+                .displayName("Scout")
+                .build();
+
+        CreateSubmissionRequest request = new CreateSubmissionRequest();
+        request.setTeamId(teamId);
+        request.setChallengeId(challengeId);
+        request.setBaseId(baseId);
+        request.setAnswer("answer");
+
+        when(playerRepository.findById(playerId)).thenReturn(Optional.of(hydratedPlayer));
+        when(fileStorageService.validateStoredFileUrl(null, gameId)).thenReturn(null);
+        when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
+        when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
+        when(baseRepository.findById(baseId)).thenReturn(Optional.of(base));
+        when(submissionRepository.save(any(Submission.class))).thenAnswer(invocation -> {
+            Submission saved = invocation.getArgument(0);
+            saved.setId(createdSubmissionId);
+            saved.setSubmittedAt(Instant.now());
+            return saved;
+        });
+
+        SubmissionResponse response = assertDoesNotThrow(() -> submissionService.createSubmission(gameId, request));
+        assertEquals(createdSubmissionId, response.getId());
+        verify(playerRepository).findById(playerId);
     }
 }

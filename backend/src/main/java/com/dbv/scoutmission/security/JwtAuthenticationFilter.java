@@ -73,7 +73,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private void authenticatePlayer(String jwt, HttpServletRequest request) {
         UUID playerId = tokenProvider.getUserIdFromToken(jwt);
-        Player player = playerRepository.findById(playerId).orElse(null);
+        Player player = playerRepository.findAuthPlayerById(playerId).orElse(null);
 
         if (player != null) {
             var authorities = List.of(
