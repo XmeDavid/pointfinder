@@ -18,7 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.dbv.companion.R
+import com.dbv.companion.core.i18n.R
 
 @Composable
 fun WelcomeScreen(

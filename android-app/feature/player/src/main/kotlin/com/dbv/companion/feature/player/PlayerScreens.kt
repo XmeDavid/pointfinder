@@ -47,7 +47,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.dbv.companion.R
+import com.dbv.companion.core.i18n.R
 import com.dbv.companion.core.model.BaseProgress
 import com.dbv.companion.core.model.BaseStatus
 import com.dbv.companion.core.model.CheckInResponse
