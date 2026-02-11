@@ -51,6 +51,7 @@
     <string name="label_progress">Progresso</string>
     <string name="label_status">Status</string>
     <string name="label_answer">Resposta</string>
+    <string name="label_notes">Notas (opcional)</string>
     <string name="label_device">Dispositivo</string>
     <string name="label_device_id">ID do dispositivo</string>
     <string name="label_device_id_short">%1$s...</string>

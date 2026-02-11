@@ -499,6 +499,14 @@ fun SolveScreen(
                 Button(onClick = onCapturePhoto) { Text(stringResource(R.string.action_take_photo)) }
             }
             Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = answer,
+                onValueChange = onAnswerChange,
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 2,
+                label = { Text(stringResource(R.string.label_notes)) },
+            )
+            Spacer(Modifier.height(8.dp))
             if (!isOnline) {
                 Text(stringResource(R.string.hint_photo_required_online), color = MaterialTheme.colorScheme.error)
             }
