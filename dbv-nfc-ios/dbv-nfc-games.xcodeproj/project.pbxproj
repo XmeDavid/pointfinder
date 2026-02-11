@@ -29,9 +29,22 @@
 		37A610572E5E3DD20028D38D /* dbv-nfc-gamesUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "dbv-nfc-gamesUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		37E7C9332F3D0535004E5590 /* Exceptions for "dbv-nfc-games" folder in "dbv-nfc-games" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 37A610392E5E3DD00028D38D /* dbv-nfc-games */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		37A6103C2E5E3DD10028D38D /* dbv-nfc-games */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				37E7C9332F3D0535004E5590 /* Exceptions for "dbv-nfc-games" folder in "dbv-nfc-games" target */,
+			);
 			path = "dbv-nfc-games";
 			sourceTree = "<group>";
 		};
@@ -403,6 +416,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "dbv-nfc-games/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = PointFinder;
 				INFOPLIST_KEY_NFCReaderUsageDescription = "Scan NFC tags at bases to register progress.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Scan QR codes to join your team and take photos for challenges.";
@@ -451,6 +465,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "dbv-nfc-games/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = PointFinder;
 				INFOPLIST_KEY_NFCReaderUsageDescription = "Scan NFC tags at bases to register progress.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Scan QR codes to join your team and take photos for challenges.";
