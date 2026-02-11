@@ -8,6 +8,17 @@ This project contains the Android companion implementation for player and operat
 - Android SDK with API 35
 - Android build tools compatible with AGP 8.7.x
 
+## Setup
+
+1. Copy `.env.example` to `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Update the `.env` file with your configuration:
+   - `API_BASE_URL`: Your API server URL (defaults to https://desbravadores.dev)
+   - `GOOGLE_MAPS_API_KEY`: Your Google Maps API key (get from [Google Cloud Console](https://console.cloud.google.com/google/maps-apis))
+
 ## Project Structure
 
 - `app` - application shell, navigation, DI wiring

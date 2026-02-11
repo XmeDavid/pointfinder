@@ -17,13 +17,13 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
-        buildConfigField("String", "API_BASE_URL", "\"https://desbravadores.dev/\"")
+        buildConfigField("String", "API_BASE_URL", "\"${rootProject.env.API_BASE_URL.orElse("https://desbravadores.dev")}\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
-        manifestPlaceholders["mapsApiKey"] = "CHANGE_ME"
+        manifestPlaceholders["mapsApiKey"] = rootProject.env.GOOGLE_MAPS_API_KEY.orElse("")
     }
 
     buildTypes {
