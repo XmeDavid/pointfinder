@@ -40,6 +40,13 @@ public class ApnsPushService {
         }
 
         try {
+            log.info("Initializing APNs client (production={}), keyPath='{}', keyId='{}', teamId='{}', bundleId='{}'",
+                    apnsConfig.isProduction(),
+                    apnsConfig.getKeyPath(),
+                    apnsConfig.getKeyId(),
+                    apnsConfig.getTeamId(),
+                    apnsConfig.getBundleId());
+
             InputStream keyStream = resourceLoader.getResource(apnsConfig.getKeyPath()).getInputStream();
 
             ApnsSigningKey signingKey = ApnsSigningKey.loadFromInputStream(

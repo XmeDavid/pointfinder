@@ -32,7 +32,8 @@ services:
       # APNs (Apple Push Notifications) configuration - values come from .env
       # Single source of truth: APPLE_PROD_APNS_KEY is both the Key ID and part of the filename
       APNS_ENABLED: ${APNS_ENABLED:-false}
-      APNS_KEY_PATH: ${APNS_KEY_PATH:-/app/config/apns-key.p8}
+      # Use file: URL so Spring's ResourceLoader reads from filesystem, not classpath
+      APNS_KEY_PATH: ${APNS_KEY_PATH:-file:/app/config/apns-key.p8}
       APNS_KEY_ID: ${APPLE_PROD_APNS_KEY:-}      # e.g. G9D86M2578
       APNS_TEAM_ID: ${APNS_TEAM_ID:-}            # e.g. ABC123DEFG
       APNS_BUNDLE_ID: ${APNS_BUNDLE_ID:-com.prayer.pointfinder}
