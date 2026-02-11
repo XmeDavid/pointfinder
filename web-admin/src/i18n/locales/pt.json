@@ -408,7 +408,7 @@
   },
   "landing": {
     "nav": {
-      "operatorLogin": "Entrar como Operador"
+      "operatorLogin": "Entrar"
     },
     "hero": {
       "tagline": "Jogos de aventura ao ar livre com NFC para organizações de escotismo. Crie missões, posicione bases e deixe as equipas explorar o mundo real.",
@@ -457,7 +457,7 @@
     },
     "footer": {
       "tagline": "Feito para Desbravadores",
-      "operatorLogin": "Entrar como Operador",
+      "operatorLogin": "Entrar",
       "copyright": "\u00a9 {{year}} PointFinder. Todos os direitos reservados."
     }
   }

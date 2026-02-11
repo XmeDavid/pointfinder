@@ -1,9 +1,8 @@
-App Store Copy
-Promotional Text (157/170 chars)
-PointFinder turns camps into NFC-powered adventures. Join with your team code, check in at real-world bases, solve challenges, and keep progress synced live.
-Description
-PointFinder (DBV Companion) is the companion app for NFC-powered scouting missions and outdoor challenge games.
+PointFinder turns small pathfinders games into big digitally powered adventures. Check in at real-world bases and solve challenges.
+---
+This is the companion app for PointFinder, a platform that digitally poweres pathfinder missions and outdoor challenge games.
 Whether you are a player in the field or an operator running the event, PointFinder connects teams, bases, and progress in real time.
+
 For players:
 Join a game with a QR code or join code
 Explore base locations on the map
@@ -11,16 +10,18 @@ Check in at physical bases using NFC
 Unlock and solve text or photo challenges
 Keep playing offline and sync actions when connection returns
 Track progress by base status from not visited to completed
+
 For operators:
-Sign in and access assigned games
+Sign in and access your games or coolaborate with on other's games.
 Monitor teams and base activity on a live map
 View base-by-base team progress and submission states
 Write and link NFC tags to bases from iPhone
-Review fixed and random challenge assignment states
+
 Built for real-world events:
-Designed for scouting organizations, camps, and mission activities
+Designed for pathfinder organizations, camps, and mission activities
 Multi-language support: English, Portuguese, and German
 Push notifications and resilient sync flows for active games
+
 Important:
 A game code from your organizer is required to join as a player.
 An operator account is required to use operator tools.
