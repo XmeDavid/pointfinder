@@ -1,5 +1,6 @@
 package com.dbv.companion.feature.player
 
+import android.graphics.Bitmap
 import android.graphics.Color as AndroidColor
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -46,9 +47,12 @@ import androidx.compose.animation.core.tween
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.Image
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dbv.companion.core.i18n.R
@@ -435,6 +439,8 @@ fun SolveScreen(
     onVerifyPresence: () -> Unit,
     onPickPhoto: () -> Unit,
     onCapturePhoto: () -> Unit,
+    photoBitmap: Bitmap?,
+    onClearPhoto: () -> Unit,
     onSubmit: () -> Unit,
     onBack: () -> Unit,
     isOnline: Boolean,
@@ -471,6 +477,23 @@ fun SolveScreen(
         if (isPhotoMode) {
             Text(stringResource(R.string.label_photo_mode))
             Spacer(Modifier.height(8.dp))
+            if (photoBitmap != null) {
+                Box(contentAlignment = Alignment.TopEnd) {
+                    Image(
+                        bitmap = photoBitmap.asImageBitmap(),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(220.dp)
+                            .clip(MaterialTheme.shapes.medium),
+                        contentScale = ContentScale.Crop,
+                    )
+                    TextButton(onClick = onClearPhoto) {
+                        Text("Remove", color = Color.White)
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = onPickPhoto) { Text(stringResource(R.string.action_choose_photo)) }
                 Button(onClick = onCapturePhoto) { Text(stringResource(R.string.action_take_photo)) }

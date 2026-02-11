@@ -1,5 +1,13 @@
 package com.dbv.companion.navigation
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
+import android.os.Build
+import android.provider.MediaStore
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -8,6 +16,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.FileProvider
+import java.io.ByteArrayOutputStream
+import java.io.File
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -156,10 +168,56 @@ private fun PlayerRootScreen(
     val viewModel: PlayerViewModel = hiltViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val playerCameraState = rememberCameraPositionState()
+    val context = LocalContext.current
 
     var selectedTab by rememberSaveable { mutableStateOf(PlayerTab.MAP) }
     var solving by remember { mutableStateOf<Pair<String, String>?>(null) }
     var photoBytes by remember { mutableStateOf<ByteArray?>(null) }
+    var photoBitmap by remember { mutableStateOf<Bitmap?>(null) }
+
+    // Camera temp file URI
+    val cameraPhotoUri = remember {
+        val photoDir = File(context.cacheDir, "photos").apply { mkdirs() }
+        val photoFile = File(photoDir, "capture.jpg")
+        FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", photoFile)
+    }
+
+    // Gallery picker
+    val pickPhotoLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia(),
+    ) { uri ->
+        if (uri != null) {
+            runCatching {
+                val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, uri))
+                } else {
+                    @Suppress("DEPRECATION")
+                    MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+                }
+                photoBitmap = bitmap
+                val out = ByteArrayOutputStream()
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 70, out)
+                photoBytes = out.toByteArray()
+            }
+        }
+    }
+
+    // Camera capture
+    val cameraLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicture(),
+    ) { success ->
+        if (success) {
+            runCatching {
+                val inputStream = context.contentResolver.openInputStream(cameraPhotoUri)
+                val bitmap = BitmapFactory.decodeStream(inputStream)
+                inputStream?.close()
+                photoBitmap = bitmap
+                val out = ByteArrayOutputStream()
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 70, out)
+                photoBytes = out.toByteArray()
+            }
+        }
+    }
 
     LaunchedEffect(auth.gameId, isOnline) {
         viewModel.refresh(auth, isOnline)
@@ -170,6 +228,8 @@ private fun PlayerRootScreen(
         onTabSelected = { tab ->
             // Clear sub-screen state so tabs always navigate
             solving = null
+            photoBytes = null
+            photoBitmap = null
             viewModel.clearCheckIn()
             viewModel.clearSubmissionResult()
             selectedTab = tab
@@ -194,8 +254,10 @@ private fun PlayerRootScreen(
                     presenceRequired = state.presenceRequired,
                     presenceVerified = state.presenceVerified,
                     onVerifyPresence = { viewModel.beginPresenceVerification(baseId) },
-                    onPickPhoto = { photoBytes = ByteArray(1) },
-                    onCapturePhoto = { photoBytes = ByteArray(1) },
+                    onPickPhoto = { pickPhotoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+                    onCapturePhoto = { cameraLauncher.launch(cameraPhotoUri) },
+                    photoBitmap = photoBitmap,
+                    onClearPhoto = { photoBitmap = null; photoBytes = null },
                     onBack = { solving = null },
                     onSubmit = {
                         if (state.isPhotoMode) {
@@ -231,6 +293,8 @@ private fun PlayerRootScreen(
                         viewModel.setPresenceRequired(
                             state.progress.firstOrNull { it.baseId == baseId }?.requirePresenceToSubmit == true,
                         )
+                        val checkInChallenge = state.activeCheckIn?.challenge
+                        viewModel.setPhotoMode(checkInChallenge?.answerType == "file")
                     },
                     onBack = { viewModel.clearCheckIn() },
                 )
@@ -288,6 +352,7 @@ private fun PlayerRootScreen(
                 if (challengeId != null) {
                     solving = selectedBase.baseId to challengeId
                     viewModel.setPresenceRequired(selectedBase.requirePresenceToSubmit)
+                    viewModel.setPhotoMode(state.selectedChallenge?.answerType == "file")
                 }
                 viewModel.clearSelectedBase()
             },
