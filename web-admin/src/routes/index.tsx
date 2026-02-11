@@ -2,6 +2,9 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import { AppShell } from "@/components/layout/AppShell";
 import { GameShell } from "@/features/game-detail/GameShell";
 
+// Landing
+import { LandingPage } from "@/features/landing/LandingPage";
+
 // Auth
 import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
@@ -37,6 +40,13 @@ import { AuthGuard } from "./AuthGuard";
 import { GuestGuard } from "./GuestGuard";
 
 export const router = createBrowserRouter([
+  /* -------- Public landing page -------- */
+  {
+    path: "/",
+    element: <LandingPage />,
+  },
+
+  /* -------- Auth pages -------- */
   {
     path: "/login",
     element: (
@@ -53,8 +63,9 @@ export const router = createBrowserRouter([
       </GuestGuard>
     ),
   },
+
+  /* -------- Authenticated admin shell (pathless layout route) -------- */
   {
-    path: "/",
     element: (
       <AuthGuard>
         <AppShell />
@@ -62,10 +73,6 @@ export const router = createBrowserRouter([
     ),
     handle: { breadcrumb: "Home" },
     children: [
-      {
-        index: true,
-        element: <Navigate to="/games" replace />,
-      },
       {
         path: "games",
         handle: { breadcrumb: "Games" },
@@ -87,6 +94,8 @@ export const router = createBrowserRouter([
       },
     ],
   },
+
+  /* -------- Game detail shell -------- */
   {
     path: "/games/:gameId",
     element: (

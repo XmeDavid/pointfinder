@@ -90,3 +90,95 @@ body {
   height: auto;
   border-radius: 0.375rem;
 }
+
+/* =============================================================
+   Landing page animations
+   ============================================================= */
+
+/* Fade-in on initial load (applied directly to hero elements) */
+.landing-fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: landingFadeIn 0.9s ease forwards;
+}
+
+@keyframes landingFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scroll-triggered reveal (activated by IntersectionObserver) */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.scroll-reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Gentle floating for waypoint decorations */
+.landing-float {
+  animation: landingFloat 6s ease-in-out infinite;
+}
+
+@keyframes landingFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Slow compass rotation (one full turn ≈ 2 min) */
+.landing-rotate-slow {
+  animation: landingRotateSlow 120s linear infinite;
+}
+
+@keyframes landingRotateSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Sonar / radar pulse rings */
+.landing-ping {
+  animation: landingPing 4s ease-out infinite;
+}
+
+@keyframes landingPing {
+  0% {
+    transform: scale(1);
+    opacity: 0.25;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+/* Scroll-indicator bounce */
+.landing-bounce {
+  animation: landingBounce 2s ease-in-out infinite;
+}
+
+@keyframes landingBounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(5px);
+  }
+}
