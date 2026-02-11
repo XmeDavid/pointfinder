@@ -1,26 +1,29 @@
-PointFinder turns small pathfinders games into big digitally powered adventures. Check in at real-world bases and solve challenges.
----
-This is the companion app for PointFinder, a platform that digitally poweres pathfinder missions and outdoor challenge games.
-Whether you are a player in the field or an operator running the event, PointFinder connects teams, bases, and progress in real time.
+[EN]
+Promotional text:
+PointFinder turns Pathfinder games into immersive digital adventures. Check in at real-world bases with NFC and solve challenges with your team.
+
+Description:
+PointFinder is the companion app for NFC-powered Pathfinder missions and outdoor challenge games.
+Whether you are a player in the field or an operator running the event, PointFinder connects teams, bases, and live progress in real time.
 
 For players:
 Join a game with a QR code or join code
 Explore base locations on the map
-Check in at physical bases using NFC
+Check in at physical bases with NFC
 Unlock and solve text or photo challenges
-Keep playing offline and sync actions when connection returns
-Track progress by base status from not visited to completed
+Keep playing offline and sync actions when your connection returns
+Track progress by base status, from not visited to completed
 
 For operators:
-Sign in and access your games or coolaborate with on other's games.
+Sign in to access your games or collaborate on games with other operators
 Monitor teams and base activity on a live map
-View base-by-base team progress and submission states
-Write and link NFC tags to bases from iPhone
+View team progress and submission status for each base
+Write and link NFC tags to bases from your iPhone
 
 Built for real-world events:
-Designed for pathfinder organizations, camps, and mission activities
+Designed for Pathfinder organizations, camps, and mission activities
 Multi-language support: English, Portuguese, and German
-Push notifications and resilient sync flows for active games
+Push notifications and resilient sync for active games
 
 Important:
 A game code from your organizer is required to join as a player.
@@ -28,4 +31,75 @@ An operator account is required to use operator tools.
 NFC features require a compatible iPhone.
 Location access is used during active missions for map and team tracking.
 Photo submissions require an internet connection.
-If you want, I can also draft the matching Play Store short description + full description in the same tone.
+
+---
+
+[PT-PT]
+Texto promocional:
+O PointFinder transforma pequenos jogos de Desbravadores em grandes aventuras digitais. Faz check-in em bases reais e resolve desafios.
+
+Descrição:
+Esta é a app complementar do PointFinder, uma plataforma que digitaliza missões de Desbravadores e jogos de desafios ao ar livre.
+Quer sejas um jogador no terreno ou um operador a gerir o evento, o PointFinder liga equipas, bases e progresso em tempo real.
+
+Para jogadores:
+Entra num jogo com um código QR ou código de entrada
+Explora as localizações das bases no mapa
+Faz check-in em bases físicas com NFC
+Desbloqueia e resolve desafios de texto ou fotografia
+Continua a jogar offline e sincroniza as ações quando voltares a ter ligação
+Acompanha o progresso por estado da base, de não visitada a concluída
+
+Para operadores:
+Inicia sessão e acede aos teus jogos ou colabora nos jogos de outros operadores
+Monitoriza equipas e atividade das bases num mapa em direto
+Vê o progresso das equipas e o estado das submissões por base
+Escreve e associa etiquetas NFC às bases com o iPhone
+
+Construído para eventos no mundo real:
+Pensado para organizações de Desbravadores, acampamentos e atividades de missão
+Suporte multilingue: inglês, português e alemão
+Notificações push e sincronização robusta para jogos ativos
+
+Importante:
+É necessário um código de jogo fornecido pelo teu organizador para entrares como jogador.
+É necessária uma conta de operador para usar as ferramentas de operador.
+As funcionalidades NFC requerem um iPhone compatível.
+O acesso à localização é usado durante missões ativas para mapa e seguimento das equipas.
+As submissões com fotografia requerem ligação à internet.
+
+---
+
+[DE]
+Werbetext:
+PointFinder macht aus kleinen Pfadfinder-Spielen große digital unterstützte Abenteuer. Checkt an realen Stationen ein und löst Herausforderungen.
+
+Beschreibung:
+Dies ist die Begleit-App für PointFinder, eine Plattform, die Pfadfinder-Missionen und Outdoor-Challenge-Spiele digital unterstützt.
+Egal ob du als Spieler im Feld unterwegs bist oder als Operator das Event leitest, PointFinder verbindet Teams, Stationen und Fortschritt in Echtzeit.
+
+Für Spieler:
+Tritt einem Spiel per QR-Code oder Spielcode bei
+Erkunde Standorte der Stationen auf der Karte
+Checke per NFC an physischen Stationen ein
+Schalte Text- oder Foto-Challenges frei und löse sie
+Spiele offline weiter und synchronisiere Aktionen, sobald die Verbindung zurück ist
+Verfolge den Fortschritt über den Stationsstatus von nicht besucht bis abgeschlossen
+
+Für Operatoren:
+Melde dich an und greife auf deine Spiele zu oder arbeite an Spielen anderer Operatoren mit
+Überwache Teams und Stationsaktivität auf einer Live-Karte
+Sieh den Teamfortschritt und den Einreichungsstatus pro Station
+Schreibe und verknüpfe NFC-Tags an Stationen mit dem iPhone
+
+Für reale Events entwickelt:
+Gemacht für Pfadfinder-Organisationen, Camps und Missionsaktivitäten
+Mehrsprachige Unterstützung: Englisch, Portugiesisch und Deutsch
+Push-Benachrichtigungen und robuste Synchronisierung für aktive Spiele
+
+Wichtig:
+Zum Beitritt als Spieler ist ein Spielcode vom Veranstalter erforderlich.
+Für Operator-Funktionen ist ein Operator-Konto erforderlich.
+NFC-Funktionen erfordern ein kompatibles iPhone.
+Der Standortzugriff wird während aktiver Missionen für Karte und Team-Tracking verwendet.
+Foto-Einreichungen erfordern eine Internetverbindung.
