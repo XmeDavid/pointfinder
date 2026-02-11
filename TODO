@@ -18,3 +18,5 @@ Rebrand app and website to the name
 App Icon
 How to publish on AppStore
 How to publish on PlayStore
+
+BEFORE PROD on iOS app change the env on the server for the APNs
