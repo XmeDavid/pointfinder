@@ -8,7 +8,7 @@ final class NFCReaderService: NSObject {
     var isReading = false
     var errorMessage: String?
 
-    private var session: NFCNDEFReaderSession?
+    private var session: NFCTagReaderSession?
     private var continuation: CheckedContinuation<UUID, Error>?
 
     private func resolveContinuation(_ result: Result<UUID, Error>) {
@@ -27,7 +27,7 @@ final class NFCReaderService: NSObject {
         #if targetEnvironment(simulator)
         throw NFCError.notAvailable
         #else
-        guard NFCNDEFReaderSession.readingAvailable else {
+        guard NFCTagReaderSession.readingAvailable else {
             throw NFCError.notAvailable
         }
 
@@ -36,7 +36,7 @@ final class NFCReaderService: NSObject {
             self.errorMessage = nil
             self.isReading = true
 
-            self.session = NFCNDEFReaderSession(delegate: self, queue: .main, invalidateAfterFirstRead: true)
+            self.session = NFCTagReaderSession(pollingOption: .iso14443, delegate: self, queue: .main)
             self.session?.alertMessage = Translations.string("nfc.holdToRead")
             self.session?.begin()
         }
@@ -50,13 +50,13 @@ final class NFCReaderService: NSObject {
     }
 }
 
-// MARK: - NFCNDEFReaderSessionDelegate
+// MARK: - NFCTagReaderSessionDelegate
 
-extension NFCReaderService: NFCNDEFReaderSessionDelegate {
+extension NFCReaderService: NFCTagReaderSessionDelegate {
 
-    func readerSessionDidBecomeActive(_ session: NFCNDEFReaderSession) {}
+    func tagReaderSessionDidBecomeActive(_ session: NFCTagReaderSession) {}
 
-    func readerSession(_ session: NFCNDEFReaderSession, didInvalidateWithError error: Error) {
+    func tagReaderSession(_ session: NFCTagReaderSession, didInvalidateWithError error: Error) {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.isReading = false
@@ -71,20 +71,7 @@ extension NFCReaderService: NFCNDEFReaderSessionDelegate {
         }
     }
 
-    func readerSession(_ session: NFCNDEFReaderSession, didDetectNDEFs messages: [NFCNDEFMessage]) {
-        guard let message = messages.first,
-              let record = message.records.first else {
-            DispatchQueue.main.async { [weak self] in
-                self?.isReading = false
-                self?.resolveContinuation(.failure(NFCError.noData))
-            }
-            return
-        }
-
-        processRecord(record, session: session)
-    }
-
-    func readerSession(_ session: NFCNDEFReaderSession, didDetect tags: [any NFCNDEFTag]) {
+    func tagReaderSession(_ session: NFCTagReaderSession, didDetect tags: [NFCTag]) {
         guard let tag = tags.first else {
             session.invalidate(errorMessage: Translations.string("nfc.noTagFound"))
             return
@@ -96,23 +83,60 @@ extension NFCReaderService: NFCNDEFReaderSessionDelegate {
                 return
             }
 
-            tag.readNDEF { message, error in
-                if let error = error {
-                    session.invalidate(errorMessage: error.localizedDescription)
-                    return
-                }
-
-                guard let message = message, let record = message.records.first else {
-                    session.invalidate(errorMessage: Translations.string("nfc.noDataOnTag"))
-                    return
-                }
-
-                self?.processRecord(record, session: session)
+            // Check if the tag supports NDEF
+            guard case let .iso7816(ndefTag) = tag,
+                  let ndefTag = ndefTag as? NFCNDEFTag else {
+                // Try other tag types
+                self?.handleNonISO7816Tag(tag, session: session)
+                return
             }
+
+            self?.readNDEFFromTag(ndefTag, session: session)
         }
     }
 
-    private func processRecord(_ record: NFCNDEFPayload, session: NFCNDEFReaderSession) {
+    private func handleNonISO7816Tag(_ tag: NFCTag, session: NFCTagReaderSession) {
+        // Try to get NDEF interface from other tag types
+        let ndefTag: NFCNDEFTag?
+
+        switch tag {
+        case .miFare(let mifareTag):
+            ndefTag = mifareTag
+        case .iso15693(let iso15693Tag):
+            ndefTag = iso15693Tag
+        case .feliCa(let felicaTag):
+            ndefTag = felicaTag
+        case .iso7816:
+            ndefTag = nil
+        @unknown default:
+            ndefTag = nil
+        }
+
+        guard let ndefTag = ndefTag else {
+            session.invalidate(errorMessage: Translations.string("nfc.noTagFound"))
+            return
+        }
+
+        readNDEFFromTag(ndefTag, session: session)
+    }
+
+    private func readNDEFFromTag(_ tag: NFCNDEFTag, session: NFCTagReaderSession) {
+        tag.readNDEF { [weak self] message, error in
+            if let error = error {
+                session.invalidate(errorMessage: error.localizedDescription)
+                return
+            }
+
+            guard let message = message, let record = message.records.first else {
+                session.invalidate(errorMessage: Translations.string("nfc.noDataOnTag"))
+                return
+            }
+
+            self?.processRecord(record, session: session)
+        }
+    }
+
+    private func processRecord(_ record: NFCNDEFPayload, session: NFCTagReaderSession) {
         let payload = record.payload
 
         // Try to parse as JSON with baseId
