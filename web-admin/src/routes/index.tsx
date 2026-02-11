@@ -32,17 +32,26 @@ import { ActivityPage } from "@/features/monitoring/ActivityPage";
 import { SubmissionsPage } from "@/features/monitoring/SubmissionsPage";
 import { TeamDetailPage } from "@/features/monitoring/TeamDetailPage";
 
-// Auth guard
+// Auth guards
 import { AuthGuard } from "./AuthGuard";
+import { GuestGuard } from "./GuestGuard";
 
 export const router = createBrowserRouter([
   {
     path: "/login",
-    element: <LoginPage />,
+    element: (
+      <GuestGuard>
+        <LoginPage />
+      </GuestGuard>
+    ),
   },
   {
     path: "/register/:token",
-    element: <RegisterPage />,
+    element: (
+      <GuestGuard>
+        <RegisterPage />
+      </GuestGuard>
+    ),
   },
   {
     path: "/",

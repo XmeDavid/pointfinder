@@ -54,7 +54,7 @@ public class EmailService {
     @Async
     public void sendGameInvite(String toEmail, String gameName, String inviterName) {
         String subject = "You've been invited to operate a game on " + BRAND_NAME;
-        String loginLink = frontendUrl + "/login";
+        String loginLink = frontendUrl;
         String safeInviterName = escapeHtml(inviterName);
         String safeGameName = escapeHtml(gameName);
         String html = buildEmailTemplate(
