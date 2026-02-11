@@ -273,6 +273,10 @@ sealed class AuthType {
         val teamId: EntityId,
         val gameId: EntityId,
         val displayName: String,
+        val gameName: String? = null,
+        val teamName: String? = null,
+        val teamColor: String? = null,
+        val gameStatus: String? = null,
     ) : AuthType()
 
     data class Operator(

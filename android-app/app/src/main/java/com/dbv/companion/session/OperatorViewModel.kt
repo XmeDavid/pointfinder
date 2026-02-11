@@ -33,6 +33,7 @@ data class OperatorState(
     val assignmentSummary: String = "Unknown",
     val awaitingNfcWrite: Boolean = false,
     val writeStatus: String? = null,
+    val writeSuccess: Boolean? = null,
     val errorMessage: String? = null,
 )
 
@@ -85,6 +86,7 @@ class OperatorViewModel @Inject constructor(
             baseProgress = emptyList(),
             selectedBase = null,
             writeStatus = null,
+            writeSuccess = null,
         )
     }
 
@@ -135,12 +137,14 @@ class OperatorViewModel @Inject constructor(
                     assignmentSummary = summary,
                     awaitingNfcWrite = false,
                     writeStatus = null,
+                    writeSuccess = null,
                 )
             }.onFailure {
                 _state.value = _state.value.copy(
                     selectedBase = base,
                     assignmentSummary = "Unknown",
                     awaitingNfcWrite = false,
+                    writeSuccess = null,
                 )
             }
         }
@@ -150,6 +154,7 @@ class OperatorViewModel @Inject constructor(
         _state.value = _state.value.copy(
             selectedBase = null,
             writeStatus = null,
+            writeSuccess = null,
             awaitingNfcWrite = false,
         )
     }
@@ -158,6 +163,7 @@ class OperatorViewModel @Inject constructor(
         _state.value = _state.value.copy(
             awaitingNfcWrite = true,
             writeStatus = "Hold an NFC tag near the device to write base payload.",
+            writeSuccess = null,
         )
     }
 
@@ -167,6 +173,7 @@ class OperatorViewModel @Inject constructor(
         _state.value = _state.value.copy(
             awaitingNfcWrite = false,
             writeStatus = if (result.isSuccess) "NFC write success" else "NFC write failed: ${result.exceptionOrNull()?.message}",
+            writeSuccess = result.isSuccess,
         )
     }
 
@@ -177,10 +184,10 @@ class OperatorViewModel @Inject constructor(
             runCatching {
                 operatorRepository.linkBaseNfc(game.id, base.id)
             }.onSuccess {
-                _state.value = _state.value.copy(writeStatus = "NFC link success")
+                _state.value = _state.value.copy(writeStatus = "NFC link success", writeSuccess = true)
                 refreshSelectedGameData()
             }.onFailure { err ->
-                _state.value = _state.value.copy(writeStatus = "NFC link failed: ${err.message}")
+                _state.value = _state.value.copy(writeStatus = "NFC link failed: ${err.message}", writeSuccess = false)
             }
         }
     }

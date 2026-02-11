@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AssistChip
@@ -26,12 +27,16 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.dbv.companion.R
 import com.dbv.companion.core.model.Base
 import com.dbv.companion.core.model.Game
 import com.dbv.companion.core.model.TeamBaseProgressResponse
@@ -57,18 +62,13 @@ fun OperatorHomeScreen(
 ) {
     Scaffold(
         topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text("Operator", style = MaterialTheme.typography.titleLarge)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = onRefresh) { Text("Refresh") }
-                    Button(onClick = onLogout) { Text("Logout") }
-                }
-            }
+            TopAppBar(
+                title = { Text(stringResource(R.string.label_operator)) },
+                actions = {
+                    TextButton(onClick = onRefresh) { Text(stringResource(R.string.action_refresh)) }
+                    TextButton(onClick = onLogout) { Text(stringResource(R.string.action_logout)) }
+                },
+            )
         },
     ) { padding ->
         LazyColumn(
@@ -79,7 +79,7 @@ fun OperatorHomeScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (games.isEmpty()) {
-                item { Text("No Games") }
+                item { Text(stringResource(R.string.label_no_games)) }
             } else {
                 items(games) { game ->
                     Surface(
@@ -116,19 +116,19 @@ fun OperatorGameScaffold(
                     selected = selectedTab == OperatorTab.LIVE_MAP,
                     onClick = { onTabSelected(OperatorTab.LIVE_MAP) },
                     icon = { androidx.compose.material3.Icon(Icons.Default.Map, contentDescription = null) },
-                    label = { Text("Live Map") },
+                    label = { Text(stringResource(R.string.label_live_map)) },
                 )
                 NavigationBarItem(
                     selected = selectedTab == OperatorTab.BASES,
                     onClick = { onTabSelected(OperatorTab.BASES) },
-                    icon = { Text("B") },
-                    label = { Text("Bases") },
+                    icon = { androidx.compose.material3.Icon(Icons.Default.LocationOn, contentDescription = stringResource(R.string.label_bases)) },
+                    label = { Text(stringResource(R.string.label_bases)) },
                 )
                 NavigationBarItem(
                     selected = selectedTab == OperatorTab.SETTINGS,
                     onClick = { onTabSelected(OperatorTab.SETTINGS) },
                     icon = { androidx.compose.material3.Icon(Icons.Default.Settings, contentDescription = null) },
-                    label = { Text("Settings") },
+                    label = { Text(stringResource(R.string.label_settings)) },
                 )
             }
         },
@@ -151,7 +151,7 @@ fun OperatorMapScreen(
                 Marker(
                     state = MarkerState(LatLng(base.lat, base.lng)),
                     title = base.name,
-                    snippet = "Base",
+                    snippet = stringResource(R.string.label_base_marker),
                     onClick = {
                         onBaseSelected(base)
                         true
@@ -161,7 +161,7 @@ fun OperatorMapScreen(
             teamLocations.forEach { location ->
                 Marker(
                     state = MarkerState(LatLng(location.lat, location.lng)),
-                    title = "Team ${location.teamId.take(6)}",
+                    title = stringResource(R.string.label_team_marker, location.teamId.take(6)),
                     snippet = location.updatedAt,
                 )
             }
@@ -172,7 +172,7 @@ fun OperatorMapScreen(
                 .align(Alignment.TopEnd)
                 .padding(12.dp),
         ) {
-            Text("Refresh")
+            Text(stringResource(R.string.action_refresh))
         }
     }
 }
@@ -189,10 +189,10 @@ fun LiveBaseProgressBottomSheet(
             Text(base.name, style = MaterialTheme.typography.titleLarge)
             Spacer(Modifier.height(8.dp))
             val grouped = progress.filter { it.baseId == base.id }
-            Text("Teams: ${grouped.size}")
+            Text(stringResource(R.string.label_teams_count, grouped.size))
             Spacer(Modifier.height(8.dp))
             grouped.forEach { item ->
-                Text("Team ${item.teamId.take(6)} - ${item.status}")
+                Text(stringResource(R.string.label_team_status_row, item.teamId.take(6), item.status))
             }
             Spacer(Modifier.height(16.dp))
         }
@@ -224,7 +224,13 @@ fun OperatorBasesScreen(
                     Spacer(Modifier.height(4.dp))
                     Text("${base.lat}, ${base.lng}", style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(4.dp))
-                    Text(if (base.nfcLinked) "NFC linked" else "NFC not linked")
+                    Text(
+                        if (base.nfcLinked) {
+                            stringResource(R.string.label_nfc_linked)
+                        } else {
+                            stringResource(R.string.label_nfc_not_linked)
+                        },
+                    )
                 }
             }
         }
@@ -236,6 +242,7 @@ fun OperatorBaseDetailScreen(
     base: Base,
     assignmentSummary: String,
     writeStatus: String?,
+    writeSuccess: Boolean?,
     onBack: () -> Unit,
     onWriteNfc: () -> Unit,
     onLinkBackend: () -> Unit,
@@ -250,18 +257,21 @@ fun OperatorBaseDetailScreen(
         Spacer(Modifier.height(8.dp))
         Text(base.description)
         Spacer(Modifier.height(8.dp))
-        Text("Presence required: ${base.requirePresenceToSubmit}")
+        Text(stringResource(R.string.label_presence_required_value, base.requirePresenceToSubmit.toString()))
         Spacer(Modifier.height(8.dp))
-        Text("Assignments: $assignmentSummary")
+        Text(stringResource(R.string.label_assignments_value, assignmentSummary))
         Spacer(Modifier.height(12.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = onBack) { Text("Back") }
-            Button(onClick = onWriteNfc) { Text("Write NFC") }
-            Button(onClick = onLinkBackend) { Text("Link in Backend") }
+            Button(onClick = onBack) { Text(stringResource(R.string.action_back)) }
+            Button(onClick = onWriteNfc) { Text(stringResource(R.string.action_write_nfc)) }
+            Button(onClick = onLinkBackend) { Text(stringResource(R.string.action_link_backend)) }
         }
         if (!writeStatus.isNullOrBlank()) {
             Spacer(Modifier.height(12.dp))
-            Text(writeStatus, color = if (writeStatus.contains("success", ignoreCase = true)) Color(0xFF0F7A36) else MaterialTheme.colorScheme.error)
+            Text(
+                writeStatus,
+                color = if (writeSuccess == true) Color(0xFF0F7A36) else MaterialTheme.colorScheme.error,
+            )
         }
     }
 }
@@ -282,10 +292,10 @@ fun OperatorSettingsScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("Settings", style = MaterialTheme.typography.titleLarge)
-        Text("Game: ${gameName ?: "-"}")
-        Text("Status: ${gameStatus ?: "-"}")
-        Text("Language: ${currentLanguage.uppercase()}")
+        Text(stringResource(R.string.label_settings), style = MaterialTheme.typography.titleLarge)
+        Text("${stringResource(R.string.label_game)}: ${gameName ?: "-"}")
+        Text("${stringResource(R.string.label_status)}: ${gameStatus ?: "-"}")
+        Text("${stringResource(R.string.label_language)}: ${currentLanguage.uppercase()}")
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("en", "pt", "de").forEach { lang ->
                 Button(onClick = { onLanguageChanged(lang) }) {
@@ -293,7 +303,7 @@ fun OperatorSettingsScreen(
                 }
             }
         }
-        Button(onClick = onSwitchGame) { Text("Switch game") }
-        Button(onClick = onLogout) { Text("Logout") }
+        Button(onClick = onSwitchGame) { Text(stringResource(R.string.action_switch_game)) }
+        Button(onClick = onLogout) { Text(stringResource(R.string.action_logout)) }
     }
 }

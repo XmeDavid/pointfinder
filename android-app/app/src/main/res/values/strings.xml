@@ -1,17 +1,37 @@
 <resources>
     <string name="app_name">DBV Companion</string>
+
+    <!-- Actions -->
     <string name="action_join_game">Join a Game</string>
     <string name="action_operator_login">Operator Login</string>
     <string name="action_continue">Continue</string>
     <string name="action_join">Join</string>
+    <string name="action_sign_in">Sign In</string>
     <string name="action_logout">Logout</string>
     <string name="action_leave_game">Leave Game</string>
+    <string name="action_scan_qr">Scan QR</string>
     <string name="action_scan_nfc">Scan NFC</string>
+    <string name="action_check_in_at_base">Check In at Base</string>
     <string name="action_submit">Submit</string>
+    <string name="action_solve">Solve</string>
+    <string name="action_solve_challenge">Solve challenge</string>
     <string name="action_write_nfc">Write NFC Tag</string>
+    <string name="action_link_backend">Link in Backend</string>
+    <string name="action_verify_with_nfc">Verify with NFC</string>
+    <string name="action_choose_photo">Choose Photo</string>
+    <string name="action_take_photo">Take Photo</string>
+    <string name="action_refresh">Refresh</string>
+    <string name="action_back">Back</string>
+    <string name="action_back_to_map">Back to map</string>
+    <string name="action_switch_game">Switch game</string>
+
+    <!-- Labels -->
     <string name="label_welcome">PointFinder</string>
+    <string name="label_subtitle">DBV Companion</string>
+    <string name="label_join_with_qr_or_code">Join with QR or code</string>
     <string name="label_join_code">Join code</string>
     <string name="label_display_name">Display name</string>
+    <string name="label_your_name">Your name</string>
     <string name="label_email">Email</string>
     <string name="label_password">Password</string>
     <string name="label_map">Map</string>
@@ -23,18 +43,58 @@
     <string name="label_operator">Operator</string>
     <string name="label_player">Player</string>
     <string name="label_language">Language</string>
+    <string name="label_legend">Legend</string>
     <string name="label_game">Game</string>
     <string name="label_team">Team</string>
     <string name="label_profile">Profile</string>
+    <string name="label_name">Name</string>
     <string name="label_progress">Progress</string>
+    <string name="label_status">Status</string>
+    <string name="label_answer">Answer</string>
+    <string name="label_device">Device</string>
     <string name="label_device_id">Device ID</string>
+    <string name="label_device_id_short">%1$s...</string>
+    <string name="label_current_game">Current Game</string>
+    <string name="label_your_team">Your Team</string>
+    <string name="label_your_profile">Your Profile</string>
+    <string name="label_total_bases">Total Bases</string>
+    <string name="label_pending_actions">Pending actions</string>
+    <string name="label_pending_sync_one">%1$d pending action to sync</string>
+    <string name="label_pending_sync_other">%1$d pending actions to sync</string>
+    <string name="label_base_check_in">Base Check-In</string>
+    <string name="label_checked_in_at_base">Checked in at %1$s</string>
+    <string name="label_no_challenge_details">No challenge details yet.</string>
+    <string name="label_no_challenge_assigned">No challenge assigned.</string>
+    <string name="label_awaiting_review">Awaiting review</string>
+    <string name="label_solve_title">Solve challenge</string>
+    <string name="label_presence_required">Presence verification required.</string>
+    <string name="label_presence_verified">Presence verified</string>
+    <string name="label_photo_mode">Photo answer mode</string>
+    <string name="label_submission_status">Submission status: %1$s</string>
+    <string name="label_teams_count">Teams: %1$d</string>
+    <string name="label_team_status_row">Team %1$s - %2$s</string>
+    <string name="label_base_marker">Base</string>
+    <string name="label_team_marker">Team %1$s</string>
+    <string name="label_nfc_linked">NFC linked</string>
+    <string name="label_nfc_not_linked">NFC not linked</string>
+    <string name="label_presence_required_value">Presence required: %1$s</string>
+    <string name="label_assignments_value">Assignments: %1$s</string>
+    <string name="label_no_games">No Games</string>
+
+    <!-- Hints -->
+    <string name="hint_checkin_instructions">Hold your phone near the marker at a base to check in</string>
+    <string name="hint_offline_sync">Offline: data will sync when online.</string>
     <string name="hint_photo_required_online">Photo submissions require internet.</string>
     <string name="hint_presence_required">NFC presence required before submit.</string>
+
+    <!-- Status -->
     <string name="status_not_visited">Not visited</string>
     <string name="status_checked_in">Checked in</string>
     <string name="status_submitted">Pending review</string>
     <string name="status_completed">Completed</string>
     <string name="status_rejected">Rejected</string>
+
+    <!-- Errors -->
     <string name="error_generic">Something went wrong.</string>
     <string name="error_invalid_nfc">Invalid NFC payload.</string>
     <string name="error_missing_fields">Please fill all required fields.</string>

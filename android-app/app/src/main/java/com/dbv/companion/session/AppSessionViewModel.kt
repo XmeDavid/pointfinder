@@ -16,6 +16,7 @@ import com.dbv.companion.core.platform.PushTokenProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import java.util.Locale
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +29,7 @@ data class AppSessionState(
     val isLoading: Boolean = false,
     val isOnline: Boolean = true,
     val pendingActionsCount: Int = 0,
+    val currentLanguage: String = "en",
     val errorMessage: String? = null,
 )
 
@@ -87,9 +89,9 @@ class AppSessionViewModel @Inject constructor(
             }
 
             val preferred = sessionStore.preferredLanguage()
-            if (!preferred.isNullOrBlank()) {
-                LocaleManager.applyLanguage(preferred)
-            }
+            val resolvedLanguage = LocaleManager.normalizeLanguage(preferred ?: Locale.getDefault().language)
+            _state.value = _state.value.copy(currentLanguage = resolvedLanguage)
+            LocaleManager.applyLanguage(resolvedLanguage)
         }
     }
 
@@ -144,8 +146,10 @@ class AppSessionViewModel @Inject constructor(
 
     fun updateLanguage(languageCode: String) {
         viewModelScope.launch {
-            sessionStore.setPreferredLanguage(languageCode)
-            LocaleManager.applyLanguage(languageCode)
+            val normalized = LocaleManager.normalizeLanguage(languageCode)
+            sessionStore.setPreferredLanguage(normalized)
+            LocaleManager.applyLanguage(normalized)
+            _state.value = _state.value.copy(currentLanguage = normalized)
         }
     }
 

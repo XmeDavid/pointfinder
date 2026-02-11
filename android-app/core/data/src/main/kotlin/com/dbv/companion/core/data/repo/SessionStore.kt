@@ -45,6 +45,8 @@ class SessionStore @Inject constructor(
             prefs[DISPLAY_NAME] = response.player.displayName
             prefs[GAME_NAME] = response.game.name
             prefs[TEAM_NAME] = response.team.name
+            prefs[TEAM_COLOR] = response.team.color
+            prefs[GAME_STATUS] = response.game.status
         }
     }
 
@@ -93,6 +95,10 @@ class SessionStore @Inject constructor(
                         teamId = teamId,
                         gameId = gameId,
                         displayName = prefs[DISPLAY_NAME].orEmpty(),
+                        gameName = prefs[GAME_NAME],
+                        teamName = prefs[TEAM_NAME],
+                        teamColor = prefs[TEAM_COLOR],
+                        gameStatus = prefs[GAME_STATUS],
                     )
                 }
             }
@@ -159,6 +165,8 @@ class SessionStore @Inject constructor(
         private val DISPLAY_NAME = stringPreferencesKey("display_name")
         private val GAME_NAME = stringPreferencesKey("game_name")
         private val TEAM_NAME = stringPreferencesKey("team_name")
+        private val TEAM_COLOR = stringPreferencesKey("team_color")
+        private val GAME_STATUS = stringPreferencesKey("game_status")
         private val OPERATOR_ID = stringPreferencesKey("operator_id")
         private val OPERATOR_NAME = stringPreferencesKey("operator_name")
         private val PREFERRED_LANGUAGE = stringPreferencesKey("preferred_language")

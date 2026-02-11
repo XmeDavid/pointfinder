@@ -13,12 +13,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.dbv.companion.R
 
 @Composable
 fun WelcomeScreen(
@@ -33,16 +33,16 @@ fun WelcomeScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Text("PointFinder", style = MaterialTheme.typography.headlineLarge)
+        Text(stringResource(R.string.label_welcome), style = MaterialTheme.typography.headlineLarge)
         Spacer(Modifier.height(12.dp))
-        Text("DBV Companion", style = MaterialTheme.typography.bodyMedium)
+        Text(stringResource(R.string.label_subtitle), style = MaterialTheme.typography.bodyMedium)
         Spacer(Modifier.height(24.dp))
         Button(onClick = onJoinGame, modifier = Modifier.fillMaxWidth()) {
-            Text("Join a Game")
+            Text(stringResource(R.string.action_join_game))
         }
         Spacer(Modifier.height(12.dp))
         Button(onClick = onOperatorLogin, modifier = Modifier.fillMaxWidth()) {
-            Text("Operator Login")
+            Text(stringResource(R.string.action_operator_login))
         }
     }
 }
@@ -62,20 +62,20 @@ fun PlayerJoinScreen(
             .padding(24.dp),
         verticalArrangement = Arrangement.Center,
     ) {
-        Text("Join with QR or code", style = MaterialTheme.typography.titleLarge)
+        Text(stringResource(R.string.label_join_with_qr_or_code), style = MaterialTheme.typography.titleLarge)
         Spacer(Modifier.height(12.dp))
         Button(onClick = onScanQr, modifier = Modifier.fillMaxWidth()) {
-            Text("Scan QR")
+            Text(stringResource(R.string.action_scan_qr))
         }
         if (cameraDenied) {
             Spacer(Modifier.height(8.dp))
-            Text("Camera permission denied.", color = MaterialTheme.colorScheme.error)
+            Text(stringResource(R.string.error_camera_denied), color = MaterialTheme.colorScheme.error)
         }
         Spacer(Modifier.height(16.dp))
         OutlinedTextField(
             value = joinCode,
             onValueChange = onJoinCodeChange,
-            label = { Text("Join code") },
+            label = { Text(stringResource(R.string.label_join_code)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
         )
@@ -85,7 +85,7 @@ fun PlayerJoinScreen(
             enabled = joinCode.trim().isNotBlank(),
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text("Continue")
+            Text(stringResource(R.string.action_continue))
         }
     }
 }
@@ -104,12 +104,12 @@ fun PlayerNameScreen(
             .padding(24.dp),
         verticalArrangement = Arrangement.Center,
     ) {
-        Text("Your name", style = MaterialTheme.typography.titleLarge)
+        Text(stringResource(R.string.label_your_name), style = MaterialTheme.typography.titleLarge)
         Spacer(Modifier.height(12.dp))
         OutlinedTextField(
             value = name,
             onValueChange = onNameChange,
-            label = { Text("Display name") },
+            label = { Text(stringResource(R.string.label_display_name)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
         )
@@ -122,7 +122,7 @@ fun PlayerNameScreen(
             if (isLoading) {
                 CircularProgressIndicator(strokeWidth = 2.dp)
             } else {
-                Text("Join Game")
+                Text(stringResource(R.string.action_join_game))
             }
         }
     }
@@ -144,12 +144,12 @@ fun OperatorLoginScreen(
             .padding(24.dp),
         verticalArrangement = Arrangement.Center,
     ) {
-        Text("Operator Login", style = MaterialTheme.typography.titleLarge)
+        Text(stringResource(R.string.action_operator_login), style = MaterialTheme.typography.titleLarge)
         Spacer(Modifier.height(12.dp))
         OutlinedTextField(
             value = email,
             onValueChange = onEmailChange,
-            label = { Text("Email") },
+            label = { Text(stringResource(R.string.label_email)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
         )
@@ -157,7 +157,7 @@ fun OperatorLoginScreen(
         OutlinedTextField(
             value = password,
             onValueChange = onPasswordChange,
-            label = { Text("Password") },
+            label = { Text(stringResource(R.string.label_password)) },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
@@ -171,7 +171,7 @@ fun OperatorLoginScreen(
             if (isLoading) {
                 CircularProgressIndicator(strokeWidth = 2.dp)
             } else {
-                Text("Sign In")
+                Text(stringResource(R.string.action_sign_in))
             }
         }
     }

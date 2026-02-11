@@ -46,6 +46,7 @@ fun AppNavigation(
     modifier: Modifier = Modifier,
 ) {
     val sessionViewModel: AppSessionViewModel = hiltViewModel()
+    val operatorViewModel: OperatorViewModel = hiltViewModel()
     val sessionState by sessionViewModel.state.collectAsStateWithLifecycle()
 
     var joinCode by rememberSaveable { mutableStateOf("") }
@@ -119,11 +120,13 @@ fun AppNavigation(
                 sessionViewModel = sessionViewModel,
                 isOnline = sessionState.isOnline,
                 pendingActionsCount = sessionState.pendingActionsCount,
+                currentLanguage = sessionState.currentLanguage,
             )
         }
 
         composable(Routes.OPERATOR_HOME) {
             OperatorHomeRoot(
+                viewModel = operatorViewModel,
                 sessionViewModel = sessionViewModel,
                 onOpenGame = { navController.navigate(Routes.OPERATOR_GAME) },
             )
@@ -131,7 +134,9 @@ fun AppNavigation(
 
         composable(Routes.OPERATOR_GAME) {
             OperatorGameRoot(
+                viewModel = operatorViewModel,
                 sessionViewModel = sessionViewModel,
+                currentLanguage = sessionState.currentLanguage,
                 onSwitchGame = { navController.popBackStack() },
             )
         }
@@ -144,6 +149,7 @@ private fun PlayerRootScreen(
     sessionViewModel: AppSessionViewModel,
     isOnline: Boolean,
     pendingActionsCount: Int,
+    currentLanguage: String,
 ) {
     val viewModel: PlayerViewModel = hiltViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -240,12 +246,15 @@ private fun PlayerRootScreen(
 
             else -> {
                 PlayerSettingsScreen(
-                    gameName = auth.gameId,
-                    teamName = auth.teamId,
+                    gameName = auth.gameName,
+                    gameStatus = auth.gameStatus,
+                    teamName = auth.teamName,
+                    teamColor = auth.teamColor,
                     displayName = auth.displayName,
                     deviceId = auth.playerId,
                     pendingActionsCount = pendingActionsCount,
-                    currentLanguage = "en",
+                    progress = state.progress,
+                    currentLanguage = currentLanguage,
                     onLanguageChanged = sessionViewModel::updateLanguage,
                     onLogout = sessionViewModel::logout,
                 )
@@ -277,10 +286,10 @@ private fun PlayerRootScreen(
 
 @Composable
 private fun OperatorHomeRoot(
+    viewModel: OperatorViewModel,
     sessionViewModel: AppSessionViewModel,
     onOpenGame: () -> Unit,
 ) {
-    val viewModel: OperatorViewModel = hiltViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.loadGames() }
 
@@ -297,10 +306,11 @@ private fun OperatorHomeRoot(
 
 @Composable
 private fun OperatorGameRoot(
+    viewModel: OperatorViewModel,
     sessionViewModel: AppSessionViewModel,
+    currentLanguage: String,
     onSwitchGame: () -> Unit,
 ) {
-    val viewModel: OperatorViewModel = hiltViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val selectedGame = state.selectedGame
 
@@ -343,6 +353,7 @@ private fun OperatorGameRoot(
                         base = base,
                         assignmentSummary = state.assignmentSummary,
                         writeStatus = state.writeStatus,
+                        writeSuccess = state.writeSuccess,
                         onBack = viewModel::clearSelectedBase,
                         onWriteNfc = viewModel::beginWriteNfc,
                         onLinkBackend = viewModel::linkBaseNfc,
@@ -354,7 +365,7 @@ private fun OperatorGameRoot(
                 OperatorSettingsScreen(
                     gameName = selectedGame.name,
                     gameStatus = selectedGame.status,
-                    currentLanguage = "en",
+                    currentLanguage = currentLanguage,
                     onLanguageChanged = sessionViewModel::updateLanguage,
                     onSwitchGame = {
                         viewModel.clearSelectedGame()

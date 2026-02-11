@@ -34,6 +34,10 @@ class AuthRepository @Inject constructor(
             teamId = response.team.id,
             gameId = response.game.id,
             displayName = response.player.displayName,
+            gameName = response.game.name,
+            teamName = response.team.name,
+            teamColor = response.team.color,
+            gameStatus = response.game.status,
         )
     }
 
