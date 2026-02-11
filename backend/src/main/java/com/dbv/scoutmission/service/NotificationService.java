@@ -5,6 +5,7 @@ import com.dbv.scoutmission.dto.response.NotificationResponse;
 import com.dbv.scoutmission.entity.Game;
 import com.dbv.scoutmission.entity.GameNotification;
 import com.dbv.scoutmission.entity.Player;
+import com.dbv.scoutmission.entity.PushPlatform;
 import com.dbv.scoutmission.entity.Team;
 import com.dbv.scoutmission.entity.User;
 import com.dbv.scoutmission.exception.BadRequestException;
@@ -37,6 +38,7 @@ public class NotificationService {
     private final PlayerRepository playerRepository;
     private final GameEventBroadcaster eventBroadcaster;
     private final ApnsPushService apnsPushService;
+    private final FcmPushService fcmPushService;
     private final GameAccessService gameAccessService;
 
     @Transactional(readOnly = true)
@@ -88,15 +90,32 @@ public class NotificationService {
         }
 
         if (!pushTargets.isEmpty()) {
-            List<String> tokens = pushTargets.stream()
+            List<String> apnsTokens = pushTargets.stream()
+                    .filter(p -> p.getPushPlatform() == null || p.getPushPlatform() == PushPlatform.ios)
                     .map(Player::getPushToken)
                     .toList();
-            apnsPushService.sendPush(
-                    tokens,
-                    game.getName(),
-                    request.getMessage(),
-                    Map.of("gameId", gameId.toString())
-            );
+            List<String> fcmTokens = pushTargets.stream()
+                    .filter(p -> p.getPushPlatform() == PushPlatform.android)
+                    .map(Player::getPushToken)
+                    .toList();
+
+            if (!apnsTokens.isEmpty()) {
+                apnsPushService.sendPush(
+                        apnsTokens,
+                        game.getName(),
+                        request.getMessage(),
+                        Map.of("gameId", gameId.toString())
+                );
+            }
+
+            if (!fcmTokens.isEmpty()) {
+                fcmPushService.sendPush(
+                        fcmTokens,
+                        game.getName(),
+                        request.getMessage(),
+                        Map.of("gameId", gameId.toString())
+                );
+            }
         }
 
         return response;

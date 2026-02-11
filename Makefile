@@ -4,8 +4,10 @@ DOCKER_COMPOSE ?= docker compose
 IOS_PROJECT ?= dbv-nfc-ios/dbv-nfc-games.xcodeproj
 IOS_SCHEME ?= dbv-nfc-games
 IOS_DESTINATION ?= platform=iOS Simulator,name=iPhone 16
+ANDROID_PROJECT ?= android-app
+ANDROID_GRADLEW ?= backend/gradlew
 
-.PHONY: help check-docker check-xcode test-backend-docker test-frontend-docker test-docker test-ios test-all
+.PHONY: help check-docker check-xcode check-android-gradle test-backend-docker test-frontend-docker test-docker test-ios test-android test-all
 
 help:
 	@echo "Available targets:"
@@ -13,6 +15,7 @@ help:
 	@echo "  test-frontend-docker Run frontend tests in Docker"
 	@echo "  test-docker          Run backend + frontend Docker tests"
 	@echo "  test-ios             Run iOS tests on macOS host (xcodebuild)"
+	@echo "  test-android         Run Android JVM/unit checks via Gradle"
 	@echo "  test-all             Run docker tests and then iOS tests"
 
 check-docker:
@@ -21,6 +24,9 @@ check-docker:
 
 check-xcode:
 	@command -v xcodebuild >/dev/null 2>&1 || { echo "xcodebuild is required for iOS tests. Install Xcode and select the developer directory."; exit 1; }
+
+check-android-gradle:
+	@test -x "$(ANDROID_GRADLEW)" || { echo "$(ANDROID_GRADLEW) not found or not executable."; exit 1; }
 
 test-backend-docker: check-docker
 	@$(DOCKER_COMPOSE) -f $(TEST_COMPOSE_FILE) run --rm backend-test
@@ -32,5 +38,8 @@ test-docker: test-backend-docker test-frontend-docker
 
 test-ios: check-xcode
 	@xcodebuild test -project "$(IOS_PROJECT)" -scheme "$(IOS_SCHEME)" -destination "$(IOS_DESTINATION)"
+
+test-android: check-android-gradle
+	@$(ANDROID_GRADLEW) -p "$(ANDROID_PROJECT)" :core:model:test :core:data:test :app:assembleDebug
 
 test-all: test-docker test-ios

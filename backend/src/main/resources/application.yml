@@ -60,3 +60,7 @@ app:
     team-id: ${APNS_TEAM_ID:}
     bundle-id: ${APNS_BUNDLE_ID:}
     production: ${APNS_PRODUCTION:false}
+  fcm:
+    enabled: ${FCM_ENABLED:false}
+    credentials-path: ${FCM_CREDENTIALS_PATH:}
+    project-id: ${FCM_PROJECT_ID:}

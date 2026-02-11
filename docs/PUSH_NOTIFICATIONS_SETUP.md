@@ -1,6 +1,6 @@
 # Push Notifications Setup Guide
 
-One-time configuration steps required to enable iOS push notifications.
+One-time configuration steps required to enable iOS and Android push notifications.
 
 ---
 
@@ -129,6 +129,48 @@ apns.production=true
 
 ---
 
+## 4. Android (FCM) Configuration
+
+### 4.1 Firebase Project Setup
+
+1. Create or select a Firebase project in the Firebase console.
+2. Enable **Cloud Messaging**.
+3. Create a service account key JSON file with messaging permissions.
+4. Store the JSON securely (do not commit it to git).
+
+### 4.2 Backend Configuration
+
+Add these environment variables for backend runtime:
+
+```properties
+FCM_ENABLED=true
+FCM_CREDENTIALS_PATH=/app/config/firebase-service-account.json
+FCM_PROJECT_ID=your-firebase-project-id
+```
+
+If running locally with classpath resources, `FCM_CREDENTIALS_PATH` can point to a classpath resource.
+
+### 4.3 Android Client Push Token Registration
+
+Android clients should register the push token using:
+
+```http
+PUT /api/player/push-token
+```
+
+Payload:
+
+```json
+{
+  "pushToken": "<fcm_token>",
+  "platform": "android"
+}
+```
+
+For iOS clients, `platform` is optional and defaults to `ios`.
+
+---
+
 ## Quick Reference: Dev vs Production
 
 | Step | Development | Production | Notes |
@@ -141,6 +183,7 @@ apns.production=true
 | `.p8` via Docker/secrets | No | Yes | Secure storage |
 | `apns.production=false` | Yes | -- | Sandbox APNs |
 | `apns.production=true` | -- | Yes | Production APNs |
+| `FCM_ENABLED=true` + credentials | Optional | Optional | Required only for Android push |
 
 ---
 

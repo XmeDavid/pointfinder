@@ -391,11 +391,12 @@ public class PlayerService {
     }
 
     @Transactional
-    public void updatePushToken(Player player, String pushToken) {
+    public void updatePushToken(Player player, String pushToken, PushPlatform platform) {
         UUID playerId = player.getId();
         player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
         player.setPushToken(pushToken);
+        player.setPushPlatform(platform);
         playerRepository.save(player);
     }
 

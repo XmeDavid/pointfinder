@@ -39,6 +39,7 @@ dependencies {
 
     // APNs Push Notifications
     implementation("com.eatthepath:pushy:0.15.4")
+    implementation("com.google.firebase:firebase-admin:9.3.0")
 
     // JWT
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
