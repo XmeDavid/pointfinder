@@ -43,10 +43,35 @@ class PlayerRepository @Inject constructor(
                 val gameData = api.getGameData(auth.gameId)
                 db.progressDao().deleteForGame(auth.gameId)
                 db.progressDao().upsertAll(gameData.progress.map { it.toCached(auth.gameId) })
+                // Cache challenges so they're available when tapping any base
+                cacheGameChallenges(auth, gameData)
                 return gameData.progress
             }
         }
         return db.progressDao().progressForGame(auth.gameId).map { it.toBaseProgress() }
+    }
+
+    private suspend fun cacheGameChallenges(auth: AuthType.Player, gameData: com.dbv.companion.core.model.GameDataResponse) {
+        val challengeMap = gameData.challenges.associateBy { it.id }
+        for (assignment in gameData.assignments) {
+            if (assignment.teamId == null || assignment.teamId == auth.teamId) {
+                val challenge = challengeMap[assignment.challengeId] ?: continue
+                db.challengeDao().upsert(
+                    CachedChallengeEntity(
+                        gameId = auth.gameId,
+                        teamId = auth.teamId,
+                        baseId = assignment.baseId,
+                        id = challenge.id,
+                        title = challenge.title,
+                        description = challenge.description,
+                        content = challenge.content,
+                        completionContent = challenge.completionContent,
+                        answerType = challenge.answerType,
+                        points = challenge.points,
+                    ),
+                )
+            }
+        }
     }
 
     suspend fun checkIn(auth: AuthType.Player, baseId: String, online: Boolean): CheckInResult {

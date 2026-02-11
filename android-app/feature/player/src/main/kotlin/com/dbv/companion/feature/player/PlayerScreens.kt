@@ -57,6 +57,7 @@ import com.dbv.companion.core.model.BaseStatus
 import com.dbv.companion.core.model.CheckInResponse
 import com.dbv.companion.core.model.SubmissionResponse
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.CameraPositionState
@@ -148,10 +149,18 @@ fun PlayerMapScreen(
             cameraPositionState = cameraPositionState,
         ) {
             progress.forEach { item ->
+                val markerHue = when (item.baseStatus()) {
+                    BaseStatus.NOT_VISITED -> BitmapDescriptorFactory.HUE_RED
+                    BaseStatus.CHECKED_IN -> BitmapDescriptorFactory.HUE_AZURE
+                    BaseStatus.SUBMITTED -> BitmapDescriptorFactory.HUE_ORANGE
+                    BaseStatus.COMPLETED -> BitmapDescriptorFactory.HUE_GREEN
+                    BaseStatus.REJECTED -> BitmapDescriptorFactory.HUE_ROSE
+                }
                 Marker(
                     state = MarkerState(position = LatLng(item.lat, item.lng)),
                     title = item.baseName,
                     snippet = item.status,
+                    icon = BitmapDescriptorFactory.defaultMarker(markerHue),
                     onClick = {
                         onBaseSelected(item)
                         true
@@ -385,6 +394,7 @@ fun BaseCheckInDetailScreen(
     response: CheckInResponse,
     isOffline: Boolean,
     onSolve: (baseId: String, challengeId: String) -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -392,6 +402,8 @@ fun BaseCheckInDetailScreen(
             .fillMaxSize()
             .padding(16.dp),
     ) {
+        TextButton(onClick = onBack) { Text(stringResource(R.string.action_back_to_map)) }
+        Spacer(Modifier.height(4.dp))
         Text(stringResource(R.string.label_checked_in_at_base, response.baseName), style = MaterialTheme.typography.titleLarge)
         if (isOffline) {
             Spacer(Modifier.height(8.dp))
@@ -424,6 +436,7 @@ fun SolveScreen(
     onPickPhoto: () -> Unit,
     onCapturePhoto: () -> Unit,
     onSubmit: () -> Unit,
+    onBack: () -> Unit,
     isOnline: Boolean,
     errorMessage: String?,
     modifier: Modifier = Modifier,
@@ -433,7 +446,11 @@ fun SolveScreen(
             .fillMaxSize()
             .padding(16.dp),
     ) {
-        Text(stringResource(R.string.label_solve_title), style = MaterialTheme.typography.titleLarge)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = onBack) { Text(stringResource(R.string.action_back)) }
+            Spacer(Modifier.size(8.dp))
+            Text(stringResource(R.string.label_solve_title), style = MaterialTheme.typography.titleLarge)
+        }
         Spacer(Modifier.height(12.dp))
 
         if (presenceRequired) {

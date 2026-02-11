@@ -167,7 +167,13 @@ private fun PlayerRootScreen(
 
     PlayerHomeScaffold(
         selectedTab = selectedTab,
-        onTabSelected = { selectedTab = it },
+        onTabSelected = { tab ->
+            // Clear sub-screen state so tabs always navigate
+            solving = null
+            viewModel.clearCheckIn()
+            viewModel.clearSubmissionResult()
+            selectedTab = tab
+        },
         isOffline = !isOnline,
     ) {
         when {
@@ -190,6 +196,7 @@ private fun PlayerRootScreen(
                     onVerifyPresence = { viewModel.beginPresenceVerification(baseId) },
                     onPickPhoto = { photoBytes = ByteArray(1) },
                     onCapturePhoto = { photoBytes = ByteArray(1) },
+                    onBack = { solving = null },
                     onSubmit = {
                         if (state.isPhotoMode) {
                             viewModel.submitPhoto(
@@ -225,6 +232,7 @@ private fun PlayerRootScreen(
                             state.progress.firstOrNull { it.baseId == baseId }?.requirePresenceToSubmit == true,
                         )
                     },
+                    onBack = { viewModel.clearCheckIn() },
                 )
             }
 
