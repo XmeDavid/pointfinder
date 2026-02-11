@@ -3,7 +3,7 @@ package com.dbv.companion
 import android.os.Bundle
 import android.nfc.NfcAdapter
 import android.nfc.Tag
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import com.dbv.companion.navigation.AppNavigation
 import com.dbv.companion.core.platform.NfcEventBus
@@ -13,7 +13,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var nfcService: NfcService
 

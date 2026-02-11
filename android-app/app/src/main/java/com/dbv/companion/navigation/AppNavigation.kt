@@ -39,6 +39,8 @@ import com.dbv.companion.feature.player.SubmissionResultScreen
 import com.dbv.companion.session.AppSessionViewModel
 import com.dbv.companion.session.OperatorViewModel
 import com.dbv.companion.session.PlayerViewModel
+import com.google.maps.android.compose.CameraPositionState
+import com.google.maps.android.compose.rememberCameraPositionState
 
 @Composable
 fun AppNavigation(
@@ -153,6 +155,7 @@ private fun PlayerRootScreen(
 ) {
     val viewModel: PlayerViewModel = hiltViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val playerCameraState = rememberCameraPositionState()
 
     var selectedTab by rememberSaveable { mutableStateOf(PlayerTab.MAP) }
     var solving by remember { mutableStateOf<Pair<String, String>?>(null) }
@@ -229,6 +232,7 @@ private fun PlayerRootScreen(
                 PlayerMapScreen(
                     progress = state.progress,
                     isLoading = state.isLoading,
+                    cameraPositionState = playerCameraState,
                     onBaseSelected = { viewModel.selectBase(auth, it) },
                     onRefresh = { viewModel.refresh(auth, isOnline) },
                 )
@@ -312,6 +316,7 @@ private fun OperatorGameRoot(
     onSwitchGame: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val operatorCameraState = rememberCameraPositionState()
     val selectedGame = state.selectedGame
 
     if (selectedGame == null) {
@@ -328,6 +333,7 @@ private fun OperatorGameRoot(
                 OperatorMapScreen(
                     bases = state.bases,
                     teamLocations = state.locations,
+                    cameraPositionState = operatorCameraState,
                     onBaseSelected = viewModel::selectBase,
                     onRefresh = viewModel::refreshSelectedGameData,
                 )
@@ -336,6 +342,7 @@ private fun OperatorGameRoot(
                     LiveBaseProgressBottomSheet(
                         base = base,
                         progress = state.baseProgress,
+                        teams = state.teams,
                         onDismiss = viewModel::clearSelectedBase,
                     )
                 }
@@ -351,12 +358,13 @@ private fun OperatorGameRoot(
                     val base = state.selectedBase!!
                     OperatorBaseDetailScreen(
                         base = base,
-                        assignmentSummary = state.assignmentSummary,
+                        challenges = state.challenges,
+                        assignments = state.assignments,
+                        teams = state.teams,
                         writeStatus = state.writeStatus,
                         writeSuccess = state.writeSuccess,
                         onBack = viewModel::clearSelectedBase,
                         onWriteNfc = viewModel::beginWriteNfc,
-                        onLinkBackend = viewModel::linkBaseNfc,
                     )
                 }
             }

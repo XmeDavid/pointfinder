@@ -20,7 +20,9 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -34,6 +36,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -45,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dbv.companion.core.i18n.R
@@ -52,7 +56,10 @@ import com.dbv.companion.core.model.BaseProgress
 import com.dbv.companion.core.model.BaseStatus
 import com.dbv.companion.core.model.CheckInResponse
 import com.dbv.companion.core.model.SubmissionResponse
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
+import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
@@ -120,13 +127,25 @@ fun PlayerHomeScaffold(
 fun PlayerMapScreen(
     progress: List<BaseProgress>,
     isLoading: Boolean,
+    cameraPositionState: CameraPositionState,
     onBaseSelected: (BaseProgress) -> Unit,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    LaunchedEffect(progress) {
+        if (progress.isNotEmpty() && !cameraPositionState.isMoving) {
+            val builder = LatLngBounds.builder()
+            progress.forEach { builder.include(LatLng(it.lat, it.lng)) }
+            runCatching {
+                cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(builder.build(), 80))
+            }
+        }
+    }
+
     Box(modifier = modifier.fillMaxSize()) {
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
+            cameraPositionState = cameraPositionState,
         ) {
             progress.forEach { item ->
                 Marker(
@@ -141,21 +160,19 @@ fun PlayerMapScreen(
             }
         }
 
-        Surface(
+        Row(
             modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(12.dp),
-            shape = MaterialTheme.shapes.medium,
-            tonalElevation = 2.dp,
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 12.dp, start = 16.dp, end = 16.dp)
+                .background(Color.Black.copy(alpha = 0.55f), shape = MaterialTheme.shapes.small)
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(modifier = Modifier.padding(8.dp)) {
-                Text(stringResource(R.string.label_legend), fontWeight = FontWeight.Bold)
-                Text(stringResource(R.string.status_not_visited))
-                Text(stringResource(R.string.status_checked_in))
-                Text(stringResource(R.string.status_submitted))
-                Text(stringResource(R.string.status_completed))
-                Text(stringResource(R.string.status_rejected))
-            }
+            LegendDot(color = Color.Gray, label = stringResource(R.string.status_not_visited))
+            LegendDot(color = Color(0xFF1565C0), label = stringResource(R.string.status_checked_in))
+            LegendDot(color = Color(0xFFE08A00), label = stringResource(R.string.status_submitted))
+            LegendDot(color = Color(0xFF2E7D32), label = stringResource(R.string.status_completed))
         }
 
         Button(
@@ -182,21 +199,105 @@ fun BaseDetailBottomSheet(
     onSolve: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val status = baseProgress.baseStatus()
+    val statusColor = when (status) {
+        BaseStatus.NOT_VISITED -> Color.Gray
+        BaseStatus.CHECKED_IN -> Color(0xFF1565C0)
+        BaseStatus.SUBMITTED -> Color(0xFFE08A00)
+        BaseStatus.COMPLETED -> Color(0xFF2E7D32)
+        BaseStatus.REJECTED -> Color(0xFFD32F2F)
+    }
+    val statusIcon = when (status) {
+        BaseStatus.NOT_VISITED -> Icons.Default.LocationOn
+        BaseStatus.CHECKED_IN -> Icons.Default.CheckCircle
+        BaseStatus.SUBMITTED -> Icons.Default.CheckCircle
+        BaseStatus.COMPLETED -> Icons.Default.CheckCircle
+        BaseStatus.REJECTED -> Icons.Default.LocationOn
+    }
+
     ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(baseProgress.baseName, style = MaterialTheme.typography.titleLarge)
-            Spacer(Modifier.height(8.dp))
-            Text("${stringResource(R.string.label_status)}: ${baseStatusLabel(baseProgress.baseStatus())}")
-            Spacer(Modifier.height(8.dp))
-            Text(challenge?.description ?: stringResource(R.string.label_no_challenge_details))
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Text(baseProgress.baseName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(12.dp))
-            when (baseProgress.baseStatus()) {
-                BaseStatus.NOT_VISITED -> Button(onClick = onCheckIn) { Text(stringResource(R.string.action_check_in_at_base)) }
-                BaseStatus.CHECKED_IN, BaseStatus.REJECTED -> Button(onClick = onSolve) { Text(stringResource(R.string.action_solve)) }
-                BaseStatus.SUBMITTED -> Text(stringResource(R.string.label_awaiting_review))
-                BaseStatus.COMPLETED -> Text(stringResource(R.string.status_completed))
+
+            // Status banner
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(statusColor.copy(alpha = 0.12f), shape = MaterialTheme.shapes.medium)
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(statusIcon, contentDescription = null, tint = statusColor, modifier = Modifier.size(20.dp))
+                    Text(baseStatusLabel(status), fontWeight = FontWeight.Medium, color = statusColor)
+                }
+                if (challenge != null) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFE08A00), modifier = Modifier.size(16.dp))
+                        Text("${challenge.points} pts", style = MaterialTheme.typography.labelMedium, color = Color(0xFFE08A00))
+                    }
+                }
             }
-            Spacer(Modifier.height(8.dp))
+
+            Spacer(Modifier.height(12.dp))
+            Text(
+                challenge?.description ?: stringResource(R.string.label_no_challenge_details),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(16.dp))
+
+            when (status) {
+                BaseStatus.NOT_VISITED -> {
+                    Button(
+                        onClick = onCheckIn,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0)),
+                    ) {
+                        Icon(Icons.Default.LocationOn, contentDescription = null)
+                        Spacer(Modifier.size(8.dp))
+                        Text(stringResource(R.string.action_check_in_at_base))
+                    }
+                }
+                BaseStatus.CHECKED_IN, BaseStatus.REJECTED -> {
+                    Button(
+                        onClick = onSolve,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0)),
+                    ) { Text(stringResource(R.string.action_solve_challenge)) }
+                }
+                BaseStatus.SUBMITTED -> {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFE08A00).copy(alpha = 0.12f), shape = MaterialTheme.shapes.small)
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                    ) {
+                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFFE08A00), modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.size(8.dp))
+                        Text(stringResource(R.string.label_awaiting_review), color = Color(0xFFE08A00), fontWeight = FontWeight.Medium)
+                    }
+                }
+                BaseStatus.COMPLETED -> {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFF2E7D32).copy(alpha = 0.12f), shape = MaterialTheme.shapes.small)
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                    ) {
+                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF2E7D32), modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.size(8.dp))
+                        Text(stringResource(R.string.status_completed), color = Color(0xFF2E7D32), fontWeight = FontWeight.Medium)
+                    }
+                }
+            }
+            Spacer(Modifier.height(16.dp))
         }
     }
 }
@@ -226,15 +327,21 @@ fun CheckInScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Box(contentAlignment = Alignment.Center) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.graphicsLayer {
+                scaleX = pulseScale
+                scaleY = pulseScale
+            },
+        ) {
             Box(
                 modifier = Modifier
-                    .size((160f * pulseScale).dp)
+                    .size(160.dp)
                     .background(Color(0x1A16A34A), shape = MaterialTheme.shapes.extraLarge),
             )
             Box(
                 modifier = Modifier
-                    .size((120f * pulseScale).dp)
+                    .size(120.dp)
                     .background(Color(0x3316A34A), shape = MaterialTheme.shapes.extraLarge),
             )
             Icon(Icons.Default.LocationOn, contentDescription = null, modifier = Modifier.size(52.dp), tint = MaterialTheme.colorScheme.primary)
@@ -516,6 +623,14 @@ private fun SettingValueRow(
 private fun parseTeamColor(teamColor: String?): Color {
     if (teamColor.isNullOrBlank()) return Color.Gray
     return runCatching { Color(AndroidColor.parseColor(teamColor)) }.getOrDefault(Color.Gray)
+}
+
+@Composable
+private fun LegendDot(color: Color, label: String) {
+    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(color))
+        Text(label, style = MaterialTheme.typography.labelSmall, color = Color.White)
+    }
 }
 
 @Composable

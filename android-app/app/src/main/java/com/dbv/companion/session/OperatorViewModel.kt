@@ -4,8 +4,11 @@ import android.nfc.Tag
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dbv.companion.core.data.repo.OperatorRepository
+import com.dbv.companion.core.model.Assignment
 import com.dbv.companion.core.model.Base
+import com.dbv.companion.core.model.Challenge
 import com.dbv.companion.core.model.Game
+import com.dbv.companion.core.model.Team
 import com.dbv.companion.core.model.TeamBaseProgressResponse
 import com.dbv.companion.core.model.TeamLocationResponse
 import com.dbv.companion.core.platform.NfcEventBus
@@ -29,6 +32,9 @@ data class OperatorState(
     val bases: List<Base> = emptyList(),
     val locations: List<TeamLocationResponse> = emptyList(),
     val baseProgress: List<TeamBaseProgressResponse> = emptyList(),
+    val teams: List<Team> = emptyList(),
+    val challenges: List<Challenge> = emptyList(),
+    val assignments: List<Assignment> = emptyList(),
     val selectedBase: Base? = null,
     val assignmentSummary: String = "Unknown",
     val awaitingNfcWrite: Boolean = false,
@@ -74,7 +80,26 @@ class OperatorViewModel @Inject constructor(
     fun selectGame(game: Game) {
         _state.value = _state.value.copy(selectedGame = game, selectedTab = OperatorTab.LIVE_MAP)
         refreshSelectedGameData()
+        loadGameMeta(game.id)
         startPolling()
+    }
+
+    private fun loadGameMeta(gameId: String) {
+        viewModelScope.launch {
+            runCatching {
+                Triple(
+                    operatorRepository.gameTeams(gameId),
+                    operatorRepository.gameChallenges(gameId),
+                    operatorRepository.gameAssignments(gameId),
+                )
+            }.onSuccess { (teams, challenges, assignments) ->
+                _state.value = _state.value.copy(
+                    teams = teams,
+                    challenges = challenges,
+                    assignments = assignments,
+                )
+            }
+        }
     }
 
     fun clearSelectedGame() {
@@ -168,27 +193,35 @@ class OperatorViewModel @Inject constructor(
     }
 
     private fun writeBaseNfc(tag: Tag) {
-        val base = _state.value.selectedBase ?: return
-        val result = nfcService.writeBaseTag(tag, base.id)
-        _state.value = _state.value.copy(
-            awaitingNfcWrite = false,
-            writeStatus = if (result.isSuccess) "NFC write success" else "NFC write failed: ${result.exceptionOrNull()?.message}",
-            writeSuccess = result.isSuccess,
-        )
-    }
-
-    fun linkBaseNfc() {
         val game = _state.value.selectedGame ?: return
         val base = _state.value.selectedBase ?: return
-        viewModelScope.launch {
-            runCatching {
-                operatorRepository.linkBaseNfc(game.id, base.id)
-            }.onSuccess {
-                _state.value = _state.value.copy(writeStatus = "NFC link success", writeSuccess = true)
-                refreshSelectedGameData()
-            }.onFailure { err ->
-                _state.value = _state.value.copy(writeStatus = "NFC link failed: ${err.message}", writeSuccess = false)
+        val result = nfcService.writeBaseTag(tag, base.id)
+        if (result.isSuccess) {
+            // Auto-link in backend after successful write
+            viewModelScope.launch {
+                runCatching {
+                    operatorRepository.linkBaseNfc(game.id, base.id)
+                }.onSuccess {
+                    _state.value = _state.value.copy(
+                        awaitingNfcWrite = false,
+                        writeStatus = "NFC written and linked successfully",
+                        writeSuccess = true,
+                    )
+                    refreshSelectedGameData()
+                }.onFailure { err ->
+                    _state.value = _state.value.copy(
+                        awaitingNfcWrite = false,
+                        writeStatus = "NFC written but link failed: ${err.message}",
+                        writeSuccess = false,
+                    )
+                }
             }
+        } else {
+            _state.value = _state.value.copy(
+                awaitingNfcWrite = false,
+                writeStatus = "NFC write failed: ${result.exceptionOrNull()?.message}",
+                writeSuccess = false,
+            )
         }
     }
 

@@ -80,6 +80,13 @@
     <string name="label_presence_required_value">Presença obrigatória: %1$s</string>
     <string name="label_assignments_value">Atribuições: %1$s</string>
     <string name="label_no_games">Sem jogos</string>
+    <string name="label_remaining">Restantes</string>
+    <string name="label_challenge_assignment">Atribuição de Desafio</string>
+    <string name="label_fixed_challenge">Desafio Fixo</string>
+    <string name="label_randomly_assigned">Atribuído Aleatoriamente</string>
+    <string name="label_random_not_started">Atribuição aleatória (ainda não iniciada)</string>
+    <string name="label_answer_type">Resposta: %1$s</string>
+    <string name="label_pts">%1$d pts</string>
 
     <!-- Hints -->
     <string name="hint_checkin_instructions">Aproxime seu telefone do marcador na base para fazer check-in</string>

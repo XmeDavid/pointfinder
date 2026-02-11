@@ -80,6 +80,13 @@
     <string name="label_presence_required_value">Präsenz erforderlich: %1$s</string>
     <string name="label_assignments_value">Zuweisungen: %1$s</string>
     <string name="label_no_games">Keine Spiele</string>
+    <string name="label_remaining">Verbleibend</string>
+    <string name="label_challenge_assignment">Aufgabenzuweisung</string>
+    <string name="label_fixed_challenge">Feste Aufgabe</string>
+    <string name="label_randomly_assigned">Zufällig Zugewiesen</string>
+    <string name="label_random_not_started">Zufällige Zuweisung (noch nicht gestartet)</string>
+    <string name="label_answer_type">Antwort: %1$s</string>
+    <string name="label_pts">%1$d Punkte</string>
 
     <!-- Hints -->
     <string name="hint_checkin_instructions">Halte dein Telefon an den Marker an der Basis, um einzuchecken</string>
