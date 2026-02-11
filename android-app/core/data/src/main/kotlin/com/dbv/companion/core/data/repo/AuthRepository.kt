@@ -69,7 +69,7 @@ class AuthRepository @Inject constructor(
 
 @Singleton
 class OperatorTokenRefresher @Inject constructor(
-    private val api: CompanionApi,
+    @javax.inject.Named("refresh") private val api: CompanionApi,
     private val sessionStore: SessionStore,
 ) : TokenRefresher {
     private val refreshLock = Mutex()

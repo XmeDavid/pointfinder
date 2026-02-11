@@ -163,8 +163,9 @@ private fun PlayerRootScreen(
     ) {
         when {
             state.latestSubmission != null -> {
+                val submission = state.latestSubmission!!
                 SubmissionResultScreen(
-                    submission = state.latestSubmission,
+                    submission = submission,
                     onBack = { viewModel.clearSubmissionResult() },
                 )
             }
@@ -205,8 +206,9 @@ private fun PlayerRootScreen(
             }
 
             state.activeCheckIn != null -> {
+                val checkIn = state.activeCheckIn!!
                 BaseCheckInDetailScreen(
-                    response = state.activeCheckIn,
+                    response = checkIn,
                     isOffline = !isOnline,
                     onSolve = { baseId, challengeId ->
                         solving = baseId to challengeId
@@ -320,8 +322,9 @@ private fun OperatorGameRoot(
                     onRefresh = viewModel::refreshSelectedGameData,
                 )
                 if (state.selectedBase != null) {
+                    val base = state.selectedBase!!
                     LiveBaseProgressBottomSheet(
-                        base = state.selectedBase,
+                        base = base,
                         progress = state.baseProgress,
                         onDismiss = viewModel::clearSelectedBase,
                     )
@@ -335,8 +338,9 @@ private fun OperatorGameRoot(
                         onSelectBase = viewModel::selectBase,
                     )
                 } else {
+                    val base = state.selectedBase!!
                     OperatorBaseDetailScreen(
-                        base = state.selectedBase,
+                        base = base,
                         assignmentSummary = state.assignmentSummary,
                         writeStatus = state.writeStatus,
                         onBack = viewModel::clearSelectedBase,

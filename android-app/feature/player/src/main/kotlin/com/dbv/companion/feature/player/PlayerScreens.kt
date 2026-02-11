@@ -338,9 +338,10 @@ fun SubmissionResultScreen(
         Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(72.dp))
         Spacer(Modifier.height(12.dp))
         Text("Submission status: ${submission.status}", style = MaterialTheme.typography.titleLarge)
-        if (!submission.feedback.isNullOrBlank()) {
+        val feedback = submission.feedback
+        if (!feedback.isNullOrBlank()) {
             Spacer(Modifier.height(8.dp))
-            Text(submission.feedback)
+            Text(feedback)
         }
         Spacer(Modifier.height(16.dp))
         Button(onClick = onBack) {

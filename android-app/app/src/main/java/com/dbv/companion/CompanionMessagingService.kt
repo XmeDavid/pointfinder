@@ -8,15 +8,31 @@ import com.dbv.companion.core.data.repo.AuthRepository
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-@AndroidEntryPoint
 class CompanionMessagingService : FirebaseMessagingService() {
-    @Inject
-    lateinit var authRepository: AuthRepository
+
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface MessagingServiceEntryPoint {
+        fun authRepository(): AuthRepository
+    }
+
+    private val authRepository: AuthRepository by lazy {
+        val appContext = applicationContext
+        val hiltEntryPoint = EntryPointAccessors.fromApplication(
+            appContext,
+            MessagingServiceEntryPoint::class.java
+        )
+        hiltEntryPoint.authRepository()
+    }
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)

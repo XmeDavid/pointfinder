@@ -35,6 +35,26 @@ abstract class AppBindingsModule {
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
+
+    @Provides
+    @Singleton
+    @javax.inject.Named("refresh")
+    fun provideRefreshOkHttpClient(): OkHttpClient {
+        val logger = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BASIC
+        }
+        return OkHttpClient.Builder()
+            .addInterceptor(logger)
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    @javax.inject.Named("refresh")
+    fun provideRefreshApi(@javax.inject.Named("refresh") okHttpClient: OkHttpClient): CompanionApi {
+        return ApiFactory.buildApi(BuildConfig.API_BASE_URL, okHttpClient)
+    }
+
     @Provides
     @Singleton
     fun provideOkHttpClient(
