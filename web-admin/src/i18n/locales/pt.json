@@ -406,5 +406,60 @@
     "deleteConfirmTitle": "Tem a certeza que deseja eliminar este jogo?",
     "deleteConfirmDescription": "Esta ação não pode ser revertida. Todas as bases, desafios, equipas e atribuições serão permanentemente eliminados.",
     "confirmDelete": "Sim, Eliminar Jogo"
+  },
+  "landing": {
+    "nav": {
+      "operatorLogin": "Entrar como Operador"
+    },
+    "hero": {
+      "tagline": "Jogos de aventura ao ar livre com NFC para organizações de escotismo. Crie missões, posicione bases e deixe as equipas explorar o mundo real.",
+      "availableOn": "Disponível na",
+      "appStore": "App Store",
+      "googlePlay": "Google Play",
+      "scroll": "Scroll"
+    },
+    "howItWorks": {
+      "label": "Como Funciona",
+      "title": "Três passos para a aventura",
+      "step1Title": "Configure a Missão",
+      "step1Body": "Posicione bases no mapa interativo, grave tags NFC, crie desafios e organize equipas através do painel de administração.",
+      "step2Title": "Explore e Descubra",
+      "step2Body": "As equipas partem para o terreno com os seus telemóveis, leem tags NFC em locais físicos e desbloqueiam desafios para resolver no local.",
+      "step3Title": "Monitorize em Tempo Real",
+      "step3Body": "Acompanhe a ação ao vivo no painel com rastreamento de equipas, classificações, feed de atividade e revisão de submissões."
+    },
+    "features": {
+      "label": "Funcionalidades",
+      "title": "Tudo o que precisa para gerir o jogo",
+      "nfcTitle": "Jogo com NFC",
+      "nfcBody": "Leia tags NFC físicas colocadas nas bases ao longo do campo de jogo para fazer check-in e desbloquear desafios. Cada tag é vinculada a uma localização para verificação segura.",
+      "mapsTitle": "Mapas Interativos",
+      "mapsBody": "Bases rastreadas por GPS e localização ao vivo das equipas exibidas num mapa interativo com indicadores de estado em tempo real.",
+      "challengesTitle": "Desafios de Foto e Texto",
+      "challengesBody": "Múltiplos tipos de resposta incluindo texto livre com validação automática e submissão de fotos para revisão manual.",
+      "leaderboardTitle": "Classificação em Tempo Real",
+      "leaderboardBody": "Ranking ao vivo das equipas atualizado instantaneamente à medida que os desafios são completados e os pontos atribuídos.",
+      "dashboardTitle": "Painel em Direto",
+      "dashboardBody": "Monitorize cada aspeto do jogo em tempo real: equipas ativas, submissões pendentes, taxas de conclusão e progresso das equipas.",
+      "pushTitle": "Notificações Push",
+      "pushBody": "Envie mensagens instantâneas para todas as equipas ou equipas específicas diretamente no terreno.",
+      "offlineTitle": "Modo Offline",
+      "offlineBody": "As submissões são guardadas offline e sincronizadas automaticamente quando a ligação é restabelecida.",
+      "multiLangTitle": "Multi-Idioma",
+      "multiLangBody": "Disponível em Inglês, Português e Alemão com deteção automática de idioma."
+    },
+    "platforms": {
+      "label": "Plataformas",
+      "title": "Disponível em todo o lado",
+      "description": "Aplicações nativas para iOS e Android, além de um painel de administração completo para gestão de jogos e monitorização ao vivo.",
+      "ios": "App iOS",
+      "webAdmin": "Admin Web",
+      "android": "App Android"
+    },
+    "footer": {
+      "tagline": "Feito para Desbravadores",
+      "operatorLogin": "Entrar como Operador",
+      "copyright": "\u00a9 {{year}} PointFinder. Todos os direitos reservados."
+    }
   }
 }

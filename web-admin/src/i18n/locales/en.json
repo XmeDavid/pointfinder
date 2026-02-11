@@ -406,5 +406,60 @@
     "deleteConfirmTitle": "Are you sure you want to delete this game?",
     "deleteConfirmDescription": "This action cannot be undone. All bases, challenges, teams, and assignments will be permanently deleted.",
     "confirmDelete": "Yes, Delete Game"
+  },
+  "landing": {
+    "nav": {
+      "operatorLogin": "Operator Login"
+    },
+    "hero": {
+      "tagline": "NFC-powered outdoor adventure games for scouting organizations. Create missions, place bases, and let teams explore the real world.",
+      "availableOn": "Available on",
+      "appStore": "App Store",
+      "googlePlay": "Google Play",
+      "scroll": "Scroll"
+    },
+    "howItWorks": {
+      "label": "How It Works",
+      "title": "Three steps to adventure",
+      "step1Title": "Set Up Your Mission",
+      "step1Body": "Place bases on an interactive map, write NFC tags, create challenges, and assemble teams through the web admin panel.",
+      "step2Title": "Explore & Discover",
+      "step2Body": "Teams head into the field with their phones, scan NFC tags at physical bases, and unlock challenges to solve on the spot.",
+      "step3Title": "Monitor in Real-Time",
+      "step3Body": "Watch the action unfold on the live dashboard with team tracking, leaderboards, activity feeds, and submission review."
+    },
+    "features": {
+      "label": "Features",
+      "title": "Everything you need to run the game",
+      "nfcTitle": "NFC Gameplay",
+      "nfcBody": "Scan physical NFC tags placed at bases throughout the playing field to check in and unlock challenges. Each tag is uniquely linked to a base location for tamper-proof verification.",
+      "mapsTitle": "Interactive Maps",
+      "mapsBody": "GPS-tracked bases and live team locations displayed on an interactive map with real-time status indicators.",
+      "challengesTitle": "Photo & Text Challenges",
+      "challengesBody": "Multiple answer types including free-text with auto-validation and photo submissions for manual review.",
+      "leaderboardTitle": "Real-Time Leaderboard",
+      "leaderboardBody": "Live team rankings updated instantly as challenges are completed and points are awarded.",
+      "dashboardTitle": "Live Dashboard",
+      "dashboardBody": "Monitor every aspect of your game in real-time: active teams, pending submissions, completion rates, and team progress.",
+      "pushTitle": "Push Notifications",
+      "pushBody": "Send instant messages to all teams or specific teams directly in the field.",
+      "offlineTitle": "Offline Mode",
+      "offlineBody": "Submissions queue offline and sync automatically when connectivity returns.",
+      "multiLangTitle": "Multi-Language",
+      "multiLangBody": "Available in English, Portuguese, and German with automatic language detection."
+    },
+    "platforms": {
+      "label": "Platforms",
+      "title": "Available everywhere",
+      "description": "Native apps for iOS and Android, plus a full-featured web admin for game management and live monitoring.",
+      "ios": "iOS App",
+      "webAdmin": "Web Admin",
+      "android": "Android App"
+    },
+    "footer": {
+      "tagline": "Built for Pathfinders",
+      "operatorLogin": "Operator Login",
+      "copyright": "\u00a9 {{year}} PointFinder. All rights reserved."
+    }
   }
 }

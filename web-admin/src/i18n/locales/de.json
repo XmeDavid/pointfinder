@@ -406,5 +406,60 @@
     "deleteConfirmTitle": "Sind Sie sicher, dass Sie dieses Spiel löschen möchten?",
     "deleteConfirmDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Alle Stationen, Challenges, Teams und Zuweisungen werden dauerhaft gelöscht.",
     "confirmDelete": "Ja, Spiel löschen"
+  },
+  "landing": {
+    "nav": {
+      "operatorLogin": "Operator-Login"
+    },
+    "hero": {
+      "tagline": "NFC-basierte Outdoor-Abenteuerspiele für Pfadfinderorganisationen. Erstellen Sie Missionen, platzieren Sie Stationen und lassen Sie Teams die echte Welt erkunden.",
+      "availableOn": "Verfügbar im",
+      "appStore": "App Store",
+      "googlePlay": "Google Play",
+      "scroll": "Scrollen"
+    },
+    "howItWorks": {
+      "label": "So funktioniert's",
+      "title": "Drei Schritte zum Abenteuer",
+      "step1Title": "Mission einrichten",
+      "step1Body": "Platzieren Sie Stationen auf der interaktiven Karte, beschreiben Sie NFC-Tags, erstellen Sie Challenges und stellen Sie Teams über das Admin-Panel zusammen.",
+      "step2Title": "Erkunden & Entdecken",
+      "step2Body": "Teams ziehen mit ihren Handys los, scannen NFC-Tags an physischen Standorten und schalten Challenges frei, die vor Ort gelöst werden.",
+      "step3Title": "Echtzeit-Monitoring",
+      "step3Body": "Verfolgen Sie das Geschehen live auf dem Dashboard mit Team-Tracking, Ranglisten, Aktivitätsfeed und Einreichungsprüfung."
+    },
+    "features": {
+      "label": "Funktionen",
+      "title": "Alles, was Sie für das Spiel brauchen",
+      "nfcTitle": "NFC-Gameplay",
+      "nfcBody": "Scannen Sie physische NFC-Tags an Stationen im gesamten Spielfeld, um einzuchecken und Challenges freizuschalten. Jeder Tag ist eindeutig mit einem Standort verknüpft.",
+      "mapsTitle": "Interaktive Karten",
+      "mapsBody": "GPS-verfolgte Stationen und Live-Team-Positionen auf einer interaktiven Karte mit Echtzeit-Statusindikatoren.",
+      "challengesTitle": "Foto- & Text-Challenges",
+      "challengesBody": "Verschiedene Antworttypen: Freitext mit automatischer Validierung und Foto-Einreichungen zur manuellen Prüfung.",
+      "leaderboardTitle": "Echtzeit-Rangliste",
+      "leaderboardBody": "Live-Team-Rankings, die sofort aktualisiert werden, wenn Challenges abgeschlossen und Punkte vergeben werden.",
+      "dashboardTitle": "Live-Dashboard",
+      "dashboardBody": "Überwachen Sie jeden Aspekt Ihres Spiels in Echtzeit: aktive Teams, ausstehende Einreichungen, Abschlussraten und Team-Fortschritt.",
+      "pushTitle": "Push-Benachrichtigungen",
+      "pushBody": "Senden Sie sofortige Nachrichten an alle oder bestimmte Teams direkt im Feld.",
+      "offlineTitle": "Offline-Modus",
+      "offlineBody": "Einreichungen werden offline gespeichert und automatisch synchronisiert, wenn die Verbindung wiederhergestellt wird.",
+      "multiLangTitle": "Mehrsprachig",
+      "multiLangBody": "Verfügbar auf Englisch, Portugiesisch und Deutsch mit automatischer Spracherkennung."
+    },
+    "platforms": {
+      "label": "Plattformen",
+      "title": "Überall verfügbar",
+      "description": "Native Apps für iOS und Android sowie ein umfassendes Web-Admin-Panel für Spielverwaltung und Live-Monitoring.",
+      "ios": "iOS-App",
+      "webAdmin": "Web-Admin",
+      "android": "Android-App"
+    },
+    "footer": {
+      "tagline": "Gemacht für Pfadfinder",
+      "operatorLogin": "Operator-Login",
+      "copyright": "\u00a9 {{year}} PointFinder. Alle Rechte vorbehalten."
+    }
   }
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Compass,
   Smartphone,
@@ -13,6 +14,7 @@ import {
   ChevronDown,
   Settings,
   Radio,
+  type LucideIcon,
 } from "lucide-react";
 
 /* =================================================================
@@ -164,6 +166,8 @@ function SectionDivider() {
    ================================================================= */
 
 function Navbar() {
+  const { t } = useTranslation();
+
   return (
     <nav
       className="fixed top-0 left-0 right-0 z-50 border-b border-white/[0.04]"
@@ -181,7 +185,7 @@ function Navbar() {
           to="/login"
           className="text-sm font-medium text-green-400/70 transition-colors duration-200 hover:text-green-400"
         >
-          Operator Login
+          {t("landing.nav.operatorLogin")}
         </Link>
       </div>
     </nav>
@@ -192,7 +196,7 @@ function Navbar() {
    Hero
    ================================================================= */
 
-const waypoints = [
+const heroWaypoints = [
   { x: 8, y: 22, s: 3, o: 0.14, d: 0 },
   { x: 88, y: 14, s: 2, o: 0.1, d: 2 },
   { x: 14, y: 74, s: 2.5, o: 0.12, d: 4 },
@@ -203,6 +207,8 @@ const waypoints = [
 ];
 
 function Hero() {
+  const { t } = useTranslation();
+
   return (
     <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-6 pt-20">
       {/* Grid background + radial glow */}
@@ -220,7 +226,7 @@ function Hero() {
 
       {/* Floating waypoint dots */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        {waypoints.map((wp, i) => (
+        {heroWaypoints.map((wp, i) => (
           <div
             key={i}
             className="absolute landing-float"
@@ -262,20 +268,19 @@ function Hero() {
         className="landing-fade-in max-w-lg text-center text-base leading-relaxed text-white/45 md:text-lg"
         style={{ animationDelay: "0.8s" }}
       >
-        NFC-powered outdoor adventure games for scouting organizations.
-        Create missions, place bases, and let teams explore the real world.
+        {t("landing.hero.tagline")}
       </p>
 
       {/* Store badges */}
       <div className="landing-fade-in mt-10 flex flex-wrap items-center justify-center gap-3" style={{ animationDelay: "1.1s" }}>
-        <StoreBadge icon={<AppleLogo />} label="App Store" />
-        <StoreBadge icon={<PlayLogo />} label="Google Play" />
+        <StoreBadge icon={<AppleLogo />} label={t("landing.hero.appStore")} availableOn={t("landing.hero.availableOn")} />
+        <StoreBadge icon={<PlayLogo />} label={t("landing.hero.googlePlay")} availableOn={t("landing.hero.availableOn")} />
       </div>
 
       {/* Scroll hint */}
       <div className="landing-fade-in absolute bottom-8 left-1/2 -translate-x-1/2" style={{ animationDelay: "1.6s" }}>
         <div className="flex flex-col items-center gap-1.5 text-white/20">
-          <span className="text-[10px] font-medium uppercase tracking-[0.2em]">Scroll</span>
+          <span className="text-[10px] font-medium uppercase tracking-[0.2em]">{t("landing.hero.scroll")}</span>
           <ChevronDown className="h-4 w-4 landing-bounce" />
         </div>
       </div>
@@ -285,12 +290,12 @@ function Hero() {
 
 /* Store badge helpers */
 
-function StoreBadge({ icon, label }: { icon: React.ReactNode; label: string }) {
+function StoreBadge({ icon, label, availableOn }: { icon: React.ReactNode; label: string; availableOn: string }) {
   return (
     <div className="flex items-center gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.03] px-5 py-2.5 text-sm text-white/35">
       {icon}
       <div className="flex flex-col">
-        <span className="text-[9px] uppercase tracking-wider text-white/25">Available on</span>
+        <span className="text-[9px] uppercase tracking-wider text-white/25">{availableOn}</span>
         <span className="font-medium leading-tight">{label}</span>
       </div>
     </div>
@@ -317,38 +322,25 @@ function PlayLogo() {
    How It Works
    ================================================================= */
 
-const steps = [
-  {
-    num: "01",
-    icon: Settings,
-    title: "Set Up Your Mission",
-    body: "Place bases on an interactive map, write NFC tags, create challenges, and assemble teams through the web admin panel.",
-  },
-  {
-    num: "02",
-    icon: Smartphone,
-    title: "Explore & Discover",
-    body: "Teams head into the field with their phones, scan NFC tags at physical bases, and unlock challenges to solve on the spot.",
-  },
-  {
-    num: "03",
-    icon: LayoutDashboard,
-    title: "Monitor in Real-Time",
-    body: "Watch the action unfold on the live dashboard with team tracking, leaderboards, activity feeds, and submission review.",
-  },
+const steps: { num: string; icon: LucideIcon; titleKey: string; bodyKey: string }[] = [
+  { num: "01", icon: Settings, titleKey: "landing.howItWorks.step1Title", bodyKey: "landing.howItWorks.step1Body" },
+  { num: "02", icon: Smartphone, titleKey: "landing.howItWorks.step2Title", bodyKey: "landing.howItWorks.step2Body" },
+  { num: "03", icon: LayoutDashboard, titleKey: "landing.howItWorks.step3Title", bodyKey: "landing.howItWorks.step3Body" },
 ];
 
 function HowItWorks() {
+  const { t } = useTranslation();
+
   return (
     <section className="relative px-6 py-20 md:py-28">
       <div className="mx-auto max-w-5xl">
         {/* Heading */}
         <div className="scroll-reveal mb-16 text-center">
           <span className="mb-3 block text-xs font-medium uppercase tracking-[0.2em] text-green-500/70">
-            How It Works
+            {t("landing.howItWorks.label")}
           </span>
           <h2 className="text-3xl font-bold text-white md:text-4xl">
-            Three steps to adventure
+            {t("landing.howItWorks.title")}
           </h2>
         </div>
 
@@ -373,8 +365,8 @@ function HowItWorks() {
                 </span>
               </div>
 
-              <h3 className="mb-3 text-lg font-semibold text-white">{step.title}</h3>
-              <p className="max-w-xs text-sm leading-relaxed text-white/35">{step.body}</p>
+              <h3 className="mb-3 text-lg font-semibold text-white">{t(step.titleKey)}</h3>
+              <p className="max-w-xs text-sm leading-relaxed text-white/35">{t(step.bodyKey)}</p>
             </div>
           ))}
         </div>
@@ -387,69 +379,30 @@ function HowItWorks() {
    Features – bento grid
    ================================================================= */
 
-const features = [
-  {
-    icon: Radio,
-    title: "NFC Gameplay",
-    body: "Scan physical NFC tags placed at bases throughout the playing field to check in and unlock challenges. Each tag is uniquely linked to a base location for tamper-proof verification.",
-    span: "md:col-span-2 md:row-span-2",
-    large: true,
-  },
-  {
-    icon: MapPin,
-    title: "Interactive Maps",
-    body: "GPS-tracked bases and live team locations displayed on an interactive map with real-time status indicators.",
-    span: "",
-  },
-  {
-    icon: Camera,
-    title: "Photo & Text Challenges",
-    body: "Multiple answer types including free-text with auto-validation and photo submissions for manual review.",
-    span: "",
-  },
-  {
-    icon: Trophy,
-    title: "Real-Time Leaderboard",
-    body: "Live team rankings updated instantly as challenges are completed and points are awarded.",
-    span: "",
-  },
-  {
-    icon: LayoutDashboard,
-    title: "Live Dashboard",
-    body: "Monitor every aspect of your game in real-time: active teams, pending submissions, completion rates, and team progress.",
-    span: "md:col-span-2",
-  },
-  {
-    icon: Bell,
-    title: "Push Notifications",
-    body: "Send instant messages to all teams or specific teams directly in the field.",
-    span: "",
-  },
-  {
-    icon: WifiOff,
-    title: "Offline Mode",
-    body: "Submissions queue offline and sync automatically when connectivity returns.",
-    span: "",
-  },
-  {
-    icon: Globe,
-    title: "Multi-Language",
-    body: "Available in English, Portuguese, and German with automatic language detection.",
-    span: "",
-  },
+const features: { id: string; icon: LucideIcon; titleKey: string; bodyKey: string; span: string; large?: boolean }[] = [
+  { id: "nfc", icon: Radio, titleKey: "landing.features.nfcTitle", bodyKey: "landing.features.nfcBody", span: "md:col-span-2 md:row-span-2", large: true },
+  { id: "maps", icon: MapPin, titleKey: "landing.features.mapsTitle", bodyKey: "landing.features.mapsBody", span: "" },
+  { id: "challenges", icon: Camera, titleKey: "landing.features.challengesTitle", bodyKey: "landing.features.challengesBody", span: "" },
+  { id: "leaderboard", icon: Trophy, titleKey: "landing.features.leaderboardTitle", bodyKey: "landing.features.leaderboardBody", span: "" },
+  { id: "dashboard", icon: LayoutDashboard, titleKey: "landing.features.dashboardTitle", bodyKey: "landing.features.dashboardBody", span: "md:col-span-2" },
+  { id: "push", icon: Bell, titleKey: "landing.features.pushTitle", bodyKey: "landing.features.pushBody", span: "" },
+  { id: "offline", icon: WifiOff, titleKey: "landing.features.offlineTitle", bodyKey: "landing.features.offlineBody", span: "" },
+  { id: "i18n", icon: Globe, titleKey: "landing.features.multiLangTitle", bodyKey: "landing.features.multiLangBody", span: "" },
 ];
 
 function Features() {
+  const { t } = useTranslation();
+
   return (
     <section className="relative px-6 py-20 md:py-28">
       <div className="mx-auto max-w-5xl">
         {/* Heading */}
         <div className="scroll-reveal mb-16 text-center">
           <span className="mb-3 block text-xs font-medium uppercase tracking-[0.2em] text-green-500/70">
-            Features
+            {t("landing.features.label")}
           </span>
           <h2 className="text-3xl font-bold text-white md:text-4xl">
-            Everything you need to run the game
+            {t("landing.features.title")}
           </h2>
         </div>
 
@@ -457,7 +410,7 @@ function Features() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {features.map((f, i) => (
             <div
-              key={f.title}
+              key={f.id}
               className={`scroll-reveal group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.015] p-6 transition-all duration-300 hover:border-green-500/[0.14] hover:bg-green-500/[0.015] ${f.span} ${f.large ? "flex flex-col justify-between" : ""}`}
               style={{ transitionDelay: `${i * 80}ms` }}
             >
@@ -467,10 +420,10 @@ function Features() {
               </div>
 
               <h3 className={`mb-2 font-semibold text-white ${f.large ? "text-xl" : "text-base"}`}>
-                {f.title}
+                {t(f.titleKey)}
               </h3>
               <p className={`leading-relaxed text-white/35 ${f.large ? "max-w-md text-[15px]" : "text-sm"}`}>
-                {f.body}
+                {t(f.bodyKey)}
               </p>
 
               {/* Decorative corner arcs on the hero card */}
@@ -625,33 +578,35 @@ function ScreenDashboard() {
 }
 
 function Platforms() {
+  const { t } = useTranslation();
+
   return (
     <section className="relative overflow-hidden px-6 py-20 md:py-28">
       <div className="mx-auto max-w-6xl">
         {/* Heading */}
         <div className="scroll-reveal mb-16 text-center">
           <span className="mb-3 block text-xs font-medium uppercase tracking-[0.2em] text-green-500/70">
-            Platforms
+            {t("landing.platforms.label")}
           </span>
           <h2 className="text-3xl font-bold text-white md:text-4xl">
-            Available everywhere
+            {t("landing.platforms.title")}
           </h2>
           <p className="mx-auto mt-4 max-w-md text-sm text-white/35 md:text-base">
-            Native apps for iOS and Android, plus a full-featured web admin for game management and live monitoring.
+            {t("landing.platforms.description")}
           </p>
         </div>
 
         {/* Device row */}
         <div className="flex flex-col items-center justify-center gap-10 md:flex-row md:items-end md:gap-12">
-          <PhoneMockup label="iOS App">
+          <PhoneMockup label={t("landing.platforms.ios")}>
             <ScreenMap />
           </PhoneMockup>
 
-          <DesktopMockup label="Web Admin">
+          <DesktopMockup label={t("landing.platforms.webAdmin")}>
             <ScreenDashboard />
           </DesktopMockup>
 
-          <PhoneMockup label="Android App">
+          <PhoneMockup label={t("landing.platforms.android")}>
             <ScreenNfc />
           </PhoneMockup>
         </div>
@@ -665,6 +620,8 @@ function Platforms() {
    ================================================================= */
 
 function Footer() {
+  const { t } = useTranslation();
+
   return (
     <footer className="border-t border-white/[0.04] px-6 py-12">
       <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-6 md:flex-row">
@@ -674,7 +631,7 @@ function Footer() {
           </div>
           <div>
             <span className="block text-sm font-semibold text-white">PointFinder</span>
-            <span className="block text-xs text-white/25">Built for Pathfinders</span>
+            <span className="block text-xs text-white/25">{t("landing.footer.tagline")}</span>
           </div>
         </div>
 
@@ -682,11 +639,11 @@ function Footer() {
           to="/login"
           className="text-sm text-white/25 transition-colors duration-200 hover:text-green-400"
         >
-          Operator Login &rarr;
+          {t("landing.footer.operatorLogin")} &rarr;
         </Link>
 
         <span className="text-xs text-white/15">
-          &copy; {new Date().getFullYear()} PointFinder. All rights reserved.
+          {t("landing.footer.copyright", { year: new Date().getFullYear() })}
         </span>
       </div>
     </footer>
