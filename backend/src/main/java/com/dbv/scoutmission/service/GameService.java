@@ -13,6 +13,7 @@ import com.dbv.scoutmission.exception.ResourceNotFoundException;
 import com.dbv.scoutmission.repository.*;
 import com.dbv.scoutmission.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class GameService {
 
@@ -35,6 +37,7 @@ public class GameService {
     private final TeamLocationRepository teamLocationRepository;
     private final ActivityEventRepository activityEventRepository;
     private final GameAccessService gameAccessService;
+    private final FileStorageService fileStorageService;
 
     @Transactional(readOnly = true)
     public List<GameResponse> getAllGames() {
@@ -102,6 +105,12 @@ public class GameService {
     public void deleteGame(UUID id) {
         gameAccessService.ensureCurrentUserCanAccessGame(id);
         gameRepository.deleteById(id);
+        // Clean up uploaded files after DB deletion (non-fatal if it fails)
+        try {
+            fileStorageService.deleteGameFiles(id);
+        } catch (Exception e) {
+            log.warn("Failed to clean up files for deleted game {}: {}", id, e.getMessage());
+        }
     }
 
     @Transactional

@@ -1,14 +1,18 @@
 package com.dbv.scoutmission.service;
 
 import com.dbv.scoutmission.exception.BadRequestException;
+import com.dbv.scoutmission.exception.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.annotation.PostConstruct;
 import java.io.InputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,7 +32,12 @@ public class FileStorageService {
     );
 
     private static final Pattern STORED_FILE_URL_PATTERN = Pattern.compile(
-            "^/uploads/([0-9a-fA-F\\-]{36})/([0-9a-fA-F\\-]{36})\\.(jpg|jpeg|png|webp|heic|heif)$"
+            "^(?:/uploads|/api/(?:player/files|games/[0-9a-fA-F\\-]{36}/files))/([0-9a-fA-F\\-]{36})/([0-9a-fA-F\\-]{36})\\.(jpg|jpeg|png|webp|heic|heif)$"
+    );
+
+    /** Matches the legacy /uploads/ path format for backwards compatibility. */
+    private static final Pattern LEGACY_UPLOAD_PATTERN = Pattern.compile(
+            "^/uploads/([0-9a-fA-F\\-]{36})/([0-9a-fA-F\\-]{36}\\.(jpg|jpeg|png|webp|heic|heif))$"
     );
 
     private static final Set<String> HEIF_BRANDS = Set.of(
@@ -54,11 +63,11 @@ public class FileStorageService {
     }
 
     /**
-     * Store an uploaded file and return the public URL path.
+     * Store an uploaded file and return the authenticated API URL path.
      *
      * @param file   the uploaded file
      * @param gameId the game this submission belongs to
-     * @return the public URL path, e.g. "/uploads/gameId/uuid.jpg"
+     * @return the API URL path, e.g. "/api/games/{gameId}/files/{uuid}.jpg"
      */
     public String store(MultipartFile file, UUID gameId) {
         ImageKind imageKind = validateFile(file);
@@ -72,15 +81,111 @@ public class FileStorageService {
             Path target = gameDir.resolve(filename);
             file.transferTo(target);
             log.info("Stored file: {}", target);
-            return "/uploads/" + gameId + "/" + filename;
+            return "/api/games/" + gameId + "/files/" + filename;
         } catch (IOException e) {
             throw new RuntimeException("Failed to store file", e);
         }
     }
 
     /**
+     * Load a file as a Spring Resource for streaming to clients.
+     *
+     * @param gameId   the game the file belongs to
+     * @param filename the file name (uuid.ext)
+     * @return the file as a Resource
+     */
+    public Resource loadFile(UUID gameId, String filename) {
+        // Sanitize filename to prevent path traversal
+        if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
+            throw new BadRequestException("Invalid filename");
+        }
+
+        Path filePath = uploadsRoot.resolve(gameId.toString()).resolve(filename).normalize();
+        if (!filePath.startsWith(uploadsRoot)) {
+            throw new BadRequestException("Invalid file path");
+        }
+
+        try {
+            Resource resource = new UrlResource(filePath.toUri());
+            if (!resource.exists() || !resource.isReadable()) {
+                throw new ResourceNotFoundException("File not found: " + filename);
+            }
+            return resource;
+        } catch (MalformedURLException e) {
+            throw new ResourceNotFoundException("File not found: " + filename);
+        }
+    }
+
+    /**
+     * Delete all uploaded files for a game.
+     *
+     * @param gameId the game whose files should be deleted
+     */
+    public void deleteGameFiles(UUID gameId) {
+        Path gameDir = uploadsRoot.resolve(gameId.toString());
+        if (!Files.isDirectory(gameDir)) {
+            return;
+        }
+        try (var files = Files.walk(gameDir)) {
+            // Delete files first, then directories (reverse order)
+            files.sorted(java.util.Comparator.reverseOrder())
+                    .forEach(path -> {
+                        try {
+                            Files.deleteIfExists(path);
+                        } catch (IOException e) {
+                            log.warn("Failed to delete file: {}", path, e);
+                        }
+                    });
+            log.info("Deleted upload directory for game {}", gameId);
+        } catch (IOException e) {
+            log.warn("Failed to clean up uploads for game {}: {}", gameId, e.getMessage());
+        }
+    }
+
+    /**
+     * Delete a single uploaded file by its stored URL path.
+     *
+     * @param fileUrl the stored file URL (e.g. "/api/games/{gameId}/files/{uuid}.jpg" or legacy "/uploads/...")
+     */
+    public void deleteFile(String fileUrl) {
+        if (fileUrl == null || fileUrl.isBlank()) return;
+
+        // Extract gameId and filename from the URL
+        Matcher legacyMatcher = LEGACY_UPLOAD_PATTERN.matcher(fileUrl.trim());
+        String gameIdStr;
+        String fileName;
+        if (legacyMatcher.matches()) {
+            gameIdStr = legacyMatcher.group(1);
+            fileName = legacyMatcher.group(2);
+        } else {
+            // Try new API pattern: /api/games/{gameId}/files/{filename}
+            Matcher apiMatcher = Pattern.compile("^/api/games/([0-9a-fA-F\\-]{36})/files/([0-9a-fA-F\\-]{36}\\.[a-z]+)$")
+                    .matcher(fileUrl.trim());
+            if (!apiMatcher.matches()) {
+                log.warn("Cannot parse file URL for deletion: {}", fileUrl);
+                return;
+            }
+            gameIdStr = apiMatcher.group(1);
+            fileName = apiMatcher.group(2);
+        }
+
+        Path target = uploadsRoot.resolve(gameIdStr).resolve(fileName).normalize();
+        if (!target.startsWith(uploadsRoot)) {
+            log.warn("Path traversal attempt in file deletion: {}", fileUrl);
+            return;
+        }
+        try {
+            Files.deleteIfExists(target);
+            log.info("Deleted file: {}", target);
+        } catch (IOException e) {
+            log.warn("Failed to delete file {}: {}", target, e.getMessage());
+        }
+    }
+
+    /**
      * Validate a file URL points to an existing upload for the same game.
-     * Returns a normalized URL path for storage.
+     * Accepts both legacy /uploads/ paths and new /api/games/.../files/ paths.
+     * Returns a normalized API URL path for storage.
      */
     public String validateStoredFileUrl(String fileUrl, UUID gameId) {
         if (fileUrl == null || fileUrl.isBlank()) {
@@ -88,13 +193,24 @@ public class FileStorageService {
         }
 
         String trimmed = fileUrl.trim();
-        Matcher matcher = STORED_FILE_URL_PATTERN.matcher(trimmed);
-        if (!matcher.matches()) {
-            throw new BadRequestException("Invalid file URL format");
+
+        // Try to extract gameId and filename from either URL format
+        String urlGameId;
+        String fileName;
+
+        Matcher legacyMatcher = LEGACY_UPLOAD_PATTERN.matcher(trimmed);
+        if (legacyMatcher.matches()) {
+            urlGameId = legacyMatcher.group(1);
+            fileName = legacyMatcher.group(2);
+        } else {
+            Matcher apiMatcher = STORED_FILE_URL_PATTERN.matcher(trimmed);
+            if (!apiMatcher.matches()) {
+                throw new BadRequestException("Invalid file URL format");
+            }
+            urlGameId = apiMatcher.group(1);
+            fileName = apiMatcher.group(2) + "." + apiMatcher.group(3).toLowerCase(Locale.ROOT);
         }
 
-        String urlGameId = matcher.group(1);
-        String fileName = matcher.group(2) + "." + matcher.group(3).toLowerCase(Locale.ROOT);
         if (!urlGameId.equalsIgnoreCase(gameId.toString())) {
             throw new BadRequestException("File URL does not belong to this game");
         }
@@ -104,7 +220,7 @@ public class FileStorageService {
             throw new BadRequestException("Referenced file does not exist");
         }
 
-        return "/uploads/" + urlGameId + "/" + fileName;
+        return "/api/games/" + urlGameId + "/files/" + fileName;
     }
 
     private ImageKind validateFile(MultipartFile file) {

@@ -16,6 +16,8 @@ interface AuthState {
   logout: () => void;
   /** Called by the API client when tokens are refreshed successfully */
   setTokens: (accessToken: string, refreshToken: string, user: User) => void;
+  /** Clear in-memory access token (e.g. after a 401, before retrying via refresh) */
+  clearAccessToken: () => void;
   /** Called by the API client on unrecoverable auth failure */
   handleAuthFailure: () => void;
 }
@@ -76,6 +78,10 @@ export const useAuthStore = create<AuthState>()(
         set({ accessToken, refreshToken, user, isAuthenticated: true });
       },
 
+      clearAccessToken: () => {
+        set({ accessToken: null });
+      },
+
       handleAuthFailure: () => {
         // Only trigger if we think we're authenticated (avoid loops)
         if (get().isAuthenticated) {
@@ -91,16 +97,17 @@ export const useAuthStore = create<AuthState>()(
     {
       name: "scout-auth",
       partialize: (state) => ({
-        // Only persist data fields, not computed/transient ones
+        // Only persist refresh token and user info — NOT the access token.
+        // The access token is kept in-memory only, reducing XSS exposure.
+        // On page load, a fresh access token is obtained via the refresh token.
         user: state.user,
-        accessToken: state.accessToken,
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {
-          // Validate: if isAuthenticated but tokens are missing, reset
-          if (state.isAuthenticated && !state.accessToken) {
+          // Validate: if isAuthenticated but refresh token is missing, reset
+          if (state.isAuthenticated && !state.refreshToken) {
             state.isAuthenticated = false;
             state.user = null;
             state.accessToken = null;

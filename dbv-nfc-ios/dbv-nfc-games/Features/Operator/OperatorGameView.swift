@@ -34,7 +34,7 @@ struct OperatorGameView: View {
                 TabView {
                     // Live Map tab
                     if let token = token {
-                        OperatorMapView(gameId: game.id, token: token, bases: bases)
+                        OperatorMapView(gameId: game.id, token: token, bases: $bases)
                             .tabItem {
                                 Label(locale.t("operator.liveMap"), systemImage: "map.fill")
                             }

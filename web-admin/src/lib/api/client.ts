@@ -10,16 +10,62 @@ const apiClient = axios.create({
   },
 });
 
-// Track if we're currently refreshing to avoid concurrent refresh calls
-let isRefreshing = false;
-let failedQueue: { resolve: (token: string) => void; reject: (err: unknown) => void }[] = [];
+// ---------------------------------------------------------------------------
+// Shared token refresh with promise deduplication.
+// Only one /auth/refresh call runs at a time; concurrent callers await the
+// same promise. This prevents the backend from seeing a second request with
+// an already-rotated (invalid) refresh token.
+// ---------------------------------------------------------------------------
 
-function processQueue(error: unknown, token: string | null) {
-  failedQueue.forEach((p) => {
-    if (token) p.resolve(token);
-    else p.reject(error);
-  });
-  failedQueue = [];
+let refreshPromise: Promise<string> | null = null;
+
+/**
+ * Perform a single token refresh, deduplicating concurrent calls.
+ * Returns the new access token or throws on failure.
+ */
+function refreshAccessToken(): Promise<string> {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    try {
+      const refreshToken = useAuthStore.getState().refreshToken;
+      if (!refreshToken) throw new Error("No refresh token");
+
+      // Use raw axios to bypass apiClient interceptors and avoid loops
+      const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
+      const { accessToken: newAccessToken, refreshToken: newRefreshToken, user } = response.data;
+      useAuthStore.getState().setTokens(newAccessToken, newRefreshToken, user);
+      return newAccessToken as string;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
+}
+
+/**
+ * Obtain a valid access token, refreshing if necessary.
+ * Safe to call from multiple call-sites concurrently — only one refresh
+ * request will be in-flight at a time.
+ *
+ * @returns The current (or freshly obtained) access token, or `null` if
+ *          the user is not authenticated / refresh failed.
+ */
+export async function getValidAccessToken(): Promise<string | null> {
+  const { accessToken, refreshToken, isAuthenticated } = useAuthStore.getState();
+
+  // Happy path: token already available in memory
+  if (accessToken) return accessToken;
+
+  // Nothing to refresh with
+  if (!isAuthenticated || !refreshToken) return null;
+
+  try {
+    return await refreshAccessToken();
+  } catch {
+    return null;
+  }
 }
 
 function forceLogout() {
@@ -30,68 +76,44 @@ function forceLogout() {
   }, 50);
 }
 
-// Request interceptor: attach access token from Zustand store
-apiClient.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().accessToken;
+// ---------------------------------------------------------------------------
+// Request interceptor: attach access token, refreshing if needed.
+// ---------------------------------------------------------------------------
+
+apiClient.interceptors.request.use(async (config) => {
+  const token = await getValidAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-// Response interceptor: handle auth errors and refresh token
+// ---------------------------------------------------------------------------
+// Response interceptor: on 401/403, attempt one refresh then retry.
+// Uses the same deduplicating refreshAccessToken() so concurrent 401s
+// don't each fire their own refresh call.
+// ---------------------------------------------------------------------------
+
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
     const status = error.response?.status;
 
-    // 401/403 = invalid/expired token -> attempt refresh
+    // 401/403 with no prior retry = token may have expired mid-session
     if ((status === 401 || status === 403) && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      // If already refreshing, queue this request
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({
-            resolve: (token: string) => {
-              originalRequest.headers.Authorization = `Bearer ${token}`;
-              resolve(apiClient(originalRequest));
-            },
-            reject,
-          });
-        });
-      }
-
-      isRefreshing = true;
+      // Invalidate the in-memory token so refreshAccessToken() actually fires
+      useAuthStore.getState().clearAccessToken();
 
       try {
-        const refreshToken = useAuthStore.getState().refreshToken;
-        if (!refreshToken) throw new Error("No refresh token");
-
-        // Call refresh endpoint directly (bypass interceptors to avoid loops)
-        const response = await axios.post(`${API_URL}/auth/refresh`, {
-          refreshToken,
-        });
-
-        const { accessToken: newAccessToken, refreshToken: newRefreshToken, user } = response.data;
-
-        // Update Zustand store (this also persists to localStorage)
-        useAuthStore.getState().setTokens(newAccessToken, newRefreshToken, user);
-
-        // Process any queued requests with the new token
-        processQueue(null, newAccessToken);
-
-        // Retry original request with new token
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        const newToken = await refreshAccessToken();
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return apiClient(originalRequest);
       } catch {
-        // Refresh failed - kick to login
-        processQueue(error, null);
         forceLogout();
         return Promise.reject(error);
-      } finally {
-        isRefreshing = false;
       }
     }
 

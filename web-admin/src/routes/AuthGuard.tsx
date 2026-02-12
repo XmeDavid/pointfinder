@@ -5,23 +5,25 @@ import apiClient from "@/lib/api/client";
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const accessToken = useAuthStore((s) => s.accessToken);
   const hasHydrated = useAuthStore((s) => s.hasHydrated);
   const [sessionVerified, setSessionVerified] = useState(false);
   const verifyAttempted = useRef(false);
 
-  // After hydration, verify the session is actually valid with the backend
+  // After hydration, verify the session is actually valid with the backend.
+  // The access token may be null after page refresh (it's in-memory only);
+  // the API client request interceptor will refresh it automatically.
   useEffect(() => {
     if (!hasHydrated || verifyAttempted.current) return;
     verifyAttempted.current = true;
 
-    if (!isAuthenticated || !accessToken) {
+    if (!isAuthenticated) {
       setSessionVerified(true);
       return;
     }
 
     // Make a lightweight API call to verify the token is accepted by the backend.
-    // If it fails with 401, the response interceptor will handle refresh or logout.
+    // If the access token is null, the request interceptor will use the refresh
+    // token to obtain a new one before sending the request.
     apiClient
       .get("/games")
       .then(() => setSessionVerified(true))
@@ -30,7 +32,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         // If we get here, either refresh succeeded (user stays) or logout happened.
         setSessionVerified(true);
       });
-  }, [hasHydrated, isAuthenticated, accessToken]);
+  }, [hasHydrated, isAuthenticated]);
 
   if (!hasHydrated || !sessionVerified) {
     return (
@@ -40,7 +42,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isAuthenticated || !accessToken) {
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 

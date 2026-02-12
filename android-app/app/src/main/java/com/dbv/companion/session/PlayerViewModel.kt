@@ -8,6 +8,7 @@ import com.dbv.companion.core.model.BaseProgress
 import com.dbv.companion.core.model.CheckInResponse
 import com.dbv.companion.core.model.SubmissionResponse
 import com.dbv.companion.core.platform.NfcEventBus
+import com.dbv.companion.core.platform.PlayerLocationService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,6 +38,7 @@ data class PlayerState(
 class PlayerViewModel @Inject constructor(
     private val playerRepository: PlayerRepository,
     private val nfcEventBus: NfcEventBus,
+    private val locationService: PlayerLocationService,
 ) : ViewModel() {
     private val _state = MutableStateFlow(PlayerState())
     val state: StateFlow<PlayerState> = _state.asStateFlow()
@@ -91,6 +93,8 @@ class PlayerViewModel @Inject constructor(
                     scanError = null,
                 )
                 refresh(auth, online)
+                // Send location immediately after check-in (matches iOS behavior)
+                launch { locationService.sendLocationNow() }
             }.onFailure { err ->
                 _state.value = _state.value.copy(scanError = err.message ?: "Check-in failed")
             }
@@ -174,6 +178,8 @@ class PlayerViewModel @Inject constructor(
                     presenceVerified = false,
                 )
                 refresh(auth, online)
+                // Send location immediately after submission (matches iOS behavior)
+                launch { locationService.sendLocationNow() }
             }.onFailure { err ->
                 _state.value = _state.value.copy(solveError = err.message ?: "Submit failed")
             }
@@ -212,6 +218,8 @@ class PlayerViewModel @Inject constructor(
                     presenceVerified = false,
                 )
                 refresh(auth, online)
+                // Send location immediately after photo submission (matches iOS behavior)
+                launch { locationService.sendLocationNow() }
             }.onFailure { err ->
                 _state.value = _state.value.copy(solveError = err.message ?: "Photo submit failed")
             }

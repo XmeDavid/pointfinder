@@ -81,7 +81,7 @@ class AppSessionViewModel @Inject constructor(
             _state.value = _state.value.copy(authType = auth, isLoading = false)
             when (auth) {
                 is AuthType.Player -> {
-                    locationService.start()
+                    locationService.start(auth.gameId)
                     registerPushTokenIfPossible()
                 }
                 is AuthType.Operator -> Unit
@@ -106,7 +106,7 @@ class AppSessionViewModel @Inject constructor(
                 authRepository.playerJoin(joinCode, displayName, deviceIdProvider.deviceId())
             }.onSuccess { auth ->
                 _state.value = _state.value.copy(authType = auth, isLoading = false)
-                locationService.start()
+                locationService.start(auth.gameId)
                 registerPushTokenIfPossible()
             }.onFailure { err ->
                 _state.value = _state.value.copy(isLoading = false, errorMessage = err.message)

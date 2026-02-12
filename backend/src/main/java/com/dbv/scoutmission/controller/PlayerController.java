@@ -107,4 +107,16 @@ public class PlayerController {
         playerService.updatePushToken(player, request.getPushToken(), request.resolvePlatform());
         return ResponseEntity.ok().build();
     }
+
+    /**
+     * Self-service player data deletion endpoint.
+     * Deletes the player record, their push token, and any associated data.
+     * Team-level data (submissions, check-ins) is preserved as it belongs to the team.
+     */
+    @DeleteMapping("/api/player/me")
+    public ResponseEntity<Void> deleteMyData() {
+        Player player = SecurityUtils.getCurrentPlayer();
+        playerService.deletePlayerData(player);
+        return ResponseEntity.noContent().build();
+    }
 }

@@ -457,6 +457,7 @@
     },
     "footer": {
       "tagline": "Built for Pathfinders",
+      "privacyPolicy": "Privacy Policy",
       "operatorLogin": "Operator Login",
       "copyright": "\u00a9 {{year}} PointFinder. All rights reserved."
     }

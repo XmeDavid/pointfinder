@@ -400,6 +400,22 @@ public class PlayerService {
         playerRepository.save(player);
     }
 
+    /**
+     * Self-service player data deletion.
+     * Removes the player record (including token, push token, device ID).
+     * Team-level data (submissions, check-ins, team location) is preserved
+     * as it belongs to the team, not the individual player.
+     */
+    @Transactional
+    public void deletePlayerData(Player player) {
+        UUID playerId = player.getId();
+        player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
+
+        // Delete the player record (cascading from FK will be handled by DB)
+        playerRepository.delete(player);
+    }
+
     @Transactional
     public void updateLocation(UUID gameId, Player player, Double lat, Double lng) {
         UUID playerId = player.getId();

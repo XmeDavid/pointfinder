@@ -457,6 +457,7 @@
     },
     "footer": {
       "tagline": "Gemacht für Pfadfinder",
+      "privacyPolicy": "Datenschutzerklärung",
       "operatorLogin": "Operator-Login",
       "copyright": "\u00a9 {{year}} PointFinder. Alle Rechte vorbehalten."
     }

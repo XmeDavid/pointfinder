@@ -4,6 +4,7 @@ import { GameShell } from "@/features/game-detail/GameShell";
 
 // Landing
 import { LandingPage } from "@/features/landing/LandingPage";
+import { PrivacyPage } from "@/features/landing/PrivacyPage";
 
 // Auth
 import { LoginPage } from "@/features/auth/LoginPage";
@@ -44,6 +45,10 @@ export const router = createBrowserRouter([
   {
     path: "/",
     element: <LandingPage />,
+  },
+  {
+    path: "/privacy",
+    element: <PrivacyPage />,
   },
 
   /* -------- Auth pages -------- */

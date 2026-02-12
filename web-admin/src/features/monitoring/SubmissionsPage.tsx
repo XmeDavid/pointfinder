@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle, XCircle, Clock, FileText, Filter, Maximize2 } from "lucide-react";
@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { AuthImage } from "@/components/AuthImage";
 import { submissionsApi } from "@/lib/api/submissions";
 import { teamsApi } from "@/lib/api/teams";
 import { challengesApi } from "@/lib/api/challenges";
@@ -26,7 +27,15 @@ export function SubmissionsPage() {
   const [filter, setFilter] = useState<"all" | "pending">("all");
   const [reviewingSub, setReviewingSub] = useState<Submission | null>(null);
   const [feedback, setFeedback] = useState("");
-  const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
+  const [fullScreenImage, setFullScreenImage] = useState<{ apiUrl: string; blobUrl?: string } | null>(null);
+  // Cache blob URLs by API path so the fullscreen dialog can reuse them
+  const blobCache = useRef<Map<string, string>>(new Map());
+  const cacheBlobUrl = useCallback((apiUrl: string, blobUrl: string) => {
+    blobCache.current.set(apiUrl, blobUrl);
+  }, []);
+  const openFullScreen = useCallback((apiUrl: string) => {
+    setFullScreenImage({ apiUrl, blobUrl: blobCache.current.get(apiUrl) });
+  }, []);
 
   const { data: submissions = [] } = useQuery({ queryKey: ["submissions", gameId], queryFn: () => submissionsApi.listByGame(gameId!) });
   const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!) });
@@ -76,7 +85,7 @@ export function SubmissionsPage() {
                   <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
                     {sub.fileUrl ? (
                       <>
-                        <img src={sub.fileUrl} alt="Submission" className="h-10 w-10 rounded object-cover cursor-pointer" onClick={(e) => { e.stopPropagation(); setFullScreenImage(sub.fileUrl!); }} />
+                        <AuthImage src={sub.fileUrl} alt="Submission" className="h-10 w-10 rounded object-cover cursor-pointer" onClick={(e) => { e.stopPropagation(); openFullScreen(sub.fileUrl!); }} onBlobReady={(blob) => cacheBlobUrl(sub.fileUrl!, blob)} />
                         {sub.answer && <span className="truncate max-w-md">{sub.answer}</span>}
                       </>
                     ) : (
@@ -106,8 +115,8 @@ export function SubmissionsPage() {
                 <div>
                   <p className="text-sm font-medium mb-1">{t("submissions.answer")}</p>
                   <div className="relative group">
-                    <img src={reviewingSub.fileUrl} alt="Submission photo" className="rounded-md max-h-64 w-full object-contain bg-muted cursor-pointer" onClick={() => setFullScreenImage(reviewingSub.fileUrl!)} />
-                    <button className="absolute top-2 right-2 p-1 rounded bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setFullScreenImage(reviewingSub.fileUrl!)}><Maximize2 className="h-4 w-4" /></button>
+                    <AuthImage src={reviewingSub.fileUrl} alt="Submission photo" className="rounded-md max-h-64 w-full object-contain bg-muted cursor-pointer" onClick={() => openFullScreen(reviewingSub.fileUrl!)} onBlobReady={(blob) => cacheBlobUrl(reviewingSub.fileUrl!, blob)} />
+                    <button className="absolute top-2 right-2 p-1 rounded bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => openFullScreen(reviewingSub.fileUrl!)}><Maximize2 className="h-4 w-4" /></button>
                   </div>
                 </div>
               )}
@@ -128,7 +137,12 @@ export function SubmissionsPage() {
       <Dialog open={!!fullScreenImage} onOpenChange={() => setFullScreenImage(null)}>
         <DialogContent className="max-w-4xl p-2" onClose={() => setFullScreenImage(null)}>
           {fullScreenImage && (
-            <img src={fullScreenImage} alt="Submission photo" className="w-full h-auto max-h-[85vh] object-contain rounded" />
+            <AuthImage
+              src={fullScreenImage.apiUrl}
+              initialBlobUrl={fullScreenImage.blobUrl}
+              alt="Submission photo"
+              className="w-full h-auto max-h-[85vh] object-contain rounded"
+            />
           )}
         </DialogContent>
       </Dialog>

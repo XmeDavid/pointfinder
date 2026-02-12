@@ -1,6 +1,6 @@
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
-import { useAuthStore } from "@/hooks/useAuth";
+import { getValidAccessToken } from "@/lib/api/client";
 
 const WS_URL = import.meta.env.VITE_WS_URL || "/ws";
 
@@ -16,15 +16,16 @@ export function connectWebSocket(
     stompClient.deactivate();
   }
 
-  const accessToken = useAuthStore.getState().accessToken;
-
   const client = new Client({
     webSocketFactory: () => new SockJS(WS_URL) as WebSocket,
-    connectHeaders: accessToken
-      ? {
-          Authorization: `Bearer ${accessToken}`,
-        }
-      : {},
+    // connectHeaders are set dynamically in beforeConnect
+    connectHeaders: {},
+    beforeConnect: async () => {
+      const token = await getValidAccessToken();
+      if (token) {
+        client.connectHeaders = { Authorization: `Bearer ${token}` };
+      }
+    },
     reconnectDelay: 5000,
     heartbeatIncoming: 10000,
     heartbeatOutgoing: 10000,

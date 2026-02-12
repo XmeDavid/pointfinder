@@ -635,12 +635,20 @@ function Footer() {
           </div>
         </div>
 
-        <Link
-          to="/login"
-          className="text-sm text-white/25 transition-colors duration-200 hover:text-green-400"
-        >
-          {t("landing.footer.operatorLogin")} &rarr;
-        </Link>
+        <div className="flex items-center gap-4 text-sm">
+          <Link
+            to="/privacy"
+            className="text-white/25 transition-colors duration-200 hover:text-green-400"
+          >
+            {t("landing.footer.privacyPolicy")}
+          </Link>
+          <Link
+            to="/login"
+            className="text-white/25 transition-colors duration-200 hover:text-green-400"
+          >
+            {t("landing.footer.operatorLogin")} &rarr;
+          </Link>
+        </div>
 
         <span className="text-xs text-white/15">
           {t("landing.footer.copyright", { year: new Date().getFullYear() })}

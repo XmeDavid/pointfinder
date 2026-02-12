@@ -6,7 +6,7 @@ struct OperatorMapView: View {
 
     let gameId: UUID
     let token: String
-    let bases: [Base]
+    @Binding var bases: [Base]
     
     @State private var teams: [Team] = []
     @State private var teamLocations: [TeamLocationResponse] = []
@@ -66,7 +66,12 @@ struct OperatorMapView: View {
             LiveBaseProgressSheet(
                 gameId: gameId,
                 token: token,
-                base: base
+                base: base,
+                onNfcLinked: { baseId in
+                    if let index = bases.firstIndex(where: { $0.id == baseId }) {
+                        bases[index].nfcLinked = true
+                    }
+                }
             )
             .presentationDetents([.medium, .large])
         }
@@ -180,13 +185,29 @@ struct LiveBaseProgressSheet: View {
     let gameId: UUID
     let token: String
     let base: Base
+    var onNfcLinked: ((UUID) -> Void)?
     
     @State private var teams: [Team] = []
     @State private var progress: [TeamBaseProgressResponse] = []
     @State private var isLoading = true
     @State private var pollingTask: Task<Void, Never>?
     
+    // NFC writing
+    @State private var nfcWriter = NFCWriterService()
+    @State private var nfcLinked: Bool
+    @State private var isWritingNfc = false
+    @State private var writeSuccess = false
+    @State private var writeError: String?
+    
     private let apiClient = APIClient()
+    
+    init(gameId: UUID, token: String, base: Base, onNfcLinked: ((UUID) -> Void)? = nil) {
+        self.gameId = gameId
+        self.token = token
+        self.base = base
+        self.onNfcLinked = onNfcLinked
+        self._nfcLinked = State(initialValue: base.nfcLinked)
+    }
     
     var body: some View {
         NavigationStack {
@@ -209,7 +230,7 @@ struct LiveBaseProgressSheet: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                             
-                            if base.nfcLinked {
+                            if nfcLinked {
                                 Label(locale.t("nfc.nfcLinked"), systemImage: "checkmark.circle.fill")
                                     .font(.caption)
                                     .foregroundStyle(.green)
@@ -222,6 +243,48 @@ struct LiveBaseProgressSheet: View {
                     }
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color(.systemGray6))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    
+                    // NFC Linking section
+                    VStack(alignment: .leading, spacing: 12) {
+                        Label(locale.t("nfc.tag"), systemImage: "sensor.tag.radiowaves.forward")
+                            .font(.headline)
+                        
+                        Text(locale.t("nfc.writeInstructions"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        
+                        if let error = writeError {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundStyle(.red)
+                        }
+                        
+                        if writeSuccess {
+                            Label(locale.t("nfc.writeSuccess"), systemImage: "checkmark.circle.fill")
+                                .font(.caption)
+                                .foregroundStyle(.green)
+                        }
+                        
+                        Button {
+                            Task { await writeTag() }
+                        } label: {
+                            Label(
+                                isWritingNfc ? locale.t("nfc.writing") : locale.t("nfc.writeToTag"),
+                                systemImage: "sensor.tag.radiowaves.forward"
+                            )
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(isWritingNfc ? Color.gray : Color.accentColor)
+                            .foregroundStyle(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                        }
+                        .disabled(isWritingNfc)
+                    }
+                    .padding()
                     .background(Color(.systemGray6))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                     
@@ -308,6 +371,38 @@ struct LiveBaseProgressSheet: View {
                 }
             }
         }
+    }
+    
+    // MARK: - NFC Writing
+    
+    private func writeTag() async {
+        isWritingNfc = true
+        writeError = nil
+        writeSuccess = false
+        
+        do {
+            try await nfcWriter.writeBaseId(base.id)
+            
+            let _ = try await apiClient.linkBaseNfc(
+                gameId: gameId,
+                baseId: base.id,
+                token: token
+            )
+            
+            nfcLinked = true
+            writeSuccess = true
+            onNfcLinked?(base.id)
+        } catch let error as NFCError {
+            if case .cancelled = error {
+                // User cancelled
+            } else {
+                writeError = error.localizedDescription
+            }
+        } catch {
+            writeError = error.localizedDescription
+        }
+        
+        isWritingNfc = false
     }
 }
 
