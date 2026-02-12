@@ -50,7 +50,6 @@ export function ChallengesPage() {
   function openCreate() {
     setEditing(null);
     setForm({
-      gameId,
       title: "",
       description: "",
       content: "",

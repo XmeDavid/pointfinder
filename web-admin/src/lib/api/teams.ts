@@ -15,7 +15,7 @@ export const teamsApi = {
     return data;
   },
 
-  getById: async (id: string): Promise<Team> => {
+  getById: async (_id: string): Promise<Team> => {
     // Fetch from all games' teams - we need to find the team and its game
     // The team response includes gameId, so we can find it
     // For now, we'll accept the gameId being passed optionally

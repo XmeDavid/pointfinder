@@ -61,7 +61,7 @@ export function BasesPage() {
   });
 
   const deleteBase = useMutation({
-    mutationFn: basesApi.delete,
+    mutationFn: (id: string) => basesApi.delete(id, gameId!),
     onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["bases", gameId] }); },
     onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
@@ -72,13 +72,13 @@ export function BasesPage() {
     const lastBase = bases.length > 0 ? bases[bases.length - 1] : null;
     const lat = lastBase ? lastBase.lat : defaultLocation.lat;
     const lng = lastBase ? lastBase.lng : defaultLocation.lng;
-    setForm({ gameId, name: "", description: "", lat, lng, requirePresenceToSubmit: false, hidden: false });
+    setForm({ name: "", description: "", lat, lng, requirePresenceToSubmit: false, hidden: false });
     setDialogOpen(true);
   }
 
   function openEdit(base: Base) {
     setEditing(base);
-    setForm({ gameId: base.gameId, name: base.name, description: base.description, lat: base.lat, lng: base.lng, fixedChallengeId: base.fixedChallengeId, requirePresenceToSubmit: base.requirePresenceToSubmit, hidden: base.hidden });
+    setForm({ name: base.name, description: base.description, lat: base.lat, lng: base.lng, fixedChallengeId: base.fixedChallengeId, requirePresenceToSubmit: base.requirePresenceToSubmit, hidden: base.hidden });
     setDialogOpen(true);
   }
 

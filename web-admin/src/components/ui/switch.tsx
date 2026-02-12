@@ -2,6 +2,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 interface SwitchProps {
+  id?: string;
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
   className?: string;
@@ -9,9 +10,10 @@ interface SwitchProps {
 }
 
 const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
-  ({ checked, onCheckedChange, className, disabled }, ref) => (
+  ({ id, checked, onCheckedChange, className, disabled }, ref) => (
     <button
       ref={ref}
+      id={id}
       role="switch"
       type="button"
       aria-checked={checked}

@@ -114,11 +114,9 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
 
       <div className="flex items-center gap-2">
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="gap-1.5 text-xs font-medium">
-              <Globe className="h-4 w-4" />
-              {currentLang.toUpperCase()}
-            </Button>
+          <DropdownMenuTrigger className="inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium hover:bg-accent hover:text-accent-foreground transition-colors" aria-label="Change language">
+            <Globe className="h-4 w-4" />
+            {currentLang.toUpperCase()}
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {languages.map((language) => (
@@ -139,15 +137,13 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
         </Button>
 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button type="button" className="cursor-pointer relative flex items-center justify-center rounded-md p-2 hover:bg-accent transition-colors" aria-label="Notifications">
-              <Bell className="h-4 w-4" />
-              {myInvites.length > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
-                  {myInvites.length}
-                </span>
-              )}
-            </button>
+          <DropdownMenuTrigger className="relative flex items-center justify-center rounded-md p-2 hover:bg-accent transition-colors" aria-label="Notifications">
+            <Bell className="h-4 w-4" />
+            {myInvites.length > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
+                {myInvites.length}
+              </span>
+            )}
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-80">
             <div className="px-2 py-1.5 text-sm font-medium">{t("invitations.title")}</div>
@@ -183,13 +179,11 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
         </DropdownMenu>
 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button type="button" className="cursor-pointer flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-accent transition-colors" aria-label="User menu">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium">
-                {user?.name.charAt(0).toUpperCase()}
-              </div>
-              <span className="text-sm font-medium hidden sm:block">{user?.name}</span>
-            </button>
+          <DropdownMenuTrigger className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-accent transition-colors" aria-label="User menu">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium">
+              {user?.name.charAt(0).toUpperCase()}
+            </div>
+            <span className="text-sm font-medium hidden sm:block">{user?.name}</span>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <div className="px-2 py-1.5 text-sm">

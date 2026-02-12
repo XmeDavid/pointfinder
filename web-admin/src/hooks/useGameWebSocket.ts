@@ -14,7 +14,7 @@ export function useGameWebSocket(gameId: string | undefined): string | null {
   useEffect(() => {
     if (!gameId) return;
 
-    const client = connectWebSocket(gameId, (payload) => {
+    connectWebSocket(gameId, (payload) => {
       setConnectionError(null);
       switch (payload.type) {
         case "activity":

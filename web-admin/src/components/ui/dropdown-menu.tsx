@@ -24,12 +24,16 @@ function DropdownMenu({ children }: DropdownMenuProps) {
   );
 }
 
-function DropdownMenuTrigger({ children, className }: { children: React.ReactNode; className?: string }) {
+function DropdownMenuTrigger({ children, className, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   const { open, setOpen } = React.useContext(DropdownContext);
   return (
     <button
       type="button"
-      onClick={() => setOpen(!open)}
+      {...props}
+      onClick={(e) => {
+        setOpen(!open);
+        props.onClick?.(e);
+      }}
       className={cn("cursor-pointer", className)}
     >
       {children}
