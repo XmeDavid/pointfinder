@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Puzzle, Trash2, Pencil, FileText, Image, CheckCircle, Eye, MapPin } from "lucide-react";
@@ -9,11 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { RichTextEditor } from "@/components/common/RichTextEditor";
 import { challengesApi, type CreateChallengeDto } from "@/lib/api/challenges";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { useTranslation } from "react-i18next";
 import type { Challenge } from "@/types";
+
+const RichTextEditor = lazy(() =>
+  import("@/components/common/RichTextEditor").then((m) => ({ default: m.RichTextEditor }))
+);
 
 export function ChallengesPage() {
   const { t } = useTranslation();
@@ -118,18 +121,20 @@ export function ChallengesPage() {
               <div className="space-y-2"><Label>{t("challenges.pointsLabel")}</Label><Input type="number" min={0} value={form.points ?? 100} onChange={(e) => setForm((f) => ({ ...f, points: parseInt(e.target.value) || 0 }))} required /></div>
             </div>
             <div className="space-y-2"><Label>{t("challenges.shortDescription")}</Label><Input value={form.description ?? ""} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder={t("challenges.shortDescriptionPlaceholder")} /></div>
-            <div className="space-y-2">
-              <Label>{t("challenges.content")}</Label>
-              <RichTextEditor value={form.content ?? ""} onChange={(html) => setForm((f) => ({ ...f, content: html }))} placeholder={t("challenges.contentPlaceholder")} />
-            </div>
-            <div className="space-y-2">
-              <Label>{t("challenges.completionContent")}</Label>
-              <RichTextEditor
-                value={form.completionContent ?? ""}
-                onChange={(html) => setForm((f) => ({ ...f, completionContent: html }))}
-                placeholder={t("challenges.completionContentPlaceholder")}
-              />
-            </div>
+            <Suspense fallback={<div className="h-[200px] animate-pulse rounded-md border border-input bg-muted/30" />}>
+              <div className="space-y-2">
+                <Label>{t("challenges.content")}</Label>
+                <RichTextEditor value={form.content ?? ""} onChange={(html) => setForm((f) => ({ ...f, content: html }))} placeholder={t("challenges.contentPlaceholder")} />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("challenges.completionContent")}</Label>
+                <RichTextEditor
+                  value={form.completionContent ?? ""}
+                  onChange={(html) => setForm((f) => ({ ...f, completionContent: html }))}
+                  placeholder={t("challenges.completionContentPlaceholder")}
+                />
+              </div>
+            </Suspense>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>{t("challenges.answerType")}</Label>

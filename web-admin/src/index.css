@@ -10,7 +10,7 @@
   --color-card-foreground: #0a0a0a;
   --color-popover: #ffffff;
   --color-popover-foreground: #0a0a0a;
-  --color-primary: #16a34a;
+  --color-primary: #15803d;
   --color-primary-foreground: #ffffff;
   --color-secondary: #f5f5f5;
   --color-secondary-foreground: #171717;
@@ -22,10 +22,10 @@
   --color-destructive-foreground: #ffffff;
   --color-border: #e5e5e5;
   --color-input: #e5e5e5;
-  --color-ring: #16a34a;
+  --color-ring: #15803d;
   --color-warning: #f59e0b;
   --color-warning-foreground: #ffffff;
-  --color-success: #22c55e;
+  --color-success: #15803d;
   --color-success-foreground: #ffffff;
   --radius-sm: 0.25rem;
   --radius-md: 0.375rem;
@@ -35,7 +35,7 @@
   --color-sidebar: #fafafa;
   --color-sidebar-foreground: #0a0a0a;
   --color-sidebar-border: #e5e5e5;
-  --color-sidebar-accent: #16a34a;
+  --color-sidebar-accent: #15803d;
   --color-sidebar-accent-foreground: #ffffff;
 }
 

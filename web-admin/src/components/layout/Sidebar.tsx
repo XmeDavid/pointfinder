@@ -139,6 +139,7 @@ export function Sidebar({ gameStatus, open, onClose }: SidebarProps) {
         <button
           onClick={onClose}
           className="md:hidden rounded-md p-1 text-sidebar-foreground/70 hover:bg-sidebar-accent/10 transition-colors"
+          aria-label="Close sidebar"
         >
           <X className="h-5 w-5" />
         </button>

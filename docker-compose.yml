@@ -59,13 +59,16 @@ services:
       context: ./web-admin
       dockerfile: Dockerfile
     container_name: scoutmission-web
-    expose:
-      - "5173"
     environment:
       VITE_API_URL: /api
       VITE_WS_URL: /ws
-    depends_on:
-      - backend
+    volumes:
+      - frontend_dist:/app/dist
+    healthcheck:
+      test: ["CMD", "test", "-f", "/app/dist/index.html"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
 
   nginx:
     build:
@@ -79,9 +82,12 @@ services:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
       - uploads:/uploads:ro
+      - frontend_dist:/usr/share/nginx/html/app:ro
     depends_on:
-      - backend
-      - frontend
+      backend:
+        condition: service_started
+      frontend:
+        condition: service_healthy
     command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
 
   certbot:
@@ -95,3 +101,4 @@ services:
 volumes:
   pgdata:
   uploads:
+  frontend_dist:
