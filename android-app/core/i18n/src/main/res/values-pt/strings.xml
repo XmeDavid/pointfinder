@@ -137,12 +137,10 @@
     <!-- Submission result -->
     <string name="result_correct">Correto!</string>
     <string name="result_approved">Aprovado!</string>
-    <string name="result_incorrect">Incorreto</string>
     <string name="result_rejected">Rejeitado</string>
     <string name="result_submitted">Submetido</string>
     <string name="result_correct_msg">Bom trabalho! A tua resposta está correta.</string>
     <string name="result_approved_msg">A tua submissão foi aprovada.</string>
-    <string name="result_incorrect_msg">Desculpa, essa não é a resposta certa. Podes tentar novamente.</string>
     <string name="result_rejected_msg">A tua submissão foi rejeitada. Verifica o feedback e tenta novamente.</string>
     <string name="result_submitted_msg">A tua resposta foi submetida e está a aguardar revisão por um operador.</string>
 

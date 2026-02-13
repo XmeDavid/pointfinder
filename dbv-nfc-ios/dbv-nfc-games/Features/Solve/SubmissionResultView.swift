@@ -90,7 +90,7 @@ struct SubmissionResultView: View {
     private var resultColor: Color {
         switch submission.status {
         case "correct", "approved": return .green
-        case "incorrect", "rejected": return .red
+        case "rejected": return .red
         default: return .orange
         }
     }
@@ -98,7 +98,7 @@ struct SubmissionResultView: View {
     private var resultIcon: String {
         switch submission.status {
         case "correct", "approved": return "checkmark.circle.fill"
-        case "incorrect", "rejected": return "xmark.circle.fill"
+        case "rejected": return "xmark.circle.fill"
         default: return "clock.fill"
         }
     }
@@ -107,7 +107,6 @@ struct SubmissionResultView: View {
         switch submission.status {
         case "correct": return locale.t("result.correct")
         case "approved": return locale.t("result.approved")
-        case "incorrect": return locale.t("result.incorrect")
         case "rejected": return locale.t("result.rejected")
         default: return locale.t("result.submitted")
         }
@@ -117,7 +116,6 @@ struct SubmissionResultView: View {
         switch submission.status {
         case "correct": return locale.t("result.correctMsg")
         case "approved": return locale.t("result.approvedMsg")
-        case "incorrect": return locale.t("result.incorrectMsg")
         case "rejected": return locale.t("result.rejectedMsg")
         default: return locale.t("result.submittedMsg")
         }

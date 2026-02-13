@@ -1,12 +1,13 @@
 import { useState, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle, XCircle, Clock, FileText, Filter, Maximize2 } from "lucide-react";
+import { CheckCircle, XCircle, Clock, FileText, Filter, Maximize2, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AuthImage } from "@/components/AuthImage";
 import { submissionsApi } from "@/lib/api/submissions";
 import { teamsApi } from "@/lib/api/teams";
@@ -47,9 +48,9 @@ export function SubmissionsPage() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["submissions", gameId] }); setReviewingSub(null); setFeedback(""); },
   });
 
-  const statusLabels: Record<SubmissionStatus, string> = { pending: t("submissions.statusPending"), approved: t("submissions.statusApproved"), rejected: t("submissions.statusRejected"), correct: t("submissions.statusCorrect"), incorrect: t("submissions.statusIncorrect") };
-  const statusVariants: Record<SubmissionStatus, "warning" | "success" | "destructive"> = { pending: "warning", approved: "success", rejected: "destructive", correct: "success", incorrect: "destructive" };
-  const statusIcons: Record<SubmissionStatus, React.ReactNode> = { pending: <Clock className="h-3 w-3" />, approved: <CheckCircle className="h-3 w-3" />, rejected: <XCircle className="h-3 w-3" />, correct: <CheckCircle className="h-3 w-3" />, incorrect: <XCircle className="h-3 w-3" /> };
+  const statusLabels: Record<SubmissionStatus, string> = { pending: t("submissions.statusPending"), approved: t("submissions.statusApproved"), rejected: t("submissions.statusRejected"), correct: t("submissions.statusCorrect") };
+  const statusVariants: Record<SubmissionStatus, "warning" | "success" | "destructive"> = { pending: "warning", approved: "success", rejected: "destructive", correct: "success" };
+  const statusIcons: Record<SubmissionStatus, React.ReactNode> = { pending: <Clock className="h-3 w-3" />, approved: <CheckCircle className="h-3 w-3" />, rejected: <XCircle className="h-3 w-3" />, correct: <CheckCircle className="h-3 w-3" /> };
 
   const filtered = filter === "pending" ? submissions.filter((s) => s.status === "pending") : submissions;
   const sorted = [...filtered].sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
@@ -96,8 +97,17 @@ export function SubmissionsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant={statusVariants[sub.status]}>{statusIcons[sub.status]}<span className="ml-1">{statusLabels[sub.status]}</span></Badge>
-                  {sub.status === "pending" && <Button size="sm" onClick={() => setReviewingSub(sub)}>{t("submissions.review")}</Button>}
-                  {(sub.status === "incorrect" || sub.status === "correct") && <Button size="sm" variant="outline" onClick={() => setReviewingSub(sub)}>{t("submissions.override")}</Button>}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                      aria-label={t("submissions.actions")}
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setReviewingSub(sub)}>{t("submissions.override")}</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </CardContent>
             </Card>
@@ -124,9 +134,10 @@ export function SubmissionsPage() {
               {(!reviewingSub.fileUrl || reviewingSub.answer) && (
                 <div><p className="text-sm font-medium mb-1">{reviewingSub.fileUrl ? t("submissions.notes") : t("submissions.answer")}</p><div className="rounded-md bg-muted p-3 text-sm">{reviewingSub.answer || <span className="text-muted-foreground italic">{t("submissions.noNotes")}</span>}</div></div>
               )}
-              {(reviewingSub.status === "incorrect" || reviewingSub.status === "correct") && (() => {
+              {(() => {
                 const ch = challenges.find((c) => c.id === reviewingSub.challengeId);
-                return ch?.correctAnswer ? (
+                const shouldShowCorrectAnswer = !!ch?.correctAnswer && ch.answerType === "text" && ch.autoValidate;
+                return shouldShowCorrectAnswer ? (
                   <div>
                     <p className="text-sm font-medium mb-1">{t("submissions.correctAnswer")}</p>
                     <div className="rounded-md bg-muted p-3 text-sm">{ch.correctAnswer}</div>

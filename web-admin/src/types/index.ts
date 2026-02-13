@@ -78,8 +78,7 @@ export type SubmissionStatus =
   | "pending"
   | "approved"
   | "rejected"
-  | "correct"
-  | "incorrect";
+  | "correct";
 
 export interface Submission {
   id: string;

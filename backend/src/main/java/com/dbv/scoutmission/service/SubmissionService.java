@@ -96,7 +96,7 @@ public class SubmissionService {
             String providedAnswer = request.getAnswer() != null ? request.getAnswer().trim() : "";
             status = challenge.getCorrectAnswer().equalsIgnoreCase(providedAnswer)
                     ? SubmissionStatus.correct
-                    : SubmissionStatus.incorrect;
+                    : SubmissionStatus.rejected;
         }
 
         Submission submission = Submission.builder()

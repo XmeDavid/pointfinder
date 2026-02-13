@@ -4,6 +4,5 @@ public enum SubmissionStatus {
     pending,
     approved,
     rejected,
-    correct,
-    incorrect
+    correct
 }

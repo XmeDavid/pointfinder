@@ -586,7 +586,7 @@ fun SubmissionResultScreen(
     modifier: Modifier = Modifier,
 ) {
     val isSuccess = submission.status == "correct" || submission.status == "approved"
-    val isFailure = submission.status == "incorrect" || submission.status == "rejected"
+    val isFailure = submission.status == "rejected"
 
     val resultIcon = when {
         isSuccess -> Icons.Default.CheckCircle
@@ -601,14 +601,12 @@ fun SubmissionResultScreen(
     val resultTitle = when (submission.status) {
         "correct" -> stringResource(R.string.result_correct)
         "approved" -> stringResource(R.string.result_approved)
-        "incorrect" -> stringResource(R.string.result_incorrect)
         "rejected" -> stringResource(R.string.result_rejected)
         else -> stringResource(R.string.result_submitted)
     }
     val resultMessage = when (submission.status) {
         "correct" -> stringResource(R.string.result_correct_msg)
         "approved" -> stringResource(R.string.result_approved_msg)
-        "incorrect" -> stringResource(R.string.result_incorrect_msg)
         "rejected" -> stringResource(R.string.result_rejected_msg)
         else -> stringResource(R.string.result_submitted_msg)
     }

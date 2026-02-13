@@ -355,7 +355,7 @@
     "statusApproved": "Freigegeben",
     "statusRejected": "Abgelehnt",
     "statusCorrect": "Korrekt",
-    "statusIncorrect": "Falsch",
+    "actions": "Aktionen",
     "override": "Überschreiben",
     "correctAnswer": "Richtige Antwort"
   },

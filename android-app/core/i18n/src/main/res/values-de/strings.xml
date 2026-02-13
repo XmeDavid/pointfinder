@@ -137,12 +137,10 @@
     <!-- Submission result -->
     <string name="result_correct">Richtig!</string>
     <string name="result_approved">Freigegeben!</string>
-    <string name="result_incorrect">Falsch</string>
     <string name="result_rejected">Abgelehnt</string>
     <string name="result_submitted">Eingereicht</string>
     <string name="result_correct_msg">Super gemacht! Deine Antwort ist richtig.</string>
     <string name="result_approved_msg">Deine Einreichung wurde freigegeben.</string>
-    <string name="result_incorrect_msg">Leider ist das nicht die richtige Antwort. Du kannst es erneut versuchen.</string>
     <string name="result_rejected_msg">Deine Einreichung wurde abgelehnt. Prüfe das Feedback und versuche es erneut.</string>
     <string name="result_submitted_msg">Deine Antwort wurde eingereicht und wartet auf Prüfung durch einen Operator.</string>
 
