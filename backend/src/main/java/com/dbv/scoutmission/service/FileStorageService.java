@@ -31,8 +31,12 @@ public class FileStorageService {
             "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"
     );
 
-    private static final Pattern STORED_FILE_URL_PATTERN = Pattern.compile(
-            "^(?:/uploads|/api/(?:player/files|games/[0-9a-fA-F\\-]{36}/files))/([0-9a-fA-F\\-]{36})/([0-9a-fA-F\\-]{36})\\.(jpg|jpeg|png|webp|heic|heif)$"
+    private static final Pattern PLAYER_API_FILE_URL_PATTERN = Pattern.compile(
+            "^/api/player/files/([0-9a-fA-F\\-]{36})/([0-9a-fA-F\\-]{36})\\.(jpg|jpeg|png|webp|heic|heif)$"
+    );
+
+    private static final Pattern GAME_API_FILE_URL_PATTERN = Pattern.compile(
+            "^/api/games/([0-9a-fA-F\\-]{36})/files/([0-9a-fA-F\\-]{36})\\.(jpg|jpeg|png|webp|heic|heif)$"
     );
 
     /** Matches the legacy /uploads/ path format for backwards compatibility. */
@@ -184,7 +188,7 @@ public class FileStorageService {
 
     /**
      * Validate a file URL points to an existing upload for the same game.
-     * Accepts both legacy /uploads/ paths and new /api/games/.../files/ paths.
+     * Accepts legacy /uploads/ paths and authenticated API file paths.
      * Returns a normalized API URL path for storage.
      */
     public String validateStoredFileUrl(String fileUrl, UUID gameId) {
@@ -203,12 +207,17 @@ public class FileStorageService {
             urlGameId = legacyMatcher.group(1);
             fileName = legacyMatcher.group(2);
         } else {
-            Matcher apiMatcher = STORED_FILE_URL_PATTERN.matcher(trimmed);
-            if (!apiMatcher.matches()) {
+            Matcher playerApiMatcher = PLAYER_API_FILE_URL_PATTERN.matcher(trimmed);
+            Matcher gameApiMatcher = GAME_API_FILE_URL_PATTERN.matcher(trimmed);
+            if (playerApiMatcher.matches()) {
+                urlGameId = playerApiMatcher.group(1);
+                fileName = playerApiMatcher.group(2) + "." + playerApiMatcher.group(3).toLowerCase(Locale.ROOT);
+            } else if (gameApiMatcher.matches()) {
+                urlGameId = gameApiMatcher.group(1);
+                fileName = gameApiMatcher.group(2) + "." + gameApiMatcher.group(3).toLowerCase(Locale.ROOT);
+            } else {
                 throw new BadRequestException("Invalid file URL format");
             }
-            urlGameId = apiMatcher.group(1);
-            fileName = apiMatcher.group(2) + "." + apiMatcher.group(3).toLowerCase(Locale.ROOT);
         }
 
         if (!urlGameId.equalsIgnoreCase(gameId.toString())) {

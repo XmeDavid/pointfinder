@@ -44,11 +44,30 @@ class FileStorageServiceTest {
 
         String fileUrl = fileStorageService.store(file, gameId);
         assertNotNull(fileUrl);
-        assertTrue(fileUrl.startsWith("/uploads/" + gameId + "/"));
+        assertTrue(fileUrl.startsWith("/api/games/" + gameId + "/files/"));
         assertTrue(fileUrl.endsWith(".png"));
 
         String validated = fileStorageService.validateStoredFileUrl(fileUrl, gameId);
         assertEquals(fileUrl, validated);
+    }
+
+    @Test
+    void validateStoredFileUrlAcceptsPlayerApiPathAndNormalizes() {
+        UUID gameId = UUID.randomUUID();
+        byte[] jpegHeader = new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, 0x00};
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "photo.jpg",
+                "image/jpeg",
+                jpegHeader
+        );
+
+        String canonicalUrl = fileStorageService.store(file, gameId);
+        String filename = canonicalUrl.substring(canonicalUrl.lastIndexOf('/') + 1);
+        String playerUrl = "/api/player/files/" + gameId + "/" + filename;
+
+        String validated = fileStorageService.validateStoredFileUrl(playerUrl, gameId);
+        assertEquals(canonicalUrl, validated);
     }
 
     @Test
