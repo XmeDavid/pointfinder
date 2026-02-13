@@ -313,6 +313,10 @@ fun BaseDetailBottomSheet(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                if (challenge != null && challenge.content.isNotBlank()) {
+                    Spacer(Modifier.height(8.dp))
+                    HtmlContentView(html = challenge.content)
+                }
             }
             Spacer(Modifier.height(16.dp))
 

@@ -10,22 +10,18 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 
 /**
  * Renders TipTap HTML content using a WebView.
  * Supports headings, lists, blockquotes, code, images, bold, italic, and dark/light mode.
  * Mirrors the iOS HTMLContentView / AutoSizingHTMLView.
+ *
+ * Height is managed by the WebView itself (WRAP_CONTENT) rather than a JS bridge,
+ * which avoids recomposition loops and image-cropping issues.
  */
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
@@ -34,24 +30,13 @@ fun HtmlContentView(
     modifier: Modifier = Modifier,
 ) {
     val isDark = isSystemInDarkTheme()
-    val density = LocalDensity.current
-    var contentHeightDp by remember { mutableIntStateOf(0) }
     val wrappedHtml = remember(html, isDark) { wrapHtml(html, isDark) }
 
     // Track last loaded HTML to prevent reload loops.
-    // The update block only reloads if the content actually changed.
     val lastLoadedHtml = remember { mutableListOf("") }
 
-    val heightModifier = if (contentHeightDp > 0) {
-        Modifier.height(contentHeightDp.dp)
-    } else {
-        Modifier.heightIn(min = 50.dp)
-    }
-
     AndroidView(
-        modifier = modifier
-            .fillMaxWidth()
-            .then(heightModifier),
+        modifier = modifier.fillMaxWidth(),
         factory = { context ->
             WebView(context).apply {
                 layoutParams = ViewGroup.LayoutParams(
@@ -63,14 +48,15 @@ fun HtmlContentView(
                 isHorizontalScrollBarEnabled = false
                 setBackgroundColor(android.graphics.Color.TRANSPARENT)
 
+                // Let the WebView measure its own content height natively.
+                // After images load, re-request layout so the parent picks up the new size.
                 val mainHandler = Handler(Looper.getMainLooper())
                 addJavascriptInterface(
                     object {
                         @JavascriptInterface
-                        fun onHeightChanged(heightPx: Float) {
-                            val dp = with(density) { heightPx.toDp().value.toInt() + 4 }
+                        fun onContentReady() {
                             mainHandler.post {
-                                contentHeightDp = dp
+                                requestLayout()
                             }
                         }
                     },
@@ -84,10 +70,8 @@ fun HtmlContentView(
                     ): Boolean = true // Prevent link navigation
 
                     override fun onPageFinished(view: WebView?, url: String?) {
-                        view?.evaluateJavascript(
-                            "AndroidBridge.onHeightChanged(document.body.scrollHeight);",
-                            null,
-                        )
+                        // Re-request layout once the page is loaded
+                        view?.requestLayout()
                     }
                 }
 
@@ -96,8 +80,6 @@ fun HtmlContentView(
             }
         },
         update = { webView ->
-            // Only reload if the HTML content actually changed.
-            // This prevents the infinite loop: height change -> recompose -> reload -> height change.
             if (lastLoadedHtml[0] != wrappedHtml) {
                 lastLoadedHtml[0] = wrappedHtml
                 webView.loadDataWithBaseURL(null, wrappedHtml, "text/html", "UTF-8", null)
@@ -237,13 +219,11 @@ private fun wrapHtml(content: String, isDark: Boolean): String {
         <body>
             $content
             <script>
-                function reportHeight() {
-                    AndroidBridge.onHeightChanged(document.body.scrollHeight);
-                }
-                window.onload = reportHeight;
-                // Also report height when images finish loading
+                // Re-request native layout after images finish loading
                 document.querySelectorAll('img').forEach(function(img) {
-                    img.onload = reportHeight;
+                    img.onload = function() {
+                        if (window.AndroidBridge) AndroidBridge.onContentReady();
+                    };
                 });
             </script>
         </body>

@@ -125,6 +125,7 @@ interface CompanionApi {
     suspend fun getTeamProgress(@Path("gameId") gameId: String): List<TeamBaseProgressResponse>
 }
 
+@kotlinx.serialization.Serializable
 object EmptyBody
 
 interface AuthTokenProvider {
