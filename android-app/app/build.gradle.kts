@@ -98,6 +98,10 @@ dependencies {
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    implementation("net.zetetic:android-database-sqlcipher:4.5.4")
+    implementation("androidx.sqlite:sqlite:2.4.0")
+
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     implementation("androidx.hilt:hilt-work:1.2.0")
     ksp("androidx.hilt:hilt-compiler:1.2.0")
