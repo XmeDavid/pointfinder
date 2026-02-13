@@ -13,6 +13,7 @@ import { invitesApi } from "@/lib/api/invites";
 import { formatDate } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { getApiErrorMessage } from "@/lib/api/errors";
+import { useAuthStore } from "@/hooks/useAuth";
 
 export function GameOperatorsPage() {
   const { t } = useTranslation();
@@ -44,7 +45,11 @@ export function GameOperatorsPage() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["game", gameId] }); queryClient.invalidateQueries({ queryKey: ["game-operators", gameId] }); },
   });
 
+  const { user } = useAuthStore();
+
   if (!game) return null;
+
+  const canKick = user?.role === "admin" || user?.id === game.createdBy;
 
   return (
     <div className="space-y-6">
@@ -59,7 +64,7 @@ export function GameOperatorsPage() {
             <CardContent className="flex items-center gap-4 p-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary"><UserCog className="h-5 w-5" /></div>
               <div className="flex-1 min-w-0"><p className="font-medium truncate">{op.name}</p><p className="text-sm text-muted-foreground truncate">{op.email}</p></div>
-              {op.id === game.createdBy ? <Badge variant="default">{t("gameOperators.owner")}</Badge> : <Button variant="ghost" size="icon" onClick={() => removeOperator.mutate(op.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>}
+              {op.id === game.createdBy ? <Badge variant="default">{t("gameOperators.owner")}</Badge> : canKick ? <Button variant="ghost" size="icon" onClick={() => removeOperator.mutate(op.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button> : null}
             </CardContent>
           </Card>
         ))}

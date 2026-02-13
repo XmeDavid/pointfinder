@@ -70,24 +70,20 @@ export const router = createBrowserRouter([
         <AppShell />
       </AuthGuard>
     ),
-    handle: { breadcrumb: "Home" },
     children: [
       {
         path: "games",
-        handle: { breadcrumb: "Games" },
         children: [
           { index: true, element: <GamesListPage /> },
-          { path: "new", element: <CreateGamePage />, handle: { breadcrumb: "New Game" } },
+          { path: "new", element: <CreateGamePage /> },
         ],
       },
       {
         path: "admin",
-        handle: { breadcrumb: "Admin" },
         children: [
           {
             path: "operators",
             element: <OperatorsPage />,
-            handle: { breadcrumb: "Operators" },
           },
         ],
       },
@@ -102,31 +98,29 @@ export const router = createBrowserRouter([
         <GameShell />
       </AuthGuard>
     ),
-    handle: { breadcrumb: "Games" },
     children: [
       {
         index: true,
         element: <Navigate to="overview" replace />,
       },
-      { path: "overview", element: <OverviewPage />, handle: { breadcrumb: "Overview" } },
-      { path: "operators", element: <GameOperatorsPage />, handle: { breadcrumb: "Operators" } },
-      { path: "bases", element: <BasesPage />, handle: { breadcrumb: "Bases" } },
-      { path: "challenges", element: <ChallengesPage />, handle: { breadcrumb: "Challenges" } },
-      { path: "assignments", element: <AssignmentsPage />, handle: { breadcrumb: "Assignments" } },
-      { path: "teams", element: <TeamsPage />, handle: { breadcrumb: "Teams" } },
-      { path: "notifications", element: <NotificationsPage />, handle: { breadcrumb: "Notifications" } },
-      { path: "settings", element: <SettingsPage />, handle: { breadcrumb: "Settings" } },
-      { path: "results", element: <ResultsPage />, handle: { breadcrumb: "Results" } },
+      { path: "overview", element: <OverviewPage /> },
+      { path: "operators", element: <GameOperatorsPage /> },
+      { path: "bases", element: <BasesPage /> },
+      { path: "challenges", element: <ChallengesPage /> },
+      { path: "assignments", element: <AssignmentsPage /> },
+      { path: "teams", element: <TeamsPage /> },
+      { path: "notifications", element: <NotificationsPage /> },
+      { path: "settings", element: <SettingsPage /> },
+      { path: "results", element: <ResultsPage /> },
       {
         path: "monitor",
-        handle: { breadcrumb: "Monitor" },
         children: [
           { index: true, element: <DashboardPage /> },
-          { path: "map", element: <MapPage />, handle: { breadcrumb: "Map" } },
-          { path: "leaderboard", element: <LeaderboardPage />, handle: { breadcrumb: "Leaderboard" } },
-          { path: "activity", element: <ActivityPage />, handle: { breadcrumb: "Activity" } },
-          { path: "submissions", element: <SubmissionsPage />, handle: { breadcrumb: "Submissions" } },
-          { path: "teams/:teamId", element: <TeamDetailPage />, handle: { breadcrumb: "Team Detail" } },
+          { path: "map", element: <MapPage /> },
+          { path: "leaderboard", element: <LeaderboardPage /> },
+          { path: "activity", element: <ActivityPage /> },
+          { path: "submissions", element: <SubmissionsPage /> },
+          { path: "teams/:teamId", element: <TeamDetailPage /> },
         ],
       },
     ],

@@ -9,6 +9,7 @@ import com.dbv.scoutmission.dto.response.UserResponse;
 import com.dbv.scoutmission.entity.*;
 import com.dbv.scoutmission.exception.BadRequestException;
 import com.dbv.scoutmission.exception.ConflictException;
+import com.dbv.scoutmission.exception.ForbiddenException;
 import com.dbv.scoutmission.exception.ResourceNotFoundException;
 import com.dbv.scoutmission.repository.*;
 import com.dbv.scoutmission.security.SecurityUtils;
@@ -199,6 +200,13 @@ public class GameService {
     @Transactional
     public void removeOperator(UUID gameId, UUID userId) {
         Game game = gameAccessService.getAccessibleGame(gameId);
+        User currentUser = SecurityUtils.getCurrentUser();
+
+        if (currentUser.getRole() != UserRole.admin
+                && !game.getCreatedBy().getId().equals(currentUser.getId())) {
+            throw new ForbiddenException("Only the game owner or an admin can remove operators");
+        }
+
         if (game.getCreatedBy().getId().equals(userId)) {
             throw new BadRequestException("Cannot remove the game creator as operator");
         }

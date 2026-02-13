@@ -31,7 +31,7 @@ export function GamesListPage() {
           <h1 className="text-2xl font-bold">{t("games.title")}</h1>
           <p className="text-muted-foreground">{t("games.description")}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
             <Upload className="mr-2 h-4 w-4" />{t("game.import")}
           </Button>
