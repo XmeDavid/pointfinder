@@ -38,6 +38,11 @@ services:
       APNS_TEAM_ID: ${APNS_TEAM_ID:-}            # e.g. ABC123DEFG
       APNS_BUNDLE_ID: ${APNS_BUNDLE_ID:-com.prayer.pointfinder}
       APNS_PRODUCTION: ${APNS_PRODUCTION:-false}
+      # FCM (Firebase Cloud Messaging) configuration - values come from .env
+      FCM_ENABLED: ${FCM_ENABLED:-false}
+      # Use file: URL so Spring's ResourceLoader reads from filesystem, not classpath
+      FCM_CREDENTIALS_PATH: ${FCM_CREDENTIALS_PATH:-file:/app/config/firebase-service-account.json}
+      FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
       MAIL_HOST: smtp.resend.com
       MAIL_USERNAME: resend
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
@@ -50,6 +55,8 @@ services:
       # Mount your APNs .p8 key from the host into the container (read-only)
       # The filename includes the Key ID from APPLE_PROD_APNS_KEY (e.g. AuthKey_G9D86M2578.p8)
       - ./secrets/AuthKey_${APPLE_PROD_APNS_KEY}.p8:/app/config/apns-key.p8:ro
+      # Mount your Firebase service account JSON from the host into the container (read-only)
+      - ./secrets/firebase-service-account.json:/app/config/firebase-service-account.json:ro
     depends_on:
       postgres:
         condition: service_healthy

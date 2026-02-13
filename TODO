@@ -1,27 +1,15 @@
 Code (in codebase)
+- Delete breadcrumbs from web admin (They don't fit our usecase).
+- Small screen fixes:
+    - Globe icon + current lang - > just globe (tiny screens only)
+    - Small screens Import game and create game, should go on top of eachother, instead of side to side.
+    -Handle sideways overflow
+- Text on android is often this weird purple, looks awful, specially on top of the green. Colors need clear improvement, let's not make anything to exotic.
+-iOS the popup explaining the permissions appears after the permission request... Show permissions explanation first, then ask for them as needed.
+-Android map labels at the bottom is clean in english but changing languages, so of the words go vertical and the label occupies a bunch of space
+-Check offline syncronization android vs iOS. On Android i can see actions pending sync, but it looks like they can get stuck like that, when is it resyincing? iphone looks ok, but cant see pending actions. Let's analyze the offline capabilities of iOS vs Android and bring it up to parity.
+- On web admin, an operator owner of a game should be able to kick other operators from that game.
 
-
-- NFC scanning on Android review - not finished.
-
-- Handle same-device multiple logins correctly (device ID should not change each time).
-
-- Add reset password feature for operators.
-
-- Android landing page auth choice: player join should be the primary action, operator should be secondary.
-- Improve Android error handling (for example, login errors).
-- Android colors seem off in some places.
-- Use more icons on Android where relevant.
-- Android landing page (player/operator login): no visible title in dark mode.
-- Settings on Android is still not great, need to match parity with iOS.
-- Do a general Android parity and UI polish pass.
-
-- Android map zoom animation goes too far out and back in (likely map is being recreated).
-- Android team pins look like bases; improve visual distinction.
-- Android game list state tags are all the same color; differentiate by state.
-
-- Android (and maybe iOS/web in some places) shows base coordinates in operator base list; this is not useful for users.
-- Replace/hide coordinates and prioritize useful base description text.
-- On small screens, web header is too large and breaks layout.
 
 ---
 
@@ -29,6 +17,7 @@ Outside Codebase (manual / ops / launch)
 
 ## Localization Review
 - Check German translation with a German expert.
+- Review all strings by testers
 
 ## Launch / Release
 - Publish on App Store.
