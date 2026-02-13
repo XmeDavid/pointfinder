@@ -9,7 +9,7 @@ import { useAuthStore } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 export function RegisterPage() {
   const { t } = useTranslation();
