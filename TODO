@@ -1,22 +1,43 @@
-!Profile cleanup
-!Order nfc tags to portugal to quicker testing
-!Rename draft state to setup
-!Change settings icon to gear icon, and overview to dashboard icon
-!Dates on EU format (switch mm and dd)
-!iOS operator map bug
-!Hidden bases
-!QR Codes for the teams
-!Push notifications
-!Possible content after challange
-~Get a name: PointFinder 
-~Get domain for the platform
-~Create an email for the platform might change but working
-Check import failures
-German language translation
-Android version
-Rebrand app and website to the name
-App Icon
-How to publish on AppStore
-How to publish on PlayStore
+Code (in codebase)
 
-BEFORE PROD on iOS app change the env on the server for the APNs
+
+- NFC scanning on Android review - not finished.
+
+- Handle same-device multiple logins correctly (device ID should not change each time).
+
+- Add reset password feature for operators.
+
+- Android landing page auth choice: player join should be the primary action, operator should be secondary.
+- Improve Android error handling (for example, login errors).
+- Android colors seem off in some places.
+- Use more icons on Android where relevant.
+- Android landing page (player/operator login): no visible title in dark mode.
+
+- Settings on Android is still not great, need to match parity with iOS.
+- Do a general Android parity and UI polish pass.
+
+- Android map zoom animation goes too far out and back in (likely map is being recreated).
+- Android team pins look like bases; improve visual distinction.
+- Android game list state tags are all the same color; differentiate by state.
+
+- Android (and maybe iOS/web in some places) shows base coordinates in operator base list; this is not useful for users.
+- Replace/hide coordinates and prioritize useful base description text.
+- On small screens, web header is too large and breaks layout.
+
+---
+
+Outside Codebase (manual / ops / launch)
+
+## Localization Review
+- Check German translation with a German expert.
+
+## Launch / Release
+- Publish on App Store.
+- Publish on Play Store.
+
+## Infra / Domain / Email Routing
+- Set up reverse proxy or forwarding so `info@desbravadores.dev` goes to personal email.
+- Evaluate whether we need a different domain.
+
+## Branding
+- App icon.

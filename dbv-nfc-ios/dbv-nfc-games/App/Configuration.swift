@@ -8,6 +8,7 @@ enum AppConfiguration {
     #endif
 
     static let appName = "PointFinder"
+    static let privacyPolicyURL = "https://desbravadores.dev/privacy/"
 
     // Keychain keys
     static let playerTokenKey = "com.dbvnfc.playerToken"

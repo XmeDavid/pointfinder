@@ -117,6 +117,12 @@ struct OperatorSettingsView: View {
                     Text(locale.t("settings.currentGame"))
                 }
 
+                Section(locale.t("settings.privacy")) {
+                    Link(destination: URL(string: AppConfiguration.privacyPolicyURL)!) {
+                        Label(locale.t("settings.privacyPolicy"), systemImage: "hand.raised")
+                    }
+                }
+
                 Section {
                     Button {
                         onBack()

@@ -24,6 +24,8 @@
     <string name="action_back">Back</string>
     <string name="action_back_to_map">Back to map</string>
     <string name="action_switch_game">Switch game</string>
+    <string name="action_open_privacy_policy">View Privacy Policy</string>
+    <string name="action_delete_account">Delete Account</string>
 
     <!-- Labels -->
     <string name="label_welcome">PointFinder</string>
@@ -47,6 +49,7 @@
     <string name="label_game">Game</string>
     <string name="label_team">Team</string>
     <string name="label_profile">Profile</string>
+    <string name="label_privacy">Privacy</string>
     <string name="label_name">Name</string>
     <string name="label_progress">Progress</string>
     <string name="label_status">Status</string>
@@ -88,6 +91,22 @@
     <string name="label_random_not_started">Random assignment (not yet started)</string>
     <string name="label_answer_type">Answer: %1$s</string>
     <string name="label_pts">%1$d pts</string>
+    <string name="label_deleting_account">Deleting account...</string>
+    <!-- Permission Disclosure -->
+    <string name="disclosure_title">Before You Start</string>
+    <string name="disclosure_subtitle">PointFinder needs a few permissions to run your game experience.</string>
+    <string name="disclosure_location_title">Location</string>
+    <string name="disclosure_location_detail">Shows your team on the live map so operators can monitor the game.</string>
+    <string name="disclosure_notifications_title">Notifications</string>
+    <string name="disclosure_notifications_detail">Delivers game updates and messages from your operator.</string>
+    <string name="disclosure_camera_title">Camera &amp; Photos</string>
+    <string name="disclosure_camera_detail">Scan QR codes to join and submit photos for challenges.</string>
+    <string name="disclosure_footer">You can change these permissions later in Settings.</string>
+    <string name="disclosure_continue">Continue</string>
+
+    <string name="dialog_delete_account_title">Delete Account</string>
+    <string name="dialog_delete_account_message">This will permanently delete your player account data for PointFinder. This action cannot be undone.</string>
+    <string name="dialog_delete_account_confirm">Delete</string>
 
     <!-- Hints -->
     <string name="hint_checkin_instructions">Hold your phone near the marker at a base to check in</string>

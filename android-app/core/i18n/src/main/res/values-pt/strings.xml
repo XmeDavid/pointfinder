@@ -24,6 +24,8 @@
     <string name="action_back">Voltar</string>
     <string name="action_back_to_map">Voltar ao mapa</string>
     <string name="action_switch_game">Trocar jogo</string>
+    <string name="action_open_privacy_policy">Ver Política de Privacidade</string>
+    <string name="action_delete_account">Eliminar Conta</string>
 
     <!-- Labels -->
     <string name="label_welcome">PointFinder</string>
@@ -47,6 +49,7 @@
     <string name="label_game">Jogo</string>
     <string name="label_team">Equipe</string>
     <string name="label_profile">Perfil</string>
+    <string name="label_privacy">Privacidade</string>
     <string name="label_name">Nome</string>
     <string name="label_progress">Progresso</string>
     <string name="label_status">Status</string>
@@ -88,6 +91,22 @@
     <string name="label_random_not_started">Atribuição aleatória (ainda não iniciada)</string>
     <string name="label_answer_type">Resposta: %1$s</string>
     <string name="label_pts">%1$d pts</string>
+    <string name="label_deleting_account">A eliminar conta...</string>
+    <!-- Permission Disclosure -->
+    <string name="disclosure_title">Antes de Começar</string>
+    <string name="disclosure_subtitle">O PointFinder precisa de algumas permissões para a tua experiência de jogo.</string>
+    <string name="disclosure_location_title">Localização</string>
+    <string name="disclosure_location_detail">Mostra a tua equipa no mapa ao vivo para os operadores monitorizarem o jogo.</string>
+    <string name="disclosure_notifications_title">Notificações</string>
+    <string name="disclosure_notifications_detail">Envia atualizações de jogo e mensagens do operador.</string>
+    <string name="disclosure_camera_title">Câmara e Fotos</string>
+    <string name="disclosure_camera_detail">Lê códigos QR para entrar e submete fotos para desafios.</string>
+    <string name="disclosure_footer">Podes alterar estas permissões mais tarde nas Definições.</string>
+    <string name="disclosure_continue">Continuar</string>
+
+    <string name="dialog_delete_account_title">Eliminar Conta</string>
+    <string name="dialog_delete_account_message">Isto irá eliminar permanentemente os teus dados de conta de jogador no PointFinder. Esta ação não pode ser desfeita.</string>
+    <string name="dialog_delete_account_confirm">Eliminar</string>
 
     <!-- Hints -->
     <string name="hint_checkin_instructions">Aproxime seu telefone do marcador na base para fazer check-in</string>

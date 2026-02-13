@@ -1,5 +1,7 @@
 package com.dbv.companion.feature.operator
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -44,6 +46,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dbv.companion.core.i18n.R
@@ -69,6 +72,8 @@ enum class OperatorTab {
     BASES,
     SETTINGS,
 }
+
+private const val PRIVACY_POLICY_URL = "https://desbravadores.dev/privacy/"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -520,6 +525,7 @@ fun OperatorSettingsScreen(
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -536,6 +542,14 @@ fun OperatorSettingsScreen(
                     Text(lang.uppercase())
                 }
             }
+        }
+        Button(
+            onClick = {
+                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_POLICY_URL)))
+            },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(R.string.action_open_privacy_policy))
         }
         Button(onClick = onSwitchGame) { Text(stringResource(R.string.action_switch_game)) }
         Button(onClick = onLogout) { Text(stringResource(R.string.action_logout)) }

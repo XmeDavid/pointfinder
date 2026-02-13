@@ -27,10 +27,12 @@ import kotlinx.coroutines.launch
 data class AppSessionState(
     val authType: AuthType = AuthType.None,
     val isLoading: Boolean = false,
+    val isDeletingAccount: Boolean = false,
     val isOnline: Boolean = true,
     val pendingActionsCount: Int = 0,
     val currentLanguage: String = "en",
     val errorMessage: String? = null,
+    val showPermissionDisclosure: Boolean = false,
 )
 
 @HiltViewModel
@@ -81,8 +83,13 @@ class AppSessionViewModel @Inject constructor(
             _state.value = _state.value.copy(authType = auth, isLoading = false)
             when (auth) {
                 is AuthType.Player -> {
-                    locationService.start(auth.gameId)
-                    registerPushTokenIfPossible()
+                    val seen = sessionStore.isPermissionDisclosureSeen()
+                    if (seen) {
+                        locationService.start(auth.gameId)
+                        registerPushTokenIfPossible()
+                    } else {
+                        _state.value = _state.value.copy(showPermissionDisclosure = true)
+                    }
                 }
                 is AuthType.Operator -> Unit
                 AuthType.None -> Unit
@@ -105,9 +112,16 @@ class AppSessionViewModel @Inject constructor(
             runCatching {
                 authRepository.playerJoin(joinCode, displayName, deviceIdProvider.deviceId())
             }.onSuccess { auth ->
-                _state.value = _state.value.copy(authType = auth, isLoading = false)
-                locationService.start(auth.gameId)
-                registerPushTokenIfPossible()
+                val needsDisclosure = !sessionStore.isPermissionDisclosureSeen()
+                _state.value = _state.value.copy(
+                    authType = auth,
+                    isLoading = false,
+                    showPermissionDisclosure = needsDisclosure,
+                )
+                if (!needsDisclosure) {
+                    locationService.start(auth.gameId)
+                    registerPushTokenIfPossible()
+                }
             }.onFailure { err ->
                 _state.value = _state.value.copy(isLoading = false, errorMessage = err.message)
             }
@@ -133,10 +147,51 @@ class AppSessionViewModel @Inject constructor(
 
     fun logout() {
         viewModelScope.launch {
+            val currentLanguage = _state.value.currentLanguage
+            val isOnline = _state.value.isOnline
             authRepository.clearSession()
             playerRepository.clearAll()
             locationService.stop()
-            _state.value = AppSessionState()
+            _state.value = AppSessionState(
+                isOnline = isOnline,
+                currentLanguage = currentLanguage,
+            )
+        }
+    }
+
+    fun deletePlayerAccount() {
+        if (_state.value.authType !is AuthType.Player) return
+        viewModelScope.launch {
+            val currentLanguage = _state.value.currentLanguage
+            val isOnline = _state.value.isOnline
+            _state.value = _state.value.copy(isDeletingAccount = true, errorMessage = null)
+            runCatching {
+                authRepository.deletePlayerAccount()
+            }.onSuccess {
+                playerRepository.clearAll()
+                locationService.stop()
+                _state.value = AppSessionState(
+                    isOnline = isOnline,
+                    currentLanguage = currentLanguage,
+                )
+            }.onFailure { err ->
+                _state.value = _state.value.copy(
+                    isDeletingAccount = false,
+                    errorMessage = err.message,
+                )
+            }
+        }
+    }
+
+    fun onPermissionDisclosureAccepted() {
+        viewModelScope.launch {
+            sessionStore.setPermissionDisclosureSeen()
+            _state.value = _state.value.copy(showPermissionDisclosure = false)
+            val auth = _state.value.authType
+            if (auth is AuthType.Player) {
+                locationService.start(auth.gameId)
+                registerPushTokenIfPossible()
+            }
         }
     }
 

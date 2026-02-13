@@ -1,5 +1,6 @@
 package com.dbv.companion.navigation
 
+import android.Manifest
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
@@ -8,6 +9,23 @@ import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -15,8 +33,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -135,6 +158,7 @@ fun AppNavigation(
                 isOnline = sessionState.isOnline,
                 pendingActionsCount = sessionState.pendingActionsCount,
                 currentLanguage = sessionState.currentLanguage,
+                showPermissionDisclosure = sessionState.showPermissionDisclosure,
             )
         }
 
@@ -164,6 +188,7 @@ private fun PlayerRootScreen(
     isOnline: Boolean,
     pendingActionsCount: Int,
     currentLanguage: String,
+    showPermissionDisclosure: Boolean = false,
 ) {
     val viewModel: PlayerViewModel = hiltViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -174,6 +199,48 @@ private fun PlayerRootScreen(
     var solving by remember { mutableStateOf<Pair<String, String>?>(null) }
     var photoBytes by remember { mutableStateOf<ByteArray?>(null) }
     var photoBitmap by remember { mutableStateOf<Bitmap?>(null) }
+
+    // Permission launchers (fired after disclosure accepted)
+    var pendingPermissionRequest by remember { mutableStateOf(false) }
+
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) { _ ->
+        // After location result, request notifications on Android 13+
+        pendingPermissionRequest = true
+    }
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { _ ->
+        // Done — permissions flow complete
+    }
+
+    // Chain: after location permission result, request notification permission
+    LaunchedEffect(pendingPermissionRequest) {
+        if (pendingPermissionRequest) {
+            pendingPermissionRequest = false
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    // Permission disclosure dialog
+    if (showPermissionDisclosure) {
+        PermissionDisclosureDialog(
+            onContinue = {
+                sessionViewModel.onPermissionDisclosureAccepted()
+                // Launch location permission request
+                locationPermissionLauncher.launch(
+                    arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                    ),
+                )
+            },
+        )
+    }
 
     // Camera temp file URI
     val cameraPhotoUri = remember {
@@ -332,6 +399,8 @@ private fun PlayerRootScreen(
                     progress = state.progress,
                     currentLanguage = currentLanguage,
                     onLanguageChanged = sessionViewModel::updateLanguage,
+                    isDeletingAccount = sessionState.isDeletingAccount,
+                    onDeleteAccount = sessionViewModel::deletePlayerAccount,
                     onLogout = sessionViewModel::logout,
                 )
             }
@@ -455,6 +524,72 @@ private fun OperatorGameRoot(
                     onLogout = sessionViewModel::logout,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun PermissionDisclosureDialog(onContinue: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = { /* non-dismissible */ },
+        title = {
+            Text(
+                stringResource(com.dbv.companion.core.i18n.R.string.disclosure_title),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Text(
+                    stringResource(com.dbv.companion.core.i18n.R.string.disclosure_subtitle),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                DisclosureRow(
+                    icon = { Icon(Icons.Default.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp)) },
+                    title = stringResource(com.dbv.companion.core.i18n.R.string.disclosure_location_title),
+                    detail = stringResource(com.dbv.companion.core.i18n.R.string.disclosure_location_detail),
+                )
+                DisclosureRow(
+                    icon = { Icon(Icons.Default.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp)) },
+                    title = stringResource(com.dbv.companion.core.i18n.R.string.disclosure_notifications_title),
+                    detail = stringResource(com.dbv.companion.core.i18n.R.string.disclosure_notifications_detail),
+                )
+                DisclosureRow(
+                    icon = { Icon(Icons.Default.CameraAlt, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp)) },
+                    title = stringResource(com.dbv.companion.core.i18n.R.string.disclosure_camera_title),
+                    detail = stringResource(com.dbv.companion.core.i18n.R.string.disclosure_camera_detail),
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    stringResource(com.dbv.companion.core.i18n.R.string.disclosure_footer),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.outline,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = onContinue, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(com.dbv.companion.core.i18n.R.string.disclosure_continue))
+            }
+        },
+    )
+}
+
+@Composable
+private fun DisclosureRow(
+    icon: @Composable () -> Unit,
+    title: String,
+    detail: String,
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
+        icon()
+        Column {
+            Text(title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+            Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

@@ -163,6 +163,10 @@ actor APIClient {
                           token: token)
     }
 
+    func deletePlayerAccount(token: String) async throws {
+        try await deleteVoid("/api/player/me", token: token)
+    }
+
     // MARK: - Operator Endpoints
 
     func getGames(token: String) async throws -> [Game] {
@@ -237,6 +241,11 @@ actor APIClient {
     private func patch<T: Decodable>(_ path: String, token: String? = nil) async throws -> T {
         let request = try buildRequest(path: path, method: "PATCH", token: token)
         return try await execute(request)
+    }
+
+    private func deleteVoid(_ path: String, token: String? = nil) async throws {
+        let request = try buildRequest(path: path, method: "DELETE", token: token)
+        try await executeVoid(request)
     }
 
     // MARK: - Helpers

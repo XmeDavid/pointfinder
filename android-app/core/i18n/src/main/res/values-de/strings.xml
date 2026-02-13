@@ -24,6 +24,8 @@
     <string name="action_back">Zurück</string>
     <string name="action_back_to_map">Zurück zur Karte</string>
     <string name="action_switch_game">Spiel wechseln</string>
+    <string name="action_open_privacy_policy">Datenschutzerklärung anzeigen</string>
+    <string name="action_delete_account">Konto löschen</string>
 
     <!-- Labels -->
     <string name="label_welcome">PointFinder</string>
@@ -47,6 +49,7 @@
     <string name="label_game">Spiel</string>
     <string name="label_team">Team</string>
     <string name="label_profile">Profil</string>
+    <string name="label_privacy">Datenschutz</string>
     <string name="label_name">Name</string>
     <string name="label_progress">Fortschritt</string>
     <string name="label_status">Status</string>
@@ -88,6 +91,22 @@
     <string name="label_random_not_started">Zufällige Zuweisung (noch nicht gestartet)</string>
     <string name="label_answer_type">Antwort: %1$s</string>
     <string name="label_pts">%1$d Punkte</string>
+    <string name="label_deleting_account">Konto wird gelöscht...</string>
+    <!-- Permission Disclosure -->
+    <string name="disclosure_title">Bevor du startest</string>
+    <string name="disclosure_subtitle">PointFinder benötigt einige Berechtigungen für dein Spielerlebnis.</string>
+    <string name="disclosure_location_title">Standort</string>
+    <string name="disclosure_location_detail">Zeigt dein Team auf der Live-Karte, damit Operatoren das Spiel überwachen können.</string>
+    <string name="disclosure_notifications_title">Benachrichtigungen</string>
+    <string name="disclosure_notifications_detail">Liefert Spiel-Updates und Nachrichten von deinem Operator.</string>
+    <string name="disclosure_camera_title">Kamera &amp; Fotos</string>
+    <string name="disclosure_camera_detail">QR-Codes scannen und Fotos für Challenges einreichen.</string>
+    <string name="disclosure_footer">Du kannst diese Berechtigungen später in den Einstellungen ändern.</string>
+    <string name="disclosure_continue">Weiter</string>
+
+    <string name="dialog_delete_account_title">Konto löschen</string>
+    <string name="dialog_delete_account_message">Dadurch werden deine Spielerkontodaten für PointFinder dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.</string>
+    <string name="dialog_delete_account_confirm">Löschen</string>
 
     <!-- Hints -->
     <string name="hint_checkin_instructions">Halte dein Telefon an den Marker an der Basis, um einzuchecken</string>

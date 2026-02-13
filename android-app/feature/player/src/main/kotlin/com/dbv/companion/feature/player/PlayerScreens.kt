@@ -1,7 +1,9 @@
 package com.dbv.companion.feature.player
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color as AndroidColor
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,6 +24,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -39,11 +42,14 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.runtime.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,6 +59,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dbv.companion.core.i18n.R
@@ -74,6 +81,8 @@ enum class PlayerTab {
     CHECK_IN,
     SETTINGS,
 }
+
+private const val PRIVACY_POLICY_URL = "https://desbravadores.dev/privacy/"
 
 @Composable
 fun PlayerHomeScaffold(
@@ -575,9 +584,13 @@ fun PlayerSettingsScreen(
     progress: List<BaseProgress>,
     currentLanguage: String,
     onLanguageChanged: (String) -> Unit,
+    isDeletingAccount: Boolean,
+    onDeleteAccount: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
+    var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
     val completedCount = progress.count { it.baseStatus() == BaseStatus.COMPLETED }
     val checkedInCount = progress.count { it.baseStatus() == BaseStatus.CHECKED_IN }
     val pendingReviewCount = progress.count { it.baseStatus() == BaseStatus.SUBMITTED }
@@ -645,10 +658,64 @@ fun PlayerSettingsScreen(
             }
         }
         item {
+            Text(stringResource(R.string.label_privacy), style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+            Button(
+                onClick = {
+                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_POLICY_URL)))
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.action_open_privacy_policy))
+            }
+        }
+        item {
             Button(onClick = onLogout, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.action_leave_game))
             }
         }
+        item {
+            Button(
+                onClick = { showDeleteDialog = true },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isDeletingAccount,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError,
+                ),
+            ) {
+                Text(
+                    if (isDeletingAccount) {
+                        stringResource(R.string.label_deleting_account)
+                    } else {
+                        stringResource(R.string.action_delete_account)
+                    },
+                )
+            }
+        }
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text(stringResource(R.string.dialog_delete_account_title)) },
+            text = { Text(stringResource(R.string.dialog_delete_account_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteDialog = false
+                        onDeleteAccount()
+                    },
+                ) {
+                    Text(stringResource(R.string.dialog_delete_account_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+        )
     }
 }
 

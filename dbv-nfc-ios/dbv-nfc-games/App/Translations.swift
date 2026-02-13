@@ -52,6 +52,7 @@ enum Translations {
         // Common
         "common.error": "Error",
         "common.ok": "OK",
+        "common.cancel": "Cancel",
         "common.unknownError": "An unknown error occurred",
         "common.done": "Done",
         "common.pts": "pts",
@@ -158,6 +159,13 @@ enum Translations {
         "settings.pendingReview": "Pending Review",
         "settings.device": "Device",
         "settings.deviceId": "Device ID",
+        "settings.privacy": "Privacy",
+        "settings.privacyPolicy": "View Privacy Policy",
+        "settings.deleteAccount": "Delete Account",
+        "settings.deletingAccount": "Deleting account...",
+        "settings.deleteAccountTitle": "Delete Account",
+        "settings.deleteAccountMessage": "This will permanently delete your player account data for PointFinder. This action cannot be undone.",
+        "settings.deleteAccountConfirm": "Delete",
         "settings.leaveGame": "Leave Game",
 
         // Operator
@@ -222,6 +230,18 @@ enum Translations {
         "apiError.decodingError": "Failed to decode response: %@",
         "apiError.authExpired": "Session expired. Please log in again.",
 
+        // Permission Disclosure
+        "disclosure.title": "Before You Start",
+        "disclosure.subtitle": "PointFinder needs a few permissions to run your game experience.",
+        "disclosure.locationTitle": "Location",
+        "disclosure.locationDetail": "Shows your team on the live map so operators can monitor the game.",
+        "disclosure.notificationsTitle": "Notifications",
+        "disclosure.notificationsDetail": "Delivers game updates and messages from your operator.",
+        "disclosure.cameraTitle": "Camera & Photos",
+        "disclosure.cameraDetail": "Scan QR codes to join and submit photos for challenges.",
+        "disclosure.footer": "You can change these permissions later in Settings.",
+        "disclosure.continue": "Continue",
+
         // App Errors
         "error.photoOffline": "Photo submissions require an internet connection.",
         "error.photoProcessing": "Failed to process photo.",
@@ -257,6 +277,7 @@ enum Translations {
         // Common
         "common.error": "Erro",
         "common.ok": "OK",
+        "common.cancel": "Cancelar",
         "common.unknownError": "Ocorreu um erro desconhecido",
         "common.done": "Feito",
         "common.pts": "pts",
@@ -363,6 +384,13 @@ enum Translations {
         "settings.pendingReview": "Revisão Pendente",
         "settings.device": "Dispositivo",
         "settings.deviceId": "ID do Dispositivo",
+        "settings.privacy": "Privacidade",
+        "settings.privacyPolicy": "Ver Política de Privacidade",
+        "settings.deleteAccount": "Eliminar Conta",
+        "settings.deletingAccount": "A eliminar conta...",
+        "settings.deleteAccountTitle": "Eliminar Conta",
+        "settings.deleteAccountMessage": "Isto irá eliminar permanentemente os teus dados de conta de jogador no PointFinder. Esta ação não pode ser desfeita.",
+        "settings.deleteAccountConfirm": "Eliminar",
         "settings.leaveGame": "Sair do Jogo",
 
         // Operator
@@ -427,6 +455,18 @@ enum Translations {
         "apiError.decodingError": "Falha ao descodificar resposta: %@",
         "apiError.authExpired": "Sessão expirou. Inicia sessão novamente.",
 
+        // Permission Disclosure
+        "disclosure.title": "Antes de Começar",
+        "disclosure.subtitle": "O PointFinder precisa de algumas permissões para a tua experiência de jogo.",
+        "disclosure.locationTitle": "Localização",
+        "disclosure.locationDetail": "Mostra a tua equipa no mapa ao vivo para os operadores monitorizarem o jogo.",
+        "disclosure.notificationsTitle": "Notificações",
+        "disclosure.notificationsDetail": "Envia atualizações de jogo e mensagens do operador.",
+        "disclosure.cameraTitle": "Câmara e Fotos",
+        "disclosure.cameraDetail": "Lê códigos QR para entrar e submete fotos para desafios.",
+        "disclosure.footer": "Podes alterar estas permissões mais tarde nas Definições.",
+        "disclosure.continue": "Continuar",
+
         // App Errors
         "error.photoOffline": "As submissões de fotos requerem ligação à internet.",
         "error.photoProcessing": "Falha ao processar foto.",
@@ -462,6 +502,7 @@ enum Translations {
         // Common
         "common.error": "Fehler",
         "common.ok": "OK",
+        "common.cancel": "Abbrechen",
         "common.unknownError": "Ein unbekannter Fehler ist aufgetreten",
         "common.done": "Fertig",
         "common.pts": "Pkt",
@@ -568,6 +609,13 @@ enum Translations {
         "settings.pendingReview": "Prüfung ausstehend",
         "settings.device": "Gerät",
         "settings.deviceId": "Geräte-ID",
+        "settings.privacy": "Datenschutz",
+        "settings.privacyPolicy": "Datenschutzerklärung anzeigen",
+        "settings.deleteAccount": "Konto löschen",
+        "settings.deletingAccount": "Konto wird gelöscht...",
+        "settings.deleteAccountTitle": "Konto löschen",
+        "settings.deleteAccountMessage": "Dadurch werden deine Spielerkontodaten für PointFinder dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+        "settings.deleteAccountConfirm": "Löschen",
         "settings.leaveGame": "Spiel verlassen",
 
         // Operator
@@ -631,6 +679,18 @@ enum Translations {
         "apiError.httpError": "Serverfehler (%d): %@",
         "apiError.decodingError": "Antwort konnte nicht dekodiert werden: %@",
         "apiError.authExpired": "Sitzung abgelaufen. Bitte erneut anmelden.",
+
+        // Permission Disclosure
+        "disclosure.title": "Bevor du startest",
+        "disclosure.subtitle": "PointFinder benötigt einige Berechtigungen für dein Spielerlebnis.",
+        "disclosure.locationTitle": "Standort",
+        "disclosure.locationDetail": "Zeigt dein Team auf der Live-Karte, damit Operatoren das Spiel überwachen können.",
+        "disclosure.notificationsTitle": "Benachrichtigungen",
+        "disclosure.notificationsDetail": "Liefert Spiel-Updates und Nachrichten von deinem Operator.",
+        "disclosure.cameraTitle": "Kamera & Fotos",
+        "disclosure.cameraDetail": "QR-Codes scannen und Fotos für Challenges einreichen.",
+        "disclosure.footer": "Du kannst diese Berechtigungen später in den Einstellungen ändern.",
+        "disclosure.continue": "Weiter",
 
         // App Errors
         "error.photoOffline": "Foto-Einreichungen benötigen eine Internetverbindung.",

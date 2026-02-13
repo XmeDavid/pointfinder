@@ -133,6 +133,16 @@ class SessionStore @Inject constructor(
         return context.sessionDataStore.data.first()[PREFERRED_LANGUAGE]
     }
 
+    suspend fun isPermissionDisclosureSeen(): Boolean {
+        return context.sessionDataStore.data.first()[PERMISSION_DISCLOSURE_SEEN] == "true"
+    }
+
+    suspend fun setPermissionDisclosureSeen() {
+        context.sessionDataStore.edit { prefs ->
+            prefs[PERMISSION_DISCLOSURE_SEEN] = "true"
+        }
+    }
+
     override fun currentToken(): String? {
         return when (authType()) {
             is AuthType.Player -> securePrefs.getString(KEY_PLAYER_TOKEN, null)
@@ -170,5 +180,6 @@ class SessionStore @Inject constructor(
         private val OPERATOR_ID = stringPreferencesKey("operator_id")
         private val OPERATOR_NAME = stringPreferencesKey("operator_name")
         private val PREFERRED_LANGUAGE = stringPreferencesKey("preferred_language")
+        private val PERMISSION_DISCLOSURE_SEEN = stringPreferencesKey("permission_disclosure_seen")
     }
 }

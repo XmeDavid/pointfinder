@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Privacy Policy for PointFinder - how we handle personal data across the PointFinder iOS app, Android app, and web admin." />
+  <meta name="description" content="Privacy Policy for PointFinder covering iOS, Android, and web admin data processing, sharing, retention, and user rights." />
   <title>Privacy Policy | PointFinder</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -37,6 +37,29 @@
     section ul { list-style: disc; padding-left: 1.25rem; }
     section li { margin-bottom: 0.5rem; }
     section li strong { color: #fff; }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.75rem;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 0.5rem;
+      overflow: hidden;
+    }
+    .data-table th, .data-table td {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      text-align: left;
+      vertical-align: top;
+      padding: 0.75rem;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+    }
+    .data-table th {
+      background: rgba(255,255,255,0.06);
+      color: #fff;
+      font-weight: 600;
+    }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .muted { color: rgba(255,255,255,0.6); font-size: 0.8rem; }
     .contact-link { color: #86efac; }
   </style>
 </head>
@@ -44,102 +67,185 @@
   <main class="container">
     <div class="top-bar">
       <a href="/" class="back-link">&larr; Back to Home</a>
-      <span class="updated">Last updated: February 11, 2026</span>
+      <span class="updated">Last updated: February 13, 2026</span>
     </div>
 
     <header>
       <h1>Privacy Policy</h1>
-      <p>This Privacy Policy explains how PointFinder ("we", "us", "our") handles personal data across the PointFinder iOS app, Android app, and web admin available at desbravadores.dev.</p>
-      <p>The platform is designed for organized scouting and Pathfinder activities. Depending on your role, you may use PointFinder as a player, organizer, or operator.</p>
+      <p>This Privacy Policy explains how PointFinder ("PointFinder", "we", "us", "our") processes personal data across the PointFinder iOS app, Android app, and web admin at <a href="https://desbravadores.dev">desbravadores.dev</a>.</p>
+      <p>PointFinder is used for organized scouting and Pathfinder activities by players, organizers, and operators. We aim to process personal data transparently and in line with applicable privacy laws, including GDPR where it applies.</p>
     </header>
 
     <div class="sections">
       <section>
-        <h2>1. Data We Process</h2>
-        <p>We process the minimum data needed to run games, authenticate users, and monitor event progress.</p>
-        <ul>
-          <li><strong>Account data (operators/admins):</strong> name, email address, password hash, role, and refresh-token records.</li>
-          <li><strong>Player profile data:</strong> display name, device ID, team and game membership, and player access token.</li>
-          <li><strong>Gameplay data:</strong> check-ins, challenge submissions (text and optional photo), review status, feedback, points, and activity events.</li>
-          <li><strong>Location data:</strong> team latitude/longitude updates for live map monitoring during active missions.</li>
-          <li><strong>Push data:</strong> push notification token and platform (iOS or Android) for game notifications.</li>
-          <li><strong>Session and local cache data:</strong> authentication and session records in browser or device storage, plus offline queue and cached game state for connectivity recovery.</li>
-        </ul>
+        <h2>1. Controller, Scope, and Contact</h2>
+        <p>The data controller for PointFinder is <strong>David Simões Batista</strong>, the individual developer and publisher of the PointFinder iOS app, DBV Companion Android app, and web admin at <a href="https://desbravadores.dev">desbravadores.dev</a>.</p>
+        <p>Privacy contact: <a class="contact-link" href="mailto:info@desbravadores.dev">info@desbravadores.dev</a></p>
       </section>
 
       <section>
-        <h2>2. How We Collect Data</h2>
+        <h2>2. Personal Data We Process</h2>
+        <p>We process data required to provide gameplay, operations, security, and support functions.</p>
         <ul>
-          <li><strong>Directly from users</strong> when operators register or log in, and when players join with a join code/QR code.</li>
-          <li><strong>From gameplay actions</strong> such as NFC check-ins, submissions, and operator review workflows.</li>
-          <li><strong>From device features</strong> when permissions are granted (camera, NFC, notifications, location, photo library).</li>
+          <li><strong>Operator/admin account data:</strong> name, email, hashed password, role, refresh-token/session records.</li>
+          <li><strong>Player profile data:</strong> display name, device identifier, team and game membership, player access token.</li>
+          <li><strong>Gameplay content:</strong> check-ins, challenge responses (text and optional photo upload), review status, feedback, scores, and activity events.</li>
+          <li><strong>Location data:</strong> latitude/longitude updates for team live monitoring during active sessions.</li>
+          <li><strong>Notification data:</strong> push token and platform (iOS/APNs or Android/FCM).</li>
+          <li><strong>Technical/session data:</strong> auth/session state, offline queue state, local caches, and security/operational logs.</li>
         </ul>
-        <p>Both iOS and Android clients send periodic location updates during active player sessions (approximately every 30 seconds), as well as immediate updates after key actions such as check-ins and submissions. Location data is used solely for real-time mission monitoring by authorized operators.</p>
+        <p>We do not sell personal data and we do not use your data for third-party behavioral advertising.</p>
       </section>
 
       <section>
-        <h2>3. Why We Use Data</h2>
+        <h2>3. How We Collect Data</h2>
         <ul>
-          <li>Authenticate players and operators securely.</li>
-          <li>Run game mechanics (check-ins, challenge solving, scoring).</li>
-          <li>Provide real-time monitoring for authorized operators.</li>
-          <li>Deliver game notifications and event communications (push/email).</li>
-          <li>Support offline-first synchronization when connectivity returns.</li>
-          <li>Protect platform integrity, prevent abuse, and troubleshoot operational issues.</li>
+          <li><strong>Directly from you:</strong> when operators register/log in and when players join using join code or QR code.</li>
+          <li><strong>From your activity:</strong> gameplay actions such as NFC check-ins, submissions, reviews, and score updates.</li>
+          <li><strong>From your device:</strong> when permissions are granted (location, camera, photo library, notifications, NFC).</li>
+          <li><strong>From organizers/operators:</strong> game setup and team management data entered in web admin.</li>
         </ul>
+        <p>During active player sessions, iOS and Android clients send location updates periodically (approximately every 30 seconds) and after key actions (for example check-ins/submissions) for real-time mission monitoring by authorized operators.</p>
       </section>
 
       <section>
-        <h2>4. Data Sharing and Processors</h2>
-        <p>We do not sell personal data. We share data only when required to operate platform features:</p>
+        <h2>4. Why We Process Data and Legal Bases (GDPR)</h2>
+        <p>Where GDPR applies, we rely on one or more of the following legal bases:</p>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Purpose</th>
+              <th>Example Activities</th>
+              <th>Legal Basis</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Service delivery and account management</td>
+              <td>Authentication, joining games, team assignment, challenge workflows</td>
+              <td>Contract performance (Art. 6(1)(b))</td>
+            </tr>
+            <tr>
+              <td>Operational monitoring and gameplay integrity</td>
+              <td>Live map updates, anti-abuse controls, fairness checks</td>
+              <td>Legitimate interests (Art. 6(1)(f)) and/or contract</td>
+            </tr>
+            <tr>
+              <td>Optional device capabilities</td>
+              <td>Push notifications, camera/photo permissions where required by platform law</td>
+              <td>Consent (Art. 6(1)(a)) where required</td>
+            </tr>
+            <tr>
+              <td>Security, legal, and compliance</td>
+              <td>Audit trails, incident response, legal obligations</td>
+              <td>Legal obligation (Art. 6(1)(c)) and legitimate interests</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>5. App Permissions and Device Access</h2>
+        <ul>
+          <li><strong>Location (when in use):</strong> used for team monitoring during active gameplay.</li>
+          <li><strong>Camera and photo library:</strong> used for QR scanning and optional photo-based challenge submissions.</li>
+          <li><strong>NFC:</strong> used for base tag interactions/check-ins.</li>
+          <li><strong>Notifications:</strong> used for game updates and operational messages.</li>
+        </ul>
+        <p>You can revoke permissions in your device settings. Revoking certain permissions may limit core app features.</p>
+      </section>
+
+      <section>
+        <h2>6. Data Sharing, Recipients, and Processors</h2>
+        <p>We share data only when needed to provide and secure the service:</p>
         <ul>
           <li><strong>Push providers:</strong> Apple Push Notification service (APNs) and Firebase Cloud Messaging (FCM).</li>
-          <li><strong>Email delivery:</strong> SMTP email provider configured for operator invites and notifications.</li>
-          <li><strong>Map tiles and assets:</strong> OpenStreetMap tiles and Google Fonts in the web admin.</li>
-          <li><strong>Infrastructure providers:</strong> hosting, networking, and storage needed to run the service.</li>
+          <li><strong>Mapping and map assets:</strong> Apple MapKit (iOS), Google Maps SDK (Android), OpenStreetMap tiles (web admin).</li>
+          <li><strong>Email delivery:</strong> SMTP provider used for invites and operational notifications.</li>
+          <li><strong>Infrastructure:</strong> hosting, storage, networking, and security providers that process data on our behalf.</li>
+          <li><strong>Legal/compliance disclosures:</strong> where required by applicable law, legal process, or to protect rights and safety.</li>
         </ul>
+        <p>We do not sell personal data and do not share personal data with data brokers for targeted advertising.</p>
       </section>
 
       <section>
-        <h2>5. Security Measures</h2>
+        <h2>7. International Data Transfers</h2>
+        <p>Some processors may process data outside your country (including outside the EEA/UK). Where legally required, we use appropriate safeguards such as contractual data protection clauses and equivalent protection measures.</p>
+      </section>
+
+      <section>
+        <h2>8. Retention and Deletion</h2>
+        <p>We retain data only as long as needed for the purposes described in this policy, based on data type and operational/legal necessity.</p>
         <ul>
-          <li>TLS (HTTPS) in production transport.</li>
-          <li>Password hashing using BCrypt.</li>
-          <li>JWT-based authentication and role-based authorization.</li>
-          <li>Refresh-token flow for operator sessions.</li>
-          <li>Mobile token storage in Keychain (iOS) and encrypted shared preferences (Android).</li>
+          <li><strong>Game data (teams, players, submissions, check-ins, activity, team location):</strong> retained while game records are active; deleted when a game is deleted in primary database flows.</li>
+          <li><strong>Operator account/session data:</strong> retained while account is active and for a limited period thereafter for security, audit, and legal obligations.</li>
+          <li><strong>Push tokens:</strong> retained while needed for notifications and removed/overwritten when invalidated or no longer needed.</li>
+          <li><strong>Uploaded challenge files:</strong> retained with related game content and removed on game cleanup or deletion routines.</li>
+          <li><strong>Device-local caches:</strong> remain on device until logout, app removal, or user/device cleanup actions.</li>
+          <li><strong>Logs:</strong> retained for a limited period required for troubleshooting, abuse prevention, and service security.</li>
         </ul>
-        <p>No internet-connected system is 100% secure. We continue to improve technical and organizational safeguards.</p>
+        <p>When deletion is requested, we delete or anonymize data unless retention is required by law, dispute handling, fraud prevention, or security obligations.</p>
       </section>
 
       <section>
-        <h2>6. Retention and Deletion</h2>
-        <p>We keep data for as long as it is needed for active games and operational records.</p>
+        <h2>9. Security Measures</h2>
         <ul>
-          <li>Deleting a game removes related records in the primary relational database (teams, players, submissions, check-ins, locations, and activity events) through cascading relationships.</li>
-          <li>Some operational artifacts (for example uploaded files, token rows, and logs) can persist until cleanup routines or manual deletion are performed.</li>
-          <li>Offline and cache data may remain on user devices until logout or local app data cleanup.</li>
+          <li>TLS (HTTPS) transport security in production.</li>
+          <li>Password hashing (BCrypt) for operator credentials.</li>
+          <li>Token-based authentication, refresh tokens, and role-based access control.</li>
+          <li>Mobile secure token storage (Keychain on iOS, encrypted storage on Android).</li>
+          <li>Access controls and operational safeguards to reduce unauthorized access risk.</li>
         </ul>
+        <p>No internet-connected system can be guaranteed 100% secure, but we continuously improve technical and organizational safeguards.</p>
       </section>
 
       <section>
-        <h2>7. Your Rights and Choices</h2>
+        <h2>10. Your Privacy Rights</h2>
+        <p>Depending on your jurisdiction, you may have rights to:</p>
         <ul>
-          <li>You can stop using the app at any time and remove it from your device.</li>
-          <li>You can manage app permissions (location, camera, notifications, photo access, NFC) in device settings.</li>
-          <li>For data access, correction, or deletion requests, contact your game organizer and/or platform support.</li>
+          <li>Access personal data we hold about you.</li>
+          <li>Correct inaccurate data.</li>
+          <li>Delete your personal data.</li>
+          <li>Restrict or object to certain processing.</li>
+          <li>Data portability (where applicable).</li>
+          <li>Withdraw consent at any time where processing is consent-based.</li>
+          <li>Lodge a complaint with your local data protection authority.</li>
         </ul>
-        <p>Contact email for privacy requests: <a class="contact-link" href="mailto:info@desbravadores.dev">info@desbravadores.dev</a></p>
+        <p>Where GDPR applies, we respond to valid rights requests within the legally required timeline (typically within one month, subject to lawful extensions).</p>
       </section>
 
       <section>
-        <h2>8. Children's Data</h2>
-        <p>PointFinder is designed for organized youth activities supervised by responsible adults. Event organizers are responsible for obtaining all necessary participant permissions and parental consents required by local law.</p>
+        <h2 id="deletion-request">11. Account and Data Deletion Requests</h2>
+        <p><strong>In-app deletion (players):</strong> open Settings in the app and tap "Delete Account". This immediately deletes your player profile, device identifier, push token, and access token from our servers.</p>
+        <p><strong>By email:</strong> you can also request account/data deletion by emailing <a class="contact-link" href="mailto:info@desbravadores.dev?subject=PointFinder%20Account%20Deletion%20Request">info@desbravadores.dev</a> with subject "PointFinder Account Deletion Request".</p>
+        <ul>
+          <li><strong>Players (email):</strong> include display name, game/join context, and approximate last use date so we can locate records safely.</li>
+          <li><strong>Operators/admins:</strong> contact us from your account email if possible.</li>
+          <li>We may request additional details to verify identity before processing email-based deletion.</li>
+          <li>Some records may be retained where legally required or strictly necessary for security/fraud defense.</li>
+        </ul>
+        <p class="muted">This page serves as the public web resource for account/data deletion requests as required by app store policies.</p>
       </section>
 
       <section>
-        <h2>9. Policy Updates</h2>
-        <p>We may update this Privacy Policy as the platform evolves or legal requirements change. The "Last updated" date at the top reflects the latest revision.</p>
+        <h2>12. Children and Youth Data</h2>
+        <p>PointFinder is designed for organized youth activities supervised by responsible adults. Organizers are expected to obtain any parental/guardian permissions required by local law before registering minors. We process participant data only to run and monitor authorized event activities.</p>
+      </section>
+
+      <section>
+        <h2>13. Automated Decision-Making</h2>
+        <p>PointFinder does not use automated decision-making or profiling that produces legal or similarly significant effects on users.</p>
+      </section>
+
+      <section>
+        <h2>14. Policy Updates</h2>
+        <p>We may update this policy when our product, processors, or legal requirements change. Material updates will be reflected by the "Last updated" date and, where appropriate, additional in-app or website notice.</p>
+      </section>
+
+      <section>
+        <h2>15. Contact and Complaints</h2>
+        <p>For privacy questions, rights requests, or complaints, contact <a class="contact-link" href="mailto:info@desbravadores.dev">info@desbravadores.dev</a>.</p>
+        <p>If you are in the EEA/UK, you may also lodge a complaint with your national data protection authority.</p>
       </section>
     </div>
   </main>

@@ -3,6 +3,8 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(AppState.self) private var appState
     @Environment(LocaleManager.self) private var locale
+    @State private var showDeleteAccountConfirm = false
+    @State private var isDeletingAccount = false
 
     var body: some View {
         NavigationStack {
@@ -108,6 +110,33 @@ struct SettingsView: View {
                     }
                 }
 
+                // Privacy
+                Section(locale.t("settings.privacy")) {
+                    Link(destination: URL(string: AppConfiguration.privacyPolicyURL)!) {
+                        HStack {
+                            Spacer()
+                            Text(locale.t("settings.privacyPolicy"))
+                            Spacer()
+                        }
+                    }
+                }
+
+                // Player account deletion
+                if appState.isPlayer {
+                    Section {
+                        Button(role: .destructive) {
+                            showDeleteAccountConfirm = true
+                        } label: {
+                            HStack {
+                                Spacer()
+                                Text(isDeletingAccount ? locale.t("settings.deletingAccount") : locale.t("settings.deleteAccount"))
+                                Spacer()
+                            }
+                        }
+                        .disabled(isDeletingAccount)
+                    }
+                }
+
                 // Logout
                 Section {
                     Button(role: .destructive) {
@@ -122,6 +151,20 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle(locale.t("settings.title"))
+            .alert(locale.t("settings.deleteAccountTitle"), isPresented: $showDeleteAccountConfirm) {
+                Button(locale.t("settings.deleteAccountConfirm"), role: .destructive) {
+                    Task {
+                        isDeletingAccount = true
+                        await appState.deletePlayerAccount()
+                        isDeletingAccount = false
+                    }
+                }
+                Button(locale.t("common.cancel"), role: .cancel) {
+                    showDeleteAccountConfirm = false
+                }
+            } message: {
+                Text(locale.t("settings.deleteAccountMessage"))
+            }
         }
     }
 }

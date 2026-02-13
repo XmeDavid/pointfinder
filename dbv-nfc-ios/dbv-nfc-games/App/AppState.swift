@@ -410,6 +410,21 @@ final class AppState {
         }
     }
 
+    // MARK: - Account Deletion
+
+    func deletePlayerAccount() async {
+        guard case .player(let token, _, _, _) = authType else {
+            return
+        }
+
+        do {
+            try await apiClient.deletePlayerAccount(token: token)
+            logout()
+        } catch {
+            setError(error.localizedDescription)
+        }
+    }
+
     // MARK: - Solve Session
 
     func startSolving(baseId: UUID, challengeId: UUID) {

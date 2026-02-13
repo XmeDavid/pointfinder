@@ -30,6 +30,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.PATCH
@@ -92,6 +93,9 @@ interface CompanionApi {
 
     @PUT("api/player/push-token")
     suspend fun registerPushToken(@Body request: PushTokenRequest)
+
+    @DELETE("api/player/me")
+    suspend fun deleteMyPlayerData()
 
     @GET("api/games")
     suspend fun getGames(): List<Game>

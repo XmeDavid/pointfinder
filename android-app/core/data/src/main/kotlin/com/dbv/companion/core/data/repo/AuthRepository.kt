@@ -66,6 +66,11 @@ class AuthRepository @Inject constructor(
         )
     }
 
+    suspend fun deletePlayerAccount() {
+        api.deleteMyPlayerData()
+        sessionStore.clearSession()
+    }
+
     suspend fun clearSession() {
         sessionStore.clearSession()
     }

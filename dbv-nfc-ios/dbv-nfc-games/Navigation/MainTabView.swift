@@ -3,6 +3,8 @@ import SwiftUI
 struct MainTabView: View {
     @Environment(AppState.self) private var appState
     @Environment(LocaleManager.self) private var locale
+    @AppStorage("com.dbvnfc.permissionDisclosureSeen") private var disclosureSeen = false
+    @State private var showDisclosure = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -26,6 +28,17 @@ struct MainTabView: View {
                     .tabItem {
                         Label(locale.t("tabs.settings"), systemImage: "gearshape.fill")
                     }
+            }
+        }
+        .onAppear {
+            if !disclosureSeen {
+                showDisclosure = true
+            }
+        }
+        .sheet(isPresented: $showDisclosure) {
+            PermissionDisclosureView {
+                disclosureSeen = true
+                showDisclosure = false
             }
         }
     }
