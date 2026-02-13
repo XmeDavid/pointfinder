@@ -39,6 +39,7 @@ struct MainTabView: View {
             PermissionDisclosureView {
                 disclosureSeen = true
                 showDisclosure = false
+                appState.requestPermissionsAfterDisclosure()
             }
         }
     }

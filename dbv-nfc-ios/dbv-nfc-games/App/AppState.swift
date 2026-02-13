@@ -112,12 +112,18 @@ final class AppState {
             currentTeam = response.team
             currentPlayer = response.player
 
-            // Start location tracking
-            locationService.startTracking(apiClient: apiClient, gameId: response.game.id, token: response.token)
-
-            // Register for push notifications
+            // Configure push service (but don't request permission yet)
             PushNotificationService.shared.configure(apiClient: apiClient, playerToken: response.token)
-            PushNotificationService.shared.requestPermissionAndRegister()
+
+            // Only start location tracking and request push permission if
+            // the user has already seen the permission disclosure sheet.
+            // Otherwise, MainTabView will show the disclosure first and
+            // call requestPermissionsAfterDisclosure() when the user taps Continue.
+            let disclosureSeen = UserDefaults.standard.bool(forKey: "com.dbvnfc.permissionDisclosureSeen")
+            if disclosureSeen {
+                locationService.startTracking(apiClient: apiClient, gameId: response.game.id, token: response.token)
+                PushNotificationService.shared.requestPermissionAndRegister()
+            }
 
             // Load initial progress
             await loadProgress()
@@ -222,6 +228,9 @@ final class AppState {
             await OfflineQueue.shared.enqueueCheckIn(gameId: gameId, baseId: baseId)
         }
 
+        // Trigger sync immediately so queued actions retry as soon as possible
+        Task { await SyncEngine.shared.syncPendingActions() }
+
         // Update local cache
         await GameDataCache.shared.updateBaseStatus(baseId: baseId, status: "checked_in", gameId: gameId)
 
@@ -286,6 +295,9 @@ final class AppState {
             challengeId: challengeId,
             answer: answer
         )
+
+        // Trigger sync immediately so queued actions retry as soon as possible
+        Task { await SyncEngine.shared.syncPendingActions() }
 
         // Update local cache
         await GameDataCache.shared.updateBaseStatus(baseId: baseId, status: "submitted", gameId: gameId)
@@ -496,12 +508,16 @@ final class AppState {
 
             authType = .player(token: token, playerId: playerId, teamId: teamId, gameId: gameId)
 
-            // Resume location tracking
-            locationService.startTracking(apiClient: apiClient, gameId: gameId, token: token)
-
-            // Re-register for push notifications (token may have changed)
+            // Configure push service (but don't request permission yet)
             PushNotificationService.shared.configure(apiClient: apiClient, playerToken: token)
-            PushNotificationService.shared.requestPermissionAndRegister()
+
+            // Only resume location tracking and push if the user has already
+            // seen the permission disclosure sheet.
+            let disclosureSeen = UserDefaults.standard.bool(forKey: "com.dbvnfc.permissionDisclosureSeen")
+            if disclosureSeen {
+                locationService.startTracking(apiClient: apiClient, gameId: gameId, token: token)
+                PushNotificationService.shared.requestPermissionAndRegister()
+            }
 
             // Restore game/team info will happen when progress loads
             Task { await loadProgress() }
@@ -561,6 +577,16 @@ final class AppState {
                 }
             }
         )
+    }
+
+    // MARK: - Permission Disclosure
+
+    /// Called by MainTabView after the user dismisses the permission disclosure sheet.
+    /// Starts location tracking and requests push notification permission.
+    func requestPermissionsAfterDisclosure() {
+        guard case .player(let token, _, _, let gameId) = authType else { return }
+        locationService.startTracking(apiClient: apiClient, gameId: gameId, token: token)
+        PushNotificationService.shared.requestPermissionAndRegister()
     }
 
     // MARK: - Error

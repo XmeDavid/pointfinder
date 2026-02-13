@@ -5,11 +5,10 @@ Code (in codebase)
     - Small screens Import game and create game, should go on top of eachother, instead of side to side.
     -Handle sideways overflow
 - Text on android is often this weird purple, looks awful, specially on top of the green. Colors need clear improvement, let's not make anything to exotic.
--iOS the popup explaining the permissions appears after the permission request... Show permissions explanation first, then ask for them as needed.
--Android map labels at the bottom is clean in english but changing languages, so of the words go vertical and the label occupies a bunch of space
--Check offline syncronization android vs iOS. On Android i can see actions pending sync, but it looks like they can get stuck like that, when is it resyincing? iphone looks ok, but cant see pending actions. Let's analyze the offline capabilities of iOS vs Android and bring it up to parity.
+!-iOS the popup explaining the permissions appears after the permission request... Show permissions explanation first, then ask for them as needed.
+!-Android map labels at the bottom is clean in english but changing languages, so of the words go vertical and the label occupies a bunch of space
+!-Check offline syncronization android vs iOS. On Android i can see actions pending sync, but it looks like they can get stuck like that, when is it resyincing? iphone looks ok, but cant see pending actions. Let's analyze the offline capabilities of iOS vs Android and bring it up to parity.
 - On web admin, an operator owner of a game should be able to kick other operators from that game.
--rename android package name to same as ios com.prayer.pointfinder
 
 ---
 

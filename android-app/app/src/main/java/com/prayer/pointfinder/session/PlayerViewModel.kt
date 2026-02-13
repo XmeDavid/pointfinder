@@ -3,6 +3,7 @@ package com.prayer.pointfinder.session
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.prayer.pointfinder.core.data.repo.OfflineSyncWorker
 import com.prayer.pointfinder.core.data.repo.PlayerRepository
 import com.prayer.pointfinder.core.model.AuthType
 import com.prayer.pointfinder.core.model.BaseProgress
@@ -100,6 +101,11 @@ class PlayerViewModel @Inject constructor(
                     activeCheckIn = result.response,
                     scanError = null,
                 )
+                // If the action was queued offline, trigger sync immediately
+                // so it retries as soon as connectivity allows.
+                if (result.queued) {
+                    OfflineSyncWorker.enqueue(context)
+                }
                 refresh(auth, online)
                 // Send location immediately after check-in (matches iOS behavior)
                 launch { locationService.sendLocationNow() }
@@ -191,6 +197,11 @@ class PlayerViewModel @Inject constructor(
                     answerText = "",
                     presenceVerified = false,
                 )
+                // If the action was queued offline, trigger sync immediately
+                // so it retries as soon as connectivity allows.
+                if (result.queued) {
+                    OfflineSyncWorker.enqueue(context)
+                }
                 refresh(auth, online)
                 // Send location immediately after submission (matches iOS behavior)
                 launch { locationService.sendLocationNow() }

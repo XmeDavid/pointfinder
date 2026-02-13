@@ -108,6 +108,12 @@ struct SettingsView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
+                    HStack {
+                        Text(locale.t("settings.pendingActions"))
+                        Spacer()
+                        Text("\(appState.pendingActionsCount)")
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
                 // Privacy
