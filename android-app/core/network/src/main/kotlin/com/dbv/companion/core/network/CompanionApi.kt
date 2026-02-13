@@ -89,7 +89,7 @@ interface CompanionApi {
     suspend fun updateLocation(
         @Path("gameId") gameId: String,
         @Body request: LocationUpdateRequest,
-    )
+    ): retrofit2.Response<Unit>
 
     @PUT("api/player/push-token")
     suspend fun registerPushToken(@Body request: PushTokenRequest)

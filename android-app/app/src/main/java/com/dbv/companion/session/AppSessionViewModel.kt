@@ -1,6 +1,7 @@
 package com.dbv.companion.session
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dbv.companion.core.data.repo.AuthRepository
@@ -85,6 +86,7 @@ class AppSessionViewModel @Inject constructor(
             when (auth) {
                 is AuthType.Player -> {
                     val seen = sessionStore.isPermissionDisclosureSeen()
+                    Log.i(TAG, "restoreSession: Player gameId=${auth.gameId}, disclosureSeen=$seen")
                     if (seen) {
                         locationService.start(auth.gameId)
                         registerPushTokenIfPossible()
@@ -195,6 +197,7 @@ class AppSessionViewModel @Inject constructor(
     }
 
     fun onPermissionDisclosureAccepted() {
+        Log.i(TAG, "onPermissionDisclosureAccepted")
         viewModelScope.launch {
             sessionStore.setPermissionDisclosureSeen()
             _state.value = _state.value.copy(showPermissionDisclosure = false)
@@ -211,9 +214,15 @@ class AppSessionViewModel @Inject constructor(
      */
     fun onLocationPermissionResult() {
         val auth = _state.value.authType
+        Log.i(TAG, "onLocationPermissionResult: authType=${auth.javaClass.simpleName}" +
+            if (auth is AuthType.Player) " gameId=${auth.gameId}" else "")
         if (auth is AuthType.Player) {
             locationService.start(auth.gameId)
         }
+    }
+
+    companion object {
+        private const val TAG = "AppSession"
     }
 
     fun clearError() {

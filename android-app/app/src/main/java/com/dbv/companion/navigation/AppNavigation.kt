@@ -285,14 +285,20 @@ private fun PlayerRootScreen(
         if (uri != null) {
             runCatching {
                 val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, uri))
+                    // Force software bitmap — hardware bitmaps cannot be compressed
+                    ImageDecoder.decodeBitmap(
+                        ImageDecoder.createSource(context.contentResolver, uri),
+                    ) { decoder, _, _ ->
+                        decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+                    }
                 } else {
                     @Suppress("DEPRECATION")
                     MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
                 }
-                photoBitmap = bitmap
+                val scaled = scaleBitmapDown(bitmap, 1920)
+                photoBitmap = scaled
                 val out = ByteArrayOutputStream()
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 70, out)
+                scaled.compress(Bitmap.CompressFormat.JPEG, 70, out)
                 photoBytes = out.toByteArray()
             }
         }
@@ -307,10 +313,13 @@ private fun PlayerRootScreen(
                 val inputStream = context.contentResolver.openInputStream(cameraPhotoUri)
                 val bitmap = BitmapFactory.decodeStream(inputStream)
                 inputStream?.close()
-                photoBitmap = bitmap
-                val out = ByteArrayOutputStream()
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 70, out)
-                photoBytes = out.toByteArray()
+                if (bitmap != null) {
+                    val scaled = scaleBitmapDown(bitmap, 1920)
+                    photoBitmap = scaled
+                    val out = ByteArrayOutputStream()
+                    scaled.compress(Bitmap.CompressFormat.JPEG, 70, out)
+                    photoBytes = out.toByteArray()
+                }
             }
         }
     }
@@ -626,4 +635,18 @@ private fun DisclosureRow(
             Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
+}
+
+/** Scale a bitmap so its longest side is at most [maxSide] pixels. */
+private fun scaleBitmapDown(bitmap: Bitmap, maxSide: Int): Bitmap {
+    val w = bitmap.width
+    val h = bitmap.height
+    if (w <= maxSide && h <= maxSide) return bitmap
+    val ratio = maxSide.toFloat() / maxOf(w, h)
+    return Bitmap.createScaledBitmap(
+        bitmap,
+        (w * ratio).toInt(),
+        (h * ratio).toInt(),
+        true,
+    )
 }

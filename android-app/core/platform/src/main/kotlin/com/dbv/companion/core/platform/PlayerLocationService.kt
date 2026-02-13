@@ -150,27 +150,31 @@ class PlayerLocationService @Inject constructor(
     private suspend fun sendCurrentLocation() {
         val currentGameId = gameId
         if (currentGameId == null) {
-            Log.d(TAG, "sendCurrentLocation: skipped — no gameId")
+            Log.w(TAG, "sendCurrentLocation: skipped — no gameId")
             return
         }
         val location = _lastLocation.value
         if (location == null) {
-            Log.d(TAG, "sendCurrentLocation: skipped — no location yet")
+            Log.w(TAG, "sendCurrentLocation: skipped — no location yet")
             return
         }
         if (!networkMonitor.isOnline.value) {
-            Log.d(TAG, "sendCurrentLocation: skipped — offline")
+            Log.w(TAG, "sendCurrentLocation: skipped — offline")
             return
         }
 
         try {
-            api.updateLocation(
+            val response = api.updateLocation(
                 gameId = currentGameId,
                 request = LocationUpdateRequest(lat = location.lat, lng = location.lng),
             )
-            Log.d(TAG, "Location sent (${location.lat}, ${location.lng}) for game=$currentGameId")
+            if (response.isSuccessful) {
+                Log.i(TAG, "Location sent OK (${location.lat}, ${location.lng}) game=$currentGameId")
+            } else {
+                Log.w(TAG, "Location send failed: HTTP ${response.code()} ${response.message()}")
+            }
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to send location: ${e.message}", e)
+            Log.e(TAG, "Location send exception: ${e.javaClass.simpleName}: ${e.message}", e)
         }
     }
 
