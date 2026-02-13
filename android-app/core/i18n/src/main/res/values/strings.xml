@@ -26,6 +26,7 @@
     <string name="action_switch_game">Switch game</string>
     <string name="action_open_privacy_policy">View Privacy Policy</string>
     <string name="action_delete_account">Delete Account</string>
+    <string name="action_remove">Remove</string>
 
     <!-- Labels -->
     <string name="label_welcome">PointFinder</string>
@@ -92,6 +93,11 @@
     <string name="label_answer_type">Answer: %1$s</string>
     <string name="label_pts">%1$d pts</string>
     <string name="label_deleting_account">Deleting account...</string>
+    <string name="label_assignment_random_not_started">Random assignment not started</string>
+    <string name="label_assignment_fixed">Fixed challenge assignment</string>
+    <string name="label_assignment_per_team">Per-team assignments (%1$d)</string>
+    <string name="label_no_games_description">You have no games yet. Pull to refresh or check back later.</string>
+
     <!-- Permission Disclosure -->
     <string name="disclosure_title">Before You Start</string>
     <string name="disclosure_subtitle">PointFinder needs a few permissions to run your game experience.</string>
@@ -113,6 +119,7 @@
     <string name="hint_offline_sync">Offline: data will sync when online.</string>
     <string name="hint_photo_required_online">Photo submissions require internet.</string>
     <string name="hint_presence_required">NFC presence required before submit.</string>
+    <string name="hint_nfc_hold_near">Hold an NFC tag near the device to write base payload.</string>
 
     <!-- Status -->
     <string name="status_not_visited">Not visited</string>
@@ -121,6 +128,9 @@
     <string name="status_completed">Completed</string>
     <string name="status_rejected">Rejected</string>
 
+    <!-- Status messages -->
+    <string name="success_nfc_written">NFC written and linked successfully.</string>
+
     <!-- Errors -->
     <string name="error_generic">Something went wrong.</string>
     <string name="error_invalid_nfc">Invalid NFC payload.</string>
@@ -128,4 +138,10 @@
     <string name="error_presence_wrong_base">NFC tag does not match this base.</string>
     <string name="error_camera_denied">Camera permission denied.</string>
     <string name="error_nfc_unavailable">NFC is not available on this device.</string>
+    <string name="error_scan_nfc_first">Scan a base NFC tag first.</string>
+    <string name="error_answer_required">Please provide an answer.</string>
+    <string name="error_photo_required">Photo is required.</string>
+    <string name="error_nfc_write_failed">NFC write failed.</string>
+    <string name="error_nfc_link_failed">NFC written but link failed: %1$s</string>
+    <string name="error_network_unavailable">Network unavailable. Please check your connection.</string>
 </resources>

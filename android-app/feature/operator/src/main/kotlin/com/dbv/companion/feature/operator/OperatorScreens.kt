@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -75,6 +76,14 @@ enum class OperatorTab {
 
 private const val PRIVACY_POLICY_URL = "https://desbravadores.dev/privacy/"
 
+// Semantic color constants
+private val StatusCheckedIn = Color(0xFF1565C0)
+private val StatusCompleted = Color(0xFF2E7D32)
+private val StatusSubmitted = Color(0xFFE08A00)
+private val StarGold = Color(0xFFE08A00)
+private val BadgePurple = Color(0xFF7B1FA2)
+private val BadgeIndigo = Color(0xFF303F9F)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OperatorHomeScreen(
@@ -82,6 +91,8 @@ fun OperatorHomeScreen(
     onSelectGame: (Game) -> Unit,
     onLogout: () -> Unit,
     onRefresh: () -> Unit,
+    isLoading: Boolean = false,
+    errorMessage: String? = null,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -95,30 +106,74 @@ fun OperatorHomeScreen(
             )
         },
     ) { padding ->
-        LazyColumn(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            if (games.isEmpty()) {
-                item { Text(stringResource(R.string.label_no_games)) }
-            } else {
-                items(games) { game ->
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onSelectGame(game) },
-                        tonalElevation = 2.dp,
-                        shape = MaterialTheme.shapes.medium,
-                    ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
-                            Text(game.name, fontWeight = FontWeight.SemiBold)
-                            Spacer(Modifier.height(4.dp))
-                            Text(game.description, style = MaterialTheme.typography.bodySmall)
-                            Spacer(Modifier.height(6.dp))
-                            AssistChip(onClick = {}, label = { Text(game.status.uppercase()) })
+        when {
+            isLoading && games.isEmpty() -> {
+                Box(
+                    modifier = modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+            !errorMessage.isNullOrBlank() && games.isEmpty() -> {
+                Column(
+                    modifier = modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Text(errorMessage, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+                    Spacer(Modifier.height(12.dp))
+                    Button(onClick = onRefresh) { Text(stringResource(R.string.action_refresh)) }
+                }
+            }
+            games.isEmpty() -> {
+                Column(
+                    modifier = modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Text(stringResource(R.string.label_no_games), style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        stringResource(R.string.label_no_games_description),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Button(onClick = onRefresh) { Text(stringResource(R.string.action_refresh)) }
+                }
+            }
+            else -> {
+                LazyColumn(
+                    modifier = modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    items(games) { game ->
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onSelectGame(game) },
+                            tonalElevation = 2.dp,
+                            shape = MaterialTheme.shapes.medium,
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text(game.name, fontWeight = FontWeight.SemiBold)
+                                Spacer(Modifier.height(4.dp))
+                                Text(game.description, style = MaterialTheme.typography.bodySmall)
+                                Spacer(Modifier.height(6.dp))
+                                AssistChip(onClick = {}, label = { Text(game.status.uppercase()) })
+                            }
                         }
                     }
                 }
@@ -240,9 +295,9 @@ fun LiveBaseProgressBottomSheet(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                StatBadge(count = completedCount, label = stringResource(R.string.status_completed), color = Color(0xFF2E7D32), modifier = Modifier.weight(1f))
-                StatBadge(count = pendingCount, label = stringResource(R.string.status_submitted), color = Color(0xFFE08A00), modifier = Modifier.weight(1f))
-                StatBadge(count = checkedInCount, label = stringResource(R.string.status_checked_in), color = Color(0xFF1565C0), modifier = Modifier.weight(1f))
+                StatBadge(count = completedCount, label = stringResource(R.string.status_completed), color = StatusCompleted, modifier = Modifier.weight(1f))
+                StatBadge(count = pendingCount, label = stringResource(R.string.status_submitted), color = StatusSubmitted, modifier = Modifier.weight(1f))
+                StatBadge(count = checkedInCount, label = stringResource(R.string.status_checked_in), color = StatusCheckedIn, modifier = Modifier.weight(1f))
                 StatBadge(count = remainingCount, label = stringResource(R.string.label_remaining), color = Color.Gray, modifier = Modifier.weight(1f))
             }
             Spacer(Modifier.height(16.dp))
@@ -253,9 +308,9 @@ fun LiveBaseProgressBottomSheet(
                 val teamColor = team?.color?.let { c -> runCatching { Color(android.graphics.Color.parseColor(c)) }.getOrDefault(Color.Gray) } ?: Color.Gray
                 val teamName = team?.name ?: item.teamId.take(8)
                 val statusColor = when (item.status) {
-                    "completed" -> Color(0xFF2E7D32)
-                    "checked_in" -> Color(0xFF1565C0)
-                    "submitted" -> Color(0xFFE08A00)
+                    "completed" -> StatusCompleted
+                    "checked_in" -> StatusCheckedIn
+                    "submitted" -> StatusSubmitted
                     else -> Color.Gray
                 }
                 val statusLabel = when (item.status) {
@@ -381,12 +436,12 @@ fun OperatorBaseDetailScreen(
                 Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     // NFC badge
-                    val nfcColor = if (base.nfcLinked) Color(0xFF2E7D32) else Color(0xFFE08A00)
+                    val nfcColor = if (base.nfcLinked) StatusCompleted else StatusSubmitted
                     val nfcLabel = if (base.nfcLinked) stringResource(R.string.label_nfc_linked) else stringResource(R.string.label_nfc_not_linked)
                     CapsuleBadge(label = nfcLabel, color = nfcColor)
                     // Presence badge
                     if (base.requirePresenceToSubmit) {
-                        CapsuleBadge(label = stringResource(R.string.label_presence_required), color = Color(0xFF1565C0))
+                        CapsuleBadge(label = stringResource(R.string.label_presence_required), color = StatusCheckedIn)
                     }
                 }
             }
@@ -408,7 +463,7 @@ fun OperatorBaseDetailScreen(
                         Spacer(Modifier.height(8.dp))
                         Text(
                             writeStatus,
-                            color = if (writeSuccess == true) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error,
+                            color = if (writeSuccess == true) StatusCompleted else MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall,
                         )
                     }
@@ -421,13 +476,13 @@ fun OperatorBaseDetailScreen(
                     Text(stringResource(R.string.label_challenge_assignment), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                     Spacer(Modifier.height(8.dp))
                     if (fixedChallenge != null) {
-                        CapsuleBadge(label = stringResource(R.string.label_fixed_challenge), color = Color(0xFF7B1FA2))
+                        CapsuleBadge(label = stringResource(R.string.label_fixed_challenge), color = BadgePurple)
                         Spacer(Modifier.height(8.dp))
                         ChallengeCard(challenge = fixedChallenge)
                     } else if (baseAssignments.isEmpty()) {
                         Text(stringResource(R.string.label_random_not_started), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
-                        CapsuleBadge(label = stringResource(R.string.label_randomly_assigned), color = Color(0xFF303F9F))
+                        CapsuleBadge(label = stringResource(R.string.label_randomly_assigned), color = BadgeIndigo)
                         Spacer(Modifier.height(8.dp))
                         baseAssignments.forEach { assignment ->
                             val team = teams.firstOrNull { it.id == assignment.teamId }
@@ -481,8 +536,8 @@ private fun ChallengeCard(challenge: Challenge) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
             Text(challenge.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFE08A00), modifier = Modifier.size(14.dp))
-                Text("${challenge.points} pts", style = MaterialTheme.typography.labelSmall, color = Color(0xFFE08A00))
+                Icon(Icons.Default.Star, contentDescription = null, tint = StarGold, modifier = Modifier.size(14.dp))
+                Text("${challenge.points} pts", style = MaterialTheme.typography.labelSmall, color = StarGold)
             }
         }
         Spacer(Modifier.height(4.dp))
@@ -509,8 +564,8 @@ private fun TeamAssignmentRow(team: Team, challenge: Challenge) {
             Text(challenge.title, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-            Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFE08A00), modifier = Modifier.size(12.dp))
-            Text("${challenge.points}", style = MaterialTheme.typography.labelSmall, color = Color(0xFFE08A00))
+            Icon(Icons.Default.Star, contentDescription = null, tint = StarGold, modifier = Modifier.size(12.dp))
+            Text("${challenge.points}", style = MaterialTheme.typography.labelSmall, color = StarGold)
         }
     }
 }
@@ -526,32 +581,115 @@ fun OperatorSettingsScreen(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    Column(
+    LazyColumn(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Text(stringResource(R.string.label_settings), style = MaterialTheme.typography.titleLarge)
-        Text("${stringResource(R.string.label_game)}: ${gameName ?: "-"}")
-        Text("${stringResource(R.string.label_status)}: ${gameStatus ?: "-"}")
-        Text("${stringResource(R.string.label_language)}: ${currentLanguage.uppercase()}")
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("en", "pt", "de").forEach { lang ->
-                Button(onClick = { onLanguageChanged(lang) }) {
-                    Text(lang.uppercase())
+        item {
+            Text(
+                stringResource(R.string.label_settings),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+
+        // Language section
+        item {
+            OperatorSettingsSection(title = stringResource(R.string.label_language)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("en" to "English", "pt" to "Portugues", "de" to "Deutsch").forEach { (code, label) ->
+                        val isSelected = code == currentLanguage
+                        if (isSelected) {
+                            Button(onClick = {}) { Text(label) }
+                        } else {
+                            TextButton(onClick = { onLanguageChanged(code) }) { Text(label) }
+                        }
+                    }
                 }
             }
         }
-        Button(
-            onClick = {
-                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_POLICY_URL)))
-            },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(stringResource(R.string.action_open_privacy_policy))
+
+        // Game info section
+        item {
+            OperatorSettingsSection(title = stringResource(R.string.label_current_game)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(stringResource(R.string.label_game))
+                    Text(gameName ?: "-", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(stringResource(R.string.label_status))
+                    Text(
+                        gameStatus?.replaceFirstChar { it.uppercase() } ?: "-",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
         }
-        Button(onClick = onSwitchGame) { Text(stringResource(R.string.action_switch_game)) }
-        Button(onClick = onLogout) { Text(stringResource(R.string.action_logout)) }
+
+        // Privacy section
+        item {
+            OperatorSettingsSection(title = stringResource(R.string.label_privacy)) {
+                TextButton(
+                    onClick = {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_POLICY_URL)))
+                    },
+                ) {
+                    Text(stringResource(R.string.action_open_privacy_policy))
+                }
+            }
+        }
+
+        // Actions section
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                androidx.compose.material3.OutlinedButton(
+                    onClick = onSwitchGame,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.size(8.dp))
+                    Text(stringResource(R.string.action_switch_game))
+                }
+                TextButton(
+                    onClick = onLogout,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error,
+                    ),
+                ) {
+                    Text(stringResource(R.string.action_logout))
+                }
+            }
+        }
+
+        item { Spacer(Modifier.height(16.dp)) }
+    }
+}
+
+@Composable
+private fun OperatorSettingsSection(
+    title: String,
+    content: @Composable () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                shape = MaterialTheme.shapes.medium,
+            )
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+        content()
     }
 }

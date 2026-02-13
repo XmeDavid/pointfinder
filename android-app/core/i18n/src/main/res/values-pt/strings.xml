@@ -26,6 +26,7 @@
     <string name="action_switch_game">Trocar jogo</string>
     <string name="action_open_privacy_policy">Ver Política de Privacidade</string>
     <string name="action_delete_account">Eliminar Conta</string>
+    <string name="action_remove">Remover</string>
 
     <!-- Labels -->
     <string name="label_welcome">PointFinder</string>
@@ -92,6 +93,11 @@
     <string name="label_answer_type">Resposta: %1$s</string>
     <string name="label_pts">%1$d pts</string>
     <string name="label_deleting_account">A eliminar conta...</string>
+    <string name="label_assignment_random_not_started">Atribuição aleatória não iniciada</string>
+    <string name="label_assignment_fixed">Atribuição de desafio fixo</string>
+    <string name="label_assignment_per_team">Atribuições por equipe (%1$d)</string>
+    <string name="label_no_games_description">Não tens jogos ainda. Puxa para atualizar ou verifica mais tarde.</string>
+
     <!-- Permission Disclosure -->
     <string name="disclosure_title">Antes de Começar</string>
     <string name="disclosure_subtitle">O PointFinder precisa de algumas permissões para a tua experiência de jogo.</string>
@@ -113,6 +119,7 @@
     <string name="hint_offline_sync">Offline: os dados serão sincronizados quando voltar conexão.</string>
     <string name="hint_photo_required_online">Envios de foto exigem internet.</string>
     <string name="hint_presence_required">Presença NFC obrigatória antes do envio.</string>
+    <string name="hint_nfc_hold_near">Aproxime uma tag NFC do dispositivo para gravar a base.</string>
 
     <!-- Status -->
     <string name="status_not_visited">Não visitado</string>
@@ -121,6 +128,9 @@
     <string name="status_completed">Concluído</string>
     <string name="status_rejected">Rejeitado</string>
 
+    <!-- Status messages -->
+    <string name="success_nfc_written">NFC gravado e associado com sucesso.</string>
+
     <!-- Errors -->
     <string name="error_generic">Algo deu errado.</string>
     <string name="error_invalid_nfc">Payload NFC inválido.</string>
@@ -128,4 +138,10 @@
     <string name="error_presence_wrong_base">A tag NFC não corresponde a esta base.</string>
     <string name="error_camera_denied">Permissão da câmera negada.</string>
     <string name="error_nfc_unavailable">NFC não disponível neste dispositivo.</string>
+    <string name="error_scan_nfc_first">Leia uma tag NFC de base primeiro.</string>
+    <string name="error_answer_required">Forneça uma resposta.</string>
+    <string name="error_photo_required">Foto é obrigatória.</string>
+    <string name="error_nfc_write_failed">Falha ao gravar NFC.</string>
+    <string name="error_nfc_link_failed">NFC gravado mas associação falhou: %1$s</string>
+    <string name="error_network_unavailable">Rede indisponível. Verifique sua conexão.</string>
 </resources>

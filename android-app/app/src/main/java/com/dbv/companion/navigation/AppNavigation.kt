@@ -114,16 +114,28 @@ fun AppNavigation(
     ) {
         composable(Routes.WELCOME) {
             WelcomeScreen(
-                onJoinGame = { navController.navigate(Routes.PLAYER_JOIN) },
-                onOperatorLogin = { navController.navigate(Routes.OPERATOR_LOGIN) },
+                onJoinGame = {
+                    sessionViewModel.clearError()
+                    navController.navigate(Routes.PLAYER_JOIN)
+                },
+                onOperatorLogin = {
+                    sessionViewModel.clearError()
+                    navController.navigate(Routes.OPERATOR_LOGIN)
+                },
             )
         }
 
         composable(Routes.PLAYER_JOIN) {
             PlayerJoinScreen(
                 joinCode = joinCode,
-                onJoinCodeChange = { joinCode = it },
-                onContinue = { navController.navigate(Routes.PLAYER_NAME) },
+                onJoinCodeChange = {
+                    joinCode = it
+                    sessionViewModel.clearError()
+                },
+                onContinue = {
+                    sessionViewModel.clearError()
+                    navController.navigate(Routes.PLAYER_NAME)
+                },
                 onScanQr = {},
                 cameraDenied = false,
             )
@@ -132,9 +144,13 @@ fun AppNavigation(
         composable(Routes.PLAYER_NAME) {
             PlayerNameScreen(
                 name = displayName,
-                onNameChange = { displayName = it },
+                onNameChange = {
+                    displayName = it
+                    sessionViewModel.clearError()
+                },
                 onJoin = { sessionViewModel.joinPlayer(joinCode, displayName) },
                 isLoading = sessionState.isLoading,
+                errorMessage = sessionState.errorMessage,
             )
         }
 
@@ -142,10 +158,17 @@ fun AppNavigation(
             OperatorLoginScreen(
                 email = operatorEmail,
                 password = operatorPassword,
-                onEmailChange = { operatorEmail = it },
-                onPasswordChange = { operatorPassword = it },
+                onEmailChange = {
+                    operatorEmail = it
+                    sessionViewModel.clearError()
+                },
+                onPasswordChange = {
+                    operatorPassword = it
+                    sessionViewModel.clearError()
+                },
                 onSignIn = { sessionViewModel.loginOperator(operatorEmail, operatorPassword) },
                 isLoading = sessionState.isLoading,
+                errorMessage = sessionState.errorMessage,
             )
         }
 
@@ -402,6 +425,7 @@ private fun PlayerRootScreen(
                     isDeletingAccount = sessionState.isDeletingAccount,
                     onDeleteAccount = sessionViewModel::deletePlayerAccount,
                     onLogout = sessionViewModel::logout,
+                    errorMessage = sessionState.errorMessage,
                 )
             }
         }
@@ -447,6 +471,8 @@ private fun OperatorHomeRoot(
         },
         onLogout = sessionViewModel::logout,
         onRefresh = viewModel::loadGames,
+        isLoading = state.isLoading,
+        errorMessage = state.errorMessage,
     )
 }
 

@@ -84,6 +84,14 @@ enum class PlayerTab {
 
 private const val PRIVACY_POLICY_URL = "https://desbravadores.dev/privacy/"
 
+// Semantic color constants for status, accents, and indicators
+private val StatusCheckedIn = Color(0xFF1565C0)
+private val StatusCompleted = Color(0xFF2E7D32)
+private val StatusSubmitted = Color(0xFFE08A00)
+private val StatusRejected = Color(0xFFD32F2F)
+private val StarGold = Color(0xFFE08A00)
+private val OfflineOrange = Color(0xFFE08A00)
+
 @Composable
 fun PlayerHomeScaffold(
     selectedTab: PlayerTab,
@@ -97,7 +105,7 @@ fun PlayerHomeScaffold(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFFE08A00))
+                        .background(OfflineOrange)
                         .padding(8.dp),
                 ) {
                     Text(
@@ -192,9 +200,9 @@ fun PlayerMapScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             LegendDot(color = Color.Gray, label = stringResource(R.string.status_not_visited))
-            LegendDot(color = Color(0xFF1565C0), label = stringResource(R.string.status_checked_in))
-            LegendDot(color = Color(0xFFE08A00), label = stringResource(R.string.status_submitted))
-            LegendDot(color = Color(0xFF2E7D32), label = stringResource(R.string.status_completed))
+            LegendDot(color = StatusCheckedIn, label = stringResource(R.string.status_checked_in))
+            LegendDot(color = StatusSubmitted, label = stringResource(R.string.status_submitted))
+            LegendDot(color = StatusCompleted, label = stringResource(R.string.status_completed))
         }
 
         Button(
@@ -224,10 +232,10 @@ fun BaseDetailBottomSheet(
     val status = baseProgress.baseStatus()
     val statusColor = when (status) {
         BaseStatus.NOT_VISITED -> Color.Gray
-        BaseStatus.CHECKED_IN -> Color(0xFF1565C0)
-        BaseStatus.SUBMITTED -> Color(0xFFE08A00)
-        BaseStatus.COMPLETED -> Color(0xFF2E7D32)
-        BaseStatus.REJECTED -> Color(0xFFD32F2F)
+        BaseStatus.CHECKED_IN -> StatusCheckedIn
+        BaseStatus.SUBMITTED -> StatusSubmitted
+        BaseStatus.COMPLETED -> StatusCompleted
+        BaseStatus.REJECTED -> StatusRejected
     }
     val statusIcon = when (status) {
         BaseStatus.NOT_VISITED -> Icons.Default.LocationOn
@@ -257,8 +265,8 @@ fun BaseDetailBottomSheet(
                 }
                 if (challenge != null) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFE08A00), modifier = Modifier.size(16.dp))
-                        Text("${challenge.points} pts", style = MaterialTheme.typography.labelMedium, color = Color(0xFFE08A00))
+                        Icon(Icons.Default.Star, contentDescription = null, tint = StarGold, modifier = Modifier.size(16.dp))
+                        Text("${challenge.points} pts", style = MaterialTheme.typography.labelMedium, color = StarGold)
                     }
                 }
             }
@@ -276,7 +284,7 @@ fun BaseDetailBottomSheet(
                     Button(
                         onClick = onCheckIn,
                         modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0)),
+                        colors = ButtonDefaults.buttonColors(containerColor = StatusCheckedIn),
                     ) {
                         Icon(Icons.Default.LocationOn, contentDescription = null)
                         Spacer(Modifier.size(8.dp))
@@ -287,35 +295,35 @@ fun BaseDetailBottomSheet(
                     Button(
                         onClick = onSolve,
                         modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0)),
+                        colors = ButtonDefaults.buttonColors(containerColor = StatusCheckedIn),
                     ) { Text(stringResource(R.string.action_solve_challenge)) }
                 }
                 BaseStatus.SUBMITTED -> {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color(0xFFE08A00).copy(alpha = 0.12f), shape = MaterialTheme.shapes.small)
+                            .background(StatusSubmitted.copy(alpha = 0.12f), shape = MaterialTheme.shapes.small)
                             .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center,
                     ) {
-                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFFE08A00), modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = StatusSubmitted, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.size(8.dp))
-                        Text(stringResource(R.string.label_awaiting_review), color = Color(0xFFE08A00), fontWeight = FontWeight.Medium)
+                        Text(stringResource(R.string.label_awaiting_review), color = StatusSubmitted, fontWeight = FontWeight.Medium)
                     }
                 }
                 BaseStatus.COMPLETED -> {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color(0xFF2E7D32).copy(alpha = 0.12f), shape = MaterialTheme.shapes.small)
+                            .background(StatusCompleted.copy(alpha = 0.12f), shape = MaterialTheme.shapes.small)
                             .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center,
                     ) {
-                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF2E7D32), modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = StatusCompleted, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.size(8.dp))
-                        Text(stringResource(R.string.status_completed), color = Color(0xFF2E7D32), fontWeight = FontWeight.Medium)
+                        Text(stringResource(R.string.status_completed), color = StatusCompleted, fontWeight = FontWeight.Medium)
                     }
                 }
             }
@@ -359,12 +367,12 @@ fun CheckInScreen(
             Box(
                 modifier = Modifier
                     .size(160.dp)
-                    .background(Color(0x1A16A34A), shape = MaterialTheme.shapes.extraLarge),
+                    .background(StatusCompleted.copy(alpha = 0.10f), shape = MaterialTheme.shapes.extraLarge),
             )
             Box(
                 modifier = Modifier
                     .size(120.dp)
-                    .background(Color(0x3316A34A), shape = MaterialTheme.shapes.extraLarge),
+                    .background(StatusCompleted.copy(alpha = 0.20f), shape = MaterialTheme.shapes.extraLarge),
             )
             Icon(Icons.Default.LocationOn, contentDescription = null, modifier = Modifier.size(52.dp), tint = MaterialTheme.colorScheme.primary)
         }
@@ -379,7 +387,7 @@ fun CheckInScreen(
         Spacer(Modifier.height(16.dp))
         if (pendingActionsCount > 0) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFFE08A00))
+                Icon(Icons.Default.CheckCircle, contentDescription = null, tint = StatusSubmitted)
                 val label = if (pendingActionsCount == 1) {
                     stringResource(R.string.label_pending_sync_one, pendingActionsCount)
                 } else {
@@ -420,7 +428,7 @@ fun BaseCheckInDetailScreen(
         Text(stringResource(R.string.label_checked_in_at_base, response.baseName), style = MaterialTheme.typography.titleLarge)
         if (isOffline) {
             Spacer(Modifier.height(8.dp))
-            Text(stringResource(R.string.hint_offline_sync), color = Color(0xFFE08A00))
+            Text(stringResource(R.string.hint_offline_sync), color = OfflineOrange)
         }
         Spacer(Modifier.height(12.dp))
         val challenge = response.challenge
@@ -498,7 +506,7 @@ fun SolveScreen(
                         contentScale = ContentScale.Crop,
                     )
                     TextButton(onClick = onClearPhoto) {
-                        Text("Remove", color = Color.White)
+                        Text(stringResource(R.string.action_remove), color = Color.White)
                     }
                 }
                 Spacer(Modifier.height(8.dp))
@@ -587,6 +595,7 @@ fun PlayerSettingsScreen(
     isDeletingAccount: Boolean,
     onDeleteAccount: () -> Unit,
     onLogout: () -> Unit,
+    errorMessage: String? = null,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -600,99 +609,141 @@ fun PlayerSettingsScreen(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        item { Text(stringResource(R.string.label_settings), style = MaterialTheme.typography.titleLarge) }
         item {
-            Text(stringResource(R.string.label_current_game), style = MaterialTheme.typography.titleMedium)
-            SettingValueRow(label = stringResource(R.string.label_game), value = gameName ?: "-")
-            SettingValueRow(label = stringResource(R.string.label_status), value = gameStatus?.replaceFirstChar { it.uppercase() } ?: "-")
+            Text(
+                stringResource(R.string.label_settings),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+            )
         }
+
+        // Language (first, matching iOS)
         item {
-            Text(stringResource(R.string.label_your_team), style = MaterialTheme.typography.titleMedium)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(stringResource(R.string.label_team))
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Box(
-                        modifier = Modifier
-                            .size(12.dp)
-                            .clip(CircleShape)
-                            .background(teamDotColor),
-                    )
-                    Text(teamName ?: "-", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-        }
-        item {
-            Text(stringResource(R.string.label_your_profile), style = MaterialTheme.typography.titleMedium)
-            SettingValueRow(label = stringResource(R.string.label_name), value = displayName ?: "-")
-        }
-        item {
-            Text(stringResource(R.string.label_progress), style = MaterialTheme.typography.titleMedium)
-            SettingValueRow(label = stringResource(R.string.label_total_bases), value = progress.size.toString())
-            SettingValueRow(label = stringResource(R.string.status_completed), value = completedCount.toString(), valueColor = Color(0xFF2E7D32))
-            SettingValueRow(label = stringResource(R.string.status_checked_in), value = checkedInCount.toString(), valueColor = Color(0xFF1565C0))
-            SettingValueRow(label = stringResource(R.string.status_submitted), value = pendingReviewCount.toString(), valueColor = Color(0xFFE08A00))
-        }
-        item {
-            Text(stringResource(R.string.label_device), style = MaterialTheme.typography.titleMedium)
-            SettingValueRow(label = stringResource(R.string.label_device_id), value = stringResource(R.string.label_device_id_short, deviceId.take(8)))
-        }
-        item { SettingValueRow(label = stringResource(R.string.label_pending_actions), value = pendingActionsCount.toString()) }
-        item {
-            Text(stringResource(R.string.label_language), style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("en", "pt", "de").forEach { lang ->
-                    TextButton(onClick = { onLanguageChanged(lang) }) {
-                        Text(
-                            text = lang.uppercase(),
-                            fontWeight = if (lang == currentLanguage) FontWeight.Bold else FontWeight.Normal,
-                        )
+            SettingsSection(title = stringResource(R.string.label_language)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("en" to "English", "pt" to "Portugues", "de" to "Deutsch").forEach { (code, label) ->
+                        val isSelected = code == currentLanguage
+                        if (isSelected) {
+                            Button(onClick = {}) {
+                                Text(label)
+                            }
+                        } else {
+                            TextButton(onClick = { onLanguageChanged(code) }) {
+                                Text(label)
+                            }
+                        }
                     }
                 }
             }
         }
+
+        // Current game
         item {
-            Text(stringResource(R.string.label_privacy), style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
-            Button(
-                onClick = {
-                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_POLICY_URL)))
-                },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(stringResource(R.string.action_open_privacy_policy))
+            SettingsSection(title = stringResource(R.string.label_current_game)) {
+                SettingValueRow(label = stringResource(R.string.label_game), value = gameName ?: "-")
+                SettingValueRow(label = stringResource(R.string.label_status), value = gameStatus?.replaceFirstChar { it.uppercase() } ?: "-")
             }
         }
+
+        // Team
         item {
-            Button(onClick = onLogout, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.action_leave_game))
+            SettingsSection(title = stringResource(R.string.label_your_team)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(stringResource(R.string.label_team))
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .clip(CircleShape)
+                                .background(teamDotColor),
+                        )
+                        Text(teamName ?: "-", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
             }
         }
+
+        // Profile
         item {
-            Button(
-                onClick = { showDeleteDialog = true },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isDeletingAccount,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error,
-                    contentColor = MaterialTheme.colorScheme.onError,
-                ),
-            ) {
-                Text(
-                    if (isDeletingAccount) {
-                        stringResource(R.string.label_deleting_account)
-                    } else {
-                        stringResource(R.string.action_delete_account)
+            SettingsSection(title = stringResource(R.string.label_your_profile)) {
+                SettingValueRow(label = stringResource(R.string.label_name), value = displayName ?: "-")
+            }
+        }
+
+        // Progress
+        item {
+            SettingsSection(title = stringResource(R.string.label_progress)) {
+                SettingValueRow(label = stringResource(R.string.label_total_bases), value = progress.size.toString())
+                SettingValueRow(label = stringResource(R.string.status_completed), value = completedCount.toString(), valueColor = StatusCompleted)
+                SettingValueRow(label = stringResource(R.string.status_checked_in), value = checkedInCount.toString(), valueColor = StatusCheckedIn)
+                SettingValueRow(label = stringResource(R.string.status_submitted), value = pendingReviewCount.toString(), valueColor = StatusSubmitted)
+            }
+        }
+
+        // Device + pending
+        item {
+            SettingsSection(title = stringResource(R.string.label_device)) {
+                SettingValueRow(label = stringResource(R.string.label_device_id), value = stringResource(R.string.label_device_id_short, deviceId.take(8)))
+                SettingValueRow(label = stringResource(R.string.label_pending_actions), value = pendingActionsCount.toString())
+            }
+        }
+
+        // Privacy
+        item {
+            SettingsSection(title = stringResource(R.string.label_privacy)) {
+                TextButton(
+                    onClick = {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_POLICY_URL)))
                     },
+                ) {
+                    Text(stringResource(R.string.action_open_privacy_policy))
+                }
+            }
+        }
+
+        // Error display
+        if (!errorMessage.isNullOrBlank()) {
+            item {
+                Text(
+                    errorMessage,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
                 )
             }
         }
+
+        // Account actions
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onLogout, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.action_leave_game))
+                }
+                TextButton(
+                    onClick = { showDeleteDialog = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isDeletingAccount,
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error,
+                    ),
+                ) {
+                    Text(
+                        if (isDeletingAccount) {
+                            stringResource(R.string.label_deleting_account)
+                        } else {
+                            stringResource(R.string.action_delete_account)
+                        },
+                    )
+                }
+            }
+        }
+
+        item { Spacer(Modifier.height(16.dp)) }
     }
 
     if (showDeleteDialog) {
@@ -716,6 +767,26 @@ fun PlayerSettingsScreen(
                 }
             },
         )
+    }
+}
+
+@Composable
+private fun SettingsSection(
+    title: String,
+    content: @Composable () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                shape = MaterialTheme.shapes.medium,
+            )
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+        content()
     }
 }
 

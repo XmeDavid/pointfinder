@@ -12,6 +12,7 @@ import com.dbv.companion.core.model.AuthType
 import com.dbv.companion.core.platform.DeviceIdProvider
 import com.dbv.companion.core.platform.NetworkMonitor
 import com.dbv.companion.core.platform.PlayerLocationService
+import com.dbv.companion.core.network.ApiErrorParser
 import com.dbv.companion.core.platform.PushTokenProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -104,7 +105,9 @@ class AppSessionViewModel @Inject constructor(
 
     fun joinPlayer(joinCode: String, displayName: String) {
         if (joinCode.isBlank() || displayName.isBlank()) {
-            _state.value = _state.value.copy(errorMessage = "Please fill all required fields.")
+            _state.value = _state.value.copy(
+                errorMessage = context.getString(com.dbv.companion.core.i18n.R.string.error_missing_fields),
+            )
             return
         }
         viewModelScope.launch {
@@ -123,14 +126,19 @@ class AppSessionViewModel @Inject constructor(
                     registerPushTokenIfPossible()
                 }
             }.onFailure { err ->
-                _state.value = _state.value.copy(isLoading = false, errorMessage = err.message)
+                _state.value = _state.value.copy(
+                    isLoading = false,
+                    errorMessage = ApiErrorParser.extractMessage(err),
+                )
             }
         }
     }
 
     fun loginOperator(email: String, password: String) {
         if (email.isBlank() || password.isBlank()) {
-            _state.value = _state.value.copy(errorMessage = "Please fill all required fields.")
+            _state.value = _state.value.copy(
+                errorMessage = context.getString(com.dbv.companion.core.i18n.R.string.error_missing_fields),
+            )
             return
         }
         viewModelScope.launch {
@@ -140,7 +148,10 @@ class AppSessionViewModel @Inject constructor(
             }.onSuccess { auth ->
                 _state.value = _state.value.copy(authType = auth, isLoading = false)
             }.onFailure { err ->
-                _state.value = _state.value.copy(isLoading = false, errorMessage = err.message)
+                _state.value = _state.value.copy(
+                    isLoading = false,
+                    errorMessage = ApiErrorParser.extractMessage(err),
+                )
             }
         }
     }
@@ -177,7 +188,7 @@ class AppSessionViewModel @Inject constructor(
             }.onFailure { err ->
                 _state.value = _state.value.copy(
                     isDeletingAccount = false,
-                    errorMessage = err.message,
+                    errorMessage = ApiErrorParser.extractMessage(err),
                 )
             }
         }

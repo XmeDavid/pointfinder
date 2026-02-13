@@ -1,5 +1,6 @@
 package com.dbv.companion.session
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dbv.companion.core.data.repo.PlayerRepository
@@ -7,9 +8,11 @@ import com.dbv.companion.core.model.AuthType
 import com.dbv.companion.core.model.BaseProgress
 import com.dbv.companion.core.model.CheckInResponse
 import com.dbv.companion.core.model.SubmissionResponse
+import com.dbv.companion.core.network.ApiErrorParser
 import com.dbv.companion.core.platform.NfcEventBus
 import com.dbv.companion.core.platform.PlayerLocationService
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,9 +42,13 @@ class PlayerViewModel @Inject constructor(
     private val playerRepository: PlayerRepository,
     private val nfcEventBus: NfcEventBus,
     private val locationService: PlayerLocationService,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
     private val _state = MutableStateFlow(PlayerState())
     val state: StateFlow<PlayerState> = _state.asStateFlow()
+
+    private fun str(resId: Int) = context.getString(resId)
+    private val R get() = com.dbv.companion.core.i18n.R
 
     init {
         viewModelScope.launch {
@@ -61,7 +68,10 @@ class PlayerViewModel @Inject constructor(
             }.onSuccess { progress ->
                 _state.value = _state.value.copy(isLoading = false, progress = progress)
             }.onFailure { err ->
-                _state.value = _state.value.copy(isLoading = false, solveError = err.message)
+                _state.value = _state.value.copy(
+                    isLoading = false,
+                    solveError = ApiErrorParser.extractMessage(err),
+                )
             }
         }
     }
@@ -96,7 +106,9 @@ class PlayerViewModel @Inject constructor(
                 // Send location immediately after check-in (matches iOS behavior)
                 launch { locationService.sendLocationNow() }
             }.onFailure { err ->
-                _state.value = _state.value.copy(scanError = err.message ?: "Check-in failed")
+                _state.value = _state.value.copy(
+                    scanError = ApiErrorParser.extractMessage(err),
+                )
             }
         }
     }
@@ -121,14 +133,14 @@ class PlayerViewModel @Inject constructor(
         if (scannedBaseId == null) {
             _state.value = _state.value.copy(
                 presenceVerified = false,
-                solveError = "Invalid NFC payload.",
+                solveError = str(R.string.error_invalid_nfc),
             )
             return
         }
         if (scannedBaseId != expectedBaseId) {
             _state.value = _state.value.copy(
                 presenceVerified = false,
-                solveError = "NFC tag does not match this base.",
+                solveError = str(R.string.error_presence_wrong_base),
             )
             return
         }
@@ -150,7 +162,7 @@ class PlayerViewModel @Inject constructor(
     fun checkInFromLatestScan(auth: AuthType.Player, online: Boolean) {
         val baseId = _state.value.lastScannedBaseId
         if (baseId.isNullOrBlank()) {
-            _state.value = _state.value.copy(scanError = "Scan a base NFC tag first.")
+            _state.value = _state.value.copy(scanError = str(R.string.error_scan_nfc_first))
             return
         }
         startCheckIn(auth, baseId, online)
@@ -164,7 +176,7 @@ class PlayerViewModel @Inject constructor(
     ) {
         val answer = _state.value.answerText.trim()
         if (answer.isBlank()) {
-            _state.value = _state.value.copy(solveError = "Please provide an answer.")
+            _state.value = _state.value.copy(solveError = str(R.string.error_answer_required))
             return
         }
         viewModelScope.launch {
@@ -181,7 +193,9 @@ class PlayerViewModel @Inject constructor(
                 // Send location immediately after submission (matches iOS behavior)
                 launch { locationService.sendLocationNow() }
             }.onFailure { err ->
-                _state.value = _state.value.copy(solveError = err.message ?: "Submit failed")
+                _state.value = _state.value.copy(
+                    solveError = ApiErrorParser.extractMessage(err),
+                )
             }
         }
     }
@@ -195,11 +209,11 @@ class PlayerViewModel @Inject constructor(
         online: Boolean,
     ) {
         if (!online) {
-            _state.value = _state.value.copy(solveError = "Photo submissions require internet.")
+            _state.value = _state.value.copy(solveError = str(R.string.hint_photo_required_online))
             return
         }
         if (imageBytes == null) {
-            _state.value = _state.value.copy(solveError = "Photo is required.")
+            _state.value = _state.value.copy(solveError = str(R.string.error_photo_required))
             return
         }
         viewModelScope.launch {
@@ -221,7 +235,9 @@ class PlayerViewModel @Inject constructor(
                 // Send location immediately after photo submission (matches iOS behavior)
                 launch { locationService.sendLocationNow() }
             }.onFailure { err ->
-                _state.value = _state.value.copy(solveError = err.message ?: "Photo submit failed")
+                _state.value = _state.value.copy(
+                    solveError = ApiErrorParser.extractMessage(err),
+                )
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.dbv.companion.session
 
+import android.content.Context
 import android.nfc.Tag
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,10 +12,12 @@ import com.dbv.companion.core.model.Game
 import com.dbv.companion.core.model.Team
 import com.dbv.companion.core.model.TeamBaseProgressResponse
 import com.dbv.companion.core.model.TeamLocationResponse
+import com.dbv.companion.core.network.ApiErrorParser
 import com.dbv.companion.core.platform.NfcEventBus
 import com.dbv.companion.core.platform.NfcService
 import com.dbv.companion.feature.operator.OperatorTab
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -36,7 +39,7 @@ data class OperatorState(
     val challenges: List<Challenge> = emptyList(),
     val assignments: List<Assignment> = emptyList(),
     val selectedBase: Base? = null,
-    val assignmentSummary: String = "Unknown",
+    val assignmentSummary: String = "",
     val awaitingNfcWrite: Boolean = false,
     val writeStatus: String? = null,
     val writeSuccess: Boolean? = null,
@@ -48,11 +51,16 @@ class OperatorViewModel @Inject constructor(
     private val operatorRepository: OperatorRepository,
     private val nfcService: NfcService,
     private val nfcEventBus: NfcEventBus,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
     private val _state = MutableStateFlow(OperatorState())
     val state: StateFlow<OperatorState> = _state.asStateFlow()
 
     private var pollingJob: Job? = null
+
+    private fun str(resId: Int) = context.getString(resId)
+    private fun str(resId: Int, vararg args: Any) = context.getString(resId, *args)
+    private val R get() = com.dbv.companion.core.i18n.R
 
     init {
         viewModelScope.launch {
@@ -72,7 +80,10 @@ class OperatorViewModel @Inject constructor(
             }.onSuccess { games ->
                 _state.value = _state.value.copy(isLoading = false, games = games)
             }.onFailure { err ->
-                _state.value = _state.value.copy(isLoading = false, errorMessage = err.message)
+                _state.value = _state.value.copy(
+                    isLoading = false,
+                    errorMessage = ApiErrorParser.extractMessage(err),
+                )
             }
         }
     }
@@ -140,7 +151,9 @@ class OperatorViewModel @Inject constructor(
                     baseProgress = progress,
                 )
             }.onFailure { err ->
-                _state.value = _state.value.copy(errorMessage = err.message)
+                _state.value = _state.value.copy(
+                    errorMessage = ApiErrorParser.extractMessage(err),
+                )
             }
         }
     }
@@ -152,9 +165,9 @@ class OperatorViewModel @Inject constructor(
                 val assignments = operatorRepository.gameAssignments(game.id)
                 val matching = assignments.filter { it.baseId == base.id }
                 when {
-                    matching.isEmpty() -> "Random assignment not started"
-                    matching.any { it.teamId == null } -> "Fixed challenge assignment"
-                    else -> "Per-team assignments (${matching.size})"
+                    matching.isEmpty() -> str(R.string.label_assignment_random_not_started)
+                    matching.any { it.teamId == null } -> str(R.string.label_assignment_fixed)
+                    else -> str(R.string.label_assignment_per_team, matching.size)
                 }
             }.onSuccess { summary ->
                 _state.value = _state.value.copy(
@@ -167,7 +180,7 @@ class OperatorViewModel @Inject constructor(
             }.onFailure {
                 _state.value = _state.value.copy(
                     selectedBase = base,
-                    assignmentSummary = "Unknown",
+                    assignmentSummary = str(R.string.label_status),
                     awaitingNfcWrite = false,
                     writeSuccess = null,
                 )
@@ -187,7 +200,7 @@ class OperatorViewModel @Inject constructor(
     fun beginWriteNfc() {
         _state.value = _state.value.copy(
             awaitingNfcWrite = true,
-            writeStatus = "Hold an NFC tag near the device to write base payload.",
+            writeStatus = str(R.string.hint_nfc_hold_near),
             writeSuccess = null,
         )
     }
@@ -204,14 +217,14 @@ class OperatorViewModel @Inject constructor(
                 }.onSuccess {
                     _state.value = _state.value.copy(
                         awaitingNfcWrite = false,
-                        writeStatus = "NFC written and linked successfully",
+                        writeStatus = str(R.string.success_nfc_written),
                         writeSuccess = true,
                     )
                     refreshSelectedGameData()
                 }.onFailure { err ->
                     _state.value = _state.value.copy(
                         awaitingNfcWrite = false,
-                        writeStatus = "NFC written but link failed: ${err.message}",
+                        writeStatus = str(R.string.error_nfc_link_failed, ApiErrorParser.extractMessage(err)),
                         writeSuccess = false,
                     )
                 }
@@ -219,7 +232,7 @@ class OperatorViewModel @Inject constructor(
         } else {
             _state.value = _state.value.copy(
                 awaitingNfcWrite = false,
-                writeStatus = "NFC write failed: ${result.exceptionOrNull()?.message}",
+                writeStatus = str(R.string.error_nfc_write_failed),
                 writeSuccess = false,
             )
         }
