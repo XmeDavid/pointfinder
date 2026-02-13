@@ -65,10 +65,10 @@ services:
     build:
       context: ./web-admin
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: /api
+        VITE_WS_URL: /ws
     container_name: scoutmission-web
-    environment:
-      VITE_API_URL: /api
-      VITE_WS_URL: /ws
     volumes:
       - frontend_dist:/app/dist
     healthcheck:

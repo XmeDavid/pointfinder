@@ -3,7 +3,7 @@ import { persist } from "zustand/middleware";
 import type { User } from "@/types";
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 interface AuthState {
   user: User | null;
