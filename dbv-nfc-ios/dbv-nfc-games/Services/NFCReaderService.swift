@@ -136,21 +136,21 @@ extension NFCReaderService: NFCTagReaderSessionDelegate {
         }
     }
 
-    private func processRecord(_ record: NFCNDEFPayload, session: NFCTagReaderSession) {
-        let payload = record.payload
+    private static let tagURLPrefix = "https://desbravadores.dev/tag/"
 
-        // Try to parse as JSON with baseId
+    private func processRecord(_ record: NFCNDEFPayload, session: NFCTagReaderSession) {
+        // Try URL record first (new format: https://desbravadores.dev/tag/{baseId})
+        if let baseId = extractBaseIdFromURI(record) {
+            succeedWith(baseId: baseId, session: session)
+            return
+        }
+
+        // Try to parse as JSON with baseId (legacy MIME format)
+        let payload = record.payload
         if let json = try? JSONSerialization.jsonObject(with: payload) as? [String: Any],
            let baseIdString = json["baseId"] as? String,
            let baseId = UUID(uuidString: baseIdString) {
-            session.alertMessage = Translations.string("nfc.readSuccess")
-            session.invalidate()
-            DispatchQueue.main.async { [weak self] in
-                self?.lastReadBaseId = baseId
-                self?.isReading = false
-                self?.session = nil
-                self?.resolveContinuation(.success(baseId))
-            }
+            succeedWith(baseId: baseId, session: session)
             return
         }
 
@@ -169,14 +169,7 @@ extension NFCReaderService: NFCTagReaderSessionDelegate {
                let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                let baseIdString = json["baseId"] as? String,
                let baseId = UUID(uuidString: baseIdString) {
-                session.alertMessage = Translations.string("nfc.readSuccess")
-                session.invalidate()
-                DispatchQueue.main.async { [weak self] in
-                    self?.lastReadBaseId = baseId
-                    self?.isReading = false
-                    self?.session = nil
-                    self?.resolveContinuation(.success(baseId))
-                }
+                succeedWith(baseId: baseId, session: session)
                 return
             }
         }
@@ -186,6 +179,27 @@ extension NFCReaderService: NFCTagReaderSessionDelegate {
             self?.isReading = false
             self?.session = nil
             self?.resolveContinuation(.failure(NFCError.invalidData))
+        }
+    }
+
+    /// Extract baseId from a well-known URI record (https://desbravadores.dev/tag/{uuid}).
+    private func extractBaseIdFromURI(_ record: NFCNDEFPayload) -> UUID? {
+        guard record.typeNameFormat == .nfcWellKnown else { return nil }
+        guard let url = record.wellKnownTypeURIPayload() else { return nil }
+        let urlString = url.absoluteString
+        guard urlString.hasPrefix(Self.tagURLPrefix) else { return nil }
+        let idString = String(urlString.dropFirst(Self.tagURLPrefix.count))
+        return UUID(uuidString: idString)
+    }
+
+    private func succeedWith(baseId: UUID, session: NFCTagReaderSession) {
+        session.alertMessage = Translations.string("nfc.readSuccess")
+        session.invalidate()
+        DispatchQueue.main.async { [weak self] in
+            self?.lastReadBaseId = baseId
+            self?.isReading = false
+            self?.session = nil
+            self?.resolveContinuation(.success(baseId))
         }
     }
 }

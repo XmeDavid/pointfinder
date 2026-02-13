@@ -12,6 +12,8 @@ final class NFCWriterService: NSObject {
     private var payloadToWrite: NFCNDEFPayload?
     private var continuation: CheckedContinuation<Void, Error>?
 
+    private static let tagURLPrefix = "https://desbravadores.dev/tag/"
+
     /// Write a base ID to an NFC tag.
     func writeBaseId(_ baseId: UUID) async throws {
         #if targetEnvironment(simulator)
@@ -21,15 +23,8 @@ final class NFCWriterService: NSObject {
             throw NFCError.notAvailable
         }
 
-        let json: [String: Any] = ["baseId": baseId.uuidString]
-        let data = try JSONSerialization.data(withJSONObject: json)
-
-        payloadToWrite = NFCNDEFPayload(
-            format: .media,
-            type: "application/json".data(using: .utf8)!,
-            identifier: Data(),
-            payload: data
-        )
+        let url = URL(string: "\(Self.tagURLPrefix)\(baseId.uuidString)")!
+        payloadToWrite = NFCNDEFPayload.wellKnownTypeURIPayload(url: url)!
 
         return try await withCheckedThrowingContinuation { continuation in
             self.continuation = continuation
