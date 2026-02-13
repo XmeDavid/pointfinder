@@ -13,6 +13,7 @@ import com.prayer.pointfinder.core.model.PlayerSubmissionRequest
 import com.prayer.pointfinder.core.model.SubmissionResponse
 import com.prayer.pointfinder.core.network.ApiFactory
 import com.prayer.pointfinder.core.network.CompanionApi
+import java.io.IOException
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -76,7 +77,7 @@ class PlayerRepository @Inject constructor(
 
     suspend fun checkIn(auth: AuthType.Player, baseId: String, online: Boolean): CheckInResult {
         if (online) {
-            runCatching {
+            try {
                 val response = api.checkIn(auth.gameId, baseId)
                 response.challenge?.let { challenge ->
                     db.challengeDao().upsert(
@@ -104,6 +105,8 @@ class PlayerRepository @Inject constructor(
                     response
                 }
                 return CheckInResult(response = enrichedResponse, queued = false)
+            } catch (_: IOException) {
+                // Network connectivity error -- fall through to offline path
             }
         }
 
@@ -147,7 +150,7 @@ class PlayerRepository @Inject constructor(
         online: Boolean,
     ): SubmitResult {
         if (online) {
-            runCatching {
+            try {
                 val response = api.submitAnswer(
                     gameId = auth.gameId,
                     request = PlayerSubmissionRequest(
@@ -160,6 +163,8 @@ class PlayerRepository @Inject constructor(
                 db.progressDao().updateStatus(auth.gameId, baseId, "submitted")
                 db.progressDao().updateSubmissionStatus(auth.gameId, baseId, "pending")
                 return SubmitResult(response = response, queued = false)
+            } catch (_: IOException) {
+                // Network connectivity error -- fall through to offline path
             }
         }
 
