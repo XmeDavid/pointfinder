@@ -52,13 +52,7 @@ fun WelcomeScreen(
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.onBackground,
             )
-            Spacer(Modifier.height(12.dp))
-            Text(
-                stringResource(R.string.label_subtitle),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(48.dp))
             Button(onClick = onJoinGame, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Default.GroupAdd, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.size(8.dp))
