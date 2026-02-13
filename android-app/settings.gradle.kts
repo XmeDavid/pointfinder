@@ -14,7 +14,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "dbv-android-companion"
+rootProject.name = "pointfinder-android"
 
 include(
     ":app",

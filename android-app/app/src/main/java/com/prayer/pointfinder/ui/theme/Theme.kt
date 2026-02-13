@@ -17,7 +17,7 @@ private val DarkColors = darkColorScheme(
 )
 
 @Composable
-fun DBVCompanionTheme(
+fun PointFinderTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {

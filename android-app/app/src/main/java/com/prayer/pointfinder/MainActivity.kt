@@ -8,7 +8,7 @@ import androidx.activity.compose.setContent
 import com.prayer.pointfinder.navigation.AppNavigation
 import com.prayer.pointfinder.core.platform.NfcEventBus
 import com.prayer.pointfinder.core.platform.NfcService
-import com.prayer.pointfinder.ui.theme.DBVCompanionTheme
+import com.prayer.pointfinder.ui.theme.PointFinderTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -23,7 +23,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            DBVCompanionTheme {
+            PointFinderTheme {
                 AppNavigation()
             }
         }

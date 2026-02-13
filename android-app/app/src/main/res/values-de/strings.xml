@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">DBV Companion</string>
+    <string name="app_name">PointFinder</string>
 
     <!-- Actions -->
     <string name="action_join_game">Spiel beitreten</string>
@@ -27,7 +27,7 @@
 
     <!-- Labels -->
     <string name="label_welcome">PointFinder</string>
-    <string name="label_subtitle">DBV Companion</string>
+    <string name="label_subtitle">PointFinder</string>
     <string name="label_join_with_qr_or_code">Mit QR oder Code beitreten</string>
     <string name="label_join_code">Beitrittscode</string>
     <string name="label_display_name">Anzeigename</string>

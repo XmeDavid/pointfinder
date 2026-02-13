@@ -8,7 +8,7 @@ Use these values consistently across App Store Connect, Google Play Console, pri
 |-------|-------|
 | Publisher / Developer name | David Simões Batista |
 | App name (iOS) | PointFinder |
-| App name (Android) | DBV Companion |
+| App name (Android) | PointFinder |
 | Bundle ID (iOS) | com.prayer.pointfinder |
 | Package name (Android) | com.prayer.pointfinder |
 

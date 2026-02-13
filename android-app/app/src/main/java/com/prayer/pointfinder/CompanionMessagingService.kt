@@ -43,20 +43,20 @@ class CompanionMessagingService : FirebaseMessagingService() {
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
-        val channelId = "dbv-companion-default"
+        val channelId = "pointfinder-default"
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (manager.getNotificationChannel(channelId) == null) {
             manager.createNotificationChannel(
                 NotificationChannel(
                     channelId,
-                    "DBV Companion",
+                    "PointFinder",
                     NotificationManager.IMPORTANCE_DEFAULT,
                 ),
             )
         }
         val notification = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle(remoteMessage.notification?.title ?: "DBV Notification")
+            .setContentTitle(remoteMessage.notification?.title ?: "PointFinder")
             .setContentText(remoteMessage.notification?.body ?: "New message")
             .setAutoCancel(true)
             .build()
