@@ -421,7 +421,10 @@ private fun PlayerRootScreen(
                         val checkInChallenge = state.activeCheckIn?.challenge
                         viewModel.setPhotoMode(checkInChallenge?.answerType == "file")
                     },
-                    onBack = { viewModel.clearCheckIn() },
+                    onBack = {
+                        viewModel.clearCheckIn()
+                        viewModel.refresh(auth, isOnline)
+                    },
                 )
             }
 

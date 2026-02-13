@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
@@ -448,6 +450,7 @@ fun BaseCheckInDetailScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(16.dp),
     ) {
         TextButton(onClick = onBack) { Text(stringResource(R.string.action_back_to_map)) }
@@ -463,6 +466,10 @@ fun BaseCheckInDetailScreen(
             Text(challenge.title, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
             Text(challenge.description)
+            if (challenge.content.isNotBlank()) {
+                Spacer(Modifier.height(8.dp))
+                HtmlContentView(html = challenge.content)
+            }
             Spacer(Modifier.height(12.dp))
             Button(onClick = { onSolve(response.baseId, challenge.id) }) {
                 Text(stringResource(R.string.action_solve_challenge))
@@ -588,10 +595,11 @@ fun SubmissionResultScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
     ) {
+        Spacer(Modifier.height(32.dp))
         Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(72.dp))
         Spacer(Modifier.height(12.dp))
         Text(stringResource(R.string.label_submission_status, submission.status), style = MaterialTheme.typography.titleLarge)
@@ -599,6 +607,14 @@ fun SubmissionResultScreen(
         if (!feedback.isNullOrBlank()) {
             Spacer(Modifier.height(8.dp))
             Text(feedback)
+        }
+        val completionContent = submission.completionContent
+        if (!completionContent.isNullOrBlank()) {
+            Spacer(Modifier.height(16.dp))
+            HtmlContentView(
+                html = completionContent,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
         Spacer(Modifier.height(16.dp))
         Button(onClick = onBack) {
