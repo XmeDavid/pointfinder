@@ -63,6 +63,7 @@ import com.prayer.pointfinder.feature.operator.OperatorMapScreen
 import com.prayer.pointfinder.feature.operator.OperatorSettingsScreen
 import com.prayer.pointfinder.feature.operator.OperatorTab
 import com.prayer.pointfinder.core.platform.NfcEventBus
+import com.prayer.pointfinder.core.platform.NfcPayloadCodec
 import com.prayer.pointfinder.feature.player.BaseCheckInDetailScreen
 import com.prayer.pointfinder.feature.player.BaseDetailBottomSheet
 import com.prayer.pointfinder.feature.player.CheckInScreen
@@ -410,7 +411,9 @@ private fun PlayerRootScreen(
                         if (state.presenceRequired) {
                             // Show NFC scan dialog; on scan, verify base match then submit
                             pendingNfcAction = { scannedBaseId ->
-                                if (scannedBaseId == baseId) {
+                                val normalizedScannedBaseId = NfcPayloadCodec.normalizeBaseId(scannedBaseId)
+                                val normalizedExpectedBaseId = NfcPayloadCodec.normalizeBaseId(baseId)
+                                if (normalizedScannedBaseId != null && normalizedScannedBaseId == normalizedExpectedBaseId) {
                                     doSubmit()
                                 } else {
                                     viewModel.setSolveError(

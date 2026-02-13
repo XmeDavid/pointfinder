@@ -40,8 +40,13 @@ class NfcService @Inject constructor(
         val messages = intent?.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)
             ?.mapNotNull { it as? NdefMessage }
             .orEmpty()
-        if (messages.isEmpty()) return null
-        return NfcPayloadCodec.parseBaseId(messages.first())
+        val parsedFromMessage = messages.firstOrNull()?.let(NfcPayloadCodec::parseBaseId)
+        if (parsedFromMessage != null) return parsedFromMessage
+
+        // Some TAG_DISCOVERED deliveries omit EXTRA_NDEF_MESSAGES.
+        @Suppress("DEPRECATION")
+        val tag = intent?.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG) ?: return null
+        return parseBaseIdFromTag(tag)
     }
 
     fun parseBaseIdFromTag(tag: Tag): String? {

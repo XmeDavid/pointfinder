@@ -3,6 +3,7 @@ package com.prayer.pointfinder.core.platform
 import android.nfc.NdefMessage
 import android.nfc.NdefRecord
 import java.nio.charset.StandardCharsets
+import java.util.UUID
 import org.json.JSONObject
 
 object NfcPayloadCodec {
@@ -17,7 +18,18 @@ object NfcPayloadCodec {
 
     fun parseBaseId(message: NdefMessage?): String? {
         val record = message?.records?.firstOrNull() ?: return null
-        return parseBaseIdFromUri(record) ?: parseBaseIdFromJson(record)
+        val parsedBaseId = parseBaseIdFromUri(record) ?: parseBaseIdFromJson(record)
+        return normalizeBaseId(parsedBaseId)
+    }
+
+    /**
+     * Canonicalize NFC IDs so comparisons are stable across platforms.
+     * UUID values are normalized to lowercase canonical form; other IDs are trimmed.
+     */
+    fun normalizeBaseId(rawBaseId: String?): String? {
+        val trimmed = rawBaseId?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+        val uuid = runCatching { UUID.fromString(trimmed) }.getOrNull()
+        return uuid?.toString() ?: trimmed
     }
 
     /** New format: URL record with path /tag/{baseId} */

@@ -11,6 +11,7 @@ import com.prayer.pointfinder.core.model.CheckInResponse
 import com.prayer.pointfinder.core.model.SubmissionResponse
 import com.prayer.pointfinder.core.network.ApiErrorParser
 import com.prayer.pointfinder.core.platform.NfcEventBus
+import com.prayer.pointfinder.core.platform.NfcPayloadCodec
 import com.prayer.pointfinder.core.platform.PlayerLocationService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -138,14 +139,16 @@ class PlayerViewModel @Inject constructor(
     }
 
     fun verifyPresence(scannedBaseId: String?, expectedBaseId: String) {
-        if (scannedBaseId == null) {
+        val normalizedScannedBaseId = NfcPayloadCodec.normalizeBaseId(scannedBaseId)
+        if (normalizedScannedBaseId == null) {
             _state.value = _state.value.copy(
                 presenceVerified = false,
                 solveError = context.getString(StringR.string.error_invalid_nfc),
             )
             return
         }
-        if (scannedBaseId != expectedBaseId) {
+        val normalizedExpectedBaseId = NfcPayloadCodec.normalizeBaseId(expectedBaseId)
+        if (normalizedScannedBaseId != normalizedExpectedBaseId) {
             _state.value = _state.value.copy(
                 presenceVerified = false,
                 solveError = context.getString(StringR.string.error_presence_wrong_base),
