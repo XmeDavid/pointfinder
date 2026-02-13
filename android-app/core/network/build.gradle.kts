@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.dbv.companion.core.network"
+    namespace = "com.prayer.pointfinder.core.network"
     compileSdk = 35
 
     defaultConfig {

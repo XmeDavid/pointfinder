@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.dbv.companion.feature.player"
+    namespace = "com.prayer.pointfinder.feature.player"
     compileSdk = 35
 
     defaultConfig {

@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.dbv.companion.core.model"
+    namespace = "com.prayer.pointfinder.core.model"
     compileSdk = 35
 
     defaultConfig {

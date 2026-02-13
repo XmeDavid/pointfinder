@@ -8,11 +8,11 @@ plugins {
 }
 
 android {
-    namespace = "com.dbv.companion"
+    namespace = "com.prayer.pointfinder"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.dbv.companion"
+        applicationId = "com.prayer.pointfinder"
         minSdk = 26
         targetSdk = 35
         versionCode = 1

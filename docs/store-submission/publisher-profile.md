@@ -10,7 +10,7 @@ Use these values consistently across App Store Connect, Google Play Console, pri
 | App name (iOS) | PointFinder |
 | App name (Android) | DBV Companion |
 | Bundle ID (iOS) | com.prayer.pointfinder |
-| Package name (Android) | com.dbv.companion |
+| Package name (Android) | com.prayer.pointfinder |
 
 ## Contact
 

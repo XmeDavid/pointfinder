@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.dbv.companion.feature.auth"
+    namespace = "com.prayer.pointfinder.feature.auth"
     compileSdk = 35
 
     defaultConfig {

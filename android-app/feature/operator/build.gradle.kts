@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.dbv.companion.feature.operator"
+    namespace = "com.prayer.pointfinder.feature.operator"
     compileSdk = 35
 
     defaultConfig {
