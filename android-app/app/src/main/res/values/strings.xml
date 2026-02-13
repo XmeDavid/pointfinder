@@ -65,6 +65,8 @@
     <string name="label_checked_in_at_base">Checked in at %1$s</string>
     <string name="label_no_challenge_details">No challenge details yet.</string>
     <string name="label_no_challenge_assigned">No challenge assigned.</string>
+    <string name="label_challenge_locked">Challenge locked</string>
+    <string name="label_challenge_locked_hint">Visit this base to unlock the challenge</string>
     <string name="label_awaiting_review">Awaiting review</string>
     <string name="label_solve_title">Solve challenge</string>
     <string name="label_presence_required">Presence verification required.</string>

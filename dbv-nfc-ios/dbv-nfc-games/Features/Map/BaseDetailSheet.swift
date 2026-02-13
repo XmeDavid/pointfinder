@@ -34,7 +34,7 @@ struct BaseDetailSheet: View {
                         Text(locale.t(status.translationKey))
                             .fontWeight(.medium)
                         Spacer()
-                        if let points = challenge?.points {
+                        if status != .notVisited, let points = challenge?.points {
                             Label("\(points) \(locale.t("common.pts"))", systemImage: "star.fill")
                                 .font(.subheadline)
                                 .foregroundStyle(.orange)
@@ -48,6 +48,23 @@ struct BaseDetailSheet: View {
                         ProgressView(locale.t("base.loadingChallenge"))
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.top, 40)
+                    } else if status == .notVisited {
+                        // Challenge locked -- player must check in first
+                        VStack(spacing: 12) {
+                            Image(systemName: "lock.fill")
+                                .font(.system(size: 48))
+                                .foregroundStyle(.secondary)
+                            Text(locale.t("base.challengeLocked"))
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.primary)
+                            Text(locale.t("base.challengeLockedHint"))
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 40)
                     } else if let challenge = challenge {
                         // Challenge content
                         VStack(alignment: .leading, spacing: 12) {
@@ -97,18 +114,6 @@ struct BaseDetailSheet: View {
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .padding()
                         }
-                    } else if status == .notVisited {
-                        VStack(spacing: 12) {
-                            Image(systemName: "mappin.and.ellipse")
-                                .font(.system(size: 48))
-                                .foregroundStyle(.secondary)
-                            Text(locale.t("base.checkInToSee"))
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                                .multilineTextAlignment(.center)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 40)
                     } else {
                         VStack(spacing: 12) {
                             Image(systemName: "exclamationmark.triangle")

@@ -65,6 +65,8 @@
     <string name="label_checked_in_at_base">Eingecheckt bei %1$s</string>
     <string name="label_no_challenge_details">Noch keine Aufgabendetails.</string>
     <string name="label_no_challenge_assigned">Keine Aufgabe zugewiesen.</string>
+    <string name="label_challenge_locked">Challenge gesperrt</string>
+    <string name="label_challenge_locked_hint">Besuche diese Station, um die Challenge freizuschalten</string>
     <string name="label_awaiting_review">Warten auf Prüfung</string>
     <string name="label_solve_title">Aufgabe lösen</string>
     <string name="label_presence_required">Präsenzprüfung erforderlich.</string>
