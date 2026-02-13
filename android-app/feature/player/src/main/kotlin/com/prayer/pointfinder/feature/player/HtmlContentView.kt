@@ -1,12 +1,15 @@
 package com.prayer.pointfinder.feature.player
 
 import android.annotation.SuppressLint
+import android.os.Handler
+import android.os.Looper
 import android.view.ViewGroup
 import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.runtime.Composable
@@ -32,14 +35,23 @@ fun HtmlContentView(
 ) {
     val isDark = isSystemInDarkTheme()
     val density = LocalDensity.current
-    var contentHeightDp by remember { mutableIntStateOf(100) }
-
+    var contentHeightDp by remember { mutableIntStateOf(0) }
     val wrappedHtml = remember(html, isDark) { wrapHtml(html, isDark) }
+
+    // Track last loaded HTML to prevent reload loops.
+    // The update block only reloads if the content actually changed.
+    val lastLoadedHtml = remember { mutableListOf("") }
+
+    val heightModifier = if (contentHeightDp > 0) {
+        Modifier.height(contentHeightDp.dp)
+    } else {
+        Modifier.heightIn(min = 50.dp)
+    }
 
     AndroidView(
         modifier = modifier
-            .heightIn(min = 50.dp)
-            .then(if (contentHeightDp > 0) Modifier.height(contentHeightDp.dp) else Modifier),
+            .fillMaxWidth()
+            .then(heightModifier),
         factory = { context ->
             WebView(context).apply {
                 layoutParams = ViewGroup.LayoutParams(
@@ -47,18 +59,19 @@ fun HtmlContentView(
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                 )
                 settings.javaScriptEnabled = true
-                settings.loadWithOverviewMode = true
-                settings.useWideViewPort = true
                 isVerticalScrollBarEnabled = false
                 isHorizontalScrollBarEnabled = false
                 setBackgroundColor(android.graphics.Color.TRANSPARENT)
 
+                val mainHandler = Handler(Looper.getMainLooper())
                 addJavascriptInterface(
                     object {
                         @JavascriptInterface
                         fun onHeightChanged(heightPx: Float) {
-                            val dp = with(density) { heightPx.toDp().value.toInt() }
-                            contentHeightDp = dp + 4 // small padding to avoid clipping
+                            val dp = with(density) { heightPx.toDp().value.toInt() + 4 }
+                            mainHandler.post {
+                                contentHeightDp = dp
+                            }
                         }
                     },
                     "AndroidBridge",
@@ -68,13 +81,9 @@ fun HtmlContentView(
                     override fun shouldOverrideUrlLoading(
                         view: WebView?,
                         request: WebResourceRequest?,
-                    ): Boolean {
-                        // Prevent link navigation
-                        return true
-                    }
+                    ): Boolean = true // Prevent link navigation
 
                     override fun onPageFinished(view: WebView?, url: String?) {
-                        // Measure content height after page loads
                         view?.evaluateJavascript(
                             "AndroidBridge.onHeightChanged(document.body.scrollHeight);",
                             null,
@@ -82,18 +91,23 @@ fun HtmlContentView(
                     }
                 }
 
+                lastLoadedHtml[0] = wrappedHtml
                 loadDataWithBaseURL(null, wrappedHtml, "text/html", "UTF-8", null)
             }
         },
         update = { webView ->
-            webView.loadDataWithBaseURL(null, wrappedHtml, "text/html", "UTF-8", null)
+            // Only reload if the HTML content actually changed.
+            // This prevents the infinite loop: height change -> recompose -> reload -> height change.
+            if (lastLoadedHtml[0] != wrappedHtml) {
+                lastLoadedHtml[0] = wrappedHtml
+                webView.loadDataWithBaseURL(null, wrappedHtml, "text/html", "UTF-8", null)
+            }
         },
     )
 }
 
 private fun wrapHtml(content: String, isDark: Boolean): String {
     val textColor = if (isDark) "#FFFFFF" else "#000000"
-    val secondaryColor = if (isDark) "#8E8E93" else "#6C6C70"
     val codeBackground = if (isDark) "#2C2C2E" else "#F2F2F7"
     val blockquoteBackground = if (isDark) "#1C1C1E" else "#F5F5F5"
     val blockquoteBorder = if (isDark) "#48484A" else "#D1D1D6"
@@ -223,14 +237,13 @@ private fun wrapHtml(content: String, isDark: Boolean): String {
         <body>
             $content
             <script>
-                window.onload = function() {
+                function reportHeight() {
                     AndroidBridge.onHeightChanged(document.body.scrollHeight);
-                };
-                // Also report height when images load
+                }
+                window.onload = reportHeight;
+                // Also report height when images finish loading
                 document.querySelectorAll('img').forEach(function(img) {
-                    img.onload = function() {
-                        AndroidBridge.onHeightChanged(document.body.scrollHeight);
-                    };
+                    img.onload = reportHeight;
                 });
             </script>
         </body>

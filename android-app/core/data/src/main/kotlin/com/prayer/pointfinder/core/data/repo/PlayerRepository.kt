@@ -95,7 +95,15 @@ class PlayerRepository @Inject constructor(
                     )
                 }
                 db.progressDao().updateStatus(auth.gameId, baseId, "checked_in")
-                return CheckInResult(response = response, queued = false)
+                // If the server didn't return a challenge (e.g. random assignment timing),
+                // try to enrich from the local cache (populated by loadProgress).
+                val enrichedResponse = if (response.challenge == null) {
+                    val cached = db.challengeDao().challengeForBase(auth.gameId, auth.teamId, baseId)
+                    response.copy(challenge = cached?.toChallengeInfo())
+                } else {
+                    response
+                }
+                return CheckInResult(response = enrichedResponse, queued = false)
             }
         }
 
