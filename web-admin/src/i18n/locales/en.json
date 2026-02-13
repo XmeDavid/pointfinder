@@ -355,7 +355,9 @@
     "statusApproved": "Approved",
     "statusRejected": "Rejected",
     "statusCorrect": "Correct",
-    "statusIncorrect": "Incorrect"
+    "statusIncorrect": "Incorrect",
+    "override": "Override",
+    "correctAnswer": "Correct Answer"
   },
   "teamDetail": {
     "backToLeaderboard": "Back to Leaderboard",

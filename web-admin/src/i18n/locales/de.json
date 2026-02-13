@@ -355,7 +355,9 @@
     "statusApproved": "Freigegeben",
     "statusRejected": "Abgelehnt",
     "statusCorrect": "Korrekt",
-    "statusIncorrect": "Falsch"
+    "statusIncorrect": "Falsch",
+    "override": "Überschreiben",
+    "correctAnswer": "Richtige Antwort"
   },
   "teamDetail": {
     "backToLeaderboard": "Zurück zur Rangliste",

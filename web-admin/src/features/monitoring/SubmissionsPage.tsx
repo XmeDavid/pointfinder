@@ -97,6 +97,7 @@ export function SubmissionsPage() {
                 <div className="flex items-center gap-2">
                   <Badge variant={statusVariants[sub.status]}>{statusIcons[sub.status]}<span className="ml-1">{statusLabels[sub.status]}</span></Badge>
                   {sub.status === "pending" && <Button size="sm" onClick={() => setReviewingSub(sub)}>{t("submissions.review")}</Button>}
+                  {(sub.status === "incorrect" || sub.status === "correct") && <Button size="sm" variant="outline" onClick={() => setReviewingSub(sub)}>{t("submissions.override")}</Button>}
                 </div>
               </CardContent>
             </Card>
@@ -123,6 +124,15 @@ export function SubmissionsPage() {
               {(!reviewingSub.fileUrl || reviewingSub.answer) && (
                 <div><p className="text-sm font-medium mb-1">{reviewingSub.fileUrl ? t("submissions.notes") : t("submissions.answer")}</p><div className="rounded-md bg-muted p-3 text-sm">{reviewingSub.answer || <span className="text-muted-foreground italic">{t("submissions.noNotes")}</span>}</div></div>
               )}
+              {(reviewingSub.status === "incorrect" || reviewingSub.status === "correct") && (() => {
+                const ch = challenges.find((c) => c.id === reviewingSub.challengeId);
+                return ch?.correctAnswer ? (
+                  <div>
+                    <p className="text-sm font-medium mb-1">{t("submissions.correctAnswer")}</p>
+                    <div className="rounded-md bg-muted p-3 text-sm">{ch.correctAnswer}</div>
+                  </div>
+                ) : null;
+              })()}
               <div className="space-y-2"><p className="text-sm font-medium">{t("submissions.feedbackLabel")}</p><Textarea value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder={t("submissions.feedbackPlaceholder")} rows={2} /></div>
             </div>
             <DialogFooter>

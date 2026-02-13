@@ -355,7 +355,9 @@
     "statusApproved": "Aprovado",
     "statusRejected": "Rejeitado",
     "statusCorrect": "Correto",
-    "statusIncorrect": "Incorreto"
+    "statusIncorrect": "Incorreto",
+    "override": "Substituir",
+    "correctAnswer": "Resposta Correta"
   },
   "teamDetail": {
     "backToLeaderboard": "Voltar à Classificação",

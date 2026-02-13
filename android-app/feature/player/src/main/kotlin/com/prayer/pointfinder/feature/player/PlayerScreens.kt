@@ -23,12 +23,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Nfc
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -596,6 +598,34 @@ fun SubmissionResultScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val isSuccess = submission.status == "correct" || submission.status == "approved"
+    val isFailure = submission.status == "incorrect" || submission.status == "rejected"
+
+    val resultIcon = when {
+        isSuccess -> Icons.Default.CheckCircle
+        isFailure -> Icons.Default.Cancel
+        else -> Icons.Default.Schedule
+    }
+    val resultColor = when {
+        isSuccess -> StatusCompleted
+        isFailure -> StatusRejected
+        else -> StatusSubmitted
+    }
+    val resultTitle = when (submission.status) {
+        "correct" -> stringResource(R.string.result_correct)
+        "approved" -> stringResource(R.string.result_approved)
+        "incorrect" -> stringResource(R.string.result_incorrect)
+        "rejected" -> stringResource(R.string.result_rejected)
+        else -> stringResource(R.string.result_submitted)
+    }
+    val resultMessage = when (submission.status) {
+        "correct" -> stringResource(R.string.result_correct_msg)
+        "approved" -> stringResource(R.string.result_approved_msg)
+        "incorrect" -> stringResource(R.string.result_incorrect_msg)
+        "rejected" -> stringResource(R.string.result_rejected_msg)
+        else -> stringResource(R.string.result_submitted_msg)
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -604,21 +634,31 @@ fun SubmissionResultScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(Modifier.height(32.dp))
-        Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(72.dp))
+        Icon(resultIcon, contentDescription = null, modifier = Modifier.size(72.dp), tint = resultColor)
         Spacer(Modifier.height(12.dp))
-        Text(stringResource(R.string.label_submission_status, submission.status), style = MaterialTheme.typography.titleLarge)
+        Text(resultTitle, style = MaterialTheme.typography.titleLarge)
+        Spacer(Modifier.height(4.dp))
+        Text(
+            resultMessage,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
         val feedback = submission.feedback
         if (!feedback.isNullOrBlank()) {
-            Spacer(Modifier.height(8.dp))
-            Text(feedback)
+            Spacer(Modifier.height(12.dp))
+            Text(feedback, style = MaterialTheme.typography.bodyMedium)
         }
-        val completionContent = submission.completionContent
-        if (!completionContent.isNullOrBlank()) {
-            Spacer(Modifier.height(16.dp))
-            HtmlContentView(
-                html = completionContent,
-                modifier = Modifier.fillMaxWidth(),
-            )
+        // Only show completion content for correct/approved submissions
+        if (isSuccess) {
+            val completionContent = submission.completionContent
+            if (!completionContent.isNullOrBlank()) {
+                Spacer(Modifier.height(16.dp))
+                HtmlContentView(
+                    html = completionContent,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
         Spacer(Modifier.height(16.dp))
         Button(onClick = onBack) {
