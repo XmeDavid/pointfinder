@@ -12,7 +12,6 @@ Code (in codebase)
 - Android colors seem off in some places.
 - Use more icons on Android where relevant.
 - Android landing page (player/operator login): no visible title in dark mode.
-
 - Settings on Android is still not great, need to match parity with iOS.
 - Do a general Android parity and UI polish pass.
 
