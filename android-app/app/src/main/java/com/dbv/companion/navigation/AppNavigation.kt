@@ -324,6 +324,17 @@ private fun PlayerRootScreen(
         }
     }
 
+    // Camera permission launcher — needed because CAMERA is declared in manifest.
+    // On Android 11+, ACTION_IMAGE_CAPTURE requires the permission to be granted
+    // if it is declared in the manifest.
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) {
+            cameraLauncher.launch(cameraPhotoUri)
+        }
+    }
+
     LaunchedEffect(auth.gameId, isOnline) {
         viewModel.refresh(auth, isOnline)
     }
@@ -360,7 +371,13 @@ private fun PlayerRootScreen(
                     presenceVerified = state.presenceVerified,
                     onVerifyPresence = { viewModel.beginPresenceVerification(baseId) },
                     onPickPhoto = { pickPhotoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
-                    onCapturePhoto = { cameraLauncher.launch(cameraPhotoUri) },
+                    onCapturePhoto = {
+                        if (context.checkSelfPermission(Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                            cameraLauncher.launch(cameraPhotoUri)
+                        } else {
+                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                        }
+                    },
                     photoBitmap = photoBitmap,
                     onClearPhoto = { photoBitmap = null; photoBytes = null },
                     onBack = { solving = null },
