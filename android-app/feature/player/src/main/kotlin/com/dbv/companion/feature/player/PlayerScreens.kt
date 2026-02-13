@@ -48,7 +48,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.runtime.rememberSaveable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
@@ -599,7 +599,7 @@ fun PlayerSettingsScreen(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
     val completedCount = progress.count { it.baseStatus() == BaseStatus.COMPLETED }
     val checkedInCount = progress.count { it.baseStatus() == BaseStatus.CHECKED_IN }
     val pendingReviewCount = progress.count { it.baseStatus() == BaseStatus.SUBMITTED }
