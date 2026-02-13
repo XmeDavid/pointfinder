@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import com.dbv.companion.core.i18n.R as StringR
 
 data class PlayerState(
     val isLoading: Boolean = false,
@@ -46,9 +47,6 @@ class PlayerViewModel @Inject constructor(
 ) : ViewModel() {
     private val _state = MutableStateFlow(PlayerState())
     val state: StateFlow<PlayerState> = _state.asStateFlow()
-
-    private fun str(resId: Int) = context.getString(resId)
-    private val R get() = com.dbv.companion.core.i18n.R
 
     init {
         viewModelScope.launch {
@@ -133,14 +131,14 @@ class PlayerViewModel @Inject constructor(
         if (scannedBaseId == null) {
             _state.value = _state.value.copy(
                 presenceVerified = false,
-                solveError = str(R.string.error_invalid_nfc),
+                solveError = context.getString(StringR.string.error_invalid_nfc),
             )
             return
         }
         if (scannedBaseId != expectedBaseId) {
             _state.value = _state.value.copy(
                 presenceVerified = false,
-                solveError = str(R.string.error_presence_wrong_base),
+                solveError = context.getString(StringR.string.error_presence_wrong_base),
             )
             return
         }
@@ -162,7 +160,9 @@ class PlayerViewModel @Inject constructor(
     fun checkInFromLatestScan(auth: AuthType.Player, online: Boolean) {
         val baseId = _state.value.lastScannedBaseId
         if (baseId.isNullOrBlank()) {
-            _state.value = _state.value.copy(scanError = str(R.string.error_scan_nfc_first))
+            _state.value = _state.value.copy(
+                scanError = context.getString(StringR.string.error_scan_nfc_first),
+            )
             return
         }
         startCheckIn(auth, baseId, online)
@@ -176,7 +176,9 @@ class PlayerViewModel @Inject constructor(
     ) {
         val answer = _state.value.answerText.trim()
         if (answer.isBlank()) {
-            _state.value = _state.value.copy(solveError = str(R.string.error_answer_required))
+            _state.value = _state.value.copy(
+                solveError = context.getString(StringR.string.error_answer_required),
+            )
             return
         }
         viewModelScope.launch {
@@ -209,11 +211,15 @@ class PlayerViewModel @Inject constructor(
         online: Boolean,
     ) {
         if (!online) {
-            _state.value = _state.value.copy(solveError = str(R.string.hint_photo_required_online))
+            _state.value = _state.value.copy(
+                solveError = context.getString(StringR.string.hint_photo_required_online),
+            )
             return
         }
         if (imageBytes == null) {
-            _state.value = _state.value.copy(solveError = str(R.string.error_photo_required))
+            _state.value = _state.value.copy(
+                solveError = context.getString(StringR.string.error_photo_required),
+            )
             return
         }
         viewModelScope.launch {

@@ -181,6 +181,8 @@ fun AppNavigation(
                 isOnline = sessionState.isOnline,
                 pendingActionsCount = sessionState.pendingActionsCount,
                 currentLanguage = sessionState.currentLanguage,
+                isDeletingAccount = sessionState.isDeletingAccount,
+                sessionErrorMessage = sessionState.errorMessage,
                 showPermissionDisclosure = sessionState.showPermissionDisclosure,
             )
         }
@@ -211,6 +213,8 @@ private fun PlayerRootScreen(
     isOnline: Boolean,
     pendingActionsCount: Int,
     currentLanguage: String,
+    isDeletingAccount: Boolean,
+    sessionErrorMessage: String?,
     showPermissionDisclosure: Boolean = false,
 ) {
     val viewModel: PlayerViewModel = hiltViewModel()
@@ -422,10 +426,10 @@ private fun PlayerRootScreen(
                     progress = state.progress,
                     currentLanguage = currentLanguage,
                     onLanguageChanged = sessionViewModel::updateLanguage,
-                    isDeletingAccount = sessionState.isDeletingAccount,
+                    isDeletingAccount = isDeletingAccount,
                     onDeleteAccount = sessionViewModel::deletePlayerAccount,
                     onLogout = sessionViewModel::logout,
-                    errorMessage = sessionState.errorMessage,
+                    errorMessage = sessionErrorMessage,
                 )
             }
         }

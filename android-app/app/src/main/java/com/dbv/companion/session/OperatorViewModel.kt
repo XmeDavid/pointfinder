@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import com.dbv.companion.core.i18n.R as StringR
 
 data class OperatorState(
     val isLoading: Boolean = false,
@@ -57,10 +58,6 @@ class OperatorViewModel @Inject constructor(
     val state: StateFlow<OperatorState> = _state.asStateFlow()
 
     private var pollingJob: Job? = null
-
-    private fun str(resId: Int) = context.getString(resId)
-    private fun str(resId: Int, vararg args: Any) = context.getString(resId, *args)
-    private val R get() = com.dbv.companion.core.i18n.R
 
     init {
         viewModelScope.launch {
@@ -165,9 +162,9 @@ class OperatorViewModel @Inject constructor(
                 val assignments = operatorRepository.gameAssignments(game.id)
                 val matching = assignments.filter { it.baseId == base.id }
                 when {
-                    matching.isEmpty() -> str(R.string.label_assignment_random_not_started)
-                    matching.any { it.teamId == null } -> str(R.string.label_assignment_fixed)
-                    else -> str(R.string.label_assignment_per_team, matching.size)
+                    matching.isEmpty() -> context.getString(StringR.string.label_assignment_random_not_started)
+                    matching.any { it.teamId == null } -> context.getString(StringR.string.label_assignment_fixed)
+                    else -> context.getString(StringR.string.label_assignment_per_team, matching.size)
                 }
             }.onSuccess { summary ->
                 _state.value = _state.value.copy(
@@ -180,7 +177,7 @@ class OperatorViewModel @Inject constructor(
             }.onFailure {
                 _state.value = _state.value.copy(
                     selectedBase = base,
-                    assignmentSummary = str(R.string.label_status),
+                    assignmentSummary = context.getString(StringR.string.label_status),
                     awaitingNfcWrite = false,
                     writeSuccess = null,
                 )
@@ -200,7 +197,7 @@ class OperatorViewModel @Inject constructor(
     fun beginWriteNfc() {
         _state.value = _state.value.copy(
             awaitingNfcWrite = true,
-            writeStatus = str(R.string.hint_nfc_hold_near),
+            writeStatus = context.getString(StringR.string.hint_nfc_hold_near),
             writeSuccess = null,
         )
     }
@@ -217,14 +214,14 @@ class OperatorViewModel @Inject constructor(
                 }.onSuccess {
                     _state.value = _state.value.copy(
                         awaitingNfcWrite = false,
-                        writeStatus = str(R.string.success_nfc_written),
+                        writeStatus = context.getString(StringR.string.success_nfc_written),
                         writeSuccess = true,
                     )
                     refreshSelectedGameData()
                 }.onFailure { err ->
                     _state.value = _state.value.copy(
                         awaitingNfcWrite = false,
-                        writeStatus = str(R.string.error_nfc_link_failed, ApiErrorParser.extractMessage(err)),
+                        writeStatus = context.getString(StringR.string.error_nfc_link_failed, ApiErrorParser.extractMessage(err)),
                         writeSuccess = false,
                     )
                 }
@@ -232,7 +229,7 @@ class OperatorViewModel @Inject constructor(
         } else {
             _state.value = _state.value.copy(
                 awaitingNfcWrite = false,
-                writeStatus = str(R.string.error_nfc_write_failed),
+                writeStatus = context.getString(StringR.string.error_nfc_write_failed),
                 writeSuccess = false,
             )
         }
