@@ -1,0 +1,4 @@
+2026-02-13 12:47:35.669  8468-8468  AppSession              com.dbv.companion                    I  restoreSession: Player gameId=b506dbc7-5415-47ea-a7b3-b2e4e06c581d, disclosureSeen=true
+2026-02-13 12:47:35.670  8468-8468  PlayerLocationService   com.dbv.companion                    I  Starting location service for game=b506dbc7-5415-47ea-a7b3-b2e4e06c581d
+2026-02-13 12:48:05.678  8468-8522  PlayerLocationService   com.dbv.companion                    W  sendCurrentLocation: skipped — no location yet
+2026-02-13 12:48:35.681  8468-8507  PlayerLocationService   com.dbv.companion                    W  sendCurrentLocation: skipped — no location yet
