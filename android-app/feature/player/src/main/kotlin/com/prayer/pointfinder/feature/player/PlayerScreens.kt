@@ -492,8 +492,6 @@ fun SolveScreen(
     onAnswerChange: (String) -> Unit,
     isPhotoMode: Boolean,
     presenceRequired: Boolean,
-    presenceVerified: Boolean,
-    onVerifyPresence: () -> Unit,
     onPickPhoto: () -> Unit,
     onCapturePhoto: () -> Unit,
     photoBitmap: Bitmap?,
@@ -515,21 +513,6 @@ fun SolveScreen(
             Text(stringResource(R.string.label_solve_title), style = MaterialTheme.typography.titleLarge)
         }
         Spacer(Modifier.height(12.dp))
-
-        if (presenceRequired) {
-            Text(stringResource(R.string.label_presence_required))
-            Spacer(Modifier.height(8.dp))
-            Button(onClick = onVerifyPresence, enabled = !presenceVerified) {
-                Text(
-                    if (presenceVerified) {
-                        stringResource(R.string.label_presence_verified)
-                    } else {
-                        stringResource(R.string.action_verify_with_nfc)
-                    },
-                )
-            }
-            Spacer(Modifier.height(12.dp))
-        }
 
         if (isPhotoMode) {
             Text(stringResource(R.string.label_photo_mode))
@@ -585,9 +568,13 @@ fun SolveScreen(
         Spacer(Modifier.height(12.dp))
         Button(
             onClick = onSubmit,
-            enabled = (!isPhotoMode || isOnline) && (!presenceRequired || presenceVerified),
+            enabled = !isPhotoMode || isOnline,
         ) {
-            Text(stringResource(R.string.action_submit))
+            Text(
+                stringResource(
+                    if (presenceRequired) R.string.action_confirm_at_base else R.string.action_submit,
+                ),
+            )
         }
     }
 }

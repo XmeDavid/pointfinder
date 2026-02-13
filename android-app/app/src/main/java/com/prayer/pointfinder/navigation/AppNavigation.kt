@@ -229,6 +229,8 @@ private fun PlayerRootScreen(
     var photoBytes by remember { mutableStateOf<ByteArray?>(null) }
     var photoBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var showNfcScanDialog by remember { mutableStateOf(false) }
+    // Callback to invoke when an NFC scan completes (used for both check-in and presence verification).
+    var pendingNfcAction by remember { mutableStateOf<((String) -> Unit)?>(null) }
 
     // Permission launchers (fired after disclosure accepted)
     var pendingPermissionRequest by remember { mutableStateOf(false) }
@@ -366,13 +368,33 @@ private fun PlayerRootScreen(
 
             solving != null -> {
                 val (baseId, challengeId) = solving ?: return@PlayerHomeScaffold
+
+                // Closure that performs the actual submission (reused by direct and NFC paths).
+                val doSubmit = {
+                    if (state.isPhotoMode) {
+                        viewModel.submitPhoto(
+                            auth = auth,
+                            baseId = baseId,
+                            challengeId = challengeId,
+                            imageBytes = photoBytes,
+                            notes = state.answerText,
+                            online = isOnline,
+                        )
+                    } else {
+                        viewModel.submitText(
+                            auth = auth,
+                            baseId = baseId,
+                            challengeId = challengeId,
+                            online = isOnline,
+                        )
+                    }
+                }
+
                 SolveScreen(
                     answer = state.answerText,
                     onAnswerChange = viewModel::setAnswerText,
                     isPhotoMode = state.isPhotoMode,
                     presenceRequired = state.presenceRequired,
-                    presenceVerified = state.presenceVerified,
-                    onVerifyPresence = { viewModel.beginPresenceVerification(baseId) },
                     onPickPhoto = { pickPhotoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                     onCapturePhoto = {
                         if (context.checkSelfPermission(Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
@@ -385,22 +407,20 @@ private fun PlayerRootScreen(
                     onClearPhoto = { photoBitmap = null; photoBytes = null },
                     onBack = { solving = null },
                     onSubmit = {
-                        if (state.isPhotoMode) {
-                            viewModel.submitPhoto(
-                                auth = auth,
-                                baseId = baseId,
-                                challengeId = challengeId,
-                                imageBytes = photoBytes,
-                                notes = state.answerText,
-                                online = isOnline,
-                            )
+                        if (state.presenceRequired) {
+                            // Show NFC scan dialog; on scan, verify base match then submit
+                            pendingNfcAction = { scannedBaseId ->
+                                if (scannedBaseId == baseId) {
+                                    doSubmit()
+                                } else {
+                                    viewModel.setSolveError(
+                                        context.getString(com.prayer.pointfinder.core.i18n.R.string.error_presence_wrong_base),
+                                    )
+                                }
+                            }
+                            showNfcScanDialog = true
                         } else {
-                            viewModel.submitText(
-                                auth = auth,
-                                baseId = baseId,
-                                challengeId = challengeId,
-                                online = isOnline,
-                            )
+                            doSubmit()
                         }
                     },
                     isOnline = isOnline,
@@ -491,19 +511,29 @@ private fun PlayerRootScreen(
         )
     }
 
-    // NFC scan dialog: shown when the user taps "Check In at Base".
-    // Listens for NFC tag scans and automatically triggers check-in.
+    // NFC scan dialog: used for both check-in and presence-verified submission.
+    // Listens for NFC tag scans and invokes the appropriate action.
     if (showNfcScanDialog) {
+        val currentNfcAction = pendingNfcAction
         LaunchedEffect(Unit) {
             viewModel.scannedBaseIds.collect { baseId ->
                 if (baseId != null) {
                     showNfcScanDialog = false
-                    viewModel.startCheckIn(auth, baseId, isOnline)
+                    if (currentNfcAction != null) {
+                        currentNfcAction(baseId)
+                        pendingNfcAction = null
+                    } else {
+                        // Default: check-in flow
+                        viewModel.startCheckIn(auth, baseId, isOnline)
+                    }
                 }
             }
         }
         NfcScanDialog(
-            onDismiss = { showNfcScanDialog = false },
+            onDismiss = {
+                showNfcScanDialog = false
+                pendingNfcAction = null
+            },
         )
     }
 }

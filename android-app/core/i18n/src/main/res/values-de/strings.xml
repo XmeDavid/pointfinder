@@ -13,6 +13,7 @@
     <string name="action_scan_nfc">NFC scannen</string>
     <string name="action_check_in_at_base">An Basis einchecken</string>
     <string name="action_submit">Senden</string>
+    <string name="action_confirm_at_base">An Basis bestätigen zum Senden</string>
     <string name="action_solve">Lösen</string>
     <string name="action_solve_challenge">Aufgabe lösen</string>
     <string name="action_write_nfc">NFC-Tag schreiben</string>

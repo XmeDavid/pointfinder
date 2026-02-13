@@ -13,6 +13,7 @@
     <string name="action_scan_nfc">Scan NFC</string>
     <string name="action_check_in_at_base">Check In at Base</string>
     <string name="action_submit">Submit</string>
+    <string name="action_confirm_at_base">Confirm at Base to Submit</string>
     <string name="action_solve">Solve</string>
     <string name="action_solve_challenge">Solve challenge</string>
     <string name="action_write_nfc">Write NFC Tag</string>

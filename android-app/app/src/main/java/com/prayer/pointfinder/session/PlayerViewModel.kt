@@ -266,4 +266,8 @@ class PlayerViewModel @Inject constructor(
     fun clearSubmissionResult() {
         _state.value = _state.value.copy(latestSubmission = null)
     }
+
+    fun setSolveError(message: String) {
+        _state.value = _state.value.copy(solveError = message)
+    }
 }
