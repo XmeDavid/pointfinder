@@ -58,6 +58,7 @@ class PlayerLocationService @Inject constructor(
     private val callback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
             val value = result.lastLocation ?: return
+            Log.d(TAG, "GPS update: (${value.latitude}, ${value.longitude})")
             _lastLocation.value = DeviceLocation(value.latitude, value.longitude)
 
             // Send first location immediately (matches iOS behavior)
@@ -70,14 +71,31 @@ class PlayerLocationService @Inject constructor(
 
     @SuppressLint("MissingPermission")
     fun start(gameId: String) {
-        if (!hasLocationPermission()) return
+        if (!hasLocationPermission()) {
+            Log.w(TAG, "start() called but location permission not granted")
+            return
+        }
 
+        Log.i(TAG, "Starting location service for game=$gameId")
         this.gameId = gameId
         this.sentFirstLocation = false
 
         // Create a new coroutine scope for location sending
         scope?.cancel()
         scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+        // Bootstrap: request last known location immediately so we don't
+        // have to wait for the first GPS callback (which can be slow indoors).
+        client.lastLocation.addOnSuccessListener { location ->
+            if (location != null && _lastLocation.value == null) {
+                Log.i(TAG, "Bootstrap: got last known location (${location.latitude}, ${location.longitude})")
+                _lastLocation.value = DeviceLocation(location.latitude, location.longitude)
+                if (!sentFirstLocation) {
+                    sentFirstLocation = true
+                    scope?.launch { sendCurrentLocation() }
+                }
+            }
+        }
 
         val request = LocationRequest.Builder(Priority.PRIORITY_BALANCED_POWER_ACCURACY, 30_000L)
             .setMinUpdateDistanceMeters(10f)
@@ -130,18 +148,29 @@ class PlayerLocationService @Inject constructor(
     }
 
     private suspend fun sendCurrentLocation() {
-        val currentGameId = gameId ?: return
-        val location = _lastLocation.value ?: return
-        if (!networkMonitor.isOnline.value) return
+        val currentGameId = gameId
+        if (currentGameId == null) {
+            Log.d(TAG, "sendCurrentLocation: skipped — no gameId")
+            return
+        }
+        val location = _lastLocation.value
+        if (location == null) {
+            Log.d(TAG, "sendCurrentLocation: skipped — no location yet")
+            return
+        }
+        if (!networkMonitor.isOnline.value) {
+            Log.d(TAG, "sendCurrentLocation: skipped — offline")
+            return
+        }
 
         try {
             api.updateLocation(
                 gameId = currentGameId,
                 request = LocationUpdateRequest(lat = location.lat, lng = location.lng),
             )
+            Log.d(TAG, "Location sent (${location.lat}, ${location.lng}) for game=$currentGameId")
         } catch (e: Exception) {
-            // Silently ignore location update failures — not critical (matches iOS behavior)
-            Log.d(TAG, "Failed to send location: ${e.message}")
+            Log.w(TAG, "Failed to send location: ${e.message}", e)
         }
     }
 
