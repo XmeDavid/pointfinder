@@ -250,12 +250,12 @@ fun OperatorMapScreen(
         GoogleMap(modifier = Modifier.fillMaxSize(), cameraPositionState = cameraPositionState) {
             bases.forEach { base ->
                 val aggregateStatus = aggregateBaseStatus(base, baseProgress)
-                val markerHue = statusToMarkerHue(aggregateStatus)
+                val markerIcon = statusToMarkerIcon(aggregateStatus)
                 Marker(
                     state = MarkerState(LatLng(base.lat, base.lng)),
                     title = base.name,
                     snippet = stringResource(R.string.label_base_marker),
-                    icon = BitmapDescriptorFactory.defaultMarker(markerHue),
+                    icon = markerIcon,
                     onClick = {
                         onBaseSelected(base)
                         true
@@ -305,14 +305,41 @@ private fun aggregateBaseStatus(
     }.minByOrNull { it.ordinal } ?: BaseStatus.NOT_VISITED
 }
 
-private fun statusToMarkerHue(status: BaseStatus): Float {
+private fun statusToMarkerIcon(status: BaseStatus): BitmapDescriptor {
     return when (status) {
-        BaseStatus.NOT_VISITED -> BitmapDescriptorFactory.HUE_RED
-        BaseStatus.CHECKED_IN -> BitmapDescriptorFactory.HUE_AZURE
-        BaseStatus.SUBMITTED -> BitmapDescriptorFactory.HUE_ORANGE
-        BaseStatus.COMPLETED -> BitmapDescriptorFactory.HUE_GREEN
-        BaseStatus.REJECTED -> BitmapDescriptorFactory.HUE_ROSE
+        BaseStatus.NOT_VISITED -> createPinMarkerBitmap(android.graphics.Color.GRAY)
+        BaseStatus.CHECKED_IN -> BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
+        BaseStatus.SUBMITTED -> BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)
+        BaseStatus.COMPLETED -> BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
+        BaseStatus.REJECTED -> BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
     }
+}
+
+private fun createPinMarkerBitmap(colorInt: Int, width: Int = 48, height: Int = 64): BitmapDescriptor {
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = colorInt
+        style = Paint.Style.FILL
+    }
+    // Draw teardrop: circle at top + triangle pointing down
+    val circleRadius = width / 2f - 2f
+    val circleCenterY = circleRadius + 2f
+    canvas.drawCircle(width / 2f, circleCenterY, circleRadius, paint)
+    val path = android.graphics.Path().apply {
+        moveTo(width / 2f - circleRadius * 0.6f, circleCenterY + circleRadius * 0.7f)
+        lineTo(width / 2f, height.toFloat() - 2f)
+        lineTo(width / 2f + circleRadius * 0.6f, circleCenterY + circleRadius * 0.7f)
+        close()
+    }
+    canvas.drawPath(path, paint)
+    // White dot in center
+    val dotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.WHITE
+        style = Paint.Style.FILL
+    }
+    canvas.drawCircle(width / 2f, circleCenterY, circleRadius * 0.35f, dotPaint)
+    return BitmapDescriptorFactory.fromBitmap(bitmap)
 }
 
 private fun createCircleMarkerBitmap(colorInt: Int, sizePx: Int = 48): BitmapDescriptor {
