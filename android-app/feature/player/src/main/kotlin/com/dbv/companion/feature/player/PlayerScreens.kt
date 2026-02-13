@@ -311,15 +311,7 @@ fun BaseDetailBottomSheet(
 
             when (status) {
                 BaseStatus.NOT_VISITED -> {
-                    Button(
-                        onClick = onCheckIn,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = StatusCheckedIn),
-                    ) {
-                        Icon(Icons.Default.LocationOn, contentDescription = null)
-                        Spacer(Modifier.size(8.dp))
-                        Text(stringResource(R.string.action_check_in_at_base))
-                    }
+                    // No action button -- player must use the Check-In tab (NFC scan)
                 }
                 BaseStatus.CHECKED_IN, BaseStatus.REJECTED -> {
                     Button(
