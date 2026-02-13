@@ -346,21 +346,21 @@ export function MapPage() {
               );
             })}
 
-            {/* Team location markers */}
-            {showTeams && teams.map((team) => {
-              // In team view, only show the selected team's location
-              if (viewMode !== "all" && team.id !== viewMode) return null;
+            {/* Player location markers (one per player) */}
+            {showTeams && locations.map((loc) => {
+              // In team view, only show locations for the selected team
+              if (viewMode !== "all" && loc.teamId !== viewMode) return null;
 
-              const loc = locations.find((l) => l.teamId === team.id);
-              if (!loc) return null;
+              const team = teamMap.get(loc.teamId);
+              if (!team) return null;
 
               const isStale = now - new Date(loc.updatedAt).getTime() > STALE_THRESHOLD_MS;
 
               return (
                 <CircleMarker
-                  key={`${team.id}-${loc.lat}-${loc.lng}-${isStale}`}
+                  key={`${loc.playerId}-${loc.lat}-${loc.lng}-${isStale}`}
                   center={[loc.lat, loc.lng]}
-                  radius={10}
+                  radius={8}
                   pathOptions={{
                     color: isStale ? "#9ca3af" : team.color,
                     fillColor: team.color,
@@ -371,12 +371,13 @@ export function MapPage() {
                 >
                   <Popup>
                     <div className="min-w-[140px]">
-                      <div className="flex items-center gap-1.5">
+                      <p className="font-semibold text-sm">{loc.displayName}</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
                         <div
-                          className="h-2.5 w-2.5 rounded-full"
+                          className="h-2 w-2 rounded-full"
                           style={{ backgroundColor: team.color }}
                         />
-                        <p className="font-semibold text-sm">{team.name}</p>
+                        <p className="text-xs text-gray-500">{team.name}</p>
                       </div>
                       <p className="text-xs text-gray-500 mt-1">
                         {loc.lat.toFixed(5)}, {loc.lng.toFixed(5)}
@@ -440,45 +441,52 @@ export function MapPage() {
           <CardContent>
             <div className="space-y-2">
               {teams.map((team) => {
-                const loc = locations.find((l) => l.teamId === team.id);
-                const isStale = loc
-                  ? now - new Date(loc.updatedAt).getTime() > STALE_THRESHOLD_MS
-                  : false;
+                const teamLocs = locations.filter((l) => l.teamId === team.id);
                 const isActive = viewMode === team.id;
 
                 return (
-                  <div
-                    key={team.id}
-                    className={`flex items-center justify-between text-sm cursor-pointer rounded px-1.5 py-1 transition-colors ${
-                      isActive ? "bg-muted ring-1 ring-ring" : "hover:bg-muted/50"
-                    }`}
-                    onClick={() => setViewMode(isActive ? "all" : team.id)}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="h-3 w-3 rounded-full border"
-                        style={{
-                          backgroundColor: team.color,
-                          borderColor: team.color,
-                        }}
-                      />
-                      <span className={isActive ? "font-medium" : ""}>{team.name}</span>
-                    </div>
-                    {loc ? (
-                      <div className="flex items-center gap-1.5">
-                        {isStale && (
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                            {t("common.noSignal")}
-                          </Badge>
-                        )}
-                        <span className="text-xs text-muted-foreground">
-                          {loc.lat.toFixed(4)}, {loc.lng.toFixed(4)}
-                        </span>
+                  <div key={team.id}>
+                    <div
+                      className={`flex items-center justify-between text-sm cursor-pointer rounded px-1.5 py-1 transition-colors ${
+                        isActive ? "bg-muted ring-1 ring-ring" : "hover:bg-muted/50"
+                      }`}
+                      onClick={() => setViewMode(isActive ? "all" : team.id)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="h-3 w-3 rounded-full border"
+                          style={{
+                            backgroundColor: team.color,
+                            borderColor: team.color,
+                          }}
+                        />
+                        <span className={isActive ? "font-medium" : ""}>{team.name}</span>
                       </div>
-                    ) : (
-                      <Badge variant="secondary" className="text-xs">
-                        {t("common.noSignal")}
-                      </Badge>
+                      {teamLocs.length === 0 && (
+                        <Badge variant="secondary" className="text-xs">
+                          {t("common.noSignal")}
+                        </Badge>
+                      )}
+                    </div>
+                    {teamLocs.length > 0 && (
+                      <div className="ml-6 mt-0.5 space-y-0.5">
+                        {teamLocs.map((loc) => {
+                          const isStale = now - new Date(loc.updatedAt).getTime() > STALE_THRESHOLD_MS;
+                          return (
+                            <div key={loc.playerId} className="flex items-center justify-between text-xs text-muted-foreground">
+                              <span>{loc.displayName}</span>
+                              <div className="flex items-center gap-1.5">
+                                {isStale && (
+                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                                    {t("common.noSignal")}
+                                  </Badge>
+                                )}
+                                <span>{loc.lat.toFixed(4)}, {loc.lng.toFixed(4)}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     )}
                   </div>
                 );

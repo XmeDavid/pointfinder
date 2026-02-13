@@ -4,11 +4,13 @@ import SwiftUI
 /// Response from GET /api/games/{gameId}/monitoring/locations
 struct TeamLocationResponse: Codable, Identifiable {
     let teamId: UUID
+    let playerId: UUID?
+    let displayName: String?
     let lat: Double
     let lng: Double
     let updatedAt: String
     
-    var id: UUID { teamId }
+    var id: UUID { playerId ?? teamId }
     
     /// Check if the location is stale (older than 5 minutes)
     var isStale: Bool {

@@ -22,6 +22,7 @@ public class MonitoringService {
     private final SubmissionRepository submissionRepository;
     private final ActivityEventRepository activityEventRepository;
     private final TeamLocationRepository teamLocationRepository;
+    private final PlayerLocationRepository playerLocationRepository;
     private final CheckInRepository checkInRepository;
     private final AssignmentRepository assignmentRepository;
     private final GameAccessService gameAccessService;
@@ -212,12 +213,14 @@ public class MonitoringService {
     @Transactional(readOnly = true)
     public List<TeamLocationResponse> getLocations(UUID gameId) {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
-        return teamLocationRepository.findByGameId(gameId).stream()
-                .map(tl -> TeamLocationResponse.builder()
-                        .teamId(tl.getTeamId())
-                        .lat(tl.getLat())
-                        .lng(tl.getLng())
-                        .updatedAt(tl.getUpdatedAt())
+        return playerLocationRepository.findByGameId(gameId).stream()
+                .map(pl -> TeamLocationResponse.builder()
+                        .teamId(pl.getPlayer().getTeam().getId())
+                        .playerId(pl.getPlayerId())
+                        .displayName(pl.getPlayer().getDisplayName())
+                        .lat(pl.getLat())
+                        .lng(pl.getLng())
+                        .updatedAt(pl.getUpdatedAt())
                         .build())
                 .collect(Collectors.toList());
     }

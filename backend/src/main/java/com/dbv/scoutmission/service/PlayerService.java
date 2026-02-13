@@ -41,6 +41,7 @@ public class PlayerService {
     private final JwtTokenProvider tokenProvider;
     private final SubmissionService submissionService;
     private final TeamLocationRepository teamLocationRepository;
+    private final PlayerLocationRepository playerLocationRepository;
     private final GameAccessService gameAccessService;
 
     @Transactional
@@ -429,10 +430,10 @@ public class PlayerService {
             throw new BadRequestException("Player does not belong to this game");
         }
 
-        TeamLocation location = teamLocationRepository.findById(team.getId()).orElse(null);
+        PlayerLocation location = playerLocationRepository.findById(playerId).orElse(null);
         if (location == null) {
-            location = TeamLocation.builder()
-                    .team(team)
+            location = PlayerLocation.builder()
+                    .player(player)
                     .lat(lat)
                     .lng(lng)
                     .build();
@@ -440,14 +441,16 @@ public class PlayerService {
             location.setLat(lat);
             location.setLng(lng);
         }
-        teamLocationRepository.save(location);
+        playerLocationRepository.save(location);
 
-        eventBroadcaster.broadcastLocationUpdate(gameId, Map.of(
-                "teamId", team.getId(),
-                "lat", lat,
-                "lng", lng,
-                "updatedAt", Instant.now().toString()
-        ));
+        Map<String, Object> locationData = new HashMap<>();
+        locationData.put("teamId", team.getId());
+        locationData.put("playerId", playerId);
+        locationData.put("displayName", player.getDisplayName());
+        locationData.put("lat", lat);
+        locationData.put("lng", lng);
+        locationData.put("updatedAt", Instant.now().toString());
+        eventBroadcaster.broadcastLocationUpdate(gameId, locationData);
     }
 
     private CheckInResponse buildCheckInResponse(CheckIn checkIn, Base base, Team team) {

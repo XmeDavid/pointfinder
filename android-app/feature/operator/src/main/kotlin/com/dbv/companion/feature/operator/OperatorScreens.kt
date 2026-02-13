@@ -264,13 +264,14 @@ fun OperatorMapScreen(
             }
             teamLocations.forEach { location ->
                 val team = teams.firstOrNull { it.id == location.teamId }
+                val playerName = location.displayName ?: team?.name ?: location.teamId.take(6)
                 val teamName = team?.name ?: location.teamId.take(6)
                 val teamColorInt = team?.color?.let { c ->
                     runCatching { android.graphics.Color.parseColor(c) }.getOrDefault(android.graphics.Color.GRAY)
                 } ?: android.graphics.Color.GRAY
                 Marker(
                     state = MarkerState(LatLng(location.lat, location.lng)),
-                    title = stringResource(R.string.label_team_marker, teamName),
+                    title = "$playerName ($teamName)",
                     snippet = formatTimestamp(location.updatedAt),
                     icon = createCircleMarkerBitmap(teamColorInt),
                 )
@@ -306,13 +307,14 @@ private fun aggregateBaseStatus(
 }
 
 private fun statusToMarkerIcon(status: BaseStatus): BitmapDescriptor {
-    return when (status) {
-        BaseStatus.NOT_VISITED -> createPinMarkerBitmap(android.graphics.Color.GRAY)
-        BaseStatus.CHECKED_IN -> BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
-        BaseStatus.SUBMITTED -> BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)
-        BaseStatus.COMPLETED -> BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
-        BaseStatus.REJECTED -> BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
+    val colorInt = when (status) {
+        BaseStatus.NOT_VISITED -> android.graphics.Color.GRAY
+        BaseStatus.CHECKED_IN -> android.graphics.Color.parseColor("#1976D2") // blue
+        BaseStatus.SUBMITTED -> android.graphics.Color.parseColor("#F57C00") // orange
+        BaseStatus.COMPLETED -> android.graphics.Color.parseColor("#388E3C") // green
+        BaseStatus.REJECTED -> android.graphics.Color.parseColor("#D32F2F") // red
     }
+    return createPinMarkerBitmap(colorInt)
 }
 
 private fun createPinMarkerBitmap(colorInt: Int, width: Int = 48, height: Int = 64): BitmapDescriptor {

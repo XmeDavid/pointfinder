@@ -228,6 +228,8 @@ data class GameDataResponse(
 @Serializable
 data class TeamLocationResponse(
     val teamId: EntityId,
+    val playerId: EntityId? = null,
+    val displayName: String? = null,
     val lat: Double,
     val lng: Double,
     val updatedAt: String,

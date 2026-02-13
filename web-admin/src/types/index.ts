@@ -118,6 +118,8 @@ export interface OperatorInvite {
 
 export interface TeamLocation {
   teamId: string;
+  playerId: string;
+  displayName: string;
   lat: number;
   lng: number;
   updatedAt: string;

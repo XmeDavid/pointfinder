@@ -37,10 +37,11 @@ struct OperatorMapView: View {
                     }
                 }
                 
-                // Team location annotations
+                // Player location annotations (one per player)
                 ForEach(teamLocations) { location in
                     if let team = teams.first(where: { $0.id == location.teamId }) {
-                        Annotation(team.name, coordinate: CLLocationCoordinate2D(latitude: location.lat, longitude: location.lng)) {
+                        let label = location.displayName ?? team.name
+                        Annotation(label, coordinate: CLLocationCoordinate2D(latitude: location.lat, longitude: location.lng)) {
                             TeamLocationAnnotationView(team: team, location: location)
                         }
                     }
@@ -435,14 +436,21 @@ struct TeamLocationAnnotationView: View {
             }
             .opacity(location.isStale ? 0.6 : 1.0)
             
-            Text(team.name)
-                .font(.caption2)
-                .fontWeight(.medium)
-                .padding(.horizontal, 4)
-                .padding(.vertical, 2)
-                .background(.ultraThinMaterial)
-                .clipShape(RoundedRectangle(cornerRadius: 4))
-                .opacity(location.isStale ? 0.6 : 1.0)
+            VStack(spacing: 0) {
+                Text(location.displayName ?? team.name)
+                    .font(.caption2)
+                    .fontWeight(.medium)
+                if location.displayName != nil {
+                    Text(team.name)
+                        .font(.system(size: 8))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.horizontal, 4)
+            .padding(.vertical, 2)
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 4))
+            .opacity(location.isStale ? 0.6 : 1.0)
         }
     }
 }
