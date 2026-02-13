@@ -9,7 +9,7 @@ Code (in codebase)
 -Android map labels at the bottom is clean in english but changing languages, so of the words go vertical and the label occupies a bunch of space
 -Check offline syncronization android vs iOS. On Android i can see actions pending sync, but it looks like they can get stuck like that, when is it resyincing? iphone looks ok, but cant see pending actions. Let's analyze the offline capabilities of iOS vs Android and bring it up to parity.
 - On web admin, an operator owner of a game should be able to kick other operators from that game.
-
+-rename android package name to same as ios com.prayer.pointfinder
 
 ---
 
