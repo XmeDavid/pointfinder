@@ -24,6 +24,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.dbv.companion.core.i18n.R
@@ -109,10 +111,11 @@ fun PlayerJoinScreen(
             Spacer(Modifier.height(16.dp))
             OutlinedTextField(
                 value = joinCode,
-                onValueChange = onJoinCodeChange,
+                onValueChange = { onJoinCodeChange(it.uppercase()) },
                 label = { Text(stringResource(R.string.label_join_code)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
             )
             Spacer(Modifier.height(12.dp))
             Button(

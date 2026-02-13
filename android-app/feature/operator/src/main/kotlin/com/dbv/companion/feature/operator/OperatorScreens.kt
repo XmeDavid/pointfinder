@@ -1,6 +1,9 @@
 package com.dbv.companion.feature.operator
 
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -54,6 +57,7 @@ import com.dbv.companion.core.i18n.R
 import androidx.compose.ui.draw.clip
 import com.dbv.companion.core.model.Assignment
 import com.dbv.companion.core.model.Base
+import com.dbv.companion.core.model.BaseStatus
 import com.dbv.companion.core.model.Challenge
 import com.dbv.companion.core.model.Game
 import com.dbv.companion.core.model.Team
@@ -61,12 +65,17 @@ import com.dbv.companion.core.model.TeamBaseProgressResponse
 import com.dbv.companion.core.model.TeamLocationResponse
 import androidx.compose.runtime.LaunchedEffect
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 enum class OperatorTab {
     LIVE_MAP,
@@ -220,6 +229,8 @@ fun OperatorGameScaffold(
 fun OperatorMapScreen(
     bases: List<Base>,
     teamLocations: List<TeamLocationResponse>,
+    teams: List<Team>,
+    baseProgress: List<TeamBaseProgressResponse>,
     cameraPositionState: CameraPositionState,
     onBaseSelected: (Base) -> Unit,
     onRefresh: () -> Unit,
@@ -238,10 +249,13 @@ fun OperatorMapScreen(
     Box(modifier = modifier.fillMaxSize()) {
         GoogleMap(modifier = Modifier.fillMaxSize(), cameraPositionState = cameraPositionState) {
             bases.forEach { base ->
+                val aggregateStatus = aggregateBaseStatus(base, baseProgress)
+                val markerHue = statusToMarkerHue(aggregateStatus)
                 Marker(
                     state = MarkerState(LatLng(base.lat, base.lng)),
                     title = base.name,
                     snippet = stringResource(R.string.label_base_marker),
+                    icon = BitmapDescriptorFactory.defaultMarker(markerHue),
                     onClick = {
                         onBaseSelected(base)
                         true
@@ -249,10 +263,16 @@ fun OperatorMapScreen(
                 )
             }
             teamLocations.forEach { location ->
+                val team = teams.firstOrNull { it.id == location.teamId }
+                val teamName = team?.name ?: location.teamId.take(6)
+                val teamColorInt = team?.color?.let { c ->
+                    runCatching { android.graphics.Color.parseColor(c) }.getOrDefault(android.graphics.Color.GRAY)
+                } ?: android.graphics.Color.GRAY
                 Marker(
                     state = MarkerState(LatLng(location.lat, location.lng)),
-                    title = stringResource(R.string.label_team_marker, location.teamId.take(6)),
-                    snippet = location.updatedAt,
+                    title = stringResource(R.string.label_team_marker, teamName),
+                    snippet = formatTimestamp(location.updatedAt),
+                    icon = createCircleMarkerBitmap(teamColorInt),
                 )
             }
         }
@@ -265,6 +285,59 @@ fun OperatorMapScreen(
             Text(stringResource(R.string.action_refresh))
         }
     }
+}
+
+private fun aggregateBaseStatus(
+    base: Base,
+    baseProgress: List<TeamBaseProgressResponse>,
+): BaseStatus {
+    val statuses = baseProgress.filter { it.baseId == base.id }
+    if (statuses.isEmpty()) return BaseStatus.NOT_VISITED
+    return statuses.mapNotNull { progress ->
+        when (progress.status) {
+            "not_visited" -> BaseStatus.NOT_VISITED
+            "checked_in" -> BaseStatus.CHECKED_IN
+            "submitted" -> BaseStatus.SUBMITTED
+            "completed" -> BaseStatus.COMPLETED
+            "rejected" -> BaseStatus.REJECTED
+            else -> null
+        }
+    }.minByOrNull { it.ordinal } ?: BaseStatus.NOT_VISITED
+}
+
+private fun statusToMarkerHue(status: BaseStatus): Float {
+    return when (status) {
+        BaseStatus.NOT_VISITED -> BitmapDescriptorFactory.HUE_RED
+        BaseStatus.CHECKED_IN -> BitmapDescriptorFactory.HUE_AZURE
+        BaseStatus.SUBMITTED -> BitmapDescriptorFactory.HUE_ORANGE
+        BaseStatus.COMPLETED -> BitmapDescriptorFactory.HUE_GREEN
+        BaseStatus.REJECTED -> BitmapDescriptorFactory.HUE_ROSE
+    }
+}
+
+private fun createCircleMarkerBitmap(colorInt: Int, sizePx: Int = 48): BitmapDescriptor {
+    val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = colorInt
+        style = Paint.Style.FILL
+    }
+    canvas.drawCircle(sizePx / 2f, sizePx / 2f, sizePx / 2f - 3f, paint)
+    val border = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.WHITE
+        style = Paint.Style.STROKE
+        strokeWidth = 3f
+    }
+    canvas.drawCircle(sizePx / 2f, sizePx / 2f, sizePx / 2f - 3f, border)
+    return BitmapDescriptorFactory.fromBitmap(bitmap)
+}
+
+private fun formatTimestamp(iso: String): String {
+    return runCatching {
+        val instant = Instant.parse(iso)
+        val local = instant.atZone(ZoneId.systemDefault())
+        DateTimeFormatter.ofPattern("HH:mm").format(local)
+    }.getOrDefault(iso)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

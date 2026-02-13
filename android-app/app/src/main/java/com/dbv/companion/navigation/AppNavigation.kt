@@ -505,6 +505,8 @@ private fun OperatorGameRoot(
                 OperatorMapScreen(
                     bases = state.bases,
                     teamLocations = state.locations,
+                    teams = state.teams,
+                    baseProgress = state.baseProgress,
                     cameraPositionState = operatorCameraState,
                     onBaseSelected = viewModel::selectBase,
                     onRefresh = viewModel::refreshSelectedGameData,
