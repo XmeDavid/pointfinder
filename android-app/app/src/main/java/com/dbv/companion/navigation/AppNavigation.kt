@@ -233,6 +233,8 @@ private fun PlayerRootScreen(
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) { _ ->
+        // Start location service now that permission has been granted (or denied)
+        sessionViewModel.onLocationPermissionResult()
         // After location result, request notifications on Android 13+
         pendingPermissionRequest = true
     }

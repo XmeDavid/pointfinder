@@ -198,11 +198,21 @@ class AppSessionViewModel @Inject constructor(
         viewModelScope.launch {
             sessionStore.setPermissionDisclosureSeen()
             _state.value = _state.value.copy(showPermissionDisclosure = false)
-            val auth = _state.value.authType
-            if (auth is AuthType.Player) {
-                locationService.start(auth.gameId)
-                registerPushTokenIfPossible()
-            }
+            // Note: location service is NOT started here because the system
+            // permission dialog hasn't been shown yet. It will be started
+            // from onLocationPermissionResult() after the user grants permission.
+            registerPushTokenIfPossible()
+        }
+    }
+
+    /**
+     * Called after the system location permission dialog returns a result.
+     * Starts the location service if permission was granted.
+     */
+    fun onLocationPermissionResult() {
+        val auth = _state.value.authType
+        if (auth is AuthType.Player) {
+            locationService.start(auth.gameId)
         }
     }
 
