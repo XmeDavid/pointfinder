@@ -49,8 +49,8 @@ export function LeaderboardPage() {
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm font-bold shrink-0">{i + 1}</span>
                 <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: entry.color }} />
                 <span className="flex-1 font-medium">{entry.teamName}</span>
-                <div className="flex-1 mx-4"><div className="h-2 rounded-full bg-muted overflow-hidden"><div className="h-full rounded-full transition-all" style={{ width: `${(entry.points / topPoints) * 100}%`, backgroundColor: entry.color }} /></div></div>
-                <span className="text-sm text-muted-foreground">{entry.completedChallenges} {t("leaderboard.done")}</span>
+                <div className="flex-1 mx-4 hidden md:block"><div className="h-2 rounded-full bg-muted overflow-hidden"><div className="h-full rounded-full transition-all" style={{ width: `${(entry.points / topPoints) * 100}%`, backgroundColor: entry.color }} /></div></div>
+                <span className="text-sm text-muted-foreground hidden sm:inline">{entry.completedChallenges} {t("leaderboard.done")}</span>
                 <span className="font-bold tabular-nums w-16 text-right">{entry.points} {t("common.pts")}</span>
               </div>
             ))}</div></CardContent>

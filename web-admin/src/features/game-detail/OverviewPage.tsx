@@ -68,7 +68,7 @@ export function OverviewPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold">{game.name}</h1>
@@ -76,7 +76,7 @@ export function OverviewPage() {
           </div>
           <p className="mt-1 text-muted-foreground">{game.description}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-end sm:self-auto">
           {nextStep && (
             <Button onClick={() => transition.mutate(nextStep.next)} disabled={transition.isPending || !canGoLive} variant={nextStep.next === "ended" ? "destructive" : "default"}>
               {nextStep.icon}{nextStep.label}

@@ -18,9 +18,9 @@ export function ResultsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div><h1 className="text-2xl font-bold">{t("results.title")}</h1><p className="text-muted-foreground">{game.name}</p></div>
-        <Button variant="outline"><Download className="mr-2 h-4 w-4" />{t("results.exportResults")}</Button>
+        <Button className="self-end sm:self-auto" variant="outline"><Download className="mr-2 h-4 w-4" />{t("results.exportResults")}</Button>
       </div>
       {leaderboard.length > 0 && (
         <Card className="border-yellow-500/50 bg-gradient-to-r from-yellow-500/5 to-transparent">

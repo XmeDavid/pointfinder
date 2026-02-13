@@ -157,7 +157,7 @@ export function AssignmentsPage() {
                     const team = assignment.teamId ? teamById.get(assignment.teamId) : null;
                     return (
                       <div key={assignment.id} className="flex items-center justify-between rounded-md border border-border p-3">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 flex-wrap">
                           <span className="text-sm font-medium">{challenge?.title ?? "?"}</span>
                           <Badge variant="outline">{challenge?.points ?? 0} {t("common.pts")}</Badge>
                           {team ? (
@@ -182,7 +182,7 @@ export function AssignmentsPage() {
                   })}
 
                   {!isFullyAssigned && (
-                    <div className="flex items-end gap-3 rounded-md border border-dashed border-border p-3">
+                    <div className="flex flex-col sm:flex-row sm:items-end gap-3 rounded-md border border-dashed border-border p-3">
                       <div className="flex-1 space-y-1">
                         <label className="text-xs text-muted-foreground">{t("assignments.challenge")}</label>
                         <Select
@@ -214,6 +214,7 @@ export function AssignmentsPage() {
                       </div>
 
                       <Button
+                        className="w-full sm:w-auto"
                         onClick={() => createAssignment.mutate({
                           baseId: base.id,
                           challengeId: draft.challengeId,

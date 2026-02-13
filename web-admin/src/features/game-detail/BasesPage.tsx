@@ -92,12 +92,12 @@ export function BasesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">{t("bases.title")}</h1>
           <p className="text-muted-foreground">{t("bases.summary", { count: bases.length, linked: bases.filter((b) => b.nfcLinked).length })}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-end sm:self-auto">
           <div className="flex rounded-md border border-border">
             <Button variant={view === "list" ? "secondary" : "ghost"} size="sm" onClick={() => setView("list")}><List className="h-4 w-4" /></Button>
             <Button variant={view === "map" ? "secondary" : "ghost"} size="sm" onClick={() => setView("map")}><MapIcon className="h-4 w-4" /></Button>
@@ -114,7 +114,7 @@ export function BasesPage() {
           ) : (
             bases.map((base) => (
               <Card key={base.id}>
-                <CardContent className="flex items-center gap-4 p-4">
+                <CardContent className="flex flex-wrap items-center gap-4 p-4">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10"><MapPin className="h-5 w-5 text-blue-500" /></div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -125,11 +125,11 @@ export function BasesPage() {
                     <p className="text-sm text-muted-foreground truncate">{base.description}</p>
                     <p className="text-xs text-muted-foreground mt-1">{base.lat.toFixed(4)}, {base.lng.toFixed(4)}</p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 ml-auto">
                     {/* NFC status is read-only -- set by mobile app when tag is written */}
                     <Badge variant={base.nfcLinked ? "success" : "destructive"} className="gap-1">
                       {base.nfcLinked ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-                      {base.nfcLinked ? t("bases.nfcLinked") : t("bases.nfcNotLinked")}
+                      <span className="hidden sm:inline">{base.nfcLinked ? t("bases.nfcLinked") : t("bases.nfcNotLinked")}</span>
                     </Badge>
                     <Button variant="ghost" size="icon" onClick={() => openEdit(base)}><Pencil className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" onClick={() => deleteBase.mutate(base.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>

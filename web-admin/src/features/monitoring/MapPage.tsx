@@ -197,12 +197,12 @@ export function MapPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">{t("mapPage.title")}</h1>
           <p className="text-muted-foreground">{t("mapPage.description")}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-end sm:self-auto">
           <Button
             variant={showBases ? "default" : "outline"}
             size="sm"
