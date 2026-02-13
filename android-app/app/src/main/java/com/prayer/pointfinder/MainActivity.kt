@@ -1,6 +1,5 @@
 package com.prayer.pointfinder
 
-import android.app.PendingIntent
 import android.content.Intent
 import android.nfc.NfcAdapter
 import android.nfc.Tag
@@ -24,6 +23,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Handle NFC intent that launched the app (cold start)
         handleNfcIntent(intent)
         setContent {
             PointFinderTheme {
@@ -34,18 +34,19 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        val intent = Intent(this, javaClass).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-        val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent, PendingIntent.FLAG_MUTABLE,
-        )
-        NfcAdapter.getDefaultAdapter(this)?.enableForegroundDispatch(
-            this, pendingIntent, null, null,
-        )
+        // Use reader mode instead of foreground dispatch.
+        // Reader mode uses a direct callback (no PendingIntent), which avoids
+        // Background Activity Launch (BAL) restrictions on Android 14+/API 35.
+        nfcService.enableReaderMode(this) { tag ->
+            val baseId = nfcService.parseBaseIdFromTag(tag)
+            nfcEventBus.emitDiscoveredTag(tag)
+            nfcEventBus.emitScannedBaseId(baseId)
+        }
     }
 
     override fun onPause() {
         super.onPause()
-        NfcAdapter.getDefaultAdapter(this)?.disableForegroundDispatch(this)
+        nfcService.disableReaderMode(this)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -53,10 +54,12 @@ class MainActivity : AppCompatActivity() {
         handleNfcIntent(intent)
     }
 
+    /** Handle NFC intents delivered via manifest intent filters (app not in foreground). */
     private fun handleNfcIntent(intent: Intent?) {
         if (intent == null) return
         val scannedBaseId = nfcService.parseBaseIdFromIntent(intent)
         if (intent.hasExtra(NfcAdapter.EXTRA_TAG)) {
+            @Suppress("DEPRECATION")
             val tag = intent.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG)
             if (tag != null) {
                 nfcEventBus.emitDiscoveredTag(tag)
