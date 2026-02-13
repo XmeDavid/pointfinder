@@ -164,15 +164,11 @@ class PlayerLocationService @Inject constructor(
         }
 
         try {
-            val response = api.updateLocation(
+            api.updateLocation(
                 gameId = currentGameId,
                 request = LocationUpdateRequest(lat = location.lat, lng = location.lng),
             )
-            if (response.isSuccessful) {
-                Log.i(TAG, "Location sent OK (${location.lat}, ${location.lng}) game=$currentGameId")
-            } else {
-                Log.w(TAG, "Location send failed: HTTP ${response.code()} ${response.message()}")
-            }
+            Log.i(TAG, "Location sent OK (${location.lat}, ${location.lng}) game=$currentGameId")
         } catch (e: Exception) {
             Log.e(TAG, "Location send exception: ${e.javaClass.simpleName}: ${e.message}", e)
         }
