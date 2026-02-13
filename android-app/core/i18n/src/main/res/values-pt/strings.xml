@@ -27,6 +27,9 @@
     <string name="action_open_privacy_policy">Ver Política de Privacidade</string>
     <string name="action_delete_account">Eliminar Conta</string>
     <string name="action_remove">Remover</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="nfc_scan_dialog_title">Ler Tag NFC</string>
+    <string name="nfc_scan_dialog_message">Segura o telemóvel perto da tag NFC na base</string>
 
     <!-- Labels -->
     <string name="label_welcome">PointFinder</string>

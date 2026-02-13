@@ -16,6 +16,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -48,6 +49,9 @@ class PlayerViewModel @Inject constructor(
 ) : ViewModel() {
     private val _state = MutableStateFlow(PlayerState())
     val state: StateFlow<PlayerState> = _state.asStateFlow()
+
+    /** Exposed so the NFC scan dialog can collect base IDs while open. */
+    val scannedBaseIds: SharedFlow<String?> = nfcEventBus.scannedBaseIds
 
     init {
         viewModelScope.launch {

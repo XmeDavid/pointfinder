@@ -27,6 +27,9 @@
     <string name="action_open_privacy_policy">Datenschutzerklärung anzeigen</string>
     <string name="action_delete_account">Konto löschen</string>
     <string name="action_remove">Entfernen</string>
+    <string name="action_cancel">Abbrechen</string>
+    <string name="nfc_scan_dialog_title">NFC-Tag scannen</string>
+    <string name="nfc_scan_dialog_message">Halte dein Telefon an den NFC-Tag an der Basis</string>
 
     <!-- Labels -->
     <string name="label_welcome">PointFinder</string>

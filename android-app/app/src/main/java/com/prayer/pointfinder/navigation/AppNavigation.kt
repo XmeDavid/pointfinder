@@ -62,9 +62,11 @@ import com.prayer.pointfinder.feature.operator.LiveBaseProgressBottomSheet
 import com.prayer.pointfinder.feature.operator.OperatorMapScreen
 import com.prayer.pointfinder.feature.operator.OperatorSettingsScreen
 import com.prayer.pointfinder.feature.operator.OperatorTab
+import com.prayer.pointfinder.core.platform.NfcEventBus
 import com.prayer.pointfinder.feature.player.BaseCheckInDetailScreen
 import com.prayer.pointfinder.feature.player.BaseDetailBottomSheet
 import com.prayer.pointfinder.feature.player.CheckInScreen
+import com.prayer.pointfinder.feature.player.NfcScanDialog
 import com.prayer.pointfinder.feature.player.PlayerHomeScaffold
 import com.prayer.pointfinder.feature.player.PlayerMapScreen
 import com.prayer.pointfinder.feature.player.PlayerSettingsScreen
@@ -226,6 +228,7 @@ private fun PlayerRootScreen(
     var solving by remember { mutableStateOf<Pair<String, String>?>(null) }
     var photoBytes by remember { mutableStateOf<ByteArray?>(null) }
     var photoBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var showNfcScanDialog by remember { mutableStateOf(false) }
 
     // Permission launchers (fired after disclosure accepted)
     var pendingPermissionRequest by remember { mutableStateOf(false) }
@@ -437,7 +440,7 @@ private fun PlayerRootScreen(
                     pendingActionsCount = pendingActionsCount,
                     scanError = state.scanError,
                     onScan = {
-                        viewModel.checkInFromLatestScan(auth, isOnline)
+                        showNfcScanDialog = true
                     },
                 )
             }
@@ -482,6 +485,22 @@ private fun PlayerRootScreen(
                 viewModel.clearSelectedBase()
             },
             onDismiss = { viewModel.clearSelectedBase() },
+        )
+    }
+
+    // NFC scan dialog: shown when the user taps "Check In at Base".
+    // Listens for NFC tag scans and automatically triggers check-in.
+    if (showNfcScanDialog) {
+        LaunchedEffect(Unit) {
+            viewModel.scannedBaseIds.collect { baseId ->
+                if (baseId != null) {
+                    showNfcScanDialog = false
+                    viewModel.startCheckIn(auth, baseId, isOnline)
+                }
+            }
+        }
+        NfcScanDialog(
+            onDismiss = { showNfcScanDialog = false },
         )
     }
 }
