@@ -24,8 +24,19 @@ export function useGameWebSocket(gameId: string | undefined): string | null {
           queryClient.invalidateQueries({ queryKey: ["leaderboard", gameId] });
           queryClient.invalidateQueries({ queryKey: ["progress", gameId] });
           break;
+        case "submission_status":
+          queryClient.invalidateQueries({ queryKey: ["submissions", gameId] });
+          queryClient.invalidateQueries({ queryKey: ["dashboard-stats", gameId] });
+          queryClient.invalidateQueries({ queryKey: ["leaderboard", gameId] });
+          queryClient.invalidateQueries({ queryKey: ["progress", gameId] });
+          break;
         case "notification":
           queryClient.invalidateQueries({ queryKey: ["notifications", gameId] });
+          break;
+        case "game_status":
+          queryClient.invalidateQueries({ queryKey: ["game", gameId] });
+          queryClient.invalidateQueries({ queryKey: ["games"] });
+          queryClient.invalidateQueries({ queryKey: ["dashboard-stats", gameId] });
           break;
         case "leaderboard":
           queryClient.invalidateQueries({ queryKey: ["leaderboard", gameId] });

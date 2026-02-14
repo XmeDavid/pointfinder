@@ -10,6 +10,8 @@ import com.prayer.pointfinder.core.model.BaseProgress
 import com.prayer.pointfinder.core.model.CheckInResponse
 import com.prayer.pointfinder.core.model.SubmissionResponse
 import com.prayer.pointfinder.core.network.ApiErrorParser
+import com.prayer.pointfinder.core.network.MobileRealtimeClient
+import com.prayer.pointfinder.core.network.RealtimeConnectionState
 import com.prayer.pointfinder.core.platform.NfcEventBus
 import com.prayer.pointfinder.core.platform.NfcPayloadCodec
 import com.prayer.pointfinder.core.platform.PlayerLocationService
@@ -22,6 +24,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import com.prayer.pointfinder.core.i18n.R as StringR
 
 data class PlayerState(
@@ -41,6 +45,7 @@ data class PlayerState(
     val solveError: String? = null,
     val latestSubmission: SubmissionResponse? = null,
     val authExpired: Boolean = false,
+    val realtimeConnected: Boolean = false,
 )
 
 @HiltViewModel
@@ -48,6 +53,7 @@ class PlayerViewModel @Inject constructor(
     private val playerRepository: PlayerRepository,
     private val nfcEventBus: NfcEventBus,
     private val locationService: PlayerLocationService,
+    private val realtimeClient: MobileRealtimeClient,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
     private val _state = MutableStateFlow(PlayerState())
@@ -55,6 +61,9 @@ class PlayerViewModel @Inject constructor(
 
     /** Exposed so the NFC scan dialog can collect base IDs while open. */
     val scannedBaseIds: SharedFlow<String?> = nfcEventBus.scannedBaseIds
+
+    private var lastAuth: AuthType.Player? = null
+    private var lastOnline: Boolean = true
 
     init {
         viewModelScope.launch {
@@ -64,9 +73,36 @@ class PlayerViewModel @Inject constructor(
                 verifyPresence(baseId, expected)
             }
         }
+        viewModelScope.launch {
+            realtimeClient.connectionState.collectLatest { state ->
+                _state.value = _state.value.copy(
+                    realtimeConnected = state is RealtimeConnectionState.Connected,
+                )
+            }
+        }
+        viewModelScope.launch {
+            realtimeClient.events.collectLatest { event ->
+                when (event.type) {
+                    "game_status" -> {
+                        val status = event.data?.jsonObject?.get("status")?.jsonPrimitive?.contentOrNull
+                        if (!status.isNullOrBlank()) {
+                            _state.value = _state.value.copy(gameStatus = status)
+                        }
+                    }
+
+                    "submission_status",
+                    "activity" -> {
+                        val auth = lastAuth ?: return@collectLatest
+                        refresh(auth, lastOnline)
+                    }
+                }
+            }
+        }
     }
 
     fun refresh(auth: AuthType.Player, online: Boolean) {
+        lastAuth = auth
+        lastOnline = online
         viewModelScope.launch {
             _state.value = _state.value.copy(
                 isLoading = true,

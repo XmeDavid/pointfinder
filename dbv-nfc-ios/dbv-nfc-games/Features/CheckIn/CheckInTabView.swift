@@ -112,7 +112,8 @@ struct CheckInTabView: View {
             .task(id: "\(appState.currentGame?.status ?? "none")-\(appState.isOnline)") {
                 guard appState.isOnline, appState.currentGame?.status != "live" else { return }
                 while !Task.isCancelled && appState.isOnline && appState.currentGame?.status != "live" {
-                    try? await Task.sleep(nanoseconds: 10_000_000_000)
+                    let intervalNs: UInt64 = appState.realtimeConnected ? 30_000_000_000 : 10_000_000_000
+                    try? await Task.sleep(nanoseconds: intervalNs)
                     await appState.loadProgress()
                 }
             }

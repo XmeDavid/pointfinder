@@ -13,6 +13,7 @@ import { teamsApi } from "@/lib/api/teams";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { formatDateTime } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { useGameWebSocket } from "@/hooks/useGameWebSocket";
 
 export function NotificationsPage() {
   const { t } = useTranslation();
@@ -21,6 +22,7 @@ export function NotificationsPage() {
   const [message, setMessage] = useState("");
   const [targetTeamId, setTargetTeamId] = useState("");
   const [actionError, setActionError] = useState("");
+  const websocketError = useGameWebSocket(gameId);
 
   const { data: notifications = [] } = useQuery({ queryKey: ["notifications", gameId], queryFn: () => notificationsApi.listByGame(gameId!) });
   const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!) });
@@ -36,6 +38,7 @@ export function NotificationsPage() {
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold">{t("notifications.title")}</h1><p className="text-muted-foreground">{t("notifications.description")}</p></div>
+      {websocketError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{websocketError}</div>}
       {actionError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{actionError}</div>}
       <Card>
         <CardHeader><CardTitle className="text-lg">{t("notifications.compose")}</CardTitle><CardDescription>{t("notifications.composeDescription")}</CardDescription></CardHeader>

@@ -2,6 +2,7 @@ import SwiftUI
 import MapKit
 
 struct OperatorMapView: View {
+    @Environment(AppState.self) private var appState
     @Environment(LocaleManager.self) private var locale
 
     let gameId: UUID
@@ -80,6 +81,23 @@ struct OperatorMapView: View {
             await loadInitialData()
             startPolling()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .mobileRealtimeEvent)) { notification in
+            guard let rawGameId = notification.userInfo?["gameId"] as? String,
+                  UUID(uuidString: rawGameId) == gameId,
+                  let type = notification.userInfo?["type"] as? String else { return }
+
+            switch type {
+            case "location":
+                Task { await loadLocations() }
+            case "activity", "submission_status", "game_status", "notification":
+                Task {
+                    await loadLocations()
+                    await loadProgress()
+                }
+            default:
+                break
+            }
+        }
         .onAppear {
             updateCameraPosition()
         }
@@ -131,9 +149,12 @@ struct OperatorMapView: View {
         pollingTask?.cancel()
         pollingTask = Task {
             while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(pollInterval))
-                await loadLocations()
-                await loadProgress()
+                let interval = appState.realtimeConnected ? 20.0 : pollInterval
+                try? await Task.sleep(for: .seconds(interval))
+                if !appState.realtimeConnected {
+                    await loadLocations()
+                    await loadProgress()
+                }
             }
         }
     }
@@ -180,6 +201,7 @@ struct OperatorMapView: View {
 /// A version of the base progress sheet that fetches its own data
 /// and polls for updates while open, so it always shows live status.
 struct LiveBaseProgressSheet: View {
+    @Environment(AppState.self) private var appState
     @Environment(LocaleManager.self) private var locale
     @Environment(\.dismiss) private var dismiss
     
@@ -338,6 +360,11 @@ struct LiveBaseProgressSheet: View {
             await loadData()
             startPolling()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .mobileRealtimeEvent)) { notification in
+            guard let rawGameId = notification.userInfo?["gameId"] as? String,
+                  UUID(uuidString: rawGameId) == gameId else { return }
+            Task { await loadData() }
+        }
         .onDisappear {
             pollingTask?.cancel()
             pollingTask = nil
@@ -362,13 +389,16 @@ struct LiveBaseProgressSheet: View {
         pollingTask?.cancel()
         pollingTask = Task {
             while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(5))
+                let interval = appState.realtimeConnected ? 20.0 : 5.0
+                try? await Task.sleep(for: .seconds(interval))
 
-                do {
-                    let allProgress = try await apiClient.getTeamProgress(gameId: gameId, token: token)
-                    progress = allProgress.filter { $0.baseId == base.id }
-                } catch {
-                    // Silently continue polling
+                if !appState.realtimeConnected {
+                    do {
+                        let allProgress = try await apiClient.getTeamProgress(gameId: gameId, token: token)
+                        progress = allProgress.filter { $0.baseId == base.id }
+                    } catch {
+                        // Silently continue polling
+                    }
                 }
             }
         }

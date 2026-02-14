@@ -68,6 +68,7 @@ export function Sidebar({ gameStatus, open, onClose }: SidebarProps) {
   const { t } = useTranslation();
   const location = useLocation();
   const isAdmin = user?.role === "admin";
+  const onRealtimePage = location.pathname.includes("/monitor") || location.pathname.endsWith("/notifications");
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
@@ -85,7 +86,9 @@ export function Sidebar({ gameStatus, open, onClose }: SidebarProps) {
     queryKey: ["submissions", gameId],
     queryFn: () => submissionsApi.listByGame(gameId!),
     enabled: !!gameId && (gameStatus === "live" || gameStatus === "ended"),
-    refetchInterval: 15000,
+    // Monitoring and notifications pages already use websocket invalidation;
+    // keep polling as low-frequency fallback there.
+    refetchInterval: onRealtimePage ? 60000 : 15000,
   });
 
   const pendingCount = submissions.filter((s) => s.status === "pending").length;

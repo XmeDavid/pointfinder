@@ -60,6 +60,12 @@ struct OperatorGameView: View {
         }
         .task {
             await loadBases()
+            if let token = token {
+                appState.connectRealtime(gameId: game.id, token: token)
+            }
+        }
+        .onDisappear {
+            appState.disconnectRealtime()
         }
     }
 

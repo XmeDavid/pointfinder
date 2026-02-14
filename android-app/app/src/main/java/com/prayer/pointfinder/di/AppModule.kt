@@ -13,6 +13,7 @@ import com.prayer.pointfinder.core.network.ApiFactory
 import com.prayer.pointfinder.core.network.AuthInterceptor
 import com.prayer.pointfinder.core.network.AuthTokenProvider
 import com.prayer.pointfinder.core.network.CompanionApi
+import com.prayer.pointfinder.core.network.MobileRealtimeClient
 import com.prayer.pointfinder.core.network.TokenAuthenticator
 import com.prayer.pointfinder.core.network.TokenRefresher
 import dagger.Binds
@@ -80,6 +81,15 @@ object AppModule {
     @Singleton
     fun provideApi(okHttpClient: OkHttpClient): CompanionApi {
         return ApiFactory.buildApi(BuildConfig.API_BASE_URL, okHttpClient)
+    }
+
+    @Provides
+    @Singleton
+    fun provideMobileRealtimeClient(): MobileRealtimeClient {
+        return MobileRealtimeClient(
+            apiBaseUrl = BuildConfig.API_BASE_URL,
+            enabled = BuildConfig.ENABLE_MOBILE_REALTIME,
+        )
     }
 
     @Provides
