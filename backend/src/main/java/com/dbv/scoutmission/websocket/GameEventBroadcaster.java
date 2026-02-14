@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -74,9 +76,23 @@ public class GameEventBroadcaster {
         payload.put("emittedAt", java.time.Instant.now().toString());
         payload.put("data", data);
 
-        String destination = "/topic/games/" + gameId;
-        log.debug("Broadcasting {} event to {}", type, destination);
-        messagingTemplate.convertAndSend(destination, payload);
-        mobileRealtimeHub.broadcast(gameId, payload);
+        Runnable dispatch = () -> {
+            String destination = "/topic/games/" + gameId;
+            log.debug("Broadcasting {} event to {}", type, destination);
+            messagingTemplate.convertAndSend(destination, payload);
+            mobileRealtimeHub.broadcast(gameId, payload);
+        };
+
+        if (TransactionSynchronizationManager.isSynchronizationActive()
+                && TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    dispatch.run();
+                }
+            });
+        } else {
+            dispatch.run();
+        }
     }
 }

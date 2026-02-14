@@ -84,7 +84,12 @@ class PlayerViewModel @Inject constructor(
             realtimeClient.events.collectLatest { event ->
                 when (event.type) {
                     "game_status" -> {
-                        val status = event.data?.jsonObject?.get("status")?.jsonPrimitive?.contentOrNull
+                        val status: String? = event.data
+                            ?.jsonObject
+                            ?.get("status")
+                            ?.let { jsonValue ->
+                                runCatching { jsonValue.jsonPrimitive.content }.getOrNull()
+                            }
                         if (!status.isNullOrBlank()) {
                             _state.value = _state.value.copy(gameStatus = status)
                         }

@@ -18,6 +18,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -162,13 +163,13 @@ class MobileRealtimeClient(
     }
 
     private fun buildRealtimeUrl(params: SessionParams): HttpUrl {
-        val base = HttpUrl.parse(apiBaseUrl)
+        val base = apiBaseUrl.toHttpUrlOrNull()
             ?: throw IllegalArgumentException("Invalid API base URL: $apiBaseUrl")
-        val wsScheme = if (base.isHttps()) "wss" else "ws"
+        val wsScheme = if (base.isHttps) "wss" else "ws"
         return HttpUrl.Builder()
             .scheme(wsScheme)
-            .host(base.host())
-            .port(base.port())
+            .host(base.host)
+            .port(base.port)
             .addPathSegment("ws")
             .addPathSegment("mobile")
             .addQueryParameter("gameId", params.gameId)
