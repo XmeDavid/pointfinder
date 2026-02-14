@@ -122,6 +122,8 @@ final class AppState {
     }
 
     private func configureSyncEngine() {
+        syncEngine.configure(apiClient: apiClient)
+
         // Wire up sync engine to refresh progress after sync completes
         syncEngine.onSyncComplete = { [weak self] in
             await self?.loadProgress()

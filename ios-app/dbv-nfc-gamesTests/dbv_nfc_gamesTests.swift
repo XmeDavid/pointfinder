@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+@testable import dbv_nfc_games
 
 struct PointFinderTests {
 

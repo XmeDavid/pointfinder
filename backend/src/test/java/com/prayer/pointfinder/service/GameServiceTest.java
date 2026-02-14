@@ -9,12 +9,12 @@ import com.prayer.pointfinder.dto.response.GameResponse;
 import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.repository.*;
+import com.prayer.pointfinder.websocket.GameEventBroadcaster;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -58,9 +58,15 @@ class GameServiceTest {
     private ActivityEventRepository activityEventRepository;
     @Mock
     private GameAccessService gameAccessService;
+    @Mock
+    private FileStorageService fileStorageService;
+    @Mock
+    private GameEventBroadcaster eventBroadcaster;
+    @Mock
+    private ChallengeAssignmentService challengeAssignmentService;
 
-    @InjectMocks
     private GameService gameService;
+    private GameImportExportService gameImportExportService;
 
     private User authenticatedUser;
 
@@ -75,6 +81,34 @@ class GameServiceTest {
                 .build();
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(authenticatedUser, null)
+        );
+
+        gameImportExportService = new GameImportExportService(
+                gameRepository,
+                userRepository,
+                baseRepository,
+                challengeRepository,
+                teamRepository,
+                assignmentRepository,
+                gameAccessService
+        );
+
+        gameService = new GameService(
+                gameRepository,
+                userRepository,
+                baseRepository,
+                challengeRepository,
+                teamRepository,
+                assignmentRepository,
+                checkInRepository,
+                submissionRepository,
+                teamLocationRepository,
+                activityEventRepository,
+                gameAccessService,
+                fileStorageService,
+                eventBroadcaster,
+                challengeAssignmentService,
+                gameImportExportService
         );
     }
 

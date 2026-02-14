@@ -1,5 +1,8 @@
 package com.prayer.pointfinder.controller;
 
+import com.prayer.pointfinder.entity.Player;
+import com.prayer.pointfinder.security.SecurityUtils;
+import com.prayer.pointfinder.service.FileAccessService;
 import com.prayer.pointfinder.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
@@ -23,6 +26,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class FileController {
 
+    private final FileAccessService fileAccessService;
     private final FileStorageService fileStorageService;
 
     /**
@@ -33,6 +37,8 @@ public class FileController {
     public ResponseEntity<Resource> getFileAsPlayer(
             @PathVariable UUID gameId,
             @PathVariable String filename) {
+        Player player = SecurityUtils.getCurrentPlayer();
+        fileAccessService.ensurePlayerCanReadFile(gameId, filename, player);
         return serveFile(gameId, filename);
     }
 
@@ -44,6 +50,7 @@ public class FileController {
     public ResponseEntity<Resource> getFileAsOperator(
             @PathVariable UUID gameId,
             @PathVariable String filename) {
+        fileAccessService.ensureOperatorCanReadFile(gameId, filename);
         return serveFile(gameId, filename);
     }
 

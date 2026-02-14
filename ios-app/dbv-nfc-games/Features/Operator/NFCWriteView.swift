@@ -19,8 +19,6 @@ struct BaseDetailView: View {
     @State private var teams: [Team] = []
     @State private var isLoadingData = true
 
-    private let apiClient = APIClient()
-
     private var token: String? {
         if case .userOperator(let token, _, _) = appState.authType {
             return token
@@ -315,7 +313,7 @@ struct BaseDetailView: View {
 
     private func loadChallenges(token: String) async {
         do {
-            challenges = try await apiClient.getChallenges(gameId: game.id, token: token)
+            challenges = try await appState.apiClient.getChallenges(gameId: game.id, token: token)
         } catch {
             Logger(subsystem: "com.prayer.pointfinder", category: "NFCWrite").error("Failed to load challenges: \(error.localizedDescription, privacy: .public)")
         }
@@ -323,7 +321,7 @@ struct BaseDetailView: View {
 
     private func loadAssignments(token: String) async {
         do {
-            assignments = try await apiClient.getAssignments(gameId: game.id, token: token)
+            assignments = try await appState.apiClient.getAssignments(gameId: game.id, token: token)
         } catch {
             Logger(subsystem: "com.prayer.pointfinder", category: "NFCWrite").error("Failed to load assignments: \(error.localizedDescription, privacy: .public)")
         }
@@ -331,7 +329,7 @@ struct BaseDetailView: View {
 
     private func loadTeams(token: String) async {
         do {
-            teams = try await apiClient.getTeams(gameId: game.id, token: token)
+            teams = try await appState.apiClient.getTeams(gameId: game.id, token: token)
         } catch {
             Logger(subsystem: "com.prayer.pointfinder", category: "NFCWrite").error("Failed to load teams: \(error.localizedDescription, privacy: .public)")
         }
@@ -348,7 +346,7 @@ struct BaseDetailView: View {
             try await nfcWriter.writeBaseId(base.id)
 
             guard let token = token else { return }
-            let updated = try await appState.apiClient.linkBaseNfc(
+            _ = try await appState.apiClient.linkBaseNfc(
                 gameId: game.id,
                 baseId: base.id,
                 token: token

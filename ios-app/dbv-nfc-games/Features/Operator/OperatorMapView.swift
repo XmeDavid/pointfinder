@@ -18,7 +18,6 @@ struct OperatorMapView: View {
     @State private var cameraPosition: MapCameraPosition = .automatic
     @State private var pollingTask: Task<Void, Never>?
     
-    private let apiClient = APIClient()
     private let pollInterval: TimeInterval = 5.0
     
     var body: some View {
@@ -124,7 +123,7 @@ struct OperatorMapView: View {
     
     private func loadTeams() async {
         do {
-            teams = try await apiClient.getTeams(gameId: gameId, token: token)
+            teams = try await appState.apiClient.getTeams(gameId: gameId, token: token)
         } catch {
             Logger(subsystem: "com.prayer.pointfinder", category: "OperatorMap").error("Failed to load teams: \(error.localizedDescription, privacy: .public)")
         }
@@ -132,7 +131,7 @@ struct OperatorMapView: View {
     
     private func loadLocations() async {
         do {
-            teamLocations = try await apiClient.getTeamLocations(gameId: gameId, token: token)
+            teamLocations = try await appState.apiClient.getTeamLocations(gameId: gameId, token: token)
         } catch {
             Logger(subsystem: "com.prayer.pointfinder", category: "OperatorMap").error("Failed to load locations: \(error.localizedDescription, privacy: .public)")
         }
@@ -140,7 +139,7 @@ struct OperatorMapView: View {
     
     private func loadProgress() async {
         do {
-            teamProgress = try await apiClient.getTeamProgress(gameId: gameId, token: token)
+            teamProgress = try await appState.apiClient.getTeamProgress(gameId: gameId, token: token)
         } catch {
             Logger(subsystem: "com.prayer.pointfinder", category: "OperatorMap").error("Failed to load progress: \(error.localizedDescription, privacy: .public)")
         }
@@ -222,8 +221,6 @@ struct LiveBaseProgressSheet: View {
     @State private var isWritingNfc = false
     @State private var writeSuccess = false
     @State private var writeError: String?
-    
-    private let apiClient = APIClient()
     
     init(gameId: UUID, token: String, base: Base, onNfcLinked: ((UUID) -> Void)? = nil) {
         self.gameId = gameId
@@ -374,8 +371,8 @@ struct LiveBaseProgressSheet: View {
     
     private func loadData() async {
         do {
-            async let teamsResult = apiClient.getTeams(gameId: gameId, token: token)
-            async let progressResult = apiClient.getTeamProgress(gameId: gameId, token: token)
+            async let teamsResult = appState.apiClient.getTeams(gameId: gameId, token: token)
+            async let progressResult = appState.apiClient.getTeamProgress(gameId: gameId, token: token)
             
             let (fetchedTeams, allProgress) = try await (teamsResult, progressResult)
             teams = fetchedTeams
@@ -395,7 +392,7 @@ struct LiveBaseProgressSheet: View {
 
                 if !appState.realtimeConnected {
                     do {
-                        let allProgress = try await apiClient.getTeamProgress(gameId: gameId, token: token)
+                        let allProgress = try await appState.apiClient.getTeamProgress(gameId: gameId, token: token)
                         progress = allProgress.filter { $0.baseId == base.id }
                     } catch {
                         // Silently continue polling
@@ -415,7 +412,7 @@ struct LiveBaseProgressSheet: View {
         do {
             try await nfcWriter.writeBaseId(base.id)
             
-            let _ = try await apiClient.linkBaseNfc(
+            let _ = try await appState.apiClient.linkBaseNfc(
                 gameId: gameId,
                 baseId: base.id,
                 token: token
