@@ -71,5 +71,5 @@ jobs:
           restore-keys: android-gradle-
 
       - name: Run Android unit tests
-        run: android-app/gradlew -p android-app :core:model:test :core:data:test :app:assembleDebug
+        run: android-app/gradlew -p android-app :core:model:test :core:data:test :core:network:test :app:assembleDebug
 
