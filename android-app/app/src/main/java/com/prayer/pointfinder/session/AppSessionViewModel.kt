@@ -13,6 +13,7 @@ import com.prayer.pointfinder.core.platform.DeviceIdProvider
 import com.prayer.pointfinder.core.platform.NetworkMonitor
 import com.prayer.pointfinder.core.platform.PlayerLocationService
 import com.prayer.pointfinder.core.network.ApiErrorParser
+import com.prayer.pointfinder.core.network.MobileRealtimeClient
 import com.prayer.pointfinder.core.platform.PushTokenProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -45,6 +46,7 @@ class AppSessionViewModel @Inject constructor(
     private val deviceIdProvider: DeviceIdProvider,
     private val pushTokenProvider: PushTokenProvider,
     private val locationService: PlayerLocationService,
+    private val realtimeClient: MobileRealtimeClient,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
     private val joinCodeRegex = Regex("^[A-Z0-9]{6,20}$")
@@ -86,6 +88,7 @@ class AppSessionViewModel @Inject constructor(
             _state.value = _state.value.copy(authType = auth, isLoading = false)
             when (auth) {
                 is AuthType.Player -> {
+                    realtimeClient.connect(gameId = auth.gameId, token = auth.token)
                     val seen = sessionStore.isPermissionDisclosureSeen()
                     if (seen) {
                         locationService.start(auth.gameId)
@@ -94,8 +97,8 @@ class AppSessionViewModel @Inject constructor(
                         _state.value = _state.value.copy(showPermissionDisclosure = true)
                     }
                 }
-                is AuthType.Operator -> Unit
-                AuthType.None -> Unit
+                is AuthType.Operator -> realtimeClient.disconnect()
+                AuthType.None -> realtimeClient.disconnect()
             }
 
             val preferred = sessionStore.preferredLanguage()
@@ -124,6 +127,7 @@ class AppSessionViewModel @Inject constructor(
             runCatching {
                 authRepository.playerJoin(normalizedJoinCode, displayName, deviceIdProvider.deviceId())
             }.onSuccess { auth ->
+                realtimeClient.connect(gameId = auth.gameId, token = auth.token)
                 val needsDisclosure = !sessionStore.isPermissionDisclosureSeen()
                 _state.value = _state.value.copy(
                     authType = auth,
@@ -155,6 +159,7 @@ class AppSessionViewModel @Inject constructor(
             runCatching {
                 authRepository.operatorLogin(email, password)
             }.onSuccess { auth ->
+                realtimeClient.disconnect()
                 _state.value = _state.value.copy(authType = auth, isLoading = false)
             }.onFailure { err ->
                 _state.value = _state.value.copy(
@@ -172,6 +177,7 @@ class AppSessionViewModel @Inject constructor(
             authRepository.clearSession()
             playerRepository.clearAll()
             locationService.stop()
+            realtimeClient.disconnect()
             _state.value = AppSessionState(
                 isOnline = isOnline,
                 currentLanguage = currentLanguage,
@@ -190,6 +196,7 @@ class AppSessionViewModel @Inject constructor(
             }.onSuccess {
                 playerRepository.clearAll()
                 locationService.stop()
+                realtimeClient.disconnect()
                 _state.value = AppSessionState(
                     isOnline = isOnline,
                     currentLanguage = currentLanguage,

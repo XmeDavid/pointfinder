@@ -148,6 +148,7 @@ public class SubmissionService {
 
         // Broadcast via WebSocket
         eventBroadcaster.broadcastActivityEvent(gameId, event);
+        eventBroadcaster.broadcastSubmissionStatus(gameId, submission);
 
         return toResponse(submission);
     }
@@ -212,6 +213,7 @@ public class SubmissionService {
         if (event.getChallenge() != null) event.getChallenge().getId();
 
         eventBroadcaster.broadcastActivityEvent(gameId, event);
+        eventBroadcaster.broadcastSubmissionStatus(gameId, submission);
 
         return toResponse(submission);
     }

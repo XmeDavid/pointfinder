@@ -13,6 +13,7 @@ import com.dbv.scoutmission.exception.ForbiddenException;
 import com.dbv.scoutmission.exception.ResourceNotFoundException;
 import com.dbv.scoutmission.repository.*;
 import com.dbv.scoutmission.security.SecurityUtils;
+import com.dbv.scoutmission.websocket.GameEventBroadcaster;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,7 @@ public class GameService {
     private final ActivityEventRepository activityEventRepository;
     private final GameAccessService gameAccessService;
     private final FileStorageService fileStorageService;
+    private final GameEventBroadcaster eventBroadcaster;
 
     @Transactional(readOnly = true)
     public List<GameResponse> getAllGames() {
@@ -185,6 +187,7 @@ public class GameService {
 
         game.setStatus(target);
         game = gameRepository.save(game);
+        eventBroadcaster.broadcastGameStatus(game.getId(), game.getStatus().name());
         return toResponse(game);
     }
 

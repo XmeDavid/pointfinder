@@ -18,6 +18,7 @@ android {
         versionCode = 1
         versionName = "0.1.0"
         buildConfigField("String", "API_BASE_URL", "\"${rootProject.env.API_BASE_URL.orElse("https://desbravadores.dev")}\"")
+        buildConfigField("Boolean", "ENABLE_MOBILE_REALTIME", "true")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

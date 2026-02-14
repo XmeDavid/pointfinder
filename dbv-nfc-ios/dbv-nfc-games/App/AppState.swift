@@ -50,11 +50,13 @@ final class AppState {
     let apiClient = APIClient()
     let locationService = LocationService()
     let syncEngine = SyncEngine.shared
+    let realtimeClient = MobileRealtimeClient()
     private let logger = Logger(
         subsystem: Bundle.main.bundleIdentifier ?? "com.dbv.nfcgames",
         category: "AppState"
     )
     private var pendingCountTask: Task<Void, Never>?
+    var realtimeConnected = false
 
     // MARK: - Init
 
@@ -67,8 +69,56 @@ final class AppState {
                 }
             }
         }
+        configureRealtimeClient()
         restoreSession()
         configureSyncEngine()
+    }
+
+    private func configureRealtimeClient() {
+        realtimeClient.onConnectionStateChange = { [weak self] state in
+            guard let self else { return }
+            self.realtimeConnected = (state == .connected)
+            self.logger.debug("Mobile realtime connection state: \(String(describing: state), privacy: .public)")
+        }
+        realtimeClient.onEvent = { [weak self] payload in
+            guard let self else { return }
+            self.handleRealtimeEvent(payload)
+        }
+    }
+
+    private func handleRealtimeEvent(_ payload: [String: Any]) {
+        if let type = payload["type"] as? String {
+            logger.debug("Received mobile realtime event: \(type, privacy: .public)")
+        }
+        NotificationCenter.default.post(name: .mobileRealtimeEvent, object: nil, userInfo: payload)
+
+        guard case .player(_, _, _, let currentGameId) = authType else { return }
+        if let rawGameId = payload["gameId"] as? String,
+           let eventGameId = UUID(uuidString: rawGameId),
+           eventGameId != currentGameId {
+            return
+        }
+
+        guard let type = payload["type"] as? String else { return }
+        switch type {
+        case "game_status":
+            if let data = payload["data"] as? [String: Any],
+               let status = data["status"] as? String,
+               var game = currentGame {
+                game = PlayerAuthResponse.GameInfo(
+                    id: game.id,
+                    name: game.name,
+                    description: game.description,
+                    status: status
+                )
+                currentGame = game
+            }
+            Task { await loadProgress() }
+        case "submission_status", "activity":
+            Task { await loadProgress() }
+        default:
+            break
+        }
     }
 
     private func configureSyncEngine() {
@@ -116,6 +166,7 @@ final class AppState {
                 teamId: response.team.id,
                 gameId: response.game.id
             )
+            realtimeClient.connect(gameId: response.game.id, token: response.token)
             currentGame = response.game
             currentTeam = response.team
             currentPlayer = response.player
@@ -157,6 +208,7 @@ final class AppState {
                 refreshToken: response.refreshToken,
                 userId: response.user.id
             )
+            realtimeClient.disconnect()
 
             // Enable automatic token refresh on the API client
             await configureApiClientAuth(refreshToken: response.refreshToken)
@@ -481,6 +533,7 @@ final class AppState {
     func logout() {
         locationService.stopTracking()
         PushNotificationService.shared.reset()
+        realtimeClient.disconnect()
 
         KeychainService.deleteAll()
         let defaults = UserDefaults.standard
@@ -524,6 +577,7 @@ final class AppState {
            let gameId = UUID(uuidString: gameIdStr) {
 
             authType = .player(token: token, playerId: playerId, teamId: teamId, gameId: gameId)
+            realtimeClient.connect(gameId: gameId, token: token)
 
             // Configure push service (but don't request permission yet)
             PushNotificationService.shared.configure(apiClient: apiClient, playerToken: token)
@@ -564,7 +618,18 @@ final class AppState {
             }
 
             Task { await configureApiClientAuth(refreshToken: refreshToken) }
+            realtimeClient.disconnect()
         }
+    }
+
+    // MARK: - Realtime
+
+    func connectRealtime(gameId: UUID, token: String) {
+        realtimeClient.connect(gameId: gameId, token: token)
+    }
+
+    func disconnectRealtime() {
+        realtimeClient.disconnect()
     }
 
     // MARK: - API Client Auth

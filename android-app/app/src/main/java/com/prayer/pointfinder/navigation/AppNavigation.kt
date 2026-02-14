@@ -450,10 +450,11 @@ private fun PlayerRootScreen(
         viewModel.refresh(auth, isOnline)
     }
 
-    LaunchedEffect(auth.gameId, isOnline) {
+    LaunchedEffect(auth.gameId, isOnline, state.realtimeConnected) {
         if (!isOnline) return@LaunchedEffect
         while ((state.gameStatus ?: auth.gameStatus) != "live") {
-            delay(10_000L)
+            // Keep polling as fallback, but back off when realtime socket is healthy.
+            delay(if (state.realtimeConnected) 30_000L else 10_000L)
             viewModel.refresh(auth, true)
         }
     }

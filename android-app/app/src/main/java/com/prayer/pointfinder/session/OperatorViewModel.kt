@@ -5,6 +5,7 @@ import android.nfc.Tag
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.prayer.pointfinder.core.data.repo.OperatorRepository
+import com.prayer.pointfinder.core.data.repo.SessionStore
 import com.prayer.pointfinder.core.model.Assignment
 import com.prayer.pointfinder.core.model.Base
 import com.prayer.pointfinder.core.model.Challenge
@@ -13,6 +14,8 @@ import com.prayer.pointfinder.core.model.Team
 import com.prayer.pointfinder.core.model.TeamBaseProgressResponse
 import com.prayer.pointfinder.core.model.TeamLocationResponse
 import com.prayer.pointfinder.core.network.ApiErrorParser
+import com.prayer.pointfinder.core.network.MobileRealtimeClient
+import com.prayer.pointfinder.core.network.RealtimeConnectionState
 import com.prayer.pointfinder.core.platform.NfcEventBus
 import com.prayer.pointfinder.core.platform.NfcService
 import com.prayer.pointfinder.feature.operator.OperatorTab
@@ -51,6 +54,8 @@ data class OperatorState(
 @HiltViewModel
 class OperatorViewModel @Inject constructor(
     private val operatorRepository: OperatorRepository,
+    private val sessionStore: SessionStore,
+    private val realtimeClient: MobileRealtimeClient,
     private val nfcService: NfcService,
     private val nfcEventBus: NfcEventBus,
     @ApplicationContext private val context: Context,
@@ -65,6 +70,24 @@ class OperatorViewModel @Inject constructor(
             nfcEventBus.discoveredTags.collectLatest { tag ->
                 if (_state.value.awaitingNfcWrite) {
                     writeBaseNfc(tag)
+                }
+            }
+        }
+        viewModelScope.launch {
+            realtimeClient.events.collectLatest { event ->
+                val selectedGameId = _state.value.selectedGame?.id ?: return@collectLatest
+                if (event.gameId != null && event.gameId != selectedGameId) return@collectLatest
+
+                when (event.type) {
+                    "activity",
+                    "location",
+                    "submission_status",
+                    "notification" -> refreshSelectedGameData()
+
+                    "game_status" -> {
+                        loadGames()
+                        refreshSelectedGameData()
+                    }
                 }
             }
         }
@@ -93,6 +116,9 @@ class OperatorViewModel @Inject constructor(
 
     fun selectGame(game: Game) {
         _state.value = _state.value.copy(selectedGame = game, selectedTab = OperatorTab.LIVE_MAP)
+        sessionStore.operatorToken()?.let { token ->
+            realtimeClient.connect(gameId = game.id, token = token)
+        }
         refreshSelectedGameData()
         loadGameMeta(game.id)
         startPolling()
@@ -121,6 +147,7 @@ class OperatorViewModel @Inject constructor(
 
     fun clearSelectedGame() {
         pollingJob?.cancel()
+        realtimeClient.disconnect()
         _state.value = _state.value.copy(
             selectedGame = null,
             bases = emptyList(),
@@ -262,14 +289,17 @@ class OperatorViewModel @Inject constructor(
         pollingJob?.cancel()
         pollingJob = viewModelScope.launch {
             while (true) {
-                refreshSelectedGameData()
-                delay(5_000L)
+                if (realtimeClient.connectionState.value !is RealtimeConnectionState.Connected) {
+                    refreshSelectedGameData()
+                }
+                delay(20_000L)
             }
         }
     }
 
     private fun markAuthExpiredIfNeeded(err: Throwable): Boolean {
         if (!ApiErrorParser.isAuthExpired(err)) return false
+        realtimeClient.disconnect()
         _state.value = _state.value.copy(
             isLoading = false,
             awaitingNfcWrite = false,

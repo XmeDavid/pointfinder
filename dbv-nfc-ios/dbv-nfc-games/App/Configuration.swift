@@ -9,6 +9,7 @@ enum AppConfiguration {
 
     static let appName = "PointFinder"
     static let privacyPolicyURL = "https://desbravadores.dev/privacy/"
+    static let mobileRealtimeEnabled = true
 
     // Keychain keys
     static let playerTokenKey = "com.dbvnfc.playerToken"
