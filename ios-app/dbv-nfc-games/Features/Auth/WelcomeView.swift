@@ -12,12 +12,6 @@ struct WelcomeView: View {
 
                 // Logo area
                 VStack(spacing: 16) {
-                    Image("logo_desbravadores")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 120, height: 120)
-                        .clipShape(RoundedRectangle(cornerRadius: 24))
-
                     Text(locale.t("welcome.title"))
                         .font(.largeTitle)
                         .fontWeight(.bold)

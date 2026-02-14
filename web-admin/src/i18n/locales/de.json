@@ -200,6 +200,7 @@
     "nfcLinked": "NFC verknüpft",
     "nfcNotLinked": "NFC nicht verknüpft",
     "fixedChallengeTag": "Feste Challenge",
+    "fixedChallengeNamed": "Fest: {{challenge}}",
     "summary": "{{count}} Station(en) · {{linked}} NFC verknüpft",
     "clickMapToSelect": "Klicken Sie auf die Karte, um einen Ort auszuwählen",
     "mapView": "Kartenansicht",
@@ -208,7 +209,8 @@
     "requirePresenceHint": "Spieler müssen sich physisch an dieser Station befinden, um ihre Antwort einzureichen",
     "hidden": "Auf Karte ausgeblendet",
     "hiddenHint": "Spieler sehen diese Station nicht auf der Karte, bis sie einchecken (z. B. per NFC-Scan)",
-    "hiddenTag": "Ausgeblendet"
+    "hiddenTag": "Ausgeblendet",
+    "noFixedChallengesAvailable": "Derzeit sind keine festen Challenges verfügbar."
   },
   "challenges": {
     "title": "Challenges",
@@ -231,6 +233,7 @@
     "fileUpload": "Datei-Upload",
     "autoValidate": "Automatisch validieren",
     "locationBound": "Ortsgebunden",
+    "fixedToBase": "Fest für {{base}}",
     "correctAnswer": "Richtige Antwort",
     "correctAnswerPlaceholder": "Erwartete Antwort (Groß-/Kleinschreibung wird ignoriert)",
     "manualReview": "Manuelle Prüfung",
@@ -261,6 +264,7 @@
     "fullyAssigned": "Diese Station ist für alle Teams vollständig zugewiesen.",
     "modeLockedAllTeams": "Diese Station verwendet eine \"Alle Teams\"-Zuweisung. Entfernen Sie diese, bevor Sie teamspezifische Zuweisungen hinzufügen.",
     "noTeamsAvailable": "Keine Teams für zusätzliche Zuweisungen an dieser Station verfügbar.",
+    "noChallengesAvailable": "Keine Challenges für zusätzliche Zuweisungen an dieser Station verfügbar.",
     "conflictGeneric": "Diese Zuweisung steht im Konflikt mit vorhandenen Daten.",
     "unassignedNote_one": "{{count}} Station ohne Zuweisung erhält beim Spielstart pro Team zufällige Challenges.",
     "unassignedNote_other": "{{count}} Stationen ohne Zuweisung erhalten beim Spielstart pro Team zufällige Challenges."
@@ -346,6 +350,7 @@
     "team": "Team",
     "challenge": "Challenge",
     "answer": "Antwort",
+    "answerHidden": "Antwort ausgeblendet (zur Ansicht prüfen)",
     "notes": "Notizen",
     "noNotes": "Keine Notizen",
     "feedbackLabel": "Feedback (optional)",
@@ -359,7 +364,8 @@
     "statusCorrect": "Korrekt",
     "actions": "Aktionen",
     "override": "Überschreiben",
-    "correctAnswer": "Richtige Antwort"
+    "correctAnswer": "Richtige Antwort",
+    "feedbackSent": "Feedback: {{feedback}}"
   },
   "teamDetail": {
     "backToLeaderboard": "Zurück zur Rangliste",

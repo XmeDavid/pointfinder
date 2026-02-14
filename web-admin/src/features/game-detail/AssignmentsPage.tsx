@@ -80,6 +80,10 @@ export function AssignmentsPage() {
 
   const fixedBases = bases.filter((b) => b.fixedChallengeId);
   const assignableBases = bases.filter((b) => !b.fixedChallengeId);
+  const fixedChallengeIds = useMemo(
+    () => new Set(bases.map((base) => base.fixedChallengeId).filter((id): id is string => Boolean(id))),
+    [bases]
+  );
   const assignmentsByBase = useMemo(() => {
     const map = new Map<string, Assignment[]>();
     assignments.forEach((assignment) => {
@@ -133,13 +137,18 @@ export function AssignmentsPage() {
           {assignableBases.map((base) => {
             const baseAssignments = assignmentsByBase.get(base.id) ?? [];
             const hasAllTeamsAssignment = baseAssignments.some((assignment) => !assignment.teamId);
+            const assignedChallengeIds = new Set(baseAssignments.map((assignment) => assignment.challengeId));
+            const availableChallenges = challenges.filter(
+              (challenge) => !fixedChallengeIds.has(challenge.id) && !assignedChallengeIds.has(challenge.id)
+            );
             const assignedTeamIds = new Set(baseAssignments.map((assignment) => assignment.teamId).filter(Boolean));
             const availableTeams = teams.filter((team) => !assignedTeamIds.has(team.id));
             const isFullyAssigned = hasAllTeamsAssignment || (teams.length > 0 && availableTeams.length === 0);
             const showAllTeamsOption = baseAssignments.length === 0;
             const draft = drafts[base.id] ?? EMPTY_DRAFT;
             const requiresTeamSelection = !showAllTeamsOption;
-            const canAssign = Boolean(draft.challengeId) && (!requiresTeamSelection || Boolean(draft.teamId));
+            const canAssign = availableChallenges.some((challenge) => challenge.id === draft.challengeId)
+              && (!requiresTeamSelection || Boolean(draft.teamId));
             const isCreatingThisBase = createAssignment.isPending && createAssignment.variables?.baseId === base.id;
 
             return (
@@ -190,7 +199,7 @@ export function AssignmentsPage() {
                           onChange={(e) => updateDraft(base.id, { challengeId: e.target.value, error: undefined })}
                         >
                           <option value="">{t("assignments.selectChallenge")}</option>
-                          {challenges.map((challenge) => (
+                          {availableChallenges.map((challenge) => (
                             <option key={challenge.id} value={challenge.id}>
                               {challenge.title} ({challenge.points} {t("common.pts")})
                             </option>
@@ -238,6 +247,10 @@ export function AssignmentsPage() {
 
                   {!hasAllTeamsAssignment && !isFullyAssigned && !showAllTeamsOption && availableTeams.length === 0 && (
                     <p className="text-sm text-muted-foreground">{t("assignments.noTeamsAvailable")}</p>
+                  )}
+
+                  {!hasAllTeamsAssignment && availableChallenges.length === 0 && (
+                    <p className="text-sm text-muted-foreground">{t("assignments.noChallengesAvailable")}</p>
                   )}
 
                   {draft.error && (

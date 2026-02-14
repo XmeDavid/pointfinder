@@ -33,3 +33,4 @@ Use these values consistently across App Store Connect, Google Play Console, pri
 - You are the sole data controller as an individual (no company entity required).
 - The privacy policy already names "PointFinder" as the service; store listings should reference the same name.
 - Google Play requires the deletion URL to be publicly accessible without login. The privacy policy deletion section serves this purpose.
+- Domain decision: keep `desbravadores.dev` for this release to avoid rework across store metadata, app configs, and legal URLs.
