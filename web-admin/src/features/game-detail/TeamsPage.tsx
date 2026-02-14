@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Users, Copy, Trash2, Check, Pencil, QrCode } from "lucide-react";
+import { Plus, Users, Copy, Trash2, Check, Pencil, QrCode, UserMinus } from "lucide-react";
 import QRCode from "qrcode";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,7 +64,15 @@ export function TeamsPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {teams.map((team) => (
-            <TeamCard key={team.id} team={team} onCopy={copyCode} copiedCode={copiedCode} onDelete={() => deleteTeam.mutate(team.id)} onUpdate={(name) => updateTeam.mutate({ id: team.id, name })} />
+            <TeamCard
+              key={team.id}
+              team={team}
+              onCopy={copyCode}
+              copiedCode={copiedCode}
+              onDelete={() => deleteTeam.mutate(team.id)}
+              onUpdate={(name) => updateTeam.mutate({ id: team.id, name })}
+              onActionError={setActionError}
+            />
           ))}
         </div>
       )}
@@ -88,8 +96,23 @@ export function TeamsPage() {
   );
 }
 
-function TeamCard({ team, onCopy, copiedCode, onDelete, onUpdate }: { team: Team; onCopy: (code: string) => void; copiedCode: string | null; onDelete: () => void; onUpdate: (name: string) => void }) {
+function TeamCard({
+  team,
+  onCopy,
+  copiedCode,
+  onDelete,
+  onUpdate,
+  onActionError,
+}: {
+  team: Team;
+  onCopy: (code: string) => void;
+  copiedCode: string | null;
+  onDelete: () => void;
+  onUpdate: (name: string) => void;
+  onActionError: (message: string) => void;
+}) {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(team.name);
 
@@ -97,6 +120,15 @@ function TeamCard({ team, onCopy, copiedCode, onDelete, onUpdate }: { team: Team
   const { data: players = [] } = useQuery({
     queryKey: ["players", team.id],
     queryFn: () => teamsApi.getPlayers(team.id, team.gameId),
+  });
+
+  const removePlayer = useMutation({
+    mutationFn: (playerId: string) => teamsApi.removePlayer(team.id, playerId, team.gameId),
+    onSuccess: () => {
+      onActionError("");
+      queryClient.invalidateQueries({ queryKey: ["players", team.id] });
+    },
+    onError: (error: unknown) => onActionError(getApiErrorMessage(error)),
   });
 
   const handleSave = () => {
@@ -169,9 +201,25 @@ function TeamCard({ team, onCopy, copiedCode, onDelete, onUpdate }: { team: Team
           <div className="space-y-1 border-t border-border pt-3">
             <p className="text-xs font-medium text-muted-foreground mb-2">{t("teams.members")}</p>
             {players.map((p) => (
-              <div key={p.id} className="flex items-center justify-between text-sm">
-                <span>{p.displayName}</span>
-                <span className="text-xs text-muted-foreground font-mono">{p.deviceId}</span>
+              <div key={p.id} className="flex items-center justify-between gap-2 text-sm">
+                <span className="min-w-0 flex-1 truncate">{p.displayName}</span>
+                <span className="max-w-40 truncate text-xs text-muted-foreground font-mono text-right" title={p.deviceId}>
+                  {p.deviceId}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  disabled={removePlayer.isPending}
+                  onClick={() => {
+                    if (window.confirm(t("teams.removeMemberConfirm", { name: p.displayName }))) {
+                      removePlayer.mutate(p.id);
+                    }
+                  }}
+                  title={t("teams.removeMember")}
+                >
+                  <UserMinus className="h-3.5 w-3.5 text-muted-foreground" />
+                </Button>
               </div>
             ))}
           </div>

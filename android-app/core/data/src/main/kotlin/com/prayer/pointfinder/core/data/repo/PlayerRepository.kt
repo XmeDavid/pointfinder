@@ -26,6 +26,11 @@ data class CheckInResult(
     val queued: Boolean,
 )
 
+data class ProgressResult(
+    val progress: List<BaseProgress>,
+    val gameStatus: String?,
+)
+
 data class SubmitResult(
     val response: SubmissionResponse,
     val queued: Boolean,
@@ -38,7 +43,7 @@ class PlayerRepository @Inject constructor(
 ) {
     suspend fun pendingCount(): Int = db.pendingActionDao().pendingCount()
 
-    suspend fun loadProgress(auth: AuthType.Player, online: Boolean): List<BaseProgress> {
+    suspend fun loadProgress(auth: AuthType.Player, online: Boolean): ProgressResult {
         if (online) {
             runCatching {
                 val gameData = api.getGameData(auth.gameId)
@@ -46,10 +51,16 @@ class PlayerRepository @Inject constructor(
                 db.progressDao().upsertAll(gameData.progress.map { it.toCached(auth.gameId) })
                 // Cache challenges so they're available when tapping any base
                 cacheGameChallenges(auth, gameData)
-                return gameData.progress
+                return ProgressResult(
+                    progress = gameData.progress,
+                    gameStatus = gameData.gameStatus,
+                )
             }
         }
-        return db.progressDao().progressForGame(auth.gameId).map { it.toBaseProgress() }
+        return ProgressResult(
+            progress = db.progressDao().progressForGame(auth.gameId).map { it.toBaseProgress() },
+            gameStatus = auth.gameStatus,
+        )
     }
 
     private suspend fun cacheGameChallenges(auth: AuthType.Player, gameData: com.prayer.pointfinder.core.model.GameDataResponse) {

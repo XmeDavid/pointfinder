@@ -111,6 +111,7 @@ struct Assignment: Codable, Identifiable {
 
 /// Complete game data response for offline caching
 struct GameDataResponse: Codable {
+    let gameStatus: String?
     let bases: [Base]
     let challenges: [Challenge]
     let assignments: [Assignment]

@@ -277,7 +277,9 @@
     "noMembers": "Noch keine Mitglieder",
     "member_one": "{{count}} Mitglied",
     "member_other": "{{count}} Mitglieder",
-    "downloadQr": "QR-Code herunterladen"
+    "downloadQr": "QR-Code herunterladen",
+    "removeMember": "Spieler entfernen",
+    "removeMemberConfirm": "{{name}} aus diesem Spiel entfernen?"
   },
   "notifications": {
     "title": "Benachrichtigungen",

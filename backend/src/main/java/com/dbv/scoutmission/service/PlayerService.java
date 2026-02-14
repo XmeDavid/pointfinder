@@ -50,8 +50,8 @@ public class PlayerService {
                 .orElseThrow(() -> new BadRequestException("Invalid join code"));
 
         Game game = team.getGame();
-        if (game.getStatus() != GameStatus.live) {
-            throw new BadRequestException("Game is not active");
+        if (game.getStatus() == GameStatus.ended) {
+            throw new BadRequestException("Game has ended");
         }
 
         // Find existing player by device ID in this game, or create a new one.
@@ -110,6 +110,7 @@ public class PlayerService {
         team.getId();
         team.getName();
         gameAccessService.ensurePlayerBelongsToGame(player, gameId);
+        ensureGameIsLiveForPlayerActions(team);
 
         Base base = baseRepository.findById(baseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Base", baseId));
@@ -344,6 +345,7 @@ public class PlayerService {
                 .collect(Collectors.toList());
 
         return GameDataResponse.builder()
+                .gameStatus(team.getGame().getStatus().name())
                 .bases(bases)
                 .challenges(challenges)
                 .assignments(assignments)
@@ -362,6 +364,7 @@ public class PlayerService {
         // Force initialization of lazy proxy within this transaction
         team.getId();
         gameAccessService.ensurePlayerBelongsToGame(player, gameId);
+        ensureGameIsLiveForPlayerActions(team);
 
         Base base = baseRepository.findById(request.getBaseId())
                 .orElseThrow(() -> new ResourceNotFoundException("Base", request.getBaseId()));
@@ -428,9 +431,8 @@ public class PlayerService {
         Team team = player.getTeam();
         team.getId(); // force initialization
 
-        if (!team.getGame().getId().equals(gameId)) {
-            throw new BadRequestException("Player does not belong to this game");
-        }
+        gameAccessService.ensurePlayerBelongsToGame(player, gameId);
+        ensureGameIsLiveForPlayerActions(team);
 
         PlayerLocation location = playerLocationRepository.findById(playerId).orElse(null);
         if (location == null) {
@@ -496,5 +498,11 @@ public class PlayerService {
                 .orElse(null);
         Assignment assignment = teamSpecificAssignment != null ? teamSpecificAssignment : globalAssignment;
         return assignment != null ? assignment.getChallenge() : base.getFixedChallenge();
+    }
+
+    private void ensureGameIsLiveForPlayerActions(Team team) {
+        if (team.getGame().getStatus() != GameStatus.live) {
+            throw new BadRequestException("Game is not active yet");
+        }
     }
 }

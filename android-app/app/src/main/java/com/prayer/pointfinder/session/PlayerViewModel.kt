@@ -27,6 +27,7 @@ import com.prayer.pointfinder.core.i18n.R as StringR
 data class PlayerState(
     val isLoading: Boolean = false,
     val progress: List<BaseProgress> = emptyList(),
+    val gameStatus: String? = null,
     val selectedBase: BaseProgress? = null,
     val selectedChallenge: CheckInResponse.ChallengeInfo? = null,
     val activeCheckIn: CheckInResponse? = null,
@@ -67,13 +68,19 @@ class PlayerViewModel @Inject constructor(
 
     fun refresh(auth: AuthType.Player, online: Boolean) {
         viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true, scanError = null, solveError = null)
+            _state.value = _state.value.copy(
+                isLoading = true,
+                scanError = null,
+                solveError = null,
+                gameStatus = _state.value.gameStatus ?: auth.gameStatus,
+            )
             runCatching {
                 playerRepository.loadProgress(auth, online)
-            }.onSuccess { progress ->
+            }.onSuccess { result ->
                 _state.value = _state.value.copy(
                     isLoading = false,
-                    progress = progress,
+                    progress = result.progress,
+                    gameStatus = result.gameStatus ?: _state.value.gameStatus,
                     authExpired = false,
                 )
             }.onFailure { err ->

@@ -50,4 +50,12 @@ public class TeamController {
                                                             @PathVariable UUID teamId) {
         return ResponseEntity.ok(teamService.getPlayers(gameId, teamId));
     }
+
+    @DeleteMapping("/{teamId}/players/{playerId}")
+    public ResponseEntity<Void> removePlayer(@PathVariable UUID gameId,
+                                             @PathVariable UUID teamId,
+                                             @PathVariable UUID playerId) {
+        teamService.removePlayer(gameId, teamId, playerId);
+        return ResponseEntity.noContent().build();
+    }
 }

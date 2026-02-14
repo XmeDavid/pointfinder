@@ -103,6 +103,8 @@
     <string name="label_assignment_fixed">Fixed challenge assignment</string>
     <string name="label_assignment_per_team">Per-team assignments (%1$d)</string>
     <string name="label_no_games_description">You have no games yet. Pull to refresh or check back later.</string>
+    <string name="label_game_not_active_title">Game not active yet</string>
+    <string name="label_game_not_active_message">Please wait until your operator sets the game live.</string>
 
     <!-- Permission Disclosure -->
     <string name="disclosure_title">Before You Start</string>

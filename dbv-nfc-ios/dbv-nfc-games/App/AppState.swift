@@ -179,6 +179,15 @@ final class AppState {
                 let gameData = try await apiClient.getGameData(gameId: gameId, token: token)
                 await GameDataCache.shared.cacheGameData(gameData, gameId: gameId)
                 baseProgress = gameData.progress
+                if let status = gameData.gameStatus, var game = currentGame {
+                    game = PlayerAuthResponse.GameInfo(
+                        id: game.id,
+                        name: game.name,
+                        description: game.description,
+                        status: status
+                    )
+                    currentGame = game
+                }
             } catch {
                 // Fall back to cache on network error
                 if let cached = await GameDataCache.shared.getCachedProgress(gameId: gameId) {

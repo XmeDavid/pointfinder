@@ -103,6 +103,8 @@
     <string name="label_assignment_fixed">Feste Aufgabenzuweisung</string>
     <string name="label_assignment_per_team">Zuweisungen pro Team (%1$d)</string>
     <string name="label_no_games_description">Du hast noch keine Spiele. Ziehe zum Aktualisieren oder schaue später wieder vorbei.</string>
+    <string name="label_game_not_active_title">Spiel ist noch nicht aktiv</string>
+    <string name="label_game_not_active_message">Bitte warte, bis dein Operator das Spiel live schaltet.</string>
 
     <!-- Permission Disclosure -->
     <string name="disclosure_title">Bevor du startest</string>
