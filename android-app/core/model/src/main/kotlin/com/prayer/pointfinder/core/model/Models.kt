@@ -219,6 +219,7 @@ data class SubmissionResponse(
 
 @Serializable
 data class GameDataResponse(
+    val gameStatus: String? = null,
     val bases: List<Base>,
     val challenges: List<Challenge>,
     val assignments: List<Assignment>,

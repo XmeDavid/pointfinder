@@ -10,6 +10,8 @@ struct GameMapView: View {
     var body: some View {
         NavigationStack {
             ZStack {
+                let status = appState.currentGame?.status
+                let shouldBlockGameplay = status == "setup" || status == "ended"
                 Map(position: $cameraPosition) {
                     ForEach(appState.baseProgress) { base in
                         Annotation(
@@ -38,6 +40,22 @@ struct GameMapView: View {
                     MapLegendView()
                         .padding(.bottom, 8)
                 }
+
+                if shouldBlockGameplay {
+                    Color.black.opacity(0.35)
+                        .ignoresSafeArea()
+                    VStack(spacing: 10) {
+                        Text(locale.t("player.gameNotLiveTitle"))
+                            .font(.headline)
+                        Text(locale.t("player.gameNotLiveMessage"))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(20)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+                    .padding(.horizontal, 24)
+                }
             }
             .navigationTitle(appState.currentGame?.name ?? locale.t("map.defaultTitle"))
             .navigationBarTitleDisplayMode(.inline)
@@ -55,6 +73,13 @@ struct GameMapView: View {
             }
             .refreshable {
                 await appState.loadProgress()
+            }
+            .task(id: appState.currentGame?.status) {
+                guard appState.currentGame?.status != "live" else { return }
+                while !Task.isCancelled && appState.currentGame?.status != "live" {
+                    try? await Task.sleep(nanoseconds: 10_000_000_000)
+                    await appState.loadProgress()
+                }
             }
             .alert(locale.t("common.error"), isPresented: Binding(
                 get: { appState.showError },

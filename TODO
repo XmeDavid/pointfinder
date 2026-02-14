@@ -1,4 +1,12 @@
 Code (in codebase)
+- Map view on bases, you cant click the pin to see info
+- On challanges list, if a challange is on a fixed based already assigned, lets show in the card the name of the base. Maybe replace the location bound tag, to the base it was bounded to, if not bound keep the same, maybe a slight distinction on color, "location bound" maybe slightly faded, and if its the actual name of the base full black as is.
+-The above, we can do the reverse, so if its fixed challange, and there is already a challange assign, we can show in the tag the challange.
+-The "Manual / Randomizable Assignments",  when selecting a challange, it shows me on the dropdown challanges that already fixed, this should not be the case
+-Everytime it makes sense, we should limit the dropdown, I see we do this already with the teams, which is great (if i assigned to one, it disappears from the dropdown when doing for the remaining teams)
+-On iOS operator, the game list, lets add a scroll down to refresh
+-On iOS remove the image on the landing page for now
+-On Android, move the Join game with code or QR a bit up, the keyboard hides the continue button when inputting a code, with a lot of empty space above
 ---
 
 Outside Codebase (manual / ops / launch)

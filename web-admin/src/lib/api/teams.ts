@@ -42,4 +42,9 @@ export const teamsApi = {
     const { data } = await apiClient.get(`/games/${gameId}/teams/${teamId}/players`);
     return data;
   },
+
+  removePlayer: async (teamId: string, playerId: string, gameId?: string): Promise<void> => {
+    if (!gameId) return;
+    await apiClient.delete(`/games/${gameId}/teams/${teamId}/players/${playerId}`);
+  },
 };

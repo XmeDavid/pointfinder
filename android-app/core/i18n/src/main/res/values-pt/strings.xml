@@ -103,6 +103,8 @@
     <string name="label_assignment_fixed">Atribuição de desafio fixo</string>
     <string name="label_assignment_per_team">Atribuições por equipe (%1$d)</string>
     <string name="label_no_games_description">Não tens jogos ainda. Puxa para atualizar ou verifica mais tarde.</string>
+    <string name="label_game_not_active_title">Jogo ainda não está ativo</string>
+    <string name="label_game_not_active_message">Aguarda até que o operador coloque o jogo em direto.</string>
 
     <!-- Permission Disclosure -->
     <string name="disclosure_title">Antes de Começar</string>

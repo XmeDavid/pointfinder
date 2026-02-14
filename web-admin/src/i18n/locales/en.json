@@ -277,7 +277,9 @@
     "noMembers": "No members yet",
     "member_one": "{{count}} member",
     "member_other": "{{count}} members",
-    "downloadQr": "Download QR Code"
+    "downloadQr": "Download QR Code",
+    "removeMember": "Remove player",
+    "removeMemberConfirm": "Remove {{name}} from this game?"
   },
   "notifications": {
     "title": "Notifications",

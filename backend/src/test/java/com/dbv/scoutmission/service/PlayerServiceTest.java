@@ -6,6 +6,7 @@ import com.dbv.scoutmission.entity.Game;
 import com.dbv.scoutmission.entity.GameStatus;
 import com.dbv.scoutmission.entity.Player;
 import com.dbv.scoutmission.entity.Team;
+import com.dbv.scoutmission.exception.BadRequestException;
 import com.dbv.scoutmission.repository.ActivityEventRepository;
 import com.dbv.scoutmission.repository.AssignmentRepository;
 import com.dbv.scoutmission.repository.BaseRepository;
@@ -28,7 +29,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -173,6 +176,121 @@ class PlayerServiceTest {
         assertEquals("jwt-token", response.getToken());
         verify(playerRepository).findFirstByDeviceIdAndTeamGameIdOrderByCreatedAtDesc(deviceId, gameId);
         verify(playerRepository, times(2)).save(existingPlayer);
+    }
+
+    @Test
+    void joinTeamAllowsSetupStatus() {
+        UUID gameId = UUID.randomUUID();
+        UUID teamId = UUID.randomUUID();
+        String joinCode = "SETUP01";
+        String deviceId = "device-setup";
+
+        Game game = Game.builder()
+                .id(gameId)
+                .name("Setup Game")
+                .description("Desc")
+                .status(GameStatus.setup)
+                .build();
+        Team team = Team.builder()
+                .id(teamId)
+                .game(game)
+                .name("Falcons")
+                .joinCode(joinCode)
+                .color("#00AAFF")
+                .build();
+
+        PlayerJoinRequest request = new PlayerJoinRequest();
+        request.setJoinCode(joinCode);
+        request.setDisplayName("Setup Player");
+        request.setDeviceId(deviceId);
+
+        when(teamRepository.findByJoinCode(joinCode)).thenReturn(Optional.of(team));
+        when(playerRepository.findFirstByDeviceIdAndTeamGameIdOrderByCreatedAtDesc(deviceId, gameId))
+                .thenReturn(Optional.empty());
+        when(playerRepository.save(any(Player.class))).thenAnswer(invocation -> {
+            Player p = invocation.getArgument(0);
+            if (p.getId() == null) {
+                p.setId(UUID.randomUUID());
+            }
+            return p;
+        });
+        when(tokenProvider.generatePlayerToken(any(UUID.class), any(UUID.class), any(UUID.class))).thenReturn("jwt-token");
+
+        PlayerAuthResponse response = playerService.joinTeam(request);
+
+        assertEquals("jwt-token", response.getToken());
+        assertEquals("setup", response.getGame().getStatus());
+        assertEquals("Setup Player", response.getPlayer().getDisplayName());
+    }
+
+    @Test
+    void joinTeamRejectsEndedStatus() {
+        UUID gameId = UUID.randomUUID();
+        UUID teamId = UUID.randomUUID();
+        String joinCode = "ENDED01";
+
+        Game game = Game.builder()
+                .id(gameId)
+                .name("Ended Game")
+                .description("Desc")
+                .status(GameStatus.ended)
+                .build();
+        Team team = Team.builder()
+                .id(teamId)
+                .game(game)
+                .name("Sharks")
+                .joinCode(joinCode)
+                .color("#0033FF")
+                .build();
+
+        PlayerJoinRequest request = new PlayerJoinRequest();
+        request.setJoinCode(joinCode);
+        request.setDisplayName("Late Player");
+        request.setDeviceId("late-device");
+
+        when(teamRepository.findByJoinCode(joinCode)).thenReturn(Optional.of(team));
+
+        BadRequestException ex = assertThrows(BadRequestException.class, () -> playerService.joinTeam(request));
+
+        assertEquals("Game has ended", ex.getMessage());
+        verify(playerRepository, never()).save(any(Player.class));
+    }
+
+    @Test
+    void updateLocationBlocksWhenGameIsNotLive() {
+        UUID gameId = UUID.randomUUID();
+        UUID teamId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+
+        Game game = Game.builder()
+                .id(gameId)
+                .name("Setup Game")
+                .description("Desc")
+                .status(GameStatus.setup)
+                .build();
+        Team team = Team.builder()
+                .id(teamId)
+                .game(game)
+                .name("Wolves")
+                .joinCode("SETUP02")
+                .color("#FF9900")
+                .build();
+        Player player = Player.builder()
+                .id(playerId)
+                .team(team)
+                .deviceId("device-location")
+                .displayName("Player")
+                .build();
+
+        when(playerRepository.findById(playerId)).thenReturn(Optional.of(player));
+
+        BadRequestException ex = assertThrows(
+                BadRequestException.class,
+                () -> playerService.updateLocation(gameId, player, 40.0, -8.0)
+        );
+
+        assertEquals("Game is not active yet", ex.getMessage());
+        verify(playerLocationRepository, never()).save(any());
     }
 }
 

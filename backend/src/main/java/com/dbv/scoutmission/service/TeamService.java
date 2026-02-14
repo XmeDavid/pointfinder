@@ -5,6 +5,7 @@ import com.dbv.scoutmission.dto.request.UpdateTeamRequest;
 import com.dbv.scoutmission.dto.response.PlayerResponse;
 import com.dbv.scoutmission.dto.response.TeamResponse;
 import com.dbv.scoutmission.entity.Game;
+import com.dbv.scoutmission.entity.Player;
 import com.dbv.scoutmission.entity.Team;
 import com.dbv.scoutmission.exception.BadRequestException;
 import com.dbv.scoutmission.exception.ResourceNotFoundException;
@@ -103,6 +104,28 @@ public class TeamService {
                         .displayName(p.getDisplayName())
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void removePlayer(UUID gameId, UUID teamId, UUID playerId) {
+        gameAccessService.ensureCurrentUserCanAccessGame(gameId);
+
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new ResourceNotFoundException("Team", teamId));
+        if (!team.getGame().getId().equals(gameId)) {
+            throw new BadRequestException("Team does not belong to this game");
+        }
+
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
+        if (!player.getTeam().getId().equals(teamId)) {
+            throw new BadRequestException("Player does not belong to this team");
+        }
+        if (!player.getTeam().getGame().getId().equals(gameId)) {
+            throw new BadRequestException("Player does not belong to this game");
+        }
+
+        playerRepository.delete(player);
     }
 
     private String generateUniqueJoinCode() {

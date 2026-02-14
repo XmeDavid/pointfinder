@@ -10,13 +10,16 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.background
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.LocationOn
@@ -79,6 +82,7 @@ import com.prayer.pointfinder.session.OperatorViewModel
 import com.prayer.pointfinder.session.PlayerViewModel
 import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.rememberCameraPositionState
+import kotlinx.coroutines.delay
 
 @Composable
 fun AppNavigation(
@@ -235,6 +239,8 @@ private fun PlayerRootScreen(
 
     // Permission launchers (fired after disclosure accepted)
     var pendingPermissionRequest by remember { mutableStateOf(false) }
+    val gameStatus = state.gameStatus ?: auth.gameStatus
+    val shouldBlockGameplay = gameStatus == "setup" || gameStatus == "ended"
 
     LaunchedEffect(state.authExpired) {
         if (state.authExpired) {
@@ -352,6 +358,13 @@ private fun PlayerRootScreen(
         viewModel.refresh(auth, isOnline)
     }
 
+    LaunchedEffect(auth.gameId, isOnline, state.gameStatus) {
+        if (isOnline && state.gameStatus != "live") {
+            delay(10_000L)
+            viewModel.refresh(auth, isOnline)
+        }
+    }
+
     PlayerHomeScaffold(
         selectedTab = selectedTab,
         onTabSelected = { tab ->
@@ -459,29 +472,39 @@ private fun PlayerRootScreen(
             }
 
             selectedTab == PlayerTab.MAP -> {
-                PlayerMapScreen(
-                    progress = state.progress,
-                    isLoading = state.isLoading,
-                    cameraPositionState = playerCameraState,
-                    onBaseSelected = { viewModel.selectBase(auth, it) },
-                    onRefresh = { viewModel.refresh(auth, isOnline) },
-                )
+                Box(modifier = Modifier.fillMaxSize()) {
+                    PlayerMapScreen(
+                        progress = state.progress,
+                        isLoading = state.isLoading,
+                        cameraPositionState = playerCameraState,
+                        onBaseSelected = { viewModel.selectBase(auth, it) },
+                        onRefresh = { viewModel.refresh(auth, isOnline) },
+                    )
+                    if (shouldBlockGameplay) {
+                        GameNotLiveOverlay()
+                    }
+                }
             }
 
             selectedTab == PlayerTab.CHECK_IN -> {
-                CheckInScreen(
-                    pendingActionsCount = pendingActionsCount,
-                    scanError = state.scanError,
-                    onScan = {
-                        showNfcScanDialog = true
-                    },
-                )
+                Box(modifier = Modifier.fillMaxSize()) {
+                    CheckInScreen(
+                        pendingActionsCount = pendingActionsCount,
+                        scanError = state.scanError,
+                        onScan = {
+                            showNfcScanDialog = true
+                        },
+                    )
+                    if (shouldBlockGameplay) {
+                        GameNotLiveOverlay()
+                    }
+                }
             }
 
             else -> {
                 PlayerSettingsScreen(
                     gameName = auth.gameName,
-                    gameStatus = auth.gameStatus,
+                    gameStatus = gameStatus,
                     teamName = auth.teamName,
                     teamColor = auth.teamColor,
                     displayName = auth.displayName,
@@ -505,10 +528,12 @@ private fun PlayerRootScreen(
             baseProgress = selectedBase,
             challenge = state.selectedChallenge,
             onCheckIn = {
+                if (shouldBlockGameplay) return@BaseDetailBottomSheet
                 viewModel.startCheckIn(auth, selectedBase.baseId, isOnline)
                 viewModel.clearSelectedBase()
             },
             onSolve = {
+                if (shouldBlockGameplay) return@BaseDetailBottomSheet
                 val challengeId = state.selectedChallenge?.id ?: selectedBase.challengeId
                 if (challengeId != null) {
                     solving = selectedBase.baseId to challengeId
@@ -545,6 +570,40 @@ private fun PlayerRootScreen(
                 pendingNfcAction = null
             },
         )
+    }
+}
+
+@Composable
+private fun GameNotLiveOverlay() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.85f)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(24.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.background,
+                    shape = MaterialTheme.shapes.medium,
+                )
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.label_game_not_active_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = stringResource(R.string.label_game_not_active_message),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+        }
     }
 }
 
