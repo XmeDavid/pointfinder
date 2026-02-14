@@ -37,6 +37,14 @@ export function SubmissionsPage() {
   const openFullScreen = useCallback((apiUrl: string) => {
     setFullScreenImage({ apiUrl, blobUrl: blobCache.current.get(apiUrl) });
   }, []);
+  const openReview = useCallback((submission: Submission) => {
+    setReviewingSub(submission);
+    setFeedback(submission.feedback ?? "");
+  }, []);
+  const closeReview = useCallback(() => {
+    setReviewingSub(null);
+    setFeedback("");
+  }, []);
 
   const { data: submissions = [] } = useQuery({ queryKey: ["submissions", gameId], queryFn: () => submissionsApi.listByGame(gameId!) });
   const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!) });
@@ -71,11 +79,24 @@ export function SubmissionsPage() {
         <Card className="py-12"><CardContent className="text-center"><FileText className="mx-auto h-8 w-8 text-muted-foreground mb-2" /><p className="text-muted-foreground">{filter === "pending" ? t("submissions.noPending") : t("submissions.noSubmissions")}</p></CardContent></Card>
       ) : (
         <div className="space-y-3">{sorted.map((sub) => {
+          const isPending = sub.status === "pending";
           const team = teams.find((tm) => tm.id === sub.teamId);
           const challenge = challenges.find((c) => c.id === sub.challengeId);
           const base = bases.find((b) => b.id === sub.baseId);
           return (
-            <Card key={sub.id}>
+            <Card
+              key={sub.id}
+              className={isPending ? "cursor-pointer transition-colors hover:border-primary/50" : undefined}
+              onClick={isPending ? () => openReview(sub) : undefined}
+              role={isPending ? "button" : undefined}
+              tabIndex={isPending ? 0 : undefined}
+              onKeyDown={isPending ? (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  openReview(sub);
+                }
+              } : undefined}
+            >
               <CardContent className="flex items-center gap-4 p-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -87,25 +108,31 @@ export function SubmissionsPage() {
                     {sub.fileUrl ? (
                       <>
                         <AuthImage src={sub.fileUrl} alt="Submission" className="h-10 w-10 rounded object-cover cursor-pointer" onClick={(e) => { e.stopPropagation(); openFullScreen(sub.fileUrl!); }} onBlobReady={(blob) => cacheBlobUrl(sub.fileUrl!, blob)} />
-                        {sub.answer && <span className="truncate max-w-md">{sub.answer}</span>}
                       </>
                     ) : (
-                      <><FileText className="h-3.5 w-3.5" /><span className="truncate max-w-md">{sub.answer}</span></>
+                      <><FileText className="h-3.5 w-3.5" /><span className="truncate max-w-md">{t("submissions.answerHidden")}</span></>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">{formatDateTime(sub.submittedAt)}</p>
+                  {sub.feedback && sub.status !== "pending" && (
+                    <p className="text-xs text-muted-foreground mt-1 truncate max-w-xl">
+                      {t("submissions.feedbackSent", { feedback: sub.feedback })}
+                    </p>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant={statusVariants[sub.status]}>{statusIcons[sub.status]}<span className="ml-1">{statusLabels[sub.status]}</span></Badge>
                   <DropdownMenu>
                     <DropdownMenuTrigger
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
                       className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground"
                       aria-label={t("submissions.actions")}
                     >
                       <MoreHorizontal className="h-4 w-4" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setReviewingSub(sub)}>{t("submissions.override")}</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => openReview(sub)}>{t("submissions.override")}</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -115,9 +142,9 @@ export function SubmissionsPage() {
         })}</div>
       )}
 
-      <Dialog open={!!reviewingSub} onOpenChange={() => setReviewingSub(null)}>
+      <Dialog open={!!reviewingSub} onOpenChange={closeReview}>
         {reviewingSub && (
-          <DialogContent onClose={() => setReviewingSub(null)}>
+          <DialogContent onClose={closeReview}>
             <DialogHeader><DialogTitle>{t("submissions.reviewTitle")}</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div><p className="text-sm font-medium mb-1">{t("submissions.team")}</p><p className="text-sm text-muted-foreground">{teams.find((tm) => tm.id === reviewingSub.teamId)?.name}</p></div>

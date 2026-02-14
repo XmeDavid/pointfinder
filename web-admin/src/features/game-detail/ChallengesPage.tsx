@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from "react";
+import { useMemo, useState, lazy, Suspense } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Puzzle, Trash2, Pencil, FileText, Image, CheckCircle, Eye, MapPin } from "lucide-react";
@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { challengesApi, type CreateChallengeDto } from "@/lib/api/challenges";
+import { basesApi } from "@/lib/api/bases";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { useTranslation } from "react-i18next";
 import type { Challenge } from "@/types";
@@ -28,6 +29,16 @@ export function ChallengesPage() {
   const [actionError, setActionError] = useState("");
 
   const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!) });
+  const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!) });
+  const fixedBaseByChallengeId = useMemo(() => {
+    const map = new Map<string, { id: string; name: string }>();
+    bases.forEach((base) => {
+      if (base.fixedChallengeId) {
+        map.set(base.fixedChallengeId, { id: base.id, name: base.name });
+      }
+    });
+    return map;
+  }, [bases]);
 
   const createChallenge = useMutation({
     mutationFn: (data: CreateChallengeDto) => challengesApi.create({ ...data, gameId: gameId! }),
@@ -89,23 +100,36 @@ export function ChallengesPage() {
         <div className="grid gap-4 md:grid-cols-2">
           {challenges.map((ch) => (
             <Card key={ch.id}>
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0"><CardTitle className="text-base">{ch.title}</CardTitle><CardDescription className="line-clamp-1">{ch.description}</CardDescription></div>
-                  <div className="flex gap-1 ml-2">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(ch)}><Pencil className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => deleteChallenge.mutate(ch.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline">{ch.points} {t("common.pts")}</Badge>
-                  <Badge variant="secondary">{ch.answerType === "text" ? <><FileText className="mr-1 h-3 w-3" /> {t("challenges.text")}</> : <><Image className="mr-1 h-3 w-3" /> {t("challenges.fileUpload")}</>}</Badge>
-                  {ch.autoValidate ? <Badge variant="success"><CheckCircle className="mr-1 h-3 w-3" /> {t("challenges.autoValidate")}</Badge> : <Badge variant="warning"><Eye className="mr-1 h-3 w-3" /> {t("challenges.manualReview")}</Badge>}
-                  {ch.locationBound && <Badge variant="outline"><MapPin className="mr-1 h-3 w-3" /> {t("challenges.locationBound")}</Badge>}
-                </div>
-              </CardContent>
+              {(() => {
+                const fixedBase = fixedBaseByChallengeId.get(ch.id);
+                return (
+                  <>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0"><CardTitle className="text-base">{ch.title}</CardTitle><CardDescription className="line-clamp-1">{ch.description}</CardDescription></div>
+                        <div className="flex gap-1 ml-2">
+                          <Button variant="ghost" size="icon" onClick={() => openEdit(ch)}><Pencil className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => deleteChallenge.mutate(ch.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant="outline">{ch.points} {t("common.pts")}</Badge>
+                        <Badge variant="secondary">{ch.answerType === "text" ? <><FileText className="mr-1 h-3 w-3" /> {t("challenges.text")}</> : <><Image className="mr-1 h-3 w-3" /> {t("challenges.fileUpload")}</>}</Badge>
+                        {ch.autoValidate ? <Badge variant="success"><CheckCircle className="mr-1 h-3 w-3" /> {t("challenges.autoValidate")}</Badge> : <Badge variant="warning"><Eye className="mr-1 h-3 w-3" /> {t("challenges.manualReview")}</Badge>}
+                        {ch.locationBound && <Badge variant="outline" className={fixedBase ? "opacity-60" : undefined}><MapPin className="mr-1 h-3 w-3" /> {t("challenges.locationBound")}</Badge>}
+                        {fixedBase && (
+                          <Badge variant="secondary" className="max-w-full">
+                            <MapPin className="mr-1 h-3 w-3 shrink-0" />
+                            <span className="truncate">{t("challenges.fixedToBase", { base: fixedBase.name })}</span>
+                          </Badge>
+                        )}
+                      </div>
+                    </CardContent>
+                  </>
+                );
+              })()}
             </Card>
           ))}
         </div>

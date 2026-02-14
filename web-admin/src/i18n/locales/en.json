@@ -200,6 +200,7 @@
     "nfcLinked": "NFC linked",
     "nfcNotLinked": "NFC not linked",
     "fixedChallengeTag": "Fixed challenge",
+    "fixedChallengeNamed": "Fixed: {{challenge}}",
     "summary": "{{count}} base(s) · {{linked}} NFC linked",
     "clickMapToSelect": "Click on the map to select location",
     "mapView": "Map view",
@@ -208,7 +209,8 @@
     "requirePresenceHint": "Players must be physically at this base to submit their answer",
     "hidden": "Hidden from map",
     "hiddenHint": "Players won't see this base on the map until they check in (e.g. via NFC scan)",
-    "hiddenTag": "Hidden"
+    "hiddenTag": "Hidden",
+    "noFixedChallengesAvailable": "No fixed challenges are currently available."
   },
   "challenges": {
     "title": "Challenges",
@@ -231,6 +233,7 @@
     "fileUpload": "File Upload",
     "autoValidate": "Auto-validate",
     "locationBound": "Location-bound",
+    "fixedToBase": "Fixed to {{base}}",
     "correctAnswer": "Correct Answer",
     "correctAnswerPlaceholder": "The expected answer (case-insensitive comparison)",
     "manualReview": "Manual review",
@@ -261,6 +264,7 @@
     "fullyAssigned": "This base is fully assigned for all teams.",
     "modeLockedAllTeams": "This base uses an \"All Teams\" assignment. Remove it before adding team-specific assignments.",
     "noTeamsAvailable": "No teams available for additional assignments on this base.",
+    "noChallengesAvailable": "No challenges available for additional assignments on this base.",
     "conflictGeneric": "This assignment conflicts with existing data.",
     "unassignedNote_one": "{{count}} base without assignments will receive random challenges per team when the game starts.",
     "unassignedNote_other": "{{count}} bases without assignments will receive random challenges per team when the game starts."
@@ -346,6 +350,7 @@
     "team": "Team",
     "challenge": "Challenge",
     "answer": "Answer",
+    "answerHidden": "Answer hidden (review to view details)",
     "notes": "Notes",
     "noNotes": "No notes",
     "feedbackLabel": "Feedback (optional)",
@@ -359,7 +364,8 @@
     "statusCorrect": "Correct",
     "actions": "Actions",
     "override": "Override",
-    "correctAnswer": "Correct Answer"
+    "correctAnswer": "Correct Answer",
+    "feedbackSent": "Feedback: {{feedback}}"
   },
   "teamDetail": {
     "backToLeaderboard": "Back to Leaderboard",

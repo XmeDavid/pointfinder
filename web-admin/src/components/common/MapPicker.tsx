@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -118,7 +118,19 @@ export function BaseMapView({ bases, className }: BaseMapViewProps) {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         {bases.map((base) => (
-          <Marker key={base.id} position={[base.lat, base.lng]} icon={greenIcon} />
+          <Marker key={base.id} position={[base.lat, base.lng]} icon={greenIcon}>
+            <Popup>
+              <div className="min-w-[180px]">
+                <p className="text-sm font-semibold">{base.name}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {base.lat.toFixed(5)}, {base.lng.toFixed(5)}
+                </p>
+                <p className="text-xs mt-1">
+                  NFC: {base.nfcLinked ? "linked" : "not linked"}
+                </p>
+              </div>
+            </Popup>
+          </Marker>
         ))}
       </MapContainer>
     </div>

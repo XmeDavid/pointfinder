@@ -87,6 +87,8 @@ struct BaseCheckInDetailView: View {
                         Text(challenge.description)
                             .font(.body)
                             .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.bottom, 2)
 
                         if status == .completed && !completionContent.isEmpty {
                             Divider()

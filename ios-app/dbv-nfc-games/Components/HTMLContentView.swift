@@ -77,7 +77,7 @@ struct HTMLContentView: UIViewRepresentable {
                     color: \(textColor);
                     background-color: \(backgroundColor);
                     margin: 0;
-                    padding: 0;
+                    padding: 0 0 4px 0;
                     word-wrap: break-word;
                     overflow-wrap: break-word;
                 }
@@ -238,7 +238,8 @@ struct AutoSizingHTMLView: View {
     
     var body: some View {
         HTMLContentView(html: html, dynamicHeight: $height)
-            .frame(height: max(50, height))
+            // Small safety margin prevents occasional descender clipping on iOS.
+            .frame(height: max(50, height + 4))
     }
 }
 

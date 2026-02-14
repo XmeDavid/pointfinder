@@ -43,6 +43,14 @@ Use before each App Store / Play Store submission to verify compliance.
 - [ ] Contact email matches across stores and privacy policy
 - [ ] App name matches store listing and in-app branding
 
+## Branding and Contact Readiness
+
+- [ ] iOS AppIcon source exists in `ios-app/dbv-nfc-games/Assets.xcassets/AppIcon.appiconset/out-2.png`
+- [ ] Android launcher icons exist in `android-app/app/src/main/res/mipmap-*`
+- [ ] AndroidManifest uses `@mipmap/ic_launcher` and `@mipmap/ic_launcher_round`
+- [ ] Support inbox forwarding for `info@desbravadores.dev` is configured and tested
+- [ ] Test email from external sender arrives in the target inbox
+
 ## Final Checks
 
 - [ ] App builds and runs on physical device (iOS)

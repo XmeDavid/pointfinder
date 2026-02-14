@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, MapPin, Wifi, WifiOff, Trash2, Pencil, List, Map as MapIcon, EyeOff } from "lucide-react";
@@ -47,6 +47,16 @@ export function BasesPage() {
 
   const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!) });
   const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!) });
+  const challengeById = useMemo(() => new Map(challenges.map((challenge) => [challenge.id, challenge])), [challenges]);
+  const unavailableFixedChallengeIds = useMemo(() => new Set(
+    bases
+      .filter((base) => base.id !== editing?.id && base.fixedChallengeId)
+      .map((base) => base.fixedChallengeId as string)
+  ), [bases, editing?.id]);
+  const availableFixedChallenges = useMemo(() => challenges.filter(
+    (challenge) => !unavailableFixedChallengeIds.has(challenge.id)
+      || challenge.id === form.fixedChallengeId
+  ), [challenges, unavailableFixedChallengeIds, form.fixedChallengeId]);
 
   const createBase = useMutation({
     mutationFn: (data: CreateBaseDto) => basesApi.create({ ...data, gameId: gameId! }),
@@ -119,7 +129,18 @@ export function BasesPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="font-medium">{base.name}</p>
-                      {base.fixedChallengeId && <Badge variant="outline" className="text-xs">{t("bases.fixedChallengeTag")}</Badge>}
+                      {base.fixedChallengeId && (() => {
+                        const fixedChallenge = challengeById.get(base.fixedChallengeId);
+                        return fixedChallenge ? (
+                          <Badge variant="secondary" className="text-xs max-w-[260px]">
+                            <span className="truncate">
+                              {t("bases.fixedChallengeNamed", { challenge: fixedChallenge.title })}
+                            </span>
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs">{t("bases.fixedChallengeTag")}</Badge>
+                        );
+                      })()}
                       {base.hidden && <Badge variant="outline" className="text-xs gap-1"><EyeOff className="h-3 w-3" />{t("bases.hiddenTag")}</Badge>}
                     </div>
                     <p className="text-sm text-muted-foreground truncate">{base.description}</p>
@@ -182,8 +203,9 @@ export function BasesPage() {
               <Label>{t("bases.fixedChallenge")}</Label>
               <Select value={form.fixedChallengeId ?? ""} onChange={(e) => setForm((f) => ({ ...f, fixedChallengeId: e.target.value || undefined }))}>
                 <option value="">{t("bases.randomAssignment")}</option>
-                {challenges.map((ch) => <option key={ch.id} value={ch.id}>{ch.title} ({ch.points} {t("common.pts")})</option>)}
+                {availableFixedChallenges.map((ch) => <option key={ch.id} value={ch.id}>{ch.title} ({ch.points} {t("common.pts")})</option>)}
               </Select>
+              {availableFixedChallenges.length === 0 && <p className="text-xs text-muted-foreground">{t("bases.noFixedChallengesAvailable")}</p>}
               <p className="text-xs text-muted-foreground">{t("bases.fixedChallengeHint")}</p>
             </div>
             <div className="flex items-center justify-between rounded-lg border p-3">
