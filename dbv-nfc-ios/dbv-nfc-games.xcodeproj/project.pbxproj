@@ -414,6 +414,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "dbv-nfc-games/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = PointFinder;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
 				INFOPLIST_KEY_NFCReaderUsageDescription = "Scan NFC tags at bases to register progress.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Scan QR codes to join your team and take photos for challenges.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Share your location to verify presence at bases.";
@@ -467,6 +468,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "dbv-nfc-games/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = PointFinder;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
 				INFOPLIST_KEY_NFCReaderUsageDescription = "Scan NFC tags at bases to register progress.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Scan QR codes to join your team and take photos for challenges.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Share your location to verify presence at bases.";

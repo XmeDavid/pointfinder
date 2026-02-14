@@ -3,7 +3,7 @@ DOCKER_COMPOSE ?= docker compose
 
 IOS_PROJECT ?= ios-app/dbv-nfc-games.xcodeproj
 IOS_SCHEME ?= dbv-nfc-games
-IOS_DESTINATION ?= platform=iOS Simulator,name=iPhone 16
+IOS_DESTINATION ?= platform=iOS Simulator,name=iPhone 17
 ANDROID_PROJECT ?= android-app
 ANDROID_GRADLEW ?= backend/gradlew
 
