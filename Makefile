@@ -5,18 +5,18 @@ IOS_PROJECT ?= ios-app/dbv-nfc-games.xcodeproj
 IOS_SCHEME ?= dbv-nfc-games
 IOS_DESTINATION ?= platform=iOS Simulator,name=iPhone 17
 ANDROID_PROJECT ?= android-app
-ANDROID_GRADLEW ?= backend/gradlew
+ANDROID_GRADLEW ?= android-app/gradlew
 
 .PHONY: help check-docker check-xcode check-android-gradle test-backend-docker test-frontend-docker test-docker test-ios test-android test-all
 
 help:
 	@echo "Available targets:"
 	@echo "  test-backend-docker  Run backend tests in Docker"
-	@echo "  test-frontend-docker Run frontend tests in Docker"
+	@echo "  test-frontend-docker Run frontend lint + tests in Docker"
 	@echo "  test-docker          Run backend + frontend Docker tests"
 	@echo "  test-ios             Run iOS tests on macOS host (xcodebuild)"
 	@echo "  test-android         Run Android JVM/unit checks via Gradle"
-	@echo "  test-all             Run docker tests and then iOS tests"
+	@echo "  test-all             Run docker, Android, and iOS tests"
 
 check-docker:
 	@command -v docker >/dev/null 2>&1 || { echo "docker is required for Docker-based tests."; exit 1; }
@@ -32,7 +32,7 @@ test-backend-docker: check-docker
 	@$(DOCKER_COMPOSE) -f $(TEST_COMPOSE_FILE) run --rm backend-test
 
 test-frontend-docker: check-docker
-	@$(DOCKER_COMPOSE) -f $(TEST_COMPOSE_FILE) run --rm frontend-test
+	@$(DOCKER_COMPOSE) -f $(TEST_COMPOSE_FILE) run --rm frontend-test sh -lc "npm ci && npm run lint && npm run test"
 
 test-docker: test-backend-docker test-frontend-docker
 
@@ -42,4 +42,4 @@ test-ios: check-xcode
 test-android: check-android-gradle
 	@$(ANDROID_GRADLEW) -p "$(ANDROID_PROJECT)" :core:model:test :core:data:test :app:assembleDebug
 
-test-all: test-docker test-ios
+test-all: test-docker test-android test-ios
