@@ -25,6 +25,23 @@ import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 
+internal fun buildMobileRealtimeUrl(apiBaseUrl: String, gameId: String, token: String): HttpUrl {
+    val base = apiBaseUrl.toHttpUrlOrNull()
+        ?: throw IllegalArgumentException("Invalid API base URL: $apiBaseUrl")
+
+    // OkHttp HttpUrl only accepts http/https schemes. For websocket connections,
+    // OkHttp upgrades these to ws/wss during the handshake.
+    return HttpUrl.Builder()
+        .scheme(base.scheme)
+        .host(base.host)
+        .port(base.port)
+        .addPathSegment("ws")
+        .addPathSegment("mobile")
+        .addQueryParameter("gameId", gameId)
+        .addQueryParameter("token", token)
+        .build()
+}
+
 sealed interface RealtimeConnectionState {
     data object Disconnected : RealtimeConnectionState
     data object Connecting : RealtimeConnectionState
@@ -163,18 +180,11 @@ class MobileRealtimeClient(
     }
 
     private fun buildRealtimeUrl(params: SessionParams): HttpUrl {
-        val base = apiBaseUrl.toHttpUrlOrNull()
-            ?: throw IllegalArgumentException("Invalid API base URL: $apiBaseUrl")
-        val wsScheme = if (base.isHttps) "wss" else "ws"
-        return HttpUrl.Builder()
-            .scheme(wsScheme)
-            .host(base.host)
-            .port(base.port)
-            .addPathSegment("ws")
-            .addPathSegment("mobile")
-            .addQueryParameter("gameId", params.gameId)
-            .addQueryParameter("token", params.token)
-            .build()
+        return buildMobileRealtimeUrl(
+            apiBaseUrl = apiBaseUrl,
+            gameId = params.gameId,
+            token = params.token,
+        )
     }
 
     private data class SessionParams(

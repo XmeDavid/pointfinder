@@ -40,6 +40,6 @@ test-ios: check-xcode
 	@xcodebuild test -project "$(IOS_PROJECT)" -scheme "$(IOS_SCHEME)" -destination "$(IOS_DESTINATION)"
 
 test-android: check-android-gradle
-	@$(ANDROID_GRADLEW) -p "$(ANDROID_PROJECT)" :core:model:test :core:data:test :app:assembleDebug
+	@$(ANDROID_GRADLEW) -p "$(ANDROID_PROJECT)" :core:model:test :core:data:test :core:network:test :app:assembleDebug
 
 test-all: test-docker test-android test-ios

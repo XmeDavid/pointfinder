@@ -42,5 +42,5 @@ make test-android
 Direct Gradle call:
 
 ```bash
-./android-app/gradlew -p android-app :core:model:test :core:data:test :app:assembleDebug
+./android-app/gradlew -p android-app :core:model:test :core:data:test :core:network:test :app:assembleDebug
 ```
