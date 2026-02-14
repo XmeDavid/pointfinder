@@ -26,8 +26,8 @@ final class MobileRealtimeClient {
 
     private(set) var connectionState: ConnectionState = .disconnected {
         didSet {
-            onConnectionStateChange?(connectionState)
-            logger.info("Realtime state changed: \(String(describing: connectionState), privacy: .public)")
+            self.onConnectionStateChange?(self.connectionState)
+            self.logger.info("Realtime state changed: \(String(describing: self.connectionState), privacy: .public)")
         }
     }
 
@@ -132,15 +132,14 @@ final class MobileRealtimeClient {
 
         reconnectTask = Task { [weak self] in
             guard let self else { return }
+            defer { self.reconnectTask = nil }
             self.reconnectAttempt += 1
             self.connectionState = .reconnecting(attempt: self.reconnectAttempt)
             let cappedExponent = min(self.reconnectAttempt, 5)
             let backoffSeconds = min(30, 1 << cappedExponent)
             try? await Task.sleep(nanoseconds: UInt64(backoffSeconds) * 1_000_000_000)
             guard !Task.isCancelled else { return }
-            await MainActor.run {
-                self.openConnection()
-            }
+            self.openConnection()
         }
     }
 
