@@ -7,6 +7,35 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+fun Project.resolveConfigValue(key: String, defaultValue: String): String {
+    val fromGradleProperty = findProperty(key)?.toString()?.takeIf { it.isNotBlank() }
+    val fromEnvironment = providers.environmentVariable(key).orNull?.takeIf { it.isNotBlank() }
+    val fromDotEnv = rootProject.file(".env")
+        .takeIf { it.exists() }
+        ?.readLines()
+        ?.firstNotNullOfOrNull { line ->
+            val trimmed = line.trim()
+            if (trimmed.isBlank() || trimmed.startsWith("#") || !trimmed.contains("=")) {
+                return@firstNotNullOfOrNull null
+            }
+            val separator = trimmed.indexOf("=")
+            val candidateKey = trimmed.substring(0, separator).trim()
+            if (candidateKey != key) {
+                return@firstNotNullOfOrNull null
+            }
+            trimmed.substring(separator + 1)
+                .trim()
+                .removeSurrounding("\"")
+                .removeSurrounding("'")
+                .takeIf { it.isNotBlank() }
+        }
+
+    return fromGradleProperty ?: fromEnvironment ?: fromDotEnv ?: defaultValue
+}
+
+val apiBaseUrl = project.resolveConfigValue("API_BASE_URL", "https://desbravadores.dev")
+val mapsApiKey = project.resolveConfigValue("GOOGLE_MAPS_API_KEY", "")
+
 android {
     namespace = "com.prayer.pointfinder"
     compileSdk = 35
@@ -17,14 +46,14 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
-        buildConfigField("String", "API_BASE_URL", "\"${rootProject.env.API_BASE_URL.orElse("https://desbravadores.dev")}\"")
+        buildConfigField("String", "API_BASE_URL", "\"${apiBaseUrl.replace("\"", "\\\"")}\"")
         buildConfigField("Boolean", "ENABLE_MOBILE_REALTIME", "true")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
-        manifestPlaceholders["mapsApiKey"] = rootProject.env.GOOGLE_MAPS_API_KEY.orElse("")
+        manifestPlaceholders["mapsApiKey"] = mapsApiKey
     }
 
     buildTypes {
@@ -53,8 +82,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 }
 
