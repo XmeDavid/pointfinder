@@ -4,6 +4,7 @@ import android.Manifest
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
+import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -30,6 +31,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,11 +41,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import java.io.ByteArrayOutputStream
 import java.io.File
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -82,6 +87,11 @@ import com.prayer.pointfinder.session.OperatorViewModel
 import com.prayer.pointfinder.session.PlayerViewModel
 import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.mlkit.common.MlKitException
+import com.google.mlkit.vision.barcode.common.Barcode
+import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
+import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
+import java.util.Locale
 import kotlinx.coroutines.delay
 
 @Composable
@@ -89,12 +99,14 @@ fun AppNavigation(
     navController: NavHostController = rememberNavController(),
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     val sessionViewModel: AppSessionViewModel = hiltViewModel()
     val operatorViewModel: OperatorViewModel = hiltViewModel()
     val sessionState by sessionViewModel.state.collectAsStateWithLifecycle()
 
     var joinCode by rememberSaveable { mutableStateOf("") }
     var displayName by rememberSaveable { mutableStateOf("") }
+    var cameraDenied by rememberSaveable { mutableStateOf(false) }
     var operatorEmail by rememberSaveable { mutableStateOf("") }
     var operatorPassword by rememberSaveable { mutableStateOf("") }
 
@@ -135,16 +147,43 @@ fun AppNavigation(
         composable(Routes.PLAYER_JOIN) {
             PlayerJoinScreen(
                 joinCode = joinCode,
+                canContinue = isJoinCodeValid(joinCode),
                 onJoinCodeChange = {
-                    joinCode = it
+                    joinCode = extractJoinCodeFromPayload(it) ?: normalizeJoinCodeInput(it)
+                    cameraDenied = false
                     sessionViewModel.clearError()
                 },
                 onContinue = {
+                    if (!isJoinCodeValid(joinCode)) return@PlayerJoinScreen
                     sessionViewModel.clearError()
                     navController.navigate(Routes.PLAYER_NAME)
                 },
-                onScanQr = {},
-                cameraDenied = false,
+                onScanQr = {
+                    val scannerOptions = GmsBarcodeScannerOptions.Builder()
+                        .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
+                        .enableAutoZoom()
+                        .build()
+                    val scanner = GmsBarcodeScanning.getClient(context, scannerOptions)
+                    scanner.startScan()
+                        .addOnSuccessListener { barcode ->
+                            val scanned = barcode.rawValue.orEmpty()
+                            val parsed = extractJoinCodeFromPayload(scanned) ?: normalizeJoinCodeInput(scanned)
+                            joinCode = parsed
+                            cameraDenied = false
+                            sessionViewModel.clearError()
+                            if (isJoinCodeValid(parsed)) {
+                                navController.navigate(Routes.PLAYER_NAME)
+                            }
+                        }
+                        .addOnCanceledListener {
+                            // User cancelled scanning; no-op.
+                        }
+                        .addOnFailureListener { err ->
+                            cameraDenied = err is MlKitException &&
+                                err.errorCode == MlKitException.CODE_SCANNER_CAMERA_PERMISSION_NOT_GRANTED
+                        }
+                },
+                cameraDenied = cameraDenied,
             )
         }
 
@@ -213,6 +252,45 @@ fun AppNavigation(
     }
 }
 
+private val JOIN_CODE_REGEX = Regex("^[A-Z0-9]{6,20}$")
+
+private fun normalizeJoinCodeInput(value: String): String {
+    return value
+        .trim()
+        .uppercase(Locale.ROOT)
+        .filter { it.isLetterOrDigit() }
+        .take(20)
+}
+
+private fun isJoinCodeValid(value: String): Boolean {
+    return JOIN_CODE_REGEX.matches(normalizeJoinCodeInput(value))
+}
+
+private fun extractJoinCodeFromPayload(payload: String): String? {
+    val raw = payload.trim()
+    if (raw.isBlank()) return null
+
+    val direct = normalizeJoinCodeInput(raw)
+    if (JOIN_CODE_REGEX.matches(direct)) {
+        return direct
+    }
+
+    val uri = runCatching { Uri.parse(raw) }.getOrNull() ?: return null
+    val candidates = listOfNotNull(
+        uri.getQueryParameter("joinCode"),
+        uri.getQueryParameter("join_code"),
+        uri.getQueryParameter("code"),
+        uri.getQueryParameter("join"),
+        uri.lastPathSegment,
+        uri.pathSegments.lastOrNull(),
+    )
+
+    return candidates
+        .asSequence()
+        .map(::normalizeJoinCodeInput)
+        .firstOrNull(JOIN_CODE_REGEX::matches)
+}
+
 @Composable
 private fun PlayerRootScreen(
     auth: AuthType.Player,
@@ -228,6 +306,7 @@ private fun PlayerRootScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val playerCameraState = rememberCameraPositionState()
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     var selectedTab by rememberSaveable { mutableStateOf(PlayerTab.MAP) }
     var solving by remember { mutableStateOf<Pair<String, String>?>(null) }
@@ -241,6 +320,19 @@ private fun PlayerRootScreen(
     var pendingPermissionRequest by remember { mutableStateOf(false) }
     val gameStatus = state.gameStatus ?: auth.gameStatus
     val shouldBlockGameplay = gameStatus == "setup" || gameStatus == "ended"
+
+    val backToMapFromSubmission = {
+        // Fully clear transient solve/check-in UI state so result screen doesn't reopen.
+        viewModel.clearSubmissionResult()
+        viewModel.clearCheckIn()
+        solving = null
+        photoBytes = null
+        photoBitmap = null
+        showNfcScanDialog = false
+        pendingNfcAction = null
+        selectedTab = PlayerTab.MAP
+        viewModel.refresh(auth, isOnline)
+    }
 
     LaunchedEffect(state.authExpired) {
         if (state.authExpired) {
@@ -358,10 +450,23 @@ private fun PlayerRootScreen(
         viewModel.refresh(auth, isOnline)
     }
 
-    LaunchedEffect(auth.gameId, isOnline, state.gameStatus) {
-        if (isOnline && state.gameStatus != "live") {
+    LaunchedEffect(auth.gameId, isOnline) {
+        if (!isOnline) return@LaunchedEffect
+        while ((state.gameStatus ?: auth.gameStatus) != "live") {
             delay(10_000L)
-            viewModel.refresh(auth, isOnline)
+            viewModel.refresh(auth, true)
+        }
+    }
+
+    DisposableEffect(lifecycleOwner, auth.gameId, isOnline) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME && isOnline) {
+                viewModel.refresh(auth, true)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 
@@ -383,7 +488,7 @@ private fun PlayerRootScreen(
                 val submission = state.latestSubmission!!
                 SubmissionResultScreen(
                     submission = submission,
-                    onBack = { viewModel.clearSubmissionResult() },
+                    onBack = backToMapFromSubmission,
                 )
             }
 
@@ -593,12 +698,12 @@ private fun GameNotLiveOverlay() {
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                text = stringResource(R.string.label_game_not_active_title),
+                text = stringResource(com.prayer.pointfinder.core.i18n.R.string.label_game_not_active_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
             )
             Text(
-                text = stringResource(R.string.label_game_not_active_message),
+                text = stringResource(com.prayer.pointfinder.core.i18n.R.string.label_game_not_active_message),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,

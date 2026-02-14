@@ -40,13 +40,29 @@ object ApiErrorParser {
             val body = runCatching { throwable.response()?.errorBody()?.string() }.getOrNull()
             if (!body.isNullOrBlank()) {
                 val parsed = runCatching { json.decodeFromString<ErrorResponse>(body) }.getOrNull()
-                if (parsed != null && parsed.message.isNotBlank()) {
-                    return parsed.message
+                if (parsed != null) {
+                    val fieldMessage = extractFieldMessage(parsed.errors)
+                    if (!fieldMessage.isNullOrBlank()) {
+                        return fieldMessage
+                    }
+                    if (parsed.message.isNotBlank()) {
+                        return parsed.message
+                    }
                 }
             }
             return throwable.message() ?: throwable.message ?: "Unknown error"
         }
         return throwable.message ?: "Unknown error"
+    }
+
+    private fun extractFieldMessage(errors: Map<String, String>?): String? {
+        if (errors.isNullOrEmpty()) return null
+        val preferredFields = listOf("joinCode", "displayName", "deviceId")
+        for (field in preferredFields) {
+            val msg = errors[field]
+            if (!msg.isNullOrBlank()) return msg
+        }
+        return errors.values.firstOrNull { it.isNotBlank() }
     }
 
     fun isAuthExpired(throwable: Throwable): Boolean {

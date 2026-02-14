@@ -310,14 +310,21 @@ fun BaseDetailBottomSheet(
                     )
                 }
             } else {
+                val detailHtml = when {
+                    challenge == null -> null
+                    status == BaseStatus.COMPLETED && !challenge.completionContent.isNullOrBlank() ->
+                        challenge.completionContent
+                    !challenge.content.isNullOrBlank() -> challenge.content
+                    else -> null
+                }
                 Text(
                     challenge?.description ?: stringResource(R.string.label_no_challenge_details),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                if (challenge != null && challenge.content.isNotBlank()) {
+                if (!detailHtml.isNullOrBlank()) {
                     Spacer(Modifier.height(8.dp))
-                    HtmlContentView(html = challenge.content)
+                    HtmlContentView(html = detailHtml)
                 }
             }
             Spacer(Modifier.height(16.dp))

@@ -157,6 +157,7 @@
     <string name="error_camera_denied">Camera permission denied.</string>
     <string name="error_nfc_unavailable">NFC is not available on this device.</string>
     <string name="error_scan_nfc_first">Scan a base NFC tag first.</string>
+    <string name="error_invalid_join_code">Please enter a valid join code.</string>
     <string name="error_answer_required">Please provide an answer.</string>
     <string name="error_photo_required">Photo is required.</string>
     <string name="error_nfc_write_failed">NFC write failed.</string>

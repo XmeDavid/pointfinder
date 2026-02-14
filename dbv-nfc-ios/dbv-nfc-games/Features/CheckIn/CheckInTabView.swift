@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct CheckInTabView: View {
     @Environment(AppState.self) private var appState
@@ -108,12 +109,16 @@ struct CheckInTabView: View {
             .navigationDestination(for: UUID.self) { baseId in
                 BaseCheckInDetailView(baseId: baseId, popToRoot: popToRoot)
             }
-            .task(id: appState.currentGame?.status) {
-                guard appState.currentGame?.status != "live" else { return }
-                while !Task.isCancelled && appState.currentGame?.status != "live" {
+            .task(id: "\(appState.currentGame?.status ?? "none")-\(appState.isOnline)") {
+                guard appState.isOnline, appState.currentGame?.status != "live" else { return }
+                while !Task.isCancelled && appState.isOnline && appState.currentGame?.status != "live" {
                     try? await Task.sleep(nanoseconds: 10_000_000_000)
                     await appState.loadProgress()
                 }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+                guard appState.isOnline, appState.currentGame?.status != "live" else { return }
+                Task { await appState.loadProgress() }
             }
             .alert(locale.t("common.error"), isPresented: Binding(
                 get: { appState.showError },

@@ -45,6 +45,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
@@ -115,73 +116,76 @@ fun OperatorHomeScreen(
             )
         },
     ) { padding ->
-        when {
-            isLoading && games.isEmpty() -> {
-                Box(
-                    modifier = modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator()
+        PullToRefreshBox(
+            isRefreshing = isLoading,
+            onRefresh = onRefresh,
+            modifier = modifier
+                .fillMaxSize()
+                .padding(padding),
+        ) {
+            when {
+                isLoading && games.isEmpty() -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator()
+                    }
                 }
-            }
-            !errorMessage.isNullOrBlank() && games.isEmpty() -> {
-                Column(
-                    modifier = modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    Text(errorMessage, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
-                    Spacer(Modifier.height(12.dp))
-                    Button(onClick = onRefresh) { Text(stringResource(R.string.action_refresh)) }
+                !errorMessage.isNullOrBlank() && games.isEmpty() -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        Text(errorMessage, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+                        Spacer(Modifier.height(12.dp))
+                        Button(onClick = onRefresh) { Text(stringResource(R.string.action_refresh)) }
+                    }
                 }
-            }
-            games.isEmpty() -> {
-                Column(
-                    modifier = modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    Text(stringResource(R.string.label_no_games), style = MaterialTheme.typography.titleMedium)
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        stringResource(R.string.label_no_games_description),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    Button(onClick = onRefresh) { Text(stringResource(R.string.action_refresh)) }
+                games.isEmpty() -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        Text(stringResource(R.string.label_no_games), style = MaterialTheme.typography.titleMedium)
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            stringResource(R.string.label_no_games_description),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        Button(onClick = onRefresh) { Text(stringResource(R.string.action_refresh)) }
+                    }
                 }
-            }
-            else -> {
-                LazyColumn(
-                    modifier = modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                        .padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    items(games) { game ->
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onSelectGame(game) },
-                            tonalElevation = 2.dp,
-                            shape = MaterialTheme.shapes.medium,
-                        ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text(game.name, fontWeight = FontWeight.SemiBold)
-                                Spacer(Modifier.height(4.dp))
-                                Text(game.description, style = MaterialTheme.typography.bodySmall)
-                                Spacer(Modifier.height(6.dp))
-                                AssistChip(onClick = {}, label = { Text(game.status.uppercase()) })
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        items(games) { game ->
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onSelectGame(game) },
+                                tonalElevation = 2.dp,
+                                shape = MaterialTheme.shapes.medium,
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Text(game.name, fontWeight = FontWeight.SemiBold)
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(game.description, style = MaterialTheme.typography.bodySmall)
+                                    Spacer(Modifier.height(6.dp))
+                                    AssistChip(onClick = {}, label = { Text(game.status.uppercase()) })
+                                }
                             }
                         }
                     }

@@ -157,6 +157,7 @@
     <string name="error_camera_denied">Kameraberechtigung verweigert.</string>
     <string name="error_nfc_unavailable">NFC ist auf diesem Gerät nicht verfügbar.</string>
     <string name="error_scan_nfc_first">Scanne zuerst einen Basis-NFC-Tag.</string>
+    <string name="error_invalid_join_code">Bitte gib einen gueltigen Beitrittscode ein.</string>
     <string name="error_answer_required">Bitte gib eine Antwort ein.</string>
     <string name="error_photo_required">Foto ist erforderlich.</string>
     <string name="error_nfc_write_failed">NFC-Schreiben fehlgeschlagen.</string>
