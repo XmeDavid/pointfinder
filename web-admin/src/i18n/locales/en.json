@@ -350,7 +350,6 @@
     "team": "Team",
     "challenge": "Challenge",
     "answer": "Answer",
-    "answerHidden": "Answer hidden (review to view details)",
     "notes": "Notes",
     "noNotes": "No notes",
     "feedbackLabel": "Feedback (optional)",
