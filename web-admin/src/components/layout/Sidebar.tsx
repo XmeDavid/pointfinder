@@ -72,7 +72,10 @@ export function Sidebar({ gameStatus, open, onClose }: SidebarProps) {
 
   // Close sidebar on route change (mobile)
   const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   useEffect(() => {
     onCloseRef.current();
   }, [location.pathname]);

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import apiClient from "@/lib/api/client";
 
 interface AuthImageProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, "src"> {
@@ -53,40 +53,31 @@ function normalizeApiImagePath(rawSrc: string): string {
  * elsewhere (e.g. thumbnail -> fullscreen).
  */
 export function AuthImage({ src, alt, initialBlobUrl, onBlobReady, ...props }: AuthImageProps) {
-  const [blobUrl, setBlobUrl] = useState<string | null>(initialBlobUrl ?? null);
-  const onBlobReadyRef = useRef(onBlobReady);
-  onBlobReadyRef.current = onBlobReady;
+  const [fetchedImage, setFetchedImage] = useState<{ source: string; url: string } | null>(null);
+  const normalizedSrc = src ? normalizeApiImagePath(src) : null;
 
   useEffect(() => {
-    // If an initial blob URL was provided, use it directly — no fetch needed.
-    if (initialBlobUrl) {
-      setBlobUrl(initialBlobUrl);
-      return;
-    }
-
-    if (!src) {
-      setBlobUrl(null);
+    // If an initial blob URL was provided, or there is no source, skip fetching.
+    if (initialBlobUrl || !normalizedSrc) {
       return;
     }
 
     let objectUrl: string | null = null;
-    const normalizedSrc = normalizeApiImagePath(src);
 
     apiClient
       .get(normalizedSrc, { responseType: "blob" })
       .then((response) => {
         objectUrl = URL.createObjectURL(response.data);
-        setBlobUrl(objectUrl);
-        onBlobReadyRef.current?.(objectUrl);
+        setFetchedImage({ source: normalizedSrc, url: objectUrl });
+        onBlobReady?.(objectUrl);
       })
       .catch(() => {
         // Avoid unauthenticated fallback for protected API routes.
         // Keep direct fallback only for absolute URLs that may be public assets.
         if (isAbsoluteHttpUrl(normalizedSrc) && !normalizedSrc.includes("/api/")) {
-          setBlobUrl(normalizedSrc);
+          setFetchedImage({ source: normalizedSrc, url: normalizedSrc });
           return;
         }
-        setBlobUrl(null);
       });
 
     return () => {
@@ -94,7 +85,9 @@ export function AuthImage({ src, alt, initialBlobUrl, onBlobReady, ...props }: A
         URL.revokeObjectURL(objectUrl);
       }
     };
-  }, [src, initialBlobUrl]);
+  }, [normalizedSrc, initialBlobUrl, onBlobReady]);
+
+  const blobUrl = initialBlobUrl ?? (normalizedSrc && fetchedImage?.source === normalizedSrc ? fetchedImage.url : null);
 
   if (!blobUrl) return null;
 

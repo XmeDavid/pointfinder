@@ -22,7 +22,8 @@ import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+type IconDefaultPrototype = typeof L.Icon.Default.prototype & { _getIconUrl?: unknown };
+delete (L.Icon.Default.prototype as IconDefaultPrototype)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x,
   iconUrl: markerIcon,
@@ -113,7 +114,10 @@ export function MapPage() {
   const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!) });
   const { data: progress = [] } = useQuery({ queryKey: ["progress", gameId], queryFn: () => monitoringApi.getProgress(gameId!) });
   const websocketError = useGameWebSocket(gameId);
-  const { data: locations = [] } = useQuery({ queryKey: ["team-locations", gameId], queryFn: () => monitoringApi.getTeamLocations(gameId!) });
+  const { data: locations = [], dataUpdatedAt: locationsUpdatedAt } = useQuery({
+    queryKey: ["team-locations", gameId],
+    queryFn: () => monitoringApi.getTeamLocations(gameId!),
+  });
 
   const [showBases, setShowBases] = useState(true);
   const [showTeams, setShowTeams] = useState(true);
@@ -142,8 +146,8 @@ export function MapPage() {
     return idx;
   }, [progress]);
 
-  // Re-derive `now` from the locations data so stale detection updates on refetch
-  const now = useMemo(() => Date.now(), [locations]);
+  // Use query refresh timestamp so stale detection updates whenever locations refetch.
+  const now = locationsUpdatedAt;
 
   // Get user's current location or fallback (only if no bases)
   const [userLocation, setUserLocation] = useState<[number, number]>([40.08789650218038, -8.869461715221407]);
