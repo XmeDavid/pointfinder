@@ -1,14 +1,4 @@
 Code (in codebase)
-- Delete breadcrumbs from web admin (They don't fit our usecase).
-- Small screen fixes:
-    - Globe icon + current lang - > just globe (tiny screens only)
-    - Small screens Import game and create game, should go on top of eachother, instead of side to side.
-    -Handle sideways overflow
-- Text on android is often this weird purple, looks awful, specially on top of the green. Colors need clear improvement, let's not make anything to exotic.
-- On web admin, an operator owner of a game should be able to kick other operators from that game.
-- Send to login screen if not authenticated
--Submission on android of status incorrect shows a check mark, also reveals the after content/next instructions, this should not be the case
--Submission on the web admin, when autocorrect is on, and the answer is wrong, there is no way for the admin to overwrite the answer to correct (to handle misspells, synonyms)
 ---
 
 Outside Codebase (manual / ops / launch)

@@ -52,14 +52,16 @@ actor APIClient {
     /// - Parameters:
     ///   - refreshToken: The current refresh token
     ///   - onTokensRefreshed: Called with (accessToken, refreshToken, userId) when tokens are refreshed
-    ///   - onAuthFailure: Called when refresh fails and the session is unrecoverable
     func configureOperatorAuth(
         refreshToken: String,
-        onTokensRefreshed: @escaping @Sendable (String, String, UUID) async -> Void,
-        onAuthFailure: @escaping @Sendable () async -> Void
+        onTokensRefreshed: @escaping @Sendable (String, String, UUID) async -> Void
     ) {
         self.storedRefreshToken = refreshToken
         self.onTokensRefreshed = onTokensRefreshed
+    }
+
+    /// Set a global auth-failure handler used for unrecoverable 401/403 responses.
+    func setAuthFailureHandler(_ onAuthFailure: @escaping @Sendable () async -> Void) {
         self.onAuthFailure = onAuthFailure
     }
 
@@ -70,7 +72,6 @@ actor APIClient {
     func clearAuth() {
         self.storedRefreshToken = nil
         self.onTokensRefreshed = nil
-        self.onAuthFailure = nil
     }
 
     // MARK: - Auth
@@ -280,16 +281,23 @@ actor APIClient {
         }
 
         guard (200...299).contains(httpResponse.statusCode) else {
-            // If 401/403 on an authenticated request and we have a refresh token, attempt refresh
-            if (httpResponse.statusCode == 401 || httpResponse.statusCode == 403),
-               request.value(forHTTPHeaderField: "Authorization") != nil,
-               storedRefreshToken != nil {
+            let isAuthRequest = request.value(forHTTPHeaderField: "Authorization") != nil
+            let isAuthFailureStatus = httpResponse.statusCode == 401 || httpResponse.statusCode == 403
+
+            // If 401/403 on an authenticated request and we have a refresh token, attempt refresh.
+            if isAuthFailureStatus, isAuthRequest, storedRefreshToken != nil {
                 let newAccessToken = try await getRefreshedAccessToken()
 
                 // Retry with the new token
                 var retryRequest = request
                 retryRequest.setValue("Bearer \(newAccessToken)", forHTTPHeaderField: "Authorization")
                 return try await executeWithoutRetry(retryRequest)
+            }
+
+            // Player sessions do not refresh tokens. Treat 401/403 as auth-expired.
+            if isAuthFailureStatus, isAuthRequest {
+                await onAuthFailure?()
+                throw APIError.authExpired
             }
 
             let message = String(data: data, encoding: .utf8) ?? "Unknown error"
@@ -318,14 +326,20 @@ actor APIClient {
         }
 
         guard (200...299).contains(httpResponse.statusCode) else {
-            if (httpResponse.statusCode == 401 || httpResponse.statusCode == 403),
-               request.value(forHTTPHeaderField: "Authorization") != nil,
-               storedRefreshToken != nil {
+            let isAuthRequest = request.value(forHTTPHeaderField: "Authorization") != nil
+            let isAuthFailureStatus = httpResponse.statusCode == 401 || httpResponse.statusCode == 403
+
+            if isAuthFailureStatus, isAuthRequest, storedRefreshToken != nil {
                 let newAccessToken = try await getRefreshedAccessToken()
                 var retryRequest = request
                 retryRequest.setValue("Bearer \(newAccessToken)", forHTTPHeaderField: "Authorization")
                 try await executeVoidWithoutRetry(retryRequest)
                 return
+            }
+
+            if isAuthFailureStatus, isAuthRequest {
+                await onAuthFailure?()
+                throw APIError.authExpired
             }
 
             let message = String(data: data, encoding: .utf8) ?? "Unknown error"
@@ -410,6 +424,11 @@ actor APIClient {
         }
 
         guard (200...299).contains(httpResponse.statusCode) else {
+            if (httpResponse.statusCode == 401 || httpResponse.statusCode == 403),
+               request.value(forHTTPHeaderField: "Authorization") != nil {
+                await onAuthFailure?()
+                throw APIError.authExpired
+            }
             let message = String(data: data, encoding: .utf8) ?? "Unknown error"
             throw APIError.httpError(statusCode: httpResponse.statusCode, message: message)
         }
@@ -436,6 +455,11 @@ actor APIClient {
         }
 
         guard (200...299).contains(httpResponse.statusCode) else {
+            if (httpResponse.statusCode == 401 || httpResponse.statusCode == 403),
+               request.value(forHTTPHeaderField: "Authorization") != nil {
+                await onAuthFailure?()
+                throw APIError.authExpired
+            }
             let message = String(data: data, encoding: .utf8) ?? "Unknown error"
             throw APIError.httpError(statusCode: httpResponse.statusCode, message: message)
         }

@@ -48,4 +48,12 @@ object ApiErrorParser {
         }
         return throwable.message ?: "Unknown error"
     }
+
+    fun isAuthExpired(throwable: Throwable): Boolean {
+        if (throwable is HttpException) {
+            val status = throwable.code()
+            return status == 401 || status == 403
+        }
+        return false
+    }
 }

@@ -59,6 +59,14 @@ final class AppState {
     // MARK: - Init
 
     init() {
+        Task { [weak self] in
+            guard let self else { return }
+            await self.apiClient.setAuthFailureHandler { [weak self] in
+                await MainActor.run {
+                    self?.logout()
+                }
+            }
+        }
         restoreSession()
         configureSyncEngine()
     }
@@ -569,11 +577,6 @@ final class AppState {
                     KeychainService.save(key: AppConfiguration.operatorTokenKey, value: accessToken)
                     KeychainService.save(key: AppConfiguration.operatorRefreshTokenKey, value: refreshToken)
                     UserDefaults.standard.set(userId.uuidString, forKey: AppConfiguration.operatorUserIdKey)
-                }
-            },
-            onAuthFailure: { [weak self] in
-                await MainActor.run {
-                    self?.logout()
                 }
             }
         )

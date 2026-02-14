@@ -45,6 +45,7 @@ data class OperatorState(
     val writeStatus: String? = null,
     val writeSuccess: Boolean? = null,
     val errorMessage: String? = null,
+    val authExpired: Boolean = false,
 )
 
 @HiltViewModel
@@ -75,8 +76,13 @@ class OperatorViewModel @Inject constructor(
             runCatching {
                 operatorRepository.games()
             }.onSuccess { games ->
-                _state.value = _state.value.copy(isLoading = false, games = games)
+                _state.value = _state.value.copy(
+                    isLoading = false,
+                    games = games,
+                    authExpired = false,
+                )
             }.onFailure { err ->
+                if (markAuthExpiredIfNeeded(err)) return@onFailure
                 _state.value = _state.value.copy(
                     isLoading = false,
                     errorMessage = ApiErrorParser.extractMessage(err),
@@ -105,7 +111,10 @@ class OperatorViewModel @Inject constructor(
                     teams = teams,
                     challenges = challenges,
                     assignments = assignments,
+                    authExpired = false,
                 )
+            }.onFailure { err ->
+                if (markAuthExpiredIfNeeded(err)) return@onFailure
             }
         }
     }
@@ -146,8 +155,10 @@ class OperatorViewModel @Inject constructor(
                     bases = bases,
                     locations = locations,
                     baseProgress = progress,
+                    authExpired = false,
                 )
             }.onFailure { err ->
+                if (markAuthExpiredIfNeeded(err)) return@onFailure
                 _state.value = _state.value.copy(
                     errorMessage = ApiErrorParser.extractMessage(err),
                 )
@@ -173,8 +184,10 @@ class OperatorViewModel @Inject constructor(
                     awaitingNfcWrite = false,
                     writeStatus = null,
                     writeSuccess = null,
+                    authExpired = false,
                 )
-            }.onFailure {
+            }.onFailure { err ->
+                if (markAuthExpiredIfNeeded(err)) return@onFailure
                 _state.value = _state.value.copy(
                     selectedBase = base,
                     assignmentSummary = context.getString(StringR.string.label_status),
@@ -216,9 +229,11 @@ class OperatorViewModel @Inject constructor(
                         awaitingNfcWrite = false,
                         writeStatus = context.getString(StringR.string.success_nfc_written),
                         writeSuccess = true,
+                        authExpired = false,
                     )
                     refreshSelectedGameData()
                 }.onFailure { err ->
+                    if (markAuthExpiredIfNeeded(err)) return@onFailure
                     _state.value = _state.value.copy(
                         awaitingNfcWrite = false,
                         writeStatus = context.getString(StringR.string.error_nfc_link_failed, ApiErrorParser.extractMessage(err)),
@@ -239,6 +254,10 @@ class OperatorViewModel @Inject constructor(
         _state.value = _state.value.copy(errorMessage = null)
     }
 
+    fun clearAuthExpired() {
+        _state.value = _state.value.copy(authExpired = false)
+    }
+
     private fun startPolling() {
         pollingJob?.cancel()
         pollingJob = viewModelScope.launch {
@@ -247,5 +266,16 @@ class OperatorViewModel @Inject constructor(
                 delay(5_000L)
             }
         }
+    }
+
+    private fun markAuthExpiredIfNeeded(err: Throwable): Boolean {
+        if (!ApiErrorParser.isAuthExpired(err)) return false
+        _state.value = _state.value.copy(
+            isLoading = false,
+            awaitingNfcWrite = false,
+            errorMessage = null,
+            authExpired = true,
+        )
+        return true
     }
 }

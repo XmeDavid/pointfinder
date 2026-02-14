@@ -39,6 +39,7 @@ data class PlayerState(
     val scanError: String? = null,
     val solveError: String? = null,
     val latestSubmission: SubmissionResponse? = null,
+    val authExpired: Boolean = false,
 )
 
 @HiltViewModel
@@ -70,11 +71,17 @@ class PlayerViewModel @Inject constructor(
             runCatching {
                 playerRepository.loadProgress(auth, online)
             }.onSuccess { progress ->
-                _state.value = _state.value.copy(isLoading = false, progress = progress)
-            }.onFailure { err ->
                 _state.value = _state.value.copy(
                     isLoading = false,
-                    solveError = ApiErrorParser.extractMessage(err),
+                    progress = progress,
+                    authExpired = false,
+                )
+            }.onFailure { err ->
+                val authExpired = ApiErrorParser.isAuthExpired(err)
+                _state.value = _state.value.copy(
+                    isLoading = false,
+                    solveError = if (authExpired) null else ApiErrorParser.extractMessage(err),
+                    authExpired = _state.value.authExpired || authExpired,
                 )
             }
         }
@@ -105,6 +112,7 @@ class PlayerViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     activeCheckIn = result.response,
                     scanError = null,
+                    authExpired = false,
                 )
                 // If the action was queued offline, trigger sync immediately
                 // so it retries as soon as connectivity allows.
@@ -115,8 +123,10 @@ class PlayerViewModel @Inject constructor(
                 // Send location immediately after check-in (matches iOS behavior)
                 launch { locationService.sendLocationNow() }
             }.onFailure { err ->
+                val authExpired = ApiErrorParser.isAuthExpired(err)
                 _state.value = _state.value.copy(
-                    scanError = ApiErrorParser.extractMessage(err),
+                    scanError = if (authExpired) null else ApiErrorParser.extractMessage(err),
+                    authExpired = _state.value.authExpired || authExpired,
                 )
             }
         }
@@ -203,6 +213,7 @@ class PlayerViewModel @Inject constructor(
                     solveError = null,
                     answerText = "",
                     presenceVerified = false,
+                    authExpired = false,
                 )
                 // If the action was queued offline, trigger sync immediately
                 // so it retries as soon as connectivity allows.
@@ -213,8 +224,10 @@ class PlayerViewModel @Inject constructor(
                 // Send location immediately after submission (matches iOS behavior)
                 launch { locationService.sendLocationNow() }
             }.onFailure { err ->
+                val authExpired = ApiErrorParser.isAuthExpired(err)
                 _state.value = _state.value.copy(
-                    solveError = ApiErrorParser.extractMessage(err),
+                    solveError = if (authExpired) null else ApiErrorParser.extractMessage(err),
+                    authExpired = _state.value.authExpired || authExpired,
                 )
             }
         }
@@ -254,13 +267,16 @@ class PlayerViewModel @Inject constructor(
                     latestSubmission = response,
                     solveError = null,
                     presenceVerified = false,
+                    authExpired = false,
                 )
                 refresh(auth, online)
                 // Send location immediately after photo submission (matches iOS behavior)
                 launch { locationService.sendLocationNow() }
             }.onFailure { err ->
+                val authExpired = ApiErrorParser.isAuthExpired(err)
                 _state.value = _state.value.copy(
-                    solveError = ApiErrorParser.extractMessage(err),
+                    solveError = if (authExpired) null else ApiErrorParser.extractMessage(err),
+                    authExpired = _state.value.authExpired || authExpired,
                 )
             }
         }
@@ -268,6 +284,10 @@ class PlayerViewModel @Inject constructor(
 
     fun clearSubmissionResult() {
         _state.value = _state.value.copy(latestSubmission = null)
+    }
+
+    fun clearAuthExpired() {
+        _state.value = _state.value.copy(authExpired = false)
     }
 
     fun setSolveError(message: String) {

@@ -54,8 +54,9 @@ public class PlayerService {
             throw new BadRequestException("Game is not active");
         }
 
-        // Find existing player by device ID and team, or create new one
-        Player player = playerRepository.findByDeviceIdAndTeamId(request.getDeviceId(), team.getId())
+        // Find existing player by device ID in this game, or create a new one.
+        // If the device rejoins with another team code in the same game, we switch teams.
+        Player player = playerRepository.findFirstByDeviceIdAndTeamGameIdOrderByCreatedAtDesc(request.getDeviceId(), game.getId())
                 .orElse(null);
 
         if (player == null) {
@@ -65,6 +66,7 @@ public class PlayerService {
                     .displayName(request.getDisplayName())
                     .build();
         } else {
+            player.setTeam(team);
             player.setDisplayName(request.getDisplayName());
         }
 

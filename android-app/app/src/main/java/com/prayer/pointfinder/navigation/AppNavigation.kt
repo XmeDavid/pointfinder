@@ -236,6 +236,13 @@ private fun PlayerRootScreen(
     // Permission launchers (fired after disclosure accepted)
     var pendingPermissionRequest by remember { mutableStateOf(false) }
 
+    LaunchedEffect(state.authExpired) {
+        if (state.authExpired) {
+            viewModel.clearAuthExpired()
+            sessionViewModel.logout()
+        }
+    }
+
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) { _ ->
@@ -548,6 +555,12 @@ private fun OperatorHomeRoot(
     onOpenGame: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    LaunchedEffect(state.authExpired) {
+        if (state.authExpired) {
+            viewModel.clearAuthExpired()
+            sessionViewModel.logout()
+        }
+    }
     LaunchedEffect(Unit) { viewModel.loadGames() }
 
     OperatorHomeScreen(
@@ -571,6 +584,12 @@ private fun OperatorGameRoot(
     onSwitchGame: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    LaunchedEffect(state.authExpired) {
+        if (state.authExpired) {
+            viewModel.clearAuthExpired()
+            sessionViewModel.logout()
+        }
+    }
     val operatorCameraState = rememberCameraPositionState()
     val selectedGame = state.selectedGame
 
