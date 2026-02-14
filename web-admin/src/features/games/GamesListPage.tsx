@@ -137,13 +137,12 @@ function ImportGameDialog({ open, onOpenChange, navigate }: ImportGameDialogProp
 
       onOpenChange(false);
       navigate(`/games/${result.id}/overview`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof SyntaxError) {
         setError(t("game.invalidJsonFile"));
       } else {
         setError(getApiErrorMessage(error, t("game.importError")));
       }
-      console.error("Import failed:", error);
     } finally {
       setImporting(false);
     }

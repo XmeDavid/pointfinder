@@ -3,6 +3,7 @@ package com.dbv.scoutmission.service;
 import com.dbv.scoutmission.entity.Game;
 import com.dbv.scoutmission.entity.GameStatus;
 import com.dbv.scoutmission.repository.GameRepository;
+import com.dbv.scoutmission.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -18,6 +19,7 @@ import java.util.List;
 public class GameSchedulerService {
 
     private final GameRepository gameRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     /**
      * Runs every 60 seconds to check for live games that have passed their end date
@@ -34,6 +36,18 @@ public class GameSchedulerService {
                     game.getName(), game.getId(), game.getEndDate());
             game.setStatus(GameStatus.ended);
             gameRepository.save(game);
+        }
+    }
+
+    /**
+     * Runs every hour to purge expired refresh tokens from the database.
+     */
+    @Scheduled(fixedRate = 3600000)
+    @Transactional
+    public void purgeExpiredRefreshTokens() {
+        int deleted = refreshTokenRepository.deleteExpiredBefore(Instant.now());
+        if (deleted > 0) {
+            log.info("Purged {} expired refresh tokens", deleted);
         }
     }
 }

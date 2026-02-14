@@ -1,9 +1,6 @@
 spring:
   application:
-    name: scout-mission
-
-  profiles:
-    active: dev
+    name: pointfinder
 
   jackson:
     serialization:

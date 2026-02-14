@@ -1,9 +1,9 @@
 services:
   postgres:
     image: postgres:16
-    container_name: scoutmission-db
+    container_name: pointfinder-db
     environment:
-      POSTGRES_DB: scoutmission
+      POSTGRES_DB: pointfinder
       POSTGRES_USER: scout
       POSTGRES_PASSWORD: scout
     ports:
@@ -11,7 +11,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U scout -d scoutmission"]
+      test: ["CMD-SHELL", "pg_isready -U scout -d pointfinder"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -20,14 +20,15 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: scoutmission-api
+    container_name: pointfinder-api
     expose:
       - "8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/scoutmission?stringtype=unspecified
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/pointfinder?stringtype=unspecified
       SPRING_DATASOURCE_USERNAME: scout
       SPRING_DATASOURCE_PASSWORD: scout
-      SPRING_PROFILES_ACTIVE: dev
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in .env or environment}
       CORS_ORIGINS: http://localhost,https://desbravadores.dev
       # APNs (Apple Push Notifications) configuration - values come from .env
       # Single source of truth: APPLE_PROD_APNS_KEY is both the Key ID and part of the filename
@@ -68,7 +69,7 @@ services:
       args:
         VITE_API_URL: /api
         VITE_WS_URL: /ws
-    container_name: scoutmission-web
+    container_name: pointfinder-web
     volumes:
       - frontend_dist:/app/dist
     healthcheck:
@@ -81,7 +82,7 @@ services:
     build:
       context: ./nginx
       dockerfile: Dockerfile
-    container_name: scoutmission-nginx
+    container_name: pointfinder-nginx
     ports:
       - "80:80"
       - "443:443"
@@ -99,7 +100,7 @@ services:
 
   certbot:
     image: certbot/certbot
-    container_name: scoutmission-certbot
+    container_name: pointfinder-certbot
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot

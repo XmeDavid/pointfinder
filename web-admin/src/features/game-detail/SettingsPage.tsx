@@ -115,9 +115,8 @@ export function SettingsPage() {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-    } catch (error) {
+    } catch (error: unknown) {
       setActionError(getApiErrorMessage(error, t("game.exportError")));
-      console.error("Export failed:", error);
     } finally {
       setExporting(false);
     }

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Creates an admin user in the Scout Mission Control database.
+# Creates an admin user in the PointFinder database.
 # Requires: docker (to reach the running postgres container)
 #
 # Usage:
@@ -10,8 +10,8 @@
 
 set -euo pipefail
 
-CONTAINER="scoutmission-db"
-DB="scoutmission"
+CONTAINER="pointfinder-db"
+DB="pointfinder"
 DB_USER="scout"
 
 # ── Parse flags or prompt interactively ──────────────────────────

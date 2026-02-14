@@ -5,4 +5,4 @@ pluginManagement {
     }
 }
 
-rootProject.name = "scout-mission"
+rootProject.name = "pointfinder"

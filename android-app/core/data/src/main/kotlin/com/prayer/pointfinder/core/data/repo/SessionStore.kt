@@ -15,7 +15,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 
 private val Context.sessionDataStore by preferencesDataStore(name = "companion_session")
 
@@ -23,6 +22,14 @@ private val Context.sessionDataStore by preferencesDataStore(name = "companion_s
 class SessionStore @Inject constructor(
     @ApplicationContext private val context: Context,
 ) : AuthTokenProvider {
+
+    /**
+     * In-memory cache of the current auth type.
+     * Avoids runBlocking on the OkHttp interceptor hot path.
+     * Updated by savePlayerSession / saveOperatorSession / clearSession.
+     */
+    @Volatile
+    private var cachedAuthType: AuthType? = null
     private val masterKey = MasterKey.Builder(context)
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
         .build()
@@ -48,6 +55,7 @@ class SessionStore @Inject constructor(
             prefs[TEAM_COLOR] = response.team.color
             prefs[GAME_STATUS] = response.game.status
         }
+        cachedAuthType = currentAuthType()
     }
 
     suspend fun saveOperatorSession(response: OperatorAuthResponse) {
@@ -60,6 +68,7 @@ class SessionStore @Inject constructor(
             prefs[OPERATOR_ID] = response.user.id
             prefs[OPERATOR_NAME] = response.user.name
         }
+        cachedAuthType = currentAuthType()
     }
 
     suspend fun updateOperatorTokens(accessToken: String, refreshToken: String, userId: String) {
@@ -71,11 +80,13 @@ class SessionStore @Inject constructor(
             prefs[AUTH_TYPE] = AUTH_OPERATOR
             prefs[OPERATOR_ID] = userId
         }
+        cachedAuthType = currentAuthType()
     }
 
     suspend fun clearSession() {
         securePrefs.edit().clear().apply()
         context.sessionDataStore.edit { it.clear() }
+        cachedAuthType = AuthType.None
     }
 
     suspend fun currentAuthType(): AuthType {
@@ -154,7 +165,9 @@ class SessionStore @Inject constructor(
     fun currentRefreshToken(): String? = securePrefs.getString(KEY_OPERATOR_REFRESH, null)
 
     override fun authType(): AuthType {
-        return runBlocking { currentAuthType() }
+        // Return cached value to avoid blocking the OkHttp thread.
+        // The cache is populated by save/clear/restore calls on the main coroutine.
+        return cachedAuthType ?: AuthType.None
     }
 
     fun playerToken(): String? = securePrefs.getString(KEY_PLAYER_TOKEN, null)

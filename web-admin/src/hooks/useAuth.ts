@@ -95,7 +95,7 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: "scout-auth",
+      name: "pointfinder-auth",
       partialize: (state) => ({
         // Only persist refresh token and user info — NOT the access token.
         // The access token is kept in-memory only, reducing XSS exposure.

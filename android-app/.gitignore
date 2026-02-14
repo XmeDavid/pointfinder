@@ -1,3 +1,7 @@
 .env
 app/google-services.json
 firebase-service-account.json
+app-key.jks
+pepk.jar
+app/release/
+local.properties
