@@ -1,6 +1,13 @@
 import Foundation
 import os
 
+protocol SyncAPIClient: AnyObject {
+    func checkIn(gameId: UUID, baseId: UUID, token: String) async throws -> CheckInResponse
+    func submitAnswer(gameId: UUID, request: PlayerSubmissionRequest, token: String) async throws -> SubmissionResponse
+}
+
+extension APIClient: SyncAPIClient {}
+
 /// Synchronizes pending offline actions when connectivity is restored.
 /// Processes the OfflineQueue in FIFO order with retry and backoff.
 @MainActor
@@ -15,6 +22,8 @@ final class SyncEngine {
     private let maxRetries = 5
     private let baseBackoffSeconds: TimeInterval = 2
 
+    private var apiClient: SyncAPIClient?
+
     /// Callback to refresh progress after sync (injected by AppState)
     var onSyncComplete: (() async -> Void)?
 
@@ -25,6 +34,10 @@ final class SyncEngine {
                 await self?.syncPendingActions()
             }
         }
+    }
+
+    func configure(apiClient: SyncAPIClient) {
+        self.apiClient = apiClient
     }
 
     /// Number of pending actions in the queue
@@ -64,16 +77,16 @@ final class SyncEngine {
 
     private func processAction(_ action: PendingAction) async {
         // Skip if already at max retries
-        if action.retryCount >= maxRetries {
+        if action.retryCount >= self.maxRetries {
             // Remove failed action after max retries
             await OfflineQueue.shared.dequeue(action.id)
-            Logger(subsystem: "com.prayer.pointfinder", category: "SyncEngine").info(" Removed action \(action.id) after \(maxRetries) retries")
+            Logger(subsystem: "com.prayer.pointfinder", category: "SyncEngine").info(" Removed action \(action.id) after \(self.maxRetries) retries")
             return
         }
 
         // Exponential backoff if this is a retry
         if action.retryCount > 0 {
-            let delay = baseBackoffSeconds * pow(2.0, Double(action.retryCount - 1))
+            let delay = self.baseBackoffSeconds * pow(2.0, Double(action.retryCount - 1))
             try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
         }
 
@@ -93,12 +106,12 @@ final class SyncEngine {
             // Check if this is a network error (retry) vs a server error (don't retry)
             if isNetworkError(error) {
                 await OfflineQueue.shared.incrementRetryCount(action.id)
-                lastSyncError = "Network error, will retry"
+                self.lastSyncError = "Network error, will retry"
                 Logger(subsystem: "com.prayer.pointfinder", category: "SyncEngine").info(" Network error for \(action.id), will retry: \(error.localizedDescription)")
             } else {
                 // Server returned an error - remove the action to avoid infinite retries
                 await OfflineQueue.shared.dequeue(action.id)
-                lastSyncError = error.localizedDescription
+                self.lastSyncError = error.localizedDescription
                 Logger(subsystem: "com.prayer.pointfinder", category: "SyncEngine").info(" Server error for \(action.id), removing: \(error.localizedDescription)")
             }
         }
@@ -109,19 +122,23 @@ final class SyncEngine {
         guard let token = getPlayerToken() else {
             throw SyncError.noAuth
         }
-
-        let apiClient = APIClient()
+        guard let apiClient else {
+            throw SyncError.noAPIClient
+        }
         _ = try await apiClient.checkIn(gameId: action.gameId, baseId: action.baseId, token: token)
     }
 
     private func syncSubmission(_ action: PendingAction) async throws {
-        guard let token = getPlayerToken(),
-              let challengeId = action.challengeId,
+        guard let token = getPlayerToken() else {
+            throw SyncError.noAuth
+        }
+        guard let apiClient else {
+            throw SyncError.noAPIClient
+        }
+        guard let challengeId = action.challengeId,
               let answer = action.answer else {
             throw SyncError.invalidAction
         }
-
-        let apiClient = APIClient()
         let request = PlayerSubmissionRequest(
             baseId: action.baseId,
             challengeId: challengeId,
@@ -167,12 +184,15 @@ final class SyncEngine {
 
 enum SyncError: LocalizedError {
     case noAuth
+    case noAPIClient
     case invalidAction
 
     var errorDescription: String? {
         switch self {
         case .noAuth:
             return "No authentication token available"
+        case .noAPIClient:
+            return "API client is not configured"
         case .invalidAction:
             return "Invalid action data"
         }

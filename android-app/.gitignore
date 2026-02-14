@@ -5,3 +5,4 @@ app-key.jks
 pepk.jar
 app/release/
 local.properties
+logs.android
