@@ -47,6 +47,8 @@ class AppSessionViewModel @Inject constructor(
     private val locationService: PlayerLocationService,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
+    private val joinCodeRegex = Regex("^[A-Z0-9]{6,20}$")
+
     private val _state = MutableStateFlow(AppSessionState())
     val state: StateFlow<AppSessionState> = _state.asStateFlow()
 
@@ -104,16 +106,23 @@ class AppSessionViewModel @Inject constructor(
     }
 
     fun joinPlayer(joinCode: String, displayName: String) {
-        if (joinCode.isBlank() || displayName.isBlank()) {
+        val normalizedJoinCode = joinCode.trim().uppercase(Locale.ROOT)
+        if (normalizedJoinCode.isBlank() || displayName.isBlank()) {
             _state.value = _state.value.copy(
                 errorMessage = context.getString(com.prayer.pointfinder.core.i18n.R.string.error_missing_fields),
+            )
+            return
+        }
+        if (!joinCodeRegex.matches(normalizedJoinCode)) {
+            _state.value = _state.value.copy(
+                errorMessage = context.getString(com.prayer.pointfinder.core.i18n.R.string.error_invalid_join_code),
             )
             return
         }
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, errorMessage = null)
             runCatching {
-                authRepository.playerJoin(joinCode, displayName, deviceIdProvider.deviceId())
+                authRepository.playerJoin(normalizedJoinCode, displayName, deviceIdProvider.deviceId())
             }.onSuccess { auth ->
                 val needsDisclosure = !sessionStore.isPermissionDisclosureSeen()
                 _state.value = _state.value.copy(

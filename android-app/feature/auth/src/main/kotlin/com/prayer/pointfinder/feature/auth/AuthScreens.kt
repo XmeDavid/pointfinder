@@ -6,8 +6,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.GroupAdd
 import androidx.compose.material.icons.filled.Login
@@ -71,6 +74,7 @@ fun WelcomeScreen(
 @Composable
 fun PlayerJoinScreen(
     joinCode: String,
+    canContinue: Boolean,
     onJoinCodeChange: (String) -> Unit,
     onContinue: () -> Unit,
     onScanQr: () -> Unit,
@@ -84,9 +88,12 @@ fun PlayerJoinScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .imePadding()
                 .padding(24.dp),
-            verticalArrangement = Arrangement.Center,
+            verticalArrangement = Arrangement.Top,
         ) {
+            Spacer(Modifier.height(36.dp))
             Text(
                 stringResource(R.string.label_join_with_qr_or_code),
                 style = MaterialTheme.typography.titleLarge,
@@ -114,11 +121,12 @@ fun PlayerJoinScreen(
             Spacer(Modifier.height(12.dp))
             Button(
                 onClick = onContinue,
-                enabled = joinCode.trim().isNotBlank(),
+                enabled = canContinue,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.action_continue))
             }
+            Spacer(Modifier.height(24.dp))
         }
     }
 }

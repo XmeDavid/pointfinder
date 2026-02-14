@@ -10,6 +10,40 @@ interface AuthImageProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>,
   onBlobReady?: (blobUrl: string) => void;
 }
 
+function isAbsoluteHttpUrl(value: string): boolean {
+  return /^https?:\/\//i.test(value);
+}
+
+function normalizeApiImagePath(rawSrc: string): string {
+  const src = rawSrc.trim();
+
+  // Keep absolute URLs untouched (axios will bypass baseURL for these).
+  if (isAbsoluteHttpUrl(src)) {
+    return src;
+  }
+
+  // Legacy format: /uploads/{gameId}/{filename} -> /games/{gameId}/files/{filename}
+  const legacyUploadMatch = src.match(/^\/uploads\/([^/]+)\/([^/]+)$/i);
+  if (legacyUploadMatch) {
+    const [, gameId, filename] = legacyUploadMatch;
+    return `/games/${gameId}/files/${filename}`;
+  }
+
+  // Normalize player file URL into operator endpoint for admin/operator sessions.
+  const playerFileMatch = src.match(/^\/api\/player\/files\/([^/]+)\/([^/]+)$/i);
+  if (playerFileMatch) {
+    const [, gameId, filename] = playerFileMatch;
+    return `/games/${gameId}/files/${filename}`;
+  }
+
+  // apiClient baseURL already includes /api, so drop the duplicate prefix.
+  if (src.startsWith("/api/")) {
+    return src.slice(4);
+  }
+
+  return src;
+}
+
 /**
  * An <img> component that fetches images through the authenticated API client,
  * then displays them as blob URLs. This is necessary because the file serving
@@ -28,20 +62,29 @@ export function AuthImage({ src, alt, initialBlobUrl, onBlobReady, ...props }: A
       return;
     }
 
-    if (!src) return;
+    if (!src) {
+      setBlobUrl(null);
+      return;
+    }
 
     let objectUrl: string | null = null;
+    const normalizedSrc = normalizeApiImagePath(src);
 
     apiClient
-      .get(src, { responseType: "blob" })
+      .get(normalizedSrc, { responseType: "blob" })
       .then((response) => {
         objectUrl = URL.createObjectURL(response.data);
         setBlobUrl(objectUrl);
         onBlobReady?.(objectUrl);
       })
       .catch(() => {
-        // If fetch fails, fall back to direct URL (may work for legacy /uploads/ paths)
-        setBlobUrl(src);
+        // Avoid unauthenticated fallback for protected API routes.
+        // Keep direct fallback only for absolute URLs that may be public assets.
+        if (isAbsoluteHttpUrl(normalizedSrc) && !normalizedSrc.includes("/api/")) {
+          setBlobUrl(normalizedSrc);
+          return;
+        }
+        setBlobUrl(null);
       });
 
     return () => {

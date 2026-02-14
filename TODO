@@ -4,9 +4,18 @@ Code (in codebase)
 -The above, we can do the reverse, so if its fixed challange, and there is already a challange assign, we can show in the tag the challange.
 -The "Manual / Randomizable Assignments",  when selecting a challange, it shows me on the dropdown challanges that already fixed, this should not be the case
 -Everytime it makes sense, we should limit the dropdown, I see we do this already with the teams, which is great (if i assigned to one, it disappears from the dropdown when doing for the remaining teams)
--On iOS operator, the game list, lets add a scroll down to refresh
+- [x] On iOS operator, the game list, lets add a scroll down to refresh (Ensure Android parity as well here.)
 -On iOS remove the image on the landing page for now
--On Android, move the Join game with code or QR a bit up, the keyboard hides the continue button when inputting a code, with a lot of empty space above
+-Dont show the notes on the submission line, only when reviewing it.
+-Seeing submission photos is broken! Doesnt show any picture, gives 404. (My prediction is permission issues, where the photo was submitted by a player, so the operator cant see, but its just intuition, should check why)
+-Feedback is not used for anything
+- [x] After submiting on android, there is a back to map, but it doesnt work, you go back to the submission screen and you need to manually go back, look at behaviour on iOS as the gold standart on this issue.
+- [x] Going live doesnt trigger the phones to go live, on iOS there seems to be some kind of periodic polling where it did go live (remove the game not started block) on its own, android i waited a bit more and it didnt do, maybe different timings, i just refreshed and it worked. Ideally when the operator goes live, it should unlock immediatly on all devices, not sure if this is even possible, or what it involves, its ok if it stays like this, but we can investigate.
+- [X] On android, after completing a challange, we still show the challange, instead of the completion info, again check iOS where it is working. (Android it shows when the autocompletion is automatic on the popup, but on subimissions for review, when its aproved the players need to check the map, and there it shows the challange not the completion info)
+-Notifications work manually sending to players from webadmin. But as an operator, it would be nice to receive notifications on mobile when teams submit something for aproval.
+-Related to the above point, on mobile (iOS and Android), we should add another tab for the submissions. Sometimes an aproval is necessary to get the after content, and we dont want to keep players waiting, so the operator should be able to aprove easily on the go. So another tab, only exists when the game is live, with the submissions. Notifcations are already setup on both firebase and APNs so we can use that, but make this ones automatic based on the trigger of a submission.
+-Operator notifications, should be configurable in settings, by default only submissions on manual aproving, but the operator could also choose to get notified by any submission, and even team checkins for exemple.
+-On web admin, when a submission is pending aproval, instead of clicking the 3 dots, clicking anywhere on the card should open the review. We only want the 3 dots for already success or reject, since its less common to go overwrite those.
 ---
 
 Outside Codebase (manual / ops / launch)
