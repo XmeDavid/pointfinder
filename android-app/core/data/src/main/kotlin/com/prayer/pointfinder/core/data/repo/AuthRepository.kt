@@ -11,6 +11,7 @@ import javax.inject.Singleton
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import android.util.Log
 
 @Singleton
 class AuthRepository @Inject constructor(
@@ -84,13 +85,14 @@ class OperatorTokenRefresher @Inject constructor(
     private val refreshLock = Mutex()
 
     override fun refreshTokenBlocking(): String? {
+        // Use cached authType() to avoid blocking DataStore read on OkHttp thread.
+        val auth = sessionStore.authType()
+        if (auth !is AuthType.Operator) {
+            return null
+        }
+
         return runBlocking {
             refreshLock.withLock {
-                val auth = sessionStore.currentAuthType()
-                if (auth !is AuthType.Operator) {
-                    return@withLock null
-                }
-
                 val refreshed = runCatching {
                     api.refreshToken(
                         com.prayer.pointfinder.core.model.RefreshTokenRequest(

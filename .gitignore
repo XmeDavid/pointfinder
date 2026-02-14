@@ -5,5 +5,18 @@ android-app/.gradle/
 android-app/**/build/
 android-app/local.properties
 **/.idea
-**/.idea
 **/.DS_Store
+**/*.xcuserstate
+**/xcuserdata/
+
+# Sensitive / release artifacts
+android-app/app-key.jks
+android-app/pepk.jar
+android-app/app/release/
+
+# Ad-hoc / generated reports
+appstore.copy
+web-admin/lighthose.report
+
+# Legacy
+legacy/

@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/scoutmission?stringtype=unspecified}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/pointfinder?stringtype=unspecified}
     username: ${SPRING_DATASOURCE_USERNAME:scout}
     password: ${SPRING_DATASOURCE_PASSWORD:scout}
 
@@ -9,5 +9,5 @@ spring:
 
 logging:
   level:
-    com.dbv.scoutmission: DEBUG
+    com.prayer.pointfinder: DEBUG
     org.springframework.security: DEBUG

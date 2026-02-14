@@ -1,7 +1,7 @@
 TEST_COMPOSE_FILE ?= docker-compose.test.yml
 DOCKER_COMPOSE ?= docker compose
 
-IOS_PROJECT ?= dbv-nfc-ios/dbv-nfc-games.xcodeproj
+IOS_PROJECT ?= ios-app/dbv-nfc-games.xcodeproj
 IOS_SCHEME ?= dbv-nfc-games
 IOS_DESTINATION ?= platform=iOS Simulator,name=iPhone 16
 ANDROID_PROJECT ?= android-app

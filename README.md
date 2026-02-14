@@ -1,10 +1,10 @@
-# Scout Mission - NFC Gaming Platform
+# PointFinder - NFC Gaming Platform
 
 A comprehensive NFC-based gaming platform designed for scouting organizations (Pathfinders/Desbravadores). The system enables interactive, location-based games using NFC technology, real-time monitoring, and comprehensive game management.
 
 ## 🎯 Overview
 
-Scout Mission is a multi-platform system that combines:
+PointFinder is a multi-platform system that combines:
 - **NFC-enabled mobile gameplay** for participants
 - **Web-based administration** for game organizers
 - **Real-time monitoring and tracking** for supervisors
@@ -179,7 +179,7 @@ npm run dev
 
 **iOS Development**
 ```bash
-cd dbv-nfc-ios
+cd ios-app
 open dbv-nfc-games.xcodeproj
 ```
 

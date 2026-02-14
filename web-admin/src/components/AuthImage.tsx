@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import apiClient from "@/lib/api/client";
 
 interface AuthImageProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, "src"> {
@@ -54,6 +54,8 @@ function normalizeApiImagePath(rawSrc: string): string {
  */
 export function AuthImage({ src, alt, initialBlobUrl, onBlobReady, ...props }: AuthImageProps) {
   const [blobUrl, setBlobUrl] = useState<string | null>(initialBlobUrl ?? null);
+  const onBlobReadyRef = useRef(onBlobReady);
+  onBlobReadyRef.current = onBlobReady;
 
   useEffect(() => {
     // If an initial blob URL was provided, use it directly — no fetch needed.
@@ -75,7 +77,7 @@ export function AuthImage({ src, alt, initialBlobUrl, onBlobReady, ...props }: A
       .then((response) => {
         objectUrl = URL.createObjectURL(response.data);
         setBlobUrl(objectUrl);
-        onBlobReady?.(objectUrl);
+        onBlobReadyRef.current?.(objectUrl);
       })
       .catch(() => {
         // Avoid unauthenticated fallback for protected API routes.
@@ -92,9 +94,6 @@ export function AuthImage({ src, alt, initialBlobUrl, onBlobReady, ...props }: A
         URL.revokeObjectURL(objectUrl);
       }
     };
-    // onBlobReady intentionally omitted from deps — the callback identity
-    // shouldn't trigger a re-fetch.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [src, initialBlobUrl]);
 
   if (!blobUrl) return null;

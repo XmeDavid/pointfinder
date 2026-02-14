@@ -1,6 +1,6 @@
-# Android Companion App
+# PointFinder Android App
 
-This project contains the Android companion implementation for player and operator parity.
+Android companion app for the PointFinder NFC gaming platform, providing player and operator functionality.
 
 ## Tooling Requirements
 

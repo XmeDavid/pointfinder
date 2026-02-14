@@ -23,7 +23,7 @@ import { useAuthStore } from "@/hooks/useAuth";
 import { gamesApi } from "@/lib/api/games";
 import { submissionsApi } from "@/lib/api/submissions";
 import type { GameStatus } from "@/types";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface NavItem {
   label: string;
@@ -71,9 +71,11 @@ export function Sidebar({ gameStatus, open, onClose }: SidebarProps) {
   const onRealtimePage = location.pathname.includes("/monitor") || location.pathname.endsWith("/notifications");
 
   // Close sidebar on route change (mobile)
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   useEffect(() => {
-    onClose();
-  }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+    onCloseRef.current();
+  }, [location.pathname]);
 
   const { data: game } = useQuery({
     queryKey: ["game", gameId],
