@@ -5,7 +5,7 @@ This file records what was completed in-repo and what still requires manual cons
 ## Completed in repository
 
 - Aligned backend default sender email:
-  - `backend/src/main/resources/application.yml` now defaults to `info@desbravadores.dev`
+  - `backend/src/main/resources/application.yml` now defaults to `info@pointfinder.pt`
 - Added runbooks/checklist updates:
   - `docs/email-routing.md`
   - `docs/store-submission/store-submission-checklist.md` (branding/contact readiness section)
@@ -16,7 +16,7 @@ This file records what was completed in-repo and what still requires manual cons
 
 ## Manual actions still required
 
-- Configure and validate real email forwarding for `info@desbravadores.dev` (DNS/provider console).
+- Configure and validate real email forwarding for `info@pointfinder.pt` (DNS/provider console).
 - Provide final app-logo artwork for iOS/Android launcher icons before store submission.
 - Complete store console forms and uploads:
   - App Store Connect

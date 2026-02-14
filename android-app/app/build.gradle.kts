@@ -33,7 +33,7 @@ fun Project.resolveConfigValue(key: String, defaultValue: String): String {
     return fromGradleProperty ?: fromEnvironment ?: fromDotEnv ?: defaultValue
 }
 
-val apiBaseUrl = project.resolveConfigValue("API_BASE_URL", "https://desbravadores.dev")
+val apiBaseUrl = project.resolveConfigValue("API_BASE_URL", "https://pointfinder.pt")
 val mapsApiKey = project.resolveConfigValue("GOOGLE_MAPS_API_KEY", "")
 val hasGoogleServicesConfig = listOf(
     "google-services.json",

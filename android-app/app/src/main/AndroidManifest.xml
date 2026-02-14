@@ -41,7 +41,8 @@
             <intent-filter>
                 <action android:name="android.nfc.action.NDEF_DISCOVERED" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="https" android:host="desbravadores.dev" android:pathPrefix="/tag/" />
+                <data android:scheme="https" android:host="pointfinder.pt" android:pathPrefix="/tag/" />
+                <data android:scheme="https" android:host="pointfinder.ch" android:pathPrefix="/tag/" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.nfc.action.TAG_DISCOVERED" />

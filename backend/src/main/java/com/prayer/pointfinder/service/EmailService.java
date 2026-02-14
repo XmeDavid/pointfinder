@@ -10,12 +10,19 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.Locale;
+import java.util.Set;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailService {
     private static final String BRAND_NAME = "PointFinder";
     private static final String PRIMARY_COLOR = "#16a34a";
+    private static final Set<String> SUPPORTED_FRONTEND_HOSTS = Set.of(
+            "pointfinder.pt",
+            "pointfinder.ch"
+    );
 
     private final JavaMailSender mailSender;
 
@@ -29,9 +36,10 @@ public class EmailService {
     private String frontendUrl;
 
     @Async
-    public void sendRegistrationInvite(String toEmail, String token, String inviterName) {
+    public void sendRegistrationInvite(String toEmail, String token, String inviterName, String requestHost) {
+        String frontendBaseUrl = resolveFrontendBaseUrl(requestHost);
         String subject = "You've been invited to " + BRAND_NAME;
-        String registrationLink = frontendUrl + "/register/" + token;
+        String registrationLink = frontendBaseUrl + "/register/" + token;
         String safeInviterName = escapeHtml(inviterName);
         String html = buildEmailTemplate(
                 "Operator invitation",
@@ -52,9 +60,10 @@ public class EmailService {
     }
 
     @Async
-    public void sendGameInvite(String toEmail, String gameName, String inviterName) {
+    public void sendGameInvite(String toEmail, String gameName, String inviterName, String requestHost) {
+        String frontendBaseUrl = resolveFrontendBaseUrl(requestHost);
         String subject = "You've been invited to operate a game on " + BRAND_NAME;
-        String link = frontendUrl + "/games";
+        String link = frontendBaseUrl + "/games";
         String safeInviterName = escapeHtml(inviterName);
         String safeGameName = escapeHtml(gameName);
         String html = buildEmailTemplate(
@@ -121,6 +130,51 @@ public class EmailService {
                 actionUrl,
                 BRAND_NAME
         );
+    }
+
+    private String resolveFrontendBaseUrl(String requestHost) {
+        String normalizedHost = normalizeHost(requestHost);
+        if (normalizedHost != null && SUPPORTED_FRONTEND_HOSTS.contains(normalizedHost)) {
+            return "https://" + normalizedHost;
+        }
+        return frontendUrl;
+    }
+
+    private String normalizeHost(String rawHost) {
+        if (rawHost == null) {
+            return null;
+        }
+
+        String host = rawHost.trim();
+        if (host.isEmpty()) {
+            return null;
+        }
+
+        int commaIndex = host.indexOf(',');
+        if (commaIndex >= 0) {
+            host = host.substring(0, commaIndex).trim();
+        }
+
+        int schemeSeparatorIndex = host.indexOf("://");
+        if (schemeSeparatorIndex >= 0) {
+            host = host.substring(schemeSeparatorIndex + 3);
+        }
+
+        int slashIndex = host.indexOf('/');
+        if (slashIndex >= 0) {
+            host = host.substring(0, slashIndex);
+        }
+
+        int colonIndex = host.indexOf(':');
+        if (colonIndex >= 0) {
+            host = host.substring(0, colonIndex);
+        }
+
+        host = host.toLowerCase(Locale.ROOT);
+        if (host.endsWith(".")) {
+            host = host.substring(0, host.length() - 1);
+        }
+        return host.isBlank() ? null : host;
     }
 
     private String escapeHtml(String value) {

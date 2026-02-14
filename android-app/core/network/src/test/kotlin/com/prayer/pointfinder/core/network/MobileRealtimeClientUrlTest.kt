@@ -9,13 +9,13 @@ class MobileRealtimeClientUrlTest {
     @Test
     fun `buildMobileRealtimeUrl uses https scheme for secure base URL`() {
         val url = buildMobileRealtimeUrl(
-            apiBaseUrl = "https://desbravadores.dev",
+            apiBaseUrl = "https://pointfinder.pt",
             gameId = "game-123",
             token = "token-abc",
         )
 
         assertEquals("https", url.scheme)
-        assertEquals("desbravadores.dev", url.host)
+        assertEquals("pointfinder.pt", url.host)
         assertEquals(443, url.port)
         assertEquals("/ws/mobile", url.encodedPath)
         assertEquals("game-123", url.queryParameter("gameId"))

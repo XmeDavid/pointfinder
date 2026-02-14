@@ -2,13 +2,13 @@ import Foundation
 
 enum AppConfiguration {
     #if DEBUG
-    static let apiBaseURL = "https://desbravadores.dev"
+    static let apiBaseURL = "https://pointfinder.pt"
     #else
-    static let apiBaseURL = "https://desbravadores.dev"
+    static let apiBaseURL = "https://pointfinder.pt"
     #endif
 
     static let appName = "PointFinder"
-    static let privacyPolicyURL = "https://desbravadores.dev/privacy/"
+    static let privacyPolicyURL = "https://pointfinder.pt/privacy/"
     static let mobileRealtimeEnabled = true
 
     // Keychain keys

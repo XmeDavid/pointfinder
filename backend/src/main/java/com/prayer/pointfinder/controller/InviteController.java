@@ -3,6 +3,7 @@ package com.prayer.pointfinder.controller;
 import com.prayer.pointfinder.dto.request.CreateInviteRequest;
 import com.prayer.pointfinder.dto.response.InviteResponse;
 import com.prayer.pointfinder.service.InviteService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -35,8 +36,12 @@ public class InviteController {
     }
 
     @PostMapping
-    public ResponseEntity<InviteResponse> createInvite(@Valid @RequestBody CreateInviteRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(inviteService.createInvite(request));
+    public ResponseEntity<InviteResponse> createInvite(
+            @Valid @RequestBody CreateInviteRequest request,
+            HttpServletRequest httpRequest
+    ) {
+        String requestHost = httpRequest.getHeader("Host");
+        return ResponseEntity.status(HttpStatus.CREATED).body(inviteService.createInvite(request, requestHost));
     }
 
     @PostMapping("/{inviteId}/accept")

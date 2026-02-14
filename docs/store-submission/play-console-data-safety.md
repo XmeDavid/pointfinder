@@ -92,8 +92,8 @@ No data is shared with third parties. Data is sent only to the app's own backend
 |----------|--------|
 | Is data encrypted in transit? | Yes |
 | Can users request data deletion? | Yes |
-| Deletion mechanism | In-app (Settings > Delete Account) and via email to info@desbravadores.dev |
-| Deletion URL for Play Console form | https://desbravadores.dev/privacy/#deletion-request |
+| Deletion mechanism | In-app (Settings > Delete Account) and via email to info@pointfinder.pt |
+| Deletion URL for Play Console form | https://pointfinder.pt/privacy/#deletion-request |
 
 ## Third-Party Libraries
 
@@ -105,4 +105,4 @@ No data is shared with third parties. Data is sent only to the app's own backend
 
 ## Privacy Policy URL
 
-`https://desbravadores.dev/privacy/`
+`https://pointfinder.pt/privacy/`

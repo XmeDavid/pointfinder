@@ -29,7 +29,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: scout
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in .env or environment}
-      CORS_ORIGINS: http://localhost,https://desbravadores.dev
+      CORS_ORIGINS: http://localhost,https://pointfinder.pt,https://pointfinder.ch
       # APNs (Apple Push Notifications) configuration - values come from .env
       # Single source of truth: APPLE_PROD_APNS_KEY is both the Key ID and part of the filename
       APNS_ENABLED: ${APNS_ENABLED:-false}
@@ -47,9 +47,9 @@ services:
       MAIL_HOST: smtp.resend.com
       MAIL_USERNAME: resend
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
-      MAIL_FROM: info@desbravadores.dev
+      MAIL_FROM: info@pointfinder.pt
       MAIL_ENABLED: ${MAIL_ENABLED:-false}
-      FRONTEND_URL: https://desbravadores.dev
+      FRONTEND_URL: https://pointfinder.pt
       APP_UPLOADS_PATH: /uploads
     volumes:
       - uploads:/uploads
