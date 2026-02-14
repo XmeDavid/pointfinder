@@ -4,7 +4,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp")
-    id("com.google.gms.google-services")
+    id("com.google.gms.google-services") apply false
 }
 
 fun Project.resolveConfigValue(key: String, defaultValue: String): String {
@@ -35,6 +35,18 @@ fun Project.resolveConfigValue(key: String, defaultValue: String): String {
 
 val apiBaseUrl = project.resolveConfigValue("API_BASE_URL", "https://desbravadores.dev")
 val mapsApiKey = project.resolveConfigValue("GOOGLE_MAPS_API_KEY", "")
+val hasGoogleServicesConfig = listOf(
+    "google-services.json",
+    "src/main/google-services.json",
+    "src/debug/google-services.json",
+    "src/release/google-services.json",
+).any { project.file(it).exists() }
+
+if (hasGoogleServicesConfig) {
+    apply(plugin = "com.google.gms.google-services")
+} else {
+    logger.lifecycle("google-services.json not found for ${project.path}; skipping Google Services plugin.")
+}
 
 android {
     namespace = "com.prayer.pointfinder"
