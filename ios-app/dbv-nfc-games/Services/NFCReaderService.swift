@@ -136,10 +136,14 @@ extension NFCReaderService: NFCTagReaderSessionDelegate {
         }
     }
 
-    private static let tagURLPrefix = "https://desbravadores.dev/tag/"
+    private static let supportedTagHosts: Set<String> = [
+        "pointfinder.pt",
+        "pointfinder.ch",
+    ]
+    private static let tagPathPrefix = "/tag/"
 
     private func processRecord(_ record: NFCNDEFPayload, session: NFCTagReaderSession) {
-        // Try URL record first (new format: https://desbravadores.dev/tag/{baseId})
+        // Try URL record first (new format: https://pointfinder.pt/tag/{baseId})
         if let baseId = extractBaseIdFromURI(record) {
             succeedWith(baseId: baseId, session: session)
             return
@@ -182,13 +186,14 @@ extension NFCReaderService: NFCTagReaderSessionDelegate {
         }
     }
 
-    /// Extract baseId from a well-known URI record (https://desbravadores.dev/tag/{uuid}).
+    /// Extract baseId from a well-known URI record (https://pointfinder.{pt|ch}/tag/{uuid}).
     private func extractBaseIdFromURI(_ record: NFCNDEFPayload) -> UUID? {
         guard record.typeNameFormat == .nfcWellKnown else { return nil }
         guard let url = record.wellKnownTypeURIPayload() else { return nil }
-        let urlString = url.absoluteString
-        guard urlString.hasPrefix(Self.tagURLPrefix) else { return nil }
-        let idString = String(urlString.dropFirst(Self.tagURLPrefix.count))
+        guard let host = url.host?.lowercased(), Self.supportedTagHosts.contains(host) else { return nil }
+        let path = url.path
+        guard path.hasPrefix(Self.tagPathPrefix) else { return nil }
+        let idString = String(path.dropFirst(Self.tagPathPrefix.count))
         return UUID(uuidString: idString)
     }
 

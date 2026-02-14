@@ -54,7 +54,7 @@ public class InviteService {
     }
 
     @Transactional
-    public InviteResponse createInvite(CreateInviteRequest request) {
+    public InviteResponse createInvite(CreateInviteRequest request, String requestHost) {
         User currentUser = SecurityUtils.getCurrentUser();
         UUID userId = currentUser.getId();
         currentUser = userRepository.findById(userId)
@@ -91,9 +91,9 @@ public class InviteService {
 
         // Send email notification
         if (game != null) {
-            emailService.sendGameInvite(request.getEmail(), game.getName(), currentUser.getName());
+            emailService.sendGameInvite(request.getEmail(), game.getName(), currentUser.getName(), requestHost);
         } else {
-            emailService.sendRegistrationInvite(request.getEmail(), invite.getToken(), currentUser.getName());
+            emailService.sendRegistrationInvite(request.getEmail(), invite.getToken(), currentUser.getName(), requestHost);
         }
 
         return toResponse(invite);

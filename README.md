@@ -88,7 +88,7 @@ The platform is specifically designed for scouting events, camps, and educationa
 ## 📱 Current State
 
 ### Deployment Status
-- **Production URL**: https://desbravadores.dev
+- **Production URLs**: https://pointfinder.pt and https://pointfinder.ch
 - **SSL**: Automated Let's Encrypt certificates
 - **Database**: PostgreSQL with migrations
 - **Email**: Configured with Resend SMTP
@@ -234,7 +234,7 @@ The application uses PostgreSQL with Flyway migrations. Database schema is autom
 
 ### Production Deployment
 1. Configure environment variables in `docker-compose.yml`
-2. Update domain in `init-letsencrypt.sh`
+2. Confirm domains in `init-letsencrypt.sh` (`pointfinder.pt`, `pointfinder.ch`)
 3. Run SSL setup: `./init-letsencrypt.sh`
 4. Start services: `docker-compose up -d`
 
@@ -243,6 +243,10 @@ The project includes automated Let's Encrypt certificate generation and renewal:
 ```bash
 ./init-letsencrypt.sh
 ```
+
+### NFC Domain Migration
+When changing production domains, rewrite physical NFC tags using:
+- `docs/nfc-tag-rewrite-runbook.md`
 
 ## 🧪 Testing
 
@@ -289,6 +293,6 @@ Private project - All rights reserved.
 
 ---
 
-**Live Application**: https://desbravadores.dev
+**Live Application**: https://pointfinder.pt and https://pointfinder.ch
 **Project Status**: Production Ready ✅
 **Last Updated**: February 2026

@@ -92,7 +92,7 @@ enum class PlayerTab {
     SETTINGS,
 }
 
-private const val PRIVACY_POLICY_URL = "https://desbravadores.dev/privacy/"
+private const val PRIVACY_POLICY_URL = "https://pointfinder.pt/privacy/"
 
 // Semantic color constants for status, accents, and indicators
 private val StatusCheckedIn = Color(0xFF1565C0)

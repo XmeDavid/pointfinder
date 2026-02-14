@@ -112,4 +112,4 @@ to active players during events.
 
 ## Privacy Policy URL
 
-`https://desbravadores.dev/privacy/`
+`https://pointfinder.pt/privacy/`

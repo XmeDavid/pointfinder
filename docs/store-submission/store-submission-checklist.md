@@ -4,10 +4,10 @@ Use before each App Store / Play Store submission to verify compliance.
 
 ## Privacy Policy and URLs
 
-- [ ] Privacy policy is live at https://desbravadores.dev/privacy/
+- [ ] Privacy policy is live at https://pointfinder.pt/privacy/
 - [ ] Privacy policy URL entered in App Store Connect
 - [ ] Privacy policy URL entered in Play Console
-- [ ] Deletion section accessible at https://desbravadores.dev/privacy/#deletion-request
+- [ ] Deletion section accessible at https://pointfinder.pt/privacy/#deletion-request
 - [ ] Deletion URL entered in Play Console account deletion field
 - [ ] Support URL entered in App Store Connect
 
@@ -48,7 +48,7 @@ Use before each App Store / Play Store submission to verify compliance.
 - [ ] iOS AppIcon source exists in `ios-app/dbv-nfc-games/Assets.xcassets/AppIcon.appiconset/out-2.png`
 - [ ] Android launcher icons exist in `android-app/app/src/main/res/mipmap-*`
 - [ ] AndroidManifest uses `@mipmap/ic_launcher` and `@mipmap/ic_launcher_round`
-- [ ] Support inbox forwarding for `info@desbravadores.dev` is configured and tested
+- [ ] Support inbox forwarding for `info@pointfinder.pt` is configured and tested
 - [ ] Test email from external sender arrives in the target inbox
 
 ## Final Checks

@@ -25,8 +25,8 @@ Outside Codebase (manual / ops / launch)
 - Publish on Play Store.
 
 ## Infra / Domain / Email Routing
-- Set up reverse proxy or forwarding so `info@desbravadores.dev` goes to personal email.
-- Evaluate whether we need a different domain.
+- Set up reverse proxy or forwarding so `info@pointfinder.pt` goes to personal email.
+- Validate monitoring and alerting coverage for both `pointfinder.pt` and `pointfinder.ch`.
 
 ## Branding
 - App icon.

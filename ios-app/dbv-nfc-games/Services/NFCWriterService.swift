@@ -12,7 +12,7 @@ final class NFCWriterService: NSObject {
     private var payloadToWrite: NFCNDEFPayload?
     private var continuation: CheckedContinuation<Void, Error>?
 
-    private static let tagURLPrefix = "https://desbravadores.dev/tag/"
+    private static let tagURLPrefix = "https://pointfinder.pt/tag/"
 
     /// Write a base ID to an NFC tag.
     func writeBaseId(_ baseId: UUID) async throws {

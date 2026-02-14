@@ -7,11 +7,15 @@ import java.util.UUID
 import org.json.JSONObject
 
 object NfcPayloadCodec {
-    private const val TAG_URL_PREFIX = "https://desbravadores.dev/tag/"
+    private const val PRIMARY_TAG_URL_PREFIX = "https://pointfinder.pt/tag/"
+    private val SUPPORTED_TAG_URL_PREFIXES = listOf(
+        "https://pointfinder.pt/tag/",
+        "https://pointfinder.ch/tag/",
+    )
     private const val APP_PACKAGE = "com.prayer.pointfinder"
 
     fun buildBaseMessage(baseId: String): NdefMessage {
-        val uriRecord = NdefRecord.createUri("$TAG_URL_PREFIX$baseId")
+        val uriRecord = NdefRecord.createUri("$PRIMARY_TAG_URL_PREFIX$baseId")
         val aarRecord = NdefRecord.createApplicationRecord(APP_PACKAGE)
         return NdefMessage(arrayOf(uriRecord, aarRecord))
     }
@@ -37,10 +41,12 @@ object NfcPayloadCodec {
         if (record.tnf != NdefRecord.TNF_WELL_KNOWN) return null
         return try {
             val uri = record.toUri()?.toString() ?: return null
-            if (uri.startsWith(TAG_URL_PREFIX)) {
-                uri.removePrefix(TAG_URL_PREFIX).takeIf { it.isNotBlank() }
-            } else {
-                null
+            SUPPORTED_TAG_URL_PREFIXES.firstNotNullOfOrNull { prefix ->
+                if (uri.startsWith(prefix)) {
+                    uri.removePrefix(prefix).takeIf { it.isNotBlank() }
+                } else {
+                    null
+                }
             }
         } catch (_: Exception) {
             null
