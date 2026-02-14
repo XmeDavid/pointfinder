@@ -110,7 +110,7 @@ export function SubmissionsPage() {
                         <AuthImage src={sub.fileUrl} alt="Submission" className="h-10 w-10 rounded object-cover cursor-pointer" onClick={(e) => { e.stopPropagation(); openFullScreen(sub.fileUrl!); }} onBlobReady={(blob) => cacheBlobUrl(sub.fileUrl!, blob)} />
                       </>
                     ) : (
-                      <><FileText className="h-3.5 w-3.5" /><span className="truncate max-w-md">{t("submissions.answerHidden")}</span></>
+                      <><FileText className="h-3.5 w-3.5" /></>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">{formatDateTime(sub.submittedAt)}</p>
