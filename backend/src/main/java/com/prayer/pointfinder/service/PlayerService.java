@@ -43,6 +43,7 @@ public class PlayerService {
     private final TeamLocationRepository teamLocationRepository;
     private final PlayerLocationRepository playerLocationRepository;
     private final GameAccessService gameAccessService;
+    private final OperatorPushNotificationService operatorPushNotificationService;
 
     @Transactional
     public PlayerAuthResponse joinTeam(PlayerJoinRequest request) {
@@ -154,6 +155,7 @@ public class PlayerService {
         if (event.getChallenge() != null) event.getChallenge().getId();
 
         eventBroadcaster.broadcastActivityEvent(gameId, event);
+        operatorPushNotificationService.notifyOperatorsForCheckIn(base.getGame(), team, base);
 
         return buildCheckInResponse(checkIn, base, team);
     }

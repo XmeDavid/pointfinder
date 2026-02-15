@@ -29,6 +29,8 @@
     <string name="action_delete_account">Eliminar Conta</string>
     <string name="action_remove">Remover</string>
     <string name="action_cancel">Cancelar</string>
+    <string name="action_approve">Aprovar</string>
+    <string name="action_reject">Rejeitar</string>
     <string name="nfc_scan_dialog_title">Ler Tag NFC</string>
     <string name="nfc_scan_dialog_message">Segura o telemóvel perto da tag NFC na base</string>
 
@@ -43,6 +45,9 @@
     <string name="label_password">Senha</string>
     <string name="label_map">Mapa</string>
     <string name="label_check_in">Check-in</string>
+    <string name="label_submissions">Submissões</string>
+    <string name="label_pending">Pendentes</string>
+    <string name="label_all">Todos</string>
     <string name="label_settings">Configurações</string>
     <string name="label_live_map">Mapa ao vivo</string>
     <string name="label_bases">Bases</string>
@@ -91,6 +96,22 @@
     <string name="label_presence_required_value">Presença obrigatória: %1$s</string>
     <string name="label_assignments_value">Atribuições: %1$s</string>
     <string name="label_no_games">Sem jogos</string>
+    <string name="label_no_submissions">Sem submissões ainda</string>
+    <string name="label_no_pending_submissions">Sem submissões pendentes</string>
+    <string name="label_unknown_team">Equipa desconhecida</string>
+    <string name="label_unknown_challenge">Desafio desconhecido</string>
+    <string name="label_unknown_base">Base desconhecida</string>
+    <string name="label_review_submission">Rever submissão</string>
+    <string name="submissions_team_label">Equipa</string>
+    <string name="submissions_challenge_label">Desafio</string>
+    <string name="submissions_base_label">Base</string>
+    <string name="submissions_answer_label">Resposta</string>
+    <string name="submissions_feedback_label">Feedback (opcional)</string>
+    <string name="label_notification_settings">Definições de notificações</string>
+    <string name="label_notify_pending_submissions">Notificar submissões pendentes</string>
+    <string name="label_notify_all_submissions">Notificar todas as submissões</string>
+    <string name="label_notify_check_ins">Notificar check-ins</string>
+    <string name="common_saving">A guardar...</string>
     <string name="label_remaining">Restantes</string>
     <string name="label_challenge_assignment">Atribuição de Desafio</string>
     <string name="label_fixed_challenge">Desafio Fixo</string>
@@ -131,9 +152,12 @@
 
     <!-- Status -->
     <string name="status_not_visited">Não visitado</string>
+    <string name="status_pending">Pendente</string>
+    <string name="status_approved">Aprovada</string>
     <string name="status_checked_in">Check-in feito</string>
     <string name="status_submitted">Aguardando revisão</string>
     <string name="status_completed">Concluído</string>
+    <string name="status_correct">Correta</string>
     <string name="status_rejected">Rejeitado</string>
 
     <!-- Submission result -->

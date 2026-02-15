@@ -80,9 +80,8 @@ export function AssignmentsPage() {
 
   const fixedBases = bases.filter((b) => b.fixedChallengeId);
   const assignableBases = bases.filter((b) => !b.fixedChallengeId);
-  const fixedChallengeIds = useMemo(
-    () => new Set(bases.map((base) => base.fixedChallengeId).filter((id): id is string => Boolean(id))),
-    [bases]
+  const fixedChallengeIds = new Set(
+    bases.map((base) => base.fixedChallengeId).filter((id): id is string => Boolean(id))
   );
   const assignmentsByBase = useMemo(() => {
     const map = new Map<string, Assignment[]>();

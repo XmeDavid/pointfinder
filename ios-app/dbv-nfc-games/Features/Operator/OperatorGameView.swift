@@ -40,6 +40,14 @@ struct OperatorGameView: View {
                             }
                     }
 
+                    // Submissions tab (live games only)
+                    if let token = token, game.status == "live" {
+                        OperatorSubmissionsView(gameId: game.id, token: token)
+                            .tabItem {
+                                Label(locale.t("operator.submissions"), systemImage: "checklist")
+                            }
+                    }
+
                     // Bases / NFC Setup tab
                     NavigationStack {
                         BasesListView(game: game, bases: $bases)
@@ -90,6 +98,21 @@ struct OperatorSettingsView: View {
     let game: Game
     let onBack: () -> Void
 
+    @State private var notifyPendingSubmissions = true
+    @State private var notifyAllSubmissions = false
+    @State private var notifyCheckIns = false
+    @State private var isLoadingNotificationSettings = false
+    @State private var isSavingNotificationSettings = false
+    @State private var notificationSettingsError: String?
+    @State private var hasLoadedNotificationSettings = false
+
+    private var operatorToken: String? {
+        if case .userOperator(let accessToken, _, _) = appState.authType {
+            return accessToken
+        }
+        return nil
+    }
+
     var body: some View {
         NavigationStack {
             List {
@@ -123,6 +146,48 @@ struct OperatorSettingsView: View {
                     Text(locale.t("settings.currentGame"))
                 }
 
+                Section(locale.t("operator.notificationSettings")) {
+                    if isLoadingNotificationSettings && !hasLoadedNotificationSettings {
+                        ProgressView(locale.t("operator.loading"))
+                    } else {
+                        Toggle(locale.t("operator.notifyPendingSubmissions"), isOn: Binding(
+                            get: { notifyPendingSubmissions },
+                            set: { newValue in
+                                notifyPendingSubmissions = newValue
+                                saveNotificationSettings()
+                            }
+                        ))
+                        .disabled(isSavingNotificationSettings)
+                        Toggle(locale.t("operator.notifyAllSubmissions"), isOn: Binding(
+                            get: { notifyAllSubmissions },
+                            set: { newValue in
+                                notifyAllSubmissions = newValue
+                                saveNotificationSettings()
+                            }
+                        ))
+                        .disabled(isSavingNotificationSettings)
+                        Toggle(locale.t("operator.notifyCheckIns"), isOn: Binding(
+                            get: { notifyCheckIns },
+                            set: { newValue in
+                                notifyCheckIns = newValue
+                                saveNotificationSettings()
+                            }
+                        ))
+                        .disabled(isSavingNotificationSettings)
+
+                        if isSavingNotificationSettings {
+                            ProgressView(locale.t("common.saving"))
+                                .font(.caption)
+                        }
+
+                        if let notificationSettingsError {
+                            Text(notificationSettingsError)
+                                .font(.caption)
+                                .foregroundStyle(.red)
+                        }
+                    }
+                }
+
                 Section(locale.t("settings.privacy")) {
                     Link(destination: URL(string: AppConfiguration.privacyPolicyURL)!) {
                         Label(locale.t("settings.privacyPolicy"), systemImage: "hand.raised")
@@ -145,6 +210,59 @@ struct OperatorSettingsView: View {
             }
             .navigationTitle(locale.t("settings.title"))
             .navigationBarTitleDisplayMode(.inline)
+            .task {
+                await loadNotificationSettings()
+            }
+        }
+    }
+
+    private func loadNotificationSettings() async {
+        guard let operatorToken else { return }
+        isLoadingNotificationSettings = true
+        notificationSettingsError = nil
+        defer {
+            isLoadingNotificationSettings = false
+            hasLoadedNotificationSettings = true
+        }
+
+        do {
+            let settings = try await appState.apiClient.getOperatorNotificationSettings(
+                gameId: game.id,
+                token: operatorToken
+            )
+            notifyPendingSubmissions = settings.notifyPendingSubmissions
+            notifyAllSubmissions = settings.notifyAllSubmissions
+            notifyCheckIns = settings.notifyCheckIns
+        } catch {
+            notificationSettingsError = error.localizedDescription
+        }
+    }
+
+    private func saveNotificationSettings() {
+        guard let operatorToken else { return }
+        isSavingNotificationSettings = true
+        notificationSettingsError = nil
+
+        let request = UpdateOperatorNotificationSettingsRequest(
+            notifyPendingSubmissions: notifyPendingSubmissions,
+            notifyAllSubmissions: notifyAllSubmissions,
+            notifyCheckIns: notifyCheckIns
+        )
+
+        Task {
+            do {
+                let savedSettings = try await appState.apiClient.updateOperatorNotificationSettings(
+                    gameId: game.id,
+                    request: request,
+                    token: operatorToken
+                )
+                notifyPendingSubmissions = savedSettings.notifyPendingSubmissions
+                notifyAllSubmissions = savedSettings.notifyAllSubmissions
+                notifyCheckIns = savedSettings.notifyCheckIns
+            } catch {
+                notificationSettingsError = error.localizedDescription
+            }
+            isSavingNotificationSettings = false
         }
     }
 }

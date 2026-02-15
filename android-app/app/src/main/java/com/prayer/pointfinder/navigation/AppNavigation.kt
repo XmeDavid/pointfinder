@@ -69,6 +69,7 @@ import com.prayer.pointfinder.feature.operator.OperatorHomeScreen
 import com.prayer.pointfinder.feature.operator.LiveBaseProgressBottomSheet
 import com.prayer.pointfinder.feature.operator.OperatorMapScreen
 import com.prayer.pointfinder.feature.operator.OperatorSettingsScreen
+import com.prayer.pointfinder.feature.operator.OperatorSubmissionsScreen
 import com.prayer.pointfinder.feature.operator.OperatorTab
 import com.prayer.pointfinder.core.platform.NfcEventBus
 import com.prayer.pointfinder.core.platform.NfcPayloadCodec
@@ -763,8 +764,17 @@ private fun OperatorGameRoot(
         return
     }
 
+    val showSubmissionsTab = selectedGame.status == "live"
+
+    LaunchedEffect(showSubmissionsTab, state.selectedTab) {
+        if (!showSubmissionsTab && state.selectedTab == OperatorTab.SUBMISSIONS) {
+            viewModel.setTab(OperatorTab.LIVE_MAP)
+        }
+    }
+
     OperatorGameScaffold(
         selectedTab = state.selectedTab,
+        showSubmissions = showSubmissionsTab,
         onTabSelected = viewModel::setTab,
     ) {
         when (state.selectedTab) {
@@ -787,6 +797,18 @@ private fun OperatorGameRoot(
                         onDismiss = viewModel::clearSelectedBase,
                     )
                 }
+            }
+
+            OperatorTab.SUBMISSIONS -> {
+                OperatorSubmissionsScreen(
+                    submissions = state.submissions,
+                    teams = state.teams,
+                    challenges = state.challenges,
+                    bases = state.bases,
+                    isLoading = state.isLoading,
+                    onRefresh = viewModel::refreshSelectedGameData,
+                    onReviewSubmission = viewModel::reviewSubmission,
+                )
             }
 
             OperatorTab.BASES -> {
@@ -815,7 +837,11 @@ private fun OperatorGameRoot(
                     gameName = selectedGame.name,
                     gameStatus = selectedGame.status,
                     currentLanguage = currentLanguage,
+                    notificationSettings = state.notificationSettings,
+                    isLoadingNotificationSettings = state.isLoadingNotificationSettings,
+                    isSavingNotificationSettings = state.isSavingNotificationSettings,
                     onLanguageChanged = sessionViewModel::updateLanguage,
+                    onNotificationSettingsChanged = viewModel::updateNotificationSettings,
                     onSwitchGame = {
                         viewModel.clearSelectedGame()
                         onSwitchGame()

@@ -10,23 +10,35 @@ final class PushNotificationService {
 
     private var currentToken: String?
     private var apiClient: APIClient?
-    private var playerToken: String?
+    private var recipient: PushRecipient?
 
     private init() {}
 
+    private enum PushRecipient {
+        case player(token: String)
+        case userOperator(token: String)
+    }
+
     // MARK: - Configuration
 
-    /// Configure the service with the API client and player auth token.
-    /// Call this after the player joins a game.
-    func configure(apiClient: APIClient, playerToken: String) {
+    /// Configure the service for player sessions.
+    func configureForPlayer(apiClient: APIClient, playerToken: String) {
         self.apiClient = apiClient
-        self.playerToken = playerToken
+        self.recipient = .player(token: playerToken)
+        Task { await sendTokenToBackend() }
+    }
+
+    /// Configure the service for operator sessions.
+    func configureForOperator(apiClient: APIClient, operatorToken: String) {
+        self.apiClient = apiClient
+        self.recipient = .userOperator(token: operatorToken)
+        Task { await sendTokenToBackend() }
     }
 
     /// Clear configuration on logout.
     func reset() {
         apiClient = nil
-        playerToken = nil
+        recipient = nil
         currentToken = nil
     }
 
@@ -64,12 +76,17 @@ final class PushNotificationService {
     private func sendTokenToBackend() async {
         guard let token = currentToken,
               let apiClient = apiClient,
-              let playerToken = playerToken else {
+              let recipient = recipient else {
             return
         }
 
         do {
-            try await apiClient.registerPushToken(token, token: playerToken)
+            switch recipient {
+            case .player(let playerToken):
+                try await apiClient.registerPushToken(token, token: playerToken)
+            case .userOperator(let operatorToken):
+                try await apiClient.registerOperatorPushToken(token, token: operatorToken)
+            }
         } catch {
             Logger(subsystem: "com.prayer.pointfinder", category: "Push").error("Failed to register push token: \(error.localizedDescription, privacy: .public)")
         }

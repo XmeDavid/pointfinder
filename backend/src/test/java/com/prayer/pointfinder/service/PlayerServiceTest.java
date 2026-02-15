@@ -2,6 +2,8 @@ package com.prayer.pointfinder.service;
 
 import com.prayer.pointfinder.dto.request.PlayerJoinRequest;
 import com.prayer.pointfinder.dto.response.PlayerAuthResponse;
+import com.prayer.pointfinder.entity.Base;
+import com.prayer.pointfinder.entity.CheckIn;
 import com.prayer.pointfinder.entity.Game;
 import com.prayer.pointfinder.entity.GameStatus;
 import com.prayer.pointfinder.entity.Player;
@@ -31,6 +33,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -67,6 +70,8 @@ class PlayerServiceTest {
     private PlayerLocationRepository playerLocationRepository;
     @Mock
     private GameAccessService gameAccessService;
+    @Mock
+    private OperatorPushNotificationService operatorPushNotificationService;
 
     @InjectMocks
     private PlayerService playerService;
@@ -291,6 +296,63 @@ class PlayerServiceTest {
 
         assertEquals("Game is not active yet", ex.getMessage());
         verify(playerLocationRepository, never()).save(any());
+    }
+
+    @Test
+    void checkInNotifiesOperatorsAfterSuccessfulCheckIn() {
+        UUID gameId = UUID.randomUUID();
+        UUID teamId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        UUID baseId = UUID.randomUUID();
+        UUID checkInId = UUID.randomUUID();
+
+        Game game = Game.builder()
+                .id(gameId)
+                .name("Live Game")
+                .description("Desc")
+                .status(GameStatus.live)
+                .build();
+        Team team = Team.builder()
+                .id(teamId)
+                .game(game)
+                .name("Wolves")
+                .joinCode("LIVE12")
+                .color("#00AA00")
+                .build();
+        Player player = Player.builder()
+                .id(playerId)
+                .team(team)
+                .deviceId("device-checkin")
+                .displayName("Scout")
+                .build();
+        Base base = Base.builder()
+                .id(baseId)
+                .game(game)
+                .name("Base 1")
+                .description("Desc")
+                .lat(1.0)
+                .lng(2.0)
+                .nfcLinked(true)
+                .requirePresenceToSubmit(false)
+                .build();
+        CheckIn checkIn = CheckIn.builder()
+                .id(checkInId)
+                .game(game)
+                .team(team)
+                .base(base)
+                .player(player)
+                .checkedInAt(java.time.Instant.now())
+                .build();
+
+        when(playerRepository.findById(playerId)).thenReturn(Optional.of(player));
+        when(baseRepository.findById(baseId)).thenReturn(Optional.of(base));
+        when(checkInRepository.findByTeamIdAndBaseId(teamId, baseId)).thenReturn(Optional.empty());
+        when(checkInRepository.save(any(CheckIn.class))).thenReturn(checkIn);
+        when(assignmentRepository.findByBaseId(baseId)).thenReturn(java.util.List.of());
+
+        playerService.checkIn(gameId, baseId, player);
+
+        verify(operatorPushNotificationService).notifyOperatorsForCheckIn(eq(game), eq(team), eq(base));
     }
 }
 

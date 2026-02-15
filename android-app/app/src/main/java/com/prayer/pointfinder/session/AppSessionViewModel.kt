@@ -97,7 +97,10 @@ class AppSessionViewModel @Inject constructor(
                         _state.value = _state.value.copy(showPermissionDisclosure = true)
                     }
                 }
-                is AuthType.Operator -> realtimeClient.disconnect()
+                is AuthType.Operator -> {
+                    realtimeClient.disconnect()
+                    registerPushTokenIfPossible()
+                }
                 AuthType.None -> realtimeClient.disconnect()
             }
 
@@ -161,6 +164,7 @@ class AppSessionViewModel @Inject constructor(
             }.onSuccess { auth ->
                 realtimeClient.disconnect()
                 _state.value = _state.value.copy(authType = auth, isLoading = false)
+                registerPushTokenIfPossible()
             }.onFailure { err ->
                 _state.value = _state.value.copy(
                     isLoading = false,
@@ -248,7 +252,7 @@ class AppSessionViewModel @Inject constructor(
     private fun registerPushTokenIfPossible() {
         viewModelScope.launch {
             val auth = _state.value.authType
-            if (auth !is AuthType.Player) return@launch
+            if (auth is AuthType.None) return@launch
             val token = pushTokenProvider.tokenOrNull() ?: return@launch
             runCatching { authRepository.registerPushToken(token) }
         }

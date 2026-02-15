@@ -29,6 +29,8 @@
     <string name="action_delete_account">Konto löschen</string>
     <string name="action_remove">Entfernen</string>
     <string name="action_cancel">Abbrechen</string>
+    <string name="action_approve">Freigeben</string>
+    <string name="action_reject">Ablehnen</string>
     <string name="nfc_scan_dialog_title">NFC-Tag scannen</string>
     <string name="nfc_scan_dialog_message">Halte dein Telefon an den NFC-Tag an der Basis</string>
 
@@ -43,6 +45,9 @@
     <string name="label_password">Passwort</string>
     <string name="label_map">Karte</string>
     <string name="label_check_in">Check-in</string>
+    <string name="label_submissions">Einreichungen</string>
+    <string name="label_pending">Ausstehend</string>
+    <string name="label_all">Alle</string>
     <string name="label_settings">Einstellungen</string>
     <string name="label_live_map">Live-Karte</string>
     <string name="label_bases">Basen</string>
@@ -91,6 +96,22 @@
     <string name="label_presence_required_value">Präsenz erforderlich: %1$s</string>
     <string name="label_assignments_value">Zuweisungen: %1$s</string>
     <string name="label_no_games">Keine Spiele</string>
+    <string name="label_no_submissions">Noch keine Einreichungen</string>
+    <string name="label_no_pending_submissions">Keine ausstehenden Einreichungen</string>
+    <string name="label_unknown_team">Unbekanntes Team</string>
+    <string name="label_unknown_challenge">Unbekannte Challenge</string>
+    <string name="label_unknown_base">Unbekannte Station</string>
+    <string name="label_review_submission">Einreichung prüfen</string>
+    <string name="submissions_team_label">Team</string>
+    <string name="submissions_challenge_label">Challenge</string>
+    <string name="submissions_base_label">Station</string>
+    <string name="submissions_answer_label">Antwort</string>
+    <string name="submissions_feedback_label">Feedback (optional)</string>
+    <string name="label_notification_settings">Benachrichtigungseinstellungen</string>
+    <string name="label_notify_pending_submissions">Ausstehende Einreichungen benachrichtigen</string>
+    <string name="label_notify_all_submissions">Alle Einreichungen benachrichtigen</string>
+    <string name="label_notify_check_ins">Check-ins benachrichtigen</string>
+    <string name="common_saving">Wird gespeichert...</string>
     <string name="label_remaining">Verbleibend</string>
     <string name="label_challenge_assignment">Aufgabenzuweisung</string>
     <string name="label_fixed_challenge">Feste Aufgabe</string>
@@ -131,9 +152,12 @@
 
     <!-- Status -->
     <string name="status_not_visited">Nicht besucht</string>
+    <string name="status_pending">Ausstehend</string>
+    <string name="status_approved">Freigegeben</string>
     <string name="status_checked_in">Eingecheckt</string>
     <string name="status_submitted">Warten auf Prüfung</string>
     <string name="status_completed">Abgeschlossen</string>
+    <string name="status_correct">Korrekt</string>
     <string name="status_rejected">Abgelehnt</string>
 
     <!-- Submission result -->

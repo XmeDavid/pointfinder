@@ -36,6 +36,7 @@ public class SubmissionService {
     private final GameAccessService gameAccessService;
     private final FileStorageService fileStorageService;
     private final PlayerRepository playerRepository;
+    private final OperatorPushNotificationService operatorPushNotificationService;
 
     @Transactional(readOnly = true)
     public List<SubmissionResponse> getSubmissionsByGame(UUID gameId) {
@@ -149,6 +150,7 @@ public class SubmissionService {
         // Broadcast via WebSocket
         eventBroadcaster.broadcastActivityEvent(gameId, event);
         eventBroadcaster.broadcastSubmissionStatus(gameId, submission);
+        operatorPushNotificationService.notifyOperatorsForSubmission(submission);
 
         return toResponse(submission);
     }

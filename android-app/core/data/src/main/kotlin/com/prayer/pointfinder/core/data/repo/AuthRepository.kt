@@ -59,12 +59,21 @@ class AuthRepository @Inject constructor(
     }
 
     suspend fun registerPushToken(token: String) {
-        api.registerPushToken(
-            com.prayer.pointfinder.core.model.PushTokenRequest(
-                pushToken = token,
-                platform = "android",
-            ),
-        )
+        when (sessionStore.currentAuthType()) {
+            is AuthType.Player -> api.registerPushToken(
+                com.prayer.pointfinder.core.model.PushTokenRequest(
+                    pushToken = token,
+                    platform = "android",
+                ),
+            )
+            is AuthType.Operator -> api.registerUserPushToken(
+                com.prayer.pointfinder.core.model.PushTokenRequest(
+                    pushToken = token,
+                    platform = "android",
+                ),
+            )
+            AuthType.None -> Unit
+        }
     }
 
     suspend fun deletePlayerAccount() {

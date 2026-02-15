@@ -160,7 +160,7 @@ actor APIClient {
 
     func registerPushToken(_ pushToken: String, token: String) async throws {
         try await putVoid("/api/player/push-token",
-                          body: PushTokenBody(pushToken: pushToken),
+                          body: PushTokenBody(pushToken: pushToken, platform: nil),
                           token: token)
     }
 
@@ -204,6 +204,44 @@ actor APIClient {
         try await get("/api/games/\(gameId)/monitoring/progress", token: token)
     }
 
+    func getSubmissions(gameId: UUID, token: String) async throws -> [SubmissionResponse] {
+        try await get("/api/games/\(gameId)/submissions", token: token)
+    }
+
+    func reviewSubmission(
+        gameId: UUID,
+        submissionId: UUID,
+        status: String,
+        feedback: String?,
+        token: String
+    ) async throws -> SubmissionResponse {
+        try await patch(
+            "/api/games/\(gameId)/submissions/\(submissionId)/review",
+            body: ReviewSubmissionBody(status: status, feedback: feedback),
+            token: token
+        )
+    }
+
+    func getOperatorNotificationSettings(gameId: UUID, token: String) async throws -> OperatorNotificationSettingsResponse {
+        try await get("/api/games/\(gameId)/operator-notification-settings/me", token: token)
+    }
+
+    func updateOperatorNotificationSettings(
+        gameId: UUID,
+        request: UpdateOperatorNotificationSettingsRequest,
+        token: String
+    ) async throws -> OperatorNotificationSettingsResponse {
+        try await put("/api/games/\(gameId)/operator-notification-settings/me", body: request, token: token)
+    }
+
+    func registerOperatorPushToken(_ pushToken: String, token: String) async throws {
+        try await putVoid(
+            "/api/users/me/push-token",
+            body: PushTokenBody(pushToken: pushToken, platform: "ios"),
+            token: token
+        )
+    }
+
     // MARK: - HTTP Methods
 
     private func get<T: Decodable>(_ path: String, token: String? = nil) async throws -> T {
@@ -241,6 +279,13 @@ actor APIClient {
 
     private func patch<T: Decodable>(_ path: String, token: String? = nil) async throws -> T {
         let request = try buildRequest(path: path, method: "PATCH", token: token)
+        return try await execute(request)
+    }
+
+    private func patch<T: Decodable, B: Encodable>(_ path: String, body: B, token: String? = nil) async throws -> T {
+        var request = try buildRequest(path: path, method: "PATCH", token: token)
+        request.httpBody = try JSONEncoder().encode(body)
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         return try await execute(request)
     }
 
@@ -481,6 +526,12 @@ private struct LocationUpdateBody: Encodable {
 
 private struct PushTokenBody: Encodable {
     let pushToken: String
+    let platform: String?
+}
+
+private struct ReviewSubmissionBody: Encodable {
+    let status: String
+    let feedback: String?
 }
 
 // MARK: - Multipart Helpers

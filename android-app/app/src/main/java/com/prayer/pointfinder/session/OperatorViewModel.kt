@@ -10,9 +10,12 @@ import com.prayer.pointfinder.core.model.Assignment
 import com.prayer.pointfinder.core.model.Base
 import com.prayer.pointfinder.core.model.Challenge
 import com.prayer.pointfinder.core.model.Game
+import com.prayer.pointfinder.core.model.OperatorNotificationSettingsResponse
+import com.prayer.pointfinder.core.model.SubmissionResponse
 import com.prayer.pointfinder.core.model.Team
 import com.prayer.pointfinder.core.model.TeamBaseProgressResponse
 import com.prayer.pointfinder.core.model.TeamLocationResponse
+import com.prayer.pointfinder.core.model.UpdateOperatorNotificationSettingsRequest
 import com.prayer.pointfinder.core.network.ApiErrorParser
 import com.prayer.pointfinder.core.network.MobileRealtimeClient
 import com.prayer.pointfinder.core.network.RealtimeConnectionState
@@ -39,9 +42,13 @@ data class OperatorState(
     val bases: List<Base> = emptyList(),
     val locations: List<TeamLocationResponse> = emptyList(),
     val baseProgress: List<TeamBaseProgressResponse> = emptyList(),
+    val submissions: List<SubmissionResponse> = emptyList(),
     val teams: List<Team> = emptyList(),
     val challenges: List<Challenge> = emptyList(),
     val assignments: List<Assignment> = emptyList(),
+    val notificationSettings: OperatorNotificationSettingsResponse? = null,
+    val isLoadingNotificationSettings: Boolean = false,
+    val isSavingNotificationSettings: Boolean = false,
     val selectedBase: Base? = null,
     val assignmentSummary: String = "",
     val awaitingNfcWrite: Boolean = false,
@@ -99,9 +106,12 @@ class OperatorViewModel @Inject constructor(
             runCatching {
                 operatorRepository.games()
             }.onSuccess { games ->
+                val selectedId = _state.value.selectedGame?.id
+                val updatedSelectedGame = selectedId?.let { id -> games.firstOrNull { it.id == id } }
                 _state.value = _state.value.copy(
                     isLoading = false,
                     games = games,
+                    selectedGame = updatedSelectedGame ?: _state.value.selectedGame,
                     authExpired = false,
                 )
             }.onFailure { err ->
@@ -121,6 +131,7 @@ class OperatorViewModel @Inject constructor(
         }
         refreshSelectedGameData()
         loadGameMeta(game.id)
+        loadNotificationSettings()
         startPolling()
     }
 
@@ -153,6 +164,8 @@ class OperatorViewModel @Inject constructor(
             bases = emptyList(),
             locations = emptyList(),
             baseProgress = emptyList(),
+            submissions = emptyList(),
+            notificationSettings = null,
             selectedBase = null,
             writeStatus = null,
             writeSuccess = null,
@@ -161,7 +174,7 @@ class OperatorViewModel @Inject constructor(
 
     fun setTab(tab: OperatorTab) {
         _state.value = _state.value.copy(selectedTab = tab)
-        if (tab == OperatorTab.LIVE_MAP) {
+        if (tab == OperatorTab.LIVE_MAP || tab == OperatorTab.SUBMISSIONS) {
             startPolling()
         } else {
             pollingJob?.cancel()
@@ -172,21 +185,102 @@ class OperatorViewModel @Inject constructor(
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
             runCatching {
-                Triple(
-                    operatorRepository.gameBases(gameId),
-                    operatorRepository.teamLocations(gameId),
-                    operatorRepository.teamProgress(gameId),
-                )
-            }.onSuccess { (bases, locations, progress) ->
-                _state.value = _state.value.copy(
+                val bases = operatorRepository.gameBases(gameId)
+                val locations = operatorRepository.teamLocations(gameId)
+                val progress = operatorRepository.teamProgress(gameId)
+                val submissions = operatorRepository.gameSubmissions(gameId)
+                RefreshData(
                     bases = bases,
                     locations = locations,
-                    baseProgress = progress,
+                    progress = progress,
+                    submissions = submissions,
+                )
+            }.onSuccess { refreshed ->
+                _state.value = _state.value.copy(
+                    bases = refreshed.bases,
+                    locations = refreshed.locations,
+                    baseProgress = refreshed.progress,
+                    submissions = refreshed.submissions,
                     authExpired = false,
                 )
             }.onFailure { err ->
                 if (markAuthExpiredIfNeeded(err)) return@onFailure
                 _state.value = _state.value.copy(
+                    errorMessage = ApiErrorParser.extractMessage(err),
+                )
+            }
+        }
+    }
+
+    fun reviewSubmission(submissionId: String, status: String, feedback: String?) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching {
+                operatorRepository.reviewSubmission(
+                    gameId = gameId,
+                    submissionId = submissionId,
+                    status = status,
+                    feedback = feedback,
+                )
+            }.onSuccess {
+                _state.value = _state.value.copy(errorMessage = null, authExpired = false)
+                refreshSelectedGameData()
+            }.onFailure { err ->
+                if (markAuthExpiredIfNeeded(err)) return@onFailure
+                _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(err))
+            }
+        }
+    }
+
+    fun loadNotificationSettings() {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isLoadingNotificationSettings = true)
+            runCatching {
+                operatorRepository.getOperatorNotificationSettings(gameId)
+            }.onSuccess { settings ->
+                _state.value = _state.value.copy(
+                    notificationSettings = settings,
+                    isLoadingNotificationSettings = false,
+                    authExpired = false,
+                )
+            }.onFailure { err ->
+                if (markAuthExpiredIfNeeded(err)) return@onFailure
+                _state.value = _state.value.copy(
+                    isLoadingNotificationSettings = false,
+                    errorMessage = ApiErrorParser.extractMessage(err),
+                )
+            }
+        }
+    }
+
+    fun updateNotificationSettings(
+        notifyPendingSubmissions: Boolean,
+        notifyAllSubmissions: Boolean,
+        notifyCheckIns: Boolean,
+    ) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isSavingNotificationSettings = true)
+            runCatching {
+                operatorRepository.updateOperatorNotificationSettings(
+                    gameId = gameId,
+                    request = UpdateOperatorNotificationSettingsRequest(
+                        notifyPendingSubmissions = notifyPendingSubmissions,
+                        notifyAllSubmissions = notifyAllSubmissions,
+                        notifyCheckIns = notifyCheckIns,
+                    ),
+                )
+            }.onSuccess { settings ->
+                _state.value = _state.value.copy(
+                    notificationSettings = settings,
+                    isSavingNotificationSettings = false,
+                    authExpired = false,
+                )
+            }.onFailure { err ->
+                if (markAuthExpiredIfNeeded(err)) return@onFailure
+                _state.value = _state.value.copy(
+                    isSavingNotificationSettings = false,
                     errorMessage = ApiErrorParser.extractMessage(err),
                 )
             }
@@ -308,4 +402,11 @@ class OperatorViewModel @Inject constructor(
         )
         return true
     }
+
+    private data class RefreshData(
+        val bases: List<Base>,
+        val locations: List<TeamLocationResponse>,
+        val progress: List<TeamBaseProgressResponse>,
+        val submissions: List<SubmissionResponse>,
+    )
 }
