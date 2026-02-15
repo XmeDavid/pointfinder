@@ -312,6 +312,15 @@ private struct OperatorSubmissionReviewSheet: View {
                         Text(submission.answer)
                     }
                 }
+                if let fileUrl = submission.fileUrl,
+                   !fileUrl.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Section(locale.t("solve.photo")) {
+                        AuthenticatedSubmissionPhotoView(
+                            fileUrl: fileUrl,
+                            token: token
+                        )
+                    }
+                }
                 Section(locale.t("submissions.feedbackLabel")) {
                     TextEditor(text: $feedback)
                         .frame(minHeight: 100)
@@ -366,6 +375,78 @@ private struct OperatorSubmissionReviewSheet: View {
             errorMessage = error.localizedDescription
         }
         isSaving = false
+    }
+}
+
+private struct AuthenticatedSubmissionPhotoView: View {
+    let fileUrl: String
+    let token: String
+
+    @State private var image: UIImage?
+    @State private var isLoading = true
+
+    var body: some View {
+        Group {
+            if let image {
+                SwiftUI.Image(uiImage: image)
+                    .resizable()
+                    .scaledToFit()
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+            } else if isLoading {
+                HStack {
+                    Spacer()
+                    ProgressView()
+                    Spacer()
+                }
+                .padding(.vertical, 20)
+            } else {
+                Text(Translations.string("common.error"))
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+        }
+        .task(id: fileUrl) {
+            await loadImage()
+        }
+    }
+
+    private func resolvedURL() -> URL? {
+        let trimmed = fileUrl.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+
+        if let absolute = URL(string: trimmed), absolute.scheme != nil {
+            return absolute
+        }
+
+        let normalizedPath = trimmed.hasPrefix("/") ? trimmed : "/\(trimmed)"
+        return URL(string: AppConfiguration.apiBaseURL + normalizedPath)
+    }
+
+    private func loadImage() async {
+        guard let url = resolvedURL() else {
+            isLoading = false
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 30
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200...299).contains(httpResponse.statusCode),
+                  let loadedImage = UIImage(data: data) else {
+                isLoading = false
+                return
+            }
+
+            image = loadedImage
+        } catch {
+            // Keep the view in an error state.
+        }
+
+        isLoading = false
     }
 }
 

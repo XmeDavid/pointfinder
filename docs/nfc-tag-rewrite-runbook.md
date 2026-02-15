@@ -31,7 +31,7 @@ The mobile readers accept both `pointfinder.pt` and `pointfinder.ch` tag URLs.
 - [ ] All bases in the live game were rewritten.
 - [ ] Spot-check at least 10% of tags with a second device.
 - [ ] Spot-check one rewritten tag through the public `/tag/` fallback page.
-- [ ] No remaining tags resolve to `desbravadores.dev`.
+- [ ] No remaining tags resolve to `pointfinder.pt`.
 
 ## Rollback / Recovery
 

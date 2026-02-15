@@ -91,7 +91,7 @@ class SessionStore @Inject constructor(
 
     suspend fun currentAuthType(): AuthType {
         val prefs = context.sessionDataStore.data.first()
-        return when (prefs[AUTH_TYPE]) {
+        val resolved = when (prefs[AUTH_TYPE]) {
             AUTH_PLAYER -> {
                 val token = securePrefs.getString(KEY_PLAYER_TOKEN, null)
                 val playerId = prefs[PLAYER_ID]
@@ -132,6 +132,8 @@ class SessionStore @Inject constructor(
 
             else -> AuthType.None
         }
+        cachedAuthType = resolved
+        return resolved
     }
 
     suspend fun setPreferredLanguage(languageCode: String) {

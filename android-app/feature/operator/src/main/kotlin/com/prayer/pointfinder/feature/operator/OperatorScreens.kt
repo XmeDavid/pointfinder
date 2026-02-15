@@ -59,6 +59,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -83,6 +84,8 @@ import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -401,6 +404,8 @@ fun OperatorSubmissionsScreen(
     isLoading: Boolean,
     onRefresh: () -> Unit,
     onReviewSubmission: (submissionId: String, status: String, feedback: String?) -> Unit,
+    operatorAccessToken: String?,
+    apiBaseUrl: String,
     modifier: Modifier = Modifier,
 ) {
     var showPendingOnly by rememberSaveable { mutableStateOf(true) }
@@ -514,6 +519,15 @@ fun OperatorSubmissionsScreen(
                     if (reviewingSubmission.answer.isNotBlank()) {
                         Text("${stringResource(R.string.submissions_answer_label)}: ${reviewingSubmission.answer}")
                     }
+                    reviewingSubmission.fileUrl
+                        ?.takeIf { it.isNotBlank() }
+                        ?.let { fileUrl ->
+                            SubmissionPhotoPreview(
+                                fileUrl = fileUrl,
+                                apiBaseUrl = apiBaseUrl,
+                                operatorAccessToken = operatorAccessToken,
+                            )
+                        }
                     OutlinedTextField(
                         value = feedback,
                         onValueChange = { feedback = it },
@@ -548,6 +562,62 @@ fun OperatorSubmissionsScreen(
             },
         )
     }
+}
+
+@Composable
+private fun SubmissionPhotoPreview(
+    fileUrl: String,
+    apiBaseUrl: String,
+    operatorAccessToken: String?,
+) {
+    val resolvedUrl = remember(fileUrl, apiBaseUrl) {
+        resolveSubmissionFileUrl(fileUrl, apiBaseUrl)
+    } ?: return
+    val context = LocalContext.current
+    var loadFailed by remember(resolvedUrl, operatorAccessToken) { mutableStateOf(false) }
+
+    val model = remember(resolvedUrl, operatorAccessToken, context) {
+        ImageRequest.Builder(context)
+            .data(resolvedUrl)
+            .crossfade(true)
+            .apply {
+                if (!operatorAccessToken.isNullOrBlank()) {
+                    addHeader("Authorization", "Bearer $operatorAccessToken")
+                }
+            }
+            .build()
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        AsyncImage(
+            model = model,
+            contentDescription = stringResource(R.string.label_photo_mode),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(220.dp)
+                .clip(MaterialTheme.shapes.medium),
+            contentScale = ContentScale.Crop,
+            onSuccess = { loadFailed = false },
+            onError = { loadFailed = true },
+        )
+        if (loadFailed) {
+            Text(
+                text = stringResource(R.string.error_generic),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+    }
+}
+
+private fun resolveSubmissionFileUrl(fileUrl: String, apiBaseUrl: String): String? {
+    val trimmed = fileUrl.trim()
+    if (trimmed.isBlank()) return null
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed
+
+    val normalizedBase = apiBaseUrl.trimEnd('/')
+    val normalizedPath = if (trimmed.startsWith("/")) trimmed else "/$trimmed"
+    return normalizedBase + normalizedPath
 }
 
 @Composable
