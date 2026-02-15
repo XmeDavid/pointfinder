@@ -26,6 +26,7 @@ import com.prayer.pointfinder.core.model.UpdateOperatorNotificationSettingsReque
 import com.prayer.pointfinder.core.model.UserResponse
 import kotlinx.serialization.json.Json
 import okhttp3.Interceptor
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
@@ -192,8 +193,9 @@ class ApiFactory {
             },
         ): CompanionApi {
             val contentType = "application/json".toMediaType()
+            val normalizedBaseUrl = normalizeApiBaseUrl(baseUrl)
             return Retrofit.Builder()
-                .baseUrl(baseUrl)
+                .baseUrl(normalizedBaseUrl)
                 .client(okHttpClient)
                 .addConverterFactory(json.asConverterFactory(contentType))
                 .build()
@@ -201,5 +203,20 @@ class ApiFactory {
         }
 
         fun textPart(value: String): okhttp3.RequestBody = value.toRequestBody("text/plain".toMediaType())
+
+        private fun normalizeApiBaseUrl(rawBaseUrl: String): String {
+            val parsed = rawBaseUrl.trim().toHttpUrl()
+            val withoutApiSuffix = if (
+                parsed.encodedPath.equals("/api", ignoreCase = true) ||
+                parsed.encodedPath.equals("/api/", ignoreCase = true)
+            ) {
+                parsed.newBuilder().encodedPath("/").build()
+            } else {
+                parsed
+            }
+
+            val normalized = withoutApiSuffix.toString()
+            return if (normalized.endsWith("/")) normalized else "$normalized/"
+        }
     }
 }

@@ -33,7 +33,17 @@ fun Project.resolveConfigValue(key: String, defaultValue: String): String {
     return fromGradleProperty ?: fromEnvironment ?: fromDotEnv ?: defaultValue
 }
 
-val apiBaseUrl = project.resolveConfigValue("API_BASE_URL", "https://pointfinder.pt")
+fun Project.resolveApiBaseUrl(defaultValue: String): String {
+    val resolved = resolveConfigValue("API_BASE_URL", defaultValue).trim()
+    return if (resolved.contains("desbravadores.dev", ignoreCase = true)) {
+        logger.warn("API_BASE_URL points to deprecated host '$resolved'. Falling back to $defaultValue.")
+        defaultValue
+    } else {
+        resolved
+    }
+}
+
+val apiBaseUrl = project.resolveApiBaseUrl("https://pointfinder.pt")
 val mapsApiKey = project.resolveConfigValue("GOOGLE_MAPS_API_KEY", "")
 val hasGoogleServicesConfig = listOf(
     "google-services.json",
@@ -56,8 +66,8 @@ android {
         applicationId = "com.prayer.pointfinder"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.1.1"
         buildConfigField("String", "API_BASE_URL", "\"${apiBaseUrl.replace("\"", "\\\"")}\"")
         buildConfigField("Boolean", "ENABLE_MOBILE_REALTIME", "true")
 

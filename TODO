@@ -9,7 +9,28 @@ Code (in codebase)
 -Operator notifications, should be configurable in settings, by default only submissions on manual aproving, but the operator could also choose to get notified by any submission, and even team checkins for exemple.
 -On web admin, when a submission is pending aproval, instead of clicking the 3 dots, clicking anywhere on the card should open the review. We only want the 3 dots for already success or reject, since its less common to go overwrite those.
 
+# Sara Test
+-show required fields or not 
+-Bases first
+-When connected to base, select the base on the challange, show a dropdown
+-Images limit size
+-Opcional fields more clear
+-Cores de equipa costumizaveis
+-Default to same for all teams
+-Review button
+-Map view list of bases, have 2/4 completed
+-Map view points per player so na vista
+
+
+Visao geral -> Vista geral
+Atribuicoes -> Atribuir / Designar Desafios
+
+
+#Feature
+Map view for guests
 ---
+
+Vista geral
 
 Outside Codebase (manual / ops / launch)
 

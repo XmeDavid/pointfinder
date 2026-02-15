@@ -57,6 +57,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.prayer.pointfinder.BuildConfig
 import com.prayer.pointfinder.core.model.AuthType
 import com.prayer.pointfinder.feature.auth.OperatorLoginScreen
 import com.prayer.pointfinder.feature.auth.PlayerJoinScreen
@@ -243,10 +244,13 @@ fun AppNavigation(
         }
 
         composable(Routes.OPERATOR_GAME) {
+            val operatorAuth = sessionState.authType as? AuthType.Operator
             OperatorGameRoot(
                 viewModel = operatorViewModel,
                 sessionViewModel = sessionViewModel,
                 currentLanguage = sessionState.currentLanguage,
+                operatorAccessToken = operatorAuth?.accessToken,
+                apiBaseUrl = BuildConfig.API_BASE_URL,
                 onSwitchGame = { navController.popBackStack() },
             )
         }
@@ -747,6 +751,8 @@ private fun OperatorGameRoot(
     viewModel: OperatorViewModel,
     sessionViewModel: AppSessionViewModel,
     currentLanguage: String,
+    operatorAccessToken: String?,
+    apiBaseUrl: String,
     onSwitchGame: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -808,6 +814,8 @@ private fun OperatorGameRoot(
                     isLoading = state.isLoading,
                     onRefresh = viewModel::refreshSelectedGameData,
                     onReviewSubmission = viewModel::reviewSubmission,
+                    operatorAccessToken = operatorAccessToken,
+                    apiBaseUrl = apiBaseUrl,
                 )
             }
 

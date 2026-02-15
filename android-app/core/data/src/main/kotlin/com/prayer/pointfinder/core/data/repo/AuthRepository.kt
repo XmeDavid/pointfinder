@@ -5,13 +5,13 @@ import com.prayer.pointfinder.core.model.OperatorLoginRequest
 import com.prayer.pointfinder.core.model.PlayerJoinRequest
 import com.prayer.pointfinder.core.network.CompanionApi
 import com.prayer.pointfinder.core.network.TokenRefresher
+import java.util.Locale
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import android.util.Log
 
 @Singleton
 class AuthRepository @Inject constructor(
@@ -45,7 +45,7 @@ class AuthRepository @Inject constructor(
     suspend fun operatorLogin(email: String, password: String): AuthType.Operator {
         val response = api.operatorLogin(
             OperatorLoginRequest(
-                email = email.trim(),
+                email = email.trim().lowercase(Locale.ROOT),
                 password = password,
             ),
         )
@@ -95,13 +95,14 @@ class OperatorTokenRefresher @Inject constructor(
 
     override fun refreshTokenBlocking(): String? {
         // Use cached authType() to avoid blocking DataStore read on OkHttp thread.
-        val auth = sessionStore.authType()
-        if (auth !is AuthType.Operator) {
+        if (sessionStore.authType() !is AuthType.Operator) {
             return null
         }
 
         return runBlocking {
             refreshLock.withLock {
+                // Re-read inside the lock so concurrent 401s don't refresh with stale tokens.
+                val auth = sessionStore.authType() as? AuthType.Operator ?: return@withLock null
                 val refreshed = runCatching {
                     api.refreshToken(
                         com.prayer.pointfinder.core.model.RefreshTokenRequest(
