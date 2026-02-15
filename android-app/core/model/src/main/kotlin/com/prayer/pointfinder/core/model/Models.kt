@@ -218,6 +218,28 @@ data class SubmissionResponse(
 )
 
 @Serializable
+data class ReviewSubmissionRequest(
+    val status: String,
+    val feedback: String? = null,
+)
+
+@Serializable
+data class OperatorNotificationSettingsResponse(
+    val gameId: EntityId,
+    val userId: EntityId,
+    val notifyPendingSubmissions: Boolean,
+    val notifyAllSubmissions: Boolean,
+    val notifyCheckIns: Boolean,
+)
+
+@Serializable
+data class UpdateOperatorNotificationSettingsRequest(
+    val notifyPendingSubmissions: Boolean,
+    val notifyAllSubmissions: Boolean,
+    val notifyCheckIns: Boolean,
+)
+
+@Serializable
 data class GameDataResponse(
     val gameStatus: String? = null,
     val bases: List<Base>,

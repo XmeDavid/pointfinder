@@ -52,6 +52,8 @@ class SubmissionServiceTest {
     private FileStorageService fileStorageService;
     @Mock
     private PlayerRepository playerRepository;
+    @Mock
+    private OperatorPushNotificationService operatorPushNotificationService;
 
     @InjectMocks
     private SubmissionService submissionService;
@@ -195,6 +197,7 @@ class SubmissionServiceTest {
         assertEquals(normalizedFileUrl, submissionCaptor.getValue().getFileUrl());
         assertEquals(createdSubmissionId, response.getId());
         verify(fileStorageService).validateStoredFileUrl(eq(rawFileUrl), eq(gameId));
+        verify(operatorPushNotificationService).notifyOperatorsForSubmission(any(Submission.class));
     }
 
     @Test

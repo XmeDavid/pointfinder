@@ -122,19 +122,21 @@ export function SubmissionsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant={statusVariants[sub.status]}>{statusIcons[sub.status]}<span className="ml-1">{statusLabels[sub.status]}</span></Badge>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      onClick={(e) => e.stopPropagation()}
-                      onKeyDown={(e) => e.stopPropagation()}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                      aria-label={t("submissions.actions")}
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => openReview(sub)}>{t("submissions.override")}</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {!isPending && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => e.stopPropagation()}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                        aria-label={t("submissions.actions")}
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openReview(sub)}>{t("submissions.override")}</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
               </CardContent>
             </Card>

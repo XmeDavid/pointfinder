@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -38,15 +39,22 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,6 +69,7 @@ import com.prayer.pointfinder.core.model.Base
 import com.prayer.pointfinder.core.model.BaseStatus
 import com.prayer.pointfinder.core.model.Challenge
 import com.prayer.pointfinder.core.model.Game
+import com.prayer.pointfinder.core.model.SubmissionResponse
 import com.prayer.pointfinder.core.model.Team
 import com.prayer.pointfinder.core.model.TeamBaseProgressResponse
 import com.prayer.pointfinder.core.model.TeamLocationResponse
@@ -80,6 +89,7 @@ import java.time.format.DateTimeFormatter
 
 enum class OperatorTab {
     LIVE_MAP,
+    SUBMISSIONS,
     BASES,
     SETTINGS,
 }
@@ -198,6 +208,7 @@ fun OperatorHomeScreen(
 @Composable
 fun OperatorGameScaffold(
     selectedTab: OperatorTab,
+    showSubmissions: Boolean,
     onTabSelected: (OperatorTab) -> Unit,
     content: @Composable () -> Unit,
 ) {
@@ -210,6 +221,14 @@ fun OperatorGameScaffold(
                     icon = { androidx.compose.material3.Icon(Icons.Default.Map, contentDescription = null) },
                     label = { Text(stringResource(R.string.label_live_map)) },
                 )
+                if (showSubmissions) {
+                    NavigationBarItem(
+                        selected = selectedTab == OperatorTab.SUBMISSIONS,
+                        onClick = { onTabSelected(OperatorTab.SUBMISSIONS) },
+                        icon = { androidx.compose.material3.Icon(Icons.Default.List, contentDescription = null) },
+                        label = { Text(stringResource(R.string.label_submissions)) },
+                    )
+                }
                 NavigationBarItem(
                     selected = selectedTab == OperatorTab.BASES,
                     onClick = { onTabSelected(OperatorTab.BASES) },
@@ -371,6 +390,189 @@ private fun formatTimestamp(iso: String): String {
         val local = instant.atZone(ZoneId.systemDefault())
         DateTimeFormatter.ofPattern("HH:mm").format(local)
     }.getOrDefault(iso)
+}
+
+@Composable
+fun OperatorSubmissionsScreen(
+    submissions: List<SubmissionResponse>,
+    teams: List<Team>,
+    challenges: List<Challenge>,
+    bases: List<Base>,
+    isLoading: Boolean,
+    onRefresh: () -> Unit,
+    onReviewSubmission: (submissionId: String, status: String, feedback: String?) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var showPendingOnly by rememberSaveable { mutableStateOf(true) }
+    var selectedSubmission by remember { mutableStateOf<SubmissionResponse?>(null) }
+    var feedback by rememberSaveable { mutableStateOf("") }
+
+    val filteredSubmissions = submissions
+        .asSequence()
+        .filter { !showPendingOnly || it.status == "pending" }
+        .sortedByDescending { parseSubmissionInstant(it.submittedAt) }
+        .toList()
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            AssistChip(
+                onClick = { showPendingOnly = true },
+                label = { Text(stringResource(R.string.label_pending)) },
+            )
+            AssistChip(
+                onClick = { showPendingOnly = false },
+                label = { Text(stringResource(R.string.label_all)) },
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            TextButton(onClick = onRefresh) {
+                Text(stringResource(R.string.action_refresh))
+            }
+        }
+
+        when {
+            isLoading && filteredSubmissions.isEmpty() -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+            filteredSubmissions.isEmpty() -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        if (showPendingOnly) {
+                            stringResource(R.string.label_no_pending_submissions)
+                        } else {
+                            stringResource(R.string.label_no_submissions)
+                        },
+                    )
+                }
+            }
+            else -> {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(filteredSubmissions) { submission ->
+                        val teamName = teams.firstOrNull { it.id == submission.teamId }?.name
+                            ?: stringResource(R.string.label_unknown_team)
+                        val challengeTitle = challenges.firstOrNull { it.id == submission.challengeId }?.title
+                            ?: stringResource(R.string.label_unknown_challenge)
+                        val baseName = bases.firstOrNull { it.id == submission.baseId }?.name
+                            ?: stringResource(R.string.label_unknown_base)
+
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    selectedSubmission = submission
+                                    feedback = submission.feedback.orEmpty()
+                                },
+                            tonalElevation = 1.dp,
+                            shape = MaterialTheme.shapes.medium,
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(teamName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                                    Spacer(Modifier.weight(1f))
+                                    Text(
+                                        statusLabel(submission.status),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = statusColor(submission.status),
+                                    )
+                                }
+                                Spacer(Modifier.height(4.dp))
+                                Text(challengeTitle, style = MaterialTheme.typography.bodyMedium)
+                                Text(baseName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Spacer(Modifier.height(2.dp))
+                                Text(formatTimestamp(submission.submittedAt), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    val reviewingSubmission = selectedSubmission
+    if (reviewingSubmission != null) {
+        val teamName = teams.firstOrNull { it.id == reviewingSubmission.teamId }?.name
+            ?: stringResource(R.string.label_unknown_team)
+        val challengeTitle = challenges.firstOrNull { it.id == reviewingSubmission.challengeId }?.title
+            ?: stringResource(R.string.label_unknown_challenge)
+        val baseName = bases.firstOrNull { it.id == reviewingSubmission.baseId }?.name
+            ?: stringResource(R.string.label_unknown_base)
+
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { selectedSubmission = null },
+            title = { Text(stringResource(R.string.label_review_submission)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("${stringResource(R.string.submissions_team_label)}: $teamName")
+                    Text("${stringResource(R.string.submissions_challenge_label)}: $challengeTitle")
+                    Text("${stringResource(R.string.submissions_base_label)}: $baseName")
+                    if (reviewingSubmission.answer.isNotBlank()) {
+                        Text("${stringResource(R.string.submissions_answer_label)}: ${reviewingSubmission.answer}")
+                    }
+                    OutlinedTextField(
+                        value = feedback,
+                        onValueChange = { feedback = it },
+                        label = { Text(stringResource(R.string.submissions_feedback_label)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        maxLines = 3,
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onReviewSubmission(reviewingSubmission.id, "approved", feedback.takeIf { it.isNotBlank() })
+                        selectedSubmission = null
+                    },
+                ) {
+                    Text(stringResource(R.string.action_approve))
+                }
+            },
+            dismissButton = {
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    TextButton(onClick = { selectedSubmission = null }) {
+                        Text(stringResource(R.string.action_cancel))
+                    }
+                    TextButton(onClick = {
+                        onReviewSubmission(reviewingSubmission.id, "rejected", feedback.takeIf { it.isNotBlank() })
+                        selectedSubmission = null
+                    }) {
+                        Text(stringResource(R.string.action_reject), color = MaterialTheme.colorScheme.error)
+                    }
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun statusLabel(status: String): String {
+    return when (status) {
+        "pending" -> stringResource(R.string.status_pending)
+        "approved" -> stringResource(R.string.status_approved)
+        "rejected" -> stringResource(R.string.status_rejected)
+        "correct" -> stringResource(R.string.status_correct)
+        else -> status
+    }
+}
+
+@Composable
+private fun statusColor(status: String): Color {
+    return when (status) {
+        "pending" -> StatusSubmitted
+        "approved", "correct" -> StatusCompleted
+        "rejected" -> MaterialTheme.colorScheme.error
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+}
+
+private fun parseSubmissionInstant(value: String): Instant {
+    return runCatching { Instant.parse(value) }.getOrElse { Instant.EPOCH }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -681,12 +883,19 @@ fun OperatorSettingsScreen(
     gameName: String?,
     gameStatus: String?,
     currentLanguage: String,
+    notificationSettings: com.prayer.pointfinder.core.model.OperatorNotificationSettingsResponse?,
+    isLoadingNotificationSettings: Boolean,
+    isSavingNotificationSettings: Boolean,
     onLanguageChanged: (String) -> Unit,
+    onNotificationSettingsChanged: (notifyPendingSubmissions: Boolean, notifyAllSubmissions: Boolean, notifyCheckIns: Boolean) -> Unit,
     onSwitchGame: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val notifyPendingSubmissions = notificationSettings?.notifyPendingSubmissions ?: true
+    val notifyAllSubmissions = notificationSettings?.notifyAllSubmissions ?: false
+    val notifyCheckIns = notificationSettings?.notifyCheckIns ?: false
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -753,6 +962,56 @@ fun OperatorSettingsScreen(
             }
         }
 
+        // Notification settings section
+        item {
+            OperatorSettingsSection(title = stringResource(R.string.label_notification_settings)) {
+                if (isLoadingNotificationSettings && notificationSettings == null) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                } else {
+                    SettingToggleRow(
+                        label = stringResource(R.string.label_notify_pending_submissions),
+                        checked = notifyPendingSubmissions,
+                        enabled = !isSavingNotificationSettings,
+                    ) { enabled ->
+                        onNotificationSettingsChanged(
+                            enabled,
+                            notifyAllSubmissions,
+                            notifyCheckIns,
+                        )
+                    }
+                    SettingToggleRow(
+                        label = stringResource(R.string.label_notify_all_submissions),
+                        checked = notifyAllSubmissions,
+                        enabled = !isSavingNotificationSettings,
+                    ) { enabled ->
+                        onNotificationSettingsChanged(
+                            notifyPendingSubmissions,
+                            enabled,
+                            notifyCheckIns,
+                        )
+                    }
+                    SettingToggleRow(
+                        label = stringResource(R.string.label_notify_check_ins),
+                        checked = notifyCheckIns,
+                        enabled = !isSavingNotificationSettings,
+                    ) { enabled ->
+                        onNotificationSettingsChanged(
+                            notifyPendingSubmissions,
+                            notifyAllSubmissions,
+                            enabled,
+                        )
+                    }
+                    if (isSavingNotificationSettings) {
+                        Text(
+                            text = stringResource(R.string.common_saving),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        }
+
         // Actions section
         item {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -777,6 +1036,31 @@ fun OperatorSettingsScreen(
         }
 
         item { Spacer(Modifier.height(16.dp)) }
+    }
+}
+
+@Composable
+private fun SettingToggleRow(
+    label: String,
+    checked: Boolean,
+    enabled: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(1f),
+        )
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            enabled = enabled,
+        )
     }
 }
 

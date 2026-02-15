@@ -13,6 +13,7 @@ import com.prayer.pointfinder.core.model.OperatorAuthResponse
 import com.prayer.pointfinder.core.model.OperatorLoginRequest
 import com.prayer.pointfinder.core.model.PlayerAuthResponse
 import com.prayer.pointfinder.core.model.PlayerJoinRequest
+import com.prayer.pointfinder.core.model.ReviewSubmissionRequest
 import com.prayer.pointfinder.core.model.PlayerSubmissionRequest
 import com.prayer.pointfinder.core.model.PushTokenRequest
 import com.prayer.pointfinder.core.model.RefreshTokenRequest
@@ -20,6 +21,8 @@ import com.prayer.pointfinder.core.model.SubmissionResponse
 import com.prayer.pointfinder.core.model.Team
 import com.prayer.pointfinder.core.model.TeamBaseProgressResponse
 import com.prayer.pointfinder.core.model.TeamLocationResponse
+import com.prayer.pointfinder.core.model.OperatorNotificationSettingsResponse
+import com.prayer.pointfinder.core.model.UpdateOperatorNotificationSettingsRequest
 import com.prayer.pointfinder.core.model.UserResponse
 import kotlinx.serialization.json.Json
 import okhttp3.Interceptor
@@ -94,6 +97,9 @@ interface CompanionApi {
     @PUT("api/player/push-token")
     suspend fun registerPushToken(@Body request: PushTokenRequest)
 
+    @PUT("api/users/me/push-token")
+    suspend fun registerUserPushToken(@Body request: PushTokenRequest)
+
     @DELETE("api/player/me")
     suspend fun deleteMyPlayerData()
 
@@ -123,6 +129,27 @@ interface CompanionApi {
 
     @GET("api/games/{gameId}/monitoring/progress")
     suspend fun getTeamProgress(@Path("gameId") gameId: String): List<TeamBaseProgressResponse>
+
+    @GET("api/games/{gameId}/submissions")
+    suspend fun getSubmissions(@Path("gameId") gameId: String): List<SubmissionResponse>
+
+    @PATCH("api/games/{gameId}/submissions/{submissionId}/review")
+    suspend fun reviewSubmission(
+        @Path("gameId") gameId: String,
+        @Path("submissionId") submissionId: String,
+        @Body request: ReviewSubmissionRequest,
+    ): SubmissionResponse
+
+    @GET("api/games/{gameId}/operator-notification-settings/me")
+    suspend fun getOperatorNotificationSettings(
+        @Path("gameId") gameId: String,
+    ): OperatorNotificationSettingsResponse
+
+    @PUT("api/games/{gameId}/operator-notification-settings/me")
+    suspend fun updateOperatorNotificationSettings(
+        @Path("gameId") gameId: String,
+        @Body request: UpdateOperatorNotificationSettingsRequest,
+    ): OperatorNotificationSettingsResponse
 }
 
 @kotlinx.serialization.Serializable

@@ -28,6 +28,20 @@ struct SubmissionResponse: Codable, Identifiable {
     let completionContent: String?
 }
 
+struct UpdateOperatorNotificationSettingsRequest: Codable {
+    let notifyPendingSubmissions: Bool
+    let notifyAllSubmissions: Bool
+    let notifyCheckIns: Bool
+}
+
+struct OperatorNotificationSettingsResponse: Codable {
+    let gameId: UUID
+    let userId: UUID
+    let notifyPendingSubmissions: Bool
+    let notifyAllSubmissions: Bool
+    let notifyCheckIns: Bool
+}
+
 // MARK: - Pending Actions (for offline queue)
 
 enum PendingActionType: String, Codable {

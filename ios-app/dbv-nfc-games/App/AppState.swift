@@ -174,7 +174,7 @@ final class AppState {
             currentPlayer = response.player
 
             // Configure push service (but don't request permission yet)
-            PushNotificationService.shared.configure(apiClient: apiClient, playerToken: response.token)
+            PushNotificationService.shared.configureForPlayer(apiClient: apiClient, playerToken: response.token)
 
             // Only start location tracking and request push permission if
             // the user has already seen the permission disclosure sheet.
@@ -211,6 +211,8 @@ final class AppState {
                 userId: response.user.id
             )
             realtimeClient.disconnect()
+            PushNotificationService.shared.configureForOperator(apiClient: apiClient, operatorToken: response.accessToken)
+            PushNotificationService.shared.requestPermissionAndRegister()
 
             // Enable automatic token refresh on the API client
             await configureApiClientAuth(refreshToken: response.refreshToken)
@@ -582,7 +584,7 @@ final class AppState {
             realtimeClient.connect(gameId: gameId, token: token)
 
             // Configure push service (but don't request permission yet)
-            PushNotificationService.shared.configure(apiClient: apiClient, playerToken: token)
+            PushNotificationService.shared.configureForPlayer(apiClient: apiClient, playerToken: token)
 
             // Only resume location tracking and push if the user has already
             // seen the permission disclosure sheet.
@@ -621,6 +623,8 @@ final class AppState {
 
             Task { await configureApiClientAuth(refreshToken: refreshToken) }
             realtimeClient.disconnect()
+            PushNotificationService.shared.configureForOperator(apiClient: apiClient, operatorToken: token)
+            PushNotificationService.shared.requestPermissionAndRegister()
         }
     }
 
@@ -653,6 +657,7 @@ final class AppState {
                     KeychainService.save(key: AppConfiguration.operatorTokenKey, value: accessToken)
                     KeychainService.save(key: AppConfiguration.operatorRefreshTokenKey, value: refreshToken)
                     UserDefaults.standard.set(userId.uuidString, forKey: AppConfiguration.operatorUserIdKey)
+                    PushNotificationService.shared.configureForOperator(apiClient: self.apiClient, operatorToken: accessToken)
                 }
             }
         )
