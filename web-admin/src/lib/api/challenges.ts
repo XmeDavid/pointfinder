@@ -11,6 +11,7 @@ export interface CreateChallengeDto {
   correctAnswer?: string;
   points: number;
   locationBound: boolean;
+  fixedBaseId?: string;
 }
 
 export const challengesApi = {
