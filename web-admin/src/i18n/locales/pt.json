@@ -55,7 +55,7 @@
     "games": "Jogos",
     "admin": "Admin",
     "operators": "Operadores",
-    "overview": "Visão Geral",
+    "overview": "Vista Geral",
     "bases": "Bases",
     "challenges": "Desafios",
     "assignments": "Atribuições",
@@ -95,7 +95,7 @@
     "importError": "Falha ao importar jogo",
     "importGame": "Importar Jogo",
     "importDescription": "Carregue um ficheiro de exportação de jogo para criar um novo jogo com todas as bases, desafios e equipas",
-    "importDatesNote": "As datas do jogo são opcionais e podem ser definidas mais tarde na página de visão geral",
+    "importDatesNote": "As datas do jogo são opcionais e podem ser definidas mais tarde nas definições do jogo.",
     "invalidJsonFile": "Ficheiro JSON inválido",
     "invalidFileType": "Por favor selecione um ficheiro JSON",
     "fileTooLarge": "O tamanho do ficheiro excede o limite de 5MB",
@@ -245,7 +245,7 @@
     "summary_other": "{{count}} desafios"
   },
   "assignments": {
-    "title": "Atribuições",
+    "title": "Atribuir Desafios",
     "description": "Ligar desafios a bases. Atribuições fixas têm prioridade sobre aleatórias.",
     "fixedOnBase": "Fixo (definido na base)",
     "manualAssignments": "Atribuições manuais",
@@ -284,6 +284,7 @@
     "noMembers": "Sem membros ainda",
     "member_one": "{{count}} membro",
     "member_other": "{{count}} membros",
+    "teamColor": "Cor da equipa",
     "downloadQr": "Descarregar Código QR",
     "removeMember": "Remover jogador",
     "removeMemberConfirm": "Remover {{name}} deste jogo?"

@@ -284,6 +284,7 @@
     "noMembers": "Noch keine Mitglieder",
     "member_one": "{{count}} Mitglied",
     "member_other": "{{count}} Mitglieder",
+    "teamColor": "Teamfarbe",
     "downloadQr": "QR-Code herunterladen",
     "removeMember": "Spieler entfernen",
     "removeMemberConfirm": "{{name}} aus diesem Spiel entfernen?"

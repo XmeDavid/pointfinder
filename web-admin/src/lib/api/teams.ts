@@ -7,6 +7,7 @@ export interface CreateTeamDto {
 
 export interface UpdateTeamDto {
   name: string;
+  color?: string;
 }
 
 export const teamsApi = {

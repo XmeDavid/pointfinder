@@ -95,7 +95,7 @@
     "importError": "Failed to import game",
     "importGame": "Import Game",
     "importDescription": "Upload a game export file to create a new game with all bases, challenges, and teams",
-    "importDatesNote": "Game dates are optional and can be set later from the overview page",
+    "importDatesNote": "Game dates are optional and can be set later from the settings page",
     "invalidJsonFile": "Invalid JSON file",
     "invalidFileType": "Please select a JSON file",
     "fileTooLarge": "File size exceeds 5MB limit",
@@ -245,7 +245,7 @@
     "summary_other": "{{count}} challenges"
   },
   "assignments": {
-    "title": "Assignments",
+    "title": "Assign Challenges",
     "description": "Link challenges to bases. Fixed assignments override random ones.",
     "fixedOnBase": "Fixed (set on base)",
     "manualAssignments": "Manual assignments",
@@ -284,6 +284,7 @@
     "noMembers": "No members yet",
     "member_one": "{{count}} member",
     "member_other": "{{count}} members",
+    "teamColor": "Team Color",
     "downloadQr": "Download QR Code",
     "removeMember": "Remove player",
     "removeMemberConfirm": "Remove {{name}} from this game?"
