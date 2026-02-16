@@ -800,6 +800,9 @@ private fun OperatorGameRoot(
                         base = base,
                         progress = state.baseProgress,
                         teams = state.teams,
+                        onWriteNfc = viewModel::beginWriteNfc,
+                        writeStatus = state.writeStatus,
+                        writeSuccess = state.writeSuccess,
                         onDismiss = viewModel::clearSelectedBase,
                     )
                 }
@@ -858,6 +861,14 @@ private fun OperatorGameRoot(
                 )
             }
         }
+    }
+
+    if (state.awaitingNfcWrite && state.selectedBase != null) {
+        NfcScanDialog(
+            onDismiss = viewModel::cancelWriteNfc,
+            title = stringResource(com.prayer.pointfinder.core.i18n.R.string.nfc_write_dialog_title),
+            message = stringResource(com.prayer.pointfinder.core.i18n.R.string.nfc_write_dialog_message),
+        )
     }
 }
 

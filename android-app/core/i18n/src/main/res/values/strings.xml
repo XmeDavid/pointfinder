@@ -33,6 +33,8 @@
     <string name="action_reject">Reject</string>
     <string name="nfc_scan_dialog_title">Scan NFC Tag</string>
     <string name="nfc_scan_dialog_message">Hold your phone near the NFC tag at the base</string>
+    <string name="nfc_write_dialog_title">Write NFC Tag</string>
+    <string name="nfc_write_dialog_message">Hold your phone near the NFC tag you want to write</string>
 
     <!-- Labels -->
     <string name="label_welcome">PointFinder</string>

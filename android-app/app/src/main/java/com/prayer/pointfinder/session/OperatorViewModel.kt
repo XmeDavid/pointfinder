@@ -329,9 +329,25 @@ class OperatorViewModel @Inject constructor(
     }
 
     fun beginWriteNfc() {
+        if (!nfcService.isAvailable()) {
+            _state.value = _state.value.copy(
+                awaitingNfcWrite = false,
+                writeStatus = context.getString(StringR.string.error_nfc_unavailable),
+                writeSuccess = false,
+            )
+            return
+        }
         _state.value = _state.value.copy(
             awaitingNfcWrite = true,
             writeStatus = context.getString(StringR.string.hint_nfc_hold_near),
+            writeSuccess = null,
+        )
+    }
+
+    fun cancelWriteNfc() {
+        _state.value = _state.value.copy(
+            awaitingNfcWrite = false,
+            writeStatus = null,
             writeSuccess = null,
         )
     }
@@ -341,13 +357,17 @@ class OperatorViewModel @Inject constructor(
         val base = _state.value.selectedBase ?: return
         val result = nfcService.writeBaseTag(tag, base.id)
         if (result.isSuccess) {
+            _state.value = _state.value.copy(
+                awaitingNfcWrite = false,
+                writeStatus = null,
+                writeSuccess = null,
+            )
             // Auto-link in backend after successful write
             viewModelScope.launch {
                 runCatching {
                     operatorRepository.linkBaseNfc(game.id, base.id)
                 }.onSuccess {
                     _state.value = _state.value.copy(
-                        awaitingNfcWrite = false,
                         writeStatus = context.getString(StringR.string.success_nfc_written),
                         writeSuccess = true,
                         authExpired = false,
@@ -356,7 +376,6 @@ class OperatorViewModel @Inject constructor(
                 }.onFailure { err ->
                     if (markAuthExpiredIfNeeded(err)) return@onFailure
                     _state.value = _state.value.copy(
-                        awaitingNfcWrite = false,
                         writeStatus = context.getString(StringR.string.error_nfc_link_failed, ApiErrorParser.extractMessage(err)),
                         writeSuccess = false,
                     )
