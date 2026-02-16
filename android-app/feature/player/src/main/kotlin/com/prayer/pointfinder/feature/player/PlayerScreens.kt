@@ -907,7 +907,11 @@ private fun LegendDot(color: Color, label: String) {
 @Composable
 fun NfcScanDialog(
     onDismiss: () -> Unit,
+    title: String? = null,
+    message: String? = null,
 ) {
+    val dialogTitle = title ?: stringResource(R.string.nfc_scan_dialog_title)
+    val dialogMessage = message ?: stringResource(R.string.nfc_scan_dialog_message)
     val pulseTransition = rememberInfiniteTransition(label = "nfc-scan-pulse")
     val pulseScale by pulseTransition.animateFloat(
         initialValue = 1f,
@@ -923,7 +927,7 @@ fun NfcScanDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                stringResource(R.string.nfc_scan_dialog_title),
+                dialogTitle,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -947,7 +951,7 @@ fun NfcScanDialog(
                 )
                 Spacer(Modifier.height(16.dp))
                 Text(
-                    stringResource(R.string.nfc_scan_dialog_message),
+                    dialogMessage,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,

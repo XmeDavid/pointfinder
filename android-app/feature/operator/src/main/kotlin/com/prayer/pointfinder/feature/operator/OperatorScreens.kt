@@ -651,6 +651,9 @@ fun LiveBaseProgressBottomSheet(
     base: Base,
     progress: List<TeamBaseProgressResponse>,
     teams: List<Team>,
+    onWriteNfc: () -> Unit,
+    writeStatus: String?,
+    writeSuccess: Boolean?,
     onDismiss: () -> Unit,
 ) {
     val grouped = progress.filter { it.baseId == base.id }
@@ -665,6 +668,29 @@ fun LiveBaseProgressBottomSheet(
             if (base.description.isNotBlank()) {
                 Spacer(Modifier.height(4.dp))
                 Text(base.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Spacer(Modifier.height(12.dp))
+
+            Button(
+                onClick = onWriteNfc,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(Icons.Default.Nfc, contentDescription = null)
+                Spacer(Modifier.size(8.dp))
+                Text(stringResource(R.string.action_write_nfc))
+            }
+            if (!writeStatus.isNullOrBlank()) {
+                val statusColor = when (writeSuccess) {
+                    true -> StatusCompleted
+                    false -> MaterialTheme.colorScheme.error
+                    null -> MaterialTheme.colorScheme.onSurfaceVariant
+                }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = writeStatus,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = statusColor,
+                )
             }
             Spacer(Modifier.height(12.dp))
 
