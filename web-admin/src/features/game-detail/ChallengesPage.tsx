@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Select } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { challengesApi, type CreateChallengeDto } from "@/lib/api/challenges";
@@ -40,15 +41,27 @@ export function ChallengesPage() {
     return map;
   }, [bases]);
 
+  const availableBases = useMemo(() => {
+    const editingChallengeId = editing?.id;
+    return bases.filter(
+      (base) => !base.fixedChallengeId || base.fixedChallengeId === editingChallengeId
+    );
+  }, [bases, editing?.id]);
+
+  const invalidateChallengesAndBases = () => {
+    queryClient.invalidateQueries({ queryKey: ["challenges", gameId] });
+    queryClient.invalidateQueries({ queryKey: ["bases", gameId] });
+  };
+
   const createChallenge = useMutation({
     mutationFn: (data: CreateChallengeDto) => challengesApi.create({ ...data, gameId: gameId! }),
-    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["challenges", gameId] }); closeDialog(); },
+    onSuccess: () => { setActionError(""); invalidateChallengesAndBases(); closeDialog(); },
     onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
   const updateChallenge = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<CreateChallengeDto> }) => challengesApi.update(id, { ...data, gameId: gameId! }),
-    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["challenges", gameId] }); closeDialog(); },
+    onSuccess: () => { setActionError(""); invalidateChallengesAndBases(); closeDialog(); },
     onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
@@ -73,12 +86,21 @@ export function ChallengesPage() {
     setDialogOpen(true);
   }
 
-  function openEdit(ch: Challenge) { setEditing(ch); setForm({ ...ch }); setDialogOpen(true); }
+  function openEdit(ch: Challenge) {
+    setEditing(ch);
+    const fixedBase = fixedBaseByChallengeId.get(ch.id);
+    setForm({ ...ch, fixedBaseId: fixedBase?.id });
+    setDialogOpen(true);
+  }
   function closeDialog() { setDialogOpen(false); setEditing(null); }
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (editing) updateChallenge.mutate({ id: editing.id, data: form });
-    else createChallenge.mutate(form as CreateChallengeDto);
+    const payload = { ...form };
+    if (!payload.locationBound) {
+      delete payload.fixedBaseId;
+    }
+    if (editing) updateChallenge.mutate({ id: editing.id, data: payload });
+    else createChallenge.mutate(payload as CreateChallengeDto);
   }
 
   const totalPoints = challenges.reduce((sum, c) => sum + c.points, 0);
@@ -169,6 +191,16 @@ export function ChallengesPage() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between"><Label>{t("challenges.autoValidate")}</Label><Switch checked={form.autoValidate ?? false} onCheckedChange={(v) => setForm((f) => ({ ...f, autoValidate: v }))} disabled={form.answerType === "file"} /></div>
                 <div className="flex items-center justify-between"><Label>{t("challenges.locationBound")}</Label><Switch checked={form.locationBound ?? false} onCheckedChange={(v) => setForm((f) => ({ ...f, locationBound: v }))} /></div>
+                {form.locationBound && (
+                  <div className="space-y-2">
+                    <Label>{t("challenges.selectBase")}</Label>
+                    <Select value={form.fixedBaseId ?? ""} onChange={(e) => setForm((f) => ({ ...f, fixedBaseId: e.target.value || undefined }))}>
+                      <option value="">{t("challenges.selectBasePlaceholder")}</option>
+                      {availableBases.map((base) => <option key={base.id} value={base.id}>{base.name}</option>)}
+                    </Select>
+                    {availableBases.length === 0 && <p className="text-xs text-muted-foreground">{t("challenges.noBasesAvailable")}</p>}
+                  </div>
+                )}
               </div>
             </div>
             {form.autoValidate && form.answerType === "text" && (

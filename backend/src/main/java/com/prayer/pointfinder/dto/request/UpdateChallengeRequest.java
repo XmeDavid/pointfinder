@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.util.UUID;
+
 @Data
 public class UpdateChallengeRequest {
     @NotBlank
@@ -27,4 +29,6 @@ public class UpdateChallengeRequest {
     private Integer points;
 
     private Boolean locationBound = false;
+
+    private UUID fixedBaseId;
 }
