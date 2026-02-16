@@ -72,6 +72,9 @@ public class TeamService {
         }
 
         team.setName(request.getName());
+        if (request.getColor() != null) {
+            team.setColor(request.getColor());
+        }
         team = teamRepository.save(team);
         return toResponse(team);
     }

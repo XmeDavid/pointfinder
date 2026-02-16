@@ -31,7 +31,8 @@ export function TeamsPage() {
   });
 
   const updateTeam = useMutation({
-    mutationFn: ({ id, name }: { id: string; name: string }) => teamsApi.update(id, gameId!, { name }),
+    mutationFn: ({ id, name, color }: { id: string; name: string; color?: string }) =>
+      teamsApi.update(id, gameId!, { name, color }),
     onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["teams", gameId] }); },
     onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
@@ -70,7 +71,7 @@ export function TeamsPage() {
               onCopy={copyCode}
               copiedCode={copiedCode}
               onDelete={() => deleteTeam.mutate(team.id)}
-              onUpdate={(name) => updateTeam.mutate({ id: team.id, name })}
+              onUpdate={(payload) => updateTeam.mutate({ id: team.id, ...payload })}
               onActionError={setActionError}
             />
           ))}
@@ -108,7 +109,7 @@ function TeamCard({
   onCopy: (code: string) => void;
   copiedCode: string | null;
   onDelete: () => void;
-  onUpdate: (name: string) => void;
+  onUpdate: (payload: { name: string; color?: string }) => void;
   onActionError: (message: string) => void;
 }) {
   const { t } = useTranslation();
@@ -133,9 +134,15 @@ function TeamCard({
 
   const handleSave = () => {
     if (editName.trim() && editName !== team.name) {
-      onUpdate(editName.trim());
+      onUpdate({ name: editName.trim() });
     }
     setIsEditing(false);
+  };
+
+  const handleColorChange = (nextColor: string) => {
+    if (nextColor !== team.color) {
+      onUpdate({ name: team.name, color: nextColor });
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -160,7 +167,15 @@ function TeamCard({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <div className="h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: team.color }} />
+            <input
+              type="color"
+              value={team.color}
+              onChange={(e) => handleColorChange(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              className="h-5 w-5 flex-shrink-0 cursor-pointer rounded-full border border-border bg-transparent p-0"
+              title={t("teams.teamColor") ?? undefined}
+              aria-label={t("teams.teamColor")}
+            />
             {isEditing ? (
               <Input
                 value={editName}

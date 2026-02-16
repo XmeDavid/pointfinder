@@ -1,5 +1,6 @@
 package com.prayer.pointfinder.service;
 
+import com.prayer.pointfinder.dto.request.UpdateTeamRequest;
 import com.prayer.pointfinder.entity.Game;
 import com.prayer.pointfinder.entity.GameStatus;
 import com.prayer.pointfinder.entity.Player;
@@ -114,6 +115,73 @@ class TeamServiceTest {
 
         assertEquals("Player does not belong to this team", ex.getMessage());
         verify(playerRepository, never()).delete(player);
+    }
+
+    @Test
+    void updateTeamUpdatesColorWhenProvided() {
+        UUID gameId = UUID.randomUUID();
+        UUID teamId = UUID.randomUUID();
+
+        Game game = Game.builder()
+                .id(gameId)
+                .name("Game")
+                .description("Desc")
+                .status(GameStatus.live)
+                .build();
+        Team team = Team.builder()
+                .id(teamId)
+                .game(game)
+                .name("Old Team")
+                .joinCode("JOIN123")
+                .color("#123456")
+                .build();
+
+        UpdateTeamRequest request = new UpdateTeamRequest();
+        request.setName("New Team");
+        request.setColor("#ABCDEF");
+
+        when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
+        when(teamRepository.save(team)).thenReturn(team);
+
+        teamService.updateTeam(gameId, teamId, request);
+
+        assertEquals("New Team", team.getName());
+        assertEquals("#ABCDEF", team.getColor());
+        verify(gameAccessService).ensureCurrentUserCanAccessGame(gameId);
+        verify(teamRepository).save(team);
+    }
+
+    @Test
+    void updateTeamKeepsExistingColorWhenNotProvided() {
+        UUID gameId = UUID.randomUUID();
+        UUID teamId = UUID.randomUUID();
+
+        Game game = Game.builder()
+                .id(gameId)
+                .name("Game")
+                .description("Desc")
+                .status(GameStatus.live)
+                .build();
+        Team team = Team.builder()
+                .id(teamId)
+                .game(game)
+                .name("Old Team")
+                .joinCode("JOIN123")
+                .color("#123456")
+                .build();
+
+        UpdateTeamRequest request = new UpdateTeamRequest();
+        request.setName("Renamed Team");
+
+        when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
+        when(teamRepository.save(team)).thenReturn(team);
+
+        teamService.updateTeam(gameId, teamId, request);
+
+        assertEquals("Renamed Team", team.getName());
+        assertEquals("#123456", team.getColor());
+        verify(gameAccessService).ensureCurrentUserCanAccessGame(gameId);
+        verify(teamRepository).save(team);
     }
 }
 
