@@ -6,6 +6,7 @@ export interface CreateGameDto {
   description: string;
   startDate?: string;
   endDate?: string;
+  uniformAssignment?: boolean;
 }
 
 export interface GameImportData {

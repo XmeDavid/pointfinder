@@ -21,27 +21,42 @@ export function LeaderboardPage() {
         <Card className="py-12"><CardContent className="text-center"><Trophy className="mx-auto h-8 w-8 text-muted-foreground mb-2" /><p className="text-muted-foreground">{t("leaderboard.noScores")}</p></CardContent></Card>
       ) : (
         <div className="space-y-4">
-          {leaderboard.length >= 1 && (
-            <div className="grid gap-4 md:grid-cols-3">
-              {[1, 0, 2].map((idx) => {
-                const entry = leaderboard[idx]; if (!entry) return <div key={idx} />;
-                const rank = idx + 1;
-                const medals = ["", "text-yellow-500", "text-gray-400", "text-orange-400"];
-                return (
-                  <Card key={entry.teamId} className={rank === 1 ? "md:order-2 border-yellow-500/50" : rank === 2 ? "md:order-1" : "md:order-3"}>
-                    <CardContent className="p-6 text-center">
-                      <Trophy className={`mx-auto h-8 w-8 ${medals[rank]}`} />
-                      <p className="text-lg font-bold mt-2">{entry.teamName}</p>
-                      <div className="h-3 w-3 rounded-full mx-auto mt-1" style={{ backgroundColor: entry.color }} />
-                      <p className="text-3xl font-bold mt-3">{entry.points}</p>
-                      <p className="text-sm text-muted-foreground">{t("common.points")}</p>
-                      <p className="text-xs text-muted-foreground mt-2">{t("leaderboard.challengesCompleted", { count: entry.completedChallenges })}</p>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
+          {leaderboard.length >= 1 && (() => {
+            const podiumCount = Math.min(leaderboard.length, 3);
+            const gridClass = podiumCount === 1
+              ? "grid gap-4 md:grid-cols-1 max-w-md mx-auto"
+              : podiumCount === 2
+              ? "grid gap-4 md:grid-cols-2 max-w-2xl mx-auto"
+              : "grid gap-4 md:grid-cols-3";
+            const podiumIndices = podiumCount === 1 ? [0]
+              : podiumCount === 2 ? [0, 1]
+              : [1, 0, 2];
+            return (
+              <div className={gridClass}>
+                {podiumIndices.map((idx) => {
+                  const entry = leaderboard[idx];
+                  if (!entry) return null;
+                  const rank = idx + 1;
+                  const medals = ["", "text-yellow-500", "text-gray-400", "text-orange-400"];
+                  const orderClass = podiumCount === 3
+                    ? (rank === 1 ? "md:order-2" : rank === 2 ? "md:order-1" : "md:order-3")
+                    : "";
+                  return (
+                    <Card key={entry.teamId} className={`${rank === 1 ? "border-yellow-500/50" : ""} ${orderClass}`}>
+                      <CardContent className="p-6 text-center">
+                        <Trophy className={`mx-auto h-8 w-8 ${medals[rank]}`} />
+                        <p className="text-lg font-bold mt-2">{entry.teamName}</p>
+                        <div className="h-3 w-3 rounded-full mx-auto mt-1" style={{ backgroundColor: entry.color }} />
+                        <p className="text-3xl font-bold mt-3">{entry.points}</p>
+                        <p className="text-sm text-muted-foreground">{t("common.points")}</p>
+                        <p className="text-xs text-muted-foreground mt-2">{t("leaderboard.challengesCompleted", { count: entry.completedChallenges })}</p>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            );
+          })()}
           <Card>
             <CardHeader><CardTitle className="text-lg">{t("leaderboard.fullRankings")}</CardTitle></CardHeader>
             <CardContent><div className="space-y-3">{leaderboard.map((entry, i) => (

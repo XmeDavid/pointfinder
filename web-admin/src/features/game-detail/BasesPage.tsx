@@ -189,7 +189,7 @@ export function BasesPage() {
               <Input value={form.name ?? ""} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder={t("bases.namePlaceholder")} required />
             </div>
             <div className="space-y-2">
-              <Label>{t("bases.description")}</Label>
+              <Label>{t("bases.description")} <span className="text-muted-foreground font-normal">({t("common.optional")})</span></Label>
               <Textarea value={form.description ?? ""} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder={t("bases.descriptionPlaceholder")} rows={3} />
             </div>
             {/* Map picker for coordinates */}
