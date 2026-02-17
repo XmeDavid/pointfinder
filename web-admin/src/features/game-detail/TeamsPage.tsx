@@ -172,7 +172,7 @@ function TeamCard({
               value={team.color}
               onChange={(e) => handleColorChange(e.target.value)}
               onClick={(e) => e.stopPropagation()}
-              className="h-5 w-5 flex-shrink-0 cursor-pointer rounded-full border border-border bg-transparent p-0"
+              className="h-5 w-5 flex-shrink-0 cursor-pointer rounded-full border border-border bg-transparent p-0 overflow-hidden"
               title={t("teams.teamColor") ?? undefined}
               aria-label={t("teams.teamColor")}
             />
