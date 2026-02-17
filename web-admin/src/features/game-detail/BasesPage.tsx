@@ -163,7 +163,19 @@ export function BasesPage() {
       ) : (
         <Card className="overflow-hidden">
           <CardContent className="p-0">
-            <BaseMapView bases={bases} className="h-[500px]" />
+            <BaseMapView
+              bases={bases.map((base) => ({
+                ...base,
+                fixedChallengeName: base.fixedChallengeId
+                  ? challengeById.get(base.fixedChallengeId)?.title
+                  : undefined,
+              }))}
+              className="h-[500px]"
+              onEdit={(baseId) => {
+                const base = bases.find((b) => b.id === baseId);
+                if (base) openEdit(base);
+              }}
+            />
           </CardContent>
         </Card>
       )}
