@@ -172,7 +172,7 @@ function TeamCard({
               value={team.color}
               onChange={(e) => handleColorChange(e.target.value)}
               onClick={(e) => e.stopPropagation()}
-              className="h-5 w-5 flex-shrink-0 cursor-pointer rounded-full border border-border bg-transparent p-0 overflow-hidden"
+              className="h-5 w-5 flex-shrink-0 cursor-pointer appearance-none rounded-full border-0 bg-transparent p-0 overflow-hidden [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:rounded-full [&::-webkit-color-swatch]:border-0 [&::-moz-color-swatch]:rounded-full [&::-moz-color-swatch]:border-0"
               title={t("teams.teamColor") ?? undefined}
               aria-label={t("teams.teamColor")}
             />
