@@ -3,11 +3,6 @@ Code (in codebase)
 -Feedback is not used practically. So the reviewer of a submission can add feedback, but then the players dont see it
 -Its a good idea to limit the dropdowns of available challanges to select. But there is this bug, where if i assign a challange to only one team, when trying to select for the other team, that challange is not available, even tho it has not been assigned to that team.
 
-# Submission work
--Notifications work manually sending to players from webadmin. But as an operator, it would be nice to receive notifications on mobile when teams submit something for aproval.
--Related to the above point, on mobile (iOS and Android), we should add another tab for the submissions. Sometimes an aproval is necessary to get the after content, and we dont want to keep players waiting, so the operator should be able to aprove easily on the go. So another tab, only exists when the game is live, with the submissions. Notifcations are already setup on both firebase and APNs so we can use that, but make this ones automatic based on the trigger of a submission.
--Operator notifications, should be configurable in settings, by default only submissions on manual aproving, but the operator could also choose to get notified by any submission, and even team checkins for exemple.
--On web admin, when a submission is pending aproval, instead of clicking the 3 dots, clicking anywhere on the card should open the review. We only want the 3 dots for already success or reject, since its less common to go overwrite those.
 
 # Sara Test
 -show required fields or not 
