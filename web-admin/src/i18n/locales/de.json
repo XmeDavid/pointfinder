@@ -28,7 +28,8 @@
     "pts": "Pkt",
     "points": "Punkte",
     "noSignal": "Kein Signal",
-    "saving": "Wird gespeichert..."
+    "saving": "Wird gespeichert...",
+    "optional": "optional"
   },
   "auth": {
     "signIn": "Anmelden",

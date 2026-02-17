@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { gamesApi } from "@/lib/api/games";
 import { getApiErrorMessage } from "@/lib/api/errors";
@@ -16,7 +17,7 @@ export function CreateGamePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({ name: "", description: "", startDate: "", endDate: "" });
+  const [form, setForm] = useState({ name: "", description: "", startDate: "", endDate: "", uniformAssignment: true });
   const [actionError, setActionError] = useState("");
 
   const createGame = useMutation({
@@ -57,12 +58,12 @@ export function CreateGamePage() {
               <Input id="name" placeholder={t("games.gameNamePlaceholder")} value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">{t("games.gameDescription")}</Label>
+              <Label htmlFor="description">{t("games.gameDescription")} <span className="text-muted-foreground font-normal">({t("common.optional")})</span></Label>
               <Textarea id="description" placeholder={t("games.gameDescriptionPlaceholder")} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} rows={4} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="startDate">{t("games.startDate")}</Label>
+                <Label htmlFor="startDate">{t("games.startDate")} <span className="text-muted-foreground font-normal">({t("common.optional")})</span></Label>
                 <Input
                   id="startDate"
                   type="text"
@@ -73,7 +74,7 @@ export function CreateGamePage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="endDate">{t("games.endDate")}</Label>
+                <Label htmlFor="endDate">{t("games.endDate")} <span className="text-muted-foreground font-normal">({t("common.optional")})</span></Label>
                 <Input
                   id="endDate"
                   type="text"
@@ -85,6 +86,13 @@ export function CreateGamePage() {
               </div>
             </div>
             <p className="text-xs text-muted-foreground">{t("games.dateFormatHint")}</p>
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <Label>{t("settings.uniformAssignment")}</Label>
+                <p className="text-xs text-muted-foreground">{t("settings.uniformAssignmentDescription")}</p>
+              </div>
+              <Switch checked={form.uniformAssignment} onCheckedChange={(v) => setForm((f) => ({ ...f, uniformAssignment: v }))} />
+            </div>
             <div className="flex justify-end gap-2 pt-4">
               <Button type="button" variant="outline" onClick={() => navigate("/games")}>{t("common.cancel")}</Button>
               <Button type="submit" disabled={createGame.isPending}>{createGame.isPending ? t("games.creating") : t("games.createGame")}</Button>

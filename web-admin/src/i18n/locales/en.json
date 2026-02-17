@@ -28,7 +28,8 @@
     "pts": "pts",
     "points": "points",
     "noSignal": "No signal",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "optional": "optional"
   },
   "auth": {
     "signIn": "Sign In",

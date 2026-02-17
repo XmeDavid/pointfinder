@@ -165,14 +165,14 @@ export function ChallengesPage() {
               <div className="space-y-2"><Label>{t("challenges.challengeTitle")}</Label><Input value={form.title ?? ""} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder={t("challenges.titlePlaceholder")} required /></div>
               <div className="space-y-2"><Label>{t("challenges.pointsLabel")}</Label><Input type="number" min={0} value={form.points ?? 100} onChange={(e) => setForm((f) => ({ ...f, points: parseInt(e.target.value) || 0 }))} required /></div>
             </div>
-            <div className="space-y-2"><Label>{t("challenges.shortDescription")}</Label><Input value={form.description ?? ""} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder={t("challenges.shortDescriptionPlaceholder")} /></div>
+            <div className="space-y-2"><Label>{t("challenges.shortDescription")} <span className="text-muted-foreground font-normal">({t("common.optional")})</span></Label><Input value={form.description ?? ""} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder={t("challenges.shortDescriptionPlaceholder")} /></div>
             <Suspense fallback={<div className="h-[200px] animate-pulse rounded-md border border-input bg-muted/30" />}>
               <div className="space-y-2">
-                <Label>{t("challenges.content")}</Label>
+                <Label>{t("challenges.content")} <span className="text-muted-foreground font-normal">({t("common.optional")})</span></Label>
                 <RichTextEditor value={form.content ?? ""} onChange={(html) => setForm((f) => ({ ...f, content: html }))} placeholder={t("challenges.contentPlaceholder")} />
               </div>
               <div className="space-y-2">
-                <Label>{t("challenges.completionContent")}</Label>
+                <Label>{t("challenges.completionContent")} <span className="text-muted-foreground font-normal">({t("common.optional")})</span></Label>
                 <RichTextEditor
                   value={form.completionContent ?? ""}
                   onChange={(html) => setForm((f) => ({ ...f, completionContent: html }))}

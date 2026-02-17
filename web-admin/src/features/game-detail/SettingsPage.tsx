@@ -173,12 +173,12 @@ export function SettingsPage() {
               <Input id="name" placeholder={t("games.gameNamePlaceholder")} value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">{t("games.gameDescription")}</Label>
+              <Label htmlFor="description">{t("games.gameDescription")} <span className="text-muted-foreground font-normal">({t("common.optional")})</span></Label>
               <Textarea id="description" placeholder={t("games.gameDescriptionPlaceholder")} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} rows={4} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="startDate">{t("games.startDate")}</Label>
+                <Label htmlFor="startDate">{t("games.startDate")} <span className="text-muted-foreground font-normal">({t("common.optional")})</span></Label>
                 <Input
                   id="startDate"
                   type="text"
@@ -189,7 +189,7 @@ export function SettingsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="endDate">{t("games.endDate")}</Label>
+                <Label htmlFor="endDate">{t("games.endDate")} <span className="text-muted-foreground font-normal">({t("common.optional")})</span></Label>
                 <Input
                   id="endDate"
                   type="text"

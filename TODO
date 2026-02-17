@@ -1,5 +1,5 @@
 Code (in codebase)
-- Map view on bases, lets improve the pin info, right now is just name and coordinates, challange would be relevant if exists. Same tags we use on the list view basically, hidden, challange if fixed, small icon for linked or not
+
 -Feedback is not used practically. So the reviewer of a submission can add feedback, but then the players dont see it
 -Its a good idea to limit the dropdowns of available challanges to select. But there is this bug, where if i assign a challange to only one team, when trying to select for the other team, that challange is not available, even tho it has not been assigned to that team.
 
