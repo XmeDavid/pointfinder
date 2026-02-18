@@ -418,6 +418,8 @@ export function MapPage() {
                 const status = viewMode === "all"
                   ? getAggregateStatus(base.id)
                   : (progressIndex.get(base.id)?.get(viewMode)?.status ?? "not_visited");
+                const baseProgress = progressIndex.get(base.id);
+                const completedCount = teams.filter((team) => baseProgress?.get(team.id)?.status === "completed").length;
                 return (
                   <div key={base.id} className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
@@ -427,7 +429,10 @@ export function MapPage() {
                       />
                       <span>{base.name}</span>
                     </div>
-                    <StatusBadge status={status} />
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground font-medium">{completedCount}/{teams.length}</span>
+                      <StatusBadge status={status} />
+                    </div>
                   </div>
                 );
               })}
