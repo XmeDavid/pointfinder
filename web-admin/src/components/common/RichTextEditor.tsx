@@ -19,6 +19,38 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+const MAX_DIMENSION = 1200;
+const JPEG_QUALITY = 0.85;
+
+function resizeImage(file: File): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const { width, height } = img;
+      const scale = Math.min(1, MAX_DIMENSION / Math.max(width, height));
+      const targetW = Math.round(width * scale);
+      const targetH = Math.round(height * scale);
+
+      const canvas = document.createElement("canvas");
+      canvas.width = targetW;
+      canvas.height = targetH;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, targetW, targetH);
+      resolve(canvas.toDataURL("image/jpeg", JPEG_QUALITY));
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      // Fallback: return original as data URL
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.readAsDataURL(file);
+    };
+    img.src = objectUrl;
+  });
+}
+
 interface RichTextEditorProps {
   value: string;
   onChange: (html: string) => void;
@@ -86,12 +118,9 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
       const file = e.target.files?.[0];
       if (!file || !editor) return;
 
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = reader.result as string;
+      resizeImage(file).then((dataUrl) => {
         editor.chain().focus().setImage({ src: dataUrl }).run();
-      };
-      reader.readAsDataURL(file);
+      });
 
       // Reset so the same file can be picked again
       e.target.value = "";
