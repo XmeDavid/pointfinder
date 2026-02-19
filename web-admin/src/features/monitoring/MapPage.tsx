@@ -32,6 +32,11 @@ L.Icon.Default.mergeOptions({
 
 const STALE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
 
+function parseTimestamp(value: string): number {
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
 // Status colors for pins
 const STATUS_COLORS: Record<BaseStatus, string> = {
   not_visited: "#9ca3af",  // gray
@@ -198,6 +203,29 @@ export function MapPage() {
   };
 
   const selectedTeam = viewMode !== "all" ? teams.find((t) => t.id === viewMode) : null;
+  const markerLocations = useMemo(() => {
+    if (viewMode !== "all") {
+      return locations.filter((loc) => loc.teamId === viewMode);
+    }
+
+    const latestByTeam = new Map<string, (typeof locations)[number]>();
+    locations.forEach((loc) => {
+      const existing = latestByTeam.get(loc.teamId);
+      if (!existing) {
+        latestByTeam.set(loc.teamId, loc);
+        return;
+      }
+
+      const currentTs = parseTimestamp(loc.updatedAt);
+      const existingTs = parseTimestamp(existing.updatedAt);
+      // Keep ordering deterministic if timestamps are equal.
+      if (currentTs > existingTs || (currentTs === existingTs && loc.playerId > existing.playerId)) {
+        latestByTeam.set(loc.teamId, loc);
+      }
+    });
+
+    return Array.from(latestByTeam.values());
+  }, [locations, viewMode]);
 
   return (
     <div className="space-y-4">
@@ -350,21 +378,20 @@ export function MapPage() {
               );
             })}
 
-            {/* Player location markers (one per player) */}
-            {showTeams && locations.map((loc) => {
-              // In team view, only show locations for the selected team
-              if (viewMode !== "all" && loc.teamId !== viewMode) return null;
-
+            {/* Team location markers in all-view; player markers in team-view */}
+            {showTeams && markerLocations.map((loc) => {
               const team = teamMap.get(loc.teamId);
               if (!team) return null;
 
-              const isStale = now - new Date(loc.updatedAt).getTime() > STALE_THRESHOLD_MS;
+              const playerName = loc.displayName?.trim() || "-";
+              const isStale = now - parseTimestamp(loc.updatedAt) > STALE_THRESHOLD_MS;
+              const isAggregateView = viewMode === "all";
 
               return (
                 <CircleMarker
-                  key={`${loc.playerId}-${loc.lat}-${loc.lng}-${isStale}`}
+                  key={`${isAggregateView ? `team-${loc.teamId}` : loc.playerId}-${loc.lat}-${loc.lng}-${isStale}`}
                   center={[loc.lat, loc.lng]}
-                  radius={8}
+                  radius={isAggregateView ? 10 : 8}
                   pathOptions={{
                     color: isStale ? "#9ca3af" : team.color,
                     fillColor: team.color,
@@ -375,13 +402,15 @@ export function MapPage() {
                 >
                   <Popup>
                     <div className="min-w-[140px]">
-                      <p className="font-semibold text-sm">{loc.displayName}</p>
+                      <p className="font-semibold text-sm">{isAggregateView ? team.name : playerName}</p>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <div
                           className="h-2 w-2 rounded-full"
                           style={{ backgroundColor: team.color }}
                         />
-                        <p className="text-xs text-gray-500">{team.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {isAggregateView ? t("mapPage.latestPingBy", { player: playerName }) : team.name}
+                        </p>
                       </div>
                       <p className="text-xs text-gray-500 mt-1">
                         {loc.lat.toFixed(5)}, {loc.lng.toFixed(5)}
@@ -430,7 +459,9 @@ export function MapPage() {
                       <span>{base.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground font-medium">{completedCount}/{teams.length}</span>
+                      {viewMode === "all" && (
+                        <span className="text-xs text-muted-foreground font-medium">{completedCount}/{teams.length}</span>
+                      )}
                       <StatusBadge status={status} />
                     </div>
                   </div>
@@ -480,7 +511,7 @@ export function MapPage() {
                     {teamLocs.length > 0 && (
                       <div className="ml-6 mt-0.5 space-y-0.5">
                         {teamLocs.map((loc) => {
-                          const isStale = now - new Date(loc.updatedAt).getTime() > STALE_THRESHOLD_MS;
+                          const isStale = now - parseTimestamp(loc.updatedAt) > STALE_THRESHOLD_MS;
                           return (
                             <div key={loc.playerId} className="flex items-center justify-between text-xs text-muted-foreground">
                               <span>{loc.displayName}</span>

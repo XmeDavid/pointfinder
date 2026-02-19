@@ -330,7 +330,8 @@
     "completed": "Completed",
     "rejected": "Rejected",
     "challenge": "Challenge",
-    "noChallenge": "No challenge assigned"
+    "noChallenge": "No challenge assigned",
+    "latestPingBy": "Latest ping: {{player}}"
   },
   "leaderboard": {
     "title": "Leaderboard",

@@ -330,7 +330,8 @@
     "completed": "Concluído",
     "rejected": "Rejeitado",
     "challenge": "Desafio",
-    "noChallenge": "Sem desafio atribuído"
+    "noChallenge": "Sem desafio atribuído",
+    "latestPingBy": "Último ping: {{player}}"
   },
   "leaderboard": {
     "title": "Classificação",
