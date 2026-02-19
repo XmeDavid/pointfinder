@@ -22,6 +22,8 @@ import com.prayer.pointfinder.core.model.Team
 import com.prayer.pointfinder.core.model.TeamBaseProgressResponse
 import com.prayer.pointfinder.core.model.TeamLocationResponse
 import com.prayer.pointfinder.core.model.OperatorNotificationSettingsResponse
+import com.prayer.pointfinder.core.model.PlayerNotificationResponse
+import com.prayer.pointfinder.core.model.UnseenCountResponse
 import com.prayer.pointfinder.core.model.UpdateOperatorNotificationSettingsRequest
 import com.prayer.pointfinder.core.model.UserResponse
 import kotlinx.serialization.json.Json
@@ -103,6 +105,15 @@ interface CompanionApi {
 
     @DELETE("api/player/me")
     suspend fun deleteMyPlayerData()
+
+    @GET("api/player/notifications")
+    suspend fun getPlayerNotifications(): List<PlayerNotificationResponse>
+
+    @GET("api/player/notifications/unseen-count")
+    suspend fun getUnseenNotificationCount(): UnseenCountResponse
+
+    @POST("api/player/notifications/mark-seen")
+    suspend fun markNotificationsSeen(@Body body: EmptyBody = EmptyBody)
 
     @GET("api/games")
     suspend fun getGames(): List<Game>

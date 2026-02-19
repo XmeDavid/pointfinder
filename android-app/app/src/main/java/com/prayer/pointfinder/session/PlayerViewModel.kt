@@ -8,6 +8,7 @@ import com.prayer.pointfinder.core.data.repo.PlayerRepository
 import com.prayer.pointfinder.core.model.AuthType
 import com.prayer.pointfinder.core.model.BaseProgress
 import com.prayer.pointfinder.core.model.CheckInResponse
+import com.prayer.pointfinder.core.model.PlayerNotificationResponse
 import com.prayer.pointfinder.core.model.SubmissionResponse
 import com.prayer.pointfinder.core.network.ApiErrorParser
 import com.prayer.pointfinder.core.network.MobileRealtimeClient
@@ -46,6 +47,11 @@ data class PlayerState(
     val latestSubmission: SubmissionResponse? = null,
     val authExpired: Boolean = false,
     val realtimeConnected: Boolean = false,
+    val notifications: List<PlayerNotificationResponse> = emptyList(),
+    val unseenNotificationCount: Long = 0,
+    val isLoadingNotifications: Boolean = false,
+    val showingNotifications: Boolean = false,
+    val lastNotificationsSeenAt: String? = null,
 )
 
 @HiltViewModel
@@ -54,6 +60,7 @@ class PlayerViewModel @Inject constructor(
     private val nfcEventBus: NfcEventBus,
     private val locationService: PlayerLocationService,
     private val realtimeClient: MobileRealtimeClient,
+    private val api: com.prayer.pointfinder.core.network.CompanionApi,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
     private val _state = MutableStateFlow(PlayerState())
@@ -99,6 +106,12 @@ class PlayerViewModel @Inject constructor(
                     "activity" -> {
                         val auth = lastAuth ?: return@collectLatest
                         refresh(auth, lastOnline)
+                    }
+
+                    "notification" -> {
+                        _state.value = _state.value.copy(
+                            unseenNotificationCount = _state.value.unseenNotificationCount + 1,
+                        )
                     }
                 }
             }
@@ -340,5 +353,41 @@ class PlayerViewModel @Inject constructor(
 
     fun setSolveError(message: String) {
         _state.value = _state.value.copy(solveError = message)
+    }
+
+    fun loadUnseenCount() {
+        viewModelScope.launch {
+            runCatching { api.getUnseenNotificationCount() }
+                .onSuccess { response ->
+                    _state.value = _state.value.copy(unseenNotificationCount = response.count)
+                }
+        }
+    }
+
+    fun openNotifications() {
+        _state.value = _state.value.copy(showingNotifications = true, isLoadingNotifications = true)
+        viewModelScope.launch {
+            runCatching { api.getPlayerNotifications() }
+                .onSuccess { notifications ->
+                    _state.value = _state.value.copy(
+                        notifications = notifications,
+                        isLoadingNotifications = false,
+                    )
+                }
+                .onFailure {
+                    _state.value = _state.value.copy(isLoadingNotifications = false)
+                }
+            runCatching { api.markNotificationsSeen() }
+                .onSuccess {
+                    _state.value = _state.value.copy(
+                        unseenNotificationCount = 0,
+                        lastNotificationsSeenAt = java.time.Instant.now().toString(),
+                    )
+                }
+        }
+    }
+
+    fun closeNotifications() {
+        _state.value = _state.value.copy(showingNotifications = false)
     }
 }

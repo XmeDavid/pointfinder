@@ -15,8 +15,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -27,17 +29,22 @@ import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
@@ -47,6 +54,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -76,6 +84,7 @@ import com.prayer.pointfinder.core.i18n.R
 import com.prayer.pointfinder.core.model.BaseProgress
 import com.prayer.pointfinder.core.model.BaseStatus
 import com.prayer.pointfinder.core.model.CheckInResponse
+import com.prayer.pointfinder.core.model.PlayerNotificationResponse
 import com.prayer.pointfinder.core.model.SubmissionResponse
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -102,28 +111,52 @@ private val StatusRejected = Color(0xFFD32F2F)
 private val StarGold = Color(0xFFE08A00)
 private val OfflineOrange = Color(0xFFE08A00)
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlayerHomeScaffold(
     selectedTab: PlayerTab,
     onTabSelected: (PlayerTab) -> Unit,
     isOffline: Boolean,
+    unseenNotificationCount: Long = 0,
+    onNotificationsClick: () -> Unit = {},
     content: @Composable () -> Unit,
 ) {
     Scaffold(
         topBar = {
-            if (isOffline) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(OfflineOrange)
-                        .padding(8.dp),
-                ) {
-                    Text(
-                        text = stringResource(R.string.label_offline),
-                        color = Color.Black,
-                        style = MaterialTheme.typography.labelLarge,
-                    )
+            Column {
+                if (isOffline) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(OfflineOrange)
+                            .padding(8.dp),
+                    ) {
+                        Text(
+                            text = stringResource(R.string.label_offline),
+                            color = Color.Black,
+                            style = MaterialTheme.typography.labelLarge,
+                        )
+                    }
                 }
+                TopAppBar(
+                    title = {},
+                    actions = {
+                        IconButton(onClick = onNotificationsClick) {
+                            BadgedBox(
+                                badge = {
+                                    if (unseenNotificationCount > 0) {
+                                        Badge { Text(unseenNotificationCount.toString()) }
+                                    }
+                                },
+                            ) {
+                                Icon(
+                                    Icons.Default.Notifications,
+                                    contentDescription = stringResource(R.string.label_notifications),
+                                )
+                            }
+                        }
+                    },
+                )
             }
         },
         bottomBar = {
@@ -977,4 +1010,130 @@ private fun baseStatusLabel(status: BaseStatus): String {
         BaseStatus.COMPLETED -> stringResource(R.string.status_completed)
         BaseStatus.REJECTED -> stringResource(R.string.status_rejected)
     }
+}
+
+@Composable
+fun PlayerNotificationListScreen(
+    notifications: List<PlayerNotificationResponse>,
+    lastSeenAt: String?,
+    isLoading: Boolean,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.fillMaxSize()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            TextButton(onClick = onBack) { Text(stringResource(R.string.action_back)) }
+            Spacer(Modifier.width(8.dp))
+            Text(
+                stringResource(R.string.label_notifications),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+
+        if (isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator()
+            }
+        } else if (notifications.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        Icons.Default.Notifications,
+                        contentDescription = null,
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        stringResource(R.string.label_no_notifications),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                items(notifications, key = { it.id }) { notification ->
+                    val isUnseen = lastSeenAt == null || notification.sentAt > lastSeenAt
+                    NotificationRow(notification = notification, isUnseen = isUnseen)
+                    HorizontalDivider()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun NotificationRow(
+    notification: PlayerNotificationResponse,
+    isUnseen: Boolean,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                if (isUnseen) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f)
+                else Color.Transparent,
+            )
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        if (isUnseen) {
+            Box(
+                modifier = Modifier
+                    .padding(top = 6.dp)
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary),
+            )
+            Spacer(Modifier.width(12.dp))
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                notification.message,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (isUnseen) FontWeight.SemiBold else FontWeight.Normal,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                formatNotificationTime(notification.sentAt),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+private fun formatNotificationTime(isoTimestamp: String): String {
+    return runCatching {
+        val instant = java.time.Instant.parse(isoTimestamp)
+        val now = java.time.Instant.now()
+        val duration = java.time.Duration.between(instant, now)
+        when {
+            duration.toMinutes() < 1 -> "Just now"
+            duration.toMinutes() < 60 -> "${duration.toMinutes()}m ago"
+            duration.toHours() < 24 -> "${duration.toHours()}h ago"
+            duration.toDays() < 7 -> "${duration.toDays()}d ago"
+            else -> {
+                val formatter = java.time.format.DateTimeFormatter
+                    .ofPattern("MMM d")
+                    .withZone(java.time.ZoneId.systemDefault())
+                formatter.format(instant)
+            }
+        }
+    }.getOrDefault(isoTimestamp)
 }

@@ -273,6 +273,10 @@ enum Translations {
         "disclosure.footer": "You can change these permissions later in Settings.",
         "disclosure.continue": "Continue",
 
+        // Notifications
+        "notifications.title": "Notifications",
+        "notifications.empty": "No notifications yet",
+
         // App Errors
         "error.photoOffline": "Photo submissions require an internet connection.",
         "error.photoProcessing": "Failed to process photo.",
@@ -529,6 +533,10 @@ enum Translations {
         "disclosure.footer": "Podes alterar estas permissões mais tarde nas Definições.",
         "disclosure.continue": "Continuar",
 
+        // Notifications
+        "notifications.title": "Notificações",
+        "notifications.empty": "Sem notificações ainda",
+
         // App Errors
         "error.photoOffline": "As submissões de fotos requerem ligação à internet.",
         "error.photoProcessing": "Falha ao processar foto.",
@@ -784,6 +792,10 @@ enum Translations {
         "disclosure.cameraDetail": "QR-Codes scannen und Fotos für Challenges einreichen.",
         "disclosure.footer": "Du kannst diese Berechtigungen später in den Einstellungen ändern.",
         "disclosure.continue": "Weiter",
+
+        // Notifications
+        "notifications.title": "Benachrichtigungen",
+        "notifications.empty": "Noch keine Benachrichtigungen",
 
         // App Errors
         "error.photoOffline": "Foto-Einreichungen benötigen eine Internetverbindung.",

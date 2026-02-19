@@ -189,4 +189,8 @@
     <string name="error_nfc_write_failed">NFC write failed.</string>
     <string name="error_nfc_link_failed">NFC written but link failed: %1$s</string>
     <string name="error_network_unavailable">Network unavailable. Please check your connection.</string>
+
+    <!-- Notifications -->
+    <string name="label_notifications">Notifications</string>
+    <string name="label_no_notifications">No notifications yet</string>
 </resources>
