@@ -25,6 +25,7 @@ struct SubmissionResponse: Codable, Identifiable {
     let submittedAt: String
     let reviewedBy: UUID?
     let feedback: String?
+    let points: Int?
     let completionContent: String?
 }
 

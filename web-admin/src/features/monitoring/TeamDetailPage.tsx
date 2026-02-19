@@ -38,7 +38,7 @@ export function TeamDetailPage() {
 
   if (!team) return null;
 
-  const totalPoints = submissions.filter((s) => s.status === "correct" || s.status === "approved").reduce((acc, s) => { const ch = challenges.find((c) => c.id === s.challengeId); return acc + (ch?.points ?? 0); }, 0);
+  const totalPoints = submissions.filter((s) => s.status === "correct" || s.status === "approved").reduce((acc, s) => { const ch = challenges.find((c) => c.id === s.challengeId); return acc + (s.points ?? ch?.points ?? 0); }, 0);
   const statusIcon: Record<SubmissionStatus, React.ReactNode> = { pending: <Clock className="h-4 w-4 text-yellow-500" />, approved: <CheckCircle className="h-4 w-4 text-green-500" />, rejected: <XCircle className="h-4 w-4 text-red-500" />, correct: <CheckCircle className="h-4 w-4 text-green-500" /> };
 
   return (

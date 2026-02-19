@@ -359,6 +359,7 @@
     "answer": "Resposta",
     "notes": "Notas",
     "noNotes": "Sem notas",
+    "pointsLabel": "Pontos",
     "feedbackLabel": "Feedback (opcional)",
     "feedbackPlaceholder": "Feedback opcional para a equipa...",
     "reject": "Rejeitar",

@@ -401,6 +401,7 @@ final class AppState {
             submittedAt: ISO8601DateFormatter().string(from: Date()),
             reviewedBy: nil,
             feedback: nil,
+            points: nil,
             completionContent: nil
         )
     }

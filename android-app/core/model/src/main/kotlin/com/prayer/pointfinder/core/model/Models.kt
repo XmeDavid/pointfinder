@@ -214,6 +214,7 @@ data class SubmissionResponse(
     val submittedAt: String,
     val reviewedBy: EntityId? = null,
     val feedback: String? = null,
+    val points: Int? = null,
     val completionContent: String? = null,
 )
 
@@ -221,6 +222,7 @@ data class SubmissionResponse(
 data class ReviewSubmissionRequest(
     val status: String,
     val feedback: String? = null,
+    val points: Int? = null,
 )
 
 @Serializable

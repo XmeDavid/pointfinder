@@ -108,6 +108,7 @@
     <string name="submissions_challenge_label">Challenge</string>
     <string name="submissions_base_label">Base</string>
     <string name="submissions_answer_label">Answer</string>
+    <string name="submissions_points_label">Points</string>
     <string name="submissions_feedback_label">Feedback (optional)</string>
     <string name="label_notification_settings">Notification settings</string>
     <string name="label_notify_pending_submissions">Notify pending submissions</string>

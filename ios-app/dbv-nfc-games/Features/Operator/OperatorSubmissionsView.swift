@@ -88,6 +88,7 @@ struct OperatorSubmissionsView: View {
                 teamName: teamName(for: submission.teamId),
                 challengeTitle: challengeTitle(for: submission.challengeId),
                 baseName: baseName(for: submission.baseId),
+                defaultPoints: submission.points ?? challenges.first(where: { $0.id == submission.challengeId })?.points ?? 0,
                 token: token,
                 gameId: gameId,
                 onSaved: {
@@ -268,11 +269,13 @@ private struct OperatorSubmissionReviewSheet: View {
     let teamName: String
     let challengeTitle: String
     let baseName: String
+    let defaultPoints: Int
     let token: String
     let gameId: UUID
     let onSaved: () -> Void
 
     @State private var feedback: String
+    @State private var pointsText: String
     @State private var isSaving = false
     @State private var errorMessage: String?
 
@@ -281,6 +284,7 @@ private struct OperatorSubmissionReviewSheet: View {
         teamName: String,
         challengeTitle: String,
         baseName: String,
+        defaultPoints: Int,
         token: String,
         gameId: UUID,
         onSaved: @escaping () -> Void
@@ -289,10 +293,12 @@ private struct OperatorSubmissionReviewSheet: View {
         self.teamName = teamName
         self.challengeTitle = challengeTitle
         self.baseName = baseName
+        self.defaultPoints = defaultPoints
         self.token = token
         self.gameId = gameId
         self.onSaved = onSaved
         self._feedback = State(initialValue: submission.feedback ?? "")
+        self._pointsText = State(initialValue: "\(defaultPoints)")
     }
 
     var body: some View {
@@ -320,6 +326,10 @@ private struct OperatorSubmissionReviewSheet: View {
                             token: token
                         )
                     }
+                }
+                Section(locale.t("submissions.pointsLabel")) {
+                    TextField(locale.t("submissions.pointsLabel"), text: $pointsText)
+                        .keyboardType(.numberPad)
                 }
                 Section(locale.t("submissions.feedbackLabel")) {
                     TextEditor(text: $feedback)
@@ -362,11 +372,13 @@ private struct OperatorSubmissionReviewSheet: View {
         isSaving = true
         errorMessage = nil
         do {
+            let pts = status == "approved" ? Int(pointsText) : nil
             _ = try await appState.apiClient.reviewSubmission(
                 gameId: gameId,
                 submissionId: submission.id,
                 status: status,
                 feedback: feedback.isEmpty ? nil : feedback,
+                points: pts,
                 token: token
             )
             onSaved()

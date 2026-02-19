@@ -41,10 +41,11 @@ class OperatorRepository @Inject constructor(
         submissionId: String,
         status: String,
         feedback: String?,
+        points: Int? = null,
     ): SubmissionResponse = api.reviewSubmission(
         gameId = gameId,
         submissionId = submissionId,
-        request = ReviewSubmissionRequest(status = status, feedback = feedback),
+        request = ReviewSubmissionRequest(status = status, feedback = feedback, points = points),
     )
 
     suspend fun getOperatorNotificationSettings(gameId: String): OperatorNotificationSettingsResponse =

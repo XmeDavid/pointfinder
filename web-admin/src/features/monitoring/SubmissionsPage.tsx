@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle, XCircle, Clock, FileText, Filter, Maximize2, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -28,6 +29,7 @@ export function SubmissionsPage() {
   const [filter, setFilter] = useState<"all" | "pending">("all");
   const [reviewingSub, setReviewingSub] = useState<Submission | null>(null);
   const [feedback, setFeedback] = useState("");
+  const [reviewPoints, setReviewPoints] = useState<number>(0);
   const [fullScreenImage, setFullScreenImage] = useState<{ apiUrl: string; blobUrl?: string } | null>(null);
   // Cache blob URLs by API path so the fullscreen dialog can reuse them
   const blobCache = useRef<Map<string, string>>(new Map());
@@ -37,23 +39,27 @@ export function SubmissionsPage() {
   const openFullScreen = useCallback((apiUrl: string) => {
     setFullScreenImage({ apiUrl, blobUrl: blobCache.current.get(apiUrl) });
   }, []);
-  const openReview = useCallback((submission: Submission) => {
-    setReviewingSub(submission);
-    setFeedback(submission.feedback ?? "");
-  }, []);
-  const closeReview = useCallback(() => {
-    setReviewingSub(null);
-    setFeedback("");
-  }, []);
 
   const { data: submissions = [] } = useQuery({ queryKey: ["submissions", gameId], queryFn: () => submissionsApi.listByGame(gameId!) });
   const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!) });
   const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!) });
   const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!) });
 
+  const openReview = useCallback((submission: Submission) => {
+    setReviewingSub(submission);
+    setFeedback(submission.feedback ?? "");
+    const ch = challenges.find((c) => c.id === submission.challengeId);
+    setReviewPoints(submission.points ?? ch?.points ?? 0);
+  }, [challenges]);
+  const closeReview = useCallback(() => {
+    setReviewingSub(null);
+    setFeedback("");
+    setReviewPoints(0);
+  }, []);
+
   const reviewMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: SubmissionStatus }) => submissionsApi.review(id, status, user!.id, feedback || undefined, gameId),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["submissions", gameId] }); setReviewingSub(null); setFeedback(""); },
+    mutationFn: ({ id, status, points }: { id: string; status: SubmissionStatus; points?: number }) => submissionsApi.review(id, status, user!.id, feedback || undefined, gameId, points),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["submissions", gameId] }); setReviewingSub(null); setFeedback(""); setReviewPoints(0); },
   });
 
   const statusLabels: Record<SubmissionStatus, string> = { pending: t("submissions.statusPending"), approved: t("submissions.statusApproved"), rejected: t("submissions.statusRejected"), correct: t("submissions.statusCorrect") };
@@ -176,11 +182,12 @@ export function SubmissionsPage() {
                   </div>
                 ) : null;
               })()}
+              <div className="space-y-2"><p className="text-sm font-medium">{t("submissions.pointsLabel")}</p><Input type="number" min={0} value={reviewPoints} onChange={(e) => setReviewPoints(parseInt(e.target.value) || 0)} /></div>
               <div className="space-y-2"><p className="text-sm font-medium">{t("submissions.feedbackLabel")}</p><Textarea value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder={t("submissions.feedbackPlaceholder")} rows={2} /></div>
             </div>
             <DialogFooter>
               <Button variant="destructive" onClick={() => reviewMutation.mutate({ id: reviewingSub.id, status: "rejected" })} disabled={reviewMutation.isPending}><XCircle className="mr-1 h-4 w-4" /> {t("submissions.reject")}</Button>
-              <Button onClick={() => reviewMutation.mutate({ id: reviewingSub.id, status: "approved" })} disabled={reviewMutation.isPending}><CheckCircle className="mr-1 h-4 w-4" /> {t("submissions.approve")}</Button>
+              <Button onClick={() => reviewMutation.mutate({ id: reviewingSub.id, status: "approved", points: reviewPoints })} disabled={reviewMutation.isPending}><CheckCircle className="mr-1 h-4 w-4" /> {t("submissions.approve")}</Button>
             </DialogFooter>
           </DialogContent>
         )}
