@@ -372,7 +372,8 @@
     "actions": "Ações",
     "override": "Substituir",
     "correctAnswer": "Resposta Correta",
-    "feedbackSent": "Feedback: {{feedback}}"
+    "feedbackSent": "Feedback: {{feedback}}",
+    "pointsLabelWithExpected": "Pontos ({{points}})"
   },
   "teamDetail": {
     "backToLeaderboard": "Voltar à Classificação",
@@ -476,7 +477,7 @@
       "tagline": "Feito para Desbravadores",
       "privacyPolicy": "Política de Privacidade",
       "operatorLogin": "Entrar",
-      "copyright": "\u00a9 {{year}} PointFinder. Todos os direitos reservados."
+      "copyright": "© {{year}} PointFinder. Todos os direitos reservados."
     }
   }
 }

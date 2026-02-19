@@ -372,7 +372,8 @@
     "actions": "Actions",
     "override": "Override",
     "correctAnswer": "Correct Answer",
-    "feedbackSent": "Feedback: {{feedback}}"
+    "feedbackSent": "Feedback: {{feedback}}",
+    "pointsLabelWithExpected": "Points ({{points}})"
   },
   "teamDetail": {
     "backToLeaderboard": "Back to Leaderboard",
@@ -476,7 +477,7 @@
       "tagline": "Built for Pathfinders",
       "privacyPolicy": "Privacy Policy",
       "operatorLogin": "Operator Login",
-      "copyright": "\u00a9 {{year}} PointFinder. All rights reserved."
+      "copyright": "© {{year}} PointFinder. All rights reserved."
     }
   }
 }
