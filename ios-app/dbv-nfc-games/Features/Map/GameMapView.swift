@@ -7,6 +7,7 @@ struct GameMapView: View {
     @Environment(LocaleManager.self) private var locale
     @State private var selectedBase: BaseProgress?
     @State private var cameraPosition: MapCameraPosition = .automatic
+    @State private var showNotifications = false
 
     var body: some View {
         NavigationStack {
@@ -62,12 +63,35 @@ struct GameMapView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        Task { await appState.loadProgress() }
-                    } label: {
-                        Image(systemName: "arrow.clockwise")
+                    HStack(spacing: 16) {
+                        Button {
+                            showNotifications = true
+                        } label: {
+                            Image(systemName: "bell.fill")
+                                .overlay(alignment: .topTrailing) {
+                                    if appState.unseenNotificationCount > 0 {
+                                        Text("\(appState.unseenNotificationCount)")
+                                            .font(.system(size: 10, weight: .bold))
+                                            .foregroundStyle(.white)
+                                            .padding(3)
+                                            .background(Color.red, in: Circle())
+                                            .offset(x: 6, y: -6)
+                                    }
+                                }
+                        }
+                        Button {
+                            Task { await appState.loadProgress() }
+                        } label: {
+                            Image(systemName: "arrow.clockwise")
+                        }
                     }
                 }
+            }
+            .navigationDestination(isPresented: $showNotifications) {
+                PlayerNotificationListView()
+            }
+            .task {
+                await appState.loadUnseenNotificationCount()
             }
             .sheet(item: $selectedBase) { base in
                 BaseDetailSheet(baseId: base.baseId)

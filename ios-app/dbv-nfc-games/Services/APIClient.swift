@@ -168,6 +168,18 @@ actor APIClient {
         try await deleteVoid("/api/player/me", token: token)
     }
 
+    func getPlayerNotifications(token: String) async throws -> [PlayerNotificationResponse] {
+        try await get("/api/player/notifications", token: token)
+    }
+
+    func getUnseenNotificationCount(token: String) async throws -> UnseenCountResponse {
+        try await get("/api/player/notifications/unseen-count", token: token)
+    }
+
+    func markNotificationsSeen(token: String) async throws {
+        try await postVoid("/api/player/notifications/mark-seen", body: EmptyBody(), token: token)
+    }
+
     // MARK: - Operator Endpoints
 
     func getGames(token: String) async throws -> [Game] {

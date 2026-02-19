@@ -240,6 +240,21 @@ data class UpdateOperatorNotificationSettingsRequest(
 )
 
 @Serializable
+data class PlayerNotificationResponse(
+    val id: EntityId,
+    val gameId: EntityId,
+    val message: String,
+    val targetTeamId: EntityId? = null,
+    val sentAt: String,
+    val sentBy: EntityId,
+)
+
+@Serializable
+data class UnseenCountResponse(
+    val count: Long,
+)
+
+@Serializable
 data class GameDataResponse(
     val gameStatus: String? = null,
     val bases: List<Base>,

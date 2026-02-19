@@ -39,6 +39,9 @@ public class Player {
     @Column(name = "push_platform", nullable = false)
     private PushPlatform pushPlatform = PushPlatform.ios;
 
+    @Column(name = "last_notifications_seen_at")
+    private Instant lastNotificationsSeenAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

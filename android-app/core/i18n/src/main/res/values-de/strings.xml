@@ -189,4 +189,8 @@
     <string name="error_nfc_write_failed">NFC-Schreiben fehlgeschlagen.</string>
     <string name="error_nfc_link_failed">NFC geschrieben, aber Verknüpfung fehlgeschlagen: %1$s</string>
     <string name="error_network_unavailable">Netzwerk nicht verfügbar. Überprüfe deine Verbindung.</string>
+
+    <!-- Notifications -->
+    <string name="label_notifications">Benachrichtigungen</string>
+    <string name="label_no_notifications">Noch keine Benachrichtigungen</string>
 </resources>

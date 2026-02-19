@@ -42,6 +42,21 @@ struct OperatorNotificationSettingsResponse: Codable {
     let notifyCheckIns: Bool
 }
 
+// MARK: - Player Notifications
+
+struct PlayerNotificationResponse: Codable, Identifiable {
+    let id: UUID
+    let gameId: UUID
+    let message: String
+    let targetTeamId: UUID?
+    let sentAt: String
+    let sentBy: UUID
+}
+
+struct UnseenCountResponse: Codable {
+    let count: Int
+}
+
 // MARK: - Pending Actions (for offline queue)
 
 enum PendingActionType: String, Codable {

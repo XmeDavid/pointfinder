@@ -30,6 +30,13 @@ final class AppState {
     var solvingBaseId: UUID?
     var solvingChallengeId: UUID?
 
+    // MARK: - Notifications
+
+    var notifications: [PlayerNotificationResponse] = []
+    var unseenNotificationCount: Int = 0
+    var isLoadingNotifications = false
+    var lastNotificationsSeenAt: String?
+
     // MARK: - Error Handling
 
     var errorMessage: String?
@@ -116,6 +123,8 @@ final class AppState {
             Task { await loadProgress() }
         case "submission_status", "activity":
             Task { await loadProgress() }
+        case "notification":
+            unseenNotificationCount += 1
         default:
             break
         }
@@ -555,6 +564,9 @@ final class AppState {
         solvingBaseId = nil
         solvingChallengeId = nil
         pendingActionsCount = 0
+        notifications = []
+        unseenNotificationCount = 0
+        lastNotificationsSeenAt = nil
         pendingCountTask?.cancel()
         pendingCountTask = nil
 
@@ -671,6 +683,37 @@ final class AppState {
         guard case .player(let token, _, _, let gameId) = authType else { return }
         locationService.startTracking(apiClient: apiClient, gameId: gameId, token: token)
         PushNotificationService.shared.requestPermissionAndRegister()
+    }
+
+    // MARK: - Notifications
+
+    func loadUnseenNotificationCount() async {
+        guard case .player(let token, _, _, _) = authType, isOnline else { return }
+        do {
+            let response = try await apiClient.getUnseenNotificationCount(token: token)
+            unseenNotificationCount = response.count
+        } catch {
+            logger.debug("Failed to load unseen notification count: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    func loadNotifications() async {
+        guard case .player(let token, _, _, _) = authType else { return }
+        isLoadingNotifications = true
+        do {
+            notifications = try await apiClient.getPlayerNotifications(token: token)
+        } catch {
+            logger.error("Failed to load notifications: \(error.localizedDescription, privacy: .public)")
+        }
+        isLoadingNotifications = false
+
+        do {
+            try await apiClient.markNotificationsSeen(token: token)
+            unseenNotificationCount = 0
+            lastNotificationsSeenAt = ISO8601DateFormatter().string(from: Date())
+        } catch {
+            logger.debug("Failed to mark notifications seen: \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     // MARK: - Error

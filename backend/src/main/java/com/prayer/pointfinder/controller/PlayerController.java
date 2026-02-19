@@ -5,7 +5,10 @@ import com.prayer.pointfinder.dto.request.PlayerSubmissionRequest;
 import com.prayer.pointfinder.dto.request.UpdateLocationRequest;
 import com.prayer.pointfinder.dto.request.UpdatePushTokenRequest;
 import com.prayer.pointfinder.dto.response.*;
+import com.prayer.pointfinder.entity.GameNotification;
 import com.prayer.pointfinder.entity.Player;
+import com.prayer.pointfinder.repository.GameNotificationRepository;
+import com.prayer.pointfinder.repository.PlayerRepository;
 import com.prayer.pointfinder.security.SecurityUtils;
 import com.prayer.pointfinder.service.FileStorageService;
 import com.prayer.pointfinder.service.PlayerService;
@@ -17,8 +20,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,6 +31,8 @@ public class PlayerController {
 
     private final PlayerService playerService;
     private final FileStorageService fileStorageService;
+    private final GameNotificationRepository gameNotificationRepository;
+    private final PlayerRepository playerRepository;
 
     // Public endpoint - no auth required
     @PostMapping("/api/auth/player/join")
@@ -118,5 +125,49 @@ public class PlayerController {
         Player player = SecurityUtils.getCurrentPlayer();
         playerService.deletePlayerData(player);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/api/player/notifications")
+    public ResponseEntity<List<NotificationResponse>> getPlayerNotifications() {
+        Player player = SecurityUtils.getCurrentPlayer();
+        UUID gameId = player.getTeam().getGame().getId();
+        UUID teamId = player.getTeam().getId();
+        List<NotificationResponse> notifications = gameNotificationRepository
+                .findByGameIdForTeam(gameId, teamId)
+                .stream()
+                .map(this::toNotificationResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(notifications);
+    }
+
+    @GetMapping("/api/player/notifications/unseen-count")
+    public ResponseEntity<UnseenCountResponse> getUnseenNotificationCount() {
+        Player player = SecurityUtils.getCurrentPlayer();
+        UUID gameId = player.getTeam().getGame().getId();
+        UUID teamId = player.getTeam().getId();
+        Instant since = player.getLastNotificationsSeenAt() != null
+                ? player.getLastNotificationsSeenAt()
+                : Instant.EPOCH;
+        long count = gameNotificationRepository.countUnseenForTeam(gameId, teamId, since);
+        return ResponseEntity.ok(new UnseenCountResponse(count));
+    }
+
+    @PostMapping("/api/player/notifications/mark-seen")
+    public ResponseEntity<Void> markNotificationsSeen() {
+        Player player = SecurityUtils.getCurrentPlayer();
+        player.setLastNotificationsSeenAt(Instant.now());
+        playerRepository.save(player);
+        return ResponseEntity.ok().build();
+    }
+
+    private NotificationResponse toNotificationResponse(GameNotification n) {
+        return NotificationResponse.builder()
+                .id(n.getId())
+                .gameId(n.getGame().getId())
+                .message(n.getMessage())
+                .targetTeamId(n.getTargetTeam() != null ? n.getTargetTeam().getId() : null)
+                .sentAt(n.getSentAt())
+                .sentBy(n.getSentBy().getId())
+                .build();
     }
 }

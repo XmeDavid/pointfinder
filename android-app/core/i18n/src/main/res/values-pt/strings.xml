@@ -189,4 +189,8 @@
     <string name="error_nfc_write_failed">Falha ao gravar NFC.</string>
     <string name="error_nfc_link_failed">NFC gravado mas associação falhou: %1$s</string>
     <string name="error_network_unavailable">Rede indisponível. Verifique sua conexão.</string>
+
+    <!-- Notifications -->
+    <string name="label_notifications">Notificações</string>
+    <string name="label_no_notifications">Sem notificações ainda</string>
 </resources>

@@ -80,6 +80,7 @@ import com.prayer.pointfinder.feature.player.CheckInScreen
 import com.prayer.pointfinder.feature.player.NfcScanDialog
 import com.prayer.pointfinder.feature.player.PlayerHomeScaffold
 import com.prayer.pointfinder.feature.player.PlayerMapScreen
+import com.prayer.pointfinder.feature.player.PlayerNotificationListScreen
 import com.prayer.pointfinder.feature.player.PlayerSettingsScreen
 import com.prayer.pointfinder.feature.player.PlayerTab
 import com.prayer.pointfinder.feature.player.SolveScreen
@@ -453,6 +454,7 @@ private fun PlayerRootScreen(
 
     LaunchedEffect(auth.gameId, isOnline) {
         viewModel.refresh(auth, isOnline)
+        if (isOnline) viewModel.loadUnseenCount()
     }
 
     LaunchedEffect(auth.gameId, isOnline, state.realtimeConnected) {
@@ -485,11 +487,22 @@ private fun PlayerRootScreen(
             photoBitmap = null
             viewModel.clearCheckIn()
             viewModel.clearSubmissionResult()
+            viewModel.closeNotifications()
             selectedTab = tab
         },
         isOffline = !isOnline,
+        unseenNotificationCount = state.unseenNotificationCount,
+        onNotificationsClick = { viewModel.openNotifications() },
     ) {
         when {
+            state.showingNotifications -> {
+                PlayerNotificationListScreen(
+                    notifications = state.notifications,
+                    lastSeenAt = state.lastNotificationsSeenAt,
+                    isLoading = state.isLoadingNotifications,
+                    onBack = { viewModel.closeNotifications() },
+                )
+            }
             state.latestSubmission != null -> {
                 val submission = state.latestSubmission!!
                 SubmissionResultScreen(
