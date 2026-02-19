@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FormLabel } from "@/components/ui/form-label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
@@ -70,19 +70,27 @@ export function RegisterPage() {
               <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="name">{t("auth.fullName")}</Label>
+              <FormLabel htmlFor="name" required>
+                {t("auth.fullName")}
+              </FormLabel>
               <Input id="name" placeholder={t("auth.yourName")} value={name} onChange={(e) => setName(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">{t("auth.email")}</Label>
+              <FormLabel htmlFor="email" required>
+                {t("auth.email")}
+              </FormLabel>
               <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={emailLocked} className={emailLocked ? "bg-muted" : ""} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">{t("auth.password")}</Label>
+              <FormLabel htmlFor="password" required>
+                {t("auth.password")}
+              </FormLabel>
               <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirm">{t("auth.confirmPassword")}</Label>
+              <FormLabel htmlFor="confirm" required>
+                {t("auth.confirmPassword")}
+              </FormLabel>
               <Input id="confirm" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>

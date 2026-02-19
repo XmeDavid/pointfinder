@@ -29,7 +29,8 @@
     "points": "pontos",
     "noSignal": "Sem sinal",
     "saving": "A guardar...",
-    "optional": "opcional"
+    "optional": "opcional",
+    "required": "obrigatório"
   },
   "auth": {
     "signIn": "Entrar",

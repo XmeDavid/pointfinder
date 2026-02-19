@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Mail, Clock, CheckCircle, Trash2, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FormLabel } from "@/components/ui/form-label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -91,7 +91,9 @@ export function GameOperatorsPage() {
           <DialogHeader><DialogTitle>{t("gameOperators.inviteTitle")}</DialogTitle><DialogDescription>{t("gameOperators.inviteDescription")}</DialogDescription></DialogHeader>
           <form onSubmit={(e) => { e.preventDefault(); setInviteError(""); sendInvite.mutate(inviteEmail); }}>
             <div className="space-y-2">
-              <Label htmlFor="game-invite-email">{t("admin.emailAddress")}</Label>
+              <FormLabel htmlFor="game-invite-email" required>
+                {t("admin.emailAddress")}
+              </FormLabel>
               <Input id="game-invite-email" type="email" placeholder={t("admin.emailPlaceholder")} value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} required />
               {inviteError && <p className="text-sm text-destructive">{inviteError}</p>}
             </div>

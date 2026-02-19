@@ -5,7 +5,7 @@ import { Plus, Users, Copy, Trash2, Check, Pencil, QrCode, UserMinus } from "luc
 import QRCode from "qrcode";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FormLabel } from "@/components/ui/form-label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { teamsApi } from "@/lib/api/teams";
@@ -83,8 +83,10 @@ export function TeamsPage() {
           <DialogHeader><DialogTitle>{t("teams.createTitle")}</DialogTitle></DialogHeader>
           <form onSubmit={(e) => { e.preventDefault(); createTeam.mutate(); }}>
             <div className="space-y-2">
-              <Label>{t("teams.teamName")}</Label>
-              <Input value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder={t("teams.teamNamePlaceholder")} required />
+              <FormLabel htmlFor="teamName" required>
+                {t("teams.teamName")}
+              </FormLabel>
+              <Input id="teamName" value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder={t("teams.teamNamePlaceholder")} required />
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>{t("common.cancel")}</Button>

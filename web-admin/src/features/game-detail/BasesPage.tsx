@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, MapPin, Wifi, WifiOff, Trash2, Pencil, List, Map as MapIcon, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FormLabel } from "@/components/ui/form-label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -185,16 +185,20 @@ export function BasesPage() {
           <DialogHeader><DialogTitle>{editing ? t("bases.editBase") : t("bases.createBase")}</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label>{t("bases.name")}</Label>
-              <Input value={form.name ?? ""} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder={t("bases.namePlaceholder")} required />
+              <FormLabel htmlFor="baseName" required>
+                {t("bases.name")}
+              </FormLabel>
+              <Input id="baseName" value={form.name ?? ""} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder={t("bases.namePlaceholder")} required />
             </div>
             <div className="space-y-2">
-              <Label>{t("bases.description")} <span className="text-muted-foreground font-normal">({t("common.optional")})</span></Label>
-              <Textarea value={form.description ?? ""} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder={t("bases.descriptionPlaceholder")} rows={3} />
+              <FormLabel htmlFor="baseDescription" optional>
+                {t("bases.description")}
+              </FormLabel>
+              <Textarea id="baseDescription" value={form.description ?? ""} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder={t("bases.descriptionPlaceholder")} rows={3} />
             </div>
             {/* Map picker for coordinates */}
             <div className="space-y-2">
-              <Label>{t("bases.clickMapToSelect")}</Label>
+              <p className="text-sm font-medium leading-none">{t("bases.clickMapToSelect")}</p>
               <MapPicker
                 value={{ lat: form.lat ?? defaultLocation.lat, lng: form.lng ?? defaultLocation.lng }}
                 onChange={(lat, lng) => setForm((f) => ({ ...f, lat, lng }))}
@@ -202,18 +206,24 @@ export function BasesPage() {
               />
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">{t("bases.latitude")}</Label>
-                  <Input type="number" step="any" value={form.lat ?? ""} onChange={(e) => setForm((f) => ({ ...f, lat: parseFloat(e.target.value) }))} required />
+                  <FormLabel htmlFor="baseLatitude" className="text-xs text-muted-foreground" required>
+                    {t("bases.latitude")}
+                  </FormLabel>
+                  <Input id="baseLatitude" type="number" step="any" value={form.lat ?? ""} onChange={(e) => setForm((f) => ({ ...f, lat: parseFloat(e.target.value) }))} required />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">{t("bases.longitude")}</Label>
-                  <Input type="number" step="any" value={form.lng ?? ""} onChange={(e) => setForm((f) => ({ ...f, lng: parseFloat(e.target.value) }))} required />
+                  <FormLabel htmlFor="baseLongitude" className="text-xs text-muted-foreground" required>
+                    {t("bases.longitude")}
+                  </FormLabel>
+                  <Input id="baseLongitude" type="number" step="any" value={form.lng ?? ""} onChange={(e) => setForm((f) => ({ ...f, lng: parseFloat(e.target.value) }))} required />
                 </div>
               </div>
             </div>
             <div className="space-y-2">
-              <Label>{t("bases.fixedChallenge")}</Label>
-              <Select value={form.fixedChallengeId ?? ""} onChange={(e) => setForm((f) => ({ ...f, fixedChallengeId: e.target.value || undefined }))}>
+              <FormLabel htmlFor="baseFixedChallenge" optional>
+                {t("bases.fixedChallenge")}
+              </FormLabel>
+              <Select id="baseFixedChallenge" value={form.fixedChallengeId ?? ""} onChange={(e) => setForm((f) => ({ ...f, fixedChallengeId: e.target.value || undefined }))}>
                 <option value="">{t("bases.randomAssignment")}</option>
                 {availableFixedChallenges.map((ch) => <option key={ch.id} value={ch.id}>{ch.title} ({ch.points} {t("common.pts")})</option>)}
               </Select>
@@ -222,7 +232,7 @@ export function BasesPage() {
             </div>
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">
-                <Label htmlFor="requirePresence">{t("bases.requirePresence")}</Label>
+                <FormLabel htmlFor="requirePresence">{t("bases.requirePresence")}</FormLabel>
                 <p className="text-xs text-muted-foreground">{t("bases.requirePresenceHint")}</p>
               </div>
               <Switch
@@ -233,7 +243,7 @@ export function BasesPage() {
             </div>
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">
-                <Label htmlFor="hidden">{t("bases.hidden")}</Label>
+                <FormLabel htmlFor="hidden">{t("bases.hidden")}</FormLabel>
                 <p className="text-xs text-muted-foreground">{t("bases.hiddenHint")}</p>
               </div>
               <Switch

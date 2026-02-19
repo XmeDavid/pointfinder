@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Send, Bell, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+import { FormLabel } from "@/components/ui/form-label";
 import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -44,8 +44,21 @@ export function NotificationsPage() {
         <CardHeader><CardTitle className="text-lg">{t("notifications.compose")}</CardTitle><CardDescription>{t("notifications.composeDescription")}</CardDescription></CardHeader>
         <CardContent>
           <form onSubmit={(e) => { e.preventDefault(); sendNotification.mutate(); }} className="space-y-4">
-            <div className="space-y-2"><Label>{t("notifications.target")}</Label><Select value={targetTeamId} onChange={(e) => setTargetTeamId(e.target.value)}><option value="">{t("notifications.allTeams")}</option>{teams.map((tm) => <option key={tm.id} value={tm.id}>{tm.name}</option>)}</Select></div>
-            <div className="space-y-2"><Label>{t("notifications.message")}</Label><Textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder={t("notifications.messagePlaceholder")} rows={3} required /></div>
+            <div className="space-y-2">
+              <FormLabel htmlFor="notificationTarget" optional>
+                {t("notifications.target")}
+              </FormLabel>
+              <Select id="notificationTarget" value={targetTeamId} onChange={(e) => setTargetTeamId(e.target.value)}>
+                <option value="">{t("notifications.allTeams")}</option>
+                {teams.map((tm) => <option key={tm.id} value={tm.id}>{tm.name}</option>)}
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <FormLabel htmlFor="notificationMessage" required>
+                {t("notifications.message")}
+              </FormLabel>
+              <Textarea id="notificationMessage" value={message} onChange={(e) => setMessage(e.target.value)} placeholder={t("notifications.messagePlaceholder")} rows={3} required />
+            </div>
             <Button type="submit" disabled={sendNotification.isPending || !message.trim()}><Send className="mr-2 h-4 w-4" />{sendNotification.isPending ? t("common.sending") : t("notifications.sendNotification")}</Button>
           </form>
         </CardContent>

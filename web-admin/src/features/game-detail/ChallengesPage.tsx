@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Puzzle, Trash2, Pencil, FileText, Image, CheckCircle, Eye, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FormLabel } from "@/components/ui/form-label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select } from "@/components/ui/select";
@@ -162,17 +162,56 @@ export function ChallengesPage() {
           <DialogHeader><DialogTitle>{editing ? t("challenges.editChallenge") : t("challenges.createChallenge")}</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2"><Label>{t("challenges.challengeTitle")}</Label><Input value={form.title ?? ""} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder={t("challenges.titlePlaceholder")} required /></div>
-              <div className="space-y-2"><Label>{t("challenges.pointsLabel")}</Label><Input type="number" min={0} value={form.points ?? 100} onChange={(e) => setForm((f) => ({ ...f, points: parseInt(e.target.value) || 0 }))} required /></div>
+              <div className="space-y-2">
+                <FormLabel htmlFor="challengeTitle" required>
+                  {t("challenges.challengeTitle")}
+                </FormLabel>
+                <Input
+                  id="challengeTitle"
+                  value={form.title ?? ""}
+                  onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                  placeholder={t("challenges.titlePlaceholder")}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <FormLabel htmlFor="challengePoints" required>
+                  {t("challenges.pointsLabel")}
+                </FormLabel>
+                <Input
+                  id="challengePoints"
+                  type="number"
+                  min={0}
+                  value={form.points ?? 100}
+                  onChange={(e) => setForm((f) => ({ ...f, points: parseInt(e.target.value) || 0 }))}
+                  required
+                />
+              </div>
             </div>
-            <div className="space-y-2"><Label>{t("challenges.shortDescription")} <span className="text-muted-foreground font-normal">({t("common.optional")})</span></Label><Input value={form.description ?? ""} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder={t("challenges.shortDescriptionPlaceholder")} /></div>
+            <div className="space-y-2">
+              <FormLabel htmlFor="challengeDescription" optional>
+                {t("challenges.shortDescription")}
+              </FormLabel>
+              <Input
+                id="challengeDescription"
+                value={form.description ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                placeholder={t("challenges.shortDescriptionPlaceholder")}
+              />
+            </div>
             <Suspense fallback={<div className="h-[200px] animate-pulse rounded-md border border-input bg-muted/30" />}>
               <div className="space-y-2">
-                <Label>{t("challenges.content")} <span className="text-muted-foreground font-normal">({t("common.optional")})</span></Label>
+                <p className="text-sm font-medium leading-none">
+                  {t("challenges.content")}
+                  <span className="text-muted-foreground font-normal"> ({t("common.optional")})</span>
+                </p>
                 <RichTextEditor value={form.content ?? ""} onChange={(html) => setForm((f) => ({ ...f, content: html }))} placeholder={t("challenges.contentPlaceholder")} />
               </div>
               <div className="space-y-2">
-                <Label>{t("challenges.completionContent")} <span className="text-muted-foreground font-normal">({t("common.optional")})</span></Label>
+                <p className="text-sm font-medium leading-none">
+                  {t("challenges.completionContent")}
+                  <span className="text-muted-foreground font-normal"> ({t("common.optional")})</span>
+                </p>
                 <RichTextEditor
                   value={form.completionContent ?? ""}
                   onChange={(html) => setForm((f) => ({ ...f, completionContent: html }))}
@@ -182,19 +221,40 @@ export function ChallengesPage() {
             </Suspense>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label>{t("challenges.answerType")}</Label>
+                <p className="text-sm font-medium leading-none">{t("challenges.answerType")}</p>
                 <div className="flex gap-2">
                   <Button type="button" variant={form.answerType === "text" ? "default" : "outline"} size="sm" onClick={() => setForm((f) => ({ ...f, answerType: "text" }))}><FileText className="mr-1 h-4 w-4" /> {t("challenges.text")}</Button>
                   <Button type="button" variant={form.answerType === "file" ? "default" : "outline"} size="sm" onClick={() => setForm((f) => ({ ...f, answerType: "file", autoValidate: false }))}><Image className="mr-1 h-4 w-4" /> {t("challenges.fileUpload")}</Button>
                 </div>
               </div>
               <div className="space-y-3">
-                <div className="flex items-center justify-between"><Label>{t("challenges.autoValidate")}</Label><Switch checked={form.autoValidate ?? false} onCheckedChange={(v) => setForm((f) => ({ ...f, autoValidate: v }))} disabled={form.answerType === "file"} /></div>
-                <div className="flex items-center justify-between"><Label>{t("challenges.locationBound")}</Label><Switch checked={form.locationBound ?? false} onCheckedChange={(v) => setForm((f) => ({ ...f, locationBound: v }))} /></div>
+                <div className="flex items-center justify-between">
+                  <FormLabel htmlFor="challengeAutoValidate">{t("challenges.autoValidate")}</FormLabel>
+                  <Switch
+                    id="challengeAutoValidate"
+                    checked={form.autoValidate ?? false}
+                    onCheckedChange={(v) => setForm((f) => ({ ...f, autoValidate: v }))}
+                    disabled={form.answerType === "file"}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <FormLabel htmlFor="challengeLocationBound">{t("challenges.locationBound")}</FormLabel>
+                  <Switch
+                    id="challengeLocationBound"
+                    checked={form.locationBound ?? false}
+                    onCheckedChange={(v) => setForm((f) => ({ ...f, locationBound: v }))}
+                  />
+                </div>
                 {form.locationBound && (
                   <div className="space-y-2">
-                    <Label>{t("challenges.selectBase")}</Label>
-                    <Select value={form.fixedBaseId ?? ""} onChange={(e) => setForm((f) => ({ ...f, fixedBaseId: e.target.value || undefined }))}>
+                    <FormLabel htmlFor="challengeFixedBase" optional>
+                      {t("challenges.selectBase")}
+                    </FormLabel>
+                    <Select
+                      id="challengeFixedBase"
+                      value={form.fixedBaseId ?? ""}
+                      onChange={(e) => setForm((f) => ({ ...f, fixedBaseId: e.target.value || undefined }))}
+                    >
                       <option value="">{t("challenges.selectBasePlaceholder")}</option>
                       {availableBases.map((base) => <option key={base.id} value={base.id}>{base.name}</option>)}
                     </Select>
@@ -204,7 +264,18 @@ export function ChallengesPage() {
               </div>
             </div>
             {form.autoValidate && form.answerType === "text" && (
-              <div className="space-y-2"><Label>{t("challenges.correctAnswer")}</Label><Input value={form.correctAnswer ?? ""} onChange={(e) => setForm((f) => ({ ...f, correctAnswer: e.target.value }))} placeholder={t("challenges.correctAnswerPlaceholder")} required /></div>
+              <div className="space-y-2">
+                <FormLabel htmlFor="challengeCorrectAnswer" required>
+                  {t("challenges.correctAnswer")}
+                </FormLabel>
+                <Input
+                  id="challengeCorrectAnswer"
+                  value={form.correctAnswer ?? ""}
+                  onChange={(e) => setForm((f) => ({ ...f, correctAnswer: e.target.value }))}
+                  placeholder={t("challenges.correctAnswerPlaceholder")}
+                  required
+                />
+              </div>
             )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={closeDialog}>{t("common.cancel")}</Button>
