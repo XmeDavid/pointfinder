@@ -372,7 +372,8 @@
     "actions": "Aktionen",
     "override": "Überschreiben",
     "correctAnswer": "Richtige Antwort",
-    "feedbackSent": "Feedback: {{feedback}}"
+    "feedbackSent": "Feedback: {{feedback}}",
+    "pointsLabelWithExpected": "Punkte ({{points}})"
   },
   "teamDetail": {
     "backToLeaderboard": "Zurück zur Rangliste",
@@ -476,7 +477,7 @@
       "tagline": "Gemacht für Pfadfinder",
       "privacyPolicy": "Datenschutzerklärung",
       "operatorLogin": "Operator-Login",
-      "copyright": "\u00a9 {{year}} PointFinder. Alle Rechte vorbehalten."
+      "copyright": "© {{year}} PointFinder. Alle Rechte vorbehalten."
     }
   }
 }

@@ -512,6 +512,7 @@ fun OperatorSubmissionsScreen(
             ?: stringResource(R.string.label_unknown_challenge)
         val baseName = bases.firstOrNull { it.id == reviewingSubmission.baseId }?.name
             ?: stringResource(R.string.label_unknown_base)
+        val expectedChallengePoints = challenges.firstOrNull { it.id == reviewingSubmission.challengeId }?.points
 
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { selectedSubmission = null },
@@ -536,7 +537,13 @@ fun OperatorSubmissionsScreen(
                     OutlinedTextField(
                         value = pointsText,
                         onValueChange = { pointsText = it.filter { c -> c.isDigit() } },
-                        label = { Text(stringResource(R.string.submissions_points_label)) },
+                        label = {
+                            Text(
+                                expectedChallengePoints?.let {
+                                    stringResource(R.string.submissions_points_label_with_expected, it)
+                                } ?: stringResource(R.string.submissions_points_label)
+                            )
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),

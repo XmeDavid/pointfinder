@@ -109,6 +109,7 @@
     <string name="submissions_base_label">Station</string>
     <string name="submissions_answer_label">Antwort</string>
     <string name="submissions_points_label">Punkte</string>
+    <string name="submissions_points_label_with_expected">Punkte (%1$d)</string>
     <string name="submissions_feedback_label">Feedback (optional)</string>
     <string name="label_notification_settings">Benachrichtigungseinstellungen</string>
     <string name="label_notify_pending_submissions">Ausstehende Einreichungen benachrichtigen</string>

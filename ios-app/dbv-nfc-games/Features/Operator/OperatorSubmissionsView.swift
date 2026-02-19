@@ -88,7 +88,7 @@ struct OperatorSubmissionsView: View {
                 teamName: teamName(for: submission.teamId),
                 challengeTitle: challengeTitle(for: submission.challengeId),
                 baseName: baseName(for: submission.baseId),
-                defaultPoints: submission.points ?? challenges.first(where: { $0.id == submission.challengeId })?.points ?? 0,
+                defaultPoints: challenges.first(where: { $0.id == submission.challengeId })?.points ?? 0,
                 token: token,
                 gameId: gameId,
                 onSaved: {
@@ -298,7 +298,7 @@ private struct OperatorSubmissionReviewSheet: View {
         self.gameId = gameId
         self.onSaved = onSaved
         self._feedback = State(initialValue: submission.feedback ?? "")
-        self._pointsText = State(initialValue: "\(defaultPoints)")
+        self._pointsText = State(initialValue: "\(submission.points ?? defaultPoints)")
     }
 
     var body: some View {
@@ -327,7 +327,7 @@ private struct OperatorSubmissionReviewSheet: View {
                         )
                     }
                 }
-                Section(locale.t("submissions.pointsLabel")) {
+                Section(locale.t("submissions.pointsLabelWithExpected", defaultPoints)) {
                     TextField(locale.t("submissions.pointsLabel"), text: $pointsText)
                         .keyboardType(.numberPad)
                 }

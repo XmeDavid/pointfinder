@@ -69,6 +69,7 @@ export function SubmissionsPage() {
   const filtered = filter === "pending" ? submissions.filter((s) => s.status === "pending") : submissions;
   const sorted = [...filtered].sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
   const pendingCount = submissions.filter((s) => s.status === "pending").length;
+  const expectedReviewPoints = reviewingSub ? challenges.find((c) => c.id === reviewingSub.challengeId)?.points : undefined;
 
   return (
     <div className="space-y-6">
@@ -182,7 +183,7 @@ export function SubmissionsPage() {
                   </div>
                 ) : null;
               })()}
-              <div className="space-y-2"><p className="text-sm font-medium">{t("submissions.pointsLabel")}</p><Input type="number" min={0} value={reviewPoints} onChange={(e) => setReviewPoints(parseInt(e.target.value) || 0)} /></div>
+              <div className="space-y-2"><p className="text-sm font-medium">{expectedReviewPoints != null ? t("submissions.pointsLabelWithExpected", { points: expectedReviewPoints }) : t("submissions.pointsLabel")}</p><Input type="number" min={0} value={reviewPoints} onChange={(e) => setReviewPoints(parseInt(e.target.value) || 0)} /></div>
               <div className="space-y-2"><p className="text-sm font-medium">{t("submissions.feedbackLabel")}</p><Textarea value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder={t("submissions.feedbackPlaceholder")} rows={2} /></div>
             </div>
             <DialogFooter>
