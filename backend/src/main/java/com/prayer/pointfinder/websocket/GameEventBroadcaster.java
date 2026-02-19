@@ -65,6 +65,7 @@ public class GameEventBroadcaster {
         payload.put("submittedAt", submission.getSubmittedAt() != null ? submission.getSubmittedAt().toString() : null);
         payload.put("reviewedBy", submission.getReviewedBy() != null ? submission.getReviewedBy().getId() : null);
         payload.put("feedback", submission.getFeedback());
+        payload.put("points", submission.getPoints());
         broadcast(gameId, "submission_status", payload);
     }
 

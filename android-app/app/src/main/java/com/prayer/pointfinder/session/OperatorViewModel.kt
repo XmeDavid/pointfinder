@@ -212,7 +212,7 @@ class OperatorViewModel @Inject constructor(
         }
     }
 
-    fun reviewSubmission(submissionId: String, status: String, feedback: String?) {
+    fun reviewSubmission(submissionId: String, status: String, feedback: String?, points: Int? = null) {
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
             runCatching {
@@ -221,6 +221,7 @@ class OperatorViewModel @Inject constructor(
                     submissionId = submissionId,
                     status = status,
                     feedback = feedback,
+                    points = points,
                 )
             }.onSuccess {
                 _state.value = _state.value.copy(errorMessage = null, authExpired = false)

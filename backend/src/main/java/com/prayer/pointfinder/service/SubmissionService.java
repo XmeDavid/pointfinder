@@ -189,6 +189,14 @@ public class SubmissionService {
         submission.setReviewedBy(currentUser);
         submission.setFeedback(request.getFeedback());
 
+        if (newStatus == SubmissionStatus.approved) {
+            if (request.getPoints() != null) {
+                submission.setPoints(request.getPoints());
+            } else if (submission.getPoints() == null) {
+                submission.setPoints(submission.getChallenge().getPoints());
+            }
+        }
+
         submission = submissionRepository.save(submission);
 
         // Create activity event for the review
@@ -263,6 +271,7 @@ public class SubmissionService {
                 .submittedAt(s.getSubmittedAt())
                 .reviewedBy(s.getReviewedBy() != null ? s.getReviewedBy().getId() : null)
                 .feedback(s.getFeedback())
+                .points(s.getPoints())
                 .completionContent(s.getChallenge().getCompletionContent())
                 .build();
     }

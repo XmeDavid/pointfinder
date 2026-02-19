@@ -225,11 +225,12 @@ actor APIClient {
         submissionId: UUID,
         status: String,
         feedback: String?,
+        points: Int? = nil,
         token: String
     ) async throws -> SubmissionResponse {
         try await patch(
             "/api/games/\(gameId)/submissions/\(submissionId)/review",
-            body: ReviewSubmissionBody(status: status, feedback: feedback),
+            body: ReviewSubmissionBody(status: status, feedback: feedback, points: points),
             token: token
         )
     }
@@ -544,6 +545,7 @@ private struct PushTokenBody: Encodable {
 private struct ReviewSubmissionBody: Encodable {
     let status: String
     let feedback: String?
+    let points: Int?
 }
 
 // MARK: - Multipart Helpers

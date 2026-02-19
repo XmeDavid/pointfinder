@@ -75,7 +75,7 @@ public class MonitoringService {
                     ));
 
             int points = scoredByChallenge.values().stream()
-                    .mapToInt(s -> s.getChallenge().getPoints())
+                    .mapToInt(s -> s.getPoints() != null ? s.getPoints() : s.getChallenge().getPoints())
                     .sum();
 
             int completed = scoredByChallenge.size();

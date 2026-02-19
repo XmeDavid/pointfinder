@@ -18,11 +18,12 @@ export const submissionsApi = {
     status: SubmissionStatus,
     _reviewedBy: string,
     feedback?: string,
-    gameId?: string
+    gameId?: string,
+    points?: number
   ): Promise<Submission> => {
     const { data } = await apiClient.patch(
       `/games/${gameId}/submissions/${id}/review`,
-      { status, feedback }
+      { status, feedback, points }
     );
     return data;
   },

@@ -359,6 +359,7 @@
     "answer": "Antwort",
     "notes": "Notizen",
     "noNotes": "Keine Notizen",
+    "pointsLabel": "Punkte",
     "feedbackLabel": "Feedback (optional)",
     "feedbackPlaceholder": "Optionales Feedback für das Team...",
     "reject": "Ablehnen",

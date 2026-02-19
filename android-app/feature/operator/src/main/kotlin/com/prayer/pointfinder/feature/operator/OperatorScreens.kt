@@ -403,7 +403,7 @@ fun OperatorSubmissionsScreen(
     bases: List<Base>,
     isLoading: Boolean,
     onRefresh: () -> Unit,
-    onReviewSubmission: (submissionId: String, status: String, feedback: String?) -> Unit,
+    onReviewSubmission: (submissionId: String, status: String, feedback: String?, points: Int?) -> Unit,
     operatorAccessToken: String?,
     apiBaseUrl: String,
     modifier: Modifier = Modifier,
@@ -411,6 +411,7 @@ fun OperatorSubmissionsScreen(
     var showPendingOnly by rememberSaveable { mutableStateOf(true) }
     var selectedSubmission by remember { mutableStateOf<SubmissionResponse?>(null) }
     var feedback by rememberSaveable { mutableStateOf("") }
+    var pointsText by rememberSaveable { mutableStateOf("") }
 
     val filteredSubmissions = submissions
         .asSequence()
@@ -472,6 +473,10 @@ fun OperatorSubmissionsScreen(
                                 .clickable {
                                     selectedSubmission = submission
                                     feedback = submission.feedback.orEmpty()
+                                    val defaultPts = submission.points
+                                        ?: challenges.firstOrNull { it.id == submission.challengeId }?.points
+                                        ?: 0
+                                    pointsText = defaultPts.toString()
                                 },
                             tonalElevation = 1.dp,
                             shape = MaterialTheme.shapes.medium,
@@ -529,6 +534,14 @@ fun OperatorSubmissionsScreen(
                             )
                         }
                     OutlinedTextField(
+                        value = pointsText,
+                        onValueChange = { pointsText = it.filter { c -> c.isDigit() } },
+                        label = { Text(stringResource(R.string.submissions_points_label)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                    )
+                    OutlinedTextField(
                         value = feedback,
                         onValueChange = { feedback = it },
                         label = { Text(stringResource(R.string.submissions_feedback_label)) },
@@ -540,7 +553,7 @@ fun OperatorSubmissionsScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        onReviewSubmission(reviewingSubmission.id, "approved", feedback.takeIf { it.isNotBlank() })
+                        onReviewSubmission(reviewingSubmission.id, "approved", feedback.takeIf { it.isNotBlank() }, pointsText.toIntOrNull())
                         selectedSubmission = null
                     },
                 ) {
@@ -553,7 +566,7 @@ fun OperatorSubmissionsScreen(
                         Text(stringResource(R.string.action_cancel))
                     }
                     TextButton(onClick = {
-                        onReviewSubmission(reviewingSubmission.id, "rejected", feedback.takeIf { it.isNotBlank() })
+                        onReviewSubmission(reviewingSubmission.id, "rejected", feedback.takeIf { it.isNotBlank() }, null)
                         selectedSubmission = null
                     }) {
                         Text(stringResource(R.string.action_reject), color = MaterialTheme.colorScheme.error)
