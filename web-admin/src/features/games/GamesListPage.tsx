@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FormLabel } from "@/components/ui/form-label";
 import { gamesApi, isGameExportDto } from "@/lib/api/games";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { formatDate } from "@/lib/utils";
@@ -160,7 +160,9 @@ function ImportGameDialog({ open, onOpenChange, navigate }: ImportGameDialogProp
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="file">{t("game.selectFile")}</Label>
+            <FormLabel htmlFor="file" required>
+              {t("game.selectFile")}
+            </FormLabel>
             <Input
               id="file"
               type="file"

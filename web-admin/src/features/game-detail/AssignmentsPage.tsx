@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link2, Trash2, Plus, Shuffle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { FormLabel } from "@/components/ui/form-label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
 import { basesApi } from "@/lib/api/bases";
@@ -136,16 +137,15 @@ export function AssignmentsPage() {
           {assignableBases.map((base) => {
             const baseAssignments = assignmentsByBase.get(base.id) ?? [];
             const hasAllTeamsAssignment = baseAssignments.some((assignment) => !assignment.teamId);
-            const assignedChallengeIds = new Set(baseAssignments.map((assignment) => assignment.challengeId));
-            const availableChallenges = challenges.filter(
-              (challenge) => !fixedChallengeIds.has(challenge.id) && !assignedChallengeIds.has(challenge.id)
-            );
+            const availableChallenges = challenges.filter((challenge) => !fixedChallengeIds.has(challenge.id));
             const assignedTeamIds = new Set(baseAssignments.map((assignment) => assignment.teamId).filter(Boolean));
             const availableTeams = teams.filter((team) => !assignedTeamIds.has(team.id));
             const isFullyAssigned = hasAllTeamsAssignment || (teams.length > 0 && availableTeams.length === 0);
             const showAllTeamsOption = baseAssignments.length === 0;
             const draft = drafts[base.id] ?? EMPTY_DRAFT;
             const requiresTeamSelection = !showAllTeamsOption;
+            const challengeSelectId = `assignment-challenge-${base.id}`;
+            const teamSelectId = `assignment-team-${base.id}`;
             const canAssign = availableChallenges.some((challenge) => challenge.id === draft.challengeId)
               && (!requiresTeamSelection || Boolean(draft.teamId));
             const isCreatingThisBase = createAssignment.isPending && createAssignment.variables?.baseId === base.id;
@@ -192,8 +192,11 @@ export function AssignmentsPage() {
                   {!isFullyAssigned && (
                     <div className="flex flex-col sm:flex-row sm:items-end gap-3 rounded-md border border-dashed border-border p-3">
                       <div className="flex-1 space-y-1">
-                        <label className="text-xs text-muted-foreground">{t("assignments.challenge")}</label>
+                        <FormLabel htmlFor={challengeSelectId} className="text-xs text-muted-foreground" required>
+                          {t("assignments.challenge")}
+                        </FormLabel>
                         <Select
+                          id={challengeSelectId}
                           value={draft.challengeId}
                           onChange={(e) => updateDraft(base.id, { challengeId: e.target.value, error: undefined })}
                         >
@@ -207,8 +210,11 @@ export function AssignmentsPage() {
                       </div>
 
                       <div className="flex-1 space-y-1">
-                        <label className="text-xs text-muted-foreground">{t("assignments.team")}</label>
+                        <FormLabel htmlFor={teamSelectId} className="text-xs text-muted-foreground" required={requiresTeamSelection} optional={!requiresTeamSelection}>
+                          {t("assignments.team")}
+                        </FormLabel>
                         <Select
+                          id={teamSelectId}
                           value={draft.teamId}
                           onChange={(e) => updateDraft(base.id, { teamId: e.target.value, error: undefined })}
                         >

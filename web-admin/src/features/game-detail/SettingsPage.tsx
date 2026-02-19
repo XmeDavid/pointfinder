@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Trash2, RotateCcw, Play, AlertTriangle, Database, Eraser, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FormLabel } from "@/components/ui/form-label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
@@ -169,16 +169,22 @@ export function SettingsPage() {
         <CardContent>
           <form onSubmit={(e) => { e.preventDefault(); updateGame.mutate(); }} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">{t("games.gameName")}</Label>
+              <FormLabel htmlFor="name" required>
+                {t("games.gameName")}
+              </FormLabel>
               <Input id="name" placeholder={t("games.gameNamePlaceholder")} value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">{t("games.gameDescription")} <span className="text-muted-foreground font-normal">({t("common.optional")})</span></Label>
+              <FormLabel htmlFor="description" optional>
+                {t("games.gameDescription")}
+              </FormLabel>
               <Textarea id="description" placeholder={t("games.gameDescriptionPlaceholder")} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} rows={4} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="startDate">{t("games.startDate")} <span className="text-muted-foreground font-normal">({t("common.optional")})</span></Label>
+                <FormLabel htmlFor="startDate" optional>
+                  {t("games.startDate")}
+                </FormLabel>
                 <Input
                   id="startDate"
                   type="text"
@@ -189,7 +195,9 @@ export function SettingsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="endDate">{t("games.endDate")} <span className="text-muted-foreground font-normal">({t("common.optional")})</span></Label>
+                <FormLabel htmlFor="endDate" optional>
+                  {t("games.endDate")}
+                </FormLabel>
                 <Input
                   id="endDate"
                   type="text"
@@ -203,10 +211,14 @@ export function SettingsPage() {
             <p className="text-xs text-muted-foreground">{t("games.dateFormatHint")}</p>
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div className="space-y-0.5">
-                <Label>{t("settings.uniformAssignment")}</Label>
+                <FormLabel htmlFor="uniformAssignment">{t("settings.uniformAssignment")}</FormLabel>
                 <p className="text-xs text-muted-foreground">{t("settings.uniformAssignmentDescription")}</p>
               </div>
-              <Switch checked={form.uniformAssignment} onCheckedChange={(v) => setForm((f) => ({ ...f, uniformAssignment: v }))} />
+              <Switch
+                id="uniformAssignment"
+                checked={form.uniformAssignment}
+                onCheckedChange={(v) => setForm((f) => ({ ...f, uniformAssignment: v }))}
+              />
             </div>
             <div className="flex items-center justify-end gap-2 pt-4">
               {saved && <span className="text-sm text-green-500">{t("settings.saved")}</span>}
