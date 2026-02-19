@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -30,6 +29,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Nfc
@@ -42,9 +42,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
@@ -54,7 +54,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -111,52 +110,28 @@ private val StatusRejected = Color(0xFFD32F2F)
 private val StarGold = Color(0xFFE08A00)
 private val OfflineOrange = Color(0xFFE08A00)
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlayerHomeScaffold(
     selectedTab: PlayerTab,
     onTabSelected: (PlayerTab) -> Unit,
     isOffline: Boolean,
-    unseenNotificationCount: Long = 0,
-    onNotificationsClick: () -> Unit = {},
     content: @Composable () -> Unit,
 ) {
     Scaffold(
         topBar = {
-            Column {
-                if (isOffline) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(OfflineOrange)
-                            .padding(8.dp),
-                    ) {
-                        Text(
-                            text = stringResource(R.string.label_offline),
-                            color = Color.Black,
-                            style = MaterialTheme.typography.labelLarge,
-                        )
-                    }
+            if (isOffline) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(OfflineOrange)
+                        .padding(8.dp),
+                ) {
+                    Text(
+                        text = stringResource(R.string.label_offline),
+                        color = Color.Black,
+                        style = MaterialTheme.typography.labelLarge,
+                    )
                 }
-                TopAppBar(
-                    title = {},
-                    actions = {
-                        IconButton(onClick = onNotificationsClick) {
-                            BadgedBox(
-                                badge = {
-                                    if (unseenNotificationCount > 0) {
-                                        Badge { Text(unseenNotificationCount.toString()) }
-                                    }
-                                },
-                            ) {
-                                Icon(
-                                    Icons.Default.Notifications,
-                                    contentDescription = stringResource(R.string.label_notifications),
-                                )
-                            }
-                        }
-                    },
-                )
             }
         },
         bottomBar = {
@@ -192,9 +167,11 @@ fun PlayerHomeScaffold(
 fun PlayerMapScreen(
     progress: List<BaseProgress>,
     isLoading: Boolean,
+    unseenNotificationCount: Long,
     cameraPositionState: CameraPositionState,
     onBaseSelected: (BaseProgress) -> Unit,
     onRefresh: () -> Unit,
+    onNotificationsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LaunchedEffect(progress) {
@@ -249,16 +226,37 @@ fun PlayerMapScreen(
             LegendDot(color = StatusCompleted, label = stringResource(R.string.status_completed))
         }
 
-        Button(
-            onClick = onRefresh,
+        Row(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (isLoading) {
-                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-            } else {
-                Text(stringResource(R.string.action_refresh))
+            FilledTonalIconButton(onClick = onNotificationsClick) {
+                BadgedBox(
+                    badge = {
+                        if (unseenNotificationCount > 0) {
+                            val badgeLabel = if (unseenNotificationCount > 99) "99+" else unseenNotificationCount.toString()
+                            Badge { Text(badgeLabel) }
+                        }
+                    },
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Notifications,
+                        contentDescription = stringResource(R.string.label_notifications),
+                    )
+                }
+            }
+            FilledTonalIconButton(onClick = onRefresh) {
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = stringResource(R.string.action_refresh),
+                    )
+                }
             }
         }
     }

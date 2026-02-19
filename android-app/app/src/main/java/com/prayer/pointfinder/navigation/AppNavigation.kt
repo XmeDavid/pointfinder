@@ -491,8 +491,6 @@ private fun PlayerRootScreen(
             selectedTab = tab
         },
         isOffline = !isOnline,
-        unseenNotificationCount = state.unseenNotificationCount,
-        onNotificationsClick = { viewModel.openNotifications() },
     ) {
         when {
             state.showingNotifications -> {
@@ -600,9 +598,11 @@ private fun PlayerRootScreen(
                     PlayerMapScreen(
                         progress = state.progress,
                         isLoading = state.isLoading,
+                        unseenNotificationCount = state.unseenNotificationCount,
                         cameraPositionState = playerCameraState,
                         onBaseSelected = { viewModel.selectBase(auth, it) },
                         onRefresh = { viewModel.refresh(auth, isOnline) },
+                        onNotificationsClick = { viewModel.openNotifications() },
                     )
                     if (shouldBlockGameplay) {
                         GameNotLiveOverlay()
