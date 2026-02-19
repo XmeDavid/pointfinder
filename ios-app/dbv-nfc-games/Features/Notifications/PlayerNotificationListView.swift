@@ -70,8 +70,15 @@ private struct NotificationRow: View {
     }
 
     private func formatRelativeTime(_ isoString: String) -> String {
-        let formatter = ISO8601DateFormatter()
-        guard let date = formatter.date(from: isoString) else { return isoString }
+        // Backend Instant values may include fractional seconds, so support both forms.
+        let withFractionalSeconds = ISO8601DateFormatter()
+        withFractionalSeconds.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let fallback = ISO8601DateFormatter()
+        fallback.formatOptions = [.withInternetDateTime]
+
+        guard let date = withFractionalSeconds.date(from: isoString) ?? fallback.date(from: isoString) else {
+            return isoString
+        }
         let interval = Date().timeIntervalSince(date)
 
         switch interval {
