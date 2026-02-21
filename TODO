@@ -6,7 +6,6 @@
 
 ## Features
 -Map view for guests, operators can generate a guest view token(lets say a 6 character code), we create a new page, that is guest facing, it should have great design, should have features similar to the live map view. the idea is to display on a television or something at the base. we use the code to not dox locations to everyone on the web.
--Notifications are not presisted. So if a player misses a notification, or ignores it and clears. on the app it cant see. Ideally there should be a way to check notifications in the app. Make sure it works on both iOS and Android.
 -Overwrite points on submissions. When an operator is on the review submission modal, it should start with the default points for the base, but allow the user to change it. This is for cases where submissions are slightly incomplete, but the operator considers it done, and wants to award a certain amount of points.
 
 
