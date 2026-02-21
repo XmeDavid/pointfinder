@@ -24,6 +24,7 @@ services:
     expose:
       - "8080"
     environment:
+      JAVA_OPTS: "-Xms256m -Xmx1200m"
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/pointfinder?stringtype=unspecified
       SPRING_DATASOURCE_USERNAME: scout
       SPRING_DATASOURCE_PASSWORD: scout
@@ -52,7 +53,7 @@ services:
       FRONTEND_URL: https://pointfinder.pt
       APP_UPLOADS_PATH: /uploads
     volumes:
-      - uploads:/uploads
+      - ${UPLOADS_PATH:-./data/uploads}:/uploads
       # Mount your APNs .p8 key from the host into the container (read-only)
       # The filename includes the Key ID from APPLE_PROD_APNS_KEY (e.g. AuthKey_G9D86M2578.p8)
       - ./secrets/AuthKey_${APPLE_PROD_APNS_KEY}.p8:/app/config/apns-key.p8:ro
@@ -89,7 +90,7 @@ services:
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
-      - uploads:/uploads:ro
+      - ${UPLOADS_PATH:-./data/uploads}:/uploads:ro
       - frontend_dist:/usr/share/nginx/html/app:ro
     depends_on:
       backend:
@@ -108,5 +109,4 @@ services:
 
 volumes:
   pgdata:
-  uploads:
   frontend_dist:
