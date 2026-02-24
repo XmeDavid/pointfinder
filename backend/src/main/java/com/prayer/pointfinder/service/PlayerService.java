@@ -177,12 +177,25 @@ public class PlayerService {
         List<Submission> submissions = submissionRepository.findByTeamId(team.getId());
         List<Assignment> assignments = assignmentRepository.findByGameId(gameId);
 
+        // Build unlock maps: targetBaseId -> challengeId that unlocks it
+        List<Challenge> unlockChallenges = challengeRepository.findByGameIdAndUnlocksBaseIsNotNull(gameId);
+        Map<UUID, UUID> unlockChallengeByTargetBase = new HashMap<>();
+        for (Challenge uc : unlockChallenges) {
+            unlockChallengeByTargetBase.put(uc.getUnlocksBase().getId(), uc.getId());
+        }
+
         // Build lookup maps
         Map<UUID, CheckIn> checkInByBase = checkIns.stream()
                 .collect(Collectors.toMap(ci -> ci.getBase().getId(), ci -> ci));
         Map<UUID, Submission> submissionByBase = submissions.stream()
                 .collect(Collectors.toMap(
                         s -> s.getBase().getId(),
+                        s -> s,
+                        (a, b) -> a.getSubmittedAt().isAfter(b.getSubmittedAt()) ? a : b
+                ));
+        Map<UUID, Submission> submissionByChallenge = submissions.stream()
+                .collect(Collectors.toMap(
+                        s -> s.getChallenge().getId(),
                         s -> s,
                         (a, b) -> a.getSubmittedAt().isAfter(b.getSubmittedAt()) ? a : b
                 ));
@@ -232,9 +245,21 @@ public class PlayerService {
                 status = "not_visited";
             }
 
-            // Hide bases marked as hidden that the team hasn't visited yet
+            // Hide bases marked as hidden that the team hasn't visited yet,
+            // unless the team has completed the challenge that unlocks this base
             if (Boolean.TRUE.equals(base.getHidden()) && "not_visited".equals(status)) {
-                return null;
+                UUID unlockingChallengeId = unlockChallengeByTargetBase.get(bId);
+                if (unlockingChallengeId != null) {
+                    Submission unlockSub = submissionByChallenge.get(unlockingChallengeId);
+                    boolean unlocked = unlockSub != null
+                            && (unlockSub.getStatus() == SubmissionStatus.approved
+                                || unlockSub.getStatus() == SubmissionStatus.correct);
+                    if (!unlocked) {
+                        return null;
+                    }
+                } else {
+                    return null;
+                }
             }
 
             return BaseProgressResponse.builder()

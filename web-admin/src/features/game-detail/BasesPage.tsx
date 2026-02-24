@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { basesApi, type CreateBaseDto } from "@/lib/api/bases";
 import { challengesApi } from "@/lib/api/challenges";
 import { getApiErrorMessage } from "@/lib/api/errors";
-import { MapPicker, BaseMapView } from "@/components/common/MapPicker";
+import { MapPicker, BaseMapView, type UnlockConnection } from "@/components/common/MapPicker";
 import { useTranslation } from "react-i18next";
 import type { Base } from "@/types";
 
@@ -57,6 +57,16 @@ export function BasesPage() {
     (challenge) => !unavailableFixedChallengeIds.has(challenge.id)
       || challenge.id === form.fixedChallengeId
   ), [challenges, unavailableFixedChallengeIds, form.fixedChallengeId]);
+
+  const unlockConnections = useMemo<UnlockConnection[]>(() => {
+    return challenges
+      .filter((ch) => ch.unlocksBaseId)
+      .map((ch) => {
+        const sourceBase = bases.find((b) => b.fixedChallengeId === ch.id);
+        return sourceBase ? { fromBaseId: sourceBase.id, toBaseId: ch.unlocksBaseId! } : null;
+      })
+      .filter((c): c is UnlockConnection => c !== null);
+  }, [challenges, bases]);
 
   const createBase = useMutation({
     mutationFn: (data: CreateBaseDto) => basesApi.create({ ...data, gameId: gameId! }),
@@ -170,6 +180,7 @@ export function BasesPage() {
                   ? challengeById.get(base.fixedChallengeId)?.title
                   : undefined,
               }))}
+              connections={unlockConnections}
               className="h-[500px]"
               onEdit={(baseId) => {
                 const base = bases.find((b) => b.id === baseId);

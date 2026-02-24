@@ -88,6 +88,8 @@ public class GameImportExportService {
                         .correctAnswer(challenge.getCorrectAnswer())
                         .points(challenge.getPoints())
                         .locationBound(challenge.getLocationBound())
+                        .unlocksBaseTempId(challenge.getUnlocksBase() != null ?
+                                baseIdMap.get(challenge.getUnlocksBase().getId()) : null)
                         .build())
                 .collect(Collectors.toList());
 
@@ -202,6 +204,51 @@ public class GameImportExportService {
             }
         }
 
+        Map<String, List<String>> fixedBaseTempIdsByChallengeTempId =
+                buildFixedBaseTempIdsByChallenge(data.getBases());
+
+        // Restore unlocks_base relationships (challenges already created, bases now exist)
+        for (ChallengeExportDto chDto : data.getChallenges()) {
+            if (chDto.getUnlocksBaseTempId() != null) {
+                UUID challengeId = challengeIdMap.get(chDto.getTempId());
+                UUID targetBaseId = baseIdMap.get(chDto.getUnlocksBaseTempId());
+                if (challengeId == null || targetBaseId == null) {
+                    throw new BadRequestException("Invalid unlock relationship for challenge: " + chDto.getTempId());
+                }
+
+                Challenge challenge = challengeRepository.findById(challengeId).orElseThrow();
+                Base targetBase = baseRepository.findById(targetBaseId).orElseThrow();
+
+                if (!Boolean.TRUE.equals(challenge.getLocationBound())) {
+                    throw new BadRequestException("Challenge " + chDto.getTempId()
+                            + " must be location-bound to unlock a base");
+                }
+                List<String> sourceBaseTempIds = fixedBaseTempIdsByChallengeTempId
+                        .getOrDefault(chDto.getTempId(), List.of());
+                if (sourceBaseTempIds.isEmpty()) {
+                    throw new BadRequestException("Challenge " + chDto.getTempId()
+                            + " must be fixed to a base to unlock another base");
+                }
+                if (sourceBaseTempIds.contains(chDto.getUnlocksBaseTempId())) {
+                    throw new BadRequestException("Challenge " + chDto.getTempId()
+                            + " cannot unlock its own fixed base");
+                }
+                if (!Boolean.TRUE.equals(targetBase.getHidden())) {
+                    throw new BadRequestException("Unlock target base must be hidden for challenge: " + chDto.getTempId());
+                }
+
+                challengeRepository.findByUnlocksBaseId(targetBaseId).ifPresent(existing -> {
+                    if (!existing.getId().equals(challenge.getId())) {
+                        throw new BadRequestException("Multiple challenges cannot unlock the same base: "
+                                + chDto.getUnlocksBaseTempId());
+                    }
+                });
+
+                challenge.setUnlocksBase(targetBase);
+                challengeRepository.save(challenge);
+            }
+        }
+
         for (AssignmentExportDto assignDto : data.getAssignments()) {
             UUID baseId = baseIdMap.get(assignDto.getBaseTempId());
             UUID challengeId = challengeIdMap.get(assignDto.getChallengeTempId());
@@ -262,6 +309,9 @@ public class GameImportExportService {
             if (ch.getPoints() < 0) {
                 throw new BadRequestException(fp + ".points must be greater than or equal to 0");
             }
+            if (ch.getUnlocksBaseTempId() != null && ch.getUnlocksBaseTempId().isBlank()) {
+                throw new BadRequestException(fp + ".unlocksBaseTempId cannot be blank");
+            }
             if (!challengeTempIds.add(ch.getTempId())) {
                 throw new BadRequestException("Duplicate challenge tempId: " + ch.getTempId());
             }
@@ -312,6 +362,54 @@ public class GameImportExportService {
                         + " references non-existent fixed challenge: " + base.getFixedChallengeTempId());
             }
         }
+
+        for (int i = 0; i < data.getChallenges().size(); i++) {
+            ChallengeExportDto ch = data.getChallenges().get(i);
+            if (ch.getUnlocksBaseTempId() != null &&
+                    !baseTempIds.contains(ch.getUnlocksBaseTempId())) {
+                throw new BadRequestException("Challenge at index " + i
+                        + " references non-existent unlock base: " + ch.getUnlocksBaseTempId());
+            }
+        }
+
+        Map<String, BaseExportDto> baseByTempId = data.getBases().stream()
+                .collect(Collectors.toMap(BaseExportDto::getTempId, b -> b));
+        Map<String, List<String>> fixedBaseTempIdsByChallengeTempId =
+                buildFixedBaseTempIdsByChallenge(data.getBases());
+        Set<String> seenUnlockTargetBaseTempIds = new HashSet<>();
+
+        for (int i = 0; i < data.getChallenges().size(); i++) {
+            ChallengeExportDto challenge = data.getChallenges().get(i);
+            String unlocksBaseTempId = challenge.getUnlocksBaseTempId();
+            if (unlocksBaseTempId == null) {
+                continue;
+            }
+
+            if (!Boolean.TRUE.equals(challenge.getLocationBound())) {
+                throw new BadRequestException("Challenge at index " + i
+                        + " must be locationBound=true when unlocksBaseTempId is set");
+            }
+
+            List<String> sourceBaseTempIds = fixedBaseTempIdsByChallengeTempId
+                    .getOrDefault(challenge.getTempId(), List.of());
+            if (sourceBaseTempIds.isEmpty()) {
+                throw new BadRequestException("Challenge at index " + i
+                        + " must be fixed to a base when unlocksBaseTempId is set");
+            }
+            if (sourceBaseTempIds.contains(unlocksBaseTempId)) {
+                throw new BadRequestException("Challenge at index " + i
+                        + " cannot unlock its own fixed base: " + unlocksBaseTempId);
+            }
+
+            BaseExportDto targetBase = baseByTempId.get(unlocksBaseTempId);
+            if (targetBase == null || !Boolean.TRUE.equals(targetBase.getHidden())) {
+                throw new BadRequestException("Challenge at index " + i
+                        + " must reference a hidden base as unlock target: " + unlocksBaseTempId);
+            }
+            if (!seenUnlockTargetBaseTempIds.add(unlocksBaseTempId)) {
+                throw new BadRequestException("Multiple challenges cannot unlock the same base: " + unlocksBaseTempId);
+            }
+        }
     }
 
     private void validateImportDates(GameImportRequest request) {
@@ -350,6 +448,18 @@ public class GameImportExportService {
             }
             basesWithTeamSpecific.add(baseTempId);
         }
+    }
+
+    private Map<String, List<String>> buildFixedBaseTempIdsByChallenge(List<BaseExportDto> baseDtos) {
+        Map<String, List<String>> fixedBaseTempIdsByChallengeTempId = new HashMap<>();
+        for (BaseExportDto baseDto : baseDtos) {
+            if (baseDto.getFixedChallengeTempId() != null) {
+                fixedBaseTempIdsByChallengeTempId
+                        .computeIfAbsent(baseDto.getFixedChallengeTempId(), ignored -> new ArrayList<>())
+                        .add(baseDto.getTempId());
+            }
+        }
+        return fixedBaseTempIdsByChallengeTempId;
     }
 
     // ── Utility helpers ──────────────────────────────────────────────

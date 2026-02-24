@@ -50,6 +50,10 @@ public class Challenge {
     @Column(name = "location_bound", nullable = false)
     private Boolean locationBound;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "unlocks_base_id")
+    private Base unlocksBase;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

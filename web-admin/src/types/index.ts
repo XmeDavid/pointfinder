@@ -49,6 +49,7 @@ export interface Challenge {
   correctAnswer?: string;
   points: number;
   locationBound: boolean;
+  unlocksBaseId?: string;
 }
 
 export interface Team {

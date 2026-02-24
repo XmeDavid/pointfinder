@@ -1,7 +1,7 @@
 import { useMemo, useState, lazy, Suspense } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Puzzle, Trash2, Pencil, FileText, Image, CheckCircle, Eye, MapPin } from "lucide-react";
+import { Plus, Puzzle, Trash2, Pencil, FileText, Image, CheckCircle, Eye, MapPin, Unlock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormLabel } from "@/components/ui/form-label";
@@ -48,6 +48,27 @@ export function ChallengesPage() {
     );
   }, [bases, editing?.id]);
 
+  const baseById = useMemo(() => new Map(bases.map((b) => [b.id, b])), [bases]);
+
+  const alreadyUnlockedBaseIds = useMemo(() => {
+    const editingId = editing?.id;
+    return new Set(
+      challenges
+        .filter((ch) => ch.unlocksBaseId && ch.id !== editingId)
+        .map((ch) => ch.unlocksBaseId as string)
+    );
+  }, [challenges, editing?.id]);
+
+  const hiddenBases = useMemo(() => {
+    return bases.filter(
+      (b) => b.hidden && b.id !== form.fixedBaseId && !alreadyUnlockedBaseIds.has(b.id)
+    );
+  }, [bases, form.fixedBaseId, alreadyUnlockedBaseIds]);
+  const effectiveUnlocksBaseId = useMemo(() => {
+    if (!form.unlocksBaseId) return undefined;
+    return hiddenBases.some((base) => base.id === form.unlocksBaseId) ? form.unlocksBaseId : undefined;
+  }, [hiddenBases, form.unlocksBaseId]);
+
   const invalidateChallengesAndBases = () => {
     queryClient.invalidateQueries({ queryKey: ["challenges", gameId] });
     queryClient.invalidateQueries({ queryKey: ["bases", gameId] });
@@ -89,7 +110,7 @@ export function ChallengesPage() {
   function openEdit(ch: Challenge) {
     setEditing(ch);
     const fixedBase = fixedBaseByChallengeId.get(ch.id);
-    setForm({ ...ch, fixedBaseId: fixedBase?.id });
+    setForm({ ...ch, fixedBaseId: fixedBase?.id, unlocksBaseId: ch.unlocksBaseId });
     setDialogOpen(true);
   }
   function closeDialog() { setDialogOpen(false); setEditing(null); }
@@ -98,6 +119,13 @@ export function ChallengesPage() {
     const payload = { ...form };
     if (!payload.locationBound) {
       delete payload.fixedBaseId;
+      delete payload.unlocksBaseId;
+    }
+    if (!payload.fixedBaseId) {
+      delete payload.unlocksBaseId;
+    }
+    if (payload.unlocksBaseId && !hiddenBases.some((base) => base.id === payload.unlocksBaseId)) {
+      delete payload.unlocksBaseId;
     }
     if (editing) updateChallenge.mutate({ id: editing.id, data: payload });
     else createChallenge.mutate(payload as CreateChallengeDto);
@@ -147,6 +175,15 @@ export function ChallengesPage() {
                             <span className="truncate">{t("challenges.fixedToBase", { base: fixedBase.name })}</span>
                           </Badge>
                         )}
+                        {ch.unlocksBaseId && (() => {
+                          const unlockTarget = baseById.get(ch.unlocksBaseId);
+                          return unlockTarget ? (
+                            <Badge variant="outline" className="max-w-full">
+                              <Unlock className="mr-1 h-3 w-3 shrink-0" />
+                              <span className="truncate">{t("challenges.unlocksBaseLabel", { base: unlockTarget.name })}</span>
+                            </Badge>
+                          ) : null;
+                        })()}
                       </div>
                     </CardContent>
                   </>
@@ -253,12 +290,39 @@ export function ChallengesPage() {
                     <Select
                       id="challengeFixedBase"
                       value={form.fixedBaseId ?? ""}
-                      onChange={(e) => setForm((f) => ({ ...f, fixedBaseId: e.target.value || undefined }))}
+                      onChange={(e) => setForm((f) => ({ ...f, fixedBaseId: e.target.value || undefined, unlocksBaseId: undefined }))}
                     >
                       <option value="">{t("challenges.selectBasePlaceholder")}</option>
                       {availableBases.map((base) => <option key={base.id} value={base.id}>{base.name}</option>)}
                     </Select>
                     {availableBases.length === 0 && <p className="text-xs text-muted-foreground">{t("challenges.noBasesAvailable")}</p>}
+                  </div>
+                )}
+                {form.locationBound && form.fixedBaseId && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <FormLabel htmlFor="challengeUnlocksBase">{t("challenges.unlocksBaseToggle")}</FormLabel>
+                      <Switch
+                        id="challengeUnlocksBase"
+                        checked={!!effectiveUnlocksBaseId}
+                        disabled={hiddenBases.length === 0}
+                        onCheckedChange={(v) => setForm((f) => ({ ...f, unlocksBaseId: v ? (hiddenBases[0]?.id ?? undefined) : undefined }))}
+                      />
+                    </div>
+                    {hiddenBases.length === 0 && (
+                      <p className="text-xs text-muted-foreground">{t("challenges.noHiddenBasesAvailable")}</p>
+                    )}
+                    {effectiveUnlocksBaseId && hiddenBases.length > 0 && (
+                      <>
+                        <Select
+                          id="challengeUnlocksBaseSelect"
+                          value={effectiveUnlocksBaseId}
+                          onChange={(e) => setForm((f) => ({ ...f, unlocksBaseId: e.target.value || undefined }))}
+                        >
+                          {hiddenBases.map((base) => <option key={base.id} value={base.id}>{base.name}</option>)}
+                        </Select>
+                      </>
+                    )}
                   </div>
                 )}
               </div>

@@ -1,0 +1,42 @@
+---
+description: Always use Docker for running backend and frontend tests
+alwaysApply: true
+---
+
+# Testing via Docker
+
+**Always use Docker** to run backend and frontend tests. Never run tests directly on the host machine.
+
+## Commands
+
+| Test Scope | Command |
+|------------|---------|
+| Backend only | `make test-backend-docker` |
+| Frontend only | `make test-frontend-docker` |
+| Both backend + frontend | `make test-docker` |
+| All (including Android/iOS) | `make test-all` |
+
+## Why Docker?
+
+- Ensures consistent environment across machines
+- Backend tests use `docker-compose.test.yml` with isolated JDK 21 container
+- Frontend tests use Node 22 Alpine container with proper caching
+- No need for local Java/Node installations to match
+
+## What NOT to do
+
+```bash
+# ❌ Don't run directly on host
+cd backend && ./gradlew test
+cd web-admin && npm test
+
+# ✅ Use Docker instead
+make test-backend-docker
+make test-frontend-docker
+```
+
+## Exceptions
+
+- **Android tests**: Run via `make test-android` (requires local Android SDK)
+- **iOS tests**: Run via `make test-ios` (requires macOS with Xcode)
+For this scenarios check first if is possible, if it is, use this

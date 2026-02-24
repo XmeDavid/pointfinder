@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Pencil, EyeOff, Wifi, WifiOff } from "lucide-react";
@@ -73,8 +73,14 @@ interface BaseMarker {
   fixedChallengeName?: string;
 }
 
+export interface UnlockConnection {
+  fromBaseId: string;
+  toBaseId: string;
+}
+
 interface BaseMapViewProps {
   bases: BaseMarker[];
+  connections?: UnlockConnection[];
   className?: string;
   onEdit?: (baseId: string) => void;
 }
@@ -89,7 +95,17 @@ const greenIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
-export function BaseMapView({ bases, className, onEdit }: BaseMapViewProps) {
+function arrowIcon(fromLat: number, fromLng: number, toLat: number, toLng: number) {
+  const angle = Math.atan2(toLng - fromLng, toLat - fromLat) * (180 / Math.PI);
+  return L.divIcon({
+    html: `<svg width="14" height="14" viewBox="0 0 14 14" style="transform: rotate(${180 - angle}deg); opacity: 0.5;"><polygon points="7,0 14,14 7,10 0,14" fill="#6b7280"/></svg>`,
+    className: "",
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
+  });
+}
+
+export function BaseMapView({ bases, connections, className, onEdit }: BaseMapViewProps) {
   const [userLocation, setUserLocation] = useState<[number, number]>([40.08789650218038, -8.869461715221407]);
 
   useEffect(() => {
@@ -168,6 +184,26 @@ export function BaseMapView({ bases, className, onEdit }: BaseMapViewProps) {
             </Popup>
           </Marker>
         ))}
+        {connections?.map((conn) => {
+          const from = bases.find((b) => b.id === conn.fromBaseId);
+          const to = bases.find((b) => b.id === conn.toBaseId);
+          if (!from || !to) return null;
+          const arrowLat = from.lat + (to.lat - from.lat) * 0.85;
+          const arrowLng = from.lng + (to.lng - from.lng) * 0.85;
+          return (
+            <span key={`${conn.fromBaseId}-${conn.toBaseId}`}>
+              <Polyline
+                positions={[[from.lat, from.lng], [to.lat, to.lng]]}
+                pathOptions={{ dashArray: "8 8", opacity: 0.5, color: "#6b7280", weight: 2 }}
+              />
+              <Marker
+                position={[arrowLat, arrowLng]}
+                icon={arrowIcon(from.lat, from.lng, to.lat, to.lng)}
+                interactive={false}
+              />
+            </span>
+          );
+        })}
       </MapContainer>
     </div>
   );

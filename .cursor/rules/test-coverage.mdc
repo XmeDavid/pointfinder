@@ -1,0 +1,39 @@
+---
+description: Require tests for all features and bug fixes
+alwaysApply: true
+---
+
+# Test Coverage Required
+
+Every code change must include corresponding tests.
+
+## Features
+
+New features require tests that verify the feature works as expected:
+
+- Backend: Add tests in `backend/src/test/java/...` mirroring the source structure
+- Frontend: Add tests alongside components or in `__tests__` directories
+- Cover happy path and key edge cases
+
+## Bug Fixes
+
+Bug fixes require a regression test that:
+
+1. Would have failed before the fix
+2. Passes after the fix
+3. Prevents the bug from recurring
+
+## Test Locations
+
+| Component | Test Location |
+|-----------|---------------|
+| Backend services | `backend/src/test/java/com/prayer/pointfinder/service/` |
+| Backend controllers | `backend/src/test/java/com/prayer/pointfinder/controller/` |
+| Frontend components | Same directory as component, `*.test.tsx` |
+
+## Workflow
+
+1. Write/modify the code
+2. Write tests covering the change
+3. Run tests via Docker (`make test-docker`)
+4. Verify tests pass before considering the task complete

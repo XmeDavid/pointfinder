@@ -58,6 +58,14 @@ public class ChallengeService {
             assignChallengeToBase(challenge, request.getFixedBaseId(), gameId);
         }
 
+        UUID effectiveFixedBaseId = resolveEffectiveFixedBaseId(challenge.getId(), request.getFixedBaseId());
+        UUID unlocksBaseId = normalizeUnlocksBaseRequest(
+                request.getLocationBound(),
+                effectiveFixedBaseId,
+                request.getUnlocksBaseId()
+        );
+        handleUnlocksBase(challenge, unlocksBaseId, gameId, effectiveFixedBaseId);
+
         return toResponse(challenge);
     }
 
@@ -83,6 +91,14 @@ public class ChallengeService {
         if (request.getFixedBaseId() != null) {
             assignChallengeToBase(challenge, request.getFixedBaseId(), gameId);
         }
+
+        UUID effectiveFixedBaseId = resolveEffectiveFixedBaseId(challenge.getId(), request.getFixedBaseId());
+        UUID unlocksBaseId = normalizeUnlocksBaseRequest(
+                request.getLocationBound(),
+                effectiveFixedBaseId,
+                request.getUnlocksBaseId()
+        );
+        handleUnlocksBase(challenge, unlocksBaseId, gameId, effectiveFixedBaseId);
 
         return toResponse(challenge);
     }
@@ -120,6 +136,61 @@ public class ChallengeService {
         baseRepository.save(targetBase);
     }
 
+    private UUID resolveEffectiveFixedBaseId(UUID challengeId, UUID requestedFixedBaseId) {
+        if (requestedFixedBaseId != null) {
+            return requestedFixedBaseId;
+        }
+        return baseRepository.findByFixedChallengeId(challengeId).stream()
+                .map(Base::getId)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private UUID normalizeUnlocksBaseRequest(Boolean locationBound, UUID effectiveFixedBaseId, UUID requestedUnlocksBaseId) {
+        boolean isLocationBound = Boolean.TRUE.equals(locationBound);
+        if (requestedUnlocksBaseId != null && (!isLocationBound || effectiveFixedBaseId == null)) {
+            throw new BadRequestException("Unlock target requires challenge to be location-bound and fixed to a base");
+        }
+        return isLocationBound && effectiveFixedBaseId != null ? requestedUnlocksBaseId : null;
+    }
+
+    private void handleUnlocksBase(Challenge challenge, UUID unlocksBaseId, UUID gameId, UUID effectiveFixedBaseId) {
+        if (unlocksBaseId == null) {
+            if (challenge.getUnlocksBase() != null) {
+                challenge.setUnlocksBase(null);
+                challengeRepository.save(challenge);
+            }
+            return;
+        }
+        if (effectiveFixedBaseId == null) {
+            throw new BadRequestException("Unlock target requires challenge to be fixed to a base");
+        }
+
+        Base targetBase = baseRepository.findById(unlocksBaseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Base", unlocksBaseId));
+        if (!targetBase.getGame().getId().equals(gameId)) {
+            throw new BadRequestException("Target base does not belong to this game");
+        }
+        if (!Boolean.TRUE.equals(targetBase.getHidden())) {
+            throw new BadRequestException("Target base must be hidden to be used as an unlock target");
+        }
+
+        // Ensure target is not the challenge's own fixed base
+        if (effectiveFixedBaseId.equals(unlocksBaseId)) {
+            throw new BadRequestException("Cannot unlock the same base the challenge is fixed to");
+        }
+
+        // Ensure no other challenge already unlocks this base
+        challengeRepository.findByUnlocksBaseId(unlocksBaseId).ifPresent(existing -> {
+            if (!existing.getId().equals(challenge.getId())) {
+                throw new BadRequestException("Another challenge already unlocks this base");
+            }
+        });
+
+        challenge.setUnlocksBase(targetBase);
+        challengeRepository.save(challenge);
+    }
+
     private void ensureChallengeBelongsToGame(Challenge challenge, UUID gameId) {
         if (!challenge.getGame().getId().equals(gameId)) {
             throw new BadRequestException("Challenge does not belong to this game");
@@ -139,6 +210,7 @@ public class ChallengeService {
                 .correctAnswer(c.getCorrectAnswer())
                 .points(c.getPoints())
                 .locationBound(c.getLocationBound())
+                .unlocksBaseId(c.getUnlocksBase() != null ? c.getUnlocksBase().getId() : null)
                 .build();
     }
 }
