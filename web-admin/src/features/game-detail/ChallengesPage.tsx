@@ -265,14 +265,14 @@ export function ChallengesPage() {
                 </div>
               </div>
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <FormLabel htmlFor="challengeAutoValidate">{t("challenges.autoValidate")}</FormLabel>
+                <div className="flex items-center gap-2">
                   <Switch
                     id="challengeAutoValidate"
                     checked={form.autoValidate ?? false}
                     onCheckedChange={(v) => setForm((f) => ({ ...f, autoValidate: v }))}
                     disabled={form.answerType === "file"}
                   />
+                  <FormLabel htmlFor="challengeAutoValidate">{t("challenges.autoValidate")}</FormLabel>
                 </div>
                 <div className="flex items-center justify-between">
                   <FormLabel htmlFor="challengeLocationBound">{t("challenges.locationBound")}</FormLabel>
