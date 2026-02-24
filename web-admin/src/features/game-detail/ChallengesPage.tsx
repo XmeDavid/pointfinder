@@ -257,23 +257,23 @@ export function ChallengesPage() {
               </div>
             </Suspense>
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <p className="text-sm font-medium leading-none">{t("challenges.answerType")}</p>
                 <div className="flex gap-2">
                   <Button type="button" variant={form.answerType === "text" ? "default" : "outline"} size="sm" onClick={() => setForm((f) => ({ ...f, answerType: "text" }))}><FileText className="mr-1 h-4 w-4" /> {t("challenges.text")}</Button>
                   <Button type="button" variant={form.answerType === "file" ? "default" : "outline"} size="sm" onClick={() => setForm((f) => ({ ...f, answerType: "file", autoValidate: false }))}><Image className="mr-1 h-4 w-4" /> {t("challenges.fileUpload")}</Button>
                 </div>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between">
+                  <FormLabel htmlFor="challengeAutoValidate">{t("challenges.autoValidate")}</FormLabel>
                   <Switch
                     id="challengeAutoValidate"
                     checked={form.autoValidate ?? false}
                     onCheckedChange={(v) => setForm((f) => ({ ...f, autoValidate: v }))}
                     disabled={form.answerType === "file"}
                   />
-                  <FormLabel htmlFor="challengeAutoValidate">{t("challenges.autoValidate")}</FormLabel>
                 </div>
+              </div>
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <FormLabel htmlFor="challengeLocationBound">{t("challenges.locationBound")}</FormLabel>
                   <Switch
