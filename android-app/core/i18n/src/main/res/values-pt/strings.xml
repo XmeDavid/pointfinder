@@ -151,6 +151,9 @@
     <string name="hint_checkin_instructions">Aproxime seu telefone do marcador na base para fazer check-in</string>
     <string name="hint_offline_sync">Offline: os dados serão sincronizados quando voltar conexão.</string>
     <string name="hint_photo_required_online">Envios de foto exigem internet.</string>
+    <string name="hint_media_offline_queue">Submissões de media ficam em fila offline e enviam quando houver internet.</string>
+    <string name="hint_media_reselect_required">O ficheiro original já não está disponível. Seleciona-o novamente.</string>
+    <string name="hint_media_upload_disabled">Envio de media está temporariamente indisponível. Tenta novamente mais tarde.</string>
     <string name="hint_presence_required">Presença NFC obrigatória antes do envio.</string>
     <string name="hint_nfc_hold_near">Aproxime uma tag NFC do dispositivo para gravar a base.</string>
 

@@ -34,6 +34,29 @@ class OfflineSyncWorker @AssistedInject constructor(
         val pending = prioritizedPendingActions(playerRepository.pendingActions())
 
         pending.forEach { action ->
+            if (action.type == "media_submission" && action.requiresReselect) {
+                return@forEach
+            }
+
+            if (action.type == "media_submission") {
+                when (playerRepository.syncMediaSubmission(auth, action)) {
+                    MediaSyncOutcome.Synced -> playerRepository.markSynced(action.id)
+                    MediaSyncOutcome.NeedsReselect -> {
+                        // Keep action persisted with requiresReselect so UI can prompt re-selection.
+                    }
+                    MediaSyncOutcome.PermanentFailure -> playerRepository.markSynced(action.id)
+                    MediaSyncOutcome.Retry -> {
+                        if (action.retryCount >= 5) {
+                            playerRepository.markSynced(action.id)
+                        } else {
+                            playerRepository.incrementRetry(action.id)
+                            return Result.retry()
+                        }
+                    }
+                }
+                return@forEach
+            }
+
             val synced = runCatching {
                 when (action.type) {
                     "check_in" -> api.checkIn(action.gameId, action.baseId)
@@ -43,6 +66,7 @@ class OfflineSyncWorker @AssistedInject constructor(
                             baseId = action.baseId,
                             challengeId = action.challengeId ?: return@runCatching false,
                             answer = action.answer.orEmpty(),
+                            fileUrl = null,
                             idempotencyKey = action.id,
                         ),
                     )

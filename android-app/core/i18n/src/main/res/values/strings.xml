@@ -151,6 +151,9 @@
     <string name="hint_checkin_instructions">Hold your phone near the marker at a base to check in</string>
     <string name="hint_offline_sync">Offline: data will sync when online.</string>
     <string name="hint_photo_required_online">Photo submissions require internet.</string>
+    <string name="hint_media_offline_queue">Media submissions queue offline and upload when network returns.</string>
+    <string name="hint_media_reselect_required">The original media is no longer available. Please reselect it.</string>
+    <string name="hint_media_upload_disabled">Media uploads are temporarily unavailable. Try again later.</string>
     <string name="hint_presence_required">NFC presence required before submit.</string>
     <string name="hint_nfc_hold_near">Hold an NFC tag near the device to write base payload.</string>
 

@@ -1,8 +1,10 @@
 package com.prayer.pointfinder.session
 
 import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.prayer.pointfinder.BuildConfig
 import com.prayer.pointfinder.core.data.repo.OfflineSyncWorker
 import com.prayer.pointfinder.core.data.repo.PlayerRepository
 import com.prayer.pointfinder.core.model.AuthType
@@ -18,6 +20,9 @@ import com.prayer.pointfinder.core.platform.NfcPayloadCodec
 import com.prayer.pointfinder.core.platform.PlayerLocationService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.io.File
+import java.io.IOException
+import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -298,40 +303,92 @@ class PlayerViewModel @Inject constructor(
         auth: AuthType.Player,
         baseId: String,
         challengeId: String,
-        imageBytes: ByteArray?,
+        mediaBytes: ByteArray?,
+        mediaSourceUri: String?,
+        mediaContentType: String?,
+        mediaSizeBytes: Long?,
+        mediaFileName: String?,
         notes: String,
         online: Boolean,
     ) {
-        if (!online) {
+        if (!BuildConfig.ENABLE_CHUNKED_MEDIA_UPLOAD) {
             _state.value = _state.value.copy(
-                solveError = context.getString(StringR.string.hint_photo_required_online),
+                solveError = context.getString(StringR.string.hint_media_upload_disabled),
             )
             return
         }
-        if (imageBytes == null) {
+        if (mediaBytes == null && mediaSourceUri.isNullOrBlank()) {
             _state.value = _state.value.copy(
                 solveError = context.getString(StringR.string.error_photo_required),
             )
             return
         }
+
+        val resolvedContentType = mediaContentType?.ifBlank { null } ?: "image/jpeg"
+        val resolvedSizeBytes = mediaSizeBytes
+            ?: mediaBytes?.size?.toLong()
+            ?: 0L
+        if (resolvedSizeBytes <= 0L) {
+            _state.value = _state.value.copy(
+                solveError = context.getString(StringR.string.error_photo_required),
+            )
+            return
+        }
+
+        val guaranteedCopyPath: String?
+        val queuedSourceUri: String?
+        if (resolvedSizeBytes <= MEDIA_COPY_THRESHOLD_BYTES) {
+            guaranteedCopyPath = try {
+                createGuaranteedMediaCopy(
+                    mediaBytes = mediaBytes,
+                    mediaSourceUri = mediaSourceUri,
+                    contentType = resolvedContentType,
+                    originalFileName = mediaFileName,
+                )
+            } catch (_: IOException) {
+                null
+            }
+            if (guaranteedCopyPath == null) {
+                _state.value = _state.value.copy(
+                    solveError = context.getString(StringR.string.error_photo_required),
+                )
+                return
+            }
+            queuedSourceUri = null
+        } else {
+            if (mediaSourceUri.isNullOrBlank()) {
+                _state.value = _state.value.copy(
+                    solveError = context.getString(StringR.string.hint_media_reselect_required),
+                )
+                return
+            }
+            guaranteedCopyPath = null
+            queuedSourceUri = mediaSourceUri
+        }
+
         viewModelScope.launch {
             runCatching {
-                playerRepository.submitPhoto(
+                playerRepository.submitMedia(
                     auth = auth,
                     baseId = baseId,
                     challengeId = challengeId,
                     answer = notes,
-                    imageBytes = imageBytes,
+                    mediaContentType = resolvedContentType,
+                    mediaSizeBytes = resolvedSizeBytes,
+                    mediaLocalPath = guaranteedCopyPath,
+                    mediaSourceUri = queuedSourceUri,
+                    mediaFileName = mediaFileName,
                 )
-            }.onSuccess { response ->
+            }.onSuccess { result ->
                 _state.value = _state.value.copy(
-                    latestSubmission = response,
+                    latestSubmission = result.response,
                     solveError = null,
                     presenceVerified = false,
                     authExpired = false,
                 )
+                OfflineSyncWorker.enqueue(context)
                 refresh(auth, online)
-                // Send location immediately after photo submission (matches iOS behavior)
+                // Send location immediately after media submission (matches iOS behavior)
                 launch { locationService.sendLocationNow() }
             }.onFailure { err ->
                 val authExpired = ApiErrorParser.isAuthExpired(err)
@@ -341,6 +398,51 @@ class PlayerViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    private fun createGuaranteedMediaCopy(
+        mediaBytes: ByteArray?,
+        mediaSourceUri: String?,
+        contentType: String,
+        originalFileName: String?,
+    ): String? {
+        val pendingDir = File(context.filesDir, "pending-media")
+        if (!pendingDir.exists()) {
+            pendingDir.mkdirs()
+        }
+        val extension = extensionForContentType(contentType, originalFileName)
+        val target = File(pendingDir, "${UUID.randomUUID()}.$extension")
+        if (mediaBytes != null) {
+            target.writeBytes(mediaBytes)
+            return target.absolutePath
+        }
+        val uri = mediaSourceUri?.let(Uri::parse) ?: return null
+        context.contentResolver.openInputStream(uri)?.use { input ->
+            target.outputStream().use { output -> input.copyTo(output) }
+            return target.absolutePath
+        }
+        return null
+    }
+
+    private fun extensionForContentType(contentType: String, originalFileName: String?): String {
+        val lowerContentType = contentType.lowercase()
+        if (lowerContentType == "image/png") return "png"
+        if (lowerContentType == "image/webp") return "webp"
+        if (lowerContentType == "image/heic" || lowerContentType == "image/heif") return "heic"
+        if (lowerContentType == "video/mp4") return "mp4"
+        if (lowerContentType == "video/quicktime") return "mov"
+
+        val original = originalFileName.orEmpty().lowercase()
+        if (original.endsWith(".png")) return "png"
+        if (original.endsWith(".webp")) return "webp"
+        if (original.endsWith(".heic") || original.endsWith(".heif")) return "heic"
+        if (original.endsWith(".mp4")) return "mp4"
+        if (original.endsWith(".mov")) return "mov"
+        return "jpg"
+    }
+
+    companion object {
+        private const val MEDIA_COPY_THRESHOLD_BYTES = 100L * 1024L * 1024L
     }
 
     fun clearSubmissionResult() {

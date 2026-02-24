@@ -32,6 +32,9 @@ actor OfflineQueue {
 
     /// Remove an action from the queue (after successful sync)
     func dequeue(_ id: UUID) {
+        if let action = pendingActions.first(where: { $0.id == id }) {
+            deleteLocalMediaCopyIfNeeded(for: action)
+        }
         pendingActions.removeAll { $0.id == id }
         saveToDisk()
     }
@@ -59,6 +62,18 @@ actor OfflineQueue {
         pendingActions.contains { $0.id == id }
     }
 
+    /// Get a specific action from the queue.
+    func pendingAction(id: UUID) -> PendingAction? {
+        pendingActions.first { $0.id == id }
+    }
+
+    /// Replace an existing action in the queue.
+    func update(_ action: PendingAction) {
+        guard let index = pendingActions.firstIndex(where: { $0.id == action.id }) else { return }
+        pendingActions[index] = action
+        saveToDisk()
+    }
+
     /// Check if there's a pending check-in for a base in a specific game.
     func hasPendingCheckIn(gameId: UUID, baseId: UUID) -> Bool {
         pendingActions.contains { $0.type == .checkIn && $0.gameId == gameId && $0.baseId == baseId }
@@ -73,12 +88,18 @@ actor OfflineQueue {
 
     /// Clear all pending actions
     func clearAll() {
+        for action in pendingActions {
+            deleteLocalMediaCopyIfNeeded(for: action)
+        }
         pendingActions.removeAll()
         saveToDisk()
     }
 
     /// Clear pending actions for a specific game
     func clearGame(_ gameId: UUID) {
+        for action in pendingActions where action.gameId == gameId {
+            deleteLocalMediaCopyIfNeeded(for: action)
+        }
         pendingActions.removeAll { $0.gameId == gameId }
         saveToDisk()
     }
@@ -104,6 +125,60 @@ actor OfflineQueue {
         return action.id  // Return the idempotency key
     }
 
+    /// Create and enqueue a media submission action.
+    func enqueueMediaSubmission(
+        gameId: UUID,
+        baseId: UUID,
+        challengeId: UUID,
+        answer: String,
+        contentType: String,
+        sizeBytes: Int64,
+        localFilePath: String?,
+        sourcePath: String?,
+        fileName: String?
+    ) -> UUID {
+        var action = PendingAction(
+            type: .mediaSubmission,
+            gameId: gameId,
+            baseId: baseId,
+            challengeId: challengeId,
+            answer: answer
+        )
+        action.mediaContentType = contentType
+        action.mediaSizeBytes = sizeBytes
+        action.mediaLocalFilePath = localFilePath
+        action.mediaSourcePath = sourcePath
+        action.mediaFileName = fileName
+        action.uploadChunkIndex = 0
+        action.needsReselect = false
+        enqueue(action)
+        return action.id
+    }
+
+    /// Update upload checkpoint details for a media action.
+    func updateUploadProgress(
+        id: UUID,
+        uploadSessionId: UUID?,
+        uploadedChunkIndex: Int?,
+        totalChunks: Int?,
+        lastError: String?
+    ) {
+        guard let index = pendingActions.firstIndex(where: { $0.id == id }) else { return }
+        pendingActions[index].uploadSessionId = uploadSessionId
+        pendingActions[index].uploadChunkIndex = uploadedChunkIndex
+        pendingActions[index].uploadTotalChunks = totalChunks
+        pendingActions[index].lastError = lastError
+        saveToDisk()
+    }
+
+    /// Mark a media action as requiring user re-selection (source unavailable).
+    func markNeedsReselect(id: UUID, message: String) {
+        guard let index = pendingActions.firstIndex(where: { $0.id == id }) else { return }
+        pendingActions[index].needsReselect = true
+        pendingActions[index].lastError = message
+        saveToDisk()
+    }
+
     // MARK: - Persistence
 
     private func loadFromDisk() {
@@ -124,5 +199,10 @@ actor OfflineQueue {
         } catch {
             Logger(subsystem: "com.prayer.pointfinder", category: "OfflineQueue").warning(" Failed to save to disk: \(error.localizedDescription)")
         }
+    }
+
+    private func deleteLocalMediaCopyIfNeeded(for action: PendingAction) {
+        guard let localPath = action.mediaLocalFilePath else { return }
+        try? FileManager.default.removeItem(atPath: localPath)
     }
 }

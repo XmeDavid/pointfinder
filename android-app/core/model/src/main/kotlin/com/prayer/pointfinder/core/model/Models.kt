@@ -199,7 +199,30 @@ data class PlayerSubmissionRequest(
     val baseId: EntityId,
     val challengeId: EntityId,
     val answer: String,
+    val fileUrl: String? = null,
     val idempotencyKey: String? = null,
+)
+
+@Serializable
+data class UploadSessionInitRequest(
+    val originalFileName: String? = null,
+    val contentType: String,
+    val totalSizeBytes: Long,
+    val chunkSizeBytes: Int? = null,
+)
+
+@Serializable
+data class UploadSessionResponse(
+    val sessionId: EntityId,
+    val gameId: EntityId,
+    val contentType: String,
+    val totalSizeBytes: Long,
+    val chunkSizeBytes: Int,
+    val totalChunks: Int,
+    val uploadedChunks: List<Int> = emptyList(),
+    val status: String,
+    val fileUrl: String? = null,
+    val expiresAt: String,
 )
 
 @Serializable
@@ -304,6 +327,9 @@ enum class PendingActionType {
 
     @SerialName("submission")
     SUBMISSION,
+
+    @SerialName("media_submission")
+    MEDIA_SUBMISSION,
 }
 
 sealed class AuthType {

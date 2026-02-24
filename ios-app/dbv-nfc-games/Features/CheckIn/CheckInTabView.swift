@@ -67,6 +67,14 @@ struct CheckInTabView: View {
                         .padding(.horizontal)
                     }
 
+                    if let syncError = appState.syncEngine.lastSyncError, !syncError.isEmpty {
+                        Text(syncError)
+                            .font(.caption2)
+                            .foregroundStyle(.orange)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 24)
+                    }
+
                     Spacer()
 
                     // Check-in button

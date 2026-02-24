@@ -4,6 +4,17 @@ import os
 protocol SyncAPIClient: AnyObject {
     func checkIn(gameId: UUID, baseId: UUID, token: String) async throws -> CheckInResponse
     func submitAnswer(gameId: UUID, request: PlayerSubmissionRequest, token: String) async throws -> SubmissionResponse
+    func createUploadSession(gameId: UUID, request: UploadSessionInitRequest, token: String) async throws -> UploadSessionResponse
+    func uploadSessionChunk(
+        gameId: UUID,
+        sessionId: UUID,
+        chunkIndex: Int,
+        chunkData: Data,
+        token: String
+    ) async throws -> UploadSessionResponse
+    func getUploadSession(gameId: UUID, sessionId: UUID, token: String) async throws -> UploadSessionResponse
+    func completeUploadSession(gameId: UUID, sessionId: UUID, token: String) async throws -> UploadSessionResponse
+    func cancelUploadSession(gameId: UUID, sessionId: UUID, token: String) async throws
 }
 
 extension APIClient: SyncAPIClient {}
@@ -60,12 +71,17 @@ final class SyncEngine {
         // Process check-ins first, then submissions (submissions may depend on check-ins)
         let checkIns = actions.filter { $0.type == .checkIn }
         let submissions = actions.filter { $0.type == .submission }
+        let mediaSubmissions = actions.filter { $0.type == .mediaSubmission }
 
         for action in checkIns {
             await processAction(action)
         }
 
         for action in submissions {
+            await processAction(action)
+        }
+
+        for action in mediaSubmissions {
             await processAction(action)
         }
 
@@ -80,6 +96,9 @@ final class SyncEngine {
         if action.retryCount >= self.maxRetries {
             // Remove failed action after max retries
             await OfflineQueue.shared.dequeue(action.id)
+            if let localPath = action.mediaLocalFilePath {
+                try? FileManager.default.removeItem(atPath: localPath)
+            }
             Logger(subsystem: "com.prayer.pointfinder", category: "SyncEngine").info(" Removed action \(action.id) after \(self.maxRetries) retries")
             return
         }
@@ -96,6 +115,8 @@ final class SyncEngine {
                 try await syncCheckIn(action)
             case .submission:
                 try await syncSubmission(action)
+            case .mediaSubmission:
+                try await syncMediaSubmission(action)
             }
 
             // Success - remove from queue
@@ -103,6 +124,10 @@ final class SyncEngine {
             Logger(subsystem: "com.prayer.pointfinder", category: "SyncEngine").info(" Synced action: \(action.type.rawValue) for base \(action.baseId)")
 
         } catch {
+            if let syncError = error as? SyncError, syncError == .needsReselect {
+                self.lastSyncError = syncError.localizedDescription
+                return
+            }
             // Check if this is a network error (retry) vs a server error (don't retry)
             if isNetworkError(error) {
                 await OfflineQueue.shared.incrementRetryCount(action.id)
@@ -148,6 +173,171 @@ final class SyncEngine {
         _ = try await apiClient.submitAnswer(gameId: action.gameId, request: request, token: token)
     }
 
+    private func syncMediaSubmission(_ action: PendingAction) async throws {
+        if action.needsReselect {
+            throw SyncError.needsReselect
+        }
+        guard let token = getPlayerToken() else {
+            throw SyncError.noAuth
+        }
+        guard let apiClient else {
+            throw SyncError.noAPIClient
+        }
+        guard let challengeId = action.challengeId,
+              let contentType = action.mediaContentType else {
+            throw SyncError.invalidAction
+        }
+
+        guard let mediaURL = resolveMediaURL(for: action) else {
+            await OfflineQueue.shared.markNeedsReselect(
+                id: action.id,
+                message: "Media source unavailable. Please reselect."
+            )
+            throw SyncError.needsReselect
+        }
+        let totalSize = action.mediaSizeBytes ?? fileSize(url: mediaURL)
+        guard totalSize > 0 else {
+            throw SyncError.invalidAction
+        }
+
+        var session = try await ensureUploadSession(
+            action: action,
+            gameId: action.gameId,
+            contentType: contentType,
+            totalSize: totalSize,
+            apiClient: apiClient,
+            token: token
+        )
+
+        if session.status == "completed", let completedUrl = session.fileUrl {
+            let request = PlayerSubmissionRequest(
+                baseId: action.baseId,
+                challengeId: challengeId,
+                answer: action.answer ?? "",
+                fileUrl: completedUrl,
+                idempotencyKey: action.id
+            )
+            _ = try await apiClient.submitAnswer(gameId: action.gameId, request: request, token: token)
+            cleanupLocalCopyIfNeeded(action: action)
+            return
+        }
+
+        let uploadedSet = Set(session.uploadedChunks)
+        let fileHandle = try FileHandle(forReadingFrom: mediaURL)
+        defer { try? fileHandle.close() }
+
+        for chunkIndex in 0..<session.totalChunks {
+            let expectedSize = expectedChunkSize(
+                totalSizeBytes: totalSize,
+                chunkSizeBytes: session.chunkSizeBytes,
+                totalChunks: session.totalChunks,
+                chunkIndex: chunkIndex
+            )
+            let chunkData = try fileHandle.read(upToCount: expectedSize) ?? Data()
+            guard chunkData.count == expectedSize else {
+                throw SyncError.invalidAction
+            }
+            if uploadedSet.contains(chunkIndex) {
+                continue
+            }
+            session = try await apiClient.uploadSessionChunk(
+                gameId: action.gameId,
+                sessionId: session.sessionId,
+                chunkIndex: chunkIndex,
+                chunkData: chunkData,
+                token: token
+            )
+            await OfflineQueue.shared.updateUploadProgress(
+                id: action.id,
+                uploadSessionId: session.sessionId,
+                uploadedChunkIndex: chunkIndex + 1,
+                totalChunks: session.totalChunks,
+                lastError: nil
+            )
+        }
+
+        let completed = try await apiClient.completeUploadSession(
+            gameId: action.gameId,
+            sessionId: session.sessionId,
+            token: token
+        )
+        guard let fileUrl = completed.fileUrl else {
+            throw SyncError.invalidAction
+        }
+        let request = PlayerSubmissionRequest(
+            baseId: action.baseId,
+            challengeId: challengeId,
+            answer: action.answer ?? "",
+            fileUrl: fileUrl,
+            idempotencyKey: action.id
+        )
+        _ = try await apiClient.submitAnswer(gameId: action.gameId, request: request, token: token)
+        cleanupLocalCopyIfNeeded(action: action)
+    }
+
+    private func ensureUploadSession(
+        action: PendingAction,
+        gameId: UUID,
+        contentType: String,
+        totalSize: Int64,
+        apiClient: SyncAPIClient,
+        token: String
+    ) async throws -> UploadSessionResponse {
+        if let existingSessionId = action.uploadSessionId {
+            if let existing = try? await apiClient.getUploadSession(gameId: gameId, sessionId: existingSessionId, token: token) {
+                return existing
+            }
+        }
+        let created = try await apiClient.createUploadSession(
+            gameId: gameId,
+            request: UploadSessionInitRequest(
+                originalFileName: action.mediaFileName,
+                contentType: contentType,
+                totalSizeBytes: totalSize,
+                chunkSizeBytes: DEFAULT_CHUNK_SIZE_BYTES
+            ),
+            token: token
+        )
+        await OfflineQueue.shared.updateUploadProgress(
+            id: action.id,
+            uploadSessionId: created.sessionId,
+            uploadedChunkIndex: 0,
+            totalChunks: created.totalChunks,
+            lastError: nil
+        )
+        return created
+    }
+
+    private func resolveMediaURL(for action: PendingAction) -> URL? {
+        if let localPath = action.mediaLocalFilePath {
+            let localURL = URL(fileURLWithPath: localPath)
+            return FileManager.default.fileExists(atPath: localURL.path) ? localURL : nil
+        }
+        if let sourcePath = action.mediaSourcePath {
+            let sourceURL = URL(fileURLWithPath: sourcePath)
+            return FileManager.default.fileExists(atPath: sourceURL.path) ? sourceURL : nil
+        }
+        return nil
+    }
+
+    private func fileSize(url: URL) -> Int64 {
+        let attrs = try? FileManager.default.attributesOfItem(atPath: url.path)
+        return (attrs?[.size] as? NSNumber)?.int64Value ?? 0
+    }
+
+    private func expectedChunkSize(totalSizeBytes: Int64, chunkSizeBytes: Int, totalChunks: Int, chunkIndex: Int) -> Int {
+        if chunkIndex < totalChunks - 1 {
+            return chunkSizeBytes
+        }
+        let consumed = Int64(chunkSizeBytes) * Int64(totalChunks - 1)
+        return Int(totalSizeBytes - consumed)
+    }
+
+    private func cleanupLocalCopyIfNeeded(action: PendingAction) {
+        guard let localPath = action.mediaLocalFilePath else { return }
+        try? FileManager.default.removeItem(atPath: localPath)
+    }
+
     private func getPlayerToken() -> String? {
         // Load from keychain
         KeychainService.load(key: AppConfiguration.playerTokenKey)
@@ -186,6 +376,7 @@ enum SyncError: LocalizedError {
     case noAuth
     case noAPIClient
     case invalidAction
+    case needsReselect
 
     var errorDescription: String? {
         switch self {
@@ -195,6 +386,10 @@ enum SyncError: LocalizedError {
             return "API client is not configured"
         case .invalidAction:
             return "Invalid action data"
+        case .needsReselect:
+            return "Media source unavailable, user must reselect"
         }
     }
 }
+
+private let DEFAULT_CHUNK_SIZE_BYTES = 8 * 1024 * 1024

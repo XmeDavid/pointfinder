@@ -4,14 +4,36 @@ struct PlayerSubmissionRequest: Codable {
     let baseId: UUID
     let challengeId: UUID
     let answer: String
+    let fileUrl: String?
     let idempotencyKey: UUID?
 
-    init(baseId: UUID, challengeId: UUID, answer: String, idempotencyKey: UUID? = nil) {
+    init(baseId: UUID, challengeId: UUID, answer: String, fileUrl: String? = nil, idempotencyKey: UUID? = nil) {
         self.baseId = baseId
         self.challengeId = challengeId
         self.answer = answer
+        self.fileUrl = fileUrl
         self.idempotencyKey = idempotencyKey
     }
+}
+
+struct UploadSessionInitRequest: Codable {
+    let originalFileName: String?
+    let contentType: String
+    let totalSizeBytes: Int64
+    let chunkSizeBytes: Int?
+}
+
+struct UploadSessionResponse: Codable {
+    let sessionId: UUID
+    let gameId: UUID
+    let contentType: String
+    let totalSizeBytes: Int64
+    let chunkSizeBytes: Int
+    let totalChunks: Int
+    let uploadedChunks: [Int]
+    let status: String
+    let fileUrl: String?
+    let expiresAt: String
 }
 
 struct SubmissionResponse: Codable, Identifiable {
@@ -63,6 +85,7 @@ struct UnseenCountResponse: Codable {
 enum PendingActionType: String, Codable {
     case checkIn = "check_in"
     case submission = "submission"
+    case mediaSubmission = "media_submission"
 }
 
 struct PendingAction: Codable, Identifiable {
@@ -74,6 +97,16 @@ struct PendingAction: Codable, Identifiable {
     let answer: String?
     let createdAt: Date
     var retryCount: Int
+    var mediaContentType: String?
+    var mediaLocalFilePath: String?
+    var mediaSourcePath: String?
+    var mediaSizeBytes: Int64?
+    var mediaFileName: String?
+    var uploadSessionId: UUID?
+    var uploadChunkIndex: Int?
+    var uploadTotalChunks: Int?
+    var needsReselect: Bool
+    var lastError: String?
 
     init(type: PendingActionType, gameId: UUID, baseId: UUID, challengeId: UUID? = nil, answer: String? = nil) {
         self.id = UUID()
@@ -84,5 +117,15 @@ struct PendingAction: Codable, Identifiable {
         self.answer = answer
         self.createdAt = Date()
         self.retryCount = 0
+        self.mediaContentType = nil
+        self.mediaLocalFilePath = nil
+        self.mediaSourcePath = nil
+        self.mediaSizeBytes = nil
+        self.mediaFileName = nil
+        self.uploadSessionId = nil
+        self.uploadChunkIndex = nil
+        self.uploadTotalChunks = nil
+        self.needsReselect = false
+        self.lastError = nil
     }
 }

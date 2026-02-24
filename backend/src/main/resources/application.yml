@@ -20,8 +20,8 @@ spring:
 
   servlet:
     multipart:
-      max-file-size: 10MB
-      max-request-size: 10MB
+      max-file-size: 100MB
+      max-request-size: 100MB
 
   mail:
     host: ${MAIL_HOST:smtp.resend.com}
@@ -62,3 +62,20 @@ app:
     enabled: ${FCM_ENABLED:false}
     credentials-path: ${FCM_CREDENTIALS_PATH:}
     project-id: ${FCM_PROJECT_ID:}
+  uploads:
+    path: ${APP_UPLOADS_PATH:/uploads}
+    max-file-size-bytes: ${APP_UPLOADS_MAX_FILE_SIZE_BYTES:2147483648}
+    chunk:
+      enabled: ${APP_UPLOADS_CHUNK_ENABLED:true}
+      default-size-bytes: ${APP_UPLOADS_CHUNK_DEFAULT_SIZE_BYTES:8388608}
+      max-size-bytes: ${APP_UPLOADS_CHUNK_MAX_SIZE_BYTES:16777216}
+      session-ttl-seconds: ${APP_UPLOADS_CHUNK_SESSION_TTL_SECONDS:172800}
+    limits:
+      max-active-sessions-per-player: ${APP_UPLOADS_MAX_ACTIVE_SESSIONS_PER_PLAYER:3}
+      max-active-bytes-per-game: ${APP_UPLOADS_MAX_ACTIVE_BYTES_PER_GAME:17179869184}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
