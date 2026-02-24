@@ -51,6 +51,12 @@ sealed interface MediaSyncOutcome {
     data object PermanentFailure : MediaSyncOutcome
 }
 
+internal fun completedUploadFileUrl(session: UploadSessionResponse): String? {
+    if (session.status != "completed") return null
+    val fileUrl = session.fileUrl ?: return null
+    return fileUrl.takeIf { it.isNotBlank() }
+}
+
 @Singleton
 class PlayerRepository @Inject constructor(
     private val api: CompanionApi,
@@ -293,8 +299,9 @@ class PlayerRepository @Inject constructor(
 
         return try {
             var session = ensureUploadSession(auth, action, contentType, source.sizeBytes)
-            if (session.status == "completed" && !session.fileUrl.isNullOrBlank()) {
-                submitMediaAnswer(auth, action, challengeId, session.fileUrl)
+            val completedFileUrl = completedUploadFileUrl(session)
+            if (completedFileUrl != null) {
+                submitMediaAnswer(auth, action, challengeId, completedFileUrl)
                 return MediaSyncOutcome.Synced
             }
 
