@@ -19,7 +19,7 @@ appstore.copy
 web-admin/lighthose.report
 
 # Local upload data
-data/
+/data/
 
 # Legacy
 legacy/
