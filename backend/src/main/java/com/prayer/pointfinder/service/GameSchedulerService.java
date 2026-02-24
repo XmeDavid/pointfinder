@@ -20,6 +20,7 @@ public class GameSchedulerService {
 
     private final GameRepository gameRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final ChunkedUploadService chunkedUploadService;
 
     /**
      * Runs every 60 seconds to check for live games that have passed their end date
@@ -48,6 +49,18 @@ public class GameSchedulerService {
         int deleted = refreshTokenRepository.deleteExpiredBefore(Instant.now());
         if (deleted > 0) {
             log.info("Purged {} expired refresh tokens", deleted);
+        }
+    }
+
+    /**
+     * Runs every 15 minutes to expire stale chunk upload sessions and clean temporary chunk files.
+     */
+    @Scheduled(fixedRate = 900000)
+    @Transactional
+    public void expireStaleChunkUploadSessions() {
+        int expired = chunkedUploadService.expireStaleSessions();
+        if (expired > 0) {
+            log.info("Expired {} stale chunk upload sessions", expired);
         }
     }
 }

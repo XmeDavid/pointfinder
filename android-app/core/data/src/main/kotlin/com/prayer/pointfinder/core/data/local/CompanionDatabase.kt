@@ -22,6 +22,16 @@ data class PendingActionEntity(
     val answer: String?,
     val createdAtEpochMs: Long,
     val retryCount: Int,
+    val mediaContentType: String? = null,
+    val mediaLocalPath: String? = null,
+    val mediaSourceUri: String? = null,
+    val mediaSizeBytes: Long? = null,
+    val mediaFileName: String? = null,
+    val uploadSessionId: String? = null,
+    val uploadChunkIndex: Int? = null,
+    val uploadTotalChunks: Int? = null,
+    val requiresReselect: Boolean = false,
+    val lastError: String? = null,
 )
 
 @Entity(tableName = "cached_progress", primaryKeys = ["gameId", "baseId"])
@@ -73,8 +83,39 @@ interface PendingActionDao {
     @Query("DELETE FROM pending_actions WHERE id = :id")
     suspend fun deleteById(id: String)
 
+    @Query("SELECT * FROM pending_actions WHERE id = :id LIMIT 1")
+    suspend fun findById(id: String): PendingActionEntity?
+
     @Query("UPDATE pending_actions SET retryCount = retryCount + 1 WHERE id = :id")
     suspend fun incrementRetryCount(id: String)
+
+    @Query(
+        """
+        UPDATE pending_actions
+        SET uploadSessionId = :uploadSessionId,
+            uploadChunkIndex = :uploadChunkIndex,
+            uploadTotalChunks = :uploadTotalChunks,
+            lastError = :lastError
+        WHERE id = :id
+        """,
+    )
+    suspend fun updateUploadProgress(
+        id: String,
+        uploadSessionId: String?,
+        uploadChunkIndex: Int?,
+        uploadTotalChunks: Int?,
+        lastError: String?,
+    )
+
+    @Query(
+        """
+        UPDATE pending_actions
+        SET requiresReselect = :requiresReselect,
+            lastError = :lastError
+        WHERE id = :id
+        """,
+    )
+    suspend fun updateNeedsReselect(id: String, requiresReselect: Boolean, lastError: String?)
 
     @Query("DELETE FROM pending_actions")
     suspend fun clearAll()
@@ -119,7 +160,7 @@ interface ChallengeDao {
         CachedProgressEntity::class,
         CachedChallengeEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = false,
 )
 abstract class CompanionDatabase : RoomDatabase() {

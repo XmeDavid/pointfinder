@@ -282,6 +282,8 @@ enum Translations {
         // App Errors
         "error.photoOffline": "Photo submissions require an internet connection.",
         "error.photoProcessing": "Failed to process photo.",
+        "error.mediaSourceRequired": "Large media must keep an accessible source file. Please reselect it.",
+        "error.mediaUploadDisabled": "Media uploads are temporarily unavailable.",
     ]
 
     // MARK: - Portuguese
@@ -544,6 +546,8 @@ enum Translations {
         // App Errors
         "error.photoOffline": "As submissões de fotos requerem ligação à internet.",
         "error.photoProcessing": "Falha ao processar foto.",
+        "error.mediaSourceRequired": "Media grande precisa manter o ficheiro de origem acessível. Seleciona-o novamente.",
+        "error.mediaUploadDisabled": "Envio de media está temporariamente indisponível.",
     ]
 
     // MARK: - German
@@ -806,5 +810,7 @@ enum Translations {
         // App Errors
         "error.photoOffline": "Foto-Einreichungen benötigen eine Internetverbindung.",
         "error.photoProcessing": "Foto konnte nicht verarbeitet werden.",
+        "error.mediaSourceRequired": "Große Medien benötigen eine verfügbare Quelldatei. Bitte erneut auswählen.",
+        "error.mediaUploadDisabled": "Medien-Uploads sind vorübergehend nicht verfügbar.",
     ]
 }

@@ -113,43 +113,45 @@ actor APIClient {
         try await post("/api/player/games/\(gameId)/submissions", body: request, token: token)
     }
 
-    func submitAnswerWithFile(
+    func createUploadSession(
         gameId: UUID,
-        baseId: UUID,
-        challengeId: UUID,
-        imageData: Data,
-        notes: String,
-        idempotencyKey: UUID? = nil,
+        request: UploadSessionInitRequest,
         token: String
-    ) async throws -> SubmissionResponse {
-        let boundary = "Boundary-\(UUID().uuidString)"
-        var request = try buildRequest(path: "/api/player/games/\(gameId)/submissions/upload", method: "POST", token: token)
-        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+    ) async throws -> UploadSessionResponse {
+        try await post("/api/player/games/\(gameId)/uploads/sessions", body: request, token: token)
+    }
 
-        var body = Data()
-
-        // file field
-        body.appendMultipart(boundary: boundary, name: "file", filename: "photo.jpg", mimeType: "image/jpeg", data: imageData)
-
-        // baseId field
-        body.appendMultipart(boundary: boundary, name: "baseId", value: baseId.uuidString)
-
-        // challengeId field
-        body.appendMultipart(boundary: boundary, name: "challengeId", value: challengeId.uuidString)
-
-        // answer (notes) field
-        body.appendMultipart(boundary: boundary, name: "answer", value: notes)
-
-        // idempotency key field
-        if let idempotencyKey {
-            body.appendMultipart(boundary: boundary, name: "idempotencyKey", value: idempotencyKey.uuidString)
-        }
-
-        // closing boundary
-        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
-
-        request.httpBody = body
+    func uploadSessionChunk(
+        gameId: UUID,
+        sessionId: UUID,
+        chunkIndex: Int,
+        chunkData: Data,
+        token: String
+    ) async throws -> UploadSessionResponse {
+        var request = try buildRequest(
+            path: "/api/player/games/\(gameId)/uploads/sessions/\(sessionId)/chunks/\(chunkIndex)",
+            method: "PUT",
+            token: token
+        )
+        request.httpBody = chunkData
+        request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
         return try await execute(request)
+    }
+
+    func getUploadSession(gameId: UUID, sessionId: UUID, token: String) async throws -> UploadSessionResponse {
+        try await get("/api/player/games/\(gameId)/uploads/sessions/\(sessionId)", token: token)
+    }
+
+    func completeUploadSession(gameId: UUID, sessionId: UUID, token: String) async throws -> UploadSessionResponse {
+        try await post(
+            "/api/player/games/\(gameId)/uploads/sessions/\(sessionId)/complete",
+            body: EmptyBody(),
+            token: token
+        )
+    }
+
+    func cancelUploadSession(gameId: UUID, sessionId: UUID, token: String) async throws {
+        try await deleteVoid("/api/player/games/\(gameId)/uploads/sessions/\(sessionId)", token: token)
     }
 
     func updateLocation(gameId: UUID, lat: Double, lng: Double, token: String) async throws {
@@ -548,20 +550,3 @@ private struct ReviewSubmissionBody: Encodable {
     let points: Int?
 }
 
-// MARK: - Multipart Helpers
-
-extension Data {
-    mutating func appendMultipart(boundary: String, name: String, value: String) {
-        let field = "--\(boundary)\r\nContent-Disposition: form-data; name=\"\(name)\"\r\n\r\n\(value)\r\n"
-        append(field.data(using: .utf8)!)
-    }
-
-    mutating func appendMultipart(boundary: String, name: String, filename: String, mimeType: String, data: Data) {
-        var header = "--\(boundary)\r\n"
-        header += "Content-Disposition: form-data; name=\"\(name)\"; filename=\"\(filename)\"\r\n"
-        header += "Content-Type: \(mimeType)\r\n\r\n"
-        append(header.data(using: .utf8)!)
-        append(data)
-        append("\r\n".data(using: .utf8)!)
-    }
-}

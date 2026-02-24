@@ -24,25 +24,24 @@ import com.prayer.pointfinder.core.model.TeamLocationResponse
 import com.prayer.pointfinder.core.model.OperatorNotificationSettingsResponse
 import com.prayer.pointfinder.core.model.PlayerNotificationResponse
 import com.prayer.pointfinder.core.model.UnseenCountResponse
+import com.prayer.pointfinder.core.model.UploadSessionInitRequest
+import com.prayer.pointfinder.core.model.UploadSessionResponse
 import com.prayer.pointfinder.core.model.UpdateOperatorNotificationSettingsRequest
 import com.prayer.pointfinder.core.model.UserResponse
 import kotlinx.serialization.json.Json
 import okhttp3.Interceptor
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
-import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.RequestBody
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
-import retrofit2.http.Multipart
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
-import retrofit2.http.Part
 import retrofit2.http.Path
 
 interface CompanionApi {
@@ -80,16 +79,38 @@ interface CompanionApi {
         @Body request: PlayerSubmissionRequest,
     ): SubmissionResponse
 
-    @Multipart
-    @POST("api/player/games/{gameId}/submissions/upload")
-    suspend fun submitPhoto(
+    @POST("api/player/games/{gameId}/uploads/sessions")
+    suspend fun createUploadSession(
         @Path("gameId") gameId: String,
-        @Part file: MultipartBody.Part,
-        @Part("baseId") baseId: okhttp3.RequestBody,
-        @Part("challengeId") challengeId: okhttp3.RequestBody,
-        @Part("answer") answer: okhttp3.RequestBody,
-        @Part("idempotencyKey") idempotencyKey: okhttp3.RequestBody?,
-    ): SubmissionResponse
+        @Body request: UploadSessionInitRequest,
+    ): UploadSessionResponse
+
+    @PUT("api/player/games/{gameId}/uploads/sessions/{sessionId}/chunks/{chunkIndex}")
+    suspend fun uploadSessionChunk(
+        @Path("gameId") gameId: String,
+        @Path("sessionId") sessionId: String,
+        @Path("chunkIndex") chunkIndex: Int,
+        @Body chunkBody: RequestBody,
+    ): UploadSessionResponse
+
+    @GET("api/player/games/{gameId}/uploads/sessions/{sessionId}")
+    suspend fun getUploadSession(
+        @Path("gameId") gameId: String,
+        @Path("sessionId") sessionId: String,
+    ): UploadSessionResponse
+
+    @POST("api/player/games/{gameId}/uploads/sessions/{sessionId}/complete")
+    suspend fun completeUploadSession(
+        @Path("gameId") gameId: String,
+        @Path("sessionId") sessionId: String,
+        @Body body: EmptyBody = EmptyBody,
+    ): UploadSessionResponse
+
+    @DELETE("api/player/games/{gameId}/uploads/sessions/{sessionId}")
+    suspend fun cancelUploadSession(
+        @Path("gameId") gameId: String,
+        @Path("sessionId") sessionId: String,
+    )
 
     @POST("api/player/games/{gameId}/location")
     suspend fun updateLocation(
@@ -212,8 +233,6 @@ class ApiFactory {
                 .build()
                 .create(CompanionApi::class.java)
         }
-
-        fun textPart(value: String): okhttp3.RequestBody = value.toRequestBody("text/plain".toMediaType())
 
         private fun normalizeApiBaseUrl(rawBaseUrl: String): String {
             val parsed = rawBaseUrl.trim().toHttpUrl()

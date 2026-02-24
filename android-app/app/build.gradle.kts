@@ -44,6 +44,7 @@ fun Project.resolveApiBaseUrl(defaultValue: String): String {
 }
 
 val apiBaseUrl = project.resolveApiBaseUrl("https://pointfinder.pt")
+val enableChunkedMediaUpload = project.resolveConfigValue("ENABLE_CHUNKED_MEDIA_UPLOAD", "true")
 val mapsApiKey = project.resolveConfigValue("GOOGLE_MAPS_API_KEY", "")
 val hasGoogleServicesConfig = listOf(
     "google-services.json",
@@ -70,6 +71,7 @@ android {
         versionName = "0.2.0"
         buildConfigField("String", "API_BASE_URL", "\"${apiBaseUrl.replace("\"", "\\\"")}\"")
         buildConfigField("Boolean", "ENABLE_MOBILE_REALTIME", "true")
+        buildConfigField("Boolean", "ENABLE_CHUNKED_MEDIA_UPLOAD", enableChunkedMediaUpload)
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

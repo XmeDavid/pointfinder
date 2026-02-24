@@ -4,12 +4,14 @@ import com.prayer.pointfinder.dto.request.PlayerJoinRequest;
 import com.prayer.pointfinder.dto.request.PlayerSubmissionRequest;
 import com.prayer.pointfinder.dto.request.UpdateLocationRequest;
 import com.prayer.pointfinder.dto.request.UpdatePushTokenRequest;
+import com.prayer.pointfinder.dto.request.UploadSessionInitRequest;
 import com.prayer.pointfinder.dto.response.*;
 import com.prayer.pointfinder.entity.GameNotification;
 import com.prayer.pointfinder.entity.Player;
 import com.prayer.pointfinder.repository.GameNotificationRepository;
 import com.prayer.pointfinder.repository.PlayerRepository;
 import com.prayer.pointfinder.security.SecurityUtils;
+import com.prayer.pointfinder.service.ChunkedUploadService;
 import com.prayer.pointfinder.service.FileStorageService;
 import com.prayer.pointfinder.service.PlayerService;
 import jakarta.validation.Valid;
@@ -30,6 +32,7 @@ import java.util.stream.Collectors;
 public class PlayerController {
 
     private final PlayerService playerService;
+    private final ChunkedUploadService chunkedUploadService;
     private final FileStorageService fileStorageService;
     private final GameNotificationRepository gameNotificationRepository;
     private final PlayerRepository playerRepository;
@@ -98,6 +101,58 @@ public class PlayerController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(playerService.submitAnswer(gameId, request, player));
+    }
+
+    @PostMapping("/api/player/games/{gameId}/uploads/sessions")
+    public ResponseEntity<UploadSessionResponse> createUploadSession(
+            @PathVariable UUID gameId,
+            @Valid @RequestBody UploadSessionInitRequest request
+    ) {
+        Player player = SecurityUtils.getCurrentPlayer();
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(chunkedUploadService.createSession(gameId, player, request));
+    }
+
+    @PutMapping(value = "/api/player/games/{gameId}/uploads/sessions/{sessionId}/chunks/{chunkIndex}",
+            consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public ResponseEntity<UploadSessionResponse> uploadSessionChunk(
+            @PathVariable UUID gameId,
+            @PathVariable UUID sessionId,
+            @PathVariable int chunkIndex,
+            @RequestBody byte[] chunkPayload
+    ) {
+        Player player = SecurityUtils.getCurrentPlayer();
+        return ResponseEntity.ok(
+                chunkedUploadService.uploadChunk(gameId, sessionId, chunkIndex, chunkPayload, player)
+        );
+    }
+
+    @GetMapping("/api/player/games/{gameId}/uploads/sessions/{sessionId}")
+    public ResponseEntity<UploadSessionResponse> getUploadSession(
+            @PathVariable UUID gameId,
+            @PathVariable UUID sessionId
+    ) {
+        Player player = SecurityUtils.getCurrentPlayer();
+        return ResponseEntity.ok(chunkedUploadService.getSession(gameId, sessionId, player));
+    }
+
+    @PostMapping("/api/player/games/{gameId}/uploads/sessions/{sessionId}/complete")
+    public ResponseEntity<UploadSessionResponse> completeUploadSession(
+            @PathVariable UUID gameId,
+            @PathVariable UUID sessionId
+    ) {
+        Player player = SecurityUtils.getCurrentPlayer();
+        return ResponseEntity.ok(chunkedUploadService.completeSession(gameId, sessionId, player));
+    }
+
+    @DeleteMapping("/api/player/games/{gameId}/uploads/sessions/{sessionId}")
+    public ResponseEntity<Void> cancelUploadSession(
+            @PathVariable UUID gameId,
+            @PathVariable UUID sessionId
+    ) {
+        Player player = SecurityUtils.getCurrentPlayer();
+        chunkedUploadService.cancelSession(gameId, sessionId, player);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/api/player/games/{gameId}/location")

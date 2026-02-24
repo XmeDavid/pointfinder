@@ -10,6 +10,12 @@ enum AppConfiguration {
     static let appName = "PointFinder"
     static let privacyPolicyURL = "https://pointfinder.pt/privacy/"
     static let mobileRealtimeEnabled = true
+    static var chunkedMediaUploadEnabled: Bool {
+        if UserDefaults.standard.object(forKey: "feature.chunkedMediaUploadEnabled") != nil {
+            return UserDefaults.standard.bool(forKey: "feature.chunkedMediaUploadEnabled")
+        }
+        return true
+    }
 
     // Keychain keys
     static let playerTokenKey = "com.prayer.pointfinder.playerToken"

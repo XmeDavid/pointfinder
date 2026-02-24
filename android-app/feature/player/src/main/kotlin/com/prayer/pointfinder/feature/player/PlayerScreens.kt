@@ -586,7 +586,10 @@ fun SolveScreen(
             )
             Spacer(Modifier.height(8.dp))
             if (!isOnline) {
-                Text(stringResource(R.string.hint_photo_required_online), color = MaterialTheme.colorScheme.error)
+                Text(
+                    stringResource(R.string.hint_media_offline_queue),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         } else {
             OutlinedTextField(
@@ -604,10 +607,7 @@ fun SolveScreen(
         }
 
         Spacer(Modifier.height(12.dp))
-        Button(
-            onClick = onSubmit,
-            enabled = !isPhotoMode || isOnline,
-        ) {
+        Button(onClick = onSubmit) {
             Text(
                 stringResource(
                     if (presenceRequired) R.string.action_confirm_at_base else R.string.action_submit,

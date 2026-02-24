@@ -1,12 +1,14 @@
 package com.prayer.pointfinder.navigation
 
 import android.Manifest
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
+import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -316,8 +318,12 @@ private fun PlayerRootScreen(
 
     var selectedTab by rememberSaveable { mutableStateOf(PlayerTab.MAP) }
     var solving by remember { mutableStateOf<Pair<String, String>?>(null) }
-    var photoBytes by remember { mutableStateOf<ByteArray?>(null) }
-    var photoBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var selectedMediaBytes by remember { mutableStateOf<ByteArray?>(null) }
+    var selectedMediaBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var selectedMediaUri by remember { mutableStateOf<Uri?>(null) }
+    var selectedMediaContentType by remember { mutableStateOf<String?>(null) }
+    var selectedMediaSizeBytes by remember { mutableStateOf<Long?>(null) }
+    var selectedMediaFileName by remember { mutableStateOf<String?>(null) }
     var showNfcScanDialog by remember { mutableStateOf(false) }
     // Callback to invoke when an NFC scan completes (used for both check-in and presence verification).
     var pendingNfcAction by remember { mutableStateOf<((String) -> Unit)?>(null) }
@@ -332,8 +338,12 @@ private fun PlayerRootScreen(
         viewModel.clearSubmissionResult()
         viewModel.clearCheckIn()
         solving = null
-        photoBytes = null
-        photoBitmap = null
+        selectedMediaBytes = null
+        selectedMediaBitmap = null
+        selectedMediaUri = null
+        selectedMediaContentType = null
+        selectedMediaSizeBytes = null
+        selectedMediaFileName = null
         showNfcScanDialog = false
         pendingNfcAction = null
         selectedTab = PlayerTab.MAP
@@ -401,22 +411,44 @@ private fun PlayerRootScreen(
     ) { uri ->
         if (uri != null) {
             runCatching {
-                val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    // Force software bitmap — hardware bitmaps cannot be compressed
-                    ImageDecoder.decodeBitmap(
-                        ImageDecoder.createSource(context.contentResolver, uri),
-                    ) { decoder, _, _ ->
-                        decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION,
+                )
+            }
+            val metadata = resolvePickedMediaMetadata(context, uri)
+            selectedMediaUri = uri
+            selectedMediaContentType = metadata.mimeType
+            selectedMediaSizeBytes = metadata.sizeBytes
+            selectedMediaFileName = metadata.displayName
+
+            runCatching {
+                if (metadata.mimeType.startsWith("image/")) {
+                    val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        // Force software bitmap — hardware bitmaps cannot be compressed
+                        ImageDecoder.decodeBitmap(
+                            ImageDecoder.createSource(context.contentResolver, uri),
+                        ) { decoder, _, _ ->
+                            decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+                        }
+                    } else {
+                        @Suppress("DEPRECATION")
+                        MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+                    }
+                    val scaled = scaleBitmapDown(bitmap, 1920)
+                    selectedMediaBitmap = scaled
+                    val out = ByteArrayOutputStream()
+                    scaled.compress(Bitmap.CompressFormat.JPEG, 70, out)
+                    selectedMediaBytes = out.toByteArray()
+                    selectedMediaContentType = "image/jpeg"
+                    selectedMediaSizeBytes = selectedMediaBytes?.size?.toLong()
+                    if (selectedMediaFileName.isNullOrBlank()) {
+                        selectedMediaFileName = "capture.jpg"
                     }
                 } else {
-                    @Suppress("DEPRECATION")
-                    MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+                    selectedMediaBitmap = null
+                    selectedMediaBytes = null
                 }
-                val scaled = scaleBitmapDown(bitmap, 1920)
-                photoBitmap = scaled
-                val out = ByteArrayOutputStream()
-                scaled.compress(Bitmap.CompressFormat.JPEG, 70, out)
-                photoBytes = out.toByteArray()
             }
         }
     }
@@ -432,10 +464,14 @@ private fun PlayerRootScreen(
                 inputStream?.close()
                 if (bitmap != null) {
                     val scaled = scaleBitmapDown(bitmap, 1920)
-                    photoBitmap = scaled
+                    selectedMediaBitmap = scaled
                     val out = ByteArrayOutputStream()
                     scaled.compress(Bitmap.CompressFormat.JPEG, 70, out)
-                    photoBytes = out.toByteArray()
+                    selectedMediaBytes = out.toByteArray()
+                    selectedMediaUri = cameraPhotoUri
+                    selectedMediaContentType = "image/jpeg"
+                    selectedMediaSizeBytes = selectedMediaBytes?.size?.toLong()
+                    selectedMediaFileName = "capture.jpg"
                 }
             }
         }
@@ -483,8 +519,12 @@ private fun PlayerRootScreen(
         onTabSelected = { tab ->
             // Clear sub-screen state so tabs always navigate
             solving = null
-            photoBytes = null
-            photoBitmap = null
+            selectedMediaBytes = null
+            selectedMediaBitmap = null
+            selectedMediaUri = null
+            selectedMediaContentType = null
+            selectedMediaSizeBytes = null
+            selectedMediaFileName = null
             viewModel.clearCheckIn()
             viewModel.clearSubmissionResult()
             viewModel.closeNotifications()
@@ -519,7 +559,11 @@ private fun PlayerRootScreen(
                             auth = auth,
                             baseId = baseId,
                             challengeId = challengeId,
-                            imageBytes = photoBytes,
+                            mediaBytes = selectedMediaBytes,
+                            mediaSourceUri = selectedMediaUri?.toString(),
+                            mediaContentType = selectedMediaContentType,
+                            mediaSizeBytes = selectedMediaSizeBytes,
+                            mediaFileName = selectedMediaFileName,
                             notes = state.answerText,
                             online = isOnline,
                         )
@@ -538,7 +582,11 @@ private fun PlayerRootScreen(
                     onAnswerChange = viewModel::setAnswerText,
                     isPhotoMode = state.isPhotoMode,
                     presenceRequired = state.presenceRequired,
-                    onPickPhoto = { pickPhotoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+                    onPickPhoto = {
+                        pickPhotoLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo),
+                        )
+                    },
                     onCapturePhoto = {
                         if (context.checkSelfPermission(Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
                             cameraLauncher.launch(cameraPhotoUri)
@@ -546,8 +594,15 @@ private fun PlayerRootScreen(
                             cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                         }
                     },
-                    photoBitmap = photoBitmap,
-                    onClearPhoto = { photoBitmap = null; photoBytes = null },
+                    photoBitmap = selectedMediaBitmap,
+                    onClearPhoto = {
+                        selectedMediaBitmap = null
+                        selectedMediaBytes = null
+                        selectedMediaUri = null
+                        selectedMediaContentType = null
+                        selectedMediaSizeBytes = null
+                        selectedMediaFileName = null
+                    },
                     onBack = { solving = null },
                     onSubmit = {
                         if (state.presenceRequired) {
@@ -962,5 +1017,35 @@ private fun scaleBitmapDown(bitmap: Bitmap, maxSide: Int): Bitmap {
         (w * ratio).toInt(),
         (h * ratio).toInt(),
         true,
+    )
+}
+
+private data class PickedMediaMetadata(
+    val mimeType: String,
+    val sizeBytes: Long?,
+    val displayName: String?,
+)
+
+private fun resolvePickedMediaMetadata(context: android.content.Context, uri: Uri): PickedMediaMetadata {
+    val mimeType = context.contentResolver.getType(uri) ?: "application/octet-stream"
+    var sizeBytes: Long? = null
+    var displayName: String? = null
+    context.contentResolver.query(uri, arrayOf(OpenableColumns.SIZE, OpenableColumns.DISPLAY_NAME), null, null, null)
+        ?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                val sizeIdx = cursor.getColumnIndex(OpenableColumns.SIZE)
+                if (sizeIdx >= 0 && !cursor.isNull(sizeIdx)) {
+                    sizeBytes = cursor.getLong(sizeIdx)
+                }
+                val nameIdx = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                if (nameIdx >= 0 && !cursor.isNull(nameIdx)) {
+                    displayName = cursor.getString(nameIdx)
+                }
+            }
+        }
+    return PickedMediaMetadata(
+        mimeType = mimeType,
+        sizeBytes = sizeBytes,
+        displayName = displayName,
     )
 }

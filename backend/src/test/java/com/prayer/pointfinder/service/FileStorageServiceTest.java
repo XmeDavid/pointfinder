@@ -26,6 +26,7 @@ class FileStorageServiceTest {
     void setUp() {
         fileStorageService = new FileStorageService();
         ReflectionTestUtils.setField(fileStorageService, "uploadsPath", tempDir.toString());
+        ReflectionTestUtils.setField(fileStorageService, "maxFileSizeBytes", 1024L * 1024L * 1024L);
         fileStorageService.init();
     }
 
@@ -81,6 +82,23 @@ class FileStorageServiceTest {
         );
 
         assertThrows(BadRequestException.class, () -> fileStorageService.store(spoofedFile, gameId));
+    }
+
+    @Test
+    void storeAcceptsMp4WhenHeaderMatches() {
+        UUID gameId = UUID.randomUUID();
+        byte[] mp4Header = new byte[]{
+                0x00, 0x00, 0x00, 0x18, 'f', 't', 'y', 'p', 'i', 's', 'o', 'm'
+        };
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "clip.mp4",
+                "video/mp4",
+                mp4Header
+        );
+
+        String fileUrl = fileStorageService.store(file, gameId);
+        assertTrue(fileUrl.endsWith(".mp4"));
     }
 
     @Test

@@ -406,16 +406,10 @@ final class AppState {
         )
     }
 
-    /// Submit a photo answer. Requires online connectivity (no offline support for photos).
+    /// Submit a photo answer as an offline-capable queued media submission.
     func submitAnswerWithPhoto(baseId: UUID, challengeId: UUID, image: UIImage, notes: String) async -> SubmissionResponse? {
-        guard case .player(let token, _, _, let gameId) = authType else {
+        guard case .player(_, _, _, _) = authType else {
             logger.error("Photo submission blocked: missing player auth context")
-            return nil
-        }
-
-        guard isOnline else {
-            logger.info("Photo submission blocked while offline")
-            setError(Translations.string("error.photoOffline"))
             return nil
         }
 
@@ -426,33 +420,106 @@ final class AppState {
             return nil
         }
 
-        do {
-            let idempotencyKey = UUID()
-            logger.debug(
-                "Submitting photo answer for base \(baseId, privacy: .public) challenge \(challengeId, privacy: .public)"
-            )
-            let response = try await apiClient.submitAnswerWithFile(
-                gameId: gameId,
-                baseId: baseId,
-                challengeId: challengeId,
-                imageData: imageData,
-                notes: notes,
-                idempotencyKey: idempotencyKey,
-                token: token
-            )
+        return await submitAnswerWithMedia(
+            baseId: baseId,
+            challengeId: challengeId,
+            mediaData: imageData,
+            mediaSourceURL: nil,
+            contentType: "image/jpeg",
+            fileName: "photo.jpg",
+            notes: notes
+        )
+    }
 
-            // Send location immediately so operators see the update
-            await locationService.sendLocationNow()
-
-            // Refresh progress
-            await loadProgress()
-
-            return response
-        } catch {
-            logger.error("Photo submission request failed: \(error.localizedDescription, privacy: .public)")
-            setError(error.localizedDescription)
+    /// Queue a media submission that is later synced via resumable chunked uploads.
+    func submitAnswerWithMedia(
+        baseId: UUID,
+        challengeId: UUID,
+        mediaData: Data?,
+        mediaSourceURL: URL?,
+        contentType: String,
+        fileName: String?,
+        notes: String
+    ) async -> SubmissionResponse? {
+        guard case .player(_, _, let teamId, let gameId) = authType else { return nil }
+        guard AppConfiguration.chunkedMediaUploadEnabled else {
+            setError(Translations.string("error.mediaUploadDisabled"))
             return nil
         }
+
+        let inferredSize = Int64(mediaData?.count ?? 0)
+        let sourceSize = mediaSourceURL.map { sourceURL -> Int64 in
+            let attrs = try? FileManager.default.attributesOfItem(atPath: sourceURL.path)
+            return (attrs?[.size] as? NSNumber)?.int64Value ?? 0
+        } ?? 0
+        let sizeBytes = max(inferredSize, sourceSize)
+        guard sizeBytes > 0 else {
+            setError(Translations.string("error.photoProcessing"))
+            return nil
+        }
+
+        let localFilePath: String?
+        let sourcePath: String?
+        if sizeBytes <= mediaCopyThresholdBytes {
+            do {
+                localFilePath = try persistMediaCopy(
+                    data: mediaData,
+                    sourceURL: mediaSourceURL,
+                    preferredFileName: fileName,
+                    contentType: contentType
+                )
+                sourcePath = nil
+            } catch {
+                logger.error("Failed to persist guaranteed media copy: \(error.localizedDescription, privacy: .public)")
+                setError(Translations.string("error.photoProcessing"))
+                return nil
+            }
+        } else {
+            guard let mediaSourceURL else {
+                setError(Translations.string("error.mediaSourceRequired"))
+                return nil
+            }
+            localFilePath = nil
+            sourcePath = mediaSourceURL.path
+        }
+
+        let idempotencyKey = await OfflineQueue.shared.enqueueMediaSubmission(
+            gameId: gameId,
+            baseId: baseId,
+            challengeId: challengeId,
+            answer: notes,
+            contentType: contentType,
+            sizeBytes: sizeBytes,
+            localFilePath: localFilePath,
+            sourcePath: sourcePath,
+            fileName: fileName
+        )
+
+        // Trigger sync immediately so queued media retries as soon as possible.
+        Task { await SyncEngine.shared.syncPendingActions() }
+
+        // Update local cache/progress immediately.
+        await GameDataCache.shared.updateBaseStatus(baseId: baseId, status: "submitted", gameId: gameId)
+        updateLocalBaseStatus(baseId: baseId, status: .submitted)
+        pendingActionsCount = await OfflineQueue.shared.pendingCount
+        if isOnline {
+            await locationService.sendLocationNow()
+        }
+
+        return SubmissionResponse(
+            id: idempotencyKey,
+            teamId: teamId,
+            challengeId: challengeId,
+            baseId: baseId,
+            answer: notes,
+            fileUrl: nil,
+            status: "pending",
+            submittedAt: ISO8601DateFormatter().string(from: Date()),
+            reviewedBy: nil,
+            feedback: nil,
+            points: nil,
+            completionContent: nil
+        )
     }
 
     func getCachedChallenge(forBaseId baseId: UUID) async -> CheckInResponse.ChallengeInfo? {
@@ -504,6 +571,49 @@ final class AppState {
             }
         }
     }
+
+    private func persistMediaCopy(
+        data: Data?,
+        sourceURL: URL?,
+        preferredFileName: String?,
+        contentType: String
+    ) throws -> String {
+        let pendingDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("pending-media", isDirectory: true)
+        try FileManager.default.createDirectory(at: pendingDir, withIntermediateDirectories: true)
+
+        let fileExtension: String
+        if let preferredFileName, let ext = preferredFileName.split(separator: ".").last, !ext.isEmpty {
+            fileExtension = String(ext)
+        } else if contentType == "image/png" {
+            fileExtension = "png"
+        } else if contentType == "image/webp" {
+            fileExtension = "webp"
+        } else if contentType == "image/heic" || contentType == "image/heif" {
+            fileExtension = "heic"
+        } else if contentType == "video/mp4" {
+            fileExtension = "mp4"
+        } else if contentType == "video/quicktime" {
+            fileExtension = "mov"
+        } else {
+            fileExtension = "jpg"
+        }
+
+        let targetURL = pendingDir.appendingPathComponent("\(UUID().uuidString).\(fileExtension)")
+        if let data {
+            try data.write(to: targetURL, options: .atomic)
+            return targetURL.path
+        }
+        if let sourceURL {
+            if FileManager.default.fileExists(atPath: sourceURL.path) {
+                try FileManager.default.copyItem(at: sourceURL, to: targetURL)
+                return targetURL.path
+            }
+        }
+        throw NSError(domain: "AppState", code: -1, userInfo: [NSLocalizedDescriptionKey: "No media source available"])
+    }
+
+    private var mediaCopyThresholdBytes: Int64 { 100 * 1024 * 1024 }
 
     // MARK: - Account Deletion
 

@@ -61,9 +61,7 @@ struct SolveView: View {
                     HStack(spacing: 8) {
                         Image(systemName: "wifi.slash")
                             .foregroundStyle(.orange)
-                        Text(isPhotoType
-                             ? locale.t("offline.photoRequired")
-                             : locale.t("offline.submissionSync"))
+                        Text(locale.t("offline.submissionSync"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -243,7 +241,7 @@ struct SolveView: View {
 
     private var canSubmit: Bool {
         if isPhotoType {
-            return selectedImage != nil && appState.isOnline
+            return selectedImage != nil
         } else {
             return !answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         }
