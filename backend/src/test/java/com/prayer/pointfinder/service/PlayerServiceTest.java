@@ -1,12 +1,16 @@
 package com.prayer.pointfinder.service;
 
 import com.prayer.pointfinder.dto.request.PlayerJoinRequest;
+import com.prayer.pointfinder.dto.response.BaseProgressResponse;
 import com.prayer.pointfinder.dto.response.PlayerAuthResponse;
 import com.prayer.pointfinder.entity.Base;
+import com.prayer.pointfinder.entity.Challenge;
 import com.prayer.pointfinder.entity.CheckIn;
 import com.prayer.pointfinder.entity.Game;
 import com.prayer.pointfinder.entity.GameStatus;
 import com.prayer.pointfinder.entity.Player;
+import com.prayer.pointfinder.entity.Submission;
+import com.prayer.pointfinder.entity.SubmissionStatus;
 import com.prayer.pointfinder.entity.Team;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.repository.ActivityEventRepository;
@@ -27,11 +31,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -296,6 +303,91 @@ class PlayerServiceTest {
 
         assertEquals("Game is not active yet", ex.getMessage());
         verify(playerLocationRepository, never()).save(any());
+    }
+
+    @Test
+    void getProgressShowsHiddenBaseWhenUnlockChallengeIsCompleted() {
+        UUID gameId = UUID.randomUUID();
+        UUID teamId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        UUID challengeId = UUID.randomUUID();
+        UUID sourceBaseId = UUID.randomUUID();
+        UUID hiddenBaseId = UUID.randomUUID();
+
+        Game game = Game.builder()
+                .id(gameId)
+                .name("Live Game")
+                .description("Desc")
+                .status(GameStatus.live)
+                .build();
+        Team team = Team.builder()
+                .id(teamId)
+                .game(game)
+                .name("Wolves")
+                .joinCode("LIVE22")
+                .color("#00AA00")
+                .build();
+        Player player = Player.builder()
+                .id(playerId)
+                .team(team)
+                .deviceId("device-progress")
+                .displayName("Scout")
+                .build();
+        Base sourceBase = Base.builder()
+                .id(sourceBaseId)
+                .game(game)
+                .name("Source Base")
+                .description("Desc")
+                .lat(1.0)
+                .lng(2.0)
+                .hidden(false)
+                .nfcLinked(false)
+                .requirePresenceToSubmit(false)
+                .build();
+        Base hiddenBase = Base.builder()
+                .id(hiddenBaseId)
+                .game(game)
+                .name("Hidden Base")
+                .description("Desc")
+                .lat(3.0)
+                .lng(4.0)
+                .hidden(true)
+                .nfcLinked(false)
+                .requirePresenceToSubmit(false)
+                .build();
+        Challenge unlockChallenge = Challenge.builder()
+                .id(challengeId)
+                .game(game)
+                .title("Unlock challenge")
+                .locationBound(true)
+                .unlocksBase(hiddenBase)
+                .build();
+        Submission unlockSubmission = Submission.builder()
+                .id(UUID.randomUUID())
+                .team(team)
+                .challenge(unlockChallenge)
+                .base(sourceBase)
+                .answer("ok")
+                .status(SubmissionStatus.correct)
+                .submittedAt(Instant.now())
+                .build();
+
+        when(playerRepository.findById(playerId)).thenReturn(Optional.of(player));
+        when(baseRepository.findByGameId(gameId)).thenReturn(List.of(sourceBase, hiddenBase));
+        when(checkInRepository.findByGameIdAndTeamId(gameId, teamId)).thenReturn(List.of());
+        when(submissionRepository.findByTeamId(teamId)).thenReturn(List.of(unlockSubmission));
+        when(assignmentRepository.findByGameId(gameId)).thenReturn(List.of());
+        when(challengeRepository.findByGameIdAndUnlocksBaseIsNotNull(gameId)).thenReturn(List.of(unlockChallenge));
+
+        List<BaseProgressResponse> progress = playerService.getProgress(gameId, player);
+
+        BaseProgressResponse hiddenProgress = progress.stream()
+                .filter(p -> p.getBaseId().equals(hiddenBaseId))
+                .findFirst()
+                .orElseThrow();
+
+        assertEquals("not_visited", hiddenProgress.getStatus());
+        assertTrue(progress.stream().anyMatch(p -> p.getBaseId().equals(sourceBaseId)));
     }
 
     @Test

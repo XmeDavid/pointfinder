@@ -244,7 +244,10 @@
     "manualReview": "Manual review",
     "totalPoints": "{{total}} total points",
     "summary_one": "{{count}} challenge",
-    "summary_other": "{{count}} challenges"
+    "summary_other": "{{count}} challenges",
+    "unlocksBaseToggle": "Unlocks a hidden base",
+    "unlocksBaseLabel": "Unlocks: {{base}}",
+    "noHiddenBasesAvailable": "No hidden bases available to unlock"
   },
   "assignments": {
     "title": "Assign Challenges",

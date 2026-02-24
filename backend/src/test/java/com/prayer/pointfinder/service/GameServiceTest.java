@@ -272,6 +272,155 @@ class GameServiceTest {
         verify(gameRepository, never()).save(any(Game.class));
     }
 
+    @Test
+    void importGameRejectsUnlockTargetThatIsNotHidden() {
+        when(userRepository.findById(authenticatedUser.getId())).thenReturn(Optional.of(authenticatedUser));
+
+        GameImportRequest request = new GameImportRequest();
+        request.setGameData(GameExportDto.builder()
+                .exportVersion("1.0")
+                .game(GameMetadataDto.builder().name("Game").description("").uniformAssignment(false).build())
+                .bases(List.of(
+                        BaseExportDto.builder()
+                                .tempId("base_1")
+                                .name("Source")
+                                .description("")
+                                .lat(1.0)
+                                .lng(2.0)
+                                .hidden(false)
+                                .fixedChallengeTempId("challenge_1")
+                                .requirePresenceToSubmit(false)
+                                .build(),
+                        BaseExportDto.builder()
+                                .tempId("base_2")
+                                .name("Target")
+                                .description("")
+                                .lat(3.0)
+                                .lng(4.0)
+                                .hidden(false)
+                                .requirePresenceToSubmit(false)
+                                .build()
+                ))
+                .challenges(List.of(ChallengeExportDto.builder()
+                        .tempId("challenge_1")
+                        .title("Challenge")
+                        .answerType(AnswerType.text)
+                        .points(100)
+                        .locationBound(true)
+                        .unlocksBaseTempId("base_2")
+                        .build()))
+                .assignments(List.of())
+                .teams(List.of())
+                .build());
+
+        BadRequestException ex = assertThrows(BadRequestException.class, () -> gameService.importGame(request));
+        assertTrue(ex.getMessage().contains("hidden base"));
+        verify(gameRepository, never()).save(any(Game.class));
+    }
+
+    @Test
+    void importGameRejectsDuplicateUnlockTargets() {
+        when(userRepository.findById(authenticatedUser.getId())).thenReturn(Optional.of(authenticatedUser));
+
+        GameImportRequest request = new GameImportRequest();
+        request.setGameData(GameExportDto.builder()
+                .exportVersion("1.0")
+                .game(GameMetadataDto.builder().name("Game").description("").uniformAssignment(false).build())
+                .bases(List.of(
+                        BaseExportDto.builder()
+                                .tempId("base_1")
+                                .name("Source 1")
+                                .description("")
+                                .lat(1.0)
+                                .lng(2.0)
+                                .hidden(false)
+                                .fixedChallengeTempId("challenge_1")
+                                .requirePresenceToSubmit(false)
+                                .build(),
+                        BaseExportDto.builder()
+                                .tempId("base_2")
+                                .name("Source 2")
+                                .description("")
+                                .lat(5.0)
+                                .lng(6.0)
+                                .hidden(false)
+                                .fixedChallengeTempId("challenge_2")
+                                .requirePresenceToSubmit(false)
+                                .build(),
+                        BaseExportDto.builder()
+                                .tempId("base_3")
+                                .name("Hidden target")
+                                .description("")
+                                .lat(3.0)
+                                .lng(4.0)
+                                .hidden(true)
+                                .requirePresenceToSubmit(false)
+                                .build()
+                ))
+                .challenges(List.of(
+                        ChallengeExportDto.builder()
+                                .tempId("challenge_1")
+                                .title("Challenge 1")
+                                .answerType(AnswerType.text)
+                                .points(100)
+                                .locationBound(true)
+                                .unlocksBaseTempId("base_3")
+                                .build(),
+                        ChallengeExportDto.builder()
+                                .tempId("challenge_2")
+                                .title("Challenge 2")
+                                .answerType(AnswerType.text)
+                                .points(100)
+                                .locationBound(true)
+                                .unlocksBaseTempId("base_3")
+                                .build()
+                ))
+                .assignments(List.of())
+                .teams(List.of())
+                .build());
+
+        BadRequestException ex = assertThrows(BadRequestException.class, () -> gameService.importGame(request));
+        assertTrue(ex.getMessage().contains("Multiple challenges cannot unlock the same base"));
+        verify(gameRepository, never()).save(any(Game.class));
+    }
+
+    @Test
+    void importGameRejectsUnlockingOwnFixedBase() {
+        when(userRepository.findById(authenticatedUser.getId())).thenReturn(Optional.of(authenticatedUser));
+
+        GameImportRequest request = new GameImportRequest();
+        request.setGameData(GameExportDto.builder()
+                .exportVersion("1.0")
+                .game(GameMetadataDto.builder().name("Game").description("").uniformAssignment(false).build())
+                .bases(List.of(
+                        BaseExportDto.builder()
+                                .tempId("base_1")
+                                .name("Source")
+                                .description("")
+                                .lat(1.0)
+                                .lng(2.0)
+                                .hidden(true)
+                                .fixedChallengeTempId("challenge_1")
+                                .requirePresenceToSubmit(false)
+                                .build()
+                ))
+                .challenges(List.of(ChallengeExportDto.builder()
+                        .tempId("challenge_1")
+                        .title("Challenge")
+                        .answerType(AnswerType.text)
+                        .points(100)
+                        .locationBound(true)
+                        .unlocksBaseTempId("base_1")
+                        .build()))
+                .assignments(List.of())
+                .teams(List.of())
+                .build());
+
+        BadRequestException ex = assertThrows(BadRequestException.class, () -> gameService.importGame(request));
+        assertTrue(ex.getMessage().contains("cannot unlock its own fixed base"));
+        verify(gameRepository, never()).save(any(Game.class));
+    }
+
     // ── Status transition tests ──────────────────────────────────────
 
     @Test

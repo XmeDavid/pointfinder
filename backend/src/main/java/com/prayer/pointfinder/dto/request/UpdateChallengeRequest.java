@@ -31,4 +31,6 @@ public class UpdateChallengeRequest {
     private Boolean locationBound = false;
 
     private UUID fixedBaseId;
+
+    private UUID unlocksBaseId;
 }

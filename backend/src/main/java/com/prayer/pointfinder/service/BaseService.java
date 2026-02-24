@@ -14,7 +14,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -58,6 +60,9 @@ public class BaseService {
                 .build();
 
         base = baseRepository.save(base);
+        if (base.getFixedChallenge() != null) {
+            enforceChallengeUnlockGuardrails(base.getFixedChallenge().getId());
+        }
         return toResponse(base);
     }
 
@@ -67,6 +72,8 @@ public class BaseService {
         Base base = baseRepository.findById(baseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Base", baseId));
         ensureBaseBelongsToGame(base, gameId);
+        boolean wasHidden = Boolean.TRUE.equals(base.getHidden());
+        UUID previousFixedChallengeId = base.getFixedChallenge() != null ? base.getFixedChallenge().getId() : null;
 
         base.setName(request.getName());
         base.setDescription(request.getDescription() != null ? request.getDescription() : "");
@@ -95,6 +102,19 @@ public class BaseService {
         }
 
         base = baseRepository.save(base);
+        if (wasHidden && !Boolean.TRUE.equals(base.getHidden())) {
+            clearUnlockTarget(base.getId());
+        }
+
+        Set<UUID> impactedChallengeIds = new HashSet<>();
+        if (previousFixedChallengeId != null) {
+            impactedChallengeIds.add(previousFixedChallengeId);
+        }
+        if (base.getFixedChallenge() != null) {
+            impactedChallengeIds.add(base.getFixedChallenge().getId());
+        }
+        impactedChallengeIds.forEach(this::enforceChallengeUnlockGuardrails);
+
         return toResponse(base);
     }
 
@@ -115,7 +135,41 @@ public class BaseService {
         Base base = baseRepository.findById(baseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Base", baseId));
         ensureBaseBelongsToGame(base, gameId);
+        UUID fixedChallengeId = base.getFixedChallenge() != null ? base.getFixedChallenge().getId() : null;
+        clearUnlockTarget(base.getId());
         baseRepository.delete(base);
+        if (fixedChallengeId != null) {
+            enforceChallengeUnlockGuardrails(fixedChallengeId);
+        }
+    }
+
+    private void clearUnlockTarget(UUID targetBaseId) {
+        challengeRepository.findByUnlocksBaseId(targetBaseId).ifPresent(challenge -> {
+            challenge.setUnlocksBase(null);
+            challengeRepository.save(challenge);
+        });
+    }
+
+    private void enforceChallengeUnlockGuardrails(UUID challengeId) {
+        challengeRepository.findById(challengeId).ifPresent(challenge -> {
+            if (challenge.getUnlocksBase() == null) {
+                return;
+            }
+
+            List<Base> fixedBases = baseRepository.findByFixedChallengeId(challengeId);
+            UUID unlockTargetBaseId = challenge.getUnlocksBase().getId();
+
+            boolean hasFixedBase = !fixedBases.isEmpty();
+            boolean unlocksOwnFixedBase = fixedBases.stream()
+                    .anyMatch(base -> base.getId().equals(unlockTargetBaseId));
+            boolean locationBound = Boolean.TRUE.equals(challenge.getLocationBound());
+            boolean targetHidden = Boolean.TRUE.equals(challenge.getUnlocksBase().getHidden());
+
+            if (!locationBound || !hasFixedBase || unlocksOwnFixedBase || !targetHidden) {
+                challenge.setUnlocksBase(null);
+                challengeRepository.save(challenge);
+            }
+        });
     }
 
     private void ensureBaseBelongsToGame(Base base, UUID gameId) {

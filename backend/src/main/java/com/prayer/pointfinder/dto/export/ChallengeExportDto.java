@@ -21,4 +21,5 @@ public class ChallengeExportDto {
     private String correctAnswer;
     private Integer points;
     private Boolean locationBound;
+    private String unlocksBaseTempId;
 }

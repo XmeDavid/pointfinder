@@ -244,7 +244,10 @@
     "manualReview": "Manuelle Prüfung",
     "totalPoints": "{{total}} Gesamtpunkte",
     "summary_one": "{{count}} Challenge",
-    "summary_other": "{{count}} Challenges"
+    "summary_other": "{{count}} Challenges",
+    "unlocksBaseToggle": "Versteckte Basis freischalten",
+    "unlocksBaseLabel": "Schaltet frei: {{base}}",
+    "noHiddenBasesAvailable": "Keine versteckten Basen zum Freischalten verfügbar"
   },
   "assignments": {
     "title": "Zuweisungen",

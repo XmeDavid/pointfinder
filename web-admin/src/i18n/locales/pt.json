@@ -244,7 +244,10 @@
     "manualReview": "Revisão manual",
     "totalPoints": "{{total}} pontos totais",
     "summary_one": "{{count}} desafio",
-    "summary_other": "{{count}} desafios"
+    "summary_other": "{{count}} desafios",
+    "unlocksBaseToggle": "Desbloqueia uma base oculta",
+    "unlocksBaseLabel": "Desbloqueia: {{base}}",
+    "noHiddenBasesAvailable": "Nenhuma base oculta disponível para desbloquear"
   },
   "assignments": {
     "title": "Atribuir Desafios",

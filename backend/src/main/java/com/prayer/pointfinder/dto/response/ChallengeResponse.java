@@ -21,4 +21,5 @@ public class ChallengeResponse {
     private String correctAnswer;
     private Integer points;
     private Boolean locationBound;
+    private UUID unlocksBaseId;
 }
