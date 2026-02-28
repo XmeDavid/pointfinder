@@ -65,6 +65,7 @@ class AppSessionViewModel @Inject constructor(
             networkMonitor.isOnline.collectLatest { online ->
                 _state.value = _state.value.copy(isOnline = online)
                 if (online && _state.value.authType is AuthType.Player && _state.value.pendingActionsCount > 0) {
+                    launch { playerRepository.trySyncPendingActions(_state.value.authType as AuthType.Player) }
                     OfflineSyncWorker.enqueue(context)
                 }
             }

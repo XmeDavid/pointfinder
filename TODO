@@ -1,12 +1,23 @@
 #Code (in codebase)
 
 ## Bugs
+-The location bound on a challange, and the fixed based, should be synced
+-Android sync issue: When submitting a photo on a base, the action becomes permanently as a pending action and never syncs, on iOS is working. On this android, the game was randomly also showing as ended, but that was no the case, I had to restart the app, and only then on a resync would the game lock of ended game disapear.
+
+
 
 ## Improvements
+-Multiple correct answers for auto validation
+-Confirm deletions with popup dialogs.
+
 
 ## Features
 -Map view for guests, operators can generate a guest view token(lets say a 6 character code), we create a new page, that is guest facing, it should have great design, should have features similar to the live map view. the idea is to display on a television or something at the base. we use the code to not dox locations to everyone on the web.
+-Recover password
 
+
+## Test
+-Test long videos
 
 
 ## Consider what we want to do

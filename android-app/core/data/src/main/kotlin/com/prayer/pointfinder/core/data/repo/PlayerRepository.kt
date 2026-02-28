@@ -25,6 +25,7 @@ import java.io.InputStream
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.sync.Mutex
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
@@ -63,6 +64,8 @@ class PlayerRepository @Inject constructor(
     private val db: CompanionDatabase,
     @ApplicationContext private val context: Context,
 ) {
+    private val syncMutex = Mutex()
+
     suspend fun pendingCount(): Int = db.pendingActionDao().pendingCount()
 
     suspend fun loadProgress(auth: AuthType.Player, online: Boolean): ProgressResult {
@@ -74,7 +77,7 @@ class PlayerRepository @Inject constructor(
                 cacheGameChallenges(auth, gameData)
                 return ProgressResult(
                     progress = gameData.progress,
-                    gameStatus = gameData.gameStatus,
+                    gameStatus = gameData.gameStatus ?: auth.gameStatus,
                 )
             }
         }
@@ -348,6 +351,8 @@ class PlayerRepository @Inject constructor(
             MediaSyncOutcome.Retry
         } catch (_: HttpException) {
             MediaSyncOutcome.PermanentFailure
+        } catch (_: Exception) {
+            MediaSyncOutcome.Retry
         }
     }
 
@@ -468,6 +473,62 @@ class PlayerRepository @Inject constructor(
         return null
     }
 
+    suspend fun trySyncPendingActions(auth: AuthType.Player) {
+        if (!syncMutex.tryLock()) return
+        try {
+            val pending = prioritizedPendingActions(pendingActions())
+            for (action in pending) {
+                if (action.type == ACTION_TYPE_MEDIA_SUBMISSION) {
+                    if (action.requiresReselect) continue
+                    when (syncMediaSubmission(auth, action)) {
+                        MediaSyncOutcome.Synced -> markSynced(action.id)
+                        MediaSyncOutcome.PermanentFailure -> markSynced(action.id)
+                        MediaSyncOutcome.NeedsReselect -> continue
+                        MediaSyncOutcome.Retry -> {
+                            if (action.retryCount >= MAX_RETRIES) {
+                                markSynced(action.id)
+                            } else {
+                                incrementRetry(action.id)
+                                return
+                            }
+                        }
+                    }
+                } else {
+                    val synced = runCatching {
+                        when (action.type) {
+                            "check_in" -> api.checkIn(action.gameId, action.baseId)
+                            "submission" -> api.submitAnswer(
+                                gameId = action.gameId,
+                                request = PlayerSubmissionRequest(
+                                    baseId = action.baseId,
+                                    challengeId = action.challengeId ?: return@runCatching false,
+                                    answer = action.answer.orEmpty(),
+                                    fileUrl = null,
+                                    idempotencyKey = action.id,
+                                ),
+                            )
+                            else -> return@runCatching true
+                        }
+                        true
+                    }.getOrElse { false }
+
+                    if (synced) {
+                        markSynced(action.id)
+                    } else {
+                        if (action.retryCount >= MAX_RETRIES) {
+                            markSynced(action.id)
+                        } else {
+                            incrementRetry(action.id)
+                            return
+                        }
+                    }
+                }
+            }
+        } finally {
+            syncMutex.unlock()
+        }
+    }
+
     suspend fun cachedChallenge(auth: AuthType.Player, baseId: String): CheckInResponse.ChallengeInfo? {
         return db.challengeDao().challengeForBase(auth.gameId, auth.teamId, baseId)?.toChallengeInfo()
     }
@@ -499,5 +560,6 @@ class PlayerRepository @Inject constructor(
     companion object {
         private const val ACTION_TYPE_MEDIA_SUBMISSION = "media_submission"
         private const val DEFAULT_CHUNK_SIZE_BYTES = 8 * 1024 * 1024
+        private const val MAX_RETRIES = 5
     }
 }

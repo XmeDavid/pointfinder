@@ -66,6 +66,7 @@ class PlayerViewModel @Inject constructor(
     private val locationService: PlayerLocationService,
     private val realtimeClient: MobileRealtimeClient,
     private val api: com.prayer.pointfinder.core.network.CompanionApi,
+    private val sessionStore: com.prayer.pointfinder.core.data.repo.SessionStore,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
     private val _state = MutableStateFlow(PlayerState())
@@ -104,6 +105,7 @@ class PlayerViewModel @Inject constructor(
                             }
                         if (!status.isNullOrBlank()) {
                             _state.value = _state.value.copy(gameStatus = status)
+                            launch { sessionStore.updateGameStatus(status) }
                         }
                     }
 
@@ -136,12 +138,17 @@ class PlayerViewModel @Inject constructor(
             runCatching {
                 playerRepository.loadProgress(auth, online)
             }.onSuccess { result ->
+                val freshStatus = result.gameStatus ?: _state.value.gameStatus
                 _state.value = _state.value.copy(
                     isLoading = false,
                     progress = result.progress,
-                    gameStatus = result.gameStatus ?: _state.value.gameStatus,
+                    gameStatus = freshStatus,
                     authExpired = false,
                 )
+                val apiStatus = result.gameStatus
+                if (apiStatus != null) {
+                    launch { sessionStore.updateGameStatus(apiStatus) }
+                }
             }.onFailure { err ->
                 val authExpired = ApiErrorParser.isAuthExpired(err)
                 _state.value = _state.value.copy(
@@ -183,6 +190,7 @@ class PlayerViewModel @Inject constructor(
                 // If the action was queued offline, trigger sync immediately
                 // so it retries as soon as connectivity allows.
                 if (result.queued) {
+                    launch { playerRepository.trySyncPendingActions(auth) }
                     OfflineSyncWorker.enqueue(context)
                 }
                 refresh(auth, online)
@@ -284,6 +292,7 @@ class PlayerViewModel @Inject constructor(
                 // If the action was queued offline, trigger sync immediately
                 // so it retries as soon as connectivity allows.
                 if (result.queued) {
+                    launch { playerRepository.trySyncPendingActions(auth) }
                     OfflineSyncWorker.enqueue(context)
                 }
                 refresh(auth, online)
@@ -386,6 +395,7 @@ class PlayerViewModel @Inject constructor(
                     presenceVerified = false,
                     authExpired = false,
                 )
+                launch { playerRepository.trySyncPendingActions(auth) }
                 OfflineSyncWorker.enqueue(context)
                 refresh(auth, online)
                 // Send location immediately after media submission (matches iOS behavior)

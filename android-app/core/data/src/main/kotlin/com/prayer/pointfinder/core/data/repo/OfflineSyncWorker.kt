@@ -89,6 +89,20 @@ class OfflineSyncWorker @AssistedInject constructor(
             }
         }
 
+        // If new actions arrived while we were processing, schedule a fresh worker.
+        // Using REPLACE is safe here because the current worker is finishing.
+        if (playerRepository.pendingActions().isNotEmpty()) {
+            val constraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build()
+            val request = OneTimeWorkRequestBuilder<OfflineSyncWorker>()
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, Duration.ofSeconds(2))
+                .setConstraints(constraints)
+                .build()
+            WorkManager.getInstance(applicationContext)
+                .enqueueUniqueWork(UNIQUE_WORK, ExistingWorkPolicy.REPLACE, request)
+        }
+
         return Result.success()
     }
 
@@ -104,7 +118,7 @@ class OfflineSyncWorker @AssistedInject constructor(
                 .setConstraints(constraints)
                 .build()
             WorkManager.getInstance(context)
-                .enqueueUniqueWork(UNIQUE_WORK, ExistingWorkPolicy.REPLACE, request)
+                .enqueueUniqueWork(UNIQUE_WORK, ExistingWorkPolicy.KEEP, request)
         }
     }
 }
