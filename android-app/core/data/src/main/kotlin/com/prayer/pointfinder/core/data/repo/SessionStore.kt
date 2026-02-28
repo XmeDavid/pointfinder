@@ -136,6 +136,13 @@ class SessionStore @Inject constructor(
         return resolved
     }
 
+    suspend fun updateGameStatus(status: String) {
+        context.sessionDataStore.edit { prefs ->
+            prefs[GAME_STATUS] = status
+        }
+        cachedAuthType = currentAuthType()
+    }
+
     suspend fun setPreferredLanguage(languageCode: String) {
         context.sessionDataStore.edit { prefs ->
             prefs[PREFERRED_LANGUAGE] = languageCode
