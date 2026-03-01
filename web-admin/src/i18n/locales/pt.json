@@ -145,7 +145,11 @@
     "team_one": "{{count}} equipa",
     "team_other": "{{count}} equipas",
     "operator_one": "{{count}} operador",
-    "operator_other": "{{count}} operadores"
+    "operator_other": "{{count}} operadores",
+    "searchPlaceholder": "Pesquisar jogos...",
+    "myGames": "Os Meus Jogos",
+    "allGames": "Todos os Jogos",
+    "noMatchingGames": "Nenhum jogo corresponde aos filtros."
   },
   "status": {
     "setup": "Configuração",
@@ -508,5 +512,18 @@
       "operatorLogin": "Entrar",
       "copyright": "© {{year}} PointFinder. Todos os direitos reservados."
     }
+  },
+  "layout": {
+    "switcher": "Layout",
+    "classic": "Clássico",
+    "classicDesc": "Vista lateral padrão",
+    "setup": "Configuração",
+    "setupDesc": "Fluxo guiado de criação, compatível com telemóvel",
+    "monitor": "Monitor",
+    "monitorDesc": "Monitorização em ecrã completo, sem barra lateral",
+    "review": "Revisão",
+    "reviewDesc": "Fila de submissões em painel dividido",
+    "broadcast": "Projeção",
+    "broadcastDesc": "Classificação para projetor"
   }
 }

@@ -145,7 +145,11 @@
     "team_one": "{{count}} team",
     "team_other": "{{count}} teams",
     "operator_one": "{{count}} operator",
-    "operator_other": "{{count}} operators"
+    "operator_other": "{{count}} operators",
+    "searchPlaceholder": "Search games...",
+    "myGames": "My Games",
+    "allGames": "All Games",
+    "noMatchingGames": "No games match your filters."
   },
   "status": {
     "setup": "Setup",
@@ -508,5 +512,18 @@
       "operatorLogin": "Operator Login",
       "copyright": "© {{year}} PointFinder. All rights reserved."
     }
+  },
+  "layout": {
+    "switcher": "Layout",
+    "classic": "Classic",
+    "classicDesc": "Standard sidebar view",
+    "setup": "Setup",
+    "setupDesc": "Guided creation flow, mobile-friendly",
+    "monitor": "Monitor",
+    "monitorDesc": "Full-screen monitoring, no sidebar",
+    "review": "Review",
+    "reviewDesc": "Split-pane submission queue",
+    "broadcast": "Broadcast",
+    "broadcastDesc": "Projector-ready leaderboard"
   }
 }

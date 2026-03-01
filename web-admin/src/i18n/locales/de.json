@@ -145,7 +145,11 @@
     "team_one": "{{count}} Team",
     "team_other": "{{count}} Teams",
     "operator_one": "{{count}} Operator",
-    "operator_other": "{{count}} Operatoren"
+    "operator_other": "{{count}} Operatoren",
+    "searchPlaceholder": "Spiele suchen...",
+    "myGames": "Meine Spiele",
+    "allGames": "Alle Spiele",
+    "noMatchingGames": "Keine Spiele entsprechen den Filtern."
   },
   "status": {
     "setup": "Setup",
@@ -508,5 +512,18 @@
       "operatorLogin": "Operator-Login",
       "copyright": "© {{year}} PointFinder. Alle Rechte vorbehalten."
     }
+  },
+  "layout": {
+    "switcher": "Layout",
+    "classic": "Klassisch",
+    "classicDesc": "Standardansicht mit Seitenleiste",
+    "setup": "Einrichtung",
+    "setupDesc": "Geführter Erstellungsablauf, mobilfreundlich",
+    "monitor": "Monitor",
+    "monitorDesc": "Vollbildüberwachung ohne Seitenleiste",
+    "review": "Überprüfung",
+    "reviewDesc": "Geteilte Ansicht für Einreichungen",
+    "broadcast": "Präsentation",
+    "broadcastDesc": "Bestenliste für Beamer"
   }
 }
