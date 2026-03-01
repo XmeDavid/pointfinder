@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-dialog";
 import { basesApi, type CreateBaseDto } from "@/lib/api/bases";
 import { challengesApi } from "@/lib/api/challenges";
 import { getApiErrorMessage } from "@/lib/api/errors";
@@ -29,6 +30,7 @@ export function BasesPage() {
   const [editing, setEditing] = useState<Base | null>(null);
   const [form, setForm] = useState<Partial<CreateBaseDto>>({});
   const [actionError, setActionError] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [defaultLocation, setDefaultLocation] = useState<{ lat: number; lng: number }>({ lat: 40.08789650218038, lng: -8.869461715221407 });
 
   useEffect(() => {
@@ -163,7 +165,7 @@ export function BasesPage() {
                       <span className="hidden sm:inline">{base.nfcLinked ? t("bases.nfcLinked") : t("bases.nfcNotLinked")}</span>
                     </Badge>
                     <Button variant="ghost" size="icon" onClick={() => openEdit(base)}><Pencil className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => deleteBase.mutate(base.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(base.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                   </div>
                 </CardContent>
               </Card>
@@ -270,6 +272,14 @@ export function BasesPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDeleteDialog
+        open={deleteTarget !== null}
+        onConfirm={() => { if (deleteTarget) deleteBase.mutate(deleteTarget); setDeleteTarget(null); }}
+        onCancel={() => setDeleteTarget(null)}
+        title={t("bases.deleteConfirmTitle")}
+        description={t("bases.deleteConfirmDescription")}
+      />
     </div>
   );
 }

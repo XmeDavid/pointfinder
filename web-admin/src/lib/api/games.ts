@@ -40,7 +40,7 @@ export interface ChallengeExportDto {
   completionContent?: string;
   answerType: AnswerType;
   autoValidate?: boolean;
-  correctAnswer?: string;
+  correctAnswer?: string[];
   points: number;
   locationBound?: boolean;
 }

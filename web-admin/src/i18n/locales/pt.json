@@ -175,7 +175,9 @@
     "inviteDescription": "Introduza o email de um operador existente para convidá-lo para este jogo. Será notificado por email e poderá aceitar o convite na plataforma.",
     "owner": "Dono",
     "pendingInvitations": "Convites Pendentes",
-    "inviteError": "Falha ao enviar convite. Tente novamente."
+    "inviteError": "Falha ao enviar convite. Tente novamente.",
+    "removeConfirmTitle": "Remover este operador?",
+    "removeConfirmDescription": "Este operador perderá o acesso a este jogo."
   },
   "invitations": {
     "title": "Convites",
@@ -212,7 +214,9 @@
     "hidden": "Oculta no mapa",
     "hiddenHint": "Os jogadores não verão esta base no mapa até fazerem check-in (ex. via NFC)",
     "hiddenTag": "Oculta",
-    "noFixedChallengesAvailable": "Não há desafios fixos disponíveis de momento."
+    "noFixedChallengesAvailable": "Não há desafios fixos disponíveis de momento.",
+    "deleteConfirmTitle": "Eliminar esta base?",
+    "deleteConfirmDescription": "Esta base e as suas atribuições serão permanentemente eliminadas."
   },
   "challenges": {
     "title": "Desafios",
@@ -239,15 +243,18 @@
     "selectBase": "Atribuir a base",
     "selectBasePlaceholder": "Selecionar uma base...",
     "noBasesAvailable": "Nenhuma base disponível (todas as bases já têm um desafio fixo)",
-    "correctAnswer": "Resposta Correta",
+    "correctAnswer": "Respostas Corretas",
     "correctAnswerPlaceholder": "A resposta esperada (comparação sem distinção de maiúsculas)",
+    "addAnswer": "Adicionar Resposta",
     "manualReview": "Revisão manual",
     "totalPoints": "{{total}} pontos totais",
     "summary_one": "{{count}} desafio",
     "summary_other": "{{count}} desafios",
     "unlocksBaseToggle": "Desbloqueia uma base oculta",
     "unlocksBaseLabel": "Desbloqueia: {{base}}",
-    "noHiddenBasesAvailable": "Nenhuma base oculta disponível para desbloquear"
+    "noHiddenBasesAvailable": "Nenhuma base oculta disponível para desbloquear",
+    "deleteConfirmTitle": "Eliminar este desafio?",
+    "deleteConfirmDescription": "Este desafio e todas as suas atribuições serão permanentemente eliminados."
   },
   "assignments": {
     "title": "Atribuir Desafios",
@@ -275,7 +282,9 @@
     "noChallengesAvailable": "Não há desafios disponíveis para novas atribuições nesta base.",
     "conflictGeneric": "Esta atribuição entra em conflito com dados existentes.",
     "unassignedNote_one": "{{count}} base sem atribuição receberá desafios aleatórios por equipa ao iniciar o jogo.",
-    "unassignedNote_other": "{{count}} bases sem atribuição receberão desafios aleatórios por equipa ao iniciar o jogo."
+    "unassignedNote_other": "{{count}} bases sem atribuição receberão desafios aleatórios por equipa ao iniciar o jogo.",
+    "deleteConfirmTitle": "Eliminar esta atribuição?",
+    "deleteConfirmDescription": "Esta atribuição será permanentemente removida."
   },
   "teams": {
     "title": "Equipas",
@@ -292,7 +301,9 @@
     "teamColor": "Cor da equipa",
     "downloadQr": "Descarregar Código QR",
     "removeMember": "Remover jogador",
-    "removeMemberConfirm": "Remover {{name}} deste jogo?"
+    "removeMemberConfirm": "Remover {{name}} deste jogo?",
+    "deleteConfirmTitle": "Eliminar esta equipa?",
+    "deleteConfirmDescription": "Esta equipa e todos os seus membros serão permanentemente removidos."
   },
   "notifications": {
     "title": "Notificações",

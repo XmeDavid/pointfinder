@@ -12,6 +12,7 @@ import { challengesApi } from "@/lib/api/challenges";
 import { teamsApi } from "@/lib/api/teams";
 import { assignmentsApi } from "@/lib/api/assignments";
 import { getApiErrorMessage } from "@/lib/api/errors";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-dialog";
 import { useTranslation } from "react-i18next";
 import type { Assignment } from "@/types";
 
@@ -34,6 +35,7 @@ export function AssignmentsPage() {
   const { gameId } = useParams<{ gameId: string }>();
   const queryClient = useQueryClient();
   const [drafts, setDrafts] = useState<Record<string, AssignmentDraft>>({});
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!) });
   const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!) });
@@ -180,7 +182,7 @@ export function AssignmentsPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => deleteAssignment.mutate(assignment.id)}
+                          onClick={() => setDeleteTarget(assignment.id)}
                           disabled={deleteAssignment.isPending}
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
@@ -269,6 +271,14 @@ export function AssignmentsPage() {
           {basesWithoutAssignment.length > 0 && <p className="text-sm text-muted-foreground">{t("assignments.unassignedNote", { count: basesWithoutAssignment.length })}</p>}
         </CardContent>
       </Card>
+
+      <ConfirmDeleteDialog
+        open={deleteTarget !== null}
+        onConfirm={() => { if (deleteTarget) deleteAssignment.mutate(deleteTarget); setDeleteTarget(null); }}
+        onCancel={() => setDeleteTarget(null)}
+        title={t("assignments.deleteConfirmTitle")}
+        description={t("assignments.deleteConfirmDescription")}
+      />
     </div>
   );
 }

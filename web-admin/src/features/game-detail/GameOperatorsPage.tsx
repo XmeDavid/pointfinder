@@ -8,6 +8,7 @@ import { FormLabel } from "@/components/ui/form-label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-dialog";
 import { gamesApi } from "@/lib/api/games";
 import { invitesApi } from "@/lib/api/invites";
 import { formatDate } from "@/lib/utils";
@@ -21,6 +22,7 @@ export function GameOperatorsPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteError, setInviteError] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const { data: game } = useQuery({ queryKey: ["game", gameId], queryFn: () => gamesApi.getById(gameId!) });
@@ -64,7 +66,7 @@ export function GameOperatorsPage() {
             <CardContent className="flex items-center gap-4 p-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary"><UserCog className="h-5 w-5" /></div>
               <div className="flex-1 min-w-0"><p className="font-medium truncate">{op.name}</p><p className="text-sm text-muted-foreground truncate">{op.email}</p></div>
-              {op.id === game.createdBy ? <Badge variant="default">{t("gameOperators.owner")}</Badge> : canKick ? <Button variant="ghost" size="icon" onClick={() => removeOperator.mutate(op.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button> : null}
+              {op.id === game.createdBy ? <Badge variant="default">{t("gameOperators.owner")}</Badge> : canKick ? <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(op.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button> : null}
             </CardContent>
           </Card>
         ))}
@@ -101,6 +103,14 @@ export function GameOperatorsPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDeleteDialog
+        open={deleteTarget !== null}
+        onConfirm={() => { if (deleteTarget) removeOperator.mutate(deleteTarget); setDeleteTarget(null); }}
+        onCancel={() => setDeleteTarget(null)}
+        title={t("gameOperators.removeConfirmTitle")}
+        description={t("gameOperators.removeConfirmDescription")}
+      />
     </div>
   );
 }

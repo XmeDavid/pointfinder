@@ -8,7 +8,7 @@ export interface CreateChallengeDto {
   completionContent: string;
   answerType: "text" | "file";
   autoValidate: boolean;
-  correctAnswer?: string;
+  correctAnswer?: string[];
   points: number;
   locationBound: boolean;
   fixedBaseId?: string;

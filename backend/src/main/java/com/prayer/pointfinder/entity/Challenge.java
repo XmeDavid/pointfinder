@@ -1,10 +1,12 @@
 package com.prayer.pointfinder.entity;
 
+import com.prayer.pointfinder.converter.StringListJsonConverter;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -41,8 +43,9 @@ public class Challenge {
     @Column(name = "auto_validate", nullable = false)
     private Boolean autoValidate;
 
-    @Column(name = "correct_answer", length = 1000)
-    private String correctAnswer;
+    @Convert(converter = StringListJsonConverter.class)
+    @Column(name = "correct_answer", columnDefinition = "TEXT")
+    private List<String> correctAnswer;
 
     @Column(nullable = false)
     private Integer points;
