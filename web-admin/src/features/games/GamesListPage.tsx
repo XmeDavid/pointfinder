@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Plus, Calendar, Users, Upload } from "lucide-react";
+import { Plus, Calendar, Users, Upload, Search } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,17 +12,49 @@ import { gamesApi, isGameExportDto } from "@/lib/api/games";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { formatDate } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { useAuthStore } from "@/hooks/useAuth";
+import { cn } from "@/lib/utils";
 import type { Game, GameStatus } from "@/types";
+
+type OwnerFilter = "mine" | "all";
+type StatusFilter = GameStatus | "all";
 
 export function GamesListPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const isAdmin = user?.role === "admin";
+
   const { data: games = [], isLoading } = useQuery({ queryKey: ["games"], queryFn: gamesApi.list });
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+
+  // Filter state (admin only)
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [ownerFilter, setOwnerFilter] = useState<OwnerFilter>("mine");
+
+  const filteredGames = isAdmin
+    ? games.filter((game) => {
+        if (search && !game.name.toLowerCase().includes(search.toLowerCase())) return false;
+        if (statusFilter !== "all" && game.status !== statusFilter) return false;
+        if (ownerFilter === "mine") {
+          const isMine = game.createdBy === user?.id || game.operatorIds.includes(user?.id ?? "");
+          if (!isMine) return false;
+        }
+        return true;
+      })
+    : games;
 
   if (isLoading) {
     return <div className="flex items-center justify-center py-20"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
   }
+
+  const statusOptions: { value: StatusFilter; label: string }[] = [
+    { value: "all", label: t("common.all") },
+    { value: "setup", label: t("status.setup") },
+    { value: "live", label: t("status.live") },
+    { value: "ended", label: t("status.ended") },
+  ];
 
   return (
     <div className="space-y-6">
@@ -41,18 +73,75 @@ export function GamesListPage() {
         </div>
       </div>
 
+      {/* Admin filter bar */}
+      {isAdmin && (
+        <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              className="pl-9"
+              placeholder={t("games.searchPlaceholder")}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          <div className="flex items-center gap-1 flex-wrap">
+            {statusOptions.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setStatusFilter(opt.value)}
+                className={cn(
+                  "rounded-full px-3 py-1 text-xs font-medium border transition-colors",
+                  statusFilter === opt.value
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/50"
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center rounded-md border border-border overflow-hidden shrink-0">
+            <button
+              onClick={() => setOwnerFilter("mine")}
+              className={cn(
+                "px-3 py-1.5 text-xs font-medium transition-colors",
+                ownerFilter === "mine" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {t("games.myGames")}
+            </button>
+            <button
+              onClick={() => setOwnerFilter("all")}
+              className={cn(
+                "px-3 py-1.5 text-xs font-medium transition-colors border-l border-border",
+                ownerFilter === "all" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {t("games.allGames")}
+            </button>
+          </div>
+        </div>
+      )}
+
       <ImportGameDialog open={importDialogOpen} onOpenChange={setImportDialogOpen} navigate={navigate} />
 
-      {games.length === 0 ? (
+      {filteredGames.length === 0 ? (
         <Card className="py-12">
           <CardContent className="text-center">
-            <p className="text-muted-foreground mb-4">{t("games.noGames")}</p>
-            <Button onClick={() => navigate("/games/new")}><Plus className="mr-2 h-4 w-4" />{t("games.createGame")}</Button>
+            <p className="text-muted-foreground mb-4">
+              {games.length === 0 ? t("games.noGames") : t("games.noMatchingGames")}
+            </p>
+            {games.length === 0 && (
+              <Button onClick={() => navigate("/games/new")}><Plus className="mr-2 h-4 w-4" />{t("games.createGame")}</Button>
+            )}
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {games.map((game) => <GameCard key={game.id} game={game} />)}
+          {filteredGames.map((game) => <GameCard key={game.id} game={game} />)}
         </div>
       )}
     </div>
