@@ -61,7 +61,12 @@ public class BaseService {
 
         base = baseRepository.save(base);
         if (base.getFixedChallenge() != null) {
-            enforceChallengeUnlockGuardrails(base.getFixedChallenge().getId());
+            Challenge fc = base.getFixedChallenge();
+            if (!Boolean.TRUE.equals(fc.getLocationBound())) {
+                fc.setLocationBound(true);
+                challengeRepository.save(fc);
+            }
+            enforceChallengeUnlockGuardrails(fc.getId());
         }
         return toResponse(base);
     }
@@ -106,6 +111,27 @@ public class BaseService {
             clearUnlockTarget(base.getId());
         }
 
+        // Sync locationBound on the new fixed challenge
+        if (base.getFixedChallenge() != null) {
+            Challenge fc = base.getFixedChallenge();
+            if (!Boolean.TRUE.equals(fc.getLocationBound())) {
+                fc.setLocationBound(true);
+                challengeRepository.save(fc);
+            }
+        }
+
+        // If the previous fixed challenge was removed or changed, clear locationBound if no other base uses it
+        if (previousFixedChallengeId != null &&
+                (base.getFixedChallenge() == null || !previousFixedChallengeId.equals(base.getFixedChallenge().getId()))) {
+            challengeRepository.findById(previousFixedChallengeId).ifPresent(oldChallenge -> {
+                if (Boolean.TRUE.equals(oldChallenge.getLocationBound()) &&
+                        baseRepository.findByFixedChallengeId(previousFixedChallengeId).isEmpty()) {
+                    oldChallenge.setLocationBound(false);
+                    challengeRepository.save(oldChallenge);
+                }
+            });
+        }
+
         Set<UUID> impactedChallengeIds = new HashSet<>();
         if (previousFixedChallengeId != null) {
             impactedChallengeIds.add(previousFixedChallengeId);
@@ -139,6 +165,13 @@ public class BaseService {
         clearUnlockTarget(base.getId());
         baseRepository.delete(base);
         if (fixedChallengeId != null) {
+            challengeRepository.findById(fixedChallengeId).ifPresent(challenge -> {
+                if (Boolean.TRUE.equals(challenge.getLocationBound()) &&
+                        baseRepository.findByFixedChallengeId(fixedChallengeId).isEmpty()) {
+                    challenge.setLocationBound(false);
+                    challengeRepository.save(challenge);
+                }
+            });
             enforceChallengeUnlockGuardrails(fixedChallengeId);
         }
     }

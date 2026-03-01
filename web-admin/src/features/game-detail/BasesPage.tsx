@@ -72,19 +72,19 @@ export function BasesPage() {
 
   const createBase = useMutation({
     mutationFn: (data: CreateBaseDto) => basesApi.create({ ...data, gameId: gameId! }),
-    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["bases", gameId] }); closeDialog(); },
+    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["bases", gameId] }); queryClient.invalidateQueries({ queryKey: ["challenges", gameId] }); closeDialog(); },
     onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
   const updateBase = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<CreateBaseDto> }) => basesApi.update(id, { ...data, gameId: gameId! }),
-    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["bases", gameId] }); closeDialog(); },
+    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["bases", gameId] }); queryClient.invalidateQueries({ queryKey: ["challenges", gameId] }); closeDialog(); },
     onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
   const deleteBase = useMutation({
     mutationFn: (id: string) => basesApi.delete(id, gameId!),
-    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["bases", gameId] }); },
+    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["bases", gameId] }); queryClient.invalidateQueries({ queryKey: ["challenges", gameId] }); },
     onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
