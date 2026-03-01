@@ -93,11 +93,11 @@ public class SubmissionService {
         // Determine initial status - auto-validate text answers if configured
         SubmissionStatus status = SubmissionStatus.pending;
         if (challenge.getAutoValidate() && challenge.getAnswerType() == AnswerType.text
-                && challenge.getCorrectAnswer() != null) {
+                && challenge.getCorrectAnswer() != null && !challenge.getCorrectAnswer().isEmpty()) {
             String providedAnswer = request.getAnswer() != null ? request.getAnswer().trim() : "";
-            status = challenge.getCorrectAnswer().equalsIgnoreCase(providedAnswer)
-                    ? SubmissionStatus.correct
-                    : SubmissionStatus.rejected;
+            boolean matches = challenge.getCorrectAnswer().stream()
+                    .anyMatch(ans -> ans.trim().equalsIgnoreCase(providedAnswer));
+            status = matches ? SubmissionStatus.correct : SubmissionStatus.rejected;
         }
 
         Submission submission = Submission.builder()

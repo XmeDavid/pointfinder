@@ -175,7 +175,9 @@
     "inviteDescription": "Enter the email of an existing operator to invite them to this game. They will be notified by email and can accept the invitation on the platform.",
     "owner": "Owner",
     "pendingInvitations": "Pending Invitations",
-    "inviteError": "Failed to send invitation. Please try again."
+    "inviteError": "Failed to send invitation. Please try again.",
+    "removeConfirmTitle": "Remove this operator?",
+    "removeConfirmDescription": "This operator will lose access to this game."
   },
   "invitations": {
     "title": "Invitations",
@@ -212,7 +214,9 @@
     "hidden": "Hidden from map",
     "hiddenHint": "Players won't see this base on the map until they check in (e.g. via NFC scan)",
     "hiddenTag": "Hidden",
-    "noFixedChallengesAvailable": "No fixed challenges are currently available."
+    "noFixedChallengesAvailable": "No fixed challenges are currently available.",
+    "deleteConfirmTitle": "Delete this base?",
+    "deleteConfirmDescription": "This base and its assignments will be permanently deleted."
   },
   "challenges": {
     "title": "Challenges",
@@ -239,15 +243,18 @@
     "selectBase": "Assign to base",
     "selectBasePlaceholder": "Select a base...",
     "noBasesAvailable": "No available bases (all bases already have a fixed challenge)",
-    "correctAnswer": "Correct Answer",
+    "correctAnswer": "Correct Answers",
     "correctAnswerPlaceholder": "The expected answer (case-insensitive comparison)",
+    "addAnswer": "Add Answer",
     "manualReview": "Manual review",
     "totalPoints": "{{total}} total points",
     "summary_one": "{{count}} challenge",
     "summary_other": "{{count}} challenges",
     "unlocksBaseToggle": "Unlocks a hidden base",
     "unlocksBaseLabel": "Unlocks: {{base}}",
-    "noHiddenBasesAvailable": "No hidden bases available to unlock"
+    "noHiddenBasesAvailable": "No hidden bases available to unlock",
+    "deleteConfirmTitle": "Delete this challenge?",
+    "deleteConfirmDescription": "This challenge and all its assignments will be permanently deleted."
   },
   "assignments": {
     "title": "Assign Challenges",
@@ -275,7 +282,9 @@
     "noChallengesAvailable": "No challenges available for additional assignments on this base.",
     "conflictGeneric": "This assignment conflicts with existing data.",
     "unassignedNote_one": "{{count}} base without assignments will receive random challenges per team when the game starts.",
-    "unassignedNote_other": "{{count}} bases without assignments will receive random challenges per team when the game starts."
+    "unassignedNote_other": "{{count}} bases without assignments will receive random challenges per team when the game starts.",
+    "deleteConfirmTitle": "Delete this assignment?",
+    "deleteConfirmDescription": "This assignment will be permanently removed."
   },
   "teams": {
     "title": "Teams",
@@ -292,7 +301,9 @@
     "teamColor": "Team Color",
     "downloadQr": "Download QR Code",
     "removeMember": "Remove player",
-    "removeMemberConfirm": "Remove {{name}} from this game?"
+    "removeMemberConfirm": "Remove {{name}} from this game?",
+    "deleteConfirmTitle": "Delete this team?",
+    "deleteConfirmDescription": "This team and all its members will be permanently removed."
   },
   "notifications": {
     "title": "Notifications",

@@ -18,6 +18,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -246,7 +247,7 @@ class SubmissionServiceTest {
     void createSubmissionAutoValidationStoresCorrectStatusWhenAnswerMatches() {
         UUID createdSubmissionId = UUID.randomUUID();
         challenge.setAutoValidate(true);
-        challenge.setCorrectAnswer("Open Sesame");
+        challenge.setCorrectAnswer(List.of("Open Sesame"));
 
         CreateSubmissionRequest request = new CreateSubmissionRequest();
         request.setTeamId(teamId);
@@ -274,10 +275,72 @@ class SubmissionServiceTest {
     }
 
     @Test
+    void createSubmissionAutoValidationStoresCorrectStatusWhenAnyAnswerMatches() {
+        UUID createdSubmissionId = UUID.randomUUID();
+        challenge.setAutoValidate(true);
+        challenge.setCorrectAnswer(List.of("Open Sesame", "Abracadabra", "Please"));
+
+        CreateSubmissionRequest request = new CreateSubmissionRequest();
+        request.setTeamId(teamId);
+        request.setChallengeId(challengeId);
+        request.setBaseId(baseId);
+        request.setAnswer("abracadabra");
+
+        when(fileStorageService.validateStoredFileUrl(null, gameId)).thenReturn(null);
+        when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
+        when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
+        when(baseRepository.findById(baseId)).thenReturn(Optional.of(base));
+        when(submissionRepository.save(any(Submission.class))).thenAnswer(invocation -> {
+            Submission saved = invocation.getArgument(0);
+            saved.setId(createdSubmissionId);
+            saved.setSubmittedAt(Instant.now());
+            return saved;
+        });
+
+        SubmissionResponse response = submissionService.createSubmission(gameId, request);
+
+        ArgumentCaptor<Submission> submissionCaptor = ArgumentCaptor.forClass(Submission.class);
+        verify(submissionRepository).save(submissionCaptor.capture());
+        assertEquals(SubmissionStatus.correct, submissionCaptor.getValue().getStatus());
+        assertEquals(SubmissionStatus.correct.name(), response.getStatus());
+    }
+
+    @Test
     void createSubmissionAutoValidationStoresRejectedStatusWhenAnswerDoesNotMatch() {
         UUID createdSubmissionId = UUID.randomUUID();
         challenge.setAutoValidate(true);
-        challenge.setCorrectAnswer("Open Sesame");
+        challenge.setCorrectAnswer(List.of("Open Sesame"));
+
+        CreateSubmissionRequest request = new CreateSubmissionRequest();
+        request.setTeamId(teamId);
+        request.setChallengeId(challengeId);
+        request.setBaseId(baseId);
+        request.setAnswer("wrong answer");
+
+        when(fileStorageService.validateStoredFileUrl(null, gameId)).thenReturn(null);
+        when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
+        when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
+        when(baseRepository.findById(baseId)).thenReturn(Optional.of(base));
+        when(submissionRepository.save(any(Submission.class))).thenAnswer(invocation -> {
+            Submission saved = invocation.getArgument(0);
+            saved.setId(createdSubmissionId);
+            saved.setSubmittedAt(Instant.now());
+            return saved;
+        });
+
+        SubmissionResponse response = submissionService.createSubmission(gameId, request);
+
+        ArgumentCaptor<Submission> submissionCaptor = ArgumentCaptor.forClass(Submission.class);
+        verify(submissionRepository).save(submissionCaptor.capture());
+        assertEquals(SubmissionStatus.rejected, submissionCaptor.getValue().getStatus());
+        assertEquals(SubmissionStatus.rejected.name(), response.getStatus());
+    }
+
+    @Test
+    void createSubmissionAutoValidationStoresRejectedStatusWhenNoAnswerMatchesMultiple() {
+        UUID createdSubmissionId = UUID.randomUUID();
+        challenge.setAutoValidate(true);
+        challenge.setCorrectAnswer(List.of("Open Sesame", "Abracadabra"));
 
         CreateSubmissionRequest request = new CreateSubmissionRequest();
         request.setTeamId(teamId);

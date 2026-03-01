@@ -1,7 +1,7 @@
 import { useMemo, useState, lazy, Suspense } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Puzzle, Trash2, Pencil, FileText, Image, CheckCircle, Eye, MapPin, Unlock } from "lucide-react";
+import { Plus, Minus, Puzzle, Trash2, Pencil, FileText, Image, CheckCircle, Eye, MapPin, Unlock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormLabel } from "@/components/ui/form-label";
@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-dialog";
 import { challengesApi, type CreateChallengeDto } from "@/lib/api/challenges";
 import { basesApi } from "@/lib/api/bases";
 import { getApiErrorMessage } from "@/lib/api/errors";
@@ -28,6 +29,7 @@ export function ChallengesPage() {
   const [editing, setEditing] = useState<Challenge | null>(null);
   const [form, setForm] = useState<Partial<CreateChallengeDto>>({});
   const [actionError, setActionError] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!) });
   const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!) });
@@ -159,7 +161,7 @@ export function ChallengesPage() {
                         <div className="flex-1 min-w-0"><CardTitle className="text-base">{ch.title}</CardTitle><CardDescription className="line-clamp-1">{ch.description}</CardDescription></div>
                         <div className="flex gap-1 ml-2">
                           <Button variant="ghost" size="icon" onClick={() => openEdit(ch)}><Pencil className="h-4 w-4" /></Button>
-                          <Button variant="ghost" size="icon" onClick={() => deleteChallenge.mutate(ch.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(ch.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                         </div>
                       </div>
                     </CardHeader>
@@ -329,16 +331,44 @@ export function ChallengesPage() {
             </div>
             {form.autoValidate && form.answerType === "text" && (
               <div className="space-y-2">
-                <FormLabel htmlFor="challengeCorrectAnswer" required>
+                <FormLabel required>
                   {t("challenges.correctAnswer")}
                 </FormLabel>
-                <Input
-                  id="challengeCorrectAnswer"
-                  value={form.correctAnswer ?? ""}
-                  onChange={(e) => setForm((f) => ({ ...f, correctAnswer: e.target.value }))}
-                  placeholder={t("challenges.correctAnswerPlaceholder")}
-                  required
-                />
+                {(form.correctAnswer ?? [""]).map((ans, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <Input
+                      value={ans}
+                      onChange={(e) => {
+                        const updated = [...(form.correctAnswer ?? [""])];
+                        updated[idx] = e.target.value;
+                        setForm((f) => ({ ...f, correctAnswer: updated }));
+                      }}
+                      placeholder={t("challenges.correctAnswerPlaceholder")}
+                      required
+                    />
+                    {(form.correctAnswer ?? [""]).length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          const updated = (form.correctAnswer ?? [""]).filter((_, i) => i !== idx);
+                          setForm((f) => ({ ...f, correctAnswer: updated }));
+                        }}
+                      >
+                        <Minus className="h-4 w-4 text-destructive" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setForm((f) => ({ ...f, correctAnswer: [...(f.correctAnswer ?? [""]), ""] }))}
+                >
+                  <Plus className="mr-1 h-4 w-4" /> {t("challenges.addAnswer")}
+                </Button>
               </div>
             )}
             <DialogFooter>
@@ -348,6 +378,14 @@ export function ChallengesPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDeleteDialog
+        open={deleteTarget !== null}
+        onConfirm={() => { if (deleteTarget) deleteChallenge.mutate(deleteTarget); setDeleteTarget(null); }}
+        onCancel={() => setDeleteTarget(null)}
+        title={t("challenges.deleteConfirmTitle")}
+        description={t("challenges.deleteConfirmDescription")}
+      />
     </div>
   );
 }

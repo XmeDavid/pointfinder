@@ -2,13 +2,9 @@
 
 ## Bugs
 -The location bound on a challange, and the fixed based, should be synced
--Android sync issue: When submitting a photo on a base, the action becomes permanently as a pending action and never syncs, on iOS is working. On this android, the game was randomly also showing as ended, but that was no the case, I had to restart the app, and only then on a resync would the game lock of ended game disapear.
-
 
 
 ## Improvements
--Multiple correct answers for auto validation
--Confirm deletions with popup dialogs.
 
 
 ## Features

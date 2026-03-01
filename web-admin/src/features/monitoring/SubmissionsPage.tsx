@@ -175,11 +175,11 @@ export function SubmissionsPage() {
               )}
               {(() => {
                 const ch = challenges.find((c) => c.id === reviewingSub.challengeId);
-                const shouldShowCorrectAnswer = !!ch?.correctAnswer && ch.answerType === "text" && ch.autoValidate;
+                const shouldShowCorrectAnswer = ch?.correctAnswer && ch.correctAnswer.length > 0 && ch.answerType === "text" && ch.autoValidate;
                 return shouldShowCorrectAnswer ? (
                   <div>
                     <p className="text-sm font-medium mb-1">{t("submissions.correctAnswer")}</p>
-                    <div className="rounded-md bg-muted p-3 text-sm">{ch.correctAnswer}</div>
+                    <div className="rounded-md bg-muted p-3 text-sm">{ch.correctAnswer.join(", ")}</div>
                   </div>
                 ) : null;
               })()}

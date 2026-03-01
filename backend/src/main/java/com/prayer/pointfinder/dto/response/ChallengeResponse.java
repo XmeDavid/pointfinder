@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -18,7 +19,7 @@ public class ChallengeResponse {
     private String completionContent;
     private String answerType;
     private Boolean autoValidate;
-    private String correctAnswer;
+    private List<String> correctAnswer;
     private Integer points;
     private Boolean locationBound;
     private UUID unlocksBaseId;

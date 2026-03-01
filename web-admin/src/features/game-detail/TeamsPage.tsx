@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { FormLabel } from "@/components/ui/form-label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-dialog";
 import { teamsApi } from "@/lib/api/teams";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { useTranslation } from "react-i18next";
@@ -21,6 +22,7 @@ export function TeamsPage() {
   const [teamName, setTeamName] = useState("");
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [actionError, setActionError] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!) });
 
@@ -70,7 +72,7 @@ export function TeamsPage() {
               team={team}
               onCopy={copyCode}
               copiedCode={copiedCode}
-              onDelete={() => deleteTeam.mutate(team.id)}
+              onDelete={() => setDeleteTarget(team.id)}
               onUpdate={(payload) => updateTeam.mutate({ id: team.id, ...payload })}
               onActionError={setActionError}
             />
@@ -95,6 +97,14 @@ export function TeamsPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDeleteDialog
+        open={deleteTarget !== null}
+        onConfirm={() => { if (deleteTarget) deleteTeam.mutate(deleteTarget); setDeleteTarget(null); }}
+        onCancel={() => setDeleteTarget(null)}
+        title={t("teams.deleteConfirmTitle")}
+        description={t("teams.deleteConfirmDescription")}
+      />
     </div>
   );
 }
@@ -118,6 +128,8 @@ function TeamCard({
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(team.name);
+  const [removePlayerId, setRemovePlayerId] = useState<string | null>(null);
+  const removingPlayer = players.find((p) => p.id === removePlayerId);
 
   // Always fetch players -- no expand/collapse
   const { data: players = [] } = useQuery({
@@ -228,11 +240,7 @@ function TeamCard({
                   size="icon"
                   className="h-7 w-7"
                   disabled={removePlayer.isPending}
-                  onClick={() => {
-                    if (window.confirm(t("teams.removeMemberConfirm", { name: p.displayName }))) {
-                      removePlayer.mutate(p.id);
-                    }
-                  }}
+                  onClick={() => setRemovePlayerId(p.id)}
                   title={t("teams.removeMember")}
                 >
                   <UserMinus className="h-3.5 w-3.5 text-muted-foreground" />
@@ -245,6 +253,14 @@ function TeamCard({
           <p className="text-xs text-muted-foreground border-t border-border pt-3">{t("teams.noMembers")}</p>
         )}
       </CardContent>
+
+      <ConfirmDeleteDialog
+        open={removePlayerId !== null}
+        onConfirm={() => { if (removePlayerId) removePlayer.mutate(removePlayerId); setRemovePlayerId(null); }}
+        onCancel={() => setRemovePlayerId(null)}
+        title={t("teams.removeMember")}
+        description={removingPlayer ? t("teams.removeMemberConfirm", { name: removingPlayer.displayName }) : ""}
+      />
     </Card>
   );
 }
