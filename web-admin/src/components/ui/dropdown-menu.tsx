@@ -24,8 +24,18 @@ function DropdownMenu({ children }: DropdownMenuProps) {
   );
 }
 
-function DropdownMenuTrigger({ children, className, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+function DropdownMenuTrigger({ children, className, asChild, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { asChild?: boolean }) {
   const { open, setOpen } = React.useContext(DropdownContext);
+
+  if (asChild && React.isValidElement(children)) {
+    return React.cloneElement(children as React.ReactElement<any>, {
+      onClick: (e: React.MouseEvent) => {
+        setOpen(!open);
+        (children as React.ReactElement<any>).props.onClick?.(e);
+      },
+    });
+  }
+
   return (
     <button
       type="button"
@@ -75,19 +85,23 @@ function DropdownMenuItem({
   className,
   onClick,
   destructive,
+  disabled,
 }: {
   children: React.ReactNode;
   className?: string;
   onClick?: () => void;
   destructive?: boolean;
+  disabled?: boolean;
 }) {
   const { setOpen } = React.useContext(DropdownContext);
   return (
     <button
       type="button"
+      disabled={disabled}
       className={cn(
         "relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
         destructive && "text-destructive hover:text-destructive",
+        disabled && "pointer-events-none opacity-50",
         className
       )}
       onClick={() => {
