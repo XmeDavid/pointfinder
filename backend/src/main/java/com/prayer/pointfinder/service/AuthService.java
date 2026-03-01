@@ -8,6 +8,7 @@ import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.OperatorInviteRepository;
+import com.prayer.pointfinder.repository.PasswordResetTokenRepository;
 import com.prayer.pointfinder.repository.RefreshTokenRepository;
 import com.prayer.pointfinder.repository.UserRepository;
 import com.prayer.pointfinder.security.JwtTokenProvider;
@@ -18,16 +19,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
+    private static final int MAX_ACTIVE_RESET_TOKENS = 3;
+    private static final long RESET_TOKEN_EXPIRY_MS = 3_600_000; // 1 hour
+
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final OperatorInviteRepository inviteRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
+    private final EmailService emailService;
 
     @Transactional
     public AuthResponse login(LoginRequest request) {
@@ -92,6 +100,59 @@ public class AuthService {
     @Transactional
     public void logout(String refreshTokenStr) {
         refreshTokenRepository.deleteByToken(refreshTokenStr);
+    }
+
+    @Transactional
+    public void requestPasswordReset(String email, String requestHost) {
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            return; // Silent return — no email enumeration
+        }
+
+        User user = userOpt.get();
+
+        long activeTokens = passwordResetTokenRepository
+                .countByUserIdAndUsedFalseAndExpiresAtAfter(user.getId(), Instant.now());
+        if (activeTokens >= MAX_ACTIVE_RESET_TOKENS) {
+            return; // Rate limit exceeded — silent return
+        }
+
+        String token = UUID.randomUUID().toString();
+        PasswordResetToken resetToken = PasswordResetToken.builder()
+                .user(user)
+                .token(token)
+                .expiresAt(Instant.now().plusMillis(RESET_TOKEN_EXPIRY_MS))
+                .build();
+        passwordResetTokenRepository.save(resetToken);
+
+        emailService.sendPasswordResetEmail(user.getEmail(), token, requestHost);
+    }
+
+    @Transactional
+    public void resetPassword(String token, String newPassword) {
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
+                .orElseThrow(() -> new BadRequestException("Invalid reset token"));
+
+        if (resetToken.isUsed()) {
+            throw new BadRequestException("This reset link has already been used");
+        }
+
+        if (resetToken.isExpired()) {
+            throw new BadRequestException("This reset link has expired");
+        }
+
+        User user = resetToken.getUser();
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        resetToken.setUsed(true);
+        passwordResetTokenRepository.save(resetToken);
+
+        // Invalidate all other reset tokens for this user
+        passwordResetTokenRepository.invalidateAllForUser(user.getId());
+
+        // Delete all refresh tokens to log out all sessions
+        refreshTokenRepository.deleteByUserId(user.getId());
     }
 
     private AuthResponse generateAuthResponse(User user) {

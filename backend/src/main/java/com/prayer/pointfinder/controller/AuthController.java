@@ -1,8 +1,6 @@
 package com.prayer.pointfinder.controller;
 
-import com.prayer.pointfinder.dto.request.LoginRequest;
-import com.prayer.pointfinder.dto.request.RefreshTokenRequest;
-import com.prayer.pointfinder.dto.request.RegisterRequest;
+import com.prayer.pointfinder.dto.request.*;
 import com.prayer.pointfinder.dto.response.AuthResponse;
 import com.prayer.pointfinder.entity.OperatorInvite;
 import com.prayer.pointfinder.exception.BadRequestException;
@@ -55,5 +53,19 @@ public class AuthController {
     public ResponseEntity<Void> logout(@Valid @RequestBody RefreshTokenRequest request) {
         authService.logout(request.getRefreshToken());
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Map<String, String>> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request,
+            @RequestHeader(value = "X-Forwarded-Host", required = false) String forwardedHost) {
+        authService.requestPasswordReset(request.getEmail(), forwardedHost);
+        return ResponseEntity.ok(Map.of("message", "If an account with that email exists, a reset link has been sent."));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Map<String, String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request.getToken(), request.getPassword());
+        return ResponseEntity.ok(Map.of("message", "Password has been reset successfully."));
     }
 }

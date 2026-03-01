@@ -51,7 +51,22 @@
     "createAccount": "Create Account",
     "creatingAccount": "Creating account...",
     "passwordsNoMatch": "Passwords do not match",
-    "registrationFailed": "Registration failed. The invite may have expired."
+    "registrationFailed": "Registration failed. The invite may have expired.",
+    "forgotPassword": "Forgot password?",
+    "forgotPasswordTitle": "Forgot Password",
+    "forgotPasswordDescription": "Enter your email and we'll send you a link to reset your password.",
+    "forgotPasswordSuccess": "If an account with that email exists, we've sent a password reset link. Please check your inbox.",
+    "forgotPasswordError": "Something went wrong. Please try again.",
+    "sendResetLink": "Send Reset Link",
+    "sendingResetLink": "Sending...",
+    "backToSignIn": "Back to sign in",
+    "resetPasswordTitle": "Reset Password",
+    "resetPasswordDescription": "Enter your new password below.",
+    "newPassword": "New Password",
+    "resetPassword": "Reset Password",
+    "resettingPassword": "Resetting...",
+    "resetPasswordSuccess": "Your password has been reset successfully. You can now sign in with your new password.",
+    "resetPasswordError": "Failed to reset password. The link may be invalid or expired."
   },
   "nav": {
     "games": "Games",
