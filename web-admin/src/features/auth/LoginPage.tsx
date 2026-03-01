@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,9 +53,14 @@ export function LoginPage() {
               <Input id="email" type="email" placeholder="admin@pointfinder.dev" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <FormLabel htmlFor="password" required>
-                {t("auth.password")}
-              </FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel htmlFor="password" required>
+                  {t("auth.password")}
+                </FormLabel>
+                <Link to="/forgot-password" className="text-sm text-muted-foreground hover:underline">
+                  {t("auth.forgotPassword")}
+                </Link>
+              </div>
               <Input id="password" type="password" placeholder={t("auth.enterPassword")} value={password} onChange={(e) => setPassword(e.target.value)} required />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>

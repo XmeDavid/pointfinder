@@ -51,7 +51,22 @@
     "createAccount": "Konto erstellen",
     "creatingAccount": "Konto wird erstellt...",
     "passwordsNoMatch": "Passwörter stimmen nicht überein",
-    "registrationFailed": "Registrierung fehlgeschlagen. Die Einladung ist möglicherweise abgelaufen."
+    "registrationFailed": "Registrierung fehlgeschlagen. Die Einladung ist möglicherweise abgelaufen.",
+    "forgotPassword": "Passwort vergessen?",
+    "forgotPasswordTitle": "Passwort vergessen",
+    "forgotPasswordDescription": "Geben Sie Ihre E-Mail-Adresse ein und wir senden Ihnen einen Link zum Zurücksetzen.",
+    "forgotPasswordSuccess": "Falls ein Konto mit dieser E-Mail existiert, haben wir einen Link zum Zurücksetzen gesendet. Bitte prüfen Sie Ihren Posteingang.",
+    "forgotPasswordError": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "sendResetLink": "Link senden",
+    "sendingResetLink": "Wird gesendet...",
+    "backToSignIn": "Zurück zur Anmeldung",
+    "resetPasswordTitle": "Passwort zurücksetzen",
+    "resetPasswordDescription": "Geben Sie unten Ihr neues Passwort ein.",
+    "newPassword": "Neues Passwort",
+    "resetPassword": "Passwort zurücksetzen",
+    "resettingPassword": "Wird zurückgesetzt...",
+    "resetPasswordSuccess": "Ihr Passwort wurde erfolgreich zurückgesetzt. Sie können sich jetzt mit Ihrem neuen Passwort anmelden.",
+    "resetPasswordError": "Passwort konnte nicht zurückgesetzt werden. Der Link ist möglicherweise ungültig oder abgelaufen."
   },
   "nav": {
     "games": "Spiele",

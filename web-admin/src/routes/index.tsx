@@ -8,6 +8,8 @@ import { LandingPage } from "@/features/landing/LandingPage";
 // Auth
 import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
+import { ForgotPasswordPage } from "@/features/auth/ForgotPasswordPage";
+import { ResetPasswordPage } from "@/features/auth/ResetPasswordPage";
 
 // Admin
 import { OperatorsPage } from "@/features/admin/OperatorsPage";
@@ -59,6 +61,22 @@ export const router = createBrowserRouter([
     element: (
       <GuestGuard>
         <RegisterPage />
+      </GuestGuard>
+    ),
+  },
+  {
+    path: "/forgot-password",
+    element: (
+      <GuestGuard>
+        <ForgotPasswordPage />
+      </GuestGuard>
+    ),
+  },
+  {
+    path: "/reset-password/:token",
+    element: (
+      <GuestGuard>
+        <ResetPasswordPage />
       </GuestGuard>
     ),
   },

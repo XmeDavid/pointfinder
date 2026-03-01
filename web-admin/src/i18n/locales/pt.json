@@ -51,7 +51,22 @@
     "createAccount": "Criar Conta",
     "creatingAccount": "A criar conta...",
     "passwordsNoMatch": "As palavras-passe não coincidem",
-    "registrationFailed": "Registo falhou. O convite pode ter expirado."
+    "registrationFailed": "Registo falhou. O convite pode ter expirado.",
+    "forgotPassword": "Esqueceu a palavra-passe?",
+    "forgotPasswordTitle": "Recuperar Palavra-passe",
+    "forgotPasswordDescription": "Introduza o seu email e enviaremos um link para redefinir a sua palavra-passe.",
+    "forgotPasswordSuccess": "Se existir uma conta com esse email, enviámos um link de recuperação. Verifique a sua caixa de entrada.",
+    "forgotPasswordError": "Algo correu mal. Tente novamente.",
+    "sendResetLink": "Enviar Link de Recuperação",
+    "sendingResetLink": "A enviar...",
+    "backToSignIn": "Voltar ao início de sessão",
+    "resetPasswordTitle": "Redefinir Palavra-passe",
+    "resetPasswordDescription": "Introduza a sua nova palavra-passe abaixo.",
+    "newPassword": "Nova Palavra-passe",
+    "resetPassword": "Redefinir Palavra-passe",
+    "resettingPassword": "A redefinir...",
+    "resetPasswordSuccess": "A sua palavra-passe foi redefinida com sucesso. Pode agora iniciar sessão com a nova palavra-passe.",
+    "resetPasswordError": "Falha ao redefinir a palavra-passe. O link pode ser inválido ou ter expirado."
   },
   "nav": {
     "games": "Jogos",

@@ -60,6 +60,29 @@ public class EmailService {
     }
 
     @Async
+    public void sendPasswordResetEmail(String toEmail, String token, String requestHost) {
+        String frontendBaseUrl = resolveFrontendBaseUrl(requestHost);
+        String subject = "Reset your " + BRAND_NAME + " password";
+        String resetLink = frontendBaseUrl + "/reset-password/" + token;
+        String html = buildEmailTemplate(
+                "Password reset",
+                "Reset your password",
+                """
+                <p style="margin: 0 0 14px; color: #404040; font-size: 16px; line-height: 1.6;">
+                    We received a request to reset your password for your <strong>%s</strong> account.
+                </p>
+                <p style="margin: 0 0 14px; color: #404040; font-size: 16px; line-height: 1.6;">
+                    Click the button below to set a new password. This link will expire in <strong>1 hour</strong>.
+                </p>
+                """.formatted(BRAND_NAME),
+                "Reset Password",
+                resetLink
+        );
+
+        sendHtmlEmail(toEmail, subject, html);
+    }
+
+    @Async
     public void sendGameInvite(String toEmail, String gameName, String inviterName, String requestHost) {
         String frontendBaseUrl = resolveFrontendBaseUrl(requestHost);
         String subject = "You've been invited to operate a game on " + BRAND_NAME;
