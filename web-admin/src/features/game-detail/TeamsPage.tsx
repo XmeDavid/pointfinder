@@ -129,13 +129,13 @@ function TeamCard({
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(team.name);
   const [removePlayerId, setRemovePlayerId] = useState<string | null>(null);
-  const removingPlayer = players.find((p) => p.id === removePlayerId);
 
   // Always fetch players -- no expand/collapse
   const { data: players = [] } = useQuery({
     queryKey: ["players", team.id],
     queryFn: () => teamsApi.getPlayers(team.id, team.gameId),
   });
+  const removingPlayer = players.find((p) => p.id === removePlayerId);
 
   const removePlayer = useMutation({
     mutationFn: (playerId: string) => teamsApi.removePlayer(team.id, playerId, team.gameId),
