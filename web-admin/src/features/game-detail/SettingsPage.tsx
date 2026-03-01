@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Trash2, RotateCcw, Play, AlertTriangle, Database, Eraser, Download } from "lucide-react";
+import { Trash2, RotateCcw, Play, AlertTriangle, Database, Eraser, Download, Radio, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormLabel } from "@/components/ui/form-label";
@@ -99,6 +99,20 @@ export function SettingsPage() {
       queryClient.invalidateQueries({ queryKey: ["games"] });
       setStateTarget(null);
       setProgressChoice(null);
+    },
+    onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
+  });
+
+  const toggleBroadcast = useMutation({
+    mutationFn: () =>
+      gamesApi.update(gameId!, {
+        name: game!.name,
+        broadcastEnabled: !game!.broadcastEnabled,
+      }),
+    onSuccess: () => {
+      setActionError("");
+      queryClient.invalidateQueries({ queryKey: ["game", gameId] });
+      queryClient.invalidateQueries({ queryKey: ["games"] });
     },
     onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
@@ -241,6 +255,67 @@ export function SettingsPage() {
             <Download className="mr-2 h-4 w-4" />
             {exporting ? t("game.exporting") : t("game.export")}
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* Broadcast */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Radio className="h-5 w-5" />
+            {t("settings.broadcast")}
+          </CardTitle>
+          <CardDescription>{t("settings.broadcastDescription")}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between rounded-lg border p-4">
+            <div className="space-y-0.5">
+              <FormLabel htmlFor="broadcastEnabled">{t("settings.enableBroadcast")}</FormLabel>
+              <p className="text-xs text-muted-foreground">{t("settings.enableBroadcastDesc")}</p>
+            </div>
+            <Switch
+              id="broadcastEnabled"
+              checked={game.broadcastEnabled}
+              onCheckedChange={() => toggleBroadcast.mutate()}
+              disabled={toggleBroadcast.isPending}
+            />
+          </div>
+          {game.broadcastEnabled && game.broadcastCode && (
+            <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">{t("settings.broadcastCode")}</span>
+                <div className="flex items-center gap-2">
+                  <code className="rounded bg-muted px-3 py-1.5 font-mono text-lg tracking-widest font-bold">
+                    {game.broadcastCode}
+                  </code>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => navigator.clipboard.writeText(game.broadcastCode!)}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">{t("settings.broadcastUrl")}</span>
+                <div className="flex items-center gap-2">
+                  <code className="rounded bg-muted px-2 py-1 text-xs font-mono truncate max-w-[280px]">
+                    {`${window.location.origin}/live/${game.broadcastCode}`}
+                  </code>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => navigator.clipboard.writeText(`${window.location.origin}/live/${game.broadcastCode}`)}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

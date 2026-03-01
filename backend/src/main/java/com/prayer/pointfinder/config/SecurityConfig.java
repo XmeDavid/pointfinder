@@ -52,6 +52,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/broadcast/**").permitAll()
                 .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/api/player/**").hasRole("PLAYER")
                 .requestMatchers("/api/games/**", "/api/invites/**", "/api/users/**")

@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface GameRepository extends JpaRepository<Game, UUID> {
@@ -21,4 +22,6 @@ public interface GameRepository extends JpaRepository<Game, UUID> {
 
     @Query("SELECT g FROM Game g JOIN g.operators o WHERE o.id = :userId")
     List<Game> findByOperatorId(@Param("userId") UUID userId);
+
+    Optional<Game> findByBroadcastCodeAndBroadcastEnabledTrue(String broadcastCode);
 }

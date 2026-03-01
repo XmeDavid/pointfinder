@@ -63,6 +63,13 @@ public class Game {
     @Builder.Default
     private Boolean uniformAssignment = false;
 
+    @Column(name = "broadcast_enabled", nullable = false)
+    @Builder.Default
+    private Boolean broadcastEnabled = false;
+
+    @Column(name = "broadcast_code", length = 6)
+    private String broadcastCode;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

@@ -21,4 +21,6 @@ public class GameResponse {
     private UUID createdBy;
     private List<UUID> operatorIds;
     private Boolean uniformAssignment;
+    private Boolean broadcastEnabled;
+    private String broadcastCode;
 }

@@ -455,7 +455,13 @@
     "uniformAssignmentDescription": "When enabled, all teams get the same challenge at each base. When disabled, each team gets a different random challenge per base.",
     "deleteConfirmTitle": "Are you sure you want to delete this game?",
     "deleteConfirmDescription": "This action cannot be undone. All bases, challenges, teams, and assignments will be permanently deleted.",
-    "confirmDelete": "Yes, Delete Game"
+    "confirmDelete": "Yes, Delete Game",
+    "broadcast": "Broadcast",
+    "broadcastDescription": "Share a live view of the game on a projector or separate screen",
+    "enableBroadcast": "Enable broadcast",
+    "enableBroadcastDesc": "Generate a public link for spectators to watch the game live without logging in",
+    "broadcastCode": "Broadcast code",
+    "broadcastUrl": "Direct link"
   },
   "landing": {
     "nav": {
@@ -522,8 +528,15 @@
     "monitor": "Monitor",
     "monitorDesc": "Full-screen monitoring, no sidebar",
     "review": "Review",
-    "reviewDesc": "Split-pane submission queue",
-    "broadcast": "Broadcast",
-    "broadcastDesc": "Projector-ready leaderboard"
+    "reviewDesc": "Split-pane submission queue"
+  },
+  "live": {
+    "title": "Live Broadcast",
+    "description": "Enter a 6-character code to watch a game live",
+    "viewGame": "Watch Game",
+    "invalidCode": "Invalid broadcast code",
+    "notFound": "Broadcast not found",
+    "notFoundDescription": "This broadcast code is invalid or the broadcast has been disabled.",
+    "backToEntry": "Back to code entry"
   }
 }

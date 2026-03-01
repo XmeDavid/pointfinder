@@ -37,6 +37,10 @@ import { ActivityPage } from "@/features/monitoring/ActivityPage";
 import { SubmissionsPage } from "@/features/monitoring/SubmissionsPage";
 import { TeamDetailPage } from "@/features/monitoring/TeamDetailPage";
 
+// Live broadcast (public)
+import { LiveEntryPage } from "@/features/live/LiveEntryPage";
+import { LiveBroadcastPage } from "@/features/live/LiveBroadcastPage";
+
 // Auth guards
 import { AuthGuard } from "./AuthGuard";
 import { GuestGuard } from "./GuestGuard";
@@ -79,6 +83,16 @@ export const router = createBrowserRouter([
         <ResetPasswordPage />
       </GuestGuard>
     ),
+  },
+
+  /* -------- Public live broadcast -------- */
+  {
+    path: "/live",
+    element: <LiveEntryPage />,
+  },
+  {
+    path: "/live/:code",
+    element: <LiveBroadcastPage />,
   },
 
   /* -------- Authenticated admin shell (pathless layout route) -------- */
