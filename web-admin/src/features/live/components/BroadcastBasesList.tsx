@@ -59,28 +59,41 @@ export function BroadcastBasesList({ bases, teams, progress }: Props) {
   };
 
   return (
-    <div className="flex h-full flex-col rounded-xl border border-white/10 bg-white/5 p-4 overflow-hidden">
-      <h2 className="mb-3 text-lg font-semibold text-white/80">{t("nav.bases")}</h2>
-      <div className="flex flex-1 flex-col gap-2 overflow-y-auto">
-        {bases.map((base) => {
-          const status = getAggregateStatus(base.id);
-          const completed = getCompletedCount(base.id);
-          return (
-            <div
-              key={base.id}
-              className="flex items-center gap-3 rounded-lg bg-white/[0.03] px-3 py-2"
-            >
+    <div className="flex h-full flex-col rounded-xl border border-white/10 bg-white/5 p-3 overflow-hidden">
+      <h2 className="mb-2 text-sm font-semibold text-white/70 shrink-0">
+        {t("nav.bases")} ({bases.length})
+      </h2>
+      <div className="flex-1 overflow-y-auto">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+          {bases.map((base) => {
+            const status = getAggregateStatus(base.id);
+            const completed = getCompletedCount(base.id);
+            const pct = teams.length > 0 ? Math.round((completed / teams.length) * 100) : 0;
+            return (
               <div
-                className="h-3 w-3 rounded-full shrink-0"
-                style={{ backgroundColor: STATUS_COLORS[status] ?? STATUS_COLORS.not_visited }}
-              />
-              <span className="text-sm font-medium flex-1 truncate">{base.name}</span>
-              <span className="text-xs text-white/40 tabular-nums">
-                {completed}/{teams.length}
-              </span>
-            </div>
-          );
-        })}
+                key={base.id}
+                className="rounded-lg border border-white/[0.07] bg-white/[0.03] p-2.5 space-y-1.5"
+              >
+                <div className="flex items-start gap-2">
+                  <div
+                    className="h-2.5 w-2.5 rounded-full shrink-0 mt-0.5"
+                    style={{ backgroundColor: STATUS_COLORS[status] ?? STATUS_COLORS.not_visited }}
+                  />
+                  <span className="text-xs font-medium leading-tight line-clamp-2">{base.name}</span>
+                </div>
+                <div className="h-1 rounded-full bg-white/10 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-green-500 transition-all duration-500"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <span className="text-[10px] text-white/40 tabular-nums">
+                  {completed}/{teams.length}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
