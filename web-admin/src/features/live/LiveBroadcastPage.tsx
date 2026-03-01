@@ -4,7 +4,7 @@ import { Radio } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { broadcastApi } from "@/lib/api/broadcast";
 import { useBroadcastWebSocket } from "@/hooks/useBroadcastWebSocket";
-import { BroadcastLeaderboard } from "./components/BroadcastLeaderboard";
+import { BroadcastPodium } from "./components/BroadcastPodium";
 import { BroadcastMap } from "./components/BroadcastMap";
 import { BroadcastTeamList } from "./components/BroadcastTeamList";
 import { BroadcastBasesList } from "./components/BroadcastBasesList";
@@ -85,7 +85,7 @@ export function LiveBroadcastPage() {
       {/* Header bar */}
       <div className="flex items-center justify-between border-b border-white/10 px-4 py-2 shrink-0">
         <div className="flex items-center gap-2">
-          <Radio className="h-5 w-5 text-blue-400" />
+          <Radio className="h-5 w-5 text-green-400" />
           <span className="font-semibold text-sm">PointFinder</span>
         </div>
         <span className="text-sm font-medium truncate mx-4">{initialData.gameName}</span>
@@ -94,17 +94,32 @@ export function LiveBroadcastPage() {
         </code>
       </div>
 
-      {/* 2x2 grid */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-3 p-3 overflow-hidden">
-        <BroadcastLeaderboard leaderboard={leaderboard} />
-        <BroadcastMap
-          bases={bases}
-          teams={teams}
-          locations={locations}
-          progress={progress}
-        />
-        <BroadcastTeamList teams={teams} leaderboard={leaderboard} />
-        <BroadcastBasesList bases={bases} teams={teams} progress={progress} />
+      {/* Main layout: left 1/3 | right 2/3 */}
+      <div className="flex-1 flex gap-3 p-3 overflow-hidden">
+        {/* Left column: 1/3 width — podium (1/3 height) + team list (2/3 height) */}
+        <div className="w-1/3 flex flex-col gap-3 min-w-0">
+          <div className="h-1/3 min-h-0">
+            <BroadcastPodium leaderboard={leaderboard} />
+          </div>
+          <div className="h-2/3 min-h-0">
+            <BroadcastTeamList teams={teams} leaderboard={leaderboard} />
+          </div>
+        </div>
+
+        {/* Right column: 2/3 width — map (2/3 height) + bases grid (1/3 height) */}
+        <div className="w-2/3 flex flex-col gap-3 min-w-0">
+          <div className="h-2/3 min-h-0">
+            <BroadcastMap
+              bases={bases}
+              teams={teams}
+              locations={locations}
+              progress={progress}
+            />
+          </div>
+          <div className="h-1/3 min-h-0">
+            <BroadcastBasesList bases={bases} teams={teams} progress={progress} />
+          </div>
+        </div>
       </div>
     </div>
   );
