@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type LayoutMode = "classic" | "setup" | "monitor" | "review" | "broadcast";
+export type LayoutMode = "classic" | "setup" | "monitor" | "review";
 
 interface GameLayoutState {
   layouts: Record<string, LayoutMode>;

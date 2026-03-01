@@ -54,6 +54,14 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
     }
 
     private void authenticate(StompHeaderAccessor accessor) {
+        // Check for broadcast viewer first (no JWT required)
+        List<String> broadcastHeaders = accessor.getNativeHeader("X-Broadcast-Code");
+        String broadcastCode = (broadcastHeaders != null && !broadcastHeaders.isEmpty()) ? broadcastHeaders.get(0) : null;
+        if (StringUtils.hasText(broadcastCode)) {
+            authenticateBroadcastViewer(broadcastCode.toUpperCase(), accessor);
+            return;
+        }
+
         String token = extractToken(accessor);
         if (!StringUtils.hasText(token) || !tokenProvider.validateToken(token)) {
             throw new AccessDeniedException("Invalid or missing WebSocket token");
@@ -65,6 +73,16 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
             return;
         }
         authenticateUser(token, accessor);
+    }
+
+    private void authenticateBroadcastViewer(String code, StompHeaderAccessor accessor) {
+        var game = gameRepository.findByBroadcastCodeAndBroadcastEnabledTrue(code)
+                .orElseThrow(() -> new AccessDeniedException("Invalid broadcast code"));
+        WebSocketBroadcastPrincipal principal = new WebSocketBroadcastPrincipal(game.getId());
+        var authorities = List.of(new SimpleGrantedAuthority("ROLE_BROADCAST_VIEWER"));
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(principal, null, authorities);
+        accessor.setUser(authentication);
     }
 
     private void authenticateUser(String token, StompHeaderAccessor accessor) {
@@ -134,6 +152,13 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
             return;
         }
 
+        if (principal instanceof WebSocketBroadcastPrincipal broadcastPrincipal) {
+            if (!broadcastPrincipal.gameId().equals(gameId)) {
+                throw new AccessDeniedException("Broadcast viewer cannot subscribe to another game topic");
+            }
+            return;
+        }
+
         throw new AccessDeniedException("Unknown WebSocket principal");
     }
 
@@ -185,5 +210,8 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
     }
 
     private record WebSocketPlayerPrincipal(UUID playerId, UUID gameId) {
+    }
+
+    private record WebSocketBroadcastPrincipal(UUID gameId) {
     }
 }

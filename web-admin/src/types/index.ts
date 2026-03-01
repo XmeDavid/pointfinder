@@ -20,6 +20,8 @@ export interface Game {
   createdBy: string;
   operatorIds: string[];
   uniformAssignment: boolean;
+  broadcastEnabled: boolean;
+  broadcastCode: string | null;
 }
 
 export interface Base {

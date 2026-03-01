@@ -55,10 +55,13 @@ public class MonitoringService {
     @Transactional(readOnly = true)
     public List<LeaderboardEntry> getLeaderboard(UUID gameId) {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
+        return computeLeaderboard(gameId);
+    }
+
+    List<LeaderboardEntry> computeLeaderboard(UUID gameId) {
         List<Team> teams = teamRepository.findByGameId(gameId);
         List<Submission> submissions = submissionRepository.findByGameId(gameId);
 
-        // Group submissions by team
         Map<UUID, List<Submission>> byTeam = submissions.stream()
                 .collect(Collectors.groupingBy(s -> s.getTeam().getId()));
 
@@ -112,6 +115,10 @@ public class MonitoringService {
     @Transactional(readOnly = true)
     public List<TeamBaseProgressResponse> getProgress(UUID gameId) {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
+        return computeProgress(gameId);
+    }
+
+    List<TeamBaseProgressResponse> computeProgress(UUID gameId) {
         List<Team> teams = teamRepository.findByGameId(gameId);
         List<Base> bases = baseRepository.findByGameId(gameId);
         List<CheckIn> checkIns = checkInRepository.findByGameId(gameId);
@@ -127,14 +134,12 @@ public class MonitoringService {
                 )
                 .toList();
 
-        // Group check-ins by team+base
         Map<UUID, Map<UUID, CheckIn>> checkInsByTeamBase = checkIns.stream()
                 .collect(Collectors.groupingBy(
                         ci -> ci.getTeam().getId(),
                         Collectors.toMap(ci -> ci.getBase().getId(), ci -> ci)
                 ));
 
-        // Group submissions by team+base (keep latest per base)
         Map<UUID, Map<UUID, Submission>> submissionsByTeamBase = submissions.stream()
                 .collect(Collectors.groupingBy(
                         s -> s.getTeam().getId(),
@@ -145,8 +150,6 @@ public class MonitoringService {
                         )
                 ));
 
-        // Group assignments: team-specific take priority, then global (team==null)
-        // Key: teamId -> baseId -> Assignment
         Map<UUID, Map<UUID, Assignment>> teamAssignments = new HashMap<>();
         Map<UUID, Assignment> globalAssignments = new HashMap<>();
         for (Assignment a : sortedAssignments) {
@@ -172,7 +175,6 @@ public class MonitoringService {
                 CheckIn ci = teamCheckIns.get(baseId);
                 Submission sub = teamSubs.get(baseId);
 
-                // Resolve assignment: team-specific first, then global
                 Assignment assignment = teamSpecific.get(baseId);
                 if (assignment == null) {
                     assignment = globalAssignments.get(baseId);
@@ -213,6 +215,10 @@ public class MonitoringService {
     @Transactional(readOnly = true)
     public List<TeamLocationResponse> getLocations(UUID gameId) {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
+        return computeLocations(gameId);
+    }
+
+    List<TeamLocationResponse> computeLocations(UUID gameId) {
         return playerLocationRepository.findByGameId(gameId).stream()
                 .map(pl -> TeamLocationResponse.builder()
                         .teamId(pl.getPlayer().getTeam().getId())

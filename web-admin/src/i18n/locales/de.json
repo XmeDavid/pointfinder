@@ -455,7 +455,13 @@
     "uniformAssignmentDescription": "Wenn aktiviert, erhalten alle Teams pro Station dieselbe Challenge. Wenn deaktiviert, erhält jedes Team pro Station eine unterschiedliche zufällige Challenge.",
     "deleteConfirmTitle": "Sind Sie sicher, dass Sie dieses Spiel löschen möchten?",
     "deleteConfirmDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Alle Stationen, Challenges, Teams und Zuweisungen werden dauerhaft gelöscht.",
-    "confirmDelete": "Ja, Spiel löschen"
+    "confirmDelete": "Ja, Spiel löschen",
+    "broadcast": "Übertragung",
+    "broadcastDescription": "Teilen Sie eine Live-Ansicht des Spiels auf einem Beamer oder separaten Bildschirm",
+    "enableBroadcast": "Übertragung aktivieren",
+    "enableBroadcastDesc": "Generiert einen öffentlichen Link, über den Zuschauer das Spiel live verfolgen können, ohne sich anzumelden",
+    "broadcastCode": "Übertragungscode",
+    "broadcastUrl": "Direktlink"
   },
   "landing": {
     "nav": {
@@ -522,8 +528,15 @@
     "monitor": "Monitor",
     "monitorDesc": "Vollbildüberwachung ohne Seitenleiste",
     "review": "Überprüfung",
-    "reviewDesc": "Geteilte Ansicht für Einreichungen",
-    "broadcast": "Präsentation",
-    "broadcastDesc": "Bestenliste für Beamer"
+    "reviewDesc": "Geteilte Ansicht für Einreichungen"
+  },
+  "live": {
+    "title": "Live-Übertragung",
+    "description": "Geben Sie einen 6-stelligen Code ein, um ein Spiel live zu verfolgen",
+    "viewGame": "Spiel ansehen",
+    "invalidCode": "Ungültiger Übertragungscode",
+    "notFound": "Übertragung nicht gefunden",
+    "notFoundDescription": "Dieser Übertragungscode ist ungültig oder die Übertragung wurde deaktiviert.",
+    "backToEntry": "Zurück zur Codeeingabe"
   }
 }

@@ -1,4 +1,4 @@
-import { Moon, Sun, LogOut, Globe, Bell, Check, Menu, LayoutGrid, Sidebar, ListChecks, Radio, SplitSquareHorizontal, Monitor } from "lucide-react";
+import { Moon, Sun, LogOut, Globe, Bell, Check, Menu, LayoutGrid, Sidebar, ListChecks, Radio, SplitSquareHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -51,13 +51,6 @@ const LAYOUT_OPTIONS: LayoutOption[] = [
     icon: <SplitSquareHorizontal className="h-4 w-4" />,
     labelKey: "layout.review",
     descKey: "layout.reviewDesc",
-    available: (status) => status === "live" || status === "ended",
-  },
-  {
-    mode: "broadcast",
-    icon: <Monitor className="h-4 w-4" />,
-    labelKey: "layout.broadcast",
-    descKey: "layout.broadcastDesc",
     available: (status) => status === "live" || status === "ended",
   },
 ];

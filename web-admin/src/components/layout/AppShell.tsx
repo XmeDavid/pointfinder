@@ -6,7 +6,6 @@ import { useGameLayoutStore } from "@/hooks/useGameLayout";
 import { SetupLayout } from "./layouts/SetupLayout";
 import { MonitorLayout } from "./layouts/MonitorLayout";
 import { ReviewLayout } from "./layouts/ReviewLayout";
-import { BroadcastLayout } from "./layouts/BroadcastLayout";
 import type { GameStatus } from "@/types";
 
 export function AppShell({ gameStatus }: { gameStatus?: GameStatus }) {
@@ -23,9 +22,6 @@ export function AppShell({ gameStatus }: { gameStatus?: GameStatus }) {
   }
   if (layout === "review" && gameId) {
     return <ReviewLayout gameId={gameId} gameStatus={gameStatus} />;
-  }
-  if (layout === "broadcast" && gameId) {
-    return <BroadcastLayout gameId={gameId} gameStatus={gameStatus} />;
   }
 
   return (

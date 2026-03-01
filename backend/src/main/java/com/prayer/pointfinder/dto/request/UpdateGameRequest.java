@@ -17,4 +17,6 @@ public class UpdateGameRequest {
     private Instant endDate;
 
     private Boolean uniformAssignment;
+
+    private Boolean broadcastEnabled;
 }

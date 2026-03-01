@@ -455,7 +455,13 @@
     "uniformAssignmentDescription": "Quando ativado, todas as equipas recebem o mesmo desafio em cada base. Quando desativado, cada equipa recebe um desafio aleatório diferente por base.",
     "deleteConfirmTitle": "Tem a certeza que deseja eliminar este jogo?",
     "deleteConfirmDescription": "Esta ação não pode ser revertida. Todas as bases, desafios, equipas e atribuições serão permanentemente eliminados.",
-    "confirmDelete": "Sim, Eliminar Jogo"
+    "confirmDelete": "Sim, Eliminar Jogo",
+    "broadcast": "Transmissão",
+    "broadcastDescription": "Partilhe uma vista ao vivo do jogo num projetor ou ecrã separado",
+    "enableBroadcast": "Ativar transmissão",
+    "enableBroadcastDesc": "Gerar um link público para espectadores assistirem ao jogo ao vivo sem iniciar sessão",
+    "broadcastCode": "Código de transmissão",
+    "broadcastUrl": "Link direto"
   },
   "landing": {
     "nav": {
@@ -522,8 +528,15 @@
     "monitor": "Monitor",
     "monitorDesc": "Monitorização em ecrã completo, sem barra lateral",
     "review": "Revisão",
-    "reviewDesc": "Fila de submissões em painel dividido",
-    "broadcast": "Projeção",
-    "broadcastDesc": "Classificação para projetor"
+    "reviewDesc": "Fila de submissões em painel dividido"
+  },
+  "live": {
+    "title": "Transmissão ao Vivo",
+    "description": "Introduza um código de 6 caracteres para assistir ao jogo ao vivo",
+    "viewGame": "Ver Jogo",
+    "invalidCode": "Código de transmissão inválido",
+    "notFound": "Transmissão não encontrada",
+    "notFoundDescription": "Este código de transmissão é inválido ou a transmissão foi desativada.",
+    "backToEntry": "Voltar à introdução do código"
   }
 }

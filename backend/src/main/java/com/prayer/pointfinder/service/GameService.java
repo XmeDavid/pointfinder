@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -48,6 +49,10 @@ public class GameService {
     private final GameEventBroadcaster eventBroadcaster;
     private final ChallengeAssignmentService challengeAssignmentService;
     private final GameImportExportService gameImportExportService;
+
+    private static final String BROADCAST_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    private static final int BROADCAST_CODE_LENGTH = 6;
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     // ── Read ─────────────────────────────────────────────────────────
 
@@ -121,6 +126,17 @@ public class GameService {
         game.setEndDate(request.getEndDate());
         if (request.getUniformAssignment() != null) {
             game.setUniformAssignment(request.getUniformAssignment());
+        }
+        if (request.getBroadcastEnabled() != null) {
+            boolean wasEnabled = Boolean.TRUE.equals(game.getBroadcastEnabled());
+            boolean nowEnabled = request.getBroadcastEnabled();
+            if (nowEnabled && !wasEnabled) {
+                game.setBroadcastEnabled(true);
+                game.setBroadcastCode(generateBroadcastCode());
+            } else if (!nowEnabled && wasEnabled) {
+                game.setBroadcastEnabled(false);
+                game.setBroadcastCode(null);
+            }
         }
 
         game = gameRepository.save(game);
@@ -279,6 +295,22 @@ public class GameService {
                 .createdBy(game.getCreatedBy().getId())
                 .operatorIds(operatorIds)
                 .uniformAssignment(game.getUniformAssignment())
+                .broadcastEnabled(game.getBroadcastEnabled())
+                .broadcastCode(game.getBroadcastCode())
                 .build();
+    }
+
+    private String generateBroadcastCode() {
+        for (int attempt = 0; attempt < 10; attempt++) {
+            StringBuilder sb = new StringBuilder(BROADCAST_CODE_LENGTH);
+            for (int i = 0; i < BROADCAST_CODE_LENGTH; i++) {
+                sb.append(BROADCAST_CODE_CHARS.charAt(RANDOM.nextInt(BROADCAST_CODE_CHARS.length())));
+            }
+            String code = sb.toString();
+            if (!gameRepository.findByBroadcastCodeAndBroadcastEnabledTrue(code).isPresent()) {
+                return code;
+            }
+        }
+        throw new IllegalStateException("Unable to generate unique broadcast code after 10 attempts");
     }
 }
