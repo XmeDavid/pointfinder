@@ -115,22 +115,24 @@ export function TeamVariablesEditor({ teams, variables: initialVariables, onSave
               className="grid transition-[grid-template-rows] duration-200 ease-in-out"
               style={{ gridTemplateRows: expanded ? "1fr" : "0fr" }}
             >
-              <div className="overflow-hidden p-1">
-                <div className="p-3 space-y-2">
-                  {teams.map((team) => (
-                    <div key={team.id} className="flex items-center gap-3">
-                      <div className="flex items-center gap-2 w-32 shrink-0">
-                        <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: team.color }} />
-                        <span className="text-sm truncate">{team.name}</span>
+              <div className="overflow-hidden">
+                <div className="p-1">
+                  <div className="p-3 space-y-2">
+                    {teams.map((team) => (
+                      <div key={team.id} className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 w-32 shrink-0">
+                          <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: team.color }} />
+                          <span className="text-sm truncate">{team.name}</span>
+                        </div>
+                        <Input
+                          value={variable.teamValues[team.id] ?? ""}
+                          onChange={(e) => updateValue(variable.key, team.id, e.target.value)}
+                          placeholder={t("teamVariables.valuePlaceholder")}
+                          className="h-8 text-sm"
+                        />
                       </div>
-                      <Input
-                        value={variable.teamValues[team.id] ?? ""}
-                        onChange={(e) => updateValue(variable.key, team.id, e.target.value)}
-                        placeholder={t("teamVariables.valuePlaceholder")}
-                        className="h-8 text-sm"
-                      />
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
