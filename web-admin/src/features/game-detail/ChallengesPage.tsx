@@ -223,7 +223,7 @@ export function ChallengesPage() {
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent onClose={closeDialog} className="max-w-2xl">
+        <DialogContent onClose={closeDialog} className="max-w-3xl">
           <DialogHeader><DialogTitle>{editing ? t("challenges.editChallenge") : t("challenges.createChallenge")}</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">

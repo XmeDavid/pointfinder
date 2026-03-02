@@ -115,7 +115,7 @@ export function TeamVariablesEditor({ teams, variables: initialVariables, onSave
               className="grid transition-[grid-template-rows] duration-200 ease-in-out"
               style={{ gridTemplateRows: expanded ? "1fr" : "0fr" }}
             >
-              <div className="overflow-hidden">
+              <div className="overflow-hidden px-px pb-px">
                 <div className="p-3 space-y-2">
                   {teams.map((team) => (
                     <div key={team.id} className="flex items-center gap-3">
