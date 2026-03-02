@@ -264,27 +264,27 @@ export function ChallengesPage() {
                 placeholder={t("challenges.shortDescriptionPlaceholder")}
               />
             </div>
-            <Suspense fallback={<div className="h-[200px] animate-pulse rounded-md border border-input bg-muted/30" />}>
-              <div className="space-y-2">
-                <p className="text-sm font-medium leading-none">
-                  {t("challenges.content")}
-                  <span className="text-muted-foreground font-normal"> ({t("common.optional")})</span>
-                </p>
+            <Collapsible
+              title={<>{t("challenges.content")}<span className="text-muted-foreground font-normal"> ({t("common.optional")})</span></>}
+              defaultOpen={true}
+            >
+              <Suspense fallback={<div className="h-[200px] animate-pulse rounded-md border border-input bg-muted/30" />}>
                 <RichTextEditor value={form.content ?? ""} onChange={(html) => setForm((f) => ({ ...f, content: html }))} placeholder={t("challenges.contentPlaceholder")} availableVariables={editing ? availableVariables : undefined} />
-              </div>
-              <div className="space-y-2">
-                <p className="text-sm font-medium leading-none">
-                  {t("challenges.completionContent")}
-                  <span className="text-muted-foreground font-normal"> ({t("common.optional")})</span>
-                </p>
+              </Suspense>
+            </Collapsible>
+            <Collapsible
+              title={<>{t("challenges.completionContent")}<span className="text-muted-foreground font-normal"> ({t("common.optional")})</span></>}
+              defaultOpen={false}
+            >
+              <Suspense fallback={<div className="h-[200px] animate-pulse rounded-md border border-input bg-muted/30" />}>
                 <RichTextEditor
                   value={form.completionContent ?? ""}
                   onChange={(html) => setForm((f) => ({ ...f, completionContent: html }))}
                   placeholder={t("challenges.completionContentPlaceholder")}
                   availableVariables={editing ? availableVariables : undefined}
                 />
-              </div>
-            </Suspense>
+              </Suspense>
+            </Collapsible>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-3">
                 <p className="text-sm font-medium leading-none">{t("challenges.answerType")}</p>

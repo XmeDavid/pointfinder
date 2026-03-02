@@ -33,7 +33,7 @@ export function Collapsible({ title, icon, description, defaultOpen = false, chi
         className="grid transition-[grid-template-rows] duration-200 ease-in-out"
         style={{ gridTemplateRows: open ? "1fr" : "0fr" }}
       >
-        <div className="overflow-hidden px-px pb-px">
+        <div className="overflow-hidden p-1">
           {description && open && (
             <p className="text-xs text-muted-foreground mb-2">{description}</p>
           )}

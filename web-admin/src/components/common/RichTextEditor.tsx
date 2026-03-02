@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import TiptapImage from "@tiptap/extension-image";
@@ -95,6 +95,52 @@ export function RichTextEditor({ value, onChange, placeholder, availableVariable
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [varDropdownOpen, setVarDropdownOpen] = useState(false);
   const varBtnRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Inline {{ suggestion state
+  const [suggestionQuery, setSuggestionQuery] = useState<string | null>(null);
+  const [suggestionIndex, setSuggestionIndex] = useState(0);
+  const [suggestionCoords, setSuggestionCoords] = useState<{ top: number; left: number } | null>(null);
+  const suggestionRef = useRef<{ query: string | null; index: number; filtered: string[] }>({ query: null, index: 0, filtered: [] });
+
+  const filteredSuggestions = availableVariables?.filter(
+    (v) => suggestionQuery === null ? false : v.toLowerCase().startsWith(suggestionQuery.toLowerCase()),
+  ) ?? [];
+  // Keep ref in sync for handleKeyDown access
+  useEffect(() => {
+    suggestionRef.current = { query: suggestionQuery, index: suggestionIndex, filtered: filteredSuggestions };
+  });
+
+  const checkSuggestion = useCallback((editorInstance: ReturnType<typeof useEditor>) => {
+    if (!editorInstance || !availableVariables?.length) {
+      setSuggestionQuery(null);
+      setSuggestionCoords(null);
+      return;
+    }
+    const { state } = editorInstance;
+    const { from } = state.selection;
+    const textBefore = state.doc.textBetween(
+      Math.max(0, from - 50),
+      from,
+      "",
+    );
+    const match = textBefore.match(/\{\{(\w*)$/);
+    if (match) {
+      const coords = editorInstance.view.coordsAtPos(from);
+      const containerRect = containerRef.current?.getBoundingClientRect();
+      if (containerRect) {
+        setSuggestionQuery(match[1]);
+        setSuggestionIndex(0);
+        setSuggestionCoords({
+          top: coords.bottom - containerRect.top,
+          left: coords.left - containerRect.left,
+        });
+      }
+    } else {
+      setSuggestionQuery(null);
+      setSuggestionCoords(null);
+    }
+  }, [availableVariables]);
 
   const editor = useEditor({
     extensions: [
@@ -105,10 +151,53 @@ export function RichTextEditor({ value, onChange, placeholder, availableVariable
     content: value,
     onUpdate: ({ editor: e }) => {
       onChange(e.getHTML());
+      checkSuggestion(e);
+    },
+    onSelectionUpdate: ({ editor: e }) => {
+      checkSuggestion(e);
     },
     editorProps: {
       attributes: {
         class: "prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[150px] px-3 py-2",
+      },
+      handleKeyDown: (view, event) => {
+        const { query, index, filtered } = suggestionRef.current;
+        if (query === null || filtered.length === 0) return false;
+        if (event.key === "ArrowDown") {
+          event.preventDefault();
+          setSuggestionIndex((i) => (i + 1) % filtered.length);
+          return true;
+        }
+        if (event.key === "ArrowUp") {
+          event.preventDefault();
+          setSuggestionIndex((i) => (i - 1 + filtered.length) % filtered.length);
+          return true;
+        }
+        if (event.key === "Enter" || event.key === "Tab") {
+          event.preventDefault();
+          const selected = filtered[index];
+          if (selected) {
+            const { state } = view;
+            const { from } = state.selection;
+            const textBefore = state.doc.textBetween(Math.max(0, from - 50), from, "");
+            const match = textBefore.match(/\{\{(\w*)$/);
+            if (match) {
+              const deleteFrom = from - match[0].length;
+              const replacement = `{{${selected}}}`;
+              view.dispatch(state.tr.delete(deleteFrom, from).insertText(replacement, deleteFrom));
+            }
+          }
+          setSuggestionQuery(null);
+          setSuggestionCoords(null);
+          return true;
+        }
+        if (event.key === "Escape") {
+          event.preventDefault();
+          setSuggestionQuery(null);
+          setSuggestionCoords(null);
+          return true;
+        }
+        return false;
       },
     },
   });
@@ -140,6 +229,23 @@ export function RichTextEditor({ value, onChange, placeholder, availableVariable
     }
   }, [editor]);
 
+  const selectSuggestion = useCallback((varName: string) => {
+    if (!editor) return;
+    const { state } = editor;
+    const { from } = state.selection;
+    const textBefore = state.doc.textBetween(Math.max(0, from - 50), from, "");
+    const match = textBefore.match(/\{\{(\w*)$/);
+    if (match) {
+      const deleteFrom = from - match[0].length;
+      editor.chain().focus()
+        .deleteRange({ from: deleteFrom, to: from })
+        .insertContent(`{{${varName}}}`)
+        .run();
+    }
+    setSuggestionQuery(null);
+    setSuggestionCoords(null);
+  }, [editor]);
+
   const insertVariable = useCallback((varName: string) => {
     if (!editor) return;
     editor.chain().focus().insertContent(`{{${varName}}}`).run();
@@ -151,7 +257,7 @@ export function RichTextEditor({ value, onChange, placeholder, availableVariable
   const hasVariables = availableVariables && availableVariables.length > 0;
 
   return (
-    <div className="rounded-md border border-input overflow-hidden">
+    <div ref={containerRef} className="relative rounded-md border border-input">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-0.5 border-b border-border bg-muted/50 px-2 py-1">
         <ToolbarButton
@@ -287,6 +393,35 @@ export function RichTextEditor({ value, onChange, placeholder, availableVariable
 
       {/* Editor content */}
       <EditorContent editor={editor} />
+
+      {/* Inline {{ suggestion popup */}
+      {suggestionQuery !== null && suggestionCoords && filteredSuggestions.length > 0 && (
+        <div
+          className="absolute z-50 min-w-[160px] rounded-md border border-border bg-popover shadow-md"
+          style={{ top: suggestionCoords.top + 4, left: suggestionCoords.left }}
+        >
+          <div className="py-1">
+            {filteredSuggestions.map((v, i) => (
+              <button
+                key={v}
+                type="button"
+                className={cn(
+                  "flex w-full items-center px-3 py-1.5 text-sm font-mono cursor-pointer",
+                  i === suggestionIndex
+                    ? "bg-accent text-accent-foreground"
+                    : "hover:bg-accent hover:text-accent-foreground",
+                )}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  selectSuggestion(v);
+                }}
+              >
+                {`{{${v}}}`}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Hidden file input for image uploads */}
       <input
