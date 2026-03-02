@@ -44,6 +44,7 @@ public class PlayerService {
     private final PlayerLocationRepository playerLocationRepository;
     private final GameAccessService gameAccessService;
     private final OperatorPushNotificationService operatorPushNotificationService;
+    private final TemplateVariableService templateVariableService;
 
     @Transactional
     public PlayerAuthResponse joinTeam(PlayerJoinRequest request) {
@@ -124,7 +125,7 @@ public class PlayerService {
         Optional<CheckIn> existing = checkInRepository.findByTeamIdAndBaseId(team.getId(), baseId);
         if (existing.isPresent()) {
             // Return the existing check-in with challenge info
-            return buildCheckInResponse(existing.get(), base, team);
+            return buildCheckInResponse(existing.get(), base, team, gameId);
         }
 
         // Create new check-in
@@ -157,7 +158,7 @@ public class PlayerService {
         eventBroadcaster.broadcastActivityEvent(gameId, event);
         operatorPushNotificationService.notifyOperatorsForCheckIn(base.getGame(), team, base);
 
-        return buildCheckInResponse(checkIn, base, team);
+        return buildCheckInResponse(checkIn, base, team, gameId);
     }
 
     @Transactional(readOnly = true)
@@ -353,7 +354,8 @@ public class PlayerService {
             }
         }
 
-        // Load all relevant challenges
+        // Load all relevant challenges, resolving {{variables}} for this team
+        UUID teamId = team.getId();
         List<ChallengeResponse> challenges = challengeRepository.findByGameId(gameId).stream()
                 .filter(c -> challengeIds.contains(c.getId()))
                 .map(c -> ChallengeResponse.builder()
@@ -361,8 +363,10 @@ public class PlayerService {
                         .gameId(gameId)
                         .title(c.getTitle())
                         .description(c.getDescription())
-                        .content(c.getContent())
-                        .completionContent(c.getCompletionContent())
+                        .content(templateVariableService.resolveTemplate(
+                                c.getContent(), gameId, c.getId(), teamId))
+                        .completionContent(templateVariableService.resolveTemplate(
+                                c.getCompletionContent(), gameId, c.getId(), teamId))
                         .answerType(c.getAnswerType().name())
                         .autoValidate(c.getAutoValidate())
                         .correctAnswer(null) // Don't expose correct answer to players
@@ -420,7 +424,11 @@ public class PlayerService {
         submissionRequest.setFileUrl(request.getFileUrl());
         submissionRequest.setIdempotencyKey(request.getIdempotencyKey());
 
-        return submissionService.createSubmission(gameId, submissionRequest);
+        SubmissionResponse response = submissionService.createSubmission(gameId, submissionRequest);
+        // Resolve {{variables}} in completionContent for this team
+        response.setCompletionContent(templateVariableService.resolveTemplate(
+                response.getCompletionContent(), gameId, request.getChallengeId(), team.getId()));
+        return response;
     }
 
     @Transactional
@@ -484,7 +492,7 @@ public class PlayerService {
         eventBroadcaster.broadcastLocationUpdate(gameId, locationData);
     }
 
-    private CheckInResponse buildCheckInResponse(CheckIn checkIn, Base base, Team team) {
+    private CheckInResponse buildCheckInResponse(CheckIn checkIn, Base base, Team team, UUID gameId) {
         Challenge challenge = resolveAssignedChallenge(base, team);
 
         CheckInResponse.ChallengeInfo challengeInfo = null;
@@ -493,8 +501,10 @@ public class PlayerService {
                     .id(challenge.getId())
                     .title(challenge.getTitle())
                     .description(challenge.getDescription())
-                    .content(challenge.getContent())
-                    .completionContent(challenge.getCompletionContent())
+                    .content(templateVariableService.resolveTemplate(
+                            challenge.getContent(), gameId, challenge.getId(), team.getId()))
+                    .completionContent(templateVariableService.resolveTemplate(
+                            challenge.getCompletionContent(), gameId, challenge.getId(), team.getId()))
                     .answerType(challenge.getAnswerType().name())
                     .points(challenge.getPoints())
                     .build();

@@ -55,6 +55,8 @@ class SubmissionServiceTest {
     private PlayerRepository playerRepository;
     @Mock
     private OperatorPushNotificationService operatorPushNotificationService;
+    @Mock
+    private TemplateVariableService templateVariableService;
 
     @InjectMocks
     private SubmissionService submissionService;
@@ -122,6 +124,10 @@ class SubmissionServiceTest {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(operator, null)
         );
+
+        // Default: resolveTemplates passes through the input list unchanged
+        org.mockito.Mockito.lenient().when(templateVariableService.resolveTemplates(any(), any(), any(), any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     @AfterEach

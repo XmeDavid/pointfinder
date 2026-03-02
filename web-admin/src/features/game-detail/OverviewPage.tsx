@@ -9,6 +9,7 @@ import { basesApi } from "@/lib/api/bases";
 import { challengesApi } from "@/lib/api/challenges";
 import { teamsApi } from "@/lib/api/teams";
 import { assignmentsApi } from "@/lib/api/assignments";
+import { teamVariablesApi } from "@/lib/api/team-variables";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { formatDateTime } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
@@ -26,6 +27,7 @@ export function OverviewPage() {
   const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!) });
   const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!) });
   const { data: assignments = [] } = useQuery({ queryKey: ["assignments", gameId], queryFn: () => assignmentsApi.listByGame(gameId!) });
+  const { data: varCompleteness } = useQuery({ queryKey: ["team-variables-completeness", gameId], queryFn: () => teamVariablesApi.checkCompleteness(gameId!) });
 
   const transition = useMutation({
     mutationFn: (status: GameStatus) => gamesApi.updateStatus(gameId!, status),
@@ -55,6 +57,8 @@ export function OverviewPage() {
   // Enough challenges so every team gets a unique challenge at every base
   const enoughChallenges = challenges.length >= bases.length;
 
+  const varsComplete = varCompleteness?.complete ?? true;
+
   const readinessChecks = [
     { ok: bases.length > 0, label: t("overview.basesCreated", { count: bases.length }) },
     { ok: challenges.length > 0, label: t("overview.challengesCreated", { count: challenges.length }) },
@@ -62,6 +66,7 @@ export function OverviewPage() {
     { ok: basesWithoutNfc.length === 0, label: basesWithoutNfc.length === 0 ? t("overview.allNfcLinked") : t("overview.nfcMissing", { count: basesWithoutNfc.length }) },
     { ok: unassignedLocationBound.length === 0, label: unassignedLocationBound.length === 0 ? t("overview.allLocationBoundAssigned") : t("overview.locationBoundUnassigned", { count: unassignedLocationBound.length }) },
     { ok: enoughChallenges, label: enoughChallenges ? t("overview.enoughChallenges") : t("overview.notEnoughChallenges", { bases: bases.length, challenges: challenges.length }) },
+    ...(varCompleteness && !varsComplete ? [{ ok: false, label: t("overview.variablesIncomplete", { count: varCompleteness.errors.length }) }] : []),
   ];
 
   const canGoLive = game.status !== "setup" || readinessChecks.every((check) => check.ok);

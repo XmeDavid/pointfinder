@@ -49,6 +49,7 @@ public class GameService {
     private final GameEventBroadcaster eventBroadcaster;
     private final ChallengeAssignmentService challengeAssignmentService;
     private final GameImportExportService gameImportExportService;
+    private final TeamVariableService teamVariableService;
 
     private static final String BROADCAST_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     private static final int BROADCAST_CODE_LENGTH = 6;
@@ -277,6 +278,12 @@ public class GameService {
             throw new BadRequestException(
                     String.format("Not enough challenges for unique assignment. %d bases but only %d challenges. " +
                             "Each team must have a unique challenge at every base.", baseCount, challengeCount));
+        }
+
+        // Ensure all team variables have values for every team
+        List<String> variableErrors = teamVariableService.validateVariableCompleteness(game.getId());
+        if (!variableErrors.isEmpty()) {
+            throw new BadRequestException("Team variables incomplete: " + variableErrors.get(0));
         }
     }
 

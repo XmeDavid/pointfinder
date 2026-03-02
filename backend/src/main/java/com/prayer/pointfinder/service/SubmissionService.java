@@ -37,6 +37,7 @@ public class SubmissionService {
     private final FileStorageService fileStorageService;
     private final PlayerRepository playerRepository;
     private final OperatorPushNotificationService operatorPushNotificationService;
+    private final TemplateVariableService templateVariableService;
 
     @Transactional(readOnly = true)
     public List<SubmissionResponse> getSubmissionsByGame(UUID gameId) {
@@ -95,7 +96,10 @@ public class SubmissionService {
         if (challenge.getAutoValidate() && challenge.getAnswerType() == AnswerType.text
                 && challenge.getCorrectAnswer() != null && !challenge.getCorrectAnswer().isEmpty()) {
             String providedAnswer = request.getAnswer() != null ? request.getAnswer().trim() : "";
-            boolean matches = challenge.getCorrectAnswer().stream()
+            // Resolve {{variables}} in correct answers for this team
+            java.util.List<String> resolvedAnswers = templateVariableService.resolveTemplates(
+                    challenge.getCorrectAnswer(), gameId, challenge.getId(), team.getId());
+            boolean matches = resolvedAnswers.stream()
                     .anyMatch(ans -> ans.trim().equalsIgnoreCase(providedAnswer));
             status = matches ? SubmissionStatus.correct : SubmissionStatus.rejected;
         }

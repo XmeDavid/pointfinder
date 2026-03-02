@@ -184,7 +184,23 @@
     "locationBoundUnassigned_other": "{{count}} desafios de localização não atribuídos",
     "enoughChallenges": "Desafios suficientes para atribuição única",
     "notEnoughChallenges": "Desafios insuficientes: {{bases}} bases mas apenas {{challenges}} desafios",
-    "notSet": "Não definido"
+    "notSet": "Não definido",
+    "variablesIncomplete_one": "{{count}} variável de equipa sem valores",
+    "variablesIncomplete_other": "{{count}} variáveis de equipa sem valores"
+  },
+  "teamVariables": {
+    "gameVariables": "Variáveis do Jogo",
+    "gameVariablesDescription": "Variáveis partilhadas entre todos os desafios, únicas por equipa",
+    "challengeVariables": "Variáveis do Desafio",
+    "challengeVariablesDescription": "Variáveis específicas deste desafio, únicas por equipa. Use {{variableName}} no conteúdo, conteúdo de conclusão ou respostas corretas.",
+    "addVariable": "Adicionar Variável",
+    "variableKeyPlaceholder": "ex. proximasCoordenadas",
+    "variableKeyHint": "Deve começar com uma letra, apenas letras, dígitos e underscores",
+    "duplicateKey": "Nome da variável já existe",
+    "valuePlaceholder": "Valor para esta equipa...",
+    "previewAsTeam": "Pré-visualizar como Equipa",
+    "selectTeamPreview": "Selecione uma equipa para pré-visualizar...",
+    "noTeams": "Crie equipas primeiro para definir variáveis"
   },
   "gameOperators": {
     "title": "Operadores do Jogo",

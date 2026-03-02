@@ -1,7 +1,7 @@
 import { useMemo, useState, lazy, Suspense } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Minus, Puzzle, Trash2, Pencil, FileText, Image, CheckCircle, Eye, MapPin, Unlock } from "lucide-react";
+import { Plus, Minus, Puzzle, Trash2, Pencil, FileText, Image, CheckCircle, Eye, MapPin, Unlock, Variable } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormLabel } from "@/components/ui/form-label";
@@ -11,8 +11,11 @@ import { Select } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-dialog";
+import { TeamVariablesEditor } from "@/components/common/TeamVariablesEditor";
 import { challengesApi, type CreateChallengeDto } from "@/lib/api/challenges";
 import { basesApi } from "@/lib/api/bases";
+import { teamsApi } from "@/lib/api/teams";
+import { teamVariablesApi, type TeamVariableEntry } from "@/lib/api/team-variables";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { useTranslation } from "react-i18next";
 import type { Challenge } from "@/types";
@@ -33,6 +36,9 @@ export function ChallengesPage() {
 
   const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!) });
   const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!) });
+  const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!) });
+  const [varsSaving, setVarsSaving] = useState(false);
+  const [previewTeamId, setPreviewTeamId] = useState<string>("");
   const fixedBaseByChallengeId = useMemo(() => {
     const map = new Map<string, { id: string; name: string }>();
     bases.forEach((base) => {
@@ -70,6 +76,25 @@ export function ChallengesPage() {
     if (!form.unlocksBaseId) return undefined;
     return hiddenBases.some((base) => base.id === form.unlocksBaseId) ? form.unlocksBaseId : undefined;
   }, [hiddenBases, form.unlocksBaseId]);
+
+  const { data: challengeVarsData } = useQuery({
+    queryKey: ["challenge-variables", gameId, editing?.id],
+    queryFn: () => teamVariablesApi.getChallengeVariables(gameId!, editing!.id),
+    enabled: !!editing,
+  });
+  const { data: gameVarsData } = useQuery({
+    queryKey: ["game-variables", gameId],
+    queryFn: () => teamVariablesApi.getGameVariables(gameId!),
+    enabled: teams.length > 0,
+  });
+
+  // All available variable names for the toolbar insert button
+  const availableVariables = useMemo(() => {
+    const keys = new Set<string>();
+    gameVarsData?.variables?.forEach((v) => keys.add(v.key));
+    challengeVarsData?.variables?.forEach((v) => keys.add(v.key));
+    return Array.from(keys);
+  }, [gameVarsData, challengeVarsData]);
 
   const invalidateChallengesAndBases = () => {
     queryClient.invalidateQueries({ queryKey: ["challenges", gameId] });
@@ -244,7 +269,7 @@ export function ChallengesPage() {
                   {t("challenges.content")}
                   <span className="text-muted-foreground font-normal"> ({t("common.optional")})</span>
                 </p>
-                <RichTextEditor value={form.content ?? ""} onChange={(html) => setForm((f) => ({ ...f, content: html }))} placeholder={t("challenges.contentPlaceholder")} />
+                <RichTextEditor value={form.content ?? ""} onChange={(html) => setForm((f) => ({ ...f, content: html }))} placeholder={t("challenges.contentPlaceholder")} availableVariables={editing ? availableVariables : undefined} />
               </div>
               <div className="space-y-2">
                 <p className="text-sm font-medium leading-none">
@@ -255,6 +280,7 @@ export function ChallengesPage() {
                   value={form.completionContent ?? ""}
                   onChange={(html) => setForm((f) => ({ ...f, completionContent: html }))}
                   placeholder={t("challenges.completionContentPlaceholder")}
+                  availableVariables={editing ? availableVariables : undefined}
                 />
               </div>
             </Suspense>
@@ -371,6 +397,49 @@ export function ChallengesPage() {
                 </Button>
               </div>
             )}
+            {editing && teams.length > 0 && (
+              <div className="space-y-2 border-t border-border pt-4">
+                <div className="flex items-center gap-2">
+                  <Variable className="h-4 w-4 text-muted-foreground" />
+                  <p className="text-sm font-medium leading-none">{t("teamVariables.challengeVariables")}</p>
+                </div>
+                <p className="text-xs text-muted-foreground">{t("teamVariables.challengeVariablesDescription")}</p>
+                <TeamVariablesEditor
+                  teams={teams}
+                  variables={challengeVarsData?.variables ?? []}
+                  saving={varsSaving}
+                  onSave={async (vars) => {
+                    setVarsSaving(true);
+                    try {
+                      await teamVariablesApi.saveChallengeVariables(gameId!, editing.id, { variables: vars });
+                      queryClient.invalidateQueries({ queryKey: ["challenge-variables", gameId, editing.id] });
+                      setActionError("");
+                    } catch (error) {
+                      setActionError(getApiErrorMessage(error));
+                    } finally {
+                      setVarsSaving(false);
+                    }
+                  }}
+                />
+              </div>
+            )}
+            {editing && availableVariables.length > 0 && teams.length > 0 && (
+              <div className="space-y-2 border-t border-border pt-4">
+                <p className="text-sm font-medium leading-none">{t("teamVariables.previewAsTeam")}</p>
+                <Select value={previewTeamId} onChange={(e) => setPreviewTeamId(e.target.value)}>
+                  <option value="">{t("teamVariables.selectTeamPreview")}</option>
+                  {teams.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}
+                </Select>
+                {previewTeamId && (
+                  <div className="rounded-md border border-border bg-muted/30 p-3 space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground">{t("challenges.content")}</p>
+                    <div className="prose prose-sm dark:prose-invert max-w-none text-sm" dangerouslySetInnerHTML={{ __html: resolveVariablesClient(form.content ?? "", gameVarsData?.variables ?? [], challengeVarsData?.variables ?? [], previewTeamId) }} />
+                    <p className="text-xs font-medium text-muted-foreground mt-3">{t("challenges.completionContent")}</p>
+                    <div className="prose prose-sm dark:prose-invert max-w-none text-sm" dangerouslySetInnerHTML={{ __html: resolveVariablesClient(form.completionContent ?? "", gameVarsData?.variables ?? [], challengeVarsData?.variables ?? [], previewTeamId) }} />
+                  </div>
+                )}
+              </div>
+            )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={closeDialog}>{t("common.cancel")}</Button>
               <Button type="submit" disabled={createChallenge.isPending || updateChallenge.isPending}>{editing ? t("challenges.editChallenge") : t("challenges.createChallenge")}</Button>
@@ -388,4 +457,20 @@ export function ChallengesPage() {
       />
     </div>
   );
+}
+
+function resolveVariablesClient(
+  template: string,
+  gameVariables: TeamVariableEntry[],
+  challengeVariables: TeamVariableEntry[],
+  teamId: string,
+): string {
+  const vars: Record<string, string> = {};
+  for (const v of gameVariables) {
+    if (v.teamValues[teamId] !== undefined) vars[v.key] = v.teamValues[teamId];
+  }
+  for (const v of challengeVariables) {
+    if (v.teamValues[teamId] !== undefined) vars[v.key] = v.teamValues[teamId];
+  }
+  return template.replace(/\{\{(\w+)\}\}/g, (match, key) => vars[key] ?? match);
 }
