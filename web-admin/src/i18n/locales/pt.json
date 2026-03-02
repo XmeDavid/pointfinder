@@ -200,7 +200,8 @@
     "valuePlaceholder": "Valor para esta equipa...",
     "previewAsTeam": "Pré-visualizar como Equipa",
     "selectTeamPreview": "Selecione uma equipa para pré-visualizar...",
-    "noTeams": "Crie equipas primeiro para definir variáveis"
+    "noTeams": "Crie equipas primeiro para definir variáveis",
+    "teamsFilledCount": "{{filled}}/{{total}} equipas"
   },
   "gameOperators": {
     "title": "Operadores do Jogo",

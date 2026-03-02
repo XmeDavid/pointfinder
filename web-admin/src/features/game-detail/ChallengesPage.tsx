@@ -11,6 +11,7 @@ import { Select } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-dialog";
+import { Collapsible } from "@/components/ui/collapsible";
 import { TeamVariablesEditor } from "@/components/common/TeamVariablesEditor";
 import { challengesApi, type CreateChallengeDto } from "@/lib/api/challenges";
 import { basesApi } from "@/lib/api/bases";
@@ -398,12 +399,12 @@ export function ChallengesPage() {
               </div>
             )}
             {editing && teams.length > 0 && (
-              <div className="space-y-2 border-t border-border pt-4">
-                <div className="flex items-center gap-2">
-                  <Variable className="h-4 w-4 text-muted-foreground" />
-                  <p className="text-sm font-medium leading-none">{t("teamVariables.challengeVariables")}</p>
-                </div>
-                <p className="text-xs text-muted-foreground">{t("teamVariables.challengeVariablesDescription")}</p>
+              <Collapsible
+                title={t("teamVariables.challengeVariables")}
+                icon={<Variable className="h-4 w-4 text-muted-foreground" />}
+                description={t("teamVariables.challengeVariablesDescription")}
+                className="border-t border-border pt-2"
+              >
                 <TeamVariablesEditor
                   teams={teams}
                   variables={challengeVarsData?.variables ?? []}
@@ -421,24 +422,27 @@ export function ChallengesPage() {
                     }
                   }}
                 />
-              </div>
+              </Collapsible>
             )}
             {editing && availableVariables.length > 0 && teams.length > 0 && (
-              <div className="space-y-2 border-t border-border pt-4">
-                <p className="text-sm font-medium leading-none">{t("teamVariables.previewAsTeam")}</p>
+              <Collapsible
+                title={t("teamVariables.previewAsTeam")}
+                icon={<Eye className="h-4 w-4 text-muted-foreground" />}
+                className="border-t border-border pt-2"
+              >
                 <Select value={previewTeamId} onChange={(e) => setPreviewTeamId(e.target.value)}>
                   <option value="">{t("teamVariables.selectTeamPreview")}</option>
                   {teams.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}
                 </Select>
                 {previewTeamId && (
-                  <div className="rounded-md border border-border bg-muted/30 p-3 space-y-2">
+                  <div className="rounded-md border border-border bg-muted/30 p-3 space-y-2 mt-2">
                     <p className="text-xs font-medium text-muted-foreground">{t("challenges.content")}</p>
                     <div className="prose prose-sm dark:prose-invert max-w-none text-sm" dangerouslySetInnerHTML={{ __html: resolveVariablesClient(form.content ?? "", gameVarsData?.variables ?? [], challengeVarsData?.variables ?? [], previewTeamId) }} />
                     <p className="text-xs font-medium text-muted-foreground mt-3">{t("challenges.completionContent")}</p>
                     <div className="prose prose-sm dark:prose-invert max-w-none text-sm" dangerouslySetInnerHTML={{ __html: resolveVariablesClient(form.completionContent ?? "", gameVarsData?.variables ?? [], challengeVarsData?.variables ?? [], previewTeamId) }} />
                   </div>
                 )}
-              </div>
+              </Collapsible>
             )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={closeDialog}>{t("common.cancel")}</Button>

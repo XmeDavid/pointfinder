@@ -200,7 +200,8 @@
     "valuePlaceholder": "Value for this team...",
     "previewAsTeam": "Preview as Team",
     "selectTeamPreview": "Select a team to preview...",
-    "noTeams": "Create teams first to define variables"
+    "noTeams": "Create teams first to define variables",
+    "teamsFilledCount": "{{filled}}/{{total}} teams"
   },
   "gameOperators": {
     "title": "Game Operators",

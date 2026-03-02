@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Plus, Trash2, Save } from "lucide-react";
+import { Plus, Trash2, Save, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTranslation } from "react-i18next";
@@ -22,9 +22,19 @@ export function TeamVariablesEditor({ teams, variables: initialVariables, onSave
   const [edits, setEdits] = useState<TeamVariableEntry[] | null>(null);
   const [newKeyName, setNewKeyName] = useState("");
   const [keyError, setKeyError] = useState("");
+  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
 
   const variables = edits ?? initialVariables;
   const dirty = edits !== null;
+
+  const toggleExpanded = useCallback((key: string) => {
+    setExpandedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
 
   const addVariable = useCallback(() => {
     const key = newKeyName.trim();
@@ -41,11 +51,17 @@ export function TeamVariablesEditor({ teams, variables: initialVariables, onSave
     const teamValues: Record<string, string> = {};
     teams.forEach((team) => { teamValues[team.id] = ""; });
     setEdits([...variables, { key, teamValues }]);
+    setExpandedKeys((prev) => new Set(prev).add(key));
     setNewKeyName("");
   }, [newKeyName, variables, teams, t]);
 
   const removeVariable = useCallback((key: string) => {
     setEdits(variables.filter((v) => v.key !== key));
+    setExpandedKeys((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
   }, [variables]);
 
   const updateValue = useCallback((key: string, teamId: string, value: string) => {
@@ -66,33 +82,61 @@ export function TeamVariablesEditor({ teams, variables: initialVariables, onSave
   }
 
   return (
-    <div className="space-y-4">
-      {variables.map((variable) => (
-        <div key={variable.key} className="rounded-md border border-border">
-          <div className="flex items-center justify-between bg-muted/50 px-3 py-2">
-            <code className="text-sm font-mono font-medium">{`{{${variable.key}}}`}</code>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeVariable(variable.key)}>
-              <Trash2 className="h-3.5 w-3.5 text-destructive" />
-            </Button>
-          </div>
-          <div className="p-3 space-y-2">
-            {teams.map((team) => (
-              <div key={team.id} className="flex items-center gap-3">
-                <div className="flex items-center gap-2 w-32 shrink-0">
-                  <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: team.color }} />
-                  <span className="text-sm truncate">{team.name}</span>
+    <div className="space-y-2">
+      {variables.map((variable) => {
+        const expanded = expandedKeys.has(variable.key);
+        const filledCount = teams.filter((team) => (variable.teamValues[team.id] ?? "").trim() !== "").length;
+        return (
+          <div key={variable.key} className="rounded-md border border-border">
+            <div className="flex items-center bg-muted/50 px-3 py-2">
+              <button
+                type="button"
+                className="flex flex-1 items-center gap-2 text-left min-w-0"
+                onClick={() => toggleExpanded(variable.key)}
+              >
+                <ChevronRight className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-200 ${expanded ? "rotate-90" : ""}`} />
+                <code className="text-sm font-mono font-medium">{`{{${variable.key}}}`}</code>
+                {!expanded && (
+                  <span className="text-xs text-muted-foreground ml-auto">
+                    {t("teamVariables.teamsFilledCount", { filled: filledCount, total: teams.length })}
+                  </span>
+                )}
+              </button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 shrink-0 ml-2"
+                onClick={(e) => { e.stopPropagation(); removeVariable(variable.key); }}
+              >
+                <Trash2 className="h-3.5 w-3.5 text-destructive" />
+              </Button>
+            </div>
+            <div
+              className="grid transition-[grid-template-rows] duration-200 ease-in-out"
+              style={{ gridTemplateRows: expanded ? "1fr" : "0fr" }}
+            >
+              <div className="overflow-hidden">
+                <div className="p-3 space-y-2">
+                  {teams.map((team) => (
+                    <div key={team.id} className="flex items-center gap-3">
+                      <div className="flex items-center gap-2 w-32 shrink-0">
+                        <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: team.color }} />
+                        <span className="text-sm truncate">{team.name}</span>
+                      </div>
+                      <Input
+                        value={variable.teamValues[team.id] ?? ""}
+                        onChange={(e) => updateValue(variable.key, team.id, e.target.value)}
+                        placeholder={t("teamVariables.valuePlaceholder")}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                  ))}
                 </div>
-                <Input
-                  value={variable.teamValues[team.id] ?? ""}
-                  onChange={(e) => updateValue(variable.key, team.id, e.target.value)}
-                  placeholder={t("teamVariables.valuePlaceholder")}
-                  className="h-8 text-sm"
-                />
               </div>
-            ))}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       <div className="flex items-end gap-2">
         <div className="flex-1">
