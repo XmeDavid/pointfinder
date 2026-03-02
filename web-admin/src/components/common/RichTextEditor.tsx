@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import TiptapImage from "@tiptap/extension-image";
@@ -16,6 +16,7 @@ import {
   ImageIcon,
   Undo,
   Redo,
+  Variable,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -55,6 +56,7 @@ interface RichTextEditorProps {
   value: string;
   onChange: (html: string) => void;
   placeholder?: string;
+  availableVariables?: string[];
 }
 
 function ToolbarButton({
@@ -89,8 +91,10 @@ function ToolbarButton({
   );
 }
 
-export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorProps) {
+export function RichTextEditor({ value, onChange, placeholder, availableVariables }: RichTextEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [varDropdownOpen, setVarDropdownOpen] = useState(false);
+  const varBtnRef = useRef<HTMLDivElement>(null);
 
   const editor = useEditor({
     extensions: [
@@ -136,7 +140,15 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
     }
   }, [editor]);
 
+  const insertVariable = useCallback((varName: string) => {
+    if (!editor) return;
+    editor.chain().focus().insertContent(`{{${varName}}}`).run();
+    setVarDropdownOpen(false);
+  }, [editor]);
+
   if (!editor) return null;
+
+  const hasVariables = availableVariables && availableVariables.length > 0;
 
   return (
     <div className="rounded-md border border-input overflow-hidden">
@@ -220,6 +232,40 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
         <ToolbarButton onClick={addImageUrl} title="Image from URL">
           <span className="text-xs font-medium">URL</span>
         </ToolbarButton>
+
+        {hasVariables && (
+          <>
+            <div className="mx-1 h-5 w-px bg-border" />
+            <div className="relative" ref={varBtnRef}>
+              <ToolbarButton
+                onClick={() => setVarDropdownOpen((o) => !o)}
+                active={varDropdownOpen}
+                title="Insert Variable"
+              >
+                <Variable className="h-4 w-4" />
+              </ToolbarButton>
+              {varDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setVarDropdownOpen(false)} />
+                  <div className="absolute left-0 top-full z-50 mt-1 min-w-[160px] rounded-md border border-border bg-popover shadow-md">
+                    <div className="py-1">
+                      {availableVariables!.map((v) => (
+                        <button
+                          key={v}
+                          type="button"
+                          className="flex w-full items-center px-3 py-1.5 text-sm font-mono hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                          onClick={() => insertVariable(v)}
+                        >
+                          {`{{${v}}}`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </>
+        )}
 
         <div className="mx-1 h-5 w-px bg-border" />
 

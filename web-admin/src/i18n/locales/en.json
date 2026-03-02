@@ -184,7 +184,23 @@
     "locationBoundUnassigned_other": "{{count}} location-bound challenges not assigned",
     "enoughChallenges": "Enough challenges for unique assignment",
     "notEnoughChallenges": "Not enough challenges: {{bases}} bases but only {{challenges}} challenges",
-    "notSet": "Not set"
+    "notSet": "Not set",
+    "variablesIncomplete_one": "{{count}} team variable missing values",
+    "variablesIncomplete_other": "{{count}} team variables missing values"
+  },
+  "teamVariables": {
+    "gameVariables": "Game Variables",
+    "gameVariablesDescription": "Variables shared across all challenges, unique per team",
+    "challengeVariables": "Challenge Variables",
+    "challengeVariablesDescription": "Variables specific to this challenge, unique per team. Use {{variableName}} in content, completion content, or correct answers.",
+    "addVariable": "Add Variable",
+    "variableKeyPlaceholder": "e.g. nextCoordinates",
+    "variableKeyHint": "Must start with a letter, only letters, digits, and underscores",
+    "duplicateKey": "Variable name already exists",
+    "valuePlaceholder": "Value for this team...",
+    "previewAsTeam": "Preview as Team",
+    "selectTeamPreview": "Select a team to preview...",
+    "noTeams": "Create teams first to define variables"
   },
   "gameOperators": {
     "title": "Game Operators",

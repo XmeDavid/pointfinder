@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Users, Copy, Trash2, Check, Pencil, QrCode, UserMinus } from "lucide-react";
+import { Plus, Users, Copy, Trash2, Check, Pencil, QrCode, UserMinus, Variable } from "lucide-react";
 import QRCode from "qrcode";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,9 @@ import { FormLabel } from "@/components/ui/form-label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-dialog";
+import { TeamVariablesEditor } from "@/components/common/TeamVariablesEditor";
 import { teamsApi } from "@/lib/api/teams";
+import { teamVariablesApi } from "@/lib/api/team-variables";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { useTranslation } from "react-i18next";
 import type { Team } from "@/types";
@@ -25,6 +27,8 @@ export function TeamsPage() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!) });
+  const { data: gameVarsData } = useQuery({ queryKey: ["game-variables", gameId], queryFn: () => teamVariablesApi.getGameVariables(gameId!), enabled: teams.length > 0 });
+  const [varsSaving, setVarsSaving] = useState(false);
 
   const createTeam = useMutation({
     mutationFn: () => teamsApi.create({ gameId: gameId!, name: teamName }),
@@ -78,6 +82,39 @@ export function TeamsPage() {
             />
           ))}
         </div>
+      )}
+
+      {teams.length > 0 && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Variable className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <CardTitle className="text-lg">{t("teamVariables.gameVariables")}</CardTitle>
+                <CardDescription>{t("teamVariables.gameVariablesDescription")}</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <TeamVariablesEditor
+              teams={teams}
+              variables={gameVarsData?.variables ?? []}
+              saving={varsSaving}
+              onSave={async (vars) => {
+                setVarsSaving(true);
+                try {
+                  await teamVariablesApi.saveGameVariables(gameId!, { variables: vars });
+                  queryClient.invalidateQueries({ queryKey: ["game-variables", gameId] });
+                  setActionError("");
+                } catch (error) {
+                  setActionError(getApiErrorMessage(error));
+                } finally {
+                  setVarsSaving(false);
+                }
+              }}
+            />
+          </CardContent>
+        </Card>
       )}
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>

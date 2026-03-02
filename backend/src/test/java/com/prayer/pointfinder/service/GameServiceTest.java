@@ -64,6 +64,8 @@ class GameServiceTest {
     private GameEventBroadcaster eventBroadcaster;
     @Mock
     private ChallengeAssignmentService challengeAssignmentService;
+    @Mock
+    private TeamVariableService teamVariableService;
 
     private GameService gameService;
     private GameImportExportService gameImportExportService;
@@ -108,7 +110,8 @@ class GameServiceTest {
                 fileStorageService,
                 eventBroadcaster,
                 challengeAssignmentService,
-                gameImportExportService
+                gameImportExportService,
+                teamVariableService
         );
     }
 
