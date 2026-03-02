@@ -194,7 +194,7 @@ export function BasesPage() {
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent onClose={closeDialog}>
+        <DialogContent onClose={closeDialog} className="max-w-3xl">
           <DialogHeader><DialogTitle>{editing ? t("bases.editBase") : t("bases.createBase")}</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
