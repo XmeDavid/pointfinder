@@ -4,7 +4,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { Pencil, EyeOff, Wifi, WifiOff } from "lucide-react";
 import { computeBounds } from "@/lib/map-utils";
 import { PinMarkerSvg } from "@/components/common/MapMarkers";
-import { getStyleUrl } from "@/lib/tile-sources";
+import { getStyleUrl, getDefaultCenter } from "@/lib/tile-sources";
 import type { MapRef, MapMouseEvent } from "react-map-gl/maplibre";
 import type { GeoJSON } from "geojson";
 
@@ -71,20 +71,23 @@ export function BaseMapView({ bases, connections, className, onEdit, tileSource 
   const fittedRef = useRef(false);
   const [popup, setPopup] = useState<BaseMarker | null>(null);
 
-  const [userLocation, setUserLocation] = useState<[number, number]>([40.08789650218038, -8.869461715221407]);
+  const tileSourceCenter = getDefaultCenter(tileSource);
+  const [geoLocation, setGeoLocation] = useState<[number, number] | null>(null);
 
   useEffect(() => {
     if (bases.length === 0 && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setUserLocation([position.coords.latitude, position.coords.longitude]);
+          setGeoLocation([position.coords.latitude, position.coords.longitude]);
         },
         () => {
-          setUserLocation([40.08789650218038, -8.869461715221407]);
+          // Geolocation failed, tile source default will be used
         }
       );
     }
   }, [bases.length]);
+
+  const userLocation: [number, number] = geoLocation ?? [tileSourceCenter.lat, tileSourceCenter.lng];
 
   const center: [number, number] = bases.length > 0
     ? [bases.reduce((s, b) => s + b.lat, 0) / bases.length, bases.reduce((s, b) => s + b.lng, 0) / bases.length]

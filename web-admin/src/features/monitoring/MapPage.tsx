@@ -18,7 +18,7 @@ import { useGameWebSocket } from "@/hooks/useGameWebSocket";
 import { formatDateTime } from "@/lib/utils";
 import { STATUS_COLORS, getAggregateStatus as getAggregateStatusUtil, parseTimestamp, computeBounds } from "@/lib/map-utils";
 import { PinMarkerSvg, CircleDot } from "@/components/common/MapMarkers";
-import { getStyleUrl } from "@/lib/tile-sources";
+import { getStyleUrl, getDefaultCenter } from "@/lib/tile-sources";
 import type { BaseStatus, TeamLocation } from "@/types";
 import type { MapRef } from "react-map-gl/maplibre";
 
@@ -111,21 +111,24 @@ export function MapPage() {
   // Use query refresh timestamp so stale detection updates whenever locations refetch.
   const now = locationsUpdatedAt;
 
-  // Get user's current location or fallback (only if no bases)
-  const [userLocation, setUserLocation] = useState<[number, number]>([40.08789650218038, -8.869461715221407]);
+  // Get user's current location or fallback to tile source default center
+  const tileSourceCenter = getDefaultCenter(game?.tileSource);
+  const [geoLocation, setGeoLocation] = useState<[number, number] | null>(null);
 
   useEffect(() => {
     if (bases.length === 0 && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setUserLocation([position.coords.latitude, position.coords.longitude]);
+          setGeoLocation([position.coords.latitude, position.coords.longitude]);
         },
         () => {
-          setUserLocation([40.08789650218038, -8.869461715221407]);
+          // Geolocation failed, tile source default will be used
         }
       );
     }
   }, [bases.length]);
+
+  const userLocation: [number, number] = geoLocation ?? [tileSourceCenter.lat, tileSourceCenter.lng];
 
   // Fit bounds when bases first load
   useEffect(() => {
