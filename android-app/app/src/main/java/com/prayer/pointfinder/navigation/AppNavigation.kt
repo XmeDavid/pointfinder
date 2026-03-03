@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.LocationOn
@@ -653,6 +654,7 @@ private fun PlayerRootScreen(
                         isLoading = state.isLoading,
                         unseenNotificationCount = state.unseenNotificationCount,
                         tileSource = auth.tileSource ?: "osm",
+                        isDark = isSystemInDarkTheme(),
                         onBaseSelected = { viewModel.selectBase(auth, it) },
                         onRefresh = { viewModel.refresh(auth, isOnline) },
                         onNotificationsClick = { viewModel.openNotifications() },
@@ -856,6 +858,7 @@ private fun OperatorGameRoot(
                     teams = state.teams,
                     baseProgress = state.baseProgress,
                     tileSource = selectedGame.tileSource,
+                    isDark = isSystemInDarkTheme(),
                     onBaseSelected = viewModel::selectBase,
                     onRefresh = viewModel::refreshSelectedGameData,
                 )

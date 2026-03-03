@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { getStyleUrl, getDefaultCenter, TILE_SOURCES, DARK_STYLE_URL } from "./tile-sources";
+import { getStyleUrl, getResolvedStyleUrl, getDefaultCenter, TILE_SOURCES, DARK_STYLE_URL } from "./tile-sources";
 
 describe("TILE_SOURCES", () => {
-  it("defines all three tile sources", () => {
-    expect(Object.keys(TILE_SOURCES)).toHaveLength(3);
+  it("defines all five tile sources", () => {
+    expect(Object.keys(TILE_SOURCES)).toHaveLength(5);
     expect(TILE_SOURCES.osm).toBeDefined();
+    expect(TILE_SOURCES.voyager).toBeDefined();
+    expect(TILE_SOURCES.positron).toBeDefined();
     expect(TILE_SOURCES.swisstopo).toBeDefined();
     expect(TILE_SOURCES["swisstopo-sat"]).toBeDefined();
   });
@@ -45,6 +47,33 @@ describe("getStyleUrl", () => {
   it("falls back to OSM for null/undefined", () => {
     expect(getStyleUrl(null)).toBe(TILE_SOURCES.osm.styleUrl);
     expect(getStyleUrl(undefined)).toBe(TILE_SOURCES.osm.styleUrl);
+  });
+});
+
+describe("getResolvedStyleUrl", () => {
+  it("returns dark style when isDark=true and source has darkStyleUrl", () => {
+    expect(getResolvedStyleUrl("osm", true)).toBe(DARK_STYLE_URL);
+    expect(getResolvedStyleUrl("voyager", true)).toBe(DARK_STYLE_URL);
+    expect(getResolvedStyleUrl("positron", true)).toBe(DARK_STYLE_URL);
+  });
+
+  it("returns light style when isDark=true but source has no dark variant", () => {
+    expect(getResolvedStyleUrl("swisstopo", true)).toBe(TILE_SOURCES.swisstopo.styleUrl);
+    expect(getResolvedStyleUrl("swisstopo-sat", true)).toBe(TILE_SOURCES["swisstopo-sat"].styleUrl);
+  });
+
+  it("returns light style when isDark=false", () => {
+    expect(getResolvedStyleUrl("osm", false)).toBe(TILE_SOURCES.osm.styleUrl);
+    expect(getResolvedStyleUrl("voyager", false)).toBe(TILE_SOURCES.voyager.styleUrl);
+    expect(getResolvedStyleUrl("positron", false)).toBe(TILE_SOURCES.positron.styleUrl);
+    expect(getResolvedStyleUrl("swisstopo", false)).toBe(TILE_SOURCES.swisstopo.styleUrl);
+  });
+
+  it("handles null/undefined by falling back to OSM", () => {
+    expect(getResolvedStyleUrl(null, false)).toBe(TILE_SOURCES.osm.styleUrl);
+    expect(getResolvedStyleUrl(undefined, false)).toBe(TILE_SOURCES.osm.styleUrl);
+    expect(getResolvedStyleUrl(null, true)).toBe(DARK_STYLE_URL);
+    expect(getResolvedStyleUrl(undefined, true)).toBe(DARK_STYLE_URL);
   });
 });
 

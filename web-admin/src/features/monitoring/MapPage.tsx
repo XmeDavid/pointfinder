@@ -18,7 +18,8 @@ import { useGameWebSocket } from "@/hooks/useGameWebSocket";
 import { formatDateTime } from "@/lib/utils";
 import { STATUS_COLORS, getAggregateStatus as getAggregateStatusUtil, parseTimestamp, computeBounds } from "@/lib/map-utils";
 import { PinMarkerSvg, CircleDot } from "@/components/common/MapMarkers";
-import { getStyleUrl, getDefaultCenter } from "@/lib/tile-sources";
+import { getResolvedStyleUrl, getDefaultCenter } from "@/lib/tile-sources";
+import { useThemeStore } from "@/hooks/useTheme";
 import type { BaseStatus, TeamLocation } from "@/types";
 import type { MapRef } from "react-map-gl/maplibre";
 
@@ -52,6 +53,7 @@ function StatusBadge({ status }: { status: BaseStatus }) {
 
 export function MapPage() {
   const { t } = useTranslation();
+  const { dark } = useThemeStore();
   const { gameId } = useParams<{ gameId: string }>();
   const mapRef = useRef<MapRef>(null);
   const fittedRef = useRef(false);
@@ -263,7 +265,7 @@ export function MapPage() {
             ref={mapRef}
             initialViewState={{ longitude: defaultCenter.lng, latitude: defaultCenter.lat, zoom: 13 }}
             style={{ width: "100%", height: "550px" }}
-            mapStyle={getStyleUrl(game?.tileSource)}
+            mapStyle={getResolvedStyleUrl(game?.tileSource, dark)}
             onClick={() => { setPopupBase(null); setPopupLoc(null); }}
           >
             {/* Base markers */}

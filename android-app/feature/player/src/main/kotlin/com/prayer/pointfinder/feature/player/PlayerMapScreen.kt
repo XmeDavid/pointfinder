@@ -73,6 +73,7 @@ fun PlayerMapScreen(
     isLoading: Boolean,
     unseenNotificationCount: Long,
     tileSource: String,
+    isDark: Boolean,
     onBaseSelected: (BaseProgress) -> Unit,
     onRefresh: () -> Unit,
     onNotificationsClick: () -> Unit,
@@ -104,7 +105,7 @@ fun PlayerMapScreen(
 
     // Update style when tileSource changes
     LaunchedEffect(map, tileSource) {
-        map?.setStyle(Style.Builder().fromUri(TileSources.getStyleUrl(tileSource)))
+        map?.setStyle(Style.Builder().fromUri(TileSources.getResolvedStyleUrl(tileSource, isDark)))
     }
 
     // Update markers whenever progress changes
@@ -138,7 +139,7 @@ fun PlayerMapScreen(
             factory = {
                 mapView.apply {
                     getMapAsync { mapLibreMap ->
-                        mapLibreMap.setStyle(Style.Builder().fromUri(TileSources.getStyleUrl(tileSource)))
+                        mapLibreMap.setStyle(Style.Builder().fromUri(TileSources.getResolvedStyleUrl(tileSource, isDark)))
                         mapLibreMap.setOnMarkerClickListener { marker ->
                             val item = progress.firstOrNull {
                                 it.lat == marker.position.latitude && it.lng == marker.position.longitude

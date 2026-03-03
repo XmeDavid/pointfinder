@@ -50,6 +50,7 @@ fun OperatorMapScreen(
     teams: List<Team>,
     baseProgress: List<TeamBaseProgressResponse>,
     tileSource: String,
+    isDark: Boolean,
     onBaseSelected: (Base) -> Unit,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
@@ -80,7 +81,7 @@ fun OperatorMapScreen(
 
     // Update style when tileSource changes
     LaunchedEffect(map, tileSource) {
-        map?.setStyle(Style.Builder().fromUri(TileSources.getStyleUrl(tileSource)))
+        map?.setStyle(Style.Builder().fromUri(TileSources.getResolvedStyleUrl(tileSource, isDark)))
     }
 
     // Update markers whenever data changes
@@ -134,7 +135,7 @@ fun OperatorMapScreen(
             factory = {
                 mapView.apply {
                     getMapAsync { mapLibreMap ->
-                        mapLibreMap.setStyle(Style.Builder().fromUri(TileSources.getStyleUrl(tileSource)))
+                        mapLibreMap.setStyle(Style.Builder().fromUri(TileSources.getResolvedStyleUrl(tileSource, isDark)))
                         mapLibreMap.setOnMarkerClickListener { marker ->
                             val base = bases.firstOrNull {
                                 it.lat == marker.position.latitude && it.lng == marker.position.longitude
