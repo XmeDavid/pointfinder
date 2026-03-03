@@ -31,6 +31,15 @@ struct PlayerAuthResponse: Codable {
         let name: String
         let description: String
         let status: String
+        let tileSource: String?
+
+        init(id: UUID, name: String, description: String, status: String, tileSource: String? = nil) {
+            self.id = id
+            self.name = name
+            self.description = description
+            self.status = status
+            self.tileSource = tileSource
+        }
     }
 }
 

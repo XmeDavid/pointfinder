@@ -23,4 +23,5 @@ public class GameResponse {
     private Boolean uniformAssignment;
     private Boolean broadcastEnabled;
     private String broadcastCode;
+    private String tileSource;
 }

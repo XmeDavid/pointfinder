@@ -14,6 +14,7 @@ public class BroadcastDataResponse {
     private UUID gameId;
     private String gameName;
     private String gameStatus;
+    private String tileSource;
     private List<LeaderboardEntry> leaderboard;
     private List<BroadcastTeamResponse> teams;
     private List<BroadcastBaseResponse> bases;

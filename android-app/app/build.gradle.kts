@@ -45,7 +45,7 @@ fun Project.resolveApiBaseUrl(defaultValue: String): String {
 
 val apiBaseUrl = project.resolveApiBaseUrl("https://pointfinder.pt")
 val enableChunkedMediaUpload = project.resolveConfigValue("ENABLE_CHUNKED_MEDIA_UPLOAD", "true")
-val mapsApiKey = project.resolveConfigValue("GOOGLE_MAPS_API_KEY", "")
+// Google Maps API key no longer needed (using MapLibre)
 val hasGoogleServicesConfig = listOf(
     "google-services.json",
     "src/main/google-services.json",
@@ -77,7 +77,7 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-        manifestPlaceholders["mapsApiKey"] = mapsApiKey
+        // manifestPlaceholders removed — MapLibre does not need an API key
     }
 
     buildTypes {
@@ -143,8 +143,7 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
-    implementation("com.google.maps.android:maps-compose:6.3.0")
-    implementation("com.google.android.gms:play-services-maps:19.0.0")
+    implementation("org.maplibre.gl:android-sdk:11.8.4")
 
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")

@@ -479,7 +479,12 @@
     "enableBroadcast": "Enable broadcast",
     "enableBroadcastDesc": "Generate a public link for spectators to watch the game live without logging in",
     "broadcastCode": "Broadcast code",
-    "broadcastUrl": "Direct link"
+    "broadcastUrl": "Direct link",
+    "tileSource": "Map tiles",
+    "tileSourceDescription": "Choose which map tile provider to use for this game across all platforms",
+    "tileSourceOsm": "OpenStreetMap",
+    "tileSourceSwisstopo": "SwissTopo",
+    "tileSourceSwisstopoSat": "SwissTopo Satellite"
   },
   "landing": {
     "nav": {

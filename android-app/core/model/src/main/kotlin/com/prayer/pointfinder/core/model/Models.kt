@@ -39,6 +39,7 @@ data class PlayerAuthResponse(
         val name: String,
         val description: String,
         val status: GameStatus,
+        val tileSource: String? = null,
     )
 }
 
@@ -86,6 +87,7 @@ data class Game(
     val name: String,
     val description: String,
     val status: GameStatus,
+    val tileSource: String = "osm",
 )
 
 @Serializable
@@ -362,6 +364,7 @@ sealed class AuthType {
         val teamName: String? = null,
         val teamColor: String? = null,
         val gameStatus: GameStatus? = null,
+        val tileSource: String? = null,
     ) : AuthType()
 
     data class Operator(

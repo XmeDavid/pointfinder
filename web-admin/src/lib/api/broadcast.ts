@@ -50,6 +50,7 @@ export interface BroadcastData {
   gameId: string;
   gameName: string;
   gameStatus: string;
+  tileSource: string;
   leaderboard: BroadcastLeaderboardEntry[];
   teams: BroadcastTeam[];
   bases: BroadcastBase[];

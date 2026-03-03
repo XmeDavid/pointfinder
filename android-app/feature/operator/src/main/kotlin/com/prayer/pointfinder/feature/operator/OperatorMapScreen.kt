@@ -9,26 +9,36 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.prayer.pointfinder.core.i18n.R
 import com.prayer.pointfinder.core.model.Base
 import com.prayer.pointfinder.core.model.BaseStatus
 import com.prayer.pointfinder.core.model.Team
 import com.prayer.pointfinder.core.model.TeamBaseProgressResponse
 import com.prayer.pointfinder.core.model.TeamLocationResponse
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.BitmapDescriptor
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.LatLngBounds
-import com.google.maps.android.compose.CameraPositionState
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
+import com.prayer.pointfinder.core.model.TileSources
+import org.maplibre.android.annotations.IconFactory
+import org.maplibre.android.annotations.MarkerOptions
+import org.maplibre.android.camera.CameraUpdateFactory
+import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.geometry.LatLngBounds
+import org.maplibre.android.maps.MapLibreMap
+import org.maplibre.android.maps.MapView
+import org.maplibre.android.maps.Style
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -39,52 +49,109 @@ fun OperatorMapScreen(
     teamLocations: List<TeamLocationResponse>,
     teams: List<Team>,
     baseProgress: List<TeamBaseProgressResponse>,
-    cameraPositionState: CameraPositionState,
+    tileSource: String,
     onBaseSelected: (Base) -> Unit,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LaunchedEffect(bases) {
-        if (bases.isNotEmpty() && !cameraPositionState.isMoving) {
-            val builder = LatLngBounds.builder()
-            bases.forEach { builder.include(LatLng(it.lat, it.lng)) }
+    val context = LocalContext.current
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val mapView = remember { MapView(context) }
+    var map by remember { mutableStateOf<MapLibreMap?>(null) }
+    val iconFactory = remember { IconFactory.getInstance(context) }
+
+    DisposableEffect(lifecycle) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> mapView.onStart()
+                Lifecycle.Event.ON_RESUME -> mapView.onResume()
+                Lifecycle.Event.ON_PAUSE -> mapView.onPause()
+                Lifecycle.Event.ON_STOP -> mapView.onStop()
+                Lifecycle.Event.ON_DESTROY -> mapView.onDestroy()
+                else -> {}
+            }
+        }
+        lifecycle.addObserver(observer)
+        onDispose {
+            lifecycle.removeObserver(observer)
+            mapView.onDestroy()
+        }
+    }
+
+    // Update style when tileSource changes
+    LaunchedEffect(map, tileSource) {
+        map?.setStyle(Style.Builder().fromUri(TileSources.getStyleUrl(tileSource)))
+    }
+
+    // Update markers whenever data changes
+    LaunchedEffect(map, bases, teamLocations, teams, baseProgress) {
+        val m = map ?: return@LaunchedEffect
+        m.annotations.forEach { m.removeAnnotation(it) }
+
+        // Base markers
+        bases.forEach { base ->
+            val status = aggregateBaseStatus(base, baseProgress)
+            val colorInt = statusColor(status)
+            val icon = iconFactory.fromBitmap(createPinMarkerBitmap(colorInt))
+            m.addMarker(
+                MarkerOptions()
+                    .position(LatLng(base.lat, base.lng))
+                    .title(base.name)
+                    .icon(icon),
+            )
+        }
+
+        // Team location markers
+        teamLocations.forEach { location ->
+            val team = teams.firstOrNull { it.id == location.teamId }
+            val playerName = location.displayName ?: team?.name ?: location.teamId.take(6)
+            val teamName = team?.name ?: location.teamId.take(6)
+            val teamColorInt = team?.color?.let { c ->
+                runCatching { android.graphics.Color.parseColor(c) }.getOrDefault(android.graphics.Color.GRAY)
+            } ?: android.graphics.Color.GRAY
+            val icon = iconFactory.fromBitmap(createCircleMarkerBitmap(teamColorInt))
+            m.addMarker(
+                MarkerOptions()
+                    .position(LatLng(location.lat, location.lng))
+                    .title("$playerName ($teamName)")
+                    .snippet(formatTimestamp(location.updatedAt))
+                    .icon(icon),
+            )
+        }
+
+        // Fit camera to bounds
+        if (bases.isNotEmpty()) {
+            val boundsBuilder = LatLngBounds.Builder()
+            bases.forEach { boundsBuilder.include(LatLng(it.lat, it.lng)) }
             runCatching {
-                cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(builder.build(), 80))
+                m.easeCamera(CameraUpdateFactory.newLatLngBounds(boundsBuilder.build(), 80))
             }
         }
     }
 
     Box(modifier = modifier.fillMaxSize()) {
-        GoogleMap(modifier = Modifier.fillMaxSize(), cameraPositionState = cameraPositionState) {
-            bases.forEach { base ->
-                val aggregateStatus = aggregateBaseStatus(base, baseProgress)
-                val markerIcon = statusToMarkerIcon(aggregateStatus)
-                Marker(
-                    state = MarkerState(LatLng(base.lat, base.lng)),
-                    title = base.name,
-                    snippet = stringResource(R.string.label_base_marker),
-                    icon = markerIcon,
-                    onClick = {
-                        onBaseSelected(base)
-                        true
-                    },
-                )
-            }
-            teamLocations.forEach { location ->
-                val team = teams.firstOrNull { it.id == location.teamId }
-                val playerName = location.displayName ?: team?.name ?: location.teamId.take(6)
-                val teamName = team?.name ?: location.teamId.take(6)
-                val teamColorInt = team?.color?.let { c ->
-                    runCatching { android.graphics.Color.parseColor(c) }.getOrDefault(android.graphics.Color.GRAY)
-                } ?: android.graphics.Color.GRAY
-                Marker(
-                    state = MarkerState(LatLng(location.lat, location.lng)),
-                    title = "$playerName ($teamName)",
-                    snippet = formatTimestamp(location.updatedAt),
-                    icon = createCircleMarkerBitmap(teamColorInt),
-                )
-            }
-        }
+        AndroidView(
+            factory = {
+                mapView.apply {
+                    getMapAsync { mapLibreMap ->
+                        mapLibreMap.setStyle(Style.Builder().fromUri(TileSources.getStyleUrl(tileSource)))
+                        mapLibreMap.setOnMarkerClickListener { marker ->
+                            val base = bases.firstOrNull {
+                                it.lat == marker.position.latitude && it.lng == marker.position.longitude
+                            }
+                            if (base != null) {
+                                onBaseSelected(base)
+                                true
+                            } else {
+                                false
+                            }
+                        }
+                        map = mapLibreMap
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxSize(),
+        )
         Button(
             onClick = onRefresh,
             modifier = Modifier
@@ -105,21 +172,15 @@ private fun aggregateBaseStatus(
     return statuses.minByOrNull { it.status.ordinal }?.status ?: BaseStatus.NOT_VISITED
 }
 
-private fun statusToMarkerIcon(status: BaseStatus): BitmapDescriptor {
-    val colorInt = when (status) {
-        BaseStatus.NOT_VISITED -> android.graphics.Color.GRAY
-        BaseStatus.CHECKED_IN -> android.graphics.Color.parseColor("#1976D2")
-        BaseStatus.SUBMITTED -> android.graphics.Color.parseColor("#F57C00")
-        BaseStatus.COMPLETED -> android.graphics.Color.parseColor("#388E3C")
-        BaseStatus.REJECTED -> android.graphics.Color.parseColor("#D32F2F")
-    }
-    return createPinMarkerBitmap(colorInt)
+private fun statusColor(status: BaseStatus): Int = when (status) {
+    BaseStatus.NOT_VISITED -> android.graphics.Color.GRAY
+    BaseStatus.CHECKED_IN -> android.graphics.Color.parseColor("#1976D2")
+    BaseStatus.SUBMITTED -> android.graphics.Color.parseColor("#F57C00")
+    BaseStatus.COMPLETED -> android.graphics.Color.parseColor("#388E3C")
+    BaseStatus.REJECTED -> android.graphics.Color.parseColor("#D32F2F")
 }
 
-private val pinBitmapCache = mutableMapOf<Int, BitmapDescriptor>()
-
-private fun createPinMarkerBitmap(colorInt: Int, width: Int = 48, height: Int = 64): BitmapDescriptor {
-    pinBitmapCache[colorInt]?.let { return it }
+private fun createPinMarkerBitmap(colorInt: Int, width: Int = 48, height: Int = 64): Bitmap {
     val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
     val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -141,13 +202,10 @@ private fun createPinMarkerBitmap(colorInt: Int, width: Int = 48, height: Int = 
         style = Paint.Style.FILL
     }
     canvas.drawCircle(width / 2f, circleCenterY, circleRadius * 0.35f, dotPaint)
-    return BitmapDescriptorFactory.fromBitmap(bitmap).also { pinBitmapCache[colorInt] = it }
+    return bitmap
 }
 
-private val circleBitmapCache = mutableMapOf<Int, BitmapDescriptor>()
-
-private fun createCircleMarkerBitmap(colorInt: Int, sizePx: Int = 48): BitmapDescriptor {
-    circleBitmapCache[colorInt]?.let { return it }
+private fun createCircleMarkerBitmap(colorInt: Int, sizePx: Int = 48): Bitmap {
     val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
     val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -161,7 +219,7 @@ private fun createCircleMarkerBitmap(colorInt: Int, sizePx: Int = 48): BitmapDes
         strokeWidth = 3f
     }
     canvas.drawCircle(sizePx / 2f, sizePx / 2f, sizePx / 2f - 3f, border)
-    return BitmapDescriptorFactory.fromBitmap(bitmap).also { circleBitmapCache[colorInt] = it }
+    return bitmap
 }
 
 internal fun formatTimestamp(iso: String): String {

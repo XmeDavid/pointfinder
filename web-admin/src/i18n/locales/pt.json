@@ -479,7 +479,12 @@
     "enableBroadcast": "Ativar transmissão",
     "enableBroadcastDesc": "Gerar um link público para espectadores assistirem ao jogo ao vivo sem iniciar sessão",
     "broadcastCode": "Código de transmissão",
-    "broadcastUrl": "Link direto"
+    "broadcastUrl": "Link direto",
+    "tileSource": "Mapa",
+    "tileSourceDescription": "Escolha o fornecedor de mapa para este jogo em todas as plataformas",
+    "tileSourceOsm": "OpenStreetMap",
+    "tileSourceSwisstopo": "SwissTopo",
+    "tileSourceSwisstopoSat": "SwissTopo Satélite"
   },
   "landing": {
     "nav": {

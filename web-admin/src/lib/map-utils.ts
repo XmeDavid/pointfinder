@@ -1,6 +1,3 @@
-import { useEffect, useRef } from "react";
-import { useMap } from "react-leaflet";
-import L from "leaflet";
 import type { BaseStatus } from "@/types";
 
 export const STATUS_COLORS: Record<BaseStatus, string> = {
@@ -18,26 +15,6 @@ export const STATUS_PRIORITY: Record<BaseStatus, number> = {
   rejected: 3,
   completed: 4,
 };
-
-const iconCache = new Map<string, L.DivIcon>();
-
-export function createColoredIcon(color: string): L.DivIcon {
-  let icon = iconCache.get(color);
-  if (!icon) {
-    icon = L.divIcon({
-      className: "",
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      html: `<svg width="25" height="41" viewBox="0 0 25 41" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12.5 0C5.6 0 0 5.6 0 12.5C0 21.9 12.5 41 12.5 41S25 21.9 25 12.5C25 5.6 19.4 0 12.5 0Z" fill="${color}" stroke="#fff" stroke-width="1.5"/>
-      <circle cx="12.5" cy="12.5" r="5" fill="#fff"/>
-    </svg>`,
-    });
-    iconCache.set(color, icon);
-  }
-  return icon;
-}
 
 export function getAggregateStatus(
   baseId: string,
@@ -61,18 +38,15 @@ export function parseTimestamp(value: string): number {
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
-/** Auto-fits map bounds when bases first load */
-export function FitBounds({ bases }: { bases: { lat: number; lng: number }[] }) {
-  const map = useMap();
-  const fitted = useRef(false);
-
-  useEffect(() => {
-    if (bases.length > 0 && !fitted.current) {
-      const bounds = L.latLngBounds(bases.map((b) => [b.lat, b.lng]));
-      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
-      fitted.current = true;
-    }
-  }, [bases, map]);
-
-  return null;
+/** Compute LngLatBounds from a list of coordinates */
+export function computeBounds(points: { lat: number; lng: number }[]): [[number, number], [number, number]] | null {
+  if (points.length === 0) return null;
+  let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+  for (const p of points) {
+    if (p.lng < minLng) minLng = p.lng;
+    if (p.lng > maxLng) maxLng = p.lng;
+    if (p.lat < minLat) minLat = p.lat;
+    if (p.lat > maxLat) maxLat = p.lat;
+  }
+  return [[minLng, minLat], [maxLng, maxLat]];
 }

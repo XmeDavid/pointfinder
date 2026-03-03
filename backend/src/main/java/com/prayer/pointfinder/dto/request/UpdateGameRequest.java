@@ -19,4 +19,6 @@ public class UpdateGameRequest {
     private Boolean uniformAssignment;
 
     private Boolean broadcastEnabled;
+
+    private String tileSource;
 }

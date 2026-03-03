@@ -50,6 +50,7 @@ public class BroadcastService {
                 .gameId(gameId)
                 .gameName(game.getName())
                 .gameStatus(game.getStatus().name())
+                .tileSource(game.getTileSource())
                 .leaderboard(monitoringService.computeLeaderboard(gameId))
                 .teams(teams)
                 .bases(bases)

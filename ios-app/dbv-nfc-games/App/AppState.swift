@@ -119,7 +119,8 @@ final class AppState {
                     id: game.id,
                     name: game.name,
                     description: game.description,
-                    status: status
+                    status: status,
+                    tileSource: game.tileSource
                 )
                 currentGame = game
             }

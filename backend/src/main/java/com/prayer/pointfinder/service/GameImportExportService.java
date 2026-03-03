@@ -63,6 +63,7 @@ public class GameImportExportService {
                 .name(game.getName())
                 .description(game.getDescription())
                 .uniformAssignment(game.getUniformAssignment())
+                .tileSource(game.getTileSource())
                 .build();
 
         List<BaseExportDto> baseExportDtos = bases.stream()
@@ -146,6 +147,7 @@ public class GameImportExportService {
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .uniformAssignment(data.getGame().getUniformAssignment() != null ? data.getGame().getUniformAssignment() : false)
+                .tileSource(data.getGame().getTileSource() != null ? data.getGame().getTileSource() : "osm")
                 .status(GameStatus.setup)
                 .createdBy(currentUser)
                 .build();
@@ -476,6 +478,7 @@ public class GameImportExportService {
                 .createdBy(game.getCreatedBy().getId())
                 .operatorIds(operatorIds)
                 .uniformAssignment(game.getUniformAssignment())
+                .tileSource(game.getTileSource())
                 .build();
     }
 

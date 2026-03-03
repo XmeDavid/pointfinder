@@ -1,5 +1,8 @@
 package com.prayer.pointfinder.feature.player
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,73 +35,127 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.LatLngBounds
-import com.google.maps.android.compose.CameraPositionState
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.prayer.pointfinder.core.i18n.R
 import com.prayer.pointfinder.core.model.BaseProgress
 import com.prayer.pointfinder.core.model.BaseStatus
 import com.prayer.pointfinder.core.model.CheckInResponse
+import com.prayer.pointfinder.core.model.TileSources
+import org.maplibre.android.annotations.IconFactory
+import org.maplibre.android.annotations.MarkerOptions
+import org.maplibre.android.camera.CameraUpdateFactory
+import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.geometry.LatLngBounds
+import org.maplibre.android.maps.MapLibreMap
+import org.maplibre.android.maps.MapView
+import org.maplibre.android.maps.Style
 
 @Composable
 fun PlayerMapScreen(
     progress: List<BaseProgress>,
     isLoading: Boolean,
     unseenNotificationCount: Long,
-    cameraPositionState: CameraPositionState,
+    tileSource: String,
     onBaseSelected: (BaseProgress) -> Unit,
     onRefresh: () -> Unit,
     onNotificationsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LaunchedEffect(progress) {
-        if (progress.isNotEmpty() && !cameraPositionState.isMoving) {
-            val builder = LatLngBounds.builder()
-            progress.forEach { builder.include(LatLng(it.lat, it.lng)) }
+    val context = LocalContext.current
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val mapView = remember { MapView(context) }
+    var map by remember { mutableStateOf<MapLibreMap?>(null) }
+    val iconFactory = remember { IconFactory.getInstance(context) }
+
+    DisposableEffect(lifecycle) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> mapView.onStart()
+                Lifecycle.Event.ON_RESUME -> mapView.onResume()
+                Lifecycle.Event.ON_PAUSE -> mapView.onPause()
+                Lifecycle.Event.ON_STOP -> mapView.onStop()
+                Lifecycle.Event.ON_DESTROY -> mapView.onDestroy()
+                else -> {}
+            }
+        }
+        lifecycle.addObserver(observer)
+        onDispose {
+            lifecycle.removeObserver(observer)
+            mapView.onDestroy()
+        }
+    }
+
+    // Update style when tileSource changes
+    LaunchedEffect(map, tileSource) {
+        map?.setStyle(Style.Builder().fromUri(TileSources.getStyleUrl(tileSource)))
+    }
+
+    // Update markers whenever progress changes
+    LaunchedEffect(map, progress) {
+        val m = map ?: return@LaunchedEffect
+        m.annotations.forEach { m.removeAnnotation(it) }
+
+        progress.forEach { item ->
+            val colorInt = statusColorInt(item.status)
+            val icon = iconFactory.fromBitmap(createPinMarkerBitmap(colorInt))
+            m.addMarker(
+                MarkerOptions()
+                    .position(LatLng(item.lat, item.lng))
+                    .title(item.baseName)
+                    .snippet(item.status.name.lowercase())
+                    .icon(icon),
+            )
+        }
+
+        if (progress.isNotEmpty()) {
+            val boundsBuilder = LatLngBounds.Builder()
+            progress.forEach { boundsBuilder.include(LatLng(it.lat, it.lng)) }
             runCatching {
-                cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(builder.build(), 80))
+                m.easeCamera(CameraUpdateFactory.newLatLngBounds(boundsBuilder.build(), 80))
             }
         }
     }
 
     Box(modifier = modifier.fillMaxSize()) {
-        GoogleMap(
-            modifier = Modifier.fillMaxSize(),
-            cameraPositionState = cameraPositionState,
-        ) {
-            progress.forEach { item ->
-                val markerHue = when (item.status) {
-                    BaseStatus.NOT_VISITED -> BitmapDescriptorFactory.HUE_RED
-                    BaseStatus.CHECKED_IN -> BitmapDescriptorFactory.HUE_AZURE
-                    BaseStatus.SUBMITTED -> BitmapDescriptorFactory.HUE_ORANGE
-                    BaseStatus.COMPLETED -> BitmapDescriptorFactory.HUE_GREEN
-                    BaseStatus.REJECTED -> BitmapDescriptorFactory.HUE_ROSE
+        AndroidView(
+            factory = {
+                mapView.apply {
+                    getMapAsync { mapLibreMap ->
+                        mapLibreMap.setStyle(Style.Builder().fromUri(TileSources.getStyleUrl(tileSource)))
+                        mapLibreMap.setOnMarkerClickListener { marker ->
+                            val item = progress.firstOrNull {
+                                it.lat == marker.position.latitude && it.lng == marker.position.longitude
+                            }
+                            if (item != null) {
+                                onBaseSelected(item)
+                                true
+                            } else {
+                                false
+                            }
+                        }
+                        map = mapLibreMap
+                    }
                 }
-                Marker(
-                    state = MarkerState(position = LatLng(item.lat, item.lng)),
-                    title = item.baseName,
-                    snippet = item.status.name.lowercase(),
-                    icon = BitmapDescriptorFactory.defaultMarker(markerHue),
-                    onClick = {
-                        onBaseSelected(item)
-                        true
-                    },
-                )
-            }
-        }
+            },
+            modifier = Modifier.fillMaxSize(),
+        )
 
         @OptIn(ExperimentalLayoutApi::class)
         FlowRow(
@@ -150,6 +207,39 @@ fun PlayerMapScreen(
             }
         }
     }
+}
+
+private fun statusColorInt(status: BaseStatus): Int = when (status) {
+    BaseStatus.NOT_VISITED -> android.graphics.Color.GRAY
+    BaseStatus.CHECKED_IN -> android.graphics.Color.parseColor("#1565C0")
+    BaseStatus.SUBMITTED -> android.graphics.Color.parseColor("#E08A00")
+    BaseStatus.COMPLETED -> android.graphics.Color.parseColor("#2E7D32")
+    BaseStatus.REJECTED -> android.graphics.Color.parseColor("#D32F2F")
+}
+
+private fun createPinMarkerBitmap(colorInt: Int, width: Int = 48, height: Int = 64): Bitmap {
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = colorInt
+        style = Paint.Style.FILL
+    }
+    val circleRadius = width / 2f - 2f
+    val circleCenterY = circleRadius + 2f
+    canvas.drawCircle(width / 2f, circleCenterY, circleRadius, paint)
+    val path = android.graphics.Path().apply {
+        moveTo(width / 2f - circleRadius * 0.6f, circleCenterY + circleRadius * 0.7f)
+        lineTo(width / 2f, height.toFloat() - 2f)
+        lineTo(width / 2f + circleRadius * 0.6f, circleCenterY + circleRadius * 0.7f)
+        close()
+    }
+    canvas.drawPath(path, paint)
+    val dotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.WHITE
+        style = Paint.Style.FILL
+    }
+    canvas.drawCircle(width / 2f, circleCenterY, circleRadius * 0.35f, dotPaint)
+    return bitmap
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

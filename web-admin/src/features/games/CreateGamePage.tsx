@@ -17,7 +17,7 @@ export function CreateGamePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({ name: "", description: "", startDate: "", endDate: "", uniformAssignment: true });
+  const [form, setForm] = useState({ name: "", description: "", startDate: "", endDate: "", uniformAssignment: true, tileSource: "osm" });
   const [actionError, setActionError] = useState("");
 
   const createGame = useMutation({
@@ -94,6 +94,20 @@ export function CreateGamePage() {
               </div>
             </div>
             <p className="text-xs text-muted-foreground">{t("games.dateFormatHint")}</p>
+            <div className="space-y-2">
+              <FormLabel htmlFor="tileSource">{t("settings.tileSource")}</FormLabel>
+              <p className="text-xs text-muted-foreground">{t("settings.tileSourceDescription")}</p>
+              <select
+                id="tileSource"
+                value={form.tileSource}
+                onChange={(e) => setForm((f) => ({ ...f, tileSource: e.target.value }))}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="osm">{t("settings.tileSourceOsm")}</option>
+                <option value="swisstopo">{t("settings.tileSourceSwisstopo")}</option>
+                <option value="swisstopo-sat">{t("settings.tileSourceSwisstopoSat")}</option>
+              </select>
+            </div>
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div className="space-y-0.5">
                 <FormLabel htmlFor="uniformAssignment">{t("settings.uniformAssignment")}</FormLabel>

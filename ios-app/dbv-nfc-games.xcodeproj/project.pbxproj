@@ -112,6 +112,7 @@
 			);
 			name = "dbv-nfc-games";
 			packageProductDependencies = (
+				C1ADE0012E5E3DD0DE4D0002 /* MapLibre */,
 			);
 			productName = "dbv-nfc-games";
 			productReference = 37A6103A2E5E3DD10028D38D /* dbv-nfc-games.app */;
@@ -197,6 +198,9 @@
 			mainGroup = 37A610312E5E3DD00028D38D;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
+			packageReferences = (
+				C1ADE0012E5E3DD0DE4D0001 /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */,
+			);
 			productRefGroup = 37A6103B2E5E3DD10028D38D /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -268,6 +272,25 @@
 			targetProxy = 37A610582E5E3DD20028D38D /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C1ADE0012E5E3DD0DE4D0001 /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/maplibre/maplibre-gl-native-distribution";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 6.9.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C1ADE0012E5E3DD0DE4D0002 /* MapLibre */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C1ADE0012E5E3DD0DE4D0001 /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */;
+			productName = MapLibre;
+		};
+/* End XCSwiftPackageProductDependency section */
 
 /* Begin XCBuildConfiguration section */
 		37A6105F2E5E3DD20028D38D /* Debug */ = {

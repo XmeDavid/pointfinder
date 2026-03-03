@@ -1,62 +1,42 @@
-import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents, useMap } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import { useEffect, useRef, useCallback, useState } from "react";
+import { Map as MapGL, Marker, Source, Layer } from "react-map-gl/maplibre";
+import "maplibre-gl/dist/maplibre-gl.css";
 import { Pencil, EyeOff, Wifi, WifiOff } from "lucide-react";
-
-// Fix Leaflet default marker icon issue with bundlers
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: markerIcon2x,
-  iconUrl: markerIcon,
-  shadowUrl: markerShadow,
-});
+import { computeBounds } from "@/lib/map-utils";
+import { PinMarkerSvg } from "@/components/common/MapMarkers";
+import { getStyleUrl } from "@/lib/tile-sources";
+import type { MapRef, MapMouseEvent } from "react-map-gl/maplibre";
+import type { GeoJSON } from "geojson";
 
 interface MapPickerProps {
   value: { lat: number; lng: number };
   onChange: (lat: number, lng: number) => void;
   className?: string;
+  tileSource?: string;
 }
 
-function ClickHandler({ onChange }: { onChange: (lat: number, lng: number) => void }) {
-  useMapEvents({
-    click(e) {
-      onChange(e.latlng.lat, e.latlng.lng);
+export function MapPicker({ value, onChange, className, tileSource }: MapPickerProps) {
+  const handleClick = useCallback(
+    (e: MapMouseEvent) => {
+      onChange(e.lngLat.lat, e.lngLat.lng);
     },
-  });
-  return null;
-}
+    [onChange],
+  );
 
-function RecenterMap({ lat, lng }: { lat: number; lng: number }) {
-  const map = useMap();
-  useEffect(() => {
-    map.setView([lat, lng], map.getZoom(), { animate: true });
-  }, [map, lat, lng]);
-  return null;
-}
-
-export function MapPicker({ value, onChange, className }: MapPickerProps) {
   return (
     <div className={className}>
-      <MapContainer
-        center={[value.lat, value.lng]}
-        zoom={15}
-        style={{ height: "100%", width: "100%", borderRadius: "0.375rem" }}
-        className="z-0"
+      <MapGL
+        initialViewState={{ longitude: value.lng, latitude: value.lat, zoom: 15 }}
+        style={{ width: "100%", height: "100%", borderRadius: "0.375rem" }}
+        mapStyle={getStyleUrl(tileSource)}
+        onClick={handleClick}
+        longitude={value.lng}
+        latitude={value.lat}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <Marker position={[value.lat, value.lng]} />
-        <ClickHandler onChange={onChange} />
-        <RecenterMap lat={value.lat} lng={value.lng} />
-      </MapContainer>
+        <Marker longitude={value.lng} latitude={value.lat} anchor="bottom">
+          <PinMarkerSvg color="#3b82f6" />
+        </Marker>
+      </MapGL>
     </div>
   );
 }
@@ -83,29 +63,14 @@ interface BaseMapViewProps {
   connections?: UnlockConnection[];
   className?: string;
   onEdit?: (baseId: string) => void;
+  tileSource?: string;
 }
 
-const greenIcon = new L.Icon({
-  iconUrl: markerIcon,
-  iconRetinaUrl: markerIcon2x,
-  shadowUrl: markerShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
+export function BaseMapView({ bases, connections, className, onEdit, tileSource }: BaseMapViewProps) {
+  const mapRef = useRef<MapRef>(null);
+  const fittedRef = useRef(false);
+  const [popup, setPopup] = useState<BaseMarker | null>(null);
 
-function arrowIcon(fromLat: number, fromLng: number, toLat: number, toLng: number) {
-  const angle = Math.atan2(toLng - fromLng, toLat - fromLat) * (180 / Math.PI);
-  return L.divIcon({
-    html: `<svg width="16" height="16" viewBox="0 0 16 16" style="transform: rotate(${angle}deg); opacity: 0.7;"><polygon points="8,0 16,14 8,10 0,14" fill="#6b7280"/></svg>`,
-    className: "",
-    iconSize: [16, 16],
-    iconAnchor: [8, 8],
-  });
-}
-
-export function BaseMapView({ bases, connections, className, onEdit }: BaseMapViewProps) {
   const [userLocation, setUserLocation] = useState<[number, number]>([40.08789650218038, -8.869461715221407]);
 
   useEffect(() => {
@@ -115,7 +80,6 @@ export function BaseMapView({ bases, connections, className, onEdit }: BaseMapVi
           setUserLocation([position.coords.latitude, position.coords.longitude]);
         },
         () => {
-          // Geolocation failed, use fallback
           setUserLocation([40.08789650218038, -8.869461715221407]);
         }
       );
@@ -126,92 +90,114 @@ export function BaseMapView({ bases, connections, className, onEdit }: BaseMapVi
     ? [bases.reduce((s, b) => s + b.lat, 0) / bases.length, bases.reduce((s, b) => s + b.lng, 0) / bases.length]
     : userLocation;
 
-  return (
-    <div className={className}>
-      <MapContainer
-        center={center}
-        zoom={14}
-        style={{ height: "100%", width: "100%" }}
-        className="z-0"
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        {bases.map((base) => (
-          <Marker key={base.id} position={[base.lat, base.lng]} icon={greenIcon}>
-            <Popup>
-              <div className="min-w-[200px] max-w-[280px]">
-                <p className="text-sm font-semibold leading-tight">{base.name}</p>
-                {base.description && (
-                  <p className="text-xs text-gray-500 mt-1 line-clamp-2">{base.description}</p>
-                )}
-                <p className="text-xs text-gray-400 mt-1">
-                  {base.lat.toFixed(5)}, {base.lng.toFixed(5)}
-                </p>
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {base.hidden && (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded border border-gray-300 bg-gray-50 text-gray-600">
-                      <EyeOff className="h-3 w-3" />
-                      Hidden
-                    </span>
-                  )}
-                  {base.fixedChallengeName && (
-                    <span className="inline-flex items-center px-1.5 py-0.5 text-xs rounded border border-blue-200 bg-blue-50 text-blue-700 max-w-[160px]">
-                      <span className="truncate">Fixed: {base.fixedChallengeName}</span>
-                    </span>
-                  )}
-                  <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded border ${
-                    base.nfcLinked
-                      ? "border-green-200 bg-green-50 text-green-700"
-                      : "border-red-200 bg-red-50 text-red-700"
-                  }`}>
-                    {base.nfcLinked ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-                    {base.nfcLinked ? "NFC linked" : "NFC not linked"}
-                  </span>
-                </div>
-                {onEdit && (
-                  <button
-                    type="button"
-                    onClick={() => onEdit(base.id)}
-                    className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 transition-colors"
-                  >
-                    <Pencil className="h-3 w-3" />
-                    Edit Base
-                  </button>
-                )}
-              </div>
-            </Popup>
-          </Marker>
-        ))}
-        {connections?.map((conn) => {
+  useEffect(() => {
+    if (bases.length > 0 && mapRef.current && !fittedRef.current) {
+      const bounds = computeBounds(bases);
+      if (bounds) {
+        mapRef.current.fitBounds(bounds, { padding: 40, maxZoom: 16 });
+        fittedRef.current = true;
+      }
+    }
+  }, [bases]);
+
+  const connectionsGeoJson: GeoJSON | null = connections && connections.length > 0
+    ? {
+        type: "FeatureCollection",
+        features: connections.map((conn) => {
           const from = bases.find((b) => b.id === conn.fromBaseId);
           const to = bases.find((b) => b.id === conn.toBaseId);
           if (!from || !to) return null;
-          const arrow1Lat = from.lat + (to.lat - from.lat) * 0.5;
-          const arrow1Lng = from.lng + (to.lng - from.lng) * 0.5;
-          const arrow2Lat = from.lat + (to.lat - from.lat) * 0.8;
-          const arrow2Lng = from.lng + (to.lng - from.lng) * 0.8;
-          return (
-            <span key={`${conn.fromBaseId}-${conn.toBaseId}`}>
-              <Polyline
-                positions={[[from.lat, from.lng], [to.lat, to.lng]]}
-                pathOptions={{ dashArray: "8 8", opacity: 0.5, color: "#6b7280", weight: 2 }}
-              />
-              <Marker
-                position={[arrow1Lat, arrow1Lng]}
-                icon={arrowIcon(from.lat, from.lng, to.lat, to.lng)}
-                interactive={false}
-              />
-              <Marker
-                position={[arrow2Lat, arrow2Lng]}
-                icon={arrowIcon(from.lat, from.lng, to.lat, to.lng)}
-                interactive={false}
-              />
-            </span>
-          );
-        })}
-      </MapContainer>
+          return {
+            type: "Feature" as const,
+            properties: {},
+            geometry: {
+              type: "LineString" as const,
+              coordinates: [[from.lng, from.lat], [to.lng, to.lat]],
+            },
+          };
+        }).filter(Boolean) as GeoJSON.Feature[],
+      }
+    : null;
+
+  return (
+    <div className={className}>
+      <MapGL
+        ref={mapRef}
+        initialViewState={{ longitude: center[1], latitude: center[0], zoom: 14 }}
+        style={{ width: "100%", height: "100%" }}
+        mapStyle={getStyleUrl(tileSource)}
+      >
+        {bases.map((base) => (
+          <Marker
+            key={base.id}
+            longitude={base.lng}
+            latitude={base.lat}
+            anchor="bottom"
+            onClick={(e) => { e.originalEvent.stopPropagation(); setPopup(base); }}
+          >
+            <PinMarkerSvg color="#3b82f6" />
+          </Marker>
+        ))}
+
+        {connectionsGeoJson && (
+          <Source id="connections" type="geojson" data={connectionsGeoJson}>
+            <Layer
+              id="connection-lines"
+              type="line"
+              paint={{ "line-color": "#6b7280", "line-width": 2, "line-opacity": 0.5, "line-dasharray": [8, 8] }}
+            />
+          </Source>
+        )}
+
+        {popup && (
+          <Marker longitude={popup.lng} latitude={popup.lat} anchor="bottom">
+            <div
+              className="bg-white rounded-lg shadow-lg p-3 min-w-[200px] max-w-[280px] -translate-y-12"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button className="absolute top-1 right-1 text-gray-400 hover:text-gray-600 text-xs px-1" onClick={() => setPopup(null)}>x</button>
+              <p className="text-sm font-semibold leading-tight">{popup.name}</p>
+              {popup.description && (
+                <p className="text-xs text-gray-500 mt-1 line-clamp-2">{popup.description}</p>
+              )}
+              <p className="text-xs text-gray-400 mt-1">
+                {popup.lat.toFixed(5)}, {popup.lng.toFixed(5)}
+              </p>
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {popup.hidden && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded border border-gray-300 bg-gray-50 text-gray-600">
+                    <EyeOff className="h-3 w-3" />
+                    Hidden
+                  </span>
+                )}
+                {popup.fixedChallengeName && (
+                  <span className="inline-flex items-center px-1.5 py-0.5 text-xs rounded border border-blue-200 bg-blue-50 text-blue-700 max-w-[160px]">
+                    <span className="truncate">Fixed: {popup.fixedChallengeName}</span>
+                  </span>
+                )}
+                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded border ${
+                  popup.nfcLinked
+                    ? "border-green-200 bg-green-50 text-green-700"
+                    : "border-red-200 bg-red-50 text-red-700"
+                }`}>
+                  {popup.nfcLinked ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
+                  {popup.nfcLinked ? "NFC linked" : "NFC not linked"}
+                </span>
+              </div>
+              {onEdit && (
+                <button
+                  type="button"
+                  onClick={() => onEdit(popup.id)}
+                  className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 transition-colors"
+                >
+                  <Pencil className="h-3 w-3" />
+                  Edit Base
+                </button>
+              )}
+            </div>
+          </Marker>
+        )}
+      </MapGL>
     </div>
   );
 }
