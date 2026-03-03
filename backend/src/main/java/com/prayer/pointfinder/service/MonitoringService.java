@@ -180,28 +180,13 @@ public class MonitoringService {
                     assignment = globalAssignments.get(baseId);
                 }
 
-                String status;
-                String submissionStatus = null;
-
-                if (sub != null) {
-                    submissionStatus = sub.getStatus().name();
-                    if (sub.getStatus() == SubmissionStatus.approved || sub.getStatus() == SubmissionStatus.correct) {
-                        status = "completed";
-                    } else if (sub.getStatus() == SubmissionStatus.rejected) {
-                        status = "rejected";
-                    } else {
-                        status = "submitted";
-                    }
-                } else if (ci != null) {
-                    status = "checked_in";
-                } else {
-                    status = "not_visited";
-                }
+                BaseStatus status = BaseStatus.compute(sub, ci);
+                String submissionStatus = sub != null ? sub.getStatus().name() : null;
 
                 result.add(TeamBaseProgressResponse.builder()
                         .baseId(baseId)
                         .teamId(teamId)
-                        .status(status)
+                        .status(status.name())
                         .checkedInAt(ci != null ? ci.getCheckedInAt() : null)
                         .challengeId(assignment != null ? assignment.getChallenge().getId() : null)
                         .submissionStatus(submissionStatus)

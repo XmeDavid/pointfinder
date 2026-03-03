@@ -228,27 +228,12 @@ public class PlayerService {
             Submission sub = submissionByBase.get(bId);
             Assignment assignment = assignmentByBase.get(bId);
 
-            String status;
-            String submissionStatus = null;
-
-            if (sub != null) {
-                submissionStatus = sub.getStatus().name();
-                if (sub.getStatus() == SubmissionStatus.approved || sub.getStatus() == SubmissionStatus.correct) {
-                    status = "completed";
-                } else if (sub.getStatus() == SubmissionStatus.rejected) {
-                    status = "rejected";
-                } else {
-                    status = "submitted";
-                }
-            } else if (ci != null) {
-                status = "checked_in";
-            } else {
-                status = "not_visited";
-            }
+            BaseStatus status = BaseStatus.compute(sub, ci);
+            String submissionStatus = sub != null ? sub.getStatus().name() : null;
 
             // Hide bases marked as hidden that the team hasn't visited yet,
             // unless the team has completed the challenge that unlocks this base
-            if (Boolean.TRUE.equals(base.getHidden()) && "not_visited".equals(status)) {
+            if (Boolean.TRUE.equals(base.getHidden()) && status == BaseStatus.not_visited) {
                 UUID unlockingChallengeId = unlockChallengeByTargetBase.get(bId);
                 if (unlockingChallengeId != null) {
                     Submission unlockSub = submissionByChallenge.get(unlockingChallengeId);
@@ -270,7 +255,7 @@ public class PlayerService {
                     .lng(base.getLng())
                     .nfcLinked(base.getNfcLinked())
                     .requirePresenceToSubmit(base.getRequirePresenceToSubmit())
-                    .status(status)
+                    .status(status.name())
                     .checkedInAt(ci != null ? ci.getCheckedInAt() : null)
                     .challengeId(assignment != null ? assignment.getChallenge().getId() : null)
                     .submissionStatus(submissionStatus)
@@ -459,6 +444,10 @@ public class PlayerService {
 
     @Transactional
     public void updateLocation(UUID gameId, Player player, Double lat, Double lng) {
+        if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+            throw new BadRequestException("Invalid coordinates");
+        }
+
         UUID playerId = player.getId();
         player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));

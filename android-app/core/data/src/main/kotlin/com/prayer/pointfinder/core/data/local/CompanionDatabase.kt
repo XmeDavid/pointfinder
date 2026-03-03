@@ -10,6 +10,7 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.RoomDatabase
 import com.prayer.pointfinder.core.model.BaseProgress
+import com.prayer.pointfinder.core.model.BaseStatus
 import com.prayer.pointfinder.core.model.CheckInResponse
 
 @Entity(tableName = "pending_actions")
@@ -178,7 +179,7 @@ fun BaseProgress.toCached(gameId: String): CachedProgressEntity {
         lng = lng,
         nfcLinked = nfcLinked,
         requirePresenceToSubmit = requirePresenceToSubmit,
-        status = status,
+        status = status.name.lowercase(),
         checkedInAt = checkedInAt,
         challengeId = challengeId,
         submissionStatus = submissionStatus,
@@ -193,7 +194,7 @@ fun CachedProgressEntity.toBaseProgress(): BaseProgress {
         lng = lng,
         nfcLinked = nfcLinked,
         requirePresenceToSubmit = requirePresenceToSubmit,
-        status = status,
+        status = BaseStatus.valueOf(status.uppercase()),
         checkedInAt = checkedInAt,
         challengeId = challengeId,
         submissionStatus = submissionStatus,

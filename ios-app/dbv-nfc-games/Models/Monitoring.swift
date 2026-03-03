@@ -19,14 +19,7 @@ struct TeamLocationResponse: Codable, Identifiable {
     }
     
     private func parseDate() -> Date? {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let date = formatter.date(from: updatedAt) {
-            return date
-        }
-        // Try without fractional seconds
-        formatter.formatOptions = [.withInternetDateTime]
-        return formatter.date(from: updatedAt)
+        DateFormatting.parseISO8601(updatedAt)
     }
 }
 

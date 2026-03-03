@@ -134,7 +134,7 @@ actor GameDataCache {
                 nfcLinked: old.nfcLinked,
                 requirePresenceToSubmit: old.requirePresenceToSubmit,
                 status: status,
-                checkedInAt: status == "checked_in" ? ISO8601DateFormatter().string(from: Date()) : old.checkedInAt,
+                checkedInAt: status == "checked_in" ? DateFormatting.iso8601String() : old.checkedInAt,
                 challengeId: old.challengeId,
                 submissionStatus: status == "submitted" ? "pending" : old.submissionStatus
             )

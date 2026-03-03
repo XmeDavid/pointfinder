@@ -381,7 +381,8 @@
     "rejected": "Abgelehnt",
     "challenge": "Challenge",
     "noChallenge": "Keine Challenge zugewiesen",
-    "latestPingBy": "Letzter Ping: {{player}}"
+    "latestPingBy": "Letzter Ping: {{player}}",
+    "loadError": "Kartendaten konnten nicht geladen werden. Einige Informationen fehlen möglicherweise."
   },
   "leaderboard": {
     "title": "Rangliste",

@@ -1,0 +1,425 @@
+import Foundation
+import UIKit
+import os
+
+// MARK: - Game Actions (Check-in, Submissions, Progress)
+
+extension AppState {
+
+    // MARK: - Progress
+
+    /// Load game progress. If online, fetches from server and caches.
+    /// If offline, loads from cache.
+    func loadProgress() async {
+        guard case .player(let token, _, let teamId, let gameId) = authType else { return }
+        isLoadingProgress = true
+
+        if isOnline {
+            do {
+                // Fetch complete game data and cache it
+                let gameData = try await apiClient.getGameData(gameId: gameId, token: token)
+                await GameDataCache.shared.cacheGameData(gameData, gameId: gameId)
+                baseProgress = gameData.progress
+                if let status = gameData.gameStatus, var game = currentGame {
+                    game = PlayerAuthResponse.GameInfo(
+                        id: game.id,
+                        name: game.name,
+                        description: game.description,
+                        status: status
+                    )
+                    currentGame = game
+                }
+            } catch {
+                // Fall back to cache on network error
+                if let cached = await GameDataCache.shared.getCachedProgress(gameId: gameId) {
+                    baseProgress = cached
+                } else {
+                    setError(error.localizedDescription)
+                }
+            }
+        } else {
+            // Offline: load from cache
+            if let cached = await GameDataCache.shared.getCachedProgress(gameId: gameId) {
+                baseProgress = cached
+            }
+        }
+
+        // Update pending count
+        pendingActionsCount = await OfflineQueue.shared.pendingCount
+
+        isLoadingProgress = false
+    }
+
+    // MARK: - Check-in
+
+    /// Check in at a base. If online, calls API directly.
+    /// If offline, queues the action and returns a locally-constructed response.
+    func checkIn(baseId: UUID) async -> CheckInResponse? {
+        guard case .player(let token, _, let teamId, let gameId) = authType else { return nil }
+
+        if isOnline {
+            do {
+                let response = try await apiClient.checkIn(gameId: gameId, baseId: baseId, token: token)
+
+                // Cache the challenge
+                if let challenge = response.challenge {
+                    await GameDataCache.shared.cacheChallenge(challenge, forBaseId: baseId)
+                }
+
+                // Send location immediately so operators see the team near the base
+                await locationService.sendLocationNow()
+
+                // Refresh progress
+                await loadProgress()
+
+                return response
+            } catch {
+                // If network error, fall through to offline handling
+                if !isNetworkError(error) {
+                    setError(error.localizedDescription)
+                    return nil
+                }
+            }
+        }
+
+        // Offline path: enqueue action once and return local response
+        let alreadyQueued = await OfflineQueue.shared.hasPendingCheckIn(gameId: gameId, baseId: baseId)
+        if !alreadyQueued {
+            await OfflineQueue.shared.enqueueCheckIn(gameId: gameId, baseId: baseId)
+        }
+
+        // Trigger sync immediately so queued actions retry as soon as possible
+        Task { await SyncEngine.shared.syncPendingActions() }
+
+        // Update local cache
+        await GameDataCache.shared.updateBaseStatus(baseId: baseId, status: "checked_in", gameId: gameId)
+
+        // Update local progress state
+        updateLocalBaseStatus(baseId: baseId, status: .checkedIn)
+
+        // Get cached challenge info
+        let challenge = await GameDataCache.shared.getCachedChallenge(forBaseId: baseId, teamId: teamId, gameId: gameId)
+
+        pendingActionsCount = await OfflineQueue.shared.pendingCount
+
+        // Construct local response
+        let baseName = baseProgress.first { $0.baseId == baseId }?.baseName ?? Translations.string("base.defaultName")
+        return CheckInResponse(
+            checkInId: UUID(), // Temporary local ID
+            baseId: baseId,
+            baseName: baseName,
+            checkedInAt: DateFormatting.iso8601String(),
+            challenge: challenge
+        )
+    }
+
+    // MARK: - Text Submission
+
+    /// Submit an answer. If online, calls API directly.
+    /// If offline, queues the action and returns a locally-constructed response.
+    func submitAnswer(baseId: UUID, challengeId: UUID, answer: String) async -> SubmissionResponse? {
+        guard case .player(let token, _, let teamId, let gameId) = authType else { return nil }
+
+        if isOnline {
+            do {
+                let request = PlayerSubmissionRequest(
+                    baseId: baseId,
+                    challengeId: challengeId,
+                    answer: answer,
+                    idempotencyKey: UUID()
+                )
+                let response = try await apiClient.submitAnswer(
+                    gameId: gameId,
+                    request: request,
+                    token: token
+                )
+
+                // Send location immediately so operators see the update
+                await locationService.sendLocationNow()
+
+                // Refresh progress
+                await loadProgress()
+
+                return response
+            } catch {
+                // If network error, fall through to offline handling
+                if !isNetworkError(error) {
+                    setError(error.localizedDescription)
+                    return nil
+                }
+            }
+        }
+
+        // Offline path: enqueue action with idempotency key
+        let idempotencyKey = await OfflineQueue.shared.enqueueSubmission(
+            gameId: gameId,
+            baseId: baseId,
+            challengeId: challengeId,
+            answer: answer
+        )
+
+        // Trigger sync immediately so queued actions retry as soon as possible
+        Task { await SyncEngine.shared.syncPendingActions() }
+
+        // Update local cache
+        await GameDataCache.shared.updateBaseStatus(baseId: baseId, status: "submitted", gameId: gameId)
+
+        // Update local progress state
+        updateLocalBaseStatus(baseId: baseId, status: .submitted)
+
+        pendingActionsCount = await OfflineQueue.shared.pendingCount
+
+        // Construct local response
+        return SubmissionResponse(
+            id: idempotencyKey,
+            teamId: teamId,
+            challengeId: challengeId,
+            baseId: baseId,
+            answer: answer,
+            fileUrl: nil,
+            status: "pending",
+            submittedAt: DateFormatting.iso8601String(),
+            reviewedBy: nil,
+            feedback: nil,
+            points: nil,
+            completionContent: nil
+        )
+    }
+
+    // MARK: - Photo Submission
+
+    /// Submit a photo answer as an offline-capable queued media submission.
+    func submitAnswerWithPhoto(baseId: UUID, challengeId: UUID, image: UIImage, notes: String) async -> SubmissionResponse? {
+        guard case .player(_, _, _, _) = authType else {
+            logger.error("Photo submission blocked: missing player auth context")
+            return nil
+        }
+
+        // Compress to JPEG at 0.7 quality
+        guard let imageData = image.jpegData(compressionQuality: 0.7) else {
+            logger.error("Photo submission failed: JPEG conversion returned nil")
+            setError(Translations.string("error.photoProcessing"))
+            return nil
+        }
+
+        return await submitAnswerWithMedia(
+            baseId: baseId,
+            challengeId: challengeId,
+            mediaData: imageData,
+            mediaSourceURL: nil,
+            contentType: "image/jpeg",
+            fileName: "photo.jpg",
+            notes: notes
+        )
+    }
+
+    // MARK: - Media Submission
+
+    /// Queue a media submission that is later synced via resumable chunked uploads.
+    func submitAnswerWithMedia(
+        baseId: UUID,
+        challengeId: UUID,
+        mediaData: Data?,
+        mediaSourceURL: URL?,
+        contentType: String,
+        fileName: String?,
+        notes: String
+    ) async -> SubmissionResponse? {
+        guard case .player(_, _, let teamId, let gameId) = authType else { return nil }
+        guard AppConfiguration.chunkedMediaUploadEnabled else {
+            setError(Translations.string("error.mediaUploadDisabled"))
+            return nil
+        }
+
+        let inferredSize = Int64(mediaData?.count ?? 0)
+        let sourceSize = mediaSourceURL.map { sourceURL -> Int64 in
+            let attrs = try? FileManager.default.attributesOfItem(atPath: sourceURL.path)
+            return (attrs?[.size] as? NSNumber)?.int64Value ?? 0
+        } ?? 0
+        let sizeBytes = max(inferredSize, sourceSize)
+        guard sizeBytes > 0 else {
+            setError(Translations.string("error.photoProcessing"))
+            return nil
+        }
+
+        let localFilePath: String?
+        let sourcePath: String?
+        if sizeBytes <= mediaCopyThresholdBytes {
+            do {
+                localFilePath = try persistMediaCopy(
+                    data: mediaData,
+                    sourceURL: mediaSourceURL,
+                    preferredFileName: fileName,
+                    contentType: contentType
+                )
+                sourcePath = nil
+            } catch {
+                logger.error("Failed to persist guaranteed media copy: \(error.localizedDescription, privacy: .public)")
+                setError(Translations.string("error.photoProcessing"))
+                return nil
+            }
+        } else {
+            guard let mediaSourceURL else {
+                setError(Translations.string("error.mediaSourceRequired"))
+                return nil
+            }
+            localFilePath = nil
+            sourcePath = mediaSourceURL.path
+        }
+
+        let idempotencyKey = await OfflineQueue.shared.enqueueMediaSubmission(
+            gameId: gameId,
+            baseId: baseId,
+            challengeId: challengeId,
+            answer: notes,
+            contentType: contentType,
+            sizeBytes: sizeBytes,
+            localFilePath: localFilePath,
+            sourcePath: sourcePath,
+            fileName: fileName
+        )
+
+        // Trigger sync immediately so queued media retries as soon as possible.
+        Task { await SyncEngine.shared.syncPendingActions() }
+
+        // Update local cache/progress immediately.
+        await GameDataCache.shared.updateBaseStatus(baseId: baseId, status: "submitted", gameId: gameId)
+        updateLocalBaseStatus(baseId: baseId, status: .submitted)
+        pendingActionsCount = await OfflineQueue.shared.pendingCount
+        if isOnline {
+            await locationService.sendLocationNow()
+        }
+
+        return SubmissionResponse(
+            id: idempotencyKey,
+            teamId: teamId,
+            challengeId: challengeId,
+            baseId: baseId,
+            answer: notes,
+            fileUrl: nil,
+            status: "pending",
+            submittedAt: DateFormatting.iso8601String(),
+            reviewedBy: nil,
+            feedback: nil,
+            points: nil,
+            completionContent: nil
+        )
+    }
+
+    // MARK: - Cached Challenge
+
+    func getCachedChallenge(forBaseId baseId: UUID) async -> CheckInResponse.ChallengeInfo? {
+        guard case .player(_, _, let teamId, let gameId) = authType else {
+            return await GameDataCache.shared.getCachedChallenge(forBaseId: baseId)
+        }
+        // Try the new cache method first, fall back to legacy
+        if let challenge = await GameDataCache.shared.getCachedChallenge(forBaseId: baseId, teamId: teamId, gameId: gameId) {
+            return challenge
+        }
+        return await GameDataCache.shared.getCachedChallenge(forBaseId: baseId)
+    }
+
+    // MARK: - Solve Session
+
+    func startSolving(baseId: UUID, challengeId: UUID) {
+        solvingBaseId = baseId
+        solvingChallengeId = challengeId
+    }
+
+    func clearSolveSession() {
+        solvingBaseId = nil
+        solvingChallengeId = nil
+    }
+
+    // MARK: - Status Helpers
+
+    func statusForBase(_ baseId: UUID) -> BaseStatus {
+        baseProgress.first(where: { $0.baseId == baseId })?.baseStatus ?? .notVisited
+    }
+
+    func progressForBase(_ baseId: UUID) -> BaseProgress? {
+        baseProgress.first(where: { $0.baseId == baseId })
+    }
+
+    // MARK: - Offline Helpers
+
+    private func isNetworkError(_ error: Error) -> Bool {
+        if let apiError = error as? APIError {
+            switch apiError {
+            case .networkError:
+                return true
+            default:
+                return false
+            }
+        }
+        let nsError = error as NSError
+        guard nsError.domain == NSURLErrorDomain else { return false }
+        let transientNetworkCodes: Set<Int> = [
+            NSURLErrorNotConnectedToInternet,
+            NSURLErrorNetworkConnectionLost,
+            NSURLErrorTimedOut,
+            NSURLErrorCannotFindHost,
+            NSURLErrorCannotConnectToHost,
+            NSURLErrorDNSLookupFailed,
+            NSURLErrorInternationalRoamingOff,
+            NSURLErrorCallIsActive,
+            NSURLErrorDataNotAllowed
+        ]
+        return transientNetworkCodes.contains(nsError.code)
+    }
+
+    private func updateLocalBaseStatus(baseId: UUID, status: BaseStatus) {
+        if let index = baseProgress.firstIndex(where: { $0.baseId == baseId }) {
+            baseProgress[index].status = status.rawValue
+            if status == .checkedIn {
+                baseProgress[index].checkedInAt = DateFormatting.iso8601String()
+            }
+            if status == .submitted {
+                baseProgress[index].submissionStatus = "pending"
+            }
+        }
+    }
+
+    private func persistMediaCopy(
+        data: Data?,
+        sourceURL: URL?,
+        preferredFileName: String?,
+        contentType: String
+    ) throws -> String {
+        let pendingDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("pending-media", isDirectory: true)
+        try FileManager.default.createDirectory(at: pendingDir, withIntermediateDirectories: true)
+
+        let fileExtension: String
+        if let preferredFileName, let ext = preferredFileName.split(separator: ".").last, !ext.isEmpty {
+            fileExtension = String(ext)
+        } else if contentType == "image/png" {
+            fileExtension = "png"
+        } else if contentType == "image/webp" {
+            fileExtension = "webp"
+        } else if contentType == "image/heic" || contentType == "image/heif" {
+            fileExtension = "heic"
+        } else if contentType == "video/mp4" {
+            fileExtension = "mp4"
+        } else if contentType == "video/quicktime" {
+            fileExtension = "mov"
+        } else {
+            fileExtension = "jpg"
+        }
+
+        let targetURL = pendingDir.appendingPathComponent("\(UUID().uuidString).\(fileExtension)")
+        if let data {
+            try data.write(to: targetURL, options: .atomic)
+            return targetURL.path
+        }
+        if let sourceURL {
+            if FileManager.default.fileExists(atPath: sourceURL.path) {
+                try FileManager.default.copyItem(at: sourceURL, to: targetURL)
+                return targetURL.path
+            }
+        }
+        throw NSError(domain: "AppState", code: -1, userInfo: [NSLocalizedDescriptionKey: "No media source available"])
+    }
+
+    private var mediaCopyThresholdBytes: Int64 { 100 * 1024 * 1024 }
+}

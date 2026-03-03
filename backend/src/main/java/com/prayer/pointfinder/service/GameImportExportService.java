@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -24,6 +25,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class GameImportExportService {
+
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     private final GameRepository gameRepository;
     private final UserRepository userRepository;
@@ -133,9 +136,9 @@ public class GameImportExportService {
         validateImportData(data);
         validateImportDates(request);
 
-        Map<String, UUID> baseIdMap = new HashMap<>();
-        Map<String, UUID> challengeIdMap = new HashMap<>();
-        Map<String, UUID> teamIdMap = new HashMap<>();
+        Map<String, Challenge> challengeEntityMap = new HashMap<>();
+        Map<String, Base> baseEntityMap = new HashMap<>();
+        Map<String, Team> teamEntityMap = new HashMap<>();
 
         Game newGame = Game.builder()
                 .name(data.getGame().getName())
@@ -163,15 +166,16 @@ public class GameImportExportService {
                     .locationBound(chDto.getLocationBound() != null ? chDto.getLocationBound() : false)
                     .build();
             challenge = challengeRepository.save(challenge);
-            challengeIdMap.put(chDto.getTempId(), challenge.getId());
+            challengeEntityMap.put(chDto.getTempId(), challenge);
         }
 
         for (BaseExportDto baseDto : data.getBases()) {
             Challenge fixedChallenge = null;
             if (baseDto.getFixedChallengeTempId() != null) {
-                UUID challengeId = challengeIdMap.get(baseDto.getFixedChallengeTempId());
-                fixedChallenge = challengeRepository.findById(challengeId)
-                        .orElseThrow(() -> new IllegalStateException("Challenge not found"));
+                fixedChallenge = challengeEntityMap.get(baseDto.getFixedChallengeTempId());
+                if (fixedChallenge == null) {
+                    throw new IllegalStateException("Challenge not found");
+                }
             }
 
             Base base = Base.builder()
@@ -187,7 +191,7 @@ public class GameImportExportService {
                     .fixedChallenge(fixedChallenge)
                     .build();
             base = baseRepository.save(base);
-            baseIdMap.put(baseDto.getTempId(), base.getId());
+            baseEntityMap.put(baseDto.getTempId(), base);
         }
 
         if (data.getTeams() != null && !data.getTeams().isEmpty()) {
@@ -200,7 +204,7 @@ public class GameImportExportService {
                         .color(teamDto.getColor())
                         .build();
                 team = teamRepository.save(team);
-                teamIdMap.put(teamDto.getTempId(), team.getId());
+                teamEntityMap.put(teamDto.getTempId(), team);
             }
         }
 
@@ -210,14 +214,11 @@ public class GameImportExportService {
         // Restore unlocks_base relationships (challenges already created, bases now exist)
         for (ChallengeExportDto chDto : data.getChallenges()) {
             if (chDto.getUnlocksBaseTempId() != null) {
-                UUID challengeId = challengeIdMap.get(chDto.getTempId());
-                UUID targetBaseId = baseIdMap.get(chDto.getUnlocksBaseTempId());
-                if (challengeId == null || targetBaseId == null) {
+                Challenge challenge = challengeEntityMap.get(chDto.getTempId());
+                Base targetBase = baseEntityMap.get(chDto.getUnlocksBaseTempId());
+                if (challenge == null || targetBase == null) {
                     throw new BadRequestException("Invalid unlock relationship for challenge: " + chDto.getTempId());
                 }
-
-                Challenge challenge = challengeRepository.findById(challengeId).orElseThrow();
-                Base targetBase = baseRepository.findById(targetBaseId).orElseThrow();
 
                 if (!Boolean.TRUE.equals(challenge.getLocationBound())) {
                     throw new BadRequestException("Challenge " + chDto.getTempId()
@@ -237,7 +238,7 @@ public class GameImportExportService {
                     throw new BadRequestException("Unlock target base must be hidden for challenge: " + chDto.getTempId());
                 }
 
-                challengeRepository.findByUnlocksBaseId(targetBaseId).ifPresent(existing -> {
+                challengeRepository.findByUnlocksBaseId(targetBase.getId()).ifPresent(existing -> {
                     if (!existing.getId().equals(challenge.getId())) {
                         throw new BadRequestException("Multiple challenges cannot unlock the same base: "
                                 + chDto.getUnlocksBaseTempId());
@@ -250,14 +251,10 @@ public class GameImportExportService {
         }
 
         for (AssignmentExportDto assignDto : data.getAssignments()) {
-            UUID baseId = baseIdMap.get(assignDto.getBaseTempId());
-            UUID challengeId = challengeIdMap.get(assignDto.getChallengeTempId());
-            UUID teamId = assignDto.getTeamTempId() != null ?
-                    teamIdMap.get(assignDto.getTeamTempId()) : null;
-
-            Base base = baseRepository.findById(baseId).orElseThrow();
-            Challenge challenge = challengeRepository.findById(challengeId).orElseThrow();
-            Team team = teamId != null ? teamRepository.findById(teamId).orElse(null) : null;
+            Base base = baseEntityMap.get(assignDto.getBaseTempId());
+            Challenge challenge = challengeEntityMap.get(assignDto.getChallengeTempId());
+            Team team = assignDto.getTeamTempId() != null ?
+                    teamEntityMap.get(assignDto.getTeamTempId()) : null;
 
             assignmentRepository.save(Assignment.builder()
                     .game(newGame).base(base).challenge(challenge).team(team).build());
@@ -497,8 +494,7 @@ public class GameImportExportService {
 
     private String generateRandomCode(int length) {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        Random random = new Random();
-        return random.ints(length, 0, chars.length())
+        return RANDOM.ints(length, 0, chars.length())
                 .mapToObj(chars::charAt)
                 .map(String::valueOf)
                 .collect(Collectors.joining());

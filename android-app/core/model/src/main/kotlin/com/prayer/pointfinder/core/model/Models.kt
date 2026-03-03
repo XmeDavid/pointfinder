@@ -38,7 +38,7 @@ data class PlayerAuthResponse(
         val id: EntityId,
         val name: String,
         val description: String,
-        val status: String,
+        val status: GameStatus,
     )
 }
 
@@ -85,7 +85,7 @@ data class Game(
     val id: EntityId,
     val name: String,
     val description: String,
-    val status: String,
+    val status: GameStatus,
 )
 
 @Serializable
@@ -133,6 +133,33 @@ data class Team(
 )
 
 @Serializable
+enum class GameStatus {
+    @SerialName("setup")
+    SETUP,
+
+    @SerialName("live")
+    LIVE,
+
+    @SerialName("ended")
+    ENDED,
+}
+
+@Serializable
+enum class SubmissionStatus {
+    @SerialName("pending")
+    PENDING,
+
+    @SerialName("approved")
+    APPROVED,
+
+    @SerialName("rejected")
+    REJECTED,
+
+    @SerialName("correct")
+    CORRECT,
+}
+
+@Serializable
 enum class BaseStatus {
     @SerialName("not_visited")
     NOT_VISITED,
@@ -158,21 +185,11 @@ data class BaseProgress(
     val lng: Double,
     val nfcLinked: Boolean,
     val requirePresenceToSubmit: Boolean,
-    val status: String,
+    val status: BaseStatus,
     val checkedInAt: String? = null,
     val challengeId: EntityId? = null,
     val submissionStatus: String? = null,
-) {
-    fun baseStatus(): BaseStatus {
-        return when (status) {
-            "checked_in" -> BaseStatus.CHECKED_IN
-            "submitted" -> BaseStatus.SUBMITTED
-            "completed" -> BaseStatus.COMPLETED
-            "rejected" -> BaseStatus.REJECTED
-            else -> BaseStatus.NOT_VISITED
-        }
-    }
-}
+)
 
 @Serializable
 data class CheckInResponse(
@@ -233,7 +250,7 @@ data class SubmissionResponse(
     val baseId: EntityId,
     val answer: String,
     val fileUrl: String? = null,
-    val status: String,
+    val status: SubmissionStatus,
     val submittedAt: String,
     val reviewedBy: EntityId? = null,
     val feedback: String? = null,
@@ -243,7 +260,7 @@ data class SubmissionResponse(
 
 @Serializable
 data class ReviewSubmissionRequest(
-    val status: String,
+    val status: SubmissionStatus,
     val feedback: String? = null,
     val points: Int? = null,
 )
@@ -281,7 +298,7 @@ data class UnseenCountResponse(
 
 @Serializable
 data class GameDataResponse(
-    val gameStatus: String? = null,
+    val gameStatus: GameStatus? = null,
     val bases: List<Base>,
     val challenges: List<Challenge>,
     val assignments: List<Assignment>,
@@ -302,7 +319,7 @@ data class TeamLocationResponse(
 data class TeamBaseProgressResponse(
     val baseId: EntityId,
     val teamId: EntityId,
-    val status: String,
+    val status: BaseStatus,
     val checkedInAt: String? = null,
     val challengeId: EntityId? = null,
     val submissionStatus: String? = null,
@@ -344,7 +361,7 @@ sealed class AuthType {
         val gameName: String? = null,
         val teamName: String? = null,
         val teamColor: String? = null,
-        val gameStatus: String? = null,
+        val gameStatus: GameStatus? = null,
     ) : AuthType()
 
     data class Operator(

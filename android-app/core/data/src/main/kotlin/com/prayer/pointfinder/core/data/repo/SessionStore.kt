@@ -8,6 +8,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.prayer.pointfinder.core.model.AuthType
+import com.prayer.pointfinder.core.model.GameStatus
 import com.prayer.pointfinder.core.model.OperatorAuthResponse
 import com.prayer.pointfinder.core.model.PlayerAuthResponse
 import com.prayer.pointfinder.core.network.AuthTokenProvider
@@ -53,7 +54,7 @@ class SessionStore @Inject constructor(
             prefs[GAME_NAME] = response.game.name
             prefs[TEAM_NAME] = response.team.name
             prefs[TEAM_COLOR] = response.team.color
-            prefs[GAME_STATUS] = response.game.status
+            prefs[GAME_STATUS] = response.game.status.name.lowercase()
         }
         cachedAuthType = currentAuthType()
     }
@@ -109,7 +110,7 @@ class SessionStore @Inject constructor(
                         gameName = prefs[GAME_NAME],
                         teamName = prefs[TEAM_NAME],
                         teamColor = prefs[TEAM_COLOR],
-                        gameStatus = prefs[GAME_STATUS],
+                        gameStatus = prefs[GAME_STATUS]?.let { runCatching { GameStatus.valueOf(it.uppercase()) }.getOrNull() },
                     )
                 }
             }
@@ -136,9 +137,9 @@ class SessionStore @Inject constructor(
         return resolved
     }
 
-    suspend fun updateGameStatus(status: String) {
+    suspend fun updateGameStatus(status: GameStatus) {
         context.sessionDataStore.edit { prefs ->
-            prefs[GAME_STATUS] = status
+            prefs[GAME_STATUS] = status.name.lowercase()
         }
         cachedAuthType = currentAuthType()
     }

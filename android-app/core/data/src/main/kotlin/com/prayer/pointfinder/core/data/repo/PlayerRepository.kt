@@ -13,8 +13,10 @@ import com.prayer.pointfinder.core.model.AuthType
 import com.prayer.pointfinder.core.model.BaseProgress
 import com.prayer.pointfinder.core.model.CheckInResponse
 import com.prayer.pointfinder.core.model.GameDataResponse
+import com.prayer.pointfinder.core.model.GameStatus
 import com.prayer.pointfinder.core.model.PlayerSubmissionRequest
 import com.prayer.pointfinder.core.model.SubmissionResponse
+import com.prayer.pointfinder.core.model.SubmissionStatus
 import com.prayer.pointfinder.core.model.UploadSessionInitRequest
 import com.prayer.pointfinder.core.model.UploadSessionResponse
 import com.prayer.pointfinder.core.network.CompanionApi
@@ -37,7 +39,7 @@ data class CheckInResult(
 
 data class ProgressResult(
     val progress: List<BaseProgress>,
-    val gameStatus: String?,
+    val gameStatus: GameStatus?,
 )
 
 data class SubmitResult(
@@ -227,7 +229,7 @@ class PlayerRepository @Inject constructor(
                 baseId = baseId,
                 answer = answer,
                 fileUrl = null,
-                status = "pending",
+                status = SubmissionStatus.PENDING,
                 submittedAt = java.time.Instant.now().toString(),
                 reviewedBy = null,
                 feedback = null,
@@ -281,7 +283,7 @@ class PlayerRepository @Inject constructor(
                 baseId = baseId,
                 answer = answer,
                 fileUrl = null,
-                status = "pending",
+                status = SubmissionStatus.PENDING,
                 submittedAt = java.time.Instant.now().toString(),
                 reviewedBy = null,
                 feedback = null,
