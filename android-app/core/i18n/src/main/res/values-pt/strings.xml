@@ -57,6 +57,10 @@
     <string name="label_operator">Operador</string>
     <string name="label_player">Jogador</string>
     <string name="label_language">Idioma</string>
+    <string name="label_theme">Tema</string>
+    <string name="label_theme_system">Sistema</string>
+    <string name="label_theme_light">Claro</string>
+    <string name="label_theme_dark">Escuro</string>
     <string name="label_legend">Legenda</string>
     <string name="label_game">Jogo</string>
     <string name="label_team">Equipe</string>

@@ -63,6 +63,7 @@ import androidx.navigation.compose.rememberNavController
 import com.prayer.pointfinder.BuildConfig
 import com.prayer.pointfinder.core.model.AuthType
 import com.prayer.pointfinder.core.model.GameStatus
+import com.prayer.pointfinder.core.model.ThemeMode
 import com.prayer.pointfinder.feature.auth.OperatorLoginScreen
 import com.prayer.pointfinder.feature.auth.PlayerJoinScreen
 import com.prayer.pointfinder.feature.auth.PlayerNameScreen
@@ -232,6 +233,7 @@ fun AppNavigation(
                 isOnline = sessionState.isOnline,
                 pendingActionsCount = sessionState.pendingActionsCount,
                 currentLanguage = sessionState.currentLanguage,
+                currentThemeMode = sessionState.themeMode,
                 isDeletingAccount = sessionState.isDeletingAccount,
                 sessionErrorMessage = sessionState.errorMessage,
                 showPermissionDisclosure = sessionState.showPermissionDisclosure,
@@ -252,6 +254,7 @@ fun AppNavigation(
                 viewModel = operatorViewModel,
                 sessionViewModel = sessionViewModel,
                 currentLanguage = sessionState.currentLanguage,
+                currentThemeMode = sessionState.themeMode,
                 operatorAccessToken = operatorAuth?.accessToken,
                 apiBaseUrl = BuildConfig.API_BASE_URL,
                 onSwitchGame = { navController.popBackStack() },
@@ -306,6 +309,7 @@ private fun PlayerRootScreen(
     isOnline: Boolean,
     pendingActionsCount: Int,
     currentLanguage: String,
+    currentThemeMode: ThemeMode,
     isDeletingAccount: Boolean,
     sessionErrorMessage: String?,
     showPermissionDisclosure: Boolean = false,
@@ -649,12 +653,17 @@ private fun PlayerRootScreen(
 
             selectedTab == PlayerTab.MAP -> {
                 Box(modifier = Modifier.fillMaxSize()) {
+                    val isDark = when (currentThemeMode) {
+                        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+                        ThemeMode.LIGHT -> false
+                        ThemeMode.DARK -> true
+                    }
                     PlayerMapScreen(
                         progress = state.progress,
                         isLoading = state.isLoading,
                         unseenNotificationCount = state.unseenNotificationCount,
                         tileSource = auth.tileSource ?: "osm",
-                        isDark = isSystemInDarkTheme(),
+                        isDark = isDark,
                         onBaseSelected = { viewModel.selectBase(auth, it) },
                         onRefresh = { viewModel.refresh(auth, isOnline) },
                         onNotificationsClick = { viewModel.openNotifications() },
@@ -692,6 +701,8 @@ private fun PlayerRootScreen(
                     progress = state.progress,
                     currentLanguage = currentLanguage,
                     onLanguageChanged = sessionViewModel::updateLanguage,
+                    currentThemeMode = currentThemeMode.name,
+                    onThemeModeChanged = { sessionViewModel.updateThemeMode(ThemeMode.valueOf(it)) },
                     isDeletingAccount = isDeletingAccount,
                     onDeleteAccount = sessionViewModel::deletePlayerAccount,
                     onLogout = sessionViewModel::logout,
@@ -819,6 +830,7 @@ private fun OperatorGameRoot(
     viewModel: OperatorViewModel,
     sessionViewModel: AppSessionViewModel,
     currentLanguage: String,
+    currentThemeMode: ThemeMode,
     operatorAccessToken: String?,
     apiBaseUrl: String,
     onSwitchGame: () -> Unit,
@@ -852,13 +864,18 @@ private fun OperatorGameRoot(
     ) {
         when (state.selectedTab) {
             OperatorTab.LIVE_MAP -> {
+                val operatorIsDark = when (currentThemeMode) {
+                    ThemeMode.SYSTEM -> isSystemInDarkTheme()
+                    ThemeMode.LIGHT -> false
+                    ThemeMode.DARK -> true
+                }
                 OperatorMapScreen(
                     bases = state.bases,
                     teamLocations = state.locations,
                     teams = state.teams,
                     baseProgress = state.baseProgress,
                     tileSource = selectedGame.tileSource,
-                    isDark = isSystemInDarkTheme(),
+                    isDark = operatorIsDark,
                     onBaseSelected = viewModel::selectBase,
                     onRefresh = viewModel::refreshSelectedGameData,
                 )
@@ -916,10 +933,12 @@ private fun OperatorGameRoot(
                     gameName = selectedGame.name,
                     gameStatus = selectedGame.status,
                     currentLanguage = currentLanguage,
+                    currentThemeMode = currentThemeMode.name,
                     notificationSettings = state.notificationSettings,
                     isLoadingNotificationSettings = state.isLoadingNotificationSettings,
                     isSavingNotificationSettings = state.isSavingNotificationSettings,
                     onLanguageChanged = sessionViewModel::updateLanguage,
+                    onThemeModeChanged = { sessionViewModel.updateThemeMode(ThemeMode.valueOf(it)) },
                     onNotificationSettingsChanged = viewModel::updateNotificationSettings,
                     onSwitchGame = {
                         viewModel.clearSelectedGame()

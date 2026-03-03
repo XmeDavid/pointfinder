@@ -47,6 +47,9 @@ struct MapLibreMapView: UIViewRepresentable {
             mapView.removeAnnotations(existing)
         }
 
+        // Set annotation items before adding so viewFor delegate can resolve them
+        coordinator.annotationItems = annotations
+
         // Add new annotations
         for item in annotations {
             let point = MLNPointAnnotation()
@@ -55,7 +58,6 @@ struct MapLibreMapView: UIViewRepresentable {
             point.subtitle = item.subtitle
             mapView.addAnnotation(point)
         }
-        coordinator.annotationItems = annotations
 
         // Fit bounds
         if !fitCoordinates.isEmpty && fitCoordinates.count > 1 {

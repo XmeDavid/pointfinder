@@ -59,6 +59,7 @@ struct OperatorMapView: View {
                 annotations: baseAnnotations + locationAnnotations,
                 fitCoordinates: bases.map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng) }
             )
+            .ignoresSafeArea()
 
             if isLoading && teams.isEmpty {
                 ProgressView(locale.t("operator.loading"))

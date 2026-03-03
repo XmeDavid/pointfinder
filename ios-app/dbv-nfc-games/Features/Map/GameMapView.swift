@@ -38,6 +38,7 @@ struct GameMapView: View {
                         CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng)
                     }
                 )
+                .ignoresSafeArea()
 
                 // Legend overlay
                 VStack {

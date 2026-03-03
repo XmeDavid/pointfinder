@@ -57,6 +57,10 @@
     <string name="label_operator">Operator</string>
     <string name="label_player">Player</string>
     <string name="label_language">Language</string>
+    <string name="label_theme">Theme</string>
+    <string name="label_theme_system">System</string>
+    <string name="label_theme_light">Light</string>
+    <string name="label_theme_dark">Dark</string>
     <string name="label_legend">Legend</string>
     <string name="label_game">Game</string>
     <string name="label_team">Team</string>

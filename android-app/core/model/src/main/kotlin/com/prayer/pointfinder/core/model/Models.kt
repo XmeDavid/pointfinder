@@ -5,6 +5,8 @@ import kotlinx.serialization.Serializable
 
 typealias EntityId = String
 
+enum class ThemeMode { SYSTEM, LIGHT, DARK }
+
 @Serializable
 data class PlayerJoinRequest(
     val joinCode: String,

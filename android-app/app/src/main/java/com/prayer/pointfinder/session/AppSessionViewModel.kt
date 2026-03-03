@@ -9,6 +9,7 @@ import com.prayer.pointfinder.core.data.repo.PlayerRepository
 import com.prayer.pointfinder.core.data.repo.SessionStore
 import com.prayer.pointfinder.core.i18n.LocaleManager
 import com.prayer.pointfinder.core.model.AuthType
+import com.prayer.pointfinder.core.model.ThemeMode
 import com.prayer.pointfinder.core.platform.DeviceIdProvider
 import com.prayer.pointfinder.core.platform.NetworkMonitor
 import com.prayer.pointfinder.core.platform.PlayerLocationService
@@ -33,6 +34,7 @@ data class AppSessionState(
     val isOnline: Boolean = true,
     val pendingActionsCount: Int = 0,
     val currentLanguage: String = "en",
+    val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val errorMessage: String? = null,
     val showPermissionDisclosure: Boolean = false,
 )
@@ -107,7 +109,8 @@ class AppSessionViewModel @Inject constructor(
 
             val preferred = sessionStore.preferredLanguage()
             val resolvedLanguage = LocaleManager.normalizeLanguage(preferred ?: Locale.getDefault().language)
-            _state.value = _state.value.copy(currentLanguage = resolvedLanguage)
+            val savedTheme = sessionStore.preferredTheme()?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() } ?: ThemeMode.SYSTEM
+            _state.value = _state.value.copy(currentLanguage = resolvedLanguage, themeMode = savedTheme)
             LocaleManager.applyLanguage(resolvedLanguage)
         }
     }
@@ -178,6 +181,7 @@ class AppSessionViewModel @Inject constructor(
     fun logout() {
         viewModelScope.launch {
             val currentLanguage = _state.value.currentLanguage
+            val currentTheme = _state.value.themeMode
             val isOnline = _state.value.isOnline
             authRepository.clearSession()
             playerRepository.clearAll()
@@ -186,6 +190,7 @@ class AppSessionViewModel @Inject constructor(
             _state.value = AppSessionState(
                 isOnline = isOnline,
                 currentLanguage = currentLanguage,
+                themeMode = currentTheme,
             )
         }
     }
@@ -194,6 +199,7 @@ class AppSessionViewModel @Inject constructor(
         if (_state.value.authType !is AuthType.Player) return
         viewModelScope.launch {
             val currentLanguage = _state.value.currentLanguage
+            val currentTheme = _state.value.themeMode
             val isOnline = _state.value.isOnline
             _state.value = _state.value.copy(isDeletingAccount = true, errorMessage = null)
             runCatching {
@@ -205,6 +211,7 @@ class AppSessionViewModel @Inject constructor(
                 _state.value = AppSessionState(
                     isOnline = isOnline,
                     currentLanguage = currentLanguage,
+                    themeMode = currentTheme,
                 )
             }.onFailure { err ->
                 _state.value = _state.value.copy(
@@ -247,6 +254,13 @@ class AppSessionViewModel @Inject constructor(
             sessionStore.setPreferredLanguage(normalized)
             LocaleManager.applyLanguage(normalized)
             _state.value = _state.value.copy(currentLanguage = normalized)
+        }
+    }
+
+    fun updateThemeMode(mode: ThemeMode) {
+        viewModelScope.launch {
+            sessionStore.setPreferredTheme(mode.name)
+            _state.value = _state.value.copy(themeMode = mode)
         }
     }
 

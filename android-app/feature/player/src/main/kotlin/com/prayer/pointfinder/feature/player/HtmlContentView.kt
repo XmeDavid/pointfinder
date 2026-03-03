@@ -8,11 +8,12 @@ import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.viewinterop.AndroidView
 
 /**
@@ -29,7 +30,9 @@ fun HtmlContentView(
     html: String,
     modifier: Modifier = Modifier,
 ) {
-    val isDark = isSystemInDarkTheme()
+    // Use the resolved theme luminance rather than isSystemInDarkTheme(),
+    // so forced light/dark mode from the theme override is respected.
+    val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
     val wrappedHtml = remember(html, isDark) { wrapHtml(html, isDark) }
 
     // Track last loaded HTML to prevent reload loops.

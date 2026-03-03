@@ -86,9 +86,14 @@ class SessionStore @Inject constructor(
     }
 
     suspend fun clearSession() {
+        val savedLanguage = preferredLanguage()
+        val savedTheme = preferredTheme()
         securePrefs.edit().clear().apply()
         context.sessionDataStore.edit { it.clear() }
         cachedAuthType = AuthType.None
+        // Restore device-level preferences
+        savedLanguage?.let { setPreferredLanguage(it) }
+        savedTheme?.let { setPreferredTheme(it) }
     }
 
     suspend fun currentAuthType(): AuthType {
@@ -156,6 +161,16 @@ class SessionStore @Inject constructor(
         return context.sessionDataStore.data.first()[PREFERRED_LANGUAGE]
     }
 
+    suspend fun setPreferredTheme(mode: String) {
+        context.sessionDataStore.edit { prefs ->
+            prefs[PREFERRED_THEME] = mode
+        }
+    }
+
+    suspend fun preferredTheme(): String? {
+        return context.sessionDataStore.data.first()[PREFERRED_THEME]
+    }
+
     suspend fun isPermissionDisclosureSeen(): Boolean {
         return context.sessionDataStore.data.first()[PERMISSION_DISCLOSURE_SEEN] == "true"
     }
@@ -206,6 +221,7 @@ class SessionStore @Inject constructor(
         private val OPERATOR_NAME = stringPreferencesKey("operator_name")
         private val PREFERRED_LANGUAGE = stringPreferencesKey("preferred_language")
         private val TILE_SOURCE = stringPreferencesKey("tile_source")
+        private val PREFERRED_THEME = stringPreferencesKey("preferred_theme")
         private val PERMISSION_DISCLOSURE_SEEN = stringPreferencesKey("permission_disclosure_seen")
     }
 }

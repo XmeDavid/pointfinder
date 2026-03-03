@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		373F09522F572D1700DCB95B /* MapLibre in Frameworks */ = {isa = PBXBuildFile; productRef = C1ADE0012E5E3DD0DE4D0002 /* MapLibre */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		37A6104E2E5E3DD20028D38D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				373F09522F572D1700DCB95B /* MapLibre in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -197,10 +202,10 @@
 			);
 			mainGroup = 37A610312E5E3DD00028D38D;
 			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 77;
 			packageReferences = (
 				C1ADE0012E5E3DD0DE4D0001 /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */,
 			);
+			preferredProjectObjectVersion = 77;
 			productRefGroup = 37A6103B2E5E3DD10028D38D /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -272,25 +277,6 @@
 			targetProxy = 37A610582E5E3DD20028D38D /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		C1ADE0012E5E3DD0DE4D0001 /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/maplibre/maplibre-gl-native-distribution";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 6.9.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		C1ADE0012E5E3DD0DE4D0002 /* MapLibre */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = C1ADE0012E5E3DD0DE4D0001 /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */;
-			productName = MapLibre;
-		};
-/* End XCSwiftPackageProductDependency section */
 
 /* Begin XCBuildConfiguration section */
 		37A6105F2E5E3DD20028D38D /* Debug */ = {
@@ -663,6 +649,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C1ADE0012E5E3DD0DE4D0001 /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/maplibre/maplibre-gl-native-distribution";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 6.9.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C1ADE0012E5E3DD0DE4D0002 /* MapLibre */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C1ADE0012E5E3DD0DE4D0001 /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */;
+			productName = MapLibre;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 37A610322E5E3DD00028D38D /* Project object */;
 }

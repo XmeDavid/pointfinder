@@ -1,15 +1,12 @@
 #Code (in codebase)
 
 ## Bugs
--The location bound on a challange, and the fixed based, should be synced
 
 
 ## Improvements
 
 
 ## Features
--Map view for guests, operators can generate a guest view token(lets say a 6 character code), we create a new page, that is guest facing, it should have great design, should have features similar to the live map view. the idea is to display on a television or something at the base. we use the code to not dox locations to everyone on the web.
--Recover password
 
 
 ## Test

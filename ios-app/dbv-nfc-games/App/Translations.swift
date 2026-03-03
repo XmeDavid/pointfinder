@@ -172,6 +172,10 @@ enum Translations {
         "settings.deleteAccountMessage": "This will permanently delete your player account data for PointFinder. This action cannot be undone.",
         "settings.deleteAccountConfirm": "Delete",
         "settings.leaveGame": "Leave Game",
+        "settings.theme": "Theme",
+        "settings.themeSystem": "System",
+        "settings.themeLight": "Light",
+        "settings.themeDark": "Dark",
 
         // Operator
         "operator.loadingGames": "Loading games...",
@@ -436,6 +440,10 @@ enum Translations {
         "settings.deleteAccountMessage": "Isto irá eliminar permanentemente os teus dados de conta de jogador no PointFinder. Esta ação não pode ser desfeita.",
         "settings.deleteAccountConfirm": "Eliminar",
         "settings.leaveGame": "Sair do Jogo",
+        "settings.theme": "Tema",
+        "settings.themeSystem": "Sistema",
+        "settings.themeLight": "Claro",
+        "settings.themeDark": "Escuro",
 
         // Operator
         "operator.loadingGames": "A carregar jogos...",
@@ -700,6 +708,10 @@ enum Translations {
         "settings.deleteAccountMessage": "Dadurch werden deine Spielerkontodaten für PointFinder dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
         "settings.deleteAccountConfirm": "Löschen",
         "settings.leaveGame": "Spiel verlassen",
+        "settings.theme": "Design",
+        "settings.themeSystem": "System",
+        "settings.themeLight": "Hell",
+        "settings.themeDark": "Dunkel",
 
         // Operator
         "operator.loadingGames": "Spiele werden geladen...",
