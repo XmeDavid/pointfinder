@@ -98,10 +98,10 @@ const greenIcon = new L.Icon({
 function arrowIcon(fromLat: number, fromLng: number, toLat: number, toLng: number) {
   const angle = Math.atan2(toLng - fromLng, toLat - fromLat) * (180 / Math.PI);
   return L.divIcon({
-    html: `<svg width="14" height="14" viewBox="0 0 14 14" style="transform: rotate(${180 - angle}deg); opacity: 0.5;"><polygon points="7,0 14,14 7,10 0,14" fill="#6b7280"/></svg>`,
+    html: `<svg width="16" height="16" viewBox="0 0 16 16" style="transform: rotate(${angle}deg); opacity: 0.7;"><polygon points="8,0 16,14 8,10 0,14" fill="#6b7280"/></svg>`,
     className: "",
-    iconSize: [14, 14],
-    iconAnchor: [7, 7],
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
   });
 }
 
@@ -188,8 +188,10 @@ export function BaseMapView({ bases, connections, className, onEdit }: BaseMapVi
           const from = bases.find((b) => b.id === conn.fromBaseId);
           const to = bases.find((b) => b.id === conn.toBaseId);
           if (!from || !to) return null;
-          const arrowLat = from.lat + (to.lat - from.lat) * 0.85;
-          const arrowLng = from.lng + (to.lng - from.lng) * 0.85;
+          const arrow1Lat = from.lat + (to.lat - from.lat) * 0.5;
+          const arrow1Lng = from.lng + (to.lng - from.lng) * 0.5;
+          const arrow2Lat = from.lat + (to.lat - from.lat) * 0.8;
+          const arrow2Lng = from.lng + (to.lng - from.lng) * 0.8;
           return (
             <span key={`${conn.fromBaseId}-${conn.toBaseId}`}>
               <Polyline
@@ -197,7 +199,12 @@ export function BaseMapView({ bases, connections, className, onEdit }: BaseMapVi
                 pathOptions={{ dashArray: "8 8", opacity: 0.5, color: "#6b7280", weight: 2 }}
               />
               <Marker
-                position={[arrowLat, arrowLng]}
+                position={[arrow1Lat, arrow1Lng]}
+                icon={arrowIcon(from.lat, from.lng, to.lat, to.lng)}
+                interactive={false}
+              />
+              <Marker
+                position={[arrow2Lat, arrow2Lng]}
                 icon={arrowIcon(from.lat, from.lng, to.lat, to.lng)}
                 interactive={false}
               />
