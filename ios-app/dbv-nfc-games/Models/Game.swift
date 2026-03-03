@@ -5,9 +5,27 @@ struct Game: Codable, Identifiable {
     let name: String
     let description: String
     let status: String
+    let tileSource: String
 
     var isActive: Bool {
         status == "live"
+    }
+
+    init(id: UUID, name: String, description: String, status: String, tileSource: String = "osm") {
+        self.id = id
+        self.name = name
+        self.description = description
+        self.status = status
+        self.tileSource = tileSource
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        description = try container.decode(String.self, forKey: .description)
+        status = try container.decode(String.self, forKey: .status)
+        tileSource = try container.decodeIfPresent(String.self, forKey: .tileSource) ?? "osm"
     }
 }
 

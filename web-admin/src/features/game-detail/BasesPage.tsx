@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-dialog";
 import { basesApi, type CreateBaseDto } from "@/lib/api/bases";
 import { challengesApi } from "@/lib/api/challenges";
+import { gamesApi } from "@/lib/api/games";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { MapPicker, BaseMapView, type UnlockConnection } from "@/components/common/MapPicker";
 import { useTranslation } from "react-i18next";
@@ -47,6 +48,7 @@ export function BasesPage() {
     }
   }, []);
 
+  const { data: game } = useQuery({ queryKey: ["game", gameId], queryFn: () => gamesApi.getById(gameId!) });
   const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!) });
   const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!) });
   const challengeById = useMemo(() => new Map(challenges.map((challenge) => [challenge.id, challenge])), [challenges]);
@@ -188,6 +190,7 @@ export function BasesPage() {
                 const base = bases.find((b) => b.id === baseId);
                 if (base) openEdit(base);
               }}
+              tileSource={game?.tileSource}
             />
           </CardContent>
         </Card>
@@ -216,6 +219,7 @@ export function BasesPage() {
                 value={{ lat: form.lat ?? defaultLocation.lat, lng: form.lng ?? defaultLocation.lng }}
                 onChange={(lat, lng) => setForm((f) => ({ ...f, lat, lng }))}
                 className="h-[250px] rounded-md overflow-hidden border border-input"
+                tileSource={game?.tileSource}
               />
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">

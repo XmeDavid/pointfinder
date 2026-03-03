@@ -22,6 +22,7 @@ export interface Game {
   uniformAssignment: boolean;
   broadcastEnabled: boolean;
   broadcastCode: string | null;
+  tileSource: string;
 }
 
 export interface Base {

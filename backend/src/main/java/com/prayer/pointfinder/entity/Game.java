@@ -70,6 +70,10 @@ public class Game {
     @Column(name = "broadcast_code", length = 6)
     private String broadcastCode;
 
+    @Column(name = "tile_source", nullable = false, length = 50)
+    @Builder.Default
+    private String tileSource = "osm";
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

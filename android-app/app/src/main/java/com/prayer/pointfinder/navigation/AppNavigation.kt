@@ -91,8 +91,6 @@ import com.prayer.pointfinder.feature.player.SubmissionResultScreen
 import com.prayer.pointfinder.session.AppSessionViewModel
 import com.prayer.pointfinder.session.OperatorViewModel
 import com.prayer.pointfinder.session.PlayerViewModel
-import com.google.maps.android.compose.CameraPositionState
-import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.mlkit.common.MlKitException
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
@@ -313,7 +311,6 @@ private fun PlayerRootScreen(
 ) {
     val viewModel: PlayerViewModel = hiltViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val playerCameraState = rememberCameraPositionState()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -655,7 +652,7 @@ private fun PlayerRootScreen(
                         progress = state.progress,
                         isLoading = state.isLoading,
                         unseenNotificationCount = state.unseenNotificationCount,
-                        cameraPositionState = playerCameraState,
+                        tileSource = auth.tileSource ?: "osm",
                         onBaseSelected = { viewModel.selectBase(auth, it) },
                         onRefresh = { viewModel.refresh(auth, isOnline) },
                         onNotificationsClick = { viewModel.openNotifications() },
@@ -831,7 +828,6 @@ private fun OperatorGameRoot(
             sessionViewModel.logout()
         }
     }
-    val operatorCameraState = rememberCameraPositionState()
     val selectedGame = state.selectedGame
 
     if (selectedGame == null) {
@@ -859,7 +855,7 @@ private fun OperatorGameRoot(
                     teamLocations = state.locations,
                     teams = state.teams,
                     baseProgress = state.baseProgress,
-                    cameraPositionState = operatorCameraState,
+                    tileSource = selectedGame.tileSource,
                     onBaseSelected = viewModel::selectBase,
                     onRefresh = viewModel::refreshSelectedGameData,
                 )

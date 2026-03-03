@@ -54,6 +54,7 @@ public class GameService {
     private static final String BROADCAST_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     private static final int BROADCAST_CODE_LENGTH = 6;
     private static final SecureRandom RANDOM = new SecureRandom();
+    private static final java.util.Set<String> VALID_TILE_SOURCES = java.util.Set.of("osm", "swisstopo", "swisstopo-sat");
 
     // ── Read ─────────────────────────────────────────────────────────
 
@@ -108,6 +109,7 @@ public class GameService {
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .uniformAssignment(request.getUniformAssignment() != null ? request.getUniformAssignment() : false)
+                .tileSource(validateTileSource(request.getTileSource()))
                 .status(GameStatus.setup)
                 .createdBy(currentUser)
                 .build();
@@ -127,6 +129,9 @@ public class GameService {
         game.setEndDate(request.getEndDate());
         if (request.getUniformAssignment() != null) {
             game.setUniformAssignment(request.getUniformAssignment());
+        }
+        if (request.getTileSource() != null) {
+            game.setTileSource(validateTileSource(request.getTileSource()));
         }
         if (request.getBroadcastEnabled() != null) {
             boolean wasEnabled = Boolean.TRUE.equals(game.getBroadcastEnabled());
@@ -304,7 +309,16 @@ public class GameService {
                 .uniformAssignment(game.getUniformAssignment())
                 .broadcastEnabled(game.getBroadcastEnabled())
                 .broadcastCode(game.getBroadcastCode())
+                .tileSource(game.getTileSource())
                 .build();
+    }
+
+    private String validateTileSource(String tileSource) {
+        if (tileSource == null || tileSource.isBlank()) return "osm";
+        if (!VALID_TILE_SOURCES.contains(tileSource)) {
+            throw new BadRequestException("Invalid tile source: " + tileSource + ". Valid values: " + VALID_TILE_SOURCES);
+        }
+        return tileSource;
     }
 
     private String generateBroadcastCode() {

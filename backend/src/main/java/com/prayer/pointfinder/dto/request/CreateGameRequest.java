@@ -17,4 +17,6 @@ public class CreateGameRequest {
     private Instant endDate;
 
     private Boolean uniformAssignment = false;
+
+    private String tileSource;
 }

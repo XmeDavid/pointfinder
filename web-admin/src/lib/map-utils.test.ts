@@ -1,23 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
-
-// Mock leaflet and react-leaflet to avoid DOM/window dependency
-vi.mock("leaflet", () => ({
-  default: {
-    divIcon: vi.fn(() => ({})),
-    latLngBounds: vi.fn(),
-  },
-  divIcon: vi.fn(() => ({})),
-  latLngBounds: vi.fn(),
-}));
-vi.mock("react-leaflet", () => ({
-  useMap: vi.fn(),
-}));
-vi.mock("react", () => ({
-  useEffect: vi.fn(),
-  useRef: vi.fn(() => ({ current: false })),
-}));
-
-import { getAggregateStatus, parseTimestamp, STATUS_COLORS, STATUS_PRIORITY } from "./map-utils";
+import { describe, expect, it } from "vitest";
+import { getAggregateStatus, parseTimestamp, STATUS_COLORS, STATUS_PRIORITY, computeBounds } from "./map-utils";
 
 describe("STATUS_COLORS", () => {
   it("defines colors for all five statuses", () => {
@@ -85,5 +67,24 @@ describe("parseTimestamp", () => {
   it("returns 0 for invalid strings", () => {
     expect(parseTimestamp("not-a-date")).toBe(0);
     expect(parseTimestamp("")).toBe(0);
+  });
+});
+
+describe("computeBounds", () => {
+  it("returns null for empty array", () => {
+    expect(computeBounds([])).toBeNull();
+  });
+
+  it("computes correct bounds for a single point", () => {
+    const bounds = computeBounds([{ lat: 47.0, lng: 8.0 }]);
+    expect(bounds).toEqual([[8.0, 47.0], [8.0, 47.0]]);
+  });
+
+  it("computes correct bounds for multiple points", () => {
+    const bounds = computeBounds([
+      { lat: 46.0, lng: 7.0 },
+      { lat: 48.0, lng: 9.0 },
+    ]);
+    expect(bounds).toEqual([[7.0, 46.0], [9.0, 48.0]]);
   });
 });

@@ -1,12 +1,11 @@
 import SwiftUI
-import MapKit
 import UIKit
+import CoreLocation
 
 struct GameMapView: View {
     @Environment(AppState.self) private var appState
     @Environment(LocaleManager.self) private var locale
     @State private var selectedBase: BaseProgress?
-    @State private var cameraPosition: MapCameraPosition = .automatic
     @State private var showNotifications = false
 
     var body: some View {
@@ -14,27 +13,30 @@ struct GameMapView: View {
             ZStack {
                 let status = appState.currentGame?.status
                 let shouldBlockGameplay = status == "setup" || status == "ended"
-                Map(position: $cameraPosition) {
-                    ForEach(appState.baseProgress) { base in
-                        Annotation(
-                            base.baseName,
-                            coordinate: CLLocationCoordinate2D(latitude: base.lat, longitude: base.lng)
-                        ) {
+
+                let annotations = appState.baseProgress.map { base in
+                    MapAnnotationItem(
+                        id: base.baseId.uuidString,
+                        coordinate: CLLocationCoordinate2D(latitude: base.lat, longitude: base.lng),
+                        title: base.baseName,
+                        subtitle: base.baseStatus.rawValue,
+                        view: AnyView(
                             BaseAnnotationView(
                                 status: base.baseStatus,
                                 name: base.baseName
                             )
-                            .onTapGesture {
-                                selectedBase = base
-                            }
-                        }
+                        ),
+                        onTap: { [base] in selectedBase = base }
+                    )
+                }
+
+                MapLibreMapView(
+                    styleURL: TileSources.styleURL(for: appState.currentGame?.tileSource),
+                    annotations: annotations,
+                    fitCoordinates: appState.baseProgress.map {
+                        CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng)
                     }
-                }
-                .mapStyle(.standard(elevation: .flat))
-                .mapControls {
-                    MapCompass()
-                    MapScaleView()
-                }
+                )
 
                 // Legend overlay
                 VStack {

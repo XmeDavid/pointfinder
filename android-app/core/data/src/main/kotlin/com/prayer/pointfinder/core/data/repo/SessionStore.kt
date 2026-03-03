@@ -55,6 +55,7 @@ class SessionStore @Inject constructor(
             prefs[TEAM_NAME] = response.team.name
             prefs[TEAM_COLOR] = response.team.color
             prefs[GAME_STATUS] = response.game.status.name.lowercase()
+            response.game.tileSource?.let { prefs[TILE_SOURCE] = it }
         }
         cachedAuthType = currentAuthType()
     }
@@ -111,6 +112,7 @@ class SessionStore @Inject constructor(
                         teamName = prefs[TEAM_NAME],
                         teamColor = prefs[TEAM_COLOR],
                         gameStatus = prefs[GAME_STATUS]?.let { runCatching { GameStatus.valueOf(it.uppercase()) }.getOrNull() },
+                        tileSource = prefs[TILE_SOURCE],
                     )
                 }
             }
@@ -203,6 +205,7 @@ class SessionStore @Inject constructor(
         private val OPERATOR_ID = stringPreferencesKey("operator_id")
         private val OPERATOR_NAME = stringPreferencesKey("operator_name")
         private val PREFERRED_LANGUAGE = stringPreferencesKey("preferred_language")
+        private val TILE_SOURCE = stringPreferencesKey("tile_source")
         private val PERMISSION_DISCLOSURE_SEEN = stringPreferencesKey("permission_disclosure_seen")
     }
 }

@@ -8,6 +8,7 @@ export interface CreateGameDto {
   endDate?: string;
   uniformAssignment?: boolean;
   broadcastEnabled?: boolean;
+  tileSource?: string;
 }
 
 export interface GameImportData {

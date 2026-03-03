@@ -96,6 +96,7 @@ public class PlayerService {
                         .name(game.getName())
                         .description(game.getDescription())
                         .status(game.getStatus().name())
+                        .tileSource(game.getTileSource())
                         .build())
                 .build();
     }

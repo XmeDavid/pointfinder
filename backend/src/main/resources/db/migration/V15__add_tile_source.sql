@@ -1,0 +1,1 @@
+ALTER TABLE games ADD COLUMN tile_source VARCHAR(50) NOT NULL DEFAULT 'osm';

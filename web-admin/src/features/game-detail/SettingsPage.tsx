@@ -30,7 +30,7 @@ export function SettingsPage() {
 
   const { data: game } = useQuery({ queryKey: ["game", gameId], queryFn: () => gamesApi.getById(gameId!) });
 
-  const [form, setForm] = useState({ name: "", description: "", startDate: "", endDate: "", uniformAssignment: false });
+  const [form, setForm] = useState({ name: "", description: "", startDate: "", endDate: "", uniformAssignment: false, tileSource: "osm" });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [saved, setSaved] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -48,6 +48,7 @@ export function SettingsPage() {
         startDate: formatDateTimeInputValue(game.startDate),
         endDate: formatDateTimeInputValue(game.endDate),
         uniformAssignment: game.uniformAssignment ?? false,
+        tileSource: game.tileSource ?? "osm",
       });
     }
   }, [game]);
@@ -233,6 +234,20 @@ export function SettingsPage() {
                 checked={form.uniformAssignment}
                 onCheckedChange={(v) => setForm((f) => ({ ...f, uniformAssignment: v }))}
               />
+            </div>
+            <div className="space-y-2">
+              <FormLabel htmlFor="tileSource">{t("settings.tileSource")}</FormLabel>
+              <p className="text-xs text-muted-foreground">{t("settings.tileSourceDescription")}</p>
+              <select
+                id="tileSource"
+                value={form.tileSource}
+                onChange={(e) => setForm((f) => ({ ...f, tileSource: e.target.value }))}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="osm">{t("settings.tileSourceOsm")}</option>
+                <option value="swisstopo">{t("settings.tileSourceSwisstopo")}</option>
+                <option value="swisstopo-sat">{t("settings.tileSourceSwisstopoSat")}</option>
+              </select>
             </div>
             <div className="flex items-center justify-end gap-2 pt-4">
               {saved && <span className="text-sm text-green-500">{t("settings.saved")}</span>}

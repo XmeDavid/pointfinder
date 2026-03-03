@@ -1,10 +1,9 @@
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { MapPin, Radio, Eye, EyeOff, Users, User, AlertTriangle } from "lucide-react";
-import { useState, useMemo, useEffect, useCallback } from "react";
-import { MapContainer, TileLayer, Marker, Popup, CircleMarker } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { Map as MapGL, Marker } from "react-map-gl/maplibre";
+import "maplibre-gl/dist/maplibre-gl.css";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,24 +12,15 @@ import { basesApi } from "@/lib/api/bases";
 import { teamsApi } from "@/lib/api/teams";
 import { challengesApi } from "@/lib/api/challenges";
 import { monitoringApi } from "@/lib/api/monitoring";
+import { gamesApi } from "@/lib/api/games";
 import { useTranslation } from "react-i18next";
 import { useGameWebSocket } from "@/hooks/useGameWebSocket";
 import { formatDateTime } from "@/lib/utils";
-import { STATUS_COLORS, createColoredIcon, getAggregateStatus as getAggregateStatusUtil, parseTimestamp, FitBounds } from "@/lib/map-utils";
-import type { BaseStatus } from "@/types";
-
-// Fix default marker icon issue with bundlers (known react-leaflet issue)
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
-
-type IconDefaultPrototype = typeof L.Icon.Default.prototype & { _getIconUrl?: unknown };
-delete (L.Icon.Default.prototype as IconDefaultPrototype)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: markerIcon2x,
-  iconUrl: markerIcon,
-  shadowUrl: markerShadow,
-});
+import { STATUS_COLORS, getAggregateStatus as getAggregateStatusUtil, parseTimestamp, computeBounds } from "@/lib/map-utils";
+import { PinMarkerSvg, CircleDot } from "@/components/common/MapMarkers";
+import { getStyleUrl } from "@/lib/tile-sources";
+import type { BaseStatus, TeamLocation } from "@/types";
+import type { MapRef } from "react-map-gl/maplibre";
 
 const STALE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -63,7 +53,10 @@ function StatusBadge({ status }: { status: BaseStatus }) {
 export function MapPage() {
   const { t } = useTranslation();
   const { gameId } = useParams<{ gameId: string }>();
+  const mapRef = useRef<MapRef>(null);
+  const fittedRef = useRef(false);
 
+  const gameQuery = useQuery({ queryKey: ["game", gameId], queryFn: () => gamesApi.getById(gameId!) });
   const basesQuery = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!) });
   const teamsQuery = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!) });
   const challengesQuery = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!) });
@@ -74,6 +67,7 @@ export function MapPage() {
     queryFn: () => monitoringApi.getTeamLocations(gameId!),
   });
 
+  const game = gameQuery.data;
   const bases = basesQuery.data ?? [];
   const teams = teamsQuery.data ?? [];
   const challenges = challengesQuery.data ?? [];
@@ -89,6 +83,8 @@ export function MapPage() {
   const [showTeams, setShowTeams] = useState(true);
   // "all" = default aggregate view, string = teamId for team-specific view
   const [viewMode, setViewMode] = useState<"all" | string>("all");
+  const [popupBase, setPopupBase] = useState<string | null>(null);
+  const [popupLoc, setPopupLoc] = useState<string | null>(null);
 
   const challengeMap = useMemo(() => {
     const map = new Map<string, { title: string; description: string; points: number }>();
@@ -125,18 +121,28 @@ export function MapPage() {
           setUserLocation([position.coords.latitude, position.coords.longitude]);
         },
         () => {
-          // Geolocation failed, use fallback
           setUserLocation([40.08789650218038, -8.869461715221407]);
         }
       );
     }
   }, [bases.length]);
 
-  // Default center - will be overridden by FitBounds when bases exist
-  const defaultCenter: [number, number] = useMemo(() =>
+  // Fit bounds when bases first load
+  useEffect(() => {
+    if (bases.length > 0 && mapRef.current && !fittedRef.current) {
+      const bounds = computeBounds(bases);
+      if (bounds) {
+        mapRef.current.fitBounds(bounds, { padding: 40, maxZoom: 16 });
+        fittedRef.current = true;
+      }
+    }
+  }, [bases]);
+
+  // Default center
+  const defaultCenter: { lng: number; lat: number } = useMemo(() =>
     bases.length > 0
-      ? [bases.reduce((s, b) => s + b.lat, 0) / bases.length, bases.reduce((s, b) => s + b.lng, 0) / bases.length]
-      : userLocation,
+      ? { lat: bases.reduce((s, b) => s + b.lat, 0) / bases.length, lng: bases.reduce((s, b) => s + b.lng, 0) / bases.length }
+      : { lat: userLocation[0], lng: userLocation[1] },
     [bases, userLocation]
   );
 
@@ -160,7 +166,7 @@ export function MapPage() {
 
   // Pre-index locations by teamId for O(1) lookup
   const locationsByTeam = useMemo(() => {
-    const map = new Map<string, typeof locations>();
+    const map = new Map<string, TeamLocation[]>();
     locations.forEach((loc) => {
       const arr = map.get(loc.teamId) ?? [];
       arr.push(loc);
@@ -175,7 +181,7 @@ export function MapPage() {
       return locations.filter((loc) => loc.teamId === viewMode);
     }
 
-    const latestByTeam = new Map<string, (typeof locations)[number]>();
+    const latestByTeam = new Map<string, TeamLocation>();
     locations.forEach((loc) => {
       const existing = latestByTeam.get(loc.teamId);
       if (!existing) {
@@ -185,7 +191,6 @@ export function MapPage() {
 
       const currentTs = parseTimestamp(loc.updatedAt);
       const existingTs = parseTimestamp(existing.updatedAt);
-      // Keep ordering deterministic if timestamps are equal.
       if (currentTs > existingTs || (currentTs === existingTs && loc.playerId > existing.playerId)) {
         latestByTeam.set(loc.teamId, loc);
       }
@@ -251,38 +256,40 @@ export function MapPage() {
 
       <Card className="overflow-hidden">
         <CardContent className="p-0">
-          <MapContainer
-            center={defaultCenter}
-            zoom={13}
-            className="h-[550px] w-full z-0"
-            scrollWheelZoom={true}
+          <MapGL
+            ref={mapRef}
+            initialViewState={{ longitude: defaultCenter.lng, latitude: defaultCenter.lat, zoom: 13 }}
+            style={{ width: "100%", height: "550px" }}
+            mapStyle={getStyleUrl(game?.tileSource)}
+            onClick={() => { setPopupBase(null); setPopupLoc(null); }}
           >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <FitBounds bases={bases} />
-
             {/* Base markers */}
             {showBases && bases.map((base) => {
               const color = getBaseColor(base.id);
+              const isOpen = popupBase === base.id;
               const baseProgress = progressIndex.get(base.id);
 
               return (
                 <Marker
                   key={`${base.id}-${viewMode}-${color}`}
-                  position={[base.lat, base.lng]}
-                  icon={createColoredIcon(color)}
+                  longitude={base.lng}
+                  latitude={base.lat}
+                  anchor="bottom"
+                  onClick={(e) => { e.originalEvent.stopPropagation(); setPopupBase(isOpen ? null : base.id); setPopupLoc(null); }}
                 >
-                  <Popup>
-                    <div className="min-w-[220px]">
+                  <PinMarkerSvg color={color} />
+                  {isOpen && (
+                    <div
+                      className="absolute bottom-12 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg p-3 min-w-[220px] max-w-[300px] z-10"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button className="absolute top-1 right-1 text-gray-400 hover:text-gray-600 text-xs px-1" onClick={() => setPopupBase(null)}>x</button>
                       <p className="font-semibold text-sm">{base.name}</p>
                       {base.description && (
                         <p className="text-xs text-gray-500 mt-0.5">{base.description}</p>
                       )}
 
                       {viewMode === "all" ? (
-                        /* Default view: show team list with statuses */
                         <div className="mt-2 space-y-1">
                           {teams.map((team) => {
                             const tp = baseProgress?.get(team.id);
@@ -306,7 +313,6 @@ export function MapPage() {
                           })}
                         </div>
                       ) : (
-                        /* Team view: show challenge assigned to this team */
                         (() => {
                           const tp = baseProgress?.get(viewMode);
                           const status: BaseStatus = tp?.status ?? "not_visited";
@@ -350,7 +356,7 @@ export function MapPage() {
                         {base.lat.toFixed(5)}, {base.lng.toFixed(5)}
                       </p>
                     </div>
-                  </Popup>
+                  )}
                 </Marker>
               );
             })}
@@ -363,22 +369,24 @@ export function MapPage() {
               const playerName = loc.displayName?.trim() || "-";
               const isStale = now - parseTimestamp(loc.updatedAt) > STALE_THRESHOLD_MS;
               const isAggregateView = viewMode === "all";
+              const locKey = isAggregateView ? `team-${loc.teamId}` : loc.playerId;
+              const isOpen = popupLoc === locKey;
 
               return (
-                <CircleMarker
-                  key={`${isAggregateView ? `team-${loc.teamId}` : loc.playerId}-${loc.lat}-${loc.lng}-${isStale}`}
-                  center={[loc.lat, loc.lng]}
-                  radius={isAggregateView ? 10 : 8}
-                  pathOptions={{
-                    color: isStale ? "#9ca3af" : team.color,
-                    fillColor: team.color,
-                    fillOpacity: isStale ? 0.4 : 0.8,
-                    weight: isStale ? 1 : 2,
-                    dashArray: isStale ? "4 4" : undefined,
-                  }}
+                <Marker
+                  key={`${locKey}-${loc.lat}-${loc.lng}-${isStale}`}
+                  longitude={loc.lng}
+                  latitude={loc.lat}
+                  anchor="center"
+                  onClick={(e) => { e.originalEvent.stopPropagation(); setPopupLoc(isOpen ? null : locKey); setPopupBase(null); }}
                 >
-                  <Popup>
-                    <div className="min-w-[140px]">
+                  <CircleDot color={team.color} stale={isStale} />
+                  {isOpen && (
+                    <div
+                      className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg p-3 min-w-[140px] z-10"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button className="absolute top-1 right-1 text-gray-400 hover:text-gray-600 text-xs px-1" onClick={() => setPopupLoc(null)}>x</button>
                       <p className="font-semibold text-sm">{isAggregateView ? team.name : playerName}</p>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <div
@@ -401,11 +409,11 @@ export function MapPage() {
                         </p>
                       )}
                     </div>
-                  </Popup>
-                </CircleMarker>
+                  )}
+                </Marker>
               );
             })}
-          </MapContainer>
+          </MapGL>
         </CardContent>
       </Card>
 
