@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { BroadcastBase, BroadcastTeam, BroadcastProgress } from "@/lib/api/broadcast";
 import { STATUS_COLORS, STATUS_PRIORITY } from "@/lib/map-utils";
+import type { BaseStatus } from "@/types";
 
 interface Props {
   bases: BroadcastBase[];
@@ -62,7 +63,7 @@ export function BroadcastBasesList({ bases, teams, progress }: Props) {
                 <div className="flex items-start gap-2">
                   <div
                     className="h-2.5 w-2.5 rounded-full shrink-0 mt-0.5"
-                    style={{ backgroundColor: STATUS_COLORS[status] ?? STATUS_COLORS.not_visited }}
+                    style={{ backgroundColor: STATUS_COLORS[status as BaseStatus] ?? STATUS_COLORS.not_visited }}
                   />
                   <span className="text-xs font-medium leading-tight line-clamp-2">{base.name}</span>
                 </div>

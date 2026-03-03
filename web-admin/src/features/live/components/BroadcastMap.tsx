@@ -8,6 +8,9 @@ import type {
   BroadcastProgress,
 } from "@/lib/api/broadcast";
 import { STATUS_COLORS, STATUS_PRIORITY, createColoredIcon, FitBounds } from "@/lib/map-utils";
+import type { BaseStatus } from "@/types";
+
+const STALE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
 
 interface Props {
   bases: BroadcastBase[];
@@ -92,7 +95,7 @@ export function BroadcastMap({ bases, teams, locations, progress }: Props) {
 
         {bases.map((base) => {
           const status = getAggregateStatus(base.id);
-          const color = STATUS_COLORS[status] ?? STATUS_COLORS.not_visited;
+          const color = STATUS_COLORS[status as BaseStatus] ?? STATUS_COLORS.not_visited;
           return (
             <Marker
               key={base.id}
