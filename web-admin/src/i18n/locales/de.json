@@ -483,6 +483,8 @@
     "tileSource": "Kartenkacheln",
     "tileSourceDescription": "Wählen Sie den Kartenanbieter für dieses Spiel auf allen Plattformen",
     "tileSourceOsm": "OpenStreetMap",
+    "tileSourceVoyager": "CartoDB Voyager",
+    "tileSourcePositron": "CartoDB Positron",
     "tileSourceSwisstopo": "SwissTopo",
     "tileSourceSwisstopoSat": "SwissTopo Satellit"
   },

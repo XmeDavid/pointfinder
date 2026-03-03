@@ -4,7 +4,8 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { Pencil, EyeOff, Wifi, WifiOff } from "lucide-react";
 import { computeBounds } from "@/lib/map-utils";
 import { PinMarkerSvg } from "@/components/common/MapMarkers";
-import { getStyleUrl, getDefaultCenter } from "@/lib/tile-sources";
+import { getResolvedStyleUrl, getDefaultCenter } from "@/lib/tile-sources";
+import { useThemeStore } from "@/hooks/useTheme";
 import type { MapRef, MapMouseEvent } from "react-map-gl/maplibre";
 import type { GeoJSON } from "geojson";
 
@@ -16,6 +17,7 @@ interface MapPickerProps {
 }
 
 export function MapPicker({ value, onChange, className, tileSource }: MapPickerProps) {
+  const { dark } = useThemeStore();
   const handleClick = useCallback(
     (e: MapMouseEvent) => {
       onChange(e.lngLat.lat, e.lngLat.lng);
@@ -28,7 +30,7 @@ export function MapPicker({ value, onChange, className, tileSource }: MapPickerP
       <MapGL
         initialViewState={{ longitude: value.lng, latitude: value.lat, zoom: 15 }}
         style={{ width: "100%", height: "100%", borderRadius: "0.375rem" }}
-        mapStyle={getStyleUrl(tileSource)}
+        mapStyle={getResolvedStyleUrl(tileSource, dark)}
         onClick={handleClick}
         longitude={value.lng}
         latitude={value.lat}
@@ -67,6 +69,7 @@ interface BaseMapViewProps {
 }
 
 export function BaseMapView({ bases, connections, className, onEdit, tileSource }: BaseMapViewProps) {
+  const { dark } = useThemeStore();
   const mapRef = useRef<MapRef>(null);
   const fittedRef = useRef(false);
   const [popup, setPopup] = useState<BaseMarker | null>(null);
@@ -128,7 +131,7 @@ export function BaseMapView({ bases, connections, className, onEdit, tileSource 
         ref={mapRef}
         initialViewState={{ longitude: center[1], latitude: center[0], zoom: 14 }}
         style={{ width: "100%", height: "100%" }}
-        mapStyle={getStyleUrl(tileSource)}
+        mapStyle={getResolvedStyleUrl(tileSource, dark)}
       >
         {bases.map((base) => (
           <Marker

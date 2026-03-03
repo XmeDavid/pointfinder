@@ -5,6 +5,7 @@ import CoreLocation
 struct GameMapView: View {
     @Environment(AppState.self) private var appState
     @Environment(LocaleManager.self) private var locale
+    @Environment(\.colorScheme) private var colorScheme
     @State private var selectedBase: BaseProgress?
     @State private var showNotifications = false
 
@@ -31,7 +32,7 @@ struct GameMapView: View {
                 }
 
                 MapLibreMapView(
-                    styleURL: TileSources.styleURL(for: appState.currentGame?.tileSource),
+                    styleURL: TileSources.resolvedStyleURL(for: appState.currentGame?.tileSource, isDark: colorScheme == .dark),
                     annotations: annotations,
                     fitCoordinates: appState.baseProgress.map {
                         CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng)

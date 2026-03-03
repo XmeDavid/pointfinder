@@ -54,7 +54,7 @@ public class GameService {
     private static final String BROADCAST_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     private static final int BROADCAST_CODE_LENGTH = 6;
     private static final SecureRandom RANDOM = new SecureRandom();
-    private static final java.util.Set<String> VALID_TILE_SOURCES = java.util.Set.of("osm", "swisstopo", "swisstopo-sat");
+    private static final java.util.Set<String> VALID_TILE_SOURCES = java.util.Set.of("osm", "voyager", "positron", "swisstopo", "swisstopo-sat");
 
     // ── Read ─────────────────────────────────────────────────────────
 

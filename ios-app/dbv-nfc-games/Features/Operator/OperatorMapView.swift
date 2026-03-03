@@ -5,6 +5,7 @@ import os
 struct OperatorMapView: View {
     @Environment(AppState.self) private var appState
     @Environment(LocaleManager.self) private var locale
+    @Environment(\.colorScheme) private var colorScheme
 
     let gameId: UUID
     let token: String
@@ -54,7 +55,7 @@ struct OperatorMapView: View {
             }
 
             MapLibreMapView(
-                styleURL: TileSources.styleURL(for: tileSource),
+                styleURL: TileSources.resolvedStyleURL(for: tileSource, isDark: colorScheme == .dark),
                 annotations: baseAnnotations + locationAnnotations,
                 fitCoordinates: bases.map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng) }
             )

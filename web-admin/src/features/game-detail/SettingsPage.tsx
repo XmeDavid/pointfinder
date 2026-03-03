@@ -245,6 +245,8 @@ export function SettingsPage() {
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
                 <option value="osm">{t("settings.tileSourceOsm")}</option>
+                <option value="voyager">{t("settings.tileSourceVoyager")}</option>
+                <option value="positron">{t("settings.tileSourcePositron")}</option>
                 <option value="swisstopo">{t("settings.tileSourceSwisstopo")}</option>
                 <option value="swisstopo-sat">{t("settings.tileSourceSwisstopoSat")}</option>
               </select>
