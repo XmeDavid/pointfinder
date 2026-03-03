@@ -104,6 +104,7 @@ export function CreateGamePage() {
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
                 <option value="osm">{t("settings.tileSourceOsm")}</option>
+                <option value="osm-classic">{t("settings.tileSourceOsmClassic")}</option>
                 <option value="voyager">{t("settings.tileSourceVoyager")}</option>
                 <option value="positron">{t("settings.tileSourcePositron")}</option>
                 <option value="swisstopo">{t("settings.tileSourceSwisstopo")}</option>

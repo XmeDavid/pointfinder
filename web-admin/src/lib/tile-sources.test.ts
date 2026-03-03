@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 import { getStyleUrl, getResolvedStyleUrl, getDefaultCenter, TILE_SOURCES, DARK_STYLE_URL } from "./tile-sources";
 
 describe("TILE_SOURCES", () => {
-  it("defines all five tile sources", () => {
-    expect(Object.keys(TILE_SOURCES)).toHaveLength(5);
+  it("defines all six tile sources", () => {
+    expect(Object.keys(TILE_SOURCES)).toHaveLength(6);
     expect(TILE_SOURCES.osm).toBeDefined();
+    expect(TILE_SOURCES["osm-classic"]).toBeDefined();
     expect(TILE_SOURCES.voyager).toBeDefined();
     expect(TILE_SOURCES.positron).toBeDefined();
     expect(TILE_SOURCES.swisstopo).toBeDefined();
@@ -14,7 +15,7 @@ describe("TILE_SOURCES", () => {
   it("each source has a label, styleUrl, and defaultCenter", () => {
     for (const [, source] of Object.entries(TILE_SOURCES)) {
       expect(source.label).toBeTruthy();
-      expect(source.styleUrl).toMatch(/^https:\/\//);
+      expect(source.styleUrl).toBeTruthy();
       expect(source.defaultCenter.lat).toBeTypeOf("number");
       expect(source.defaultCenter.lng).toBeTypeOf("number");
     }
@@ -60,6 +61,7 @@ describe("getResolvedStyleUrl", () => {
   it("returns light style when isDark=true but source has no dark variant", () => {
     expect(getResolvedStyleUrl("swisstopo", true)).toBe(TILE_SOURCES.swisstopo.styleUrl);
     expect(getResolvedStyleUrl("swisstopo-sat", true)).toBe(TILE_SOURCES["swisstopo-sat"].styleUrl);
+    expect(getResolvedStyleUrl("osm-classic", true)).toBe(TILE_SOURCES["osm-classic"].styleUrl);
   });
 
   it("returns light style when isDark=false", () => {

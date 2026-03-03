@@ -3,6 +3,7 @@ import Foundation
 enum TileSources {
     private static let styles: [String: String] = [
         "osm": "https://tiles.openfreemap.org/styles/liberty",
+        "osm-classic": "https://pointfinder.pt/styles/osm-classic.json",
         "swisstopo": "https://vectortiles.geo.admin.ch/styles/ch.swisstopo.basemap.vt/style.json",
         "swisstopo-sat": "https://vectortiles.geo.admin.ch/styles/ch.swisstopo.imagerybasemap.vt/style.json",
         "voyager": "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json",

@@ -1,4 +1,4 @@
-export type TileSourceKey = "osm" | "swisstopo" | "swisstopo-sat" | "voyager" | "positron";
+export type TileSourceKey = "osm" | "osm-classic" | "swisstopo" | "swisstopo-sat" | "voyager" | "positron";
 
 export const DARK_STYLE_URL = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 
@@ -10,6 +10,11 @@ export const TILE_SOURCES: Record<
     label: "OpenStreetMap",
     styleUrl: "https://tiles.openfreemap.org/styles/liberty",
     darkStyleUrl: DARK_STYLE_URL,
+    defaultCenter: { lat: 40.08789650218038, lng: -8.869461715221407 },
+  },
+  "osm-classic": {
+    label: "OpenStreetMap Classic",
+    styleUrl: "/styles/osm-classic.json",
     defaultCenter: { lat: 40.08789650218038, lng: -8.869461715221407 },
   },
   voyager: {

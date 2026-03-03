@@ -483,6 +483,7 @@
     "tileSource": "Map tiles",
     "tileSourceDescription": "Choose which map tile provider to use for this game across all platforms",
     "tileSourceOsm": "OpenStreetMap",
+    "tileSourceOsmClassic": "OpenStreetMap Classic",
     "tileSourceVoyager": "CartoDB Voyager",
     "tileSourcePositron": "CartoDB Positron",
     "tileSourceSwisstopo": "SwissTopo",
