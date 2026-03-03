@@ -564,5 +564,64 @@
     "notFound": "Übertragung nicht gefunden",
     "notFoundDescription": "Dieser Übertragungscode ist ungültig oder die Übertragung wurde deaktiviert.",
     "backToEntry": "Zurück zur Codeeingabe"
+  },
+  "faq": {
+    "label": "FAQ",
+    "title": "Häufig gestellte Fragen",
+    "subtitle": "Alles, was Sie über die Einrichtung und Durchführung von Spielen mit PointFinder wissen müssen.",
+    "backToHome": "Startseite",
+    "categories": {
+      "gettingStarted": "Erste Schritte",
+      "gameSetup": "Spiel-Einrichtung",
+      "playing": "Spielen",
+      "operator": "Operator & Monitoring",
+      "platform": "Plattform"
+    },
+    "gettingStarted": {
+      "whatIsQ": "Was ist PointFinder?",
+      "whatIsA": "PointFinder ist eine NFC-basierte Abenteuer-Spielplattform für Pfadfinder- und Jugendorganisationen. Organisatoren platzieren physische NFC-Tags an Outdoor-Standorten (Stationen), erstellen Challenges für Teams und überwachen alles in Echtzeit über ein Web-Dashboard.",
+      "firstGameQ": "Wie erstelle ich mein erstes Spiel?",
+      "firstGameA": "Registrieren Sie sich als Operator und erstellen Sie ein neues Spiel im Dashboard. Fügen Sie Stationen mit GPS-Koordinaten hinzu, schreiben Sie Challenges (Foto, Text oder Quiz), organisieren Sie Spieler in Teams und starten Sie das Spiel. Die Plattform führt Sie durch jeden Schritt mit einer Bereitschafts-Checkliste.",
+      "equipmentQ": "Welche Ausrüstung brauche ich?",
+      "equipmentA": "Sie benötigen nur NFC-Tags (günstige Aufkleber oder Karten) und Smartphones. Platzieren Sie NFC-Tags an jeder Station und die Teams nutzen die iOS- oder Android-App zum Scannen. Das Web-Admin-Panel läuft in jedem Browser."
+    },
+    "gameSetup": {
+      "basesQ": "Was sind Stationen?",
+      "basesA": "Stationen sind physische Orte, an denen NFC-Tags platziert werden. Jede Station wird mit GPS-Koordinaten kartiert und auf der interaktiven Karte angezeigt. Teams besuchen die Stationen im Feld und scannen den NFC-Tag, um einzuchecken und ihre Challenge zu erhalten.",
+      "challengesQ": "Was sind Challenges?",
+      "challengesA": "Challenges sind Aufgaben, die an jeder Station zugewiesen werden. Sie können eine Textantwort (mit optionaler Auto-Validierung), eine Foto-Einreichung zur manuellen Prüfung oder ein Quiz erfordern. Jede Challenge hat einen Punktwert, der zur Teamwertung beiträgt.",
+      "assignmentQ": "Wie funktioniert die Challenge-Zuweisung?",
+      "assignmentA": "Sie können Challenges auf zwei Arten zuweisen: Einheitliche Zuweisung gibt jedem Team die gleiche Challenge pro Station, während zufällige Zuweisung jedem Team eine andere Challenge pro Station gibt. Sie können auch bestimmte Challenges an bestimmte Stationen fixieren.",
+      "variablesQ": "Was sind Team-Variablen?",
+      "variablesA": "Team-Variablen sind benutzerdefinierte Platzhalter im Challenge-Text, die für jedes Team durch einzigartige Werte ersetzt werden. Zum Beispiel könnte eine Challenge sagen \"Gehe zu {{nextCoordinates}}\", wobei jedes Team andere Koordinaten erhält."
+    },
+    "playing": {
+      "joinQ": "Wie treten Teams einem Spiel bei?",
+      "joinA": "Spieler laden die PointFinder-App (iOS oder Android) herunter, geben den Spielcode des Organisators ein und treten ihrem Team bei. Dann können sie die Karte mit Stationsstandorten sehen und mit der Erkundung beginnen.",
+      "nfcScanQ": "Wie funktioniert das NFC-Scannen?",
+      "nfcScanA": "Wenn ein Team an einer Station ankommt, hält es das Handy an den NFC-Tag. Die App liest den Tag, verifiziert die Station, checkt das Team ein und zeigt die Challenge. Es funktioniert mit jedem NFC-fähigen Smartphone.",
+      "afterScanQ": "Was passiert nach dem Scannen?",
+      "afterScanA": "Nach dem Scannen sieht das Team seine Challenge und reicht eine Antwort ein — entweder Text oder Foto. Textantworten können automatisch validiert werden, während Foto-Einreichungen zur manuellen Prüfung an Operatoren gehen.",
+      "offlineQ": "Funktioniert es offline?",
+      "offlineA": "Ja. Kernfunktionen wie NFC-Scannen und Challenge-Anzeige funktionieren ohne Internetverbindung. Einreichungen werden lokal gespeichert und automatisch synchronisiert, wenn die Verbindung wiederhergestellt wird."
+    },
+    "operator": {
+      "monitorQ": "Wie überwache ich ein laufendes Spiel?",
+      "monitorA": "Das Web-Admin bietet ein Echtzeit-Dashboard mit einer Live-Karte der Team-Positionen, einer Rangliste mit sofortigen Punkteaktualisierungen, einem Aktivitätsfeed aller Spielereignisse und einer Einreichungs-Warteschlange.",
+      "reviewQ": "Wie funktioniert die Einreichungsprüfung?",
+      "reviewA": "Wenn Teams Fotos einreichen, erscheinen diese in der Prüfungswarteschlange des Operators. Operatoren können jede Einreichung mit optionalem Feedback genehmigen oder ablehnen. Genehmigte Einreichungen vergeben Punkte; abgelehnte benachrichtigen das Team, es erneut zu versuchen.",
+      "broadcastQ": "Kann ich das Spiel öffentlich übertragen?",
+      "broadcastA": "Ja. Aktivieren Sie den Übertragungsmodus in den Spieleinstellungen, um einen öffentlichen Link zu generieren. Zuschauer können die Live-Rangliste, Karte und den Aktivitätsfeed ohne Anmeldung verfolgen — perfekt für die Projektion bei Veranstaltungen.",
+      "multipleQ": "Können mehrere Personen ein Spiel verwalten?",
+      "multipleA": "Ja. Der Spielbesitzer kann andere Operatoren per E-Mail einladen. Eingeladene Operatoren erhalten vollen Zugriff auf Dashboard, Einreichungsprüfung und Monitoring-Tools."
+    },
+    "platform": {
+      "supportedQ": "Welche Plattformen werden unterstützt?",
+      "supportedA": "PointFinder bietet native Apps für iOS und Android (für Spieler und Operatoren im Feld) sowie ein vollständiges Web-Admin-Dashboard (für Spielerstellung, Verwaltung und Live-Monitoring).",
+      "mapsQ": "Welche Kartenoptionen gibt es?",
+      "mapsA": "Sie können pro Spiel zwischen mehreren Kartenanbietern wählen: OpenStreetMap, OpenStreetMap Classic, CartoDB Voyager, CartoDB Positron und SwissTopo (inklusive Satellitenansicht). Die Kartenwahl gilt plattformübergreifend.",
+      "languagesQ": "Welche Sprachen werden unterstützt?",
+      "languagesA": "PointFinder ist auf Englisch, Portugiesisch und Deutsch verfügbar. Die App erkennt die Gerätesprache automatisch und passt sich entsprechend an."
+    }
   }
 }

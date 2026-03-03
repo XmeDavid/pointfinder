@@ -636,6 +636,12 @@ function Footer() {
         </div>
 
         <div className="flex items-center gap-4 text-sm">
+          <Link
+            to="/faq"
+            className="text-white/25 transition-colors duration-200 hover:text-green-400"
+          >
+            {t("faq.label")}
+          </Link>
           <a
             href="/privacy"
             className="text-white/25 transition-colors duration-200 hover:text-green-400"
