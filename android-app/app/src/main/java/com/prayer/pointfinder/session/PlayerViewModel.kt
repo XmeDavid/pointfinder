@@ -10,6 +10,7 @@ import com.prayer.pointfinder.core.data.repo.PlayerRepository
 import com.prayer.pointfinder.core.model.AuthType
 import com.prayer.pointfinder.core.model.BaseProgress
 import com.prayer.pointfinder.core.model.CheckInResponse
+import com.prayer.pointfinder.core.model.GameStatus
 import com.prayer.pointfinder.core.model.PlayerNotificationResponse
 import com.prayer.pointfinder.core.model.SubmissionResponse
 import com.prayer.pointfinder.core.network.ApiErrorParser
@@ -37,7 +38,7 @@ import com.prayer.pointfinder.core.i18n.R as StringR
 data class PlayerState(
     val isLoading: Boolean = false,
     val progress: List<BaseProgress> = emptyList(),
-    val gameStatus: String? = null,
+    val gameStatus: GameStatus? = null,
     val selectedBase: BaseProgress? = null,
     val selectedChallenge: CheckInResponse.ChallengeInfo? = null,
     val activeCheckIn: CheckInResponse? = null,
@@ -97,13 +98,14 @@ class PlayerViewModel @Inject constructor(
             realtimeClient.events.collectLatest { event ->
                 when (event.type) {
                     "game_status" -> {
-                        val status: String? = event.data
+                        val statusStr: String? = event.data
                             ?.jsonObject
                             ?.get("status")
                             ?.let { jsonValue ->
                                 runCatching { jsonValue.jsonPrimitive.content }.getOrNull()
                             }
-                        if (!status.isNullOrBlank()) {
+                        val status = statusStr?.let { runCatching { GameStatus.valueOf(it.uppercase()) }.getOrNull() }
+                        if (status != null) {
                             _state.value = _state.value.copy(gameStatus = status)
                             launch { sessionStore.updateGameStatus(status) }
                         }

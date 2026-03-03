@@ -1,6 +1,8 @@
 package com.prayer.pointfinder.core.data.repo
 
 import com.prayer.pointfinder.core.model.AuthType
+import com.prayer.pointfinder.core.model.GameStatus
+import com.prayer.pointfinder.core.model.SubmissionStatus
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -19,7 +21,7 @@ class PlayerRepositoryTest {
                 baseId = UUID.randomUUID().toString(),
                 answer = "test answer",
                 fileUrl = null,
-                status = "pending",
+                status = SubmissionStatus.PENDING,
                 submittedAt = java.time.Instant.now().toString(),
                 reviewedBy = null,
                 feedback = null,
@@ -28,7 +30,7 @@ class PlayerRepositoryTest {
             queued = true,
         )
         assertTrue(result.queued)
-        assertEquals("pending", result.response.status)
+        assertEquals(SubmissionStatus.PENDING, result.response.status)
         assertNotNull(result.response.id)
     }
 
@@ -52,9 +54,9 @@ class PlayerRepositoryTest {
     fun `progress result carries game status`() {
         val result = ProgressResult(
             progress = emptyList(),
-            gameStatus = "live",
+            gameStatus = GameStatus.LIVE,
         )
-        assertEquals("live", result.gameStatus)
+        assertEquals(GameStatus.LIVE, result.gameStatus)
         assertTrue(result.progress.isEmpty())
     }
 }

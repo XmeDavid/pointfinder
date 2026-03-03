@@ -12,6 +12,7 @@ import com.prayer.pointfinder.core.model.Challenge
 import com.prayer.pointfinder.core.model.Game
 import com.prayer.pointfinder.core.model.OperatorNotificationSettingsResponse
 import com.prayer.pointfinder.core.model.SubmissionResponse
+import com.prayer.pointfinder.core.model.SubmissionStatus
 import com.prayer.pointfinder.core.model.Team
 import com.prayer.pointfinder.core.model.TeamBaseProgressResponse
 import com.prayer.pointfinder.core.model.TeamLocationResponse
@@ -212,7 +213,7 @@ class OperatorViewModel @Inject constructor(
         }
     }
 
-    fun reviewSubmission(submissionId: String, status: String, feedback: String?, points: Int? = null) {
+    fun reviewSubmission(submissionId: String, status: SubmissionStatus, feedback: String?, points: Int? = null) {
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
             runCatching {

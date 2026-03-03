@@ -8,6 +8,7 @@ import com.prayer.pointfinder.core.model.Game
 import com.prayer.pointfinder.core.model.OperatorNotificationSettingsResponse
 import com.prayer.pointfinder.core.model.ReviewSubmissionRequest
 import com.prayer.pointfinder.core.model.SubmissionResponse
+import com.prayer.pointfinder.core.model.SubmissionStatus
 import com.prayer.pointfinder.core.model.Team
 import com.prayer.pointfinder.core.model.TeamBaseProgressResponse
 import com.prayer.pointfinder.core.model.TeamLocationResponse
@@ -39,7 +40,7 @@ class OperatorRepository @Inject constructor(
     suspend fun reviewSubmission(
         gameId: String,
         submissionId: String,
-        status: String,
+        status: SubmissionStatus,
         feedback: String?,
         points: Int? = null,
     ): SubmissionResponse = api.reviewSubmission(

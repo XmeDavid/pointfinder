@@ -381,7 +381,8 @@
     "rejected": "Rejeitado",
     "challenge": "Desafio",
     "noChallenge": "Sem desafio atribuído",
-    "latestPingBy": "Último ping: {{player}}"
+    "latestPingBy": "Último ping: {{player}}",
+    "loadError": "Falha ao carregar dados do mapa. Algumas informações podem estar em falta."
   },
   "leaderboard": {
     "title": "Classificação",

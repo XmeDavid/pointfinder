@@ -1,22 +1,7 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { BroadcastBase, BroadcastTeam, BroadcastProgress } from "@/lib/api/broadcast";
-
-const STATUS_COLORS: Record<string, string> = {
-  not_visited: "#9ca3af",
-  checked_in: "#3b82f6",
-  submitted: "#f59e0b",
-  completed: "#22c55e",
-  rejected: "#ef4444",
-};
-
-const STATUS_PRIORITY: Record<string, number> = {
-  not_visited: 0,
-  checked_in: 1,
-  submitted: 2,
-  rejected: 3,
-  completed: 4,
-};
+import { STATUS_COLORS, STATUS_PRIORITY } from "@/lib/map-utils";
 
 interface Props {
   bases: BroadcastBase[];
@@ -40,12 +25,12 @@ export function BroadcastBasesList({ bases, teams, progress }: Props) {
     const baseProgress = progressIndex.get(baseId);
     if (!baseProgress || baseProgress.size === 0) return "not_visited";
     let minPriority = Infinity;
+    let minStatus = "not_visited";
     baseProgress.forEach((status) => {
-      const priority = STATUS_PRIORITY[status] ?? 0;
-      if (priority < minPriority) minPriority = priority;
+      const priority = STATUS_PRIORITY[status as keyof typeof STATUS_PRIORITY] ?? 0;
+      if (priority < minPriority) { minPriority = priority; minStatus = status; }
     });
-    const entry = Object.entries(STATUS_PRIORITY).find(([, v]) => v === minPriority);
-    return entry?.[0] ?? "not_visited";
+    return minStatus;
   };
 
   const getCompletedCount = (baseId: string): number => {

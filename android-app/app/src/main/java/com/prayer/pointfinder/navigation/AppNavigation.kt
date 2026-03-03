@@ -61,6 +61,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.prayer.pointfinder.BuildConfig
 import com.prayer.pointfinder.core.model.AuthType
+import com.prayer.pointfinder.core.model.GameStatus
 import com.prayer.pointfinder.feature.auth.OperatorLoginScreen
 import com.prayer.pointfinder.feature.auth.PlayerJoinScreen
 import com.prayer.pointfinder.feature.auth.PlayerNameScreen
@@ -331,7 +332,7 @@ private fun PlayerRootScreen(
     // Permission launchers (fired after disclosure accepted)
     var pendingPermissionRequest by remember { mutableStateOf(false) }
     val gameStatus = state.gameStatus ?: auth.gameStatus
-    val shouldBlockGameplay = gameStatus == "setup" || gameStatus == "ended"
+    val shouldBlockGameplay = gameStatus == GameStatus.SETUP || gameStatus == GameStatus.ENDED
 
     val backToMapFromSubmission = {
         // Fully clear transient solve/check-in UI state so result screen doesn't reopen.
@@ -495,7 +496,7 @@ private fun PlayerRootScreen(
 
     LaunchedEffect(auth.gameId, isOnline, state.realtimeConnected) {
         if (!isOnline) return@LaunchedEffect
-        while ((state.gameStatus ?: auth.gameStatus) != "live") {
+        while ((state.gameStatus ?: auth.gameStatus) != GameStatus.LIVE) {
             // Keep polling as fallback, but back off when realtime socket is healthy.
             delay(if (state.realtimeConnected) 30_000L else 10_000L)
             viewModel.refresh(auth, true)
@@ -838,7 +839,7 @@ private fun OperatorGameRoot(
         return
     }
 
-    val showSubmissionsTab = selectedGame.status == "live"
+    val showSubmissionsTab = selectedGame.status == GameStatus.LIVE
 
     LaunchedEffect(showSubmissionsTab, state.selectedTab) {
         if (!showSubmissionsTab && state.selectedTab == OperatorTab.SUBMISSIONS) {

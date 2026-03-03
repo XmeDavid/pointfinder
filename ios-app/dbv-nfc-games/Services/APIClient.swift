@@ -31,6 +31,7 @@ actor APIClient {
     private let baseURL: String
     private let session: URLSession
     private let decoder: JSONDecoder
+    private let encoder: JSONEncoder
 
     // MARK: - Token Refresh State
 
@@ -44,6 +45,7 @@ actor APIClient {
         self.baseURL = baseURL
         self.session = session
         self.decoder = JSONDecoder()
+        self.encoder = JSONEncoder()
     }
 
     // MARK: - Auth Configuration
@@ -266,28 +268,28 @@ actor APIClient {
 
     private func post<T: Decodable, B: Encodable>(_ path: String, body: B, token: String? = nil) async throws -> T {
         var request = try buildRequest(path: path, method: "POST", token: token)
-        request.httpBody = try JSONEncoder().encode(body)
+        request.httpBody = try encoder.encode(body)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         return try await execute(request)
     }
 
     private func postVoid<B: Encodable>(_ path: String, body: B, token: String? = nil) async throws {
         var request = try buildRequest(path: path, method: "POST", token: token)
-        request.httpBody = try JSONEncoder().encode(body)
+        request.httpBody = try encoder.encode(body)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         try await executeVoid(request)
     }
 
     private func put<T: Decodable, B: Encodable>(_ path: String, body: B, token: String? = nil) async throws -> T {
         var request = try buildRequest(path: path, method: "PUT", token: token)
-        request.httpBody = try JSONEncoder().encode(body)
+        request.httpBody = try encoder.encode(body)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         return try await execute(request)
     }
 
     private func putVoid<B: Encodable>(_ path: String, body: B, token: String? = nil) async throws {
         var request = try buildRequest(path: path, method: "PUT", token: token)
-        request.httpBody = try JSONEncoder().encode(body)
+        request.httpBody = try encoder.encode(body)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         try await executeVoid(request)
     }
@@ -299,7 +301,7 @@ actor APIClient {
 
     private func patch<T: Decodable, B: Encodable>(_ path: String, body: B, token: String? = nil) async throws -> T {
         var request = try buildRequest(path: path, method: "PATCH", token: token)
-        request.httpBody = try JSONEncoder().encode(body)
+        request.httpBody = try encoder.encode(body)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         return try await execute(request)
     }
@@ -426,7 +428,7 @@ actor APIClient {
             }
 
             var request = try buildRequest(path: "/api/auth/refresh", method: "POST", token: nil)
-            request.httpBody = try JSONEncoder().encode(RefreshTokenBody(refreshToken: refreshToken))
+            request.httpBody = try encoder.encode(RefreshTokenBody(refreshToken: refreshToken))
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
             let (data, response) = try await session.data(for: request)

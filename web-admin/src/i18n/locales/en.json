@@ -381,7 +381,8 @@
     "rejected": "Rejected",
     "challenge": "Challenge",
     "noChallenge": "No challenge assigned",
-    "latestPingBy": "Latest ping: {{player}}"
+    "latestPingBy": "Latest ping: {{player}}",
+    "loadError": "Failed to load map data. Some information may be missing."
   },
   "leaderboard": {
     "title": "Leaderboard",

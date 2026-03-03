@@ -2,6 +2,8 @@ package com.prayer.pointfinder.repository;
 
 import com.prayer.pointfinder.entity.CheckIn;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,7 +19,8 @@ public interface CheckInRepository extends JpaRepository<CheckIn, UUID> {
 
     boolean existsByTeamIdAndBaseId(UUID teamId, UUID baseId);
 
-    List<CheckIn> findByGameId(UUID gameId);
+    @Query("SELECT c FROM CheckIn c LEFT JOIN FETCH c.team LEFT JOIN FETCH c.base WHERE c.game.id = :gameId")
+    List<CheckIn> findByGameId(@Param("gameId") UUID gameId);
 
     void deleteByGameId(UUID gameId);
 }

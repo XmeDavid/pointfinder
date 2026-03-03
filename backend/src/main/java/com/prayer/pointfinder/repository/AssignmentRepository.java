@@ -2,6 +2,8 @@ package com.prayer.pointfinder.repository;
 
 import com.prayer.pointfinder.entity.Assignment;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -9,7 +11,8 @@ import java.util.UUID;
 
 public interface AssignmentRepository extends JpaRepository<Assignment, UUID> {
 
-    List<Assignment> findByGameId(UUID gameId);
+    @Query("SELECT a FROM Assignment a LEFT JOIN FETCH a.base LEFT JOIN FETCH a.challenge WHERE a.game.id = :gameId")
+    List<Assignment> findByGameId(@Param("gameId") UUID gameId);
 
     List<Assignment> findByBaseId(UUID baseId);
 

@@ -1,13 +1,14 @@
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { MapPin, Radio, Eye, EyeOff, Users, User } from "lucide-react";
-import { useState, useMemo, useEffect, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Popup, CircleMarker, useMap } from "react-leaflet";
+import { MapPin, Radio, Eye, EyeOff, Users, User, AlertTriangle } from "lucide-react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { MapContainer, TileLayer, Marker, Popup, CircleMarker } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/common/Spinner";
 import { basesApi } from "@/lib/api/bases";
 import { teamsApi } from "@/lib/api/teams";
 import { challengesApi } from "@/lib/api/challenges";
@@ -15,6 +16,7 @@ import { monitoringApi } from "@/lib/api/monitoring";
 import { useTranslation } from "react-i18next";
 import { useGameWebSocket } from "@/hooks/useGameWebSocket";
 import { formatDateTime } from "@/lib/utils";
+import { STATUS_COLORS, createColoredIcon, getAggregateStatus as getAggregateStatusUtil, parseTimestamp, FitBounds } from "@/lib/map-utils";
 import type { BaseStatus } from "@/types";
 
 // Fix default marker icon issue with bundlers (known react-leaflet issue)
@@ -31,58 +33,6 @@ L.Icon.Default.mergeOptions({
 });
 
 const STALE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
-
-function parseTimestamp(value: string): number {
-  const parsed = Date.parse(value);
-  return Number.isNaN(parsed) ? 0 : parsed;
-}
-
-// Status colors for pins
-const STATUS_COLORS: Record<BaseStatus, string> = {
-  not_visited: "#9ca3af",  // gray
-  checked_in: "#3b82f6",   // blue
-  submitted: "#f59e0b",    // amber
-  completed: "#22c55e",    // green
-  rejected: "#ef4444",     // red
-};
-
-// Status priority for aggregate (lowest = worst)
-const STATUS_PRIORITY: Record<BaseStatus, number> = {
-  not_visited: 0,
-  checked_in: 1,
-  submitted: 2,
-  rejected: 3,
-  completed: 4,
-};
-
-function createColoredIcon(color: string): L.DivIcon {
-  return L.divIcon({
-    className: "",
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    html: `<svg width="25" height="41" viewBox="0 0 25 41" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12.5 0C5.6 0 0 5.6 0 12.5C0 21.9 12.5 41 12.5 41S25 21.9 25 12.5C25 5.6 19.4 0 12.5 0Z" fill="${color}" stroke="#fff" stroke-width="1.5"/>
-      <circle cx="12.5" cy="12.5" r="5" fill="#fff"/>
-    </svg>`,
-  });
-}
-
-/** Auto-fits map bounds when bases load */
-function FitBounds({ bases }: { bases: { lat: number; lng: number }[] }) {
-  const map = useMap();
-  const fitted = useRef(false);
-
-  useEffect(() => {
-    if (bases.length > 0 && !fitted.current) {
-      const bounds = L.latLngBounds(bases.map((b) => [b.lat, b.lng]));
-      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
-      fitted.current = true;
-    }
-  }, [bases, map]);
-
-  return null;
-}
 
 function StatusBadge({ status }: { status: BaseStatus }) {
   const { t } = useTranslation();
@@ -114,15 +64,26 @@ export function MapPage() {
   const { t } = useTranslation();
   const { gameId } = useParams<{ gameId: string }>();
 
-  const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!) });
-  const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!) });
-  const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!) });
-  const { data: progress = [] } = useQuery({ queryKey: ["progress", gameId], queryFn: () => monitoringApi.getProgress(gameId!) });
+  const basesQuery = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!) });
+  const teamsQuery = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!) });
+  const challengesQuery = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!) });
+  const progressQuery = useQuery({ queryKey: ["progress", gameId], queryFn: () => monitoringApi.getProgress(gameId!) });
   const websocketError = useGameWebSocket(gameId);
-  const { data: locations = [], dataUpdatedAt: locationsUpdatedAt } = useQuery({
+  const locationsQuery = useQuery({
     queryKey: ["team-locations", gameId],
     queryFn: () => monitoringApi.getTeamLocations(gameId!),
   });
+
+  const bases = basesQuery.data ?? [];
+  const teams = teamsQuery.data ?? [];
+  const challenges = challengesQuery.data ?? [];
+  const progress = progressQuery.data ?? [];
+  const locations = locationsQuery.data ?? [];
+  const locationsUpdatedAt = locationsQuery.dataUpdatedAt;
+
+  const isLoading = basesQuery.isLoading || teamsQuery.isLoading || challengesQuery.isLoading || progressQuery.isLoading || locationsQuery.isLoading;
+  const isError = basesQuery.isError || teamsQuery.isError || challengesQuery.isError || progressQuery.isError || locationsQuery.isError;
+  const hasData = basesQuery.data !== undefined || teamsQuery.data !== undefined;
 
   const [showBases, setShowBases] = useState(true);
   const [showTeams, setShowTeams] = useState(true);
@@ -172,35 +133,41 @@ export function MapPage() {
   }, [bases.length]);
 
   // Default center - will be overridden by FitBounds when bases exist
-  const defaultCenter: [number, number] = bases.length > 0
-    ? [bases.reduce((s, b) => s + b.lat, 0) / bases.length, bases.reduce((s, b) => s + b.lng, 0) / bases.length]
-    : userLocation;
+  const defaultCenter: [number, number] = useMemo(() =>
+    bases.length > 0
+      ? [bases.reduce((s, b) => s + b.lat, 0) / bases.length, bases.reduce((s, b) => s + b.lng, 0) / bases.length]
+      : userLocation,
+    [bases, userLocation]
+  );
 
   // Compute aggregate status for a base (lowest common denominator across all teams)
-  const getAggregateStatus = (baseId: string): BaseStatus => {
-    const baseProgress = progressIndex.get(baseId);
-    if (!baseProgress || baseProgress.size === 0) return "not_visited";
-
-    let minPriority = Infinity;
-    baseProgress.forEach((p) => {
-      const priority = STATUS_PRIORITY[p.status];
-      if (priority < minPriority) minPriority = priority;
-    });
-
-    // Map back to status
-    const entry = Object.entries(STATUS_PRIORITY).find(([, v]) => v === minPriority);
-    return (entry?.[0] as BaseStatus) ?? "not_visited";
-  };
+  const getAggregateStatus = useCallback(
+    (baseId: string): BaseStatus => getAggregateStatusUtil(baseId, progressIndex),
+    [progressIndex]
+  );
 
   // Get pin color for a base
-  const getBaseColor = (baseId: string): string => {
-    if (viewMode === "all") {
-      return STATUS_COLORS[getAggregateStatus(baseId)];
-    }
-    // Team-specific view
-    const teamProgress = progressIndex.get(baseId)?.get(viewMode);
-    return STATUS_COLORS[teamProgress?.status ?? "not_visited"];
-  };
+  const getBaseColor = useCallback(
+    (baseId: string): string => {
+      if (viewMode === "all") {
+        return STATUS_COLORS[getAggregateStatus(baseId)];
+      }
+      const teamProgress = progressIndex.get(baseId)?.get(viewMode);
+      return STATUS_COLORS[teamProgress?.status ?? "not_visited"];
+    },
+    [viewMode, getAggregateStatus, progressIndex]
+  );
+
+  // Pre-index locations by teamId for O(1) lookup
+  const locationsByTeam = useMemo(() => {
+    const map = new Map<string, typeof locations>();
+    locations.forEach((loc) => {
+      const arr = map.get(loc.teamId) ?? [];
+      arr.push(loc);
+      map.set(loc.teamId, arr);
+    });
+    return map;
+  }, [locations]);
 
   const selectedTeam = viewMode !== "all" ? teams.find((t) => t.id === viewMode) : null;
   const markerLocations = useMemo(() => {
@@ -226,6 +193,10 @@ export function MapPage() {
 
     return Array.from(latestByTeam.values());
   }, [locations, viewMode]);
+
+  if (isLoading && !hasData) {
+    return <Spinner />;
+  }
 
   return (
     <div className="space-y-4">
@@ -256,6 +227,12 @@ export function MapPage() {
         </div>
       </div>
       {websocketError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{websocketError}</div>}
+      {isError && (
+        <div className="flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+          {t("mapPage.loadError")}
+        </div>
+      )}
 
       {/* View mode indicator */}
       {selectedTeam && (
@@ -481,7 +458,7 @@ export function MapPage() {
           <CardContent>
             <div className="space-y-2">
               {teams.map((team) => {
-                const teamLocs = locations.filter((l) => l.teamId === team.id);
+                const teamLocs = locationsByTeam.get(team.id) ?? [];
                 const isActive = viewMode === team.id;
 
                 return (

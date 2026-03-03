@@ -5,6 +5,7 @@ import com.prayer.pointfinder.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -15,6 +16,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ChallengeAssignmentService {
+
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     private final BaseRepository baseRepository;
     private final ChallengeRepository challengeRepository;
@@ -48,7 +51,7 @@ public class ChallengeAssignmentService {
                 .filter(c -> !fixedChallengeIds.contains(c.getId()))
                 .collect(Collectors.toList());
 
-        Random random = new Random();
+        // Use class-level SecureRandom instead of local Random
 
         // Track globally used challenges (for uniform assignment mode)
         Set<UUID> usedGlobally = new HashSet<>(fixedChallengeIds);
@@ -90,7 +93,7 @@ public class ChallengeAssignmentService {
                             .collect(Collectors.toList());
 
                     if (!sharedPool.isEmpty()) {
-                        Challenge selected = sharedPool.get(random.nextInt(sharedPool.size()));
+                        Challenge selected = sharedPool.get(RANDOM.nextInt(sharedPool.size()));
                         usedGlobally.add(selected.getId());
                         for (Team team : teams) {
                             assignmentRepository.save(Assignment.builder()
@@ -106,7 +109,7 @@ public class ChallengeAssignmentService {
                                 .collect(Collectors.toList());
 
                         if (!teamPool.isEmpty()) {
-                            Challenge selected = teamPool.get(random.nextInt(teamPool.size()));
+                            Challenge selected = teamPool.get(RANDOM.nextInt(teamPool.size()));
                             assignmentRepository.save(Assignment.builder()
                                     .game(game).base(base).challenge(selected).team(team).build());
                             usedByTeam.add(selected.getId());

@@ -306,6 +306,56 @@ class PlayerServiceTest {
     }
 
     @Test
+    void updateLocationRejectsInvalidLatitude() {
+        UUID gameId = UUID.randomUUID();
+        Player player = Player.builder()
+                .id(UUID.randomUUID())
+                .deviceId("device-loc")
+                .displayName("Player")
+                .build();
+
+        BadRequestException ex = assertThrows(
+                BadRequestException.class,
+                () -> playerService.updateLocation(gameId, player, 91.0, 10.0)
+        );
+        assertEquals("Invalid coordinates", ex.getMessage());
+        verify(playerLocationRepository, never()).save(any());
+    }
+
+    @Test
+    void updateLocationRejectsInvalidLongitude() {
+        UUID gameId = UUID.randomUUID();
+        Player player = Player.builder()
+                .id(UUID.randomUUID())
+                .deviceId("device-loc")
+                .displayName("Player")
+                .build();
+
+        BadRequestException ex = assertThrows(
+                BadRequestException.class,
+                () -> playerService.updateLocation(gameId, player, 40.0, -181.0)
+        );
+        assertEquals("Invalid coordinates", ex.getMessage());
+        verify(playerLocationRepository, never()).save(any());
+    }
+
+    @Test
+    void updateLocationRejectsNegativeInvalidLatitude() {
+        UUID gameId = UUID.randomUUID();
+        Player player = Player.builder()
+                .id(UUID.randomUUID())
+                .deviceId("device-loc")
+                .displayName("Player")
+                .build();
+
+        BadRequestException ex = assertThrows(
+                BadRequestException.class,
+                () -> playerService.updateLocation(gameId, player, -91.0, 0.0)
+        );
+        assertEquals("Invalid coordinates", ex.getMessage());
+    }
+
+    @Test
     void getProgressShowsHiddenBaseWhenUnlockChallengeIsCompleted() {
         UUID gameId = UUID.randomUUID();
         UUID teamId = UUID.randomUUID();

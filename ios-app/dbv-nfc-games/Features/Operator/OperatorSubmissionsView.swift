@@ -242,13 +242,7 @@ struct OperatorSubmissionsView: View {
     }
 
     private func parseISODate(_ value: String) -> Date {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let date = formatter.date(from: value) {
-            return date
-        }
-        formatter.formatOptions = [.withInternetDateTime]
-        return formatter.date(from: value) ?? .distantPast
+        DateFormatting.parseISO8601(value) ?? .distantPast
     }
 
     private func formatDate(_ value: String) -> String {
