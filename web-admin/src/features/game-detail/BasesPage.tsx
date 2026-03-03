@@ -17,6 +17,7 @@ import { challengesApi } from "@/lib/api/challenges";
 import { gamesApi } from "@/lib/api/games";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { MapPicker, BaseMapView, type UnlockConnection } from "@/components/common/MapPicker";
+import { getDefaultCenter } from "@/lib/tile-sources";
 import { useTranslation } from "react-i18next";
 import type { Base } from "@/types";
 
@@ -32,23 +33,26 @@ export function BasesPage() {
   const [form, setForm] = useState<Partial<CreateBaseDto>>({});
   const [actionError, setActionError] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  const [defaultLocation, setDefaultLocation] = useState<{ lat: number; lng: number }>({ lat: 40.08789650218038, lng: -8.869461715221407 });
+
+  const { data: game } = useQuery({ queryKey: ["game", gameId], queryFn: () => gamesApi.getById(gameId!) });
+
+  const tileSourceCenter = getDefaultCenter(game?.tileSource);
+  const [geoLocation, setGeoLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setDefaultLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
+          setGeoLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
         },
         () => {
-          // Geolocation failed, use fallback
-          setDefaultLocation({ lat: 40.08789650218038, lng: -8.869461715221407 });
+          // Geolocation failed, tile source default will be used
         }
       );
     }
   }, []);
 
-  const { data: game } = useQuery({ queryKey: ["game", gameId], queryFn: () => gamesApi.getById(gameId!) });
+  const defaultLocation = geoLocation ?? tileSourceCenter;
   const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!) });
   const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!) });
   const challengeById = useMemo(() => new Map(challenges.map((challenge) => [challenge.id, challenge])), [challenges]);
