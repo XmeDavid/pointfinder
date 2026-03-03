@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(AppState.self) private var appState
     @Environment(LocaleManager.self) private var locale
+    @Environment(AppearanceManager.self) private var appearance
     @State private var showDeleteAccountConfirm = false
     @State private var isDeletingAccount = false
 
@@ -18,6 +19,16 @@ struct SettingsView: View {
                         Text("English").tag("en")
                         Text("Português").tag("pt")
                         Text("Deutsch").tag("de")
+                    }
+                }
+
+                // Theme picker
+                Section(locale.t("settings.theme")) {
+                    @Bindable var appearance = appearance
+                    Picker(locale.t("settings.theme"), selection: $appearance.preferredTheme) {
+                        Text(locale.t("settings.themeSystem")).tag("system")
+                        Text(locale.t("settings.themeLight")).tag("light")
+                        Text(locale.t("settings.themeDark")).tag("dark")
                     }
                 }
 
@@ -199,4 +210,5 @@ extension Color {
     SettingsView()
         .environment(AppState())
         .environment(LocaleManager())
+        .environment(AppearanceManager())
 }

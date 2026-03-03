@@ -23,3 +23,7 @@ web-admin/lighthose.report
 
 # Legacy
 legacy/
+
+.cursor/
+.claude/
+.tmux

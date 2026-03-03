@@ -50,6 +50,8 @@ fun PlayerSettingsScreen(
     progress: List<BaseProgress>,
     currentLanguage: String,
     onLanguageChanged: (String) -> Unit,
+    currentThemeMode: String,
+    onThemeModeChanged: (String) -> Unit,
     isDeletingAccount: Boolean,
     onDeleteAccount: () -> Unit,
     onLogout: () -> Unit,
@@ -89,6 +91,30 @@ fun PlayerSettingsScreen(
                             }
                         } else {
                             TextButton(onClick = { onLanguageChanged(code) }) {
+                                Text(label)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Theme
+        item {
+            SettingsSection(title = stringResource(R.string.label_theme)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(
+                        "SYSTEM" to stringResource(R.string.label_theme_system),
+                        "LIGHT" to stringResource(R.string.label_theme_light),
+                        "DARK" to stringResource(R.string.label_theme_dark),
+                    ).forEach { (mode, label) ->
+                        val isSelected = mode == currentThemeMode
+                        if (isSelected) {
+                            Button(onClick = {}) {
+                                Text(label)
+                            }
+                        } else {
+                            TextButton(onClick = { onThemeModeChanged(mode) }) {
                                 Text(label)
                             }
                         }
