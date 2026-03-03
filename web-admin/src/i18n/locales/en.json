@@ -564,5 +564,64 @@
     "notFound": "Broadcast not found",
     "notFoundDescription": "This broadcast code is invalid or the broadcast has been disabled.",
     "backToEntry": "Back to code entry"
+  },
+  "faq": {
+    "label": "FAQ",
+    "title": "Frequently Asked Questions",
+    "subtitle": "Everything you need to know about setting up and running games with PointFinder.",
+    "backToHome": "Home",
+    "categories": {
+      "gettingStarted": "Getting Started",
+      "gameSetup": "Game Setup",
+      "playing": "Playing the Game",
+      "operator": "Operator & Monitoring",
+      "platform": "Platform"
+    },
+    "gettingStarted": {
+      "whatIsQ": "What is PointFinder?",
+      "whatIsA": "PointFinder is an NFC-based adventure game platform designed for scouting and youth organizations. Organizers place physical NFC tags at outdoor locations (bases), create challenges for teams to complete, and monitor everything in real time through a web dashboard.",
+      "firstGameQ": "How do I create my first game?",
+      "firstGameA": "Sign up as an operator, then create a new game from the dashboard. Add bases with GPS coordinates, write challenges (photo, text, or quiz), organize players into teams, and go live when you're ready. The platform guides you through each step with a readiness checklist.",
+      "equipmentQ": "What equipment do I need?",
+      "equipmentA": "All you need are NFC tags (inexpensive stickers or cards) and smartphones. Place NFC tags at each base location, and teams use the iOS or Android app to scan them. The web admin panel runs in any browser for game management."
+    },
+    "gameSetup": {
+      "basesQ": "What are bases?",
+      "basesA": "Bases are physical locations where you place NFC tags. Each base is mapped with GPS coordinates and shown on the interactive map. Teams visit bases in the field and scan the NFC tag to check in and receive their challenge.",
+      "challengesQ": "What are challenges?",
+      "challengesA": "Challenges are tasks assigned at each base. They can require a text answer (with optional auto-validation), a photo submission for manual review, or a quiz. Each challenge has a point value that contributes to the team's score.",
+      "assignmentQ": "How does challenge assignment work?",
+      "assignmentA": "You can assign challenges to bases in two modes: uniform assignment gives every team the same challenge at each base, while random assignment gives each team a different challenge per base. You can also fix specific challenges to specific bases for full control.",
+      "variablesQ": "What are team variables?",
+      "variablesA": "Team variables are custom placeholders you define in challenge text that get replaced with unique values per team. For example, a challenge might say \"Go to {{nextCoordinates}}\" where each team receives different coordinates, creating personalized experiences."
+    },
+    "playing": {
+      "joinQ": "How do teams join a game?",
+      "joinA": "Players download the PointFinder app (iOS or Android), enter the game code shared by the organizer, and join their assigned team. They can then see the map with base locations and start exploring.",
+      "nfcScanQ": "How does NFC scanning work?",
+      "nfcScanA": "When a team arrives at a base, they tap their phone against the NFC tag. The app reads the tag, verifies the base, checks the team in, and reveals their challenge. It works with any NFC-enabled smartphone.",
+      "afterScanQ": "What happens after scanning?",
+      "afterScanA": "After scanning, the team sees their challenge and submits a response — either a text answer or a photo. Text answers can be auto-validated against correct answers, while photo submissions go to operators for manual review.",
+      "offlineQ": "Does it work offline?",
+      "offlineA": "Yes. Core features like NFC scanning and challenge viewing work without an internet connection. Submissions are queued locally and automatically sync when connectivity is restored."
+    },
+    "operator": {
+      "monitorQ": "How do I monitor a live game?",
+      "monitorA": "The web admin provides a real-time dashboard with a live map showing team positions, a leaderboard with instant score updates, an activity feed of all game events, and a submission review queue.",
+      "reviewQ": "How does submission review work?",
+      "reviewA": "When teams submit photo answers, they appear in the operator's review queue. Operators can approve or reject each submission with optional feedback. Approved submissions award points; rejected ones notify the team to try again.",
+      "broadcastQ": "Can I broadcast the game publicly?",
+      "broadcastA": "Yes. Enable broadcast mode in game settings to generate a public link. Spectators can watch the live leaderboard, map, and activity feed without logging in — perfect for projecting at events.",
+      "multipleQ": "Can multiple people manage a game?",
+      "multipleA": "Yes. The game owner can invite other operators by email. Invited operators get full access to the game dashboard, submission review, and monitoring tools."
+    },
+    "platform": {
+      "supportedQ": "What platforms are supported?",
+      "supportedA": "PointFinder offers native apps for iOS and Android (for players and operators in the field) and a full-featured web admin dashboard (for game creation, management, and live monitoring).",
+      "mapsQ": "What map options are available?",
+      "mapsA": "You can choose from several tile providers per game: OpenStreetMap, OpenStreetMap Classic, CartoDB Voyager, CartoDB Positron, and SwissTopo (including satellite view). The map choice applies across all platforms.",
+      "languagesQ": "What languages are supported?",
+      "languagesA": "PointFinder is available in English, Portuguese, and German. The app automatically detects the device language and switches accordingly."
+    }
   }
 }

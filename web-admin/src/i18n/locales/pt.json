@@ -564,5 +564,64 @@
     "notFound": "Transmissão não encontrada",
     "notFoundDescription": "Este código de transmissão é inválido ou a transmissão foi desativada.",
     "backToEntry": "Voltar à introdução do código"
+  },
+  "faq": {
+    "label": "FAQ",
+    "title": "Perguntas Frequentes",
+    "subtitle": "Tudo o que precisa de saber sobre como configurar e gerir jogos com o PointFinder.",
+    "backToHome": "Início",
+    "categories": {
+      "gettingStarted": "Primeiros Passos",
+      "gameSetup": "Configuração do Jogo",
+      "playing": "Jogar",
+      "operator": "Operador e Monitorização",
+      "platform": "Plataforma"
+    },
+    "gettingStarted": {
+      "whatIsQ": "O que é o PointFinder?",
+      "whatIsA": "O PointFinder é uma plataforma de jogos de aventura baseada em NFC, concebida para organizações de escotismo e jovens. Os organizadores colocam tags NFC físicas em locais exteriores (bases), criam desafios para as equipas completarem e monitorizam tudo em tempo real através de um painel web.",
+      "firstGameQ": "Como crio o meu primeiro jogo?",
+      "firstGameA": "Registe-se como operador e crie um novo jogo a partir do painel. Adicione bases com coordenadas GPS, escreva desafios (foto, texto ou quiz), organize os jogadores em equipas e inicie o jogo quando estiver pronto. A plataforma guia-o em cada passo com uma checklist de preparação.",
+      "equipmentQ": "Que equipamento preciso?",
+      "equipmentA": "Só precisa de tags NFC (autocolantes ou cartões baratos) e smartphones. Coloque tags NFC em cada base e as equipas usam a app iOS ou Android para as ler. O painel de administração web funciona em qualquer navegador."
+    },
+    "gameSetup": {
+      "basesQ": "O que são bases?",
+      "basesA": "As bases são locais físicos onde se colocam tags NFC. Cada base é mapeada com coordenadas GPS e mostrada no mapa interativo. As equipas visitam as bases no terreno e leem a tag NFC para fazer check-in e receber o seu desafio.",
+      "challengesQ": "O que são desafios?",
+      "challengesA": "Os desafios são tarefas atribuídas em cada base. Podem exigir uma resposta em texto (com validação automática opcional), uma submissão de foto para revisão manual ou um quiz. Cada desafio tem uma pontuação que contribui para o resultado da equipa.",
+      "assignmentQ": "Como funciona a atribuição de desafios?",
+      "assignmentA": "Pode atribuir desafios às bases de duas formas: a atribuição uniforme dá a todas as equipas o mesmo desafio em cada base, enquanto a atribuição aleatória dá a cada equipa um desafio diferente por base. Também pode fixar desafios específicos a bases específicas para controlo total.",
+      "variablesQ": "O que são variáveis de equipa?",
+      "variablesA": "As variáveis de equipa são marcadores personalizados que define no texto do desafio e que são substituídos por valores únicos por equipa. Por exemplo, um desafio pode dizer \"Vai até {{nextCoordinates}}\" onde cada equipa recebe coordenadas diferentes, criando experiências personalizadas."
+    },
+    "playing": {
+      "joinQ": "Como é que as equipas aderem a um jogo?",
+      "joinA": "Os jogadores descarregam a app PointFinder (iOS ou Android), introduzem o código do jogo partilhado pelo organizador e juntam-se à sua equipa. Depois podem ver o mapa com as localizações das bases e começar a explorar.",
+      "nfcScanQ": "Como funciona a leitura NFC?",
+      "nfcScanA": "Quando uma equipa chega a uma base, encosta o telemóvel à tag NFC. A app lê a tag, verifica a base, faz o check-in da equipa e revela o desafio. Funciona com qualquer smartphone com NFC.",
+      "afterScanQ": "O que acontece após a leitura?",
+      "afterScanA": "Após a leitura, a equipa vê o seu desafio e submete uma resposta — texto ou foto. As respostas em texto podem ser validadas automaticamente, enquanto as submissões de foto vão para os operadores para revisão manual.",
+      "offlineQ": "Funciona offline?",
+      "offlineA": "Sim. As funcionalidades principais como leitura NFC e visualização de desafios funcionam sem ligação à internet. As submissões são guardadas localmente e sincronizadas automaticamente quando a ligação é restabelecida."
+    },
+    "operator": {
+      "monitorQ": "Como monitorizo um jogo ao vivo?",
+      "monitorA": "O painel de administração oferece um dashboard em tempo real com um mapa ao vivo mostrando as posições das equipas, uma classificação com atualizações instantâneas, um feed de atividade de todos os eventos e uma fila de revisão de submissões.",
+      "reviewQ": "Como funciona a revisão de submissões?",
+      "reviewA": "Quando as equipas submetem fotos, estas aparecem na fila de revisão do operador. Os operadores podem aprovar ou rejeitar cada submissão com feedback opcional. As submissões aprovadas atribuem pontos; as rejeitadas notificam a equipa para tentar novamente.",
+      "broadcastQ": "Posso transmitir o jogo publicamente?",
+      "broadcastA": "Sim. Ative o modo de transmissão nas definições do jogo para gerar um link público. Os espetadores podem acompanhar a classificação, mapa e feed de atividade ao vivo sem iniciar sessão — perfeito para projetar em eventos.",
+      "multipleQ": "Várias pessoas podem gerir um jogo?",
+      "multipleA": "Sim. O proprietário do jogo pode convidar outros operadores por email. Os operadores convidados têm acesso total ao painel, revisão de submissões e ferramentas de monitorização."
+    },
+    "platform": {
+      "supportedQ": "Que plataformas são suportadas?",
+      "supportedA": "O PointFinder oferece apps nativas para iOS e Android (para jogadores e operadores no terreno) e um painel de administração web completo (para criação de jogos, gestão e monitorização ao vivo).",
+      "mapsQ": "Que opções de mapa estão disponíveis?",
+      "mapsA": "Pode escolher entre vários fornecedores de mapas por jogo: OpenStreetMap, OpenStreetMap Classic, CartoDB Voyager, CartoDB Positron e SwissTopo (incluindo vista de satélite). A escolha do mapa aplica-se a todas as plataformas.",
+      "languagesQ": "Que idiomas são suportados?",
+      "languagesA": "O PointFinder está disponível em Inglês, Português e Alemão. A app deteta automaticamente o idioma do dispositivo e adapta-se."
+    }
   }
 }

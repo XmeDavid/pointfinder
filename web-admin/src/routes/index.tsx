@@ -4,6 +4,7 @@ import { GameShell } from "@/features/game-detail/GameShell";
 
 // Landing
 import { LandingPage } from "@/features/landing/LandingPage";
+import { FaqPage } from "@/features/faq/FaqPage";
 
 // Auth
 import { LoginPage } from "@/features/auth/LoginPage";
@@ -50,6 +51,11 @@ export const router = createBrowserRouter([
   {
     path: "/",
     element: <LandingPage />,
+  },
+  /* -------- FAQ page -------- */
+  {
+    path: "/faq",
+    element: <FaqPage />,
   },
   /* -------- Auth pages -------- */
   {

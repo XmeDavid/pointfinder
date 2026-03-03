@@ -4,6 +4,7 @@ import i18next from "i18next";
 import { I18nextProvider } from "react-i18next";
 import en from "./i18n/locales/en.json";
 import { LandingPage } from "./features/landing/LandingPage";
+import { FaqPage } from "./features/faq/FaqPage";
 
 interface PageConfig {
   component: React.ComponentType;
@@ -17,6 +18,12 @@ const pages: Record<string, PageConfig> = {
     title: "PointFinder - NFC Adventure Games for Scouts",
     description:
       "Create and manage NFC-based adventure games for scouting organizations. Teams scan physical NFC tags at bases to complete challenges with real-time monitoring.",
+  },
+  "/faq": {
+    component: FaqPage,
+    title: "FAQ - PointFinder",
+    description:
+      "Frequently asked questions about PointFinder — how to set up NFC adventure games, manage teams, monitor live events, and more.",
   },
 };
 
