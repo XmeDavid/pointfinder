@@ -4,6 +4,7 @@ import android.content.Intent
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.os.Bundle
+import android.net.Uri
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -12,6 +13,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.prayer.pointfinder.core.model.ThemeMode
 import com.prayer.pointfinder.core.platform.NfcEventBus
+import com.prayer.pointfinder.core.platform.NfcPayloadCodec
 import com.prayer.pointfinder.core.platform.NfcService
 import com.prayer.pointfinder.navigation.AppNavigation
 import com.prayer.pointfinder.session.AppSessionViewModel
@@ -32,7 +34,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Handle NFC intent that launched the app (cold start)
-        handleNfcIntent(intent)
+        handleIntent(intent)
         setContent {
             val sessionState by sessionViewModel.state.collectAsState()
             val darkTheme = when (sessionState.themeMode) {
@@ -65,20 +67,36 @@ class MainActivity : AppCompatActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        handleNfcIntent(intent)
+        handleIntent(intent)
     }
 
-    /** Handle NFC intents delivered via manifest intent filters (app not in foreground). */
-    private fun handleNfcIntent(intent: Intent?) {
+    /** Handle NFC and deep link intents. */
+    private fun handleIntent(intent: Intent?) {
         if (intent == null) return
-        val scannedBaseId = nfcService.parseBaseIdFromIntent(intent)
-        if (intent.hasExtra(NfcAdapter.EXTRA_TAG)) {
-            @Suppress("DEPRECATION")
-            val tag = intent.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG)
-            if (tag != null) {
-                nfcEventBus.emitDiscoveredTag(tag)
+
+        when (intent.action) {
+            Intent.ACTION_VIEW -> {
+                val baseId = extractBaseIdFromUri(intent.data)
+                nfcEventBus.emitScannedBaseId(baseId)
+            }
+            else -> {
+                val scannedBaseId = nfcService.parseBaseIdFromIntent(intent)
+                if (intent.hasExtra(NfcAdapter.EXTRA_TAG)) {
+                    @Suppress("DEPRECATION")
+                    val tag = intent.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG)
+                    if (tag != null) {
+                        nfcEventBus.emitDiscoveredTag(tag)
+                    }
+                }
+                nfcEventBus.emitScannedBaseId(scannedBaseId)
             }
         }
-        nfcEventBus.emitScannedBaseId(scannedBaseId)
+    }
+
+    private fun extractBaseIdFromUri(uri: Uri?): String? {
+        val path = uri?.path ?: return null
+        if (!path.startsWith("/tag/")) return null
+        val rawId = path.removePrefix("/tag/").trimEnd('/')
+        return NfcPayloadCodec.normalizeBaseId(rawId)
     }
 }
