@@ -30,6 +30,10 @@ final class AppState {
     var solvingBaseId: UUID?
     var solvingChallengeId: UUID?
 
+    // MARK: - Deep Link
+
+    var pendingDeepLinkBaseId: UUID?
+
     // MARK: - Notifications
 
     var notifications: [PlayerNotificationResponse] = []

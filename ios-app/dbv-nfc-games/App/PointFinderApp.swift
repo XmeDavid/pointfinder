@@ -14,6 +14,9 @@ struct PointFinderApp: App {
                 .environment(localeManager)
                 .environment(appearanceManager)
                 .preferredColorScheme(appearanceManager.resolvedColorScheme)
+                .onOpenURL { url in
+                    appState.handleDeepLink(url: url)
+                }
         }
     }
 }

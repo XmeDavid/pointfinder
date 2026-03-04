@@ -320,6 +320,21 @@ extension AppState {
         return await GameDataCache.shared.getCachedChallenge(forBaseId: baseId)
     }
 
+    // MARK: - Deep Link
+
+    private static let supportedTagHosts: Set<String> = ["pointfinder.pt", "pointfinder.ch"]
+    private static let tagPathPrefix = "/tag/"
+
+    func handleDeepLink(url: URL) {
+        guard let host = url.host?.lowercased(),
+              Self.supportedTagHosts.contains(host) else { return }
+        let path = url.path
+        guard path.hasPrefix(Self.tagPathPrefix) else { return }
+        let rawId = String(path.dropFirst(Self.tagPathPrefix.count))
+        guard let baseId = UUID(uuidString: rawId) else { return }
+        pendingDeepLinkBaseId = baseId
+    }
+
     // MARK: - Solve Session
 
     func startSolving(baseId: UUID, challengeId: UUID) {

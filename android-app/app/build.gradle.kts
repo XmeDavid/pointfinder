@@ -67,8 +67,8 @@ android {
         applicationId = "com.prayer.pointfinder"
         minSdk = 26
         targetSdk = 35
-        versionCode = 5
-        versionName = "0.5.0"
+        versionCode = 6
+        versionName = "0.6.0"
         buildConfigField("String", "API_BASE_URL", "\"${apiBaseUrl.replace("\"", "\\\"")}\"")
         buildConfigField("Boolean", "ENABLE_MOBILE_REALTIME", "true")
         buildConfigField("Boolean", "ENABLE_CHUNKED_MEDIA_UPLOAD", enableChunkedMediaUpload)
@@ -87,6 +87,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
         }
     }
 
