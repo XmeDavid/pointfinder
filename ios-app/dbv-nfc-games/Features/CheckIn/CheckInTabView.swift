@@ -129,12 +129,8 @@ struct CheckInTabView: View {
                 guard appState.isOnline, appState.currentGame?.status != "live" else { return }
                 Task { await appState.loadProgress() }
             }
-            .task(id: appState.pendingDeepLinkBaseId) {
-                if let baseId = appState.pendingDeepLinkBaseId {
-                    appState.pendingDeepLinkBaseId = nil
-                    await performDeepLinkCheckIn(baseId: baseId)
-                }
-            }
+            .onAppear { consumeDeepLink() }
+            .onChange(of: appState.pendingDeepLinkBaseId) { consumeDeepLink() }
             .alert(locale.t("common.error"), isPresented: Binding(
                 get: { appState.showError },
                 set: { if !$0 { appState.showError = false } }
@@ -150,6 +146,13 @@ struct CheckInTabView: View {
 
     private func popToRoot() {
         navigationPath.removeLast(navigationPath.count)
+    }
+
+    private func consumeDeepLink() {
+        if let baseId = appState.pendingDeepLinkBaseId {
+            appState.pendingDeepLinkBaseId = nil
+            Task { await performDeepLinkCheckIn(baseId: baseId) }
+        }
     }
 
     private func performDeepLinkCheckIn(baseId: UUID) async {

@@ -360,6 +360,15 @@ private fun PlayerRootScreen(
         }
     }
 
+    // Deep link: auto check-in when a /tag/ URL opens the app
+    val deepLinkBaseId by viewModel.deepLinkBaseId.collectAsStateWithLifecycle()
+    LaunchedEffect(deepLinkBaseId) {
+        val baseId = deepLinkBaseId ?: return@LaunchedEffect
+        viewModel.consumeDeepLinkBaseId()
+        selectedTab = PlayerTab.CHECK_IN
+        viewModel.startCheckIn(auth, baseId, isOnline)
+    }
+
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) { _ ->

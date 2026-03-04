@@ -76,6 +76,13 @@ class PlayerViewModel @Inject constructor(
     /** Exposed so the NFC scan dialog can collect base IDs while open. */
     val scannedBaseIds: SharedFlow<String?> = nfcEventBus.scannedBaseIds
 
+    /** Deep link base ID (StateFlow so late collectors get the value). */
+    val deepLinkBaseId: StateFlow<String?> = nfcEventBus.deepLinkBaseId
+
+    fun consumeDeepLinkBaseId() {
+        nfcEventBus.consumeDeepLinkBaseId()
+    }
+
     private var lastAuth: AuthType.Player? = null
     private var lastOnline: Boolean = true
 
