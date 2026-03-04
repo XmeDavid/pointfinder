@@ -70,11 +70,11 @@ export function MapPage() {
   });
 
   const game = gameQuery.data;
-  const bases = basesQuery.data ?? [];
-  const teams = teamsQuery.data ?? [];
-  const challenges = challengesQuery.data ?? [];
-  const progress = progressQuery.data ?? [];
-  const locations = locationsQuery.data ?? [];
+  const bases = useMemo(() => basesQuery.data ?? [], [basesQuery.data]);
+  const teams = useMemo(() => teamsQuery.data ?? [], [teamsQuery.data]);
+  const challenges = useMemo(() => challengesQuery.data ?? [], [challengesQuery.data]);
+  const progress = useMemo(() => progressQuery.data ?? [], [progressQuery.data]);
+  const locations = useMemo(() => locationsQuery.data ?? [], [locationsQuery.data]);
   const locationsUpdatedAt = locationsQuery.dataUpdatedAt;
 
   const isLoading = basesQuery.isLoading || teamsQuery.isLoading || challengesQuery.isLoading || progressQuery.isLoading || locationsQuery.isLoading;
@@ -130,7 +130,7 @@ export function MapPage() {
     }
   }, [bases.length]);
 
-  const userLocation: [number, number] = geoLocation ?? [tileSourceCenter.lat, tileSourceCenter.lng];
+  const userLocation: [number, number] = useMemo(() => geoLocation ?? [tileSourceCenter.lat, tileSourceCenter.lng], [geoLocation, tileSourceCenter.lat, tileSourceCenter.lng]);
 
   // Fit bounds when bases first load
   useEffect(() => {
