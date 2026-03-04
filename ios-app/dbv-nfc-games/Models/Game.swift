@@ -89,7 +89,8 @@ struct Challenge: Codable, Identifiable {
     let completionContent: String?
     let answerType: String
     let points: Int
-    
+    let unlocksBaseId: UUID?
+
     init(
         id: UUID,
         gameId: UUID? = nil,
@@ -98,7 +99,8 @@ struct Challenge: Codable, Identifiable {
         content: String,
         completionContent: String? = nil,
         answerType: String,
-        points: Int
+        points: Int,
+        unlocksBaseId: UUID? = nil
     ) {
         self.id = id
         self.gameId = gameId
@@ -108,6 +110,7 @@ struct Challenge: Codable, Identifiable {
         self.completionContent = completionContent
         self.answerType = answerType
         self.points = points
+        self.unlocksBaseId = unlocksBaseId
     }
 }
 

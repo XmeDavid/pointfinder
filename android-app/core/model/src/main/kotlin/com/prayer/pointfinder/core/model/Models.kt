@@ -116,6 +116,7 @@ data class Challenge(
     val completionContent: String? = null,
     val answerType: String,
     val points: Int,
+    val unlocksBaseId: EntityId? = null,
 )
 
 @Serializable

@@ -883,6 +883,7 @@ private fun OperatorGameRoot(
                     teamLocations = state.locations,
                     teams = state.teams,
                     baseProgress = state.baseProgress,
+                    challenges = state.challenges,
                     tileSource = selectedGame.tileSource,
                     isDark = operatorIsDark,
                     onBaseSelected = viewModel::selectBase,

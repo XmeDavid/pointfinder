@@ -18,6 +18,7 @@ struct MapLibreMapView: UIViewRepresentable {
     let styleURL: URL
     let annotations: [MapAnnotationItem]
     let fitCoordinates: [CLLocationCoordinate2D]
+    var connections: [(CLLocationCoordinate2D, CLLocationCoordinate2D)] = []
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -59,6 +60,9 @@ struct MapLibreMapView: UIViewRepresentable {
             mapView.addAnnotation(point)
         }
 
+        // Unlock connection lines
+        updateConnectionLines(on: mapView)
+
         // Fit bounds
         if !fitCoordinates.isEmpty && fitCoordinates.count > 1 {
             let bounds = fitCoordinates.reduce(
@@ -85,6 +89,41 @@ struct MapLibreMapView: UIViewRepresentable {
             mapView.setCenter(fitCoordinates[0], zoomLevel: 15, animated: context.coordinator.hasInitialized)
             context.coordinator.hasInitialized = true
         }
+    }
+
+    // MARK: - Connection Lines
+
+    private static let connectionSourceId = "unlock-connections"
+    private static let connectionLayerId = "unlock-connections-line"
+
+    private func updateConnectionLines(on mapView: MLNMapView) {
+        guard let style = mapView.style else { return }
+
+        // Remove existing
+        if let layer = style.layer(withIdentifier: Self.connectionLayerId) {
+            style.removeLayer(layer)
+        }
+        if let source = style.source(withIdentifier: Self.connectionSourceId) {
+            style.removeSource(source)
+        }
+
+        guard !connections.isEmpty else { return }
+
+        // Build LineString features
+        let features = connections.map { (from, to) -> MLNPolylineFeature in
+            var coords = [from, to]
+            return MLNPolylineFeature(coordinates: &coords, count: 2)
+        }
+
+        let source = MLNShapeSource(identifier: Self.connectionSourceId, features: features, options: nil)
+        style.addSource(source)
+
+        let layer = MLNLineStyleLayer(identifier: Self.connectionLayerId, source: source)
+        layer.lineColor = NSExpression(forConstantValue: UIColor(red: 107.0/255.0, green: 114.0/255.0, blue: 128.0/255.0, alpha: 1))
+        layer.lineWidth = NSExpression(forConstantValue: 2)
+        layer.lineOpacity = NSExpression(forConstantValue: 0.5)
+        layer.lineDashPattern = NSExpression(forConstantValue: [8, 8])
+        style.addLayer(layer)
     }
 
     // MARK: - Coordinator
