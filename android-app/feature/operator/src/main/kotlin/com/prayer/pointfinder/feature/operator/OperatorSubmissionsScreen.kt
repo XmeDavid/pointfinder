@@ -12,8 +12,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -84,8 +88,8 @@ fun OperatorSubmissionsScreen(
                 label = { Text(stringResource(R.string.label_all)) },
             )
             Spacer(modifier = Modifier.weight(1f))
-            TextButton(onClick = onRefresh) {
-                Text(stringResource(R.string.action_refresh))
+            IconButton(onClick = onRefresh) {
+                Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_refresh))
             }
         }
 

@@ -16,7 +16,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.AssistChip
+import androidx.compose.foundation.background
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -73,7 +73,6 @@ fun OperatorHomeScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.label_operator)) },
                 actions = {
-                    TextButton(onClick = onRefresh) { Text(stringResource(R.string.action_refresh)) }
                     TextButton(onClick = onLogout) { Text(stringResource(R.string.action_logout)) }
                 },
             )
@@ -147,7 +146,20 @@ fun OperatorHomeScreen(
                                     Spacer(Modifier.height(4.dp))
                                     Text(game.description, style = MaterialTheme.typography.bodySmall)
                                     Spacer(Modifier.height(6.dp))
-                                    AssistChip(onClick = {}, label = { Text(game.status.name.uppercase()) })
+                                    val statusColor = when (game.status) {
+                                        GameStatus.LIVE -> StatusCompleted
+                                        GameStatus.SETUP -> StatusSubmitted
+                                        GameStatus.ENDED -> Color(0xFFD32F2F)
+                                    }
+                                    Text(
+                                        text = game.status.name.uppercase(),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Medium,
+                                        color = statusColor,
+                                        modifier = Modifier
+                                            .background(statusColor.copy(alpha = 0.15f), shape = MaterialTheme.shapes.small)
+                                            .padding(horizontal = 10.dp, vertical = 5.dp),
+                                    )
                                 }
                             }
                         }

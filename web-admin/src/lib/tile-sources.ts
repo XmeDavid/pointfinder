@@ -45,11 +45,11 @@ export function getStyleUrl(key: string | undefined | null): string {
   if (key && key in TILE_SOURCES) {
     return TILE_SOURCES[key as TileSourceKey].styleUrl;
   }
-  return TILE_SOURCES.osm.styleUrl;
+  return TILE_SOURCES["osm-classic"].styleUrl;
 }
 
 export function getResolvedStyleUrl(key: string | undefined | null, isDark: boolean): string {
-  const source = key && key in TILE_SOURCES ? TILE_SOURCES[key as TileSourceKey] : TILE_SOURCES.osm;
+  const source = key && key in TILE_SOURCES ? TILE_SOURCES[key as TileSourceKey] : TILE_SOURCES["osm-classic"];
   if (isDark && source.darkStyleUrl) {
     return source.darkStyleUrl;
   }
@@ -60,5 +60,5 @@ export function getDefaultCenter(key: string | undefined | null): { lat: number;
   if (key && key in TILE_SOURCES) {
     return TILE_SOURCES[key as TileSourceKey].defaultCenter;
   }
-  return TILE_SOURCES.osm.defaultCenter;
+  return TILE_SOURCES["osm-classic"].defaultCenter;
 }

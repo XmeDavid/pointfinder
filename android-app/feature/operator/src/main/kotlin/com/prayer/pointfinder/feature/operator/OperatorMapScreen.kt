@@ -6,7 +6,10 @@ import android.graphics.Paint
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Icon
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -95,7 +98,7 @@ fun OperatorMapScreen(
         bases.forEach { base ->
             val status = aggregateBaseStatus(base, baseProgress)
             val colorInt = statusColor(status)
-            val icon = iconFactory.fromBitmap(createPinMarkerBitmap(colorInt, status, density))
+            val icon = iconFactory.fromBitmap(createPinMarkerBitmap(colorInt, status, density, base.hidden))
             m.addMarker(
                 MarkerOptions()
                     .position(LatLng(base.lat, base.lng))
@@ -158,13 +161,13 @@ fun OperatorMapScreen(
             },
             modifier = Modifier.fillMaxSize(),
         )
-        Button(
+        SmallFloatingActionButton(
             onClick = onRefresh,
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(12.dp),
         ) {
-            Text(stringResource(R.string.action_refresh))
+            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_refresh))
         }
     }
 }
@@ -186,7 +189,7 @@ private fun statusColor(status: BaseStatus): Int = when (status) {
     BaseStatus.REJECTED -> android.graphics.Color.parseColor("#D32F2F")
 }
 
-private fun createPinMarkerBitmap(colorInt: Int, status: BaseStatus, density: Float): Bitmap {
+private fun createPinMarkerBitmap(colorInt: Int, status: BaseStatus, density: Float, isHidden: Boolean = false): Bitmap {
     val circleDiameterPx = (36 * density).toInt()
     val triangleHeightPx = (6 * density).toInt()
     val shadowPx = (4 * density).toInt()
@@ -199,10 +202,12 @@ private fun createPinMarkerBitmap(colorInt: Int, status: BaseStatus, density: Fl
     val radius = circleDiameterPx / 2f
     val cy = radius + shadowPx
 
+    val effectiveAlpha = if (isHidden) 180 else 255 // ~70% for hidden
+
     // Shadow
     val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = colorInt
-        alpha = 100
+        alpha = if (isHidden) 70 else 100
         maskFilter = android.graphics.BlurMaskFilter(shadowPx.toFloat(), android.graphics.BlurMaskFilter.Blur.NORMAL)
     }
     canvas.drawCircle(cx, cy + shadowPx * 0.5f, radius, shadowPaint)
@@ -210,6 +215,7 @@ private fun createPinMarkerBitmap(colorInt: Int, status: BaseStatus, density: Fl
     // Main circle
     val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = colorInt
+        alpha = effectiveAlpha
         style = Paint.Style.FILL
     }
     canvas.drawCircle(cx, cy, radius, fillPaint)
@@ -225,16 +231,33 @@ private fun createPinMarkerBitmap(colorInt: Int, status: BaseStatus, density: Fl
     }
     canvas.drawPath(triPath, fillPaint)
 
-    // White icon
-    val iconChar = when (status) {
-        BaseStatus.NOT_VISITED -> "\u25CB"   // ○ circle outline (mappin)
-        BaseStatus.CHECKED_IN -> "\u2691"    // ⚑ flag
-        BaseStatus.SUBMITTED -> "\u25F4"     // ◴ clock
-        BaseStatus.COMPLETED -> "\u2713"     // ✓ checkmark
-        BaseStatus.REJECTED -> "\u2717"      // ✗ xmark
+    // Dashed white border for hidden bases
+    if (isHidden) {
+        val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = android.graphics.Color.WHITE
+            alpha = effectiveAlpha
+            style = Paint.Style.STROKE
+            strokeWidth = 2f * density
+            pathEffect = android.graphics.DashPathEffect(floatArrayOf(6f * density, 4f * density), 0f)
+        }
+        canvas.drawCircle(cx, cy, radius - density, borderPaint)
+    }
+
+    // White icon — use eye-slash for hidden bases
+    val iconChar = if (isHidden) {
+        "\u2298" // ⊘ circled-slash (eye-slash equivalent)
+    } else {
+        when (status) {
+            BaseStatus.NOT_VISITED -> "\u25CB"   // ○ circle outline (mappin)
+            BaseStatus.CHECKED_IN -> "\u2691"    // ⚑ flag
+            BaseStatus.SUBMITTED -> "\u25F4"     // ◴ clock
+            BaseStatus.COMPLETED -> "\u2713"     // ✓ checkmark
+            BaseStatus.REJECTED -> "\u2717"      // ✗ xmark
+        }
     }
     val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = android.graphics.Color.WHITE
+        alpha = effectiveAlpha
         textSize = radius * 0.95f
         textAlign = Paint.Align.CENTER
         typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
