@@ -188,13 +188,9 @@ fun OperatorBasesScreen(
                     Spacer(Modifier.height(4.dp))
                     Text("${base.lat}, ${base.lng}", style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(4.dp))
-                    Text(
-                        if (base.nfcLinked) {
-                            stringResource(R.string.label_nfc_linked)
-                        } else {
-                            stringResource(R.string.label_nfc_not_linked)
-                        },
-                    )
+                    val nfcColor = if (base.nfcLinked) StatusCompleted else StatusSubmitted
+                    val nfcLabel = if (base.nfcLinked) stringResource(R.string.label_nfc_linked) else stringResource(R.string.label_nfc_not_linked)
+                    CapsuleBadge(label = nfcLabel, color = nfcColor)
                 }
             }
         }
@@ -300,7 +296,7 @@ fun OperatorBaseDetailScreen(
 }
 
 @Composable
-private fun CapsuleBadge(label: String, color: Color) {
+internal fun CapsuleBadge(label: String, color: Color) {
     Text(
         text = label,
         style = MaterialTheme.typography.labelSmall,
