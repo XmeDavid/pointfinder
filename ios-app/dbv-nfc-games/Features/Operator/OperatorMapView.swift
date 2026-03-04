@@ -15,6 +15,7 @@ struct OperatorMapView: View {
     @State private var teams: [Team] = []
     @State private var teamLocations: [TeamLocationResponse] = []
     @State private var teamProgress: [TeamBaseProgressResponse] = []
+    @State private var challenges: [Challenge] = []
     @State private var isLoading = true
     @State private var selectedBase: Base?
     @State private var pollingTask: Task<Void, Never>?
@@ -54,10 +55,23 @@ struct OperatorMapView: View {
                 )
             }
 
+            let unlockConnections: [(CLLocationCoordinate2D, CLLocationCoordinate2D)] = challenges
+                .filter { $0.unlocksBaseId != nil }
+                .compactMap { challenge in
+                    guard let sourceBase = bases.first(where: { $0.fixedChallengeId == challenge.id }),
+                          let targetBase = bases.first(where: { $0.id == challenge.unlocksBaseId })
+                    else { return nil }
+                    return (
+                        CLLocationCoordinate2D(latitude: sourceBase.lat, longitude: sourceBase.lng),
+                        CLLocationCoordinate2D(latitude: targetBase.lat, longitude: targetBase.lng)
+                    )
+                }
+
             MapLibreMapView(
                 styleURL: TileSources.resolvedStyleURL(for: tileSource, isDark: colorScheme == .dark),
                 annotations: baseAnnotations + locationAnnotations,
-                fitCoordinates: bases.map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng) }
+                fitCoordinates: bases.map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng) },
+                connections: unlockConnections
             )
             .ignoresSafeArea()
 
@@ -123,8 +137,9 @@ struct OperatorMapView: View {
         async let teamsTask = loadTeams()
         async let locationsTask = loadLocations()
         async let progressTask = loadProgress()
+        async let challengesTask = loadChallenges()
 
-        _ = await (teamsTask, locationsTask, progressTask)
+        _ = await (teamsTask, locationsTask, progressTask, challengesTask)
 
         isLoading = false
     }
@@ -150,6 +165,14 @@ struct OperatorMapView: View {
             teamProgress = try await appState.apiClient.getTeamProgress(gameId: gameId, token: token)
         } catch {
             Logger(subsystem: "com.prayer.pointfinder", category: "OperatorMap").error("Failed to load progress: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    private func loadChallenges() async {
+        do {
+            challenges = try await appState.apiClient.getChallenges(gameId: gameId, token: token)
+        } catch {
+            Logger(subsystem: "com.prayer.pointfinder", category: "OperatorMap").error("Failed to load challenges: \(error.localizedDescription, privacy: .public)")
         }
     }
 

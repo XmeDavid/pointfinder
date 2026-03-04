@@ -30,6 +30,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.prayer.pointfinder.core.i18n.R
 import com.prayer.pointfinder.core.model.Base
 import com.prayer.pointfinder.core.model.BaseStatus
+import com.prayer.pointfinder.core.model.Challenge
 import com.prayer.pointfinder.core.model.Team
 import com.prayer.pointfinder.core.model.TeamBaseProgressResponse
 import com.prayer.pointfinder.core.model.TeamLocationResponse
@@ -42,6 +43,16 @@ import org.maplibre.android.geometry.LatLngBounds
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
+import org.maplibre.android.style.expressions.Expression
+import org.maplibre.android.style.layers.LineLayer
+import org.maplibre.android.style.layers.Property
+import org.maplibre.android.style.layers.PropertyFactory
+import org.maplibre.android.style.layers.SymbolLayer
+import org.maplibre.android.style.sources.GeoJsonSource
+import org.maplibre.geojson.Feature
+import org.maplibre.geojson.FeatureCollection
+import org.maplibre.geojson.LineString
+import org.maplibre.geojson.Point
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -52,6 +63,7 @@ fun OperatorMapScreen(
     teamLocations: List<TeamLocationResponse>,
     teams: List<Team>,
     baseProgress: List<TeamBaseProgressResponse>,
+    challenges: List<Challenge>,
     tileSource: String,
     isDark: Boolean,
     onBaseSelected: (Base) -> Unit,
@@ -62,6 +74,7 @@ fun OperatorMapScreen(
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val mapView = remember { MapView(context) }
     var map by remember { mutableStateOf<MapLibreMap?>(null) }
+    var mapStyle by remember { mutableStateOf<Style?>(null) }
     val iconFactory = remember { IconFactory.getInstance(context) }
 
     DisposableEffect(lifecycle) {
@@ -84,13 +97,15 @@ fun OperatorMapScreen(
 
     // Update style when tileSource changes
     LaunchedEffect(map, tileSource) {
-        map?.setStyle(Style.Builder().fromUri(TileSources.getResolvedStyleUrl(tileSource, isDark)))
+        map?.setStyle(Style.Builder().fromUri(TileSources.getResolvedStyleUrl(tileSource, isDark))) { style ->
+            mapStyle = style
+        }
     }
 
     val density = context.resources.displayMetrics.density
 
-    // Update markers whenever data changes
-    LaunchedEffect(map, bases, teamLocations, teams, baseProgress) {
+    // Update markers and connection lines whenever data changes
+    LaunchedEffect(map, mapStyle, bases, teamLocations, teams, baseProgress, challenges) {
         val m = map ?: return@LaunchedEffect
         m.annotations.forEach { m.removeAnnotation(it) }
 
@@ -123,6 +138,66 @@ fun OperatorMapScreen(
                     .snippet(formatTimestamp(location.updatedAt))
                     .icon(icon),
             )
+        }
+
+        // Unlock connection lines and direction arrows
+        mapStyle?.let { style ->
+            style.getLayer("unlock-arrows")?.let { style.removeLayer(it) }
+            style.getSource("unlock-arrows")?.let { style.removeSource(it) }
+            style.getLayer("unlock-lines")?.let { style.removeLayer(it) }
+            style.getSource("unlock-lines")?.let { style.removeSource(it) }
+
+            val connections = challenges
+                .filter { it.unlocksBaseId != null }
+                .mapNotNull { challenge ->
+                    val sourceBase = bases.find { it.fixedChallengeId == challenge.id }
+                    val targetBase = bases.find { it.id == challenge.unlocksBaseId }
+                    if (sourceBase != null && targetBase != null) Pair(sourceBase, targetBase) else null
+                }
+
+            if (connections.isNotEmpty()) {
+                // Dashed connection lines
+                val lineFeatures = connections.map { (from, to) ->
+                    Feature.fromGeometry(
+                        LineString.fromLngLats(
+                            listOf(
+                                Point.fromLngLat(from.lng, from.lat),
+                                Point.fromLngLat(to.lng, to.lat),
+                            ),
+                        ),
+                    )
+                }
+                style.addSource(GeoJsonSource("unlock-lines", FeatureCollection.fromFeatures(lineFeatures)))
+                style.addLayer(
+                    LineLayer("unlock-lines", "unlock-lines").withProperties(
+                        PropertyFactory.lineColor("#6b7280"),
+                        PropertyFactory.lineWidth(2f),
+                        PropertyFactory.lineOpacity(0.5f),
+                        PropertyFactory.lineDasharray(arrayOf(8f, 8f)),
+                    ),
+                )
+
+                // Direction arrows at midpoint
+                style.addImage("unlock-arrow", createArrowBitmap(density))
+                val arrowFeatures = connections.map { (from, to) ->
+                    val midLat = (from.lat + to.lat) / 2
+                    val midLng = (from.lng + to.lng) / 2
+                    val bearing = calculateBearing(from.lat, from.lng, to.lat, to.lng)
+                    Feature.fromGeometry(Point.fromLngLat(midLng, midLat)).apply {
+                        addNumberProperty("bearing", bearing)
+                    }
+                }
+                style.addSource(GeoJsonSource("unlock-arrows", FeatureCollection.fromFeatures(arrowFeatures)))
+                style.addLayer(
+                    SymbolLayer("unlock-arrows", "unlock-arrows").withProperties(
+                        PropertyFactory.iconImage("unlock-arrow"),
+                        PropertyFactory.iconRotate(Expression.get("bearing")),
+                        PropertyFactory.iconRotationAlignment(Property.ICON_ROTATION_ALIGNMENT_MAP),
+                        PropertyFactory.iconAllowOverlap(true),
+                        PropertyFactory.iconOpacity(0.7f),
+                    ),
+                )
+            }
         }
 
         // Fit camera to bounds
@@ -284,6 +359,36 @@ private fun createCircleMarkerBitmap(colorInt: Int, sizePx: Int = 48): Bitmap {
     }
     canvas.drawCircle(sizePx / 2f, sizePx / 2f, sizePx / 2f - 3f, border)
     return bitmap
+}
+
+private fun createArrowBitmap(density: Float): Bitmap {
+    val size = (14 * density).toInt()
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.parseColor("#6b7280")
+        style = Paint.Style.FILL
+    }
+    // Triangle pointing up (north) — rotated by icon-rotate to match bearing
+    val path = android.graphics.Path().apply {
+        moveTo(size / 2f, 0f)
+        lineTo(size.toFloat(), size.toFloat())
+        lineTo(size / 2f, size * 0.6f)
+        lineTo(0f, size.toFloat())
+        close()
+    }
+    canvas.drawPath(path, paint)
+    return bitmap
+}
+
+private fun calculateBearing(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Double {
+    val dLng = Math.toRadians(lng2 - lng1)
+    val lat1Rad = Math.toRadians(lat1)
+    val lat2Rad = Math.toRadians(lat2)
+    val y = kotlin.math.sin(dLng) * kotlin.math.cos(lat2Rad)
+    val x = kotlin.math.cos(lat1Rad) * kotlin.math.sin(lat2Rad) -
+        kotlin.math.sin(lat1Rad) * kotlin.math.cos(lat2Rad) * kotlin.math.cos(dLng)
+    return (Math.toDegrees(kotlin.math.atan2(y, x)) + 360) % 360
 }
 
 internal fun formatTimestamp(iso: String): String {
