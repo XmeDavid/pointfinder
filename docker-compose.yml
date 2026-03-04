@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_DB: pointfinder
       POSTGRES_USER: scout
-      POSTGRES_PASSWORD: scout
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -25,7 +25,7 @@ services:
       JAVA_OPTS: "-Xms256m -Xmx1200m"
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/pointfinder?stringtype=unspecified
       SPRING_DATASOURCE_USERNAME: scout
-      SPRING_DATASOURCE_PASSWORD: scout
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in .env or environment}
       CORS_ORIGINS: http://localhost,https://pointfinder.pt,https://pointfinder.ch

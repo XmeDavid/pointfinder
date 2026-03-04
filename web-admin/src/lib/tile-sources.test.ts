@@ -41,13 +41,13 @@ describe("getStyleUrl", () => {
     expect(getStyleUrl("swisstopo-sat")).toBe(TILE_SOURCES["swisstopo-sat"].styleUrl);
   });
 
-  it("falls back to OSM for unknown keys", () => {
-    expect(getStyleUrl("unknown")).toBe(TILE_SOURCES.osm.styleUrl);
+  it("falls back to OSM Classic for unknown keys", () => {
+    expect(getStyleUrl("unknown")).toBe(TILE_SOURCES["osm-classic"].styleUrl);
   });
 
-  it("falls back to OSM for null/undefined", () => {
-    expect(getStyleUrl(null)).toBe(TILE_SOURCES.osm.styleUrl);
-    expect(getStyleUrl(undefined)).toBe(TILE_SOURCES.osm.styleUrl);
+  it("falls back to OSM Classic for null/undefined", () => {
+    expect(getStyleUrl(null)).toBe(TILE_SOURCES["osm-classic"].styleUrl);
+    expect(getStyleUrl(undefined)).toBe(TILE_SOURCES["osm-classic"].styleUrl);
   });
 });
 
@@ -71,11 +71,11 @@ describe("getResolvedStyleUrl", () => {
     expect(getResolvedStyleUrl("swisstopo", false)).toBe(TILE_SOURCES.swisstopo.styleUrl);
   });
 
-  it("handles null/undefined by falling back to OSM", () => {
-    expect(getResolvedStyleUrl(null, false)).toBe(TILE_SOURCES.osm.styleUrl);
-    expect(getResolvedStyleUrl(undefined, false)).toBe(TILE_SOURCES.osm.styleUrl);
-    expect(getResolvedStyleUrl(null, true)).toBe(DARK_STYLE_URL);
-    expect(getResolvedStyleUrl(undefined, true)).toBe(DARK_STYLE_URL);
+  it("handles null/undefined by falling back to OSM Classic", () => {
+    expect(getResolvedStyleUrl(null, false)).toBe(TILE_SOURCES["osm-classic"].styleUrl);
+    expect(getResolvedStyleUrl(undefined, false)).toBe(TILE_SOURCES["osm-classic"].styleUrl);
+    expect(getResolvedStyleUrl(null, true)).toBe(TILE_SOURCES["osm-classic"].styleUrl);
+    expect(getResolvedStyleUrl(undefined, true)).toBe(TILE_SOURCES["osm-classic"].styleUrl);
   });
 });
 
@@ -96,9 +96,9 @@ describe("getDefaultCenter", () => {
     expect(center).toEqual(TILE_SOURCES.osm.defaultCenter);
   });
 
-  it("falls back to OSM for null/undefined/unknown", () => {
-    expect(getDefaultCenter(null)).toEqual(TILE_SOURCES.osm.defaultCenter);
-    expect(getDefaultCenter(undefined)).toEqual(TILE_SOURCES.osm.defaultCenter);
-    expect(getDefaultCenter("unknown")).toEqual(TILE_SOURCES.osm.defaultCenter);
+  it("falls back to OSM Classic for null/undefined/unknown", () => {
+    expect(getDefaultCenter(null)).toEqual(TILE_SOURCES["osm-classic"].defaultCenter);
+    expect(getDefaultCenter(undefined)).toEqual(TILE_SOURCES["osm-classic"].defaultCenter);
+    expect(getDefaultCenter("unknown")).toEqual(TILE_SOURCES["osm-classic"].defaultCenter);
   });
 });
