@@ -77,7 +77,7 @@ class MainActivity : AppCompatActivity() {
         when (intent.action) {
             Intent.ACTION_VIEW -> {
                 val baseId = extractBaseIdFromUri(intent.data)
-                nfcEventBus.emitScannedBaseId(baseId)
+                nfcEventBus.emitDeepLinkBaseId(baseId)
             }
             else -> {
                 val scannedBaseId = nfcService.parseBaseIdFromIntent(intent)
