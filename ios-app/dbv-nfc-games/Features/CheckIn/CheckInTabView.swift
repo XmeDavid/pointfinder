@@ -129,10 +129,10 @@ struct CheckInTabView: View {
                 guard appState.isOnline, appState.currentGame?.status != "live" else { return }
                 Task { await appState.loadProgress() }
             }
-            .onChange(of: appState.pendingDeepLinkBaseId) {
+            .task(id: appState.pendingDeepLinkBaseId) {
                 if let baseId = appState.pendingDeepLinkBaseId {
                     appState.pendingDeepLinkBaseId = nil
-                    Task { await performDeepLinkCheckIn(baseId: baseId) }
+                    await performDeepLinkCheckIn(baseId: baseId)
                 }
             }
             .alert(locale.t("common.error"), isPresented: Binding(

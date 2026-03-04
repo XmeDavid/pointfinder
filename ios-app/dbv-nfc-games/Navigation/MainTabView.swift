@@ -40,6 +40,9 @@ struct MainTabView: View {
             }
         }
         .onAppear {
+            if appState.pendingDeepLinkBaseId != nil {
+                selectedTab = 1
+            }
             if !disclosureSeen {
                 showDisclosure = true
             }
