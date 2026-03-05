@@ -288,6 +288,22 @@
     <string name="label_no_content">No content yet</string>
     <string name="label_no_base">No base</string>
 
+    <!-- Team Management -->
+    <string name="label_join_code_section">Join Code</string>
+    <string name="label_show_qr">Show QR</string>
+    <string name="label_qr_code">QR Code</string>
+    <string name="label_variables">Variables</string>
+    <string name="label_players">Players (%1$d)</string>
+    <string name="label_no_players">No players yet</string>
+    <string name="label_remove_player">Remove Player</string>
+    <string name="label_remove_player_confirm">Remove %1$s from this team?</string>
+    <string name="label_delete_team">Delete Team</string>
+    <string name="label_delete_team_confirm">Delete this team? This cannot be undone.</string>
+    <string name="label_team_name">Team Name</string>
+    <string name="label_team_color">Color</string>
+    <string name="label_create_team">Create Team</string>
+    <string name="label_copied">Copied!</string>
+
     <!-- Notifications -->
     <string name="label_notifications">Notifications</string>
     <string name="label_no_notifications">No notifications yet</string>

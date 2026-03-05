@@ -72,10 +72,14 @@ import com.prayer.pointfinder.core.model.CreateBaseRequest
 import com.prayer.pointfinder.core.model.CreateChallengeRequest
 import com.prayer.pointfinder.core.model.UpdateBaseRequest
 import com.prayer.pointfinder.core.model.UpdateChallengeRequest
+import com.prayer.pointfinder.core.model.UpdateTeamRequest
+import com.prayer.pointfinder.core.model.PlayerResponse
 import com.prayer.pointfinder.feature.operator.BaseEditScreen
 import com.prayer.pointfinder.feature.operator.BasesListScreen
 import com.prayer.pointfinder.feature.operator.ChallengeEditScreen
 import com.prayer.pointfinder.feature.operator.ChallengesListScreen
+import com.prayer.pointfinder.feature.operator.TeamDetailScreen
+import com.prayer.pointfinder.feature.operator.TeamsListScreen
 import com.prayer.pointfinder.feature.operator.OperatorGameScaffold
 import com.prayer.pointfinder.feature.operator.CreateGameScreen
 import com.prayer.pointfinder.feature.operator.OperatorHomeScreen
@@ -891,6 +895,7 @@ private fun OperatorGameRoot(
     // Setup sub-screen navigation state
     // null = show hub, "bases_list" / "base_edit:<id>" / "base_create"
     // "challenges_list" / "challenge_edit:<id>" / "challenge_create" / "challenge_create_for_base:<baseId>"
+    // "teams_list" / "team_detail:<id>"
     var setupSubScreen by remember { mutableStateOf<String?>(null) }
 
     // Reset sub-screen when switching tabs
@@ -1071,6 +1076,52 @@ private fun OperatorGameRoot(
                             setupSubScreen = "challenges_list"
                         }
                     }
+                    setupSubScreen == "teams_list" -> {
+                        TeamsListScreen(
+                            teams = state.teams,
+                            onSelectTeam = { team -> setupSubScreen = "team_detail:${team.id}" },
+                            onCreateTeam = { name, color ->
+                                viewModel.createTeam(name, color) { /* created */ }
+                            },
+                            onBack = { setupSubScreen = null },
+                        )
+                    }
+                    setupSubScreen?.startsWith("team_detail:") == true -> {
+                        val teamId = setupSubScreen!!.removePrefix("team_detail:")
+                        val team = state.teams.firstOrNull { it.id == teamId }
+                        if (team != null) {
+                            var players by remember(teamId) { mutableStateOf<List<PlayerResponse>>(emptyList()) }
+                            LaunchedEffect(teamId) {
+                                viewModel.loadTeamPlayers(teamId) { players = it }
+                            }
+                            TeamDetailScreen(
+                                team = team,
+                                players = players,
+                                variables = state.variables,
+                                onSave = { request ->
+                                    viewModel.updateTeam(team.id, request) {
+                                        setupSubScreen = "teams_list"
+                                    }
+                                },
+                                onDelete = {
+                                    viewModel.deleteTeam(team.id) {
+                                        setupSubScreen = "teams_list"
+                                    }
+                                },
+                                onRemovePlayer = { playerId ->
+                                    viewModel.removePlayer(team.id, playerId) {
+                                        viewModel.loadTeamPlayers(teamId) { players = it }
+                                    }
+                                },
+                                onSaveVariableValue = { variableKey, value ->
+                                    viewModel.saveTeamVariableValue(variableKey, team.id, value)
+                                },
+                                onBack = { setupSubScreen = "teams_list" },
+                            )
+                        } else {
+                            setupSubScreen = "teams_list"
+                        }
+                    }
                     else -> {
                         SetupHubScreen(
                             game = selectedGame,
@@ -1080,7 +1131,7 @@ private fun OperatorGameRoot(
                             assignments = state.assignments,
                             onNavigateToBases = { setupSubScreen = "bases_list" },
                             onNavigateToChallenges = { setupSubScreen = "challenges_list" },
-                            onNavigateToTeams = { /* TODO: navigate to teams list */ },
+                            onNavigateToTeams = { setupSubScreen = "teams_list" },
                             onGoLive = { viewModel.updateGameStatus("live") },
                         )
                     }

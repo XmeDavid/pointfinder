@@ -43,6 +43,7 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.7.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
     implementation("com.mohamedrejeb.richeditor:richeditor-compose:1.0.0-rc13")
+    implementation("com.google.zxing:core:3.5.3")
 
     implementation(composeBom)
     implementation("androidx.compose.ui:ui")

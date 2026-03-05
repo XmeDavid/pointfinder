@@ -128,11 +128,17 @@ class OperatorRepository @Inject constructor(
 
     suspend fun deleteTeam(gameId: String, teamId: String): Response<Unit> = api.deleteTeam(gameId, teamId)
 
+    suspend fun deleteTeamUnit(gameId: String, teamId: String) { api.deleteTeam(gameId, teamId) }
+
     suspend fun getTeamPlayers(gameId: String, teamId: String): List<PlayerResponse> =
         api.getTeamPlayers(gameId, teamId)
 
     suspend fun removePlayer(gameId: String, teamId: String, playerId: String): Response<Unit> =
         api.removePlayer(gameId, teamId, playerId)
+
+    suspend fun removePlayerUnit(gameId: String, teamId: String, playerId: String) {
+        api.removePlayer(gameId, teamId, playerId)
+    }
 
     // === Notifications ===
 

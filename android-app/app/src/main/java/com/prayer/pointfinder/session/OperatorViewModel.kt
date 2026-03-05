@@ -12,13 +12,16 @@ import com.prayer.pointfinder.core.model.Challenge
 import com.prayer.pointfinder.core.model.CreateBaseRequest
 import com.prayer.pointfinder.core.model.CreateChallengeRequest
 import com.prayer.pointfinder.core.model.CreateGameRequest
+import com.prayer.pointfinder.core.model.CreateTeamRequest
 import com.prayer.pointfinder.core.model.Game
 import com.prayer.pointfinder.core.model.GameExportDto
 import com.prayer.pointfinder.core.model.ImportGameRequest
+import com.prayer.pointfinder.core.model.PlayerResponse
 import com.prayer.pointfinder.core.model.TeamVariable
 import com.prayer.pointfinder.core.model.TeamVariablesRequest
 import com.prayer.pointfinder.core.model.UpdateBaseRequest
 import com.prayer.pointfinder.core.model.UpdateChallengeRequest
+import com.prayer.pointfinder.core.model.UpdateTeamRequest
 import com.prayer.pointfinder.core.model.OperatorNotificationSettingsResponse
 import com.prayer.pointfinder.core.model.SubmissionResponse
 import com.prayer.pointfinder.core.model.SubmissionStatus
@@ -523,6 +526,86 @@ class OperatorViewModel @Inject constructor(
                 if (markAuthExpiredIfNeeded(e)) return@onFailure
                 _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(e))
             }
+        }
+    }
+
+    fun createTeam(name: String, color: String, onSuccess: (Team) -> Unit) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching {
+                val team = operatorRepository.createTeam(gameId, CreateTeamRequest(name = name))
+                operatorRepository.updateTeam(gameId, team.id, UpdateTeamRequest(name = name, color = color))
+            }.onSuccess { team ->
+                loadGameMeta(gameId)
+                onSuccess(team)
+            }.onFailure { e ->
+                if (markAuthExpiredIfNeeded(e)) return@onFailure
+                _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(e))
+            }
+        }
+    }
+
+    fun updateTeam(teamId: String, request: UpdateTeamRequest, onSuccess: () -> Unit) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching { operatorRepository.updateTeam(gameId, teamId, request) }
+                .onSuccess { loadGameMeta(gameId); onSuccess() }
+                .onFailure { e ->
+                    if (markAuthExpiredIfNeeded(e)) return@onFailure
+                    _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(e))
+                }
+        }
+    }
+
+    fun deleteTeam(teamId: String, onSuccess: () -> Unit) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching { operatorRepository.deleteTeamUnit(gameId, teamId) }
+                .onSuccess { loadGameMeta(gameId); onSuccess() }
+                .onFailure { e ->
+                    if (markAuthExpiredIfNeeded(e)) return@onFailure
+                    _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(e))
+                }
+        }
+    }
+
+    fun loadTeamPlayers(teamId: String, onSuccess: (List<PlayerResponse>) -> Unit) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching { operatorRepository.getTeamPlayers(gameId, teamId) }
+                .onSuccess(onSuccess)
+                .onFailure { /* ignore */ }
+        }
+    }
+
+    fun removePlayer(teamId: String, playerId: String, onSuccess: () -> Unit) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching { operatorRepository.removePlayerUnit(gameId, teamId, playerId) }
+                .onSuccess { onSuccess() }
+                .onFailure { e ->
+                    if (markAuthExpiredIfNeeded(e)) return@onFailure
+                    _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(e))
+                }
+        }
+    }
+
+    fun saveTeamVariableValue(variableKey: String, teamId: String, value: String) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            val currentVars = _state.value.variables.toMutableList()
+            val varIndex = currentVars.indexOfFirst { it.key == variableKey }
+            if (varIndex >= 0) {
+                val updated = currentVars[varIndex].let { v ->
+                    v.copy(teamValues = v.teamValues.toMutableMap().apply { put(teamId, value) })
+                }
+                currentVars[varIndex] = updated
+            }
+            runCatching {
+                operatorRepository.saveGameVariables(gameId, TeamVariablesRequest(variables = currentVars))
+            }.onSuccess { response ->
+                _state.value = _state.value.copy(variables = response.variables)
+            }.onFailure { /* ignore */ }
         }
     }
 
