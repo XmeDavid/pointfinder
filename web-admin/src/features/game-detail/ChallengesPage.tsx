@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-dialog";
 import { Collapsible } from "@/components/ui/collapsible";
 import { TeamVariablesEditor } from "@/components/common/TeamVariablesEditor";
+import { Alert } from "@/components/ui/alert";
 import { challengesApi, type CreateChallengeDto } from "@/lib/api/challenges";
 import { basesApi } from "@/lib/api/bases";
 import { teamsApi } from "@/lib/api/teams";
@@ -170,7 +171,7 @@ export function ChallengesPage() {
         </div>
         <Button className="self-end sm:self-auto" onClick={openCreate}><Plus className="mr-2 h-4 w-4" />{t("challenges.addChallenge")}</Button>
       </div>
-      {actionError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{actionError}</div>}
+      {actionError && <Alert onDismiss={() => setActionError("")}>{actionError}</Alert>}
 
       {challenges.length === 0 ? (
         <Card className="py-12"><CardContent className="text-center"><Puzzle className="mx-auto h-8 w-8 text-muted-foreground mb-2" /><p className="text-muted-foreground">{t("challenges.noChallengesDescription")}</p></CardContent></Card>

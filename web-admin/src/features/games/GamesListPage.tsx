@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { FormLabel } from "@/components/ui/form-label";
+import { Alert } from "@/components/ui/alert";
 import { gamesApi, isGameExportDto } from "@/lib/api/games";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { formatDate } from "@/lib/utils";
@@ -246,7 +247,7 @@ function ImportGameDialog({ open, onOpenChange, navigate }: ImportGameDialogProp
         </DialogHeader>
         <form onSubmit={handleImport} className="space-y-4">
           {error && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
+            <Alert>{error}</Alert>
           )}
           <div className="space-y-2">
             <FormLabel htmlFor="file" required>

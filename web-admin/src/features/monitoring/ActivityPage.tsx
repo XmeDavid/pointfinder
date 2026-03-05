@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Activity, MapPin, ClipboardCheck, CheckCircle, XCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Alert } from "@/components/ui/alert";
 import { monitoringApi } from "@/lib/api/monitoring";
 import { teamsApi } from "@/lib/api/teams";
 import { formatDateTime } from "@/lib/utils";
@@ -26,7 +27,7 @@ export function ActivityPage() {
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold">{t("activityFeed.title")}</h1><p className="text-muted-foreground">{t("activityFeed.description")}</p></div>
-      {websocketError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{websocketError}</div>}
+      {websocketError && <Alert>{websocketError}</Alert>}
       <Card>
         <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Activity className="h-4 w-4" /> {t("activityFeed.recentEvents")}</CardTitle></CardHeader>
         <CardContent>

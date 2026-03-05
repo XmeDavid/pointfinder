@@ -5,6 +5,7 @@ import { ArrowLeft, CheckCircle, XCircle, Clock, MapPin, UserMinus } from "lucid
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 import { teamsApi } from "@/lib/api/teams";
 import { submissionsApi } from "@/lib/api/submissions";
 import { challengesApi } from "@/lib/api/challenges";
@@ -44,7 +45,7 @@ export function TeamDetailPage() {
   return (
     <div className="space-y-6">
       <Button variant="ghost" onClick={() => navigate(`/games/${gameId}/monitor/leaderboard`)}><ArrowLeft className="mr-2 h-4 w-4" /> {t("teamDetail.backToLeaderboard")}</Button>
-      {actionError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{actionError}</div>}
+      {actionError && <Alert onDismiss={() => setActionError("")}>{actionError}</Alert>}
       <div className="flex items-center gap-4">
         <div className="h-6 w-6 rounded-full" style={{ backgroundColor: team.color }} />
         <div><h1 className="text-2xl font-bold">{team.name}</h1><p className="text-muted-foreground">{t("teams.member", { count: players.length })} &middot; {totalPoints} {t("common.points")}</p></div>

@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-dialog";
 import { TeamVariablesEditor } from "@/components/common/TeamVariablesEditor";
+import { Alert } from "@/components/ui/alert";
 import { teamsApi } from "@/lib/api/teams";
 import { teamVariablesApi } from "@/lib/api/team-variables";
 import { getApiErrorMessage } from "@/lib/api/errors";
@@ -64,7 +65,7 @@ export function TeamsPage() {
         </div>
         <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-4 w-4" />{t("teams.createTeam")}</Button>
       </div>
-      {actionError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{actionError}</div>}
+      {actionError && <Alert onDismiss={() => setActionError("")}>{actionError}</Alert>}
 
       {teams.length === 0 ? (
         <Card className="py-12"><CardContent className="text-center"><Users className="mx-auto h-8 w-8 text-muted-foreground mb-2" /><p className="text-muted-foreground">{t("teams.noTeamsDescription")}</p></CardContent></Card>
