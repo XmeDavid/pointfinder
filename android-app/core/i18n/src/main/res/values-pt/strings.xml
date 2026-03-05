@@ -321,4 +321,33 @@
     <!-- Notifications -->
     <string name="label_notifications">Notificações</string>
     <string name="label_no_notifications">Sem notificações ainda</string>
+
+    <!-- More Tab -->
+    <string name="label_game_settings">Definições do Jogo</string>
+    <string name="label_send_notifications">Enviar Notificações</string>
+    <string name="label_manage_operators">Gerir Operadores</string>
+    <string name="label_export_game">Exportar Jogo</string>
+    <string name="label_app_settings">Definições da App</string>
+    <string name="label_game_section">Jogo</string>
+    <string name="label_data_section">Dados</string>
+    <string name="label_start_date">Data de Início</string>
+    <string name="label_end_date">Data de Fim</string>
+    <string name="label_uniform_assignment">Atribuição Uniforme</string>
+    <string name="label_tile_source">Fonte do Mapa</string>
+    <string name="label_broadcast">Transmissão</string>
+    <string name="label_broadcast_code">Código de Transmissão</string>
+    <string name="label_end_game">Terminar Jogo</string>
+    <string name="label_end_game_confirm_title">Terminar Jogo?</string>
+    <string name="label_end_game_confirm_message">O jogo será terminado. As equipas não poderão continuar a jogar.</string>
+    <string name="label_message">Mensagem</string>
+    <string name="label_all_teams">Todas as Equipas</string>
+    <string name="action_send">Enviar</string>
+    <string name="label_sent_to">Enviado para %1$s</string>
+    <string name="label_invite_operator">Convidar Operador</string>
+    <string name="label_operator_email">Endereço de e-mail</string>
+    <string name="label_pending_invites">Convites Pendentes</string>
+    <string name="label_no_operators">Nenhum operador ainda</string>
+    <string name="label_no_invites">Nenhum convite pendente</string>
+    <string name="action_invite">Convidar</string>
+    <string name="label_exporting">A exportar\u2026</string>
 </resources>

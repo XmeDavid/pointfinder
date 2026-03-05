@@ -90,6 +90,11 @@ import com.prayer.pointfinder.feature.operator.SetupHubScreen
 import com.prayer.pointfinder.feature.operator.OperatorSettingsScreen
 import com.prayer.pointfinder.feature.operator.OperatorSubmissionsScreen
 import com.prayer.pointfinder.feature.operator.OperatorTab
+import com.prayer.pointfinder.feature.operator.MoreScreen
+import com.prayer.pointfinder.feature.operator.GameSettingsScreen
+import com.prayer.pointfinder.feature.operator.NotificationsScreen
+import com.prayer.pointfinder.feature.operator.OperatorsScreen
+import kotlinx.serialization.json.Json
 import com.prayer.pointfinder.core.platform.NfcEventBus
 import com.prayer.pointfinder.core.platform.NfcPayloadCodec
 import com.prayer.pointfinder.feature.player.BaseCheckInDetailScreen
@@ -900,6 +905,8 @@ private fun OperatorGameRoot(
     var setupSubScreen by remember { mutableStateOf<String?>(null) }
     // Sub-screen state for map-initiated actions (base create/edit from map)
     var mapSubScreen by remember { mutableStateOf<String?>(null) }
+    // Sub-screen state for More tab navigation
+    var moreSubScreen by remember { mutableStateOf<String?>(null) }
 
     // Reset sub-screen when switching tabs
     LaunchedEffect(state.selectedTab) {
@@ -908,6 +915,9 @@ private fun OperatorGameRoot(
         }
         if (state.selectedTab != OperatorTab.LIVE_MAP) {
             mapSubScreen = null
+        }
+        if (state.selectedTab != OperatorTab.MORE) {
+            moreSubScreen = null
         }
     }
 
@@ -1263,23 +1273,79 @@ private fun OperatorGameRoot(
             }
 
             OperatorTab.MORE -> {
-                OperatorSettingsScreen(
-                    gameName = selectedGame.name,
-                    gameStatus = selectedGame.status,
-                    currentLanguage = currentLanguage,
-                    currentThemeMode = currentThemeMode.name,
-                    notificationSettings = state.notificationSettings,
-                    isLoadingNotificationSettings = state.isLoadingNotificationSettings,
-                    isSavingNotificationSettings = state.isSavingNotificationSettings,
-                    onLanguageChanged = sessionViewModel::updateLanguage,
-                    onThemeModeChanged = { sessionViewModel.updateThemeMode(ThemeMode.valueOf(it)) },
-                    onNotificationSettingsChanged = viewModel::updateNotificationSettings,
-                    onSwitchGame = {
-                        viewModel.clearSelectedGame()
-                        onSwitchGame()
-                    },
-                    onLogout = sessionViewModel::logout,
-                )
+                val moreContext = LocalContext.current
+                when (moreSubScreen) {
+                    "settings" -> {
+                        GameSettingsScreen(
+                            game = selectedGame,
+                            onSave = { request ->
+                                viewModel.updateGame(request) {}
+                            },
+                            onUpdateStatus = viewModel::updateGameStatus,
+                            onBack = { moreSubScreen = null },
+                        )
+                    }
+                    "notifications" -> {
+                        LaunchedEffect(Unit) { viewModel.loadNotifications() }
+                        NotificationsScreen(
+                            notifications = state.notifications,
+                            teams = state.teams,
+                            onSend = { message, teamId ->
+                                viewModel.sendNotification(message, teamId) {}
+                            },
+                            onRefresh = viewModel::loadNotifications,
+                            isRefreshing = state.isLoading,
+                            onBack = { moreSubScreen = null },
+                        )
+                    }
+                    "operators" -> {
+                        LaunchedEffect(Unit) { viewModel.loadOperators() }
+                        OperatorsScreen(
+                            operators = state.operators,
+                            invites = state.invites,
+                            onInvite = { email ->
+                                viewModel.inviteOperator(email) {}
+                            },
+                            onRefresh = viewModel::loadOperators,
+                            isRefreshing = state.isLoading,
+                            onBack = { moreSubScreen = null },
+                        )
+                    }
+                    else -> {
+                        MoreScreen(
+                            currentLanguage = currentLanguage,
+                            currentThemeMode = currentThemeMode.name,
+                            notificationSettings = state.notificationSettings,
+                            isLoadingNotificationSettings = state.isLoadingNotificationSettings,
+                            isSavingNotificationSettings = state.isSavingNotificationSettings,
+                            onLanguageChanged = sessionViewModel::updateLanguage,
+                            onThemeModeChanged = { sessionViewModel.updateThemeMode(ThemeMode.valueOf(it)) },
+                            onNotificationSettingsChanged = viewModel::updateNotificationSettings,
+                            onNavigateToSettings = { moreSubScreen = "settings" },
+                            onNavigateToNotifications = { moreSubScreen = "notifications" },
+                            onNavigateToOperators = { moreSubScreen = "operators" },
+                            onExportGame = {
+                                viewModel.exportGame { exportDto ->
+                                    val jsonString = Json { prettyPrint = true }.encodeToString(
+                                        com.prayer.pointfinder.core.model.GameExportDto.serializer(),
+                                        exportDto,
+                                    )
+                                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                        type = "application/json"
+                                        putExtra(Intent.EXTRA_TEXT, jsonString)
+                                        putExtra(Intent.EXTRA_SUBJECT, "${selectedGame.name}_export.json")
+                                    }
+                                    moreContext.startActivity(Intent.createChooser(shareIntent, null))
+                                }
+                            },
+                            onSwitchGame = {
+                                viewModel.clearSelectedGame()
+                                onSwitchGame()
+                            },
+                            onLogout = sessionViewModel::logout,
+                        )
+                    }
+                }
             }
         }
     }

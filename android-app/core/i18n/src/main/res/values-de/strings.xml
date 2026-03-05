@@ -321,4 +321,33 @@
     <!-- Notifications -->
     <string name="label_notifications">Benachrichtigungen</string>
     <string name="label_no_notifications">Noch keine Benachrichtigungen</string>
+
+    <!-- More Tab -->
+    <string name="label_game_settings">Spieleinstellungen</string>
+    <string name="label_send_notifications">Benachrichtigungen senden</string>
+    <string name="label_manage_operators">Operatoren verwalten</string>
+    <string name="label_export_game">Spiel exportieren</string>
+    <string name="label_app_settings">App-Einstellungen</string>
+    <string name="label_game_section">Spiel</string>
+    <string name="label_data_section">Daten</string>
+    <string name="label_start_date">Startdatum</string>
+    <string name="label_end_date">Enddatum</string>
+    <string name="label_uniform_assignment">Einheitliche Zuweisung</string>
+    <string name="label_tile_source">Kartenkachel-Quelle</string>
+    <string name="label_broadcast">Broadcast</string>
+    <string name="label_broadcast_code">Broadcast-Code</string>
+    <string name="label_end_game">Spiel beenden</string>
+    <string name="label_end_game_confirm_title">Spiel beenden?</string>
+    <string name="label_end_game_confirm_message">Das Spiel wird beendet. Teams können nicht mehr spielen.</string>
+    <string name="label_message">Nachricht</string>
+    <string name="label_all_teams">Alle Teams</string>
+    <string name="action_send">Senden</string>
+    <string name="label_sent_to">Gesendet an %1$s</string>
+    <string name="label_invite_operator">Operator einladen</string>
+    <string name="label_operator_email">E-Mail-Adresse</string>
+    <string name="label_pending_invites">Ausstehende Einladungen</string>
+    <string name="label_no_operators">Noch keine Operatoren</string>
+    <string name="label_no_invites">Keine ausstehenden Einladungen</string>
+    <string name="action_invite">Einladen</string>
+    <string name="label_exporting">Exportieren\u2026</string>
 </resources>
