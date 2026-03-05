@@ -243,6 +243,27 @@
     <string name="action_save">Speichern</string>
     <string name="label_write_nfc">NFC schreiben</string>
 
+    <!-- Rich Text Editor -->
+    <string name="action_done">Fertig</string>
+    <string name="label_insert_variable">Variable einf\u00fcgen</string>
+    <string name="label_create_variable">Variable erstellen</string>
+    <string name="label_preview_as_team">Vorschau als Team</string>
+    <string name="label_variable_name">Variablenname</string>
+    <string name="label_no_variables">Noch keine Variablen definiert</string>
+    <string name="label_bold">Fett</string>
+    <string name="label_italic">Kursiv</string>
+    <string name="label_underline">Unterstrichen</string>
+    <string name="label_heading1">\u00dcberschrift 1</string>
+    <string name="label_heading2">\u00dcberschrift 2</string>
+    <string name="label_bullet_list">Aufz\u00e4hlungsliste</string>
+    <string name="label_ordered_list">Nummerierte Liste</string>
+    <string name="label_code">Code</string>
+    <string name="label_link">Link</string>
+    <string name="label_url">URL</string>
+    <string name="label_link_text">Linktext</string>
+    <string name="label_preview">Vorschau</string>
+    <string name="label_select_team">Team ausw\u00e4hlen</string>
+
     <!-- Notifications -->
     <string name="label_notifications">Benachrichtigungen</string>
     <string name="label_no_notifications">Noch keine Benachrichtigungen</string>

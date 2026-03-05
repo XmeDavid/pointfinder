@@ -243,6 +243,27 @@
     <string name="action_save">Save</string>
     <string name="label_write_nfc">Write NFC</string>
 
+    <!-- Rich Text Editor -->
+    <string name="action_done">Done</string>
+    <string name="label_insert_variable">Insert Variable</string>
+    <string name="label_create_variable">Create Variable</string>
+    <string name="label_preview_as_team">Preview as Team</string>
+    <string name="label_variable_name">Variable Name</string>
+    <string name="label_no_variables">No variables defined yet</string>
+    <string name="label_bold">Bold</string>
+    <string name="label_italic">Italic</string>
+    <string name="label_underline">Underline</string>
+    <string name="label_heading1">Heading 1</string>
+    <string name="label_heading2">Heading 2</string>
+    <string name="label_bullet_list">Bullet List</string>
+    <string name="label_ordered_list">Ordered List</string>
+    <string name="label_code">Code</string>
+    <string name="label_link">Link</string>
+    <string name="label_url">URL</string>
+    <string name="label_link_text">Link Text</string>
+    <string name="label_preview">Preview</string>
+    <string name="label_select_team">Select Team</string>
+
     <!-- Notifications -->
     <string name="label_notifications">Notifications</string>
     <string name="label_no_notifications">No notifications yet</string>
