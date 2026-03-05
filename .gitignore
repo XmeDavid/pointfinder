@@ -27,3 +27,4 @@ legacy/
 .cursor/
 .claude/
 .tmux
+.worktrees/
