@@ -212,6 +212,21 @@
     <string name="error_nfc_link_failed">NFC written but link failed: %1$s</string>
     <string name="error_network_unavailable">Network unavailable. Please check your connection.</string>
 
+    <!-- Setup Hub -->
+    <string name="label_needs_attention">Needs Attention</string>
+    <string name="label_manage">Manage</string>
+    <string name="label_go_live">Go Live</string>
+    <string name="label_no_bases">No bases created</string>
+    <string name="label_no_challenges">No challenges created</string>
+    <string name="label_no_teams">No teams created</string>
+    <string name="label_nfc_missing">NFC missing (%1$d bases)</string>
+    <string name="label_location_bound_unassigned">Location-bound challenges unassigned (%1$d)</string>
+    <string name="label_not_enough_challenges">Not enough challenges</string>
+    <string name="label_go_live_confirm_title">Start Game?</string>
+    <string name="label_go_live_confirm_message">Teams will be able to join and play. You can still edit bases and challenges during the game.</string>
+    <string name="label_challenges">Challenges</string>
+    <string name="label_teams">Teams</string>
+
     <!-- Notifications -->
     <string name="label_notifications">Notifications</string>
     <string name="label_no_notifications">No notifications yet</string>

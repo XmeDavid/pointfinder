@@ -212,6 +212,21 @@
     <string name="error_nfc_link_failed">NFC geschrieben, aber Verknüpfung fehlgeschlagen: %1$s</string>
     <string name="error_network_unavailable">Netzwerk nicht verfügbar. Überprüfe deine Verbindung.</string>
 
+    <!-- Setup Hub -->
+    <string name="label_needs_attention">Handlungsbedarf</string>
+    <string name="label_manage">Verwalten</string>
+    <string name="label_go_live">Spiel starten</string>
+    <string name="label_no_bases">Keine Basen erstellt</string>
+    <string name="label_no_challenges">Keine Challenges erstellt</string>
+    <string name="label_no_teams">Keine Teams erstellt</string>
+    <string name="label_nfc_missing">NFC fehlt (%1$d Basen)</string>
+    <string name="label_location_bound_unassigned">Ortsgebundene Challenges nicht zugewiesen (%1$d)</string>
+    <string name="label_not_enough_challenges">Nicht genug Challenges</string>
+    <string name="label_go_live_confirm_title">Spiel starten?</string>
+    <string name="label_go_live_confirm_message">Teams können beitreten und spielen. Basen und Challenges können weiterhin bearbeitet werden.</string>
+    <string name="label_challenges">Challenges</string>
+    <string name="label_teams">Teams</string>
+
     <!-- Notifications -->
     <string name="label_notifications">Benachrichtigungen</string>
     <string name="label_no_notifications">Noch keine Benachrichtigungen</string>
