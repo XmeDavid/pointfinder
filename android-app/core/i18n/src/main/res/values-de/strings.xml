@@ -288,6 +288,22 @@
     <string name="label_no_content">Noch kein Inhalt</string>
     <string name="label_no_base">Keine Basis</string>
 
+    <!-- Team Management -->
+    <string name="label_join_code_section">Beitrittscode</string>
+    <string name="label_show_qr">QR anzeigen</string>
+    <string name="label_qr_code">QR-Code</string>
+    <string name="label_variables">Variablen</string>
+    <string name="label_players">Spieler (%1$d)</string>
+    <string name="label_no_players">Noch keine Spieler</string>
+    <string name="label_remove_player">Spieler entfernen</string>
+    <string name="label_remove_player_confirm">%1$s aus diesem Team entfernen?</string>
+    <string name="label_delete_team">Team l\u00f6schen</string>
+    <string name="label_delete_team_confirm">Dieses Team l\u00f6schen? Dies kann nicht r\u00fcckg\u00e4ngig gemacht werden.</string>
+    <string name="label_team_name">Teamname</string>
+    <string name="label_team_color">Farbe</string>
+    <string name="label_create_team">Team erstellen</string>
+    <string name="label_copied">Kopiert!</string>
+
     <!-- Notifications -->
     <string name="label_notifications">Benachrichtigungen</string>
     <string name="label_no_notifications">Noch keine Benachrichtigungen</string>

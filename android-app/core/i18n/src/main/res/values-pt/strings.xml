@@ -288,6 +288,22 @@
     <string name="label_no_content">Sem conteúdo ainda</string>
     <string name="label_no_base">Sem base</string>
 
+    <!-- Team Management -->
+    <string name="label_join_code_section">Código de Entrada</string>
+    <string name="label_show_qr">Mostrar QR</string>
+    <string name="label_qr_code">Código QR</string>
+    <string name="label_variables">Variáveis</string>
+    <string name="label_players">Jogadores (%1$d)</string>
+    <string name="label_no_players">Sem jogadores ainda</string>
+    <string name="label_remove_player">Remover Jogador</string>
+    <string name="label_remove_player_confirm">Remover %1$s desta equipa?</string>
+    <string name="label_delete_team">Eliminar Equipa</string>
+    <string name="label_delete_team_confirm">Eliminar esta equipa? Esta ação não pode ser desfeita.</string>
+    <string name="label_team_name">Nome da Equipa</string>
+    <string name="label_team_color">Cor</string>
+    <string name="label_create_team">Criar Equipa</string>
+    <string name="label_copied">Copiado!</string>
+
     <!-- Notifications -->
     <string name="label_notifications">Notificações</string>
     <string name="label_no_notifications">Sem notificações ainda</string>
