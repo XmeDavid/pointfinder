@@ -243,6 +243,27 @@
     <string name="action_save">Guardar</string>
     <string name="label_write_nfc">Gravar NFC</string>
 
+    <!-- Rich Text Editor -->
+    <string name="action_done">Concluir</string>
+    <string name="label_insert_variable">Inserir Variável</string>
+    <string name="label_create_variable">Criar Variável</string>
+    <string name="label_preview_as_team">Pré-visualizar como Equipa</string>
+    <string name="label_variable_name">Nome da Variável</string>
+    <string name="label_no_variables">Nenhuma variável definida</string>
+    <string name="label_bold">Negrito</string>
+    <string name="label_italic">Itálico</string>
+    <string name="label_underline">Sublinhado</string>
+    <string name="label_heading1">Título 1</string>
+    <string name="label_heading2">Título 2</string>
+    <string name="label_bullet_list">Lista com Marcadores</string>
+    <string name="label_ordered_list">Lista Numerada</string>
+    <string name="label_code">Código</string>
+    <string name="label_link">Ligação</string>
+    <string name="label_url">URL</string>
+    <string name="label_link_text">Texto da Ligação</string>
+    <string name="label_preview">Pré-visualização</string>
+    <string name="label_select_team">Selecionar Equipa</string>
+
     <!-- Notifications -->
     <string name="label_notifications">Notificações</string>
     <string name="label_no_notifications">Sem notificações ainda</string>
