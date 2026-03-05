@@ -30,7 +30,9 @@
     "noSignal": "Sem sinal",
     "saving": "A guardar...",
     "optional": "opcional",
-    "required": "obrigatório"
+    "required": "obrigatório",
+    "saved": "Guardado",
+    "deleted": "Eliminado"
   },
   "auth": {
     "signIn": "Entrar",
@@ -396,7 +398,13 @@
     "title": "Feed de Atividade",
     "description": "Eventos do jogo em tempo real",
     "recentEvents": "Eventos Recentes",
-    "noActivity": "Sem atividade ainda"
+    "noActivity": "Sem atividade ainda",
+    "eventType": {
+      "check_in": "Check-in",
+      "submission": "Submissão",
+      "approval": "Aprovação",
+      "rejection": "Rejeição"
+    }
   },
   "submissions": {
     "title": "Submissões",

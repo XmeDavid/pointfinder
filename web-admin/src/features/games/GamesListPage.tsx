@@ -5,9 +5,11 @@ import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { FormLabel } from "@/components/ui/form-label";
+import { Alert } from "@/components/ui/alert";
 import { gamesApi, isGameExportDto } from "@/lib/api/games";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { formatDate } from "@/lib/utils";
@@ -46,7 +48,28 @@ export function GamesListPage() {
     : games;
 
   if (isLoading) {
-    return <div className="flex items-center justify-center py-20"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div><Skeleton className="h-8 w-40" /><Skeleton className="h-4 w-56 mt-2" /></div>
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <Skeleton className="h-6 w-36" />
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                </div>
+                <Skeleton className="h-4 w-full mt-2" />
+              </CardHeader>
+              <CardContent><Skeleton className="h-4 w-48" /></CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   const statusOptions: { value: StatusFilter; label: string }[] = [
@@ -246,7 +269,7 @@ function ImportGameDialog({ open, onOpenChange, navigate }: ImportGameDialogProp
         </DialogHeader>
         <form onSubmit={handleImport} className="space-y-4">
           {error && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
+            <Alert>{error}</Alert>
           )}
           <div className="space-y-2">
             <FormLabel htmlFor="file" required>
@@ -273,7 +296,7 @@ function ImportGameDialog({ open, onOpenChange, navigate }: ImportGameDialogProp
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t("common.cancel")}
             </Button>
-            <Button type="submit" disabled={importing || !file}>
+            <Button type="submit" loading={importing} disabled={!file}>
               {importing ? t("game.importing") : t("game.import")}
             </Button>
           </DialogFooter>

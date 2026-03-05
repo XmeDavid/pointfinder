@@ -7,6 +7,7 @@ import { SetupLayout } from "./layouts/SetupLayout";
 import { MonitorLayout } from "./layouts/MonitorLayout";
 import { ReviewLayout } from "./layouts/ReviewLayout";
 import type { GameStatus } from "@/types";
+import { Toaster } from "@/components/ui/toast";
 
 export function AppShell({ gameStatus }: { gameStatus?: GameStatus }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -15,13 +16,28 @@ export function AppShell({ gameStatus }: { gameStatus?: GameStatus }) {
   const layout = gameId ? getLayout(gameId) : "classic";
 
   if (layout === "setup" && gameId) {
-    return <SetupLayout gameId={gameId} gameStatus={gameStatus} />;
+    return (
+      <>
+        <SetupLayout gameId={gameId} gameStatus={gameStatus} />
+        <Toaster />
+      </>
+    );
   }
   if (layout === "monitor" && gameId) {
-    return <MonitorLayout gameId={gameId} gameStatus={gameStatus} />;
+    return (
+      <>
+        <MonitorLayout gameId={gameId} gameStatus={gameStatus} />
+        <Toaster />
+      </>
+    );
   }
   if (layout === "review" && gameId) {
-    return <ReviewLayout gameId={gameId} gameStatus={gameStatus} />;
+    return (
+      <>
+        <ReviewLayout gameId={gameId} gameStatus={gameStatus} />
+        <Toaster />
+      </>
+    );
   }
 
   return (
@@ -41,6 +57,7 @@ export function AppShell({ gameStatus }: { gameStatus?: GameStatus }) {
           <Outlet />
         </main>
       </div>
+      <Toaster />
     </div>
   );
 }

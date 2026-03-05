@@ -4,6 +4,7 @@ import { Calendar, MapPin, Puzzle, Users, Play, Square, AlertTriangle, CheckCirc
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 import { gamesApi } from "@/lib/api/games";
 import { basesApi } from "@/lib/api/bases";
 import { challengesApi } from "@/lib/api/challenges";
@@ -89,7 +90,7 @@ export function OverviewPage() {
           )}
         </div>
       </div>
-      {actionError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{actionError}</div>}
+      {actionError && <Alert onDismiss={() => setActionError("")}>{actionError}</Alert>}
 
       <div className="grid gap-4 md:grid-cols-4">
         <Card><CardContent className="flex items-center gap-3 p-4"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10"><MapPin className="h-5 w-5 text-blue-500" /></div><div><p className="text-2xl font-bold">{bases.length}</p><p className="text-sm text-muted-foreground">{t("nav.bases")}</p></div></CardContent></Card>
