@@ -2,7 +2,7 @@ package com.prayer.pointfinder.feature.operator
 
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,29 +15,31 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.Button
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.prayer.pointfinder.core.i18n.R
-import com.prayer.pointfinder.core.model.GameStatus
 import com.prayer.pointfinder.core.model.OperatorNotificationSettingsResponse
 
 @Composable
-fun OperatorSettingsScreen(
-    gameName: String?,
-    gameStatus: GameStatus?,
+fun MoreScreen(
     currentLanguage: String,
     currentThemeMode: String,
     notificationSettings: OperatorNotificationSettingsResponse?,
@@ -45,7 +47,11 @@ fun OperatorSettingsScreen(
     isSavingNotificationSettings: Boolean,
     onLanguageChanged: (String) -> Unit,
     onThemeModeChanged: (String) -> Unit,
-    onNotificationSettingsChanged: (notifyPendingSubmissions: Boolean, notifyAllSubmissions: Boolean, notifyCheckIns: Boolean) -> Unit,
+    onNotificationSettingsChanged: (Boolean, Boolean, Boolean) -> Unit,
+    onNavigateToSettings: () -> Unit,
+    onNavigateToNotifications: () -> Unit,
+    onNavigateToOperators: () -> Unit,
+    onExportGame: () -> Unit,
     onSwitchGame: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
@@ -54,6 +60,7 @@ fun OperatorSettingsScreen(
     val notifyPendingSubmissions = notificationSettings?.notifyPendingSubmissions ?: true
     val notifyAllSubmissions = notificationSettings?.notifyAllSubmissions ?: false
     val notifyCheckIns = notificationSettings?.notifyCheckIns ?: false
+
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -62,14 +69,53 @@ fun OperatorSettingsScreen(
     ) {
         item {
             Text(
-                stringResource(R.string.label_settings),
+                stringResource(R.string.label_more),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
             )
         }
 
+        // Game section
         item {
-            OperatorSettingsSection(title = stringResource(R.string.label_language)) {
+            OperatorSettingsSection(title = stringResource(R.string.label_game_section)) {
+                NavigationRow(
+                    icon = Icons.Default.Settings,
+                    label = stringResource(R.string.label_game_settings),
+                    onClick = onNavigateToSettings,
+                )
+                NavigationRow(
+                    icon = Icons.Default.Notifications,
+                    label = stringResource(R.string.label_send_notifications),
+                    onClick = onNavigateToNotifications,
+                )
+                NavigationRow(
+                    icon = Icons.Default.People,
+                    label = stringResource(R.string.label_manage_operators),
+                    onClick = onNavigateToOperators,
+                )
+            }
+        }
+
+        // Data section
+        item {
+            OperatorSettingsSection(title = stringResource(R.string.label_data_section)) {
+                NavigationRow(
+                    icon = Icons.Default.Download,
+                    label = stringResource(R.string.label_export_game),
+                    onClick = onExportGame,
+                )
+            }
+        }
+
+        // App Settings section
+        item {
+            OperatorSettingsSection(title = stringResource(R.string.label_app_settings)) {
+                // Language picker
+                Text(
+                    stringResource(R.string.label_language),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf("en" to "English", "pt" to "Portugues", "de" to "Deutsch").forEach { (code, label) ->
                         val isSelected = code == currentLanguage
@@ -80,11 +126,15 @@ fun OperatorSettingsScreen(
                         }
                     }
                 }
-            }
-        }
 
-        item {
-            OperatorSettingsSection(title = stringResource(R.string.label_theme)) {
+                Spacer(Modifier.height(4.dp))
+
+                // Theme picker
+                Text(
+                    stringResource(R.string.label_theme),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(
                         "SYSTEM" to stringResource(R.string.label_theme_system),
@@ -102,40 +152,7 @@ fun OperatorSettingsScreen(
             }
         }
 
-        item {
-            OperatorSettingsSection(title = stringResource(R.string.label_current_game)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(stringResource(R.string.label_game))
-                    Text(gameName ?: "-", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(stringResource(R.string.label_status))
-                    Text(
-                        gameStatus?.name?.lowercase()?.replaceFirstChar { it.uppercase() } ?: "-",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        }
-
-        item {
-            OperatorSettingsSection(title = stringResource(R.string.label_privacy)) {
-                TextButton(
-                    onClick = {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_POLICY_URL)))
-                    },
-                ) {
-                    Text(stringResource(R.string.action_open_privacy_policy))
-                }
-            }
-        }
-
+        // Notification settings
         item {
             OperatorSettingsSection(title = stringResource(R.string.label_notification_settings)) {
                 if (isLoadingNotificationSettings && notificationSettings == null) {
@@ -146,33 +163,21 @@ fun OperatorSettingsScreen(
                         checked = notifyPendingSubmissions,
                         enabled = !isSavingNotificationSettings,
                     ) { enabled ->
-                        onNotificationSettingsChanged(
-                            enabled,
-                            notifyAllSubmissions,
-                            notifyCheckIns,
-                        )
+                        onNotificationSettingsChanged(enabled, notifyAllSubmissions, notifyCheckIns)
                     }
                     SettingToggleRow(
                         label = stringResource(R.string.label_notify_all_submissions),
                         checked = notifyAllSubmissions,
                         enabled = !isSavingNotificationSettings,
                     ) { enabled ->
-                        onNotificationSettingsChanged(
-                            notifyPendingSubmissions,
-                            enabled,
-                            notifyCheckIns,
-                        )
+                        onNotificationSettingsChanged(notifyPendingSubmissions, enabled, notifyCheckIns)
                     }
                     SettingToggleRow(
                         label = stringResource(R.string.label_notify_check_ins),
                         checked = notifyCheckIns,
                         enabled = !isSavingNotificationSettings,
                     ) { enabled ->
-                        onNotificationSettingsChanged(
-                            notifyPendingSubmissions,
-                            notifyAllSubmissions,
-                            enabled,
-                        )
+                        onNotificationSettingsChanged(notifyPendingSubmissions, notifyAllSubmissions, enabled)
                     }
                     if (isSavingNotificationSettings) {
                         Text(
@@ -185,6 +190,20 @@ fun OperatorSettingsScreen(
             }
         }
 
+        // Privacy
+        item {
+            OperatorSettingsSection(title = stringResource(R.string.label_privacy)) {
+                TextButton(
+                    onClick = {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_POLICY_URL)))
+                    },
+                ) {
+                    Text(stringResource(R.string.action_open_privacy_policy))
+                }
+            }
+        }
+
+        // Switch Game / Logout
         item {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 androidx.compose.material3.OutlinedButton(
@@ -212,46 +231,36 @@ fun OperatorSettingsScreen(
 }
 
 @Composable
-internal fun SettingToggleRow(
+private fun NavigationRow(
+    icon: ImageVector,
     label: String,
-    checked: Boolean,
-    enabled: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
+    onClick: () -> Unit,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.weight(1f),
-        )
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            enabled = enabled,
-        )
-    }
-}
-
-@Composable
-internal fun OperatorSettingsSection(
-    title: String,
-    content: @Composable () -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
-                shape = MaterialTheme.shapes.medium,
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                icon,
+                contentDescription = null,
+                modifier = Modifier.size(22.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-        content()
+            Text(label, style = MaterialTheme.typography.bodyLarge)
+        }
+        Icon(
+            Icons.Default.ChevronRight,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }

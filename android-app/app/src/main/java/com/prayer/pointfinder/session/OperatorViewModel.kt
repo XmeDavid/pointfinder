@@ -16,11 +16,17 @@ import com.prayer.pointfinder.core.model.CreateTeamRequest
 import com.prayer.pointfinder.core.model.Game
 import com.prayer.pointfinder.core.model.GameExportDto
 import com.prayer.pointfinder.core.model.ImportGameRequest
+import com.prayer.pointfinder.core.model.InviteRequest
+import com.prayer.pointfinder.core.model.InviteResponse
+import com.prayer.pointfinder.core.model.NotificationResponse
+import com.prayer.pointfinder.core.model.OperatorUserResponse
+import com.prayer.pointfinder.core.model.SendNotificationRequest
 import com.prayer.pointfinder.core.model.PlayerResponse
 import com.prayer.pointfinder.core.model.TeamVariable
 import com.prayer.pointfinder.core.model.TeamVariablesRequest
 import com.prayer.pointfinder.core.model.UpdateBaseRequest
 import com.prayer.pointfinder.core.model.UpdateChallengeRequest
+import com.prayer.pointfinder.core.model.UpdateGameRequest
 import com.prayer.pointfinder.core.model.UpdateTeamRequest
 import com.prayer.pointfinder.core.model.OperatorNotificationSettingsResponse
 import com.prayer.pointfinder.core.model.ActivityEvent
@@ -74,6 +80,9 @@ data class OperatorState(
     val awaitingNfcWrite: Boolean = false,
     val writeStatus: String? = null,
     val writeSuccess: Boolean? = null,
+    val notifications: List<NotificationResponse> = emptyList(),
+    val operators: List<OperatorUserResponse> = emptyList(),
+    val invites: List<InviteResponse> = emptyList(),
     val errorMessage: String? = null,
     val authExpired: Boolean = false,
 )
@@ -204,6 +213,9 @@ class OperatorViewModel @Inject constructor(
             leaderboard = emptyList(),
             activity = emptyList(),
             notificationSettings = null,
+            notifications = emptyList(),
+            operators = emptyList(),
+            invites = emptyList(),
             selectedBase = null,
             writeStatus = null,
             writeSuccess = null,
@@ -718,6 +730,99 @@ class OperatorViewModel @Inject constructor(
             }.onFailure { e ->
                 if (markAuthExpiredIfNeeded(e)) return@onFailure
                 _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(e))
+            }
+        }
+    }
+
+    fun updateGame(request: UpdateGameRequest, onSuccess: () -> Unit) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching {
+                operatorRepository.updateGame(gameId, request)
+            }.onSuccess { updatedGame ->
+                _state.value = _state.value.copy(selectedGame = updatedGame, authExpired = false)
+                loadGames()
+                onSuccess()
+            }.onFailure { e ->
+                if (markAuthExpiredIfNeeded(e)) return@onFailure
+                _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(e))
+            }
+        }
+    }
+
+    fun loadNotifications() {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching {
+                operatorRepository.getNotifications(gameId)
+            }.onSuccess { list ->
+                _state.value = _state.value.copy(notifications = list, authExpired = false)
+            }.onFailure { err ->
+                if (markAuthExpiredIfNeeded(err)) return@onFailure
+                _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(err))
+            }
+        }
+    }
+
+    fun sendNotification(message: String, targetTeamId: String?, onSuccess: () -> Unit) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching {
+                operatorRepository.sendNotification(gameId, SendNotificationRequest(message = message, targetTeamId = targetTeamId))
+            }.onSuccess {
+                _state.value = _state.value.copy(authExpired = false)
+                loadNotifications()
+                onSuccess()
+            }.onFailure { err ->
+                if (markAuthExpiredIfNeeded(err)) return@onFailure
+                _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(err))
+            }
+        }
+    }
+
+    fun loadOperators() {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching {
+                val ops = operatorRepository.getGameOperators(gameId)
+                val inv = operatorRepository.getGameInvites(gameId)
+                ops to inv
+            }.onSuccess { (ops, inv) ->
+                _state.value = _state.value.copy(operators = ops, invites = inv, authExpired = false)
+            }.onFailure { err ->
+                if (markAuthExpiredIfNeeded(err)) return@onFailure
+                _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(err))
+            }
+        }
+    }
+
+    fun inviteOperator(email: String, onSuccess: () -> Unit) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching {
+                operatorRepository.createInvite(InviteRequest(email = email, gameId = gameId))
+            }.onSuccess {
+                _state.value = _state.value.copy(authExpired = false)
+                loadOperators()
+                onSuccess()
+            }.onFailure { err ->
+                if (markAuthExpiredIfNeeded(err)) return@onFailure
+                _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(err))
+            }
+        }
+    }
+
+    fun exportGame(onSuccess: (GameExportDto) -> Unit) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching {
+                operatorRepository.exportGame(gameId)
+            }.onSuccess { export ->
+                _state.value = _state.value.copy(authExpired = false)
+                onSuccess(export)
+            }.onFailure { err ->
+                if (markAuthExpiredIfNeeded(err)) return@onFailure
+                _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(err))
             }
         }
     }

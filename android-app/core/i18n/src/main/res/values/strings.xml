@@ -321,4 +321,33 @@
     <!-- Notifications -->
     <string name="label_notifications">Notifications</string>
     <string name="label_no_notifications">No notifications yet</string>
+
+    <!-- More Tab -->
+    <string name="label_game_settings">Game Settings</string>
+    <string name="label_send_notifications">Send Notifications</string>
+    <string name="label_manage_operators">Manage Operators</string>
+    <string name="label_export_game">Export Game</string>
+    <string name="label_app_settings">App Settings</string>
+    <string name="label_game_section">Game</string>
+    <string name="label_data_section">Data</string>
+    <string name="label_start_date">Start Date</string>
+    <string name="label_end_date">End Date</string>
+    <string name="label_uniform_assignment">Uniform Assignment</string>
+    <string name="label_tile_source">Map Tile Source</string>
+    <string name="label_broadcast">Broadcast</string>
+    <string name="label_broadcast_code">Broadcast Code</string>
+    <string name="label_end_game">End Game</string>
+    <string name="label_end_game_confirm_title">End Game?</string>
+    <string name="label_end_game_confirm_message">This will end the game. Teams will no longer be able to play.</string>
+    <string name="label_message">Message</string>
+    <string name="label_all_teams">All Teams</string>
+    <string name="action_send">Send</string>
+    <string name="label_sent_to">Sent to %1$s</string>
+    <string name="label_invite_operator">Invite Operator</string>
+    <string name="label_operator_email">Email address</string>
+    <string name="label_pending_invites">Pending Invites</string>
+    <string name="label_no_operators">No operators yet</string>
+    <string name="label_no_invites">No pending invites</string>
+    <string name="action_invite">Invite</string>
+    <string name="label_exporting">Exporting\u2026</string>
 </resources>
