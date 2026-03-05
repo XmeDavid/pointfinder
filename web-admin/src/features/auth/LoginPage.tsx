@@ -4,6 +4,7 @@ import { Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormLabel } from "@/components/ui/form-label";
+import { Alert } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
@@ -44,7 +45,7 @@ export function LoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
+              <Alert>{error}</Alert>
             )}
             <div className="space-y-2">
               <FormLabel htmlFor="email" required>

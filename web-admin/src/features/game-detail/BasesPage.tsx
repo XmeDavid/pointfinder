@@ -12,6 +12,7 @@ import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-dialog";
+import { Alert } from "@/components/ui/alert";
 import { basesApi, type CreateBaseDto } from "@/lib/api/bases";
 import { challengesApi } from "@/lib/api/challenges";
 import { gamesApi } from "@/lib/api/games";
@@ -19,12 +20,14 @@ import { getApiErrorMessage } from "@/lib/api/errors";
 import { MapPicker, BaseMapView, type UnlockConnection } from "@/components/common/MapPicker";
 import { getDefaultCenter } from "@/lib/tile-sources";
 import { useTranslation } from "react-i18next";
+import { useToast } from "@/hooks/useToast";
 import type { Base } from "@/types";
 
 type ViewMode = "list" | "map";
 
 export function BasesPage() {
   const { t } = useTranslation();
+  const toast = useToast();
   const { gameId } = useParams<{ gameId: string }>();
   const queryClient = useQueryClient();
   const [view, setView] = useState<ViewMode>("list");
@@ -78,19 +81,19 @@ export function BasesPage() {
 
   const createBase = useMutation({
     mutationFn: (data: CreateBaseDto) => basesApi.create({ ...data, gameId: gameId! }),
-    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["bases", gameId] }); queryClient.invalidateQueries({ queryKey: ["challenges", gameId] }); closeDialog(); },
+    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["bases", gameId] }); queryClient.invalidateQueries({ queryKey: ["challenges", gameId] }); closeDialog(); toast.success(t("common.saved")); },
     onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
   const updateBase = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<CreateBaseDto> }) => basesApi.update(id, { ...data, gameId: gameId! }),
-    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["bases", gameId] }); queryClient.invalidateQueries({ queryKey: ["challenges", gameId] }); closeDialog(); },
+    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["bases", gameId] }); queryClient.invalidateQueries({ queryKey: ["challenges", gameId] }); closeDialog(); toast.success(t("common.saved")); },
     onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
   const deleteBase = useMutation({
     mutationFn: (id: string) => basesApi.delete(id, gameId!),
-    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["bases", gameId] }); queryClient.invalidateQueries({ queryKey: ["challenges", gameId] }); },
+    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["bases", gameId] }); queryClient.invalidateQueries({ queryKey: ["challenges", gameId] }); toast.success(t("common.deleted")); },
     onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
@@ -133,7 +136,7 @@ export function BasesPage() {
           <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />{t("bases.addBase")}</Button>
         </div>
       </div>
-      {actionError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{actionError}</div>}
+      {actionError && <Alert onDismiss={() => setActionError("")}>{actionError}</Alert>}
 
       {view === "list" ? (
         <div className="space-y-3">
@@ -143,7 +146,7 @@ export function BasesPage() {
             bases.map((base) => (
               <Card key={base.id}>
                 <CardContent className="flex flex-wrap items-center gap-4 p-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10"><MapPin className="h-5 w-5 text-blue-500" /></div>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-chart-1/10"><MapPin className="h-5 w-5 text-chart-1" /></div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="font-medium">{base.name}</p>
@@ -161,7 +164,7 @@ export function BasesPage() {
                       })()}
                       {base.hidden && <Badge variant="outline" className="text-xs gap-1"><EyeOff className="h-3 w-3" />{t("bases.hiddenTag")}</Badge>}
                     </div>
-                    <p className="text-sm text-muted-foreground truncate">{base.description}</p>
+                    <p className="text-sm text-muted-foreground truncate" title={base.description}>{base.description}</p>
                     <p className="text-xs text-muted-foreground mt-1">{base.lat.toFixed(4)}, {base.lng.toFixed(4)}</p>
                   </div>
                   <div className="flex items-center gap-2 ml-auto">
@@ -170,8 +173,8 @@ export function BasesPage() {
                       {base.nfcLinked ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
                       <span className="hidden sm:inline">{base.nfcLinked ? t("bases.nfcLinked") : t("bases.nfcNotLinked")}</span>
                     </Badge>
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(base)}><Pencil className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(base.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(base)} aria-label={t("common.edit")}><Pencil className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(base.id)} aria-label={t("common.delete")}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                   </div>
                 </CardContent>
               </Card>
@@ -275,7 +278,7 @@ export function BasesPage() {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={closeDialog}>{t("common.cancel")}</Button>
-              <Button type="submit" disabled={createBase.isPending || updateBase.isPending}>{editing ? t("bases.editBase") : t("bases.createBase")}</Button>
+              <Button type="submit" loading={createBase.isPending || updateBase.isPending}>{editing ? t("bases.editBase") : t("bases.createBase")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

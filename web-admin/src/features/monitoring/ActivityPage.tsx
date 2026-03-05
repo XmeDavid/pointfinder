@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Activity, MapPin, ClipboardCheck, CheckCircle, XCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Alert } from "@/components/ui/alert";
 import { monitoringApi } from "@/lib/api/monitoring";
 import { teamsApi } from "@/lib/api/teams";
 import { formatDateTime } from "@/lib/utils";
@@ -10,10 +11,10 @@ import { useTranslation } from "react-i18next";
 import { useGameWebSocket } from "@/hooks/useGameWebSocket";
 
 const EVENT_ICONS: Record<string, React.ReactNode> = {
-  check_in: <MapPin className="h-4 w-4 text-blue-500" />,
-  submission: <ClipboardCheck className="h-4 w-4 text-yellow-500" />,
-  approval: <CheckCircle className="h-4 w-4 text-green-500" />,
-  rejection: <XCircle className="h-4 w-4 text-red-500" />,
+  check_in: <MapPin className="h-4 w-4 text-chart-1" />,
+  submission: <ClipboardCheck className="h-4 w-4 text-chart-2" />,
+  approval: <CheckCircle className="h-4 w-4 text-chart-3" />,
+  rejection: <XCircle className="h-4 w-4 text-destructive" />,
 };
 
 export function ActivityPage() {
@@ -26,7 +27,7 @@ export function ActivityPage() {
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold">{t("activityFeed.title")}</h1><p className="text-muted-foreground">{t("activityFeed.description")}</p></div>
-      {websocketError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{websocketError}</div>}
+      {websocketError && <Alert>{websocketError}</Alert>}
       <Card>
         <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Activity className="h-4 w-4" /> {t("activityFeed.recentEvents")}</CardTitle></CardHeader>
         <CardContent>
@@ -39,7 +40,7 @@ export function ActivityPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     {team && <Badge variant="secondary" className="text-xs"><div className="h-2 w-2 rounded-full mr-1" style={{ backgroundColor: team.color }} />{team.name}</Badge>}
-                    <Badge variant="outline" className="text-xs capitalize">{event.type.replace("_", " ")}</Badge>
+                    <Badge variant="outline" className="text-xs">{t(`activityFeed.eventType.${event.type}`, { defaultValue: event.type.replace("_", " ") })}</Badge>
                   </div>
                   <p className="text-sm mt-1">{event.message}</p>
                   <p className="text-xs text-muted-foreground mt-1">{formatDateTime(event.timestamp)}</p>

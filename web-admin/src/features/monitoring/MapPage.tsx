@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { MapPin, Radio, Eye, EyeOff, Users, User, AlertTriangle } from "lucide-react";
+import { MapPin, Radio, Eye, EyeOff, Users, User } from "lucide-react";
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { Map as MapGL, Marker } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -13,6 +13,7 @@ import { teamsApi } from "@/lib/api/teams";
 import { challengesApi } from "@/lib/api/challenges";
 import { monitoringApi } from "@/lib/api/monitoring";
 import { gamesApi } from "@/lib/api/games";
+import { Alert } from "@/components/ui/alert";
 import { useTranslation } from "react-i18next";
 import { useGameWebSocket } from "@/hooks/useGameWebSocket";
 import { formatDateTime } from "@/lib/utils";
@@ -236,12 +237,9 @@ export function MapPage() {
           </Button>
         </div>
       </div>
-      {websocketError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{websocketError}</div>}
+      {websocketError && <Alert>{websocketError}</Alert>}
       {isError && (
-        <div className="flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-          {t("mapPage.loadError")}
-        </div>
+        <Alert>{t("mapPage.loadError")}</Alert>
       )}
 
       {/* View mode indicator */}

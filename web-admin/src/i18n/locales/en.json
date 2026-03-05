@@ -30,7 +30,9 @@
     "noSignal": "No signal",
     "saving": "Saving...",
     "optional": "optional",
-    "required": "required"
+    "required": "required",
+    "saved": "Saved",
+    "deleted": "Deleted"
   },
   "auth": {
     "signIn": "Sign In",
@@ -396,7 +398,13 @@
     "title": "Activity Feed",
     "description": "Real-time game events",
     "recentEvents": "Recent Events",
-    "noActivity": "No activity yet"
+    "noActivity": "No activity yet",
+    "eventType": {
+      "check_in": "Check-in",
+      "submission": "Submission",
+      "approval": "Approval",
+      "rejection": "Rejection"
+    }
   },
   "submissions": {
     "title": "Submissions",
