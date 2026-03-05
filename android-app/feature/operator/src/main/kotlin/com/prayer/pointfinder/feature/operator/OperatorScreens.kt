@@ -12,14 +12,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.foundation.background
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -42,9 +48,10 @@ import com.prayer.pointfinder.core.model.GameStatus
 
 enum class OperatorTab {
     LIVE_MAP,
+    SETUP,
+    LIVE,
     SUBMISSIONS,
-    BASES,
-    SETTINGS,
+    MORE,
 }
 
 internal const val PRIVACY_POLICY_URL = "https://pointfinder.pt/privacy/"
@@ -62,6 +69,7 @@ internal val BadgeIndigo = Color(0xFF303F9F)
 fun OperatorHomeScreen(
     games: List<Game>,
     onSelectGame: (Game) -> Unit,
+    onCreateGame: () -> Unit,
     onLogout: () -> Unit,
     onRefresh: () -> Unit,
     isLoading: Boolean = false,
@@ -76,6 +84,11 @@ fun OperatorHomeScreen(
                     TextButton(onClick = onLogout) { Text(stringResource(R.string.action_logout)) }
                 },
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = onCreateGame) {
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.label_create_game))
+            }
         },
     ) { padding ->
         PullToRefreshBox(
@@ -173,10 +186,12 @@ fun OperatorHomeScreen(
 @Composable
 fun OperatorGameScaffold(
     selectedTab: OperatorTab,
-    showSubmissions: Boolean,
+    gameStatus: GameStatus,
     onTabSelected: (OperatorTab) -> Unit,
     content: @Composable () -> Unit,
 ) {
+    val isSetupMode = gameStatus == GameStatus.SETUP
+
     Scaffold(
         bottomBar = {
             NavigationBar {
@@ -186,25 +201,32 @@ fun OperatorGameScaffold(
                     icon = { androidx.compose.material3.Icon(Icons.Default.Map, contentDescription = null) },
                     label = { Text(stringResource(R.string.label_live_map)) },
                 )
-                if (showSubmissions) {
+                if (isSetupMode) {
                     NavigationBarItem(
-                        selected = selectedTab == OperatorTab.SUBMISSIONS,
-                        onClick = { onTabSelected(OperatorTab.SUBMISSIONS) },
-                        icon = { androidx.compose.material3.Icon(Icons.Default.List, contentDescription = null) },
-                        label = { Text(stringResource(R.string.label_submissions)) },
+                        selected = selectedTab == OperatorTab.SETUP,
+                        onClick = { onTabSelected(OperatorTab.SETUP) },
+                        icon = { androidx.compose.material3.Icon(Icons.Default.Checklist, contentDescription = null) },
+                        label = { Text(stringResource(R.string.label_setup)) },
+                    )
+                } else {
+                    NavigationBarItem(
+                        selected = selectedTab == OperatorTab.LIVE,
+                        onClick = { onTabSelected(OperatorTab.LIVE) },
+                        icon = { androidx.compose.material3.Icon(Icons.Default.BarChart, contentDescription = null) },
+                        label = { Text(stringResource(R.string.label_live)) },
                     )
                 }
                 NavigationBarItem(
-                    selected = selectedTab == OperatorTab.BASES,
-                    onClick = { onTabSelected(OperatorTab.BASES) },
-                    icon = { androidx.compose.material3.Icon(Icons.Default.LocationOn, contentDescription = stringResource(R.string.label_bases)) },
-                    label = { Text(stringResource(R.string.label_bases)) },
+                    selected = selectedTab == OperatorTab.SUBMISSIONS,
+                    onClick = { onTabSelected(OperatorTab.SUBMISSIONS) },
+                    icon = { androidx.compose.material3.Icon(Icons.Default.List, contentDescription = null) },
+                    label = { Text(stringResource(R.string.label_submissions)) },
                 )
                 NavigationBarItem(
-                    selected = selectedTab == OperatorTab.SETTINGS,
-                    onClick = { onTabSelected(OperatorTab.SETTINGS) },
-                    icon = { androidx.compose.material3.Icon(Icons.Default.Settings, contentDescription = null) },
-                    label = { Text(stringResource(R.string.label_settings)) },
+                    selected = selectedTab == OperatorTab.MORE,
+                    onClick = { onTabSelected(OperatorTab.MORE) },
+                    icon = { androidx.compose.material3.Icon(Icons.Default.MoreHoriz, contentDescription = null) },
+                    label = { Text(stringResource(R.string.label_more)) },
                 )
             }
         },

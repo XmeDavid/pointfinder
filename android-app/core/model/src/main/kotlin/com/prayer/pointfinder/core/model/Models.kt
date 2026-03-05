@@ -90,6 +90,13 @@ data class Game(
     val description: String,
     val status: GameStatus,
     val tileSource: String = "osm",
+    val startDate: String? = null,
+    val endDate: String? = null,
+    val createdBy: String? = null,
+    val operatorIds: List<String>? = null,
+    val uniformAssignment: Boolean = false,
+    val broadcastEnabled: Boolean = false,
+    val broadcastCode: String? = null,
 )
 
 @Serializable
@@ -117,6 +124,9 @@ data class Challenge(
     val answerType: String,
     val points: Int,
     val unlocksBaseId: EntityId? = null,
+    val autoValidate: Boolean = false,
+    val correctAnswer: List<String> = emptyList(),
+    val locationBound: Boolean = false,
 )
 
 @Serializable
@@ -377,3 +387,267 @@ sealed class AuthType {
         val userName: String,
     ) : AuthType()
 }
+
+// === Game CRUD Requests ===
+
+@Serializable
+data class CreateGameRequest(
+    val name: String,
+    val description: String = "",
+    val startDate: String? = null,
+    val endDate: String? = null,
+    val uniformAssignment: Boolean = false,
+    val tileSource: String? = null,
+)
+
+@Serializable
+data class UpdateGameRequest(
+    val name: String,
+    val description: String = "",
+    val startDate: String? = null,
+    val endDate: String? = null,
+    val uniformAssignment: Boolean = false,
+    val broadcastEnabled: Boolean = false,
+    val tileSource: String? = null,
+)
+
+@Serializable
+data class UpdateGameStatusRequest(
+    val status: String,
+    val resetProgress: Boolean = false,
+)
+
+// === Base CRUD Requests ===
+
+@Serializable
+data class CreateBaseRequest(
+    val name: String,
+    val description: String = "",
+    val lat: Double,
+    val lng: Double,
+    val fixedChallengeId: String? = null,
+    val requirePresenceToSubmit: Boolean = false,
+    val hidden: Boolean = false,
+)
+
+@Serializable
+data class UpdateBaseRequest(
+    val name: String,
+    val description: String = "",
+    val lat: Double,
+    val lng: Double,
+    val fixedChallengeId: String? = null,
+    val requirePresenceToSubmit: Boolean = false,
+    val hidden: Boolean = false,
+)
+
+// === Challenge CRUD Requests ===
+
+@Serializable
+data class CreateChallengeRequest(
+    val title: String,
+    val description: String = "",
+    val content: String = "",
+    val completionContent: String = "",
+    val answerType: String = "text",
+    val autoValidate: Boolean = false,
+    val correctAnswer: List<String> = emptyList(),
+    val points: Int = 0,
+    val locationBound: Boolean = false,
+    val fixedBaseId: String? = null,
+    val unlocksBaseId: String? = null,
+)
+
+@Serializable
+data class UpdateChallengeRequest(
+    val title: String,
+    val description: String = "",
+    val content: String = "",
+    val completionContent: String = "",
+    val answerType: String = "text",
+    val autoValidate: Boolean = false,
+    val correctAnswer: List<String> = emptyList(),
+    val points: Int = 0,
+    val locationBound: Boolean = false,
+    val fixedBaseId: String? = null,
+    val unlocksBaseId: String? = null,
+)
+
+// === Team CRUD Requests ===
+
+@Serializable
+data class CreateTeamRequest(val name: String)
+
+@Serializable
+data class UpdateTeamRequest(
+    val name: String,
+    val color: String? = null,
+)
+
+// === Team Variables ===
+
+@Serializable
+data class TeamVariable(
+    val key: String,
+    val teamValues: Map<String, String>,
+)
+
+@Serializable
+data class TeamVariablesRequest(val variables: List<TeamVariable>)
+
+@Serializable
+data class TeamVariablesResponse(val variables: List<TeamVariable>)
+
+@Serializable
+data class TeamVariablesCompletenessResponse(
+    val complete: Boolean,
+    val errors: List<String>,
+)
+
+// === Notifications ===
+
+@Serializable
+data class NotificationResponse(
+    val id: String,
+    val gameId: String,
+    val message: String,
+    val targetTeamId: String?,
+    val sentAt: String,
+    val sentBy: String,
+)
+
+@Serializable
+data class SendNotificationRequest(
+    val message: String,
+    val targetTeamId: String? = null,
+)
+
+// === Players ===
+
+@Serializable
+data class PlayerResponse(
+    val id: String,
+    val teamId: String,
+    val deviceId: String,
+    val displayName: String,
+)
+
+// === Operators & Invites ===
+
+@Serializable
+data class OperatorUserResponse(
+    val id: String,
+    val email: String,
+    val name: String,
+    val role: String,
+)
+
+@Serializable
+data class InviteRequest(
+    val email: String,
+    val gameId: String? = null,
+)
+
+@Serializable
+data class InviteResponse(
+    val id: String,
+    val gameId: String?,
+    val gameName: String?,
+    val email: String,
+    val status: String,
+    val invitedBy: String,
+    val inviterName: String,
+    val createdAt: String,
+)
+
+// === Monitoring ===
+
+@Serializable
+data class LeaderboardEntry(
+    val teamId: String,
+    val teamName: String,
+    val color: String,
+    val points: Int,
+    val completedChallenges: Int,
+)
+
+@Serializable
+data class ActivityEvent(
+    val id: String,
+    val gameId: String,
+    val type: String,
+    val teamId: String? = null,
+    val baseId: String? = null,
+    val challengeId: String? = null,
+    val message: String,
+    val timestamp: String,
+)
+
+// === Export/Import ===
+
+@Serializable
+data class GameExportDto(
+    val exportVersion: String,
+    val exportedAt: String,
+    val game: GameExportGame,
+    val bases: List<GameExportBase>,
+    val challenges: List<GameExportChallenge>,
+    val assignments: List<GameExportAssignment>,
+    val teams: List<GameExportTeam>,
+)
+
+@Serializable
+data class GameExportGame(
+    val name: String,
+    val description: String,
+    val uniformAssignment: Boolean,
+    val tileSource: String? = null,
+)
+
+@Serializable
+data class GameExportBase(
+    val tempId: String,
+    val name: String,
+    val description: String,
+    val lat: Double,
+    val lng: Double,
+    val hidden: Boolean,
+    val requirePresenceToSubmit: Boolean,
+    val fixedChallengeTempId: String?,
+)
+
+@Serializable
+data class GameExportChallenge(
+    val tempId: String,
+    val title: String,
+    val description: String,
+    val content: String,
+    val completionContent: String,
+    val answerType: String,
+    val autoValidate: Boolean,
+    val correctAnswer: List<String>,
+    val points: Int,
+    val locationBound: Boolean,
+    val unlocksBaseTempId: String?,
+)
+
+@Serializable
+data class GameExportAssignment(
+    val baseTempId: String,
+    val challengeTempId: String,
+    val teamTempId: String?,
+)
+
+@Serializable
+data class GameExportTeam(
+    val tempId: String,
+    val name: String,
+    val color: String,
+)
+
+@Serializable
+data class ImportGameRequest(
+    val gameData: GameExportDto,
+    val startDate: String? = null,
+    val endDate: String? = null,
+)

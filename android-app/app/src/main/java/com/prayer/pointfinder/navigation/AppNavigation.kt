@@ -68,15 +68,33 @@ import com.prayer.pointfinder.feature.auth.OperatorLoginScreen
 import com.prayer.pointfinder.feature.auth.PlayerJoinScreen
 import com.prayer.pointfinder.feature.auth.PlayerNameScreen
 import com.prayer.pointfinder.feature.auth.WelcomeScreen
-import com.prayer.pointfinder.feature.operator.OperatorBasesScreen
-import com.prayer.pointfinder.feature.operator.OperatorBaseDetailScreen
+import com.prayer.pointfinder.core.model.CreateBaseRequest
+import com.prayer.pointfinder.core.model.CreateChallengeRequest
+import com.prayer.pointfinder.core.model.UpdateBaseRequest
+import com.prayer.pointfinder.core.model.UpdateChallengeRequest
+import com.prayer.pointfinder.core.model.UpdateTeamRequest
+import com.prayer.pointfinder.core.model.PlayerResponse
+import com.prayer.pointfinder.feature.operator.BaseEditScreen
+import com.prayer.pointfinder.feature.operator.BasesListScreen
+import com.prayer.pointfinder.feature.operator.ChallengeEditScreen
+import com.prayer.pointfinder.feature.operator.ChallengesListScreen
+import com.prayer.pointfinder.feature.operator.TeamDetailScreen
+import com.prayer.pointfinder.feature.operator.TeamsListScreen
+import com.prayer.pointfinder.feature.operator.LiveScreen
 import com.prayer.pointfinder.feature.operator.OperatorGameScaffold
+import com.prayer.pointfinder.feature.operator.CreateGameScreen
 import com.prayer.pointfinder.feature.operator.OperatorHomeScreen
 import com.prayer.pointfinder.feature.operator.LiveBaseProgressBottomSheet
 import com.prayer.pointfinder.feature.operator.OperatorMapScreen
+import com.prayer.pointfinder.feature.operator.SetupHubScreen
 import com.prayer.pointfinder.feature.operator.OperatorSettingsScreen
 import com.prayer.pointfinder.feature.operator.OperatorSubmissionsScreen
 import com.prayer.pointfinder.feature.operator.OperatorTab
+import com.prayer.pointfinder.feature.operator.MoreScreen
+import com.prayer.pointfinder.feature.operator.GameSettingsScreen
+import com.prayer.pointfinder.feature.operator.NotificationsScreen
+import com.prayer.pointfinder.feature.operator.OperatorsScreen
+import kotlinx.serialization.json.Json
 import com.prayer.pointfinder.core.platform.NfcEventBus
 import com.prayer.pointfinder.core.platform.NfcPayloadCodec
 import com.prayer.pointfinder.feature.player.BaseCheckInDetailScreen
@@ -245,6 +263,24 @@ fun AppNavigation(
                 viewModel = operatorViewModel,
                 sessionViewModel = sessionViewModel,
                 onOpenGame = { navController.navigate(Routes.OPERATOR_GAME) },
+                onCreateGame = { navController.navigate(Routes.OPERATOR_CREATE_GAME) },
+            )
+        }
+
+        composable(Routes.OPERATOR_CREATE_GAME) {
+            val state by operatorViewModel.state.collectAsStateWithLifecycle()
+            CreateGameScreen(
+                onBack = { navController.popBackStack() },
+                onGameCreated = { game ->
+                    navController.popBackStack()
+                    operatorViewModel.selectGame(game)
+                    navController.navigate(Routes.OPERATOR_GAME)
+                },
+                createGame = operatorViewModel::createGame,
+                importGame = operatorViewModel::importGame,
+                isLoading = state.isLoading,
+                errorMessage = state.errorMessage,
+                onClearError = operatorViewModel::clearError,
             )
         }
 
@@ -811,6 +847,7 @@ private fun OperatorHomeRoot(
     viewModel: OperatorViewModel,
     sessionViewModel: AppSessionViewModel,
     onOpenGame: () -> Unit,
+    onCreateGame: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.authExpired) {
@@ -827,6 +864,7 @@ private fun OperatorHomeRoot(
             viewModel.selectGame(it)
             onOpenGame()
         },
+        onCreateGame = onCreateGame,
         onLogout = sessionViewModel::logout,
         onRefresh = viewModel::loadGames,
         isLoading = state.isLoading,
@@ -858,49 +896,366 @@ private fun OperatorGameRoot(
         return
     }
 
-    val showSubmissionsTab = selectedGame.status == GameStatus.LIVE
+    val gameStatus = selectedGame.status
 
-    LaunchedEffect(showSubmissionsTab, state.selectedTab) {
-        if (!showSubmissionsTab && state.selectedTab == OperatorTab.SUBMISSIONS) {
-            viewModel.setTab(OperatorTab.LIVE_MAP)
+    // Setup sub-screen navigation state
+    // null = show hub, "bases_list" / "base_edit:<id>" / "base_create"
+    // "challenges_list" / "challenge_edit:<id>" / "challenge_create" / "challenge_create_for_base:<baseId>"
+    // "teams_list" / "team_detail:<id>"
+    var setupSubScreen by remember { mutableStateOf<String?>(null) }
+    // Sub-screen state for map-initiated actions (base create/edit from map)
+    var mapSubScreen by remember { mutableStateOf<String?>(null) }
+    // Sub-screen state for More tab navigation
+    var moreSubScreen by remember { mutableStateOf<String?>(null) }
+
+    // Reset sub-screen when switching tabs
+    LaunchedEffect(state.selectedTab) {
+        if (state.selectedTab != OperatorTab.SETUP) {
+            setupSubScreen = null
+        }
+        if (state.selectedTab != OperatorTab.LIVE_MAP) {
+            mapSubScreen = null
+        }
+        if (state.selectedTab != OperatorTab.MORE) {
+            moreSubScreen = null
+        }
+    }
+
+    // When switching from setup to live mode, if current tab is SETUP, switch to LIVE
+    LaunchedEffect(gameStatus, state.selectedTab) {
+        if (gameStatus != GameStatus.SETUP && state.selectedTab == OperatorTab.SETUP) {
+            viewModel.setTab(OperatorTab.LIVE)
+        }
+        if (gameStatus == GameStatus.SETUP && state.selectedTab == OperatorTab.LIVE) {
+            viewModel.setTab(OperatorTab.SETUP)
         }
     }
 
     OperatorGameScaffold(
         selectedTab = state.selectedTab,
-        showSubmissions = showSubmissionsTab,
+        gameStatus = gameStatus,
         onTabSelected = viewModel::setTab,
     ) {
         when (state.selectedTab) {
             OperatorTab.LIVE_MAP -> {
-                val operatorIsDark = when (currentThemeMode) {
-                    ThemeMode.SYSTEM -> isSystemInDarkTheme()
-                    ThemeMode.LIGHT -> false
-                    ThemeMode.DARK -> true
+                when {
+                    mapSubScreen?.startsWith("base_create_at:") == true -> {
+                        val coords = mapSubScreen!!.removePrefix("base_create_at:")
+                        val parts = coords.split(",")
+                        val lat = parts.getOrNull(0)?.toDoubleOrNull()
+                        val lng = parts.getOrNull(1)?.toDoubleOrNull()
+                        BaseEditScreen(
+                            base = null,
+                            challenges = state.challenges,
+                            linkedChallenges = emptyList(),
+                            onSave = { request ->
+                                viewModel.createBase(request as CreateBaseRequest) {
+                                    mapSubScreen = null
+                                }
+                            },
+                            onDelete = null,
+                            onNavigateToCreateChallenge = null,
+                            onBack = { mapSubScreen = null },
+                            initialLat = lat,
+                            initialLng = lng,
+                        )
+                    }
+                    mapSubScreen?.startsWith("base_edit:") == true -> {
+                        val baseId = mapSubScreen!!.removePrefix("base_edit:")
+                        val base = state.bases.firstOrNull { it.id == baseId }
+                        if (base != null) {
+                            val linkedChallenges = state.assignments
+                                .filter { it.baseId == base.id }
+                                .mapNotNull { assignment ->
+                                    state.challenges.firstOrNull { it.id == assignment.challengeId }
+                                }
+                                .distinctBy { it.id }
+                            BaseEditScreen(
+                                base = base,
+                                challenges = state.challenges,
+                                linkedChallenges = linkedChallenges,
+                                onSave = { request ->
+                                    viewModel.updateBase(base.id, request as UpdateBaseRequest) {
+                                        mapSubScreen = null
+                                    }
+                                },
+                                onDelete = {
+                                    viewModel.deleteBase(base.id) {
+                                        mapSubScreen = null
+                                    }
+                                },
+                                onNavigateToCreateChallenge = { bId -> mapSubScreen = "challenge_create_for_base:$bId" },
+                                onBack = { mapSubScreen = null },
+                                initialLat = null,
+                                initialLng = null,
+                            )
+                        } else {
+                            mapSubScreen = null
+                        }
+                    }
+                    mapSubScreen?.startsWith("challenge_create_for_base:") == true -> {
+                        val preLinkedBaseId = mapSubScreen!!.removePrefix("challenge_create_for_base:")
+                        ChallengeEditScreen(
+                            challenge = null,
+                            bases = state.bases,
+                            teams = state.teams,
+                            variables = state.variables,
+                            onSave = { request ->
+                                viewModel.createChallenge(request as CreateChallengeRequest) {
+                                    mapSubScreen = null
+                                }
+                            },
+                            onDelete = null,
+                            onBack = { mapSubScreen = "base_edit:$preLinkedBaseId" },
+                            preLinkedBaseId = preLinkedBaseId,
+                            onCreateVariable = viewModel::createVariable,
+                        )
+                    }
+                    else -> {
+                        val operatorIsDark = when (currentThemeMode) {
+                            ThemeMode.SYSTEM -> isSystemInDarkTheme()
+                            ThemeMode.LIGHT -> false
+                            ThemeMode.DARK -> true
+                        }
+                        OperatorMapScreen(
+                            bases = state.bases,
+                            teamLocations = state.locations,
+                            teams = state.teams,
+                            baseProgress = state.baseProgress,
+                            challenges = state.challenges,
+                            assignments = state.assignments,
+                            tileSource = selectedGame.tileSource,
+                            isDark = operatorIsDark,
+                            gameStatus = gameStatus,
+                            onBaseSelected = viewModel::selectBase,
+                            onCreateBaseAt = { lat, lng ->
+                                mapSubScreen = "base_create_at:$lat,$lng"
+                            },
+                            onEditBase = { base ->
+                                mapSubScreen = "base_edit:${base.id}"
+                            },
+                            onAddChallengeForBase = { base ->
+                                mapSubScreen = "challenge_create_for_base:${base.id}"
+                            },
+                            onWriteNfc = { base ->
+                                viewModel.selectBase(base)
+                                viewModel.beginWriteNfc()
+                            },
+                            onRefresh = viewModel::refreshSelectedGameData,
+                        )
+                        if (state.selectedBase != null) {
+                            val base = state.selectedBase!!
+                            LiveBaseProgressBottomSheet(
+                                base = base,
+                                progress = state.baseProgress,
+                                teams = state.teams,
+                                onWriteNfc = viewModel::beginWriteNfc,
+                                writeStatus = state.writeStatus,
+                                writeSuccess = state.writeSuccess,
+                                onDismiss = viewModel::clearSelectedBase,
+                            )
+                        }
+                    }
                 }
-                OperatorMapScreen(
-                    bases = state.bases,
-                    teamLocations = state.locations,
+            }
+
+            OperatorTab.SETUP -> {
+                when {
+                    setupSubScreen == "bases_list" -> {
+                        BasesListScreen(
+                            bases = state.bases,
+                            challenges = state.challenges,
+                            assignments = state.assignments,
+                            onSelectBase = { base -> setupSubScreen = "base_edit:${base.id}" },
+                            onCreateBase = { setupSubScreen = "base_create" },
+                            onBack = { setupSubScreen = null },
+                        )
+                    }
+                    setupSubScreen == "base_create" -> {
+                        BaseEditScreen(
+                            base = null,
+                            challenges = state.challenges,
+                            linkedChallenges = emptyList(),
+                            onSave = { request ->
+                                viewModel.createBase(request as CreateBaseRequest) {
+                                    setupSubScreen = "bases_list"
+                                }
+                            },
+                            onDelete = null,
+                            onNavigateToCreateChallenge = null,
+                            onBack = { setupSubScreen = "bases_list" },
+                            initialLat = null,
+                            initialLng = null,
+                        )
+                    }
+                    setupSubScreen?.startsWith("base_edit:") == true -> {
+                        val baseId = setupSubScreen!!.removePrefix("base_edit:")
+                        val base = state.bases.firstOrNull { it.id == baseId }
+                        if (base != null) {
+                            val linkedChallenges = state.assignments
+                                .filter { it.baseId == base.id }
+                                .mapNotNull { assignment ->
+                                    state.challenges.firstOrNull { it.id == assignment.challengeId }
+                                }
+                                .distinctBy { it.id }
+                            BaseEditScreen(
+                                base = base,
+                                challenges = state.challenges,
+                                linkedChallenges = linkedChallenges,
+                                onSave = { request ->
+                                    viewModel.updateBase(base.id, request as UpdateBaseRequest) {
+                                        setupSubScreen = "bases_list"
+                                    }
+                                },
+                                onDelete = {
+                                    viewModel.deleteBase(base.id) {
+                                        setupSubScreen = "bases_list"
+                                    }
+                                },
+                                onNavigateToCreateChallenge = { baseId -> setupSubScreen = "challenge_create_for_base:$baseId" },
+                                onBack = { setupSubScreen = "bases_list" },
+                                initialLat = null,
+                                initialLng = null,
+                            )
+                        } else {
+                            setupSubScreen = "bases_list"
+                        }
+                    }
+                    setupSubScreen == "challenges_list" -> {
+                        ChallengesListScreen(
+                            challenges = state.challenges,
+                            bases = state.bases,
+                            assignments = state.assignments,
+                            onSelectChallenge = { challenge -> setupSubScreen = "challenge_edit:${challenge.id}" },
+                            onCreateChallenge = { setupSubScreen = "challenge_create" },
+                            onBack = { setupSubScreen = null },
+                        )
+                    }
+                    setupSubScreen == "challenge_create" || setupSubScreen?.startsWith("challenge_create_for_base:") == true -> {
+                        val preLinkedBaseId = setupSubScreen?.removePrefix("challenge_create_for_base:")
+                            ?.takeIf { setupSubScreen?.startsWith("challenge_create_for_base:") == true }
+                        ChallengeEditScreen(
+                            challenge = null,
+                            bases = state.bases,
+                            teams = state.teams,
+                            variables = state.variables,
+                            onSave = { request ->
+                                viewModel.createChallenge(request as CreateChallengeRequest) {
+                                    setupSubScreen = "challenges_list"
+                                }
+                            },
+                            onDelete = null,
+                            onBack = {
+                                setupSubScreen = if (preLinkedBaseId != null) {
+                                    "base_edit:$preLinkedBaseId"
+                                } else {
+                                    "challenges_list"
+                                }
+                            },
+                            preLinkedBaseId = preLinkedBaseId,
+                            onCreateVariable = viewModel::createVariable,
+                        )
+                    }
+                    setupSubScreen?.startsWith("challenge_edit:") == true -> {
+                        val challengeId = setupSubScreen!!.removePrefix("challenge_edit:")
+                        val challenge = state.challenges.firstOrNull { it.id == challengeId }
+                        if (challenge != null) {
+                            ChallengeEditScreen(
+                                challenge = challenge,
+                                bases = state.bases,
+                                teams = state.teams,
+                                variables = state.variables,
+                                assignments = state.assignments,
+                                onSave = { request ->
+                                    viewModel.updateChallenge(challenge.id, request as UpdateChallengeRequest) {
+                                        setupSubScreen = "challenges_list"
+                                    }
+                                },
+                                onDelete = {
+                                    viewModel.deleteChallenge(challenge.id) {
+                                        setupSubScreen = "challenges_list"
+                                    }
+                                },
+                                onBack = { setupSubScreen = "challenges_list" },
+                                onCreateVariable = viewModel::createVariable,
+                            )
+                        } else {
+                            setupSubScreen = "challenges_list"
+                        }
+                    }
+                    setupSubScreen == "teams_list" -> {
+                        TeamsListScreen(
+                            teams = state.teams,
+                            onSelectTeam = { team -> setupSubScreen = "team_detail:${team.id}" },
+                            onCreateTeam = { name, color ->
+                                viewModel.createTeam(name, color) { /* created */ }
+                            },
+                            onBack = { setupSubScreen = null },
+                        )
+                    }
+                    setupSubScreen?.startsWith("team_detail:") == true -> {
+                        val teamId = setupSubScreen!!.removePrefix("team_detail:")
+                        val team = state.teams.firstOrNull { it.id == teamId }
+                        if (team != null) {
+                            var players by remember(teamId) { mutableStateOf<List<PlayerResponse>>(emptyList()) }
+                            LaunchedEffect(teamId) {
+                                viewModel.loadTeamPlayers(teamId) { players = it }
+                            }
+                            TeamDetailScreen(
+                                team = team,
+                                players = players,
+                                variables = state.variables,
+                                onSave = { request ->
+                                    viewModel.updateTeam(team.id, request) {
+                                        setupSubScreen = "teams_list"
+                                    }
+                                },
+                                onDelete = {
+                                    viewModel.deleteTeam(team.id) {
+                                        setupSubScreen = "teams_list"
+                                    }
+                                },
+                                onRemovePlayer = { playerId ->
+                                    viewModel.removePlayer(team.id, playerId) {
+                                        viewModel.loadTeamPlayers(teamId) { players = it }
+                                    }
+                                },
+                                onSaveVariableValue = { variableKey, value ->
+                                    viewModel.saveTeamVariableValue(variableKey, team.id, value)
+                                },
+                                onBack = { setupSubScreen = "teams_list" },
+                            )
+                        } else {
+                            setupSubScreen = "teams_list"
+                        }
+                    }
+                    else -> {
+                        SetupHubScreen(
+                            game = selectedGame,
+                            bases = state.bases,
+                            challenges = state.challenges,
+                            teams = state.teams,
+                            assignments = state.assignments,
+                            onNavigateToBases = { setupSubScreen = "bases_list" },
+                            onNavigateToChallenges = { setupSubScreen = "challenges_list" },
+                            onNavigateToTeams = { setupSubScreen = "teams_list" },
+                            onGoLive = { viewModel.updateGameStatus("live") },
+                        )
+                    }
+                }
+            }
+
+            OperatorTab.LIVE -> {
+                LaunchedEffect(Unit) {
+                    viewModel.refreshLiveData()
+                }
+                LiveScreen(
+                    leaderboard = state.leaderboard,
+                    activity = state.activity,
                     teams = state.teams,
-                    baseProgress = state.baseProgress,
-                    challenges = state.challenges,
-                    tileSource = selectedGame.tileSource,
-                    isDark = operatorIsDark,
-                    onBaseSelected = viewModel::selectBase,
-                    onRefresh = viewModel::refreshSelectedGameData,
+                    isRefreshing = state.isLiveRefreshing,
+                    onRefresh = viewModel::refreshLiveData,
                 )
-                if (state.selectedBase != null) {
-                    val base = state.selectedBase!!
-                    LiveBaseProgressBottomSheet(
-                        base = base,
-                        progress = state.baseProgress,
-                        teams = state.teams,
-                        onWriteNfc = viewModel::beginWriteNfc,
-                        writeStatus = state.writeStatus,
-                        writeSuccess = state.writeSuccess,
-                        onDismiss = viewModel::clearSelectedBase,
-                    )
-                }
             }
 
             OperatorTab.SUBMISSIONS -> {
@@ -917,45 +1272,80 @@ private fun OperatorGameRoot(
                 )
             }
 
-            OperatorTab.BASES -> {
-                if (state.selectedBase == null) {
-                    OperatorBasesScreen(
-                        bases = state.bases,
-                        onSelectBase = viewModel::selectBase,
-                    )
-                } else {
-                    val base = state.selectedBase!!
-                    OperatorBaseDetailScreen(
-                        base = base,
-                        challenges = state.challenges,
-                        assignments = state.assignments,
-                        teams = state.teams,
-                        writeStatus = state.writeStatus,
-                        writeSuccess = state.writeSuccess,
-                        onBack = viewModel::clearSelectedBase,
-                        onWriteNfc = viewModel::beginWriteNfc,
-                    )
+            OperatorTab.MORE -> {
+                val moreContext = LocalContext.current
+                when (moreSubScreen) {
+                    "settings" -> {
+                        GameSettingsScreen(
+                            game = selectedGame,
+                            onSave = { request ->
+                                viewModel.updateGame(request) {}
+                            },
+                            onUpdateStatus = viewModel::updateGameStatus,
+                            onBack = { moreSubScreen = null },
+                        )
+                    }
+                    "notifications" -> {
+                        LaunchedEffect(Unit) { viewModel.loadNotifications() }
+                        NotificationsScreen(
+                            notifications = state.notifications,
+                            teams = state.teams,
+                            onSend = { message, teamId ->
+                                viewModel.sendNotification(message, teamId) {}
+                            },
+                            onRefresh = viewModel::loadNotifications,
+                            isRefreshing = state.isLoading,
+                            onBack = { moreSubScreen = null },
+                        )
+                    }
+                    "operators" -> {
+                        LaunchedEffect(Unit) { viewModel.loadOperators() }
+                        OperatorsScreen(
+                            operators = state.operators,
+                            invites = state.invites,
+                            onInvite = { email ->
+                                viewModel.inviteOperator(email) {}
+                            },
+                            onRefresh = viewModel::loadOperators,
+                            isRefreshing = state.isLoading,
+                            onBack = { moreSubScreen = null },
+                        )
+                    }
+                    else -> {
+                        MoreScreen(
+                            currentLanguage = currentLanguage,
+                            currentThemeMode = currentThemeMode.name,
+                            notificationSettings = state.notificationSettings,
+                            isLoadingNotificationSettings = state.isLoadingNotificationSettings,
+                            isSavingNotificationSettings = state.isSavingNotificationSettings,
+                            onLanguageChanged = sessionViewModel::updateLanguage,
+                            onThemeModeChanged = { sessionViewModel.updateThemeMode(ThemeMode.valueOf(it)) },
+                            onNotificationSettingsChanged = viewModel::updateNotificationSettings,
+                            onNavigateToSettings = { moreSubScreen = "settings" },
+                            onNavigateToNotifications = { moreSubScreen = "notifications" },
+                            onNavigateToOperators = { moreSubScreen = "operators" },
+                            onExportGame = {
+                                viewModel.exportGame { exportDto ->
+                                    val jsonString = Json { prettyPrint = true }.encodeToString(
+                                        com.prayer.pointfinder.core.model.GameExportDto.serializer(),
+                                        exportDto,
+                                    )
+                                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                        type = "application/json"
+                                        putExtra(Intent.EXTRA_TEXT, jsonString)
+                                        putExtra(Intent.EXTRA_SUBJECT, "${selectedGame.name}_export.json")
+                                    }
+                                    moreContext.startActivity(Intent.createChooser(shareIntent, null))
+                                }
+                            },
+                            onSwitchGame = {
+                                viewModel.clearSelectedGame()
+                                onSwitchGame()
+                            },
+                            onLogout = sessionViewModel::logout,
+                        )
+                    }
                 }
-            }
-
-            OperatorTab.SETTINGS -> {
-                OperatorSettingsScreen(
-                    gameName = selectedGame.name,
-                    gameStatus = selectedGame.status,
-                    currentLanguage = currentLanguage,
-                    currentThemeMode = currentThemeMode.name,
-                    notificationSettings = state.notificationSettings,
-                    isLoadingNotificationSettings = state.isLoadingNotificationSettings,
-                    isSavingNotificationSettings = state.isSavingNotificationSettings,
-                    onLanguageChanged = sessionViewModel::updateLanguage,
-                    onThemeModeChanged = { sessionViewModel.updateThemeMode(ThemeMode.valueOf(it)) },
-                    onNotificationSettingsChanged = viewModel::updateNotificationSettings,
-                    onSwitchGame = {
-                        viewModel.clearSelectedGame()
-                        onSwitchGame()
-                    },
-                    onLogout = sessionViewModel::logout,
-                )
             }
         }
     }

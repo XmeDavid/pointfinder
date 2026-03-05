@@ -53,6 +53,19 @@
     <string name="label_settings">Configurações</string>
     <string name="label_live_map">Mapa ao vivo</string>
     <string name="label_bases">Bases</string>
+    <string name="label_setup">Config.</string>
+    <string name="label_live">Ao Vivo</string>
+    <string name="label_more">Mais</string>
+    <string name="label_create_game">Criar Jogo</string>
+    <string name="label_game_name">Nome do Jogo</string>
+    <string name="label_game_description">Descrição</string>
+    <string name="label_start_from">Começar a partir de</string>
+    <string name="label_empty_game">Jogo vazio</string>
+    <string name="label_import_from_file">Importar de ficheiro</string>
+    <string name="label_select_file">Selecionar Ficheiro</string>
+    <string name="label_file_loaded">Ficheiro carregado</string>
+    <string name="action_create">Criar</string>
+    <string name="label_creating">A criar\u2026</string>
     <string name="label_offline">Modo offline</string>
     <string name="label_operator">Operador</string>
     <string name="label_player">Jogador</string>
@@ -199,7 +212,142 @@
     <string name="error_nfc_link_failed">NFC gravado mas associação falhou: %1$s</string>
     <string name="error_network_unavailable">Rede indisponível. Verifique sua conexão.</string>
 
+    <!-- Setup Hub -->
+    <string name="label_needs_attention">Atenção necessária</string>
+    <string name="label_manage">Gerir</string>
+    <string name="label_go_live">Iniciar jogo</string>
+    <string name="label_no_bases">Nenhuma base criada</string>
+    <string name="label_no_challenges">Nenhum desafio criado</string>
+    <string name="label_no_teams">Nenhuma equipa criada</string>
+    <string name="label_nfc_missing">NFC em falta (%1$d bases)</string>
+    <string name="label_location_bound_unassigned">Desafios com localização não atribuídos (%1$d)</string>
+    <string name="label_not_enough_challenges">Desafios insuficientes</string>
+    <string name="label_go_live_confirm_title">Iniciar jogo?</string>
+    <string name="label_go_live_confirm_message">As equipas poderão entrar e jogar. Podes continuar a editar bases e desafios durante o jogo.</string>
+    <string name="label_challenges">Desafios</string>
+    <string name="label_teams">Equipas</string>
+
+    <!-- Base Management -->
+    <string name="label_new_base">Nova Base</string>
+    <string name="label_edit_base">Editar Base</string>
+    <string name="label_base_name">Nome da Base</string>
+    <string name="label_base_description">Descrição</string>
+    <string name="label_require_presence">Exigir Presença</string>
+    <string name="label_hidden_base">Base Oculta</string>
+    <string name="label_none">Nenhum</string>
+    <string name="label_challenges_at_base">Desafios (%1$d)</string>
+    <string name="label_add_challenge">Adicionar Desafio</string>
+    <string name="label_delete_base">Eliminar Base</string>
+    <string name="label_delete_base_confirm">Eliminar esta base? Esta ação não pode ser desfeita.</string>
+    <string name="label_tap_map_to_set_location">Toca no mapa para definir a localização</string>
+    <string name="action_save">Guardar</string>
+    <string name="label_write_nfc">Gravar NFC</string>
+
+    <!-- Rich Text Editor -->
+    <string name="action_done">Concluir</string>
+    <string name="label_insert_variable">Inserir Variável</string>
+    <string name="label_create_variable">Criar Variável</string>
+    <string name="label_preview_as_team">Pré-visualizar como Equipa</string>
+    <string name="label_variable_name">Nome da Variável</string>
+    <string name="label_no_variables">Nenhuma variável definida</string>
+    <string name="label_bold">Negrito</string>
+    <string name="label_italic">Itálico</string>
+    <string name="label_underline">Sublinhado</string>
+    <string name="label_heading1">Título 1</string>
+    <string name="label_heading2">Título 2</string>
+    <string name="label_bullet_list">Lista com Marcadores</string>
+    <string name="label_ordered_list">Lista Numerada</string>
+    <string name="label_code">Código</string>
+    <string name="label_link">Ligação</string>
+    <string name="label_url">URL</string>
+    <string name="label_link_text">Texto da Ligação</string>
+    <string name="label_preview">Pré-visualização</string>
+    <string name="label_select_team">Selecionar Equipa</string>
+
+    <!-- Challenge Management -->
+    <string name="label_challenge_title">Título</string>
+    <string name="label_challenge_points">Pontos</string>
+    <string name="label_content">Conteúdo</string>
+    <string name="label_description">Descrição</string>
+    <string name="label_completion_message">Mensagem de Conclusão</string>
+    <string name="action_edit">Editar</string>
+    <string name="label_answer_type_label">Tipo de Resposta</string>
+    <string name="label_text_input">Texto</string>
+    <string name="label_file_upload">Ficheiro</string>
+    <string name="label_auto_validate">Validação automática</string>
+    <string name="label_correct_answers">Respostas Corretas</string>
+    <string name="label_add_answer">Adicionar Resposta</string>
+    <string name="label_linking">Ligação</string>
+    <string name="label_fixed_to_base">Fixa a Base</string>
+    <string name="label_location_bound">Localização obrigatória</string>
+    <string name="label_unlocks_base">Desbloqueia Base</string>
+    <string name="label_delete_challenge">Eliminar Desafio</string>
+    <string name="label_delete_challenge_confirm">Eliminar este desafio? Esta ação não pode ser desfeita.</string>
+    <string name="label_new_challenge">Novo Desafio</string>
+    <string name="label_edit_challenge">Editar Desafio</string>
+    <string name="label_no_content">Sem conteúdo ainda</string>
+    <string name="label_no_base">Sem base</string>
+
+    <!-- Team Management -->
+    <string name="label_join_code_section">Código de Entrada</string>
+    <string name="label_show_qr">Mostrar QR</string>
+    <string name="label_qr_code">Código QR</string>
+    <string name="label_variables">Variáveis</string>
+    <string name="label_players">Jogadores (%1$d)</string>
+    <string name="label_no_players">Sem jogadores ainda</string>
+    <string name="label_remove_player">Remover Jogador</string>
+    <string name="label_remove_player_confirm">Remover %1$s desta equipa?</string>
+    <string name="label_delete_team">Eliminar Equipa</string>
+    <string name="label_delete_team_confirm">Eliminar esta equipa? Esta ação não pode ser desfeita.</string>
+    <string name="label_team_name">Nome da Equipa</string>
+    <string name="label_team_color">Cor</string>
+    <string name="label_create_team">Criar Equipa</string>
+    <string name="label_copied">Copiado!</string>
+
+    <!-- Map Edit Mode -->
+    <string name="label_edit_on">Editar: ATIVO</string>
+    <string name="label_edit_off">Editar: INATIVO</string>
+    <string name="label_add_base_here">Criar Base Aqui</string>
+    <string name="label_center_on_me">Centrar em Mim</string>
+
+    <!-- Live Tab -->
+    <string name="label_leaderboard">Classificação</string>
+    <string name="label_activity">Atividade</string>
+    <string name="label_no_leaderboard">Nenhuma equipa classificada ainda</string>
+    <string name="label_no_activity">Nenhuma atividade ainda</string>
+    <string name="label_completed_count">%1$d concluídos</string>
+    <string name="label_rank">%1$d.</string>
+
     <!-- Notifications -->
     <string name="label_notifications">Notificações</string>
     <string name="label_no_notifications">Sem notificações ainda</string>
+
+    <!-- More Tab -->
+    <string name="label_game_settings">Definições do Jogo</string>
+    <string name="label_send_notifications">Enviar Notificações</string>
+    <string name="label_manage_operators">Gerir Operadores</string>
+    <string name="label_export_game">Exportar Jogo</string>
+    <string name="label_app_settings">Definições da App</string>
+    <string name="label_game_section">Jogo</string>
+    <string name="label_data_section">Dados</string>
+    <string name="label_start_date">Data de Início</string>
+    <string name="label_end_date">Data de Fim</string>
+    <string name="label_uniform_assignment">Atribuição Uniforme</string>
+    <string name="label_tile_source">Fonte do Mapa</string>
+    <string name="label_broadcast">Transmissão</string>
+    <string name="label_broadcast_code">Código de Transmissão</string>
+    <string name="label_end_game">Terminar Jogo</string>
+    <string name="label_end_game_confirm_title">Terminar Jogo?</string>
+    <string name="label_end_game_confirm_message">O jogo será terminado. As equipas não poderão continuar a jogar.</string>
+    <string name="label_message">Mensagem</string>
+    <string name="label_all_teams">Todas as Equipas</string>
+    <string name="action_send">Enviar</string>
+    <string name="label_sent_to">Enviado para %1$s</string>
+    <string name="label_invite_operator">Convidar Operador</string>
+    <string name="label_operator_email">Endereço de e-mail</string>
+    <string name="label_pending_invites">Convites Pendentes</string>
+    <string name="label_no_operators">Nenhum operador ainda</string>
+    <string name="label_no_invites">Nenhum convite pendente</string>
+    <string name="action_invite">Convidar</string>
+    <string name="label_exporting">A exportar\u2026</string>
 </resources>
