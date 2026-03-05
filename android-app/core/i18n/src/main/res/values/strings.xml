@@ -227,6 +227,22 @@
     <string name="label_challenges">Challenges</string>
     <string name="label_teams">Teams</string>
 
+    <!-- Base Management -->
+    <string name="label_new_base">New Base</string>
+    <string name="label_edit_base">Edit Base</string>
+    <string name="label_base_name">Base Name</string>
+    <string name="label_base_description">Description</string>
+    <string name="label_require_presence">Require Presence</string>
+    <string name="label_hidden_base">Hidden Base</string>
+    <string name="label_none">None</string>
+    <string name="label_challenges_at_base">Challenges (%1$d)</string>
+    <string name="label_add_challenge">Add Challenge</string>
+    <string name="label_delete_base">Delete Base</string>
+    <string name="label_delete_base_confirm">Delete this base? This cannot be undone.</string>
+    <string name="label_tap_map_to_set_location">Tap map to set location</string>
+    <string name="action_save">Save</string>
+    <string name="label_write_nfc">Write NFC</string>
+
     <!-- Notifications -->
     <string name="label_notifications">Notifications</string>
     <string name="label_no_notifications">No notifications yet</string>

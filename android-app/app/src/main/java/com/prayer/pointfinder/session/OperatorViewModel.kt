@@ -9,10 +9,12 @@ import com.prayer.pointfinder.core.data.repo.SessionStore
 import com.prayer.pointfinder.core.model.Assignment
 import com.prayer.pointfinder.core.model.Base
 import com.prayer.pointfinder.core.model.Challenge
+import com.prayer.pointfinder.core.model.CreateBaseRequest
 import com.prayer.pointfinder.core.model.CreateGameRequest
 import com.prayer.pointfinder.core.model.Game
 import com.prayer.pointfinder.core.model.GameExportDto
 import com.prayer.pointfinder.core.model.ImportGameRequest
+import com.prayer.pointfinder.core.model.UpdateBaseRequest
 import com.prayer.pointfinder.core.model.OperatorNotificationSettingsResponse
 import com.prayer.pointfinder.core.model.SubmissionResponse
 import com.prayer.pointfinder.core.model.SubmissionStatus
@@ -393,6 +395,54 @@ class OperatorViewModel @Inject constructor(
                 writeStatus = context.getString(StringR.string.error_nfc_write_failed),
                 writeSuccess = false,
             )
+        }
+    }
+
+    fun createBase(request: CreateBaseRequest, onSuccess: (Base) -> Unit) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching { operatorRepository.createBase(gameId, request) }
+                .onSuccess { base ->
+                    refreshSelectedGameData()
+                    loadGameMeta(gameId)
+                    onSuccess(base)
+                }
+                .onFailure { e ->
+                    if (markAuthExpiredIfNeeded(e)) return@onFailure
+                    _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(e))
+                }
+        }
+    }
+
+    fun updateBase(baseId: String, request: UpdateBaseRequest, onSuccess: (Base) -> Unit) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching { operatorRepository.updateBase(gameId, baseId, request) }
+                .onSuccess { base ->
+                    refreshSelectedGameData()
+                    loadGameMeta(gameId)
+                    onSuccess(base)
+                }
+                .onFailure { e ->
+                    if (markAuthExpiredIfNeeded(e)) return@onFailure
+                    _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(e))
+                }
+        }
+    }
+
+    fun deleteBase(baseId: String, onSuccess: () -> Unit) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching { operatorRepository.deleteBaseUnit(gameId, baseId) }
+                .onSuccess {
+                    refreshSelectedGameData()
+                    loadGameMeta(gameId)
+                    onSuccess()
+                }
+                .onFailure { e ->
+                    if (markAuthExpiredIfNeeded(e)) return@onFailure
+                    _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(e))
+                }
         }
     }
 

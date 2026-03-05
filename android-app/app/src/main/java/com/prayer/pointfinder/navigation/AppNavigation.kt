@@ -68,6 +68,10 @@ import com.prayer.pointfinder.feature.auth.OperatorLoginScreen
 import com.prayer.pointfinder.feature.auth.PlayerJoinScreen
 import com.prayer.pointfinder.feature.auth.PlayerNameScreen
 import com.prayer.pointfinder.feature.auth.WelcomeScreen
+import com.prayer.pointfinder.core.model.CreateBaseRequest
+import com.prayer.pointfinder.core.model.UpdateBaseRequest
+import com.prayer.pointfinder.feature.operator.BaseEditScreen
+import com.prayer.pointfinder.feature.operator.BasesListScreen
 import com.prayer.pointfinder.feature.operator.OperatorGameScaffold
 import com.prayer.pointfinder.feature.operator.CreateGameScreen
 import com.prayer.pointfinder.feature.operator.OperatorHomeScreen
@@ -880,6 +884,17 @@ private fun OperatorGameRoot(
 
     val gameStatus = selectedGame.status
 
+    // Setup sub-screen navigation state
+    // null = show hub, "bases_list" = bases list, "base_edit:<id>" = edit base, "base_create" = create base
+    var setupSubScreen by remember { mutableStateOf<String?>(null) }
+
+    // Reset sub-screen when switching tabs
+    LaunchedEffect(state.selectedTab) {
+        if (state.selectedTab != OperatorTab.SETUP) {
+            setupSubScreen = null
+        }
+    }
+
     // When switching from setup to live mode, if current tab is SETUP, switch to LIVE
     LaunchedEffect(gameStatus, state.selectedTab) {
         if (gameStatus != GameStatus.SETUP && state.selectedTab == OperatorTab.SETUP) {
@@ -928,17 +943,81 @@ private fun OperatorGameRoot(
             }
 
             OperatorTab.SETUP -> {
-                SetupHubScreen(
-                    game = selectedGame,
-                    bases = state.bases,
-                    challenges = state.challenges,
-                    teams = state.teams,
-                    assignments = state.assignments,
-                    onNavigateToBases = { /* TODO: navigate to bases list */ },
-                    onNavigateToChallenges = { /* TODO: navigate to challenges list */ },
-                    onNavigateToTeams = { /* TODO: navigate to teams list */ },
-                    onGoLive = { viewModel.updateGameStatus("live") },
-                )
+                when {
+                    setupSubScreen == "bases_list" -> {
+                        BasesListScreen(
+                            bases = state.bases,
+                            challenges = state.challenges,
+                            assignments = state.assignments,
+                            onSelectBase = { base -> setupSubScreen = "base_edit:${base.id}" },
+                            onCreateBase = { setupSubScreen = "base_create" },
+                            onBack = { setupSubScreen = null },
+                        )
+                    }
+                    setupSubScreen == "base_create" -> {
+                        BaseEditScreen(
+                            base = null,
+                            challenges = state.challenges,
+                            linkedChallenges = emptyList(),
+                            onSave = { request ->
+                                viewModel.createBase(request as CreateBaseRequest) {
+                                    setupSubScreen = "bases_list"
+                                }
+                            },
+                            onDelete = null,
+                            onNavigateToCreateChallenge = null,
+                            onBack = { setupSubScreen = "bases_list" },
+                            initialLat = null,
+                            initialLng = null,
+                        )
+                    }
+                    setupSubScreen?.startsWith("base_edit:") == true -> {
+                        val baseId = setupSubScreen!!.removePrefix("base_edit:")
+                        val base = state.bases.firstOrNull { it.id == baseId }
+                        if (base != null) {
+                            val linkedChallenges = state.assignments
+                                .filter { it.baseId == base.id }
+                                .mapNotNull { assignment ->
+                                    state.challenges.firstOrNull { it.id == assignment.challengeId }
+                                }
+                                .distinctBy { it.id }
+                            BaseEditScreen(
+                                base = base,
+                                challenges = state.challenges,
+                                linkedChallenges = linkedChallenges,
+                                onSave = { request ->
+                                    viewModel.updateBase(base.id, request as UpdateBaseRequest) {
+                                        setupSubScreen = "bases_list"
+                                    }
+                                },
+                                onDelete = {
+                                    viewModel.deleteBase(base.id) {
+                                        setupSubScreen = "bases_list"
+                                    }
+                                },
+                                onNavigateToCreateChallenge = null, // TODO: wire up in challenge management task
+                                onBack = { setupSubScreen = "bases_list" },
+                                initialLat = null,
+                                initialLng = null,
+                            )
+                        } else {
+                            setupSubScreen = "bases_list"
+                        }
+                    }
+                    else -> {
+                        SetupHubScreen(
+                            game = selectedGame,
+                            bases = state.bases,
+                            challenges = state.challenges,
+                            teams = state.teams,
+                            assignments = state.assignments,
+                            onNavigateToBases = { setupSubScreen = "bases_list" },
+                            onNavigateToChallenges = { /* TODO: navigate to challenges list */ },
+                            onNavigateToTeams = { /* TODO: navigate to teams list */ },
+                            onGoLive = { viewModel.updateGameStatus("live") },
+                        )
+                    }
+                }
             }
 
             OperatorTab.LIVE -> {
