@@ -19,6 +19,7 @@ import com.prayer.pointfinder.core.model.SubmissionStatus
 import com.prayer.pointfinder.core.model.Team
 import com.prayer.pointfinder.core.model.TeamBaseProgressResponse
 import com.prayer.pointfinder.core.model.TeamLocationResponse
+import com.prayer.pointfinder.core.model.UpdateGameStatusRequest
 import com.prayer.pointfinder.core.model.UpdateOperatorNotificationSettingsRequest
 import com.prayer.pointfinder.core.network.ApiErrorParser
 import com.prayer.pointfinder.core.network.MobileRealtimeClient
@@ -425,6 +426,21 @@ class OperatorViewModel @Inject constructor(
                 onSuccess(game)
             }.onFailure { e ->
                 _state.value = _state.value.copy(isLoading = false, errorMessage = ApiErrorParser.extractMessage(e))
+            }
+        }
+    }
+
+    fun updateGameStatus(status: String) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching {
+                operatorRepository.updateGameStatus(gameId, UpdateGameStatusRequest(status = status))
+            }.onSuccess { updatedGame ->
+                _state.value = _state.value.copy(selectedGame = updatedGame, authExpired = false)
+                loadGames()
+            }.onFailure { e ->
+                if (markAuthExpiredIfNeeded(e)) return@onFailure
+                _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(e))
             }
         }
     }

@@ -73,6 +73,7 @@ import com.prayer.pointfinder.feature.operator.CreateGameScreen
 import com.prayer.pointfinder.feature.operator.OperatorHomeScreen
 import com.prayer.pointfinder.feature.operator.LiveBaseProgressBottomSheet
 import com.prayer.pointfinder.feature.operator.OperatorMapScreen
+import com.prayer.pointfinder.feature.operator.SetupHubScreen
 import com.prayer.pointfinder.feature.operator.OperatorSettingsScreen
 import com.prayer.pointfinder.feature.operator.OperatorSubmissionsScreen
 import com.prayer.pointfinder.feature.operator.OperatorTab
@@ -927,12 +928,17 @@ private fun OperatorGameRoot(
             }
 
             OperatorTab.SETUP -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text("Setup Hub - TODO")
-                }
+                SetupHubScreen(
+                    game = selectedGame,
+                    bases = state.bases,
+                    challenges = state.challenges,
+                    teams = state.teams,
+                    assignments = state.assignments,
+                    onNavigateToBases = { /* TODO: navigate to bases list */ },
+                    onNavigateToChallenges = { /* TODO: navigate to challenges list */ },
+                    onNavigateToTeams = { /* TODO: navigate to teams list */ },
+                    onGoLive = { viewModel.updateGameStatus("live") },
+                )
             }
 
             OperatorTab.LIVE -> {
