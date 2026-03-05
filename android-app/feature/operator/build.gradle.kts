@@ -41,6 +41,7 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.8.3")
     implementation("org.maplibre.gl:android-sdk:11.8.4")
     implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
     implementation(composeBom)
     implementation("androidx.compose.ui:ui")

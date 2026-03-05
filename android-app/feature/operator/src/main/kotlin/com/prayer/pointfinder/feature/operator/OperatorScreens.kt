@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.LocationOn
@@ -23,6 +24,8 @@ import androidx.compose.foundation.background
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -66,6 +69,7 @@ internal val BadgeIndigo = Color(0xFF303F9F)
 fun OperatorHomeScreen(
     games: List<Game>,
     onSelectGame: (Game) -> Unit,
+    onCreateGame: () -> Unit,
     onLogout: () -> Unit,
     onRefresh: () -> Unit,
     isLoading: Boolean = false,
@@ -80,6 +84,11 @@ fun OperatorHomeScreen(
                     TextButton(onClick = onLogout) { Text(stringResource(R.string.action_logout)) }
                 },
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = onCreateGame) {
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.label_create_game))
+            }
         },
     ) { padding ->
         PullToRefreshBox(
