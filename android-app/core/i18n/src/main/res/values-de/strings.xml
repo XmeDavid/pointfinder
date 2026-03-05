@@ -57,6 +57,15 @@
     <string name="label_live">Live</string>
     <string name="label_more">Mehr</string>
     <string name="label_create_game">Spiel erstellen</string>
+    <string name="label_game_name">Spielname</string>
+    <string name="label_game_description">Beschreibung</string>
+    <string name="label_start_from">Starten mit</string>
+    <string name="label_empty_game">Leeres Spiel</string>
+    <string name="label_import_from_file">Aus Datei importieren</string>
+    <string name="label_select_file">Datei auswählen</string>
+    <string name="label_file_loaded">Datei geladen</string>
+    <string name="action_create">Erstellen</string>
+    <string name="label_creating">Wird erstellt\u2026</string>
     <string name="label_offline">Offline-Modus</string>
     <string name="label_operator">Operator</string>
     <string name="label_player">Spieler</string>

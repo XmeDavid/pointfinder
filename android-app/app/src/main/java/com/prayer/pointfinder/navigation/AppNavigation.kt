@@ -69,6 +69,7 @@ import com.prayer.pointfinder.feature.auth.PlayerJoinScreen
 import com.prayer.pointfinder.feature.auth.PlayerNameScreen
 import com.prayer.pointfinder.feature.auth.WelcomeScreen
 import com.prayer.pointfinder.feature.operator.OperatorGameScaffold
+import com.prayer.pointfinder.feature.operator.CreateGameScreen
 import com.prayer.pointfinder.feature.operator.OperatorHomeScreen
 import com.prayer.pointfinder.feature.operator.LiveBaseProgressBottomSheet
 import com.prayer.pointfinder.feature.operator.OperatorMapScreen
@@ -243,6 +244,24 @@ fun AppNavigation(
                 viewModel = operatorViewModel,
                 sessionViewModel = sessionViewModel,
                 onOpenGame = { navController.navigate(Routes.OPERATOR_GAME) },
+                onCreateGame = { navController.navigate(Routes.OPERATOR_CREATE_GAME) },
+            )
+        }
+
+        composable(Routes.OPERATOR_CREATE_GAME) {
+            val state by operatorViewModel.state.collectAsStateWithLifecycle()
+            CreateGameScreen(
+                onBack = { navController.popBackStack() },
+                onGameCreated = { game ->
+                    navController.popBackStack()
+                    operatorViewModel.selectGame(game)
+                    navController.navigate(Routes.OPERATOR_GAME)
+                },
+                createGame = operatorViewModel::createGame,
+                importGame = operatorViewModel::importGame,
+                isLoading = state.isLoading,
+                errorMessage = state.errorMessage,
+                onClearError = operatorViewModel::clearError,
             )
         }
 
@@ -809,6 +828,7 @@ private fun OperatorHomeRoot(
     viewModel: OperatorViewModel,
     sessionViewModel: AppSessionViewModel,
     onOpenGame: () -> Unit,
+    onCreateGame: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.authExpired) {
@@ -825,6 +845,7 @@ private fun OperatorHomeRoot(
             viewModel.selectGame(it)
             onOpenGame()
         },
+        onCreateGame = onCreateGame,
         onLogout = sessionViewModel::logout,
         onRefresh = viewModel::loadGames,
         isLoading = state.isLoading,

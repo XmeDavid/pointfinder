@@ -9,7 +9,10 @@ import com.prayer.pointfinder.core.data.repo.SessionStore
 import com.prayer.pointfinder.core.model.Assignment
 import com.prayer.pointfinder.core.model.Base
 import com.prayer.pointfinder.core.model.Challenge
+import com.prayer.pointfinder.core.model.CreateGameRequest
 import com.prayer.pointfinder.core.model.Game
+import com.prayer.pointfinder.core.model.GameExportDto
+import com.prayer.pointfinder.core.model.ImportGameRequest
 import com.prayer.pointfinder.core.model.OperatorNotificationSettingsResponse
 import com.prayer.pointfinder.core.model.SubmissionResponse
 import com.prayer.pointfinder.core.model.SubmissionStatus
@@ -389,6 +392,40 @@ class OperatorViewModel @Inject constructor(
                 writeStatus = context.getString(StringR.string.error_nfc_write_failed),
                 writeSuccess = false,
             )
+        }
+    }
+
+    fun createGame(name: String, description: String, onSuccess: (Game) -> Unit) {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isLoading = true)
+            runCatching {
+                operatorRepository.createGame(CreateGameRequest(name = name, description = description))
+            }.onSuccess { game ->
+                _state.value = _state.value.copy(isLoading = false)
+                loadGames()
+                onSuccess(game)
+            }.onFailure { e ->
+                _state.value = _state.value.copy(isLoading = false, errorMessage = ApiErrorParser.extractMessage(e))
+            }
+        }
+    }
+
+    fun importGame(name: String, exportData: GameExportDto, onSuccess: (Game) -> Unit) {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isLoading = true)
+            runCatching {
+                operatorRepository.importGame(
+                    ImportGameRequest(
+                        gameData = exportData.copy(game = exportData.game.copy(name = name)),
+                    ),
+                )
+            }.onSuccess { game ->
+                _state.value = _state.value.copy(isLoading = false)
+                loadGames()
+                onSuccess(game)
+            }.onFailure { e ->
+                _state.value = _state.value.copy(isLoading = false, errorMessage = ApiErrorParser.extractMessage(e))
+            }
         }
     }
 
