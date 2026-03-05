@@ -20,6 +20,7 @@ import { teamsApi } from "@/lib/api/teams";
 import { teamVariablesApi, type TeamVariableEntry } from "@/lib/api/team-variables";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { useTranslation } from "react-i18next";
+import { useToast } from "@/hooks/useToast";
 import type { Challenge } from "@/types";
 
 const RichTextEditor = lazy(() =>
@@ -28,6 +29,7 @@ const RichTextEditor = lazy(() =>
 
 export function ChallengesPage() {
   const { t } = useTranslation();
+  const toast = useToast();
   const { gameId } = useParams<{ gameId: string }>();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -105,19 +107,19 @@ export function ChallengesPage() {
 
   const createChallenge = useMutation({
     mutationFn: (data: CreateChallengeDto) => challengesApi.create({ ...data, gameId: gameId! }),
-    onSuccess: () => { setActionError(""); invalidateChallengesAndBases(); closeDialog(); },
+    onSuccess: () => { setActionError(""); invalidateChallengesAndBases(); closeDialog(); toast.success(t("common.saved")); },
     onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
   const updateChallenge = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<CreateChallengeDto> }) => challengesApi.update(id, { ...data, gameId: gameId! }),
-    onSuccess: () => { setActionError(""); invalidateChallengesAndBases(); closeDialog(); },
+    onSuccess: () => { setActionError(""); invalidateChallengesAndBases(); closeDialog(); toast.success(t("common.saved")); },
     onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
   const deleteChallenge = useMutation({
     mutationFn: (id: string) => challengesApi.delete(id, gameId!),
-    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["challenges", gameId] }); },
+    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["challenges", gameId] }); toast.success(t("common.deleted")); },
     onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
@@ -185,10 +187,10 @@ export function ChallengesPage() {
                   <>
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0"><CardTitle className="text-base">{ch.title}</CardTitle><CardDescription className="line-clamp-1">{ch.description}</CardDescription></div>
+                        <div className="flex-1 min-w-0"><CardTitle className="text-base">{ch.title}</CardTitle><CardDescription className="line-clamp-1" title={ch.description}>{ch.description}</CardDescription></div>
                         <div className="flex gap-1 ml-2">
-                          <Button variant="ghost" size="icon" onClick={() => openEdit(ch)}><Pencil className="h-4 w-4" /></Button>
-                          <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(ch.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => openEdit(ch)} aria-label={t("common.edit")}><Pencil className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(ch.id)} aria-label={t("common.delete")}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                         </div>
                       </div>
                     </CardHeader>
@@ -447,7 +449,7 @@ export function ChallengesPage() {
             )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={closeDialog}>{t("common.cancel")}</Button>
-              <Button type="submit" disabled={createChallenge.isPending || updateChallenge.isPending}>{editing ? t("challenges.editChallenge") : t("challenges.createChallenge")}</Button>
+              <Button type="submit" loading={createChallenge.isPending || updateChallenge.isPending}>{editing ? t("challenges.editChallenge") : t("challenges.createChallenge")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

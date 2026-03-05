@@ -20,12 +20,14 @@ import { getApiErrorMessage } from "@/lib/api/errors";
 import { MapPicker, BaseMapView, type UnlockConnection } from "@/components/common/MapPicker";
 import { getDefaultCenter } from "@/lib/tile-sources";
 import { useTranslation } from "react-i18next";
+import { useToast } from "@/hooks/useToast";
 import type { Base } from "@/types";
 
 type ViewMode = "list" | "map";
 
 export function BasesPage() {
   const { t } = useTranslation();
+  const toast = useToast();
   const { gameId } = useParams<{ gameId: string }>();
   const queryClient = useQueryClient();
   const [view, setView] = useState<ViewMode>("list");
@@ -79,19 +81,19 @@ export function BasesPage() {
 
   const createBase = useMutation({
     mutationFn: (data: CreateBaseDto) => basesApi.create({ ...data, gameId: gameId! }),
-    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["bases", gameId] }); queryClient.invalidateQueries({ queryKey: ["challenges", gameId] }); closeDialog(); },
+    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["bases", gameId] }); queryClient.invalidateQueries({ queryKey: ["challenges", gameId] }); closeDialog(); toast.success(t("common.saved")); },
     onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
   const updateBase = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<CreateBaseDto> }) => basesApi.update(id, { ...data, gameId: gameId! }),
-    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["bases", gameId] }); queryClient.invalidateQueries({ queryKey: ["challenges", gameId] }); closeDialog(); },
+    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["bases", gameId] }); queryClient.invalidateQueries({ queryKey: ["challenges", gameId] }); closeDialog(); toast.success(t("common.saved")); },
     onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
   const deleteBase = useMutation({
     mutationFn: (id: string) => basesApi.delete(id, gameId!),
-    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["bases", gameId] }); queryClient.invalidateQueries({ queryKey: ["challenges", gameId] }); },
+    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["bases", gameId] }); queryClient.invalidateQueries({ queryKey: ["challenges", gameId] }); toast.success(t("common.deleted")); },
     onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
@@ -162,7 +164,7 @@ export function BasesPage() {
                       })()}
                       {base.hidden && <Badge variant="outline" className="text-xs gap-1"><EyeOff className="h-3 w-3" />{t("bases.hiddenTag")}</Badge>}
                     </div>
-                    <p className="text-sm text-muted-foreground truncate">{base.description}</p>
+                    <p className="text-sm text-muted-foreground truncate" title={base.description}>{base.description}</p>
                     <p className="text-xs text-muted-foreground mt-1">{base.lat.toFixed(4)}, {base.lng.toFixed(4)}</p>
                   </div>
                   <div className="flex items-center gap-2 ml-auto">
@@ -171,8 +173,8 @@ export function BasesPage() {
                       {base.nfcLinked ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
                       <span className="hidden sm:inline">{base.nfcLinked ? t("bases.nfcLinked") : t("bases.nfcNotLinked")}</span>
                     </Badge>
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(base)}><Pencil className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(base.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(base)} aria-label={t("common.edit")}><Pencil className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(base.id)} aria-label={t("common.delete")}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                   </div>
                 </CardContent>
               </Card>
@@ -276,7 +278,7 @@ export function BasesPage() {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={closeDialog}>{t("common.cancel")}</Button>
-              <Button type="submit" disabled={createBase.isPending || updateBase.isPending}>{editing ? t("bases.editBase") : t("bases.createBase")}</Button>
+              <Button type="submit" loading={createBase.isPending || updateBase.isPending}>{editing ? t("bases.editBase") : t("bases.createBase")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
