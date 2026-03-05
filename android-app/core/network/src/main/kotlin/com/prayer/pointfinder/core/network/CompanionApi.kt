@@ -1,32 +1,54 @@
 package com.prayer.pointfinder.core.network
 
+import com.prayer.pointfinder.core.model.ActivityEvent
 import com.prayer.pointfinder.core.model.Assignment
 import com.prayer.pointfinder.core.model.AuthType
 import com.prayer.pointfinder.core.model.Base
 import com.prayer.pointfinder.core.model.BaseProgress
-import com.prayer.pointfinder.core.model.CheckInResponse
 import com.prayer.pointfinder.core.model.Challenge
+import com.prayer.pointfinder.core.model.CheckInResponse
+import com.prayer.pointfinder.core.model.CreateBaseRequest
+import com.prayer.pointfinder.core.model.CreateChallengeRequest
+import com.prayer.pointfinder.core.model.CreateGameRequest
+import com.prayer.pointfinder.core.model.CreateTeamRequest
 import com.prayer.pointfinder.core.model.Game
 import com.prayer.pointfinder.core.model.GameDataResponse
+import com.prayer.pointfinder.core.model.GameExportDto
+import com.prayer.pointfinder.core.model.ImportGameRequest
+import com.prayer.pointfinder.core.model.InviteRequest
+import com.prayer.pointfinder.core.model.InviteResponse
+import com.prayer.pointfinder.core.model.LeaderboardEntry
 import com.prayer.pointfinder.core.model.LocationUpdateRequest
+import com.prayer.pointfinder.core.model.NotificationResponse
 import com.prayer.pointfinder.core.model.OperatorAuthResponse
 import com.prayer.pointfinder.core.model.OperatorLoginRequest
+import com.prayer.pointfinder.core.model.OperatorNotificationSettingsResponse
+import com.prayer.pointfinder.core.model.OperatorUserResponse
 import com.prayer.pointfinder.core.model.PlayerAuthResponse
 import com.prayer.pointfinder.core.model.PlayerJoinRequest
-import com.prayer.pointfinder.core.model.ReviewSubmissionRequest
+import com.prayer.pointfinder.core.model.PlayerNotificationResponse
+import com.prayer.pointfinder.core.model.PlayerResponse
 import com.prayer.pointfinder.core.model.PlayerSubmissionRequest
 import com.prayer.pointfinder.core.model.PushTokenRequest
 import com.prayer.pointfinder.core.model.RefreshTokenRequest
+import com.prayer.pointfinder.core.model.ReviewSubmissionRequest
+import com.prayer.pointfinder.core.model.SendNotificationRequest
 import com.prayer.pointfinder.core.model.SubmissionResponse
 import com.prayer.pointfinder.core.model.Team
 import com.prayer.pointfinder.core.model.TeamBaseProgressResponse
 import com.prayer.pointfinder.core.model.TeamLocationResponse
-import com.prayer.pointfinder.core.model.OperatorNotificationSettingsResponse
-import com.prayer.pointfinder.core.model.PlayerNotificationResponse
+import com.prayer.pointfinder.core.model.TeamVariablesCompletenessResponse
+import com.prayer.pointfinder.core.model.TeamVariablesRequest
+import com.prayer.pointfinder.core.model.TeamVariablesResponse
 import com.prayer.pointfinder.core.model.UnseenCountResponse
+import com.prayer.pointfinder.core.model.UpdateBaseRequest
+import com.prayer.pointfinder.core.model.UpdateChallengeRequest
+import com.prayer.pointfinder.core.model.UpdateGameRequest
+import com.prayer.pointfinder.core.model.UpdateGameStatusRequest
+import com.prayer.pointfinder.core.model.UpdateOperatorNotificationSettingsRequest
+import com.prayer.pointfinder.core.model.UpdateTeamRequest
 import com.prayer.pointfinder.core.model.UploadSessionInitRequest
 import com.prayer.pointfinder.core.model.UploadSessionResponse
-import com.prayer.pointfinder.core.model.UpdateOperatorNotificationSettingsRequest
 import com.prayer.pointfinder.core.model.UserResponse
 import kotlinx.serialization.json.Json
 import okhttp3.Interceptor
@@ -34,11 +56,13 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody
+import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.HTTP
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
@@ -183,6 +207,169 @@ interface CompanionApi {
         @Path("gameId") gameId: String,
         @Body request: UpdateOperatorNotificationSettingsRequest,
     ): OperatorNotificationSettingsResponse
+
+    // === Game CRUD ===
+
+    @POST("api/games")
+    suspend fun createGame(@Body request: CreateGameRequest): Game
+
+    @GET("api/games/{gameId}")
+    suspend fun getGame(@Path("gameId") gameId: String): Game
+
+    @PUT("api/games/{gameId}")
+    suspend fun updateGame(@Path("gameId") gameId: String, @Body request: UpdateGameRequest): Game
+
+    @HTTP(method = "DELETE", path = "api/games/{gameId}", hasBody = false)
+    suspend fun deleteGame(@Path("gameId") gameId: String): Response<Unit>
+
+    @PATCH("api/games/{gameId}/status")
+    suspend fun updateGameStatus(@Path("gameId") gameId: String, @Body request: UpdateGameStatusRequest): Game
+
+    // === Base CRUD ===
+
+    @POST("api/games/{gameId}/bases")
+    suspend fun createBase(@Path("gameId") gameId: String, @Body request: CreateBaseRequest): Base
+
+    @PUT("api/games/{gameId}/bases/{baseId}")
+    suspend fun updateBase(
+        @Path("gameId") gameId: String,
+        @Path("baseId") baseId: String,
+        @Body request: UpdateBaseRequest,
+    ): Base
+
+    @HTTP(method = "DELETE", path = "api/games/{gameId}/bases/{baseId}", hasBody = false)
+    suspend fun deleteBase(
+        @Path("gameId") gameId: String,
+        @Path("baseId") baseId: String,
+    ): Response<Unit>
+
+    // === Challenge CRUD ===
+
+    @POST("api/games/{gameId}/challenges")
+    suspend fun createChallenge(@Path("gameId") gameId: String, @Body request: CreateChallengeRequest): Challenge
+
+    @PUT("api/games/{gameId}/challenges/{challengeId}")
+    suspend fun updateChallenge(
+        @Path("gameId") gameId: String,
+        @Path("challengeId") challengeId: String,
+        @Body request: UpdateChallengeRequest,
+    ): Challenge
+
+    @HTTP(method = "DELETE", path = "api/games/{gameId}/challenges/{challengeId}", hasBody = false)
+    suspend fun deleteChallenge(
+        @Path("gameId") gameId: String,
+        @Path("challengeId") challengeId: String,
+    ): Response<Unit>
+
+    // === Team CRUD ===
+
+    @POST("api/games/{gameId}/teams")
+    suspend fun createTeam(@Path("gameId") gameId: String, @Body request: CreateTeamRequest): Team
+
+    @PUT("api/games/{gameId}/teams/{teamId}")
+    suspend fun updateTeam(
+        @Path("gameId") gameId: String,
+        @Path("teamId") teamId: String,
+        @Body request: UpdateTeamRequest,
+    ): Team
+
+    @HTTP(method = "DELETE", path = "api/games/{gameId}/teams/{teamId}", hasBody = false)
+    suspend fun deleteTeam(
+        @Path("gameId") gameId: String,
+        @Path("teamId") teamId: String,
+    ): Response<Unit>
+
+    @GET("api/games/{gameId}/teams/{teamId}/players")
+    suspend fun getTeamPlayers(
+        @Path("gameId") gameId: String,
+        @Path("teamId") teamId: String,
+    ): List<PlayerResponse>
+
+    @HTTP(method = "DELETE", path = "api/games/{gameId}/teams/{teamId}/players/{playerId}", hasBody = false)
+    suspend fun removePlayer(
+        @Path("gameId") gameId: String,
+        @Path("teamId") teamId: String,
+        @Path("playerId") playerId: String,
+    ): Response<Unit>
+
+    // === Notifications ===
+
+    @GET("api/games/{gameId}/notifications")
+    suspend fun getNotifications(@Path("gameId") gameId: String): List<NotificationResponse>
+
+    @POST("api/games/{gameId}/notifications")
+    suspend fun sendNotification(
+        @Path("gameId") gameId: String,
+        @Body request: SendNotificationRequest,
+    ): NotificationResponse
+
+    // === Game Operators ===
+
+    @GET("api/games/{gameId}/operators")
+    suspend fun getGameOperators(@Path("gameId") gameId: String): List<OperatorUserResponse>
+
+    @POST("api/games/{gameId}/operators/{userId}")
+    suspend fun addGameOperator(
+        @Path("gameId") gameId: String,
+        @Path("userId") userId: String,
+    ): Response<Unit>
+
+    @HTTP(method = "DELETE", path = "api/games/{gameId}/operators/{userId}", hasBody = false)
+    suspend fun removeGameOperator(
+        @Path("gameId") gameId: String,
+        @Path("userId") userId: String,
+    ): Response<Unit>
+
+    // === Invites ===
+
+    @GET("api/invites/game/{gameId}")
+    suspend fun getGameInvites(@Path("gameId") gameId: String): List<InviteResponse>
+
+    @POST("api/invites")
+    suspend fun createInvite(@Body request: InviteRequest): InviteResponse
+
+    // === Team Variables ===
+
+    @GET("api/games/{gameId}/team-variables")
+    suspend fun getGameVariables(@Path("gameId") gameId: String): TeamVariablesResponse
+
+    @PUT("api/games/{gameId}/team-variables")
+    suspend fun saveGameVariables(
+        @Path("gameId") gameId: String,
+        @Body request: TeamVariablesRequest,
+    ): TeamVariablesResponse
+
+    @GET("api/games/{gameId}/challenges/{challengeId}/team-variables")
+    suspend fun getChallengeVariables(
+        @Path("gameId") gameId: String,
+        @Path("challengeId") challengeId: String,
+    ): TeamVariablesResponse
+
+    @PUT("api/games/{gameId}/challenges/{challengeId}/team-variables")
+    suspend fun saveChallengeVariables(
+        @Path("gameId") gameId: String,
+        @Path("challengeId") challengeId: String,
+        @Body request: TeamVariablesRequest,
+    ): TeamVariablesResponse
+
+    @GET("api/games/{gameId}/team-variables/completeness")
+    suspend fun getVariablesCompleteness(@Path("gameId") gameId: String): TeamVariablesCompletenessResponse
+
+    // === Monitoring ===
+
+    @GET("api/games/{gameId}/monitoring/leaderboard")
+    suspend fun getLeaderboard(@Path("gameId") gameId: String): List<LeaderboardEntry>
+
+    @GET("api/games/{gameId}/monitoring/activity")
+    suspend fun getActivity(@Path("gameId") gameId: String): List<ActivityEvent>
+
+    // === Export/Import ===
+
+    @GET("api/games/{gameId}/export")
+    suspend fun exportGame(@Path("gameId") gameId: String): GameExportDto
+
+    @POST("api/games/import")
+    suspend fun importGame(@Body request: ImportGameRequest): Game
 }
 
 @kotlinx.serialization.Serializable
