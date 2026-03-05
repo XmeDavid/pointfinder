@@ -40,7 +40,7 @@ export function ActivityPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     {team && <Badge variant="secondary" className="text-xs"><div className="h-2 w-2 rounded-full mr-1" style={{ backgroundColor: team.color }} />{team.name}</Badge>}
-                    <Badge variant="outline" className="text-xs capitalize">{event.type.replace("_", " ")}</Badge>
+                    <Badge variant="outline" className="text-xs">{t(`activityFeed.eventType.${event.type}`, { defaultValue: event.type.replace("_", " ") })}</Badge>
                   </div>
                   <p className="text-sm mt-1">{event.message}</p>
                   <p className="text-xs text-muted-foreground mt-1">{formatDateTime(event.timestamp)}</p>
