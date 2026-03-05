@@ -264,6 +264,30 @@
     <string name="label_preview">Pré-visualização</string>
     <string name="label_select_team">Selecionar Equipa</string>
 
+    <!-- Challenge Management -->
+    <string name="label_challenge_title">Título</string>
+    <string name="label_challenge_points">Pontos</string>
+    <string name="label_content">Conteúdo</string>
+    <string name="label_description">Descrição</string>
+    <string name="label_completion_message">Mensagem de Conclusão</string>
+    <string name="action_edit">Editar</string>
+    <string name="label_answer_type_label">Tipo de Resposta</string>
+    <string name="label_text_input">Texto</string>
+    <string name="label_file_upload">Ficheiro</string>
+    <string name="label_auto_validate">Validação automática</string>
+    <string name="label_correct_answers">Respostas Corretas</string>
+    <string name="label_add_answer">Adicionar Resposta</string>
+    <string name="label_linking">Ligação</string>
+    <string name="label_fixed_to_base">Fixa a Base</string>
+    <string name="label_location_bound">Localização obrigatória</string>
+    <string name="label_unlocks_base">Desbloqueia Base</string>
+    <string name="label_delete_challenge">Eliminar Desafio</string>
+    <string name="label_delete_challenge_confirm">Eliminar este desafio? Esta ação não pode ser desfeita.</string>
+    <string name="label_new_challenge">Novo Desafio</string>
+    <string name="label_edit_challenge">Editar Desafio</string>
+    <string name="label_no_content">Sem conteúdo ainda</string>
+    <string name="label_no_base">Sem base</string>
+
     <!-- Notifications -->
     <string name="label_notifications">Notificações</string>
     <string name="label_no_notifications">Sem notificações ainda</string>
