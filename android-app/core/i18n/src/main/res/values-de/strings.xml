@@ -227,6 +227,22 @@
     <string name="label_challenges">Challenges</string>
     <string name="label_teams">Teams</string>
 
+    <!-- Base Management -->
+    <string name="label_new_base">Neue Basis</string>
+    <string name="label_edit_base">Basis bearbeiten</string>
+    <string name="label_base_name">Basisname</string>
+    <string name="label_base_description">Beschreibung</string>
+    <string name="label_require_presence">Pr\u00e4senz erforderlich</string>
+    <string name="label_hidden_base">Versteckte Basis</string>
+    <string name="label_none">Keine</string>
+    <string name="label_challenges_at_base">Challenges (%1$d)</string>
+    <string name="label_add_challenge">Challenge hinzuf\u00fcgen</string>
+    <string name="label_delete_base">Basis l\u00f6schen</string>
+    <string name="label_delete_base_confirm">Diese Basis l\u00f6schen? Dies kann nicht r\u00fcckg\u00e4ngig gemacht werden.</string>
+    <string name="label_tap_map_to_set_location">Tippe auf die Karte, um den Standort festzulegen</string>
+    <string name="action_save">Speichern</string>
+    <string name="label_write_nfc">NFC schreiben</string>
+
     <!-- Notifications -->
     <string name="label_notifications">Benachrichtigungen</string>
     <string name="label_no_notifications">Noch keine Benachrichtigungen</string>

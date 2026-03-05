@@ -104,6 +104,8 @@ class OperatorRepository @Inject constructor(
 
     suspend fun deleteBase(gameId: String, baseId: String): Response<Unit> = api.deleteBase(gameId, baseId)
 
+    suspend fun deleteBaseUnit(gameId: String, baseId: String) { api.deleteBase(gameId, baseId) }
+
     // === Challenge CRUD ===
 
     suspend fun createChallenge(gameId: String, request: CreateChallengeRequest): Challenge =
