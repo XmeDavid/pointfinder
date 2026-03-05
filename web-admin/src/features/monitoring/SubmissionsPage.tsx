@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AuthImage } from "@/components/AuthImage";
+import { Alert } from "@/components/ui/alert";
 import { submissionsApi } from "@/lib/api/submissions";
 import { teamsApi } from "@/lib/api/teams";
 import { challengesApi } from "@/lib/api/challenges";
@@ -80,7 +81,7 @@ export function SubmissionsPage() {
           <Button variant={filter === "pending" ? "secondary" : "ghost"} size="sm" onClick={() => setFilter("pending")}><Filter className="mr-1 h-3 w-3" />{t("submissions.statusPending")} ({pendingCount})</Button>
         </div>
       </div>
-      {websocketError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{websocketError}</div>}
+      {websocketError && <Alert>{websocketError}</Alert>}
 
       {sorted.length === 0 ? (
         <Card className="py-12"><CardContent className="text-center"><FileText className="mx-auto h-8 w-8 text-muted-foreground mb-2" /><p className="text-muted-foreground">{filter === "pending" ? t("submissions.noPending") : t("submissions.noSubmissions")}</p></CardContent></Card>

@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Trophy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 import { monitoringApi } from "@/lib/api/monitoring";
 import { useTranslation } from "react-i18next";
 import { useGameWebSocket } from "@/hooks/useGameWebSocket";
@@ -16,7 +17,7 @@ export function LeaderboardPage() {
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold">{t("leaderboard.title")}</h1><p className="text-muted-foreground">{t("leaderboard.description")}</p></div>
-      {websocketError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{websocketError}</div>}
+      {websocketError && <Alert>{websocketError}</Alert>}
       {leaderboard.length === 0 ? (
         <Card className="py-12"><CardContent className="text-center"><Trophy className="mx-auto h-8 w-8 text-muted-foreground mb-2" /><p className="text-muted-foreground">{t("leaderboard.noScores")}</p></CardContent></Card>
       ) : (

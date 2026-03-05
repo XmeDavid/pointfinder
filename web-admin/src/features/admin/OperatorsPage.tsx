@@ -7,6 +7,7 @@ import { FormLabel } from "@/components/ui/form-label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Alert } from "@/components/ui/alert";
 import { usersApi } from "@/lib/api/users";
 import { invitesApi } from "@/lib/api/invites";
 import { getApiErrorMessage } from "@/lib/api/errors";
@@ -41,7 +42,7 @@ export function OperatorsPage() {
           <Plus className="mr-2 h-4 w-4" />{t("admin.inviteOperator")}
         </Button>
       </div>
-      {inviteError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{inviteError}</div>}
+      {inviteError && <Alert onDismiss={() => setInviteError("")}>{inviteError}</Alert>}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {operators.map((op) => (

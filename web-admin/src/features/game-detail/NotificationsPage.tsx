@@ -8,6 +8,7 @@ import { FormLabel } from "@/components/ui/form-label";
 import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 import { notificationsApi } from "@/lib/api/notifications";
 import { teamsApi } from "@/lib/api/teams";
 import { getApiErrorMessage } from "@/lib/api/errors";
@@ -38,8 +39,8 @@ export function NotificationsPage() {
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold">{t("notifications.title")}</h1><p className="text-muted-foreground">{t("notifications.description")}</p></div>
-      {websocketError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{websocketError}</div>}
-      {actionError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{actionError}</div>}
+      {websocketError && <Alert>{websocketError}</Alert>}
+      {actionError && <Alert onDismiss={() => setActionError("")}>{actionError}</Alert>}
       <Card>
         <CardHeader><CardTitle className="text-lg">{t("notifications.compose")}</CardTitle><CardDescription>{t("notifications.composeDescription")}</CardDescription></CardHeader>
         <CardContent>

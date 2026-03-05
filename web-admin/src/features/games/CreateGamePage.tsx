@@ -8,6 +8,7 @@ import { FormLabel } from "@/components/ui/form-label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 import { gamesApi } from "@/lib/api/games";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { parseDateTimeInputValue } from "@/lib/utils";
@@ -45,7 +46,7 @@ export function CreateGamePage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <Button variant="ghost" onClick={() => navigate("/games")}><ArrowLeft className="mr-2 h-4 w-4" /> {t("games.backToGames")}</Button>
-      {actionError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{actionError}</div>}
+      {actionError && <Alert onDismiss={() => setActionError("")}>{actionError}</Alert>}
       <Card>
         <CardHeader>
           <CardTitle>{t("games.createTitle")}</CardTitle>
