@@ -80,6 +80,7 @@ import com.prayer.pointfinder.feature.operator.ChallengeEditScreen
 import com.prayer.pointfinder.feature.operator.ChallengesListScreen
 import com.prayer.pointfinder.feature.operator.TeamDetailScreen
 import com.prayer.pointfinder.feature.operator.TeamsListScreen
+import com.prayer.pointfinder.feature.operator.LiveScreen
 import com.prayer.pointfinder.feature.operator.OperatorGameScaffold
 import com.prayer.pointfinder.feature.operator.CreateGameScreen
 import com.prayer.pointfinder.feature.operator.OperatorHomeScreen
@@ -1235,12 +1236,16 @@ private fun OperatorGameRoot(
             }
 
             OperatorTab.LIVE -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text("Live - TODO")
+                LaunchedEffect(Unit) {
+                    viewModel.refreshLiveData()
                 }
+                LiveScreen(
+                    leaderboard = state.leaderboard,
+                    activity = state.activity,
+                    teams = state.teams,
+                    isRefreshing = state.isLiveRefreshing,
+                    onRefresh = viewModel::refreshLiveData,
+                )
             }
 
             OperatorTab.SUBMISSIONS -> {

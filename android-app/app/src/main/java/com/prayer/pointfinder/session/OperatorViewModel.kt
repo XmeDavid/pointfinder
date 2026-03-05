@@ -23,6 +23,8 @@ import com.prayer.pointfinder.core.model.UpdateBaseRequest
 import com.prayer.pointfinder.core.model.UpdateChallengeRequest
 import com.prayer.pointfinder.core.model.UpdateTeamRequest
 import com.prayer.pointfinder.core.model.OperatorNotificationSettingsResponse
+import com.prayer.pointfinder.core.model.ActivityEvent
+import com.prayer.pointfinder.core.model.LeaderboardEntry
 import com.prayer.pointfinder.core.model.SubmissionResponse
 import com.prayer.pointfinder.core.model.SubmissionStatus
 import com.prayer.pointfinder.core.model.Team
@@ -61,6 +63,9 @@ data class OperatorState(
     val challenges: List<Challenge> = emptyList(),
     val assignments: List<Assignment> = emptyList(),
     val variables: List<TeamVariable> = emptyList(),
+    val leaderboard: List<LeaderboardEntry> = emptyList(),
+    val activity: List<ActivityEvent> = emptyList(),
+    val isLiveRefreshing: Boolean = false,
     val notificationSettings: OperatorNotificationSettingsResponse? = null,
     val isLoadingNotificationSettings: Boolean = false,
     val isSavingNotificationSettings: Boolean = false,
@@ -102,13 +107,20 @@ class OperatorViewModel @Inject constructor(
 
                 when (event.type) {
                     "activity",
+                    "submission_status" -> {
+                        refreshSelectedGameData()
+                        loadLeaderboard()
+                        loadActivity()
+                    }
+
                     "location",
-                    "submission_status",
                     "notification" -> refreshSelectedGameData()
 
                     "game_status" -> {
                         loadGames()
                         refreshSelectedGameData()
+                        loadLeaderboard()
+                        loadActivity()
                     }
                 }
             }
@@ -189,6 +201,8 @@ class OperatorViewModel @Inject constructor(
             locations = emptyList(),
             baseProgress = emptyList(),
             submissions = emptyList(),
+            leaderboard = emptyList(),
+            activity = emptyList(),
             notificationSettings = null,
             selectedBase = null,
             writeStatus = null,
@@ -198,7 +212,7 @@ class OperatorViewModel @Inject constructor(
 
     fun setTab(tab: OperatorTab) {
         _state.value = _state.value.copy(selectedTab = tab)
-        if (tab == OperatorTab.LIVE_MAP || tab == OperatorTab.SUBMISSIONS) {
+        if (tab == OperatorTab.LIVE_MAP || tab == OperatorTab.SUBMISSIONS || tab == OperatorTab.LIVE) {
             startPolling()
         } else {
             pollingJob?.cancel()
@@ -232,6 +246,56 @@ class OperatorViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     errorMessage = ApiErrorParser.extractMessage(err),
                 )
+            }
+        }
+        loadLeaderboard()
+        loadActivity()
+    }
+
+    fun loadLeaderboard() {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching { operatorRepository.getLeaderboard(gameId) }
+                .onSuccess { entries ->
+                    _state.value = _state.value.copy(leaderboard = entries, authExpired = false)
+                }
+                .onFailure { err ->
+                    if (markAuthExpiredIfNeeded(err)) return@onFailure
+                }
+        }
+    }
+
+    fun loadActivity() {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching { operatorRepository.getActivity(gameId) }
+                .onSuccess { events ->
+                    _state.value = _state.value.copy(activity = events, authExpired = false)
+                }
+                .onFailure { err ->
+                    if (markAuthExpiredIfNeeded(err)) return@onFailure
+                }
+        }
+    }
+
+    fun refreshLiveData() {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isLiveRefreshing = true)
+            runCatching {
+                val leaderboard = operatorRepository.getLeaderboard(gameId)
+                val activity = operatorRepository.getActivity(gameId)
+                leaderboard to activity
+            }.onSuccess { (leaderboard, activity) ->
+                _state.value = _state.value.copy(
+                    leaderboard = leaderboard,
+                    activity = activity,
+                    isLiveRefreshing = false,
+                    authExpired = false,
+                )
+            }.onFailure { err ->
+                _state.value = _state.value.copy(isLiveRefreshing = false)
+                if (markAuthExpiredIfNeeded(err)) return@onFailure
             }
         }
     }

@@ -310,6 +310,14 @@
     <string name="label_add_base_here">Add Base Here</string>
     <string name="label_center_on_me">Center on Me</string>
 
+    <!-- Live Tab -->
+    <string name="label_leaderboard">Leaderboard</string>
+    <string name="label_activity">Activity</string>
+    <string name="label_no_leaderboard">No teams ranked yet</string>
+    <string name="label_no_activity">No activity yet</string>
+    <string name="label_completed_count">%1$d completed</string>
+    <string name="label_rank">%1$d.</string>
+
     <!-- Notifications -->
     <string name="label_notifications">Notifications</string>
     <string name="label_no_notifications">No notifications yet</string>

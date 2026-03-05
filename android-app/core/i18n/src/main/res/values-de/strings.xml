@@ -310,6 +310,14 @@
     <string name="label_add_base_here">Basis hier erstellen</string>
     <string name="label_center_on_me">Auf mich zentrieren</string>
 
+    <!-- Live Tab -->
+    <string name="label_leaderboard">Rangliste</string>
+    <string name="label_activity">Aktivität</string>
+    <string name="label_no_leaderboard">Noch keine Teams in der Rangliste</string>
+    <string name="label_no_activity">Noch keine Aktivität</string>
+    <string name="label_completed_count">%1$d abgeschlossen</string>
+    <string name="label_rank">%1$d.</string>
+
     <!-- Notifications -->
     <string name="label_notifications">Benachrichtigungen</string>
     <string name="label_no_notifications">Noch keine Benachrichtigungen</string>
