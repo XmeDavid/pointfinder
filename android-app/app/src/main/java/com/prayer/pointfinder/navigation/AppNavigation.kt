@@ -897,11 +897,16 @@ private fun OperatorGameRoot(
     // "challenges_list" / "challenge_edit:<id>" / "challenge_create" / "challenge_create_for_base:<baseId>"
     // "teams_list" / "team_detail:<id>"
     var setupSubScreen by remember { mutableStateOf<String?>(null) }
+    // Sub-screen state for map-initiated actions (base create/edit from map)
+    var mapSubScreen by remember { mutableStateOf<String?>(null) }
 
     // Reset sub-screen when switching tabs
     LaunchedEffect(state.selectedTab) {
         if (state.selectedTab != OperatorTab.SETUP) {
             setupSubScreen = null
+        }
+        if (state.selectedTab != OperatorTab.LIVE_MAP) {
+            mapSubScreen = null
         }
     }
 
@@ -922,33 +927,124 @@ private fun OperatorGameRoot(
     ) {
         when (state.selectedTab) {
             OperatorTab.LIVE_MAP -> {
-                val operatorIsDark = when (currentThemeMode) {
-                    ThemeMode.SYSTEM -> isSystemInDarkTheme()
-                    ThemeMode.LIGHT -> false
-                    ThemeMode.DARK -> true
-                }
-                OperatorMapScreen(
-                    bases = state.bases,
-                    teamLocations = state.locations,
-                    teams = state.teams,
-                    baseProgress = state.baseProgress,
-                    challenges = state.challenges,
-                    tileSource = selectedGame.tileSource,
-                    isDark = operatorIsDark,
-                    onBaseSelected = viewModel::selectBase,
-                    onRefresh = viewModel::refreshSelectedGameData,
-                )
-                if (state.selectedBase != null) {
-                    val base = state.selectedBase!!
-                    LiveBaseProgressBottomSheet(
-                        base = base,
-                        progress = state.baseProgress,
-                        teams = state.teams,
-                        onWriteNfc = viewModel::beginWriteNfc,
-                        writeStatus = state.writeStatus,
-                        writeSuccess = state.writeSuccess,
-                        onDismiss = viewModel::clearSelectedBase,
-                    )
+                when {
+                    mapSubScreen?.startsWith("base_create_at:") == true -> {
+                        val coords = mapSubScreen!!.removePrefix("base_create_at:")
+                        val parts = coords.split(",")
+                        val lat = parts.getOrNull(0)?.toDoubleOrNull()
+                        val lng = parts.getOrNull(1)?.toDoubleOrNull()
+                        BaseEditScreen(
+                            base = null,
+                            challenges = state.challenges,
+                            linkedChallenges = emptyList(),
+                            onSave = { request ->
+                                viewModel.createBase(request as CreateBaseRequest) {
+                                    mapSubScreen = null
+                                }
+                            },
+                            onDelete = null,
+                            onNavigateToCreateChallenge = null,
+                            onBack = { mapSubScreen = null },
+                            initialLat = lat,
+                            initialLng = lng,
+                        )
+                    }
+                    mapSubScreen?.startsWith("base_edit:") == true -> {
+                        val baseId = mapSubScreen!!.removePrefix("base_edit:")
+                        val base = state.bases.firstOrNull { it.id == baseId }
+                        if (base != null) {
+                            val linkedChallenges = state.assignments
+                                .filter { it.baseId == base.id }
+                                .mapNotNull { assignment ->
+                                    state.challenges.firstOrNull { it.id == assignment.challengeId }
+                                }
+                                .distinctBy { it.id }
+                            BaseEditScreen(
+                                base = base,
+                                challenges = state.challenges,
+                                linkedChallenges = linkedChallenges,
+                                onSave = { request ->
+                                    viewModel.updateBase(base.id, request as UpdateBaseRequest) {
+                                        mapSubScreen = null
+                                    }
+                                },
+                                onDelete = {
+                                    viewModel.deleteBase(base.id) {
+                                        mapSubScreen = null
+                                    }
+                                },
+                                onNavigateToCreateChallenge = { bId -> mapSubScreen = "challenge_create_for_base:$bId" },
+                                onBack = { mapSubScreen = null },
+                                initialLat = null,
+                                initialLng = null,
+                            )
+                        } else {
+                            mapSubScreen = null
+                        }
+                    }
+                    mapSubScreen?.startsWith("challenge_create_for_base:") == true -> {
+                        val preLinkedBaseId = mapSubScreen!!.removePrefix("challenge_create_for_base:")
+                        ChallengeEditScreen(
+                            challenge = null,
+                            bases = state.bases,
+                            teams = state.teams,
+                            variables = state.variables,
+                            onSave = { request ->
+                                viewModel.createChallenge(request as CreateChallengeRequest) {
+                                    mapSubScreen = null
+                                }
+                            },
+                            onDelete = null,
+                            onBack = { mapSubScreen = "base_edit:$preLinkedBaseId" },
+                            preLinkedBaseId = preLinkedBaseId,
+                            onCreateVariable = viewModel::createVariable,
+                        )
+                    }
+                    else -> {
+                        val operatorIsDark = when (currentThemeMode) {
+                            ThemeMode.SYSTEM -> isSystemInDarkTheme()
+                            ThemeMode.LIGHT -> false
+                            ThemeMode.DARK -> true
+                        }
+                        OperatorMapScreen(
+                            bases = state.bases,
+                            teamLocations = state.locations,
+                            teams = state.teams,
+                            baseProgress = state.baseProgress,
+                            challenges = state.challenges,
+                            assignments = state.assignments,
+                            tileSource = selectedGame.tileSource,
+                            isDark = operatorIsDark,
+                            gameStatus = gameStatus,
+                            onBaseSelected = viewModel::selectBase,
+                            onCreateBaseAt = { lat, lng ->
+                                mapSubScreen = "base_create_at:$lat,$lng"
+                            },
+                            onEditBase = { base ->
+                                mapSubScreen = "base_edit:${base.id}"
+                            },
+                            onAddChallengeForBase = { base ->
+                                mapSubScreen = "challenge_create_for_base:${base.id}"
+                            },
+                            onWriteNfc = { base ->
+                                viewModel.selectBase(base)
+                                viewModel.beginWriteNfc()
+                            },
+                            onRefresh = viewModel::refreshSelectedGameData,
+                        )
+                        if (state.selectedBase != null) {
+                            val base = state.selectedBase!!
+                            LiveBaseProgressBottomSheet(
+                                base = base,
+                                progress = state.baseProgress,
+                                teams = state.teams,
+                                onWriteNfc = viewModel::beginWriteNfc,
+                                writeStatus = state.writeStatus,
+                                writeSuccess = state.writeSuccess,
+                                onDismiss = viewModel::clearSelectedBase,
+                            )
+                        }
+                    }
                 }
             }
 

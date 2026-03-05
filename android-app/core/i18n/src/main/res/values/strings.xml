@@ -304,6 +304,12 @@
     <string name="label_create_team">Create Team</string>
     <string name="label_copied">Copied!</string>
 
+    <!-- Map Edit Mode -->
+    <string name="label_edit_on">Edit: ON</string>
+    <string name="label_edit_off">Edit: OFF</string>
+    <string name="label_add_base_here">Add Base Here</string>
+    <string name="label_center_on_me">Center on Me</string>
+
     <!-- Notifications -->
     <string name="label_notifications">Notifications</string>
     <string name="label_no_notifications">No notifications yet</string>

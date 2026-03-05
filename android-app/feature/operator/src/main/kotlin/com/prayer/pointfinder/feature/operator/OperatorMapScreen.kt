@@ -1,14 +1,33 @@
 package com.prayer.pointfinder.feature.operator
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,15 +41,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.prayer.pointfinder.core.i18n.R
+import com.prayer.pointfinder.core.model.Assignment
 import com.prayer.pointfinder.core.model.Base
 import com.prayer.pointfinder.core.model.BaseStatus
 import com.prayer.pointfinder.core.model.Challenge
+import com.prayer.pointfinder.core.model.GameStatus
 import com.prayer.pointfinder.core.model.Team
 import com.prayer.pointfinder.core.model.TeamBaseProgressResponse
 import com.prayer.pointfinder.core.model.TeamLocationResponse
@@ -40,6 +63,9 @@ import org.maplibre.android.annotations.MarkerOptions
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.geometry.LatLngBounds
+import org.maplibre.android.location.LocationComponentActivationOptions
+import org.maplibre.android.location.modes.CameraMode
+import org.maplibre.android.location.modes.RenderMode
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
@@ -64,9 +90,15 @@ fun OperatorMapScreen(
     teams: List<Team>,
     baseProgress: List<TeamBaseProgressResponse>,
     challenges: List<Challenge>,
+    assignments: List<Assignment>,
     tileSource: String,
     isDark: Boolean,
+    gameStatus: GameStatus,
     onBaseSelected: (Base) -> Unit,
+    onCreateBaseAt: (lat: Double, lng: Double) -> Unit,
+    onEditBase: (Base) -> Unit,
+    onAddChallengeForBase: (Base) -> Unit,
+    onWriteNfc: (Base) -> Unit,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -76,6 +108,9 @@ fun OperatorMapScreen(
     var map by remember { mutableStateOf<MapLibreMap?>(null) }
     var mapStyle by remember { mutableStateOf<Style?>(null) }
     val iconFactory = remember { IconFactory.getInstance(context) }
+
+    var isEditMode by remember { mutableStateOf(gameStatus == GameStatus.SETUP) }
+    var editSheetBase by remember { mutableStateOf<Base?>(null) }
 
     DisposableEffect(lifecycle) {
         val observer = LifecycleEventObserver { _, event ->
@@ -95,10 +130,29 @@ fun OperatorMapScreen(
         }
     }
 
-    // Update style when tileSource changes
+    // Update style when tileSource changes, and enable location component
     LaunchedEffect(map, tileSource) {
         map?.setStyle(Style.Builder().fromUri(TileSources.getResolvedStyleUrl(tileSource, isDark))) { style ->
             mapStyle = style
+            // Enable location component (blue dot)
+            try {
+                val hasPermission = ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                ) == PackageManager.PERMISSION_GRANTED
+                if (hasPermission) {
+                    map?.locationComponent?.apply {
+                        activateLocationComponent(
+                            LocationComponentActivationOptions.builder(context, style).build(),
+                        )
+                        isLocationComponentEnabled = true
+                        cameraMode = CameraMode.NONE
+                        renderMode = RenderMode.NORMAL
+                    }
+                }
+            } catch (_: Exception) {
+                // Location component may not be available; skip blue dot
+            }
         }
     }
 
@@ -216,7 +270,7 @@ fun OperatorMapScreen(
                 mapView.apply {
                     getMapAsync { mapLibreMap ->
                         mapLibreMap.setStyle(Style.Builder().fromUri(TileSources.getResolvedStyleUrl(tileSource, isDark)))
-                        // Push compass below the overlay button
+                        // Push compass below the overlay buttons
                         val compassMarginTop = (56 * context.resources.displayMetrics.density).toInt()
                         mapLibreMap.uiSettings.setCompassMargins(0, compassMarginTop, (12 * context.resources.displayMetrics.density).toInt(), 0)
                         mapLibreMap.setOnMarkerClickListener { marker ->
@@ -224,11 +278,21 @@ fun OperatorMapScreen(
                                 it.lat == marker.position.latitude && it.lng == marker.position.longitude
                             }
                             if (base != null) {
-                                onBaseSelected(base)
+                                if (isEditMode) {
+                                    editSheetBase = base
+                                } else {
+                                    onBaseSelected(base)
+                                }
                                 true
                             } else {
                                 false
                             }
+                        }
+                        mapLibreMap.addOnMapLongClickListener { point ->
+                            if (isEditMode && gameStatus != GameStatus.ENDED) {
+                                onCreateBaseAt(point.latitude, point.longitude)
+                            }
+                            true
                         }
                         map = mapLibreMap
                     }
@@ -236,13 +300,185 @@ fun OperatorMapScreen(
             },
             modifier = Modifier.fillMaxSize(),
         )
+
+        // Top-right: Edit toggle chip + Refresh button
+        if (gameStatus != GameStatus.ENDED) {
+            Row(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                FilterChip(
+                    selected = isEditMode,
+                    onClick = { isEditMode = !isEditMode },
+                    label = {
+                        Text(
+                            if (isEditMode) {
+                                stringResource(R.string.label_edit_on)
+                            } else {
+                                stringResource(R.string.label_edit_off)
+                            },
+                        )
+                    },
+                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                )
+                SmallFloatingActionButton(onClick = onRefresh) {
+                    Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_refresh))
+                }
+            }
+        } else {
+            SmallFloatingActionButton(
+                onClick = onRefresh,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(12.dp),
+            ) {
+                Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_refresh))
+            }
+        }
+
+        // Bottom-left: Center on me button
         SmallFloatingActionButton(
-            onClick = onRefresh,
+            onClick = {
+                try {
+                    map?.locationComponent?.lastKnownLocation?.let { location ->
+                        map?.animateCamera(
+                            CameraUpdateFactory.newLatLngZoom(
+                                LatLng(location.latitude, location.longitude),
+                                15.0,
+                            ),
+                        )
+                    }
+                } catch (_: Exception) {
+                    // Location component not available
+                }
+            },
             modifier = Modifier
-                .align(Alignment.TopEnd)
+                .align(Alignment.BottomStart)
                 .padding(12.dp),
         ) {
-            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_refresh))
+            Icon(Icons.Default.MyLocation, contentDescription = stringResource(R.string.label_center_on_me))
+        }
+
+        // Bottom-right: Add base at GPS FAB (only in edit mode)
+        if (isEditMode && gameStatus != GameStatus.ENDED) {
+            FloatingActionButton(
+                onClick = {
+                    try {
+                        map?.locationComponent?.lastKnownLocation?.let { location ->
+                            onCreateBaseAt(location.latitude, location.longitude)
+                        }
+                    } catch (_: Exception) {
+                        // Location component not available
+                    }
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(12.dp),
+            ) {
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.label_add_base_here))
+            }
+        }
+    }
+
+    // Edit mode bottom sheet for base actions
+    if (editSheetBase != null) {
+        val base = editSheetBase!!
+        val challengeCount = assignments.count { it.baseId == base.id }
+        BaseEditActionSheet(
+            base = base,
+            challengeCount = challengeCount,
+            onEditBase = {
+                editSheetBase = null
+                onEditBase(base)
+            },
+            onAddChallenge = {
+                editSheetBase = null
+                onAddChallengeForBase(base)
+            },
+            onWriteNfc = {
+                editSheetBase = null
+                onWriteNfc(base)
+            },
+            onDismiss = { editSheetBase = null },
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BaseEditActionSheet(
+    base: Base,
+    challengeCount: Int,
+    onEditBase: () -> Unit,
+    onAddChallenge: () -> Unit,
+    onWriteNfc: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(base.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            if (base.description.isNotBlank()) {
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    base.description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+
+            // Status badges
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                val nfcColor = if (base.nfcLinked) StatusCompleted else StatusSubmitted
+                val nfcLabel = if (base.nfcLinked) {
+                    stringResource(R.string.label_nfc_linked)
+                } else {
+                    stringResource(R.string.label_nfc_not_linked)
+                }
+                CapsuleBadge(label = nfcLabel, color = nfcColor)
+                CapsuleBadge(
+                    label = stringResource(R.string.label_challenges_at_base, challengeCount),
+                    color = BadgeIndigo,
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // Action buttons
+            Button(
+                onClick = onEditBase,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(Icons.Default.Edit, contentDescription = null)
+                Spacer(Modifier.size(8.dp))
+                Text(stringResource(R.string.label_edit_base))
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            Button(
+                onClick = onAddChallenge,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null)
+                Spacer(Modifier.size(8.dp))
+                Text(stringResource(R.string.label_add_challenge))
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            Button(
+                onClick = onWriteNfc,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(Icons.Default.Nfc, contentDescription = null)
+                Spacer(Modifier.size(8.dp))
+                Text(stringResource(R.string.action_write_nfc))
+            }
+
+            Spacer(Modifier.height(16.dp))
         }
     }
 }
