@@ -264,6 +264,30 @@
     <string name="label_preview">Vorschau</string>
     <string name="label_select_team">Team ausw\u00e4hlen</string>
 
+    <!-- Challenge Management -->
+    <string name="label_challenge_title">Titel</string>
+    <string name="label_challenge_points">Punkte</string>
+    <string name="label_content">Inhalt</string>
+    <string name="label_description">Beschreibung</string>
+    <string name="label_completion_message">Abschlussnachricht</string>
+    <string name="action_edit">Bearbeiten</string>
+    <string name="label_answer_type_label">Antworttyp</string>
+    <string name="label_text_input">Texteingabe</string>
+    <string name="label_file_upload">Datei-Upload</string>
+    <string name="label_auto_validate">Automatisch pr\u00fcfen</string>
+    <string name="label_correct_answers">Richtige Antworten</string>
+    <string name="label_add_answer">Antwort hinzuf\u00fcgen</string>
+    <string name="label_linking">Verkn\u00fcpfung</string>
+    <string name="label_fixed_to_base">Feste Basis</string>
+    <string name="label_location_bound">Ortsgebunden</string>
+    <string name="label_unlocks_base">Schaltet Basis frei</string>
+    <string name="label_delete_challenge">Challenge l\u00f6schen</string>
+    <string name="label_delete_challenge_confirm">Diese Challenge l\u00f6schen? Dies kann nicht r\u00fcckg\u00e4ngig gemacht werden.</string>
+    <string name="label_new_challenge">Neue Challenge</string>
+    <string name="label_edit_challenge">Challenge bearbeiten</string>
+    <string name="label_no_content">Noch kein Inhalt</string>
+    <string name="label_no_base">Keine Basis</string>
+
     <!-- Notifications -->
     <string name="label_notifications">Benachrichtigungen</string>
     <string name="label_no_notifications">Noch keine Benachrichtigungen</string>

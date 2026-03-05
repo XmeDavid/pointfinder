@@ -69,9 +69,13 @@ import com.prayer.pointfinder.feature.auth.PlayerJoinScreen
 import com.prayer.pointfinder.feature.auth.PlayerNameScreen
 import com.prayer.pointfinder.feature.auth.WelcomeScreen
 import com.prayer.pointfinder.core.model.CreateBaseRequest
+import com.prayer.pointfinder.core.model.CreateChallengeRequest
 import com.prayer.pointfinder.core.model.UpdateBaseRequest
+import com.prayer.pointfinder.core.model.UpdateChallengeRequest
 import com.prayer.pointfinder.feature.operator.BaseEditScreen
 import com.prayer.pointfinder.feature.operator.BasesListScreen
+import com.prayer.pointfinder.feature.operator.ChallengeEditScreen
+import com.prayer.pointfinder.feature.operator.ChallengesListScreen
 import com.prayer.pointfinder.feature.operator.OperatorGameScaffold
 import com.prayer.pointfinder.feature.operator.CreateGameScreen
 import com.prayer.pointfinder.feature.operator.OperatorHomeScreen
@@ -885,7 +889,8 @@ private fun OperatorGameRoot(
     val gameStatus = selectedGame.status
 
     // Setup sub-screen navigation state
-    // null = show hub, "bases_list" = bases list, "base_edit:<id>" = edit base, "base_create" = create base
+    // null = show hub, "bases_list" / "base_edit:<id>" / "base_create"
+    // "challenges_list" / "challenge_edit:<id>" / "challenge_create" / "challenge_create_for_base:<baseId>"
     var setupSubScreen by remember { mutableStateOf<String?>(null) }
 
     // Reset sub-screen when switching tabs
@@ -995,13 +1000,75 @@ private fun OperatorGameRoot(
                                         setupSubScreen = "bases_list"
                                     }
                                 },
-                                onNavigateToCreateChallenge = null, // TODO: wire up in challenge management task
+                                onNavigateToCreateChallenge = { baseId -> setupSubScreen = "challenge_create_for_base:$baseId" },
                                 onBack = { setupSubScreen = "bases_list" },
                                 initialLat = null,
                                 initialLng = null,
                             )
                         } else {
                             setupSubScreen = "bases_list"
+                        }
+                    }
+                    setupSubScreen == "challenges_list" -> {
+                        ChallengesListScreen(
+                            challenges = state.challenges,
+                            bases = state.bases,
+                            assignments = state.assignments,
+                            onSelectChallenge = { challenge -> setupSubScreen = "challenge_edit:${challenge.id}" },
+                            onCreateChallenge = { setupSubScreen = "challenge_create" },
+                            onBack = { setupSubScreen = null },
+                        )
+                    }
+                    setupSubScreen == "challenge_create" || setupSubScreen?.startsWith("challenge_create_for_base:") == true -> {
+                        val preLinkedBaseId = setupSubScreen?.removePrefix("challenge_create_for_base:")
+                            ?.takeIf { setupSubScreen?.startsWith("challenge_create_for_base:") == true }
+                        ChallengeEditScreen(
+                            challenge = null,
+                            bases = state.bases,
+                            teams = state.teams,
+                            variables = state.variables,
+                            onSave = { request ->
+                                viewModel.createChallenge(request as CreateChallengeRequest) {
+                                    setupSubScreen = "challenges_list"
+                                }
+                            },
+                            onDelete = null,
+                            onBack = {
+                                setupSubScreen = if (preLinkedBaseId != null) {
+                                    "base_edit:$preLinkedBaseId"
+                                } else {
+                                    "challenges_list"
+                                }
+                            },
+                            preLinkedBaseId = preLinkedBaseId,
+                            onCreateVariable = viewModel::createVariable,
+                        )
+                    }
+                    setupSubScreen?.startsWith("challenge_edit:") == true -> {
+                        val challengeId = setupSubScreen!!.removePrefix("challenge_edit:")
+                        val challenge = state.challenges.firstOrNull { it.id == challengeId }
+                        if (challenge != null) {
+                            ChallengeEditScreen(
+                                challenge = challenge,
+                                bases = state.bases,
+                                teams = state.teams,
+                                variables = state.variables,
+                                assignments = state.assignments,
+                                onSave = { request ->
+                                    viewModel.updateChallenge(challenge.id, request as UpdateChallengeRequest) {
+                                        setupSubScreen = "challenges_list"
+                                    }
+                                },
+                                onDelete = {
+                                    viewModel.deleteChallenge(challenge.id) {
+                                        setupSubScreen = "challenges_list"
+                                    }
+                                },
+                                onBack = { setupSubScreen = "challenges_list" },
+                                onCreateVariable = viewModel::createVariable,
+                            )
+                        } else {
+                            setupSubScreen = "challenges_list"
                         }
                     }
                     else -> {
@@ -1012,7 +1079,7 @@ private fun OperatorGameRoot(
                             teams = state.teams,
                             assignments = state.assignments,
                             onNavigateToBases = { setupSubScreen = "bases_list" },
-                            onNavigateToChallenges = { /* TODO: navigate to challenges list */ },
+                            onNavigateToChallenges = { setupSubScreen = "challenges_list" },
                             onNavigateToTeams = { /* TODO: navigate to teams list */ },
                             onGoLive = { viewModel.updateGameStatus("live") },
                         )

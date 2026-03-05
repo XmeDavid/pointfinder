@@ -264,6 +264,30 @@
     <string name="label_preview">Preview</string>
     <string name="label_select_team">Select Team</string>
 
+    <!-- Challenge Management -->
+    <string name="label_challenge_title">Title</string>
+    <string name="label_challenge_points">Points</string>
+    <string name="label_content">Content</string>
+    <string name="label_description">Description</string>
+    <string name="label_completion_message">Completion Message</string>
+    <string name="action_edit">Edit</string>
+    <string name="label_answer_type_label">Answer Type</string>
+    <string name="label_text_input">Text Input</string>
+    <string name="label_file_upload">File Upload</string>
+    <string name="label_auto_validate">Auto-validate</string>
+    <string name="label_correct_answers">Correct Answers</string>
+    <string name="label_add_answer">Add Answer</string>
+    <string name="label_linking">Linking</string>
+    <string name="label_fixed_to_base">Fixed to Base</string>
+    <string name="label_location_bound">Location-bound</string>
+    <string name="label_unlocks_base">Unlocks Base</string>
+    <string name="label_delete_challenge">Delete Challenge</string>
+    <string name="label_delete_challenge_confirm">Delete this challenge? This cannot be undone.</string>
+    <string name="label_new_challenge">New Challenge</string>
+    <string name="label_edit_challenge">Edit Challenge</string>
+    <string name="label_no_content">No content yet</string>
+    <string name="label_no_base">No base</string>
+
     <!-- Notifications -->
     <string name="label_notifications">Notifications</string>
     <string name="label_no_notifications">No notifications yet</string>
