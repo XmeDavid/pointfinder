@@ -124,6 +124,9 @@ data class Challenge(
     val answerType: String,
     val points: Int,
     val unlocksBaseId: EntityId? = null,
+    val autoValidate: Boolean = false,
+    val correctAnswer: List<String> = emptyList(),
+    val locationBound: Boolean = false,
 )
 
 @Serializable
@@ -563,19 +566,19 @@ data class InviteResponse(
 data class LeaderboardEntry(
     val teamId: String,
     val teamName: String,
-    val teamColor: String,
+    val color: String,
     val points: Int,
     val completedChallenges: Int,
 )
 
 @Serializable
 data class ActivityEvent(
+    val id: String,
+    val gameId: String,
     val type: String,
-    val teamId: String?,
-    val teamName: String?,
-    val teamColor: String?,
-    val baseName: String?,
-    val challengeTitle: String?,
+    val teamId: String? = null,
+    val baseId: String? = null,
+    val challengeId: String? = null,
     val message: String,
     val timestamp: String,
 )
@@ -598,6 +601,7 @@ data class GameExportGame(
     val name: String,
     val description: String,
     val uniformAssignment: Boolean,
+    val tileSource: String? = null,
 )
 
 @Serializable
