@@ -331,13 +331,13 @@ private fun ChallengeCard(challenge: Challenge) {
             Text(challenge.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Icon(Icons.Default.Star, contentDescription = null, tint = StarGold, modifier = Modifier.size(14.dp))
-                Text("${challenge.points} pts", style = MaterialTheme.typography.labelSmall, color = StarGold)
+                Text(stringResource(R.string.label_pts, challenge.points), style = MaterialTheme.typography.labelSmall, color = StarGold)
             }
         }
         Spacer(Modifier.height(4.dp))
         Text(challenge.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3)
         Spacer(Modifier.height(4.dp))
-        Text("Answer: ${challenge.answerType}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+        Text(stringResource(R.string.label_answer_type, challenge.answerType), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
     }
 }
 
