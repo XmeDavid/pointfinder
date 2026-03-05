@@ -15,10 +15,12 @@ import { teamsApi } from "@/lib/api/teams";
 import { teamVariablesApi } from "@/lib/api/team-variables";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { useTranslation } from "react-i18next";
+import { useToast } from "@/hooks/useToast";
 import type { Team } from "@/types";
 
 export function TeamsPage() {
   const { t } = useTranslation();
+  const toast = useToast();
   const { gameId } = useParams<{ gameId: string }>();
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
@@ -33,7 +35,7 @@ export function TeamsPage() {
 
   const createTeam = useMutation({
     mutationFn: () => teamsApi.create({ gameId: gameId!, name: teamName }),
-    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["teams", gameId] }); setCreateOpen(false); setTeamName(""); },
+    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["teams", gameId] }); setCreateOpen(false); setTeamName(""); toast.success(t("common.saved")); },
     onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
@@ -46,7 +48,7 @@ export function TeamsPage() {
 
   const deleteTeam = useMutation({
     mutationFn: (id: string) => teamsApi.delete(id, gameId!),
-    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["teams", gameId] }); },
+    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["teams", gameId] }); toast.success(t("common.deleted")); },
     onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 
@@ -130,7 +132,7 @@ export function TeamsPage() {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>{t("common.cancel")}</Button>
-              <Button type="submit" disabled={createTeam.isPending}>{t("common.create")}</Button>
+              <Button type="submit" loading={createTeam.isPending}>{t("common.create")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -244,7 +246,7 @@ function TeamCard({
               </CardTitle>
             )}
           </div>
-          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onDelete(); }}>
+          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onDelete(); }} aria-label={t("common.delete")}>
             <Trash2 className="h-4 w-4 text-destructive" />
           </Button>
         </div>

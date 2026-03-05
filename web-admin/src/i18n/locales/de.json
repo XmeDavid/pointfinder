@@ -30,7 +30,9 @@
     "noSignal": "Kein Signal",
     "saving": "Wird gespeichert...",
     "optional": "optional",
-    "required": "erforderlich"
+    "required": "erforderlich",
+    "saved": "Gespeichert",
+    "deleted": "Gelöscht"
   },
   "auth": {
     "signIn": "Anmelden",
@@ -396,7 +398,13 @@
     "title": "Aktivitätsfeed",
     "description": "Spielereignisse in Echtzeit",
     "recentEvents": "Letzte Ereignisse",
-    "noActivity": "Noch keine Aktivität"
+    "noActivity": "Noch keine Aktivität",
+    "eventType": {
+      "check_in": "Check-in",
+      "submission": "Einreichung",
+      "approval": "Freigabe",
+      "rejection": "Ablehnung"
+    }
   },
   "submissions": {
     "title": "Einreichungen",

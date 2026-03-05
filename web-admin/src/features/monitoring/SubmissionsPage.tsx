@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AuthImage } from "@/components/AuthImage";
@@ -23,6 +24,7 @@ import type { Submission, SubmissionStatus } from "@/types";
 
 export function SubmissionsPage() {
   const { t } = useTranslation();
+  const toast = useToast();
   const { gameId } = useParams<{ gameId: string }>();
   const websocketError = useGameWebSocket(gameId);
   const queryClient = useQueryClient();
@@ -41,7 +43,7 @@ export function SubmissionsPage() {
     setFullScreenImage({ apiUrl, blobUrl: blobCache.current.get(apiUrl) });
   }, []);
 
-  const { data: submissions = [] } = useQuery({ queryKey: ["submissions", gameId], queryFn: () => submissionsApi.listByGame(gameId!) });
+  const { data: submissions = [], isLoading: subsLoading } = useQuery({ queryKey: ["submissions", gameId], queryFn: () => submissionsApi.listByGame(gameId!) });
   const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!) });
   const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!) });
   const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!) });
@@ -60,7 +62,7 @@ export function SubmissionsPage() {
 
   const reviewMutation = useMutation({
     mutationFn: ({ id, status, points }: { id: string; status: SubmissionStatus; points?: number }) => submissionsApi.review(id, status, user!.id, feedback || undefined, gameId, points),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["submissions", gameId] }); setReviewingSub(null); setFeedback(""); setReviewPoints(0); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["submissions", gameId] }); setReviewingSub(null); setFeedback(""); setReviewPoints(0); toast.success(t("common.saved")); },
   });
 
   const statusLabels: Record<SubmissionStatus, string> = { pending: t("submissions.statusPending"), approved: t("submissions.statusApproved"), rejected: t("submissions.statusRejected"), correct: t("submissions.statusCorrect") };
@@ -83,7 +85,20 @@ export function SubmissionsPage() {
       </div>
       {websocketError && <Alert>{websocketError}</Alert>}
 
-      {sorted.length === 0 ? (
+      {subsLoading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Card key={i}><CardContent className="flex items-center gap-4 p-4">
+              <div className="flex-1">
+                <Skeleton className="h-5 w-48" />
+                <Skeleton className="h-4 w-32 mt-2" />
+                <Skeleton className="h-3 w-24 mt-1" />
+              </div>
+              <Skeleton className="h-6 w-20 rounded-full" />
+            </CardContent></Card>
+          ))}
+        </div>
+      ) : sorted.length === 0 ? (
         <Card className="py-12"><CardContent className="text-center"><FileText className="mx-auto h-8 w-8 text-muted-foreground mb-2" /><p className="text-muted-foreground">{filter === "pending" ? t("submissions.noPending") : t("submissions.noSubmissions")}</p></CardContent></Card>
       ) : (
         <div className="space-y-3">{sorted.map((sub) => {
@@ -120,13 +135,13 @@ export function SubmissionsPage() {
                     ) : (
                       <>
                         <FileText className="h-3.5 w-3.5 flex-shrink-0" />
-                        {sub.answer && <span className="truncate max-w-xs text-xs">{sub.answer}</span>}
+                        {sub.answer && <span className="truncate max-w-xs text-xs" title={sub.answer}>{sub.answer}</span>}
                       </>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">{formatDateTime(sub.submittedAt)}</p>
                   {sub.feedback && sub.status !== "pending" && (
-                    <p className="text-xs text-muted-foreground mt-1 truncate max-w-xl">
+                    <p className="text-xs text-muted-foreground mt-1 truncate max-w-xl" title={sub.feedback ?? undefined}>
                       {t("submissions.feedbackSent", { feedback: sub.feedback })}
                     </p>
                   )}
@@ -188,8 +203,8 @@ export function SubmissionsPage() {
               <div className="space-y-2"><p className="text-sm font-medium">{t("submissions.feedbackLabel")}</p><Textarea value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder={t("submissions.feedbackPlaceholder")} rows={2} /></div>
             </div>
             <DialogFooter>
-              <Button variant="destructive" onClick={() => reviewMutation.mutate({ id: reviewingSub.id, status: "rejected" })} disabled={reviewMutation.isPending}><XCircle className="mr-1 h-4 w-4" /> {t("submissions.reject")}</Button>
-              <Button onClick={() => reviewMutation.mutate({ id: reviewingSub.id, status: "approved", points: reviewPoints })} disabled={reviewMutation.isPending}><CheckCircle className="mr-1 h-4 w-4" /> {t("submissions.approve")}</Button>
+              <Button variant="destructive" onClick={() => reviewMutation.mutate({ id: reviewingSub.id, status: "rejected" })} loading={reviewMutation.isPending}><XCircle className="mr-1 h-4 w-4" /> {t("submissions.reject")}</Button>
+              <Button onClick={() => reviewMutation.mutate({ id: reviewingSub.id, status: "approved", points: reviewPoints })} loading={reviewMutation.isPending}><CheckCircle className="mr-1 h-4 w-4" /> {t("submissions.approve")}</Button>
             </DialogFooter>
           </DialogContent>
         )}
