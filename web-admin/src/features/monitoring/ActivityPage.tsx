@@ -10,10 +10,10 @@ import { useTranslation } from "react-i18next";
 import { useGameWebSocket } from "@/hooks/useGameWebSocket";
 
 const EVENT_ICONS: Record<string, React.ReactNode> = {
-  check_in: <MapPin className="h-4 w-4 text-blue-500" />,
-  submission: <ClipboardCheck className="h-4 w-4 text-yellow-500" />,
-  approval: <CheckCircle className="h-4 w-4 text-green-500" />,
-  rejection: <XCircle className="h-4 w-4 text-red-500" />,
+  check_in: <MapPin className="h-4 w-4 text-chart-1" />,
+  submission: <ClipboardCheck className="h-4 w-4 text-chart-2" />,
+  approval: <CheckCircle className="h-4 w-4 text-chart-3" />,
+  rejection: <XCircle className="h-4 w-4 text-destructive" />,
 };
 
 export function ActivityPage() {

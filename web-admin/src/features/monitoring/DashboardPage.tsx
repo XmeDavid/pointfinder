@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Users, MapPin, Puzzle, ClipboardCheck, CheckCircle2, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 import { monitoringApi } from "@/lib/api/monitoring";
 import { gamesApi } from "@/lib/api/games";
 import { useTranslation } from "react-i18next";
@@ -27,12 +28,12 @@ export function DashboardPage() {
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold">{t("monitor.liveDashboard")}</h1><p className="text-muted-foreground">{game.name}</p></div>
-      {websocketError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{websocketError}</div>}
+      {websocketError && <Alert>{websocketError}</Alert>}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card><CardContent className="flex items-center gap-3 p-4"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10"><Users className="h-5 w-5 text-blue-500" /></div><div><p className="text-2xl font-bold">{stats.totalTeams}</p><p className="text-sm text-muted-foreground">{t("monitor.activeTeams")}</p></div></CardContent></Card>
-        <Card><CardContent className="flex items-center gap-3 p-4"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-500/10"><ClipboardCheck className="h-5 w-5 text-yellow-500" /></div><div><p className="text-2xl font-bold">{stats.pendingSubmissions}</p><p className="text-sm text-muted-foreground">{t("monitor.pendingReview")}</p></div></CardContent></Card>
-        <Card><CardContent className="flex items-center gap-3 p-4"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10"><CheckCircle2 className="h-5 w-5 text-green-500" /></div><div><p className="text-2xl font-bold">{stats.completedSubmissions}/{stats.totalSubmissions}</p><p className="text-sm text-muted-foreground">{t("monitor.completed")}</p></div></CardContent></Card>
-        <Card><CardContent className="flex items-center gap-3 p-4"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10"><Clock className="h-5 w-5 text-purple-500" /></div><div><p className="text-2xl font-bold">{hasEndDate ? `${hoursLeft}h ${minsLeft}m` : "—"}</p><p className="text-sm text-muted-foreground">{t("monitor.timeRemaining")}</p></div></CardContent></Card>
+        <Card><CardContent className="flex items-center gap-3 p-4"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-chart-1/10"><Users className="h-5 w-5 text-chart-1" /></div><div><p className="text-2xl font-bold">{stats.totalTeams}</p><p className="text-sm text-muted-foreground">{t("monitor.activeTeams")}</p></div></CardContent></Card>
+        <Card><CardContent className="flex items-center gap-3 p-4"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-chart-2/10"><ClipboardCheck className="h-5 w-5 text-chart-2" /></div><div><p className="text-2xl font-bold">{stats.pendingSubmissions}</p><p className="text-sm text-muted-foreground">{t("monitor.pendingReview")}</p></div></CardContent></Card>
+        <Card><CardContent className="flex items-center gap-3 p-4"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-chart-3/10"><CheckCircle2 className="h-5 w-5 text-chart-3" /></div><div><p className="text-2xl font-bold">{stats.completedSubmissions}/{stats.totalSubmissions}</p><p className="text-sm text-muted-foreground">{t("monitor.completed")}</p></div></CardContent></Card>
+        <Card><CardContent className="flex items-center gap-3 p-4"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-chart-4/10"><Clock className="h-5 w-5 text-chart-4" /></div><div><p className="text-2xl font-bold">{hasEndDate ? `${hoursLeft}h ${minsLeft}m` : "—"}</p><p className="text-sm text-muted-foreground">{t("monitor.timeRemaining")}</p></div></CardContent></Card>
       </div>
       <div className="grid gap-6 md:grid-cols-2">
         <Card>

@@ -12,6 +12,7 @@ import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-dialog";
+import { Alert } from "@/components/ui/alert";
 import { basesApi, type CreateBaseDto } from "@/lib/api/bases";
 import { challengesApi } from "@/lib/api/challenges";
 import { gamesApi } from "@/lib/api/games";
@@ -133,7 +134,7 @@ export function BasesPage() {
           <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />{t("bases.addBase")}</Button>
         </div>
       </div>
-      {actionError && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{actionError}</div>}
+      {actionError && <Alert onDismiss={() => setActionError("")}>{actionError}</Alert>}
 
       {view === "list" ? (
         <div className="space-y-3">
@@ -143,7 +144,7 @@ export function BasesPage() {
             bases.map((base) => (
               <Card key={base.id}>
                 <CardContent className="flex flex-wrap items-center gap-4 p-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10"><MapPin className="h-5 w-5 text-blue-500" /></div>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-chart-1/10"><MapPin className="h-5 w-5 text-chart-1" /></div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="font-medium">{base.name}</p>
