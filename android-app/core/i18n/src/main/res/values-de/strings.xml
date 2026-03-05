@@ -53,6 +53,10 @@
     <string name="label_settings">Einstellungen</string>
     <string name="label_live_map">Live-Karte</string>
     <string name="label_bases">Basen</string>
+    <string name="label_setup">Setup</string>
+    <string name="label_live">Live</string>
+    <string name="label_more">Mehr</string>
+    <string name="label_create_game">Spiel erstellen</string>
     <string name="label_offline">Offline-Modus</string>
     <string name="label_operator">Operator</string>
     <string name="label_player">Spieler</string>

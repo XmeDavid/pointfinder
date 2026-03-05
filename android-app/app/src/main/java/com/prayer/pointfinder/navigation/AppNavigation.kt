@@ -68,8 +68,6 @@ import com.prayer.pointfinder.feature.auth.OperatorLoginScreen
 import com.prayer.pointfinder.feature.auth.PlayerJoinScreen
 import com.prayer.pointfinder.feature.auth.PlayerNameScreen
 import com.prayer.pointfinder.feature.auth.WelcomeScreen
-import com.prayer.pointfinder.feature.operator.OperatorBasesScreen
-import com.prayer.pointfinder.feature.operator.OperatorBaseDetailScreen
 import com.prayer.pointfinder.feature.operator.OperatorGameScaffold
 import com.prayer.pointfinder.feature.operator.OperatorHomeScreen
 import com.prayer.pointfinder.feature.operator.LiveBaseProgressBottomSheet
@@ -858,17 +856,21 @@ private fun OperatorGameRoot(
         return
     }
 
-    val showSubmissionsTab = selectedGame.status == GameStatus.LIVE
+    val gameStatus = selectedGame.status
 
-    LaunchedEffect(showSubmissionsTab, state.selectedTab) {
-        if (!showSubmissionsTab && state.selectedTab == OperatorTab.SUBMISSIONS) {
-            viewModel.setTab(OperatorTab.LIVE_MAP)
+    // When switching from setup to live mode, if current tab is SETUP, switch to LIVE
+    LaunchedEffect(gameStatus, state.selectedTab) {
+        if (gameStatus != GameStatus.SETUP && state.selectedTab == OperatorTab.SETUP) {
+            viewModel.setTab(OperatorTab.LIVE)
+        }
+        if (gameStatus == GameStatus.SETUP && state.selectedTab == OperatorTab.LIVE) {
+            viewModel.setTab(OperatorTab.SETUP)
         }
     }
 
     OperatorGameScaffold(
         selectedTab = state.selectedTab,
-        showSubmissions = showSubmissionsTab,
+        gameStatus = gameStatus,
         onTabSelected = viewModel::setTab,
     ) {
         when (state.selectedTab) {
@@ -903,6 +905,24 @@ private fun OperatorGameRoot(
                 }
             }
 
+            OperatorTab.SETUP -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("Setup Hub - TODO")
+                }
+            }
+
+            OperatorTab.LIVE -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("Live - TODO")
+                }
+            }
+
             OperatorTab.SUBMISSIONS -> {
                 OperatorSubmissionsScreen(
                     submissions = state.submissions,
@@ -917,28 +937,7 @@ private fun OperatorGameRoot(
                 )
             }
 
-            OperatorTab.BASES -> {
-                if (state.selectedBase == null) {
-                    OperatorBasesScreen(
-                        bases = state.bases,
-                        onSelectBase = viewModel::selectBase,
-                    )
-                } else {
-                    val base = state.selectedBase!!
-                    OperatorBaseDetailScreen(
-                        base = base,
-                        challenges = state.challenges,
-                        assignments = state.assignments,
-                        teams = state.teams,
-                        writeStatus = state.writeStatus,
-                        writeSuccess = state.writeSuccess,
-                        onBack = viewModel::clearSelectedBase,
-                        onWriteNfc = viewModel::beginWriteNfc,
-                    )
-                }
-            }
-
-            OperatorTab.SETTINGS -> {
+            OperatorTab.MORE -> {
                 OperatorSettingsScreen(
                     gameName = selectedGame.name,
                     gameStatus = selectedGame.status,
