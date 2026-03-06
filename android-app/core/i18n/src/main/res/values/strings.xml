@@ -346,6 +346,7 @@
     <string name="label_invite_operator">Invite Operator</string>
     <string name="label_operator_email">Email address</string>
     <string name="label_pending_invites">Pending Invites</string>
+    <string name="label_invites">Invites</string>
     <string name="label_no_operators">No operators yet</string>
     <string name="label_no_invites">No pending invites</string>
     <string name="action_invite">Invite</string>

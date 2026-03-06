@@ -1,21 +1,20 @@
-#Code (in codebase)
+# Code (in codebase) Agent/Claude handle this
 
-## Bugs
+-When copying a code for a team, show a toast
+-Saving variables is not working
+-When creating a base, we basically only put the title and description right now, so upon creating, i think can automatically open the base to continue editing
+-Same for a challange, the create is way more limited then editing this is ok, but we need to auto redirect him to continue editing
+-It's unclear what the location button does(on map bellow the edit), it seems that clicking once will focus the user location, and again will focus a view showing all the bases, this is great, but the icon is always the same and it doesnt make it super clear
+-iOS location button not fully working, some taps dont do anything. Android only has center location, which works. Behaviour for both should be, when the user is dragging the map, show button that center location on him, if he is centered on him, show button to center on view that shows all bases.
+-iOS map sometimes just zooms out to show all bases, even when I am trying to zoom in on something
+-Base creation flow right now is different from iOS and android. iOS is simple name and description, while iOS offers same features as edit. Here I think the easiest behaviour is to have a simple create, and as soon as he creates, auto redirect to edit that base, if he wants to continue editing the rest of the fields. Right now iOS should be like this but its broken(no redirect).
+-On iOS in the More tab, on operators, i cant see the operators on a give game, in android it works(with a slight bug, where an operator that has accepted, also shows as a pending invite).
+-On android, in the setup tab, i only see bases, shows teams and challanges as no existing, but on the same game on iOS they are there
+-On Android inside the edit a base, while on iOS you can write the NFC right there, android doesnt have that option.
 
 
-## Improvements
-
-
-## Features
-
-
-## Test
--Test long videos
-
-
-## Consider what we want to do
--What to do in terms of feeback, right now its only submitted by the operator, but the players never see it.
--Images on challanges(rich text) limit size. If resizing is implemented it's ok. we can ignore this one
+## Consider for later ignore for now
+-What to do in terms of feeback, right now its only submitted by the operator, but the players never see it, on neither platform
 
 
 ---
@@ -32,6 +31,3 @@
 
 ## Infra / Domain / Email Routing
 - Set up reverse proxy or forwarding so `info@pointfinder.pt` goes to personal email.
-
-## Branding
-- App icon.

@@ -346,6 +346,7 @@
     <string name="label_invite_operator">Operator einladen</string>
     <string name="label_operator_email">E-Mail-Adresse</string>
     <string name="label_pending_invites">Ausstehende Einladungen</string>
+    <string name="label_invites">Einladungen</string>
     <string name="label_no_operators">Noch keine Operatoren</string>
     <string name="label_no_invites">Keine ausstehenden Einladungen</string>
     <string name="action_invite">Einladen</string>

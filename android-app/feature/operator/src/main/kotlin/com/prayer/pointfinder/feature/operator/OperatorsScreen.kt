@@ -113,7 +113,7 @@ fun OperatorsScreen(
                 item {
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        stringResource(R.string.label_pending_invites),
+                        stringResource(R.string.label_invites),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                     )
@@ -192,6 +192,11 @@ private fun OperatorRow(operator: OperatorUserResponse) {
 
 @Composable
 private fun InviteRow(invite: InviteResponse) {
+    val statusColor = when (invite.status.lowercase()) {
+        "accepted" -> StatusCompleted
+        "declined" -> StatusRejected
+        else -> StatusSubmitted  // pending and others
+    }
     Surface(
         shape = MaterialTheme.shapes.small,
         tonalElevation = 0.5.dp,
@@ -217,12 +222,12 @@ private fun InviteRow(invite: InviteResponse) {
             }
             Surface(
                 shape = MaterialTheme.shapes.small,
-                color = StatusSubmitted.copy(alpha = 0.15f),
+                color = statusColor.copy(alpha = 0.15f),
             ) {
                 Text(
-                    invite.status,
+                    invite.status.replaceFirstChar { it.uppercase() },
                     style = MaterialTheme.typography.labelSmall,
-                    color = StatusSubmitted,
+                    color = statusColor,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                 )
             }
