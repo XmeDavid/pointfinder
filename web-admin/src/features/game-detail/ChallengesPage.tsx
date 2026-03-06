@@ -21,6 +21,7 @@ import { teamVariablesApi, type TeamVariableEntry } from "@/lib/api/team-variabl
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/useToast";
+import DOMPurify from "dompurify";
 import type { Challenge } from "@/types";
 
 const RichTextEditor = lazy(() =>
@@ -441,9 +442,9 @@ export function ChallengesPage() {
                 {previewTeamId && (
                   <div className="rounded-md border border-border bg-muted/30 p-3 space-y-2 mt-2">
                     <p className="text-xs font-medium text-muted-foreground">{t("challenges.content")}</p>
-                    <div className="prose prose-sm dark:prose-invert max-w-none text-sm" dangerouslySetInnerHTML={{ __html: resolveVariablesClient(form.content ?? "", gameVarsData?.variables ?? [], challengeVarsData?.variables ?? [], previewTeamId) }} />
+                    <div className="prose prose-sm dark:prose-invert max-w-none text-sm" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(resolveVariablesClient(form.content ?? "", gameVarsData?.variables ?? [], challengeVarsData?.variables ?? [], previewTeamId)) }} />
                     <p className="text-xs font-medium text-muted-foreground mt-3">{t("challenges.completionContent")}</p>
-                    <div className="prose prose-sm dark:prose-invert max-w-none text-sm" dangerouslySetInnerHTML={{ __html: resolveVariablesClient(form.completionContent ?? "", gameVarsData?.variables ?? [], challengeVarsData?.variables ?? [], previewTeamId) }} />
+                    <div className="prose prose-sm dark:prose-invert max-w-none text-sm" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(resolveVariablesClient(form.completionContent ?? "", gameVarsData?.variables ?? [], challengeVarsData?.variables ?? [], previewTeamId)) }} />
                   </div>
                 )}
               </Collapsible>

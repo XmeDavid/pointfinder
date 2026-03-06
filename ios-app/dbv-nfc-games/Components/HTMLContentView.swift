@@ -23,7 +23,8 @@ struct HTMLContentView: UIViewRepresentable {
         let configuration = WKWebViewConfiguration()
         // Disable data detection (links, phone numbers, etc.)
         configuration.dataDetectorTypes = []
-        
+        configuration.defaultWebpagePreferences.allowsContentJavaScript = false
+
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
         webView.scrollView.isScrollEnabled = false
@@ -44,8 +45,25 @@ struct HTMLContentView: UIViewRepresentable {
     }
     
     func updateUIView(_ webView: WKWebView, context: Context) {
-        let wrappedHTML = wrapHTML(html)
+        let wrappedHTML = wrapHTML(sanitizeHTML(html))
         webView.loadHTMLString(wrappedHTML, baseURL: nil)
+    }
+
+    private func sanitizeHTML(_ html: String) -> String {
+        var result = html
+        if let regex = try? NSRegularExpression(pattern: "<script[^>]*>[\\s\\S]*?</script>", options: [.caseInsensitive]) {
+            result = regex.stringByReplacingMatches(in: result, range: NSRange(result.startIndex..., in: result), withTemplate: "")
+        }
+        if let regex = try? NSRegularExpression(pattern: "<script[^>]*/>", options: [.caseInsensitive]) {
+            result = regex.stringByReplacingMatches(in: result, range: NSRange(result.startIndex..., in: result), withTemplate: "")
+        }
+        if let regex = try? NSRegularExpression(pattern: #"on\w+\s*=\s*"[^"]*""#, options: [.caseInsensitive]) {
+            result = regex.stringByReplacingMatches(in: result, range: NSRange(result.startIndex..., in: result), withTemplate: "")
+        }
+        if let regex = try? NSRegularExpression(pattern: #"on\w+\s*=\s*'[^']*'"#, options: [.caseInsensitive]) {
+            result = regex.stringByReplacingMatches(in: result, range: NSRange(result.startIndex..., in: result), withTemplate: "")
+        }
+        return result
     }
     
     /// Wraps the HTML content with a stylesheet that matches the app's design
@@ -182,12 +200,6 @@ struct HTMLContentView: UIViewRepresentable {
         </head>
         <body>
             \(content)
-            <script>
-                // Notify when content is loaded
-                window.onload = function() {
-                    window.webkit.messageHandlers.heightUpdate.postMessage(document.body.scrollHeight);
-                };
-            </script>
         </body>
         </html>
         """
