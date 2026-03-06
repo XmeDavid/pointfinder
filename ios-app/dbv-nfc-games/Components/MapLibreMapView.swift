@@ -191,6 +191,30 @@ struct MapLibreMapView: UIViewRepresentable {
             guard gesture.state == .ended else { return }
             guard let mapView = gesture.view as? MLNMapView else { return }
             let point = gesture.location(in: mapView)
+
+            // Check if tap hit an annotation first
+            let hitRect = CGRect(
+                x: point.x - 22,
+                y: point.y - 22,
+                width: 44,
+                height: 44
+            )
+
+            if let visibleAnnotations = mapView.visibleAnnotations(in: hitRect) {
+                for annotation in visibleAnnotations {
+                    guard let pointAnnotation = annotation as? MLNPointAnnotation else { continue }
+                    if pointAnnotation is MLNUserLocation { continue }
+                    if let item = annotationItems.first(where: {
+                        $0.coordinate.latitude == pointAnnotation.coordinate.latitude &&
+                        $0.coordinate.longitude == pointAnnotation.coordinate.longitude
+                    }) {
+                        item.onTap?()
+                        return
+                    }
+                }
+            }
+
+            // No annotation hit — forward to map onTap
             let coordinate = mapView.convert(point, toCoordinateFrom: mapView)
             onTap?(coordinate)
         }
