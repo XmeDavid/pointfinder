@@ -28,3 +28,4 @@ legacy/
 .claude/
 .tmux
 .worktrees/
+.omc/
