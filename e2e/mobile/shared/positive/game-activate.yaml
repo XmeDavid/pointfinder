@@ -1,0 +1,32 @@
+# @scenarios P8
+# Game activation - activate a game and verify its status changes
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+
+- tapOn:
+    id: "login-email"
+- inputText: "${OPERATOR_EMAIL}"
+
+- tapOn:
+    id: "login-password"
+- inputText: "${OPERATOR_PASSWORD}"
+
+- tapOn:
+    id: "login-submit"
+
+- assertVisible: "Games"
+
+- tapOn: "${GAME_NAME:-E2E Test Game}"
+
+- tapOn:
+    id: "game-activate-btn"
+
+# Confirm activation dialog if present
+- tapOn: "Activate"
+
+# Verify the game status has changed to active
+- assertVisible:
+    id: "game-status-label"
+- assertVisible: "Active"

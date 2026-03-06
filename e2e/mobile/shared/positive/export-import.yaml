@@ -1,0 +1,31 @@
+# @scenarios P16
+# Export/import - verify export option is accessible from the game detail screen
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+
+- tapOn:
+    id: "login-email"
+- inputText: "${OPERATOR_EMAIL}"
+
+- tapOn:
+    id: "login-password"
+- inputText: "${OPERATOR_PASSWORD}"
+
+- tapOn:
+    id: "login-submit"
+
+- assertVisible: "Games"
+
+- tapOn: "${GAME_NAME:-E2E Test Game}"
+
+# Verify export button is present
+- assertVisible:
+    id: "game-export-btn"
+
+- tapOn:
+    id: "game-export-btn"
+
+# Expect a share sheet or confirmation — just assert it appeared
+- assertVisible: "Export"

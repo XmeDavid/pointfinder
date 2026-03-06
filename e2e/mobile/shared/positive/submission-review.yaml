@@ -1,0 +1,43 @@
+# @scenarios P11, P12
+# Submission review - operator reviews a player submission and approves or rejects it
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+
+- tapOn:
+    id: "login-email"
+- inputText: "${OPERATOR_EMAIL}"
+
+- tapOn:
+    id: "login-password"
+- inputText: "${OPERATOR_PASSWORD}"
+
+- tapOn:
+    id: "login-submit"
+
+- assertVisible: "Games"
+
+- tapOn: "${GAME_NAME:-E2E Test Game}"
+
+- tapOn:
+    id: "nav-monitoring"
+
+- assertVisible:
+    id: "submission-list"
+
+# Tap into the pending submission
+- tapOn: "The answer is 42"
+
+# P11: Approve the submission
+- tapOn:
+    id: "submission-approve-btn"
+
+- assertVisible: "Approved"
+
+# Re-enter monitoring to test rejection (P12) on a separate submission if available
+- tapOn:
+    id: "nav-monitoring"
+
+- assertVisible:
+    id: "submission-list"

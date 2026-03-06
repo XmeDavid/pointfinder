@@ -1,0 +1,52 @@
+# @scenarios P4, P13
+# Challenge creation and edit - create a challenge inside a game, then edit its title
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+
+- tapOn:
+    id: "login-email"
+- inputText: "${OPERATOR_EMAIL}"
+
+- tapOn:
+    id: "login-password"
+- inputText: "${OPERATOR_PASSWORD}"
+
+- tapOn:
+    id: "login-submit"
+
+- assertVisible: "Games"
+
+- tapOn: "${GAME_NAME:-E2E Test Game}"
+
+- tapOn:
+    id: "create-challenge-btn"
+
+- tapOn:
+    id: "challenge-title-input"
+- inputText: "Find the Hidden Clue"
+
+- tapOn:
+    id: "challenge-type-select"
+- tapOn: "Text"
+
+- tapOn:
+    id: "challenge-save-btn"
+
+- assertVisible: "Find the Hidden Clue"
+
+# Edit the challenge title
+- tapOn:
+    id: "challenge-edit-btn"
+
+- clearText:
+    id: "challenge-title-input"
+- tapOn:
+    id: "challenge-title-input"
+- inputText: "Find the Hidden Clue (Updated)"
+
+- tapOn:
+    id: "challenge-save-btn"
+
+- assertVisible: "Find the Hidden Clue (Updated)"

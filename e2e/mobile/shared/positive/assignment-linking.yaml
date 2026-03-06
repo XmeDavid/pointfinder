@@ -1,0 +1,35 @@
+# @scenarios P5
+# Assignment linking - link a challenge to a base within a game
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+
+- tapOn:
+    id: "login-email"
+- inputText: "${OPERATOR_EMAIL}"
+
+- tapOn:
+    id: "login-password"
+- inputText: "${OPERATOR_PASSWORD}"
+
+- tapOn:
+    id: "login-submit"
+
+- assertVisible: "Games"
+
+- tapOn: "${GAME_NAME:-E2E Test Game}"
+
+# Navigate to the base to assign a challenge to it
+- tapOn: "${BASE_NAME:-Base Alpha Edited}"
+
+- tapOn:
+    id: "assign-challenge-btn"
+
+# Pick the challenge from the list
+- tapOn: "${CHALLENGE_TITLE:-Find the Hidden Clue (Updated)}"
+
+- tapOn:
+    id: "assignment-save-btn"
+
+- assertVisible: "${CHALLENGE_TITLE:-Find the Hidden Clue (Updated)}"

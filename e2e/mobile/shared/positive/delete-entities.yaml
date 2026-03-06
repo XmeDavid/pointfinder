@@ -1,0 +1,42 @@
+# @scenarios P14
+# Delete entities - delete a base and a challenge, verify they disappear from the list
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+
+- tapOn:
+    id: "login-email"
+- inputText: "${OPERATOR_EMAIL}"
+
+- tapOn:
+    id: "login-password"
+- inputText: "${OPERATOR_PASSWORD}"
+
+- tapOn:
+    id: "login-submit"
+
+- assertVisible: "Games"
+
+- tapOn: "${GAME_NAME:-E2E Test Game}"
+
+# --- Delete a base ---
+- tapOn: "Base Alpha v2"
+
+- tapOn:
+    id: "base-delete-btn"
+
+# Confirm deletion dialog
+- tapOn: "Delete"
+
+- assertNotVisible: "Base Alpha v2"
+
+# --- Delete a challenge ---
+- tapOn: "Find the Hidden Clue v2"
+
+- tapOn:
+    id: "challenge-delete-btn"
+
+- tapOn: "Delete"
+
+- assertNotVisible: "Find the Hidden Clue v2"

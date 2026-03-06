@@ -1,0 +1,21 @@
+# @scenarios P1
+# Operator login - launch app, authenticate, verify games list visible
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+
+- assertVisible: "Login"
+
+- tapOn:
+    id: "login-email"
+- inputText: "${OPERATOR_EMAIL}"
+
+- tapOn:
+    id: "login-password"
+- inputText: "${OPERATOR_PASSWORD}"
+
+- tapOn:
+    id: "login-submit"
+
+- assertVisible: "Games"

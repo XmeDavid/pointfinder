@@ -1,0 +1,58 @@
+# @scenarios P3, P13
+# Base creation and edit - navigate to game, create base with coordinates, then edit its name
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+
+- tapOn:
+    id: "login-email"
+- inputText: "${OPERATOR_EMAIL}"
+
+- tapOn:
+    id: "login-password"
+- inputText: "${OPERATOR_PASSWORD}"
+
+- tapOn:
+    id: "login-submit"
+
+- assertVisible: "Games"
+
+# Open the target game
+- tapOn: "${GAME_NAME:-E2E Test Game}"
+
+# Create a new base
+- tapOn:
+    id: "create-base-btn"
+
+- tapOn:
+    id: "base-name-input"
+- inputText: "Base Alpha"
+
+- tapOn:
+    id: "base-lat-input"
+- inputText: "38.7169"
+
+- tapOn:
+    id: "base-lng-input"
+- inputText: "-9.1399"
+
+- tapOn:
+    id: "base-save-btn"
+
+- assertVisible: "Base Alpha"
+
+# Edit the base name
+- tapOn:
+    id: "base-edit-btn"
+
+- clearText:
+    id: "base-name-input"
+- tapOn:
+    id: "base-name-input"
+- inputText: "Base Alpha Edited"
+
+- tapOn:
+    id: "base-save-btn"
+
+- assertVisible: "Base Alpha Edited"

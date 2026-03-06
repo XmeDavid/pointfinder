@@ -1,0 +1,63 @@
+# @scenarios N9, N10
+# Business rules - verify the app enforces constraints:
+#   N9: player cannot join with an invalid/expired join code
+#   N10: operator cannot activate a game with no bases or teams configured
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+
+# --- N9: Invalid join code ---
+- tapOn: "Player"
+
+- assertVisible: "Join Game"
+
+- tapOn:
+    id: "player-join-code-input"
+- inputText: "INVALID000"
+
+- tapOn:
+    id: "player-join-btn"
+
+# Verify error is displayed and player stays on join screen
+- assertNotVisible:
+    id: "player-base-list"
+- assertVisible: "Join Game"
+
+# --- N10: Activate game with missing prerequisites ---
+- launchApp:
+    clearState: true
+
+- tapOn:
+    id: "login-email"
+- inputText: "${OPERATOR_EMAIL}"
+
+- tapOn:
+    id: "login-password"
+- inputText: "${OPERATOR_PASSWORD}"
+
+- tapOn:
+    id: "login-submit"
+
+- assertVisible: "Games"
+
+- tapOn:
+    id: "create-game-btn"
+
+- tapOn:
+    id: "game-name-input"
+- inputText: "Empty Game"
+
+- tapOn:
+    id: "game-save-btn"
+
+- assertVisible: "Empty Game"
+
+- tapOn: "Empty Game"
+
+# Try to activate without any bases or teams
+- tapOn:
+    id: "game-activate-btn"
+
+# Should show a validation error, not activate
+- assertNotVisible: "Active"

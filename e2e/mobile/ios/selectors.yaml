@@ -1,0 +1,72 @@
+# iOS platform selectors
+# Maps logical names to accessibility identifiers used in SwiftUI views
+
+# Auth
+LOGIN_EMAIL: "login-email"
+LOGIN_PASSWORD: "login-password"
+LOGIN_SUBMIT: "login-submit"
+LOGIN_ERROR: "login-error"
+
+# Navigation
+NAV_GAMES: "nav-games"
+NAV_TEAMS: "nav-teams"
+NAV_MONITORING: "nav-monitoring"
+
+# Games
+CREATE_GAME_BTN: "create-game-btn"
+GAME_NAME_INPUT: "game-name-input"
+GAME_SAVE_BTN: "game-save-btn"
+GAME_ACTIVATE_BTN: "game-activate-btn"
+GAME_STATUS_LABEL: "game-status-label"
+GAME_EXPORT_BTN: "game-export-btn"
+GAME_IMPORT_BTN: "game-import-btn"
+
+# Bases
+CREATE_BASE_BTN: "create-base-btn"
+BASE_NAME_INPUT: "base-name-input"
+BASE_LAT_INPUT: "base-lat-input"
+BASE_LNG_INPUT: "base-lng-input"
+BASE_SAVE_BTN: "base-save-btn"
+BASE_DELETE_BTN: "base-delete-btn"
+BASE_EDIT_BTN: "base-edit-btn"
+
+# Challenges
+CREATE_CHALLENGE_BTN: "create-challenge-btn"
+CHALLENGE_TITLE_INPUT: "challenge-title-input"
+CHALLENGE_TYPE_SELECT: "challenge-type-select"
+CHALLENGE_SAVE_BTN: "challenge-save-btn"
+CHALLENGE_DELETE_BTN: "challenge-delete-btn"
+CHALLENGE_EDIT_BTN: "challenge-edit-btn"
+
+# Assignments
+ASSIGN_CHALLENGE_BTN: "assign-challenge-btn"
+ASSIGNMENT_SAVE_BTN: "assignment-save-btn"
+
+# Teams
+CREATE_TEAM_BTN: "create-team-btn"
+TEAM_NAME_INPUT: "team-name-input"
+TEAM_SAVE_BTN: "team-save-btn"
+TEAM_JOIN_CODE: "team-join-code"
+TEAM_DELETE_BTN: "team-delete-btn"
+TEAM_EDIT_BTN: "team-edit-btn"
+
+# Monitoring / Operator
+MONITORING_TAB: "monitoring-tab"
+LEADERBOARD_VIEW: "leaderboard-view"
+SUBMISSION_LIST: "submission-list"
+SUBMISSION_APPROVE_BTN: "submission-approve-btn"
+SUBMISSION_REJECT_BTN: "submission-reject-btn"
+SUBMISSION_FEEDBACK_INPUT: "submission-feedback-input"
+
+# Notifications
+NOTIFICATION_MESSAGE_INPUT: "notification-message-input"
+NOTIFICATION_SEND_BTN: "notification-send-btn"
+
+# Player
+PLAYER_JOIN_CODE_INPUT: "player-join-code-input"
+PLAYER_JOIN_BTN: "player-join-btn"
+PLAYER_BASE_LIST: "player-base-list"
+PLAYER_CHALLENGE_LIST: "player-challenge-list"
+PLAYER_ANSWER_INPUT: "player-answer-input"
+PLAYER_SUBMIT_BTN: "player-submit-btn"
+PLAYER_SUBMISSION_STATUS: "player-submission-status"

@@ -1,0 +1,30 @@
+# @scenarios P9
+# Player progress - view bases and challenges list during an active game
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+
+- tapOn: "Player"
+
+- assertVisible: "Join Game"
+
+- tapOn:
+    id: "player-join-code-input"
+- inputText: "${JOIN_CODE}"
+
+- tapOn:
+    id: "player-join-btn"
+
+# Verify the base list is visible
+- assertVisible:
+    id: "player-base-list"
+
+# Tap into a base to see its challenges
+- tapOn: "${BASE_NAME:-Base Alpha v2}"
+
+- assertVisible:
+    id: "player-challenge-list"
+
+# Verify at least one challenge is listed
+- assertVisible: "${CHALLENGE_TITLE:-Find the Hidden Clue v2}"

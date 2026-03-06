@@ -1,0 +1,34 @@
+# @scenarios P18
+# Operator notification - send a broadcast notification to all teams in the game
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+
+- tapOn:
+    id: "login-email"
+- inputText: "${OPERATOR_EMAIL}"
+
+- tapOn:
+    id: "login-password"
+- inputText: "${OPERATOR_PASSWORD}"
+
+- tapOn:
+    id: "login-submit"
+
+- assertVisible: "Games"
+
+- tapOn: "${GAME_NAME:-E2E Test Game}"
+
+- tapOn:
+    id: "nav-monitoring"
+
+- tapOn:
+    id: "notification-message-input"
+- inputText: "Attention teams: bonus challenge available at Base Alpha!"
+
+- tapOn:
+    id: "notification-send-btn"
+
+# Verify confirmation that notification was sent
+- assertVisible: "Notification sent"
