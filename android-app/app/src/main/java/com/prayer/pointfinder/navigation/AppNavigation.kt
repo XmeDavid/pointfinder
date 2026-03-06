@@ -32,8 +32,11 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -117,6 +120,7 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 import java.util.Locale
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun AppNavigation(
@@ -908,6 +912,10 @@ private fun OperatorGameRoot(
     // Sub-screen state for More tab navigation
     var moreSubScreen by remember { mutableStateOf<String?>(null) }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+
     // Reset sub-screen when switching tabs
     LaunchedEffect(state.selectedTab) {
         if (state.selectedTab != OperatorTab.SETUP) {
@@ -939,6 +947,7 @@ private fun OperatorGameRoot(
         gameStatus = gameStatus,
         onTabSelected = viewModel::setTab,
     ) {
+        Box {
         when (state.selectedTab) {
             OperatorTab.LIVE_MAP -> {
                 when {
@@ -954,6 +963,7 @@ private fun OperatorGameRoot(
                             onSave = { request ->
                                 viewModel.createBase(request as CreateBaseRequest) { base ->
                                     mapSubScreen = "base_edit:${base.id}"
+                                    scope.launch { snackbarHostState.showSnackbar(context.getString(com.prayer.pointfinder.core.i18n.R.string.toast_base_created)) }
                                 }
                             },
                             onDelete = null,
@@ -981,6 +991,7 @@ private fun OperatorGameRoot(
                                 onSave = { request ->
                                     viewModel.updateBase(base.id, request as UpdateBaseRequest) {
                                         mapSubScreen = null
+                                        scope.launch { snackbarHostState.showSnackbar(context.getString(com.prayer.pointfinder.core.i18n.R.string.toast_base_saved)) }
                                     }
                                 },
                                 onDelete = {
@@ -1011,6 +1022,7 @@ private fun OperatorGameRoot(
                             onSave = { request ->
                                 viewModel.createChallenge(request as CreateChallengeRequest) {
                                     mapSubScreen = null
+                                    scope.launch { snackbarHostState.showSnackbar(context.getString(com.prayer.pointfinder.core.i18n.R.string.toast_challenge_created)) }
                                 }
                             },
                             onDelete = null,
@@ -1087,6 +1099,7 @@ private fun OperatorGameRoot(
                             onSave = { request ->
                                 viewModel.createBase(request as CreateBaseRequest) { base ->
                                     setupSubScreen = "base_edit:${base.id}"
+                                    scope.launch { snackbarHostState.showSnackbar(context.getString(com.prayer.pointfinder.core.i18n.R.string.toast_base_created)) }
                                 }
                             },
                             onDelete = null,
@@ -1114,6 +1127,7 @@ private fun OperatorGameRoot(
                                 onSave = { request ->
                                     viewModel.updateBase(base.id, request as UpdateBaseRequest) {
                                         setupSubScreen = "bases_list"
+                                        scope.launch { snackbarHostState.showSnackbar(context.getString(com.prayer.pointfinder.core.i18n.R.string.toast_base_saved)) }
                                     }
                                 },
                                 onDelete = {
@@ -1155,6 +1169,7 @@ private fun OperatorGameRoot(
                             onSave = { request ->
                                 viewModel.createChallenge(request as CreateChallengeRequest) { challenge ->
                                     setupSubScreen = "challenge_edit:${challenge.id}"
+                                    scope.launch { snackbarHostState.showSnackbar(context.getString(com.prayer.pointfinder.core.i18n.R.string.toast_challenge_created)) }
                                 }
                             },
                             onDelete = null,
@@ -1182,6 +1197,7 @@ private fun OperatorGameRoot(
                                 onSave = { request ->
                                     viewModel.updateChallenge(challenge.id, request as UpdateChallengeRequest) {
                                         setupSubScreen = "challenges_list"
+                                        scope.launch { snackbarHostState.showSnackbar(context.getString(com.prayer.pointfinder.core.i18n.R.string.toast_challenge_saved)) }
                                     }
                                 },
                                 onDelete = {
@@ -1221,6 +1237,7 @@ private fun OperatorGameRoot(
                                 onSave = { request ->
                                     viewModel.updateTeam(team.id, request) {
                                         setupSubScreen = "teams_list"
+                                        scope.launch { snackbarHostState.showSnackbar(context.getString(com.prayer.pointfinder.core.i18n.R.string.toast_team_saved)) }
                                     }
                                 },
                                 onDelete = {
@@ -1361,6 +1378,11 @@ private fun OperatorGameRoot(
                 }
             }
         }
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter),
+        )
+        } // end Box
     }
 
     if (state.awaitingNfcWrite && state.selectedBase != null) {
