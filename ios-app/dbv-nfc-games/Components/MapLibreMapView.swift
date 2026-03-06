@@ -195,14 +195,6 @@ struct MapLibreMapView: UIViewRepresentable {
             onTap?(coordinate)
         }
 
-        @objc func handleTap(_ gesture: UITapGestureRecognizer) {
-            guard gesture.state == .ended else { return }
-            guard let mapView = gesture.view as? MLNMapView else { return }
-            let point = gesture.location(in: mapView)
-            let coordinate = mapView.convert(point, toCoordinateFrom: mapView)
-            onTap?(coordinate)
-        }
-
         @objc func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
             guard gesture.state == .began else { return }
             guard let mapView = gesture.view as? MLNMapView else { return }
