@@ -929,6 +929,9 @@ private fun OperatorGameRoot(
         if (gameStatus == GameStatus.SETUP && state.selectedTab == OperatorTab.LIVE) {
             viewModel.setTab(OperatorTab.SETUP)
         }
+        if (gameStatus == GameStatus.SETUP && state.selectedTab == OperatorTab.SUBMISSIONS) {
+            viewModel.setTab(OperatorTab.LIVE_MAP)
+        }
     }
 
     OperatorGameScaffold(
