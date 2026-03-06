@@ -65,7 +65,7 @@ async function main() {
       if (game.name && game.name.startsWith('E2E ')) {
         try {
           if (game.status === 'live') {
-            await api.updateGameStatus(token, game.id, 'completed');
+            await api.updateGameStatus(token, game.id, 'ended');
           }
           const res = await api.deleteGame(token, game.id);
           console.log(`  Deleted orphan "${game.name}" (${game.id}): ${res.status}`);

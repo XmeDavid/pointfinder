@@ -40,7 +40,11 @@ test.describe('Challenge management via web UI', () => {
     // Select challenge type
     const typeSelect = page.getByTestId('challenge-type-select');
     await expect(typeSelect).toBeVisible({ timeout: 5_000 });
-    await typeSelect.selectOption({ label: /text/i });
+    // challenge-type-select is a div with buttons, not a <select>
+    const textTypeBtn = typeSelect.locator('button', { hasText: /text/i });
+    if (await textTypeBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      await textTypeBtn.click();
+    }
 
     // Fill points if there is a points input
     const pointsInput = page.locator('input[name*="point" i], [data-testid*="point"]');
@@ -85,7 +89,10 @@ test.describe('Challenge management via web UI', () => {
 
     const typeSelect = page.getByTestId('challenge-type-select');
     await expect(typeSelect).toBeVisible({ timeout: 5_000 });
-    await typeSelect.selectOption({ label: /text/i });
+    const textTypeBtn2 = typeSelect.locator('button', { hasText: /text/i });
+    if (await textTypeBtn2.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      await textTypeBtn2.click();
+    }
 
     const pointsInput = page.locator('input[name*="point" i], [data-testid*="point"]');
     if (await pointsInput.isVisible({ timeout: 1_000 }).catch(() => false)) {
