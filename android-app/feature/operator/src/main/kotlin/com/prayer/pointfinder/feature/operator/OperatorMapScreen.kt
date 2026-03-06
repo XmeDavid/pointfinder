@@ -1,8 +1,10 @@
 package com.prayer.pointfinder.feature.operator
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.location.LocationManager
 import android.graphics.Canvas
 import android.graphics.Paint
 import androidx.compose.foundation.layout.Arrangement
@@ -63,9 +65,6 @@ import org.maplibre.android.annotations.MarkerOptions
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.geometry.LatLngBounds
-import org.maplibre.android.location.LocationComponentActivationOptions
-import org.maplibre.android.location.modes.CameraMode
-import org.maplibre.android.location.modes.RenderMode
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
@@ -130,37 +129,14 @@ fun OperatorMapScreen(
         }
     }
 
-    // Update style when tileSource or dark mode changes, and enable location component
+    // Update style when tileSource or dark mode changes
+    // NOTE: LocationComponent is intentionally NOT used here — its animator
+    // races with setStyle() in Compose, causing IllegalStateException crashes.
+    // We use Android's LocationManager directly for location-dependent buttons.
     LaunchedEffect(map, tileSource, isDark) {
         val m = map ?: return@LaunchedEffect
-        // Deactivate location component before style change to prevent
-        // IllegalStateException from animator accessing invalidated style
-        try {
-            if (m.locationComponent.isLocationComponentActivated) {
-                m.locationComponent.isLocationComponentEnabled = false
-            }
-        } catch (_: Exception) { }
         m.setStyle(Style.Builder().fromUri(TileSources.getResolvedStyleUrl(tileSource, isDark))) { style ->
             mapStyle = style
-            // Re-enable location component (blue dot) on the new style
-            try {
-                val hasPermission = ContextCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                ) == PackageManager.PERMISSION_GRANTED
-                if (hasPermission) {
-                    m.locationComponent.apply {
-                        activateLocationComponent(
-                            LocationComponentActivationOptions.builder(context, style).build(),
-                        )
-                        isLocationComponentEnabled = true
-                        cameraMode = CameraMode.NONE
-                        renderMode = RenderMode.NORMAL
-                    }
-                }
-            } catch (_: Exception) {
-                // Location component may not be available; skip blue dot
-            }
         }
     }
 
@@ -349,17 +325,13 @@ fun OperatorMapScreen(
         // Bottom-left: Center on me button
         SmallFloatingActionButton(
             onClick = {
-                try {
-                    map?.locationComponent?.lastKnownLocation?.let { location ->
-                        map?.animateCamera(
-                            CameraUpdateFactory.newLatLngZoom(
-                                LatLng(location.latitude, location.longitude),
-                                15.0,
-                            ),
-                        )
-                    }
-                } catch (_: Exception) {
-                    // Location component not available
+                getLastKnownLocation(context)?.let { location ->
+                    map?.animateCamera(
+                        CameraUpdateFactory.newLatLngZoom(
+                            LatLng(location.latitude, location.longitude),
+                            15.0,
+                        ),
+                    )
                 }
             },
             modifier = Modifier
@@ -373,12 +345,8 @@ fun OperatorMapScreen(
         if (isEditMode && gameStatus != GameStatus.ENDED) {
             FloatingActionButton(
                 onClick = {
-                    try {
-                        map?.locationComponent?.lastKnownLocation?.let { location ->
-                            onCreateBaseAt(location.latitude, location.longitude)
-                        }
-                    } catch (_: Exception) {
-                        // Location component not available
+                    getLastKnownLocation(context)?.let { location ->
+                        onCreateBaseAt(location.latitude, location.longitude)
                     }
                 },
                 modifier = Modifier
@@ -633,6 +601,18 @@ private fun calculateBearing(lat1: Double, lng1: Double, lat2: Double, lng2: Dou
     val x = kotlin.math.cos(lat1Rad) * kotlin.math.sin(lat2Rad) -
         kotlin.math.sin(lat1Rad) * kotlin.math.cos(lat2Rad) * kotlin.math.cos(dLng)
     return (Math.toDegrees(kotlin.math.atan2(y, x)) + 360) % 360
+}
+
+@SuppressLint("MissingPermission")
+private fun getLastKnownLocation(context: android.content.Context): android.location.Location? {
+    val hasPermission = ContextCompat.checkSelfPermission(
+        context, Manifest.permission.ACCESS_FINE_LOCATION,
+    ) == PackageManager.PERMISSION_GRANTED
+    if (!hasPermission) return null
+    val lm = context.getSystemService(LocationManager::class.java) ?: return null
+    return lm.getLastKnownLocation(LocationManager.FUSED_PROVIDER)
+        ?: lm.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+        ?: lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
 }
 
 internal fun formatTimestamp(iso: String): String {
