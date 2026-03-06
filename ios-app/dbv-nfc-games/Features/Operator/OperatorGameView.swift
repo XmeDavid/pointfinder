@@ -58,8 +58,8 @@ struct OperatorGameView: View {
                             .tag(1)
                     }
 
-                    // Tab 2: Submissions (always visible now)
-                    if let token = token {
+                    // Tab 2: Submissions (live/ended only)
+                    if gameStatus != "setup", let token = token {
                         OperatorSubmissionsView(gameId: game.id, token: token)
                             .tabItem {
                                 Label(locale.t("operator.submissions"), systemImage: "doc.text")
