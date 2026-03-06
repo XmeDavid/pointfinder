@@ -1,0 +1,33 @@
+{
+  "scenarios": [
+    { "id": "P1",  "name": "Operator login",                    "api": true,  "web": true,  "mobile": true  },
+    { "id": "P2",  "name": "Create game",                       "api": true,  "web": true,  "mobile": true  },
+    { "id": "P3",  "name": "Create base",                       "api": true,  "web": true,  "mobile": true  },
+    { "id": "P4",  "name": "Create challenge (all types)",      "api": true,  "web": true,  "mobile": true  },
+    { "id": "P5",  "name": "Link challenge to base",            "api": true,  "web": true,  "mobile": true  },
+    { "id": "P6",  "name": "Create team",                       "api": true,  "web": true,  "mobile": true  },
+    { "id": "P7",  "name": "Player join via code",              "api": true,  "web": false, "mobile": true  },
+    { "id": "P8",  "name": "Activate game",                     "api": true,  "web": true,  "mobile": true  },
+    { "id": "P9",  "name": "Player views progress",             "api": true,  "web": false, "mobile": true  },
+    { "id": "P10", "name": "Player submits answer",             "api": true,  "web": false, "mobile": true  },
+    { "id": "P11", "name": "Operator reviews submission",       "api": true,  "web": true,  "mobile": true  },
+    { "id": "P12", "name": "Leaderboard updates after review",  "api": true,  "web": true,  "mobile": true  },
+    { "id": "P13", "name": "Edit entity",                       "api": true,  "web": true,  "mobile": true  },
+    { "id": "P14", "name": "Delete entity",                     "api": true,  "web": true,  "mobile": true  },
+    { "id": "P15", "name": "Token refresh",                     "api": true,  "web": false, "mobile": false },
+    { "id": "P16", "name": "Export/import game",                "api": true,  "web": true,  "mobile": true  },
+    { "id": "P17", "name": "Monitoring dashboard",              "api": true,  "web": true,  "mobile": true  },
+    { "id": "P18", "name": "Operator notification",             "api": true,  "web": true,  "mobile": true  },
+    { "id": "P19", "name": "Live broadcast",                    "api": true,  "web": true,  "mobile": false },
+    { "id": "N1",  "name": "Invalid login",                     "api": true,  "web": true,  "mobile": true  },
+    { "id": "N2",  "name": "Expired/invalid token",             "api": true,  "web": false, "mobile": false },
+    { "id": "N3",  "name": "Cross-game player isolation",       "api": true,  "web": false, "mobile": false },
+    { "id": "N4",  "name": "Player submits unassigned",         "api": true,  "web": false, "mobile": false },
+    { "id": "N5",  "name": "Invalid join code",                 "api": true,  "web": false, "mobile": false },
+    { "id": "N6",  "name": "Duplicate idempotency key",         "api": true,  "web": false, "mobile": false },
+    { "id": "N7",  "name": "Delete active game",                "api": true,  "web": true,  "mobile": false },
+    { "id": "N8",  "name": "Empty game name",                   "api": true,  "web": false, "mobile": false },
+    { "id": "N9",  "name": "Fixed challenge conflict",          "api": true,  "web": true,  "mobile": true  },
+    { "id": "N10", "name": "Challenge/base count constraint",   "api": true,  "web": true,  "mobile": true  }
+  ]
+}
