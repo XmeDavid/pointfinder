@@ -27,6 +27,7 @@ struct ChallengeEditView: View {
     @State private var isSaving = false
     @State private var showDeleteAlert = false
     @State private var errorMessage: String?
+    @State private var showSaveSuccess = false
     @State private var editingField: EditableField?
     @State private var showAddAnswerAlert = false
     @State private var newAnswerText = ""
@@ -224,6 +225,26 @@ struct ChallengeEditView: View {
                 }
             }
         }
+        .overlay(alignment: .top) {
+            if showSaveSuccess {
+                Text(locale.t("common.saved"))
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(.green.opacity(0.9))
+                    .foregroundStyle(.white)
+                    .clipShape(Capsule())
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            withAnimation { showSaveSuccess = false }
+                        }
+                    }
+                    .padding(.top, 8)
+            }
+        }
+        .animation(.easeInOut, value: showSaveSuccess)
         .navigationTitle(locale.t("operator.editChallenge"))
         .navigationBarTitleDisplayMode(.inline)
         .alert(locale.t("operator.deleteChallengeConfirmTitle"), isPresented: $showDeleteAlert) {
@@ -415,6 +436,7 @@ struct ChallengeEditView: View {
                 token: token
             )
             onSaved(updatedChallenge)
+            withAnimation { showSaveSuccess = true }
         } catch {
             errorMessage = error.localizedDescription
         }
