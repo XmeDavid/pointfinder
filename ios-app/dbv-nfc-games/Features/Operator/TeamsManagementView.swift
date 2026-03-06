@@ -191,6 +191,7 @@ private struct TeamCreateSheet: View {
             Form {
                 Section {
                     TextField(locale.t("operator.teamName"), text: $name)
+                        .accessibilityIdentifier("team-name-input")
                 }
 
                 Section(locale.t("operator.teamColor")) {
@@ -236,6 +237,7 @@ private struct TeamCreateSheet: View {
                         Task { await createTeam() }
                     }
                     .disabled(name.isEmpty || isCreating)
+                    .accessibilityIdentifier("team-save-btn")
                 }
             }
         }

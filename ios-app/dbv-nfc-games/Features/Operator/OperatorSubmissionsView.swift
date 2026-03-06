@@ -352,10 +352,12 @@ private struct OperatorSubmissionReviewSheet: View {
                             Task { await submit(status: "rejected") }
                         }
                         .disabled(isSaving)
+                        .accessibilityIdentifier("submission-reject-btn")
                         Button(locale.t("submissions.approve")) {
                             Task { await submit(status: "approved") }
                         }
                         .disabled(isSaving)
+                        .accessibilityIdentifier("submission-approve-btn")
                     }
                 }
             }

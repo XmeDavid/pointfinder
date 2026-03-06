@@ -34,10 +34,12 @@ struct OperatorLoginView: View {
                     .keyboardType(.emailAddress)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
+                    .accessibilityIdentifier("login-email")
 
                 SecureField(locale.t("auth.password"), text: $password)
                     .textFieldStyle(.roundedBorder)
                     .textContentType(.password)
+                    .accessibilityIdentifier("login-password")
             }
             .padding(.horizontal, 24)
 
@@ -64,6 +66,7 @@ struct OperatorLoginView: View {
             .clipShape(RoundedRectangle(cornerRadius: 14))
             .disabled(!canLogin || isLoading)
             .padding(.horizontal, 24)
+            .accessibilityIdentifier("login-submit")
 
             Spacer()
         }

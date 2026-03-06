@@ -81,6 +81,7 @@ struct ChallengeEditView: View {
             // Title & Points
             Section {
                 TextField(locale.t("operator.challengeTitle"), text: $title)
+                    .accessibilityIdentifier("challenge-title-input")
                 HStack {
                     Text(locale.t("operator.challengePoints"))
                     Spacer()
@@ -206,6 +207,7 @@ struct ChallengeEditView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .disabled(title.isEmpty || isSaving)
+                .accessibilityIdentifier("challenge-save-btn")
             }
 
             if let errorMessage {

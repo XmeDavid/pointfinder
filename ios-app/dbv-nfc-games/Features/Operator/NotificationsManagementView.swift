@@ -31,6 +31,7 @@ struct NotificationsManagementView: View {
                         .foregroundStyle(.secondary)
                     TextEditor(text: $message)
                         .frame(minHeight: 80)
+                        .accessibilityIdentifier("notification-message-input")
                 }
 
                 Picker(locale.t("operator.targetTeam"), selection: $selectedTeamId) {
@@ -48,6 +49,7 @@ struct NotificationsManagementView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .disabled(message.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSending)
+                .accessibilityIdentifier("notification-send-btn")
 
                 if let errorMessage {
                     Text(errorMessage)

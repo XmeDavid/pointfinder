@@ -108,6 +108,7 @@ struct BaseEditView: View {
             // Name & Description
             Section {
                 TextField(locale.t("operator.baseName"), text: $name)
+                    .accessibilityIdentifier("base-name-input")
                 TextField(locale.t("operator.baseDescription"), text: $description, axis: .vertical)
                     .lineLimit(2...4)
             }
@@ -163,6 +164,7 @@ struct BaseEditView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .disabled(name.isEmpty || isSaving)
+                .accessibilityIdentifier("base-save-btn")
             }
 
             if let errorMessage {
