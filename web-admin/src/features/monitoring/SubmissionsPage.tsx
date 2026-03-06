@@ -19,6 +19,7 @@ import { basesApi } from "@/lib/api/bases";
 import { useAuthStore } from "@/hooks/useAuth";
 import { formatDateTime } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { useToast } from "@/hooks/useToast";
 import { useGameWebSocket } from "@/hooks/useGameWebSocket";
 import type { Submission, SubmissionStatus } from "@/types";
 
