@@ -43,7 +43,7 @@ struct BaseEditView: View {
         return nil
     }
 
-    init(game: Game, base: Base?, challenges: [Challenge], onSaved: @escaping (Base) -> Void, onDeleted: (() -> Void)? = nil) {
+    init(game: Game, base: Base?, challenges: [Challenge], initialCoordinate: CLLocationCoordinate2D? = nil, onSaved: @escaping (Base) -> Void, onDeleted: (() -> Void)? = nil) {
         self.game = game
         self.base = base
         self.challenges = challenges
@@ -51,12 +51,16 @@ struct BaseEditView: View {
         self.onDeleted = onDeleted
         self._name = State(initialValue: base?.name ?? "")
         self._description = State(initialValue: base?.description ?? "")
-        self._lat = State(initialValue: base?.lat ?? 0)
-        self._lng = State(initialValue: base?.lng ?? 0)
+        self._lat = State(initialValue: base?.lat ?? initialCoordinate?.latitude ?? 0)
+        self._lng = State(initialValue: base?.lng ?? initialCoordinate?.longitude ?? 0)
         self._requirePresenceToSubmit = State(initialValue: base?.requirePresenceToSubmit ?? false)
         self._hidden = State(initialValue: base?.hidden ?? false)
         self._fixedChallengeId = State(initialValue: base?.fixedChallengeId)
         self._nfcLinked = State(initialValue: base?.nfcLinked ?? false)
+        // If coordinate was provided, skip GPS initialization
+        if initialCoordinate != nil {
+            self._hasInitializedLocation = State(initialValue: true)
+        }
     }
 
     var body: some View {

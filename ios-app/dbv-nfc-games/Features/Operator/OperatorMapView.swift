@@ -239,12 +239,26 @@ struct OperatorMapView: View {
             .presentationDetents([.large])
         }
         .sheet(isPresented: $showBaseCreateSheet) {
-            MapBaseCreateSheet(
-                gameId: gameId,
-                token: token,
-                coordinate: newBaseCoordinate
-            ) { newBase in
-                bases.append(newBase)
+            NavigationStack {
+                BaseEditView(
+                    game: game,
+                    base: nil,
+                    challenges: challenges,
+                    initialCoordinate: newBaseCoordinate,
+                    onSaved: { newBase in
+                        bases.append(newBase)
+                        showBaseCreateSheet = false
+                    }
+                )
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button {
+                            showBaseCreateSheet = false
+                        } label: {
+                            Image(systemName: "xmark")
+                        }
+                    }
+                }
             }
         }
         .task {
@@ -585,98 +599,6 @@ struct LiveBaseProgressSheet: View {
         }
 
         isWritingNfc = false
-    }
-}
-
-// MARK: - Map Base Create Sheet
-
-private struct MapBaseCreateSheet: View {
-    @Environment(AppState.self) private var appState
-    @Environment(LocaleManager.self) private var locale
-    @Environment(\.dismiss) private var dismiss
-
-    let gameId: UUID
-    let token: String
-    let coordinate: CLLocationCoordinate2D?
-    var onCreated: (Base) -> Void
-
-    @State private var name = ""
-    @State private var description = ""
-    @State private var isCreating = false
-    @State private var errorMessage: String?
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField(locale.t("operator.baseName"), text: $name)
-                    TextField(locale.t("operator.baseDescription"), text: $description, axis: .vertical)
-                        .lineLimit(2...4)
-                }
-
-                Section(locale.t("operator.location")) {
-                    HStack {
-                        Text(locale.t("operator.latitude"))
-                        Spacer()
-                        Text(String(format: "%.6f", coordinate?.latitude ?? 0))
-                            .foregroundStyle(.secondary)
-                    }
-                    HStack {
-                        Text(locale.t("operator.longitude"))
-                        Spacer()
-                        Text(String(format: "%.6f", coordinate?.longitude ?? 0))
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                if let errorMessage {
-                    Section {
-                        Text(errorMessage)
-                            .foregroundStyle(.red)
-                            .font(.caption)
-                    }
-                }
-            }
-            .navigationTitle(locale.t("operator.createBase"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(locale.t("common.cancel")) { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(locale.t("common.create")) {
-                        Task { await createBase() }
-                    }
-                    .disabled(name.isEmpty || isCreating)
-                }
-            }
-        }
-    }
-
-    private func createBase() async {
-        guard let coordinate else { return }
-        isCreating = true
-        errorMessage = nil
-        do {
-            let base = try await appState.apiClient.createBase(
-                gameId: gameId,
-                request: CreateBaseRequest(
-                    name: name,
-                    description: description,
-                    lat: coordinate.latitude,
-                    lng: coordinate.longitude,
-                    fixedChallengeId: nil,
-                    requirePresenceToSubmit: false,
-                    hidden: false
-                ),
-                token: token
-            )
-            onCreated(base)
-            dismiss()
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-        isCreating = false
     }
 }
 
