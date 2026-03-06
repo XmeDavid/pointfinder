@@ -5,11 +5,13 @@ struct TeamsManagementView: View {
     @Environment(LocaleManager.self) private var locale
 
     let game: Game
+    var onDismiss: (() -> Void)? = nil
 
     @State private var teams: [Team] = []
     @State private var isLoading = true
     @State private var showCreateTeam = false
     @State private var copiedTeamId: UUID?
+    @State private var showCopiedToast = false
 
     private var token: String? {
         if case .userOperator(let token, _, _) = appState.authType {
@@ -19,92 +21,120 @@ struct TeamsManagementView: View {
     }
 
     var body: some View {
-        Group {
-            if isLoading {
-                ProgressView(locale.t("operator.loading"))
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if teams.isEmpty {
-                ContentUnavailableView(
-                    locale.t("operator.noTeams"),
-                    systemImage: "person.3",
-                    description: Text(locale.t("operator.noTeamsDesc"))
-                )
-            } else {
-                List(teams) { team in
-                    NavigationLink(value: team.id) {
-                        HStack(spacing: 12) {
-                            Circle()
-                                .fill(Color(hex: team.color) ?? .blue)
-                                .frame(width: 28, height: 28)
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(team.name)
-                                    .font(.headline)
-                                if let joinCode = team.joinCode {
-                                    Text(joinCode)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                            Spacer()
-                            if let joinCode = team.joinCode {
-                                Button {
-                                    UIPasteboard.general.string = joinCode
-                                    copiedTeamId = team.id
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                        if copiedTeamId == team.id {
-                                            copiedTeamId = nil
-                                        }
+        NavigationStack {
+            Group {
+                if isLoading {
+                    ProgressView(locale.t("operator.loading"))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if teams.isEmpty {
+                    ContentUnavailableView(
+                        locale.t("operator.noTeams"),
+                        systemImage: "person.3",
+                        description: Text(locale.t("operator.noTeamsDesc"))
+                    )
+                } else {
+                    List(teams) { team in
+                        NavigationLink(value: team.id) {
+                            HStack(spacing: 12) {
+                                Circle()
+                                    .fill(Color(hex: team.color) ?? .blue)
+                                    .frame(width: 28, height: 28)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(team.name)
+                                        .font(.headline)
+                                    if let joinCode = team.joinCode {
+                                        Text(joinCode)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
                                     }
-                                } label: {
-                                    Image(systemName: copiedTeamId == team.id ? "checkmark" : "doc.on.doc")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
                                 }
-                                .buttonStyle(.plain)
+                                Spacer()
+                                if let joinCode = team.joinCode {
+                                    Button {
+                                        UIPasteboard.general.string = joinCode
+                                        copiedTeamId = team.id
+                                        withAnimation {
+                                            showCopiedToast = true
+                                        }
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                            if copiedTeamId == team.id {
+                                                copiedTeamId = nil
+                                            }
+                                            withAnimation {
+                                                showCopiedToast = false
+                                            }
+                                        }
+                                    } label: {
+                                        Image(systemName: copiedTeamId == team.id ? "checkmark" : "doc.on.doc")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
                             }
                         }
                     }
-                }
-                .listStyle(.plain)
-            }
-        }
-        .navigationTitle(locale.t("operator.teams"))
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showCreateTeam = true
-                } label: {
-                    Image(systemName: "plus")
+                    .listStyle(.plain)
                 }
             }
-        }
-        .navigationDestination(for: UUID.self) { teamId in
-            if let team = teams.first(where: { $0.id == teamId }) {
-                TeamDetailView(
-                    game: game,
-                    team: team,
-                    onSaved: { updatedTeam in
-                        if let index = teams.firstIndex(where: { $0.id == updatedTeam.id }) {
-                            teams[index] = updatedTeam
+            .navigationTitle(locale.t("operator.teams"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                if let onDismiss {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button { onDismiss() } label: {
+                            Image(systemName: "xmark")
                         }
-                    },
-                    onDeleted: {
-                        teams.removeAll { $0.id == teamId }
                     }
-                )
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showCreateTeam = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
             }
-        }
-        .sheet(isPresented: $showCreateTeam) {
-            TeamCreateSheet(game: game) { newTeam in
-                teams.append(newTeam)
+            .navigationDestination(for: UUID.self) { teamId in
+                if let team = teams.first(where: { $0.id == teamId }) {
+                    TeamDetailView(
+                        game: game,
+                        team: team,
+                        onSaved: { updatedTeam in
+                            if let index = teams.firstIndex(where: { $0.id == updatedTeam.id }) {
+                                teams[index] = updatedTeam
+                            }
+                        },
+                        onDeleted: {
+                            teams.removeAll { $0.id == teamId }
+                        }
+                    )
+                }
             }
-        }
-        .task {
-            await loadData()
-        }
-        .refreshable {
-            await loadData()
+            .sheet(isPresented: $showCreateTeam) {
+                TeamCreateSheet(game: game) { newTeam in
+                    teams.append(newTeam)
+                }
+            }
+            .task {
+                await loadData()
+            }
+            .refreshable {
+                await loadData()
+            }
+            .overlay(alignment: .bottom) {
+                if showCopiedToast {
+                    Text(locale.t("operator.copied"))
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(.ultraThinMaterial)
+                        .clipShape(Capsule())
+                        .padding(.bottom, 20)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
         }
     }
 
