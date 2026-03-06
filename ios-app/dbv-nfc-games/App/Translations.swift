@@ -250,6 +250,10 @@ enum Translations {
         "operator.deleteBaseConfirmTitle": "Delete Base?",
         "operator.deleteBaseConfirmMessage": "This will permanently delete this base and its assignments.",
         "operator.delete": "Delete",
+        "operator.editContent": "Edit Content",
+        "operator.editCompletionContent": "Edit Completion Content",
+        "operator.insertVariable": "Insert Variable",
+        "operator.previewContent": "Preview",
         "common.create": "Create",
 
         // Operator submissions
@@ -561,6 +565,10 @@ enum Translations {
         "operator.deleteBaseConfirmTitle": "Eliminar Base?",
         "operator.deleteBaseConfirmMessage": "Isto ir\u{00E1} eliminar permanentemente esta base e as suas atribui\u{00E7}\u{00F5}es.",
         "operator.delete": "Eliminar",
+        "operator.editContent": "Editar Conte\u{00FA}do",
+        "operator.editCompletionContent": "Editar Conte\u{00FA}do de Conclus\u{00E3}o",
+        "operator.insertVariable": "Inserir Vari\u{00E1}vel",
+        "operator.previewContent": "Pr\u{00E9}-visualizar",
         "common.create": "Criar",
 
         // Operator submissions
@@ -872,6 +880,10 @@ enum Translations {
         "operator.deleteBaseConfirmTitle": "Station l\u{00F6}schen?",
         "operator.deleteBaseConfirmMessage": "Dadurch wird diese Station und ihre Zuweisungen dauerhaft gel\u{00F6}scht.",
         "operator.delete": "L\u{00F6}schen",
+        "operator.editContent": "Inhalt bearbeiten",
+        "operator.editCompletionContent": "Abschlussinhalt bearbeiten",
+        "operator.insertVariable": "Variable einf\u{00FC}gen",
+        "operator.previewContent": "Vorschau",
         "common.create": "Erstellen",
 
         // Operator submissions
