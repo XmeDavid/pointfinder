@@ -39,6 +39,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -87,7 +88,10 @@ fun OperatorHomeScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onCreateGame) {
+            FloatingActionButton(
+                onClick = onCreateGame,
+                modifier = Modifier.testTag("create-game-btn"),
+            ) {
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.label_create_game))
             }
         },
@@ -201,6 +205,7 @@ fun OperatorGameScaffold(
                     onClick = { onTabSelected(OperatorTab.LIVE_MAP) },
                     icon = { androidx.compose.material3.Icon(Icons.Default.Map, contentDescription = null) },
                     label = { Text(stringResource(R.string.label_live_map)) },
+                    modifier = Modifier.testTag("nav-monitoring"),
                 )
                 if (isSetupMode) {
                     NavigationBarItem(
@@ -208,6 +213,7 @@ fun OperatorGameScaffold(
                         onClick = { onTabSelected(OperatorTab.SETUP) },
                         icon = { androidx.compose.material3.Icon(Icons.Default.Checklist, contentDescription = null) },
                         label = { Text(stringResource(R.string.label_setup)) },
+                        modifier = Modifier.testTag("nav-games"),
                     )
                 } else {
                     NavigationBarItem(
@@ -215,6 +221,7 @@ fun OperatorGameScaffold(
                         onClick = { onTabSelected(OperatorTab.LIVE) },
                         icon = { androidx.compose.material3.Icon(Icons.Default.BarChart, contentDescription = null) },
                         label = { Text(stringResource(R.string.label_live)) },
+                        modifier = Modifier.testTag("nav-games"),
                     )
                 }
                 if (!isSetupMode) {
@@ -230,6 +237,7 @@ fun OperatorGameScaffold(
                     onClick = { onTabSelected(OperatorTab.MORE) },
                     icon = { androidx.compose.material3.Icon(Icons.Default.MoreHoriz, contentDescription = null) },
                     label = { Text(stringResource(R.string.label_more)) },
+                    modifier = Modifier.testTag("nav-teams"),
                 )
             }
         },

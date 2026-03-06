@@ -50,6 +50,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -223,7 +224,7 @@ fun ChallengeEditScreen(
                 onValueChange = { title = it },
                 label = { Text(stringResource(R.string.label_challenge_title)) },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag("challenge-title-input"),
             )
 
             Spacer(Modifier.height(12.dp))
@@ -548,7 +549,7 @@ fun ChallengeEditScreen(
                     }
                 },
                 enabled = canSave,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag("challenge-save-btn"),
             ) {
                 Text(stringResource(R.string.action_save))
             }

@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.prayer.pointfinder.core.i18n.R
 
@@ -216,7 +217,7 @@ fun OperatorLoginScreen(
                 value = email,
                 onValueChange = onEmailChange,
                 label = { Text(stringResource(R.string.label_email)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag("login-email"),
                 singleLine = true,
             )
             Spacer(Modifier.height(12.dp))
@@ -225,7 +226,7 @@ fun OperatorLoginScreen(
                 onValueChange = onPasswordChange,
                 label = { Text(stringResource(R.string.label_password)) },
                 visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag("login-password"),
                 singleLine = true,
             )
             if (!errorMessage.isNullOrBlank()) {
@@ -236,7 +237,7 @@ fun OperatorLoginScreen(
             Button(
                 onClick = onSignIn,
                 enabled = !isLoading && email.isNotBlank() && password.isNotBlank(),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag("login-submit"),
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))

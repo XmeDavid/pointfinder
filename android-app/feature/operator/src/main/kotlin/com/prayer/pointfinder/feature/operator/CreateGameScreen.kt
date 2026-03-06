@@ -43,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
@@ -155,7 +156,7 @@ fun CreateGameScreen(
                 onValueChange = { name = it },
                 label = { Text(stringResource(R.string.label_game_name)) },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag("game-name-input"),
             )
 
             Spacer(Modifier.height(12.dp))
@@ -263,7 +264,7 @@ fun CreateGameScreen(
                     }
                 },
                 enabled = canCreate,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag("game-save-btn"),
             ) {
                 if (isCreating) {
                     CircularProgressIndicator(

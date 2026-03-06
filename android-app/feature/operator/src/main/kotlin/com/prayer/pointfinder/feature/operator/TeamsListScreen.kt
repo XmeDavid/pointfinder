@@ -48,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -189,7 +190,7 @@ private fun CreateTeamDialog(
                     onValueChange = { name = it },
                     label = { Text(stringResource(R.string.label_team_name)) },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("team-name-input"),
                 )
                 Spacer(Modifier.height(12.dp))
                 Text(
@@ -207,6 +208,7 @@ private fun CreateTeamDialog(
             TextButton(
                 onClick = { onCreate(name.trim(), selectedColor) },
                 enabled = name.isNotBlank(),
+                modifier = Modifier.testTag("team-save-btn"),
             ) {
                 Text(stringResource(R.string.action_create))
             }
