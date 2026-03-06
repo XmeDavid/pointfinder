@@ -1,10 +1,6 @@
 package com.prayer.pointfinder.feature.player
 
-import android.annotation.SuppressLint
-import android.os.Handler
-import android.os.Looper
 import android.view.ViewGroup
-import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -24,7 +20,6 @@ import androidx.compose.ui.viewinterop.AndroidView
  * Height is managed by the WebView itself (WRAP_CONTENT) rather than a JS bridge,
  * which avoids recomposition loops and image-cropping issues.
  */
-@SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun HtmlContentView(
     html: String,
@@ -33,7 +28,7 @@ fun HtmlContentView(
     // Use the resolved theme luminance rather than isSystemInDarkTheme(),
     // so forced light/dark mode from the theme override is respected.
     val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
-    val wrappedHtml = remember(html, isDark) { wrapHtml(html, isDark) }
+    val wrappedHtml = remember(html, isDark) { wrapHtml(sanitizeHtml(html), isDark) }
 
     // Track last loaded HTML to prevent reload loops.
     val lastLoadedHtml = remember { mutableListOf("") }
@@ -46,25 +41,9 @@ fun HtmlContentView(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                 )
-                settings.javaScriptEnabled = true
                 isVerticalScrollBarEnabled = false
                 isHorizontalScrollBarEnabled = false
                 setBackgroundColor(android.graphics.Color.TRANSPARENT)
-
-                // Let the WebView measure its own content height natively.
-                // After images load, re-request layout so the parent picks up the new size.
-                val mainHandler = Handler(Looper.getMainLooper())
-                addJavascriptInterface(
-                    object {
-                        @JavascriptInterface
-                        fun onContentReady() {
-                            mainHandler.post {
-                                requestLayout()
-                            }
-                        }
-                    },
-                    "AndroidBridge",
-                )
 
                 webViewClient = object : WebViewClient() {
                     override fun shouldOverrideUrlLoading(
@@ -90,6 +69,12 @@ fun HtmlContentView(
         },
     )
 }
+
+private fun sanitizeHtml(html: String): String =
+    html.replace(Regex("<script[^>]*>[\\s\\S]*?</script>", RegexOption.IGNORE_CASE), "")
+        .replace(Regex("<script[^>]*/>", RegexOption.IGNORE_CASE), "")
+        .replace(Regex("""on\w+\s*=\s*"[^"]*"""", RegexOption.IGNORE_CASE), "")
+        .replace(Regex("""on\w+\s*=\s*'[^']*'""", RegexOption.IGNORE_CASE), "")
 
 private fun wrapHtml(content: String, isDark: Boolean): String {
     val textColor = if (isDark) "#FFFFFF" else "#000000"
@@ -221,14 +206,6 @@ private fun wrapHtml(content: String, isDark: Boolean): String {
         </head>
         <body>
             $content
-            <script>
-                // Re-request native layout after images finish loading
-                document.querySelectorAll('img').forEach(function(img) {
-                    img.onload = function() {
-                        if (window.AndroidBridge) AndroidBridge.onContentReady();
-                    };
-                });
-            </script>
         </body>
         </html>
     """.trimIndent()
