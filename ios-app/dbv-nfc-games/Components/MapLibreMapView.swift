@@ -19,6 +19,9 @@ struct MapLibreMapView: UIViewRepresentable {
     let annotations: [MapAnnotationItem]
     let fitCoordinates: [CLLocationCoordinate2D]
     var connections: [(CLLocationCoordinate2D, CLLocationCoordinate2D)] = []
+    var showsUserLocation: Bool = false
+    var onLongPress: ((CLLocationCoordinate2D) -> Void)? = nil
+    var centerOnCoordinate: CLLocationCoordinate2D? = nil
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -30,6 +33,15 @@ struct MapLibreMapView: UIViewRepresentable {
         mapView.delegate = context.coordinator
         mapView.logoView.isHidden = true
         mapView.attributionButton.isHidden = true
+
+        if showsUserLocation {
+            mapView.showsUserLocation = true
+        }
+
+        let longPress = UILongPressGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleLongPress(_:)))
+        longPress.minimumPressDuration = 0.5
+        mapView.addGestureRecognizer(longPress)
+
         return mapView
     }
 
@@ -39,13 +51,18 @@ struct MapLibreMapView: UIViewRepresentable {
             mapView.styleURL = styleURL
         }
 
+        // Update user location display
+        mapView.showsUserLocation = showsUserLocation
+
         // Update annotations
         let coordinator = context.coordinator
         coordinator.parent = self
+        coordinator.onLongPress = onLongPress
 
-        // Remove old annotations
+        // Remove old annotations (keep user location annotation)
         if let existing = mapView.annotations {
-            mapView.removeAnnotations(existing)
+            let nonUserAnnotations = existing.filter { !($0 is MLNUserLocation) }
+            mapView.removeAnnotations(nonUserAnnotations)
         }
 
         // Set annotation items before adding so viewFor delegate can resolve them
@@ -62,6 +79,16 @@ struct MapLibreMapView: UIViewRepresentable {
 
         // Unlock connection lines
         updateConnectionLines(on: mapView)
+
+        // Center on coordinate if requested
+        if let center = centerOnCoordinate {
+            if coordinator.lastCenterTarget == nil ||
+               coordinator.lastCenterTarget!.latitude != center.latitude ||
+               coordinator.lastCenterTarget!.longitude != center.longitude {
+                mapView.setCenter(center, zoomLevel: max(mapView.zoomLevel, 15), animated: true)
+                coordinator.lastCenterTarget = center
+            }
+        }
 
         // Fit bounds
         if !fitCoordinates.isEmpty && fitCoordinates.count > 1 {
@@ -132,9 +159,20 @@ struct MapLibreMapView: UIViewRepresentable {
         var parent: MapLibreMapView
         var annotationItems: [MapAnnotationItem] = []
         var hasInitialized = false
+        var onLongPress: ((CLLocationCoordinate2D) -> Void)?
+        var lastCenterTarget: CLLocationCoordinate2D?
 
         init(_ parent: MapLibreMapView) {
             self.parent = parent
+            self.onLongPress = parent.onLongPress
+        }
+
+        @objc func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
+            guard gesture.state == .began else { return }
+            guard let mapView = gesture.view as? MLNMapView else { return }
+            let point = gesture.location(in: mapView)
+            let coordinate = mapView.convert(point, toCoordinateFrom: mapView)
+            onLongPress?(coordinate)
         }
 
         func mapView(_ mapView: MLNMapView, viewFor annotation: MLNAnnotation) -> MLNAnnotationView? {

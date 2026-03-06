@@ -8,6 +8,7 @@ struct OperatorHomeView: View {
     @State private var isLoading = true
     @State private var errorMessage: String?
     @State private var selectedGame: Game?
+    @State private var showCreateGame = false
 
     var body: some View {
         if let game = selectedGame {
@@ -70,6 +71,13 @@ struct OperatorHomeView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
+                        showCreateGame = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
                         appState.logout()
                     } label: {
                         Text(locale.t("operator.logout"))
@@ -78,6 +86,12 @@ struct OperatorHomeView: View {
             }
             .refreshable {
                 await loadGames()
+            }
+            .sheet(isPresented: $showCreateGame) {
+                CreateGameView { game in
+                    selectedGame = game
+                    Task { await loadGames() }
+                }
             }
         }
     }

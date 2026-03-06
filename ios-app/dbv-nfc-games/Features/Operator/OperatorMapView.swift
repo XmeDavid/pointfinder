@@ -20,6 +20,13 @@ struct OperatorMapView: View {
     @State private var selectedBase: Base?
     @State private var pollingTask: Task<Void, Never>?
 
+    // Edit mode
+    @State private var editMode = false
+    @State private var showBaseCreateSheet = false
+    @State private var newBaseCoordinate: CLLocationCoordinate2D?
+    @State private var centerTarget: CLLocationCoordinate2D?
+    @StateObject private var locationManager = LocationManagerHelper()
+
     private let pollInterval: TimeInterval = 5.0
 
     var body: some View {
@@ -71,7 +78,13 @@ struct OperatorMapView: View {
                 styleURL: TileSources.resolvedStyleURL(for: tileSource, isDark: colorScheme == .dark),
                 annotations: baseAnnotations + locationAnnotations,
                 fitCoordinates: bases.map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng) },
-                connections: unlockConnections
+                connections: unlockConnections,
+                showsUserLocation: true,
+                onLongPress: editMode ? { coordinate in
+                    newBaseCoordinate = coordinate
+                    showBaseCreateSheet = true
+                } : nil,
+                centerOnCoordinate: centerTarget
             )
             .ignoresSafeArea()
 
@@ -80,6 +93,84 @@ struct OperatorMapView: View {
                     .padding()
                     .background(.ultraThinMaterial)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+
+            // Edit mode & center-on-me buttons (top-right)
+            VStack {
+                HStack {
+                    Spacer()
+                    VStack(spacing: 8) {
+                        Button {
+                            editMode.toggle()
+                        } label: {
+                            Image(systemName: editMode ? "pencil.circle.fill" : "pencil.circle")
+                                .font(.title2)
+                                .padding(10)
+                                .background(.ultraThinMaterial)
+                                .clipShape(Circle())
+                        }
+
+                        Button {
+                            if let loc = locationManager.lastLocation {
+                                // Tiny jitter to force update when pressing multiple times
+                                centerTarget = CLLocationCoordinate2D(
+                                    latitude: loc.latitude + 0.00001 * Double.random(in: -1...1),
+                                    longitude: loc.longitude
+                                )
+                            }
+                        } label: {
+                            Image(systemName: "location.fill")
+                                .font(.title3)
+                                .padding(10)
+                                .background(.ultraThinMaterial)
+                                .clipShape(Circle())
+                        }
+                    }
+                    .padding(.trailing, 16)
+                    .padding(.top, 8)
+                }
+                Spacer()
+            }
+
+            // Edit mode hint
+            if editMode {
+                VStack {
+                    Text(locale.t("operator.longPressHint"))
+                        .font(.caption)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(.ultraThinMaterial)
+                        .clipShape(Capsule())
+                        .padding(.top, 8)
+                    Spacer()
+                }
+            }
+
+            // FAB button for adding base at GPS location (edit mode only)
+            if editMode {
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        Button {
+                            if let coord = locationManager.lastLocation {
+                                newBaseCoordinate = coord
+                                showBaseCreateSheet = true
+                            }
+                        } label: {
+                            Image(systemName: "plus")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.white)
+                                .frame(width: 56, height: 56)
+                                .background(Color.accentColor)
+                                .clipShape(Circle())
+                                .shadow(radius: 4)
+                        }
+                        .padding(.trailing, 16)
+                        .padding(.bottom, 80)
+                    }
+                }
             }
 
             // Legend overlay
@@ -101,6 +192,15 @@ struct OperatorMapView: View {
                 }
             )
             .presentationDetents([.medium, .large])
+        }
+        .sheet(isPresented: $showBaseCreateSheet) {
+            MapBaseCreateSheet(
+                gameId: gameId,
+                token: token,
+                coordinate: newBaseCoordinate
+            ) { newBase in
+                bases.append(newBase)
+            }
         }
         .task {
             await loadInitialData()
@@ -440,6 +540,117 @@ struct LiveBaseProgressSheet: View {
         }
 
         isWritingNfc = false
+    }
+}
+
+// MARK: - Map Base Create Sheet
+
+private struct MapBaseCreateSheet: View {
+    @Environment(AppState.self) private var appState
+    @Environment(LocaleManager.self) private var locale
+    @Environment(\.dismiss) private var dismiss
+
+    let gameId: UUID
+    let token: String
+    let coordinate: CLLocationCoordinate2D?
+    var onCreated: (Base) -> Void
+
+    @State private var name = ""
+    @State private var description = ""
+    @State private var isCreating = false
+    @State private var errorMessage: String?
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField(locale.t("operator.baseName"), text: $name)
+                    TextField(locale.t("operator.baseDescription"), text: $description, axis: .vertical)
+                        .lineLimit(2...4)
+                }
+
+                Section(locale.t("operator.location")) {
+                    HStack {
+                        Text(locale.t("operator.latitude"))
+                        Spacer()
+                        Text(String(format: "%.6f", coordinate?.latitude ?? 0))
+                            .foregroundStyle(.secondary)
+                    }
+                    HStack {
+                        Text(locale.t("operator.longitude"))
+                        Spacer()
+                        Text(String(format: "%.6f", coordinate?.longitude ?? 0))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                if let errorMessage {
+                    Section {
+                        Text(errorMessage)
+                            .foregroundStyle(.red)
+                            .font(.caption)
+                    }
+                }
+            }
+            .navigationTitle(locale.t("operator.createBase"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(locale.t("common.cancel")) { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(locale.t("common.create")) {
+                        Task { await createBase() }
+                    }
+                    .disabled(name.isEmpty || isCreating)
+                }
+            }
+        }
+    }
+
+    private func createBase() async {
+        guard let coordinate else { return }
+        isCreating = true
+        errorMessage = nil
+        do {
+            let base = try await appState.apiClient.createBase(
+                gameId: gameId,
+                request: CreateBaseRequest(
+                    name: name,
+                    description: description,
+                    lat: coordinate.latitude,
+                    lng: coordinate.longitude,
+                    fixedChallengeId: nil,
+                    requirePresenceToSubmit: false,
+                    hidden: false
+                ),
+                token: token
+            )
+            onCreated(base)
+            dismiss()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        isCreating = false
+    }
+}
+
+// MARK: - Location Manager Helper
+
+private class LocationManagerHelper: NSObject, ObservableObject, CLLocationManagerDelegate {
+    @Published var lastLocation: CLLocationCoordinate2D?
+    private let manager = CLLocationManager()
+
+    override init() {
+        super.init()
+        manager.delegate = self
+        manager.desiredAccuracy = kCLLocationAccuracyBest
+        manager.requestWhenInUseAuthorization()
+        manager.startUpdatingLocation()
+    }
+
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        lastLocation = locations.last?.coordinate
     }
 }
 
