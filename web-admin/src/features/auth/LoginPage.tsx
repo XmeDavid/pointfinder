@@ -25,8 +25,15 @@ export function LoginPage() {
     try {
       await login(email, password);
       navigate("/games");
-    } catch {
-      setError(t("auth.invalidCredentials"));
+    } catch (err: any) {
+      const status = err?.response?.status;
+      if (status === 429) {
+        setError(t("auth.tooManyAttempts"));
+      } else if (status === 500) {
+        setError(t("auth.serverError"));
+      } else {
+        setError(t("auth.invalidCredentials"));
+      }
     } finally {
       setLoading(false);
     }
