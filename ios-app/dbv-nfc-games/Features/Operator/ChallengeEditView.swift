@@ -259,7 +259,7 @@ struct ChallengeEditView: View {
                         template: html,
                         gameVariables: gameVariables,
                         challengeVariables: challengeVariables,
-                        teamId: team.id.uuidString
+                        teamId: team.id.uuidString.lowercased()
                     )
                 }
             )
