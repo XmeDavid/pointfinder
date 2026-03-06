@@ -12,6 +12,9 @@ struct OperatorSetupHubView: View {
     @State private var assignments: [Assignment] = []
     @State private var isLoading = true
     @State private var showGoLiveAlert = false
+    @State private var showBases = false
+    @State private var showChallenges = false
+    @State private var showTeams = false
 
     private var token: String? {
         if case .userOperator(let token, _, _) = appState.authType {
@@ -94,38 +97,44 @@ struct OperatorSetupHubView: View {
 
                         // Manage section
                         Section(locale.t("operator.manage")) {
-                            NavigationLink {
-                                BasesManagementView(game: game)
-                            } label: {
+                            Button { showBases = true } label: {
                                 HStack {
                                     Label(locale.t("operator.bases"), systemImage: "mappin.and.ellipse")
                                     Spacer()
                                     Text("(\(bases.count))")
                                         .foregroundStyle(.secondary)
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption)
+                                        .foregroundStyle(.tertiary)
                                 }
                             }
+                            .foregroundStyle(.primary)
 
-                            NavigationLink {
-                                ChallengesManagementView(game: game)
-                            } label: {
+                            Button { showChallenges = true } label: {
                                 HStack {
                                     Label(locale.t("operator.challenges"), systemImage: "questionmark.circle")
                                     Spacer()
                                     Text("(\(challenges.count))")
                                         .foregroundStyle(.secondary)
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption)
+                                        .foregroundStyle(.tertiary)
                                 }
                             }
+                            .foregroundStyle(.primary)
 
-                            NavigationLink {
-                                TeamsManagementView(game: game)
-                            } label: {
+                            Button { showTeams = true } label: {
                                 HStack {
                                     Label(locale.t("operator.teams"), systemImage: "person.3")
                                     Spacer()
                                     Text("(\(teams.count))")
                                         .foregroundStyle(.secondary)
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption)
+                                        .foregroundStyle(.tertiary)
                                 }
                             }
+                            .foregroundStyle(.primary)
                         }
 
                         // Go Live button
@@ -157,6 +166,42 @@ struct OperatorSetupHubView: View {
                 Button(locale.t("common.cancel"), role: .cancel) {}
             } message: {
                 Text(locale.t("operator.goLiveConfirmMessage"))
+            }
+            .fullScreenCover(isPresented: $showBases) {
+                NavigationStack {
+                    BasesManagementView(game: game)
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) {
+                                Button { showBases = false } label: {
+                                    Image(systemName: "xmark")
+                                }
+                            }
+                        }
+                }
+            }
+            .fullScreenCover(isPresented: $showChallenges) {
+                NavigationStack {
+                    ChallengesManagementView(game: game)
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) {
+                                Button { showChallenges = false } label: {
+                                    Image(systemName: "xmark")
+                                }
+                            }
+                        }
+                }
+            }
+            .fullScreenCover(isPresented: $showTeams) {
+                NavigationStack {
+                    TeamsManagementView(game: game)
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) {
+                                Button { showTeams = false } label: {
+                                    Image(systemName: "xmark")
+                                }
+                            }
+                        }
+                }
             }
         }
     }

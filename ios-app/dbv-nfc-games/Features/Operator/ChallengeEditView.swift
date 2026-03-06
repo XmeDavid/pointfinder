@@ -234,9 +234,7 @@ struct ChallengeEditView: View {
                 variables: variableKeys.isEmpty ? nil : variableKeys,
                 teams: teams.isEmpty ? nil : teams,
                 onCreateVariable: { name in
-                    if !variableKeys.contains(name) {
-                        variableKeys.append(name)
-                    }
+                    Task { await createVariable(name) }
                 }
             )
         }
@@ -313,6 +311,28 @@ struct ChallengeEditView: View {
             teams = t
         } catch {
             // Non-critical: editor still works without variables
+        }
+    }
+
+    private func createVariable(_ name: String) async {
+        guard let token else { return }
+        guard !variableKeys.contains(name) else { return }
+        // Add locally first
+        variableKeys.append(name)
+        // Persist to API
+        do {
+            let currentVariables = try await appState.apiClient.getGameVariables(gameId: game.id, token: token)
+            var updatedVars = currentVariables.variables
+            if !updatedVars.contains(where: { $0.key == name }) {
+                updatedVars.append(TeamVariable(key: name, teamValues: [:]))
+            }
+            _ = try await appState.apiClient.saveGameVariables(
+                gameId: game.id,
+                request: TeamVariablesRequest(variables: updatedVars),
+                token: token
+            )
+        } catch {
+            // Variable was added locally; API save failed but editor still works
         }
     }
 
