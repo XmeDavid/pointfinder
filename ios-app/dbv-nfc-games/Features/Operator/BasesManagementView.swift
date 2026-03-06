@@ -6,11 +6,14 @@ struct BasesManagementView: View {
     @Environment(LocaleManager.self) private var locale
 
     let game: Game
+    var onDismiss: (() -> Void)? = nil
 
     @State private var bases: [Base] = []
     @State private var challenges: [Challenge] = []
     @State private var isLoading = true
     @State private var showCreateBase = false
+    @State private var path = NavigationPath()
+    @State private var createdBaseId: UUID?
 
     private var token: String? {
         if case .userOperator(let token, _, _) = appState.authType {
@@ -20,87 +23,102 @@ struct BasesManagementView: View {
     }
 
     var body: some View {
-        Group {
-            if isLoading {
-                ProgressView(locale.t("operator.loading"))
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if bases.isEmpty {
-                ContentUnavailableView(
-                    locale.t("operator.noBases"),
-                    systemImage: "mappin.slash",
-                    description: Text(locale.t("operator.noBasesDesc"))
-                )
-            } else {
-                List(bases) { base in
-                    NavigationLink(value: base.id) {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(base.name)
-                                    .font(.headline)
-                                Text(base.description)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
-                                Text("(\(String(format: "%.4f", base.lat)), \(String(format: "%.4f", base.lng)))")
-                                    .font(.caption2)
-                                    .foregroundStyle(.tertiary)
-                            }
-                            Spacer()
-                            if base.nfcLinked {
-                                Label(locale.t("operator.linked"), systemImage: "checkmark.circle.fill")
-                                    .font(.caption)
-                                    .foregroundStyle(.green)
-                                    .labelStyle(.iconOnly)
-                            }
-                            if base.hidden {
-                                Image(systemName: "eye.slash")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+        NavigationStack(path: $path) {
+            Group {
+                if isLoading {
+                    ProgressView(locale.t("operator.loading"))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if bases.isEmpty {
+                    ContentUnavailableView(
+                        locale.t("operator.noBases"),
+                        systemImage: "mappin.slash",
+                        description: Text(locale.t("operator.noBasesDesc"))
+                    )
+                } else {
+                    List(bases) { base in
+                        NavigationLink(value: base.id) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(base.name)
+                                        .font(.headline)
+                                    Text(base.description)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                    Text("(\(String(format: "%.4f", base.lat)), \(String(format: "%.4f", base.lng)))")
+                                        .font(.caption2)
+                                        .foregroundStyle(.tertiary)
+                                }
+                                Spacer()
+                                if base.nfcLinked {
+                                    Label(locale.t("operator.linked"), systemImage: "checkmark.circle.fill")
+                                        .font(.caption)
+                                        .foregroundStyle(.green)
+                                        .labelStyle(.iconOnly)
+                                }
+                                if base.hidden {
+                                    Image(systemName: "eye.slash")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
                             }
                         }
                     }
-                }
-                .listStyle(.plain)
-            }
-        }
-        .navigationTitle(locale.t("operator.bases"))
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showCreateBase = true
-                } label: {
-                    Image(systemName: "plus")
+                    .listStyle(.plain)
                 }
             }
-        }
-        .navigationDestination(for: UUID.self) { baseId in
-            if let base = bases.first(where: { $0.id == baseId }) {
-                BaseEditView(
-                    game: game,
-                    base: base,
-                    challenges: challenges,
-                    onSaved: { updatedBase in
-                        if let index = bases.firstIndex(where: { $0.id == updatedBase.id }) {
-                            bases[index] = updatedBase
+            .navigationTitle(locale.t("operator.bases"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                if let onDismiss {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button { onDismiss() } label: {
+                            Image(systemName: "xmark")
                         }
-                    },
-                    onDeleted: {
-                        bases.removeAll { $0.id == baseId }
                     }
-                )
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showCreateBase = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
             }
-        }
-        .sheet(isPresented: $showCreateBase) {
-            BaseCreateSheet(game: game) { newBase in
-                bases.append(newBase)
+            .navigationDestination(for: UUID.self) { baseId in
+                if let base = bases.first(where: { $0.id == baseId }) {
+                    BaseEditView(
+                        game: game,
+                        base: base,
+                        challenges: challenges,
+                        onSaved: { updatedBase in
+                            if let index = bases.firstIndex(where: { $0.id == updatedBase.id }) {
+                                bases[index] = updatedBase
+                            }
+                        },
+                        onDeleted: {
+                            bases.removeAll { $0.id == baseId }
+                        }
+                    )
+                }
             }
-        }
-        .task {
-            await loadData()
-        }
-        .refreshable {
-            await loadData()
+            .sheet(isPresented: $showCreateBase, onDismiss: {
+                if let baseId = createdBaseId {
+                    path.append(baseId)
+                    createdBaseId = nil
+                }
+            }) {
+                BaseCreateSheet(game: game) { newBase in
+                    bases.append(newBase)
+                    createdBaseId = newBase.id
+                }
+            }
+            .task {
+                await loadData()
+            }
+            .refreshable {
+                await loadData()
+            }
         }
     }
 

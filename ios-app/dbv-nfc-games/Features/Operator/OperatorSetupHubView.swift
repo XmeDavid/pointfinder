@@ -168,40 +168,13 @@ struct OperatorSetupHubView: View {
                 Text(locale.t("operator.goLiveConfirmMessage"))
             }
             .fullScreenCover(isPresented: $showBases) {
-                NavigationStack {
-                    BasesManagementView(game: game)
-                        .toolbar {
-                            ToolbarItem(placement: .cancellationAction) {
-                                Button { showBases = false } label: {
-                                    Image(systemName: "xmark")
-                                }
-                            }
-                        }
-                }
+                BasesManagementView(game: game, onDismiss: { showBases = false })
             }
             .fullScreenCover(isPresented: $showChallenges) {
-                NavigationStack {
-                    ChallengesManagementView(game: game)
-                        .toolbar {
-                            ToolbarItem(placement: .cancellationAction) {
-                                Button { showChallenges = false } label: {
-                                    Image(systemName: "xmark")
-                                }
-                            }
-                        }
-                }
+                ChallengesManagementView(game: game, onDismiss: { showChallenges = false })
             }
             .fullScreenCover(isPresented: $showTeams) {
-                NavigationStack {
-                    TeamsManagementView(game: game)
-                        .toolbar {
-                            ToolbarItem(placement: .cancellationAction) {
-                                Button { showTeams = false } label: {
-                                    Image(systemName: "xmark")
-                                }
-                            }
-                        }
-                }
+                TeamsManagementView(game: game, onDismiss: { showTeams = false })
             }
         }
     }

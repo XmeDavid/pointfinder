@@ -5,12 +5,15 @@ struct ChallengesManagementView: View {
     @Environment(LocaleManager.self) private var locale
 
     let game: Game
+    var onDismiss: (() -> Void)? = nil
 
     @State private var challenges: [Challenge] = []
     @State private var bases: [Base] = []
     @State private var assignments: [Assignment] = []
     @State private var isLoading = true
     @State private var showCreateChallenge = false
+    @State private var path = NavigationPath()
+    @State private var createdChallengeId: UUID?
 
     private var token: String? {
         if case .userOperator(let token, _, _) = appState.authType {
@@ -20,87 +23,102 @@ struct ChallengesManagementView: View {
     }
 
     var body: some View {
-        Group {
-            if isLoading {
-                ProgressView(locale.t("operator.loading"))
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if challenges.isEmpty {
-                ContentUnavailableView(
-                    locale.t("operator.noChallenges"),
-                    systemImage: "questionmark.circle",
-                    description: Text(locale.t("operator.noChallengesDesc"))
-                )
-            } else {
-                List(challenges) { challenge in
-                    NavigationLink(value: challenge.id) {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(challenge.title)
-                                    .font(.headline)
-                                HStack(spacing: 6) {
-                                    Text(challenge.answerType == "text" ? locale.t("operator.textInput") : locale.t("operator.fileUpload"))
+        NavigationStack(path: $path) {
+            Group {
+                if isLoading {
+                    ProgressView(locale.t("operator.loading"))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if challenges.isEmpty {
+                    ContentUnavailableView(
+                        locale.t("operator.noChallenges"),
+                        systemImage: "questionmark.circle",
+                        description: Text(locale.t("operator.noChallengesDesc"))
+                    )
+                } else {
+                    List(challenges) { challenge in
+                        NavigationLink(value: challenge.id) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(challenge.title)
+                                        .font(.headline)
+                                    HStack(spacing: 6) {
+                                        Text(challenge.answerType == "text" ? locale.t("operator.textInput") : locale.t("operator.fileUpload"))
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                        if challenge.locationBound {
+                                            Image(systemName: "location.fill")
+                                                .font(.caption2)
+                                                .foregroundStyle(.blue)
+                                        }
+                                    }
+                                    Text(baseNameForChallenge(challenge))
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
-                                    if challenge.locationBound {
-                                        Image(systemName: "location.fill")
-                                            .font(.caption2)
-                                            .foregroundStyle(.blue)
-                                    }
                                 }
-                                Text(baseNameForChallenge(challenge))
+                                Spacer()
+                                Text(locale.t("operator.pts", challenge.points))
                                     .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(.orange)
                             }
-                            Spacer()
-                            Text(locale.t("operator.pts", challenge.points))
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                                .foregroundStyle(.orange)
+                        }
+                    }
+                    .listStyle(.plain)
+                }
+            }
+            .navigationTitle(locale.t("operator.challenges"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                if let onDismiss {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button { onDismiss() } label: {
+                            Image(systemName: "xmark")
                         }
                     }
                 }
-                .listStyle(.plain)
-            }
-        }
-        .navigationTitle(locale.t("operator.challenges"))
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showCreateChallenge = true
-                } label: {
-                    Image(systemName: "plus")
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showCreateChallenge = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
                 }
             }
-        }
-        .navigationDestination(for: UUID.self) { challengeId in
-            if let challenge = challenges.first(where: { $0.id == challengeId }) {
-                ChallengeEditView(
-                    game: game,
-                    challenge: challenge,
-                    bases: bases,
-                    assignments: assignments,
-                    onSaved: { updatedChallenge in
-                        if let index = challenges.firstIndex(where: { $0.id == updatedChallenge.id }) {
-                            challenges[index] = updatedChallenge
+            .navigationDestination(for: UUID.self) { challengeId in
+                if let challenge = challenges.first(where: { $0.id == challengeId }) {
+                    ChallengeEditView(
+                        game: game,
+                        challenge: challenge,
+                        bases: bases,
+                        assignments: assignments,
+                        onSaved: { updatedChallenge in
+                            if let index = challenges.firstIndex(where: { $0.id == updatedChallenge.id }) {
+                                challenges[index] = updatedChallenge
+                            }
+                        },
+                        onDeleted: {
+                            challenges.removeAll { $0.id == challengeId }
                         }
-                    },
-                    onDeleted: {
-                        challenges.removeAll { $0.id == challengeId }
-                    }
-                )
+                    )
+                }
             }
-        }
-        .sheet(isPresented: $showCreateChallenge) {
-            ChallengeCreateSheet(game: game) { newChallenge in
-                challenges.append(newChallenge)
+            .sheet(isPresented: $showCreateChallenge, onDismiss: {
+                if let challengeId = createdChallengeId {
+                    path.append(challengeId)
+                    createdChallengeId = nil
+                }
+            }) {
+                ChallengeCreateSheet(game: game) { newChallenge in
+                    challenges.append(newChallenge)
+                    createdChallengeId = newChallenge.id
+                }
             }
-        }
-        .task {
-            await loadData()
-        }
-        .refreshable {
-            await loadData()
+            .task {
+                await loadData()
+            }
+            .refreshable {
+                await loadData()
+            }
         }
     }
 
