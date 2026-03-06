@@ -29,3 +29,11 @@ legacy/
 .tmux
 .worktrees/
 .omc/
+
+# E2E testing
+e2e/.env
+e2e/.runtime/
+e2e/artifacts/
+e2e/node_modules/
+e2e/test-results/
+e2e/playwright-report/
