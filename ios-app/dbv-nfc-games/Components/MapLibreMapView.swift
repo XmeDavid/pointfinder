@@ -20,8 +20,11 @@ struct MapLibreMapView: UIViewRepresentable {
     let fitCoordinates: [CLLocationCoordinate2D]
     var connections: [(CLLocationCoordinate2D, CLLocationCoordinate2D)] = []
     var showsUserLocation: Bool = false
+    var onTap: ((CLLocationCoordinate2D) -> Void)? = nil
     var onLongPress: ((CLLocationCoordinate2D) -> Void)? = nil
     var centerOnCoordinate: CLLocationCoordinate2D? = nil
+    var fitAllBasesId: UUID? = nil
+    var onUserInteraction: (() -> Void)? = nil
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -37,6 +40,10 @@ struct MapLibreMapView: UIViewRepresentable {
         if showsUserLocation {
             mapView.showsUserLocation = true
         }
+
+        let tap = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleTap(_:)))
+        tap.cancelsTouchesInView = false
+        mapView.addGestureRecognizer(tap)
 
         let longPress = UILongPressGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleLongPress(_:)))
         longPress.minimumPressDuration = 0.5
@@ -57,7 +64,9 @@ struct MapLibreMapView: UIViewRepresentable {
         // Update annotations
         let coordinator = context.coordinator
         coordinator.parent = self
+        coordinator.onTap = onTap
         coordinator.onLongPress = onLongPress
+        coordinator.onUserInteraction = onUserInteraction
 
         // Remove old annotations (keep user location annotation)
         if let existing = mapView.annotations {
@@ -90,31 +99,37 @@ struct MapLibreMapView: UIViewRepresentable {
             }
         }
 
-        // Fit bounds
-        if !fitCoordinates.isEmpty && fitCoordinates.count > 1 {
-            let bounds = fitCoordinates.reduce(
-                MLNCoordinateBounds(
-                    sw: fitCoordinates[0],
-                    ne: fitCoordinates[0]
-                )
-            ) { result, coord in
-                MLNCoordinateBounds(
-                    sw: CLLocationCoordinate2D(
-                        latitude: min(result.sw.latitude, coord.latitude),
-                        longitude: min(result.sw.longitude, coord.longitude)
-                    ),
-                    ne: CLLocationCoordinate2D(
-                        latitude: max(result.ne.latitude, coord.latitude),
-                        longitude: max(result.ne.longitude, coord.longitude)
+        // Fit bounds — only on initial load or explicit fitAllBasesId trigger
+        let shouldFit = !coordinator.hasInitialized ||
+            (fitAllBasesId != nil && fitAllBasesId != coordinator.lastFitId)
+        if shouldFit && !fitCoordinates.isEmpty {
+            if fitCoordinates.count > 1 {
+                let bounds = fitCoordinates.reduce(
+                    MLNCoordinateBounds(
+                        sw: fitCoordinates[0],
+                        ne: fitCoordinates[0]
                     )
-                )
+                ) { result, coord in
+                    MLNCoordinateBounds(
+                        sw: CLLocationCoordinate2D(
+                            latitude: min(result.sw.latitude, coord.latitude),
+                            longitude: min(result.sw.longitude, coord.longitude)
+                        ),
+                        ne: CLLocationCoordinate2D(
+                            latitude: max(result.ne.latitude, coord.latitude),
+                            longitude: max(result.ne.longitude, coord.longitude)
+                        )
+                    )
+                }
+                let camera = mapView.cameraThatFitsCoordinateBounds(bounds, edgePadding: UIEdgeInsets(top: 60, left: 40, bottom: 60, right: 40))
+                mapView.setCamera(camera, animated: coordinator.hasInitialized)
+            } else if fitCoordinates.count == 1 {
+                mapView.setCenter(fitCoordinates[0], zoomLevel: 15, animated: coordinator.hasInitialized)
             }
-            let camera = mapView.cameraThatFitsCoordinateBounds(bounds, edgePadding: UIEdgeInsets(top: 60, left: 40, bottom: 60, right: 40))
-            mapView.setCamera(camera, animated: context.coordinator.hasInitialized)
-            context.coordinator.hasInitialized = true
-        } else if fitCoordinates.count == 1 {
-            mapView.setCenter(fitCoordinates[0], zoomLevel: 15, animated: context.coordinator.hasInitialized)
-            context.coordinator.hasInitialized = true
+            coordinator.hasInitialized = true
+            if let fitId = fitAllBasesId {
+                coordinator.lastFitId = fitId
+            }
         }
     }
 
@@ -159,12 +174,25 @@ struct MapLibreMapView: UIViewRepresentable {
         var parent: MapLibreMapView
         var annotationItems: [MapAnnotationItem] = []
         var hasInitialized = false
+        var onTap: ((CLLocationCoordinate2D) -> Void)?
         var onLongPress: ((CLLocationCoordinate2D) -> Void)?
         var lastCenterTarget: CLLocationCoordinate2D?
+        var lastFitId: UUID?
+        var onUserInteraction: (() -> Void)?
 
         init(_ parent: MapLibreMapView) {
             self.parent = parent
+            self.onTap = parent.onTap
             self.onLongPress = parent.onLongPress
+            self.onUserInteraction = parent.onUserInteraction
+        }
+
+        @objc func handleTap(_ gesture: UITapGestureRecognizer) {
+            guard gesture.state == .ended else { return }
+            guard let mapView = gesture.view as? MLNMapView else { return }
+            let point = gesture.location(in: mapView)
+            let coordinate = mapView.convert(point, toCoordinateFrom: mapView)
+            onTap?(coordinate)
         }
 
         @objc func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
@@ -204,6 +232,13 @@ struct MapLibreMapView: UIViewRepresentable {
                 $0.coordinate.longitude == pointAnnotation.coordinate.longitude
             }) {
                 item.onTap?()
+            }
+        }
+
+        func mapView(_ mapView: MLNMapView, regionWillChangeWith reason: MLNCameraChangeReason, animated: Bool) {
+            let userGestures: MLNCameraChangeReason = [.gesturePan, .gesturePinch, .gestureRotate, .gestureZoomIn, .gestureZoomOut, .gestureTilt, .gestureOneFingerZoom]
+            if !reason.intersection(userGestures).isEmpty {
+                onUserInteraction?()
             }
         }
     }
