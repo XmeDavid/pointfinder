@@ -110,6 +110,32 @@ android-app/
 
 Files stored in Docker volume `uploads:/uploads`. Configure max size in backend application.yml.
 
+## E2E Testing
+
+End-to-end tests live in `e2e/` and run against production (`https://pointfinder.pt`).
+
+```bash
+cd e2e
+cp .env.example .env       # Fill in credentials
+npm install
+npx playwright install chromium
+
+./run.sh smoke             # API smoke test (critical path)
+./run.sh api               # Full API test suite
+./run.sh web               # Web UI tests (Playwright)
+./run.sh ios               # iOS Maestro flows
+./run.sh android           # Android Maestro flows
+./run.sh all               # Everything
+./run.sh parity            # Check scenario coverage across layers
+./run.sh cleanup           # Delete orphaned E2E games
+```
+
+**Architecture:** Runner-owned lifecycle (`setup.ts` → tests → `cleanup.ts`). Two-tier fixtures: persistent main game (cross-layer continuity) + throwaway games (destructive tests). Parity registry in `scenarios.json` ensures API/web/mobile coverage stays in sync.
+
+**Test IDs:** Web uses `data-testid`, iOS uses `accessibilityIdentifier`, Android uses `Modifier.testTag()` — all share the same naming convention (e.g. `login-email`, `create-game-btn`).
+
+See `e2e/README.md` for full documentation.
+
 ## Documentation
 
 Additional runbooks in `docs/`:
