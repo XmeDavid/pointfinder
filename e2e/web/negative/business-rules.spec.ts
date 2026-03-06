@@ -169,7 +169,7 @@ test.describe('Business rules - negative', { tag: '@negative' }, () => {
     await createTeam(token, gameId, teamFixture(0));
 
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/settings`);
+    await page.goto(`/games/${gameId}/overview`);
 
     const activateBtn = page.locator('button', { hasText: /activate|go live|start/i });
     await expect(activateBtn).toBeVisible({ timeout: 10_000 });
