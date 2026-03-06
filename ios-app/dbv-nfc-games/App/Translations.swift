@@ -208,6 +208,10 @@ enum Translations {
         "operator.notifyPendingSubmissions": "Notify pending submissions",
         "operator.notifyAllSubmissions": "Notify all submissions",
         "operator.notifyCheckIns": "Notify team check-ins",
+        "operator.setup": "Setup",
+        "operator.live": "Live",
+        "operator.more": "More",
+        "operator.createGame": "Create Game",
 
         // Operator submissions
         "submissions.reviewTitle": "Review Submission",
@@ -476,6 +480,10 @@ enum Translations {
         "operator.notifyPendingSubmissions": "Notificar submissões pendentes",
         "operator.notifyAllSubmissions": "Notificar todas as submissões",
         "operator.notifyCheckIns": "Notificar check-ins das equipas",
+        "operator.setup": "Configuração",
+        "operator.live": "Em Direto",
+        "operator.more": "Mais",
+        "operator.createGame": "Criar Jogo",
 
         // Operator submissions
         "submissions.reviewTitle": "Rever Submissão",
@@ -744,6 +752,10 @@ enum Translations {
         "operator.notifyPendingSubmissions": "Ausstehende Einreichungen benachrichtigen",
         "operator.notifyAllSubmissions": "Alle Einreichungen benachrichtigen",
         "operator.notifyCheckIns": "Team-Check-ins benachrichtigen",
+        "operator.setup": "Einrichtung",
+        "operator.live": "Live",
+        "operator.more": "Mehr",
+        "operator.createGame": "Spiel erstellen",
 
         // Operator submissions
         "submissions.reviewTitle": "Einreichung prüfen",
