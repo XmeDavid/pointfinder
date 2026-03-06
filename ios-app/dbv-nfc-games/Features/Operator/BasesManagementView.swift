@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreLocation
 
 struct BasesManagementView: View {
     @Environment(AppState.self) private var appState
@@ -130,10 +131,9 @@ private struct BaseCreateSheet: View {
 
     @State private var name = ""
     @State private var description = ""
-    @State private var lat = 47.3769
-    @State private var lng = 8.5417
     @State private var isCreating = false
     @State private var errorMessage: String?
+    @StateObject private var locationManager = BaseCreateLocationManager()
 
     private var token: String? {
         if case .userOperator(let token, _, _) = appState.authType {
@@ -152,21 +152,19 @@ private struct BaseCreateSheet: View {
                 }
 
                 Section(locale.t("operator.location")) {
-                    HStack {
-                        Text(locale.t("operator.latitude"))
-                        Spacer()
-                        TextField("", value: $lat, format: .number)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 120)
-                    }
-                    HStack {
-                        Text(locale.t("operator.longitude"))
-                        Spacer()
-                        TextField("", value: $lng, format: .number)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 120)
+                    if let coord = locationManager.lastLocation {
+                        HStack {
+                            Image(systemName: "location.fill")
+                                .foregroundStyle(.blue)
+                            Text(String(format: "%.6f, %.6f", coord.latitude, coord.longitude))
+                                .foregroundStyle(.secondary)
+                        }
+                    } else {
+                        HStack {
+                            ProgressView()
+                            Text(locale.t("operator.acquiringLocation"))
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
 
@@ -188,14 +186,14 @@ private struct BaseCreateSheet: View {
                     Button(locale.t("common.create")) {
                         Task { await createBase() }
                     }
-                    .disabled(name.isEmpty || isCreating)
+                    .disabled(name.isEmpty || isCreating || locationManager.lastLocation == nil)
                 }
             }
         }
     }
 
     private func createBase() async {
-        guard let token else { return }
+        guard let token, let coord = locationManager.lastLocation else { return }
         isCreating = true
         errorMessage = nil
         do {
@@ -204,8 +202,8 @@ private struct BaseCreateSheet: View {
                 request: CreateBaseRequest(
                     name: name,
                     description: description,
-                    lat: lat,
-                    lng: lng,
+                    lat: coord.latitude,
+                    lng: coord.longitude,
                     fixedChallengeId: nil,
                     requirePresenceToSubmit: false,
                     hidden: false
@@ -218,5 +216,25 @@ private struct BaseCreateSheet: View {
             errorMessage = error.localizedDescription
         }
         isCreating = false
+    }
+}
+
+private class BaseCreateLocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
+    @Published var lastLocation: CLLocationCoordinate2D?
+    private let manager = CLLocationManager()
+
+    override init() {
+        super.init()
+        manager.delegate = self
+        manager.desiredAccuracy = kCLLocationAccuracyBest
+        manager.requestWhenInUseAuthorization()
+        manager.startUpdatingLocation()
+    }
+
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        if lastLocation == nil {
+            lastLocation = locations.last?.coordinate
+            manager.stopUpdatingLocation()
+        }
     }
 }

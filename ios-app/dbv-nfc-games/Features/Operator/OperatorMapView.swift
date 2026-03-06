@@ -7,10 +7,12 @@ struct OperatorMapView: View {
     @Environment(LocaleManager.self) private var locale
     @Environment(\.colorScheme) private var colorScheme
 
-    let gameId: UUID
+    let game: Game
     let token: String
-    let tileSource: String
     @Binding var bases: [Base]
+
+    private var gameId: UUID { game.id }
+    private var tileSource: String { game.tileSource }
 
     @State private var teams: [Team] = []
     @State private var teamLocations: [TeamLocationResponse] = []
@@ -18,6 +20,7 @@ struct OperatorMapView: View {
     @State private var challenges: [Challenge] = []
     @State private var isLoading = true
     @State private var selectedBase: Base?
+    @State private var editingBase: Base?
     @State private var pollingTask: Task<Void, Never>?
 
     // Edit mode
@@ -45,7 +48,13 @@ struct OperatorMapView: View {
                             isHidden: base.hidden
                         )
                     ),
-                    onTap: { [base] in selectedBase = base }
+                    onTap: { [base] in
+                        if editMode {
+                            editingBase = base
+                        } else {
+                            selectedBase = base
+                        }
+                    }
                 )
             }
 
@@ -192,6 +201,26 @@ struct OperatorMapView: View {
                 }
             )
             .presentationDetents([.medium, .large])
+        }
+        .sheet(item: $editingBase) { base in
+            NavigationStack {
+                BaseEditView(
+                    game: game,
+                    base: base,
+                    challenges: challenges,
+                    onSaved: { updatedBase in
+                        if let index = bases.firstIndex(where: { $0.id == updatedBase.id }) {
+                            bases[index] = updatedBase
+                        }
+                        editingBase = nil
+                    },
+                    onDeleted: {
+                        bases.removeAll { $0.id == base.id }
+                        editingBase = nil
+                    }
+                )
+            }
+            .presentationDetents([.large])
         }
         .sheet(isPresented: $showBaseCreateSheet) {
             MapBaseCreateSheet(
