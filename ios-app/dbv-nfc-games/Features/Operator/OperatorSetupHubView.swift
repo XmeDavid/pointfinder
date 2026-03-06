@@ -135,6 +135,7 @@ struct OperatorSetupHubView: View {
                                 }
                             }
                             .foregroundStyle(.primary)
+                            .accessibilityIdentifier("nav-teams")
                         }
 
                         // Go Live button

@@ -86,6 +86,7 @@ struct OperatorHomeView: View {
                     } label: {
                         Image(systemName: "plus")
                     }
+                    .accessibilityIdentifier("create-game-btn")
                 }
             }
             .refreshable {

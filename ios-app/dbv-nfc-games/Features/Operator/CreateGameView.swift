@@ -28,6 +28,7 @@ struct CreateGameView: View {
             Form {
                 Section {
                     TextField(locale.t("operator.gameName"), text: $name)
+                        .accessibilityIdentifier("game-name-input")
                     if !importMode {
                         TextField(locale.t("operator.gameDescription"), text: $description, axis: .vertical)
                             .lineLimit(3...6)
@@ -80,6 +81,7 @@ struct CreateGameView: View {
                         Task { await createGame() }
                     }
                     .disabled(name.isEmpty || isCreating || (importMode && importData == nil))
+                    .accessibilityIdentifier("game-save-btn")
                 }
             }
             .onChange(of: importMode) { _, newValue in

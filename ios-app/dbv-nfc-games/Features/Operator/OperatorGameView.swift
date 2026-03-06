@@ -41,6 +41,7 @@ struct OperatorGameView: View {
                                 Label(locale.t("operator.liveMap"), systemImage: "map.fill")
                             }
                             .tag(0)
+                            .accessibilityIdentifier("nav-games")
                     }
 
                     // Tab 1: Setup (in setup) or Live (in live/ended)
@@ -56,6 +57,7 @@ struct OperatorGameView: View {
                                 Label(locale.t("operator.live"), systemImage: "chart.bar")
                             }
                             .tag(1)
+                            .accessibilityIdentifier("nav-monitoring")
                     }
 
                     // Tab 2: Submissions (live/ended only)
