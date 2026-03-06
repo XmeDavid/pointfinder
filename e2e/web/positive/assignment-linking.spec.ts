@@ -78,12 +78,9 @@ test.describe('Assignment linking via web UI', () => {
     await loginAsOperator(page);
     await page.goto(`/games/${gameId}/assignments`);
 
-    // After assignment, the select should show the challenge or the page should
-    // indicate it is linked
-    const assignSelect = page.getByTestId('assignment-challenge-select').first();
-    await expect(assignSelect).toBeVisible({ timeout: 10_000 });
-    // The selected option should match the challenge we assigned
-    const selectedValue = await assignSelect.inputValue();
-    expect(selectedValue).toBe(challengeId);
+    // Existing assignments are rendered as read-only rows (not select dropdowns).
+    // Verify the challenge title appears in the assignment list.
+    const challengeTitle = page.locator('text=/Challenge Text 0/i').first();
+    await expect(challengeTitle).toBeVisible({ timeout: 10_000 });
   });
 });

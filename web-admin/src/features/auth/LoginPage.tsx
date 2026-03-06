@@ -1,4 +1,5 @@
 import { useState } from "react";
+import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,8 +26,8 @@ export function LoginPage() {
     try {
       await login(email, password);
       navigate("/games");
-    } catch (err: any) {
-      const status = err?.response?.status;
+    } catch (err: unknown) {
+      const status = axios.isAxiosError(err) ? err.response?.status : undefined;
       if (status === 429) {
         setError(t("auth.tooManyAttempts"));
       } else if (status === 500) {

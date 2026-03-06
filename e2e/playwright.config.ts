@@ -8,7 +8,7 @@ export default defineConfig({
   testDir: '.',
   testMatch: ['api/**/*.spec.ts', 'web/**/*.spec.ts'],
   fullyParallel: false,
-  workers: 1,
+  workers: 2,
   retries: 0,
   timeout: 60_000,
   reporter: [['list'], ['html', { open: 'never' }]],

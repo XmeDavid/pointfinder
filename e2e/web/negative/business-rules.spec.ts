@@ -171,25 +171,16 @@ test.describe('Business rules - negative', { tag: '@negative' }, () => {
     await loginAsOperator(page);
     await page.goto(`/games/${gameId}/overview`);
 
+    // The activate button should be visible but disabled — UI prevents activation
     const activateBtn = page.locator('button', { hasText: /activate|go live|start/i });
     await expect(activateBtn).toBeVisible({ timeout: 10_000 });
-    await activateBtn.click();
+    await expect(activateBtn).toBeDisabled();
 
-    // Confirm if dialog
-    const confirmBtn = page.locator('button', { hasText: /confirm|yes|activate/i });
-    if (await confirmBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
-      await confirmBtn.click();
-    }
-
-    // Expect an error — cannot go live with imbalanced bases/challenges
-    const errorEl = page.locator(
-      'text=/challenge|base|cannot|imbalance|not enough|required/i',
+    // A warning about insufficient challenges should be shown
+    const warningEl = page.locator(
+      'text=/challenge|base|not enough|required|imbalance/i',
     ).first();
-    await expect(errorEl).toBeVisible({ timeout: 10_000 });
-
-    // Game should NOT be live
-    const liveIndicator = page.locator('text=/live|active|running/i').first();
-    await expect(liveIndicator).not.toBeVisible({ timeout: 3_000 });
+    await expect(warningEl).toBeVisible({ timeout: 10_000 });
   });
 
   // N10: Validate via API: more bases than challenges blocks go-live
