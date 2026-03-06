@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.material.icons.filled.Refresh
@@ -82,6 +83,8 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
+private enum class LocationFocusState { CENTER_ON_ME, SHOW_ALL_BASES }
+
 @Composable
 fun OperatorMapScreen(
     bases: List<Base>,
@@ -110,6 +113,8 @@ fun OperatorMapScreen(
 
     var isEditMode by remember { mutableStateOf(gameStatus == GameStatus.SETUP) }
     var editSheetBase by remember { mutableStateOf<Base?>(null) }
+    var locationFocusState by remember { mutableStateOf(LocationFocusState.CENTER_ON_ME) }
+    var hasInitialFit by remember { mutableStateOf(false) }
 
     DisposableEffect(lifecycle) {
         val observer = LifecycleEventObserver { _, event ->
@@ -238,14 +243,18 @@ fun OperatorMapScreen(
             }
         }
 
-        // Fit camera to bounds
-        if (bases.isNotEmpty()) {
-            val boundsBuilder = LatLngBounds.Builder()
-            bases.forEach { boundsBuilder.include(LatLng(it.lat, it.lng)) }
-            runCatching {
-                m.easeCamera(CameraUpdateFactory.newLatLngBounds(boundsBuilder.build(), 80))
-            }
+    }
+
+    // Initial camera fit — only once when bases first arrive
+    LaunchedEffect(map, bases) {
+        val m = map ?: return@LaunchedEffect
+        if (hasInitialFit || bases.isEmpty()) return@LaunchedEffect
+        val boundsBuilder = LatLngBounds.Builder()
+        bases.forEach { boundsBuilder.include(LatLng(it.lat, it.lng)) }
+        runCatching {
+            m.easeCamera(CameraUpdateFactory.newLatLngBounds(boundsBuilder.build(), 80))
         }
+        hasInitialFit = true
     }
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -257,6 +266,16 @@ fun OperatorMapScreen(
                         // Push compass below the overlay buttons
                         val compassMarginTop = (56 * context.resources.displayMetrics.density).toInt()
                         mapLibreMap.uiSettings.setCompassMargins(0, compassMarginTop, (12 * context.resources.displayMetrics.density).toInt(), 0)
+
+                        // Reset location focus state when user drags the map
+                        mapLibreMap.addOnMoveListener(object : MapLibreMap.OnMoveListener {
+                            override fun onMoveBegin(detector: org.maplibre.android.gestures.MoveGestureDetector) {
+                                locationFocusState = LocationFocusState.CENTER_ON_ME
+                            }
+                            override fun onMove(detector: org.maplibre.android.gestures.MoveGestureDetector) {}
+                            override fun onMoveEnd(detector: org.maplibre.android.gestures.MoveGestureDetector) {}
+                        })
+
                         mapLibreMap.setOnMarkerClickListener { marker ->
                             val base = bases.firstOrNull {
                                 it.lat == marker.position.latitude && it.lng == marker.position.longitude
@@ -322,23 +341,44 @@ fun OperatorMapScreen(
             }
         }
 
-        // Bottom-left: Center on me button
+        // Bottom-left: Location / show-all-bases toggle button
         SmallFloatingActionButton(
             onClick = {
-                getLastKnownLocation(context)?.let { location ->
-                    map?.animateCamera(
-                        CameraUpdateFactory.newLatLngZoom(
-                            LatLng(location.latitude, location.longitude),
-                            15.0,
-                        ),
-                    )
+                when (locationFocusState) {
+                    LocationFocusState.CENTER_ON_ME -> {
+                        getLastKnownLocation(context)?.let { location ->
+                            map?.animateCamera(
+                                CameraUpdateFactory.newLatLngZoom(
+                                    LatLng(location.latitude, location.longitude),
+                                    15.0,
+                                ),
+                            )
+                        }
+                        locationFocusState = LocationFocusState.SHOW_ALL_BASES
+                    }
+                    LocationFocusState.SHOW_ALL_BASES -> {
+                        if (bases.isNotEmpty()) {
+                            val boundsBuilder = LatLngBounds.Builder()
+                            bases.forEach { boundsBuilder.include(LatLng(it.lat, it.lng)) }
+                            runCatching {
+                                map?.easeCamera(CameraUpdateFactory.newLatLngBounds(boundsBuilder.build(), 80))
+                            }
+                        }
+                        locationFocusState = LocationFocusState.CENTER_ON_ME
+                    }
                 }
             },
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .padding(12.dp),
         ) {
-            Icon(Icons.Default.MyLocation, contentDescription = stringResource(R.string.label_center_on_me))
+            Icon(
+                imageVector = when (locationFocusState) {
+                    LocationFocusState.CENTER_ON_ME -> Icons.Default.MyLocation
+                    LocationFocusState.SHOW_ALL_BASES -> Icons.Default.Map
+                },
+                contentDescription = stringResource(R.string.label_center_on_me),
+            )
         }
 
         // Bottom-right: Add base at GPS FAB (only in edit mode)
