@@ -8,11 +8,25 @@ struct RichTextEditorView: View {
     let initialHtml: String
     let onDone: (String) -> Void
 
+    // Optional variable support
+    var variables: [String]?
+    var teams: [Team]?
+    var onCreateVariable: ((String) -> Void)?
+
     @Environment(LocaleManager.self) private var locale
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
 
     @State private var webViewCoordinator = RichTextWebViewCoordinator()
+    @State private var showVariablePicker = false
+    @State private var showCreateVariable = false
+    @State private var showPreviewTeamPicker = false
+    @State private var newVariableName = ""
+    @State private var previewTeam: Team?
+
+    private var hasOverflowMenu: Bool {
+        variables != nil || onCreateVariable != nil || (teams != nil && !(teams?.isEmpty ?? true))
+    }
 
     var body: some View {
         NavigationStack {
@@ -65,7 +79,7 @@ struct RichTextEditorView: View {
                 // Editor WebView
                 RichTextWebView(
                     coordinator: webViewCoordinator,
-                    initialHtml: initialHtml,
+                    initialHtml: previewTeam != nil ? initialHtml : initialHtml,
                     isDark: colorScheme == .dark
                 )
             }
@@ -75,6 +89,36 @@ struct RichTextEditorView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(locale.t("common.cancel")) { dismiss() }
                 }
+                if hasOverflowMenu {
+                    ToolbarItem(placement: .primaryAction) {
+                        Menu {
+                            if variables != nil {
+                                Button {
+                                    showVariablePicker = true
+                                } label: {
+                                    Label(locale.t("operator.insertVariable"), systemImage: "curlybraces")
+                                }
+                            }
+                            if onCreateVariable != nil {
+                                Button {
+                                    newVariableName = ""
+                                    showCreateVariable = true
+                                } label: {
+                                    Label(locale.t("operator.createVariable"), systemImage: "plus.circle")
+                                }
+                            }
+                            if let teams, !teams.isEmpty {
+                                Button {
+                                    showPreviewTeamPicker = true
+                                } label: {
+                                    Label(locale.t("operator.previewAsTeam"), systemImage: "eye")
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                        }
+                    }
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(locale.t("common.done")) {
                         webViewCoordinator.getHTML { html in
@@ -82,6 +126,109 @@ struct RichTextEditorView: View {
                             dismiss()
                         }
                     }
+                }
+            }
+            .sheet(isPresented: $showVariablePicker) {
+                VariablePickerSheet(
+                    variables: variables ?? [],
+                    onSelect: { key in
+                        let tag = "<span class=\"variable-tag\">{{\(key)}}</span>&nbsp;"
+                        webViewCoordinator.insertHTML(tag)
+                        showVariablePicker = false
+                    }
+                )
+                .presentationDetents([.medium])
+            }
+            .alert(locale.t("operator.createVariable"), isPresented: $showCreateVariable) {
+                TextField(locale.t("operator.variableName"), text: $newVariableName)
+                Button(locale.t("common.ok")) {
+                    let trimmed = newVariableName.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !trimmed.isEmpty {
+                        onCreateVariable?(trimmed)
+                        let tag = "<span class=\"variable-tag\">{{\(trimmed)}}</span>&nbsp;"
+                        webViewCoordinator.insertHTML(tag)
+                    }
+                }
+                Button(locale.t("common.cancel"), role: .cancel) {}
+            }
+            .sheet(isPresented: $showPreviewTeamPicker) {
+                PreviewTeamPickerSheet(
+                    teams: teams ?? [],
+                    onSelect: { team in
+                        previewTeam = team
+                        showPreviewTeamPicker = false
+                    }
+                )
+                .presentationDetents([.medium])
+            }
+        }
+    }
+}
+
+// MARK: - Variable Picker Sheet
+
+private struct VariablePickerSheet: View {
+    @Environment(LocaleManager.self) private var locale
+    @Environment(\.dismiss) private var dismiss
+
+    let variables: [String]
+    let onSelect: (String) -> Void
+
+    var body: some View {
+        NavigationStack {
+            List(variables, id: \.self) { key in
+                Button {
+                    onSelect(key)
+                } label: {
+                    HStack {
+                        Text(key)
+                        Spacer()
+                        Text("{{\(key)}}")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fontDesign(.monospaced)
+                    }
+                }
+            }
+            .navigationTitle(locale.t("operator.insertVariable"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(locale.t("common.cancel")) { dismiss() }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Preview Team Picker Sheet
+
+private struct PreviewTeamPickerSheet: View {
+    @Environment(LocaleManager.self) private var locale
+    @Environment(\.dismiss) private var dismiss
+
+    let teams: [Team]
+    let onSelect: (Team) -> Void
+
+    var body: some View {
+        NavigationStack {
+            List(teams) { team in
+                Button {
+                    onSelect(team)
+                } label: {
+                    HStack(spacing: 10) {
+                        Circle()
+                            .fill(Color(hex: team.color) ?? .blue)
+                            .frame(width: 24, height: 24)
+                        Text(team.name)
+                    }
+                }
+            }
+            .navigationTitle(locale.t("operator.previewAsTeam"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(locale.t("common.cancel")) { dismiss() }
                 }
             }
         }
