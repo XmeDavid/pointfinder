@@ -104,8 +104,10 @@ struct BasesManagementView: View {
             }
             .sheet(isPresented: $showCreateBase, onDismiss: {
                 if let baseId = createdBaseId {
-                    path.append(baseId)
                     createdBaseId = nil
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        path.append(baseId)
+                    }
                 }
             }) {
                 BaseCreateSheet(game: game) { newBase in

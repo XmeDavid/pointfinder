@@ -104,8 +104,10 @@ struct ChallengesManagementView: View {
             }
             .sheet(isPresented: $showCreateChallenge, onDismiss: {
                 if let challengeId = createdChallengeId {
-                    path.append(challengeId)
                     createdChallengeId = nil
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        path.append(challengeId)
+                    }
                 }
             }) {
                 ChallengeCreateSheet(game: game) { newChallenge in
