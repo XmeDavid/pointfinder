@@ -2,9 +2,14 @@
 import { test, expect, type Page } from '@playwright/test';
 import { loadRunContext } from '../../shared/run-context';
 import { config } from '../../shared/config';
+import { forceEnglishLocale } from '../../shared/web-helpers';
 
 test.describe('Unauthorized navigation - negative', { tag: '@negative' }, () => {
   test.describe.configure({ mode: 'serial' });
+
+  test.beforeEach(async ({ page }) => {
+    await forceEnglishLocale(page);
+  });
 
   // N1: Login with wrong password shows error in UI
   test('N1: login with wrong password shows error message', async ({ page }) => {

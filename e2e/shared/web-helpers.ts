@@ -3,14 +3,18 @@ import { config } from './config';
 
 const AUTH_DELAY_MS = 4_000;
 
+/** Force English locale so hostname detection (.pt → Portuguese) doesn't interfere with tests. */
+export async function forceEnglishLocale(page: Page) {
+  await page.addInitScript(() => {
+    localStorage.setItem('pointfinder-lang', 'en');
+  });
+}
+
 export async function loginAsOperator(page: Page) {
   // Space out auth requests to stay within nginx rate limits
   await page.waitForTimeout(AUTH_DELAY_MS);
 
-  // Force English locale — hostname detection (.pt) would otherwise pick Portuguese
-  await page.addInitScript(() => {
-    localStorage.setItem('pointfinder-lang', 'en');
-  });
+  await forceEnglishLocale(page);
   await page.goto('/login');
   await page.getByTestId('login-email').fill(config.operatorEmail);
   await page.getByTestId('login-password').fill(config.operatorPassword);
