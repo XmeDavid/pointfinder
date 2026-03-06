@@ -531,7 +531,7 @@ For `smoke:web`: `game-setup.spec.ts`, `submission-review.spec.ts`, `monitoring.
 Standalone script (run via `npx tsx shared/setup.ts`) that:
 1. Generates run ID, writes it to `.runtime/latest-run-id`
 2. Logs in as operator
-3. Creates main game with 3 bases, 4 challenges (text, choice, numeric, file), assignments, 2 teams
+3. Creates main game with 3 bases, 4 challenges (text and file), assignments, 2 teams
 4. Activates the main game
 5. Saves IDs + join codes to `.runtime/<runId>.json` (no secrets)
 6. Saves tokens to `.runtime/<runId>.tokens` (gitignored, deleted in cleanup)
@@ -620,7 +620,7 @@ Expected: PASS
 
 ```
 // @scenarios P4, P13, P14
-- P4: create challenges with each answer type (text, choice, numeric, file) on throwaway game
+- P4: create challenges with each supported answer type (text, file) on throwaway game
 - P13: update challenge title → 200
 - P14: delete throwaway challenge → 204
 ```

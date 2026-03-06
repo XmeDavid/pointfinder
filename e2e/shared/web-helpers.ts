@@ -2,6 +2,10 @@ import { expect, type Page } from '@playwright/test';
 import { config } from './config';
 
 export async function loginAsOperator(page: Page) {
+  // Force English locale — hostname detection (.pt) would otherwise pick Portuguese
+  await page.addInitScript(() => {
+    localStorage.setItem('pointfinder-lang', 'en');
+  });
   await page.goto('/login');
   await page.getByTestId('login-email').fill(config.operatorEmail);
   await page.getByTestId('login-password').fill(config.operatorPassword);

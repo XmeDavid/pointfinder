@@ -128,7 +128,7 @@ ANDROID_APP_ID=com.prayer.pointfinder
 | P1  | Operator login                             | Y   | Y   | Y      |
 | P2  | Create game                                | Y   | Y   | Y      |
 | P3  | Create bases (2-3 with coords)             | Y   | Y   | Y      |
-| P4  | Create challenges (all answer types)       | Y   | Y   | Y      |
+| P4  | Create challenges (supported types: text + file) | Y   | Y   | Y      |
 | P5  | Link assignments (uniform + team-specific) | Y   | Y   | Y      |
 | P6  | Create teams with join codes               | Y   | Y   | Y      |
 | P7  | Player joins team via join code            | Y   | -   | Y      |
@@ -247,7 +247,7 @@ The runner (`run.sh`) owns the full lifecycle — not Playwright, not Maestro.
    - Generate unique run ID (e.g., "e2e-2026-03-06T14-30-45")
    - Login as test operator
    - Create main game named "E2E <runId> Main", track in createdGameIds
-   - Create 3 bases, 4 challenges, assignments, 2 teams
+   - Create 3 bases, 4 challenges (mix of text and file), assignments, 2 teams
    - Activate game
    - Write IDs (no secrets) to .runtime/<runId>.json
    - Write operator + player tokens to .runtime/<runId>.tokens (gitignored, not archived)
