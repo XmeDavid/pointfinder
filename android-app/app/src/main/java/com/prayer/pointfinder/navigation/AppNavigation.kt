@@ -949,11 +949,12 @@ private fun OperatorGameRoot(
                             challenges = state.challenges,
                             linkedChallenges = emptyList(),
                             onSave = { request ->
-                                viewModel.createBase(request as CreateBaseRequest) {
-                                    mapSubScreen = null
+                                viewModel.createBase(request as CreateBaseRequest) { base ->
+                                    mapSubScreen = "base_edit:${base.id}"
                                 }
                             },
                             onDelete = null,
+                            onWriteNfc = null,
                             onNavigateToCreateChallenge = null,
                             onBack = { mapSubScreen = null },
                             initialLat = lat,
@@ -983,6 +984,10 @@ private fun OperatorGameRoot(
                                     viewModel.deleteBase(base.id) {
                                         mapSubScreen = null
                                     }
+                                },
+                                onWriteNfc = {
+                                    viewModel.selectBase(base)
+                                    viewModel.beginWriteNfc()
                                 },
                                 onNavigateToCreateChallenge = { bId -> mapSubScreen = "challenge_create_for_base:$bId" },
                                 onBack = { mapSubScreen = null },
@@ -1077,11 +1082,12 @@ private fun OperatorGameRoot(
                             challenges = state.challenges,
                             linkedChallenges = emptyList(),
                             onSave = { request ->
-                                viewModel.createBase(request as CreateBaseRequest) {
-                                    setupSubScreen = "bases_list"
+                                viewModel.createBase(request as CreateBaseRequest) { base ->
+                                    setupSubScreen = "base_edit:${base.id}"
                                 }
                             },
                             onDelete = null,
+                            onWriteNfc = null,
                             onNavigateToCreateChallenge = null,
                             onBack = { setupSubScreen = "bases_list" },
                             initialLat = null,
@@ -1112,6 +1118,10 @@ private fun OperatorGameRoot(
                                         setupSubScreen = "bases_list"
                                     }
                                 },
+                                onWriteNfc = {
+                                    viewModel.selectBase(base)
+                                    viewModel.beginWriteNfc()
+                                },
                                 onNavigateToCreateChallenge = { baseId -> setupSubScreen = "challenge_create_for_base:$baseId" },
                                 onBack = { setupSubScreen = "bases_list" },
                                 initialLat = null,
@@ -1140,8 +1150,8 @@ private fun OperatorGameRoot(
                             teams = state.teams,
                             variables = state.variables,
                             onSave = { request ->
-                                viewModel.createChallenge(request as CreateChallengeRequest) {
-                                    setupSubScreen = "challenges_list"
+                                viewModel.createChallenge(request as CreateChallengeRequest) { challenge ->
+                                    setupSubScreen = "challenge_edit:${challenge.id}"
                                 }
                             },
                             onDelete = null,

@@ -2,7 +2,7 @@ import SwiftUI
 import Foundation
 
 func normalizedTeamVariables(_ variables: [TeamVariable], teams: [Team]) -> [TeamVariable] {
-    let teamIds = teams.map { $0.id.uuidString }
+    let teamIds = teams.map { $0.id.uuidString.lowercased() }
     let allowedTeamIds = Set(teamIds)
 
     return variables.map { variable in
@@ -131,8 +131,8 @@ struct TeamVariablesEditorView: View {
                                 TextField(
                                     "",
                                     text: Binding(
-                                        get: { value(for: variable.key, teamId: team.id.uuidString) },
-                                        set: { updateValue(for: variable.key, teamId: team.id.uuidString, value: $0) }
+                                        get: { value(for: variable.key, teamId: team.id.uuidString.lowercased()) },
+                                        set: { updateValue(for: variable.key, teamId: team.id.uuidString.lowercased(), value: $0) }
                                     )
                                 )
                                 .multilineTextAlignment(.trailing)
@@ -228,7 +228,7 @@ struct TeamVariablesEditorView: View {
 
         keyError = nil
         errorMessage = nil
-        let teamValues = Dictionary(uniqueKeysWithValues: teams.map { ($0.id.uuidString, "") })
+        let teamValues = Dictionary(uniqueKeysWithValues: teams.map { ($0.id.uuidString.lowercased(), "") })
         variables.append(TeamVariable(key: trimmed, teamValues: teamValues))
         expandedKeys.insert(trimmed)
         newVariableName = ""

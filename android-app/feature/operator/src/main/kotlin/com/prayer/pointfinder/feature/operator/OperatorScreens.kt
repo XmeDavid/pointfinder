@@ -60,6 +60,7 @@ internal const val PRIVACY_POLICY_URL = "https://pointfinder.pt/privacy/"
 internal val StatusCheckedIn = Color(0xFF1565C0)
 internal val StatusCompleted = Color(0xFF2E7D32)
 internal val StatusSubmitted = Color(0xFFE08A00)
+internal val StatusRejected = Color(0xFFD32F2F)
 internal val StarGold = Color(0xFFE08A00)
 internal val BadgePurple = Color(0xFF7B1FA2)
 internal val BadgeIndigo = Color(0xFF303F9F)

@@ -346,6 +346,7 @@
     <string name="label_invite_operator">Convidar Operador</string>
     <string name="label_operator_email">Endereço de e-mail</string>
     <string name="label_pending_invites">Convites Pendentes</string>
+    <string name="label_invites">Convites</string>
     <string name="label_no_operators">Nenhum operador ainda</string>
     <string name="label_no_invites">Nenhum convite pendente</string>
     <string name="action_invite">Convidar</string>

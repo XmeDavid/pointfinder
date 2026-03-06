@@ -80,6 +80,7 @@ fun BaseEditScreen(
     linkedChallenges: List<Challenge>,
     onSave: (Any) -> Unit,
     onDelete: (() -> Unit)?,
+    onWriteNfc: (() -> Unit)?,
     onNavigateToCreateChallenge: ((String) -> Unit)?,
     onBack: () -> Unit,
     initialLat: Double?,
@@ -155,14 +156,16 @@ fun BaseEditScreen(
                                 expanded = showOverflowMenu,
                                 onDismissRequest = { showOverflowMenu = false },
                             ) {
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.label_write_nfc)) },
-                                    leadingIcon = { Icon(Icons.Default.Nfc, contentDescription = null) },
-                                    onClick = {
-                                        showOverflowMenu = false
-                                        // NFC write is handled at the navigation level
-                                    },
-                                )
+                                if (onWriteNfc != null) {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.label_write_nfc)) },
+                                        leadingIcon = { Icon(Icons.Default.Nfc, contentDescription = null) },
+                                        onClick = {
+                                            showOverflowMenu = false
+                                            onWriteNfc()
+                                        },
+                                    )
+                                }
                                 if (onDelete != null) {
                                     DropdownMenuItem(
                                         text = {
