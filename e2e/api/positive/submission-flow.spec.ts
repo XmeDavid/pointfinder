@@ -1,8 +1,9 @@
-// @scenarios P10, P11, P12
+// @scenarios P9, P10, P11, P12
 import { test, expect } from '@playwright/test';
 import {
   playerCheckIn,
   submitAnswer,
+  getProgress,
   reviewSubmission,
   getLeaderboard,
 } from '../../shared/api-client';
@@ -28,6 +29,13 @@ test.describe('submission flow', { tag: '@smoke' }, () => {
     teamIds = ctx.teamIds;
     operatorToken = getOperatorToken();
     playerToken = getPlayerToken();
+  });
+
+  // P9
+  test('player views progress', async () => {
+    const { status, data } = await getProgress(playerToken, gameId);
+    expect(status).toBe(200);
+    expect(data).toBeDefined();
   });
 
   // P10
