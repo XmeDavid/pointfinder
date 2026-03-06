@@ -130,18 +130,26 @@ fun OperatorMapScreen(
         }
     }
 
-    // Update style when tileSource changes, and enable location component
-    LaunchedEffect(map, tileSource) {
-        map?.setStyle(Style.Builder().fromUri(TileSources.getResolvedStyleUrl(tileSource, isDark))) { style ->
+    // Update style when tileSource or dark mode changes, and enable location component
+    LaunchedEffect(map, tileSource, isDark) {
+        val m = map ?: return@LaunchedEffect
+        // Deactivate location component before style change to prevent
+        // IllegalStateException from animator accessing invalidated style
+        try {
+            if (m.locationComponent.isLocationComponentActivated) {
+                m.locationComponent.isLocationComponentEnabled = false
+            }
+        } catch (_: Exception) { }
+        m.setStyle(Style.Builder().fromUri(TileSources.getResolvedStyleUrl(tileSource, isDark))) { style ->
             mapStyle = style
-            // Enable location component (blue dot)
+            // Re-enable location component (blue dot) on the new style
             try {
                 val hasPermission = ContextCompat.checkSelfPermission(
                     context,
                     Manifest.permission.ACCESS_FINE_LOCATION,
                 ) == PackageManager.PERMISSION_GRANTED
                 if (hasPermission) {
-                    map?.locationComponent?.apply {
+                    m.locationComponent.apply {
                         activateLocationComponent(
                             LocationComponentActivationOptions.builder(context, style).build(),
                         )
@@ -269,7 +277,7 @@ fun OperatorMapScreen(
             factory = {
                 mapView.apply {
                     getMapAsync { mapLibreMap ->
-                        mapLibreMap.setStyle(Style.Builder().fromUri(TileSources.getResolvedStyleUrl(tileSource, isDark)))
+                        // Style is set by LaunchedEffect(map, tileSource, isDark) — not here
                         // Push compass below the overlay buttons
                         val compassMarginTop = (56 * context.resources.displayMetrics.density).toInt()
                         mapLibreMap.uiSettings.setCompassMargins(0, compassMarginTop, (12 * context.resources.displayMetrics.density).toInt(), 0)
