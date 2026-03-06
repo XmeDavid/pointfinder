@@ -300,6 +300,10 @@ enum Translations {
         "operator.deleteTeamConfirmMessage": "This action cannot be undone.",
         "operator.playersCount": "%d players",
         "operator.pts": "%d pts",
+        "operator.editMode": "Edit Mode",
+        "operator.centerOnMe": "Center on me",
+        "operator.addBaseHere": "Add base at GPS location",
+        "operator.longPressHint": "Long press on map to add a base",
         "common.create": "Create",
 
         // Operator submissions
@@ -661,6 +665,10 @@ enum Translations {
         "operator.deleteTeamConfirmMessage": "Esta a\u{00E7}\u{00E3}o n\u{00E3}o pode ser desfeita.",
         "operator.playersCount": "%d jogadores",
         "operator.pts": "%d pts",
+        "operator.editMode": "Modo de Edi\u{00E7}\u{00E3}o",
+        "operator.centerOnMe": "Centrar em mim",
+        "operator.addBaseHere": "Adicionar base na localiza\u{00E7}\u{00E3}o GPS",
+        "operator.longPressHint": "Manter premido no mapa para adicionar uma base",
         "common.create": "Criar",
 
         // Operator submissions
@@ -1022,6 +1030,10 @@ enum Translations {
         "operator.deleteTeamConfirmMessage": "Diese Aktion kann nicht r\u{00FC}ckg\u{00E4}ngig gemacht werden.",
         "operator.playersCount": "%d Spieler",
         "operator.pts": "%d Pkt",
+        "operator.editMode": "Bearbeitungsmodus",
+        "operator.centerOnMe": "Auf mich zentrieren",
+        "operator.addBaseHere": "Station an GPS-Position hinzuf\u{00FC}gen",
+        "operator.longPressHint": "Lange auf die Karte dr\u{00FC}cken, um eine Station hinzuzuf\u{00FC}gen",
         "common.create": "Erstellen",
 
         // Operator submissions
