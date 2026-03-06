@@ -23,6 +23,7 @@ struct BaseEditView: View {
     @State private var isSaving = false
     @State private var showDeleteAlert = false
     @State private var errorMessage: String?
+    @State private var showSaveSuccess = false
 
     // NFC
     @State private var nfcWriter = NFCWriterService()
@@ -170,6 +171,26 @@ struct BaseEditView: View {
                 }
             }
         }
+        .overlay(alignment: .top) {
+            if showSaveSuccess {
+                Text(locale.t("common.saved"))
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(.green.opacity(0.9))
+                    .foregroundStyle(.white)
+                    .clipShape(Capsule())
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            withAnimation { showSaveSuccess = false }
+                        }
+                    }
+                    .padding(.top, 8)
+            }
+        }
+        .animation(.easeInOut, value: showSaveSuccess)
         .navigationTitle(locale.t("operator.editBase"))
         .navigationBarTitleDisplayMode(.inline)
         .alert(locale.t("operator.deleteBaseConfirmTitle"), isPresented: $showDeleteAlert) {
@@ -202,6 +223,7 @@ struct BaseEditView: View {
                 token: token
             )
             onSaved(updatedBase)
+            withAnimation { showSaveSuccess = true }
         } catch {
             errorMessage = error.localizedDescription
         }
