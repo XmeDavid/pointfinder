@@ -344,7 +344,7 @@ actor APIClient {
     }
 
     func getGameInvites(gameId: UUID, token: String) async throws -> [InviteResponse] {
-        try await get("/api/games/\(gameId)/invites", token: token)
+        try await get("/api/invites/game/\(gameId)", token: token)
     }
 
     func createInvite(request: InviteRequest, token: String) async throws -> InviteResponse {
