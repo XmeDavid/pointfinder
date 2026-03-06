@@ -1,298 +1,207 @@
-# PointFinder - NFC Gaming Platform
+# PointFinder
 
-A comprehensive NFC-based gaming platform designed for scouting organizations (Pathfinders/Desbravadores). The system enables interactive, location-based games using NFC technology, real-time monitoring, and comprehensive game management.
+NFC-based gaming platform for scouting organisations (Pathfinders / Desbravadores).
+Teams scan NFC tags at physical locations to unlock challenges, while operators manage games and monitor progress in real time.
 
-## 🎯 Overview
-
-PointFinder is a multi-platform system that combines:
-- **NFC-enabled mobile gameplay** for participants
-- **Web-based administration** for game organizers
-- **Real-time monitoring and tracking** for supervisors
-- **Location-based challenges** integrated with mapping
-
-The platform is specifically designed for scouting events, camps, and educational activities where teams compete in various challenges distributed across different physical locations.
-
-## 🏗️ Architecture
-
-### System Components
+## Architecture
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   iOS Mobile    │    │   Web Admin     │    │     Backend     │
-│   (Swift/NFC)   │◄──►│ (React/TypeScript)──►│  (Spring Boot)  │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                                        │
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│     nginx       │    │   Let's Encrypt │    │   PostgreSQL    │
-│ (Reverse Proxy) │    │      (SSL)      │    │   (Database)    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+                        ┌──────────────┐
+                        │   nginx      │ :80 / :443
+                        │  + Certbot   │ TLS termination, rate limiting
+                        └──────┬───────┘
+              ┌────────────────┼────────────────┐
+              ▼                ▼                ▼
+     ┌────────────────┐ ┌───────────┐ ┌──────────────┐
+     │  Web Admin     │ │  REST API │ │  WebSocket   │
+     │  React SPA     │ │  /api/*   │ │  /ws/*       │
+     │  (static)      │ └─────┬─────┘ └──────┬───────┘
+     └────────────────┘       │               │
+                        ┌─────┴───────────────┘
+                        ▼
+              ┌──────────────────┐
+              │  Spring Boot     │ :8080 (internal)
+              │  Java 21         │
+              └────────┬─────────┘
+                       │
+              ┌────────┴─────────┐
+              │   PostgreSQL 16  │
+              │   + Flyway       │
+              └──────────────────┘
+
+   ┌───────────────┐          ┌───────────────┐
+   │   iOS App     │          │  Android App  │
+   │   Swift / NFC │          │  Kotlin / NFC │
+   └───────────────┘          └───────────────┘
 ```
 
-### Technology Stack
+## Repository layout
 
-**Backend (Java/Spring Boot)**
-- Spring Boot 3.4.1 with Java 21
-- PostgreSQL database with Flyway migrations
-- JWT authentication & authorization
-- WebSocket for real-time updates
-- Email notifications via Resend
-- RESTful API design
+```
+backend/          Spring Boot API (Java 21, Gradle)
+web-admin/        React 19 + TypeScript operator dashboard
+android-app/      Kotlin multi-module Android app
+ios-app/          Swift iOS app (Xcode project)
+nginx/            Reverse-proxy config & Dockerfile
+e2e/              End-to-end tests (Playwright + Maestro)
+scripts/          Utility scripts (e.g. create-admin.sh)
+docs/             Design docs, store-submission guides
+docker-compose.yml          Production stack
+docker-compose.test.yml     CI / local test containers
+Makefile                    One-command test runners
+```
 
-**Web Admin (React/TypeScript)**
-- React 19 with TypeScript
-- Vite build system
-- Tailwind CSS for styling
-- Zustand for state management
-- React Query for data fetching
-- Leaflet for interactive maps
-- Multi-language support (EN/PT)
+## Tech stack
 
-**Mobile App (iOS/Swift)**
-- Native iOS app with Swift
-- NFC reading/writing capabilities
-- Core Location for GPS tracking
-- Real-time API integration
-- Offline-first caching strategy
+| Layer | Stack |
+|---|---|
+| **Backend** | Spring Boot 3.4.1 · Java 21 · PostgreSQL 16 · Flyway · JWT (jjwt) · WebSocket (STOMP) · Resend SMTP · APNs (Pushy) · FCM (firebase-admin) · Prometheus metrics |
+| **Web Admin** | React 19 · TypeScript · Vite 7 · Tailwind CSS 4 · Zustand · TanStack Query · MapLibre GL · TipTap rich-text editor · i18next (EN / PT / DE) · SSR pre-rendering |
+| **Android** | Kotlin 2 · Jetpack Compose · Hilt · Retrofit / OkHttp · Room · Google Maps · NFC · Firebase Cloud Messaging |
+| **iOS** | Swift · SwiftUI · Core NFC · Core Location · APNs · URLSession |
+| **Infra** | Docker Compose · nginx · Let's Encrypt (Certbot) · GitHub Actions CI |
 
-**Infrastructure**
-- Docker containerization
-- nginx reverse proxy
-- Let's Encrypt SSL certificates
-- Automated SSL renewal
-
-## 🚀 Features
-
-### Core Gameplay
-- **NFC-Based Interactions**: Players scan NFC tags at physical bases to unlock challenges
-- **Team-Based Competition**: Multiple teams compete simultaneously
-- **Location Tracking**: GPS-based team monitoring and base verification
-- **Real-time Updates**: Live leaderboards and activity feeds
-- **Challenge Variety**: Support for different challenge types and answer formats
-
-### Administration
-- **Game Management**: Create, configure, and monitor games
-- **Base Management**: Define physical locations with NFC tags
-- **Challenge Creation**: Rich text editor for challenge content
-- **Team Organization**: Player registration and team assignments
-- **Operator Invites**: Role-based access for game operators
-- **Live Monitoring**: Real-time dashboard with team locations and progress
-
-### Technical Features
-- **Multi-language Support**: English and Portuguese localization
-- **Responsive Design**: Mobile-friendly web interface
-- **Real-time Communication**: WebSocket-based live updates
-- **Secure Authentication**: JWT-based security with refresh tokens
-- **Email Notifications**: Automated communication system
-- **Map Integration**: Interactive maps for base placement and team tracking
-
-## 📱 Current State
-
-### Deployment Status
-- **Production URLs**: https://pointfinder.pt and https://pointfinder.ch
-- **SSL**: Automated Let's Encrypt certificates
-- **Database**: PostgreSQL with migrations
-- **Email**: Configured with Resend SMTP
-
-### Component Status
-
-#### ✅ Backend (Complete)
-- Full REST API implementation
-- Authentication & authorization
-- Database schema and migrations
-- WebSocket real-time communication
-- Email service integration
-- Docker containerization
-
-#### ✅ Web Admin (Complete)
-- Game creation and management
-- Base and challenge management
-- Team administration
-- Real-time monitoring dashboard
-- Operator invitation system
-- Multi-language support
-- Responsive design
-
-#### ✅ iOS App (Complete)
-- NFC reading/writing functionality
-- Player and operator modes
-- Real-time API integration
-- Location services
-- Offline capabilities
-- Authentication flow
-
-#### ✅ Infrastructure (Complete)
-- Docker compose configuration
-- nginx reverse proxy setup
-- SSL certificate automation
-- Database persistence
-
-### Key Entities
-
-**Game**: Central entity containing bases, challenges, teams, and operators
-**Base**: Physical locations with NFC tags where challenges are accessed
-**Challenge**: Tasks/questions that teams must complete
-**Team**: Groups of players competing together
-**Player**: Individual participants in games
-**Submission**: Team responses to challenges
-**User**: System users (admins, operators)
-
-## 🛠️ Development Setup
+## Getting started
 
 ### Prerequisites
-- Docker and Docker Compose
-- Java 21 (for local backend development)
-- Node.js 18+ (for local frontend development)
-- Xcode (for iOS development)
 
-### Quick Start
+- **Docker + Docker Compose** — runs the full stack
+- **Java 21** — backend local dev
+- **Node.js 22** — web-admin local dev
+- **Xcode** — iOS development (macOS only)
+- **Android SDK (API 35)** + JDK 17/21 — Android development
 
-1. **Clone the repository**
+### Run the production-like stack locally
+
 ```bash
-git clone <repository-url>
-cd dbvnfc
+# 1. Create a .env at the repo root with required secrets
+#    (see docker-compose.yml for all ${VAR} references)
+cp .env.example .env   # if an example exists, otherwise create manually
+
+# 2. Start everything
+docker compose up -d
+
+# Services:
+#   https://localhost        → web admin
+#   https://localhost/api    → REST API
+#   wss://localhost/ws       → WebSocket
 ```
 
-2. **Start the full stack**
+> **Note:** The nginx container expects TLS certificates under `certbot/conf/`.
+> For local dev without SSL, run the backend and web-admin individually (see below).
+
+### Run individual services for development
+
+**Backend**
 ```bash
-docker-compose up -d
-```
-
-3. **Access the application**
-- Web Admin: http://localhost (redirects to https)
-- API: http://localhost/api
-- Database: localhost:5432
-
-### Development Mode
-
-**Backend Development**
-```bash
+# Uses application-dev.yml profile (in-memory or local Postgres)
 cd backend
 ./gradlew bootRun
+# API at http://localhost:8080
 ```
 
-**Frontend Development**
+**Web Admin**
 ```bash
 cd web-admin
 npm install
 npm run dev
+# Dev server at http://localhost:5173
 ```
 
-**iOS Development**
+**Android**
 ```bash
-cd ios-app
-open dbv-nfc-games.xcodeproj
+cd android-app
+cp .env.example .env
+# Set API_BASE_URL and GOOGLE_MAPS_API_KEY
+# Open in Android Studio or build from CLI:
+./gradlew :app:assembleDebug
 ```
 
-## 📋 API Endpoints
-
-### Authentication
-- `POST /api/auth/login` - User login
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/refresh` - Token refresh
-- `POST /api/auth/player/join` - Player game join
-
-### Game Management
-- `GET/POST /api/games` - List/create games
-- `GET/PUT/DELETE /api/games/{id}` - Game CRUD operations
-- `GET /api/games/{id}/teams` - Game teams
-- `GET /api/games/{id}/leaderboard` - Game leaderboard
-
-### Base & Challenge Management
-- `GET/POST /api/games/{gameId}/bases` - Base management
-- `GET/POST /api/games/{gameId}/challenges` - Challenge management
-- `GET/POST /api/games/{gameId}/assignments` - Base-challenge assignments
-
-### Team Operations
-- `POST /api/teams/{teamId}/submissions` - Submit challenge response
-- `GET /api/teams/{teamId}/location` - Team location tracking
-- `POST /api/teams/{teamId}/checkin` - Base check-in
-
-### Monitoring
-- `GET /api/monitoring/dashboard/{gameId}` - Dashboard data
-- `GET /api/monitoring/activity/{gameId}` - Activity feed
-- `WebSocket /ws` - Real-time updates
-
-## 🔧 Configuration
-
-### Environment Variables
-
-**Backend**
-- `SPRING_DATASOURCE_URL`: PostgreSQL connection string
-- `SPRING_PROFILES_ACTIVE`: Active Spring profile (dev/prod)
-- `CORS_ORIGINS`: Allowed CORS origins
-- `MAIL_HOST/USERNAME/PASSWORD`: Email configuration
-- `FRONTEND_URL`: Frontend URL for email links
-
-**Frontend**
-- `VITE_API_URL`: Backend API URL
-- `VITE_WS_URL`: WebSocket URL
-
-### Database
-The application uses PostgreSQL with Flyway migrations. Database schema is automatically created and updated on startup.
-
-## 📦 Deployment
-
-### Production Deployment
-1. Configure environment variables in `docker-compose.yml`
-2. Confirm domains in `init-letsencrypt.sh` (`pointfinder.pt`, `pointfinder.ch`)
-3. Run SSL setup: `./init-letsencrypt.sh`
-4. Start services: `docker-compose up -d`
-
-### SSL Certificate Setup
-The project includes automated Let's Encrypt certificate generation and renewal:
+**iOS**
 ```bash
-./init-letsencrypt.sh
+open ios-app/dbv-nfc-games.xcodeproj
+# Build & run on simulator or device from Xcode
 ```
 
-### NFC Domain Migration
-When changing production domains, rewrite physical NFC tags using:
-- `docs/nfc-tag-rewrite-runbook.md`
+## Testing
 
-## 🧪 Testing
+All test targets are available via the root **Makefile**:
 
-Use the root `Makefile` to run all suites from one place.
+| Command | What it runs |
+|---|---|
+| `make test-docker` | Backend + web-admin tests in Docker containers |
+| `make test-backend-docker` | Backend unit tests only (Docker) |
+| `make test-frontend-docker` | Web-admin lint + tests (Docker) |
+| `make test-android` | Android unit tests via Gradle on host |
+| `make test-ios` | iOS tests via `xcodebuild` on host (macOS) |
+| `make test-all` | All of the above |
 
-**Dockerized Tests (Backend + Web Admin)**
+Override the iOS simulator destination:
 ```bash
-make test-docker
+make test-ios IOS_DESTINATION="platform=iOS Simulator,name=iPhone 16"
 ```
 
-**Run Suites Individually**
-```bash
-make test-backend-docker
-make test-frontend-docker
-```
+### End-to-end tests
 
-**iOS Tests (macOS Host)**
-```bash
-make test-ios
-```
+The `e2e/` directory contains Playwright (API + web) and Maestro (mobile) tests.
+See [`e2e/README.md`](e2e/README.md) for setup and the full command table.
 
-**Run Everything**
-```bash
-make test-all
-```
+### CI
 
-Notes:
-- `test-docker` uses `docker-compose.test.yml` and runs backend + frontend tests in containers.
-- `test-ios` runs via `xcodebuild` on the host machine (requires macOS + Xcode).
-- You can override iOS defaults, for example:
-  - `make test-ios IOS_DESTINATION="platform=iOS Simulator,name=iPhone 15"`
+GitHub Actions (`.github/workflows/ci.yml`) runs backend, web-admin, and Android checks on every push / PR to `main`.
 
-## 📝 Legacy Components
+## Configuration
 
-The project includes legacy implementations in the `legacy/` directory for reference, including previous versions of the backend and frontend components.
+### Backend environment variables
 
-## 🤝 Contributing
+| Variable | Purpose | Default |
+|---|---|---|
+| `SPRING_DATASOURCE_URL` | JDBC connection string | — |
+| `SPRING_DATASOURCE_PASSWORD` | DB password | — |
+| `SPRING_PROFILES_ACTIVE` | `dev` or `prod` | `prod` |
+| `JWT_SECRET` | HMAC signing key (≥256 bits) | dev fallback |
+| `CORS_ORIGINS` | Comma-separated allowed origins | `http://localhost:5173` |
+| `MAIL_ENABLED` | Enable Resend email | `false` |
+| `MAIL_PASSWORD` | Resend API key | — |
+| `FRONTEND_URL` | Used in email links | `http://localhost:5173` |
+| `APNS_ENABLED` | Enable Apple push notifications | `false` |
+| `APNS_KEY_PATH` / `APNS_KEY_ID` / `APNS_TEAM_ID` | APNs credentials | — |
+| `FCM_ENABLED` | Enable Firebase push notifications | `false` |
+| `FCM_CREDENTIALS_PATH` / `FCM_PROJECT_ID` | FCM credentials | — |
+| `APP_UPLOADS_PATH` | File upload directory | `/uploads` |
 
-This is a private project for scouting organizations. For contributions or questions, please contact the project maintainer.
+### Web Admin
 
-## 📄 License
+| Variable | Purpose |
+|---|---|
+| `VITE_API_URL` | Backend API path (default `/api` in Docker) |
+| `VITE_WS_URL` | WebSocket path (default `/ws` in Docker) |
 
-Private project - All rights reserved.
+### Android app
 
----
+Configured via `android-app/.env` — see [`android-app/.env.example`](android-app/.env.example).
 
-**Live Application**: https://pointfinder.pt and https://pointfinder.ch
-**Project Status**: Production Ready ✅
-**Last Updated**: February 2026
+## Deployment
+
+1. Populate `.env` at the repo root with production secrets (DB password, JWT secret, mail, push credentials).
+2. Place APNs `.p8` key and Firebase service-account JSON under `secrets/`.
+3. Set domain names in `init-letsencrypt.sh` and run it once to provision TLS certificates.
+4. `docker compose up -d`
+
+The Certbot sidecar auto-renews certificates every 12 h, and nginx reloads every 6 h.
+
+### Domains
+
+Currently configured for **pointfinder.pt** and **pointfinder.ch** in `nginx/nginx.conf` and `docker-compose.yml`.
+
+## Project status
+
+The platform is **functional and deployed** but has open items tracked in the [`TODO`](TODO) file before public launch, including:
+- Mobile UX polish (base creation flow, variable editing, NFC write consistency)
+- Submission feedback visibility for players
+- Localization review (German)
+- App Store / Play Store publication
+
+## License
+
+Private project — all rights reserved.
