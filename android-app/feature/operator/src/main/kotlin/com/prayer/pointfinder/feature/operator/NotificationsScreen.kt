@@ -36,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -100,7 +101,7 @@ fun NotificationsScreen(
                                 value = message,
                                 onValueChange = { message = it },
                                 label = { Text(stringResource(R.string.label_message)) },
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth().testTag("notification-message-input"),
                                 minLines = 2,
                                 maxLines = 4,
                             )
@@ -139,7 +140,7 @@ fun NotificationsScreen(
                                         message = ""
                                     }
                                 },
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth().testTag("notification-send-btn"),
                                 enabled = message.isNotBlank(),
                             ) {
                                 Icon(Icons.Default.Send, contentDescription = null, modifier = Modifier.size(18.dp))

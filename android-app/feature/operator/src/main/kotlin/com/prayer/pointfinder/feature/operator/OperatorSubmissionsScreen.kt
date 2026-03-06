@@ -35,6 +35,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -216,6 +217,7 @@ fun OperatorSubmissionsScreen(
                         onReviewSubmission(reviewingSubmission.id, SubmissionStatus.APPROVED, feedback.takeIf { it.isNotBlank() }, pointsText.toIntOrNull())
                         selectedSubmission = null
                     },
+                    modifier = Modifier.testTag("submission-approve-btn"),
                 ) {
                     Text(stringResource(R.string.action_approve))
                 }
@@ -225,10 +227,13 @@ fun OperatorSubmissionsScreen(
                     TextButton(onClick = { selectedSubmission = null }) {
                         Text(stringResource(R.string.action_cancel))
                     }
-                    TextButton(onClick = {
-                        onReviewSubmission(reviewingSubmission.id, SubmissionStatus.REJECTED, feedback.takeIf { it.isNotBlank() }, null)
-                        selectedSubmission = null
-                    }) {
+                    TextButton(
+                        onClick = {
+                            onReviewSubmission(reviewingSubmission.id, SubmissionStatus.REJECTED, feedback.takeIf { it.isNotBlank() }, null)
+                            selectedSubmission = null
+                        },
+                        modifier = Modifier.testTag("submission-reject-btn"),
+                    ) {
                         Text(stringResource(R.string.action_reject), color = MaterialTheme.colorScheme.error)
                     }
                 }

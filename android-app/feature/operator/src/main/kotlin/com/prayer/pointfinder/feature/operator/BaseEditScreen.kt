@@ -51,6 +51,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -258,7 +259,7 @@ fun BaseEditScreen(
                 onValueChange = { name = it },
                 label = { Text(stringResource(R.string.label_base_name)) },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag("base-name-input"),
             )
 
             Spacer(Modifier.height(12.dp))
@@ -481,7 +482,7 @@ fun BaseEditScreen(
                     }
                 },
                 enabled = canSave,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag("base-save-btn"),
             ) {
                 Text(stringResource(R.string.action_save))
             }
