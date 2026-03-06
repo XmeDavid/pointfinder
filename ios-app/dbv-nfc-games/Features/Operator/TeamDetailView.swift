@@ -24,6 +24,7 @@ struct TeamDetailView: View {
     @State private var showRemovePlayerAlert = false
     @State private var playerToRemove: PlayerResponse?
     @State private var errorMessage: String?
+    @State private var showCopiedToast = false
 
     private let colorOptions = [
         "#ef4444", "#f97316", "#eab308", "#22c55e", "#14b8a6", "#06b6d4",
@@ -91,6 +92,14 @@ struct TeamDetailView: View {
 
                     Button {
                         UIPasteboard.general.string = joinCode
+                        withAnimation {
+                            showCopiedToast = true
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            withAnimation {
+                                showCopiedToast = false
+                            }
+                        }
                     } label: {
                         Label(locale.t("operator.copyCode"), systemImage: "doc.on.doc")
                     }
@@ -213,6 +222,19 @@ struct TeamDetailView: View {
         .sheet(isPresented: $showQRCode) {
             QRCodeSheet(joinCode: team.joinCode ?? "", teamName: team.name)
         }
+        .overlay(alignment: .bottom) {
+            if showCopiedToast {
+                Text(locale.t("operator.copied"))
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(.ultraThinMaterial)
+                    .clipShape(Capsule())
+                    .padding(.bottom, 20)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
     }
 
     // MARK: - Data Loading
@@ -227,7 +249,7 @@ struct TeamDetailView: View {
             variables = v.variables
             // Initialize variable values for this team
             for variable in v.variables {
-                variableValues[variable.key] = variable.teamValues[team.id.uuidString] ?? ""
+                variableValues[variable.key] = variable.teamValues[team.id.uuidString.lowercased()] ?? ""
             }
         } catch {
             appState.setError(error.localizedDescription)
@@ -253,7 +275,7 @@ struct TeamDetailView: View {
             if !variables.isEmpty {
                 let updatedVariables = variables.map { variable in
                     var teamValues = variable.teamValues
-                    teamValues[team.id.uuidString] = variableValues[variable.key] ?? ""
+                    teamValues[team.id.uuidString.lowercased()] = variableValues[variable.key] ?? ""
                     return TeamVariable(key: variable.key, teamValues: teamValues)
                 }
                 _ = try await appState.apiClient.saveGameVariables(
