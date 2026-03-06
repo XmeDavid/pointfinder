@@ -1,0 +1,23 @@
+# @scenarios P7
+# Player join - launch app as player, enter join code, verify team assignment
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+
+# Player role selection (if shown at launch)
+- tapOn: "Player"
+
+- assertVisible: "Join Game"
+
+- tapOn:
+    id: "player-join-code-input"
+- inputText: "${JOIN_CODE}"
+
+- tapOn:
+    id: "player-join-btn"
+
+# Verify player is now in the game and sees their team assignment
+- assertVisible: "Team Eagle"
+- assertVisible:
+    id: "player-base-list"

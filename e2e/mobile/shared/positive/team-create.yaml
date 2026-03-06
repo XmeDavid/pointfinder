@@ -1,0 +1,40 @@
+# @scenarios P6
+# Team creation - create a team and verify the join code is displayed
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+
+- tapOn:
+    id: "login-email"
+- inputText: "${OPERATOR_EMAIL}"
+
+- tapOn:
+    id: "login-password"
+- inputText: "${OPERATOR_PASSWORD}"
+
+- tapOn:
+    id: "login-submit"
+
+- assertVisible: "Games"
+
+- tapOn: "${GAME_NAME:-E2E Test Game}"
+
+- tapOn:
+    id: "nav-teams"
+
+- tapOn:
+    id: "create-team-btn"
+
+- tapOn:
+    id: "team-name-input"
+- inputText: "Team Eagle"
+
+- tapOn:
+    id: "team-save-btn"
+
+- assertVisible: "Team Eagle"
+
+# Verify join code is shown after creation
+- assertVisible:
+    id: "team-join-code"

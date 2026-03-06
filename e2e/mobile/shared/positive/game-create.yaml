@@ -1,0 +1,31 @@
+# @scenarios P2
+# Game creation - login as operator, create a new game, verify it appears in list
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+
+- tapOn:
+    id: "login-email"
+- inputText: "${OPERATOR_EMAIL}"
+
+- tapOn:
+    id: "login-password"
+- inputText: "${OPERATOR_PASSWORD}"
+
+- tapOn:
+    id: "login-submit"
+
+- assertVisible: "Games"
+
+- tapOn:
+    id: "create-game-btn"
+
+- tapOn:
+    id: "game-name-input"
+- inputText: "E2E Test Game"
+
+- tapOn:
+    id: "game-save-btn"
+
+- assertVisible: "E2E Test Game"

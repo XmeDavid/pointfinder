@@ -1,0 +1,26 @@
+# @scenarios N1
+# Invalid login - wrong password should show an error, not navigate to games
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+
+- assertVisible: "Login"
+
+- tapOn:
+    id: "login-email"
+- inputText: "${OPERATOR_EMAIL}"
+
+- tapOn:
+    id: "login-password"
+- inputText: "wrong-password-12345"
+
+- tapOn:
+    id: "login-submit"
+
+# Verify error is shown
+- assertVisible:
+    id: "login-error"
+
+# Verify we did NOT navigate to the games screen
+- assertNotVisible: "Games"

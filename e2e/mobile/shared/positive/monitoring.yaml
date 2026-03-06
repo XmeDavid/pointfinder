@@ -1,0 +1,36 @@
+# @scenarios P17
+# Monitoring - view the operator dashboard and leaderboard during an active game
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+
+- tapOn:
+    id: "login-email"
+- inputText: "${OPERATOR_EMAIL}"
+
+- tapOn:
+    id: "login-password"
+- inputText: "${OPERATOR_PASSWORD}"
+
+- tapOn:
+    id: "login-submit"
+
+- assertVisible: "Games"
+
+- tapOn: "${GAME_NAME:-E2E Test Game}"
+
+- tapOn:
+    id: "nav-monitoring"
+
+# Verify the monitoring/dashboard view is visible
+- assertVisible:
+    id: "monitoring-tab"
+
+# Verify leaderboard section is present
+- assertVisible:
+    id: "leaderboard-view"
+
+# Verify submission activity feed is present
+- assertVisible:
+    id: "submission-list"
