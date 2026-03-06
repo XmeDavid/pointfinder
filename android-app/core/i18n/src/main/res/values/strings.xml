@@ -351,4 +351,12 @@
     <string name="label_no_invites">No pending invites</string>
     <string name="action_invite">Invite</string>
     <string name="label_exporting">Exporting\u2026</string>
+
+    <!-- Toast / Snackbar -->
+    <string name="toast_base_created">Base created</string>
+    <string name="toast_base_saved">Base saved</string>
+    <string name="toast_challenge_created">Challenge created</string>
+    <string name="toast_challenge_saved">Challenge saved</string>
+    <string name="toast_team_saved">Team saved</string>
+    <string name="toast_game_created">Game created</string>
 </resources>
