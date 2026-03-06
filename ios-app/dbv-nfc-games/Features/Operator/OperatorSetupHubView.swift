@@ -182,9 +182,7 @@ struct OperatorSetupHubView: View {
                 ChallengesManagementView(game: game)
             }
             .navigationDestination(isPresented: $showTeams) {
-                // Placeholder — will be replaced by TeamsListView in Task 19
-                Text(locale.t("operator.teams"))
-                    .navigationTitle(locale.t("operator.teams"))
+                TeamsManagementView(game: game)
             }
         }
     }
