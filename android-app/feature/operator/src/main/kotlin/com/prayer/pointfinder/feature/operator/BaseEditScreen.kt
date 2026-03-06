@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Nfc
@@ -156,16 +157,6 @@ fun BaseEditScreen(
                                 expanded = showOverflowMenu,
                                 onDismissRequest = { showOverflowMenu = false },
                             ) {
-                                if (onWriteNfc != null) {
-                                    DropdownMenuItem(
-                                        text = { Text(stringResource(R.string.label_write_nfc)) },
-                                        leadingIcon = { Icon(Icons.Default.Nfc, contentDescription = null) },
-                                        onClick = {
-                                            showOverflowMenu = false
-                                            onWriteNfc()
-                                        },
-                                    )
-                                }
                                 if (onDelete != null) {
                                     DropdownMenuItem(
                                         text = {
@@ -317,6 +308,47 @@ fun BaseEditScreen(
                     checked = hidden,
                     onCheckedChange = { hidden = it },
                 )
+            }
+
+            // NFC section (edit mode only)
+            if (isEditMode && onWriteNfc != null) {
+                Spacer(Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Icon(
+                            if (base?.nfcLinked == true) Icons.Default.CheckCircle else Icons.Default.Nfc,
+                            contentDescription = null,
+                            tint = if (base?.nfcLinked == true) StatusCompleted else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp),
+                        )
+                        Text(
+                            text = stringResource(
+                                if (base?.nfcLinked == true) R.string.label_nfc_linked
+                                else R.string.label_nfc_not_linked,
+                            ),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                Button(
+                    onClick = onWriteNfc,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(Icons.Default.Nfc, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.size(8.dp))
+                    Text(stringResource(R.string.label_write_nfc))
+                }
             }
 
             Spacer(Modifier.height(12.dp))
