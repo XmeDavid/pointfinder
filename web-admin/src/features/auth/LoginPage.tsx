@@ -51,7 +51,7 @@ export function LoginPage() {
               <FormLabel htmlFor="email" required>
                 {t("auth.email")}
               </FormLabel>
-              <Input id="email" type="email" placeholder="admin@pointfinder.dev" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <Input id="email" type="email" placeholder="admin@pointfinder.dev" value={email} onChange={(e) => setEmail(e.target.value)} required data-testid="login-email" />
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -62,9 +62,9 @@ export function LoginPage() {
                   {t("auth.forgotPassword")}
                 </Link>
               </div>
-              <Input id="password" type="password" placeholder={t("auth.enterPassword")} value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <Input id="password" type="password" placeholder={t("auth.enterPassword")} value={password} onChange={(e) => setPassword(e.target.value)} required data-testid="login-password" />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full" disabled={loading} data-testid="login-submit">
               {loading ? t("auth.signingIn") : t("auth.signIn")}
             </Button>
             

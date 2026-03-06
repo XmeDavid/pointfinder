@@ -201,6 +201,7 @@ export function AssignmentsPage() {
                           id={challengeSelectId}
                           value={draft.challengeId}
                           onChange={(e) => updateDraft(base.id, { challengeId: e.target.value, error: undefined })}
+                          data-testid="assignment-challenge-select"
                         >
                           <option value="">{t("assignments.selectChallenge")}</option>
                           {availableChallenges.map((challenge) => (

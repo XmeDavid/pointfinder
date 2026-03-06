@@ -30,6 +30,7 @@ interface NavItem {
   to: string;
   icon: React.ReactNode;
   badge?: React.ReactNode;
+  testId?: string;
 }
 
 function SidebarLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
@@ -38,6 +39,7 @@ function SidebarLink({ item, onClick }: { item: NavItem; onClick?: () => void })
       to={item.to}
       end={true}
       onClick={onClick}
+      data-testid={item.testId}
       className={({ isActive }) =>
         cn(
           "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
@@ -107,7 +109,7 @@ export function Sidebar({ gameStatus, open, onClose }: SidebarProps) {
     ) : undefined;
 
   const mainNav: NavItem[] = [
-    { label: t("nav.games"), to: "/games", icon: <Compass className="h-4 w-4" /> },
+    { label: t("nav.games"), to: "/games", icon: <Compass className="h-4 w-4" />, testId: "nav-games" },
     ...(isAdmin
       ? [{ label: t("nav.operators"), to: "/admin/operators", icon: <Shield className="h-4 w-4" /> }]
       : []),
@@ -118,7 +120,7 @@ export function Sidebar({ gameStatus, open, onClose }: SidebarProps) {
         { label: t("nav.overview"), to: `/games/${gameId}/overview`, icon: <LayoutDashboard className="h-4 w-4" /> },
         { label: t("nav.bases"), to: `/games/${gameId}/bases`, icon: <MapPin className="h-4 w-4" /> },
         { label: t("nav.challenges"), to: `/games/${gameId}/challenges`, icon: <Puzzle className="h-4 w-4" /> },
-        { label: t("nav.teams"), to: `/games/${gameId}/teams`, icon: <Users className="h-4 w-4" /> },
+        { label: t("nav.teams"), to: `/games/${gameId}/teams`, icon: <Users className="h-4 w-4" />, testId: "nav-teams" },
         { label: t("nav.assignments"), to: `/games/${gameId}/assignments`, icon: <Link2 className="h-4 w-4" /> },
         { label: t("nav.notifications"), to: `/games/${gameId}/notifications`, icon: <Bell className="h-4 w-4" /> },
         { label: t("nav.operators"), to: `/games/${gameId}/operators`, icon: <UserCog className="h-4 w-4" /> },
@@ -129,7 +131,7 @@ export function Sidebar({ gameStatus, open, onClose }: SidebarProps) {
   const monitorNav: NavItem[] =
     gameId && (gameStatus === "live" || gameStatus === "ended")
       ? [
-          { label: t("nav.dashboard"), to: `/games/${gameId}/monitor`, icon: <LayoutDashboard className="h-4 w-4" /> },
+          { label: t("nav.dashboard"), to: `/games/${gameId}/monitor`, icon: <LayoutDashboard className="h-4 w-4" />, testId: "nav-monitoring" },
           { label: t("nav.map"), to: `/games/${gameId}/monitor/map`, icon: <Radio className="h-4 w-4" /> },
           { label: t("nav.leaderboard"), to: `/games/${gameId}/monitor/leaderboard`, icon: <Trophy className="h-4 w-4" /> },
           { label: t("nav.activity"), to: `/games/${gameId}/monitor/activity`, icon: <Activity className="h-4 w-4" /> },

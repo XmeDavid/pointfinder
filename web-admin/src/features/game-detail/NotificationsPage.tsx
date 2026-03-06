@@ -58,9 +58,9 @@ export function NotificationsPage() {
               <FormLabel htmlFor="notificationMessage" required>
                 {t("notifications.message")}
               </FormLabel>
-              <Textarea id="notificationMessage" value={message} onChange={(e) => setMessage(e.target.value)} placeholder={t("notifications.messagePlaceholder")} rows={3} required />
+              <Textarea id="notificationMessage" value={message} onChange={(e) => setMessage(e.target.value)} placeholder={t("notifications.messagePlaceholder")} rows={3} required data-testid="notification-message-input" />
             </div>
-            <Button type="submit" disabled={sendNotification.isPending || !message.trim()}><Send className="mr-2 h-4 w-4" />{sendNotification.isPending ? t("common.sending") : t("notifications.sendNotification")}</Button>
+            <Button type="submit" disabled={sendNotification.isPending || !message.trim()} data-testid="notification-send-btn"><Send className="mr-2 h-4 w-4" />{sendNotification.isPending ? t("common.sending") : t("notifications.sendNotification")}</Button>
           </form>
         </CardContent>
       </Card>

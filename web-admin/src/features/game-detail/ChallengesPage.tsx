@@ -240,6 +240,7 @@ export function ChallengesPage() {
                   onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
                   placeholder={t("challenges.titlePlaceholder")}
                   required
+                  data-testid="challenge-title-input"
                 />
               </div>
               <div className="space-y-2">
@@ -291,7 +292,7 @@ export function ChallengesPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-3">
                 <p className="text-sm font-medium leading-none">{t("challenges.answerType")}</p>
-                <div className="flex gap-2">
+                <div className="flex gap-2" data-testid="challenge-type-select">
                   <Button type="button" variant={form.answerType === "text" ? "default" : "outline"} size="sm" onClick={() => setForm((f) => ({ ...f, answerType: "text" }))}><FileText className="mr-1 h-4 w-4" /> {t("challenges.text")}</Button>
                   <Button type="button" variant={form.answerType === "file" ? "default" : "outline"} size="sm" onClick={() => setForm((f) => ({ ...f, answerType: "file", autoValidate: false }))}><Image className="mr-1 h-4 w-4" /> {t("challenges.fileUpload")}</Button>
                 </div>
@@ -449,7 +450,7 @@ export function ChallengesPage() {
             )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={closeDialog}>{t("common.cancel")}</Button>
-              <Button type="submit" loading={createChallenge.isPending || updateChallenge.isPending}>{editing ? t("challenges.editChallenge") : t("challenges.createChallenge")}</Button>
+              <Button type="submit" loading={createChallenge.isPending || updateChallenge.isPending} data-testid="challenge-save-btn">{editing ? t("challenges.editChallenge") : t("challenges.createChallenge")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

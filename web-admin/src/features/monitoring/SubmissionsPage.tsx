@@ -204,8 +204,8 @@ export function SubmissionsPage() {
               <div className="space-y-2"><p className="text-sm font-medium">{t("submissions.feedbackLabel")}</p><Textarea value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder={t("submissions.feedbackPlaceholder")} rows={2} /></div>
             </div>
             <DialogFooter>
-              <Button variant="destructive" onClick={() => reviewMutation.mutate({ id: reviewingSub.id, status: "rejected" })} loading={reviewMutation.isPending}><XCircle className="mr-1 h-4 w-4" /> {t("submissions.reject")}</Button>
-              <Button onClick={() => reviewMutation.mutate({ id: reviewingSub.id, status: "approved", points: reviewPoints })} loading={reviewMutation.isPending}><CheckCircle className="mr-1 h-4 w-4" /> {t("submissions.approve")}</Button>
+              <Button variant="destructive" onClick={() => reviewMutation.mutate({ id: reviewingSub.id, status: "rejected" })} loading={reviewMutation.isPending} data-testid="submission-reject-btn"><XCircle className="mr-1 h-4 w-4" /> {t("submissions.reject")}</Button>
+              <Button onClick={() => reviewMutation.mutate({ id: reviewingSub.id, status: "approved", points: reviewPoints })} loading={reviewMutation.isPending} data-testid="submission-approve-btn"><CheckCircle className="mr-1 h-4 w-4" /> {t("submissions.approve")}</Button>
             </DialogFooter>
           </DialogContent>
         )}

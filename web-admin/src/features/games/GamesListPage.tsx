@@ -90,7 +90,7 @@ export function GamesListPage() {
           <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
             <Upload className="mr-2 h-4 w-4" />{t("game.import")}
           </Button>
-          <Button onClick={() => navigate("/games/new")}>
+          <Button onClick={() => navigate("/games/new")} data-testid="create-game-btn">
             <Plus className="mr-2 h-4 w-4" />{t("games.newGame")}
           </Button>
         </div>
@@ -178,7 +178,7 @@ function GameCard({ game }: { game: Game }) {
   const statusVariant: Record<GameStatus, "default" | "secondary" | "warning" | "success"> = { setup: "secondary", live: "success", ended: "default" };
 
   return (
-    <Card className="cursor-pointer transition-shadow hover:shadow-md" onClick={() => navigate(`/games/${game.id}/overview`)}>
+    <Card className="cursor-pointer transition-shadow hover:shadow-md" onClick={() => navigate(`/games/${game.id}/overview`)} data-testid={`game-card-${game.id}`}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <CardTitle className="text-lg">{game.name}</CardTitle>
