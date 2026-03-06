@@ -8,10 +8,10 @@ struct BaseEditView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     let game: Game
-    let base: Base
+    let base: Base?
     let challenges: [Challenge]
     var onSaved: (Base) -> Void
-    var onDeleted: () -> Void
+    var onDeleted: (() -> Void)?
 
     @State private var name: String
     @State private var description: String
@@ -30,6 +30,12 @@ struct BaseEditView: View {
     @State private var nfcLinked: Bool
     @State private var isWritingNfc = false
 
+    // Location (for create mode)
+    @StateObject private var locationManager = BaseEditLocationManager()
+    @State private var hasInitializedLocation = false
+
+    private var isCreateMode: Bool { base == nil }
+
     private var token: String? {
         if case .userOperator(let token, _, _) = appState.authType {
             return token
@@ -37,20 +43,20 @@ struct BaseEditView: View {
         return nil
     }
 
-    init(game: Game, base: Base, challenges: [Challenge], onSaved: @escaping (Base) -> Void, onDeleted: @escaping () -> Void) {
+    init(game: Game, base: Base?, challenges: [Challenge], onSaved: @escaping (Base) -> Void, onDeleted: (() -> Void)? = nil) {
         self.game = game
         self.base = base
         self.challenges = challenges
         self.onSaved = onSaved
         self.onDeleted = onDeleted
-        self._name = State(initialValue: base.name)
-        self._description = State(initialValue: base.description)
-        self._lat = State(initialValue: base.lat)
-        self._lng = State(initialValue: base.lng)
-        self._requirePresenceToSubmit = State(initialValue: base.requirePresenceToSubmit)
-        self._hidden = State(initialValue: base.hidden)
-        self._fixedChallengeId = State(initialValue: base.fixedChallengeId)
-        self._nfcLinked = State(initialValue: base.nfcLinked)
+        self._name = State(initialValue: base?.name ?? "")
+        self._description = State(initialValue: base?.description ?? "")
+        self._lat = State(initialValue: base?.lat ?? 0)
+        self._lng = State(initialValue: base?.lng ?? 0)
+        self._requirePresenceToSubmit = State(initialValue: base?.requirePresenceToSubmit ?? false)
+        self._hidden = State(initialValue: base?.hidden ?? false)
+        self._fixedChallengeId = State(initialValue: base?.fixedChallengeId)
+        self._nfcLinked = State(initialValue: base?.nfcLinked ?? false)
     }
 
     var body: some View {
@@ -119,26 +125,28 @@ struct BaseEditView: View {
                 .pickerStyle(.menu)
             }
 
-            // NFC section
-            Section(locale.t("nfc.tag")) {
-                HStack {
-                    if nfcLinked {
-                        Label(locale.t("nfc.nfcLinked"), systemImage: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
-                    } else {
-                        Label(locale.t("nfc.nfcNotLinked"), systemImage: "xmark.circle")
-                            .foregroundStyle(.orange)
+            // NFC section (edit mode only)
+            if !isCreateMode {
+                Section(locale.t("nfc.tag")) {
+                    HStack {
+                        if nfcLinked {
+                            Label(locale.t("nfc.nfcLinked"), systemImage: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                        } else {
+                            Label(locale.t("nfc.nfcNotLinked"), systemImage: "xmark.circle")
+                                .foregroundStyle(.orange)
+                        }
                     }
+                    Button {
+                        Task { await writeNfcTag() }
+                    } label: {
+                        Label(
+                            isWritingNfc ? locale.t("nfc.writing") : locale.t("nfc.writeToTag"),
+                            systemImage: "sensor.tag.radiowaves.forward"
+                        )
+                    }
+                    .disabled(isWritingNfc)
                 }
-                Button {
-                    Task { await writeNfcTag() }
-                } label: {
-                    Label(
-                        isWritingNfc ? locale.t("nfc.writing") : locale.t("nfc.writeToTag"),
-                        systemImage: "sensor.tag.radiowaves.forward"
-                    )
-                }
-                .disabled(isWritingNfc)
             }
 
             // Save button
@@ -146,7 +154,7 @@ struct BaseEditView: View {
                 Button {
                     Task { await save() }
                 } label: {
-                    Text(isSaving ? locale.t("common.saving") : locale.t("operator.save"))
+                    Text(isSaving ? locale.t("common.saving") : (isCreateMode ? locale.t("common.create") : locale.t("operator.save")))
                         .fontWeight(.semibold)
                         .frame(maxWidth: .infinity)
                 }
@@ -161,13 +169,15 @@ struct BaseEditView: View {
                 }
             }
 
-            // Delete
-            Section {
-                Button(role: .destructive) {
-                    showDeleteAlert = true
-                } label: {
-                    Label(locale.t("operator.deleteBase"), systemImage: "trash")
-                        .frame(maxWidth: .infinity)
+            // Delete (edit mode only)
+            if !isCreateMode {
+                Section {
+                    Button(role: .destructive) {
+                        showDeleteAlert = true
+                    } label: {
+                        Label(locale.t("operator.deleteBase"), systemImage: "trash")
+                            .frame(maxWidth: .infinity)
+                    }
                 }
             }
         }
@@ -191,8 +201,15 @@ struct BaseEditView: View {
             }
         }
         .animation(.easeInOut, value: showSaveSuccess)
-        .navigationTitle(locale.t("operator.editBase"))
+        .navigationTitle(isCreateMode ? locale.t("operator.createBase") : locale.t("operator.editBase"))
         .navigationBarTitleDisplayMode(.inline)
+        .onReceive(locationManager.$lastLocation) { newLocation in
+            if base == nil && !hasInitializedLocation, let coord = newLocation {
+                lat = coord.latitude
+                lng = coord.longitude
+                hasInitializedLocation = true
+            }
+        }
         .alert(locale.t("operator.deleteBaseConfirmTitle"), isPresented: $showDeleteAlert) {
             Button(locale.t("operator.delete"), role: .destructive) {
                 Task { await deleteBase() }
@@ -208,22 +225,41 @@ struct BaseEditView: View {
         isSaving = true
         errorMessage = nil
         do {
-            let updatedBase = try await appState.apiClient.updateBase(
-                gameId: game.id,
-                baseId: base.id,
-                request: UpdateBaseRequest(
-                    name: name,
-                    description: description,
-                    lat: lat,
-                    lng: lng,
-                    fixedChallengeId: fixedChallengeId,
-                    requirePresenceToSubmit: requirePresenceToSubmit,
-                    hidden: hidden
-                ),
-                token: token
-            )
-            onSaved(updatedBase)
-            withAnimation { showSaveSuccess = true }
+            if let base {
+                // Update existing
+                let updatedBase = try await appState.apiClient.updateBase(
+                    gameId: game.id,
+                    baseId: base.id,
+                    request: UpdateBaseRequest(
+                        name: name,
+                        description: description,
+                        lat: lat,
+                        lng: lng,
+                        fixedChallengeId: fixedChallengeId,
+                        requirePresenceToSubmit: requirePresenceToSubmit,
+                        hidden: hidden
+                    ),
+                    token: token
+                )
+                onSaved(updatedBase)
+                withAnimation { showSaveSuccess = true }
+            } else {
+                // Create new
+                let newBase = try await appState.apiClient.createBase(
+                    gameId: game.id,
+                    request: CreateBaseRequest(
+                        name: name,
+                        description: description,
+                        lat: lat,
+                        lng: lng,
+                        fixedChallengeId: fixedChallengeId,
+                        requirePresenceToSubmit: requirePresenceToSubmit,
+                        hidden: hidden
+                    ),
+                    token: token
+                )
+                onSaved(newBase)
+            }
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -231,10 +267,10 @@ struct BaseEditView: View {
     }
 
     private func deleteBase() async {
-        guard let token else { return }
+        guard let token, let base else { return }
         do {
             try await appState.apiClient.deleteBase(gameId: game.id, baseId: base.id, token: token)
-            onDeleted()
+            onDeleted?()
             dismiss()
         } catch {
             appState.setError(error.localizedDescription)
@@ -242,7 +278,7 @@ struct BaseEditView: View {
     }
 
     private func writeNfcTag() async {
-        guard let token else { return }
+        guard let token, let base else { return }
         isWritingNfc = true
         do {
             try await nfcWriter.writeBaseId(base.id)
@@ -260,5 +296,27 @@ struct BaseEditView: View {
             appState.setError(error.localizedDescription)
         }
         isWritingNfc = false
+    }
+}
+
+// MARK: - Location Manager for Create Mode
+
+private class BaseEditLocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
+    @Published var lastLocation: CLLocationCoordinate2D?
+    private let manager = CLLocationManager()
+
+    override init() {
+        super.init()
+        manager.delegate = self
+        manager.desiredAccuracy = kCLLocationAccuracyBest
+        manager.requestWhenInUseAuthorization()
+        manager.startUpdatingLocation()
+    }
+
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        if lastLocation == nil {
+            lastLocation = locations.last?.coordinate
+            manager.stopUpdatingLocation()
+        }
     }
 }

@@ -7,13 +7,16 @@ struct ChallengesManagementView: View {
     let game: Game
     var onDismiss: (() -> Void)? = nil
 
+    enum ChallengeNavDestination: Hashable {
+        case edit(UUID)
+        case create
+    }
+
     @State private var challenges: [Challenge] = []
     @State private var bases: [Base] = []
     @State private var assignments: [Assignment] = []
     @State private var isLoading = true
-    @State private var showCreateChallenge = false
     @State private var path = NavigationPath()
-    @State private var createdChallengeId: UUID?
 
     private var token: String? {
         if case .userOperator(let token, _, _) = appState.authType {
@@ -36,7 +39,7 @@ struct ChallengesManagementView: View {
                     )
                 } else {
                     List(challenges) { challenge in
-                        NavigationLink(value: challenge.id) {
+                        NavigationLink(value: ChallengeNavDestination.edit(challenge.id)) {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(challenge.title)
@@ -78,41 +81,44 @@ struct ChallengesManagementView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        showCreateChallenge = true
+                        path.append(ChallengeNavDestination.create)
                     } label: {
                         Image(systemName: "plus")
                     }
                 }
             }
-            .navigationDestination(for: UUID.self) { challengeId in
-                if let challenge = challenges.first(where: { $0.id == challengeId }) {
+            .navigationDestination(for: ChallengeNavDestination.self) { destination in
+                switch destination {
+                case .edit(let challengeId):
+                    if let challenge = challenges.first(where: { $0.id == challengeId }) {
+                        ChallengeEditView(
+                            game: game,
+                            challenge: challenge,
+                            bases: bases,
+                            assignments: assignments,
+                            onSaved: { updatedChallenge in
+                                if let index = challenges.firstIndex(where: { $0.id == updatedChallenge.id }) {
+                                    challenges[index] = updatedChallenge
+                                }
+                            },
+                            onDeleted: {
+                                challenges.removeAll { $0.id == challengeId }
+                                path.removeLast()
+                            }
+                        )
+                    }
+                case .create:
                     ChallengeEditView(
                         game: game,
-                        challenge: challenge,
+                        challenge: nil,
                         bases: bases,
                         assignments: assignments,
-                        onSaved: { updatedChallenge in
-                            if let index = challenges.firstIndex(where: { $0.id == updatedChallenge.id }) {
-                                challenges[index] = updatedChallenge
-                            }
-                        },
-                        onDeleted: {
-                            challenges.removeAll { $0.id == challengeId }
+                        onSaved: { newChallenge in
+                            challenges.append(newChallenge)
+                            path.removeLast()
+                            path.append(ChallengeNavDestination.edit(newChallenge.id))
                         }
                     )
-                }
-            }
-            .sheet(isPresented: $showCreateChallenge, onDismiss: {
-                if let challengeId = createdChallengeId {
-                    createdChallengeId = nil
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        path.append(challengeId)
-                    }
-                }
-            }) {
-                ChallengeCreateSheet(game: game) { newChallenge in
-                    challenges.append(newChallenge)
-                    createdChallengeId = newChallenge.id
                 }
             }
             .task {
@@ -149,110 +155,5 @@ struct ChallengesManagementView: View {
             appState.setError(error.localizedDescription)
         }
         isLoading = false
-    }
-}
-
-// MARK: - Create Challenge Sheet
-
-private struct ChallengeCreateSheet: View {
-    @Environment(AppState.self) private var appState
-    @Environment(LocaleManager.self) private var locale
-    @Environment(\.dismiss) private var dismiss
-
-    let game: Game
-    var onCreated: (Challenge) -> Void
-
-    @State private var title = ""
-    @State private var points = 0
-    @State private var pointsText = "0"
-    @State private var answerType = "text"
-    @State private var isCreating = false
-    @State private var errorMessage: String?
-
-    private var token: String? {
-        if case .userOperator(let token, _, _) = appState.authType {
-            return token
-        }
-        return nil
-    }
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField(locale.t("operator.challengeTitle"), text: $title)
-                    HStack {
-                        Text(locale.t("operator.challengePoints"))
-                        Spacer()
-                        TextField("", text: $pointsText)
-                            .keyboardType(.numberPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 80)
-                            .onChange(of: pointsText) { _, newValue in
-                                points = Int(newValue) ?? 0
-                            }
-                    }
-                }
-
-                Section {
-                    Picker(locale.t("operator.answerType"), selection: $answerType) {
-                        Text(locale.t("operator.textInput")).tag("text")
-                        Text(locale.t("operator.fileUpload")).tag("file")
-                    }
-                    .pickerStyle(.segmented)
-                }
-
-                if let errorMessage {
-                    Section {
-                        Text(errorMessage)
-                            .foregroundStyle(.red)
-                            .font(.caption)
-                    }
-                }
-            }
-            .navigationTitle(locale.t("operator.createChallenge"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(locale.t("common.cancel")) { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(locale.t("common.create")) {
-                        Task { await createChallenge() }
-                    }
-                    .disabled(title.isEmpty || isCreating)
-                }
-            }
-        }
-    }
-
-    private func createChallenge() async {
-        guard let token else { return }
-        isCreating = true
-        errorMessage = nil
-        do {
-            let challenge = try await appState.apiClient.createChallenge(
-                gameId: game.id,
-                request: CreateChallengeRequest(
-                    title: title,
-                    description: "",
-                    content: "",
-                    completionContent: "",
-                    answerType: answerType,
-                    autoValidate: false,
-                    correctAnswer: [],
-                    points: points,
-                    locationBound: false,
-                    fixedBaseId: nil,
-                    unlocksBaseId: nil
-                ),
-                token: token
-            )
-            onCreated(challenge)
-            dismiss()
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-        isCreating = false
     }
 }

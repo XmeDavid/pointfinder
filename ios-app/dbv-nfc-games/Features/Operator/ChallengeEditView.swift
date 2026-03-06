@@ -6,11 +6,11 @@ struct ChallengeEditView: View {
     @Environment(\.dismiss) private var dismiss
 
     let game: Game
-    let challenge: Challenge
+    let challenge: Challenge?
     let bases: [Base]
     let assignments: [Assignment]
     var onSaved: (Challenge) -> Void
-    var onDeleted: () -> Void
+    var onDeleted: (() -> Void)?
 
     @State private var title: String
     @State private var points: Int
@@ -36,6 +36,8 @@ struct ChallengeEditView: View {
     @State private var teams: [Team] = []
     @State private var areVariablesLoading = true
 
+    private var isCreateMode: Bool { challenge == nil }
+
     enum EditableField: Identifiable {
         case content, completionContent
         var id: Self { self }
@@ -52,27 +54,26 @@ struct ChallengeEditView: View {
         Array(Set(gameVariables.map(\.key) + challengeVariables.map(\.key))).sorted()
     }
 
-    init(game: Game, challenge: Challenge, bases: [Base], assignments: [Assignment], onSaved: @escaping (Challenge) -> Void, onDeleted: @escaping () -> Void) {
+    init(game: Game, challenge: Challenge?, bases: [Base], assignments: [Assignment], onSaved: @escaping (Challenge) -> Void, onDeleted: (() -> Void)? = nil) {
         self.game = game
         self.challenge = challenge
         self.bases = bases
         self.assignments = assignments
         self.onSaved = onSaved
         self.onDeleted = onDeleted
-        self._title = State(initialValue: challenge.title)
-        self._points = State(initialValue: challenge.points)
-        self._pointsText = State(initialValue: String(challenge.points))
-        self._descriptionText = State(initialValue: challenge.description)
-        self._contentHtml = State(initialValue: challenge.content)
-        self._completionContentHtml = State(initialValue: challenge.completionContent ?? "")
-        self._answerType = State(initialValue: challenge.answerType)
-        self._autoValidate = State(initialValue: challenge.autoValidate)
-        self._correctAnswers = State(initialValue: challenge.correctAnswer ?? [])
-        // fixedBaseId comes from assignments where challengeId matches and teamId is nil
-        let globalAssignment = assignments.first(where: { $0.challengeId == challenge.id && $0.teamId == nil })
+        self._title = State(initialValue: challenge?.title ?? "")
+        self._points = State(initialValue: challenge?.points ?? 0)
+        self._pointsText = State(initialValue: String(challenge?.points ?? 0))
+        self._descriptionText = State(initialValue: challenge?.description ?? "")
+        self._contentHtml = State(initialValue: challenge?.content ?? "")
+        self._completionContentHtml = State(initialValue: challenge?.completionContent ?? "")
+        self._answerType = State(initialValue: challenge?.answerType ?? "text")
+        self._autoValidate = State(initialValue: challenge?.autoValidate ?? false)
+        self._correctAnswers = State(initialValue: challenge?.correctAnswer ?? [])
+        let globalAssignment = assignments.first(where: { $0.challengeId == challenge?.id && $0.teamId == nil })
         self._fixedBaseId = State(initialValue: globalAssignment?.baseId)
-        self._locationBound = State(initialValue: challenge.locationBound)
-        self._unlocksBaseId = State(initialValue: challenge.unlocksBaseId)
+        self._locationBound = State(initialValue: challenge?.locationBound ?? false)
+        self._unlocksBaseId = State(initialValue: challenge?.unlocksBaseId)
     }
 
     var body: some View {
@@ -200,7 +201,7 @@ struct ChallengeEditView: View {
                 Button {
                     Task { await save() }
                 } label: {
-                    Text(isSaving ? locale.t("common.saving") : locale.t("operator.save"))
+                    Text(isSaving ? locale.t("common.saving") : (isCreateMode ? locale.t("common.create") : locale.t("operator.save")))
                         .fontWeight(.semibold)
                         .frame(maxWidth: .infinity)
                 }
@@ -215,13 +216,15 @@ struct ChallengeEditView: View {
                 }
             }
 
-            // Delete
-            Section {
-                Button(role: .destructive) {
-                    showDeleteAlert = true
-                } label: {
-                    Label(locale.t("operator.deleteChallenge"), systemImage: "trash")
-                        .frame(maxWidth: .infinity)
+            // Delete (edit mode only)
+            if !isCreateMode {
+                Section {
+                    Button(role: .destructive) {
+                        showDeleteAlert = true
+                    } label: {
+                        Label(locale.t("operator.deleteChallenge"), systemImage: "trash")
+                            .frame(maxWidth: .infinity)
+                    }
                 }
             }
         }
@@ -245,7 +248,7 @@ struct ChallengeEditView: View {
             }
         }
         .animation(.easeInOut, value: showSaveSuccess)
-        .navigationTitle(locale.t("operator.editChallenge"))
+        .navigationTitle(isCreateMode ? locale.t("operator.createChallenge") : locale.t("operator.editChallenge"))
         .navigationBarTitleDisplayMode(.inline)
         .alert(locale.t("operator.deleteChallengeConfirmTitle"), isPresented: $showDeleteAlert) {
             Button(locale.t("operator.delete"), role: .destructive) {
@@ -351,13 +354,21 @@ struct ChallengeEditView: View {
     private func loadVariablesAndTeams() async {
         guard let token else { return }
         do {
-            async let gameVariablesResult = appState.apiClient.getGameVariables(gameId: game.id, token: token)
-            async let challengeVariablesResult = appState.apiClient.getChallengeVariables(gameId: game.id, challengeId: challenge.id, token: token)
-            async let teamsResult = appState.apiClient.getTeams(gameId: game.id, token: token)
-            let (gameResponse, challengeResponse, fetchedTeams) = try await (gameVariablesResult, challengeVariablesResult, teamsResult)
-            teams = fetchedTeams
-            gameVariables = normalizedTeamVariables(gameResponse.variables, teams: fetchedTeams)
-            challengeVariables = normalizedTeamVariables(challengeResponse.variables, teams: fetchedTeams)
+            if let challenge {
+                async let gameVariablesResult = appState.apiClient.getGameVariables(gameId: game.id, token: token)
+                async let challengeVariablesResult = appState.apiClient.getChallengeVariables(gameId: game.id, challengeId: challenge.id, token: token)
+                async let teamsResult = appState.apiClient.getTeams(gameId: game.id, token: token)
+                let (gameResponse, challengeResponse, fetchedTeams) = try await (gameVariablesResult, challengeVariablesResult, teamsResult)
+                teams = fetchedTeams
+                gameVariables = normalizedTeamVariables(gameResponse.variables, teams: fetchedTeams)
+                challengeVariables = normalizedTeamVariables(challengeResponse.variables, teams: fetchedTeams)
+            } else {
+                async let gameVariablesResult = appState.apiClient.getGameVariables(gameId: game.id, token: token)
+                async let teamsResult = appState.apiClient.getTeams(gameId: game.id, token: token)
+                let (gameResponse, fetchedTeams) = try await (gameVariablesResult, teamsResult)
+                teams = fetchedTeams
+                gameVariables = normalizedTeamVariables(gameResponse.variables, teams: fetchedTeams)
+            }
         } catch {
             appState.setError(error.localizedDescription)
         }
@@ -374,6 +385,13 @@ struct ChallengeEditView: View {
 
         guard !challengeVariables.contains(where: { $0.key.caseInsensitiveCompare(trimmed) == .orderedSame }) else {
             return locale.t("operator.duplicateVariable")
+        }
+
+        guard let challenge else {
+            // Create mode: just add locally
+            let teamValues = Dictionary(uniqueKeysWithValues: teams.map { ($0.id.uuidString.lowercased(), "") })
+            challengeVariables.append(TeamVariable(key: trimmed, teamValues: teamValues))
+            return nil
         }
 
         let teamValues = Dictionary(uniqueKeysWithValues: teams.map { ($0.id.uuidString, "") })
@@ -396,6 +414,13 @@ struct ChallengeEditView: View {
 
     private func saveChallengeVariables(_ updatedVariables: [TeamVariable]) async throws -> [TeamVariable] {
         guard let token else { throw APIError.authExpired }
+        guard let challenge else {
+            // Create mode: just update locally
+            await MainActor.run {
+                challengeVariables = updatedVariables
+            }
+            return updatedVariables
+        }
         let response = try await appState.apiClient.saveChallengeVariables(
             gameId: game.id,
             challengeId: challenge.id,
@@ -417,26 +442,49 @@ struct ChallengeEditView: View {
         isSaving = true
         errorMessage = nil
         do {
-            let updatedChallenge = try await appState.apiClient.updateChallenge(
-                gameId: game.id,
-                challengeId: challenge.id,
-                request: UpdateChallengeRequest(
-                    title: title,
-                    description: descriptionText,
-                    content: contentHtml,
-                    completionContent: completionContentHtml,
-                    answerType: answerType,
-                    autoValidate: autoValidate,
-                    correctAnswer: correctAnswers,
-                    points: points,
-                    locationBound: locationBound,
-                    fixedBaseId: fixedBaseId,
-                    unlocksBaseId: unlocksBaseId
-                ),
-                token: token
-            )
-            onSaved(updatedChallenge)
-            withAnimation { showSaveSuccess = true }
+            if let challenge {
+                // Update existing
+                let updatedChallenge = try await appState.apiClient.updateChallenge(
+                    gameId: game.id,
+                    challengeId: challenge.id,
+                    request: UpdateChallengeRequest(
+                        title: title,
+                        description: descriptionText,
+                        content: contentHtml,
+                        completionContent: completionContentHtml,
+                        answerType: answerType,
+                        autoValidate: autoValidate,
+                        correctAnswer: correctAnswers,
+                        points: points,
+                        locationBound: locationBound,
+                        fixedBaseId: fixedBaseId,
+                        unlocksBaseId: unlocksBaseId
+                    ),
+                    token: token
+                )
+                onSaved(updatedChallenge)
+                withAnimation { showSaveSuccess = true }
+            } else {
+                // Create new
+                let newChallenge = try await appState.apiClient.createChallenge(
+                    gameId: game.id,
+                    request: CreateChallengeRequest(
+                        title: title,
+                        description: descriptionText,
+                        content: contentHtml,
+                        completionContent: completionContentHtml,
+                        answerType: answerType,
+                        autoValidate: autoValidate,
+                        correctAnswer: correctAnswers,
+                        points: points,
+                        locationBound: locationBound,
+                        fixedBaseId: fixedBaseId,
+                        unlocksBaseId: unlocksBaseId
+                    ),
+                    token: token
+                )
+                onSaved(newChallenge)
+            }
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -444,10 +492,10 @@ struct ChallengeEditView: View {
     }
 
     private func deleteChallenge() async {
-        guard let token else { return }
+        guard let token, let challenge else { return }
         do {
             try await appState.apiClient.deleteChallenge(gameId: game.id, challengeId: challenge.id, token: token)
-            onDeleted()
+            onDeleted?()
             dismiss()
         } catch {
             appState.setError(error.localizedDescription)
