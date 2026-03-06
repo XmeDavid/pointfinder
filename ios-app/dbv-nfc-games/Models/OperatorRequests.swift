@@ -81,12 +81,12 @@ struct UpdateTeamRequest: Encodable {
 }
 
 // MARK: - Team Variables
-struct TeamVariable: Codable {
+struct TeamVariable: Codable, Equatable {
     let key: String
     let teamValues: [String: String]
 }
 
-struct TeamVariablesRequest: Encodable {
+struct TeamVariablesRequest: Codable {
     let variables: [TeamVariable]
 }
 

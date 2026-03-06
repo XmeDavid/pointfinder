@@ -30,8 +30,10 @@ struct ChallengeEditView: View {
     @State private var editingField: EditableField?
     @State private var showAddAnswerAlert = false
     @State private var newAnswerText = ""
-    @State private var variableKeys: [String] = []
+    @State private var gameVariables: [TeamVariable] = []
+    @State private var challengeVariables: [TeamVariable] = []
     @State private var teams: [Team] = []
+    @State private var areVariablesLoading = true
 
     enum EditableField: Identifiable {
         case content, completionContent
@@ -43,6 +45,10 @@ struct ChallengeEditView: View {
             return token
         }
         return nil
+    }
+
+    private var availableVariableKeys: [String] {
+        Array(Set(gameVariables.map(\.key) + challengeVariables.map(\.key))).sorted()
     }
 
     init(game: Game, challenge: Challenge, bases: [Base], assignments: [Assignment], onSaved: @escaping (Challenge) -> Void, onDeleted: @escaping () -> Void) {
@@ -176,6 +182,18 @@ struct ChallengeEditView: View {
                 .pickerStyle(.menu)
             }
 
+            Section(locale.t("operator.challengeVariables")) {
+                if areVariablesLoading {
+                    ProgressView()
+                } else {
+                    TeamVariablesEditorView(
+                        teams: teams,
+                        initialVariables: challengeVariables,
+                        onSave: saveChallengeVariables
+                    )
+                }
+            }
+
             // Save button
             Section {
                 Button {
@@ -231,10 +249,18 @@ struct ChallengeEditView: View {
                 title: titleForField(field),
                 initialHtml: htmlForField(field),
                 onDone: { html in setHtml(field, html) },
-                variables: variableKeys.isEmpty ? nil : variableKeys,
+                variables: availableVariableKeys.isEmpty ? nil : availableVariableKeys,
                 teams: teams.isEmpty ? nil : teams,
-                onCreateVariable: { name in
-                    Task { await createVariable(name) }
+                onCreateVariable: teams.isEmpty ? nil : { name in
+                    await createVariable(name)
+                },
+                resolvePreviewHTML: { team, html in
+                    resolveVariablePreview(
+                        template: html,
+                        gameVariables: gameVariables,
+                        challengeVariables: challengeVariables,
+                        teamId: team.id.uuidString
+                    )
                 }
             )
         }
@@ -304,36 +330,63 @@ struct ChallengeEditView: View {
     private func loadVariablesAndTeams() async {
         guard let token else { return }
         do {
-            async let variablesResult = appState.apiClient.getGameVariables(gameId: game.id, token: token)
+            async let gameVariablesResult = appState.apiClient.getGameVariables(gameId: game.id, token: token)
+            async let challengeVariablesResult = appState.apiClient.getChallengeVariables(gameId: game.id, challengeId: challenge.id, token: token)
             async let teamsResult = appState.apiClient.getTeams(gameId: game.id, token: token)
-            let (v, t) = try await (variablesResult, teamsResult)
-            variableKeys = v.variables.map(\.key)
-            teams = t
+            let (gameResponse, challengeResponse, fetchedTeams) = try await (gameVariablesResult, challengeVariablesResult, teamsResult)
+            teams = fetchedTeams
+            gameVariables = normalizedTeamVariables(gameResponse.variables, teams: fetchedTeams)
+            challengeVariables = normalizedTeamVariables(challengeResponse.variables, teams: fetchedTeams)
         } catch {
-            // Non-critical: editor still works without variables
+            appState.setError(error.localizedDescription)
+        }
+        areVariablesLoading = false
+    }
+
+    private func createVariable(_ name: String) async -> String? {
+        guard let token else { return APIError.authExpired.localizedDescription }
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard teamVariableKeyIsValid(trimmed) else {
+            return locale.t("operator.invalidVariableName")
+        }
+
+        guard !challengeVariables.contains(where: { $0.key.caseInsensitiveCompare(trimmed) == .orderedSame }) else {
+            return locale.t("operator.duplicateVariable")
+        }
+
+        let teamValues = Dictionary(uniqueKeysWithValues: teams.map { ($0.id.uuidString, "") })
+        let updatedVariables = challengeVariables + [TeamVariable(key: trimmed, teamValues: teamValues)]
+
+        do {
+            let response = try await appState.apiClient.saveChallengeVariables(
+                gameId: game.id,
+                challengeId: challenge.id,
+                request: TeamVariablesRequest(variables: normalizedTeamVariables(updatedVariables, teams: teams)),
+                token: token
+            )
+            challengeVariables = normalizedTeamVariables(response.variables, teams: teams)
+            errorMessage = nil
+            return nil
+        } catch {
+            return error.localizedDescription
         }
     }
 
-    private func createVariable(_ name: String) async {
-        guard let token else { return }
-        guard !variableKeys.contains(name) else { return }
-        // Add locally first
-        variableKeys.append(name)
-        // Persist to API
-        do {
-            let currentVariables = try await appState.apiClient.getGameVariables(gameId: game.id, token: token)
-            var updatedVars = currentVariables.variables
-            if !updatedVars.contains(where: { $0.key == name }) {
-                updatedVars.append(TeamVariable(key: name, teamValues: [:]))
-            }
-            _ = try await appState.apiClient.saveGameVariables(
-                gameId: game.id,
-                request: TeamVariablesRequest(variables: updatedVars),
-                token: token
-            )
-        } catch {
-            // Variable was added locally; API save failed but editor still works
+    private func saveChallengeVariables(_ updatedVariables: [TeamVariable]) async throws -> [TeamVariable] {
+        guard let token else { throw APIError.authExpired }
+        let response = try await appState.apiClient.saveChallengeVariables(
+            gameId: game.id,
+            challengeId: challenge.id,
+            request: TeamVariablesRequest(variables: normalizedTeamVariables(updatedVariables, teams: teams)),
+            token: token
+        )
+        let normalized = normalizedTeamVariables(response.variables, teams: teams)
+        await MainActor.run {
+            challengeVariables = normalized
+            errorMessage = nil
         }
+        return normalized
     }
 
     // MARK: - Actions

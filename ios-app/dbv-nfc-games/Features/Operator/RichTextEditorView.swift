@@ -11,7 +11,8 @@ struct RichTextEditorView: View {
     // Optional variable support
     var variables: [String]?
     var teams: [Team]?
-    var onCreateVariable: ((String) -> Void)?
+    var onCreateVariable: ((String) async -> String?)?
+    var resolvePreviewHTML: ((Team, String) -> String)?
 
     @Environment(LocaleManager.self) private var locale
     @Environment(\.dismiss) private var dismiss
@@ -23,6 +24,8 @@ struct RichTextEditorView: View {
     @State private var showPreviewTeamPicker = false
     @State private var newVariableName = ""
     @State private var previewTeam: Team?
+    @State private var previewHtml = ""
+    @State private var createVariableErrorMessage: String?
 
     private var hasOverflowMenu: Bool {
         variables != nil || onCreateVariable != nil || (teams != nil && !(teams?.isEmpty ?? true))
@@ -79,9 +82,18 @@ struct RichTextEditorView: View {
                 // Editor WebView
                 RichTextWebView(
                     coordinator: webViewCoordinator,
-                    initialHtml: previewTeam != nil ? initialHtml : initialHtml,
+                    initialHtml: initialHtml,
                     isDark: colorScheme == .dark
                 )
+
+                if let createVariableErrorMessage {
+                    Text(createVariableErrorMessage)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                }
             }
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
@@ -143,10 +155,16 @@ struct RichTextEditorView: View {
                 TextField(locale.t("operator.variableName"), text: $newVariableName)
                 Button(locale.t("common.ok")) {
                     let trimmed = newVariableName.trimmingCharacters(in: .whitespacesAndNewlines)
-                    if !trimmed.isEmpty {
-                        onCreateVariable?(trimmed)
-                        let tag = "<span class=\"variable-tag\">{{\(trimmed)}}</span>&nbsp;"
-                        webViewCoordinator.insertHTML(tag)
+                    if !trimmed.isEmpty, let onCreateVariable {
+                        Task {
+                            createVariableErrorMessage = nil
+                            if let errorMessage = await onCreateVariable(trimmed) {
+                                createVariableErrorMessage = errorMessage
+                            } else {
+                                let tag = "<span class=\"variable-tag\">{{\(trimmed)}}</span>&nbsp;"
+                                webViewCoordinator.insertHTML(tag)
+                            }
+                        }
                     }
                 }
                 Button(locale.t("common.cancel"), role: .cancel) {}
@@ -155,11 +173,17 @@ struct RichTextEditorView: View {
                 PreviewTeamPickerSheet(
                     teams: teams ?? [],
                     onSelect: { team in
-                        previewTeam = team
-                        showPreviewTeamPicker = false
+                        webViewCoordinator.getHTML { html in
+                            previewHtml = resolvePreviewHTML?(team, html) ?? html
+                            previewTeam = team
+                            showPreviewTeamPicker = false
+                        }
                     }
                 )
                 .presentationDetents([.medium])
+            }
+            .sheet(item: $previewTeam) { team in
+                ResolvedPreviewSheet(team: team, html: previewHtml)
             }
         }
     }
@@ -229,6 +253,50 @@ private struct PreviewTeamPickerSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(locale.t("common.cancel")) { dismiss() }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Resolved Preview Sheet
+
+private struct ResolvedPreviewSheet: View {
+    @Environment(LocaleManager.self) private var locale
+    @Environment(\.dismiss) private var dismiss
+
+    let team: Team
+    let html: String
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack(spacing: 10) {
+                        Circle()
+                            .fill(Color(hex: team.color) ?? .blue)
+                            .frame(width: 14, height: 14)
+                        Text(team.name)
+                            .font(.headline)
+                    }
+
+                    if html.isEmpty {
+                        Text(locale.t("operator.noContent"))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        AutoSizingHTMLView(html: html)
+                    }
+                }
+                .padding()
+            }
+            .navigationTitle(locale.t("operator.previewAsTeam"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(locale.t("common.done")) {
+                        dismiss()
+                    }
                 }
             }
         }

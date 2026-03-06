@@ -354,11 +354,19 @@ actor APIClient {
     // MARK: - Team Variables
 
     func getGameVariables(gameId: UUID, token: String) async throws -> TeamVariablesResponse {
-        try await get("/api/games/\(gameId)/variables", token: token)
+        try await get("/api/games/\(gameId)/team-variables", token: token)
     }
 
     func saveGameVariables(gameId: UUID, request: TeamVariablesRequest, token: String) async throws -> TeamVariablesResponse {
-        try await put("/api/games/\(gameId)/variables", body: request, token: token)
+        try await put("/api/games/\(gameId)/team-variables", body: request, token: token)
+    }
+
+    func getChallengeVariables(gameId: UUID, challengeId: UUID, token: String) async throws -> TeamVariablesResponse {
+        try await get("/api/games/\(gameId)/challenges/\(challengeId)/team-variables", token: token)
+    }
+
+    func saveChallengeVariables(gameId: UUID, challengeId: UUID, request: TeamVariablesRequest, token: String) async throws -> TeamVariablesResponse {
+        try await put("/api/games/\(gameId)/challenges/\(challengeId)/team-variables", body: request, token: token)
     }
 
     // MARK: - Monitoring

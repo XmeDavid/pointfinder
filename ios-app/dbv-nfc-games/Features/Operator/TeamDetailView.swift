@@ -14,6 +14,7 @@ struct TeamDetailView: View {
 
     @State private var name: String
     @State private var color: String
+    @State private var allTeams: [Team] = []
     @State private var players: [PlayerResponse] = []
     @State private var variables: [TeamVariable] = []
     @State private var variableValues: [String: String] = [:]
@@ -244,11 +245,13 @@ struct TeamDetailView: View {
         do {
             async let playersResult = appState.apiClient.getTeamPlayers(gameId: game.id, teamId: team.id, token: token)
             async let variablesResult = appState.apiClient.getGameVariables(gameId: game.id, token: token)
-            let (p, v) = try await (playersResult, variablesResult)
+            async let teamsResult = appState.apiClient.getTeams(gameId: game.id, token: token)
+            let (p, v, teams) = try await (playersResult, variablesResult, teamsResult)
+            allTeams = teams
             players = p
-            variables = v.variables
+            variables = normalizedTeamVariables(v.variables, teams: teams)
             // Initialize variable values for this team
-            for variable in v.variables {
+            for variable in variables {
                 variableValues[variable.key] = variable.teamValues[team.id.uuidString.lowercased()] ?? ""
             }
         } catch {
@@ -273,7 +276,7 @@ struct TeamDetailView: View {
 
             // Save variables if any exist
             if !variables.isEmpty {
-                let updatedVariables = variables.map { variable in
+                let updatedVariables = normalizedTeamVariables(variables, teams: allTeams).map { variable in
                     var teamValues = variable.teamValues
                     teamValues[team.id.uuidString.lowercased()] = variableValues[variable.key] ?? ""
                     return TeamVariable(key: variable.key, teamValues: teamValues)
@@ -361,11 +364,14 @@ private struct QRCodeSheet: View {
     }
 
     private func generateQRCode(from string: String) -> UIImage? {
-        let data = string.data(using: .ascii)
+        let data = string.data(using: .utf8)
         let filter = CIFilter.qrCodeGenerator()
         filter.setValue(data, forKey: "inputMessage")
+        filter.setValue("M", forKey: "inputCorrectionLevel")
         guard let output = filter.outputImage else { return nil }
-        let scaled = output.transformed(by: CGAffineTransform(scaleX: 10, y: 10))
-        return UIImage(ciImage: scaled)
+        let scaled = output.transformed(by: CGAffineTransform(scaleX: 12, y: 12))
+        let context = CIContext()
+        guard let cgImage = context.createCGImage(scaled, from: scaled.extent.integral) else { return nil }
+        return UIImage(cgImage: cgImage)
     }
 }
