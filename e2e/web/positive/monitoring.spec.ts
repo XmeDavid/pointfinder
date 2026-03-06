@@ -27,9 +27,9 @@ test.describe('Monitoring pages via web UI', () => {
     // Page should not show an error state
     await expect(page.locator('text=/error|failed to load/i')).not.toBeVisible();
 
-    // Should contain at least one rendered element (table row, list item, card)
-    const entries = page.locator('tr, li, [data-testid*="leaderboard"], [data-testid*="team"]');
-    await expect(entries.first()).toBeVisible({ timeout: 10_000 });
+    // Leaderboard shows team names — look for "Team" text anywhere on the page
+    const teamEntry = page.locator('text=/Team\\s*\\d/i').first();
+    await expect(teamEntry).toBeVisible({ timeout: 15_000 });
   });
 
   // P17: Activity feed page renders
@@ -62,12 +62,12 @@ test.describe('Monitoring pages via web UI', () => {
     await loginAsOperator(page);
     await page.goto(`/games/${gameId}/monitor/leaderboard`);
 
-    // Sidebar should be visible with navigation items
-    const sidebar = page.locator('nav, [role="navigation"], aside').first();
-    await expect(sidebar).toBeVisible({ timeout: 10_000 });
+    // Sidebar uses NavLink components — look for the monitoring nav item
+    const monitoringLink = page.getByTestId('nav-monitoring');
+    await expect(monitoringLink).toBeVisible({ timeout: 10_000 });
 
     // Navigate to activity via sidebar link
-    const activityLink = page.locator('a[href*="activity"], [data-testid*="activity"]').first();
+    const activityLink = page.locator('a[href*="activity"]').first();
     if (await activityLink.isVisible({ timeout: 2_000 }).catch(() => false)) {
       await activityLink.click();
       await expect(page).toHaveURL(/\/activity/, { timeout: 10_000 });

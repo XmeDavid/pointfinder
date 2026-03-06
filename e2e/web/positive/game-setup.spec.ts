@@ -31,25 +31,10 @@ test.describe('Game setup via web UI', () => {
     }
   });
 
-  // P1: Login via web UI
-  test('P1: login via web UI redirects to games list', async ({ page }) => {
-    await page.goto('/login');
-    await page.getByTestId('login-email').fill(config.operatorEmail);
-    await page.getByTestId('login-password').fill(config.operatorPassword);
-    await page.getByTestId('login-submit').click();
-
-    await expect(page).toHaveURL(/\/games/, { timeout: 15_000 });
-  });
-
-  // P1: Verify games list loads
+  // P1: Login and verify games list loads
   test('P1: games list page renders after login', async ({ page }) => {
-    await page.goto('/login');
-    await page.getByTestId('login-email').fill(config.operatorEmail);
-    await page.getByTestId('login-password').fill(config.operatorPassword);
-    await page.getByTestId('login-submit').click();
-
-    await expect(page).toHaveURL(/\/games/, { timeout: 15_000 });
-    await expect(page.getByTestId('create-game-btn')).toBeVisible();
+    await loginAsOperator(page);
+    await expect(page.getByTestId('create-game-btn')).toBeVisible({ timeout: 10_000 });
   });
 
   // P2: Create game via UI
@@ -62,21 +47,26 @@ test.describe('Game setup via web UI', () => {
 
     const gameName = throwawayGameFixture(config.runId, 'web-setup').name;
     await page.getByTestId('game-name-input').fill(gameName);
-    await page.getByTestId('game-save-btn').click();
 
-    // After save, should redirect to game overview or games list
-    await expect(page).toHaveURL(/\/games\/[^/]+/, { timeout: 15_000 });
+    // Scroll save button into view and click — the form is long
+    const saveBtn = page.getByTestId('game-save-btn');
+    await saveBtn.scrollIntoViewIfNeeded();
+    await expect(saveBtn).toBeEnabled({ timeout: 5_000 });
+    await saveBtn.click();
 
-    // Extract gameId from URL
+    // After save, should redirect to game overview (UUID in URL, not /games/new)
+    await expect(page).toHaveURL(/\/games\/[0-9a-f]{8}-[0-9a-f]{4}/, { timeout: 20_000 });
+
+    // Extract gameId from URL (may include /overview suffix)
     const url = page.url();
-    const match = url.match(/\/games\/([^/]+)/);
+    const match = url.match(/\/games\/([0-9a-f-]+)/);
     expect(match).not.toBeNull();
-    gameId = match![1];
+    gameId = match![1].replace(/\/.*$/, '');
     appendCreatedGameId(gameId);
 
     // Game card should appear in games list
     await page.goto('/games');
-    await expect(page.getByTestId(`game-card-${gameId}`)).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator(`[data-testid="game-card-${gameId}"]`)).toBeVisible({ timeout: 10_000 });
   });
 
   // P8: Activate game via settings UI

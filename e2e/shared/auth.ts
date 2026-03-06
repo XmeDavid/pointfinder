@@ -8,6 +8,7 @@ const RUNTIME_DIR = path.resolve(__dirname, '..', '.runtime');
 interface TokenStore {
   operatorAccessToken: string;
   operatorRefreshToken: string;
+  operatorUser?: { id: string; email: string; name: string; role: string; createdAt: string };
   players: Record<string, string>; // playerId -> token
 }
 
@@ -31,6 +32,10 @@ export function getOperatorToken(runId?: string): string {
 
 export function getOperatorRefreshToken(runId?: string): string {
   return readTokens(runId).operatorRefreshToken;
+}
+
+export function getOperatorUser(runId?: string): TokenStore['operatorUser'] {
+  return readTokens(runId).operatorUser;
 }
 
 export function getPlayerToken(playerId?: string, runId?: string): string {
@@ -57,6 +62,7 @@ export async function loginAndStoreTokens(runId?: string): Promise<{
   const store: TokenStore = {
     operatorAccessToken: data.accessToken,
     operatorRefreshToken: data.refreshToken,
+    operatorUser: data.user,
     players: {},
   };
   writeTokens(store, runId);
@@ -80,6 +86,23 @@ export async function joinPlayerAndStoreToken(
   writeTokens(store, runId);
 
   return { playerId: data.player.id, teamId: data.team.id, token: data.token };
+}
+
+export async function refreshAndStoreTokens(runId?: string): Promise<{
+  accessToken: string;
+  refreshToken: string;
+}> {
+  const store = readTokens(runId);
+  const { status, data } = await api.refreshToken(store.operatorRefreshToken);
+  if (status !== 200) {
+    // Refresh failed — fall back to full login
+    return loginAndStoreTokens(runId);
+  }
+  store.operatorAccessToken = data.accessToken;
+  store.operatorRefreshToken = data.refreshToken;
+  if (data.user) store.operatorUser = data.user;
+  writeTokens(store, runId);
+  return { accessToken: data.accessToken, refreshToken: data.refreshToken };
 }
 
 export function deleteTokens(runId?: string): void {

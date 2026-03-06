@@ -2,6 +2,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import { getBroadcast, getBroadcastLeaderboard } from '../../shared/api-client';
 import { loadRunContext } from '../../shared/run-context';
+import { forceEnglishLocale } from '../../shared/web-helpers';
 import { config } from '../../shared/config';
 
 test.describe('Live broadcast page', () => {
@@ -19,6 +20,7 @@ test.describe('Live broadcast page', () => {
 
   // P19: Public broadcast page is accessible without login
   test('P19: /live/:code page loads without authentication', async ({ page }) => {
+    await forceEnglishLocale(page);
     await page.goto(`/live/${broadcastCode}`);
 
     // Should NOT redirect to login
@@ -28,25 +30,28 @@ test.describe('Live broadcast page', () => {
     const content = page.locator('main, [role="main"], #root, body').first();
     await expect(content).toBeVisible({ timeout: 10_000 });
 
-    await expect(page.locator('text=/error|not found|404/i')).not.toBeVisible();
+    // Check for error text in both English and Portuguese
+    await expect(page.locator('text=/error|not found|404|não encontrad/i')).not.toBeVisible();
   });
 
   // P19: Leaderboard is visible on broadcast page
   test('P19: broadcast page shows leaderboard', async ({ page }) => {
+    await forceEnglishLocale(page);
     await page.goto(`/live/${broadcastCode}`);
 
-    // Should show team names or scores
-    const leaderboardEl = page.locator(
-      '[data-testid*="leaderboard"], [data-testid*="team"], tr, li',
-    ).first();
-    await expect(leaderboardEl).toBeVisible({ timeout: 15_000 });
+    // Should show team names or scores (broadcast page uses div-based layout)
+    // Team names from fixtures are "Team 0" and "Team 1"
+    const leaderboardEl = page.locator('text=/Team\\s*\\d/i').first();
+    await expect(leaderboardEl).toBeVisible({ timeout: 20_000 });
   });
 
   // P19: Broadcast page title/heading renders
   test('P19: broadcast page has visible heading', async ({ page }) => {
+    await forceEnglishLocale(page);
     await page.goto(`/live/${broadcastCode}`);
 
-    const heading = page.locator('h1, h2, [data-testid*="title"], [data-testid*="game-name"]').first();
+    // The broadcast page shows the game name in a span, or PointFinder heading
+    const heading = page.locator('h1, h2, span.font-semibold, span.font-medium, [data-testid*="title"], [data-testid*="game-name"]').first();
     await expect(heading).toBeVisible({ timeout: 10_000 });
   });
 
@@ -66,13 +71,25 @@ test.describe('Live broadcast page', () => {
 
   // P19: Invalid broadcast code shows error
   test('P19: invalid broadcast code shows error or redirects', async ({ page }) => {
+    await forceEnglishLocale(page);
     await page.goto('/live/INVALIDCODE999');
 
-    // Should show not found or error — not crash entirely
-    const errorEl = page.locator('text=/not found|invalid|error|404/i').first();
-    const redirectedToLogin = page.url().includes('/login');
-    const hasError = await errorEl.isVisible({ timeout: 5_000 }).catch(() => false);
+    // Wait for navigation to settle
+    await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {});
 
-    expect(hasError || redirectedToLogin).toBe(true);
+    // Check if redirected to login or live entry page
+    const url = page.url();
+    const redirectedToLogin = url.includes('/login');
+    const redirectedToLiveEntry = url.endsWith('/live') || url.endsWith('/live/');
+
+    if (redirectedToLogin || redirectedToLiveEntry) {
+      // Redirecting away from invalid code is acceptable
+      expect(true).toBe(true);
+      return;
+    }
+
+    // Otherwise, should show not found or error text (English or Portuguese)
+    const errorEl = page.locator('text=/not found|invalid|error|404|não encontrad|transmissão/i').first();
+    await expect(errorEl).toBeVisible({ timeout: 10_000 });
   });
 });

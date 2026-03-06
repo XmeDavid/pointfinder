@@ -19,6 +19,11 @@ async function main() {
   const gameId = game.data.id;
   console.log(`2. Created main game: ${gameId} ("${gameFix.name}")`);
 
+  // 2b. Enable broadcast (broadcastEnabled is only on UpdateGameRequest)
+  const updateRes = await api.updateGame(token, gameId, { name: gameFix.name, broadcastEnabled: true });
+  if (updateRes.status !== 200) throw new Error(`Enable broadcast failed: ${updateRes.status}`);
+  console.log('2b. Enabled broadcast');
+
   // 3. Create 3 bases
   const baseIds: string[] = [];
   for (let i = 0; i < 3; i++) {
