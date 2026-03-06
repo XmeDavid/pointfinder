@@ -211,7 +211,7 @@ export function BasesPage() {
               <FormLabel htmlFor="baseName" required>
                 {t("bases.name")}
               </FormLabel>
-              <Input id="baseName" value={form.name ?? ""} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder={t("bases.namePlaceholder")} required />
+              <Input id="baseName" value={form.name ?? ""} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder={t("bases.namePlaceholder")} required data-testid="base-name-input" />
             </div>
             <div className="space-y-2">
               <FormLabel htmlFor="baseDescription" optional>
@@ -233,13 +233,13 @@ export function BasesPage() {
                   <FormLabel htmlFor="baseLatitude" className="text-xs text-muted-foreground" required>
                     {t("bases.latitude")}
                   </FormLabel>
-                  <Input id="baseLatitude" type="number" step="any" value={form.lat ?? ""} onChange={(e) => setForm((f) => ({ ...f, lat: parseFloat(e.target.value) }))} required />
+                  <Input id="baseLatitude" type="number" step="any" value={form.lat ?? ""} onChange={(e) => setForm((f) => ({ ...f, lat: parseFloat(e.target.value) }))} required data-testid="base-lat-input" />
                 </div>
                 <div className="space-y-1">
                   <FormLabel htmlFor="baseLongitude" className="text-xs text-muted-foreground" required>
                     {t("bases.longitude")}
                   </FormLabel>
-                  <Input id="baseLongitude" type="number" step="any" value={form.lng ?? ""} onChange={(e) => setForm((f) => ({ ...f, lng: parseFloat(e.target.value) }))} required />
+                  <Input id="baseLongitude" type="number" step="any" value={form.lng ?? ""} onChange={(e) => setForm((f) => ({ ...f, lng: parseFloat(e.target.value) }))} required data-testid="base-lng-input" />
                 </div>
               </div>
             </div>
@@ -278,7 +278,7 @@ export function BasesPage() {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={closeDialog}>{t("common.cancel")}</Button>
-              <Button type="submit" loading={createBase.isPending || updateBase.isPending}>{editing ? t("bases.editBase") : t("bases.createBase")}</Button>
+              <Button type="submit" loading={createBase.isPending || updateBase.isPending} data-testid="base-save-btn">{editing ? t("bases.editBase") : t("bases.createBase")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

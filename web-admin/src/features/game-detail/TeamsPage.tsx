@@ -128,11 +128,11 @@ export function TeamsPage() {
               <FormLabel htmlFor="teamName" required>
                 {t("teams.teamName")}
               </FormLabel>
-              <Input id="teamName" value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder={t("teams.teamNamePlaceholder")} required />
+              <Input id="teamName" value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder={t("teams.teamNamePlaceholder")} required data-testid="team-name-input" />
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>{t("common.cancel")}</Button>
-              <Button type="submit" loading={createTeam.isPending}>{t("common.create")}</Button>
+              <Button type="submit" loading={createTeam.isPending} data-testid="team-save-btn">{t("common.create")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

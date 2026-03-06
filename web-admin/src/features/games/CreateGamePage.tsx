@@ -58,7 +58,7 @@ export function CreateGamePage() {
               <FormLabel htmlFor="name" required>
                 {t("games.gameName")}
               </FormLabel>
-              <Input id="name" placeholder={t("games.gameNamePlaceholder")} value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} required />
+              <Input id="name" placeholder={t("games.gameNamePlaceholder")} value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} required data-testid="game-name-input" />
             </div>
             <div className="space-y-2">
               <FormLabel htmlFor="description" optional>
@@ -125,7 +125,7 @@ export function CreateGamePage() {
             </div>
             <div className="flex justify-end gap-2 pt-4">
               <Button type="button" variant="outline" onClick={() => navigate("/games")}>{t("common.cancel")}</Button>
-              <Button type="submit" disabled={createGame.isPending}>{createGame.isPending ? t("games.creating") : t("games.createGame")}</Button>
+              <Button type="submit" disabled={createGame.isPending} data-testid="game-save-btn">{createGame.isPending ? t("games.creating") : t("games.createGame")}</Button>
             </div>
           </form>
         </CardContent>
