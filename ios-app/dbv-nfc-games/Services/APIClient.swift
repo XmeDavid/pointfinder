@@ -259,6 +259,128 @@ actor APIClient {
         )
     }
 
+    // MARK: - Operator Game CRUD
+
+    func createGame(request: CreateGameRequest, token: String) async throws -> Game {
+        try await post("/api/games", body: request, token: token)
+    }
+
+    func updateGame(gameId: UUID, request: UpdateGameRequest, token: String) async throws -> Game {
+        try await put("/api/games/\(gameId)", body: request, token: token)
+    }
+
+    func updateGameStatus(gameId: UUID, request: UpdateGameStatusRequest, token: String) async throws -> Game {
+        try await patch("/api/games/\(gameId)/status", body: request, token: token)
+    }
+
+    func deleteGame(gameId: UUID, token: String) async throws {
+        try await deleteVoid("/api/games/\(gameId)", token: token)
+    }
+
+    // MARK: - Operator Base CRUD
+
+    func createBase(gameId: UUID, request: CreateBaseRequest, token: String) async throws -> Base {
+        try await post("/api/games/\(gameId)/bases", body: request, token: token)
+    }
+
+    func updateBase(gameId: UUID, baseId: UUID, request: UpdateBaseRequest, token: String) async throws -> Base {
+        try await put("/api/games/\(gameId)/bases/\(baseId)", body: request, token: token)
+    }
+
+    func deleteBase(gameId: UUID, baseId: UUID, token: String) async throws {
+        try await deleteVoid("/api/games/\(gameId)/bases/\(baseId)", token: token)
+    }
+
+    // MARK: - Operator Challenge CRUD
+
+    func createChallenge(gameId: UUID, request: CreateChallengeRequest, token: String) async throws -> Challenge {
+        try await post("/api/games/\(gameId)/challenges", body: request, token: token)
+    }
+
+    func updateChallenge(gameId: UUID, challengeId: UUID, request: UpdateChallengeRequest, token: String) async throws -> Challenge {
+        try await put("/api/games/\(gameId)/challenges/\(challengeId)", body: request, token: token)
+    }
+
+    func deleteChallenge(gameId: UUID, challengeId: UUID, token: String) async throws {
+        try await deleteVoid("/api/games/\(gameId)/challenges/\(challengeId)", token: token)
+    }
+
+    // MARK: - Operator Team CRUD
+
+    func createTeam(gameId: UUID, request: CreateTeamRequest, token: String) async throws -> Team {
+        try await post("/api/games/\(gameId)/teams", body: request, token: token)
+    }
+
+    func updateTeam(gameId: UUID, teamId: UUID, request: UpdateTeamRequest, token: String) async throws -> Team {
+        try await put("/api/games/\(gameId)/teams/\(teamId)", body: request, token: token)
+    }
+
+    func deleteTeam(gameId: UUID, teamId: UUID, token: String) async throws {
+        try await deleteVoid("/api/games/\(gameId)/teams/\(teamId)", token: token)
+    }
+
+    func getTeamPlayers(gameId: UUID, teamId: UUID, token: String) async throws -> [PlayerResponse] {
+        try await get("/api/games/\(gameId)/teams/\(teamId)/players", token: token)
+    }
+
+    func removePlayer(gameId: UUID, teamId: UUID, playerId: UUID, token: String) async throws {
+        try await deleteVoid("/api/games/\(gameId)/teams/\(teamId)/players/\(playerId)", token: token)
+    }
+
+    // MARK: - Notifications
+
+    func getNotifications(gameId: UUID, token: String) async throws -> [OperatorNotificationResponse] {
+        try await get("/api/games/\(gameId)/notifications", token: token)
+    }
+
+    func sendNotification(gameId: UUID, request: SendNotificationRequest, token: String) async throws -> OperatorNotificationResponse {
+        try await post("/api/games/\(gameId)/notifications", body: request, token: token)
+    }
+
+    // MARK: - Operators & Invites
+
+    func getGameOperators(gameId: UUID, token: String) async throws -> [OperatorUserResponse] {
+        try await get("/api/games/\(gameId)/operators", token: token)
+    }
+
+    func getGameInvites(gameId: UUID, token: String) async throws -> [InviteResponse] {
+        try await get("/api/games/\(gameId)/invites", token: token)
+    }
+
+    func createInvite(request: InviteRequest, token: String) async throws -> InviteResponse {
+        try await post("/api/invites", body: request, token: token)
+    }
+
+    // MARK: - Team Variables
+
+    func getGameVariables(gameId: UUID, token: String) async throws -> TeamVariablesResponse {
+        try await get("/api/games/\(gameId)/variables", token: token)
+    }
+
+    func saveGameVariables(gameId: UUID, request: TeamVariablesRequest, token: String) async throws -> TeamVariablesResponse {
+        try await put("/api/games/\(gameId)/variables", body: request, token: token)
+    }
+
+    // MARK: - Monitoring
+
+    func getLeaderboard(gameId: UUID, token: String) async throws -> [LeaderboardEntry] {
+        try await get("/api/games/\(gameId)/monitoring/leaderboard", token: token)
+    }
+
+    func getActivity(gameId: UUID, token: String) async throws -> [ActivityEvent] {
+        try await get("/api/games/\(gameId)/monitoring/activity", token: token)
+    }
+
+    // MARK: - Export/Import
+
+    func exportGame(gameId: UUID, token: String) async throws -> GameExportDto {
+        try await get("/api/games/\(gameId)/export", token: token)
+    }
+
+    func importGame(request: ImportGameRequest, token: String) async throws -> Game {
+        try await post("/api/games/import", body: request, token: token)
+    }
+
     // MARK: - HTTP Methods
 
     private func get<T: Decodable>(_ path: String, token: String? = nil) async throws -> T {

@@ -9,6 +9,14 @@ struct OperatorGameView: View {
 
     @State private var bases: [Base] = []
     @State private var isLoading = true
+    @State private var selectedTab = 0
+    @State private var gameStatus: String
+
+    init(game: Game, onBack: @escaping () -> Void) {
+        self.game = game
+        self.onBack = onBack
+        self._gameStatus = State(initialValue: game.status)
+    }
 
     private var token: String? {
         if case .userOperator(let token, _, _) = appState.authType {
@@ -24,45 +32,47 @@ struct OperatorGameView: View {
                     ProgressView(locale.t("operator.loading"))
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if bases.isEmpty {
-                ContentUnavailableView(
-                    locale.t("operator.noBases"),
-                    systemImage: "mappin.slash",
-                    description: Text(locale.t("operator.noBasesDesc"))
-                )
             } else {
-                TabView {
-                    // Live Map tab
+                TabView(selection: $selectedTab) {
+                    // Tab 0: Map (always)
                     if let token = token {
                         OperatorMapView(gameId: game.id, token: token, tileSource: game.tileSource, bases: $bases)
                             .tabItem {
                                 Label(locale.t("operator.liveMap"), systemImage: "map.fill")
                             }
+                            .tag(0)
                     }
 
-                    // Submissions tab (live games only)
-                    if let token = token, game.status == "live" {
+                    // Tab 1: Setup (in setup) or Live (in live/ended)
+                    if gameStatus == "setup" {
+                        OperatorSetupHubView(game: game)
+                            .tabItem {
+                                Label(locale.t("operator.setup"), systemImage: "checklist")
+                            }
+                            .tag(1)
+                    } else {
+                        OperatorLiveView(game: game)
+                            .tabItem {
+                                Label(locale.t("operator.live"), systemImage: "chart.bar")
+                            }
+                            .tag(1)
+                    }
+
+                    // Tab 2: Submissions (always visible now)
+                    if let token = token {
                         OperatorSubmissionsView(gameId: game.id, token: token)
                             .tabItem {
-                                Label(locale.t("operator.submissions"), systemImage: "checklist")
+                                Label(locale.t("operator.submissions"), systemImage: "doc.text")
                             }
+                            .tag(2)
                     }
 
-                    // Bases / NFC Setup tab
-                    NavigationStack {
-                        BasesListView(game: game, bases: $bases)
-                            .navigationTitle(locale.t("operator.bases"))
-                            .navigationBarTitleDisplayMode(.inline)
-                    }
-                    .tabItem {
-                        Label(locale.t("operator.bases"), systemImage: "mappin.and.ellipse")
-                    }
-
-                    // Settings tab (back to game list, logout)
-                    OperatorSettingsView(game: game, onBack: onBack)
+                    // Tab 3: More
+                    OperatorMoreView(game: game, onBack: onBack)
                         .tabItem {
-                            Label(locale.t("tabs.settings"), systemImage: "gearshape.fill")
+                            Label(locale.t("operator.more"), systemImage: "ellipsis")
                         }
+                        .tag(3)
                 }
             }
         }
@@ -74,6 +84,15 @@ struct OperatorGameView: View {
         }
         .onDisappear {
             appState.disconnectRealtime()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .mobileRealtimeEvent)) { notification in
+            guard let rawGameId = notification.userInfo?["gameId"] as? String,
+                  UUID(uuidString: rawGameId) == game.id,
+                  let type = notification.userInfo?["type"] as? String,
+                  type == "game_status",
+                  let data = notification.userInfo?["data"] as? [String: Any],
+                  let newStatus = data["status"] as? String else { return }
+            gameStatus = newStatus
         }
     }
 
