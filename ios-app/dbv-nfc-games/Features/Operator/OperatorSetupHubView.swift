@@ -176,9 +176,7 @@ struct OperatorSetupHubView: View {
                 Text(locale.t("operator.goLiveConfirmMessage"))
             }
             .navigationDestination(isPresented: $showBases) {
-                // Placeholder — will be replaced by BasesManagementView in Task 13
-                Text(locale.t("operator.bases"))
-                    .navigationTitle(locale.t("operator.bases"))
+                BasesManagementView(game: game)
             }
             .navigationDestination(isPresented: $showChallenges) {
                 // Placeholder — will be replaced by ChallengesListView in Task 17
