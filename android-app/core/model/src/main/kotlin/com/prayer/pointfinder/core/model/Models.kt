@@ -125,7 +125,7 @@ data class Challenge(
     val points: Int,
     val unlocksBaseId: EntityId? = null,
     val autoValidate: Boolean = false,
-    val correctAnswer: List<String> = emptyList(),
+    val correctAnswer: List<String>? = null,
     val locationBound: Boolean = false,
 )
 
