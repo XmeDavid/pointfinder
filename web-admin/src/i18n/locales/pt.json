@@ -42,6 +42,8 @@
     "password": "Palavra-passe",
     "enterPassword": "Introduza a palavra-passe",
     "invalidCredentials": "Email ou palavra-passe inválidos",
+    "tooManyAttempts": "Demasiadas tentativas de login. Aguarde um momento e tente novamente.",
+    "serverError": "Erro no servidor. Tente novamente mais tarde.",
     "demoAccounts": "Contas de demonstração:",
     "demoAdmin": "Admin: admin@pointfinder.dev / admin",
     "demoOperator": "Operador: operator@pointfinder.dev / operator",
