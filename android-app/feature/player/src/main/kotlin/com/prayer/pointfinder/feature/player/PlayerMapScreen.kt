@@ -103,8 +103,8 @@ fun PlayerMapScreen(
         }
     }
 
-    // Update style when tileSource changes
-    LaunchedEffect(map, tileSource) {
+    // Update style when tileSource or dark mode changes
+    LaunchedEffect(map, tileSource, isDark) {
         map?.setStyle(Style.Builder().fromUri(TileSources.getResolvedStyleUrl(tileSource, isDark)))
     }
 
@@ -141,7 +141,7 @@ fun PlayerMapScreen(
             factory = {
                 mapView.apply {
                     getMapAsync { mapLibreMap ->
-                        mapLibreMap.setStyle(Style.Builder().fromUri(TileSources.getResolvedStyleUrl(tileSource, isDark)))
+                        // Style is set by LaunchedEffect(map, tileSource, isDark) — not here
                         // Push compass below the overlay buttons (12dp padding + ~48dp button height)
                         val compassMarginTop = (64 * context.resources.displayMetrics.density).toInt()
                         mapLibreMap.uiSettings.setCompassMargins(0, compassMarginTop, (12 * context.resources.displayMetrics.density).toInt(), 0)
