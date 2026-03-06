@@ -1,5 +1,6 @@
 // @scenarios P3, P13, P14
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { loginAsOperator } from '../../shared/web-helpers';
 import { createGame, deleteGame } from '../../shared/api-client';
 import { config } from '../../shared/config';
 import { throwawayGameFixture } from '../../shared/fixtures';
@@ -96,11 +97,3 @@ test.describe('Base management via web UI', () => {
     await expect(page.locator('text=Web Base To Delete')).not.toBeVisible({ timeout: 10_000 });
   });
 });
-
-async function loginAsOperator(page: Page) {
-  await page.goto('/login');
-  await page.getByTestId('login-email').fill(config.operatorEmail);
-  await page.getByTestId('login-password').fill(config.operatorPassword);
-  await page.getByTestId('login-submit').click();
-  await expect(page).toHaveURL(/\/games/, { timeout: 15_000 });
-}

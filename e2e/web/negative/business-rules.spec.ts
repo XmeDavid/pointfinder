@@ -1,5 +1,6 @@
 // @scenarios N7, N9, N10
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { loginAsOperator } from '../../shared/web-helpers';
 import {
   createGame,
   createBase,
@@ -232,11 +233,3 @@ test.describe('Business rules - negative', { tag: '@negative' }, () => {
     expect([400, 409, 422]).toContain(deleteRes.status);
   });
 });
-
-async function loginAsOperator(page: Page) {
-  await page.goto('/login');
-  await page.getByTestId('login-email').fill(config.operatorEmail);
-  await page.getByTestId('login-password').fill(config.operatorPassword);
-  await page.getByTestId('login-submit').click();
-  await expect(page).toHaveURL(/\/games/, { timeout: 15_000 });
-}

@@ -1,5 +1,6 @@
 // @scenarios P16
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { loginAsOperator } from '../../shared/web-helpers';
 import {
   exportGame,
   importGame,
@@ -127,11 +128,3 @@ test.describe('Export / Import via web UI', () => {
     expect(challengesRes.data.length).toBe(originalChallengesRes.data.length);
   });
 });
-
-async function loginAsOperator(page: Page) {
-  await page.goto('/login');
-  await page.getByTestId('login-email').fill(config.operatorEmail);
-  await page.getByTestId('login-password').fill(config.operatorPassword);
-  await page.getByTestId('login-submit').click();
-  await expect(page).toHaveURL(/\/games/, { timeout: 15_000 });
-}

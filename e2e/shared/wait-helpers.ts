@@ -1,3 +1,5 @@
+import * as api from './api-client';
+
 export async function waitForCondition(
   fn: () => Promise<boolean>,
   opts: { timeout?: number; interval?: number } = {},
@@ -14,38 +16,42 @@ export async function waitForCondition(
 }
 
 export async function waitForLeaderboardUpdate(
-  apiClient: { getLeaderboard: (gameId: string) => Promise<any[]> },
+  token: string,
   gameId: string,
   teamId: string,
   expectedMinPoints: number,
 ): Promise<void> {
   await waitForCondition(async () => {
-    const entries = await apiClient.getLeaderboard(gameId);
-    const team = entries.find((e: any) => e.teamId === teamId);
-    return team && team.points >= expectedMinPoints;
+    const { data } = await api.getLeaderboard(token, gameId);
+    if (!Array.isArray(data)) return false;
+    const team = data.find((e: any) => e.teamId === teamId || e.team?.id === teamId);
+    const points = team?.points ?? team?.totalPoints ?? team?.score ?? 0;
+    return points >= expectedMinPoints;
   });
 }
 
 export async function waitForSubmissionStatus(
-  apiClient: { getSubmissions: (gameId: string) => Promise<any[]> },
+  token: string,
   gameId: string,
   submissionId: string,
   expectedStatus: string,
 ): Promise<void> {
   await waitForCondition(async () => {
-    const subs = await apiClient.getSubmissions(gameId);
-    const sub = subs.find((s: any) => s.id === submissionId);
+    const { data } = await api.getSubmissions(token, gameId);
+    if (!Array.isArray(data)) return false;
+    const sub = data.find((s: any) => s.id === submissionId);
     return sub && sub.status === expectedStatus;
   });
 }
 
 export async function waitForActivityEvent(
-  apiClient: { getActivity: (gameId: string) => Promise<any[]> },
+  token: string,
   gameId: string,
   eventType: string,
 ): Promise<void> {
   await waitForCondition(async () => {
-    const events = await apiClient.getActivity(gameId);
-    return events.some((e: any) => e.type === eventType);
+    const { data } = await api.getActivity(token, gameId);
+    if (!Array.isArray(data)) return false;
+    return data.some((e: any) => e.type === eventType);
   });
 }
