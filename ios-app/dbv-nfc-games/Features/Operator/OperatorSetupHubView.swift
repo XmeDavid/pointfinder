@@ -13,11 +13,6 @@ struct OperatorSetupHubView: View {
     @State private var isLoading = true
     @State private var showGoLiveAlert = false
 
-    // Sub-navigation
-    @State private var showBases = false
-    @State private var showChallenges = false
-    @State private var showTeams = false
-
     private var token: String? {
         if case .userOperator(let token, _, _) = appState.authType {
             return token
@@ -99,50 +94,38 @@ struct OperatorSetupHubView: View {
 
                         // Manage section
                         Section(locale.t("operator.manage")) {
-                            Button {
-                                showBases = true
+                            NavigationLink {
+                                BasesManagementView(game: game)
                             } label: {
                                 HStack {
                                     Label(locale.t("operator.bases"), systemImage: "mappin.and.ellipse")
                                     Spacer()
                                     Text("(\(bases.count))")
                                         .foregroundStyle(.secondary)
-                                    Image(systemName: "chevron.right")
-                                        .font(.caption)
-                                        .foregroundStyle(.tertiary)
                                 }
                             }
-                            .foregroundStyle(.primary)
 
-                            Button {
-                                showChallenges = true
+                            NavigationLink {
+                                ChallengesManagementView(game: game)
                             } label: {
                                 HStack {
                                     Label(locale.t("operator.challenges"), systemImage: "questionmark.circle")
                                     Spacer()
                                     Text("(\(challenges.count))")
                                         .foregroundStyle(.secondary)
-                                    Image(systemName: "chevron.right")
-                                        .font(.caption)
-                                        .foregroundStyle(.tertiary)
                                 }
                             }
-                            .foregroundStyle(.primary)
 
-                            Button {
-                                showTeams = true
+                            NavigationLink {
+                                TeamsManagementView(game: game)
                             } label: {
                                 HStack {
                                     Label(locale.t("operator.teams"), systemImage: "person.3")
                                     Spacer()
                                     Text("(\(teams.count))")
                                         .foregroundStyle(.secondary)
-                                    Image(systemName: "chevron.right")
-                                        .font(.caption)
-                                        .foregroundStyle(.tertiary)
                                 }
                             }
-                            .foregroundStyle(.primary)
                         }
 
                         // Go Live button
@@ -174,15 +157,6 @@ struct OperatorSetupHubView: View {
                 Button(locale.t("common.cancel"), role: .cancel) {}
             } message: {
                 Text(locale.t("operator.goLiveConfirmMessage"))
-            }
-            .navigationDestination(isPresented: $showBases) {
-                BasesManagementView(game: game)
-            }
-            .navigationDestination(isPresented: $showChallenges) {
-                ChallengesManagementView(game: game)
-            }
-            .navigationDestination(isPresented: $showTeams) {
-                TeamsManagementView(game: game)
             }
         }
     }

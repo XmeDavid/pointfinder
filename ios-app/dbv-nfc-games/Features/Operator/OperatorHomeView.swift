@@ -69,18 +69,22 @@ struct OperatorHomeView: View {
             }
             .navigationTitle(locale.t("operator.myGames"))
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Menu {
+                        Button(role: .destructive) {
+                            appState.logout()
+                        } label: {
+                            Label(locale.t("operator.logout"), systemImage: "rectangle.portrait.and.arrow.right")
+                        }
+                    } label: {
+                        Image(systemName: "person.circle")
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showCreateGame = true
                     } label: {
                         Image(systemName: "plus")
-                    }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        appState.logout()
-                    } label: {
-                        Text(locale.t("operator.logout"))
                     }
                 }
             }

@@ -15,7 +15,7 @@ struct ChallengeEditView: View {
     @State private var title: String
     @State private var points: Int
     @State private var pointsText: String
-    @State private var descriptionHtml: String
+    @State private var descriptionText: String
     @State private var contentHtml: String
     @State private var completionContentHtml: String
     @State private var answerType: String
@@ -30,9 +30,11 @@ struct ChallengeEditView: View {
     @State private var editingField: EditableField?
     @State private var showAddAnswerAlert = false
     @State private var newAnswerText = ""
+    @State private var variableKeys: [String] = []
+    @State private var teams: [Team] = []
 
     enum EditableField: Identifiable {
-        case description, content, completionContent
+        case content, completionContent
         var id: Self { self }
     }
 
@@ -53,7 +55,7 @@ struct ChallengeEditView: View {
         self._title = State(initialValue: challenge.title)
         self._points = State(initialValue: challenge.points)
         self._pointsText = State(initialValue: String(challenge.points))
-        self._descriptionHtml = State(initialValue: challenge.description)
+        self._descriptionText = State(initialValue: challenge.description)
         self._contentHtml = State(initialValue: challenge.content)
         self._completionContentHtml = State(initialValue: challenge.completionContent ?? "")
         self._answerType = State(initialValue: challenge.answerType)
@@ -84,13 +86,14 @@ struct ChallengeEditView: View {
                 }
             }
 
-            // Content
+            // Description (plain text)
+            Section(locale.t("operator.description")) {
+                TextField(locale.t("operator.description"), text: $descriptionText, axis: .vertical)
+                    .lineLimit(2...6)
+            }
+
+            // Content (rich text)
             Section(locale.t("operator.content")) {
-                htmlEditorRow(
-                    label: locale.t("operator.description"),
-                    html: descriptionHtml,
-                    field: .description
-                )
                 htmlEditorRow(
                     label: locale.t("operator.content"),
                     html: contentHtml,
@@ -227,8 +230,18 @@ struct ChallengeEditView: View {
             RichTextEditorView(
                 title: titleForField(field),
                 initialHtml: htmlForField(field),
-                onDone: { html in setHtml(field, html) }
+                onDone: { html in setHtml(field, html) },
+                variables: variableKeys.isEmpty ? nil : variableKeys,
+                teams: teams.isEmpty ? nil : teams,
+                onCreateVariable: { name in
+                    if !variableKeys.contains(name) {
+                        variableKeys.append(name)
+                    }
+                }
             )
+        }
+        .task {
+            await loadVariablesAndTeams()
         }
     }
 
@@ -269,7 +282,6 @@ struct ChallengeEditView: View {
 
     private func titleForField(_ field: EditableField) -> String {
         switch field {
-        case .description: return locale.t("operator.description")
         case .content: return locale.t("operator.content")
         case .completionContent: return locale.t("operator.completionMessage")
         }
@@ -277,7 +289,6 @@ struct ChallengeEditView: View {
 
     private func htmlForField(_ field: EditableField) -> String {
         switch field {
-        case .description: return descriptionHtml
         case .content: return contentHtml
         case .completionContent: return completionContentHtml
         }
@@ -285,9 +296,23 @@ struct ChallengeEditView: View {
 
     private func setHtml(_ field: EditableField, _ html: String) {
         switch field {
-        case .description: descriptionHtml = html
         case .content: contentHtml = html
         case .completionContent: completionContentHtml = html
+        }
+    }
+
+    // MARK: - Data Loading
+
+    private func loadVariablesAndTeams() async {
+        guard let token else { return }
+        do {
+            async let variablesResult = appState.apiClient.getGameVariables(gameId: game.id, token: token)
+            async let teamsResult = appState.apiClient.getTeams(gameId: game.id, token: token)
+            let (v, t) = try await (variablesResult, teamsResult)
+            variableKeys = v.variables.map(\.key)
+            teams = t
+        } catch {
+            // Non-critical: editor still works without variables
         }
     }
 
@@ -303,7 +328,7 @@ struct ChallengeEditView: View {
                 challengeId: challenge.id,
                 request: UpdateChallengeRequest(
                     title: title,
-                    description: descriptionHtml,
+                    description: descriptionText,
                     content: contentHtml,
                     completionContent: completionContentHtml,
                     answerType: answerType,

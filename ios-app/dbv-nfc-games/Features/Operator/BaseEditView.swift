@@ -54,7 +54,7 @@ struct BaseEditView: View {
 
     var body: some View {
         Form {
-            // Map preview with pin
+            // Map with draggable pin (long-press to reposition)
             Section {
                 MapLibreMapView(
                     styleURL: TileSources.resolvedStyleURL(for: game.tileSource, isDark: colorScheme == .dark),
@@ -72,11 +72,28 @@ struct BaseEditView: View {
                             onTap: nil
                         )
                     ],
-                    fitCoordinates: [CLLocationCoordinate2D(latitude: lat, longitude: lng)]
+                    fitCoordinates: [CLLocationCoordinate2D(latitude: lat, longitude: lng)],
+                    onLongPress: { coordinate in
+                        lat = coordinate.latitude
+                        lng = coordinate.longitude
+                    }
                 )
                 .frame(height: 200)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+
+                Text(locale.t("operator.longPressToMovePin"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                HStack {
+                    Image(systemName: "location.fill")
+                        .foregroundStyle(.blue)
+                        .font(.caption)
+                    Text(String(format: "%.6f, %.6f", lat, lng))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
 
             // Name & Description
@@ -84,26 +101,6 @@ struct BaseEditView: View {
                 TextField(locale.t("operator.baseName"), text: $name)
                 TextField(locale.t("operator.baseDescription"), text: $description, axis: .vertical)
                     .lineLimit(2...4)
-            }
-
-            // Location
-            Section(locale.t("operator.location")) {
-                HStack {
-                    Text(locale.t("operator.latitude"))
-                    Spacer()
-                    TextField("", value: $lat, format: .number)
-                        .keyboardType(.decimalPad)
-                        .multilineTextAlignment(.trailing)
-                        .frame(width: 120)
-                }
-                HStack {
-                    Text(locale.t("operator.longitude"))
-                    Spacer()
-                    TextField("", value: $lng, format: .number)
-                        .keyboardType(.decimalPad)
-                        .multilineTextAlignment(.trailing)
-                        .frame(width: 120)
-                }
             }
 
             // Toggles
