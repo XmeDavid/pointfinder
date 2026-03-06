@@ -1,15 +1,12 @@
 // @scenarios P15
 import { test, expect } from '@playwright/test';
-import { login, refreshToken, getMe } from '../../shared/api-client';
-import { config } from '../../shared/config';
+import { refreshToken, getMe } from '../../shared/api-client';
+import { getOperatorToken, getOperatorRefreshToken } from '../../shared/auth';
 
 test.describe('Token Refresh - positive', () => {
   test('P15: refresh token returns working access token', async () => {
-    const loginRes = await login(config.operatorEmail, config.operatorPassword);
-    expect(loginRes.status).toBe(200);
-
-    const oldAccessToken = loginRes.data.accessToken;
-    const rt = loginRes.data.refreshToken;
+    const oldAccessToken = getOperatorToken();
+    const rt = getOperatorRefreshToken();
 
     const { status, data } = await refreshToken(rt);
     expect(status).toBe(200);
