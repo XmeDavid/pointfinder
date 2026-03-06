@@ -28,7 +28,12 @@ struct OperatorMapView: View {
     @State private var showBaseCreateSheet = false
     @State private var newBaseCoordinate: CLLocationCoordinate2D?
     @State private var centerTarget: CLLocationCoordinate2D?
+    @State private var mapFocusState: MapFocusState = .none
     @StateObject private var locationManager = LocationManagerHelper()
+
+    private enum MapFocusState {
+        case none, userLocation, allBases
+    }
 
     private let pollInterval: TimeInterval = 5.0
 
@@ -120,15 +125,29 @@ struct OperatorMapView: View {
                         }
 
                         Button {
-                            if let loc = locationManager.lastLocation {
-                                // Tiny jitter to force update when pressing multiple times
-                                centerTarget = CLLocationCoordinate2D(
-                                    latitude: loc.latitude + 0.00001 * Double.random(in: -1...1),
-                                    longitude: loc.longitude
-                                )
+                            switch mapFocusState {
+                            case .none, .allBases:
+                                if let loc = locationManager.lastLocation {
+                                    centerTarget = CLLocationCoordinate2D(
+                                        latitude: loc.latitude + 0.00001 * Double.random(in: -1...1),
+                                        longitude: loc.longitude
+                                    )
+                                    mapFocusState = .userLocation
+                                }
+                            case .userLocation:
+                                if !bases.isEmpty {
+                                    // Fit all bases — set centerTarget to the centroid with jitter
+                                    let avgLat = bases.map(\.lat).reduce(0, +) / Double(bases.count)
+                                    let avgLng = bases.map(\.lng).reduce(0, +) / Double(bases.count)
+                                    centerTarget = CLLocationCoordinate2D(
+                                        latitude: avgLat + 0.00001 * Double.random(in: -1...1),
+                                        longitude: avgLng
+                                    )
+                                    mapFocusState = .allBases
+                                }
                             }
                         } label: {
-                            Image(systemName: "location.fill")
+                            Image(systemName: locationButtonIcon)
                                 .font(.title3)
                                 .padding(10)
                                 .background(.ultraThinMaterial)
@@ -320,6 +339,14 @@ struct OperatorMapView: View {
     }
 
     // MARK: - Helpers
+
+    private var locationButtonIcon: String {
+        switch mapFocusState {
+        case .none: return "location"
+        case .userLocation: return "location.fill"
+        case .allBases: return "map"
+        }
+    }
 
     private func aggregateStatus(for base: Base) -> AggregateBaseStatus {
         let baseProgress = teamProgress.filter { $0.baseId == base.id }
