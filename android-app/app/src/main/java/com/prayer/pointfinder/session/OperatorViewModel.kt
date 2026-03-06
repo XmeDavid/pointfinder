@@ -2,6 +2,7 @@ package com.prayer.pointfinder.session
 
 import android.content.Context
 import android.nfc.Tag
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.prayer.pointfinder.core.data.repo.OperatorRepository
@@ -173,24 +174,26 @@ class OperatorViewModel @Inject constructor(
 
     private fun loadGameMeta(gameId: String) {
         viewModelScope.launch {
-            runCatching {
-                val teams = operatorRepository.gameTeams(gameId)
-                val challenges = operatorRepository.gameChallenges(gameId)
-                val assignments = operatorRepository.gameAssignments(gameId)
-                val variables = runCatching { operatorRepository.getGameVariables(gameId).variables }
-                    .getOrDefault(emptyList())
-                GameMeta(teams, challenges, assignments, variables)
-            }.onSuccess { meta ->
-                _state.value = _state.value.copy(
-                    teams = meta.teams,
-                    challenges = meta.challenges,
-                    assignments = meta.assignments,
-                    variables = meta.variables,
-                    authExpired = false,
-                )
-            }.onFailure { err ->
-                if (markAuthExpiredIfNeeded(err)) return@onFailure
-            }
+            val teams = runCatching { operatorRepository.gameTeams(gameId) }
+                .onFailure { Log.e("OperatorVM", "Failed to load teams", it) }
+                .getOrDefault(emptyList())
+            val challenges = runCatching { operatorRepository.gameChallenges(gameId) }
+                .onFailure { Log.e("OperatorVM", "Failed to load challenges", it) }
+                .getOrDefault(emptyList())
+            val assignments = runCatching { operatorRepository.gameAssignments(gameId) }
+                .onFailure { Log.e("OperatorVM", "Failed to load assignments", it) }
+                .getOrDefault(emptyList())
+            val variables = runCatching { operatorRepository.getGameVariables(gameId).variables }
+                .onFailure { Log.e("OperatorVM", "Failed to load variables", it) }
+                .getOrDefault(emptyList())
+
+            _state.value = _state.value.copy(
+                teams = teams,
+                challenges = challenges,
+                assignments = assignments,
+                variables = variables,
+                authExpired = false,
+            )
         }
     }
 
