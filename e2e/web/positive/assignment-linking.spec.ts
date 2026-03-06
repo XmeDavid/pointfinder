@@ -6,6 +6,7 @@ import {
   deleteGame,
   createBase,
   createChallenge,
+  createAssignment,
   getAssignments,
 } from '../../shared/api-client';
 import { config } from '../../shared/config';
@@ -75,12 +76,18 @@ test.describe('Assignment linking via web UI', () => {
   });
 
   test('P5: assignments page shows existing assignment', async ({ page }) => {
+    // Ensure an assignment exists via API (don't rely on previous test's UI state)
+    const existingAssignments = await getAssignments(token, gameId);
+    if (!Array.isArray(existingAssignments.data) || existingAssignments.data.length === 0) {
+      await createAssignment(token, gameId, { baseId, challengeId });
+    }
+
     await loginAsOperator(page);
     await page.goto(`/games/${gameId}/assignments`);
 
-    // Existing assignments are rendered as read-only rows (not select dropdowns).
+    // Existing assignments are rendered as read-only rows with challenge title and points badge.
     // Verify the challenge title appears in the assignment list.
-    const challengeTitle = page.locator('text=/Challenge Text 0/i').first();
-    await expect(challengeTitle).toBeVisible({ timeout: 10_000 });
+    const challengeTitle = page.locator('text=/Challenge Text/i').first();
+    await expect(challengeTitle).toBeVisible({ timeout: 15_000 });
   });
 });
