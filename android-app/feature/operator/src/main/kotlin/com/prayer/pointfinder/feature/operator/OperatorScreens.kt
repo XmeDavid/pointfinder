@@ -217,12 +217,14 @@ fun OperatorGameScaffold(
                         label = { Text(stringResource(R.string.label_live)) },
                     )
                 }
-                NavigationBarItem(
-                    selected = selectedTab == OperatorTab.SUBMISSIONS,
-                    onClick = { onTabSelected(OperatorTab.SUBMISSIONS) },
-                    icon = { androidx.compose.material3.Icon(Icons.Default.List, contentDescription = null) },
-                    label = { Text(stringResource(R.string.label_submissions)) },
-                )
+                if (!isSetupMode) {
+                    NavigationBarItem(
+                        selected = selectedTab == OperatorTab.SUBMISSIONS,
+                        onClick = { onTabSelected(OperatorTab.SUBMISSIONS) },
+                        icon = { androidx.compose.material3.Icon(Icons.Default.List, contentDescription = null) },
+                        label = { Text(stringResource(R.string.label_submissions)) },
+                    )
+                }
                 NavigationBarItem(
                     selected = selectedTab == OperatorTab.MORE,
                     onClick = { onTabSelected(OperatorTab.MORE) },
