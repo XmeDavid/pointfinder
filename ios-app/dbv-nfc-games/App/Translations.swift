@@ -212,6 +212,15 @@ enum Translations {
         "operator.live": "Live",
         "operator.more": "More",
         "operator.createGame": "Create Game",
+        "operator.gameName": "Game Name",
+        "operator.gameDescription": "Description",
+        "operator.startFrom": "Start From",
+        "operator.emptyGame": "Empty Game",
+        "operator.importFromFile": "Import from File",
+        "operator.selectFile": "Select JSON File",
+        "operator.fileLoaded": "File loaded",
+        "operator.fileAccessError": "Could not access file",
+        "common.create": "Create",
 
         // Operator submissions
         "submissions.reviewTitle": "Review Submission",
@@ -484,6 +493,15 @@ enum Translations {
         "operator.live": "Em Direto",
         "operator.more": "Mais",
         "operator.createGame": "Criar Jogo",
+        "operator.gameName": "Nome do Jogo",
+        "operator.gameDescription": "Descri\u{00E7}\u{00E3}o",
+        "operator.startFrom": "Come\u{00E7}ar De",
+        "operator.emptyGame": "Jogo Vazio",
+        "operator.importFromFile": "Importar de Ficheiro",
+        "operator.selectFile": "Selecionar Ficheiro JSON",
+        "operator.fileLoaded": "Ficheiro carregado",
+        "operator.fileAccessError": "N\u{00E3}o foi poss\u{00ED}vel aceder ao ficheiro",
+        "common.create": "Criar",
 
         // Operator submissions
         "submissions.reviewTitle": "Rever Submissão",
@@ -756,6 +774,15 @@ enum Translations {
         "operator.live": "Live",
         "operator.more": "Mehr",
         "operator.createGame": "Spiel erstellen",
+        "operator.gameName": "Spielname",
+        "operator.gameDescription": "Beschreibung",
+        "operator.startFrom": "Starten Von",
+        "operator.emptyGame": "Leeres Spiel",
+        "operator.importFromFile": "Aus Datei importieren",
+        "operator.selectFile": "JSON-Datei ausw\u{00E4}hlen",
+        "operator.fileLoaded": "Datei geladen",
+        "operator.fileAccessError": "Auf Datei konnte nicht zugegriffen werden",
+        "common.create": "Erstellen",
 
         // Operator submissions
         "submissions.reviewTitle": "Einreichung prüfen",
