@@ -10,6 +10,7 @@ struct TeamsManagementView: View {
     @State private var teams: [Team] = []
     @State private var isLoading = true
     @State private var showCreateTeam = false
+    @State private var showManageVariables = false
     @State private var copiedTeamId: UUID?
     @State private var showCopiedToast = false
 
@@ -87,7 +88,13 @@ struct TeamsManagementView: View {
                         }
                     }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    Button {
+                        showManageVariables = true
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                    }
+
                     Button {
                         showCreateTeam = true
                     } label: {
@@ -115,6 +122,9 @@ struct TeamsManagementView: View {
                 TeamCreateSheet(game: game) { newTeam in
                     teams.append(newTeam)
                 }
+            }
+            .sheet(isPresented: $showManageVariables) {
+                TeamVariablesManagementSheet(game: game, teams: teams)
             }
             .task {
                 await loadData()

@@ -145,10 +145,152 @@ final class APIClientAuthRegressionTests: XCTestCase {
         XCTAssertTrue(didTriggerAfterFailure)
     }
 
+    func testGameVariableRoutesUseTeamVariableEndpoints() async throws {
+        let gameId = UUID()
+        let session = makeSession()
+        let client = APIClient(baseURL: "https://example.test", session: session)
+        let requestPayload = TeamVariablesRequest(
+            variables: [
+                TeamVariable(key: "greeting", teamValues: ["team-1": "hello"])
+            ]
+        )
+
+        let lock = NSLock()
+        var capturedRequests: [(path: String, method: String, body: Data?)] = []
+
+        MockURLProtocol.requestHandler = { request in
+            lock.lock()
+            capturedRequests.append((request.url?.path ?? "", request.httpMethod ?? "", Self.requestBody(from: request)))
+            lock.unlock()
+
+            if request.url?.path == "/api/games/\(gameId)/team-variables", request.httpMethod == "GET" {
+                return Self.httpResponse(
+                    request: request,
+                    statusCode: 200,
+                    jsonBody: #"{"variables":[]}"#
+                )
+            }
+
+            if request.url?.path == "/api/games/\(gameId)/team-variables", request.httpMethod == "PUT" {
+                return Self.httpResponse(
+                    request: request,
+                    statusCode: 200,
+                    jsonBody: #"{"variables":[{"key":"greeting","teamValues":{"team-1":"hello"}}]}"#
+                )
+            }
+
+            return Self.httpResponse(
+                request: request,
+                statusCode: 404,
+                jsonBody: #"{"message":"not found"}"#
+            )
+        }
+
+        _ = try await client.getGameVariables(gameId: gameId, token: "token")
+        _ = try await client.saveGameVariables(gameId: gameId, request: requestPayload, token: "token")
+
+        lock.lock()
+        let requests = capturedRequests
+        lock.unlock()
+
+        XCTAssertEqual(requests.filter { $0.path == "/api/games/\(gameId)/team-variables" && $0.method == "GET" }.count, 1)
+        XCTAssertEqual(requests.filter { $0.path == "/api/games/\(gameId)/team-variables" && $0.method == "PUT" }.count, 1)
+
+        let body = try XCTUnwrap(requests.first { $0.method == "PUT" }?.body)
+        let decoded = try JSONDecoder().decode(TeamVariablesRequest.self, from: body)
+        XCTAssertEqual(decoded.variables, requestPayload.variables)
+    }
+
+    func testChallengeVariableRoutesUseChallengeTeamVariableEndpoints() async throws {
+        let gameId = UUID()
+        let challengeId = UUID()
+        let session = makeSession()
+        let client = APIClient(baseURL: "https://example.test", session: session)
+        let requestPayload = TeamVariablesRequest(
+            variables: [
+                TeamVariable(key: "hint", teamValues: ["team-2": "north"])
+            ]
+        )
+
+        let lock = NSLock()
+        var capturedRequests: [(path: String, method: String, body: Data?)] = []
+
+        MockURLProtocol.requestHandler = { request in
+            lock.lock()
+            capturedRequests.append((request.url?.path ?? "", request.httpMethod ?? "", Self.requestBody(from: request)))
+            lock.unlock()
+
+            if request.url?.path == "/api/games/\(gameId)/challenges/\(challengeId)/team-variables", request.httpMethod == "GET" {
+                return Self.httpResponse(
+                    request: request,
+                    statusCode: 200,
+                    jsonBody: #"{"variables":[]}"#
+                )
+            }
+
+            if request.url?.path == "/api/games/\(gameId)/challenges/\(challengeId)/team-variables", request.httpMethod == "PUT" {
+                return Self.httpResponse(
+                    request: request,
+                    statusCode: 200,
+                    jsonBody: #"{"variables":[{"key":"hint","teamValues":{"team-2":"north"}}]}"#
+                )
+            }
+
+            return Self.httpResponse(
+                request: request,
+                statusCode: 404,
+                jsonBody: #"{"message":"not found"}"#
+            )
+        }
+
+        _ = try await client.getChallengeVariables(gameId: gameId, challengeId: challengeId, token: "token")
+        _ = try await client.saveChallengeVariables(gameId: gameId, challengeId: challengeId, request: requestPayload, token: "token")
+
+        lock.lock()
+        let requests = capturedRequests
+        lock.unlock()
+
+        XCTAssertEqual(requests.filter { $0.path == "/api/games/\(gameId)/challenges/\(challengeId)/team-variables" && $0.method == "GET" }.count, 1)
+        XCTAssertEqual(requests.filter { $0.path == "/api/games/\(gameId)/challenges/\(challengeId)/team-variables" && $0.method == "PUT" }.count, 1)
+
+        let body = try XCTUnwrap(requests.first { $0.method == "PUT" }?.body)
+        let decoded = try JSONDecoder().decode(TeamVariablesRequest.self, from: body)
+        XCTAssertEqual(decoded.variables, requestPayload.variables)
+    }
+
     private func makeSession() -> URLSession {
         let config = URLSessionConfiguration.ephemeral
         config.protocolClasses = [MockURLProtocol.self]
         return URLSession(configuration: config)
+    }
+
+    private static func requestBody(from request: URLRequest) -> Data? {
+        if let body = request.httpBody {
+            return body
+        }
+
+        guard let stream = request.httpBodyStream else {
+            return nil
+        }
+
+        stream.open()
+        defer { stream.close() }
+
+        var data = Data()
+        var buffer = [UInt8](repeating: 0, count: 1024)
+
+        while stream.hasBytesAvailable {
+            let read = stream.read(&buffer, maxLength: buffer.count)
+            if read < 0 {
+                return nil
+            }
+            if read == 0 {
+                break
+            }
+            data.append(buffer, count: read)
+        }
+
+        return data.isEmpty ? nil : data
     }
 
     private static func httpResponse(

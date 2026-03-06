@@ -20,6 +20,7 @@ struct MapLibreMapView: UIViewRepresentable {
     let fitCoordinates: [CLLocationCoordinate2D]
     var connections: [(CLLocationCoordinate2D, CLLocationCoordinate2D)] = []
     var showsUserLocation: Bool = false
+    var onTap: ((CLLocationCoordinate2D) -> Void)? = nil
     var onLongPress: ((CLLocationCoordinate2D) -> Void)? = nil
     var centerOnCoordinate: CLLocationCoordinate2D? = nil
 
@@ -37,6 +38,10 @@ struct MapLibreMapView: UIViewRepresentable {
         if showsUserLocation {
             mapView.showsUserLocation = true
         }
+
+        let tap = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleTap(_:)))
+        tap.cancelsTouchesInView = false
+        mapView.addGestureRecognizer(tap)
 
         let longPress = UILongPressGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleLongPress(_:)))
         longPress.minimumPressDuration = 0.5
@@ -57,6 +62,7 @@ struct MapLibreMapView: UIViewRepresentable {
         // Update annotations
         let coordinator = context.coordinator
         coordinator.parent = self
+        coordinator.onTap = onTap
         coordinator.onLongPress = onLongPress
 
         // Remove old annotations (keep user location annotation)
@@ -159,12 +165,22 @@ struct MapLibreMapView: UIViewRepresentable {
         var parent: MapLibreMapView
         var annotationItems: [MapAnnotationItem] = []
         var hasInitialized = false
+        var onTap: ((CLLocationCoordinate2D) -> Void)?
         var onLongPress: ((CLLocationCoordinate2D) -> Void)?
         var lastCenterTarget: CLLocationCoordinate2D?
 
         init(_ parent: MapLibreMapView) {
             self.parent = parent
+            self.onTap = parent.onTap
             self.onLongPress = parent.onLongPress
+        }
+
+        @objc func handleTap(_ gesture: UITapGestureRecognizer) {
+            guard gesture.state == .ended else { return }
+            guard let mapView = gesture.view as? MLNMapView else { return }
+            let point = gesture.location(in: mapView)
+            let coordinate = mapView.convert(point, toCoordinateFrom: mapView)
+            onTap?(coordinate)
         }
 
         @objc func handleLongPress(_ gesture: UILongPressGestureRecognizer) {

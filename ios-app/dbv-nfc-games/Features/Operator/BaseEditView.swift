@@ -54,7 +54,7 @@ struct BaseEditView: View {
 
     var body: some View {
         Form {
-            // Map with draggable pin (long-press to reposition)
+            // Map with draggable pin (tap to reposition)
             Section {
                 MapLibreMapView(
                     styleURL: TileSources.resolvedStyleURL(for: game.tileSource, isDark: colorScheme == .dark),
@@ -65,15 +65,13 @@ struct BaseEditView: View {
                             title: name,
                             subtitle: nil,
                             view: AnyView(
-                                Image(systemName: "mappin.circle.fill")
-                                    .font(.title)
-                                    .foregroundStyle(.red)
+                                BaseAnnotationView(status: .notVisited, name: name)
                             ),
                             onTap: nil
                         )
                     ],
                     fitCoordinates: [CLLocationCoordinate2D(latitude: lat, longitude: lng)],
-                    onLongPress: { coordinate in
+                    onTap: { coordinate in
                         lat = coordinate.latitude
                         lng = coordinate.longitude
                     }
@@ -82,7 +80,7 @@ struct BaseEditView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
 
-                Text(locale.t("operator.longPressToMovePin"))
+                Text(locale.t("operator.tapToMovePin"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
 

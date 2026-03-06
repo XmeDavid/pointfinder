@@ -45,6 +45,56 @@ struct PointFinderTests {
         #expect(AppConfiguration.deviceIdKey.hasPrefix("com.prayer.pointfinder."))
     }
 
+    @Test func normalizedTeamVariablesAddsMissingCurrentTeamsWithoutDroppingExistingValues() async throws {
+        let team1 = Team(id: UUID(), gameId: UUID(), name: "Red", joinCode: nil, color: "#ff0000")
+        let team2 = Team(id: UUID(), gameId: team1.gameId, name: "Blue", joinCode: nil, color: "#0000ff")
+        let variables = [
+            TeamVariable(
+                key: "greeting",
+                teamValues: [
+                    team1.id.uuidString: "hello",
+                    "archived-team": "legacy"
+                ]
+            )
+        ]
+
+        let normalized = normalizedTeamVariables(variables, teams: [team1, team2])
+
+        #expect(normalized.count == 1)
+        #expect(normalized[0].teamValues[team1.id.uuidString] == "hello")
+        #expect(normalized[0].teamValues[team2.id.uuidString] == "")
+        #expect(normalized[0].teamValues["archived-team"] == nil)
+    }
+
+    @Test func teamVariableKeyValidationMatchesBackendRules() async throws {
+        #expect(teamVariableKeyIsValid("Greeting"))
+        #expect(teamVariableKeyIsValid("greeting_2"))
+        #expect(!teamVariableKeyIsValid("2greeting"))
+        #expect(!teamVariableKeyIsValid("greeting-value"))
+        #expect(!teamVariableKeyIsValid("greeting value"))
+    }
+
+    @Test func resolveVariablePreviewUsesChallengeValuesOverGameValues() async throws {
+        let teamId = UUID().uuidString
+        let html = "<p>{{greeting}} {{target}} {{unknown}}</p>"
+        let gameVariables = [
+            TeamVariable(key: "greeting", teamValues: [teamId: "Hello"]),
+            TeamVariable(key: "target", teamValues: [teamId: "World"])
+        ]
+        let challengeVariables = [
+            TeamVariable(key: "target", teamValues: [teamId: "Team"])
+        ]
+
+        let resolved = resolveVariablePreview(
+            template: html,
+            gameVariables: gameVariables,
+            challengeVariables: challengeVariables,
+            teamId: teamId
+        )
+
+        #expect(resolved == "<p>Hello Team {{unknown}}</p>")
+    }
+
     // MARK: - DateFormatting
 
     @Test func dateFormattingParsesISO8601WithFractionalSeconds() async throws {
