@@ -82,16 +82,17 @@ test.describe('Game setup via web UI', () => {
     await createTeam(token, gameId, { name: 'Web Setup Team' });
 
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/settings`);
+    await page.goto(`/games/${gameId}/overview`);
 
-    // Look for an activate/go-live button
-    const activateBtn = page.locator('button', { hasText: /activate|go live|start/i });
+    // The "Go Live" button is on the overview page (not settings)
+    const activateBtn = page.locator('button', { hasText: /go live/i });
     await expect(activateBtn).toBeVisible({ timeout: 10_000 });
+    await expect(activateBtn).toBeEnabled({ timeout: 5_000 });
     await activateBtn.click();
 
     // Confirm dialog if any
-    const confirmBtn = page.locator('button', { hasText: /confirm|yes|activate/i });
-    if (await confirmBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
+    const confirmBtn = page.locator('button', { hasText: /confirm|yes/i });
+    if (await confirmBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
       await confirmBtn.click();
     }
 

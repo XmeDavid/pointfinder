@@ -1,66 +1,76 @@
 import { expect, type Page } from '@playwright/test';
+import { config } from './config';
 import { getOperatorToken, getOperatorRefreshToken, getOperatorUser, refreshAndStoreTokens } from './auth';
 
 /** Force English locale so hostname detection (.pt → Portuguese) doesn't interfere with tests. */
 export async function forceEnglishLocale(page: Page) {
-  // addInitScript runs before any JS on every navigation — ideal for locale
   await page.addInitScript(() => {
     localStorage.setItem('pointfinder-lang', 'en');
   });
 }
 
-// Cache refresh time so we don't call refresh for every single test
-let lastRefreshTime = 0;
-const REFRESH_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
-
 /**
- * Helper to inject auth tokens into localStorage via page.evaluate().
- * Requires the page to already be on the correct domain.
- */
-async function injectAuth(page: Page, accessToken: string, refreshToken: string, user: unknown) {
-  await page.evaluate(
-    ({ accessToken, refreshToken, user }) => {
-      localStorage.setItem('pointfinder-lang', 'en');
-      localStorage.setItem(
-        'pointfinder-auth',
-        JSON.stringify({
-          state: { user, refreshToken, accessToken, isAuthenticated: true },
-          version: 0,
-        }),
-      );
-    },
-    { accessToken, refreshToken, user },
-  );
-}
-
-/**
- * Inject operator auth tokens into localStorage so the app hydrates as
- * authenticated. This avoids hitting the login API (and nginx rate limits)
- * on every test. Refreshes the token periodically to avoid expiry.
+ * Log in as operator via the real login form.
+ * Falls back to token injection if the form login fails (e.g. rate limiting).
+ *
+ * IMPORTANT: We do NOT use addInitScript for auth tokens. The SPA rotates
+ * refresh tokens on each use, so addInitScript would overwrite the latest
+ * rotated token with stale ones on every navigation, causing auth failures.
+ * Instead, we let the SPA manage its own token lifecycle via Zustand persist.
  */
 export async function loginAsOperator(page: Page) {
-  // Refresh tokens if they might be stale
-  if (Date.now() - lastRefreshTime > REFRESH_INTERVAL_MS) {
-    await refreshAndStoreTokens();
-    lastRefreshTime = Date.now();
+  // Set locale for all navigations (this is safe — no token rotation concern)
+  await page.addInitScript(() => {
+    localStorage.setItem('pointfinder-lang', 'en');
+  });
+
+  // Attempt form login
+  await page.goto('/login');
+  await page.getByRole('textbox', { name: /email/i }).fill(config.operatorEmail);
+  await page.getByRole('textbox', { name: /password/i }).fill(config.operatorPassword);
+
+  const loginResponsePromise = page.waitForResponse(
+    (resp) => resp.url().includes('/auth/login'),
+  );
+
+  await page.getByRole('button', { name: /sign in/i }).click();
+
+  let loggedIn = false;
+
+  try {
+    const resp = await loginResponsePromise;
+
+    if (resp.status() === 200) {
+      await expect(page).toHaveURL(/\/games/, { timeout: 10_000 });
+      loggedIn = true;
+    }
+    // Non-200 (e.g. 429 rate limit) — fall through to token injection
+  } catch {
+    // Form login failed — fall back to token injection
   }
 
-  // Navigate to base URL to establish domain context for localStorage
-  await page.goto('/', { waitUntil: 'commit' });
-
-  // Inject tokens directly via evaluate (more reliable than addInitScript)
-  await injectAuth(page, getOperatorToken(), getOperatorRefreshToken(), getOperatorUser());
-
-  await page.goto('/games');
-
-  // If we ended up on login, force a full token refresh and retry
-  if (page.url().includes('/login')) {
+  if (!loggedIn) {
     await refreshAndStoreTokens();
-    lastRefreshTime = Date.now();
 
-    await injectAuth(page, getOperatorToken(), getOperatorRefreshToken(), getOperatorUser());
+    await page.evaluate(
+      ({ accessToken, refreshToken, user }) => {
+        localStorage.setItem('pointfinder-lang', 'en');
+        localStorage.setItem(
+          'pointfinder-auth',
+          JSON.stringify({
+            state: { user, refreshToken, accessToken, isAuthenticated: true },
+            version: 0,
+          }),
+        );
+      },
+      {
+        accessToken: getOperatorToken(),
+        refreshToken: getOperatorRefreshToken(),
+        user: getOperatorUser(),
+      },
+    );
+
     await page.goto('/games');
+    await expect(page).toHaveURL(/\/games/, { timeout: 15_000 });
   }
-
-  await expect(page).toHaveURL(/\/games/, { timeout: 15_000 });
 }
