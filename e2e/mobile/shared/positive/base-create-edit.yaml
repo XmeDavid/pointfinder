@@ -34,13 +34,10 @@ appId: ${APP_ID}
     id: "base-name-input"
 - inputText: "${CREATED_BASE_NAME:-Base Alpha}"
 
-- tapOn:
-    id: "base-lat-input"
-- inputText: "38.7169"
-
-- tapOn:
-    id: "base-lng-input"
-- inputText: "-9.1399"
+# NOTE: base-lat-input and base-lng-input do not exist in either app.
+# Both Android and iOS use an embedded map where the operator taps to place a pin.
+# Coordinate input via text field is not supported; these steps are skipped.
+# A real E2E run would need to tap on the map view at a specific coordinate.
 
 - tapOn:
     id: "base-save-btn"

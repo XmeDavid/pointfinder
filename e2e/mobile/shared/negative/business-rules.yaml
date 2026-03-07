@@ -9,8 +9,10 @@ appId: ${APP_ID}
     clearState: true
 
 # --- N9: Invalid join code ---
-- tapOn: "Player"
+# Welcome screen button is "Join a Game" on both iOS and Android
+- tapOn: "Join a Game"
 
+# iOS nav title is "Join Game"; Android body text is "Join with QR or code"
 - assertVisible: "Join Game"
 
 - tapOn:

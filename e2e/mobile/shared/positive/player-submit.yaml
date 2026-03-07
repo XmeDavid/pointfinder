@@ -5,8 +5,11 @@ appId: ${APP_ID}
 - launchApp:
     clearState: true
 
-- tapOn: "Player"
+# Welcome screen button is "Join a Game" on both iOS and Android
+- tapOn: "Join a Game"
 
+# iOS nav title is "Join Game"; Android body text is "Join with QR or code"
+# This assertion is iOS-specific; Android relies on the input field below
 - assertVisible: "Join Game"
 
 - tapOn:
