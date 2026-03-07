@@ -153,7 +153,6 @@ final class MobileRealtimeClient {
         components.path = "/ws/mobile"
         components.queryItems = [
             URLQueryItem(name: "gameId", value: session.gameId.uuidString),
-            URLQueryItem(name: "token", value: session.token),
         ]
 
         guard let url = components.url else { return nil }

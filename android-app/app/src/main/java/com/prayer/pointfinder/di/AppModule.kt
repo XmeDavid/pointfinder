@@ -46,11 +46,15 @@ object AppModule {
     @Singleton
     @javax.inject.Named("refresh")
     fun provideRefreshOkHttpClient(): OkHttpClient {
-        val logger = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BASIC
-        }
         return OkHttpClient.Builder()
-            .addInterceptor(logger)
+            .apply {
+                if (BuildConfig.DEBUG) {
+                    val logger = HttpLoggingInterceptor().apply {
+                        level = HttpLoggingInterceptor.Level.BASIC
+                    }
+                    addInterceptor(logger)
+                }
+            }
             .build()
     }
 
@@ -67,13 +71,17 @@ object AppModule {
         tokenProvider: AuthTokenProvider,
         tokenRefresher: TokenRefresher,
     ): OkHttpClient {
-        val logger = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BASIC
-        }
         return OkHttpClient.Builder()
             .addInterceptor(AuthInterceptor(tokenProvider))
             .authenticator(TokenAuthenticator(tokenRefresher))
-            .addInterceptor(logger)
+            .apply {
+                if (BuildConfig.DEBUG) {
+                    val logger = HttpLoggingInterceptor().apply {
+                        level = HttpLoggingInterceptor.Level.BASIC
+                    }
+                    addInterceptor(logger)
+                }
+            }
             .build()
     }
 

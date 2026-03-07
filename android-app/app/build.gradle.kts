@@ -101,6 +101,15 @@ android {
         // manifestPlaceholders removed — MapLibre does not need an API key
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file(resolveConfigValue("KEYSTORE_FILE", "app-key.jks"))
+            storePassword = resolveConfigValue("KEYSTORE_PASSWORD", "")
+            keyAlias = resolveConfigValue("KEY_ALIAS", "")
+            keyPassword = resolveConfigValue("KEY_PASSWORD", "")
+        }
+    }
+
     buildTypes {
         debug {
             buildConfigField("String", "API_BASE_URL", "\"${debugApiBaseUrl.replace("\"", "\\\"")}\"")
@@ -108,11 +117,13 @@ android {
 
         release {
             buildConfigField("String", "API_BASE_URL", "\"${releaseApiBaseUrl.replace("\"", "\\\"")}\"")
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            signingConfig = signingConfigs.getByName("release")
             ndk {
                 debugSymbolLevel = "FULL"
             }
@@ -144,7 +155,7 @@ kotlin {
 }
 
 dependencies {
-    val composeBom = platform("androidx.compose:compose-bom:2024.10.01")
+    val composeBom = platform("androidx.compose:compose-bom:2025.01.01")
 
     implementation(project(":core:model"))
     implementation(project(":core:network"))

@@ -38,7 +38,6 @@ internal fun buildMobileRealtimeUrl(apiBaseUrl: String, gameId: String, token: S
         .addPathSegment("ws")
         .addPathSegment("mobile")
         .addQueryParameter("gameId", gameId)
-        .addQueryParameter("token", token)
         .build()
 }
 

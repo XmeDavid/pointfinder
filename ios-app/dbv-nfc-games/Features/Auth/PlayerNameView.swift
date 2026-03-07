@@ -31,7 +31,9 @@ struct PlayerNameView: View {
 
             TextField(locale.t("join.yourName"), text: $displayName)
                 .textFieldStyle(.roundedBorder)
-                .textContentType(.name)
+                .textContentType(.none)
+                .autocorrectionDisabled()
+                .accessibilityIdentifier("player-name-field")
                 .padding(.horizontal, 24)
 
             Button {

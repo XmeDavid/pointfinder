@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="companion_db_key.xml" />
+        <exclude domain="sharedpref" path="companion_tokens.xml" />
+        <exclude domain="file" path="datastore/companion_session.preferences_pb" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="companion_db_key.xml" />
+        <exclude domain="sharedpref" path="companion_tokens.xml" />
+        <exclude domain="file" path="datastore/companion_session.preferences_pb" />
+    </device-transfer>
+</data-extraction-rules>

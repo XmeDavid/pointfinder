@@ -137,8 +137,8 @@ struct OperatorMapView: View {
                                         latitude: loc.latitude,
                                         longitude: loc.longitude
                                     )
-                                    mapFocusState = .showAllBases
                                 }
+                                mapFocusState = .showAllBases
                             case .showAllBases:
                                 fitAllBasesId = UUID()
                                 mapFocusState = .centerOnMe
@@ -150,6 +150,7 @@ struct OperatorMapView: View {
                                 .background(.ultraThinMaterial)
                                 .clipShape(Circle())
                         }
+                        .accessibilityIdentifier("map-focus-button")
                     }
                     .padding(.trailing, 16)
                     .padding(.top, 8)

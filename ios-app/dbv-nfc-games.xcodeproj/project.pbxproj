@@ -199,6 +199,7 @@
 				en,
 				Base,
 				"pt-PT",
+				de,
 			);
 			mainGroup = 37A610312E5E3DD00028D38D;
 			minimizedProjectReferenceProxies = 1;
@@ -415,7 +416,7 @@
 				CODE_SIGN_ENTITLEMENTS = "dbv-nfc-games/dbv_nfc_games.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 0;
+				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = ZQ6CKMW9NA;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -469,7 +470,7 @@
 				CODE_SIGN_ENTITLEMENTS = "dbv-nfc-games/dbv_nfc_games.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 0;
+				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = ZQ6CKMW9NA;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -594,7 +595,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = ZQ6CKMW9NA;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.prayer.pointfinder.uitests;

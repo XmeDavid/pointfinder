@@ -1,11 +1,16 @@
 import Foundation
 
 enum AppConfiguration {
-    #if DEBUG
-    static let apiBaseURL = "http://localhost:8080"
-    #else
-    static let apiBaseURL = "https://pointfinder.pt"
-    #endif
+    static var apiBaseURL: String {
+        if let override = ProcessInfo.processInfo.environment["POINTFINDER_API_URL"] {
+            return override
+        }
+        #if DEBUG
+        return "http://localhost:8080"
+        #else
+        return "https://pointfinder.pt"
+        #endif
+    }
 
     static let appName = "PointFinder"
     static let privacyPolicyURL = "https://pointfinder.pt/privacy/"

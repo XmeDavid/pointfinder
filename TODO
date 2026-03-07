@@ -13,6 +13,12 @@
 -On iOS map view on setup, clicking on the bases, outside of edit mode should show info on the base, and with edit mode on show allow to edit, neither is working, on either mode i cant click the pins on the map
 
 
+## E2E Testing (future improvements)
+- WebSocket/STOMP live update testing (verify real-time broadcasts reach subscribers)
+- Cross-browser web testing (Firefox/Safari in Playwright)
+- Full concurrency simulation beyond 6 players
+- Playwright retries/parallelism tuning for reliability
+
 ## Consider for later ignore for now
 -What to do in terms of feeback, right now its only submitted by the operator, but the players never see it, on neither platform
 

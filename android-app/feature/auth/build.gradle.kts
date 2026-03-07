@@ -30,7 +30,7 @@ kotlin {
 }
 
 dependencies {
-    val composeBom = platform("androidx.compose:compose-bom:2024.10.01")
+    val composeBom = platform("androidx.compose:compose-bom:2025.01.01")
 
     implementation(project(":core:model"))
     implementation(project(":core:i18n"))

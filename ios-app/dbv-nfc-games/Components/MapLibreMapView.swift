@@ -259,6 +259,34 @@ struct MapLibreMapView: UIViewRepresentable {
             }
         }
 
+        func mapView(_ mapView: MLNMapView, didFinishLoading style: MLNStyle) {
+            // Fit to bases once style is loaded (initial camera may have been ignored before style loaded)
+            if !parent.fitCoordinates.isEmpty {
+                let coords = parent.fitCoordinates
+                if coords.count > 1 {
+                    let bounds = coords.reduce(
+                        MLNCoordinateBounds(sw: coords[0], ne: coords[0])
+                    ) { result, coord in
+                        MLNCoordinateBounds(
+                            sw: CLLocationCoordinate2D(
+                                latitude: min(result.sw.latitude, coord.latitude),
+                                longitude: min(result.sw.longitude, coord.longitude)
+                            ),
+                            ne: CLLocationCoordinate2D(
+                                latitude: max(result.ne.latitude, coord.latitude),
+                                longitude: max(result.ne.longitude, coord.longitude)
+                            )
+                        )
+                    }
+                    let camera = mapView.cameraThatFitsCoordinateBounds(bounds, edgePadding: UIEdgeInsets(top: 60, left: 40, bottom: 60, right: 40))
+                    mapView.setCamera(camera, animated: false)
+                } else if coords.count == 1 {
+                    mapView.setCenter(coords[0], zoomLevel: 15, animated: false)
+                }
+                hasInitialized = true
+            }
+        }
+
         func mapView(_ mapView: MLNMapView, regionWillChangeWith reason: MLNCameraChangeReason, animated: Bool) {
             let userGestures: MLNCameraChangeReason = [.gesturePan, .gesturePinch, .gestureRotate, .gestureZoomIn, .gestureZoomOut, .gestureTilt, .gestureOneFingerZoom]
             if !reason.intersection(userGestures).isEmpty {

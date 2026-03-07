@@ -222,7 +222,13 @@ export function RichTextEditor({ value, onChange, placeholder, availableVariable
     if (!editor) return;
     const url = window.prompt("Image URL:");
     if (url) {
-      editor.chain().focus().setImage({ src: url }).run();
+      try {
+        const parsed = new URL(url);
+        if (!["http:", "https:"].includes(parsed.protocol)) return;
+        editor.chain().focus().setImage({ src: parsed.href }).run();
+      } catch {
+        // Invalid URL, ignore
+      }
     }
   }, [editor]);
 

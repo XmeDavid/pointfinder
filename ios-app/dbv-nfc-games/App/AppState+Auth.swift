@@ -143,6 +143,26 @@ extension AppState {
     // MARK: - Session Restore
 
     func restoreSession() {
+        #if DEBUG
+        // Check for player auth from environment (UI testing)
+        let env = ProcessInfo.processInfo.environment
+        if let token = env["POINTFINDER_PLAYER_TOKEN"],
+           let playerIdStr = env["POINTFINDER_PLAYER_ID"],
+           let teamIdStr = env["POINTFINDER_TEAM_ID"],
+           let gameIdStr = env["POINTFINDER_GAME_ID"],
+           let playerId = UUID(uuidString: playerIdStr),
+           let teamId = UUID(uuidString: teamIdStr),
+           let gameId = UUID(uuidString: gameIdStr) {
+
+            authType = .player(token: token, playerId: playerId, teamId: teamId, gameId: gameId)
+            realtimeClient.connect(gameId: gameId, token: token)
+            UserDefaults.standard.set(true, forKey: "com.prayer.pointfinder.permissionDisclosureSeen")
+            locationService.startTracking(apiClient: apiClient, gameId: gameId, token: token)
+            progressLoadTask = Task { await loadProgress() }
+            return
+        }
+        #endif
+
         let defaults = UserDefaults.standard
         let savedType = defaults.string(forKey: AppConfiguration.authTypeKey)
 

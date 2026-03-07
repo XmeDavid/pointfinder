@@ -224,6 +224,131 @@ ensure_maestro_runtime() {
   fi
 }
 
+# --- Simulator / Emulator auto-launch ---
+
+IOS_SIM_NAME="${IOS_SIM_NAME:-}"
+IOS_SIM_BOOTED_BY_US=false
+ANDROID_EMU_BOOTED_BY_US=false
+ANDROID_EMULATOR_BIN=""
+
+resolve_android_emulator() {
+  if [[ -n "$ANDROID_EMULATOR_BIN" ]]; then
+    return 0
+  fi
+
+  local candidate
+  if candidate="$(command -v emulator 2>/dev/null)" && [[ -n "$candidate" ]]; then
+    ANDROID_EMULATOR_BIN="$candidate"
+    return 0
+  fi
+
+  for candidate in \
+    "$HOME/Library/Android/sdk/emulator/emulator" \
+    "$ANDROID_HOME/emulator/emulator" \
+    "$ANDROID_SDK_ROOT/emulator/emulator"
+  do
+    if [[ -x "$candidate" ]]; then
+      ANDROID_EMULATOR_BIN="$candidate"
+      return 0
+    fi
+  done
+
+  echo "Android emulator not found." >&2
+  return 127
+}
+
+ensure_ios_simulator() {
+  # Check if any iOS simulator is already booted
+  if xcrun simctl list devices booted 2>/dev/null | grep -q "(Booted)"; then
+    echo "iOS Simulator already running."
+    return 0
+  fi
+
+  # Pick simulator: use IOS_SIM_NAME env var, or auto-detect an iPhone
+  local sim_name="$IOS_SIM_NAME"
+  if [[ -z "$sim_name" ]]; then
+    sim_name=$(xcrun simctl list devices available 2>/dev/null \
+      | grep -E "iPhone.*Shutdown" \
+      | head -1 \
+      | sed 's/^[[:space:]]*//' \
+      | sed 's/ (.*//')
+  fi
+
+  if [[ -z "$sim_name" ]]; then
+    echo "No available iPhone simulator found." >&2
+    return 1
+  fi
+
+  echo "Booting iOS Simulator: $sim_name"
+  xcrun simctl boot "$sim_name" 2>/dev/null || true
+
+  # Wait for it to be ready
+  for _ in $(seq 1 30); do
+    if xcrun simctl list devices booted 2>/dev/null | grep -q "(Booted)"; then
+      IOS_SIM_BOOTED_BY_US=true
+      echo "iOS Simulator ready: $sim_name"
+      return 0
+    fi
+    sleep 1
+  done
+
+  echo "iOS Simulator failed to boot in time." >&2
+  return 1
+}
+
+shutdown_ios_simulator_if_ours() {
+  if [[ "$IOS_SIM_BOOTED_BY_US" == "true" ]]; then
+    echo "Shutting down iOS Simulator we started..."
+    xcrun simctl shutdown all 2>/dev/null || true
+  fi
+}
+
+ensure_android_emulator() {
+  # Check if an Android device/emulator is already connected
+  if adb devices 2>/dev/null | grep -qE "device$"; then
+    echo "Android device/emulator already connected."
+    return 0
+  fi
+
+  resolve_android_emulator || return 1
+
+  # Pick AVD: use ANDROID_AVD env var, or first available
+  local avd_name="${ANDROID_AVD:-}"
+  if [[ -z "$avd_name" ]]; then
+    avd_name=$("$ANDROID_EMULATOR_BIN" -list-avds 2>/dev/null | head -1)
+  fi
+
+  if [[ -z "$avd_name" ]]; then
+    echo "No Android AVD found. Create one with Android Studio or avdmanager." >&2
+    return 1
+  fi
+
+  echo "Starting Android emulator: $avd_name"
+  "$ANDROID_EMULATOR_BIN" -avd "$avd_name" -no-snapshot-save -no-audio -no-window &
+  local emu_pid=$!
+
+  # Wait for device to be ready
+  for _ in $(seq 1 120); do
+    if adb shell getprop sys.boot_completed 2>/dev/null | grep -q "1"; then
+      ANDROID_EMU_BOOTED_BY_US=true
+      echo "Android emulator ready: $avd_name (PID $emu_pid)"
+      return 0
+    fi
+    sleep 2
+  done
+
+  echo "Android emulator failed to boot in time." >&2
+  kill "$emu_pid" 2>/dev/null || true
+  return 1
+}
+
+shutdown_android_emulator_if_ours() {
+  if [[ "$ANDROID_EMU_BOOTED_BY_US" == "true" ]]; then
+    echo "Shutting down Android emulator we started..."
+    adb emu kill 2>/dev/null || true
+  fi
+}
+
 maestro_supports_device_locale() {
   ensure_maestro_runtime >/dev/null 2>&1 || return 1
   "$MAESTRO_BIN" test --help 2>&1 | grep -q -- '--device-locale'
@@ -370,8 +495,16 @@ run_mobile_suite() {
 run_api()      { run_playwright --project=api; }
 run_api_pos()  { run_playwright --project=api --grep-invert @negative; }
 run_web()      { run_playwright --project=web; }
-run_ios()      { run_mobile_suite ios; }
-run_android()  { run_mobile_suite android; }
+run_ios() {
+  ensure_ios_simulator
+  run_mobile_suite ios
+  shutdown_ios_simulator_if_ours
+}
+run_android() {
+  ensure_android_emulator
+  run_mobile_suite android
+  shutdown_android_emulator_if_ours
+}
 
 # --- Commands ---
 case "$CMD" in
@@ -385,14 +518,18 @@ case "$CMD" in
     run_managed_with_lifecycle run_playwright --project=web --grep @smoke
     ;;
   smoke:ios)
+    ensure_ios_simulator
     run_managed_with_lifecycle run_maestro_test ios \
       mobile/shared/positive/operator-login.yaml \
       mobile/shared/positive/game-create.yaml
+    shutdown_ios_simulator_if_ours
     ;;
   smoke:android)
+    ensure_android_emulator
     run_managed_with_lifecycle run_maestro_test android \
       mobile/shared/positive/operator-login.yaml \
       mobile/shared/positive/game-create.yaml
+    shutdown_android_emulator_if_ours
     ;;
   api)
     run_managed_with_lifecycle run_api

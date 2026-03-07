@@ -9,6 +9,6 @@ public class ResetPasswordRequest {
     @NotBlank
     private String token;
 
-    @NotBlank @Size(min = 6)
+    @NotBlank @Size(min = 6, max = 128)
     private String password;
 }
