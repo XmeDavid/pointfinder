@@ -115,9 +115,12 @@ struct GameSettingsView: View {
             // Map
             Section {
                 Picker(locale.t("operator.tileSource"), selection: $tileSource) {
-                    Text("OSM").tag("osm")
-                    Text("OSM Classic").tag("osm-classic")
-                    Text("Satellite").tag("satellite")
+                    Text("OpenStreetMap").tag("osm")
+                    Text("OpenStreetMap Classic").tag("osm-classic")
+                    Text("CartoDB Voyager").tag("voyager")
+                    Text("CartoDB Positron").tag("positron")
+                    Text("SwissTopo").tag("swisstopo")
+                    Text("SwissTopo Satellite").tag("swisstopo-sat")
                 }
             }
 
