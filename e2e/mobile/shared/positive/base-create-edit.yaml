@@ -46,10 +46,9 @@ appId: ${APP_ID}
 - tapOn:
     id: "base-edit-btn"
 
-- clearText:
-    id: "base-name-input"
 - tapOn:
     id: "base-name-input"
+- eraseText
 - inputText: "Base Alpha Edited"
 
 - tapOn:

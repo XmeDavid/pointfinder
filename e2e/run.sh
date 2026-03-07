@@ -12,8 +12,35 @@ ROOT_DIR="$(cd .. && pwd)"
 LOCAL_COMPOSE_FILE="$ROOT_DIR/docker-compose.e2e-local.yml"
 LOCAL_DB_CONTAINER="pointfinder-db-local-e2e"
 LOCAL_NGINX_CONTAINER="pointfinder-nginx-local-e2e"
+MAESTRO_BIN=""
 
-if [[ "$CMD" == *:local || "$CMD" == local:up || "$CMD" == local:down ]]; then
+uses_local_default_target() {
+  case "$CMD" in
+    smoke|smoke:web|smoke:web:local|smoke:ios|smoke:android|api|api:local|api:positive|web|web:local|ios|android|all|all:local|cleanup|local:up|local:down)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+forces_local_stack() {
+  case "$CMD" in
+    smoke:web:local|api:local|web:local|all:local|local:up|local:down)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+uses_local_base_url() {
+  [[ "${BASE_URL:-}" =~ ^https://(localhost|127\.0\.0\.1)(:[0-9]+)?$ ]]
+}
+
+if uses_local_default_target; then
   export BASE_URL="${BASE_URL:-https://localhost}"
   export OPERATOR_EMAIL="${OPERATOR_EMAIL:-local-e2e-admin@example.test}"
   export OPERATOR_PASSWORD="${OPERATOR_PASSWORD:-LocalE2E!12345}"
@@ -114,6 +141,14 @@ run_local_with_lifecycle() {
   run_with_lifecycle "$@"
 }
 
+run_managed_with_lifecycle() {
+  if forces_local_stack || uses_local_base_url; then
+    run_local_with_lifecycle "$@"
+  else
+    run_with_lifecycle "$@"
+  fi
+}
+
 run_playwright() {
   local cmd=(npx playwright test "$@")
   if (( ${#EXTRA_ARGS[@]} > 0 )); then
@@ -122,55 +157,114 @@ run_playwright() {
   "${cmd[@]}"
 }
 
+resolve_maestro() {
+  if [[ -n "$MAESTRO_BIN" ]]; then
+    return 0
+  fi
+
+  local candidate
+  if candidate="$(command -v maestro 2>/dev/null)" && [[ -n "$candidate" ]]; then
+    MAESTRO_BIN="$candidate"
+    return 0
+  fi
+
+  for candidate in \
+    "$HOME/.maestro/bin/maestro" \
+    "/opt/homebrew/bin/maestro" \
+    "/usr/local/bin/maestro"
+  do
+    if [[ -x "$candidate" ]]; then
+      MAESTRO_BIN="$candidate"
+      return 0
+    fi
+  done
+
+  echo "Maestro CLI not found. Install Maestro or add it to PATH." >&2
+  return 127
+}
+
+ensure_maestro_runtime() {
+  resolve_maestro
+
+  if ! java -version >/dev/null 2>&1; then
+    echo "Java runtime not found. Maestro CLI requires Java. Install a JRE/JDK and try again." >&2
+    return 1
+  fi
+}
+
+maestro_supports_device_locale() {
+  ensure_maestro_runtime >/dev/null 2>&1 || return 1
+  "$MAESTRO_BIN" test --help 2>&1 | grep -q -- '--device-locale'
+}
+
+run_maestro_test() {
+  ensure_maestro_runtime
+
+  local cmd=("$MAESTRO_BIN" test --format junit)
+  if maestro_supports_device_locale; then
+    cmd+=(--device-locale=en)
+  fi
+  cmd+=("$@")
+  "${cmd[@]}"
+}
+
+run_mobile_suite() {
+  run_maestro_test mobile/shared/positive/
+  run_maestro_test mobile/shared/negative/
+}
+
 run_api()      { run_playwright --project=api; }
 run_api_pos()  { run_playwright --project=api --grep-invert @negative; }
 run_web()      { run_playwright --project=web; }
-run_ios()      { maestro test --device-locale=en --format junit mobile/shared/; }
-run_android()  { maestro test --device-locale=en --format junit mobile/shared/; }
+run_ios()      { run_mobile_suite; }
+run_android()  { run_mobile_suite; }
 
 # --- Commands ---
 case "$CMD" in
   smoke)
-    run_with_lifecycle run_playwright --project=api --grep @smoke
+    run_managed_with_lifecycle run_playwright --project=api --grep @smoke
     ;;
   smoke:web)
-    run_with_lifecycle run_playwright --project=web --grep @smoke
+    run_managed_with_lifecycle run_playwright --project=web --grep @smoke
     ;;
   smoke:web:local)
-    run_local_with_lifecycle run_playwright --project=web --grep @smoke
+    run_managed_with_lifecycle run_playwright --project=web --grep @smoke
     ;;
   smoke:ios)
-    run_with_lifecycle maestro test --device-locale=en --format junit \
+    run_managed_with_lifecycle run_maestro_test \
       mobile/shared/positive/operator-login.yaml \
       mobile/shared/positive/game-create.yaml
     ;;
   smoke:android)
-    run_with_lifecycle maestro test --device-locale=en --format junit \
+    run_managed_with_lifecycle run_maestro_test \
       mobile/shared/positive/operator-login.yaml \
       mobile/shared/positive/game-create.yaml
     ;;
   api)
-    run_with_lifecycle run_api
+    run_managed_with_lifecycle run_api
     ;;
   api:local)
-    run_local_with_lifecycle run_api
+    run_managed_with_lifecycle run_api
     ;;
   api:positive)
-    run_with_lifecycle run_api_pos
+    run_managed_with_lifecycle run_api_pos
     ;;
   web)
-    run_with_lifecycle run_web
+    run_managed_with_lifecycle run_web
     ;;
   web:local)
-    run_local_with_lifecycle run_web
+    run_managed_with_lifecycle run_web
     ;;
   ios)
-    run_with_lifecycle run_ios
+    run_managed_with_lifecycle run_ios
     ;;
   android)
-    run_with_lifecycle run_android
+    run_managed_with_lifecycle run_android
     ;;
   all)
+    if forces_local_stack || uses_local_base_url; then
+      local_up
+    fi
     setup
     trap cleanup_trap EXIT
     run_api
@@ -179,7 +273,9 @@ case "$CMD" in
     run_android
     ;;
   all:local)
-    local_up
+    if forces_local_stack || uses_local_base_url; then
+      local_up
+    fi
     setup
     trap cleanup_trap EXIT
     run_api
@@ -202,17 +298,21 @@ case "$CMD" in
   help|*)
     echo "Usage: ./run.sh [command]"
     echo ""
+    echo "API/web commands default to the local Docker-backed E2E stack."
+    echo "Set BASE_URL, OPERATOR_EMAIL, and OPERATOR_PASSWORD explicitly if you want another target."
+    echo "Mobile commands still depend on the app-side backend configuration."
+    echo ""
     echo "Commands:"
-    echo "  smoke          API smoke test (critical path)"
-    echo "  smoke:web      Web smoke test (operator checks + API-assisted player)"
-    echo "  smoke:web:local Start local prod-like stack → web smoke test → teardown"
+    echo "  smoke          Local API smoke test (critical path)"
+    echo "  smoke:web      Local web smoke test (operator checks + API-assisted player)"
+    echo "  smoke:web:local Alias for the local web smoke flow"
     echo "  smoke:ios      iOS smoke test (login + create game)"
     echo "  smoke:android  Android smoke test (login + create game)"
-    echo "  api            Setup → API tests → teardown"
-    echo "  api:local      Start local prod-like stack → setup → API tests → teardown"
-    echo "  api:positive   Setup → API positive only → teardown"
-    echo "  web            Setup → web UI tests → teardown"
-    echo "  web:local      Start local prod-like stack → setup → web UI tests → teardown"
+    echo "  api            Local stack → setup → API tests → teardown"
+    echo "  api:local      Alias for the local API flow"
+    echo "  api:positive   Local stack → setup → API positive only → teardown"
+    echo "  web            Local stack → setup → web UI tests → teardown"
+    echo "  web:local      Alias for the local web flow"
     echo "  ios            Setup → Maestro iOS flows → teardown"
     echo "  android        Setup → Maestro Android flows → teardown"
     echo "  all            Setup → API → web → iOS → Android → teardown"

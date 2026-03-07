@@ -4,7 +4,7 @@ import path from 'path';
 
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
-const baseUrl = process.env.BASE_URL || 'https://pointfinder.pt';
+const baseUrl = process.env.BASE_URL || 'https://localhost';
 const ignoreHTTPSErrors = /https:\/\/(localhost|127\.0\.0\.1)(:\d+)?/i.test(baseUrl);
 
 export default defineConfig({
