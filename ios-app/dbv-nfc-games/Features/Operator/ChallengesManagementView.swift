@@ -65,6 +65,7 @@ struct ChallengesManagementView: View {
                                     .foregroundStyle(.orange)
                             }
                         }
+                        .accessibilityIdentifier("challenge-edit-btn")
                     }
                     .listStyle(.plain)
                 }
@@ -85,6 +86,7 @@ struct ChallengesManagementView: View {
                     } label: {
                         Image(systemName: "plus")
                     }
+                    .accessibilityIdentifier("create-challenge-btn")
                 }
             }
             .navigationDestination(for: ChallengeNavDestination.self) { destination in

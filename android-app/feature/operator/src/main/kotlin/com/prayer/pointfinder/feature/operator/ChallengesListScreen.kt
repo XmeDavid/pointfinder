@@ -27,6 +27,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -58,7 +59,7 @@ fun ChallengesListScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onCreateChallenge) {
+            FloatingActionButton(onClick = onCreateChallenge, modifier = Modifier.testTag("create-challenge-btn")) {
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.label_new_challenge))
             }
         },
@@ -100,6 +101,7 @@ fun ChallengesListScreen(
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .testTag("challenge-edit-btn")
                             .clickable { onSelectChallenge(challenge) },
                         tonalElevation = 2.dp,
                         shape = MaterialTheme.shapes.medium,

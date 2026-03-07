@@ -84,7 +84,7 @@ fun TeamsListScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showCreateDialog = true }) {
+            FloatingActionButton(onClick = { showCreateDialog = true }, modifier = Modifier.testTag("create-team-btn")) {
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.label_create_team))
             }
         },
@@ -114,6 +114,7 @@ fun TeamsListScreen(
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .testTag("team-edit-btn")
                             .clickable { onSelectTeam(team) },
                         tonalElevation = 2.dp,
                         shape = MaterialTheme.shapes.medium,
@@ -139,6 +140,7 @@ fun TeamsListScreen(
                                         text = joinCode,
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.testTag("team-join-code"),
                                     )
                                 }
                             }

@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -167,16 +168,18 @@ fun BaseCheckInDetailScreen(
         Spacer(Modifier.height(12.dp))
         val challenge = response.challenge
         if (challenge != null) {
-            Text(challenge.title, style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
-            Text(challenge.description)
-            if (challenge.content.isNotBlank()) {
+            Column(modifier = Modifier.testTag("player-challenge-list")) {
+                Text(challenge.title, style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
-                HtmlContentView(html = challenge.content)
-            }
-            Spacer(Modifier.height(12.dp))
-            Button(onClick = { onSolve(response.baseId, challenge.id) }) {
-                Text(stringResource(R.string.action_solve_challenge))
+                Text(challenge.description)
+                if (challenge.content.isNotBlank()) {
+                    Spacer(Modifier.height(8.dp))
+                    HtmlContentView(html = challenge.content)
+                }
+                Spacer(Modifier.height(12.dp))
+                Button(onClick = { onSolve(response.baseId, challenge.id) }) {
+                    Text(stringResource(R.string.action_solve_challenge))
+                }
             }
         } else {
             Text(stringResource(R.string.label_no_challenge_assigned))
@@ -299,7 +302,7 @@ fun SolveScreen(
             OutlinedTextField(
                 value = answer,
                 onValueChange = onAnswerChange,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag("player-answer-input"),
                 minLines = 5,
                 label = { Text(stringResource(R.string.label_answer)) },
             )
@@ -314,6 +317,7 @@ fun SolveScreen(
         Button(
             onClick = onSubmit,
             enabled = !isPhotoMode || mediaItems.isNotEmpty(),
+            modifier = Modifier.testTag("player-submit-btn"),
         ) {
             Text(
                 stringResource(
@@ -366,7 +370,7 @@ fun SubmissionResultScreen(
         Spacer(Modifier.height(32.dp))
         Icon(resultIcon, contentDescription = null, modifier = Modifier.size(72.dp), tint = resultColor)
         Spacer(Modifier.height(12.dp))
-        Text(resultTitle, style = MaterialTheme.typography.titleLarge)
+        Text(resultTitle, style = MaterialTheme.typography.titleLarge, modifier = Modifier.testTag("player-submission-status"))
         Spacer(Modifier.height(4.dp))
         Text(
             resultMessage,

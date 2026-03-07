@@ -116,7 +116,7 @@ fun PlayerJoinScreen(
                 value = joinCode,
                 onValueChange = { onJoinCodeChange(it.uppercase()) },
                 label = { Text(stringResource(R.string.label_join_code)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag("player-join-code-input"),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
             )
@@ -124,7 +124,7 @@ fun PlayerJoinScreen(
             Button(
                 onClick = onContinue,
                 enabled = canContinue,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag("player-join-btn"),
             ) {
                 Text(stringResource(R.string.action_continue))
             }
@@ -245,7 +245,7 @@ fun OperatorLoginScreen(
                 )
                 if (!errorMessage.isNullOrBlank()) {
                     Spacer(Modifier.height(8.dp))
-                    Text(errorMessage, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    Text(errorMessage, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("login-error"))
                 }
                 Spacer(Modifier.height(12.dp))
                 Button(

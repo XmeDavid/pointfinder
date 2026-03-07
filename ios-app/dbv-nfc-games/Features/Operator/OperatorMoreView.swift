@@ -66,6 +66,7 @@ struct OperatorMoreView: View {
                         }
                     }
                     .disabled(isExporting)
+                    .accessibilityIdentifier("game-export-btn")
 
                     if let exportError {
                         Text(exportError)

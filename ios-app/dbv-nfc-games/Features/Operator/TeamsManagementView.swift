@@ -74,6 +74,7 @@ struct TeamsManagementView: View {
                                 }
                             }
                         }
+                        .accessibilityIdentifier("team-edit-btn")
                     }
                     .listStyle(.plain)
                 }
@@ -100,6 +101,7 @@ struct TeamsManagementView: View {
                     } label: {
                         Image(systemName: "plus")
                     }
+                    .accessibilityIdentifier("create-team-btn")
                 }
             }
             .navigationDestination(for: UUID.self) { teamId in

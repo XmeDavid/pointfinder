@@ -27,6 +27,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -58,7 +59,7 @@ fun BasesListScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onCreateBase) {
+            FloatingActionButton(onClick = onCreateBase, modifier = Modifier.testTag("create-base-btn")) {
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.label_new_base))
             }
         },
@@ -89,6 +90,7 @@ fun BasesListScreen(
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .testTag("base-edit-btn")
                             .clickable { onSelectBase(base) },
                         tonalElevation = 2.dp,
                         shape = MaterialTheme.shapes.medium,

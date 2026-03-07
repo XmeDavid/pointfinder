@@ -37,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -115,7 +116,7 @@ private fun LeaderboardContent(leaderboard: List<LeaderboardEntry>) {
     }
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().testTag("leaderboard-view"),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         itemsIndexed(leaderboard, key = { _, entry -> entry.teamId }) { index, entry ->

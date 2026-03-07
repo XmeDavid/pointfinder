@@ -27,6 +27,7 @@ struct SubmissionResultView: View {
                     Text(resultTitle)
                         .font(.title2)
                         .fontWeight(.bold)
+                        .accessibilityIdentifier("player-submission-status")
 
                     Text(resultMessage)
                         .font(.subheadline)

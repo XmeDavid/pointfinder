@@ -3,8 +3,6 @@ package com.prayer.pointfinder.feature.operator
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -65,7 +63,7 @@ import com.prayer.pointfinder.core.model.Team
 import com.prayer.pointfinder.core.model.TeamVariable
 import com.prayer.pointfinder.core.model.UpdateChallengeRequest
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChallengeEditScreen(
     challenge: Challenge?,
@@ -213,6 +211,7 @@ fun ChallengeEditScreen(
                                         showOverflowMenu = false
                                         showDeleteDialog = true
                                     },
+                                    modifier = Modifier.testTag("challenge-delete-btn"),
                                 )
                             }
                         }
@@ -324,7 +323,8 @@ fun ChallengeEditScreen(
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = answerTypeExpanded) },
                     modifier = Modifier
                         .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        .testTag("challenge-type-select"),
                 )
                 ExposedDropdownMenu(
                     expanded = answerTypeExpanded,
@@ -375,9 +375,8 @@ fun ChallengeEditScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Spacer(Modifier.height(4.dp))
-                    FlowRow(
+                    Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         correctAnswers.forEachIndexed { index, answer ->
                             AssistChip(

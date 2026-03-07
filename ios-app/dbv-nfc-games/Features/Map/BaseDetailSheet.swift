@@ -71,6 +71,7 @@ struct BaseDetailSheet: View {
                             Text(challenge.title)
                                 .font(.title3)
                                 .fontWeight(.bold)
+                                .accessibilityIdentifier("player-challenge-list")
 
                             Text(challenge.description)
                                 .font(.body)

@@ -107,6 +107,7 @@ struct OperatorLiveView: View {
                 }
             }
             .listStyle(.plain)
+            .accessibilityIdentifier("leaderboard-view")
         }
     }
 
@@ -159,6 +160,7 @@ struct OperatorLiveView: View {
                 .padding(.vertical, 2)
             }
             .listStyle(.plain)
+            .accessibilityIdentifier("submission-list")
         }
     }
 

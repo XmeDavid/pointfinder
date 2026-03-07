@@ -90,6 +90,7 @@ struct TeamDetailView: View {
                         .fontDesign(.monospaced)
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding(.vertical, 4)
+                        .accessibilityIdentifier("team-join-code")
 
                     Button {
                         UIPasteboard.general.string = joinCode

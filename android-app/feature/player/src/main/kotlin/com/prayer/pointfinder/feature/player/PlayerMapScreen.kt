@@ -7,8 +7,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -44,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -136,7 +135,7 @@ fun PlayerMapScreen(
         }
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxSize().testTag("player-base-list")) {
         AndroidView(
             factory = {
                 mapView.apply {
@@ -163,15 +162,13 @@ fun PlayerMapScreen(
             modifier = Modifier.fillMaxSize(),
         )
 
-        @OptIn(ExperimentalLayoutApi::class)
-        FlowRow(
+        Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 12.dp, start = 16.dp, end = 16.dp)
                 .background(Color.Black.copy(alpha = 0.55f), shape = MaterialTheme.shapes.small)
                 .padding(horizontal = 12.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             LegendDot(color = Color.Gray, label = stringResource(R.string.status_not_visited))
             LegendDot(color = StatusCheckedIn, label = stringResource(R.string.status_checked_in))

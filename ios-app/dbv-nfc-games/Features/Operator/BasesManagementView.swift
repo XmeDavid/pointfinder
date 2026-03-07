@@ -66,6 +66,7 @@ struct BasesManagementView: View {
                                 }
                             }
                         }
+                        .accessibilityIdentifier("base-edit-btn")
                     }
                     .listStyle(.plain)
                 }
@@ -86,6 +87,7 @@ struct BasesManagementView: View {
                     } label: {
                         Image(systemName: "plus")
                     }
+                    .accessibilityIdentifier("create-base-btn")
                 }
             }
             .navigationDestination(for: BaseNavDestination.self) { destination in

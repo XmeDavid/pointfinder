@@ -57,7 +57,7 @@ struct OperatorGameView: View {
                                 Label(locale.t("operator.live"), systemImage: "chart.bar")
                             }
                             .tag(1)
-                            .accessibilityIdentifier("nav-monitoring")
+                            .accessibilityIdentifier("monitoring-tab")
                     }
 
                     // Tab 2: Submissions (live/ended only)

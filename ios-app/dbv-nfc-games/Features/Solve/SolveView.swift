@@ -91,6 +91,7 @@ struct SolveView: View {
                         TextField(locale.t("solve.typeAnswer"), text: $answer, axis: .vertical)
                             .textFieldStyle(.roundedBorder)
                             .lineLimit(3...8)
+                            .accessibilityIdentifier("player-answer-input")
                     }
                 }
 
@@ -128,6 +129,7 @@ struct SolveView: View {
                     }
                 }
                 .disabled(!canSubmit || isSubmitting)
+                .accessibilityIdentifier("player-submit-btn")
 
                 // Help text
                 HStack(alignment: .top, spacing: 8) {

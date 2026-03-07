@@ -80,6 +80,7 @@ struct OperatorSetupHubView: View {
                                     .font(.caption)
                                     .fontWeight(.medium)
                                     .foregroundStyle(game.status == "setup" ? .orange : .green)
+                                    .accessibilityIdentifier("game-status-label")
                             }
                             .padding(.vertical, 4)
                         }
@@ -148,6 +149,7 @@ struct OperatorSetupHubView: View {
                                     .frame(maxWidth: .infinity)
                             }
                             .disabled(!warnings.isEmpty)
+                            .accessibilityIdentifier("game-activate-btn")
                         }
                     }
                 }

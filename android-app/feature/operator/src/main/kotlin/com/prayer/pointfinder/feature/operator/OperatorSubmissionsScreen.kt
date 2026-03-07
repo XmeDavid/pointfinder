@@ -112,7 +112,7 @@ fun OperatorSubmissionsScreen(
                 }
             }
             else -> {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                LazyColumn(modifier = Modifier.testTag("submission-list"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(filteredSubmissions, key = { it.id }) { submission ->
                         val teamName = teams.firstOrNull { it.id == submission.teamId }?.name
                             ?: stringResource(R.string.label_unknown_team)

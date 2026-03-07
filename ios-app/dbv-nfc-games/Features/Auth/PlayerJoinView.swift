@@ -58,6 +58,7 @@ struct PlayerJoinView: View {
                 .textInputAutocapitalization(.characters)
                 .autocorrectionDisabled()
                 .padding(.horizontal, 24)
+                .accessibilityIdentifier("player-join-code-input")
 
             // Next button
             Button {
@@ -73,6 +74,7 @@ struct PlayerJoinView: View {
             .clipShape(RoundedRectangle(cornerRadius: 14))
             .disabled(!canProceed)
             .padding(.horizontal, 24)
+            .accessibilityIdentifier("player-join-btn")
 
             Spacer()
         }

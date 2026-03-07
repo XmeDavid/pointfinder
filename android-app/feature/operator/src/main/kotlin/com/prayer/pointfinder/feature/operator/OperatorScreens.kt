@@ -230,6 +230,7 @@ fun OperatorGameScaffold(
                         onClick = { onTabSelected(OperatorTab.SUBMISSIONS) },
                         icon = { androidx.compose.material3.Icon(Icons.Default.List, contentDescription = null) },
                         label = { Text(stringResource(R.string.label_submissions)) },
+                        modifier = Modifier.testTag("monitoring-tab"),
                     )
                 }
                 NavigationBarItem(

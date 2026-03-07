@@ -140,6 +140,7 @@ struct BaseEditView: View {
                     }
                 }
                 .pickerStyle(.menu)
+                .accessibilityIdentifier("assign-challenge-btn")
             }
 
             // NFC section (edit mode only)
@@ -178,6 +179,7 @@ struct BaseEditView: View {
                 .disabled(name.isEmpty || isSaving)
                 .accessibilityIdentifier("base-save-btn")
             }
+            .accessibilityIdentifier("assignment-save-btn")
 
             if let errorMessage {
                 Section {
@@ -196,6 +198,7 @@ struct BaseEditView: View {
                         Label(locale.t("operator.deleteBase"), systemImage: "trash")
                             .frame(maxWidth: .infinity)
                     }
+                    .accessibilityIdentifier("base-delete-btn")
                 }
             }
         }

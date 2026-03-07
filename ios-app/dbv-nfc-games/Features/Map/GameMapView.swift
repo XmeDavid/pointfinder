@@ -39,6 +39,7 @@ struct GameMapView: View {
                     }
                 )
                 .ignoresSafeArea()
+                .accessibilityIdentifier("player-base-list")
 
                 // Legend overlay
                 VStack {

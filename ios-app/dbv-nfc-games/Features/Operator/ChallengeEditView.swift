@@ -139,6 +139,7 @@ struct ChallengeEditView: View {
                     Text(locale.t("operator.fileUpload")).tag("file")
                 }
                 .pickerStyle(.segmented)
+                .accessibilityIdentifier("challenge-type-select")
 
                 if answerType == "text" {
                     Toggle(locale.t("operator.autoValidate"), isOn: $autoValidate)
@@ -244,6 +245,7 @@ struct ChallengeEditView: View {
                         Label(locale.t("operator.deleteChallenge"), systemImage: "trash")
                             .frame(maxWidth: .infinity)
                     }
+                    .accessibilityIdentifier("challenge-delete-btn")
                 }
             }
         }

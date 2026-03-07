@@ -183,6 +183,7 @@ fun BaseEditScreen(
                                             showOverflowMenu = false
                                             showDeleteDialog = true
                                         },
+                                        modifier = Modifier.testTag("base-delete-btn"),
                                     )
                                 }
                             }
@@ -444,7 +445,7 @@ fun BaseEditScreen(
                 }
                 if (onNavigateToCreateChallenge != null && base != null) {
                     Spacer(Modifier.height(8.dp))
-                    TextButton(onClick = { onNavigateToCreateChallenge(base.id) }) {
+                    TextButton(onClick = { onNavigateToCreateChallenge(base.id) }, modifier = Modifier.testTag("assign-challenge-btn")) {
                         Icon(
                             Icons.Default.Add,
                             contentDescription = null,

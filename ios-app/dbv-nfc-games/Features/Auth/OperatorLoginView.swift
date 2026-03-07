@@ -76,6 +76,7 @@ struct OperatorLoginView: View {
             Button(locale.t("common.ok")) {}
         } message: {
             Text(appState.errorMessage ?? locale.t("common.unknownError"))
+                .accessibilityIdentifier("login-error")
         }
     }
 
