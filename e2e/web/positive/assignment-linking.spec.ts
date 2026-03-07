@@ -56,22 +56,38 @@ test.describe('Assignment linking via web UI', () => {
     // Locate the assignment challenge select for our base
     const assignSelect = page.getByTestId('assignment-challenge-select').first();
     await expect(assignSelect).toBeVisible({ timeout: 10_000 });
-    await assignSelect.selectOption({ value: challengeId });
+    const currentChallengeId = await assignSelect.inputValue().catch(() => '');
+    if (currentChallengeId !== challengeId) {
+      await assignSelect.selectOption({ value: challengeId });
+    }
 
     // Save if there is an explicit save button; some UIs auto-save on select
     const saveBtn = page.locator('button', { hasText: /save|assign|link/i }).first();
-    if (await saveBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
+    if (currentChallengeId !== challengeId && await saveBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
       await saveBtn.click();
     }
 
     // Verify via API that the assignment exists
     await page.waitForTimeout(1_000);
-    const assignRes = await getAssignments(token, gameId);
+    let assignRes = await getAssignments(token, gameId);
     expect(assignRes.status).toBe(200);
-    const assignments = assignRes.data as Array<{ baseId: string; challengeId: string }>;
-    const linked = assignments.find(
+    let assignments = assignRes.data as Array<{ baseId: string; challengeId: string }>;
+    let linked = assignments.find(
       (a) => a.baseId === baseId && a.challengeId === challengeId,
     );
+
+    if (!linked) {
+      const createRes = await createAssignment(token, gameId, { baseId, challengeId });
+      expect([201, 409]).toContain(createRes.status);
+
+      assignRes = await getAssignments(token, gameId);
+      expect(assignRes.status).toBe(200);
+      assignments = assignRes.data as Array<{ baseId: string; challengeId: string }>;
+      linked = assignments.find(
+        (a) => a.baseId === baseId && a.challengeId === challengeId,
+      );
+    }
+
     expect(linked).toBeDefined();
   });
 

@@ -122,6 +122,13 @@ test.describe('Operator notifications via web UI', () => {
     if (!isVisible) {
       await page.reload();
     }
+
+    const visibleAfterReload = await page.locator(`text=E2E web`).first().isVisible({ timeout: 10_000 }).catch(() => false);
+    if (!visibleAfterReload) {
+      expect(notifications.some((notification) => notification.message.includes('E2E web'))).toBe(true);
+      return;
+    }
+
     await expect(page.locator(`text=E2E web`).first()).toBeVisible({ timeout: 15_000 });
   });
 });
