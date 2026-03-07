@@ -31,6 +31,9 @@ test.describe('monitoring', { tag: '@smoke' }, () => {
     const { status, data } = await getLeaderboard(operatorToken, gameId);
     expect(status).toBe(200);
     expect(Array.isArray(data)).toBe(true);
+    if (data.length > 0) {
+      expect(data[0]).toHaveProperty('teamId');
+    }
   });
 
   test('get activity', async () => {

@@ -11,5 +11,15 @@ test.describe('Auth - positive', { tag: '@smoke' }, () => {
     expect(data).toHaveProperty('refreshToken');
     expect(data.accessToken.length).toBeGreaterThan(0);
     expect(data.refreshToken.length).toBeGreaterThan(0);
+    expect(data).toMatchObject({
+      accessToken: expect.any(String),
+      refreshToken: expect.any(String),
+      user: {
+        id: expect.any(String),
+        email: expect.any(String),
+        name: expect.any(String),
+        role: expect.any(String),
+      },
+    });
   });
 });

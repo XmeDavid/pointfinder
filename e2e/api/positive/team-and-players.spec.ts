@@ -47,5 +47,10 @@ test.describe('team and players', () => {
     expect(data).toHaveProperty('token');
     expect(data.player).toHaveProperty('id');
     expect(data.team).toHaveProperty('id');
+    expect(data).toMatchObject({
+      token: expect.any(String),
+      player: { id: expect.any(String) },
+      team: { id: expect.any(String), name: expect.any(String) },
+    });
   });
 });
