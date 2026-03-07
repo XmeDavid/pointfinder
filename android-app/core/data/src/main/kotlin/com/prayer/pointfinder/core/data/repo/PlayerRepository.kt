@@ -14,6 +14,7 @@ import com.prayer.pointfinder.core.model.BaseProgress
 import com.prayer.pointfinder.core.model.CheckInResponse
 import com.prayer.pointfinder.core.model.GameDataResponse
 import com.prayer.pointfinder.core.model.GameStatus
+import com.prayer.pointfinder.core.model.PendingMediaItem
 import com.prayer.pointfinder.core.model.PlayerSubmissionRequest
 import com.prayer.pointfinder.core.model.SubmissionResponse
 import com.prayer.pointfinder.core.model.SubmissionStatus
@@ -293,9 +294,80 @@ class PlayerRepository @Inject constructor(
         )
     }
 
+    suspend fun submitMultiMedia(
+        auth: AuthType.Player,
+        baseId: String,
+        challengeId: String,
+        answer: String,
+        mediaItems: List<PendingMediaItem>,
+    ): SubmitResult {
+        val idempotencyKey = UUID.randomUUID().toString()
+        val mediaItemsJson = kotlinx.serialization.json.Json.encodeToString(
+            kotlinx.serialization.builtins.ListSerializer(PendingMediaItem.serializer()),
+            mediaItems,
+        )
+        db.pendingActionDao().upsert(
+            PendingActionEntity(
+                id = idempotencyKey,
+                type = ACTION_TYPE_MEDIA_SUBMISSION,
+                gameId = auth.gameId,
+                baseId = baseId,
+                challengeId = challengeId,
+                answer = answer,
+                createdAtEpochMs = System.currentTimeMillis(),
+                retryCount = 0,
+                mediaContentType = mediaItems.firstOrNull()?.contentType,
+                mediaLocalPath = mediaItems.firstOrNull()?.localPath,
+                mediaSourceUri = mediaItems.firstOrNull()?.sourceUri,
+                mediaSizeBytes = mediaItems.firstOrNull()?.sizeBytes,
+                mediaFileName = mediaItems.firstOrNull()?.fileName,
+                uploadSessionId = null,
+                uploadChunkIndex = 0,
+                uploadTotalChunks = null,
+                requiresReselect = false,
+                lastError = null,
+                mediaItemsJson = mediaItemsJson,
+            ),
+        )
+        db.progressDao().updateStatus(auth.gameId, baseId, "submitted")
+        db.progressDao().updateSubmissionStatus(auth.gameId, baseId, "pending")
+        return SubmitResult(
+            response = SubmissionResponse(
+                id = idempotencyKey,
+                teamId = auth.teamId,
+                challengeId = challengeId,
+                baseId = baseId,
+                answer = answer,
+                fileUrl = null,
+                status = SubmissionStatus.PENDING,
+                submittedAt = java.time.Instant.now().toString(),
+                reviewedBy = null,
+                feedback = null,
+                completionContent = null,
+            ),
+            queued = true,
+        )
+    }
+
     suspend fun syncMediaSubmission(auth: AuthType.Player, action: PendingActionEntity): MediaSyncOutcome {
         if (action.requiresReselect) return MediaSyncOutcome.NeedsReselect
         val challengeId = action.challengeId ?: return MediaSyncOutcome.PermanentFailure
+
+        // Check if this is a multi-media submission
+        val multiMediaItems = action.mediaItemsJson?.let { json ->
+            runCatching {
+                kotlinx.serialization.json.Json.decodeFromString(
+                    kotlinx.serialization.builtins.ListSerializer(PendingMediaItem.serializer()),
+                    json,
+                )
+            }.getOrNull()
+        }
+
+        if (multiMediaItems != null && multiMediaItems.size > 1) {
+            return syncMultiMediaSubmission(auth, action, challengeId, multiMediaItems)
+        }
+
+        // Single media item (legacy path)
         val contentType = action.mediaContentType ?: return MediaSyncOutcome.PermanentFailure
         val source = resolveMediaSource(action) ?: run {
             markNeedsReselect(action.id, "Media source missing. Please reselect the file.")
@@ -356,6 +428,109 @@ class PlayerRepository @Inject constructor(
         } catch (_: Exception) {
             MediaSyncOutcome.Retry
         }
+    }
+
+    private suspend fun syncMultiMediaSubmission(
+        auth: AuthType.Player,
+        action: PendingActionEntity,
+        challengeId: String,
+        mediaItems: List<PendingMediaItem>,
+    ): MediaSyncOutcome {
+        val fileUrls = mutableListOf<String>()
+        try {
+            for (item in mediaItems) {
+                val source = resolveMediaItemSource(item) ?: run {
+                    markNeedsReselect(action.id, "Media source missing. Please reselect files.")
+                    return MediaSyncOutcome.NeedsReselect
+                }
+
+                val session = api.createUploadSession(
+                    gameId = auth.gameId,
+                    request = UploadSessionInitRequest(
+                        originalFileName = item.fileName,
+                        contentType = item.contentType,
+                        totalSizeBytes = source.sizeBytes,
+                        chunkSizeBytes = DEFAULT_CHUNK_SIZE_BYTES,
+                    ),
+                )
+
+                val uploadedSet = session.uploadedChunks.toMutableSet()
+                var currentSession = session
+                source.open().use { input ->
+                    for (chunkIndex in 0 until currentSession.totalChunks) {
+                        val expectedSize = expectedChunkSize(
+                            totalSizeBytes = source.sizeBytes,
+                            chunkSizeBytes = currentSession.chunkSizeBytes,
+                            totalChunks = currentSession.totalChunks,
+                            chunkIndex = chunkIndex,
+                        )
+                        val chunkBytes = readExactChunk(input, expectedSize)
+                            ?: return MediaSyncOutcome.PermanentFailure
+                        if (chunkBytes.size != expectedSize) return MediaSyncOutcome.PermanentFailure
+                        if (uploadedSet.contains(chunkIndex)) continue
+
+                        currentSession = api.uploadSessionChunk(
+                            gameId = auth.gameId,
+                            sessionId = currentSession.sessionId,
+                            chunkIndex = chunkIndex,
+                            chunkBody = chunkBytes.toRequestBody("application/octet-stream".toMediaType()),
+                        )
+                        uploadedSet.add(chunkIndex)
+                    }
+                }
+
+                val completed = api.completeUploadSession(auth.gameId, currentSession.sessionId)
+                val fileUrl = completed.fileUrl ?: return MediaSyncOutcome.PermanentFailure
+                fileUrls.add(fileUrl)
+            }
+
+            // All files uploaded, submit with fileUrls
+            api.submitAnswer(
+                gameId = auth.gameId,
+                request = PlayerSubmissionRequest(
+                    baseId = action.baseId,
+                    challengeId = challengeId,
+                    answer = action.answer.orEmpty(),
+                    fileUrl = fileUrls.firstOrNull(),
+                    fileUrls = fileUrls,
+                    idempotencyKey = action.id,
+                ),
+            )
+            db.progressDao().updateStatus(auth.gameId, action.baseId, "submitted")
+            db.progressDao().updateSubmissionStatus(auth.gameId, action.baseId, "pending")
+            return MediaSyncOutcome.Synced
+        } catch (_: SecurityException) {
+            markNeedsReselect(action.id, "Media permission lost. Please reselect files.")
+            return MediaSyncOutcome.NeedsReselect
+        } catch (_: IOException) {
+            return MediaSyncOutcome.Retry
+        } catch (_: HttpException) {
+            return MediaSyncOutcome.PermanentFailure
+        } catch (_: Exception) {
+            return MediaSyncOutcome.Retry
+        }
+    }
+
+    private fun resolveMediaItemSource(item: PendingMediaItem): MediaSource? {
+        val localPath = item.localPath
+        if (!localPath.isNullOrBlank()) {
+            val file = File(localPath)
+            if (!file.exists() || !file.isFile) return null
+            return MediaSource(
+                sizeBytes = item.sizeBytes.takeIf { it > 0 } ?: file.length(),
+                open = { file.inputStream() },
+            )
+        }
+        val sourceUriString = item.sourceUri ?: return null
+        val uri = Uri.parse(sourceUriString)
+        val size = item.sizeBytes.takeIf { it > 0 } ?: resolveUriSize(uri) ?: return null
+        return MediaSource(
+            sizeBytes = size,
+            open = {
+                context.contentResolver.openInputStream(uri)
+                    ?: throw IOException("Could not open media URI")
+            },
+        )
     }
 
     private suspend fun ensureUploadSession(
@@ -538,8 +713,22 @@ class PlayerRepository @Inject constructor(
     suspend fun pendingActions(): List<PendingActionEntity> = db.pendingActionDao().pendingActions()
 
     suspend fun markSynced(actionId: String) {
-        db.pendingActionDao().findById(actionId)?.mediaLocalPath?.let { localPath ->
+        val action = db.pendingActionDao().findById(actionId)
+        // Clean up single legacy media path
+        action?.mediaLocalPath?.let { localPath ->
             runCatching { File(localPath).delete() }
+        }
+        // Clean up multi-media local paths
+        action?.mediaItemsJson?.let { json ->
+            runCatching {
+                val items = kotlinx.serialization.json.Json.decodeFromString(
+                    kotlinx.serialization.builtins.ListSerializer(PendingMediaItem.serializer()),
+                    json,
+                )
+                items.forEach { item ->
+                    item.localPath?.let { path -> runCatching { File(path).delete() } }
+                }
+            }
         }
         db.pendingActionDao().deleteById(actionId)
     }

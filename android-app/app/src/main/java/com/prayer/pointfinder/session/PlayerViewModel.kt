@@ -317,15 +317,19 @@ class PlayerViewModel @Inject constructor(
         }
     }
 
+    data class MediaItemData(
+        val bytes: ByteArray? = null,
+        val sourceUri: String? = null,
+        val contentType: String,
+        val sizeBytes: Long,
+        val fileName: String? = null,
+    )
+
     fun submitPhoto(
         auth: AuthType.Player,
         baseId: String,
         challengeId: String,
-        mediaBytes: ByteArray?,
-        mediaSourceUri: String?,
-        mediaContentType: String?,
-        mediaSizeBytes: Long?,
-        mediaFileName: String?,
+        mediaItemDataList: List<MediaItemData>,
         notes: String,
         online: Boolean,
     ) {
@@ -335,67 +339,82 @@ class PlayerViewModel @Inject constructor(
             )
             return
         }
-        if (mediaBytes == null && mediaSourceUri.isNullOrBlank()) {
+        if (mediaItemDataList.isEmpty()) {
             _state.value = _state.value.copy(
                 solveError = context.getString(StringR.string.error_photo_required),
             )
             return
         }
-
-        val resolvedContentType = mediaContentType?.ifBlank { null } ?: "image/jpeg"
-        val resolvedSizeBytes = mediaSizeBytes
-            ?: mediaBytes?.size?.toLong()
-            ?: 0L
-        if (resolvedSizeBytes <= 0L) {
+        if (mediaItemDataList.size > 5) {
             _state.value = _state.value.copy(
-                solveError = context.getString(StringR.string.error_photo_required),
+                solveError = "Maximum 5 media items allowed.",
             )
             return
         }
 
-        val guaranteedCopyPath: String?
-        val queuedSourceUri: String?
-        if (resolvedSizeBytes <= MEDIA_COPY_THRESHOLD_BYTES) {
-            guaranteedCopyPath = try {
-                createGuaranteedMediaCopy(
-                    mediaBytes = mediaBytes,
-                    mediaSourceUri = mediaSourceUri,
-                    contentType = resolvedContentType,
-                    originalFileName = mediaFileName,
-                )
-            } catch (_: IOException) {
-                null
-            }
-            if (guaranteedCopyPath == null) {
+        val pendingItems = mutableListOf<com.prayer.pointfinder.core.model.PendingMediaItem>()
+        for (item in mediaItemDataList) {
+            val resolvedContentType = item.contentType.ifBlank { "image/jpeg" }
+            val resolvedSizeBytes = item.sizeBytes.takeIf { it > 0 }
+                ?: item.bytes?.size?.toLong()
+                ?: 0L
+            if (resolvedSizeBytes <= 0L) {
                 _state.value = _state.value.copy(
                     solveError = context.getString(StringR.string.error_photo_required),
                 )
                 return
             }
-            queuedSourceUri = null
-        } else {
-            if (mediaSourceUri.isNullOrBlank()) {
-                _state.value = _state.value.copy(
-                    solveError = context.getString(StringR.string.hint_media_reselect_required),
-                )
-                return
+
+            val guaranteedCopyPath: String?
+            val queuedSourceUri: String?
+            if (resolvedSizeBytes <= MEDIA_COPY_THRESHOLD_BYTES) {
+                guaranteedCopyPath = try {
+                    createGuaranteedMediaCopy(
+                        mediaBytes = item.bytes,
+                        mediaSourceUri = item.sourceUri,
+                        contentType = resolvedContentType,
+                        originalFileName = item.fileName,
+                    )
+                } catch (_: IOException) {
+                    null
+                }
+                if (guaranteedCopyPath == null) {
+                    _state.value = _state.value.copy(
+                        solveError = context.getString(StringR.string.error_photo_required),
+                    )
+                    return
+                }
+                queuedSourceUri = null
+            } else {
+                if (item.sourceUri.isNullOrBlank()) {
+                    _state.value = _state.value.copy(
+                        solveError = context.getString(StringR.string.hint_media_reselect_required),
+                    )
+                    return
+                }
+                guaranteedCopyPath = null
+                queuedSourceUri = item.sourceUri
             }
-            guaranteedCopyPath = null
-            queuedSourceUri = mediaSourceUri
+
+            pendingItems.add(
+                com.prayer.pointfinder.core.model.PendingMediaItem(
+                    localPath = guaranteedCopyPath,
+                    sourceUri = queuedSourceUri,
+                    contentType = resolvedContentType,
+                    sizeBytes = resolvedSizeBytes,
+                    fileName = item.fileName,
+                ),
+            )
         }
 
         viewModelScope.launch {
             runCatching {
-                playerRepository.submitMedia(
+                playerRepository.submitMultiMedia(
                     auth = auth,
                     baseId = baseId,
                     challengeId = challengeId,
                     answer = notes,
-                    mediaContentType = resolvedContentType,
-                    mediaSizeBytes = resolvedSizeBytes,
-                    mediaLocalPath = guaranteedCopyPath,
-                    mediaSourceUri = queuedSourceUri,
-                    mediaFileName = mediaFileName,
+                    mediaItems = pendingItems,
                 )
             }.onSuccess { result ->
                 _state.value = _state.value.copy(

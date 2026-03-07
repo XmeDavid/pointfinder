@@ -5,6 +5,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
@@ -109,6 +110,7 @@ import com.prayer.pointfinder.feature.player.PlayerMapScreen
 import com.prayer.pointfinder.feature.player.PlayerNotificationListScreen
 import com.prayer.pointfinder.feature.player.PlayerSettingsScreen
 import com.prayer.pointfinder.feature.player.PlayerTab
+import com.prayer.pointfinder.feature.player.MediaItem
 import com.prayer.pointfinder.feature.player.SolveScreen
 import com.prayer.pointfinder.feature.player.SubmissionResultScreen
 import com.prayer.pointfinder.session.AppSessionViewModel
@@ -361,12 +363,7 @@ private fun PlayerRootScreen(
 
     var selectedTab by rememberSaveable { mutableStateOf(PlayerTab.MAP) }
     var solving by remember { mutableStateOf<Pair<String, String>?>(null) }
-    var selectedMediaBytes by remember { mutableStateOf<ByteArray?>(null) }
-    var selectedMediaBitmap by remember { mutableStateOf<Bitmap?>(null) }
-    var selectedMediaUri by remember { mutableStateOf<Uri?>(null) }
-    var selectedMediaContentType by remember { mutableStateOf<String?>(null) }
-    var selectedMediaSizeBytes by remember { mutableStateOf<Long?>(null) }
-    var selectedMediaFileName by remember { mutableStateOf<String?>(null) }
+    var selectedMediaItems by remember { mutableStateOf<List<MediaItem>>(emptyList()) }
     var showNfcScanDialog by remember { mutableStateOf(false) }
     // Callback to invoke when an NFC scan completes (used for both check-in and presence verification).
     var pendingNfcAction by remember { mutableStateOf<((String) -> Unit)?>(null) }
@@ -381,12 +378,7 @@ private fun PlayerRootScreen(
         viewModel.clearSubmissionResult()
         viewModel.clearCheckIn()
         solving = null
-        selectedMediaBytes = null
-        selectedMediaBitmap = null
-        selectedMediaUri = null
-        selectedMediaContentType = null
-        selectedMediaSizeBytes = null
-        selectedMediaFileName = null
+        selectedMediaItems = emptyList()
         showNfcScanDialog = false
         pendingNfcAction = null
         selectedTab = PlayerTab.MAP
@@ -457,11 +449,14 @@ private fun PlayerRootScreen(
         FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", photoFile)
     }
 
-    // Gallery picker
-    val pickPhotoLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.PickVisualMedia(),
-    ) { uri ->
-        if (uri != null) {
+    // Gallery picker (multi-select, up to 5)
+    val pickMediaLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickMultipleVisualMedia(5),
+    ) { uris ->
+        val remaining = 5 - selectedMediaItems.size
+        val toProcess = uris.take(remaining)
+        val newItems = mutableListOf<MediaItem>()
+        for (uri in toProcess) {
             runCatching {
                 context.contentResolver.takePersistableUriPermission(
                     uri,
@@ -469,15 +464,22 @@ private fun PlayerRootScreen(
                 )
             }
             val metadata = resolvePickedMediaMetadata(context, uri)
-            selectedMediaUri = uri
-            selectedMediaContentType = metadata.mimeType
-            selectedMediaSizeBytes = metadata.sizeBytes
-            selectedMediaFileName = metadata.displayName
+            val isVideo = metadata.mimeType.startsWith("video/")
 
-            runCatching {
-                if (metadata.mimeType.startsWith("image/")) {
+            val thumbnail: Bitmap? = runCatching {
+                if (isVideo) {
+                    val retriever = MediaMetadataRetriever()
+                    retriever.setDataSource(context, uri)
+                    val frame = retriever.getScaledFrameAtTime(
+                        0,
+                        MediaMetadataRetriever.OPTION_CLOSEST_SYNC,
+                        320,
+                        320,
+                    )
+                    retriever.release()
+                    frame
+                } else {
                     val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                        // Force software bitmap — hardware bitmaps cannot be compressed
                         ImageDecoder.decodeBitmap(
                             ImageDecoder.createSource(context.contentResolver, uri),
                         ) { decoder, _, _ ->
@@ -487,43 +489,49 @@ private fun PlayerRootScreen(
                         @Suppress("DEPRECATION")
                         MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
                     }
-                    val scaled = scaleBitmapDown(bitmap, 1920)
-                    selectedMediaBitmap = scaled
-                    val out = ByteArrayOutputStream()
-                    scaled.compress(Bitmap.CompressFormat.JPEG, 70, out)
-                    selectedMediaBytes = out.toByteArray()
-                    selectedMediaContentType = "image/jpeg"
-                    selectedMediaSizeBytes = selectedMediaBytes?.size?.toLong()
-                    if (selectedMediaFileName.isNullOrBlank()) {
-                        selectedMediaFileName = "capture.jpg"
-                    }
-                } else {
-                    selectedMediaBitmap = null
-                    selectedMediaBytes = null
+                    scaleBitmapDown(bitmap, 320)
                 }
+            }.getOrNull()
+
+            if (thumbnail != null) {
+                newItems.add(
+                    MediaItem(
+                        uri = uri.toString(),
+                        thumbnail = thumbnail,
+                        isVideo = isVideo,
+                        contentType = metadata.mimeType,
+                        sizeBytes = metadata.sizeBytes ?: 0L,
+                        fileName = metadata.displayName,
+                    ),
+                )
             }
         }
+        selectedMediaItems = selectedMediaItems + newItems
     }
 
-    // Camera capture
+    // Camera capture (adds photo to list)
     val cameraLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.TakePicture(),
     ) { success ->
-        if (success) {
+        if (success && selectedMediaItems.size < 5) {
             runCatching {
                 val inputStream = context.contentResolver.openInputStream(cameraPhotoUri)
                 val bitmap = BitmapFactory.decodeStream(inputStream)
                 inputStream?.close()
                 if (bitmap != null) {
+                    val thumbnail = scaleBitmapDown(bitmap, 320)
                     val scaled = scaleBitmapDown(bitmap, 1920)
-                    selectedMediaBitmap = scaled
                     val out = ByteArrayOutputStream()
                     scaled.compress(Bitmap.CompressFormat.JPEG, 70, out)
-                    selectedMediaBytes = out.toByteArray()
-                    selectedMediaUri = cameraPhotoUri
-                    selectedMediaContentType = "image/jpeg"
-                    selectedMediaSizeBytes = selectedMediaBytes?.size?.toLong()
-                    selectedMediaFileName = "capture.jpg"
+                    val jpegBytes = out.toByteArray()
+                    selectedMediaItems = selectedMediaItems + MediaItem(
+                        uri = cameraPhotoUri.toString(),
+                        thumbnail = thumbnail,
+                        isVideo = false,
+                        contentType = "image/jpeg",
+                        sizeBytes = jpegBytes.size.toLong(),
+                        fileName = "capture.jpg",
+                    )
                 }
             }
         }
@@ -571,12 +579,7 @@ private fun PlayerRootScreen(
         onTabSelected = { tab ->
             // Clear sub-screen state so tabs always navigate
             solving = null
-            selectedMediaBytes = null
-            selectedMediaBitmap = null
-            selectedMediaUri = null
-            selectedMediaContentType = null
-            selectedMediaSizeBytes = null
-            selectedMediaFileName = null
+            selectedMediaItems = emptyList()
             viewModel.clearCheckIn()
             viewModel.clearSubmissionResult()
             viewModel.closeNotifications()
@@ -607,15 +610,56 @@ private fun PlayerRootScreen(
                 // Closure that performs the actual submission (reused by direct and NFC paths).
                 val doSubmit = {
                     if (state.isPhotoMode) {
+                        val mediaItemDataList = selectedMediaItems.map { item ->
+                            val itemUri = Uri.parse(item.uri)
+                            // For images, re-compress; for videos, pass source URI
+                            if (!item.isVideo) {
+                                val bmp = runCatching {
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                                        ImageDecoder.decodeBitmap(
+                                            ImageDecoder.createSource(context.contentResolver, itemUri),
+                                        ) { decoder, _, _ ->
+                                            decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+                                        }
+                                    } else {
+                                        @Suppress("DEPRECATION")
+                                        MediaStore.Images.Media.getBitmap(context.contentResolver, itemUri)
+                                    }
+                                }.getOrNull()
+                                if (bmp != null) {
+                                    val scaled = scaleBitmapDown(bmp, 1920)
+                                    val out = ByteArrayOutputStream()
+                                    scaled.compress(Bitmap.CompressFormat.JPEG, 70, out)
+                                    val bytes = out.toByteArray()
+                                    PlayerViewModel.MediaItemData(
+                                        bytes = bytes,
+                                        sourceUri = item.uri,
+                                        contentType = "image/jpeg",
+                                        sizeBytes = bytes.size.toLong(),
+                                        fileName = item.fileName ?: "capture.jpg",
+                                    )
+                                } else {
+                                    PlayerViewModel.MediaItemData(
+                                        sourceUri = item.uri,
+                                        contentType = item.contentType,
+                                        sizeBytes = item.sizeBytes,
+                                        fileName = item.fileName,
+                                    )
+                                }
+                            } else {
+                                PlayerViewModel.MediaItemData(
+                                    sourceUri = item.uri,
+                                    contentType = item.contentType,
+                                    sizeBytes = item.sizeBytes,
+                                    fileName = item.fileName,
+                                )
+                            }
+                        }
                         viewModel.submitPhoto(
                             auth = auth,
                             baseId = baseId,
                             challengeId = challengeId,
-                            mediaBytes = selectedMediaBytes,
-                            mediaSourceUri = selectedMediaUri?.toString(),
-                            mediaContentType = selectedMediaContentType,
-                            mediaSizeBytes = selectedMediaSizeBytes,
-                            mediaFileName = selectedMediaFileName,
+                            mediaItemDataList = mediaItemDataList,
                             notes = state.answerText,
                             online = isOnline,
                         )
@@ -634,8 +678,9 @@ private fun PlayerRootScreen(
                     onAnswerChange = viewModel::setAnswerText,
                     isPhotoMode = state.isPhotoMode,
                     presenceRequired = state.presenceRequired,
-                    onPickPhoto = {
-                        pickPhotoLauncher.launch(
+                    mediaItems = selectedMediaItems,
+                    onPickMedia = {
+                        pickMediaLauncher.launch(
                             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo),
                         )
                     },
@@ -646,14 +691,8 @@ private fun PlayerRootScreen(
                             cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                         }
                     },
-                    photoBitmap = selectedMediaBitmap,
-                    onClearPhoto = {
-                        selectedMediaBitmap = null
-                        selectedMediaBytes = null
-                        selectedMediaUri = null
-                        selectedMediaContentType = null
-                        selectedMediaSizeBytes = null
-                        selectedMediaFileName = null
+                    onRemoveMedia = { index ->
+                        selectedMediaItems = selectedMediaItems.toMutableList().apply { removeAt(index) }
                     },
                     onBack = { solving = null },
                     onSubmit = {
