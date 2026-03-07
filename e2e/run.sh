@@ -127,9 +127,9 @@ local_up() {
   else
     docker compose -f "$LOCAL_COMPOSE_FILE" up -d
   fi
-  seed_local_admin
   docker exec "$LOCAL_NGINX_CONTAINER" nginx -s reload >/dev/null 2>&1 || true
   wait_for_local_stack
+  seed_local_admin
 }
 
 local_down() {

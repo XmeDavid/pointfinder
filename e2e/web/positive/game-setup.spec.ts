@@ -16,7 +16,7 @@ import { throwawayGameFixture, baseFixture, challengeFixture } from '../../share
 import { appendCreatedGameId } from '../../shared/run-context';
 import { getOperatorToken } from '../../shared/auth';
 
-test.describe('Game setup via web UI', () => {
+test.describe('Game setup via web UI', { tag: '@smoke' }, () => {
   test.describe.configure({ mode: 'serial' });
 
   let gameId: string;

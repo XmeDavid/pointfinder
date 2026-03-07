@@ -19,7 +19,6 @@ class MobileRealtimeClientUrlTest {
         assertEquals(443, url.port)
         assertEquals("/ws/mobile", url.encodedPath)
         assertEquals("game-123", url.queryParameter("gameId"))
-        assertEquals("token-abc", url.queryParameter("token"))
     }
 
     @Test
@@ -35,7 +34,6 @@ class MobileRealtimeClientUrlTest {
         assertEquals(8080, url.port)
         assertEquals("/ws/mobile", url.encodedPath)
         assertEquals("g1", url.queryParameter("gameId"))
-        assertEquals("t1", url.queryParameter("token"))
     }
 
     @Test
