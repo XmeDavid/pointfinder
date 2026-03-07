@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.QrCode
@@ -69,6 +70,8 @@ fun TeamDetailScreen(
     onDelete: () -> Unit,
     onRemovePlayer: (String) -> Unit,
     onSaveVariableValue: (variableKey: String, value: String) -> Unit,
+    onCreateVariable: (variableName: String) -> Unit,
+    onDeleteVariable: (variableKey: String) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -79,6 +82,8 @@ fun TeamDetailScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showQrDialog by remember { mutableStateOf(false) }
     var removePlayerTarget by remember { mutableStateOf<PlayerResponse?>(null) }
+    var newVariableName by remember { mutableStateOf("") }
+    var variableError by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
         topBar = {
@@ -213,18 +218,82 @@ fun TeamDetailScreen(
                 variables.forEach { variable ->
                     val currentValue = variable.teamValues[team.id] ?: ""
                     var editedValue by remember(variable.key, team.id) { mutableStateOf(currentValue) }
-                    OutlinedTextField(
-                        value = editedValue,
-                        onValueChange = { newVal ->
-                            editedValue = newVal
-                            onSaveVariableValue(variable.key, newVal)
-                        },
-                        label = { Text(variable.key) },
-                        singleLine = true,
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth(),
-                    )
+                    ) {
+                        OutlinedTextField(
+                            value = editedValue,
+                            onValueChange = { newVal ->
+                                editedValue = newVal
+                                onSaveVariableValue(variable.key, newVal)
+                            },
+                            label = { Text(variable.key) },
+                            singleLine = true,
+                            modifier = Modifier.weight(1f),
+                        )
+                        IconButton(onClick = { onDeleteVariable(variable.key) }) {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = stringResource(R.string.action_remove),
+                                modifier = Modifier.size(18.dp),
+                                tint = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                    }
                     Spacer(Modifier.height(8.dp))
                 }
+            }
+
+            // Add variable
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                OutlinedTextField(
+                    value = newVariableName,
+                    onValueChange = {
+                        newVariableName = it
+                        variableError = null
+                    },
+                    label = { Text(stringResource(R.string.label_variable_name)) },
+                    singleLine = true,
+                    isError = variableError != null,
+                    modifier = Modifier.weight(1f),
+                )
+                Spacer(Modifier.width(8.dp))
+                IconButton(
+                    onClick = {
+                        val trimmed = newVariableName.trim()
+                        when {
+                            trimmed.isEmpty() -> {}
+                            !trimmed.matches(Regex("^[A-Za-z][A-Za-z0-9_]*$")) -> {
+                                variableError = context.getString(R.string.label_invalid_variable_name)
+                            }
+                            variables.any { it.key.equals(trimmed, ignoreCase = true) } -> {
+                                variableError = context.getString(R.string.label_duplicate_variable)
+                            }
+                            else -> {
+                                onCreateVariable(trimmed)
+                                newVariableName = ""
+                                variableError = null
+                            }
+                        }
+                    },
+                    enabled = newVariableName.trim().isNotEmpty(),
+                ) {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = stringResource(R.string.label_create_variable),
+                    )
+                }
+            }
+            if (variableError != null) {
+                Text(
+                    text = variableError!!,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
             }
 
             Spacer(Modifier.height(12.dp))

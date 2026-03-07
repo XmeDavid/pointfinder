@@ -608,6 +608,21 @@ class OperatorViewModel @Inject constructor(
         }
     }
 
+    fun deleteVariable(variableKey: String) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching {
+                val currentVars = _state.value.variables.filter { it.key != variableKey }
+                operatorRepository.saveGameVariables(gameId, TeamVariablesRequest(variables = currentVars))
+            }.onSuccess { response ->
+                _state.value = _state.value.copy(variables = response.variables)
+            }.onFailure { e ->
+                if (markAuthExpiredIfNeeded(e)) return@onFailure
+                _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(e))
+            }
+        }
+    }
+
     fun createTeam(name: String, color: String, onSuccess: (Team) -> Unit) {
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {

@@ -65,7 +65,7 @@ private struct NotificationRow: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .listRowBackground(
-            isUnseen ? Color.accentColor.opacity(0.06) : Color.clear
+            isUnseen ? Color.accentColor.opacity(0.15) : Color.clear
         )
     }
 
