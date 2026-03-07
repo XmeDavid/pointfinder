@@ -26,10 +26,9 @@ appId: ${APP_ID}
 - tapOn:
     id: "base-edit-btn"
 
-- clearText:
-    id: "base-name-input"
 - tapOn:
     id: "base-name-input"
+- eraseText
 - inputText: "Base Alpha v2"
 
 - tapOn:
@@ -43,10 +42,9 @@ appId: ${APP_ID}
 - tapOn:
     id: "challenge-edit-btn"
 
-- clearText:
-    id: "challenge-title-input"
 - tapOn:
     id: "challenge-title-input"
+- eraseText
 - inputText: "Find the Hidden Clue v2"
 
 - tapOn:
@@ -63,10 +61,9 @@ appId: ${APP_ID}
 - tapOn:
     id: "team-edit-btn"
 
-- clearText:
-    id: "team-name-input"
 - tapOn:
     id: "team-name-input"
+- eraseText
 - inputText: "Team Eagle Edited"
 
 - tapOn:

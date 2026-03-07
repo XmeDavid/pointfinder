@@ -14,10 +14,13 @@ End-to-end test suite for PointFinder. Covers the full stack: API (Playwright), 
 ```bash
 cd e2e
 cp .env.example .env
-# Fill in BASE_URL, operator credentials, and other values
+# The default template targets the local Docker-backed E2E stack
 npm install
 npx playwright install chromium
 ```
+
+For the default API/web flows, `run.sh` will start the local Docker-backed stack for you.
+Only override `BASE_URL`, `OPERATOR_EMAIL`, or `OPERATOR_PASSWORD` if you intentionally want to target a different environment.
 
 ## Running Tests
 
@@ -25,20 +28,29 @@ All commands go through the `run.sh` entry point from the `e2e/` directory.
 
 | Command | Description |
 |---|---|
-| `./run.sh smoke` | API smoke test — critical path only |
-| `./run.sh smoke:web` | Web smoke test |
+| `./run.sh smoke` | Local API smoke test — critical path only |
+| `./run.sh smoke:web` | Local web smoke test |
+| `./run.sh smoke:web:local` | Alias for the local web smoke flow |
 | `./run.sh smoke:ios` | iOS smoke test (login + create game) |
 | `./run.sh smoke:android` | Android smoke test (login + create game) |
-| `./run.sh api` | Full API test suite |
-| `./run.sh api:positive` | API positive tests only (excludes `@negative`) |
-| `./run.sh web` | Web UI tests |
+| `./run.sh api` | Local stack + full API test suite |
+| `./run.sh api:local` | Alias for the local API flow |
+| `./run.sh api:positive` | Local stack + API positive tests only |
+| `./run.sh web` | Local stack + web UI tests |
+| `./run.sh web:local` | Alias for the local web flow |
 | `./run.sh ios` | iOS Maestro flows |
 | `./run.sh android` | Android Maestro flows |
 | `./run.sh all` | Everything: API + web + iOS + Android |
+| `./run.sh all:local` | Local stack + everything: API + web + iOS + Android |
+| `./run.sh local:up` | Start or refresh the local prod-like Docker E2E stack |
+| `./run.sh local:down` | Stop the local prod-like Docker E2E stack |
 | `./run.sh parity` | Check scenario coverage across layers |
-| `./run.sh cleanup` | Delete orphaned E2E games from the server |
+| `./run.sh cleanup` | Delete orphaned E2E games from the local stack by default |
 
-All commands except `parity` and `cleanup` run the full setup/teardown lifecycle automatically.
+API/web commands default to the local Docker-backed E2E stack.
+Mobile commands still depend on the app-side backend configuration.
+
+All commands except `parity`, `cleanup`, `local:up`, and `local:down` run the full setup/teardown lifecycle automatically.
 
 ## Architecture
 

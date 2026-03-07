@@ -40,10 +40,9 @@ appId: ${APP_ID}
 - tapOn:
     id: "challenge-edit-btn"
 
-- clearText:
-    id: "challenge-title-input"
 - tapOn:
     id: "challenge-title-input"
+- eraseText
 - inputText: "Find the Hidden Clue (Updated)"
 
 - tapOn:
