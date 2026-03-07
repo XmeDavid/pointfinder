@@ -93,14 +93,24 @@ test.describe('Base management via web UI', () => {
 
     await expect(page.locator('text=Web Base To Delete')).toBeVisible({ timeout: 10_000 });
 
-    // Find the card containing this base and click its delete (trash) icon button
-    const baseCard = page.locator('.card, [class*="card"]').filter({ hasText: 'Web Base To Delete' });
-    const deleteBtn = baseCard.getByRole('button', { name: /delete/i });
+    // Dismiss any stale error alerts before interacting
+    const dismissBtn = page.locator('button', { hasText: /dismiss/i });
+    if (await dismissBtn.isVisible({ timeout: 1_000 }).catch(() => false)) {
+      await dismissBtn.click();
+    }
+
+    // Find the base entry containing "Web Base To Delete" and its Delete button.
+    // Base items are rendered as div containers (not .card class).
+    const baseItem = page.locator('main div')
+      .filter({ hasText: 'Web Base To Delete' })
+      .filter({ has: page.getByRole('button', { name: /delete/i }) })
+      .last();
+    const deleteBtn = baseItem.getByRole('button', { name: /delete/i });
     await expect(deleteBtn).toBeVisible({ timeout: 5_000 });
     await deleteBtn.click();
 
     // Confirm deletion dialog
-    const confirmBtn = page.locator('button[class*="destructive"], button', { hasText: /delete/i }).last();
+    const confirmBtn = page.getByRole('button', { name: /delete/i }).last();
     await expect(confirmBtn).toBeVisible({ timeout: 3_000 });
     await confirmBtn.click();
 
