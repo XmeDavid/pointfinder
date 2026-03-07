@@ -30,6 +30,12 @@
     { "id": "N9",  "name": "Fixed challenge conflict",          "api": true,  "web": true,  "mobile": true  },
     { "id": "N10", "name": "Challenge/base count constraint",   "api": true,  "web": true,  "mobile": true  },
     { "id": "N11", "name": "Dropdown filtering parity",         "api": false, "web": true,  "mobile": true  },
-    { "id": "N12", "name": "Tile source options parity",        "api": false, "web": true,  "mobile": true  }
+    { "id": "N12", "name": "Tile source options parity",        "api": false, "web": true,  "mobile": true  },
+    { "id": "P20", "name": "Player submits file upload",                "api": true,  "web": false, "mobile": true  },
+    { "id": "P21", "name": "Auto-validated correct answer",             "api": true,  "web": false, "mobile": true  },
+    { "id": "P22", "name": "Player receives notification",              "api": true,  "web": false, "mobile": true  },
+    { "id": "P23", "name": "Concurrent multi-player submissions",       "api": true,  "web": false, "mobile": false },
+    { "id": "P24", "name": "Wrong answer auto-rejected",                "api": true,  "web": false, "mobile": true  },
+    { "id": "N13", "name": "Duplicate submission (idempotency key)",    "api": true,  "web": false, "mobile": false }
   ]
 }

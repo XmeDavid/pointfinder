@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import { config } from './config';
 
 const BASE = config.baseUrl;
@@ -238,6 +239,26 @@ export async function submitAnswer(
 ) {
   const res = await request('POST', `/api/player/games/${gameId}/submissions`, {
     body,
+    token: playerToken,
+  });
+  return { status: res.status, data: await json(res) };
+}
+
+export async function submitAnswerWithFile(
+  playerToken: string,
+  gameId: string,
+  body: { baseId: string; challengeId: string; filePath: string; answer?: string; idempotencyKey?: string },
+) {
+  const fileBytes = fs.readFileSync(body.filePath);
+  const fileName = body.filePath.split('/').pop() ?? 'upload';
+  const formData = new FormData();
+  formData.append('file', new Blob([fileBytes]), fileName);
+  formData.append('baseId', body.baseId);
+  formData.append('challengeId', body.challengeId);
+  if (body.answer !== undefined) formData.append('answer', body.answer);
+  if (body.idempotencyKey !== undefined) formData.append('idempotencyKey', body.idempotencyKey);
+  const res = await request('POST', `/api/player/games/${gameId}/submissions/upload`, {
+    formData,
     token: playerToken,
   });
   return { status: res.status, data: await json(res) };

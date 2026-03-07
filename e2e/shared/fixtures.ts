@@ -46,6 +46,18 @@ export function challengeFixture(answerType: 'text' | 'file', index?: number) {
   };
 }
 
+export function autoValidateChallengeFixture(index?: number) {
+  const suffix = index !== undefined ? ` ${index}` : '';
+  return {
+    title: `Auto-Validate Challenge${suffix}`,
+    description: `E2E auto-validate text challenge${suffix}`,
+    answerType: 'text' as const,
+    points: 15,
+    correctAnswer: ['correct answer'],
+    autoValidate: true,
+  };
+}
+
 export function teamFixture(index: number) {
   const colors = ['#FF5733', '#33FF57', '#3357FF', '#FF33F5'];
   return {
