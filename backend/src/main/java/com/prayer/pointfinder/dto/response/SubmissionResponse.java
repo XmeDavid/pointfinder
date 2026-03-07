@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -17,6 +18,7 @@ public class SubmissionResponse {
     private UUID baseId;
     private String answer;
     private String fileUrl;
+    private List<String> fileUrls;
     private String status;
     private Instant submittedAt;
     private UUID reviewedBy;

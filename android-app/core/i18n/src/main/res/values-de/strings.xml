@@ -19,7 +19,7 @@
     <string name="action_write_nfc">NFC-Tag schreiben</string>
     <string name="action_link_backend">Im Backend verknüpfen</string>
     <string name="action_verify_with_nfc">Mit NFC verifizieren</string>
-    <string name="action_choose_photo">Foto wählen</string>
+    <string name="action_choose_media">Medien wählen</string>
     <string name="action_take_photo">Foto aufnehmen</string>
     <string name="action_refresh">Aktualisieren</string>
     <string name="action_back">Zurück</string>
@@ -104,7 +104,7 @@
     <string name="label_solve_title">Aufgabe lösen</string>
     <string name="label_presence_required">Präsenzprüfung erforderlich.</string>
     <string name="label_presence_verified">Präsenz bestätigt</string>
-    <string name="label_photo_mode">Foto-Antwortmodus</string>
+    <string name="label_photo_mode">Medien-Antwortmodus</string>
     <string name="label_submission_status">Abgabestatus: %1$s</string>
     <string name="label_teams_count">Teams: %1$d</string>
     <string name="label_team_status_row">Team %1$s - %2$s</string>
@@ -207,7 +207,7 @@
     <string name="error_scan_nfc_first">Scanne zuerst einen Basis-NFC-Tag.</string>
     <string name="error_invalid_join_code">Bitte gib einen gueltigen Beitrittscode ein.</string>
     <string name="error_answer_required">Bitte gib eine Antwort ein.</string>
-    <string name="error_photo_required">Foto ist erforderlich.</string>
+    <string name="error_photo_required">Mindestens eine Mediendatei ist erforderlich.</string>
     <string name="error_nfc_write_failed">NFC-Schreiben fehlgeschlagen.</string>
     <string name="error_nfc_link_failed">NFC geschrieben, aber Verknüpfung fehlgeschlagen: %1$s</string>
     <string name="error_network_unavailable">Netzwerk nicht verfügbar. Überprüfe deine Verbindung.</string>

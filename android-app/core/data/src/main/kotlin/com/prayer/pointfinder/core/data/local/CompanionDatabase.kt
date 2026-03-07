@@ -33,6 +33,8 @@ data class PendingActionEntity(
     val uploadTotalChunks: Int? = null,
     val requiresReselect: Boolean = false,
     val lastError: String? = null,
+    /** JSON-encoded list of media items for multi-media submissions. */
+    val mediaItemsJson: String? = null,
 )
 
 @Entity(tableName = "cached_progress", primaryKeys = ["gameId", "baseId"])
@@ -161,7 +163,7 @@ interface ChallengeDao {
         CachedProgressEntity::class,
         CachedChallengeEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = false,
 )
 abstract class CompanionDatabase : RoomDatabase() {

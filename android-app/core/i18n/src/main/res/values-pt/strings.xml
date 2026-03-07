@@ -19,7 +19,7 @@
     <string name="action_write_nfc">Gravar tag NFC</string>
     <string name="action_link_backend">Associar no backend</string>
     <string name="action_verify_with_nfc">Verificar com NFC</string>
-    <string name="action_choose_photo">Escolher foto</string>
+    <string name="action_choose_media">Escolher média</string>
     <string name="action_take_photo">Tirar foto</string>
     <string name="action_refresh">Atualizar</string>
     <string name="action_back">Voltar</string>
@@ -104,7 +104,7 @@
     <string name="label_solve_title">Resolver desafio</string>
     <string name="label_presence_required">Verificação de presença obrigatória.</string>
     <string name="label_presence_verified">Presença verificada</string>
-    <string name="label_photo_mode">Modo de resposta por foto</string>
+    <string name="label_photo_mode">Modo de resposta por média</string>
     <string name="label_submission_status">Status da submissão: %1$s</string>
     <string name="label_teams_count">Equipes: %1$d</string>
     <string name="label_team_status_row">Equipe %1$s - %2$s</string>
@@ -207,7 +207,7 @@
     <string name="error_scan_nfc_first">Leia uma tag NFC de base primeiro.</string>
     <string name="error_invalid_join_code">Introduza um código de entrada válido.</string>
     <string name="error_answer_required">Forneça uma resposta.</string>
-    <string name="error_photo_required">Foto é obrigatória.</string>
+    <string name="error_photo_required">Pelo menos um ficheiro de média é obrigatório.</string>
     <string name="error_nfc_write_failed">Falha ao gravar NFC.</string>
     <string name="error_nfc_link_failed">NFC gravado mas associação falhou: %1$s</string>
     <string name="error_network_unavailable">Rede indisponível. Verifique sua conexão.</string>

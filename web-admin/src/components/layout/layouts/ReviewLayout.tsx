@@ -1,12 +1,12 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle, XCircle, Clock, FileText, ChevronLeft, Maximize2 } from "lucide-react";
+import { CheckCircle, XCircle, Clock, FileText, ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
 import { Header } from "../Header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { AuthImage } from "@/components/AuthImage";
+import { AuthMedia } from "@/components/AuthMedia";
 import { submissionsApi } from "@/lib/api/submissions";
 import { teamsApi } from "@/lib/api/teams";
 import { challengesApi } from "@/lib/api/challenges";
@@ -17,6 +17,42 @@ import { useTranslation } from "react-i18next";
 import { useGameWebSocket } from "@/hooks/useGameWebSocket";
 import { cn } from "@/lib/utils";
 import type { Submission, SubmissionStatus, GameStatus } from "@/types";
+
+const getMediaUrls = (sub: Submission): string[] => sub.fileUrls ?? (sub.fileUrl ? [sub.fileUrl] : []);
+function FullScreenMediaViewer({ urls, index, onPrev, onNext }: { urls: string[]; index: number; onPrev: () => void; onNext: () => void }) {
+  const currentUrl = urls[index];
+  const hasMultiple = urls.length > 1;
+  return (
+    <div className="relative">
+      <AuthMedia
+        src={currentUrl}
+        alt="Submission media"
+        className="w-full h-auto max-h-[85vh] object-contain rounded"
+      />
+      {hasMultiple && (
+        <>
+          <button
+            className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors disabled:opacity-30"
+            disabled={index === 0}
+            onClick={onPrev}
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors disabled:opacity-30"
+            disabled={index === urls.length - 1}
+            onClick={onNext}
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+            {index + 1} / {urls.length}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 interface ReviewLayoutProps {
   gameId: string;
@@ -34,7 +70,7 @@ export function ReviewLayout({ gameId, gameStatus }: ReviewLayoutProps) {
   const [filterTab, setFilterTab] = useState<FilterTab>("pending");
   const [mobileView, setMobileView] = useState<"list" | "detail">("list");
   const [selection, setSelection] = useState<{ id: string | null; feedback: string; points: number }>({ id: null, feedback: "", points: 0 });
-  const [fullScreenImage, setFullScreenImage] = useState<{ apiUrl: string; blobUrl?: string } | null>(null);
+  const [fullScreenMedia, setFullScreenMedia] = useState<{ urls: string[]; index: number } | null>(null);
   const blobCache = useRef<Map<string, string>>(new Map());
 
   const { data: submissions = [] } = useQuery({
@@ -232,33 +268,49 @@ export function ReviewLayout({ gameId, gameStatus }: ReviewLayoutProps) {
             )}
 
             {/* Answer */}
-            {selected.fileUrl ? (
-              <div>
-                <p className="text-sm font-medium mb-2">{t("submissions.answer")}</p>
-                <div className="relative group">
-                  <AuthImage
-                    src={selected.fileUrl}
-                    alt="Submission"
-                    className="rounded-md max-h-80 w-full object-contain bg-muted cursor-pointer"
-                    onClick={() => setFullScreenImage({ apiUrl: selected.fileUrl!, blobUrl: blobCache.current.get(selected.fileUrl!) })}
-                    onBlobReady={(blob) => blobCache.current.set(selected.fileUrl!, blob)}
-                  />
-                  <button
-                    className="absolute top-2 right-2 p-1 rounded bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => setFullScreenImage({ apiUrl: selected.fileUrl!, blobUrl: blobCache.current.get(selected.fileUrl!) })}
-                  >
-                    <Maximize2 className="h-4 w-4" />
-                  </button>
+            {(() => {
+              const mediaUrls = getMediaUrls(selected);
+              if (mediaUrls.length > 0) {
+                return (
+                  <div>
+                    <p className="text-sm font-medium mb-2">{t("submissions.answer")}</p>
+                    <div className="space-y-2">
+                      {mediaUrls.map((url, idx) => (
+                        <div key={url} className="relative group">
+                          <AuthMedia
+                            src={url}
+                            alt="Submission media"
+                            className="rounded-md max-h-80 w-full object-contain bg-muted cursor-pointer"
+                            onClick={() => setFullScreenMedia({ urls: mediaUrls, index: idx })}
+                            onBlobReady={(blob) => blobCache.current.set(url, blob)}
+                          />
+                          <button
+                            className="absolute top-2 right-2 p-1 rounded bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => setFullScreenMedia({ urls: mediaUrls, index: idx })}
+                          >
+                            <Maximize2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    {selected.answer && (
+                      <div className="mt-2">
+                        <p className="text-sm font-medium mb-1">{t("submissions.notes")}</p>
+                        <div className="rounded-md bg-muted p-3 text-sm">{selected.answer}</div>
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+              return (
+                <div>
+                  <p className="text-sm font-medium mb-2">{t("submissions.answer")}</p>
+                  <div className="rounded-md bg-muted p-4 text-lg min-h-16 break-words">
+                    {selected.answer || <span className="text-muted-foreground italic text-base">{t("submissions.noNotes")}</span>}
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div>
-                <p className="text-sm font-medium mb-2">{t("submissions.answer")}</p>
-                <div className="rounded-md bg-muted p-4 text-lg min-h-16 break-words">
-                  {selected.answer || <span className="text-muted-foreground italic text-base">{t("submissions.noNotes")}</span>}
-                </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Correct answer (if auto-validate text) */}
             {selectedChallenge?.correctAnswer && selectedChallenge.correctAnswer.length > 0 && selectedChallenge.answerType === "text" && selectedChallenge.autoValidate && (
@@ -337,17 +389,15 @@ export function ReviewLayout({ gameId, gameStatus }: ReviewLayoutProps) {
         </div>
       </div>
 
-      {/* Full-screen image */}
-      <Dialog open={!!fullScreenImage} onOpenChange={() => setFullScreenImage(null)}>
-        <DialogContent className="max-w-4xl p-2" onClose={() => setFullScreenImage(null)}>
-          {fullScreenImage && (
-            <AuthImage
-              src={fullScreenImage.apiUrl}
-              initialBlobUrl={fullScreenImage.blobUrl}
-              alt="Submission"
-              className="w-full h-auto max-h-[85vh] object-contain rounded"
-            />
-          )}
+      {/* Full-screen media viewer */}
+      <Dialog open={!!fullScreenMedia} onOpenChange={() => setFullScreenMedia(null)}>
+        <DialogContent className="max-w-4xl p-2" onClose={() => setFullScreenMedia(null)}>
+          {fullScreenMedia && <FullScreenMediaViewer
+            urls={fullScreenMedia.urls}
+            index={fullScreenMedia.index}
+            onPrev={() => setFullScreenMedia((prev) => prev ? { ...prev, index: prev.index - 1 } : null)}
+            onNext={() => setFullScreenMedia((prev) => prev ? { ...prev, index: prev.index + 1 } : null)}
+          />}
         </DialogContent>
       </Dialog>
     </div>

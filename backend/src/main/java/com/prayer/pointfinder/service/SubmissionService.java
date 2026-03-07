@@ -72,8 +72,11 @@ public class SubmissionService {
             }
         }
 
-        // Reject arbitrary URLs and ensure referenced files belong to this game.
-        request.setFileUrl(fileStorageService.validateStoredFileUrl(request.getFileUrl(), gameId));
+        // Validate and normalize file URLs.
+        // Support both legacy single fileUrl and new fileUrls list.
+        List<String> validatedFileUrls = validateAndNormalizeFileUrls(request, gameId);
+        request.setFileUrl(validatedFileUrls != null && !validatedFileUrls.isEmpty() ? validatedFileUrls.get(0) : null);
+        request.setFileUrls(validatedFileUrls);
 
         Team team = teamRepository.findById(request.getTeamId())
                 .orElseThrow(() -> new ResourceNotFoundException("Team", request.getTeamId()));
@@ -110,6 +113,7 @@ public class SubmissionService {
                 .base(base)
                 .answer(request.getAnswer() != null ? request.getAnswer() : "")
                 .fileUrl(request.getFileUrl())
+                .fileUrls(request.getFileUrls())
                 .status(status)
                 .submittedAt(Instant.now())
                 .idempotencyKey(request.getIdempotencyKey())
@@ -263,6 +267,24 @@ public class SubmissionService {
         }
     }
 
+    private static final int MAX_FILES_PER_SUBMISSION = 5;
+
+    private List<String> validateAndNormalizeFileUrls(CreateSubmissionRequest request, UUID gameId) {
+        List<String> urls = request.getFileUrls();
+        // Fall back to legacy single fileUrl if fileUrls not provided
+        if (urls == null || urls.isEmpty()) {
+            String single = fileStorageService.validateStoredFileUrl(request.getFileUrl(), gameId);
+            return single != null ? List.of(single) : null;
+        }
+        if (urls.size() > MAX_FILES_PER_SUBMISSION) {
+            throw new BadRequestException("Maximum " + MAX_FILES_PER_SUBMISSION + " files per submission");
+        }
+        return urls.stream()
+                .map(url -> fileStorageService.validateStoredFileUrl(url, gameId))
+                .filter(java.util.Objects::nonNull)
+                .toList();
+    }
+
     private SubmissionResponse toResponse(Submission s) {
         return SubmissionResponse.builder()
                 .id(s.getId())
@@ -271,6 +293,7 @@ public class SubmissionService {
                 .baseId(s.getBase().getId())
                 .answer(s.getAnswer())
                 .fileUrl(s.getFileUrl())
+                .fileUrls(s.getFileUrls())
                 .status(s.getStatus().name())
                 .submittedAt(s.getSubmittedAt())
                 .reviewedBy(s.getReviewedBy() != null ? s.getReviewedBy().getId() : null)

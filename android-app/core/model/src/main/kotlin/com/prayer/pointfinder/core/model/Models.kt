@@ -232,6 +232,7 @@ data class PlayerSubmissionRequest(
     val challengeId: EntityId,
     val answer: String,
     val fileUrl: String? = null,
+    val fileUrls: List<String>? = null,
     val idempotencyKey: String? = null,
 )
 
@@ -265,6 +266,7 @@ data class SubmissionResponse(
     val baseId: EntityId,
     val answer: String,
     val fileUrl: String? = null,
+    val fileUrls: List<String>? = null,
     val status: SubmissionStatus,
     val submittedAt: String,
     val reviewedBy: EntityId? = null,
@@ -341,6 +343,15 @@ data class TeamBaseProgressResponse(
 )
 
 @Serializable
+data class PendingMediaItem(
+    val localPath: String? = null,
+    val sourceUri: String? = null,
+    val contentType: String,
+    val sizeBytes: Long,
+    val fileName: String? = null,
+)
+
+@Serializable
 data class PendingAction(
     val id: String,
     val type: PendingActionType,
@@ -350,6 +361,7 @@ data class PendingAction(
     val answer: String? = null,
     val createdAtEpochMs: Long,
     val retryCount: Int = 0,
+    val mediaItems: List<PendingMediaItem>? = null,
 )
 
 @Serializable

@@ -91,6 +91,7 @@ export interface Submission {
   baseId: string;
   answer: string;
   fileUrl?: string;
+  fileUrls?: string[];
   status: SubmissionStatus;
   submittedAt: string;
   reviewedBy?: string;

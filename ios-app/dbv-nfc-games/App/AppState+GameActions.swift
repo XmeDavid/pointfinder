@@ -178,6 +178,7 @@ extension AppState {
             baseId: baseId,
             answer: answer,
             fileUrl: nil,
+            fileUrls: nil,
             status: "pending",
             submittedAt: DateFormatting.iso8601String(),
             reviewedBy: nil,
@@ -214,7 +215,112 @@ extension AppState {
         )
     }
 
-    // MARK: - Media Submission
+    // MARK: - Multi-Media Submission
+
+    /// Submit an answer with multiple media items (photos and/or videos).
+    /// Each item is persisted locally and enqueued for chunked upload via SyncEngine.
+    func submitAnswerWithMultipleMedia(
+        baseId: UUID,
+        challengeId: UUID,
+        mediaItems: [SelectedMediaItem],
+        notes: String
+    ) async -> SubmissionResponse? {
+        guard case .player(_, _, let teamId, let gameId) = authType else {
+            logger.error("Multi-media submission blocked: missing player auth context")
+            return nil
+        }
+        guard AppConfiguration.chunkedMediaUploadEnabled else {
+            setError(Translations.string("error.mediaUploadDisabled"))
+            return nil
+        }
+        guard !mediaItems.isEmpty else {
+            setError(Translations.string("error.photoProcessing"))
+            return nil
+        }
+
+        // Persist each media item locally and build PendingMediaItem array
+        var pendingItems: [PendingMediaItem] = []
+        for item in mediaItems {
+            let sizeBytes = Int64(item.data.count)
+            guard sizeBytes > 0 else { continue }
+
+            let fileName = item.isVideo
+                ? "video.\(item.contentType == "video/quicktime" ? "mov" : "mp4")"
+                : "photo.\(fileExtension(for: item.contentType))"
+
+            do {
+                let localPath = try persistMediaCopy(
+                    data: item.data,
+                    sourceURL: nil,
+                    preferredFileName: fileName,
+                    contentType: item.contentType
+                )
+                pendingItems.append(PendingMediaItem(
+                    localFilePath: localPath,
+                    contentType: item.contentType,
+                    sizeBytes: sizeBytes,
+                    fileName: fileName
+                ))
+            } catch {
+                logger.error("Failed to persist media item: \(error.localizedDescription, privacy: .public)")
+                setError(Translations.string("error.photoProcessing"))
+                return nil
+            }
+        }
+
+        guard !pendingItems.isEmpty else {
+            setError(Translations.string("error.photoProcessing"))
+            return nil
+        }
+
+        let idempotencyKey = await OfflineQueue.shared.enqueueMultiMediaSubmission(
+            gameId: gameId,
+            baseId: baseId,
+            challengeId: challengeId,
+            answer: notes,
+            mediaItems: pendingItems
+        )
+
+        // Trigger sync immediately
+        Task { await SyncEngine.shared.syncPendingActions() }
+
+        // Update local cache/progress immediately
+        await GameDataCache.shared.updateBaseStatus(baseId: baseId, status: "submitted", gameId: gameId)
+        updateLocalBaseStatus(baseId: baseId, status: .submitted)
+        pendingActionsCount = await OfflineQueue.shared.pendingCount
+        if isOnline {
+            await locationService.sendLocationNow()
+        }
+
+        return SubmissionResponse(
+            id: idempotencyKey,
+            teamId: teamId,
+            challengeId: challengeId,
+            baseId: baseId,
+            answer: notes,
+            fileUrl: nil,
+            fileUrls: nil,
+            status: "pending",
+            submittedAt: DateFormatting.iso8601String(),
+            reviewedBy: nil,
+            feedback: nil,
+            points: nil,
+            completionContent: nil
+        )
+    }
+
+    private func fileExtension(for contentType: String) -> String {
+        switch contentType {
+        case "image/png": return "png"
+        case "image/webp": return "webp"
+        case "image/heic", "image/heif": return "heic"
+        case "video/mp4": return "mp4"
+        case "video/quicktime": return "mov"
+        default: return "jpg"
+        }
+    }
+
+    // MARK: - Media Submission (single file)
 
     /// Queue a media submission that is later synced via resumable chunked uploads.
     func submitAnswerWithMedia(
@@ -298,6 +404,7 @@ extension AppState {
             baseId: baseId,
             answer: notes,
             fileUrl: nil,
+            fileUrls: nil,
             status: "pending",
             submittedAt: DateFormatting.iso8601String(),
             reviewedBy: nil,
