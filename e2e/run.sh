@@ -299,24 +299,72 @@ run_mobile_suite() {
   join_code="$(load_run_context_value 'joinCodes[0]')"
   draft_game_name="${MAESTRO_DRAFT_GAME_NAME:-E2E Mobile ${E2E_RUN_ID}}"
 
-  run_maestro_test "$platform" mobile/shared/positive/operator-login.yaml
-  run_maestro_test "$platform" mobile/shared/negative/invalid-login.yaml
-  run_maestro_test "$platform" --env "GAME_NAME=$draft_game_name" mobile/shared/positive/game-create.yaml
-  run_maestro_test "$platform" --env "GAME_NAME=$draft_game_name" mobile/shared/positive/base-create-edit.yaml
-  run_maestro_test "$platform" --env "GAME_NAME=$draft_game_name" mobile/shared/positive/challenge-create-edit.yaml
-  run_maestro_test "$platform" --env "GAME_NAME=$draft_game_name" --env "TEAM_NAME=$created_team_name" mobile/shared/positive/team-create.yaml
-  run_maestro_test "$platform" --env "GAME_NAME=$draft_game_name" --env "BASE_NAME=$created_base_name" --env "CHALLENGE_TITLE=$created_challenge_title" mobile/shared/positive/assignment-linking.yaml
-  run_maestro_test "$platform" --env "GAME_NAME=$draft_game_name" --env "BASE_NAME=$created_base_name" --env "CHALLENGE_TITLE=$created_challenge_title" --env "TEAM_NAME=$created_team_name" --env "UPDATED_BASE_NAME=$updated_base_name" --env "UPDATED_CHALLENGE_TITLE=$updated_challenge_title" --env "UPDATED_TEAM_NAME=$updated_team_name" mobile/shared/positive/edit-entities.yaml
-  run_maestro_test "$platform" --env "GAME_NAME=$draft_game_name" mobile/shared/positive/game-activate.yaml
-  run_maestro_test "$platform" --env "GAME_NAME=$main_game_name" mobile/shared/positive/monitoring.yaml
-  run_maestro_test "$platform" --env "GAME_NAME=$main_game_name" mobile/shared/positive/export-import.yaml
-  run_maestro_test "$platform" --env "GAME_NAME=$main_game_name" mobile/shared/positive/operator-notification.yaml
-  run_maestro_test "$platform" --env "JOIN_CODE=$join_code" --env "JOIN_TEAM_NAME=$join_team_name" mobile/shared/positive/player-join.yaml
-  run_maestro_test "$platform" --env "JOIN_CODE=$join_code" --env "BASE_NAME=$player_base_name" --env "CHALLENGE_TITLE=$player_challenge_title" mobile/shared/positive/player-progress.yaml
-  run_maestro_test "$platform" --env "JOIN_CODE=$join_code" --env "BASE_NAME=$player_base_name" --env "CHALLENGE_TITLE=$player_challenge_title" mobile/shared/positive/player-submit.yaml
-  run_maestro_test "$platform" --env "GAME_NAME=$main_game_name" mobile/shared/positive/submission-review.yaml
-  run_maestro_test "$platform" mobile/shared/negative/business-rules.yaml
-  run_maestro_test "$platform" --env "GAME_NAME=$draft_game_name" --env "UPDATED_BASE_NAME=$updated_base_name" --env "UPDATED_CHALLENGE_TITLE=$updated_challenge_title" mobile/shared/positive/delete-entities.yaml
+  local -a passed=()
+  local -a failed=()
+  local -a skipped=()
+  local setup_chain_broken=false
+
+  # Helper: run a flow, track result, honour setup-chain dependencies
+  run_tracked() {
+    local label="$1"
+    local is_setup_chain="$2"
+    shift 2
+
+    if [[ "$is_setup_chain" == "true" && "$setup_chain_broken" == "true" ]]; then
+      echo "--- SKIP [$label] (setup chain broken) ---"
+      skipped+=("$label")
+      return
+    fi
+
+    echo "--- RUN [$label] ---"
+    local rc=0
+    run_maestro_test "$@" || rc=$?
+
+    if (( rc == 0 )); then
+      echo "--- PASS [$label] ---"
+      passed+=("$label")
+    else
+      echo "--- FAIL [$label] (exit $rc) ---"
+      failed+=("$label")
+      if [[ "$is_setup_chain" == "true" ]]; then
+        setup_chain_broken=true
+      fi
+    fi
+  }
+
+  # --- Setup chain (ordered; skip dependents on failure) ---
+  run_tracked "operator-login"      true  "$platform" mobile/shared/positive/operator-login.yaml
+  run_tracked "game-create"         true  "$platform" --env "GAME_NAME=$draft_game_name" mobile/shared/positive/game-create.yaml
+  run_tracked "base-create-edit"    true  "$platform" --env "GAME_NAME=$draft_game_name" mobile/shared/positive/base-create-edit.yaml
+  run_tracked "challenge-create-edit" true "$platform" --env "GAME_NAME=$draft_game_name" mobile/shared/positive/challenge-create-edit.yaml
+  run_tracked "team-create"         true  "$platform" --env "GAME_NAME=$draft_game_name" --env "TEAM_NAME=$created_team_name" mobile/shared/positive/team-create.yaml
+  run_tracked "assignment-linking"  true  "$platform" --env "GAME_NAME=$draft_game_name" --env "BASE_NAME=$created_base_name" --env "CHALLENGE_TITLE=$created_challenge_title" mobile/shared/positive/assignment-linking.yaml
+  run_tracked "edit-entities"       true  "$platform" --env "GAME_NAME=$draft_game_name" --env "BASE_NAME=$created_base_name" --env "CHALLENGE_TITLE=$created_challenge_title" --env "TEAM_NAME=$created_team_name" --env "UPDATED_BASE_NAME=$updated_base_name" --env "UPDATED_CHALLENGE_TITLE=$updated_challenge_title" --env "UPDATED_TEAM_NAME=$updated_team_name" mobile/shared/positive/edit-entities.yaml
+  run_tracked "game-activate"       true  "$platform" --env "GAME_NAME=$draft_game_name" mobile/shared/positive/game-activate.yaml
+
+  # --- Independent flows (always run) ---
+  run_tracked "invalid-login"         false "$platform" mobile/shared/negative/invalid-login.yaml
+  run_tracked "monitoring"            false "$platform" --env "GAME_NAME=$main_game_name" mobile/shared/positive/monitoring.yaml
+  run_tracked "export-import"         false "$platform" --env "GAME_NAME=$main_game_name" mobile/shared/positive/export-import.yaml
+  run_tracked "operator-notification" false "$platform" --env "GAME_NAME=$main_game_name" mobile/shared/positive/operator-notification.yaml
+  run_tracked "player-join"           false "$platform" --env "JOIN_CODE=$join_code" --env "JOIN_TEAM_NAME=$join_team_name" mobile/shared/positive/player-join.yaml
+  run_tracked "player-progress"       false "$platform" --env "JOIN_CODE=$join_code" --env "BASE_NAME=$player_base_name" --env "CHALLENGE_TITLE=$player_challenge_title" mobile/shared/positive/player-progress.yaml
+  run_tracked "player-submit"         false "$platform" --env "JOIN_CODE=$join_code" --env "BASE_NAME=$player_base_name" --env "CHALLENGE_TITLE=$player_challenge_title" mobile/shared/positive/player-submit.yaml
+  run_tracked "submission-review"     false "$platform" --env "GAME_NAME=$main_game_name" mobile/shared/positive/submission-review.yaml
+  run_tracked "business-rules"        false "$platform" mobile/shared/negative/business-rules.yaml
+  run_tracked "delete-entities"       false "$platform" --env "GAME_NAME=$draft_game_name" --env "UPDATED_BASE_NAME=$updated_base_name" --env "UPDATED_CHALLENGE_TITLE=$updated_challenge_title" mobile/shared/positive/delete-entities.yaml
+
+  # --- Summary ---
+  echo ""
+  echo "======================================"
+  echo " Mobile Suite Summary ($platform)"
+  echo "======================================"
+  echo " PASSED  (${#passed[@]}): ${passed[*]:-none}"
+  echo " FAILED  (${#failed[@]}): ${failed[*]:-none}"
+  echo " SKIPPED (${#skipped[@]}): ${skipped[*]:-none}"
+  echo "======================================"
+
+  (( ${#failed[@]} == 0 ))
 }
 
 run_api()      { run_playwright --project=api; }
