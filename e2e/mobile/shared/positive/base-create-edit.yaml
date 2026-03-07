@@ -5,6 +5,10 @@ appId: ${APP_ID}
 - launchApp:
     clearState: true
 
+- assertVisible: "PointFinder"
+- tapOn: "Operator Login"
+- assertVisible: "Operator Login"
+
 - tapOn:
     id: "login-email"
 - inputText: "${OPERATOR_EMAIL}"
@@ -13,10 +17,11 @@ appId: ${APP_ID}
     id: "login-password"
 - inputText: "${OPERATOR_PASSWORD}"
 
-- tapOn:
-    id: "login-submit"
+- hideKeyboard
+- tapOn: "Sign In"
 
-- assertVisible: "Games"
+- assertVisible:
+    id: "create-game-btn"
 
 # Open the target game
 - tapOn: "${GAME_NAME:-E2E Test Game}"
@@ -27,7 +32,7 @@ appId: ${APP_ID}
 
 - tapOn:
     id: "base-name-input"
-- inputText: "Base Alpha"
+- inputText: "${CREATED_BASE_NAME:-Base Alpha}"
 
 - tapOn:
     id: "base-lat-input"
@@ -40,7 +45,7 @@ appId: ${APP_ID}
 - tapOn:
     id: "base-save-btn"
 
-- assertVisible: "Base Alpha"
+- assertVisible: "${CREATED_BASE_NAME:-Base Alpha}"
 
 # Edit the base name
 - tapOn:
@@ -49,9 +54,9 @@ appId: ${APP_ID}
 - tapOn:
     id: "base-name-input"
 - eraseText
-- inputText: "Base Alpha Edited"
+- inputText: "${BASE_NAME:-Base Alpha Edited}"
 
 - tapOn:
     id: "base-save-btn"
 
-- assertVisible: "Base Alpha Edited"
+- assertVisible: "${BASE_NAME:-Base Alpha Edited}"

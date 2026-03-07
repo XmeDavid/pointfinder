@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<testsuites>
+  <testsuite name="Test Suite" device="RZGYB2GZG2Z" tests="1" failures="1" time="51.0">
+    <testcase id="invalid-login" name="invalid-login" classname="invalid-login" time="51.0" status="ERROR">
+      <failure>Assertion is false: id: login-error is visible</failure>
+    </testcase>
+  </testsuite>
+</testsuites>

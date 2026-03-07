@@ -5,9 +5,8 @@ appId: ${APP_ID}
 - launchApp:
     clearState: true
 
-- tapOn: "Player"
-
-- assertVisible: "Join Game"
+- assertVisible: "PointFinder"
+- tapOn: "Join a Game"
 
 - tapOn:
     id: "player-join-code-input"

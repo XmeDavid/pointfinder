@@ -5,6 +5,10 @@ appId: ${APP_ID}
 - launchApp:
     clearState: true
 
+- assertVisible: "PointFinder"
+- tapOn: "Operator Login"
+- assertVisible: "Operator Login"
+
 - tapOn:
     id: "login-email"
 - inputText: "${OPERATOR_EMAIL}"
@@ -13,10 +17,11 @@ appId: ${APP_ID}
     id: "login-password"
 - inputText: "${OPERATOR_PASSWORD}"
 
-- tapOn:
-    id: "login-submit"
+- hideKeyboard
+- tapOn: "Sign In"
 
-- assertVisible: "Games"
+- assertVisible:
+    id: "create-game-btn"
 
 - tapOn: "${GAME_NAME:-E2E Test Game}"
 
@@ -28,12 +33,12 @@ appId: ${APP_ID}
 
 - tapOn:
     id: "team-name-input"
-- inputText: "Team Eagle"
+- inputText: "${TEAM_NAME:-Team Eagle}"
 
 - tapOn:
     id: "team-save-btn"
 
-- assertVisible: "Team Eagle"
+- assertVisible: "${TEAM_NAME:-Team Eagle}"
 
 # Verify join code is shown after creation
 - assertVisible:

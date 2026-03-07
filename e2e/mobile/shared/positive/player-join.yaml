@@ -5,10 +5,8 @@ appId: ${APP_ID}
 - launchApp:
     clearState: true
 
-# Player role selection (if shown at launch)
-- tapOn: "Player"
-
-- assertVisible: "Join Game"
+- assertVisible: "PointFinder"
+- tapOn: "Join a Game"
 
 - tapOn:
     id: "player-join-code-input"
@@ -18,6 +16,6 @@ appId: ${APP_ID}
     id: "player-join-btn"
 
 # Verify player is now in the game and sees their team assignment
-- assertVisible: "Team Eagle"
+- assertVisible: "${JOIN_TEAM_NAME:-Team Eagle}"
 - assertVisible:
     id: "player-base-list"

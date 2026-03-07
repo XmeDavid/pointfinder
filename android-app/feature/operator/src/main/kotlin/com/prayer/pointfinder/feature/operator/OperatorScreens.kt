@@ -81,7 +81,7 @@ fun OperatorHomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.label_operator)) },
+                title = { Text(stringResource(R.string.label_my_games)) },
                 actions = {
                     TextButton(onClick = onLogout) { Text(stringResource(R.string.action_logout)) }
                 },

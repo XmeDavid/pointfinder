@@ -65,9 +65,10 @@
     <string name="label_select_file">Datei auswählen</string>
     <string name="label_file_loaded">Datei geladen</string>
     <string name="action_create">Erstellen</string>
-    <string name="label_creating">Wird erstellt\u2026</string>
+    <string name="label_creating">Wird erstellt…</string>
     <string name="label_offline">Offline-Modus</string>
     <string name="label_operator">Operator</string>
+    <string name="label_my_games">Meine Spiele</string>
     <string name="label_player">Spieler</string>
     <string name="label_language">Sprache</string>
     <string name="label_theme">Design</string>

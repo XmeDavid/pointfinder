@@ -157,6 +157,38 @@ run_playwright() {
   "${cmd[@]}"
 }
 
+load_run_context_value() {
+  local path_expr="$1"
+  if [[ -z "${E2E_RUN_ID:-}" ]]; then
+    echo "E2E run context not initialized." >&2
+    return 1
+  fi
+
+  node -e '
+const fs = require("fs");
+const ctxPath = process.argv[1];
+const pathExpr = process.argv[2];
+const ctx = JSON.parse(fs.readFileSync(ctxPath, "utf8"));
+const tokens = pathExpr.split(".").flatMap((segment) => {
+  const resolved = [];
+  const regex = /([^\[\]]+)|\[(\d+)\]/g;
+  let match;
+  while ((match = regex.exec(segment)) !== null) {
+    resolved.push(match[1] ?? Number(match[2]));
+  }
+  return resolved;
+});
+let value = ctx;
+for (const token of tokens) {
+  value = value?.[token];
+}
+if (value === undefined || value === null) {
+  process.exit(1);
+}
+process.stdout.write(String(value));
+' ".runtime/${E2E_RUN_ID}.json" "$path_expr"
+}
+
 resolve_maestro() {
   if [[ -n "$MAESTRO_BIN" ]]; then
     return 0
@@ -198,26 +230,100 @@ maestro_supports_device_locale() {
 }
 
 run_maestro_test() {
+  local platform="$1"
+  shift
+
+  local -a extra_env=()
+  while [[ $# -gt 1 ]]; do
+    if [[ "$1" == "--env" ]]; then
+      extra_env+=("$2")
+      shift 2
+      continue
+    fi
+    break
+  done
+
   ensure_maestro_runtime
 
-  local cmd=("$MAESTRO_BIN" test --format junit)
+  local app_id
+  if [[ "$platform" == "ios" ]]; then
+    app_id="${IOS_APP_ID:-com.prayer.pointfinder}"
+  else
+    app_id="${ANDROID_APP_ID:-com.prayer.pointfinder}"
+  fi
+
+  local cmd=(
+    "$MAESTRO_BIN"
+    "--platform=$platform"
+    test
+    --format
+    junit
+    -e
+    "APP_ID=$app_id"
+    -e
+    "OPERATOR_EMAIL=$OPERATOR_EMAIL"
+    -e
+    "OPERATOR_PASSWORD=$OPERATOR_PASSWORD"
+  )
   if maestro_supports_device_locale; then
     cmd+=(--device-locale=en)
   fi
+
+  local env_kv
+  if (( ${#extra_env[@]} > 0 )); then
+    for env_kv in "${extra_env[@]}"; do
+      cmd+=(-e "$env_kv")
+    done
+  fi
+
   cmd+=("$@")
   "${cmd[@]}"
 }
 
 run_mobile_suite() {
-  run_maestro_test mobile/shared/positive/
-  run_maestro_test mobile/shared/negative/
+  local platform="$1"
+  local main_game_name
+  local join_code
+  local draft_game_name
+  local created_base_name="Base Alpha Edited"
+  local updated_base_name="Base Alpha v2"
+  local created_challenge_title="Find the Hidden Clue (Updated)"
+  local updated_challenge_title="Find the Hidden Clue v2"
+  local created_team_name="Team Eagle"
+  local updated_team_name="Team Eagle Edited"
+  local join_team_name="Team 0"
+  local player_base_name="Base 0"
+  local player_challenge_title="Challenge Text 0"
+
+  main_game_name="$(load_run_context_value 'mainGameName')"
+  join_code="$(load_run_context_value 'joinCodes[0]')"
+  draft_game_name="${MAESTRO_DRAFT_GAME_NAME:-E2E Mobile ${E2E_RUN_ID}}"
+
+  run_maestro_test "$platform" mobile/shared/positive/operator-login.yaml
+  run_maestro_test "$platform" mobile/shared/negative/invalid-login.yaml
+  run_maestro_test "$platform" --env "GAME_NAME=$draft_game_name" mobile/shared/positive/game-create.yaml
+  run_maestro_test "$platform" --env "GAME_NAME=$draft_game_name" mobile/shared/positive/base-create-edit.yaml
+  run_maestro_test "$platform" --env "GAME_NAME=$draft_game_name" mobile/shared/positive/challenge-create-edit.yaml
+  run_maestro_test "$platform" --env "GAME_NAME=$draft_game_name" --env "TEAM_NAME=$created_team_name" mobile/shared/positive/team-create.yaml
+  run_maestro_test "$platform" --env "GAME_NAME=$draft_game_name" --env "BASE_NAME=$created_base_name" --env "CHALLENGE_TITLE=$created_challenge_title" mobile/shared/positive/assignment-linking.yaml
+  run_maestro_test "$platform" --env "GAME_NAME=$draft_game_name" --env "BASE_NAME=$created_base_name" --env "CHALLENGE_TITLE=$created_challenge_title" --env "TEAM_NAME=$created_team_name" --env "UPDATED_BASE_NAME=$updated_base_name" --env "UPDATED_CHALLENGE_TITLE=$updated_challenge_title" --env "UPDATED_TEAM_NAME=$updated_team_name" mobile/shared/positive/edit-entities.yaml
+  run_maestro_test "$platform" --env "GAME_NAME=$draft_game_name" mobile/shared/positive/game-activate.yaml
+  run_maestro_test "$platform" --env "GAME_NAME=$main_game_name" mobile/shared/positive/monitoring.yaml
+  run_maestro_test "$platform" --env "GAME_NAME=$main_game_name" mobile/shared/positive/export-import.yaml
+  run_maestro_test "$platform" --env "GAME_NAME=$main_game_name" mobile/shared/positive/operator-notification.yaml
+  run_maestro_test "$platform" --env "JOIN_CODE=$join_code" --env "JOIN_TEAM_NAME=$join_team_name" mobile/shared/positive/player-join.yaml
+  run_maestro_test "$platform" --env "JOIN_CODE=$join_code" --env "BASE_NAME=$player_base_name" --env "CHALLENGE_TITLE=$player_challenge_title" mobile/shared/positive/player-progress.yaml
+  run_maestro_test "$platform" --env "JOIN_CODE=$join_code" --env "BASE_NAME=$player_base_name" --env "CHALLENGE_TITLE=$player_challenge_title" mobile/shared/positive/player-submit.yaml
+  run_maestro_test "$platform" --env "GAME_NAME=$main_game_name" mobile/shared/positive/submission-review.yaml
+  run_maestro_test "$platform" mobile/shared/negative/business-rules.yaml
+  run_maestro_test "$platform" --env "GAME_NAME=$draft_game_name" --env "UPDATED_BASE_NAME=$updated_base_name" --env "UPDATED_CHALLENGE_TITLE=$updated_challenge_title" mobile/shared/positive/delete-entities.yaml
 }
 
 run_api()      { run_playwright --project=api; }
 run_api_pos()  { run_playwright --project=api --grep-invert @negative; }
 run_web()      { run_playwright --project=web; }
-run_ios()      { run_mobile_suite; }
-run_android()  { run_mobile_suite; }
+run_ios()      { run_mobile_suite ios; }
+run_android()  { run_mobile_suite android; }
 
 # --- Commands ---
 case "$CMD" in
@@ -231,12 +337,12 @@ case "$CMD" in
     run_managed_with_lifecycle run_playwright --project=web --grep @smoke
     ;;
   smoke:ios)
-    run_managed_with_lifecycle run_maestro_test \
+    run_managed_with_lifecycle run_maestro_test ios \
       mobile/shared/positive/operator-login.yaml \
       mobile/shared/positive/game-create.yaml
     ;;
   smoke:android)
-    run_managed_with_lifecycle run_maestro_test \
+    run_managed_with_lifecycle run_maestro_test android \
       mobile/shared/positive/operator-login.yaml \
       mobile/shared/positive/game-create.yaml
     ;;

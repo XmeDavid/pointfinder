@@ -1,6 +1,7 @@
 package com.prayer.pointfinder.feature.auth
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -145,41 +146,48 @@ fun PlayerNameScreen(
         color = MaterialTheme.colorScheme.background,
         modifier = modifier.fillMaxSize(),
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
+                .imePadding()
                 .padding(24.dp),
-            verticalArrangement = Arrangement.Center,
+            contentAlignment = Alignment.Center,
         ) {
-            Text(
-                stringResource(R.string.label_your_name),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-            Spacer(Modifier.height(12.dp))
-            OutlinedTextField(
-                value = name,
-                onValueChange = onNameChange,
-                label = { Text(stringResource(R.string.label_display_name)) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-            )
-            if (!errorMessage.isNullOrBlank()) {
-                Spacer(Modifier.height(8.dp))
-                Text(errorMessage, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-            }
-            Spacer(Modifier.height(12.dp))
-            Button(
-                onClick = onJoin,
-                enabled = name.trim().isNotBlank() && !isLoading,
-                modifier = Modifier.fillMaxWidth(),
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
             ) {
-                if (isLoading) {
-                    CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
-                } else {
-                    Icon(Icons.Default.GroupAdd, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.size(8.dp))
-                    Text(stringResource(R.string.action_join_game))
+                Text(
+                    stringResource(R.string.label_your_name),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+                Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = onNameChange,
+                    label = { Text(stringResource(R.string.label_display_name)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                )
+                if (!errorMessage.isNullOrBlank()) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(errorMessage, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
+                Spacer(Modifier.height(12.dp))
+                Button(
+                    onClick = onJoin,
+                    enabled = name.trim().isNotBlank() && !isLoading,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                    } else {
+                        Icon(Icons.Default.GroupAdd, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.size(8.dp))
+                        Text(stringResource(R.string.action_join_game))
+                    }
                 }
             }
         }
@@ -201,50 +209,57 @@ fun OperatorLoginScreen(
         color = MaterialTheme.colorScheme.background,
         modifier = modifier.fillMaxSize(),
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
+                .imePadding()
                 .padding(24.dp),
-            verticalArrangement = Arrangement.Center,
+            contentAlignment = Alignment.Center,
         ) {
-            Text(
-                stringResource(R.string.action_operator_login),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-            Spacer(Modifier.height(12.dp))
-            OutlinedTextField(
-                value = email,
-                onValueChange = onEmailChange,
-                label = { Text(stringResource(R.string.label_email)) },
-                modifier = Modifier.fillMaxWidth().testTag("login-email"),
-                singleLine = true,
-            )
-            Spacer(Modifier.height(12.dp))
-            OutlinedTextField(
-                value = password,
-                onValueChange = onPasswordChange,
-                label = { Text(stringResource(R.string.label_password)) },
-                visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth().testTag("login-password"),
-                singleLine = true,
-            )
-            if (!errorMessage.isNullOrBlank()) {
-                Spacer(Modifier.height(8.dp))
-                Text(errorMessage, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-            }
-            Spacer(Modifier.height(12.dp))
-            Button(
-                onClick = onSignIn,
-                enabled = !isLoading && email.isNotBlank() && password.isNotBlank(),
-                modifier = Modifier.fillMaxWidth().testTag("login-submit"),
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
             ) {
-                if (isLoading) {
-                    CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
-                } else {
-                    Icon(Icons.Default.Login, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.size(8.dp))
-                    Text(stringResource(R.string.action_sign_in))
+                Text(
+                    stringResource(R.string.action_operator_login),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+                Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = onEmailChange,
+                    label = { Text(stringResource(R.string.label_email)) },
+                    modifier = Modifier.fillMaxWidth().testTag("login-email"),
+                    singleLine = true,
+                )
+                Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = onPasswordChange,
+                    label = { Text(stringResource(R.string.label_password)) },
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth().testTag("login-password"),
+                    singleLine = true,
+                )
+                if (!errorMessage.isNullOrBlank()) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(errorMessage, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
+                Spacer(Modifier.height(12.dp))
+                Button(
+                    onClick = onSignIn,
+                    enabled = !isLoading && email.isNotBlank() && password.isNotBlank(),
+                    modifier = Modifier.fillMaxWidth().testTag("login-submit"),
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                    } else {
+                        Icon(Icons.Default.Login, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.size(8.dp))
+                        Text(stringResource(R.string.action_sign_in))
+                    }
                 }
             }
         }

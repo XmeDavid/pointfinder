@@ -5,7 +5,9 @@ appId: ${APP_ID}
 - launchApp:
     clearState: true
 
-- assertVisible: "Login"
+- assertVisible: "PointFinder"
+- tapOn: "Operator Login"
+- assertVisible: "Operator Login"
 
 - tapOn:
     id: "login-email"
@@ -15,8 +17,8 @@ appId: ${APP_ID}
     id: "login-password"
 - inputText: "wrong-password-12345"
 
-- tapOn:
-    id: "login-submit"
+- hideKeyboard
+- tapOn: "Sign In"
 
 # Verify error is shown
 - assertVisible:
