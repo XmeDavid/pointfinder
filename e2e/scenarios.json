@@ -29,6 +29,7 @@
     { "id": "N8",  "name": "Empty game name",                   "api": true,  "web": false, "mobile": false },
     { "id": "N9",  "name": "Fixed challenge conflict",          "api": true,  "web": true,  "mobile": true  },
     { "id": "N10", "name": "Challenge/base count constraint",   "api": true,  "web": true,  "mobile": true  },
-    { "id": "N11", "name": "Dropdown filtering parity",         "api": false, "web": true,  "mobile": true  }
+    { "id": "N11", "name": "Dropdown filtering parity",         "api": false, "web": true,  "mobile": true  },
+    { "id": "N12", "name": "Tile source options parity",        "api": false, "web": true,  "mobile": true  }
   ]
 }

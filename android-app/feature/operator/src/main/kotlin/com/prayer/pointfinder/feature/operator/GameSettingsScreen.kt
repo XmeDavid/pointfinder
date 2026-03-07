@@ -72,7 +72,14 @@ fun GameSettingsScreen(
     var showGoLiveConfirm by remember { mutableStateOf(false) }
     var showEndGameConfirm by remember { mutableStateOf(false) }
 
-    val tileSourceOptions = listOf("osm_classic", "osm_topo", "satellite")
+    val tileSourceOptions = listOf(
+        "osm" to "OpenStreetMap",
+        "osm-classic" to "OpenStreetMap Classic",
+        "voyager" to "CartoDB Voyager",
+        "positron" to "CartoDB Positron",
+        "swisstopo" to "SwissTopo",
+        "swisstopo-sat" to "SwissTopo Satellite",
+    )
 
     Column(modifier = modifier.fillMaxSize()) {
         TopAppBar(
@@ -165,7 +172,7 @@ fun GameSettingsScreen(
             item {
                 Box {
                     OutlinedTextField(
-                        value = tileSource,
+                        value = tileSourceOptions.firstOrNull { it.first == tileSource }?.second ?: tileSource,
                         onValueChange = {},
                         label = { Text(stringResource(R.string.label_tile_source)) },
                         modifier = Modifier.fillMaxWidth(),
@@ -180,11 +187,11 @@ fun GameSettingsScreen(
                         expanded = tileSourceExpanded,
                         onDismissRequest = { tileSourceExpanded = false },
                     ) {
-                        tileSourceOptions.forEach { option ->
+                        tileSourceOptions.forEach { (key, label) ->
                             DropdownMenuItem(
-                                text = { Text(option) },
+                                text = { Text(label) },
                                 onClick = {
-                                    tileSource = option
+                                    tileSource = key
                                     tileSourceExpanded = false
                                 },
                             )
