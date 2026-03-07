@@ -73,3 +73,73 @@ jobs:
       - name: Run Android unit tests
         run: android-app/gradlew -p android-app :core:model:test :core:data:test :core:network:test :app:assembleDebug
 
+  e2e-smoke:
+    name: E2E Smoke Tests
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+
+      - name: Install E2E dependencies
+        working-directory: e2e
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: e2e
+        run: npx playwright install chromium --with-deps
+
+      - name: Start local E2E stack
+        run: |
+          cd e2e
+          ./run.sh local:up
+
+      - name: Run API smoke tests
+        working-directory: e2e
+        run: |
+          export BASE_URL=https://localhost
+          export OPERATOR_EMAIL=local-e2e-admin@example.test
+          export OPERATOR_PASSWORD='LocalE2E!12345'
+          export NODE_TLS_REJECT_UNAUTHORIZED=0
+          npx tsx shared/setup.ts
+          npx playwright test --project=api --grep @smoke
+
+      - name: Run Web smoke tests
+        if: always()
+        working-directory: e2e
+        run: |
+          export BASE_URL=https://localhost
+          export OPERATOR_EMAIL=local-e2e-admin@example.test
+          export OPERATOR_PASSWORD='LocalE2E!12345'
+          export NODE_TLS_REJECT_UNAUTHORIZED=0
+          npx playwright test --project=web --grep @smoke
+
+      - name: Cleanup E2E games
+        if: always()
+        working-directory: e2e
+        run: |
+          export BASE_URL=https://localhost
+          export OPERATOR_EMAIL=local-e2e-admin@example.test
+          export OPERATOR_PASSWORD='LocalE2E!12345'
+          export NODE_TLS_REJECT_UNAUTHORIZED=0
+          npx tsx shared/cleanup.ts || true
+
+      - name: Stop local E2E stack
+        if: always()
+        run: cd e2e && ./run.sh local:down
+
+      - name: Upload test artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-smoke-report
+          path: |
+            e2e/artifacts/
+            e2e/playwright-report/
+          retention-days: 7
+
