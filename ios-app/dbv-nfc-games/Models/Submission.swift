@@ -5,13 +5,15 @@ struct PlayerSubmissionRequest: Codable {
     let challengeId: UUID
     let answer: String
     let fileUrl: String?
+    let fileUrls: [String]?
     let idempotencyKey: UUID?
 
-    init(baseId: UUID, challengeId: UUID, answer: String, fileUrl: String? = nil, idempotencyKey: UUID? = nil) {
+    init(baseId: UUID, challengeId: UUID, answer: String, fileUrl: String? = nil, fileUrls: [String]? = nil, idempotencyKey: UUID? = nil) {
         self.baseId = baseId
         self.challengeId = challengeId
         self.answer = answer
         self.fileUrl = fileUrl
+        self.fileUrls = fileUrls
         self.idempotencyKey = idempotencyKey
     }
 }
@@ -43,6 +45,7 @@ struct SubmissionResponse: Codable, Identifiable {
     let baseId: UUID
     let answer: String
     let fileUrl: String?
+    let fileUrls: [String]?
     let status: String
     let submittedAt: String
     let reviewedBy: UUID?
@@ -80,6 +83,15 @@ struct UnseenCountResponse: Codable {
     let count: Int
 }
 
+// MARK: - Pending Media Item
+
+struct PendingMediaItem: Codable {
+    var localFilePath: String?
+    var contentType: String
+    var sizeBytes: Int64
+    var fileName: String?
+}
+
 // MARK: - Pending Actions (for offline queue)
 
 enum PendingActionType: String, Codable {
@@ -105,6 +117,7 @@ struct PendingAction: Codable, Identifiable {
     var uploadSessionId: UUID?
     var uploadChunkIndex: Int?
     var uploadTotalChunks: Int?
+    var mediaItems: [PendingMediaItem]?
     var needsReselect: Bool
     var lastError: String?
 
@@ -125,6 +138,7 @@ struct PendingAction: Codable, Identifiable {
         self.uploadSessionId = nil
         self.uploadChunkIndex = nil
         self.uploadTotalChunks = nil
+        self.mediaItems = nil
         self.needsReselect = false
         self.lastError = nil
     }

@@ -1,5 +1,16 @@
 import SwiftUI
 import PhotosUI
+import AVFoundation
+
+// MARK: - Selected Media Item
+
+struct SelectedMediaItem: Identifiable {
+    let id = UUID()
+    let thumbnail: UIImage
+    let isVideo: Bool
+    let data: Data
+    let contentType: String
+}
 
 struct SolveView: View {
     @Environment(AppState.self) private var appState
@@ -22,10 +33,11 @@ struct SolveView: View {
     @State private var scanError: String?
     @State private var submissionErrorMessage: String?
 
-    // Photo state
-    @State private var selectedPhoto: PhotosPickerItem?
-    @State private var selectedImage: UIImage?
+    // Media state (multi-selection)
+    @State private var selectedItems: [PhotosPickerItem] = []
+    @State private var selectedMedia: [SelectedMediaItem] = []
     @State private var showCamera = false
+    @State private var cameraImage: UIImage?
 
     private var isPhotoType: Bool {
         answerType == "file"
@@ -146,15 +158,18 @@ struct SolveView: View {
             }
         }
         .fullScreenCover(isPresented: $showCamera) {
-            CameraView(image: $selectedImage)
+            CameraView(image: $cameraImage)
                 .ignoresSafeArea()
         }
-        .onChange(of: selectedPhoto) { _, newItem in
+        .onChange(of: selectedItems) { _, newItems in
             Task {
-                if let data = try? await newItem?.loadTransferable(type: Data.self),
-                   let uiImage = UIImage(data: data) {
-                    selectedImage = uiImage
-                }
+                await loadSelectedItems(newItems)
+            }
+        }
+        .onChange(of: cameraImage) { _, newImage in
+            if let image = newImage {
+                addCameraImageToMedia(image)
+                cameraImage = nil
             }
         }
         .alert(locale.t("common.error"), isPresented: Binding(
@@ -177,31 +192,52 @@ struct SolveView: View {
             Text(locale.t("solve.photo"))
                 .font(.headline)
 
-            if let image = selectedImage {
-                // Preview
-                ZStack(alignment: .topTrailing) {
-                    SwiftUI.Image(uiImage: image)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(maxHeight: 250)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+            // Thumbnail grid
+            if !selectedMedia.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        ForEach(selectedMedia) { item in
+                            ZStack(alignment: .topTrailing) {
+                                SwiftUI.Image(uiImage: item.thumbnail)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 100, height: 100)
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
 
-                    Button {
-                        selectedImage = nil
-                        selectedPhoto = nil
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.title2)
-                            .symbolRenderingMode(.palette)
-                            .foregroundStyle(.white, .black.opacity(0.6))
+                                // Video indicator
+                                if item.isVideo {
+                                    SwiftUI.Image(systemName: "play.circle.fill")
+                                        .font(.title3)
+                                        .foregroundStyle(.white)
+                                        .shadow(radius: 2)
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                }
+
+                                // Remove button
+                                Button {
+                                    removeMediaItem(item.id)
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .font(.title3)
+                                        .symbolRenderingMode(.palette)
+                                        .foregroundStyle(.white, .black.opacity(0.6))
+                                }
+                                .padding(4)
+                            }
+                            .frame(width: 100, height: 100)
+                        }
                     }
-                    .padding(8)
+                    .padding(.vertical, 4)
                 }
+
+                Text("\(selectedMedia.count) of 5 selected")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             // Picker buttons
             HStack(spacing: 12) {
-                PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                PhotosPicker(selection: $selectedItems, maxSelectionCount: 5, matching: .any(of: [.images, .videos])) {
                     Label(locale.t("solve.library"), systemImage: "photo.on.rectangle")
                         .font(.subheadline)
                         .fontWeight(.medium)
@@ -222,6 +258,7 @@ struct SolveView: View {
                         .background(Color(.systemGray6))
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
+                .disabled(selectedMedia.count >= 5)
             }
 
             // Notes (optional)
@@ -237,11 +274,91 @@ struct SolveView: View {
         }
     }
 
+    // MARK: - Media Processing
+
+    private func loadSelectedItems(_ items: [PhotosPickerItem]) async {
+        var newMedia: [SelectedMediaItem] = []
+
+        for item in items {
+            // Try loading as video first
+            if let movieTransferable = try? await item.loadTransferable(type: VideoTransferable.self) {
+                let videoURL = movieTransferable.url
+                if let thumbnail = generateVideoThumbnail(url: videoURL),
+                   let videoData = try? Data(contentsOf: videoURL) {
+                    let contentType = videoURL.pathExtension.lowercased() == "mov" ? "video/quicktime" : "video/mp4"
+                    newMedia.append(SelectedMediaItem(
+                        thumbnail: thumbnail,
+                        isVideo: true,
+                        data: videoData,
+                        contentType: contentType
+                    ))
+                }
+            } else if let data = try? await item.loadTransferable(type: Data.self),
+                      let uiImage = UIImage(data: data) {
+                // Image
+                let contentType: String
+                if let typeId = item.supportedContentTypes.first?.identifier {
+                    if typeId.contains("png") {
+                        contentType = "image/png"
+                    } else if typeId.contains("heic") || typeId.contains("heif") {
+                        contentType = "image/heic"
+                    } else if typeId.contains("webp") {
+                        contentType = "image/webp"
+                    } else {
+                        contentType = "image/jpeg"
+                    }
+                } else {
+                    contentType = "image/jpeg"
+                }
+                newMedia.append(SelectedMediaItem(
+                    thumbnail: uiImage,
+                    isVideo: false,
+                    data: data,
+                    contentType: contentType
+                ))
+            }
+        }
+
+        await MainActor.run {
+            selectedMedia = newMedia
+        }
+    }
+
+    private func generateVideoThumbnail(url: URL) -> UIImage? {
+        let asset = AVAsset(url: url)
+        let generator = AVAssetImageGenerator(asset: asset)
+        generator.appliesPreferredTrackTransform = true
+        do {
+            let cgImage = try generator.copyCGImage(at: .zero, actualTime: nil)
+            return UIImage(cgImage: cgImage)
+        } catch {
+            return nil
+        }
+    }
+
+    private func addCameraImageToMedia(_ image: UIImage) {
+        guard selectedMedia.count < 5 else { return }
+        guard let imageData = image.jpegData(compressionQuality: 0.7) else { return }
+        let item = SelectedMediaItem(
+            thumbnail: image,
+            isVideo: false,
+            data: imageData,
+            contentType: "image/jpeg"
+        )
+        selectedMedia.append(item)
+    }
+
+    private func removeMediaItem(_ id: UUID) {
+        selectedMedia.removeAll { $0.id == id }
+        // Clear the PhotosPicker selection since we manage state via selectedMedia
+        selectedItems.removeAll()
+    }
+
     // MARK: - Submit Logic
 
     private var canSubmit: Bool {
         if isPhotoType {
-            return selectedImage != nil
+            return !selectedMedia.isEmpty
         } else {
             return !answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         }
@@ -274,11 +391,11 @@ struct SolveView: View {
 
             // NFC confirmed, now submit
             let result: SubmissionResponse?
-            if isPhotoType, let image = selectedImage {
-                result = await appState.submitAnswerWithPhoto(
+            if isPhotoType, !selectedMedia.isEmpty {
+                result = await appState.submitAnswerWithMultipleMedia(
                     baseId: baseId,
                     challengeId: challengeId,
-                    image: image,
+                    mediaItems: selectedMedia,
                     notes: answer.trimmingCharacters(in: .whitespacesAndNewlines)
                 )
             } else {
@@ -312,11 +429,11 @@ struct SolveView: View {
         isSubmitting = true
 
         let result: SubmissionResponse?
-        if isPhotoType, let image = selectedImage {
-            result = await appState.submitAnswerWithPhoto(
+        if isPhotoType, !selectedMedia.isEmpty {
+            result = await appState.submitAnswerWithMultipleMedia(
                 baseId: baseId,
                 challengeId: challengeId,
-                image: image,
+                mediaItems: selectedMedia,
                 notes: answer.trimmingCharacters(in: .whitespacesAndNewlines)
             )
         } else {
@@ -345,6 +462,23 @@ struct SolveView: View {
         }
         // Prevent delayed parent-level alerts from appearing after this local error.
         appState.showError = false
+    }
+}
+
+// MARK: - Video Transferable
+
+struct VideoTransferable: Transferable {
+    let url: URL
+
+    static var transferRepresentation: some TransferRepresentation {
+        FileRepresentation(contentType: .movie) { video in
+            SentTransferredFile(video.url)
+        } importing: { received in
+            let tempDir = FileManager.default.temporaryDirectory
+            let targetURL = tempDir.appendingPathComponent(UUID().uuidString + "." + received.file.pathExtension)
+            try FileManager.default.copyItem(at: received.file, to: targetURL)
+            return Self(url: targetURL)
+        }
     }
 }
 

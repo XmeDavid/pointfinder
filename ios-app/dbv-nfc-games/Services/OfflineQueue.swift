@@ -155,6 +155,35 @@ actor OfflineQueue {
         return action.id
     }
 
+    /// Create and enqueue a multi-media submission action with multiple media items.
+    func enqueueMultiMediaSubmission(
+        gameId: UUID,
+        baseId: UUID,
+        challengeId: UUID,
+        answer: String,
+        mediaItems: [PendingMediaItem]
+    ) -> UUID {
+        var action = PendingAction(
+            type: .mediaSubmission,
+            gameId: gameId,
+            baseId: baseId,
+            challengeId: challengeId,
+            answer: answer
+        )
+        action.mediaItems = mediaItems
+        // Set legacy single-file fields from first item for backward compat
+        if let first = mediaItems.first {
+            action.mediaContentType = first.contentType
+            action.mediaSizeBytes = first.sizeBytes
+            action.mediaLocalFilePath = first.localFilePath
+            action.mediaFileName = first.fileName
+        }
+        action.uploadChunkIndex = 0
+        action.needsReselect = false
+        enqueue(action)
+        return action.id
+    }
+
     /// Update upload checkpoint details for a media action.
     func updateUploadProgress(
         id: UUID,
@@ -202,7 +231,16 @@ actor OfflineQueue {
     }
 
     private func deleteLocalMediaCopyIfNeeded(for action: PendingAction) {
-        guard let localPath = action.mediaLocalFilePath else { return }
-        try? FileManager.default.removeItem(atPath: localPath)
+        if let localPath = action.mediaLocalFilePath {
+            try? FileManager.default.removeItem(atPath: localPath)
+        }
+        // Also clean up any multi-media item local copies
+        if let items = action.mediaItems {
+            for item in items {
+                if let localPath = item.localFilePath {
+                    try? FileManager.default.removeItem(atPath: localPath)
+                }
+            }
+        }
     }
 }

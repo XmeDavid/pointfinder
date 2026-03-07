@@ -183,8 +183,18 @@ final class SyncEngine {
         guard let apiClient else {
             throw SyncError.noAPIClient
         }
-        guard let challengeId = action.challengeId,
-              let contentType = action.mediaContentType else {
+        guard let challengeId = action.challengeId else {
+            throw SyncError.invalidAction
+        }
+
+        // Multi-media path: upload each media item and collect URLs
+        if let mediaItems = action.mediaItems, mediaItems.count > 1 {
+            try await syncMultiMediaSubmission(action: action, mediaItems: mediaItems, challengeId: challengeId, apiClient: apiClient, token: token)
+            return
+        }
+
+        // Single-media path (legacy)
+        guard let contentType = action.mediaContentType else {
             throw SyncError.invalidAction
         }
 
@@ -200,9 +210,99 @@ final class SyncEngine {
             throw SyncError.invalidAction
         }
 
-        var session = try await ensureUploadSession(
+        let fileUrl = try await uploadSingleFile(
             action: action,
             gameId: action.gameId,
+            mediaURL: mediaURL,
+            contentType: contentType,
+            totalSize: totalSize,
+            apiClient: apiClient,
+            token: token
+        )
+
+        let request = PlayerSubmissionRequest(
+            baseId: action.baseId,
+            challengeId: challengeId,
+            answer: action.answer ?? "",
+            fileUrl: fileUrl,
+            idempotencyKey: action.id
+        )
+        _ = try await apiClient.submitAnswer(gameId: action.gameId, request: request, token: token)
+        cleanupLocalCopyIfNeeded(action: action)
+    }
+
+    /// Upload multiple media items and submit with fileUrls array.
+    private func syncMultiMediaSubmission(
+        action: PendingAction,
+        mediaItems: [PendingMediaItem],
+        challengeId: UUID,
+        apiClient: SyncAPIClient,
+        token: String
+    ) async throws {
+        var fileUrls: [String] = []
+
+        for item in mediaItems {
+            guard let localPath = item.localFilePath else {
+                throw SyncError.invalidAction
+            }
+            let mediaURL = URL(fileURLWithPath: localPath)
+            guard FileManager.default.fileExists(atPath: mediaURL.path) else {
+                await OfflineQueue.shared.markNeedsReselect(
+                    id: action.id,
+                    message: "Media source unavailable. Please reselect."
+                )
+                throw SyncError.needsReselect
+            }
+
+            let totalSize = item.sizeBytes > 0 ? item.sizeBytes : fileSize(url: mediaURL)
+            guard totalSize > 0 else { continue }
+
+            let url = try await uploadSingleFileWithoutAction(
+                gameId: action.gameId,
+                mediaURL: mediaURL,
+                contentType: item.contentType,
+                totalSize: totalSize,
+                fileName: item.fileName,
+                apiClient: apiClient,
+                token: token
+            )
+            fileUrls.append(url)
+        }
+
+        guard !fileUrls.isEmpty else {
+            throw SyncError.invalidAction
+        }
+
+        let request = PlayerSubmissionRequest(
+            baseId: action.baseId,
+            challengeId: challengeId,
+            answer: action.answer ?? "",
+            fileUrls: fileUrls,
+            idempotencyKey: action.id
+        )
+        _ = try await apiClient.submitAnswer(gameId: action.gameId, request: request, token: token)
+
+        // Clean up all local media copies
+        for item in mediaItems {
+            if let localPath = item.localFilePath {
+                try? FileManager.default.removeItem(atPath: localPath)
+            }
+        }
+    }
+
+    /// Upload a single file using chunked upload, tracking progress on the PendingAction.
+    private func uploadSingleFile(
+        action: PendingAction,
+        gameId: UUID,
+        mediaURL: URL,
+        contentType: String,
+        totalSize: Int64,
+        apiClient: SyncAPIClient,
+        token: String
+    ) async throws -> String {
+        var session = try await ensureUploadSession(
+            action: action,
+            gameId: gameId,
             contentType: contentType,
             totalSize: totalSize,
             apiClient: apiClient,
@@ -210,16 +310,7 @@ final class SyncEngine {
         )
 
         if session.status == "completed", let completedUrl = session.fileUrl {
-            let request = PlayerSubmissionRequest(
-                baseId: action.baseId,
-                challengeId: challengeId,
-                answer: action.answer ?? "",
-                fileUrl: completedUrl,
-                idempotencyKey: action.id
-            )
-            _ = try await apiClient.submitAnswer(gameId: action.gameId, request: request, token: token)
-            cleanupLocalCopyIfNeeded(action: action)
-            return
+            return completedUrl
         }
 
         let uploadedSet = Set(session.uploadedChunks)
@@ -241,7 +332,7 @@ final class SyncEngine {
                 continue
             }
             session = try await apiClient.uploadSessionChunk(
-                gameId: action.gameId,
+                gameId: gameId,
                 sessionId: session.sessionId,
                 chunkIndex: chunkIndex,
                 chunkData: chunkData,
@@ -257,22 +348,78 @@ final class SyncEngine {
         }
 
         let completed = try await apiClient.completeUploadSession(
-            gameId: action.gameId,
+            gameId: gameId,
             sessionId: session.sessionId,
             token: token
         )
         guard let fileUrl = completed.fileUrl else {
             throw SyncError.invalidAction
         }
-        let request = PlayerSubmissionRequest(
-            baseId: action.baseId,
-            challengeId: challengeId,
-            answer: action.answer ?? "",
-            fileUrl: fileUrl,
-            idempotencyKey: action.id
+        return fileUrl
+    }
+
+    /// Upload a single file using chunked upload without PendingAction progress tracking.
+    /// Used for individual files in a multi-media submission.
+    private func uploadSingleFileWithoutAction(
+        gameId: UUID,
+        mediaURL: URL,
+        contentType: String,
+        totalSize: Int64,
+        fileName: String?,
+        apiClient: SyncAPIClient,
+        token: String
+    ) async throws -> String {
+        var session = try await apiClient.createUploadSession(
+            gameId: gameId,
+            request: UploadSessionInitRequest(
+                originalFileName: fileName,
+                contentType: contentType,
+                totalSizeBytes: totalSize,
+                chunkSizeBytes: DEFAULT_CHUNK_SIZE_BYTES
+            ),
+            token: token
         )
-        _ = try await apiClient.submitAnswer(gameId: action.gameId, request: request, token: token)
-        cleanupLocalCopyIfNeeded(action: action)
+
+        if session.status == "completed", let completedUrl = session.fileUrl {
+            return completedUrl
+        }
+
+        let uploadedSet = Set(session.uploadedChunks)
+        let fileHandle = try FileHandle(forReadingFrom: mediaURL)
+        defer { try? fileHandle.close() }
+
+        for chunkIndex in 0..<session.totalChunks {
+            let expectedSize = expectedChunkSize(
+                totalSizeBytes: totalSize,
+                chunkSizeBytes: session.chunkSizeBytes,
+                totalChunks: session.totalChunks,
+                chunkIndex: chunkIndex
+            )
+            let chunkData = try fileHandle.read(upToCount: expectedSize) ?? Data()
+            guard chunkData.count == expectedSize else {
+                throw SyncError.invalidAction
+            }
+            if uploadedSet.contains(chunkIndex) {
+                continue
+            }
+            session = try await apiClient.uploadSessionChunk(
+                gameId: gameId,
+                sessionId: session.sessionId,
+                chunkIndex: chunkIndex,
+                chunkData: chunkData,
+                token: token
+            )
+        }
+
+        let completed = try await apiClient.completeUploadSession(
+            gameId: gameId,
+            sessionId: session.sessionId,
+            token: token
+        )
+        guard let fileUrl = completed.fileUrl else {
+            throw SyncError.invalidAction
+        }
+        return fileUrl
     }
 
     private func ensureUploadSession(

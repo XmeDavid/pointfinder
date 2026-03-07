@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle, XCircle, Clock, FileText, Filter, Maximize2, MoreHorizontal } from "lucide-react";
+import { CheckCircle, XCircle, Clock, FileText, Filter, Maximize2, MoreHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { AuthImage } from "@/components/AuthImage";
+import { AuthMedia } from "@/components/AuthMedia";
 import { Alert } from "@/components/ui/alert";
 import { submissionsApi } from "@/lib/api/submissions";
 import { teamsApi } from "@/lib/api/teams";
@@ -23,6 +23,42 @@ import { useToast } from "@/hooks/useToast";
 import { useGameWebSocket } from "@/hooks/useGameWebSocket";
 import type { Submission, SubmissionStatus } from "@/types";
 
+const getMediaUrls = (sub: Submission): string[] => sub.fileUrls ?? (sub.fileUrl ? [sub.fileUrl] : []);
+function FullScreenMediaViewer({ urls, index, onPrev, onNext }: { urls: string[]; index: number; onPrev: () => void; onNext: () => void }) {
+  const currentUrl = urls[index];
+  const hasMultiple = urls.length > 1;
+  return (
+    <div className="relative">
+      <AuthMedia
+        src={currentUrl}
+        alt="Submission media"
+        className="w-full h-auto max-h-[85vh] object-contain rounded"
+      />
+      {hasMultiple && (
+        <>
+          <button
+            className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors disabled:opacity-30"
+            disabled={index === 0}
+            onClick={onPrev}
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors disabled:opacity-30"
+            disabled={index === urls.length - 1}
+            onClick={onNext}
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+            {index + 1} / {urls.length}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function SubmissionsPage() {
   const { t } = useTranslation();
   const toast = useToast();
@@ -34,14 +70,14 @@ export function SubmissionsPage() {
   const [reviewingSub, setReviewingSub] = useState<Submission | null>(null);
   const [feedback, setFeedback] = useState("");
   const [reviewPoints, setReviewPoints] = useState<number>(0);
-  const [fullScreenImage, setFullScreenImage] = useState<{ apiUrl: string; blobUrl?: string } | null>(null);
+  const [fullScreenMedia, setFullScreenMedia] = useState<{ urls: string[]; index: number } | null>(null);
   // Cache blob URLs by API path so the fullscreen dialog can reuse them
   const blobCache = useRef<Map<string, string>>(new Map());
   const cacheBlobUrl = useCallback((apiUrl: string, blobUrl: string) => {
     blobCache.current.set(apiUrl, blobUrl);
   }, []);
-  const openFullScreen = useCallback((apiUrl: string) => {
-    setFullScreenImage({ apiUrl, blobUrl: blobCache.current.get(apiUrl) });
+  const openFullScreen = useCallback((urls: string[], index: number) => {
+    setFullScreenMedia({ urls, index });
   }, []);
 
   const { data: submissions = [], isLoading: subsLoading } = useQuery({ queryKey: ["submissions", gameId], queryFn: () => submissionsApi.listByGame(gameId!) });
@@ -129,16 +165,24 @@ export function SubmissionsPage() {
                     {base && <span className="text-xs text-muted-foreground">@ {base.name}</span>}
                   </div>
                   <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                    {sub.fileUrl ? (
-                      <>
-                        <AuthImage src={sub.fileUrl} alt="Submission" className="h-10 w-10 rounded object-cover cursor-pointer" onClick={(e) => { e.stopPropagation(); openFullScreen(sub.fileUrl!); }} onBlobReady={(blob) => cacheBlobUrl(sub.fileUrl!, blob)} />
-                      </>
-                    ) : (
-                      <>
-                        <FileText className="h-3.5 w-3.5 flex-shrink-0" />
-                        {sub.answer && <span className="truncate max-w-xs text-xs" title={sub.answer}>{sub.answer}</span>}
-                      </>
-                    )}
+                    {(() => {
+                      const mediaUrls = getMediaUrls(sub);
+                      if (mediaUrls.length > 0) {
+                        return (
+                          <div className="flex gap-1">
+                            {mediaUrls.map((url, idx) => (
+                              <AuthMedia key={url} src={url} alt="Submission" className="h-10 w-10 rounded object-cover cursor-pointer" thumbnail onClick={(e) => { e.stopPropagation(); openFullScreen(mediaUrls, idx); }} onBlobReady={(blob) => cacheBlobUrl(url, blob)} />
+                            ))}
+                          </div>
+                        );
+                      }
+                      return (
+                        <>
+                          <FileText className="h-3.5 w-3.5 flex-shrink-0" />
+                          {sub.answer && <span className="truncate max-w-xs text-xs" title={sub.answer}>{sub.answer}</span>}
+                        </>
+                      );
+                    })()}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">{formatDateTime(sub.submittedAt)}</p>
                   {sub.feedback && sub.status !== "pending" && (
@@ -178,17 +222,27 @@ export function SubmissionsPage() {
             <div className="space-y-4">
               <div><p className="text-sm font-medium mb-1">{t("submissions.team")}</p><p className="text-sm text-muted-foreground">{teams.find((tm) => tm.id === reviewingSub.teamId)?.name}</p></div>
               <div><p className="text-sm font-medium mb-1">{t("submissions.challenge")}</p><p className="text-sm text-muted-foreground">{challenges.find((c) => c.id === reviewingSub.challengeId)?.title}</p></div>
-              {reviewingSub.fileUrl && (
-                <div>
-                  <p className="text-sm font-medium mb-1">{t("submissions.answer")}</p>
-                  <div className="relative group">
-                    <AuthImage src={reviewingSub.fileUrl} alt="Submission photo" className="rounded-md max-h-64 w-full object-contain bg-muted cursor-pointer" onClick={() => openFullScreen(reviewingSub.fileUrl!)} onBlobReady={(blob) => cacheBlobUrl(reviewingSub.fileUrl!, blob)} />
-                    <button className="absolute top-2 right-2 p-1 rounded bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => openFullScreen(reviewingSub.fileUrl!)}><Maximize2 className="h-4 w-4" /></button>
-                  </div>
-                </div>
-              )}
-              {(!reviewingSub.fileUrl || reviewingSub.answer) && (
-                <div><p className="text-sm font-medium mb-1">{reviewingSub.fileUrl ? t("submissions.notes") : t("submissions.answer")}</p><div className="rounded-md bg-muted p-3 text-sm">{reviewingSub.answer || <span className="text-muted-foreground italic">{t("submissions.noNotes")}</span>}</div></div>
+              {(() => {
+                const mediaUrls = getMediaUrls(reviewingSub);
+                if (mediaUrls.length > 0) {
+                  return (
+                    <div>
+                      <p className="text-sm font-medium mb-1">{t("submissions.answer")}</p>
+                      <div className="space-y-2">
+                        {mediaUrls.map((url, idx) => (
+                          <div key={url} className="relative group">
+                            <AuthMedia src={url} alt="Submission media" className="rounded-md max-h-64 w-full object-contain bg-muted cursor-pointer" onClick={() => openFullScreen(mediaUrls, idx)} onBlobReady={(blob) => cacheBlobUrl(url, blob)} />
+                            <button className="absolute top-2 right-2 p-1 rounded bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => openFullScreen(mediaUrls, idx)}><Maximize2 className="h-4 w-4" /></button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+              {(getMediaUrls(reviewingSub).length === 0 || reviewingSub.answer) && (
+                <div><p className="text-sm font-medium mb-1">{getMediaUrls(reviewingSub).length > 0 ? t("submissions.notes") : t("submissions.answer")}</p><div className="rounded-md bg-muted p-3 text-sm">{reviewingSub.answer || <span className="text-muted-foreground italic">{t("submissions.noNotes")}</span>}</div></div>
               )}
               {(() => {
                 const ch = challenges.find((c) => c.id === reviewingSub.challengeId);
@@ -211,17 +265,15 @@ export function SubmissionsPage() {
         )}
       </Dialog>
 
-      {/* Full-screen image viewer */}
-      <Dialog open={!!fullScreenImage} onOpenChange={() => setFullScreenImage(null)}>
-        <DialogContent className="max-w-4xl p-2" onClose={() => setFullScreenImage(null)}>
-          {fullScreenImage && (
-            <AuthImage
-              src={fullScreenImage.apiUrl}
-              initialBlobUrl={fullScreenImage.blobUrl}
-              alt="Submission photo"
-              className="w-full h-auto max-h-[85vh] object-contain rounded"
-            />
-          )}
+      {/* Full-screen media viewer */}
+      <Dialog open={!!fullScreenMedia} onOpenChange={() => setFullScreenMedia(null)}>
+        <DialogContent className="max-w-4xl p-2" onClose={() => setFullScreenMedia(null)}>
+          {fullScreenMedia && <FullScreenMediaViewer
+            urls={fullScreenMedia.urls}
+            index={fullScreenMedia.index}
+            onPrev={() => setFullScreenMedia((prev) => prev ? { ...prev, index: prev.index - 1 } : null)}
+            onNext={() => setFullScreenMedia((prev) => prev ? { ...prev, index: prev.index + 1 } : null)}
+          />}
         </DialogContent>
       </Dialog>
     </div>
