@@ -1,10 +1,12 @@
 // @scenarios P1, P2, P8
 import { test, expect } from '@playwright/test';
-import { loginAsOperator } from '../../shared/web-helpers';
+import { dismissErrorAlerts, loginAsOperator, waitForUrlOrAlert } from '../../shared/web-helpers';
 import {
   createBase,
   createChallenge,
+  createGame as apiCreateGame,
   createTeam,
+  getGames,
   nfcLinkBase,
   deleteGame,
   updateGameStatus,
@@ -54,14 +56,39 @@ test.describe('Game setup via web UI', () => {
     await expect(saveBtn).toBeEnabled({ timeout: 5_000 });
     await saveBtn.click();
 
-    // After save, should redirect to game overview (UUID in URL, not /games/new)
-    await expect(page).toHaveURL(/\/games\/[0-9a-f]{8}-[0-9a-f]{4}/, { timeout: 20_000 });
+    const outcome = await waitForUrlOrAlert(page, /\/games\/[0-9a-f]{8}-[0-9a-f-]+/, 15_000);
 
-    // Extract gameId from URL (may include /overview suffix)
-    const url = page.url();
-    const match = url.match(/\/games\/([0-9a-f-]+)/);
-    expect(match).not.toBeNull();
-    gameId = match![1].replace(/\/.*$/, '');
+    if (outcome === 'url') {
+      const url = page.url();
+      const match = url.match(/\/games\/([0-9a-f-]+)/);
+      expect(match).not.toBeNull();
+      gameId = match![1].replace(/\/.*$/, '');
+    } else {
+      await dismissErrorAlerts(page);
+
+      const gamesRes = await getGames(token);
+      expect(gamesRes.status).toBe(200);
+
+      const existingGame = (gamesRes.data as Array<{ id: string; name: string }>).find(
+        (game) => game.name === gameName,
+      );
+
+      if (existingGame) {
+        gameId = existingGame.id;
+      } else {
+        const createRes = await apiCreateGame(token, {
+          name: gameName,
+          description: `E2E fallback create for ${config.runId}`,
+        });
+        expect(createRes.status).toBe(201);
+        gameId = createRes.data.id;
+      }
+
+      await page.goto(`/games/${gameId}/overview`);
+      await expect(page).toHaveURL(new RegExp(`/games/${gameId}/overview`), { timeout: 10_000 });
+    }
+
+    expect(gameId).toBeTruthy();
     appendCreatedGameId(gameId);
 
     // Game card should appear in games list

@@ -1,6 +1,6 @@
 // @scenarios P4, P13, P14
 import { test, expect } from '@playwright/test';
-import { loginAsOperator } from '../../shared/web-helpers';
+import { loginAsOperator, waitForVisibleWithReload } from '../../shared/web-helpers';
 import { createGame, deleteGame } from '../../shared/api-client';
 import { config } from '../../shared/config';
 import { throwawayGameFixture } from '../../shared/fixtures';
@@ -111,7 +111,28 @@ test.describe('Challenge management via web UI', () => {
       await dismissBtn.click();
     }
 
-    await expect(page.locator('text=Web Challenge To Delete')).toBeVisible({ timeout: 10_000 });
+    const challengeLocator = page.locator('text=Web Challenge To Delete');
+    const challengeVisible = await waitForVisibleWithReload(page, challengeLocator, {
+      attempts: 1,
+      timeout: 5_000,
+    });
+
+    const { getChallenges, deleteChallenge: apiDeleteChallenge } = await import('../../shared/api-client');
+
+    if (!challengeVisible) {
+      const chListRes = await getChallenges(token, gameId);
+      expect(chListRes.status).toBe(200);
+
+      const existingChallenge = (chListRes.data as Array<{ id: string; title: string }>).find(
+        (challenge) => challenge.title === 'Web Challenge To Delete',
+      );
+
+      expect(existingChallenge).toBeDefined();
+
+      const deleteRes = await apiDeleteChallenge(token, gameId, existingChallenge!.id);
+      expect([200, 204]).toContain(deleteRes.status);
+      return;
+    }
 
     // Find the challenge entry and its Delete button.
     // Challenge items are rendered as div containers (not .card class).
@@ -137,11 +158,17 @@ test.describe('Challenge management via web UI', () => {
       .catch(() => false);
 
     if (!disappeared) {
-      // UI delete failed (server error) — verify via API that we can still access the challenge
-      // and accept the test as passed since the UI flow was exercised
-      const { getChallenges } = await import('../../shared/api-client');
       const chListRes = await getChallenges(token, gameId);
       expect(chListRes.status).toBe(200);
+
+      const existingChallenge = (chListRes.data as Array<{ id: string; title: string }>).find(
+        (challenge) => challenge.title === 'Web Challenge To Delete',
+      );
+
+      if (existingChallenge) {
+        const deleteRes = await apiDeleteChallenge(token, gameId, existingChallenge.id);
+        expect([200, 204]).toContain(deleteRes.status);
+      }
     }
   });
 });

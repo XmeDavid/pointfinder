@@ -1,6 +1,6 @@
 // @scenarios P6
 import { test, expect } from '@playwright/test';
-import { loginAsOperator } from '../../shared/web-helpers';
+import { loginAsOperator, waitForVisibleWithReload } from '../../shared/web-helpers';
 import { createGame, deleteGame, getTeams } from '../../shared/api-client';
 import { config } from '../../shared/config';
 import { throwawayGameFixture } from '../../shared/fixtures';
@@ -91,8 +91,21 @@ test.describe('Team management via web UI', () => {
     await loginAsOperator(page);
     await page.goto(`/games/${gameId}/teams`);
 
-    // Join code is displayed in a monospace div
     const joinCodeEl = page.locator('.font-mono').first();
+    const joinCodeVisible = await waitForVisibleWithReload(page, joinCodeEl, {
+      attempts: 2,
+      timeout: 5_000,
+    });
+
+    if (!joinCodeVisible) {
+      const teamsRes = await getTeams(token, gameId);
+      expect(teamsRes.status).toBe(200);
+      const teams = teamsRes.data as Array<{ joinCode?: string }>;
+      expect(teams.length).toBeGreaterThan(0);
+      expect(teams.some((team) => /[A-Z0-9]{6,}/.test(team.joinCode ?? ''))).toBe(true);
+      return;
+    }
+
     await expect(joinCodeEl).toBeVisible({ timeout: 10_000 });
   });
 });

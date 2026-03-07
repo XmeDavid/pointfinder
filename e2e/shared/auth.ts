@@ -38,6 +38,40 @@ export function getOperatorUser(runId?: string): TokenStore['operatorUser'] {
   return readTokens(runId).operatorUser;
 }
 
+export function syncOperatorSession(
+  session: {
+    accessToken?: string | null;
+    refreshToken?: string | null;
+    user?: TokenStore['operatorUser'];
+  },
+  runId?: string,
+): void {
+  let store: TokenStore;
+
+  try {
+    store = readTokens(runId);
+  } catch {
+    store = {
+      operatorAccessToken: '',
+      operatorRefreshToken: '',
+      operatorUser: undefined,
+      players: {},
+    };
+  }
+
+  if (session.accessToken) {
+    store.operatorAccessToken = session.accessToken;
+  }
+  if (session.refreshToken) {
+    store.operatorRefreshToken = session.refreshToken;
+  }
+  if (session.user) {
+    store.operatorUser = session.user;
+  }
+
+  writeTokens(store, runId);
+}
+
 export function getPlayerToken(playerId?: string, runId?: string): string {
   const store = readTokens(runId);
   if (!playerId) {
@@ -59,11 +93,18 @@ export async function loginAndStoreTokens(runId?: string): Promise<{
     throw new Error(`Login failed with status ${status}: ${JSON.stringify(data)}`);
   }
 
+  let existingPlayers: Record<string, string> = {};
+  try {
+    existingPlayers = readTokens(runId).players;
+  } catch {
+    existingPlayers = {};
+  }
+
   const store: TokenStore = {
     operatorAccessToken: data.accessToken,
     operatorRefreshToken: data.refreshToken,
     operatorUser: data.user,
-    players: {},
+    players: existingPlayers,
   };
   writeTokens(store, runId);
 

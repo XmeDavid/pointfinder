@@ -1,0 +1,98 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: pointfinder-db-local-e2e
+    environment:
+      POSTGRES_DB: pointfinder
+      POSTGRES_USER: scout
+      POSTGRES_PASSWORD: scout
+    volumes:
+      - ./data/local-e2e/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scout -d pointfinder"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pointfinder-api-local-e2e
+    expose:
+      - "8080"
+    environment:
+      JAVA_OPTS: "-Xms256m -Xmx1200m"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/pointfinder?stringtype=unspecified
+      SPRING_DATASOURCE_USERNAME: scout
+      SPRING_DATASOURCE_PASSWORD: scout
+      SPRING_PROFILES_ACTIVE: prod
+      JWT_SECRET: local-e2e-jwt-secret-key-that-is-at-least-256-bits-long-for-hs256
+      CORS_ORIGINS: https://localhost,http://localhost
+      FRONTEND_URL: https://localhost
+      APNS_ENABLED: "false"
+      APNS_KEY_PATH: file:/app/config/apns-key.p8
+      APNS_KEY_ID: LOCAL_E2E
+      APNS_TEAM_ID: LOCAL_E2E
+      APNS_BUNDLE_ID: com.prayer.pointfinder.local
+      APNS_PRODUCTION: "false"
+      FCM_ENABLED: "false"
+      FCM_CREDENTIALS_PATH: file:/app/config/firebase-service-account.json
+      FCM_PROJECT_ID: local-e2e
+      MAIL_ENABLED: "false"
+      MAIL_PASSWORD: ""
+      MAIL_FROM: info@localhost
+      APP_UPLOADS_PATH: /uploads
+      APP_UPLOADS_MAX_FILE_SIZE_BYTES: 2147483648
+      APP_UPLOADS_CHUNK_ENABLED: "true"
+      APP_UPLOADS_CHUNK_DEFAULT_SIZE_BYTES: 8388608
+      APP_UPLOADS_CHUNK_MAX_SIZE_BYTES: 16777216
+      APP_UPLOADS_CHUNK_SESSION_TTL_SECONDS: 172800
+      APP_UPLOADS_MAX_ACTIVE_SESSIONS_PER_PLAYER: 3
+      APP_UPLOADS_MAX_ACTIVE_BYTES_PER_GAME: 17179869184
+    volumes:
+      - ./data/local-e2e/uploads:/uploads
+      - ./data/local-e2e/secrets/AuthKey_LOCAL_E2E.p8:/app/config/apns-key.p8:ro
+      - ./data/local-e2e/secrets/firebase-service-account.json:/app/config/firebase-service-account.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./web-admin
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: /api
+        VITE_WS_URL: /ws
+    container_name: pointfinder-web-local-e2e
+    volumes:
+      - frontend_dist_local_e2e:/app/dist
+    healthcheck:
+      test: ["CMD", "test", "-f", "/app/dist/index.html"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: pointfinder-nginx-local-e2e
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.local.conf:/etc/nginx/nginx.conf:ro
+      - ./data/local-e2e/certs:/etc/nginx/certs:ro
+      - ./data/local-e2e/uploads:/uploads:ro
+      - frontend_dist_local_e2e:/usr/share/nginx/html/app:ro
+    depends_on:
+      backend:
+        condition: service_started
+      frontend:
+        condition: service_healthy
+    command: "/bin/sh -c 'nginx -g \"daemon off;\"'"
+
+volumes:
+  frontend_dist_local_e2e:
