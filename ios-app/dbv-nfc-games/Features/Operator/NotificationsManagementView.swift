@@ -72,9 +72,9 @@ struct NotificationsManagementView: View {
                             Text(notification.message)
                                 .font(.body)
                             HStack {
-                                if let teamId = notification.targetTeamId,
-                                   let team = teams.first(where: { $0.id == teamId }) {
-                                    Text(team.name)
+                                if let teamId = notification.targetTeamId {
+                                    let teamName = teams.first(where: { $0.id == teamId })?.name ?? locale.t("operator.unknownTeam")
+                                    Text(teamName)
                                         .font(.caption)
                                         .padding(.horizontal, 6)
                                         .padding(.vertical, 2)

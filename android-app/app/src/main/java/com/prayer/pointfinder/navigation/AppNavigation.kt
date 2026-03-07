@@ -1260,6 +1260,12 @@ private fun OperatorGameRoot(
                                 onSaveVariableValue = { variableKey, value ->
                                     viewModel.saveTeamVariableValue(variableKey, team.id, value)
                                 },
+                                onCreateVariable = { variableName ->
+                                    viewModel.createVariable(variableName)
+                                },
+                                onDeleteVariable = { variableKey ->
+                                    viewModel.deleteVariable(variableKey)
+                                },
                                 onBack = { setupSubScreen = "teams_list" },
                             )
                         } else {
