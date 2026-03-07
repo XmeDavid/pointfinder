@@ -5,6 +5,10 @@ appId: ${APP_ID}
 - launchApp:
     clearState: true
 
+- assertVisible: "PointFinder"
+- tapOn: "Operator Login"
+- assertVisible: "Operator Login"
+
 - tapOn:
     id: "login-email"
 - inputText: "${OPERATOR_EMAIL}"
@@ -13,10 +17,11 @@ appId: ${APP_ID}
     id: "login-password"
 - inputText: "${OPERATOR_PASSWORD}"
 
-- tapOn:
-    id: "login-submit"
+- hideKeyboard
+- tapOn: "Sign In"
 
-- assertVisible: "Games"
+- assertVisible:
+    id: "create-game-btn"
 
 - tapOn: "${GAME_NAME:-E2E Test Game}"
 
@@ -29,12 +34,12 @@ appId: ${APP_ID}
 - tapOn:
     id: "base-name-input"
 - eraseText
-- inputText: "Base Alpha v2"
+- inputText: "${UPDATED_BASE_NAME:-Base Alpha v2}"
 
 - tapOn:
     id: "base-save-btn"
 
-- assertVisible: "Base Alpha v2"
+- assertVisible: "${UPDATED_BASE_NAME:-Base Alpha v2}"
 
 # --- Edit a challenge ---
 - tapOn: "${CHALLENGE_TITLE:-Find the Hidden Clue (Updated)}"
@@ -45,18 +50,18 @@ appId: ${APP_ID}
 - tapOn:
     id: "challenge-title-input"
 - eraseText
-- inputText: "Find the Hidden Clue v2"
+- inputText: "${UPDATED_CHALLENGE_TITLE:-Find the Hidden Clue v2}"
 
 - tapOn:
     id: "challenge-save-btn"
 
-- assertVisible: "Find the Hidden Clue v2"
+- assertVisible: "${UPDATED_CHALLENGE_TITLE:-Find the Hidden Clue v2}"
 
 # --- Edit a team ---
 - tapOn:
     id: "nav-teams"
 
-- tapOn: "Team Eagle"
+- tapOn: "${TEAM_NAME:-Team Eagle}"
 
 - tapOn:
     id: "team-edit-btn"
@@ -64,9 +69,9 @@ appId: ${APP_ID}
 - tapOn:
     id: "team-name-input"
 - eraseText
-- inputText: "Team Eagle Edited"
+- inputText: "${UPDATED_TEAM_NAME:-Team Eagle Edited}"
 
 - tapOn:
     id: "team-save-btn"
 
-- assertVisible: "Team Eagle Edited"
+- assertVisible: "${UPDATED_TEAM_NAME:-Team Eagle Edited}"

@@ -43,7 +43,29 @@ fun Project.resolveApiBaseUrl(defaultValue: String): String {
     }
 }
 
-val apiBaseUrl = project.resolveApiBaseUrl("https://pointfinder.pt")
+fun Project.resolveApiBaseUrl(keys: List<String>, defaultValue: String): String {
+    val resolved = keys.firstNotNullOfOrNull { key ->
+        resolveConfigValue(key, "")
+            .trim()
+            .takeIf { it.isNotBlank() }
+    } ?: defaultValue
+
+    return if (resolved.contains("desbravadores.dev", ignoreCase = true)) {
+        logger.warn("API base URL points to deprecated host '$resolved'. Falling back to $defaultValue.")
+        defaultValue
+    } else {
+        resolved
+    }
+}
+
+val debugApiBaseUrl = project.resolveApiBaseUrl(
+    keys = listOf("API_BASE_URL_DEBUG", "API_BASE_URL"),
+    defaultValue = "http://192.168.0.1:8080",
+)
+val releaseApiBaseUrl = project.resolveApiBaseUrl(
+    keys = listOf("API_BASE_URL_RELEASE", "API_BASE_URL"),
+    defaultValue = "https://pointfinder.pt",
+)
 val enableChunkedMediaUpload = project.resolveConfigValue("ENABLE_CHUNKED_MEDIA_UPLOAD", "true")
 // Google Maps API key no longer needed (using MapLibre)
 val hasGoogleServicesConfig = listOf(
@@ -69,7 +91,6 @@ android {
         targetSdk = 35
         versionCode = 7
         versionName = "0.7.0"
-        buildConfigField("String", "API_BASE_URL", "\"${apiBaseUrl.replace("\"", "\\\"")}\"")
         buildConfigField("Boolean", "ENABLE_MOBILE_REALTIME", "true")
         buildConfigField("Boolean", "ENABLE_CHUNKED_MEDIA_UPLOAD", enableChunkedMediaUpload)
 
@@ -81,7 +102,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "API_BASE_URL", "\"${debugApiBaseUrl.replace("\"", "\\\"")}\"")
+        }
+
         release {
+            buildConfigField("String", "API_BASE_URL", "\"${releaseApiBaseUrl.replace("\"", "\\\"")}\"")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

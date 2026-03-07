@@ -2,7 +2,7 @@ import Foundation
 
 enum AppConfiguration {
     #if DEBUG
-    static let apiBaseURL = "https://pointfinder.pt"
+    static let apiBaseURL = "http://localhost:8080"
     #else
     static let apiBaseURL = "https://pointfinder.pt"
     #endif

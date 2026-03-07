@@ -19,6 +19,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: pointfinder-api-local-e2e
+    ports:
+      - "8080:8080"
     expose:
       - "8080"
     environment:

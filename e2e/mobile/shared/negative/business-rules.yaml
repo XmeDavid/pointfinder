@@ -29,6 +29,10 @@ appId: ${APP_ID}
 - launchApp:
     clearState: true
 
+- assertVisible: "PointFinder"
+- tapOn: "Operator Login"
+- assertVisible: "Operator Login"
+
 - tapOn:
     id: "login-email"
 - inputText: "${OPERATOR_EMAIL}"
@@ -37,10 +41,11 @@ appId: ${APP_ID}
     id: "login-password"
 - inputText: "${OPERATOR_PASSWORD}"
 
-- tapOn:
-    id: "login-submit"
+- hideKeyboard
+- tapOn: "Sign In"
 
-- assertVisible: "Games"
+- assertVisible:
+    id: "create-game-btn"
 
 - tapOn:
     id: "create-game-btn"
