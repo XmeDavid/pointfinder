@@ -95,6 +95,7 @@ struct BasesManagementView: View {
                         BaseEditView(
                             game: game,
                             base: base,
+                            bases: bases,
                             challenges: challenges,
                             onSaved: { updatedBase in
                                 if let index = bases.firstIndex(where: { $0.id == updatedBase.id }) {
@@ -111,6 +112,7 @@ struct BasesManagementView: View {
                     BaseEditView(
                         game: game,
                         base: nil,
+                        bases: bases,
                         challenges: challenges,
                         onSaved: { newBase in
                             bases.append(newBase)

@@ -1,4 +1,5 @@
 import { useMemo, useState, lazy, Suspense } from "react";
+import { filterAvailableBases, filterAvailableUnlockBases } from "./dropdown-filters";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Minus, Puzzle, Trash2, Pencil, FileText, Image, CheckCircle, Eye, MapPin, Unlock, Variable } from "lucide-react";
@@ -54,29 +55,17 @@ export function ChallengesPage() {
     return map;
   }, [bases]);
 
-  const availableBases = useMemo(() => {
-    const editingChallengeId = editing?.id;
-    return bases.filter(
-      (base) => !base.fixedChallengeId || base.fixedChallengeId === editingChallengeId
-    );
-  }, [bases, editing?.id]);
+  const availableBases = useMemo(
+    () => filterAvailableBases(bases, editing?.id),
+    [bases, editing?.id],
+  );
 
   const baseById = useMemo(() => new Map(bases.map((b) => [b.id, b])), [bases]);
 
-  const alreadyUnlockedBaseIds = useMemo(() => {
-    const editingId = editing?.id;
-    return new Set(
-      challenges
-        .filter((ch) => ch.unlocksBaseId && ch.id !== editingId)
-        .map((ch) => ch.unlocksBaseId as string)
-    );
-  }, [challenges, editing?.id]);
-
-  const hiddenBases = useMemo(() => {
-    return bases.filter(
-      (b) => b.hidden && b.id !== form.fixedBaseId && !alreadyUnlockedBaseIds.has(b.id)
-    );
-  }, [bases, form.fixedBaseId, alreadyUnlockedBaseIds]);
+  const hiddenBases = useMemo(
+    () => filterAvailableUnlockBases(bases, challenges, editing?.id, form.fixedBaseId),
+    [bases, challenges, editing?.id, form.fixedBaseId],
+  );
   const effectiveUnlocksBaseId = useMemo(() => {
     if (!form.unlocksBaseId) return undefined;
     return hiddenBases.some((base) => base.id === form.unlocksBaseId) ? form.unlocksBaseId : undefined;

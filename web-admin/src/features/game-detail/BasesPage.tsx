@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
+import { filterAvailableFixedChallenges } from "./dropdown-filters";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, MapPin, Wifi, WifiOff, Trash2, Pencil, List, Map as MapIcon, EyeOff } from "lucide-react";
@@ -59,15 +60,10 @@ export function BasesPage() {
   const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!) });
   const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!) });
   const challengeById = useMemo(() => new Map(challenges.map((challenge) => [challenge.id, challenge])), [challenges]);
-  const unavailableFixedChallengeIds = useMemo(() => new Set(
-    bases
-      .filter((base) => base.id !== editing?.id && base.fixedChallengeId)
-      .map((base) => base.fixedChallengeId as string)
-  ), [bases, editing?.id]);
-  const availableFixedChallenges = useMemo(() => challenges.filter(
-    (challenge) => !unavailableFixedChallengeIds.has(challenge.id)
-      || challenge.id === form.fixedChallengeId
-  ), [challenges, unavailableFixedChallengeIds, form.fixedChallengeId]);
+  const availableFixedChallenges = useMemo(
+    () => filterAvailableFixedChallenges(challenges, bases, editing?.id, form.fixedChallengeId),
+    [challenges, bases, editing?.id, form.fixedChallengeId],
+  );
 
   const unlockConnections = useMemo<UnlockConnection[]>(() => {
     return challenges
