@@ -1,9 +1,11 @@
 package com.prayer.pointfinder.entity;
 
+import com.prayer.pointfinder.converter.StringListJsonConverter;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -48,6 +50,10 @@ public class Submission {
 
     @Column(name = "file_url", columnDefinition = "TEXT")
     private String fileUrl;
+
+    @Convert(converter = StringListJsonConverter.class)
+    @Column(name = "file_urls", columnDefinition = "TEXT")
+    private List<String> fileUrls;
 
     @Column
     private Integer points;

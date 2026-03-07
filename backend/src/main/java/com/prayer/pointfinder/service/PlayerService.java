@@ -408,6 +408,7 @@ public class PlayerService {
         submissionRequest.setBaseId(request.getBaseId());
         submissionRequest.setAnswer(request.getAnswer());
         submissionRequest.setFileUrl(request.getFileUrl());
+        submissionRequest.setFileUrls(request.getFileUrls());
         submissionRequest.setIdempotencyKey(request.getIdempotencyKey());
 
         SubmissionResponse response = submissionService.createSubmission(gameId, submissionRequest);
