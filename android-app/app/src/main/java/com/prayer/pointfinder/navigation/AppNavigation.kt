@@ -997,6 +997,7 @@ private fun OperatorGameRoot(
                         val lng = parts.getOrNull(1)?.toDoubleOrNull()
                         BaseEditScreen(
                             base = null,
+                            bases = state.bases,
                             challenges = state.challenges,
                             linkedChallenges = emptyList(),
                             onSave = { request ->
@@ -1025,6 +1026,7 @@ private fun OperatorGameRoot(
                                 .distinctBy { it.id }
                             BaseEditScreen(
                                 base = base,
+                                bases = state.bases,
                                 challenges = state.challenges,
                                 linkedChallenges = linkedChallenges,
                                 onSave = { request ->
@@ -1056,6 +1058,7 @@ private fun OperatorGameRoot(
                         ChallengeEditScreen(
                             challenge = null,
                             bases = state.bases,
+                            challenges = state.challenges,
                             teams = state.teams,
                             variables = state.variables,
                             onSave = { request ->
@@ -1133,6 +1136,7 @@ private fun OperatorGameRoot(
                     setupSubScreen == "base_create" -> {
                         BaseEditScreen(
                             base = null,
+                            bases = state.bases,
                             challenges = state.challenges,
                             linkedChallenges = emptyList(),
                             onSave = { request ->
@@ -1161,6 +1165,7 @@ private fun OperatorGameRoot(
                                 .distinctBy { it.id }
                             BaseEditScreen(
                                 base = base,
+                                bases = state.bases,
                                 challenges = state.challenges,
                                 linkedChallenges = linkedChallenges,
                                 onSave = { request ->
@@ -1203,6 +1208,7 @@ private fun OperatorGameRoot(
                         ChallengeEditScreen(
                             challenge = null,
                             bases = state.bases,
+                            challenges = state.challenges,
                             teams = state.teams,
                             variables = state.variables,
                             onSave = { request ->
@@ -1230,6 +1236,7 @@ private fun OperatorGameRoot(
                             ChallengeEditScreen(
                                 challenge = challenge,
                                 bases = state.bases,
+                                challenges = state.challenges,
                                 teams = state.teams,
                                 variables = state.variables,
                                 assignments = state.assignments,
@@ -1291,6 +1298,12 @@ private fun OperatorGameRoot(
                                 },
                                 onSaveVariableValue = { variableKey, value ->
                                     viewModel.saveTeamVariableValue(variableKey, team.id, value)
+                                },
+                                onCreateVariable = { variableName ->
+                                    viewModel.createVariable(variableName)
+                                },
+                                onDeleteVariable = { variableKey ->
+                                    viewModel.deleteVariable(variableKey)
                                 },
                                 onBack = { setupSubScreen = "teams_list" },
                             )

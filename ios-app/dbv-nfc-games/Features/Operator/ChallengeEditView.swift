@@ -8,6 +8,7 @@ struct ChallengeEditView: View {
     let game: Game
     let challenge: Challenge?
     let bases: [Base]
+    let challenges: [Challenge]
     let assignments: [Assignment]
     var onSaved: (Challenge) -> Void
     var onDeleted: (() -> Void)?
@@ -50,14 +51,30 @@ struct ChallengeEditView: View {
         return nil
     }
 
+    /// Bases available for the fixed-to-base picker, excluding bases that already have a fixed challenge assigned.
+    private var availableBases: [Base] {
+        bases.filter { $0.fixedChallengeId == nil || $0.fixedChallengeId == challenge?.id }
+    }
+
+    /// Bases available for the unlocks-base picker: only hidden bases, excluding own fixed base and already-unlocked bases.
+    private var availableUnlockBases: [Base] {
+        let alreadyUnlockedBaseIds = Set(
+            challenges
+                .filter { $0.unlocksBaseId != nil && $0.id != challenge?.id }
+                .compactMap { $0.unlocksBaseId }
+        )
+        return bases.filter { $0.hidden && $0.id != fixedBaseId && !alreadyUnlockedBaseIds.contains($0.id) }
+    }
+
     private var availableVariableKeys: [String] {
         Array(Set(gameVariables.map(\.key) + challengeVariables.map(\.key))).sorted()
     }
 
-    init(game: Game, challenge: Challenge?, bases: [Base], assignments: [Assignment], onSaved: @escaping (Challenge) -> Void, onDeleted: (() -> Void)? = nil) {
+    init(game: Game, challenge: Challenge?, bases: [Base], challenges: [Challenge], assignments: [Assignment], onSaved: @escaping (Challenge) -> Void, onDeleted: (() -> Void)? = nil) {
         self.game = game
         self.challenge = challenge
         self.bases = bases
+        self.challenges = challenges
         self.assignments = assignments
         self.onSaved = onSaved
         self.onDeleted = onDeleted
@@ -168,7 +185,7 @@ struct ChallengeEditView: View {
             Section(locale.t("operator.linking")) {
                 Picker(locale.t("operator.fixedToBase"), selection: $fixedBaseId) {
                     Text(locale.t("operator.none")).tag(nil as UUID?)
-                    ForEach(bases) { base in
+                    ForEach(availableBases) { base in
                         Text(base.name).tag(base.id as UUID?)
                     }
                 }
@@ -178,7 +195,7 @@ struct ChallengeEditView: View {
 
                 Picker(locale.t("operator.unlocksBase"), selection: $unlocksBaseId) {
                     Text(locale.t("operator.none")).tag(nil as UUID?)
-                    ForEach(bases) { base in
+                    ForEach(availableUnlockBases) { base in
                         Text(base.name).tag(base.id as UUID?)
                     }
                 }

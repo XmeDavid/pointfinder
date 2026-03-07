@@ -250,6 +250,8 @@
     <string name="label_preview_as_team">Vorschau als Team</string>
     <string name="label_variable_name">Variablenname</string>
     <string name="label_no_variables">Noch keine Variablen definiert</string>
+    <string name="label_invalid_variable_name">Variablennamen müssen mit einem Buchstaben beginnen und dürfen nur Buchstaben, Zahlen oder Unterstriche enthalten</string>
+    <string name="label_duplicate_variable">Eine Variable mit diesem Namen existiert bereits</string>
     <string name="label_bold">Fett</string>
     <string name="label_italic">Kursiv</string>
     <string name="label_underline">Unterstrichen</string>

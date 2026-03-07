@@ -9,6 +9,7 @@ struct BaseEditView: View {
 
     let game: Game
     let base: Base?
+    let bases: [Base]
     let challenges: [Challenge]
     var onSaved: (Base) -> Void
     var onDeleted: (() -> Void)?
@@ -36,6 +37,16 @@ struct BaseEditView: View {
 
     private var isCreateMode: Bool { base == nil }
 
+    /// Challenges available for the fixed-challenge picker, excluding those already fixed to other bases.
+    private var availableChallenges: [Challenge] {
+        let unavailableIds = Set(
+            bases
+                .filter { $0.id != base?.id && $0.fixedChallengeId != nil }
+                .compactMap { $0.fixedChallengeId }
+        )
+        return challenges.filter { !unavailableIds.contains($0.id) || $0.id == fixedChallengeId }
+    }
+
     private var token: String? {
         if case .userOperator(let token, _, _) = appState.authType {
             return token
@@ -43,9 +54,10 @@ struct BaseEditView: View {
         return nil
     }
 
-    init(game: Game, base: Base?, challenges: [Challenge], initialCoordinate: CLLocationCoordinate2D? = nil, onSaved: @escaping (Base) -> Void, onDeleted: (() -> Void)? = nil) {
+    init(game: Game, base: Base?, bases: [Base], challenges: [Challenge], initialCoordinate: CLLocationCoordinate2D? = nil, onSaved: @escaping (Base) -> Void, onDeleted: (() -> Void)? = nil) {
         self.game = game
         self.base = base
+        self.bases = bases
         self.challenges = challenges
         self.onSaved = onSaved
         self.onDeleted = onDeleted
@@ -123,7 +135,7 @@ struct BaseEditView: View {
             Section(locale.t("operator.fixedChallenge")) {
                 Picker(locale.t("operator.fixedChallenge"), selection: $fixedChallengeId) {
                     Text(locale.t("operator.none")).tag(nil as UUID?)
-                    ForEach(challenges) { challenge in
+                    ForEach(availableChallenges) { challenge in
                         Text(challenge.title).tag(challenge.id as UUID?)
                     }
                 }

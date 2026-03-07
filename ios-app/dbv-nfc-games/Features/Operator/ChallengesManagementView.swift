@@ -95,6 +95,7 @@ struct ChallengesManagementView: View {
                             game: game,
                             challenge: challenge,
                             bases: bases,
+                            challenges: challenges,
                             assignments: assignments,
                             onSaved: { updatedChallenge in
                                 if let index = challenges.firstIndex(where: { $0.id == updatedChallenge.id }) {
@@ -112,6 +113,7 @@ struct ChallengesManagementView: View {
                         game: game,
                         challenge: nil,
                         bases: bases,
+                        challenges: challenges,
                         assignments: assignments,
                         onSaved: { newChallenge in
                             challenges.append(newChallenge)

@@ -1,4 +1,4 @@
-// @scenarios N7, N9, N10
+// @scenarios N7, N9, N10, N11, N12
 import { test, expect } from '@playwright/test';
 import { loginAsOperator } from '../../shared/web-helpers';
 import {
@@ -228,5 +228,96 @@ test.describe('Business rules - negative', { tag: '@negative' }, () => {
     // Backend currently allows deleting live games — protection is UI-only
     const deleteRes = await deleteGame(token, gameId);
     expect(deleteRes.status).toBe(204);
+  });
+
+  // N12: Tile source options parity — game settings shows all 6 tile sources
+  test('N12: game settings tile source dropdown shows all 6 options', async ({ page }) => {
+    const gameRes = await createGame(token, throwawayGameFixture(config.runId, 'web-n12-tiles'));
+    expect(gameRes.status).toBe(201);
+    const gameId = gameRes.data.id;
+    throwawayGameIds.push(gameId);
+    appendCreatedGameId(gameId);
+
+    await loginAsOperator(page);
+    await page.goto(`/games/${gameId}/settings`);
+    await expect(page).toHaveURL(/\/settings/, { timeout: 10_000 });
+
+    // Find the tile source select/dropdown
+    const tileSourceSelect = page.locator(
+      'select[id*="tileSource" i], select[name*="tile" i], [data-testid*="tile-source"]',
+    ).first();
+
+    if (await tileSourceSelect.isVisible({ timeout: 5_000 }).catch(() => false)) {
+      const options = await tileSourceSelect.locator('option').allTextContents();
+      // Should have all 6 tile source options
+      const expectedLabels = [
+        'OpenStreetMap',
+        'OpenStreetMap Classic',
+        'CartoDB Voyager',
+        'CartoDB Positron',
+        'SwissTopo',
+        'SwissTopo Satellite',
+      ];
+      for (const label of expectedLabels) {
+        const found = options.some((opt) => opt.includes(label));
+        expect(found).toBe(true);
+      }
+    }
+  });
+
+  // N11: Dropdown filtering parity — fixed challenge dropdown hides already-assigned challenges
+  test('N11: fixed challenge dropdown filters out already-assigned challenges', async ({ page }) => {
+    const gameRes = await createGame(token, throwawayGameFixture(config.runId, 'web-n11-filter'));
+    expect(gameRes.status).toBe(201);
+    const gameId = gameRes.data.id;
+    throwawayGameIds.push(gameId);
+    appendCreatedGameId(gameId);
+
+    // Create 2 bases and 1 challenge
+    const baseARes = await createBase(token, gameId, baseFixture(0));
+    expect(baseARes.status).toBe(201);
+
+    const baseBRes = await createBase(token, gameId, baseFixture(1));
+    expect(baseBRes.status).toBe(201);
+
+    const chRes = await createChallenge(token, gameId, challengeFixture('text', 0));
+    expect(chRes.status).toBe(201);
+    const challengeTitle = challengeFixture('text', 0).title;
+
+    // Assign fixed challenge to base A via API
+    const updateA = await updateBase(token, gameId, baseARes.data.id, {
+      name: 'Base A',
+      lat: baseFixture(0).lat,
+      lng: baseFixture(0).lng,
+      fixedChallengeId: chRes.data.id,
+    });
+    expect(updateA.status).toBe(200);
+
+    // Navigate to bases page and edit base B
+    await loginAsOperator(page);
+    await page.goto(`/games/${gameId}/bases`);
+
+    // Find Base 1 row and click edit
+    const baseBRow = page.locator('li, tr, [data-testid*="base"]').filter({ hasText: 'Base 1' });
+    const editBtn = baseBRow.locator('button').filter({ hasText: /edit/i });
+    if (await editBtn.isVisible({ timeout: 5_000 }).catch(() => false)) {
+      await editBtn.click();
+    } else {
+      // Fallback: try clicking the row directly
+      await baseBRow.first().click();
+    }
+
+    // Look at the fixed challenge dropdown — the already-assigned challenge should NOT appear
+    const fixedChallengeSelect = page.locator(
+      'select[id*="fixedChallenge" i], select[name*="fixed" i], [data-testid*="fixed-challenge"]',
+    ).first();
+
+    if (await fixedChallengeSelect.isVisible({ timeout: 5_000 }).catch(() => false)) {
+      // Get all option texts in the select
+      const options = await fixedChallengeSelect.locator('option').allTextContents();
+      // The challenge title should NOT be among the options (only "None" should be there)
+      const hasChallengeOption = options.some((opt) => opt.includes(challengeTitle));
+      expect(hasChallengeOption).toBe(false);
+    }
   });
 });

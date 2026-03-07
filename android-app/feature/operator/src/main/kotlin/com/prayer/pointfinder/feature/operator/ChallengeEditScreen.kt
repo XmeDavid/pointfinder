@@ -70,6 +70,7 @@ import com.prayer.pointfinder.core.model.UpdateChallengeRequest
 fun ChallengeEditScreen(
     challenge: Challenge?,
     bases: List<Base>,
+    challenges: List<Challenge> = emptyList(),
     teams: List<Team>,
     variables: List<TeamVariable>,
     assignments: List<Assignment> = emptyList(),
@@ -104,6 +105,15 @@ fun ChallengeEditScreen(
     }
     var locationBound by remember { mutableStateOf(challenge?.locationBound ?: false) }
     var unlocksBaseId by remember { mutableStateOf<String?>(challenge?.unlocksBaseId) }
+
+    // Filter bases for fixed-to-base dropdown: exclude bases that already have a fixed challenge
+    val availableBases = remember(bases, challenge?.id) {
+        filterAvailableBases(bases, challenge?.id)
+    }
+    // Filter bases for unlocks-base dropdown: only hidden, exclude own fixed base, exclude already-unlocked
+    val availableUnlockBases = remember(bases, challenges, challenge?.id, fixedBaseId) {
+        filterAvailableUnlockBases(bases, challenges, challenge?.id, fixedBaseId)
+    }
 
     // Editor state -- alternates between form and rich text editor
     var showDescriptionEditor by remember { mutableStateOf(false) }
@@ -436,7 +446,7 @@ fun ChallengeEditScreen(
                             fixedBaseExpanded = false
                         },
                     )
-                    bases.forEach { base ->
+                    availableBases.forEach { base ->
                         DropdownMenuItem(
                             text = { Text(base.name) },
                             onClick = {
@@ -497,7 +507,7 @@ fun ChallengeEditScreen(
                             unlocksBaseExpanded = false
                         },
                     )
-                    bases.forEach { base ->
+                    availableUnlockBases.forEach { base ->
                         DropdownMenuItem(
                             text = { Text(base.name) },
                             onClick = {
@@ -673,4 +683,38 @@ private fun HtmlPreviewCard(
 
 private fun stripHtml(html: String): String {
     return html.replace(Regex("<[^>]*>"), "").replace("&nbsp;", " ").trim()
+}
+
+/**
+ * Filters bases for the fixed-to-base dropdown on a challenge edit screen.
+ * Excludes bases that already have a fixedChallengeId assigned,
+ * unless it matches the challenge being edited.
+ */
+internal fun filterAvailableBases(
+    bases: List<Base>,
+    editingChallengeId: String?,
+): List<Base> {
+    return bases.filter { base ->
+        base.fixedChallengeId == null || base.fixedChallengeId == editingChallengeId
+    }
+}
+
+/**
+ * Filters bases for the unlocks-base dropdown on a challenge edit screen.
+ * Only shows hidden bases, excludes the challenge's own fixed base,
+ * and excludes bases already unlocked by other challenges.
+ */
+internal fun filterAvailableUnlockBases(
+    bases: List<Base>,
+    challenges: List<Challenge>,
+    editingChallengeId: String?,
+    fixedBaseId: String?,
+): List<Base> {
+    val alreadyUnlockedBaseIds = challenges
+        .filter { it.unlocksBaseId != null && it.id != editingChallengeId }
+        .map { it.unlocksBaseId }
+        .toSet()
+    return bases.filter { base ->
+        base.hidden && base.id != fixedBaseId && base.id !in alreadyUnlockedBaseIds
+    }
 }
