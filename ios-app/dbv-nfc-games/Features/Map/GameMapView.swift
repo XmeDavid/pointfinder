@@ -74,7 +74,7 @@ struct GameMapView: View {
                             Image(systemName: "bell.fill")
                                 .overlay(alignment: .topTrailing) {
                                     if appState.unseenNotificationCount > 0 {
-                                        Text("\(appState.unseenNotificationCount)")
+                                        Text(appState.unseenNotificationCount > 99 ? "99+" : "\(appState.unseenNotificationCount)")
                                             .font(.system(size: 10, weight: .bold))
                                             .foregroundStyle(.white)
                                             .padding(3)

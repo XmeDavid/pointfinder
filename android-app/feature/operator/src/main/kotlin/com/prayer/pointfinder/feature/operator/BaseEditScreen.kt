@@ -78,6 +78,7 @@ import org.maplibre.android.maps.Style
 @Composable
 fun BaseEditScreen(
     base: Base?,
+    bases: List<Base>,
     challenges: List<Challenge>,
     linkedChallenges: List<Challenge>,
     onSave: (Any) -> Unit,
@@ -109,6 +110,11 @@ fun BaseEditScreen(
     // Menu state
     var showOverflowMenu by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+
+    // Filter challenges: exclude those already fixed to other bases, keep current selection
+    val availableChallenges = remember(challenges, bases, base?.id, fixedChallengeId) {
+        filterAvailableChallenges(challenges, bases, base?.id, fixedChallengeId)
+    }
 
     // Fixed challenge dropdown state
     var fixedChallengeExpanded by remember { mutableStateOf(false) }
@@ -384,7 +390,7 @@ fun BaseEditScreen(
                             fixedChallengeExpanded = false
                         },
                     )
-                    challenges.forEach { challenge ->
+                    availableChallenges.forEach { challenge ->
                         DropdownMenuItem(
                             text = { Text(challenge.title) },
                             onClick = {
@@ -515,6 +521,24 @@ fun BaseEditScreen(
             },
         )
     }
+}
+
+/**
+ * Filters challenges for the fixed-challenge dropdown on a base edit screen.
+ * Excludes challenges already assigned as fixedChallengeId on other bases,
+ * but keeps the currently-selected challenge (for no-change edits).
+ */
+internal fun filterAvailableChallenges(
+    challenges: List<Challenge>,
+    bases: List<Base>,
+    editingBaseId: String?,
+    currentFixedChallengeId: String?,
+): List<Challenge> {
+    val unavailableIds = bases
+        .filter { it.id != editingBaseId && it.fixedChallengeId != null }
+        .map { it.fixedChallengeId }
+        .toSet()
+    return challenges.filter { it.id !in unavailableIds || it.id == currentFixedChallengeId }
 }
 
 /**
