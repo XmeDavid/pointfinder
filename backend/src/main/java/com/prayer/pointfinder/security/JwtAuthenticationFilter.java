@@ -41,10 +41,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
                 String tokenType = tokenProvider.getTokenType(jwt);
 
+                boolean authenticated;
                 if ("player".equals(tokenType)) {
-                    authenticatePlayer(jwt, request);
+                    authenticated = authenticatePlayer(jwt, request);
                 } else {
-                    authenticateUser(jwt, request);
+                    authenticated = authenticateUser(jwt, request);
+                }
+
+                if (!authenticated) {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    return;
                 }
             }
         } catch (Exception ex) {
@@ -54,38 +60,46 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private void authenticateUser(String jwt, HttpServletRequest request) {
+    private boolean authenticateUser(String jwt, HttpServletRequest request) {
         UUID userId = tokenProvider.getUserIdFromToken(jwt);
         User user = userRepository.findById(userId).orElse(null);
 
-        if (user != null) {
-            var authorities = List.of(
-                new SimpleGrantedAuthority("ROLE_" + user.getRole().name().toUpperCase())
-            );
-
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(user, null, authorities);
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+        if (user == null) {
+            log.warn("JWT references deleted or non-existent user with id {}", userId);
+            return false;
         }
+
+        var authorities = List.of(
+            new SimpleGrantedAuthority("ROLE_" + user.getRole().name().toUpperCase())
+        );
+
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(user, null, authorities);
+        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        return true;
     }
 
-    private void authenticatePlayer(String jwt, HttpServletRequest request) {
+    private boolean authenticatePlayer(String jwt, HttpServletRequest request) {
         UUID playerId = tokenProvider.getUserIdFromToken(jwt);
         Player player = playerRepository.findAuthPlayerById(playerId).orElse(null);
 
-        if (player != null) {
-            var authorities = List.of(
-                new SimpleGrantedAuthority("ROLE_PLAYER")
-            );
-
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(player, null, authorities);
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+        if (player == null) {
+            log.warn("JWT references deleted or non-existent player with id {}", playerId);
+            return false;
         }
+
+        var authorities = List.of(
+            new SimpleGrantedAuthority("ROLE_PLAYER")
+        );
+
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(player, null, authorities);
+        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        return true;
     }
 
     private String extractJwtFromRequest(HttpServletRequest request) {
