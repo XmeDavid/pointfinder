@@ -64,7 +64,7 @@ class MonitoringServiceTest {
                 .build();
 
         when(teamRepository.findByGameId(gameId)).thenReturn(List.of(team));
-        when(submissionRepository.findByGameId(gameId)).thenReturn(List.of(sub));
+        when(submissionRepository.findByGameIdWithRelations(gameId)).thenReturn(List.of(sub));
 
         // Should not throw NPE
         List<LeaderboardEntry> leaderboard = assertDoesNotThrow(
@@ -96,7 +96,7 @@ class MonitoringServiceTest {
                 .build();
 
         when(teamRepository.findByGameId(gameId)).thenReturn(List.of(team));
-        when(submissionRepository.findByGameId(gameId)).thenReturn(List.of(sub));
+        when(submissionRepository.findByGameIdWithRelations(gameId)).thenReturn(List.of(sub));
 
         List<LeaderboardEntry> leaderboard = monitoringService.computeLeaderboard(gameId);
 
