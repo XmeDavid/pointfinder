@@ -14,11 +14,13 @@ import { teamVariablesApi } from "@/lib/api/team-variables";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { formatDateTime } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { useToast } from "@/hooks/useToast";
 import type { GameStatus } from "@/types";
 import { useState } from "react";
 
 export function OverviewPage() {
   const { t } = useTranslation();
+  const toast = useToast();
   const { gameId } = useParams<{ gameId: string }>();
   const queryClient = useQueryClient();
   const [actionError, setActionError] = useState("");
@@ -32,8 +34,8 @@ export function OverviewPage() {
 
   const transition = useMutation({
     mutationFn: (status: GameStatus) => gamesApi.updateStatus(gameId!, status),
-    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["game", gameId] }); },
-    onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
+    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["game", gameId] }); toast.success(t("common.saved")); },
+    onError: (error: unknown) => { setActionError(getApiErrorMessage(error)); toast.error(getApiErrorMessage(error)); },
   });
 
   if (!game) return null;
