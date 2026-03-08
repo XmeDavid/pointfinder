@@ -78,7 +78,7 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
     private void authenticateBroadcastViewer(String code, StompHeaderAccessor accessor) {
         var game = gameRepository.findByBroadcastCodeAndBroadcastEnabledTrue(code)
                 .orElseThrow(() -> new AccessDeniedException("Invalid broadcast code"));
-        WebSocketBroadcastPrincipal principal = new WebSocketBroadcastPrincipal(game.getId());
+        WebSocketPrincipals.BroadcastPrincipal principal = new WebSocketPrincipals.BroadcastPrincipal(game.getId());
         var authorities = List.of(new SimpleGrantedAuthority("ROLE_BROADCAST_VIEWER"));
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(principal, null, authorities);
@@ -90,7 +90,7 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AccessDeniedException("WebSocket user not found"));
 
-        WebSocketUserPrincipal principal = new WebSocketUserPrincipal(user.getId(), user.getRole());
+        WebSocketPrincipals.UserPrincipal principal = new WebSocketPrincipals.UserPrincipal(user.getId(), user.getRole());
         var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name().toUpperCase()));
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(principal, null, authorities);
@@ -115,7 +115,7 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
         } catch (IllegalArgumentException ex) {
             throw new AccessDeniedException("Invalid player game scope in token");
         }
-        WebSocketPlayerPrincipal principal = new WebSocketPlayerPrincipal(playerId, gameId);
+        WebSocketPrincipals.PlayerPrincipal principal = new WebSocketPrincipals.PlayerPrincipal(playerId, gameId);
         var authorities = List.of(new SimpleGrantedAuthority("ROLE_PLAYER"));
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(principal, null, authorities);
@@ -140,19 +140,19 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
             principal = auth.getPrincipal();
         }
 
-        if (principal instanceof WebSocketUserPrincipal userPrincipal) {
+        if (principal instanceof WebSocketPrincipals.UserPrincipal userPrincipal) {
             authorizeUserSubscription(userPrincipal, gameId);
             return;
         }
 
-        if (principal instanceof WebSocketPlayerPrincipal playerPrincipal) {
+        if (principal instanceof WebSocketPrincipals.PlayerPrincipal playerPrincipal) {
             if (!playerPrincipal.gameId().equals(gameId)) {
                 throw new AccessDeniedException("Player cannot subscribe to another game topic");
             }
             return;
         }
 
-        if (principal instanceof WebSocketBroadcastPrincipal broadcastPrincipal) {
+        if (principal instanceof WebSocketPrincipals.BroadcastPrincipal broadcastPrincipal) {
             if (!broadcastPrincipal.gameId().equals(gameId)) {
                 throw new AccessDeniedException("Broadcast viewer cannot subscribe to another game topic");
             }
@@ -162,7 +162,7 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
         throw new AccessDeniedException("Unknown WebSocket principal");
     }
 
-    private void authorizeUserSubscription(WebSocketUserPrincipal principal, UUID gameId) {
+    private void authorizeUserSubscription(WebSocketPrincipals.UserPrincipal principal, UUID gameId) {
         if (principal.role() == UserRole.admin) {
             return;
         }
@@ -206,12 +206,5 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
         return bearerToken;
     }
 
-    private record WebSocketUserPrincipal(UUID userId, UserRole role) {
-    }
 
-    private record WebSocketPlayerPrincipal(UUID playerId, UUID gameId) {
-    }
-
-    private record WebSocketBroadcastPrincipal(UUID gameId) {
-    }
 }
