@@ -7,6 +7,12 @@ function isAbsoluteHttpUrl(value: string): boolean {
   return /^https?:\/\//i.test(value);
 }
 
+function toThumbnailPath(path: string): string {
+  const lastDot = path.lastIndexOf(".");
+  if (lastDot === -1) return path;
+  return path.substring(0, lastDot) + "_thumb.jpg";
+}
+
 function normalizeApiMediaPath(rawSrc: string): string {
   const src = rawSrc.trim();
 
@@ -58,27 +64,36 @@ export function AuthMedia({ src, alt, className, onClick, onBlobReady, initialBl
     }
 
     let objectUrl: string | null = null;
+    const srcIsVideoFile = src ? isVideo(src) : false;
+    const fetchUrl = thumbnail && !srcIsVideoFile ? toThumbnailPath(normalizedSrc) : normalizedSrc;
 
-    apiClient
-      .get(normalizedSrc, { responseType: "blob" })
-      .then((response) => {
-        objectUrl = URL.createObjectURL(response.data);
-        setFetchedMedia({ source: normalizedSrc, url: objectUrl });
-        onBlobReady?.(objectUrl);
-      })
-      .catch(() => {
-        if (isAbsoluteHttpUrl(normalizedSrc) && !normalizedSrc.includes("/api/")) {
-          setFetchedMedia({ source: normalizedSrc, url: normalizedSrc });
-          return;
-        }
-      });
+    const doFetch = (url: string, fallbackUrl?: string) => {
+      apiClient
+        .get(url, { responseType: "blob" })
+        .then((response) => {
+          objectUrl = URL.createObjectURL(response.data);
+          setFetchedMedia({ source: normalizedSrc, url: objectUrl });
+          onBlobReady?.(objectUrl);
+        })
+        .catch(() => {
+          if (fallbackUrl) {
+            doFetch(fallbackUrl);
+            return;
+          }
+          if (isAbsoluteHttpUrl(normalizedSrc) && !normalizedSrc.includes("/api/")) {
+            setFetchedMedia({ source: normalizedSrc, url: normalizedSrc });
+          }
+        });
+    };
+
+    doFetch(fetchUrl, fetchUrl !== normalizedSrc ? normalizedSrc : undefined);
 
     return () => {
       if (objectUrl) {
         URL.revokeObjectURL(objectUrl);
       }
     };
-  }, [normalizedSrc, initialBlobUrl, onBlobReady]);
+  }, [normalizedSrc, initialBlobUrl, onBlobReady, thumbnail, src]);
 
   const blobUrl = initialBlobUrl ?? (normalizedSrc && fetchedMedia?.source === normalizedSrc ? fetchedMedia.url : null);
 
