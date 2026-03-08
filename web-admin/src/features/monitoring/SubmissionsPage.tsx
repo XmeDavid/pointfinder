@@ -16,6 +16,7 @@ import { submissionsApi } from "@/lib/api/submissions";
 import { teamsApi } from "@/lib/api/teams";
 import { challengesApi } from "@/lib/api/challenges";
 import { basesApi } from "@/lib/api/bases";
+import { getApiErrorMessage } from "@/lib/api/errors";
 import { useAuthStore } from "@/hooks/useAuth";
 import { formatDateTime } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
@@ -100,6 +101,7 @@ export function SubmissionsPage() {
   const reviewMutation = useMutation({
     mutationFn: ({ id, status, points }: { id: string; status: SubmissionStatus; points?: number }) => submissionsApi.review(id, status, user!.id, feedback || undefined, gameId, points),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["submissions", gameId] }); setReviewingSub(null); setFeedback(""); setReviewPoints(0); toast.success(t("common.saved")); },
+    onError: (error: unknown) => { toast.error(getApiErrorMessage(error)); },
   });
 
   const statusLabels: Record<SubmissionStatus, string> = { pending: t("submissions.statusPending"), approved: t("submissions.statusApproved"), rejected: t("submissions.statusRejected"), correct: t("submissions.statusCorrect") };
