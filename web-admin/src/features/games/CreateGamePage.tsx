@@ -13,9 +13,11 @@ import { gamesApi } from "@/lib/api/games";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { parseDateTimeInputValue } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { useToast } from "@/hooks/useToast";
 
 export function CreateGamePage() {
   const { t } = useTranslation();
+  const toast = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [form, setForm] = useState({ name: "", description: "", startDate: "", endDate: "", uniformAssignment: true, tileSource: "osm" });
@@ -39,8 +41,12 @@ export function CreateGamePage() {
         endDate: parsedEndDate ? parsedEndDate.toISOString() : "",
       });
     },
-    onSuccess: (game) => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["games"] }); navigate(`/games/${game.id}/overview`); },
-    onError: (error: unknown) => setActionError(error instanceof Error ? error.message : getApiErrorMessage(error)),
+    onSuccess: (game) => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["games"] }); navigate(`/games/${game.id}/overview`); toast.success(t("common.saved")); },
+    onError: (error: unknown) => {
+      const msg = error instanceof Error ? error.message : getApiErrorMessage(error);
+      setActionError(msg);
+      toast.error(msg);
+    },
   });
 
   return (
