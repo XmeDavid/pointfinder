@@ -446,7 +446,8 @@ public class PlayerService {
 
     @Transactional
     public void updateLocation(UUID gameId, Player player, Double lat, Double lng) {
-        if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        if (lat == null || lng == null || !Double.isFinite(lat) || !Double.isFinite(lng)
+                || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
             throw new BadRequestException("Invalid coordinates");
         }
 

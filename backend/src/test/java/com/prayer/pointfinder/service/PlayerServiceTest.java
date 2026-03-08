@@ -496,5 +496,25 @@ class PlayerServiceTest {
 
         verify(operatorPushNotificationService).notifyOperatorsForCheckIn(eq(game), eq(team), eq(base));
     }
+
+    @Test
+    void updateLocationRejectsNaNLatitude() {
+        UUID gameId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        Player player = Player.builder().id(playerId).build();
+
+        assertThrows(BadRequestException.class,
+                () -> playerService.updateLocation(gameId, player, Double.NaN, 0.0));
+    }
+
+    @Test
+    void updateLocationRejectsInfinityLongitude() {
+        UUID gameId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        Player player = Player.builder().id(playerId).build();
+
+        assertThrows(BadRequestException.class,
+                () -> playerService.updateLocation(gameId, player, 0.0, Double.POSITIVE_INFINITY));
+    }
 }
 
