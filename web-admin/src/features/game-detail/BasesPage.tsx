@@ -57,7 +57,7 @@ export function BasesPage() {
   }, []);
 
   const defaultLocation = geoLocation ?? tileSourceCenter;
-  const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!) });
+  const { data: bases = [], isLoading } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!) });
   const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!) });
   const challengeById = useMemo(() => new Map(challenges.map((challenge) => [challenge.id, challenge])), [challenges]);
   const availableFixedChallenges = useMemo(
@@ -134,7 +134,13 @@ export function BasesPage() {
       </div>
       {actionError && <Alert onDismiss={() => setActionError("")}>{actionError}</Alert>}
 
-      {view === "list" ? (
+      {isLoading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-20 animate-pulse rounded-lg bg-muted" />
+          ))}
+        </div>
+      ) : view === "list" ? (
         <div className="space-y-3">
           {bases.length === 0 ? (
             <Card className="py-12"><CardContent className="text-center"><MapPin className="mx-auto h-8 w-8 text-muted-foreground mb-2" /><p className="text-muted-foreground">{t("bases.noBasesDescription")}</p></CardContent></Card>
