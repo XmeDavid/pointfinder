@@ -57,6 +57,8 @@ class SubmissionServiceTest {
     private OperatorPushNotificationService operatorPushNotificationService;
     @Mock
     private TemplateVariableService templateVariableService;
+    @Mock
+    private ThumbnailService thumbnailService;
 
     @InjectMocks
     private SubmissionService submissionService;

@@ -38,6 +38,10 @@ public class SubmissionService {
     private final PlayerRepository playerRepository;
     private final OperatorPushNotificationService operatorPushNotificationService;
     private final TemplateVariableService templateVariableService;
+    private final ThumbnailService thumbnailService;
+
+    @org.springframework.beans.factory.annotation.Value("${app.uploads.path:/uploads}")
+    private String uploadsPath;
 
     @Transactional(readOnly = true)
     public List<SubmissionResponse> getSubmissionsByGame(UUID gameId) {
@@ -159,6 +163,20 @@ public class SubmissionService {
         eventBroadcaster.broadcastActivityEvent(gameId, event);
         eventBroadcaster.broadcastSubmissionStatus(gameId, submission);
         operatorPushNotificationService.notifyOperatorsForSubmission(submission);
+
+        // Generate thumbnails asynchronously after commit
+        List<String> allFileUrls = submission.getFileUrls();
+        if (uploadsPath != null && allFileUrls != null && !allFileUrls.isEmpty()
+                && org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) {
+            java.nio.file.Path gameDir = java.nio.file.Paths.get(uploadsPath).resolve(gameId.toString());
+            org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                    new org.springframework.transaction.support.TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            thumbnailService.generateThumbnailsAsync(gameDir, allFileUrls);
+                        }
+                    });
+        }
 
         return toResponse(submission);
     }
