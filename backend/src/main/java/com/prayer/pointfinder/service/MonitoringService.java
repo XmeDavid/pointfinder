@@ -60,7 +60,7 @@ public class MonitoringService {
 
     List<LeaderboardEntry> computeLeaderboard(UUID gameId) {
         List<Team> teams = teamRepository.findByGameId(gameId);
-        List<Submission> submissions = submissionRepository.findByGameId(gameId);
+        List<Submission> submissions = submissionRepository.findByGameIdWithRelations(gameId);
 
         Map<UUID, List<Submission>> byTeam = submissions.stream()
                 .filter(s -> s.getChallenge() != null)
@@ -122,9 +122,9 @@ public class MonitoringService {
     List<TeamBaseProgressResponse> computeProgress(UUID gameId) {
         List<Team> teams = teamRepository.findByGameId(gameId);
         List<Base> bases = baseRepository.findByGameId(gameId);
-        List<CheckIn> checkIns = checkInRepository.findByGameId(gameId);
-        List<Submission> submissions = submissionRepository.findByGameId(gameId);
-        List<Assignment> assignments = assignmentRepository.findByGameId(gameId);
+        List<CheckIn> checkIns = checkInRepository.findByGameIdWithRelations(gameId);
+        List<Submission> submissions = submissionRepository.findByGameIdWithRelations(gameId);
+        List<Assignment> assignments = assignmentRepository.findByGameIdWithRelations(gameId);
         List<Assignment> sortedAssignments = assignments.stream()
                 .sorted(
                         Comparator.comparing(

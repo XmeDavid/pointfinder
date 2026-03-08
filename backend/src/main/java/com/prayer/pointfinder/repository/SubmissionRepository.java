@@ -17,6 +17,9 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
     @Query("SELECT s FROM Submission s LEFT JOIN FETCH s.team LEFT JOIN FETCH s.challenge LEFT JOIN FETCH s.base WHERE s.team.game.id = :gameId")
     List<Submission> findByGameId(@Param("gameId") UUID gameId);
 
+    @Query("SELECT s FROM Submission s JOIN FETCH s.team JOIN FETCH s.base LEFT JOIN FETCH s.challenge WHERE s.team.game.id = :gameId")
+    List<Submission> findByGameIdWithRelations(@Param("gameId") UUID gameId);
+
     List<Submission> findByTeamId(UUID teamId);
 
     @Query("SELECT s FROM Submission s LEFT JOIN FETCH s.team LEFT JOIN FETCH s.challenge LEFT JOIN FETCH s.base WHERE s.team.game.id = :gameId AND s.status = :status")

@@ -14,6 +14,9 @@ public interface AssignmentRepository extends JpaRepository<Assignment, UUID> {
     @Query("SELECT a FROM Assignment a LEFT JOIN FETCH a.base LEFT JOIN FETCH a.challenge WHERE a.game.id = :gameId")
     List<Assignment> findByGameId(@Param("gameId") UUID gameId);
 
+    @Query("SELECT a FROM Assignment a LEFT JOIN FETCH a.team LEFT JOIN FETCH a.base LEFT JOIN FETCH a.challenge WHERE a.game.id = :gameId")
+    List<Assignment> findByGameIdWithRelations(@Param("gameId") UUID gameId);
+
     List<Assignment> findByBaseId(UUID baseId);
 
     boolean existsByGameIdAndBaseIdAndTeamId(UUID gameId, UUID baseId, UUID teamId);
