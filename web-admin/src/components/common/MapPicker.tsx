@@ -6,6 +6,7 @@ import { computeBounds } from "@/lib/map-utils";
 import { PinMarkerSvg } from "@/components/common/MapMarkers";
 import { getResolvedStyleUrl, getDefaultCenter } from "@/lib/tile-sources";
 import { useThemeStore } from "@/hooks/useTheme";
+import { useTranslation } from "react-i18next";
 import type { MapRef, MapMouseEvent } from "react-map-gl/maplibre";
 import type { GeoJSON } from "geojson";
 
@@ -69,6 +70,7 @@ interface BaseMapViewProps {
 }
 
 export function BaseMapView({ bases, connections, className, onEdit, tileSource }: BaseMapViewProps) {
+  const { t } = useTranslation();
   const { dark } = useThemeStore();
   const mapRef = useRef<MapRef>(null);
   const fittedRef = useRef(false);
@@ -173,12 +175,12 @@ export function BaseMapView({ bases, connections, className, onEdit, tileSource 
                 {popup.hidden && (
                   <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded border border-gray-300 bg-gray-50 text-gray-600">
                     <EyeOff className="h-3 w-3" />
-                    Hidden
+                    {t("bases.hidden")}
                   </span>
                 )}
                 {popup.fixedChallengeName && (
                   <span className="inline-flex items-center px-1.5 py-0.5 text-xs rounded border border-blue-200 bg-blue-50 text-blue-700 max-w-[160px]">
-                    <span className="truncate">Fixed: {popup.fixedChallengeName}</span>
+                    <span className="truncate">{t("bases.fixedChallengeNamed", { challenge: popup.fixedChallengeName })}</span>
                   </span>
                 )}
                 <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded border ${
@@ -187,7 +189,7 @@ export function BaseMapView({ bases, connections, className, onEdit, tileSource 
                     : "border-red-200 bg-red-50 text-red-700"
                 }`}>
                   {popup.nfcLinked ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-                  {popup.nfcLinked ? "NFC linked" : "NFC not linked"}
+                  {popup.nfcLinked ? t("bases.nfcLinked") : t("bases.nfcNotLinked")}
                 </span>
               </div>
               {onEdit && (
@@ -197,7 +199,7 @@ export function BaseMapView({ bases, connections, className, onEdit, tileSource 
                   className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 transition-colors"
                 >
                   <Pencil className="h-3 w-3" />
-                  Edit Base
+                  {t("bases.editBase")}
                 </button>
               )}
             </div>

@@ -12,7 +12,7 @@ export function connectWebSocket(
   onError?: (message: string) => void
 ): Client {
   // Disconnect existing client if any
-  if (stompClient?.active) {
+  if (stompClient) {
     stompClient.deactivate();
   }
 
@@ -57,7 +57,7 @@ export function connectWebSocket(
 }
 
 export function disconnectWebSocket(): void {
-  if (stompClient?.active) {
+  if (stompClient) {
     stompClient.deactivate();
     stompClient = null;
   }

@@ -76,9 +76,7 @@ export function useBroadcastWebSocket(
     client.activate();
 
     return () => {
-      if (client.active) {
-        client.deactivate();
-      }
+      client.deactivate();
     };
   }, [gameId, code, queryClient]);
 
