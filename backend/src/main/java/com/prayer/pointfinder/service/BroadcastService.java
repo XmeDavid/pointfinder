@@ -46,12 +46,17 @@ public class BroadcastService {
                         .build())
                 .collect(Collectors.toList());
 
+        List<LeaderboardEntry> leaderboard = monitoringService.computeLeaderboard(gameId);
+        if (leaderboard.size() > 100) {
+            leaderboard = leaderboard.subList(0, 100);
+        }
+
         return BroadcastDataResponse.builder()
                 .gameId(gameId)
                 .gameName(game.getName())
                 .gameStatus(game.getStatus().name())
                 .tileSource(game.getTileSource())
-                .leaderboard(monitoringService.computeLeaderboard(gameId))
+                .leaderboard(leaderboard)
                 .teams(teams)
                 .bases(bases)
                 .locations(monitoringService.computeLocations(gameId))
