@@ -109,14 +109,21 @@ SQL
 }
 
 wait_for_local_stack() {
-  for _ in $(seq 1 60); do
-    if curl -sk https://localhost/health >/dev/null 2>&1; then
+  echo "Waiting for local E2E stack to be ready..."
+  for i in $(seq 1 120); do
+    local http_code
+    http_code=$(curl -sk -o /dev/null -w '%{http_code}' https://localhost/health 2>/dev/null || echo "000")
+    if [[ "$http_code" =~ ^(200|401|403)$ ]]; then
+      echo "Local E2E stack ready (took ${i}s)."
       return 0
+    fi
+    if (( i % 15 == 0 )); then
+      echo "  Still waiting... (${i}s, last status: $http_code)"
     fi
     sleep 1
   done
 
-  echo "Local E2E stack did not become ready in time." >&2
+  echo "Local E2E stack did not become ready in 120s." >&2
   return 1
 }
 
