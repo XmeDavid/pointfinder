@@ -37,4 +37,46 @@ describe("parseDateTimeInputValue", () => {
     expect(parseDateTimeInputValue("10/13/2026 14:05")).toBeNull();
     expect(parseDateTimeInputValue("10/02/2026 25:00")).toBeNull();
   });
+
+  it("returns null for empty and whitespace-only input", () => {
+    expect(parseDateTimeInputValue("")).toBeNull();
+    expect(parseDateTimeInputValue("   ")).toBeNull();
+  });
+
+  it("handles midnight correctly", () => {
+    const parsed = parseDateTimeInputValue("01/01/2026 00:00");
+    expect(parsed).not.toBeNull();
+    expect(parsed?.getHours()).toBe(0);
+    expect(parsed?.getMinutes()).toBe(0);
+  });
+
+  it("handles end-of-day time 23:59", () => {
+    const parsed = parseDateTimeInputValue("31/12/2025 23:59");
+    expect(parsed).not.toBeNull();
+    expect(parsed?.getHours()).toBe(23);
+    expect(parsed?.getMinutes()).toBe(59);
+  });
+
+  it("rejects minute value of 60", () => {
+    expect(parseDateTimeInputValue("10/02/2026 14:60")).toBeNull();
+  });
+
+  it("handles leap year Feb 29", () => {
+    const parsed = parseDateTimeInputValue("29/02/2028 12:00");
+    expect(parsed).not.toBeNull();
+    expect(parsed?.getDate()).toBe(29);
+    expect(parsed?.getMonth()).toBe(1);
+  });
+
+  it("rejects Feb 29 on non-leap year", () => {
+    expect(parseDateTimeInputValue("29/02/2026 12:00")).toBeNull();
+  });
+
+  it("rejects day 0", () => {
+    expect(parseDateTimeInputValue("00/01/2026 12:00")).toBeNull();
+  });
+
+  it("rejects month 0", () => {
+    expect(parseDateTimeInputValue("15/00/2026 12:00")).toBeNull();
+  });
 });
