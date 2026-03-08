@@ -15,6 +15,8 @@ import { useAuthStore } from "@/hooks/useAuth";
 import { formatDateTime } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useGameWebSocket } from "@/hooks/useGameWebSocket";
+import { useToast } from "@/hooks/useToast";
+import { getApiErrorMessage } from "@/lib/api/errors";
 import { cn } from "@/lib/utils";
 import type { Submission, SubmissionStatus, GameStatus } from "@/types";
 
@@ -63,6 +65,7 @@ type FilterTab = "pending" | "approved" | "rejected" | "all";
 
 export function ReviewLayout({ gameId, gameStatus }: ReviewLayoutProps) {
   const { t } = useTranslation();
+  const toast = useToast();
   useGameWebSocket(gameId);
   const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
@@ -120,7 +123,9 @@ export function ReviewLayout({ gameId, gameStatus }: ReviewLayoutProps) {
         setSelection({ id: null, feedback: "", points: 0 });
         setMobileView("list");
       }
+      toast.success(t("common.saved"));
     },
+    onError: (error: unknown) => { toast.error(getApiErrorMessage(error)); },
   });
 
   // Keyboard shortcuts
