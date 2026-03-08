@@ -36,7 +36,13 @@ test.describe('submission flow', { tag: '@smoke' }, () => {
     const { status, data } = await getProgress(playerToken, gameId);
     expect(status).toBe(200);
     expect(data).toBeDefined();
-    expect(data).toHaveProperty('bases');
+    expect(Array.isArray(data)).toBe(true);
+    if (data.length > 0) {
+      expect(data[0]).toMatchObject({
+        baseId: expect.any(String),
+        baseName: expect.any(String),
+      });
+    }
   });
 
   // P10
