@@ -8,6 +8,7 @@ import com.prayer.pointfinder.entity.Game;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.repository.BaseRepository;
 import com.prayer.pointfinder.repository.ChallengeRepository;
+import com.prayer.pointfinder.repository.SubmissionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,6 +35,8 @@ class ChallengeServiceTest {
     private ChallengeRepository challengeRepository;
     @Mock
     private BaseRepository baseRepository;
+    @Mock
+    private SubmissionRepository submissionRepository;
     @Mock
     private GameAccessService gameAccessService;
 
@@ -148,6 +153,15 @@ class ChallengeServiceTest {
 
         assertNull(response.getUnlocksBaseId());
         assertNull(challenge.getUnlocksBase());
+    }
+
+    @Test
+    void deleteChallengeRejectsWhenSubmissionsExist() {
+        when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
+        when(submissionRepository.countByChallengeId(challengeId)).thenReturn(1L);
+
+        assertThrows(BadRequestException.class, () -> challengeService.deleteChallenge(gameId, challengeId));
+        verify(challengeRepository, never()).delete(any(Challenge.class));
     }
 
     private UpdateChallengeRequest baseRequest() {

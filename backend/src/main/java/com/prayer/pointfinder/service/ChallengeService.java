@@ -11,6 +11,7 @@ import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.BaseRepository;
 import com.prayer.pointfinder.repository.ChallengeRepository;
+import com.prayer.pointfinder.repository.SubmissionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,7 @@ public class ChallengeService {
 
     private final ChallengeRepository challengeRepository;
     private final BaseRepository baseRepository;
+    private final SubmissionRepository submissionRepository;
     private final GameAccessService gameAccessService;
 
     @Transactional(readOnly = true)
@@ -109,6 +111,9 @@ public class ChallengeService {
         Challenge challenge = challengeRepository.findById(challengeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Challenge", challengeId));
         ensureChallengeBelongsToGame(challenge, gameId);
+        if (submissionRepository.countByChallengeId(challengeId) > 0) {
+            throw new BadRequestException("Cannot delete challenge with existing submissions");
+        }
         challengeRepository.delete(challenge);
     }
 
