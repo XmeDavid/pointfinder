@@ -55,6 +55,10 @@ public class GameEventBroadcaster {
         broadcast(gameId, "game_status", payload);
     }
 
+    public void broadcastPresence(UUID gameId, Object presenceData) {
+        broadcast(gameId, "presence", presenceData);
+    }
+
     public void broadcastSubmissionStatus(UUID gameId, Submission submission) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("id", submission.getId());
