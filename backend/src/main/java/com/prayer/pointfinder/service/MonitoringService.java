@@ -63,6 +63,7 @@ public class MonitoringService {
         List<Submission> submissions = submissionRepository.findByGameId(gameId);
 
         Map<UUID, List<Submission>> byTeam = submissions.stream()
+                .filter(s -> s.getChallenge() != null)
                 .collect(Collectors.groupingBy(s -> s.getTeam().getId()));
 
         return teams.stream().map(team -> {
@@ -78,7 +79,7 @@ public class MonitoringService {
                     ));
 
             int points = scoredByChallenge.values().stream()
-                    .mapToInt(s -> s.getPoints() != null ? s.getPoints() : s.getChallenge().getPoints())
+                    .mapToInt(s -> s.getPoints() != null ? s.getPoints() : (s.getChallenge() != null ? s.getChallenge().getPoints() : 0))
                     .sum();
 
             int completed = scoredByChallenge.size();
