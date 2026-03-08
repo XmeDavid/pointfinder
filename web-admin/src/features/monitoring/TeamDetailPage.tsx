@@ -13,10 +13,12 @@ import { basesApi } from "@/lib/api/bases";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { formatDateTime } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { useToast } from "@/hooks/useToast";
 import type { SubmissionStatus } from "@/types";
 
 export function TeamDetailPage() {
   const { t } = useTranslation();
+  const toast = useToast();
   const { gameId, teamId } = useParams<{ gameId: string; teamId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -33,8 +35,9 @@ export function TeamDetailPage() {
     onSuccess: () => {
       setActionError("");
       queryClient.invalidateQueries({ queryKey: ["players", teamId] });
+      toast.success(t("common.deleted"));
     },
-    onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
+    onError: (error: unknown) => { setActionError(getApiErrorMessage(error)); toast.error(getApiErrorMessage(error)); },
   });
 
   if (!team) return null;
