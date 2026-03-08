@@ -504,6 +504,7 @@ struct ChallengeEditView: View {
                     ),
                     token: token
                 )
+                withAnimation { showSaveSuccess = true }
                 onSaved(newChallenge)
             }
         } catch {

@@ -107,6 +107,7 @@
 				37A610362E5E3DD00028D38D /* Sources */,
 				37A610372E5E3DD00028D38D /* Frameworks */,
 				37A610382E5E3DD00028D38D /* Resources */,
+				37D5920F2F70D59800028D38D /* Copy MapLibre dSYMs */,
 			);
 			buildRules = (
 			);
@@ -241,6 +242,23 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		37D5920F2F70D59800028D38D /* Copy MapLibre dSYMs */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Copy MapLibre dSYMs";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+			shellPath = /bin/sh;
+			shellScript = "# Copy cached MapLibre dSYMs into the archive.\n# Run ios-app/scripts/fetch-maplibre-dsyms.sh before archiving.\nDSYM_CACHE=\"${SRCROOT}/.maplibre-dsyms\"\nif [ -d \"$DSYM_CACHE\" ]; then\n    find \"$DSYM_CACHE\" -name '*.dSYM' -maxdepth 2 -exec cp -R {} \"${DWARF_DSYM_FOLDER_PATH}/\" \\;\n    echo \"Copied MapLibre dSYMs to ${DWARF_DSYM_FOLDER_PATH}\"\nelse\n    echo \"warning: MapLibre dSYMs not cached. Run scripts/fetch-maplibre-dsyms.sh before archiving.\"\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		37A610362E5E3DD00028D38D /* Sources */ = {
@@ -416,7 +434,7 @@
 				CODE_SIGN_ENTITLEMENTS = "dbv-nfc-games/dbv_nfc_games.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 0;
+				CURRENT_PROJECT_VERSION = 2;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = ZQ6CKMW9NA;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -447,7 +465,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
-				MARKETING_VERSION = 0.6;
+				MARKETING_VERSION = 0.7;
 				PRODUCT_BUNDLE_IDENTIFIER = com.prayer.pointfinder;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -470,7 +488,7 @@
 				CODE_SIGN_ENTITLEMENTS = "dbv-nfc-games/dbv_nfc_games.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 0;
+				CURRENT_PROJECT_VERSION = 2;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = ZQ6CKMW9NA;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -501,7 +519,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
-				MARKETING_VERSION = 0.6;
+				MARKETING_VERSION = 0.7;
 				PRODUCT_BUNDLE_IDENTIFIER = com.prayer.pointfinder;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

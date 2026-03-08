@@ -279,6 +279,7 @@ struct BaseEditView: View {
                     ),
                     token: token
                 )
+                withAnimation { showSaveSuccess = true }
                 onSaved(newBase)
             }
         } catch {

@@ -362,4 +362,5 @@
     <string name="toast_challenge_saved">Challenge gespeichert</string>
     <string name="toast_team_saved">Team gespeichert</string>
     <string name="toast_game_created">Spiel erstellt</string>
+    <string name="toast_game_saved">Spiel gespeichert</string>
 </resources>

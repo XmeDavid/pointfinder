@@ -1363,7 +1363,9 @@ private fun OperatorGameRoot(
                         GameSettingsScreen(
                             game = selectedGame,
                             onSave = { request ->
-                                viewModel.updateGame(request) {}
+                                viewModel.updateGame(request) {
+                                    scope.launch { snackbarHostState.showSnackbar(context.getString(com.prayer.pointfinder.core.i18n.R.string.toast_game_saved)) }
+                                }
                             },
                             onUpdateStatus = viewModel::updateGameStatus,
                             onBack = { moreSubScreen = null },

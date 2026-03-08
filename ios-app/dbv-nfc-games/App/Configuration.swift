@@ -6,7 +6,8 @@ enum AppConfiguration {
             return override
         }
         #if DEBUG
-        return "http://localhost:8080"
+        // return "http://localhost:8080"
+        return "https://pointfinder.pt"
         #else
         return "https://pointfinder.pt"
         #endif

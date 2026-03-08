@@ -1,16 +1,9 @@
 # Code (in codebase) Agent/Claude handle this
 
--When creating a base, we basically only put the title and description right now, so upon creating, i think can automatically open the base to continue editing
--Same for a challange, the create is way more limited then editing this is ok, but we need to auto redirect him to continue editing
--Base creation flow right now is different from iOS and android. iOS is simple name and description, while iOS offers same features as edit. Here I think the easiest behaviour is to have a simple create, and as soon as he creates, auto redirect to edit that base, if he wants to continue editing the rest of the fields. Right now iOS should be like this but its broken(no redirect).
--On android, when the game is in setup we are showing the submission tab, not the intended behavour, iOS is correct
--On android, in the show QR code, the backgroud is transparent, and the code and done button are not very visible.
+## Deferred
 -The preview as team (to see how it looks with the variables per each is not working properly): on iOS doesnt show the var, and on iOS just shows the varname with the {{}} without replacing for the actual var.
 -On either, you have the option to create a variable inside a challange, but no way to set what for each team. I think we might need to get creative here on how we achieve this, maybe use a UX skill for this.
 -Currently we dont support the assignments/random that we do on the web, this is fine for now, but we need to improve how we handle when a game that was setup on the web has multiple challanges for different teams. And we need this consistent across android and iOS.
--On Android NFC writing on editing a base is under a 3dot menu, iOS is inline, maybe lets standerize to the iOS behaviour
--Toasts on Save buttons and other important actions on iOS and Android (web-admin done)
--On iOS map view on setup, clicking on the bases, outside of edit mode should show info on the base, and with edit mode on show allow to edit, neither is working, on either mode i cant click the pins on the map
 
 
 ## E2E Testing (future improvements)

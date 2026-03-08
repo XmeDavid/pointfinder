@@ -40,14 +40,13 @@ export function connectWebSocket(
       });
     },
     onStompError: (frame) => {
-      const message = frame.headers["message"] || "WebSocket connection error";
-      console.error("STOMP error:", message);
-      onError?.(message);
+      const raw = frame.headers["message"] || "WebSocket connection error";
+      console.error("STOMP error:", raw);
+      onError?.("Live updates temporarily unavailable. Retrying…");
     },
     onWebSocketError: () => {
-      const message = "WebSocket transport error";
-      console.error(message);
-      onError?.(message);
+      console.error("WebSocket transport error");
+      onError?.("Live updates temporarily unavailable. Retrying…");
     },
   });
 

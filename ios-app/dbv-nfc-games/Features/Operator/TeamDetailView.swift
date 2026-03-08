@@ -26,6 +26,7 @@ struct TeamDetailView: View {
     @State private var playerToRemove: PlayerResponse?
     @State private var errorMessage: String?
     @State private var showCopiedToast = false
+    @State private var showSaveSuccess = false
 
     private let colorOptions = [
         "#ef4444", "#f97316", "#eab308", "#22c55e", "#14b8a6", "#06b6d4",
@@ -224,6 +225,26 @@ struct TeamDetailView: View {
         .sheet(isPresented: $showQRCode) {
             QRCodeSheet(joinCode: team.joinCode ?? "", teamName: team.name)
         }
+        .overlay(alignment: .top) {
+            if showSaveSuccess {
+                Text(locale.t("common.saved"))
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(.green.opacity(0.9))
+                    .foregroundStyle(.white)
+                    .clipShape(Capsule())
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            withAnimation { showSaveSuccess = false }
+                        }
+                    }
+                    .padding(.top, 8)
+            }
+        }
+        .animation(.easeInOut, value: showSaveSuccess)
         .overlay(alignment: .bottom) {
             if showCopiedToast {
                 Text(locale.t("operator.copied"))
@@ -289,6 +310,7 @@ struct TeamDetailView: View {
                 )
             }
 
+            withAnimation { showSaveSuccess = true }
             onSaved(updatedTeam)
         } catch {
             errorMessage = error.localizedDescription
