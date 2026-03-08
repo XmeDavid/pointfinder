@@ -16,40 +16,32 @@ export function useGameWebSocket(gameId: string | undefined): string | null {
 
     connectWebSocket(gameId, (payload) => {
       setConnectionError(null);
+
+      const invalidate = (...keys: string[]) =>
+        keys.forEach((k) => queryClient.invalidateQueries({ queryKey: [k, gameId] }));
+
       switch (payload.type) {
         case "activity":
-          queryClient.invalidateQueries({ queryKey: ["activity", gameId] });
-          queryClient.invalidateQueries({ queryKey: ["submissions", gameId] });
-          queryClient.invalidateQueries({ queryKey: ["dashboard-stats", gameId] });
-          queryClient.invalidateQueries({ queryKey: ["leaderboard", gameId] });
-          queryClient.invalidateQueries({ queryKey: ["progress", gameId] });
+          invalidate("activity", "submissions", "dashboard-stats", "leaderboard", "progress");
           break;
         case "submission_status":
-          queryClient.invalidateQueries({ queryKey: ["submissions", gameId] });
-          queryClient.invalidateQueries({ queryKey: ["dashboard-stats", gameId] });
-          queryClient.invalidateQueries({ queryKey: ["leaderboard", gameId] });
-          queryClient.invalidateQueries({ queryKey: ["progress", gameId] });
+          invalidate("submissions", "dashboard-stats", "leaderboard", "progress");
           break;
         case "notification":
-          queryClient.invalidateQueries({ queryKey: ["notifications", gameId] });
+          invalidate("notifications");
           break;
         case "game_status":
-          queryClient.invalidateQueries({ queryKey: ["game", gameId] });
+          invalidate("game", "dashboard-stats");
           queryClient.invalidateQueries({ queryKey: ["games"] });
-          queryClient.invalidateQueries({ queryKey: ["dashboard-stats", gameId] });
           break;
         case "leaderboard":
-          queryClient.invalidateQueries({ queryKey: ["leaderboard", gameId] });
+          invalidate("leaderboard");
           break;
         case "location":
-          queryClient.invalidateQueries({ queryKey: ["team-locations", gameId] });
+          invalidate("team-locations");
           break;
         default:
-          // Invalidate everything for unknown event types
-          queryClient.invalidateQueries({ queryKey: ["activity", gameId] });
-          queryClient.invalidateQueries({ queryKey: ["submissions", gameId] });
-          queryClient.invalidateQueries({ queryKey: ["dashboard-stats", gameId] });
-          queryClient.invalidateQueries({ queryKey: ["leaderboard", gameId] });
+          invalidate("activity", "submissions", "dashboard-stats", "leaderboard", "progress");
       }
     }, (errorMessage) => {
       setConnectionError(errorMessage);
