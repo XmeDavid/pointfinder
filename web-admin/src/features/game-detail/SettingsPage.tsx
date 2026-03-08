@@ -15,6 +15,7 @@ import { gamesApi } from "@/lib/api/games";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { formatDateTimeInputValue, parseDateTimeInputValue } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { useToast } from "@/hooks/useToast";
 import type { GameStatus } from "@/types";
 
 const statusColors: Record<GameStatus, string> = {
@@ -25,6 +26,7 @@ const statusColors: Record<GameStatus, string> = {
 
 export function SettingsPage() {
   const { t } = useTranslation();
+  const toast = useToast();
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -33,7 +35,6 @@ export function SettingsPage() {
 
   const [form, setForm] = useState({ name: "", description: "", startDate: "", endDate: "", uniformAssignment: false, tileSource: "osm" });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [actionError, setActionError] = useState("");
 
@@ -76,8 +77,7 @@ export function SettingsPage() {
       setActionError("");
       queryClient.invalidateQueries({ queryKey: ["game", gameId] });
       queryClient.invalidateQueries({ queryKey: ["games"] });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      toast.success(t("settings.saved"));
     },
     onError: (error: unknown) => setActionError(error instanceof Error ? error.message : getApiErrorMessage(error)),
   });
@@ -101,6 +101,7 @@ export function SettingsPage() {
       queryClient.invalidateQueries({ queryKey: ["games"] });
       setStateTarget(null);
       setProgressChoice(null);
+      toast.success(t("settings.saved"));
     },
     onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
@@ -115,6 +116,7 @@ export function SettingsPage() {
       setActionError("");
       queryClient.invalidateQueries({ queryKey: ["game", gameId] });
       queryClient.invalidateQueries({ queryKey: ["games"] });
+      toast.success(t("common.saved"));
     },
     onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
@@ -254,7 +256,6 @@ export function SettingsPage() {
               </select>
             </div>
             <div className="flex items-center justify-end gap-2 pt-4">
-              {saved && <span className="text-sm text-green-500">{t("settings.saved")}</span>}
               <Button type="submit" disabled={updateGame.isPending || !form.name}>
                 {updateGame.isPending ? t("common.saving") : t("settings.saveChanges")}
               </Button>

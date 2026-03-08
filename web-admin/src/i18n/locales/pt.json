@@ -356,7 +356,8 @@
     "messagePlaceholder": "Escreva a sua mensagem...",
     "sendNotification": "Enviar Notificação",
     "sentNotifications": "Notificações Enviadas",
-    "noNotifications": "Nenhuma notificação enviada ainda"
+    "noNotifications": "Nenhuma notificação enviada ainda",
+    "sent": "Notificação enviada"
   },
   "monitor": {
     "liveDashboard": "Painel em Direto",

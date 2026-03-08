@@ -356,7 +356,8 @@
     "messagePlaceholder": "Type your notification message...",
     "sendNotification": "Send Notification",
     "sentNotifications": "Sent Notifications",
-    "noNotifications": "No notifications sent yet"
+    "noNotifications": "No notifications sent yet",
+    "sent": "Notification sent"
   },
   "monitor": {
     "liveDashboard": "Live Dashboard",

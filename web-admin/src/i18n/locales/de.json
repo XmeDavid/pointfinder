@@ -356,7 +356,8 @@
     "messagePlaceholder": "Benachrichtigung eingeben...",
     "sendNotification": "Benachrichtigung senden",
     "sentNotifications": "Gesendete Benachrichtigungen",
-    "noNotifications": "Noch keine Benachrichtigungen gesendet"
+    "noNotifications": "Noch keine Benachrichtigungen gesendet",
+    "sent": "Benachrichtigung gesendet"
   },
   "monitor": {
     "liveDashboard": "Live-Dashboard",

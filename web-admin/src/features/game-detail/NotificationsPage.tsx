@@ -14,10 +14,12 @@ import { teamsApi } from "@/lib/api/teams";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { formatDateTime } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { useToast } from "@/hooks/useToast";
 import { useGameWebSocket } from "@/hooks/useGameWebSocket";
 
 export function NotificationsPage() {
   const { t } = useTranslation();
+  const toast = useToast();
   const { gameId } = useParams<{ gameId: string }>();
   const queryClient = useQueryClient();
   const [message, setMessage] = useState("");
@@ -30,7 +32,7 @@ export function NotificationsPage() {
 
   const sendNotification = useMutation({
     mutationFn: () => notificationsApi.send({ gameId: gameId!, message, targetTeamId: targetTeamId || undefined }),
-    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["notifications", gameId] }); setMessage(""); setTargetTeamId(""); },
+    onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["notifications", gameId] }); setMessage(""); setTargetTeamId(""); toast.success(t("notifications.sent")); },
     onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
 

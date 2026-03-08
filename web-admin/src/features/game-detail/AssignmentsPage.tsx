@@ -14,6 +14,7 @@ import { assignmentsApi } from "@/lib/api/assignments";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-dialog";
 import { useTranslation } from "react-i18next";
+import { useToast } from "@/hooks/useToast";
 import type { Assignment } from "@/types";
 
 interface AssignmentDraft {
@@ -32,6 +33,7 @@ const EMPTY_DRAFT: AssignmentDraft = { challengeId: "", teamId: "" };
 
 export function AssignmentsPage() {
   const { t } = useTranslation();
+  const toast = useToast();
   const { gameId } = useParams<{ gameId: string }>();
   const queryClient = useQueryClient();
   const [drafts, setDrafts] = useState<Record<string, AssignmentDraft>>({});
@@ -70,6 +72,7 @@ export function AssignmentsPage() {
     onSuccess: (_, { baseId }) => {
       queryClient.invalidateQueries({ queryKey: ["assignments", gameId] });
       clearDraft(baseId);
+      toast.success(t("common.saved"));
     },
     onError: (error, { baseId }) => {
       updateDraft(baseId, { error: getApiErrorMessage(error, t("assignments.conflictGeneric")) });
@@ -78,7 +81,7 @@ export function AssignmentsPage() {
 
   const deleteAssignment = useMutation({
     mutationFn: (id: string) => assignmentsApi.delete(id, gameId!),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["assignments", gameId] }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["assignments", gameId] }); toast.success(t("common.deleted")); },
   });
 
   const fixedBases = bases.filter((b) => b.fixedChallengeId);
