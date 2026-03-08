@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { invitesApi } from "@/lib/api/invites";
 import { useGameLayoutStore, type LayoutMode } from "@/hooks/useGameLayout";
+import { OperatorPresence } from "@/components/OperatorPresence";
 import type { GameStatus } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -108,6 +109,7 @@ export function Header({
       </div>
 
       <div className="flex items-center gap-2 shrink-0">
+        {gameId && <OperatorPresence />}
         {gameId && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
