@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { connectWebSocket, disconnectWebSocket } from "@/lib/api/websocket";
+import { useOperatorPresenceStore } from "./useOperatorPresence";
 
 /**
  * Hook that connects to the game's WebSocket topic and invalidates
@@ -19,6 +20,8 @@ export function useGameWebSocket(gameId: string | undefined): string | null {
 
       const invalidate = (...keys: string[]) =>
         keys.forEach((k) => queryClient.invalidateQueries({ queryKey: [k, gameId] }));
+
+      const setOperators = useOperatorPresenceStore.getState().setOperators;
 
       switch (payload.type) {
         case "activity":
@@ -40,6 +43,11 @@ export function useGameWebSocket(gameId: string | undefined): string | null {
         case "location":
           invalidate("team-locations");
           break;
+        case "presence":
+          if (payload.data?.operators) {
+            setOperators(payload.data.operators);
+          }
+          break;
         default:
           invalidate("activity", "submissions", "dashboard-stats", "leaderboard", "progress");
       }
@@ -49,6 +57,7 @@ export function useGameWebSocket(gameId: string | undefined): string | null {
 
     return () => {
       disconnectWebSocket();
+      useOperatorPresenceStore.getState().clear();
     };
   }, [gameId, queryClient]);
 
