@@ -370,7 +370,7 @@ public class PlayerService {
                 .build();
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public SubmissionResponse submitAnswer(UUID gameId, PlayerSubmissionRequest request, Player player) {
         // Re-fetch player within transaction to get fresh entity with proper session
         UUID playerId = player.getId();
