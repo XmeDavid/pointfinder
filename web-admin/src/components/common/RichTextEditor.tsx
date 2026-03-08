@@ -19,6 +19,8 @@ import {
   Variable,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/useToast";
+import { useTranslation } from "react-i18next";
 
 const MAX_DIMENSION = 1200;
 const JPEG_QUALITY = 0.85;
@@ -92,6 +94,8 @@ function ToolbarButton({
 }
 
 export function RichTextEditor({ value, onChange, placeholder, availableVariables }: RichTextEditorProps) {
+  const toast = useToast();
+  const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [varDropdownOpen, setVarDropdownOpen] = useState(false);
   const varBtnRef = useRef<HTMLDivElement>(null);
@@ -224,13 +228,16 @@ export function RichTextEditor({ value, onChange, placeholder, availableVariable
     if (url) {
       try {
         const parsed = new URL(url);
-        if (!["http:", "https:"].includes(parsed.protocol)) return;
+        if (!["http:", "https:"].includes(parsed.protocol)) {
+          toast.error(t("errors.invalidUrl"));
+          return;
+        }
         editor.chain().focus().setImage({ src: parsed.href }).run();
       } catch {
-        // Invalid URL, ignore
+        toast.error(t("errors.invalidUrl"));
       }
     }
-  }, [editor]);
+  }, [editor, toast, t]);
 
   const selectSuggestion = useCallback((varName: string) => {
     if (!editor) return;

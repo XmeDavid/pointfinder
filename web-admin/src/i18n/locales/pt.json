@@ -634,5 +634,8 @@
       "languagesQ": "Que idiomas são suportados?",
       "languagesA": "O PointFinder está disponível em Inglês, Português e Alemão. A app deteta automaticamente o idioma do dispositivo e adapta-se."
     }
+  },
+  "errors": {
+    "invalidUrl": "URL inválido"
   }
 }
