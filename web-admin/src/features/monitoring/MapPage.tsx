@@ -342,7 +342,7 @@ export function MapPage() {
                                     </p>
                                   )}
                                   <p className="text-xs text-gray-400 mt-0.5">
-                                    {challengeInfo.points} pts
+                                    {challengeInfo.points} {t("common.pts")}
                                   </p>
                                 </div>
                               ) : (
