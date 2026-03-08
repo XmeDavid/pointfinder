@@ -67,7 +67,7 @@ enum Translations {
         // Offline
         "offline.banner": "You're offline. Changes will sync when connected.",
         "offline.checkInSync": "You're offline. Check-in will sync when connected.",
-        "offline.photoRequired": "You're offline. Photo submissions require an internet connection.",
+
         "offline.submissionSync": "You're offline. Submission will sync when connected.",
 
         // Map legend
@@ -395,7 +395,7 @@ enum Translations {
         "notifications.empty": "No notifications yet",
 
         // App Errors
-        "error.photoOffline": "Photo submissions require an internet connection.",
+
         "error.photoProcessing": "Failed to process photo.",
         "error.mediaSourceRequired": "Large media must keep an accessible source file. Please reselect it.",
         "error.mediaUploadDisabled": "Media uploads are temporarily unavailable.",
@@ -446,7 +446,7 @@ enum Translations {
         // Offline
         "offline.banner": "Estás offline. As alterações serão sincronizadas quando ligares.",
         "offline.checkInSync": "Estás offline. O check-in será sincronizado quando ligares.",
-        "offline.photoRequired": "Estás offline. As submissões de fotos requerem ligação à internet.",
+
         "offline.submissionSync": "Estás offline. A submissão será sincronizada quando ligares.",
 
         // Map legend
@@ -807,7 +807,7 @@ enum Translations {
         "notifications.empty": "Sem notificações ainda",
 
         // App Errors
-        "error.photoOffline": "As submissões de fotos requerem ligação à internet.",
+
         "error.photoProcessing": "Falha ao processar foto.",
         "error.mediaSourceRequired": "Media grande precisa manter o ficheiro de origem acessível. Seleciona-o novamente.",
         "error.mediaUploadDisabled": "Envio de media está temporariamente indisponível.",
@@ -858,7 +858,7 @@ enum Translations {
         // Offline
         "offline.banner": "Du bist offline. Änderungen werden synchronisiert, sobald du wieder verbunden bist.",
         "offline.checkInSync": "Du bist offline. Der Check-in wird synchronisiert, sobald du wieder verbunden bist.",
-        "offline.photoRequired": "Du bist offline. Foto-Einreichungen benötigen eine Internetverbindung.",
+
         "offline.submissionSync": "Du bist offline. Die Einreichung wird synchronisiert, sobald du wieder verbunden bist.",
 
         // Map legend
@@ -1219,7 +1219,7 @@ enum Translations {
         "notifications.empty": "Noch keine Benachrichtigungen",
 
         // App Errors
-        "error.photoOffline": "Foto-Einreichungen benötigen eine Internetverbindung.",
+
         "error.photoProcessing": "Foto konnte nicht verarbeitet werden.",
         "error.mediaSourceRequired": "Große Medien benötigen eine verfügbare Quelldatei. Bitte erneut auswählen.",
         "error.mediaUploadDisabled": "Medien-Uploads sind vorübergehend nicht verfügbar.",
