@@ -15,9 +15,11 @@ import { formatDate } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { useAuthStore } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/useToast";
 
 export function GameOperatorsPage() {
   const { t } = useTranslation();
+  const toast = useToast();
   const { gameId } = useParams<{ gameId: string }>();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -36,6 +38,7 @@ export function GameOperatorsPage() {
       setInviteOpen(false);
       setInviteEmail("");
       setInviteError("");
+      toast.success(t("common.saved"));
     },
     onError: (error: unknown) => {
       setInviteError(getApiErrorMessage(error, t("gameOperators.inviteError")));
@@ -44,7 +47,8 @@ export function GameOperatorsPage() {
 
   const removeOperator = useMutation({
     mutationFn: (userId: string) => gamesApi.removeOperator(gameId!, userId),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["game", gameId] }); queryClient.invalidateQueries({ queryKey: ["game-operators", gameId] }); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["game", gameId] }); queryClient.invalidateQueries({ queryKey: ["game-operators", gameId] }); toast.success(t("common.deleted")); },
+    onError: (error: unknown) => { toast.error(getApiErrorMessage(error)); },
   });
 
   const { user } = useAuthStore();
