@@ -9,7 +9,7 @@
 -On either, you have the option to create a variable inside a challange, but no way to set what for each team. I think we might need to get creative here on how we achieve this, maybe use a UX skill for this.
 -Currently we dont support the assignments/random that we do on the web, this is fine for now, but we need to improve how we handle when a game that was setup on the web has multiple challanges for different teams. And we need this consistent across android and iOS.
 -On Android NFC writing on editing a base is under a 3dot menu, iOS is inline, maybe lets standerize to the iOS behaviour
--Toasts on Save buttons and other important actions, both platforms
+-Toasts on Save buttons and other important actions on iOS and Android (web-admin done)
 -On iOS map view on setup, clicking on the bases, outside of edit mode should show info on the base, and with edit mode on show allow to edit, neither is working, on either mode i cant click the pins on the map
 
 
