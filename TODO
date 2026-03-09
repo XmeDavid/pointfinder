@@ -1,5 +1,8 @@
 # Code (in codebase) Agent/Claude handle this
 
+## IDEAS
+- Challange submission type: None: Basically you just need to check in, there is nothing to do. If a challange submission type is none, we should not show  the challange rich text editor, since nothing will be shown to the player, and it will be immediatly completed. We keep the completion info, since that the player can see once the base is completed.
+
 ## Deferred
 -The preview as team (to see how it looks with the variables per each is not working properly): on iOS doesnt show the var, and on iOS just shows the varname with the {{}} without replacing for the actual var.
 -On either, you have the option to create a variable inside a challange, but no way to set what for each team. I think we might need to get creative here on how we achieve this, maybe use a UX skill for this.
