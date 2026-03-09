@@ -273,14 +273,14 @@ export function RichTextEditor({ value, onChange, placeholder, availableVariable
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBold().run()}
           active={editor.isActive("bold")}
-          title="Bold"
+          title={t("editor.bold")}
         >
           <Bold className="h-4 w-4" />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleItalic().run()}
           active={editor.isActive("italic")}
-          title="Italic"
+          title={t("editor.italic")}
         >
           <Italic className="h-4 w-4" />
         </ToolbarButton>
@@ -290,21 +290,21 @@ export function RichTextEditor({ value, onChange, placeholder, availableVariable
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
           active={editor.isActive("heading", { level: 1 })}
-          title="Heading 1"
+          title={t("editor.heading1")}
         >
           <Heading1 className="h-4 w-4" />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
           active={editor.isActive("heading", { level: 2 })}
-          title="Heading 2"
+          title={t("editor.heading2")}
         >
           <Heading2 className="h-4 w-4" />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
           active={editor.isActive("heading", { level: 3 })}
-          title="Heading 3"
+          title={t("editor.heading3")}
         >
           <Heading3 className="h-4 w-4" />
         </ToolbarButton>
@@ -314,38 +314,38 @@ export function RichTextEditor({ value, onChange, placeholder, availableVariable
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           active={editor.isActive("bulletList")}
-          title="Bullet List"
+          title={t("editor.bulletList")}
         >
           <List className="h-4 w-4" />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           active={editor.isActive("orderedList")}
-          title="Ordered List"
+          title={t("editor.orderedList")}
         >
           <ListOrdered className="h-4 w-4" />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
           active={editor.isActive("blockquote")}
-          title="Blockquote"
+          title={t("editor.blockquote")}
         >
           <Quote className="h-4 w-4" />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleCodeBlock().run()}
           active={editor.isActive("codeBlock")}
-          title="Code Block"
+          title={t("editor.codeBlock")}
         >
           <Code className="h-4 w-4" />
         </ToolbarButton>
 
         <div className="mx-1 h-5 w-px bg-border" />
 
-        <ToolbarButton onClick={addImage} title="Upload Image">
+        <ToolbarButton onClick={addImage} title={t("editor.uploadImage")}>
           <ImageIcon className="h-4 w-4" />
         </ToolbarButton>
-        <ToolbarButton onClick={addImageUrl} title="Image from URL">
+        <ToolbarButton onClick={addImageUrl} title={t("editor.imageFromUrl")}>
           <span className="text-xs font-medium">URL</span>
         </ToolbarButton>
 
@@ -356,7 +356,7 @@ export function RichTextEditor({ value, onChange, placeholder, availableVariable
               <ToolbarButton
                 onClick={() => setVarDropdownOpen((o) => !o)}
                 active={varDropdownOpen}
-                title="Insert Variable"
+                title={t("editor.insertVariable")}
               >
                 <Variable className="h-4 w-4" />
               </ToolbarButton>
@@ -388,14 +388,14 @@ export function RichTextEditor({ value, onChange, placeholder, availableVariable
         <ToolbarButton
           onClick={() => editor.chain().focus().undo().run()}
           disabled={!editor.can().undo()}
-          title="Undo"
+          title={t("editor.undo")}
         >
           <Undo className="h-4 w-4" />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().redo().run()}
           disabled={!editor.can().redo()}
-          title="Redo"
+          title={t("editor.redo")}
         >
           <Redo className="h-4 w-4" />
         </ToolbarButton>

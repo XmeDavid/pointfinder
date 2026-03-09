@@ -637,5 +637,21 @@
   },
   "errors": {
     "invalidUrl": "URL inválido"
+  },
+  "editor": {
+    "bold": "Negrito",
+    "italic": "Italico",
+    "heading1": "Titulo 1",
+    "heading2": "Titulo 2",
+    "heading3": "Titulo 3",
+    "bulletList": "Lista",
+    "orderedList": "Lista Numerada",
+    "blockquote": "Citacao",
+    "codeBlock": "Bloco de Codigo",
+    "uploadImage": "Carregar Imagem",
+    "imageFromUrl": "Imagem por URL",
+    "insertVariable": "Inserir Variavel",
+    "undo": "Desfazer",
+    "redo": "Refazer"
   }
 }
