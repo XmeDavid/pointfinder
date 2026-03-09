@@ -637,5 +637,21 @@
   },
   "errors": {
     "invalidUrl": "Invalid URL"
+  },
+  "editor": {
+    "bold": "Bold",
+    "italic": "Italic",
+    "heading1": "Heading 1",
+    "heading2": "Heading 2",
+    "heading3": "Heading 3",
+    "bulletList": "Bullet List",
+    "orderedList": "Ordered List",
+    "blockquote": "Blockquote",
+    "codeBlock": "Code Block",
+    "uploadImage": "Upload Image",
+    "imageFromUrl": "Image from URL",
+    "insertVariable": "Insert Variable",
+    "undo": "Undo",
+    "redo": "Redo"
   }
 }

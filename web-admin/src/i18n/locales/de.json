@@ -637,5 +637,21 @@
   },
   "errors": {
     "invalidUrl": "Ungültige URL"
+  },
+  "editor": {
+    "bold": "Fett",
+    "italic": "Kursiv",
+    "heading1": "Uberschrift 1",
+    "heading2": "Uberschrift 2",
+    "heading3": "Uberschrift 3",
+    "bulletList": "Aufzahlung",
+    "orderedList": "Nummerierte Liste",
+    "blockquote": "Zitat",
+    "codeBlock": "Codeblock",
+    "uploadImage": "Bild hochladen",
+    "imageFromUrl": "Bild von URL",
+    "insertVariable": "Variable einfugen",
+    "undo": "Ruckgangig",
+    "redo": "Wiederholen"
   }
 }
