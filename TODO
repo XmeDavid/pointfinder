@@ -2,6 +2,8 @@
 
 ## IDEAS
 - Challange submission type: None: Basically you just need to check in, there is nothing to do. If a challange submission type is none, we should not show  the challange rich text editor, since nothing will be shown to the player, and it will be immediatly completed. We keep the completion info, since that the player can see once the base is completed.
+-Individual mode (Where it's one player per team), for the user it is all just one thing. One join code for all?
+-Private matches, even with the code, you aprove who gets to join, a player joins and it shows the game locked(like when it has not started yet), until the operator aproves him.
 
 ## Deferred
 -The preview as team (to see how it looks with the variables per each is not working properly): on iOS doesnt show the var, and on iOS just shows the varname with the {{}} without replacing for the actual var.
