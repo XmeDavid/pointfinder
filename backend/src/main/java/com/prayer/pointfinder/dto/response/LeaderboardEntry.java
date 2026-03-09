@@ -13,6 +13,6 @@ public class LeaderboardEntry {
     private UUID teamId;
     private String teamName;
     private String color;
-    private int points;
+    private long points;
     private int completedChallenges;
 }

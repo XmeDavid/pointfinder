@@ -2,6 +2,7 @@ package com.prayer.pointfinder.service;
 
 import com.prayer.pointfinder.dto.response.*;
 import com.prayer.pointfinder.entity.Game;
+import com.prayer.pointfinder.entity.GameStatus;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.BaseRepository;
 import com.prayer.pointfinder.repository.GameRepository;
@@ -29,6 +30,7 @@ public class BroadcastService {
         UUID gameId = game.getId();
 
         List<BroadcastTeamResponse> teams = teamRepository.findByGameId(gameId).stream()
+                .limit(500)
                 .map(t -> BroadcastTeamResponse.builder()
                         .id(t.getId())
                         .name(t.getName())
@@ -37,6 +39,7 @@ public class BroadcastService {
                 .collect(Collectors.toList());
 
         List<BroadcastBaseResponse> bases = baseRepository.findByGameId(gameId).stream()
+                .limit(500)
                 .filter(b -> !Boolean.TRUE.equals(b.getHidden()))
                 .map(b -> BroadcastBaseResponse.builder()
                         .id(b.getId())
@@ -59,7 +62,9 @@ public class BroadcastService {
                 .leaderboard(leaderboard)
                 .teams(teams)
                 .bases(bases)
-                .locations(monitoringService.computeLocations(gameId))
+                .locations(game.getStatus() == GameStatus.live
+                        ? monitoringService.computeLocations(gameId).stream().limit(500).collect(Collectors.toList())
+                        : java.util.Collections.emptyList())
                 .progress(monitoringService.computeProgress(gameId))
                 .build();
     }

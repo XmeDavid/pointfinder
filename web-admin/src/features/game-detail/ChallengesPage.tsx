@@ -1,4 +1,5 @@
 import { useMemo, useState, lazy, Suspense } from "react";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { filterAvailableBases, filterAvailableUnlockBases } from "./dropdown-filters";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -262,22 +263,26 @@ export function ChallengesPage() {
               title={<>{t("challenges.content")}<span className="text-muted-foreground font-normal"> ({t("common.optional")})</span></>}
               defaultOpen={true}
             >
-              <Suspense fallback={<div className="h-[200px] animate-pulse rounded-md border border-input bg-muted/30" />}>
-                <RichTextEditor value={form.content ?? ""} onChange={(html) => setForm((f) => ({ ...f, content: html }))} placeholder={t("challenges.contentPlaceholder")} availableVariables={editing ? availableVariables : undefined} />
-              </Suspense>
+              <ErrorBoundary>
+                <Suspense fallback={<div className="h-[200px] animate-pulse rounded-md border border-input bg-muted/30" />}>
+                  <RichTextEditor value={form.content ?? ""} onChange={(html) => setForm((f) => ({ ...f, content: html }))} placeholder={t("challenges.contentPlaceholder")} availableVariables={editing ? availableVariables : undefined} />
+                </Suspense>
+              </ErrorBoundary>
             </Collapsible>
             <Collapsible
               title={<>{t("challenges.completionContent")}<span className="text-muted-foreground font-normal"> ({t("common.optional")})</span></>}
               defaultOpen={false}
             >
-              <Suspense fallback={<div className="h-[200px] animate-pulse rounded-md border border-input bg-muted/30" />}>
-                <RichTextEditor
-                  value={form.completionContent ?? ""}
-                  onChange={(html) => setForm((f) => ({ ...f, completionContent: html }))}
-                  placeholder={t("challenges.completionContentPlaceholder")}
-                  availableVariables={editing ? availableVariables : undefined}
-                />
-              </Suspense>
+              <ErrorBoundary>
+                <Suspense fallback={<div className="h-[200px] animate-pulse rounded-md border border-input bg-muted/30" />}>
+                  <RichTextEditor
+                    value={form.completionContent ?? ""}
+                    onChange={(html) => setForm((f) => ({ ...f, completionContent: html }))}
+                    placeholder={t("challenges.completionContentPlaceholder")}
+                    availableVariables={editing ? availableVariables : undefined}
+                  />
+                </Suspense>
+              </ErrorBoundary>
             </Collapsible>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-3">

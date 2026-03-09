@@ -5,11 +5,6 @@
 -Individual mode (Where it's one player per team), for the user it is all just one thing. One join code for all?
 -Private matches, even with the code, you aprove who gets to join, a player joins and it shows the game locked(like when it has not started yet), until the operator aproves him.
 
-## Deferred
--The preview as team (to see how it looks with the variables per each is not working properly): on iOS doesnt show the var, and on iOS just shows the varname with the {{}} without replacing for the actual var.
--On either, you have the option to create a variable inside a challange, but no way to set what for each team. I think we might need to get creative here on how we achieve this, maybe use a UX skill for this.
--Currently we dont support the assignments/random that we do on the web, this is fine for now, but we need to improve how we handle when a game that was setup on the web has multiple challanges for different teams. And we need this consistent across android and iOS.
-
 
 ## E2E Testing (future improvements)
 - WebSocket/STOMP live update testing (verify real-time broadcasts reach subscribers)

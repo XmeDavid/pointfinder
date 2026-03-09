@@ -78,8 +78,8 @@ public class MonitoringService {
                             (first, second) -> first.getSubmittedAt().isAfter(second.getSubmittedAt()) ? first : second
                     ));
 
-            int points = scoredByChallenge.values().stream()
-                    .mapToInt(s -> s.getPoints() != null ? s.getPoints() : s.getChallenge().getPoints())
+            long points = scoredByChallenge.values().stream()
+                    .mapToLong(s -> s.getPoints() != null ? s.getPoints() : s.getChallenge().getPoints())
                     .sum();
 
             int completed = scoredByChallenge.size();
@@ -92,7 +92,7 @@ public class MonitoringService {
                     .completedChallenges(completed)
                     .build();
         })
-        .sorted(Comparator.comparingInt(LeaderboardEntry::getPoints).reversed())
+        .sorted(Comparator.comparingLong(LeaderboardEntry::getPoints).reversed())
         .collect(Collectors.toList());
     }
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { connectWebSocket, disconnectWebSocket } from "@/lib/api/websocket";
 import { useOperatorPresenceStore, type OperatorPresence } from "./useOperatorPresence";
@@ -11,6 +11,20 @@ import { useOperatorPresenceStore, type OperatorPresence } from "./useOperatorPr
 export function useGameWebSocket(gameId: string | undefined): string | null {
   const queryClient = useQueryClient();
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const pendingKeys = useRef<Set<string>>(new Set());
+  const rafRef = useRef<number | null>(null);
+
+  const scheduleInvalidate = useCallback((...keys: string[]) => {
+    keys.forEach(k => pendingKeys.current.add(k));
+    if (rafRef.current !== null) return;
+    rafRef.current = requestAnimationFrame(() => {
+      pendingKeys.current.forEach(k =>
+        queryClient.invalidateQueries({ queryKey: [k, gameId] })
+      );
+      pendingKeys.current.clear();
+      rafRef.current = null;
+    });
+  }, [queryClient, gameId]);
 
   useEffect(() => {
     if (!gameId) return;
@@ -18,30 +32,27 @@ export function useGameWebSocket(gameId: string | undefined): string | null {
     connectWebSocket(gameId, (payload) => {
       setConnectionError(null);
 
-      const invalidate = (...keys: string[]) =>
-        keys.forEach((k) => queryClient.invalidateQueries({ queryKey: [k, gameId] }));
-
       const setOperators = useOperatorPresenceStore.getState().setOperators;
 
       switch (payload.type) {
         case "activity":
-          invalidate("activity", "submissions", "dashboard-stats", "leaderboard", "progress");
+          scheduleInvalidate("activity", "submissions", "dashboard-stats", "leaderboard", "progress");
           break;
         case "submission_status":
-          invalidate("submissions", "dashboard-stats", "leaderboard", "progress");
+          scheduleInvalidate("submissions", "dashboard-stats", "leaderboard", "progress");
           break;
         case "notification":
-          invalidate("notifications");
+          scheduleInvalidate("notifications");
           break;
         case "game_status":
-          invalidate("game", "dashboard-stats");
+          scheduleInvalidate("game", "dashboard-stats");
           queryClient.invalidateQueries({ queryKey: ["games"] });
           break;
         case "leaderboard":
-          invalidate("leaderboard");
+          scheduleInvalidate("leaderboard");
           break;
         case "location":
-          invalidate("team-locations");
+          scheduleInvalidate("team-locations");
           break;
         case "presence": {
           const presenceData = payload.data as { operators?: OperatorPresence[] } | null;
@@ -51,7 +62,7 @@ export function useGameWebSocket(gameId: string | undefined): string | null {
           break;
         }
         default:
-          invalidate("activity", "submissions", "dashboard-stats", "leaderboard", "progress");
+          scheduleInvalidate("activity", "submissions", "dashboard-stats", "leaderboard", "progress");
       }
     }, (errorMessage) => {
       setConnectionError(errorMessage);
@@ -60,8 +71,12 @@ export function useGameWebSocket(gameId: string | undefined): string | null {
     return () => {
       disconnectWebSocket();
       useOperatorPresenceStore.getState().clear();
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
     };
-  }, [gameId, queryClient]);
+  }, [gameId, queryClient, scheduleInvalidate]);
 
   return connectionError;
 }
