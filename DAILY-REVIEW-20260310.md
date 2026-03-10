@@ -105,7 +105,7 @@ Previous review's findings status update: the CORS issue (headers allowing all) 
 
 ## Creative Corner
 
-1. **Offline-first submission queue for mobile apps**: When teams are in areas with poor connectivity (common in scouting events), submissions should queue locally and sync when connectivity returns. The Android app already uses Room for local storage -- adding a `PendingSubmission` table with a `SyncWorker` (WorkManager) would make the app resilient to network drops. The iOS equivalent would use Core Data + BGTaskScheduler. This is especially valuable because NFC scanning often happens in forests or remote areas where cell coverage is spotty.
+1. **Operator annotation layer on the live map**: Allow operators to draw temporary annotations (circles, arrows, text labels) on the Leaflet map during a game to mark danger zones, route suggestions, or meeting points. These annotations would broadcast via WebSocket to all connected operators and optionally to teams via push notification. The existing WebSocket infrastructure and Leaflet map already support custom overlays -- this would add a drawing toolbar and a new `annotation` message type. Useful for scouting events where terrain conditions change mid-game (muddy path, closed area).
 
 2. **Game replay timeline**: After a game ends, operators and teams would benefit from a visual timeline replay showing all events chronologically on the map. The activity feed data already contains timestamps and team/base references -- a slider-based timeline component that replays events on the Leaflet map (animating team markers moving between bases, showing submission pop-ups) would be a compelling post-game analysis tool. Could reuse the existing BroadcastMap component with a time-filtered data source.
 
