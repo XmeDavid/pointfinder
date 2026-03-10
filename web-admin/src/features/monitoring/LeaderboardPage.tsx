@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Trophy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
 import { monitoringApi } from "@/lib/api/monitoring";
 import { useTranslation } from "react-i18next";
 import { useGameWebSocket } from "@/hooks/useGameWebSocket";
@@ -11,14 +12,17 @@ export function LeaderboardPage() {
   const { t } = useTranslation();
   const { gameId } = useParams<{ gameId: string }>();
   const websocketError = useGameWebSocket(gameId);
-  const { data: leaderboard = [] } = useQuery({ queryKey: ["leaderboard", gameId], queryFn: () => monitoringApi.getLeaderboard(gameId!) });
+  const { data: leaderboard = [], isLoading, isError } = useQuery({ queryKey: ["leaderboard", gameId], queryFn: () => monitoringApi.getLeaderboard(gameId!) });
   const topPoints = leaderboard[0]?.points || 1;
 
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold">{t("leaderboard.title")}</h1><p className="text-muted-foreground">{t("leaderboard.description")}</p></div>
       {websocketError && <Alert>{websocketError}</Alert>}
-      {leaderboard.length === 0 ? (
+      {isError && <Alert>{t("common.serverError")}</Alert>}
+      {isLoading ? (
+        <div className="space-y-4">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 w-full" />)}</div>
+      ) : leaderboard.length === 0 ? (
         <Card className="py-12"><CardContent className="text-center"><Trophy className="mx-auto h-8 w-8 text-muted-foreground mb-2" /><p className="text-muted-foreground">{t("leaderboard.noScores")}</p></CardContent></Card>
       ) : (
         <div className="space-y-4">

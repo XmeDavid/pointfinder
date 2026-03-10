@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle, XCircle, Clock, FileText, Filter, Maximize2, MoreHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
@@ -108,9 +108,11 @@ export function SubmissionsPage() {
   const statusVariants: Record<SubmissionStatus, "warning" | "success" | "destructive"> = { pending: "warning", approved: "success", rejected: "destructive", correct: "success" };
   const statusIcons: Record<SubmissionStatus, React.ReactNode> = { pending: <Clock className="h-3 w-3" />, approved: <CheckCircle className="h-3 w-3" />, rejected: <XCircle className="h-3 w-3" />, correct: <CheckCircle className="h-3 w-3" /> };
 
-  const filtered = filter === "pending" ? submissions.filter((s) => s.status === "pending") : submissions;
-  const sorted = [...filtered].sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
-  const pendingCount = submissions.filter((s) => s.status === "pending").length;
+  const pendingCount = useMemo(() => submissions.filter((s) => s.status === "pending").length, [submissions]);
+  const sorted = useMemo(() => {
+    const filtered = filter === "pending" ? submissions.filter((s) => s.status === "pending") : submissions;
+    return [...filtered].sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+  }, [submissions, filter]);
   const expectedReviewPoints = reviewingSub ? challenges.find((c) => c.id === reviewingSub.challengeId)?.points : undefined;
 
   return (

@@ -4,6 +4,7 @@ import { Activity, MapPin, ClipboardCheck, CheckCircle, XCircle } from "lucide-r
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
 import { monitoringApi } from "@/lib/api/monitoring";
 import { teamsApi } from "@/lib/api/teams";
 import { formatDateTime } from "@/lib/utils";
@@ -21,17 +22,20 @@ export function ActivityPage() {
   const { t } = useTranslation();
   const { gameId } = useParams<{ gameId: string }>();
   const websocketError = useGameWebSocket(gameId);
-  const { data: events = [] } = useQuery({ queryKey: ["activity", gameId], queryFn: () => monitoringApi.getActivityEvents(gameId!) });
+  const { data: events = [], isLoading: eventsLoading, isError: eventsError } = useQuery({ queryKey: ["activity", gameId], queryFn: () => monitoringApi.getActivityEvents(gameId!) });
   const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!) });
 
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold">{t("activityFeed.title")}</h1><p className="text-muted-foreground">{t("activityFeed.description")}</p></div>
       {websocketError && <Alert>{websocketError}</Alert>}
+      {eventsError && <Alert>{t("common.serverError")}</Alert>}
       <Card>
         <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Activity className="h-4 w-4" /> {t("activityFeed.recentEvents")}</CardTitle></CardHeader>
         <CardContent>
-          {events.length === 0 ? (
+          {eventsLoading ? (
+            <div className="space-y-4">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}</div>
+          ) : events.length === 0 ? (
             <div className="py-8 text-center"><Activity className="mx-auto h-8 w-8 text-muted-foreground mb-2" /><p className="text-muted-foreground">{t("activityFeed.noActivity")}</p></div>
           ) : (
             <div className="space-y-4">{events.map((event) => { const team = teams.find((tm) => tm.id === event.teamId); return (
