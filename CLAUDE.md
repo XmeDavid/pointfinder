@@ -69,7 +69,7 @@ docker-compose up -d       # Start full stack
 ## Key Technologies
 
 - **Backend**: Spring Boot 3.4.1, PostgreSQL 16, Flyway, JWT auth, WebSocket (STOMP), APNs/FCM push
-- **Frontend**: React 19, Vite, TypeScript, Tailwind CSS, Zustand, React Query, Leaflet maps, i18next
+- **Frontend**: React 19, Vite, TypeScript, Tailwind CSS, Zustand, React Query, MapLibre GL maps, i18next
 - **Android**: Kotlin, Jetpack Compose, Hilt DI, Room, Retrofit, Firebase Cloud Messaging
 - **iOS**: Swift, Core NFC, Core Location
 

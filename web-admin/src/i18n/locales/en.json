@@ -374,7 +374,7 @@
     "title": "Live Map",
     "description": "Track bases and team locations in real-time",
     "liveMapView": "Live Map View",
-    "mapDescription": "Leaflet map showing base locations and team position pings. Bases appear as pin markers, team positions appear as colored dots matching team colors.",
+    "mapDescription": "MapLibre GL map showing base locations and team position pings. Bases appear as pin markers, team positions appear as colored dots matching team colors.",
     "teamLocations": "Team Locations",
     "allTeams": "All Teams",
     "viewingTeam": "Viewing: {{team}}",

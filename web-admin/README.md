@@ -9,7 +9,7 @@ React + TypeScript web admin panel for the PointFinder NFC gaming platform.
 - Tailwind CSS v4
 - Zustand for auth state
 - TanStack React Query for data fetching
-- Leaflet for interactive maps
+- MapLibre GL for interactive maps
 - i18next for multi-language support (EN/PT/DE)
 
 ## Development

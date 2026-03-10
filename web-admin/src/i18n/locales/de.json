@@ -374,7 +374,7 @@
     "title": "Live-Karte",
     "description": "Stationen und Team-Positionen in Echtzeit verfolgen",
     "liveMapView": "Live-Kartenansicht",
-    "mapDescription": "Leaflet-Karte mit Stationsorten und Team-Positionssignalen. Stationen erscheinen als Pins, Team-Positionen als farbige Punkte passend zur Teamfarbe.",
+    "mapDescription": "MapLibre-GL-Karte mit Stationsorten und Team-Positionssignalen. Stationen erscheinen als Pins, Team-Positionen als farbige Punkte passend zur Teamfarbe.",
     "teamLocations": "Team-Positionen",
     "allTeams": "Alle Teams",
     "viewingTeam": "Ansicht: {{team}}",
