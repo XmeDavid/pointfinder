@@ -36,7 +36,14 @@ export function MapPicker({ value, onChange, className, tileSource }: MapPickerP
         longitude={value.lng}
         latitude={value.lat}
       >
-        <Marker longitude={value.lng} latitude={value.lat} anchor="bottom">
+        <Marker
+          longitude={value.lng}
+          latitude={value.lat}
+          anchor="bottom"
+          draggable
+          onDragEnd={(e) => onChange(e.lngLat.lat, e.lngLat.lng)}
+          style={{ cursor: "grab" }}
+        >
           <PinMarkerSvg color="#3b82f6" />
         </Marker>
       </MapGL>
