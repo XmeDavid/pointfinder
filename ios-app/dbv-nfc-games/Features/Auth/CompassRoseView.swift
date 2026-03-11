@@ -6,7 +6,12 @@ import SwiftUI
 /// Reads the device magnetometer heading via CLLocationManager.
 /// Falls back to a slow auto-rotation when heading is unavailable (e.g. Simulator).
 private class HeadingProvider: NSObject, ObservableObject, CLLocationManagerDelegate {
+    /// Cumulative rotation in degrees (not clamped to 0-360) so that
+    /// SwiftUI animations always take the shortest path across the
+    /// 0°/360° boundary instead of jerking the long way around.
     @Published var heading: Double? = nil
+    private var cumulativeRotation: Double = 0
+    private var lastRawHeading: Double?
     private let manager = CLLocationManager()
 
     override init() {
@@ -23,8 +28,19 @@ private class HeadingProvider: NSObject, ObservableObject, CLLocationManagerDele
 
     func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
         guard newHeading.headingAccuracy >= 0 else { return }
-        // Negate so compass north points upward when facing north
-        heading = -newHeading.magneticHeading
+        let raw = -newHeading.magneticHeading // negate so north points up
+
+        if let last = lastRawHeading {
+            // Compute shortest-path delta (always in -180...180)
+            var delta = raw - last
+            if delta > 180 { delta -= 360 }
+            if delta < -180 { delta += 360 }
+            cumulativeRotation += delta
+        } else {
+            cumulativeRotation = raw
+        }
+        lastRawHeading = raw
+        heading = cumulativeRotation
     }
 }
 

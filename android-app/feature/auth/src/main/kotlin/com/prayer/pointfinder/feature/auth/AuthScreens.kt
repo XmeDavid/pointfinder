@@ -77,8 +77,9 @@ private val WelcomeDarkBg = Color(0xFF0A0A0A)
 
 /**
  * Reads the device magnetometer heading via TYPE_ROTATION_VECTOR.
- * Returns the azimuth in degrees (0 = magnetic north) or null when
- * no sensor is available (e.g. emulator).
+ * Returns a cumulative rotation in degrees (not clamped to 0-360)
+ * so that spring animations always take the shortest path across the
+ * 0°/360° boundary. Returns null when no sensor is available (emulator).
  */
 @Composable
 private fun rememberDeviceHeading(): Float? {
@@ -89,17 +90,29 @@ private fun rememberDeviceHeading(): Float? {
         val sm = context.getSystemService(android.content.Context.SENSOR_SERVICE) as SensorManager
         val sensor = sm.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
         if (sensor == null) {
-            // No sensor (emulator) – leave heading null so we fall back to auto-rotation
             onDispose {}
         } else {
             val rotationMatrix = FloatArray(9)
             val orientation = FloatArray(3)
+            var cumulativeRotation = 0f
+            var lastRaw: Float? = null
             val listener = object : SensorEventListener {
                 override fun onSensorChanged(event: SensorEvent) {
                     SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
                     SensorManager.getOrientation(rotationMatrix, orientation)
-                    // azimuth → degrees, negate so compass north points up
-                    heading = -Math.toDegrees(orientation[0].toDouble()).toFloat()
+                    val raw = -Math.toDegrees(orientation[0].toDouble()).toFloat()
+
+                    val prev = lastRaw
+                    if (prev != null) {
+                        var delta = raw - prev
+                        if (delta > 180f) delta -= 360f
+                        if (delta < -180f) delta += 360f
+                        cumulativeRotation += delta
+                    } else {
+                        cumulativeRotation = raw
+                    }
+                    lastRaw = raw
+                    heading = cumulativeRotation
                 }
                 override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
             }
