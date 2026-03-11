@@ -32,7 +32,7 @@ test-backend-docker: check-docker
 	@$(DOCKER_COMPOSE) -f $(TEST_COMPOSE_FILE) run --rm backend-test
 
 test-frontend-docker: check-docker
-	@$(DOCKER_COMPOSE) -f $(TEST_COMPOSE_FILE) run --rm frontend-test sh -lc "npm ci && npm run lint && npm run test"
+	@$(DOCKER_COMPOSE) -f $(TEST_COMPOSE_FILE) run --rm frontend-test sh -lc "npm ci && npm run lint && npm run typecheck && npm run test"
 
 test-docker: test-backend-docker test-frontend-docker
 
