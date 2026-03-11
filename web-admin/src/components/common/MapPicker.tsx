@@ -38,7 +38,7 @@ export function MapPicker({ value, onChange, className, tileSource }: MapPickerP
         onMoveEnd={handleMoveEnd}
       />
       {/* Fixed center pin — user drags map underneath */}
-      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-full pointer-events-none z-10">
+      <div className="absolute left-1/2 top-1/2 pointer-events-none z-10">
         <PinMarkerSvg color="#3b82f6" />
       </div>
     </div>
