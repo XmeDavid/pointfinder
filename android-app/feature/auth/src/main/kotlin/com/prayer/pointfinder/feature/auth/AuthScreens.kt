@@ -90,7 +90,7 @@ private data class DeviceOrientation(
     val tiltY: Float,    // roll in degrees, clamped ±25
 )
 
-private const val MAX_TILT = 25f
+private const val MAX_TILT = 20f
 
 /**
  * Reads the device orientation via TYPE_ROTATION_VECTOR.
@@ -223,7 +223,7 @@ fun CompassRose(modifier: Modifier = Modifier) {
     val dragTiltY = remember { Animatable(0f) }
     val dragSpring = spring<Float>(
         dampingRatio = Spring.DampingRatioMediumBouncy,
-        stiffness = Spring.StiffnessMediumLow,
+        stiffness = Spring.StiffnessMedium,
     )
     // Track where the finger currently is relative to center
     var touchPos by remember { mutableStateOf(Offset.Zero) }
@@ -260,13 +260,13 @@ fun CompassRose(modifier: Modifier = Modifier) {
                         // dot product of radius and drag
                         val radial = rx * dragAmount.x + ry * dragAmount.y
 
-                        // Tangential → spin the compass (0.4°/px)
-                        scope.launch { dragRotation.snapTo(dragRotation.value + tangential * 0.4f) }
+                        // Tangential → spin the compass (0.25°/px)
+                        scope.launch { dragRotation.snapTo(dragRotation.value + tangential * 0.25f) }
 
                         // Radial → tilt the compass toward/away from the touch point.
                         // The tilt axis depends on WHERE on the disc the touch is:
                         // pushing from the top tilts forward (tiltX), from the side tilts sideways (tiltY).
-                        val tiltScale = 0.3f
+                        val tiltScale = 0.2f
                         scope.launch {
                             dragTiltX.snapTo(
                                 (dragTiltX.value + radial * ry * tiltScale).coerceIn(-MAX_TILT, MAX_TILT)
