@@ -86,6 +86,14 @@ struct CompassRoseView: View {
     @State private var pulse1: CGFloat = 0
     @State private var pulse2: CGFloat = 0
 
+    // Drag interaction state — springs back to 0 on release
+    @State private var dragRotation: Double = 0
+    @State private var dragTiltX: Double = 0
+    @State private var dragTiltY: Double = 0
+    @GestureState private var isDragging = false
+
+    private static let maxTiltDrag: Double = 25
+
     private var rotation: Double {
         headingProvider.heading ?? fallbackRotation
     }
@@ -179,16 +187,34 @@ struct CompassRoseView: View {
                     ctx.fill(innerDot, with: .color(Color.compassCenter))
                 }
                 .frame(width: size, height: size)
-                .rotationEffect(.degrees(rotation))
+                .rotationEffect(.degrees(rotation + dragRotation))
                 .rotation3DEffect(
-                    .degrees(tiltProvider.tiltX),
+                    .degrees(tiltProvider.tiltX + dragTiltX),
                     axis: (x: 1, y: 0, z: 0),
                     perspective: 0.4
                 )
                 .rotation3DEffect(
-                    .degrees(-tiltProvider.tiltY),
+                    .degrees(-(tiltProvider.tiltY + dragTiltY)),
                     axis: (x: 0, y: 1, z: 0),
                     perspective: 0.4
+                )
+                .gesture(
+                    DragGesture()
+                        .updating($isDragging) { _, state, _ in state = true }
+                        .onChanged { value in
+                            // Horizontal → rotation + tilt Y, vertical → tilt X
+                            dragRotation = value.translation.width * 0.3
+                            dragTiltX = min(max(value.translation.height * 0.3, -Self.maxTiltDrag), Self.maxTiltDrag)
+                            dragTiltY = min(max(-value.translation.width * 0.15, -Self.maxTiltDrag), Self.maxTiltDrag)
+                        }
+                        .onEnded { _ in
+                            // Spring back to rest
+                            withAnimation(.interpolatingSpring(stiffness: 80, damping: 8)) {
+                                dragRotation = 0
+                                dragTiltX = 0
+                                dragTiltY = 0
+                            }
+                        }
                 )
                 .animation(.spring(response: 0.4, dampingFraction: 0.6), value: rotation)
                 .animation(.interpolatingSpring(stiffness: 100, damping: 15), value: tiltProvider.tiltX)

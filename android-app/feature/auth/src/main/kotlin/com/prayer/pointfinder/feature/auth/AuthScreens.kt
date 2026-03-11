@@ -4,6 +4,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
@@ -14,6 +15,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,7 +47,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -67,6 +71,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.prayer.pointfinder.core.i18n.R
+import kotlinx.coroutines.launch
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -206,14 +211,48 @@ fun CompassRose(modifier: Modifier = Modifier) {
         label = "pulse2",
     )
 
+    // ── Touch drag interaction ──
+    // Horizontal drag → rotation offset, vertical drag → tilt offset
+    // Springs back to 0 on release so the compass "fights" the user
+    val scope = rememberCoroutineScope()
+    val dragRotation = remember { Animatable(0f) }
+    val dragTiltX = remember { Animatable(0f) }
+    val dragTiltY = remember { Animatable(0f) }
+    val dragSpring = spring<Float>(
+        dampingRatio = Spring.DampingRatioMediumBouncy,
+        stiffness = Spring.StiffnessMediumLow,
+    )
+
     val density = LocalDensity.current
     Canvas(
         modifier = modifier
             .aspectRatio(1f)
             .fillMaxWidth()
+            .pointerInput(Unit) {
+                detectDragGestures(
+                    onDrag = { change, dragAmount ->
+                        change.consume()
+                        // Convert px drag to degrees: ~0.3° per px feels right
+                        scope.launch { dragRotation.snapTo(dragRotation.value + dragAmount.x * 0.3f) }
+                        scope.launch { dragTiltX.snapTo((dragTiltX.value + dragAmount.y * 0.3f).coerceIn(-MAX_TILT, MAX_TILT)) }
+                        scope.launch { dragTiltY.snapTo((dragTiltY.value - dragAmount.x * 0.15f).coerceIn(-MAX_TILT, MAX_TILT)) }
+                    },
+                    onDragEnd = {
+                        // Spring back to rest
+                        scope.launch { dragRotation.animateTo(0f, dragSpring) }
+                        scope.launch { dragTiltX.animateTo(0f, dragSpring) }
+                        scope.launch { dragTiltY.animateTo(0f, dragSpring) }
+                    },
+                    onDragCancel = {
+                        scope.launch { dragRotation.animateTo(0f, dragSpring) }
+                        scope.launch { dragTiltX.animateTo(0f, dragSpring) }
+                        scope.launch { dragTiltY.animateTo(0f, dragSpring) }
+                    },
+                )
+            }
             .graphicsLayer {
-                rotationX = animatedTiltX
-                rotationY = -animatedTiltY
+                rotationX = animatedTiltX + dragTiltX.value
+                rotationY = -(animatedTiltY + dragTiltY.value)
                 cameraDistance = 12f * density.density
             },
     ) {
@@ -242,8 +281,8 @@ fun CompassRose(modifier: Modifier = Modifier) {
             alpha = 0.04f,
         )
 
-        // Rotate the compass SVG content
-        rotate(degrees = animatedHeading, pivot = Offset(cx, cy)) {
+        // Rotate the compass SVG content (sensor heading + drag offset)
+        rotate(degrees = animatedHeading + dragRotation.value, pivot = Offset(cx, cy)) {
             // ── Outer rings ──
             drawCircle(CompassGreen, radius = 96f * unit, center = Offset(cx, cy), style = Stroke(0.5f * unit), alpha = 0.15f)
             drawCircle(CompassGreen, radius = 90f * unit, center = Offset(cx, cy), style = Stroke(0.4f * unit), alpha = 0.1f)
