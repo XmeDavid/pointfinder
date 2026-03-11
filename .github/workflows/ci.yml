@@ -99,7 +99,8 @@ jobs:
           cd e2e
           ./run.sh local:up
 
-      - name: Run API smoke tests
+      - name: Setup E2E fixtures
+        id: setup-e2e
         working-directory: e2e
         run: |
           export BASE_URL=https://localhost
@@ -107,10 +108,19 @@ jobs:
           export OPERATOR_PASSWORD='LocalE2E!12345'
           export NODE_TLS_REJECT_UNAUTHORIZED=0
           npx tsx shared/setup.ts
+
+      - name: Run API smoke tests
+        working-directory: e2e
+        run: |
+          export BASE_URL=https://localhost
+          export OPERATOR_EMAIL=local-e2e-admin@example.test
+          export OPERATOR_PASSWORD='LocalE2E!12345'
+          export NODE_TLS_REJECT_UNAUTHORIZED=0
           npx playwright test --project=api --grep @smoke
 
       - name: Run Web smoke tests
-        if: always()
+        if: always() && steps.setup-e2e.outcome == 'success'
+        id: web-smoke
         working-directory: e2e
         run: |
           export BASE_URL=https://localhost

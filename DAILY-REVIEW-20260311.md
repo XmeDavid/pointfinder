@@ -78,7 +78,6 @@ This was the top-priority TODO item. "None" type challenges require no answer fr
 | 7 | Unbounded broadcast code generation loop (10 attempts) | Medium | Small | GameService.java:324-336 |
 | 8 | Missing database indexes on high-cardinality columns | Medium | Small | Submission/CheckIn entities |
 | 9 | ChunkedUploadService assembly missing chunk file handling | Medium | Small | ChunkedUploadService.java:338-345 |
-| 10 | Player team switch race condition | Medium | Medium | PlayerService.java:61-75 |
 
 ### Frontend Findings (15 total)
 
