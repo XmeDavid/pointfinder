@@ -7,7 +7,7 @@ import { PinMarkerSvg } from "@/components/common/MapMarkers";
 import { getResolvedStyleUrl, getDefaultCenter } from "@/lib/tile-sources";
 import { useThemeStore } from "@/hooks/useTheme";
 import { useTranslation } from "react-i18next";
-import type { MapRef, MapMouseEvent } from "react-map-gl/maplibre";
+import type { MapRef } from "react-map-gl/maplibre";
 import type { GeoJSON } from "geojson";
 
 interface MapPickerProps {
