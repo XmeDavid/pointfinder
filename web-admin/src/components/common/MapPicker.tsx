@@ -19,34 +19,28 @@ interface MapPickerProps {
 
 export function MapPicker({ value, onChange, className, tileSource }: MapPickerProps) {
   const { dark } = useThemeStore();
-  const handleClick = useCallback(
-    (e: MapMouseEvent) => {
-      onChange(e.lngLat.lat, e.lngLat.lng);
-    },
-    [onChange],
-  );
+  const mapRef = useRef<MapRef>(null);
+
+  const handleMoveEnd = useCallback(() => {
+    const center = mapRef.current?.getCenter();
+    if (center) {
+      onChange(center.lat, center.lng);
+    }
+  }, [onChange]);
 
   return (
-    <div className={className}>
+    <div className={`${className} relative`}>
       <MapGL
+        ref={mapRef}
         initialViewState={{ longitude: value.lng, latitude: value.lat, zoom: 15 }}
         style={{ width: "100%", height: "100%", borderRadius: "0.375rem" }}
         mapStyle={getResolvedStyleUrl(tileSource, dark)}
-        onClick={handleClick}
-        longitude={value.lng}
-        latitude={value.lat}
-      >
-        <Marker
-          longitude={value.lng}
-          latitude={value.lat}
-          anchor="bottom"
-          draggable
-          onDragEnd={(e) => onChange(e.lngLat.lat, e.lngLat.lng)}
-          style={{ cursor: "grab" }}
-        >
-          <PinMarkerSvg color="#3b82f6" />
-        </Marker>
-      </MapGL>
+        onMoveEnd={handleMoveEnd}
+      />
+      {/* Fixed center pin — user drags map underneath */}
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-full pointer-events-none z-10">
+        <PinMarkerSvg color="#3b82f6" />
+      </div>
     </div>
   );
 }
