@@ -62,6 +62,8 @@ public class AuthService {
             throw new BadRequestException("Email already registered");
         }
 
+        validatePassword(request.getPassword());
+
         User user = User.builder()
                 .email(request.getEmail())
                 .name(request.getName())
@@ -141,6 +143,8 @@ public class AuthService {
             throw new BadRequestException("This reset link has expired");
         }
 
+        validatePassword(newPassword);
+
         User user = resetToken.getUser();
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepository.save(user);
@@ -153,6 +157,12 @@ public class AuthService {
 
         // Delete all refresh tokens to log out all sessions
         refreshTokenRepository.deleteByUserId(user.getId());
+    }
+
+    private void validatePassword(String password) {
+        if (password == null || password.length() < 8) {
+            throw new BadRequestException("Password must be at least 8 characters long");
+        }
     }
 
     private AuthResponse generateAuthResponse(User user) {

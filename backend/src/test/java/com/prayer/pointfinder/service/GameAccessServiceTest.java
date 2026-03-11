@@ -84,6 +84,7 @@ class GameAccessServiceTest {
                 .createdBy(operator).operators(operators).build();
 
         when(gameRepository.findById(gameId)).thenReturn(Optional.of(game));
+        when(gameRepository.isUserOperator(gameId, otherOperator.getId())).thenReturn(true);
 
         Game result = gameAccessService.getAccessibleGame(gameId);
         assertEquals(gameId, result.getId());
@@ -97,6 +98,7 @@ class GameAccessServiceTest {
                 .createdBy(operator).operators(new HashSet<>()).build();
 
         when(gameRepository.findById(gameId)).thenReturn(Optional.of(game));
+        when(gameRepository.isUserOperator(gameId, otherOperator.getId())).thenReturn(false);
 
         assertThrows(ForbiddenException.class, () -> gameAccessService.getAccessibleGame(gameId));
     }

@@ -16,6 +16,14 @@ dev/todos branch with various old todos done + audio in rich text
 
 
 
+## Code Quality / Tech Debt
+- [LOW] Backend: N+1 query in PlayerService.getProgress() — assignment.getChallenge() lazy loads inside loop. Add JOIN FETCH to assignmentRepository.findByGameId().
+- [LOW] Backend: JWT getTokenType defaults to "user" on missing claim — should throw instead of silently defaulting (JwtTokenProvider.java:91-95).
+- [LOW] Backend: Broadcast code generation loop hardcoded to 10 attempts — works fine at current scale but should log attempts (GameService.java:324-336).
+- [LOW] Frontend: WebSocket gameId stale closure on game switch — scheduleInvalidate RAF callback captures old gameId (useGameWebSocket.ts).
+- [LOW] Frontend: AuthMedia blob URL leak on unmount during in-flight fetch — objectUrl is null in cleanup if fetch hasn't resolved (AuthMedia.tsx).
+- [LOW] Frontend: SubmissionsPage blobCache ref grows unbounded — no eviction, holds references to revoked URLs (SubmissionsPage.tsx:76).
+
 ---
 
 # Outside Codebase (manual / ops / launch)

@@ -24,4 +24,7 @@ public interface GameRepository extends JpaRepository<Game, UUID> {
     List<Game> findByOperatorId(@Param("userId") UUID userId);
 
     Optional<Game> findByBroadcastCodeAndBroadcastEnabledTrue(String broadcastCode);
+
+    @Query("SELECT COUNT(o) > 0 FROM Game g JOIN g.operators o WHERE g.id = :gameId AND o.id = :userId")
+    boolean isUserOperator(@Param("gameId") UUID gameId, @Param("userId") UUID userId);
 }

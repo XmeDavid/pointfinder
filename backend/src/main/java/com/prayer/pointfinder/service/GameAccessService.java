@@ -46,8 +46,7 @@ public class GameAccessService {
             return;
         }
 
-        boolean isOperator = game.getOperators().stream()
-                .anyMatch(operator -> operator.getId().equals(currentUserId));
+        boolean isOperator = gameRepository.isUserOperator(game.getId(), currentUserId);
         if (!isOperator) {
             throw new ForbiddenException("You do not have access to this game");
         }

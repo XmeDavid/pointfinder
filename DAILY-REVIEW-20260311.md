@@ -118,7 +118,6 @@ Reviewed all implemented changes:
 
 ## Next Run
 
-- **Run backend tests** when Java 21 / Gradle are available in the environment
 - **Fix the variable resolution XSS edge case** in ChallengesPage (HTML-escape variable values before template substitution)
 - **Add database indexes** for submissions (team_id, challenge_id, base_id) and check-ins (game_id, team_id)
 - **Implement the "none" answer type UI** in Android and iOS apps
