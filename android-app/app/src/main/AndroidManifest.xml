@@ -32,6 +32,7 @@
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
+            android:screenOrientation="portrait"
             android:theme="@style/Theme.PointFinder">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
