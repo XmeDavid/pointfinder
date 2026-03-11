@@ -277,6 +277,8 @@
     "answerType": "Antworttyp",
     "text": "Text",
     "fileUpload": "Datei-Upload",
+    "checkIn": "Check-in",
+    "checkInDescription": "Keine Antwort erforderlich. Die Aufgabe wird automatisch abgeschlossen, wenn der Spieler an der Basis eincheckt.",
     "autoValidate": "Automatisch validieren",
     "locationBound": "Ortsgebunden",
     "fixedToBase": "Fest für {{base}}",

@@ -98,9 +98,12 @@ public class SubmissionService {
         challenge.getTitle();
         base.getName();
 
-        // Determine initial status - auto-validate text answers if configured
+        // Determine initial status
         SubmissionStatus status = SubmissionStatus.pending;
-        if (challenge.getAutoValidate() && challenge.getAnswerType() == AnswerType.text
+        if (challenge.getAnswerType() == AnswerType.none) {
+            // "None" challenges auto-approve immediately (check-in only)
+            status = SubmissionStatus.approved;
+        } else if (challenge.getAutoValidate() && challenge.getAnswerType() == AnswerType.text
                 && challenge.getCorrectAnswer() != null && !challenge.getCorrectAnswer().isEmpty()) {
             String providedAnswer = request.getAnswer() != null ? request.getAnswer().trim() : "";
             // Resolve {{variables}} in correct answers for this team
@@ -111,6 +114,10 @@ public class SubmissionService {
             status = matches ? SubmissionStatus.correct : SubmissionStatus.rejected;
         }
 
+        // Award points immediately for auto-resolved submissions
+        Integer points = (status == SubmissionStatus.approved || status == SubmissionStatus.correct)
+                ? challenge.getPoints() : null;
+
         Submission submission = Submission.builder()
                 .team(team)
                 .challenge(challenge)
@@ -119,6 +126,7 @@ public class SubmissionService {
                 .fileUrl(request.getFileUrl())
                 .fileUrls(request.getFileUrls())
                 .status(status)
+                .points(points)
                 .submittedAt(Instant.now())
                 .idempotencyKey(request.getIdempotencyKey())
                 .build();

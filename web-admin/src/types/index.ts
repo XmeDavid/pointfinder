@@ -38,7 +38,7 @@ export interface Base {
   fixedChallengeId?: string;
 }
 
-export type AnswerType = "text" | "file";
+export type AnswerType = "text" | "file" | "none";
 
 export interface Challenge {
   id: string;

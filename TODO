@@ -4,7 +4,7 @@ dev/todos branch with various old todos done + audio in rich text
 
 
 ## New Features [Prio]
-- [HIGH] Challange submission type: None: Basically you just need to check in, there is nothing to do. If a challange submission type is none, we should not show  the challange rich text editor, since nothing will be shown to the player, and it will be immediatly completed. We keep the completion info, since that the player can see once the base is completed.
+- [HIGH] Challange submission type: None - BACKEND + WEB DONE. Mobile apps still need UI changes: Android (PlayerGameplayScreens.kt) and iOS (SolveView.swift) need a "none" answer type path that auto-submits without showing text/file input. The operator mobile challenge edit screens also need the "none" option in the answer type picker.
 - [HIGH] Send notifications to teams as operator from mobile.
 - [HIGH] Pin dragging when setting the pin for a base is awful on web, not draggable, just clicking around and not very precise
 - [MED] Show feedback to the teams after completing a challange, if feedback was added on the submission review.

@@ -277,6 +277,8 @@
     "answerType": "Answer Type",
     "text": "Text",
     "fileUpload": "File Upload",
+    "checkIn": "Check-in",
+    "checkInDescription": "No answer required. The challenge is completed immediately when the player checks in at the base.",
     "autoValidate": "Auto-validate",
     "locationBound": "Location-bound",
     "fixedToBase": "Fixed to {{base}}",

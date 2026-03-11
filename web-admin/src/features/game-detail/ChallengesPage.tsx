@@ -3,7 +3,7 @@ import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { filterAvailableBases, filterAvailableUnlockBases } from "./dropdown-filters";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Minus, Puzzle, Trash2, Pencil, FileText, Image, CheckCircle, Eye, MapPin, Unlock, Variable } from "lucide-react";
+import { Plus, Minus, Puzzle, Trash2, Pencil, FileText, Image, CheckCircle, Eye, MapPin, Unlock, Variable, CircleCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormLabel } from "@/components/ui/form-label";
@@ -188,8 +188,8 @@ export function ChallengesPage() {
                     <CardContent>
                       <div className="flex flex-wrap gap-2">
                         <Badge variant="outline">{ch.points} {t("common.pts")}</Badge>
-                        <Badge variant="secondary">{ch.answerType === "text" ? <><FileText className="mr-1 h-3 w-3" /> {t("challenges.text")}</> : <><Image className="mr-1 h-3 w-3" /> {t("challenges.fileUpload")}</>}</Badge>
-                        {ch.autoValidate ? <Badge variant="success"><CheckCircle className="mr-1 h-3 w-3" /> {t("challenges.autoValidate")}</Badge> : <Badge variant="warning"><Eye className="mr-1 h-3 w-3" /> {t("challenges.manualReview")}</Badge>}
+                        <Badge variant="secondary">{ch.answerType === "none" ? <><CircleCheck className="mr-1 h-3 w-3" /> {t("challenges.checkIn")}</> : ch.answerType === "text" ? <><FileText className="mr-1 h-3 w-3" /> {t("challenges.text")}</> : <><Image className="mr-1 h-3 w-3" /> {t("challenges.fileUpload")}</>}</Badge>
+                        {ch.answerType !== "none" && (ch.autoValidate ? <Badge variant="success"><CheckCircle className="mr-1 h-3 w-3" /> {t("challenges.autoValidate")}</Badge> : <Badge variant="warning"><Eye className="mr-1 h-3 w-3" /> {t("challenges.manualReview")}</Badge>)}
                         {ch.locationBound && <Badge variant="outline" className={fixedBase ? "opacity-60" : undefined}><MapPin className="mr-1 h-3 w-3" /> {t("challenges.locationBound")}</Badge>}
                         {fixedBase && (
                           <Badge variant="secondary" className="max-w-full">
@@ -259,16 +259,18 @@ export function ChallengesPage() {
                 placeholder={t("challenges.shortDescriptionPlaceholder")}
               />
             </div>
-            <Collapsible
-              title={<>{t("challenges.content")}<span className="text-muted-foreground font-normal"> ({t("common.optional")})</span></>}
-              defaultOpen={true}
-            >
-              <ErrorBoundary>
-                <Suspense fallback={<div className="h-[200px] animate-pulse rounded-md border border-input bg-muted/30" />}>
-                  <RichTextEditor value={form.content ?? ""} onChange={(html) => setForm((f) => ({ ...f, content: html }))} placeholder={t("challenges.contentPlaceholder")} availableVariables={editing ? availableVariables : undefined} />
-                </Suspense>
-              </ErrorBoundary>
-            </Collapsible>
+            {form.answerType !== "none" && (
+              <Collapsible
+                title={<>{t("challenges.content")}<span className="text-muted-foreground font-normal"> ({t("common.optional")})</span></>}
+                defaultOpen={true}
+              >
+                <ErrorBoundary>
+                  <Suspense fallback={<div className="h-[200px] animate-pulse rounded-md border border-input bg-muted/30" />}>
+                    <RichTextEditor value={form.content ?? ""} onChange={(html) => setForm((f) => ({ ...f, content: html }))} placeholder={t("challenges.contentPlaceholder")} availableVariables={editing ? availableVariables : undefined} />
+                  </Suspense>
+                </ErrorBoundary>
+              </Collapsible>
+            )}
             <Collapsible
               title={<>{t("challenges.completionContent")}<span className="text-muted-foreground font-normal"> ({t("common.optional")})</span></>}
               defaultOpen={false}
@@ -290,16 +292,22 @@ export function ChallengesPage() {
                 <div className="flex gap-2" data-testid="challenge-type-select">
                   <Button type="button" variant={form.answerType === "text" ? "default" : "outline"} size="sm" onClick={() => setForm((f) => ({ ...f, answerType: "text" }))}><FileText className="mr-1 h-4 w-4" /> {t("challenges.text")}</Button>
                   <Button type="button" variant={form.answerType === "file" ? "default" : "outline"} size="sm" onClick={() => setForm((f) => ({ ...f, answerType: "file", autoValidate: false }))}><Image className="mr-1 h-4 w-4" /> {t("challenges.fileUpload")}</Button>
+                  <Button type="button" variant={form.answerType === "none" ? "default" : "outline"} size="sm" onClick={() => setForm((f) => ({ ...f, answerType: "none", autoValidate: false }))}><CircleCheck className="mr-1 h-4 w-4" /> {t("challenges.checkIn")}</Button>
                 </div>
-                <div className="flex items-center justify-between">
-                  <FormLabel htmlFor="challengeAutoValidate">{t("challenges.autoValidate")}</FormLabel>
-                  <Switch
-                    id="challengeAutoValidate"
-                    checked={form.autoValidate ?? false}
-                    onCheckedChange={(v) => setForm((f) => ({ ...f, autoValidate: v }))}
-                    disabled={form.answerType === "file"}
-                  />
-                </div>
+                {form.answerType === "none" && (
+                  <p className="text-xs text-muted-foreground">{t("challenges.checkInDescription")}</p>
+                )}
+                {form.answerType !== "none" && (
+                  <div className="flex items-center justify-between">
+                    <FormLabel htmlFor="challengeAutoValidate">{t("challenges.autoValidate")}</FormLabel>
+                    <Switch
+                      id="challengeAutoValidate"
+                      checked={form.autoValidate ?? false}
+                      onCheckedChange={(v) => setForm((f) => ({ ...f, autoValidate: v }))}
+                      disabled={form.answerType === "file"}
+                    />
+                  </div>
+                )}
               </div>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">

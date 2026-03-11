@@ -277,6 +277,8 @@
     "answerType": "Tipo de Resposta",
     "text": "Texto",
     "fileUpload": "Ficheiro",
+    "checkIn": "Check-in",
+    "checkInDescription": "Sem resposta necessaria. O desafio e completado automaticamente quando o jogador faz check-in na base.",
     "autoValidate": "Validação automática",
     "locationBound": "Ligado à localização",
     "fixedToBase": "Fixo à base {{base}}",
