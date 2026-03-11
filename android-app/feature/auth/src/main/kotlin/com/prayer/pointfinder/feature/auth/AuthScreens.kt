@@ -1,10 +1,17 @@
 package com.prayer.pointfinder.feature.auth
 
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
@@ -33,7 +40,12 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +59,7 @@ import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.platform.testTag
@@ -60,13 +73,50 @@ private val CompassGreen = Color(0xFF22C55E)
 private val CompassGreenDark = Color(0xFF16A34A)
 private val CompassGreenDeep = Color(0xFF0D5F2D)
 private val CompassCenter = Color(0xFF060B06)
+private val WelcomeDarkBg = Color(0xFF0A0A0A)
+
+/**
+ * Reads the device magnetometer heading via TYPE_ROTATION_VECTOR.
+ * Returns the azimuth in degrees (0 = magnetic north) or null when
+ * no sensor is available (e.g. emulator).
+ */
+@Composable
+private fun rememberDeviceHeading(): Float? {
+    val context = LocalContext.current
+    var heading by remember { mutableStateOf<Float?>(null) }
+
+    DisposableEffect(context) {
+        val sm = context.getSystemService(android.content.Context.SENSOR_SERVICE) as SensorManager
+        val sensor = sm.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
+        if (sensor == null) {
+            // No sensor (emulator) – leave heading null so we fall back to auto-rotation
+            onDispose {}
+        } else {
+            val rotationMatrix = FloatArray(9)
+            val orientation = FloatArray(3)
+            val listener = object : SensorEventListener {
+                override fun onSensorChanged(event: SensorEvent) {
+                    SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
+                    SensorManager.getOrientation(rotationMatrix, orientation)
+                    // azimuth → degrees, negate so compass north points up
+                    heading = -Math.toDegrees(orientation[0].toDouble()).toFloat()
+                }
+                override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+            }
+            sm.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_UI)
+            onDispose { sm.unregisterListener(listener) }
+        }
+    }
+    return heading
+}
 
 @Composable
 fun CompassRose(modifier: Modifier = Modifier) {
     val infiniteTransition = rememberInfiniteTransition(label = "compass")
+    val deviceHeading = rememberDeviceHeading()
 
-    // Slow rotation: 360° in 120 seconds
-    val rotation by infiniteTransition.animateFloat(
+    // Fallback: slow auto-rotation when no sensor is available
+    val fallbackRotation by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 360f,
         animationSpec = infiniteRepeatable(
@@ -74,6 +124,16 @@ fun CompassRose(modifier: Modifier = Modifier) {
             repeatMode = RepeatMode.Restart,
         ),
         label = "rotation",
+    )
+
+    // Smooth spring animation for device heading changes
+    val animatedHeading by animateFloatAsState(
+        targetValue = deviceHeading ?: fallbackRotation,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow,
+        ),
+        label = "heading",
     )
 
     // Three sonar pulse rings staggered by 1.5s within a 4s cycle
@@ -132,7 +192,7 @@ fun CompassRose(modifier: Modifier = Modifier) {
         )
 
         // Rotate the compass SVG content
-        rotate(degrees = rotation, pivot = Offset(cx, cy)) {
+        rotate(degrees = animatedHeading, pivot = Offset(cx, cy)) {
             // ── Outer rings ──
             drawCircle(CompassGreen, radius = 96f * unit, center = Offset(cx, cy), style = Stroke(0.5f * unit), alpha = 0.15f)
             drawCircle(CompassGreen, radius = 90f * unit, center = Offset(cx, cy), style = Stroke(0.4f * unit), alpha = 0.1f)
@@ -237,7 +297,7 @@ fun WelcomeScreen(
     modifier: Modifier = Modifier,
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.background,
+        color = WelcomeDarkBg,
         modifier = modifier.fillMaxSize(),
     ) {
         Column(
@@ -251,7 +311,7 @@ fun WelcomeScreen(
             Text(
                 stringResource(R.string.label_welcome),
                 style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.onBackground,
+                color = Color.White,
             )
 
             Spacer(Modifier.weight(1f))

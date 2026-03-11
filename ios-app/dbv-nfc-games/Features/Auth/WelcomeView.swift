@@ -14,6 +14,7 @@ struct WelcomeView: View {
                 Text(locale.t("welcome.title"))
                     .font(.largeTitle)
                     .fontWeight(.bold)
+                    .foregroundStyle(.white)
 
                 Spacer()
 
@@ -44,8 +45,8 @@ struct WelcomeView: View {
                             .font(.subheadline)
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color(.systemGray6))
-                            .foregroundStyle(.primary)
+                            .background(Color.white.opacity(0.12))
+                            .foregroundStyle(.white)
                             .clipShape(RoundedRectangle(cornerRadius: 14))
                     }
                 }
@@ -58,7 +59,9 @@ struct WelcomeView: View {
             .navigationDestination(isPresented: $showOperatorLogin) {
                 OperatorLoginView()
             }
+            .background(Color(red: 0x0A / 255.0, green: 0x0A / 255.0, blue: 0x0A / 255.0))
         }
+        .preferredColorScheme(.dark)
     }
 }
 

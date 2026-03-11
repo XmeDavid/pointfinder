@@ -1,12 +1,47 @@
+import CoreLocation
 import SwiftUI
 
+// MARK: - Heading provider
+
+/// Reads the device magnetometer heading via CLLocationManager.
+/// Falls back to a slow auto-rotation when heading is unavailable (e.g. Simulator).
+private class HeadingProvider: NSObject, ObservableObject, CLLocationManagerDelegate {
+    @Published var heading: Double? = nil
+    private let manager = CLLocationManager()
+
+    override init() {
+        super.init()
+        manager.delegate = self
+        if CLLocationManager.headingAvailable() {
+            manager.startUpdatingHeading()
+        }
+    }
+
+    deinit {
+        manager.stopUpdatingHeading()
+    }
+
+    func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
+        guard newHeading.headingAccuracy >= 0 else { return }
+        // Negate so compass north points upward when facing north
+        heading = -newHeading.magneticHeading
+    }
+}
+
+// MARK: - Compass rose view
+
 /// Animated compass rose matching the web landing page.
-/// Green (#22C55E) colour scheme with 120s rotation and sonar pulse rings.
+/// Uses the device magnetometer when available, otherwise auto-rotates.
 struct CompassRoseView: View {
-    @State private var rotation: Double = 0
+    @StateObject private var headingProvider = HeadingProvider()
+    @State private var fallbackRotation: Double = 0
     @State private var pulse0: CGFloat = 0
     @State private var pulse1: CGFloat = 0
     @State private var pulse2: CGFloat = 0
+
+    private var rotation: Double {
+        headingProvider.heading ?? fallbackRotation
+    }
 
     var body: some View {
         GeometryReader { geo in
@@ -98,13 +133,17 @@ struct CompassRoseView: View {
                 }
                 .frame(width: size, height: size)
                 .rotationEffect(.degrees(rotation))
+                .animation(.spring(response: 0.4, dampingFraction: 0.6), value: rotation)
             }
             .frame(width: geo.size.width, height: geo.size.height)
         }
         .aspectRatio(1, contentMode: .fit)
         .onAppear {
-            withAnimation(.linear(duration: 120).repeatForever(autoreverses: false)) {
-                rotation = 360
+            // Only start fallback rotation if no heading sensor
+            if !CLLocationManager.headingAvailable() {
+                withAnimation(.linear(duration: 120).repeatForever(autoreverses: false)) {
+                    fallbackRotation = 360
+                }
             }
             withAnimation(.easeOut(duration: 4).repeatForever(autoreverses: false)) {
                 pulse0 = 1
@@ -131,7 +170,6 @@ struct CompassRoseView: View {
         let resolved = ctx.resolve(Text(text)
             .font(.system(size: fontSize, weight: .bold))
             .foregroundColor(Color.compassGreen.opacity(alpha)))
-        let textSize = resolved.measure(in: CGSize(width: 100, height: 100))
         ctx.draw(resolved, at: CGPoint(x: x, y: y), anchor: .center)
     }
 }
