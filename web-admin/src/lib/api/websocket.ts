@@ -1,6 +1,7 @@
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { getValidAccessToken } from "@/lib/api/client";
+import { useAuthStore } from "@/hooks/useAuth";
 
 const WS_URL = import.meta.env.VITE_WS_URL || "/ws";
 
@@ -42,6 +43,8 @@ export function connectWebSocket(
     onStompError: (frame) => {
       const raw = frame.headers["message"] || "WebSocket connection error";
       console.error("STOMP error:", raw);
+      // Clear potentially expired token so next reconnect triggers a refresh
+      useAuthStore.getState().clearAccessToken();
       onError?.("Live updates temporarily unavailable. Retrying…");
     },
     onWebSocketError: () => {
