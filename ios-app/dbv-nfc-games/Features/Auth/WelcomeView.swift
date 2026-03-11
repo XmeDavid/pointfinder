@@ -8,20 +8,18 @@ struct WelcomeView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
+                Spacer().frame(height: 48)
+
+                // Title
+                Text(locale.t("welcome.title"))
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+
                 Spacer()
 
-                // Logo area
-                VStack(spacing: 16) {
-                    Text(locale.t("welcome.title"))
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-
-                    Text(locale.t("welcome.subtitle"))
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 40)
-                }
+                // Compass animation
+                CompassRoseView()
+                    .padding(.horizontal, 24)
 
                 Spacer()
 
