@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { Map as MapGL, Marker, Source, Layer } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { Pencil, EyeOff, Wifi, WifiOff } from "lucide-react";
+import { Lock, Unlock, Pencil, EyeOff, Wifi, WifiOff } from "lucide-react";
 import { computeBounds } from "@/lib/map-utils";
 import { PinMarkerSvg } from "@/components/common/MapMarkers";
 import { getResolvedStyleUrl, getDefaultCenter } from "@/lib/tile-sources";
@@ -20,6 +20,8 @@ interface MapPickerProps {
 export function MapPicker({ value, onChange, className, tileSource }: MapPickerProps) {
   const { dark } = useThemeStore();
   const mapRef = useRef<MapRef>(null);
+  const [locked, setLocked] = useState(true);
+  const [hovered, setHovered] = useState(false);
 
   const handleMoveEnd = useCallback(() => {
     const center = mapRef.current?.getCenter();
@@ -29,18 +31,59 @@ export function MapPicker({ value, onChange, className, tileSource }: MapPickerP
   }, [onChange]);
 
   return (
-    <div className={`${className} relative`}>
-      <MapGL
-        ref={mapRef}
-        initialViewState={{ longitude: value.lng, latitude: value.lat, zoom: 15 }}
-        style={{ width: "100%", height: "100%", borderRadius: "0.375rem" }}
-        mapStyle={getResolvedStyleUrl(tileSource, dark)}
-        onMoveEnd={handleMoveEnd}
-      />
-      {/* Fixed center pin — user drags map underneath */}
-      <div className="absolute left-1/2 top-1/2 pointer-events-none z-10">
-        <PinMarkerSvg color="#3b82f6" />
+    <div className="flex items-start gap-2">
+      <div
+        className={`${className} relative`}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        <MapGL
+          ref={mapRef}
+          initialViewState={{ longitude: value.lng, latitude: value.lat, zoom: 15 }}
+          style={{ width: "100%", height: "100%", borderRadius: "0.375rem" }}
+          mapStyle={getResolvedStyleUrl(tileSource, dark)}
+          onMoveEnd={handleMoveEnd}
+          scrollZoom={!locked}
+          dragPan={!locked}
+          dragRotate={!locked}
+          touchZoomRotate={!locked}
+          doubleClickZoom={!locked}
+          touchPitch={!locked}
+        />
+        {/* Fixed center pin */}
+        <div className="absolute left-1/2 top-1/2 pointer-events-none z-10">
+          <PinMarkerSvg color="#3b82f6" />
+        </div>
+        {/* Lock overlay — fades in on hover when locked */}
+        {locked && (
+          <div
+            className={`absolute inset-0 rounded-md flex items-center justify-center transition-opacity duration-300 ${
+              hovered ? "opacity-100" : "opacity-0"
+            }`}
+            style={{ background: "rgba(0,0,0,0.35)" }}
+          >
+            <button
+              type="button"
+              onClick={() => setLocked(false)}
+              className="flex items-center gap-2 px-4 py-2 rounded-md bg-white text-gray-800 text-sm font-medium shadow-lg hover:bg-gray-50 transition-colors"
+            >
+              <Unlock className="h-4 w-4" />
+              Unlock map
+            </button>
+          </div>
+        )}
       </div>
+      {/* Lock button outside the map */}
+      {!locked && (
+        <button
+          type="button"
+          onClick={() => setLocked(true)}
+          className="shrink-0 p-2 rounded-md border border-input bg-background hover:bg-accent text-muted-foreground transition-colors"
+          title="Lock map"
+        >
+          <Lock className="h-4 w-4" />
+        </button>
+      )}
     </div>
   );
 }
