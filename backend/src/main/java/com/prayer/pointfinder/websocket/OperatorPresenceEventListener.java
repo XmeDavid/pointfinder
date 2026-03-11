@@ -12,6 +12,8 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import org.springframework.web.socket.messaging.SessionSubscribeEvent;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Component
@@ -50,7 +52,11 @@ public class OperatorPresenceEventListener {
                 .orElse("Unknown");
 
         presenceTracker.register(sessionId, gameId, principal.userId(), name);
-        broadcastPresence(gameId);
+        // Delay broadcast to allow the broker to register the subscription.
+        // SessionSubscribeEvent fires before the async broker processes the
+        // SUBSCRIBE frame, so broadcasting immediately misses the new subscriber.
+        CompletableFuture.delayedExecutor(500, TimeUnit.MILLISECONDS)
+                .execute(() -> broadcastPresence(gameId));
     }
 
     @EventListener
