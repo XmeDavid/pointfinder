@@ -90,7 +90,7 @@ struct CompassRoseView: View {
     @State private var dragRotation: Double = 0
     @State private var dragTiltX: Double = 0
     @State private var dragTiltY: Double = 0
-    @GestureState private var isDragging = false
+    @State private var lastDragTranslation: CGSize = .zero
 
     private static let maxTiltDrag: Double = 25
 
@@ -199,16 +199,37 @@ struct CompassRoseView: View {
                     perspective: 0.4
                 )
                 .gesture(
-                    DragGesture()
-                        .updating($isDragging) { _, state, _ in state = true }
+                    DragGesture(coordinateSpace: .local)
                         .onChanged { value in
-                            // Horizontal → rotation + tilt Y, vertical → tilt X
-                            dragRotation = value.translation.width * 0.3
-                            dragTiltX = min(max(value.translation.height * 0.3, -Self.maxTiltDrag), Self.maxTiltDrag)
-                            dragTiltY = min(max(-value.translation.width * 0.15, -Self.maxTiltDrag), Self.maxTiltDrag)
+                            // Touch position relative to compass center
+                            let cx = size / 2
+                            let cy = size / 2
+                            let tx = value.location.x - cx
+                            let ty = value.location.y - cy
+                            let dist = sqrt(tx * tx + ty * ty)
+
+                            // Delta since last frame
+                            let dx = value.translation.width - lastDragTranslation.width
+                            let dy = value.translation.height - lastDragTranslation.height
+                            lastDragTranslation = value.translation
+
+                            guard dist > 1 else { return }
+
+                            // Unit radius vector from center to touch
+                            let rx = tx / dist
+                            let ry = ty / dist
+
+                            // Tangential: cross(radius, drag) → spin
+                            let tangential = rx * dy - ry * dx
+                            // Radial: dot(radius, drag) → tilt toward touch point
+                            let radial = rx * dx + ry * dy
+
+                            dragRotation += tangential * 0.4
+                            dragTiltX = min(max(dragTiltX + radial * Double(ry) * 0.3, -Self.maxTiltDrag), Self.maxTiltDrag)
+                            dragTiltY = min(max(dragTiltY + radial * Double(rx) * 0.3, -Self.maxTiltDrag), Self.maxTiltDrag)
                         }
                         .onEnded { _ in
-                            // Spring back to rest
+                            lastDragTranslation = .zero
                             withAnimation(.interpolatingSpring(stiffness: 80, damping: 8)) {
                                 dragRotation = 0
                                 dragTiltX = 0

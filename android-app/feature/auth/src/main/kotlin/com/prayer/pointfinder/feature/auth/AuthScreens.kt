@@ -72,8 +72,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.prayer.pointfinder.core.i18n.R
 import kotlinx.coroutines.launch
+import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.sqrt
 
 // Compass colours matching the web landing page
 private val CompassGreen = Color(0xFF22C55E)
@@ -212,8 +214,9 @@ fun CompassRose(modifier: Modifier = Modifier) {
     )
 
     // ── Touch drag interaction ──
-    // Horizontal drag → rotation offset, vertical drag → tilt offset
-    // Springs back to 0 on release so the compass "fights" the user
+    // Decomposes the drag vector at the touch point into tangential (spin)
+    // and radial (tilt) components relative to the compass center, so it
+    // behaves like pushing a disc pinned at its center.
     val scope = rememberCoroutineScope()
     val dragRotation = remember { Animatable(0f) }
     val dragTiltX = remember { Animatable(0f) }
@@ -222,6 +225,8 @@ fun CompassRose(modifier: Modifier = Modifier) {
         dampingRatio = Spring.DampingRatioMediumBouncy,
         stiffness = Spring.StiffnessMediumLow,
     )
+    // Track where the finger currently is relative to center
+    var touchPos by remember { mutableStateOf(Offset.Zero) }
 
     val density = LocalDensity.current
     Canvas(
@@ -230,15 +235,50 @@ fun CompassRose(modifier: Modifier = Modifier) {
             .fillMaxWidth()
             .pointerInput(Unit) {
                 detectDragGestures(
+                    onDragStart = { offset ->
+                        // Store initial touch position relative to center
+                        val cx = size.width / 2f
+                        val cy = size.height / 2f
+                        touchPos = Offset(offset.x - cx, offset.y - cy)
+                    },
                     onDrag = { change, dragAmount ->
                         change.consume()
-                        // Convert px drag to degrees: ~0.3° per px feels right
-                        scope.launch { dragRotation.snapTo(dragRotation.value + dragAmount.x * 0.3f) }
-                        scope.launch { dragTiltX.snapTo((dragTiltX.value + dragAmount.y * 0.3f).coerceIn(-MAX_TILT, MAX_TILT)) }
-                        scope.launch { dragTiltY.snapTo((dragTiltY.value - dragAmount.x * 0.15f).coerceIn(-MAX_TILT, MAX_TILT)) }
+                        // Update touch position
+                        touchPos = Offset(touchPos.x + dragAmount.x, touchPos.y + dragAmount.y)
+
+                        val dist = sqrt(touchPos.x * touchPos.x + touchPos.y * touchPos.y)
+                        if (dist < 1f) return@detectDragGestures // too close to center
+
+                        // Unit vector from center to touch point
+                        val rx = touchPos.x / dist
+                        val ry = touchPos.y / dist
+
+                        // Tangential component (perpendicular to radius):
+                        // cross product of radius and drag gives signed spin
+                        val tangential = rx * dragAmount.y - ry * dragAmount.x
+                        // Radial component (along the radius):
+                        // dot product of radius and drag
+                        val radial = rx * dragAmount.x + ry * dragAmount.y
+
+                        // Tangential → spin the compass (0.4°/px)
+                        scope.launch { dragRotation.snapTo(dragRotation.value + tangential * 0.4f) }
+
+                        // Radial → tilt the compass toward/away from the touch point.
+                        // The tilt axis depends on WHERE on the disc the touch is:
+                        // pushing from the top tilts forward (tiltX), from the side tilts sideways (tiltY).
+                        val tiltScale = 0.3f
+                        scope.launch {
+                            dragTiltX.snapTo(
+                                (dragTiltX.value + radial * ry * tiltScale).coerceIn(-MAX_TILT, MAX_TILT)
+                            )
+                        }
+                        scope.launch {
+                            dragTiltY.snapTo(
+                                (dragTiltY.value + radial * rx * tiltScale).coerceIn(-MAX_TILT, MAX_TILT)
+                            )
+                        }
                     },
                     onDragEnd = {
-                        // Spring back to rest
                         scope.launch { dragRotation.animateTo(0f, dragSpring) }
                         scope.launch { dragTiltX.animateTo(0f, dragSpring) }
                         scope.launch { dragTiltY.animateTo(0f, dragSpring) }
