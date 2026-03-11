@@ -1,4 +1,5 @@
 import CoreLocation
+import CoreMotion
 import SwiftUI
 
 // MARK: - Heading provider
@@ -44,12 +45,42 @@ private class HeadingProvider: NSObject, ObservableObject, CLLocationManagerDele
     }
 }
 
+// MARK: - Tilt provider
+
+/// Reads device pitch and roll via CMMotionManager for 3D tilt effect.
+private class TiltProvider: ObservableObject {
+    @Published var tiltX: Double = 0 // pitch, clamped ±25°
+    @Published var tiltY: Double = 0 // roll, clamped ±25°
+
+    private let motionManager = CMMotionManager()
+    private static let maxTilt: Double = 25
+
+    init() {
+        guard motionManager.isDeviceMotionAvailable else { return }
+        motionManager.deviceMotionUpdateInterval = 1.0 / 60.0
+        motionManager.startDeviceMotionUpdates(to: .main) { [weak self] motion, _ in
+            guard let self, let motion else { return }
+            // attitude.pitch: tilt forward/back, attitude.roll: tilt left/right
+            let pitch = motion.attitude.pitch * 180 / .pi
+            let roll = motion.attitude.roll * 180 / .pi
+            self.tiltX = min(max(pitch, -Self.maxTilt), Self.maxTilt)
+            self.tiltY = min(max(roll, -Self.maxTilt), Self.maxTilt)
+        }
+    }
+
+    deinit {
+        motionManager.stopDeviceMotionUpdates()
+    }
+}
+
 // MARK: - Compass rose view
 
 /// Animated compass rose matching the web landing page.
 /// Uses the device magnetometer when available, otherwise auto-rotates.
+/// Tilts in 3D based on device pitch/roll for a parallax effect.
 struct CompassRoseView: View {
     @StateObject private var headingProvider = HeadingProvider()
+    @StateObject private var tiltProvider = TiltProvider()
     @State private var fallbackRotation: Double = 0
     @State private var pulse0: CGFloat = 0
     @State private var pulse1: CGFloat = 0
@@ -149,7 +180,19 @@ struct CompassRoseView: View {
                 }
                 .frame(width: size, height: size)
                 .rotationEffect(.degrees(rotation))
+                .rotation3DEffect(
+                    .degrees(tiltProvider.tiltX),
+                    axis: (x: 1, y: 0, z: 0),
+                    perspective: 0.4
+                )
+                .rotation3DEffect(
+                    .degrees(-tiltProvider.tiltY),
+                    axis: (x: 0, y: 1, z: 0),
+                    perspective: 0.4
+                )
                 .animation(.spring(response: 0.4, dampingFraction: 0.6), value: rotation)
+                .animation(.interpolatingSpring(stiffness: 100, damping: 15), value: tiltProvider.tiltX)
+                .animation(.interpolatingSpring(stiffness: 100, damping: 15), value: tiltProvider.tiltY)
             }
             .frame(width: geo.size.width, height: geo.size.height)
         }

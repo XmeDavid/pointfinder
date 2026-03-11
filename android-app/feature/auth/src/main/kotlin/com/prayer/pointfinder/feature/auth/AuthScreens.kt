@@ -58,8 +58,10 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.platform.testTag
@@ -75,16 +77,23 @@ private val CompassGreenDeep = Color(0xFF0D5F2D)
 private val CompassCenter = Color(0xFF060B06)
 private val WelcomeDarkBg = Color(0xFF0A0A0A)
 
+private data class DeviceOrientation(
+    val heading: Float,  // cumulative azimuth (compass heading)
+    val tiltX: Float,    // pitch in degrees, clamped ±25
+    val tiltY: Float,    // roll in degrees, clamped ±25
+)
+
+private const val MAX_TILT = 25f
+
 /**
- * Reads the device magnetometer heading via TYPE_ROTATION_VECTOR.
- * Returns a cumulative rotation in degrees (not clamped to 0-360)
- * so that spring animations always take the shortest path across the
- * 0°/360° boundary. Returns null when no sensor is available (emulator).
+ * Reads the device orientation via TYPE_ROTATION_VECTOR.
+ * Returns heading (cumulative, shortest-path) plus pitch/roll for 3D tilt.
+ * Returns null when no sensor is available (emulator).
  */
 @Composable
-private fun rememberDeviceHeading(): Float? {
+private fun rememberDeviceOrientation(): DeviceOrientation? {
     val context = LocalContext.current
-    var heading by remember { mutableStateOf<Float?>(null) }
+    var orientation by remember { mutableStateOf<DeviceOrientation?>(null) }
 
     DisposableEffect(context) {
         val sm = context.getSystemService(android.content.Context.SENSOR_SERVICE) as SensorManager
@@ -93,14 +102,14 @@ private fun rememberDeviceHeading(): Float? {
             onDispose {}
         } else {
             val rotationMatrix = FloatArray(9)
-            val orientation = FloatArray(3)
+            val orientationAngles = FloatArray(3)
             var cumulativeRotation = 0f
             var lastRaw: Float? = null
             val listener = object : SensorEventListener {
                 override fun onSensorChanged(event: SensorEvent) {
                     SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
-                    SensorManager.getOrientation(rotationMatrix, orientation)
-                    val raw = -Math.toDegrees(orientation[0].toDouble()).toFloat()
+                    SensorManager.getOrientation(rotationMatrix, orientationAngles)
+                    val raw = -Math.toDegrees(orientationAngles[0].toDouble()).toFloat()
 
                     val prev = lastRaw
                     if (prev != null) {
@@ -112,7 +121,18 @@ private fun rememberDeviceHeading(): Float? {
                         cumulativeRotation = raw
                     }
                     lastRaw = raw
-                    heading = cumulativeRotation
+
+                    // pitch (orientationAngles[1]) and roll (orientationAngles[2]) in radians
+                    val pitchDeg = Math.toDegrees(orientationAngles[1].toDouble()).toFloat()
+                        .coerceIn(-MAX_TILT, MAX_TILT)
+                    val rollDeg = Math.toDegrees(orientationAngles[2].toDouble()).toFloat()
+                        .coerceIn(-MAX_TILT, MAX_TILT)
+
+                    orientation = DeviceOrientation(
+                        heading = cumulativeRotation,
+                        tiltX = pitchDeg,
+                        tiltY = rollDeg,
+                    )
                 }
                 override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
             }
@@ -120,13 +140,13 @@ private fun rememberDeviceHeading(): Float? {
             onDispose { sm.unregisterListener(listener) }
         }
     }
-    return heading
+    return orientation
 }
 
 @Composable
 fun CompassRose(modifier: Modifier = Modifier) {
     val infiniteTransition = rememberInfiniteTransition(label = "compass")
-    val deviceHeading = rememberDeviceHeading()
+    val deviceOrientation = rememberDeviceOrientation()
 
     // Fallback: slow auto-rotation when no sensor is available
     val fallbackRotation by infiniteTransition.animateFloat(
@@ -139,14 +159,26 @@ fun CompassRose(modifier: Modifier = Modifier) {
         label = "rotation",
     )
 
+    val tiltSpec = spring<Float>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium)
+
     // Smooth spring animation for device heading changes
     val animatedHeading by animateFloatAsState(
-        targetValue = deviceHeading ?: fallbackRotation,
+        targetValue = deviceOrientation?.heading ?: fallbackRotation,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
             stiffness = Spring.StiffnessLow,
         ),
         label = "heading",
+    )
+    val animatedTiltX by animateFloatAsState(
+        targetValue = deviceOrientation?.tiltX ?: 0f,
+        animationSpec = tiltSpec,
+        label = "tiltX",
+    )
+    val animatedTiltY by animateFloatAsState(
+        targetValue = deviceOrientation?.tiltY ?: 0f,
+        animationSpec = tiltSpec,
+        label = "tiltY",
     )
 
     // Three sonar pulse rings staggered by 1.5s within a 4s cycle
@@ -174,10 +206,16 @@ fun CompassRose(modifier: Modifier = Modifier) {
         label = "pulse2",
     )
 
+    val density = LocalDensity.current
     Canvas(
         modifier = modifier
             .aspectRatio(1f)
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .graphicsLayer {
+                rotationX = animatedTiltX
+                rotationY = -animatedTiltY
+                cameraDistance = 12f * density.density
+            },
     ) {
         val cx = size.width / 2f
         val cy = size.height / 2f
