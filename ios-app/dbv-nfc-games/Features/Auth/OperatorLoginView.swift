@@ -7,6 +7,9 @@ struct OperatorLoginView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var isLoading = false
+    @FocusState private var focusedField: Field?
+
+    private enum Field { case email, password }
 
     var body: some View {
         @Bindable var appState = appState
@@ -34,16 +37,19 @@ struct OperatorLoginView: View {
                     .keyboardType(.emailAddress)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
+                    .focused($focusedField, equals: .email)
                     .accessibilityIdentifier("login-email")
 
                 SecureField(locale.t("auth.password"), text: $password)
                     .textFieldStyle(.roundedBorder)
                     .textContentType(.password)
+                    .focused($focusedField, equals: .password)
                     .accessibilityIdentifier("login-password")
             }
             .padding(.horizontal, 24)
 
             Button {
+                focusedField = nil
                 Task {
                     isLoading = true
                     await appState.operatorLogin(email: email, password: password)

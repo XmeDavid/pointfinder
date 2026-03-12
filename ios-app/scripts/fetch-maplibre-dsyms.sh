@@ -72,6 +72,20 @@ if [ "$DSYM_COUNT" -eq 0 ]; then
     exit 1
 fi
 
+# Rename to match the framework name the app actually links (MapLibre.framework)
+# The GitHub release ships as MapLibre_ios_device.framework.dSYM but App Store
+# Connect expects MapLibre.framework.dSYM with DWARF binary named MapLibre.
+OLD_DSYM="$DSYM_DIR/MapLibre_ios_device.framework.dSYM"
+NEW_DSYM="$DSYM_DIR/MapLibre.framework.dSYM"
+if [ -d "$OLD_DSYM" ]; then
+    mv "$OLD_DSYM" "$NEW_DSYM"
+    mv "$NEW_DSYM/Contents/Resources/DWARF/MapLibre_ios_device" "$NEW_DSYM/Contents/Resources/DWARF/MapLibre"
+    # Fix the bundle identifier so App Store Connect can match the dSYM
+    chmod u+w "$NEW_DSYM/Contents/Info.plist"
+    /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier com.apple.xcode.dsym.MapLibre" "$NEW_DSYM/Contents/Info.plist"
+    echo "Renamed dSYM: MapLibre_ios_device -> MapLibre"
+fi
+
 echo ""
 echo "dSYM cached successfully:"
 find "$DSYM_DIR" -name "*.dSYM" -maxdepth 1
