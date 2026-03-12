@@ -188,7 +188,7 @@ struct SolveView: View {
 
     // MARK: - Photo Input Section
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private var photoInputSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(locale.t("solve.photo"))
@@ -238,9 +238,10 @@ struct SolveView: View {
             }
 
             // Picker buttons
+            let libraryLabel = locale.t("solve.library")
             HStack(spacing: 12) {
                 PhotosPicker(selection: $selectedItems, maxSelectionCount: 5, matching: .any(of: [.images, .videos])) {
-                    Label(locale.t("solve.library"), systemImage: "photo.on.rectangle")
+                    Label(libraryLabel, systemImage: "photo.on.rectangle")
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .frame(maxWidth: .infinity)
