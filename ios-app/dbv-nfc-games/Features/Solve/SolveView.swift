@@ -188,7 +188,7 @@ struct SolveView: View {
 
     // MARK: - Photo Input Section
 
-    @ViewBuilder
+    @MainActor @ViewBuilder
     private var photoInputSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(locale.t("solve.photo"))

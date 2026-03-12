@@ -19,7 +19,16 @@ actor OfflineQueue {
     private init() {
         let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         fileURL = documentsPath.appendingPathComponent("pending_actions.json")
-        loadFromDisk()
+        // Inline load (calling actor-isolated methods from init is not allowed)
+        if FileManager.default.fileExists(atPath: fileURL.path) {
+            do {
+                let data = try Data(contentsOf: fileURL)
+                pendingActions = try decoder.decode([PendingAction].self, from: data)
+            } catch {
+                Logger(subsystem: "com.prayer.pointfinder", category: "OfflineQueue").warning(" Failed to load from disk: \(error.localizedDescription)")
+                pendingActions = []
+            }
+        }
     }
 
     // MARK: - Queue Operations

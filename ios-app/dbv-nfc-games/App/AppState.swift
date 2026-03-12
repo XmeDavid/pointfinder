@@ -76,7 +76,7 @@ final class AppState {
         Task { [weak self] in
             guard let self else { return }
             await self.apiClient.setAuthFailureHandler { [weak self] in
-                await MainActor.run {
+                await MainActor.run { [weak self] in
                     self?.logout()
                 }
             }

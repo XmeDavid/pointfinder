@@ -202,8 +202,8 @@ struct MapLibreMapView: UIViewRepresentable {
 
             if let visibleAnnotations = mapView.visibleAnnotations(in: hitRect) {
                 for annotation in visibleAnnotations {
+                    if annotation is MLNUserLocation { continue }
                     guard let pointAnnotation = annotation as? MLNPointAnnotation else { continue }
-                    if pointAnnotation is MLNUserLocation { continue }
                     if let item = annotationItems.first(where: {
                         $0.coordinate.latitude == pointAnnotation.coordinate.latitude &&
                         $0.coordinate.longitude == pointAnnotation.coordinate.longitude

@@ -70,7 +70,6 @@ struct HTMLContentView: UIViewRepresentable {
     private func wrapHTML(_ content: String) -> String {
         let isDark = colorScheme == .dark
         let textColor = isDark ? "#FFFFFF" : "#000000"
-        let secondaryColor = isDark ? "#8E8E93" : "#6C6C70"
         let backgroundColor = "transparent"
         let codeBackground = isDark ? "#2C2C2E" : "#F2F2F7"
         let blockquoteBackground = isDark ? "#1C1C1E" : "#F5F5F5"

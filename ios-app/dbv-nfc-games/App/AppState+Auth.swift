@@ -240,7 +240,7 @@ extension AppState {
         await apiClient.configureOperatorAuth(
             refreshToken: refreshToken,
             onTokensRefreshed: { [weak self] accessToken, refreshToken, userId in
-                await MainActor.run {
+                await MainActor.run { [weak self] in
                     guard let self else { return }
                     // Update in-memory auth state with fresh tokens
                     self.authType = .userOperator(

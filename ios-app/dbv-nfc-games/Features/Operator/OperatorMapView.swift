@@ -296,10 +296,10 @@ struct OperatorMapView: View {
     private func loadInitialData() async {
         isLoading = true
 
-        async let teamsTask = loadTeams()
-        async let locationsTask = loadLocations()
-        async let progressTask = loadProgress()
-        async let challengesTask = loadChallenges()
+        async let teamsTask: Void = loadTeams()
+        async let locationsTask: Void = loadLocations()
+        async let progressTask: Void = loadProgress()
+        async let challengesTask: Void = loadChallenges()
 
         _ = await (teamsTask, locationsTask, progressTask, challengesTask)
 

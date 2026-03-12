@@ -110,7 +110,7 @@ SQL
 
 wait_for_local_stack() {
   echo "Waiting for local E2E stack to be ready..."
-  for i in $(seq 1 120); do
+  for i in $(seq 1 150); do
     local http_code
     http_code=$(curl -sk -o /dev/null -w '%{http_code}' https://localhost/health 2>/dev/null || echo "000")
     if [[ "$http_code" =~ ^(200|401|403)$ ]]; then
@@ -123,7 +123,7 @@ wait_for_local_stack() {
     sleep 1
   done
 
-  echo "Local E2E stack did not become ready in 120s." >&2
+  echo "Local E2E stack did not become ready in 150s." >&2
   return 1
 }
 
@@ -335,7 +335,7 @@ ensure_android_emulator() {
   local emu_pid=$!
 
   # Wait for device to be ready
-  for _ in $(seq 1 120); do
+  for _ in $(seq 1 150); do
     if adb shell getprop sys.boot_completed 2>/dev/null | grep -q "1"; then
       ANDROID_EMU_BOOTED_BY_US=true
       echo "Android emulator ready: $avd_name (PID $emu_pid)"

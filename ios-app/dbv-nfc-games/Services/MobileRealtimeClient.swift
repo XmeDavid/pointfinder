@@ -87,9 +87,9 @@ final class MobileRealtimeClient {
             while !Task.isCancelled {
                 do {
                     let message = try await task.receive()
-                    await self?.handleMessage(message)
+                    self?.handleMessage(message)
                 } catch {
-                    await self?.handleDisconnect()
+                    self?.handleDisconnect()
                     break
                 }
             }

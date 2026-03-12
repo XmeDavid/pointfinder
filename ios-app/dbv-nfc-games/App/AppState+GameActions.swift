@@ -11,7 +11,7 @@ extension AppState {
     /// Load game progress. If online, fetches from server and caches.
     /// If offline, loads from cache.
     func loadProgress() async {
-        guard case .player(let token, _, let teamId, let gameId) = authType else { return }
+        guard case .player(let token, _, _, let gameId) = authType else { return }
         isLoadingProgress = true
 
         if isOnline {

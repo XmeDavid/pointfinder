@@ -72,8 +72,7 @@ extension NFCWriterService: NFCTagReaderSessionDelegate {
             }
 
             // Check if the tag supports NDEF
-            guard case let .iso7816(ndefTag) = tag,
-                  let ndefTag = ndefTag as? NFCNDEFTag else {
+            guard case let .iso7816(ndefTag) = tag else {
                 // Try other tag types
                 self?.handleNonISO7816Tag(tag, payload: payload, session: session)
                 return
