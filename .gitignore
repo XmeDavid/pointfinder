@@ -43,3 +43,4 @@ screenshots/
 
 # Cached MapLibre dSYMs (downloaded by ios-app/scripts/fetch-maplibre-dsyms.sh)
 ios-app/.maplibre-dsyms/
+ios-app/build/

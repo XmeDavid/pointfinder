@@ -256,7 +256,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 			shellPath = /bin/sh;
-			shellScript = "# Copy cached MapLibre dSYMs into the archive.\n# Run ios-app/scripts/fetch-maplibre-dsyms.sh before archiving.\nDSYM_CACHE=\"${SRCROOT}/.maplibre-dsyms\"\nif [ -d \"$DSYM_CACHE\" ]; then\n    find \"$DSYM_CACHE\" -name '*.dSYM' -maxdepth 2 -exec cp -R {} \"${DWARF_DSYM_FOLDER_PATH}/\" \\;\n    echo \"Copied MapLibre dSYMs to ${DWARF_DSYM_FOLDER_PATH}\"\nelse\n    echo \"warning: MapLibre dSYMs not cached. Run scripts/fetch-maplibre-dsyms.sh before archiving.\"\nfi\n";
+			shellScript = "# Copy cached MapLibre dSYMs into the archive.\n# Run ios-app/scripts/fetch-maplibre-dsyms.sh before archiving.\nDSYM_CACHE=\"${SRCROOT}/.maplibre-dsyms\"\nARCHIVE_DSYMS=\"${DSTROOT}/../dSYMs\"\nif [ ! -d \"$DSYM_CACHE\" ]; then\n    echo \"warning: MapLibre dSYMs not cached. Run scripts/fetch-maplibre-dsyms.sh before archiving.\"\n    exit 0\nfi\nif [ -d \"$ARCHIVE_DSYMS\" ]; then\n    find \"$DSYM_CACHE\" -name '*.dSYM' -maxdepth 2 -exec cp -R {} \"$ARCHIVE_DSYMS/\" \\;\n    echo \"Copied MapLibre dSYMs to $ARCHIVE_DSYMS\"\nelse\n    find \"$DSYM_CACHE\" -name '*.dSYM' -maxdepth 2 -exec cp -R {} \"${DWARF_DSYM_FOLDER_PATH}/\" \\;\n    echo \"Copied MapLibre dSYMs to ${DWARF_DSYM_FOLDER_PATH}\"\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -465,7 +465,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
-				MARKETING_VERSION = 0.7;
+				MARKETING_VERSION = 0.8;
 				PRODUCT_BUNDLE_IDENTIFIER = com.prayer.pointfinder;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -519,7 +519,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
-				MARKETING_VERSION = 0.7;
+				MARKETING_VERSION = 0.8;
 				PRODUCT_BUNDLE_IDENTIFIER = com.prayer.pointfinder;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
