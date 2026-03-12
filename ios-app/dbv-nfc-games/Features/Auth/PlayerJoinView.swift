@@ -7,6 +7,7 @@ struct PlayerJoinView: View {
     @State private var joinCode = ""
     @State private var showNameScreen = false
     @State private var cameraPermission: AVAuthorizationStatus = AVCaptureDevice.authorizationStatus(for: .video)
+    @FocusState private var isCodeFocused: Bool
 
     var body: some View {
         VStack(spacing: 24) {
@@ -57,11 +58,13 @@ struct PlayerJoinView: View {
                 .multilineTextAlignment(.center)
                 .textInputAutocapitalization(.characters)
                 .autocorrectionDisabled()
+                .focused($isCodeFocused)
                 .padding(.horizontal, 24)
                 .accessibilityIdentifier("player-join-code-input")
 
             // Next button
             Button {
+                isCodeFocused = false
                 showNameScreen = true
             } label: {
                 Text(locale.t("join.next"))

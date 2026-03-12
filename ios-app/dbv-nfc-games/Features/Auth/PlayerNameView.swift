@@ -8,6 +8,7 @@ struct PlayerNameView: View {
 
     @State private var displayName = ""
     @State private var isLoading = false
+    @FocusState private var isNameFocused: Bool
 
     var body: some View {
         @Bindable var appState = appState
@@ -33,10 +34,12 @@ struct PlayerNameView: View {
                 .textFieldStyle(.roundedBorder)
                 .textContentType(.none)
                 .autocorrectionDisabled()
+                .focused($isNameFocused)
                 .accessibilityIdentifier("player-name-field")
                 .padding(.horizontal, 24)
 
             Button {
+                isNameFocused = false
                 Task {
                     isLoading = true
                     await appState.playerJoin(
