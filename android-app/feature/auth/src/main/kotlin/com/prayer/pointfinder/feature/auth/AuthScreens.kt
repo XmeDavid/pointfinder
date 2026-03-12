@@ -166,14 +166,14 @@ fun CompassRose(modifier: Modifier = Modifier) {
         label = "rotation",
     )
 
-    val tiltSpec = spring<Float>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium)
+    val tiltSpec = spring<Float>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessHigh)
 
     // Smooth spring animation for device heading changes
     val animatedHeading by animateFloatAsState(
         targetValue = deviceOrientation?.heading ?: fallbackRotation,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow,
+            stiffness = Spring.StiffnessMediumLow,
         ),
         label = "heading",
     )
@@ -222,8 +222,8 @@ fun CompassRose(modifier: Modifier = Modifier) {
     val dragTiltX = remember { Animatable(0f) }
     val dragTiltY = remember { Animatable(0f) }
     val dragSpring = spring<Float>(
-        dampingRatio = Spring.DampingRatioMediumBouncy,
-        stiffness = Spring.StiffnessMedium,
+        dampingRatio = 8f,
+        stiffness = Spring.StiffnessHigh,
     )
     // Track where the finger currently is relative to center
     var touchPos by remember { mutableStateOf(Offset.Zero) }
