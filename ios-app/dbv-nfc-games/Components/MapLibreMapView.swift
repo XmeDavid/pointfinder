@@ -68,22 +68,31 @@ struct MapLibreMapView: UIViewRepresentable {
         coordinator.onLongPress = onLongPress
         coordinator.onUserInteraction = onUserInteraction
 
-        // Remove old annotations (keep user location annotation)
-        if let existing = mapView.annotations {
-            let nonUserAnnotations = existing.filter { !($0 is MLNUserLocation) }
-            mapView.removeAnnotations(nonUserAnnotations)
-        }
+        // Only remove/re-add annotations when they actually change to avoid
+        // tearing down annotation views on every SwiftUI render cycle (which
+        // causes taps to miss while MapLibre repositions views).
+        let newFingerprint = annotations.map { "\($0.id):\($0.coordinate.latitude),\($0.coordinate.longitude)" }.joined(separator: "|")
 
-        // Set annotation items before adding so viewFor delegate can resolve them
+        // Always update the items array so tap handlers use fresh closures
         coordinator.annotationItems = annotations
 
-        // Add new annotations
-        for item in annotations {
-            let point = MLNPointAnnotation()
-            point.coordinate = item.coordinate
-            point.title = item.title
-            point.subtitle = item.subtitle
-            mapView.addAnnotation(point)
+        if newFingerprint != coordinator.lastAnnotationFingerprint {
+            coordinator.lastAnnotationFingerprint = newFingerprint
+
+            // Remove old annotations (keep user location annotation)
+            if let existing = mapView.annotations {
+                let nonUserAnnotations = existing.filter { !($0 is MLNUserLocation) }
+                mapView.removeAnnotations(nonUserAnnotations)
+            }
+
+            // Add new annotations
+            for item in annotations {
+                let point = MLNPointAnnotation()
+                point.coordinate = item.coordinate
+                point.title = item.title
+                point.subtitle = item.subtitle
+                mapView.addAnnotation(point)
+            }
         }
 
         // Unlock connection lines
@@ -179,6 +188,7 @@ struct MapLibreMapView: UIViewRepresentable {
         var lastCenterTarget: CLLocationCoordinate2D?
         var lastFitId: UUID?
         var onUserInteraction: (() -> Void)?
+        var lastAnnotationFingerprint: String = ""
 
         init(_ parent: MapLibreMapView) {
             self.parent = parent
