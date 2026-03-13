@@ -13,18 +13,25 @@ export function useGameWebSocket(gameId: string | undefined): string | null {
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const pendingKeys = useRef<Set<string>>(new Set());
   const rafRef = useRef<number | null>(null);
+  const gameIdRef = useRef<string | undefined>(gameId);
+
+  // Keep the ref in sync so the RAF callback always uses the current gameId
+  useEffect(() => {
+    gameIdRef.current = gameId;
+  }, [gameId]);
 
   const scheduleInvalidate = useCallback((...keys: string[]) => {
     keys.forEach(k => pendingKeys.current.add(k));
     if (rafRef.current !== null) return;
     rafRef.current = requestAnimationFrame(() => {
+      const currentGameId = gameIdRef.current;
       pendingKeys.current.forEach(k =>
-        queryClient.invalidateQueries({ queryKey: [k, gameId] })
+        queryClient.invalidateQueries({ queryKey: [k, currentGameId] })
       );
       pendingKeys.current.clear();
       rafRef.current = null;
     });
-  }, [queryClient, gameId]);
+  }, [queryClient]);
 
   useEffect(() => {
     if (!gameId) return;

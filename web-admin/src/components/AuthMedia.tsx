@@ -63,6 +63,7 @@ export function AuthMedia({ src, alt, className, onClick, onBlobReady, initialBl
       return;
     }
 
+    let cancelled = false;
     let objectUrl: string | null = null;
     const srcIsVideoFile = src ? isVideo(src) : false;
     const fetchUrl = thumbnail && !srcIsVideoFile ? toThumbnailPath(normalizedSrc) : normalizedSrc;
@@ -71,11 +72,16 @@ export function AuthMedia({ src, alt, className, onClick, onBlobReady, initialBl
       apiClient
         .get(url, { responseType: "blob" })
         .then((response) => {
+          if (cancelled) {
+            // Component unmounted while fetch was in-flight; do not create a blob URL
+            return;
+          }
           objectUrl = URL.createObjectURL(response.data);
           setFetchedMedia({ source: normalizedSrc, url: objectUrl });
           onBlobReady?.(objectUrl);
         })
         .catch(() => {
+          if (cancelled) return;
           if (fallbackUrl) {
             doFetch(fallbackUrl);
             return;
@@ -89,6 +95,7 @@ export function AuthMedia({ src, alt, className, onClick, onBlobReady, initialBl
     doFetch(fetchUrl, fetchUrl !== normalizedSrc ? normalizedSrc : undefined);
 
     return () => {
+      cancelled = true;
       if (objectUrl) {
         URL.revokeObjectURL(objectUrl);
       }

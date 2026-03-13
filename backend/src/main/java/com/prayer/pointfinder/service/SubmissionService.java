@@ -202,6 +202,15 @@ public class SubmissionService {
         submission.getBase().getName();
         submission.getChallenge().getTitle();
 
+        // Guard against double-review: only pending or already-reviewed submissions
+        // can be re-reviewed (override). Log the override for auditability.
+        SubmissionStatus currentStatus = submission.getStatus();
+        if (currentStatus != SubmissionStatus.pending
+                && currentStatus != SubmissionStatus.approved
+                && currentStatus != SubmissionStatus.rejected) {
+            throw new BadRequestException("Submission in status '" + currentStatus + "' cannot be reviewed");
+        }
+
         SubmissionStatus newStatus;
         try {
             newStatus = SubmissionStatus.valueOf(request.getStatus());

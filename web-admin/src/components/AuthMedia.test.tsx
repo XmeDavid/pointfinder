@@ -58,4 +58,39 @@ describe("AuthMedia", () => {
       expect(mockGet).toHaveBeenNthCalledWith(2, "/games/123/files/abc.jpg", expect.any(Object));
     });
   });
+
+  it("does not create blob URL when unmounted before fetch resolves", async () => {
+    const mockGet = vi.mocked(apiClient.get);
+    let resolveGet: (value: unknown) => void;
+    const getPromise = new Promise((resolve) => { resolveGet = resolve; });
+    mockGet.mockReturnValueOnce(getPromise as ReturnType<typeof apiClient.get>);
+
+    const { unmount } = render(<AuthMedia src="/api/games/123/files/abc.jpg" />);
+
+    // Unmount before the fetch resolves
+    unmount();
+
+    // Now resolve the fetch -- the cancelled flag should prevent blob creation
+    resolveGet!({ data: new Blob(["img"]) });
+
+    // Wait a tick for the promise to process
+    await new Promise(r => setTimeout(r, 0));
+
+    // createObjectURL should NOT have been called since component was unmounted
+    expect(global.URL.createObjectURL).not.toHaveBeenCalled();
+  });
+
+  it("revokes blob URL on unmount when fetch completed", async () => {
+    const mockGet = vi.mocked(apiClient.get);
+    mockGet.mockResolvedValueOnce({ data: new Blob(["img"]) });
+
+    const { unmount } = render(<AuthMedia src="/api/games/123/files/abc.jpg" />);
+
+    await waitFor(() => {
+      expect(global.URL.createObjectURL).toHaveBeenCalled();
+    });
+
+    unmount();
+    expect(global.URL.revokeObjectURL).toHaveBeenCalledWith("blob:test-url");
+  });
 });
