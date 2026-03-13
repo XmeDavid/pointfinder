@@ -91,7 +91,10 @@ public class JwtTokenProvider {
     public String getTokenType(String token) {
         Claims claims = getClaims(token);
         String type = claims.get("type", String.class);
-        return type != null ? type : "user";
+        if (type == null) {
+            throw new JwtException("Token missing required 'type' claim");
+        }
+        return type;
     }
 
     public Claims getClaims(String token) {

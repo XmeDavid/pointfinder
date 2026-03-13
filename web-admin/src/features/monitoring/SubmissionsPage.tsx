@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo } from "react";
+import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle, XCircle, Clock, FileText, Filter, Maximize2, MoreHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
@@ -72,11 +72,29 @@ export function SubmissionsPage() {
   const [feedback, setFeedback] = useState("");
   const [reviewPoints, setReviewPoints] = useState<number>(0);
   const [fullScreenMedia, setFullScreenMedia] = useState<{ urls: string[]; index: number } | null>(null);
-  // Cache blob URLs by API path so the fullscreen dialog can reuse them
+  // Cache blob URLs by API path so the fullscreen dialog can reuse them.
+  // Limited to MAX_BLOB_CACHE entries to prevent unbounded memory growth.
+  const MAX_BLOB_CACHE = 100;
   const blobCache = useRef<Map<string, string>>(new Map());
   const cacheBlobUrl = useCallback((apiUrl: string, blobUrl: string) => {
-    blobCache.current.set(apiUrl, blobUrl);
+    const cache = blobCache.current;
+    if (cache.size >= MAX_BLOB_CACHE && !cache.has(apiUrl)) {
+      // Evict the oldest entry (first key in insertion order)
+      const oldest = cache.keys().next().value;
+      if (oldest !== undefined) {
+        cache.delete(oldest);
+      }
+    }
+    cache.set(apiUrl, blobUrl);
   }, []);
+
+  // Clear blob cache when switching games to avoid stale references
+  useEffect(() => {
+    const cache = blobCache.current;
+    return () => {
+      cache.clear();
+    };
+  }, [gameId]);
   const openFullScreen = useCallback((urls: string[], index: number) => {
     setFullScreenMedia({ urls, index });
   }, []);
