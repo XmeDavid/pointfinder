@@ -46,8 +46,11 @@ struct OperatorSetupHubView: View {
             result.append(SetupWarning(text: locale.t("operator.warningNoTeams"), icon: "person.3"))
         }
 
+        let fixedChallengeIds = Set(bases.compactMap { $0.fixedChallengeId })
         let assignedChallengeIds = Set(assignments.map { $0.challengeId })
-        let unassignedLocationBound = challenges.filter { $0.locationBound && !assignedChallengeIds.contains($0.id) }.count
+        let unassignedLocationBound = challenges.filter {
+            $0.locationBound && !fixedChallengeIds.contains($0.id) && !assignedChallengeIds.contains($0.id)
+        }.count
         if unassignedLocationBound > 0 {
             result.append(SetupWarning(
                 text: locale.t("operator.warningLocationBoundUnassigned", unassignedLocationBound),
