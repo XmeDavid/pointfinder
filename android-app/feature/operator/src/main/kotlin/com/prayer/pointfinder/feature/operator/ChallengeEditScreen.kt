@@ -96,10 +96,10 @@ fun ChallengeEditScreen(
         }
     }
     var fixedBaseId by remember {
-        val fromAssignment = challenge?.let { ch ->
-            assignments.firstOrNull { it.challengeId == ch.id && it.teamId == null }?.baseId
+        val fromBase = challenge?.let { ch ->
+            bases.firstOrNull { it.fixedChallengeId == ch.id }?.id
         }
-        mutableStateOf(fromAssignment ?: preLinkedBaseId)
+        mutableStateOf(fromBase ?: preLinkedBaseId)
     }
     var locationBound by remember { mutableStateOf(challenge?.locationBound ?: false) }
     var unlocksBaseId by remember { mutableStateOf<String?>(challenge?.unlocksBaseId) }

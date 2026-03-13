@@ -87,8 +87,8 @@ struct ChallengeEditView: View {
         self._answerType = State(initialValue: challenge?.answerType ?? "text")
         self._autoValidate = State(initialValue: challenge?.autoValidate ?? false)
         self._correctAnswers = State(initialValue: challenge?.correctAnswer ?? [])
-        let globalAssignment = assignments.first(where: { $0.challengeId == challenge?.id && $0.teamId == nil })
-        self._fixedBaseId = State(initialValue: globalAssignment?.baseId)
+        let fixedBase = bases.first(where: { $0.fixedChallengeId == challenge?.id })
+        self._fixedBaseId = State(initialValue: fixedBase?.id)
         self._locationBound = State(initialValue: challenge?.locationBound ?? false)
         self._unlocksBaseId = State(initialValue: challenge?.unlocksBaseId)
     }

@@ -103,6 +103,7 @@ struct BasesManagementView: View {
                                 if let index = bases.firstIndex(where: { $0.id == updatedBase.id }) {
                                     bases[index] = updatedBase
                                 }
+                                Task { await loadData() }
                             },
                             onDeleted: {
                                 bases.removeAll { $0.id == baseId }
@@ -118,6 +119,7 @@ struct BasesManagementView: View {
                         challenges: challenges,
                         onSaved: { newBase in
                             bases.append(newBase)
+                            Task { await loadData() }
                             path.removeLast()
                             path.append(BaseNavDestination.edit(newBase.id))
                         }

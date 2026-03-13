@@ -103,6 +103,7 @@ struct ChallengesManagementView: View {
                                 if let index = challenges.firstIndex(where: { $0.id == updatedChallenge.id }) {
                                     challenges[index] = updatedChallenge
                                 }
+                                Task { await loadData() }
                             },
                             onDeleted: {
                                 challenges.removeAll { $0.id == challengeId }
@@ -119,6 +120,7 @@ struct ChallengesManagementView: View {
                         assignments: assignments,
                         onSaved: { newChallenge in
                             challenges.append(newChallenge)
+                            Task { await loadData() }
                             path.removeLast()
                             path.append(ChallengeNavDestination.edit(newChallenge.id))
                         }

@@ -1,7 +1,20 @@
 
+## HIGH
+
+iPhone strings not rendering
+Location permissions not syncing
+Android check in, exit, appears checked in, mas is locked
+iOS operator not syncing
+Mapa on web is broken
+
+
+
 ## To review and merge
 dev/todos branch with various old todos done + audio in rich text
 
+
+## Flight findings
+- [LOW] When logging in without internet iOS has an alert saying internet connection is not available, while android just shows red under the text box that pointfinder host was not reachable.
 
 ## New Features [Prio]
 - [HIGH] Challange submission type: None - BACKEND + WEB DONE. Mobile apps still need UI changes: Android (PlayerGameplayScreens.kt) and iOS (SolveView.swift) need a "none" answer type path that auto-submits without showing text/file input. The operator mobile challenge edit screens also need the "none" option in the answer type picker.

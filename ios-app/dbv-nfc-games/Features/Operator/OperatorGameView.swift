@@ -87,6 +87,9 @@ struct OperatorGameView: View {
         .onDisappear {
             appState.disconnectRealtime()
         }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            appState.realtimeClient.ensureConnected()
+        }
         .onReceive(NotificationCenter.default.publisher(for: .mobileRealtimeEvent)) { notification in
             guard let rawGameId = notification.userInfo?["gameId"] as? String,
                   UUID(uuidString: rawGameId) == game.id,

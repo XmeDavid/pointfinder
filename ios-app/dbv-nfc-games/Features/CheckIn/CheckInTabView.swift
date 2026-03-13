@@ -126,6 +126,7 @@ struct CheckInTabView: View {
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+                appState.realtimeClient.ensureConnected()
                 guard appState.isOnline, appState.currentGame?.status != "live" else { return }
                 Task { await appState.loadProgress() }
             }

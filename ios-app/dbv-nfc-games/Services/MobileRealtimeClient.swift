@@ -17,6 +17,7 @@ final class MobileRealtimeClient {
     private var socketTask: URLSessionWebSocketTask?
     private var receiveTask: Task<Void, Never>?
     private var reconnectTask: Task<Void, Never>?
+    private var pingTask: Task<Void, Never>?
     private var desiredSession: DesiredSession?
     private var reconnectAttempt = 0
     private let logger = Logger(
@@ -52,11 +53,32 @@ final class MobileRealtimeClient {
         reconnectAttempt = 0
         reconnectTask?.cancel()
         reconnectTask = nil
+        pingTask?.cancel()
+        pingTask = nil
         receiveTask?.cancel()
         receiveTask = nil
         socketTask?.cancel(with: .normalClosure, reason: nil)
         socketTask = nil
         connectionState = .disconnected
+    }
+
+    /// Call when the app returns to foreground to ensure connection is alive.
+    func ensureConnected() {
+        guard desiredSession != nil else { return }
+        if connectionState == .connected, let task = socketTask {
+            // Verify with a ping; if it fails, reconnect
+            task.sendPing { [weak self] error in
+                Task { @MainActor [weak self] in
+                    if error != nil {
+                        self?.logger.info("Foreground ping failed, reconnecting")
+                        self?.handleDisconnect()
+                    }
+                }
+            }
+        } else if connectionState == .disconnected {
+            reconnectAttempt = 0
+            openConnection()
+        }
     }
 
     private func openConnection() {
@@ -67,6 +89,7 @@ final class MobileRealtimeClient {
 
         connectionState = reconnectAttempt == 0 ? .connecting : .reconnecting(attempt: reconnectAttempt)
 
+        pingTask?.cancel()
         receiveTask?.cancel()
         socketTask?.cancel(with: .goingAway, reason: nil)
 
@@ -78,19 +101,55 @@ final class MobileRealtimeClient {
         let task = urlSession.webSocketTask(with: request)
         socketTask = task
         task.resume()
-        connectionState = .connected
         startReceiveLoop(task: task)
+        startPingLoop(task: task)
     }
 
     private func startReceiveLoop(task: URLSessionWebSocketTask) {
         receiveTask = Task { [weak self] in
+            // First successful receive confirms connection
+            var firstMessage = true
             while !Task.isCancelled {
                 do {
                     let message = try await task.receive()
+                    if firstMessage {
+                        firstMessage = false
+                        self?.connectionState = .connected
+                        self?.reconnectAttempt = 0
+                    }
                     self?.handleMessage(message)
                 } catch {
                     self?.handleDisconnect()
                     break
+                }
+            }
+        }
+    }
+
+    private func startPingLoop(task: URLSessionWebSocketTask) {
+        pingTask = Task { [weak self] in
+            // Mark connected optimistically after a short delay if no message yet
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            if !Task.isCancelled, let self, self.connectionState != .connected {
+                self.connectionState = .connected
+                self.reconnectAttempt = 0
+            }
+
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 15_000_000_000) // 15 seconds
+                guard !Task.isCancelled else { break }
+                guard let self, let socket = self.socketTask, socket === task else { break }
+
+                await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                    socket.sendPing { [weak self] error in
+                        if let error {
+                            Task { @MainActor [weak self] in
+                                self?.logger.debug("Ping failed: \(error.localizedDescription, privacy: .public)")
+                                self?.handleDisconnect()
+                            }
+                        }
+                        continuation.resume()
+                    }
                 }
             }
         }
@@ -115,6 +174,8 @@ final class MobileRealtimeClient {
     }
 
     private func handleDisconnect() {
+        pingTask?.cancel()
+        pingTask = nil
         socketTask = nil
         receiveTask?.cancel()
         receiveTask = nil
@@ -152,7 +213,7 @@ final class MobileRealtimeClient {
         components.scheme = base.scheme == "https" ? "wss" : "ws"
         components.path = "/ws/mobile"
         components.queryItems = [
-            URLQueryItem(name: "gameId", value: session.gameId.uuidString),
+            URLQueryItem(name: "gameId", value: session.gameId.uuidString.lowercased()),
         ]
 
         guard let url = components.url else { return nil }
@@ -171,4 +232,3 @@ final class MobileRealtimeClient {
 extension Notification.Name {
     static let mobileRealtimeEvent = Notification.Name("mobileRealtimeEvent")
 }
-

@@ -30,6 +30,14 @@ export function MapPicker({ value, onChange, className, tileSource }: MapPickerP
     }
   }, [onChange]);
 
+  const handleLoad = useCallback(() => {
+    // MapLibre canvas may render at 0×0 when inside a dialog/modal.
+    // A deferred resize forces it to re-measure the container.
+    requestAnimationFrame(() => {
+      mapRef.current?.resize();
+    });
+  }, []);
+
   return (
     <div className="flex items-start gap-2">
       <div
@@ -42,6 +50,7 @@ export function MapPicker({ value, onChange, className, tileSource }: MapPickerP
           initialViewState={{ longitude: value.lng, latitude: value.lat, zoom: 15 }}
           style={{ width: "100%", height: "100%", borderRadius: "0.375rem" }}
           mapStyle={getResolvedStyleUrl(tileSource, dark)}
+          onLoad={handleLoad}
           onMoveEnd={handleMoveEnd}
           scrollZoom={!locked}
           dragPan={!locked}
