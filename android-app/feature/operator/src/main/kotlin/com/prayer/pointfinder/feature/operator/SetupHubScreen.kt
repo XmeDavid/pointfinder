@@ -280,8 +280,11 @@ private fun buildWarnings(
         )
     }
 
+    val fixedChallengeIds = bases.mapNotNull { it.fixedChallengeId }.toSet()
     val assignedChallengeIds = assignments.map { it.challengeId }.toSet()
-    val unassignedLocationBound = challenges.count { it.locationBound && it.id !in assignedChallengeIds }
+    val unassignedLocationBound = challenges.count {
+        it.locationBound && it.id !in fixedChallengeIds && it.id !in assignedChallengeIds
+    }
     if (unassignedLocationBound > 0) {
         warnings += SetupWarning(
             text = stringResource(R.string.label_location_bound_unassigned, unassignedLocationBound),
