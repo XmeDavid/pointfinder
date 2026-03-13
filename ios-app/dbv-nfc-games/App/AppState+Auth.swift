@@ -75,7 +75,6 @@ extension AppState {
                 refreshToken: response.refreshToken,
                 userId: response.user.id
             )
-            realtimeClient.disconnect()
             PushNotificationService.shared.configureForOperator(apiClient: apiClient, operatorToken: response.accessToken)
             PushNotificationService.shared.requestPermissionAndRegister()
 
@@ -217,7 +216,6 @@ extension AppState {
             }
 
             Task { await configureApiClientAuth(refreshToken: refreshToken) }
-            realtimeClient.disconnect()
             PushNotificationService.shared.configureForOperator(apiClient: apiClient, operatorToken: token)
             PushNotificationService.shared.requestPermissionAndRegister()
         }
