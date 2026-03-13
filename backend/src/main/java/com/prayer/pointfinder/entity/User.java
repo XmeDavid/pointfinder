@@ -46,5 +46,6 @@ public class User {
     private Instant createdAt;
 
     @ManyToMany(mappedBy = "operators")
+    @Builder.Default
     private Set<Game> operatedGames = new HashSet<>();
 }
