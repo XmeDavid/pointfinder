@@ -16,8 +16,8 @@ Android companion app for the PointFinder NFC gaming platform, providing player 
    ```
 
 2. Update the `.env` file with your configuration:
-   - `API_BASE_URL`: Your API server URL (defaults to https://pointfinder.pt)
-   - `GOOGLE_MAPS_API_KEY`: Your Google Maps API key (get from [Google Cloud Console](https://console.cloud.google.com/google/maps-apis))
+   - `API_BASE_URL_DEBUG`: API URL for debug builds (defaults to http://10.0.2.2:8080)
+   - `API_BASE_URL_RELEASE`: API URL for release builds (defaults to https://pointfinder.pt)
 
 ## Project Structure
 
