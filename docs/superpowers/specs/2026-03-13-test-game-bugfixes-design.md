@@ -17,7 +17,7 @@ Five bugs identified during test game feedback. Each has been investigated and v
 Add to production `.env`:
 ```
 APNS_PRODUCTION=true
-APNS_ENABLED=true   # verify this is also set
+APNS_ENABLED=true   # add if missing — without this, the APNs client never initializes
 ```
 Restart backend container.
 
@@ -48,7 +48,7 @@ Remove 2 lines:
 - `AppState+Auth.swift:78` — `realtimeClient.disconnect()` in `operatorLogin()`
 - `AppState+Auth.swift:220` — `realtimeClient.disconnect()` in `restoreSession()` operator branch
 
-No other changes needed. The existing `OperatorGameView` lifecycle connects/disconnects per-game.
+No other changes needed. The operator realtime connection is **view-driven, not login-driven**: `OperatorGameView` connects when it appears (with the specific game ID) and disconnects on disappear. Removing the disconnect at login just stops actively preventing this existing lifecycle from working. `ensureConnected()` on foreground return is a safe no-op when no `desiredSession` is set (i.e., before navigating to a game).
 
 ### Files Changed
 - `ios-app/dbv-nfc-games/App/AppState+Auth.swift`
@@ -84,6 +84,7 @@ Two distinct bugs:
 - Add `BackHandler` when `state.activeCheckIn != null` → calls `clearCheckIn()` + `refresh()`
 - Add `BackHandler` when `solving != null` → sets `solving = null`
 - Add `BackHandler` when `state.latestSubmission != null` → calls `backToMapFromSubmission()`
+- Add `BackHandler` when `state.selectedBase != null` → calls `clearSelectedBase()`
 
 **C. Keep `refresh()` in back handler**: The `ON_RESUME` observer only fires on app foreground, not internal navigation. Periodic polling is 10-30s. Removing `refresh()` would leave stale map data.
 
@@ -118,8 +119,8 @@ case .authorizedWhenInUse, .authorizedAlways:
 ```
 The guard clause at line 99 (`guard apiClient != nil, gameId != nil, token != nil`) prevents premature timer starts.
 
-**B. Create `pauseUpdates()` for denial** (`LocationService.swift`):
-Instead of calling `stopTracking()` on denial (which nulls credentials, making the service unrecoverable until next app launch):
+**B. Defensive hardening: `pauseUpdates()` on denial** (`LocationService.swift`):
+The current denial branch only logs. This is not a bug, but adding active cleanup ensures no resources are wasted if location was previously running and the user revokes permission from Settings mid-session:
 ```swift
 private func pauseUpdates() {
     locationManager.stopUpdatingLocation()
@@ -127,7 +128,7 @@ private func pauseUpdates() {
     sendTimer = nil
 }
 ```
-This preserves `apiClient`/`gameId`/`token` so `resumeIfNeeded()` and the authorization callback can recover the service when permission is later granted.
+This preserves `apiClient`/`gameId`/`token` (unlike `stopTracking()` which nulls them) so `resumeIfNeeded()` and the authorization callback can recover the service when permission is later granted.
 
 Use in the denial branch:
 ```swift
@@ -136,6 +137,7 @@ case .denied, .restricted:
         self.pauseUpdates()
     }
 ```
+Note: if `startTracking()` was never called, this is a safe no-op.
 
 ### Files Changed
 - `ios-app/dbv-nfc-games/Services/LocationService.swift`
