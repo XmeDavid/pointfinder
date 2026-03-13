@@ -67,6 +67,9 @@ extension AppState {
                     await GameDataCache.shared.cacheChallenge(challenge, forBaseId: baseId)
                 }
 
+                // Optimistic update so UI reflects check-in immediately
+                updateLocalBaseStatus(baseId: baseId, status: .checkedIn)
+
                 // Send location immediately so operators see the team near the base
                 await locationService.sendLocationNow()
 
@@ -134,6 +137,9 @@ extension AppState {
                     request: request,
                     token: token
                 )
+
+                // Optimistic update so UI reflects submission immediately
+                updateLocalBaseStatus(baseId: baseId, status: .submitted)
 
                 // Send location immediately so operators see the update
                 await locationService.sendLocationNow()

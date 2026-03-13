@@ -9,6 +9,7 @@ import com.prayer.pointfinder.core.data.repo.OfflineSyncWorker
 import com.prayer.pointfinder.core.data.repo.PlayerRepository
 import com.prayer.pointfinder.core.model.AuthType
 import com.prayer.pointfinder.core.model.BaseProgress
+import com.prayer.pointfinder.core.model.BaseStatus
 import com.prayer.pointfinder.core.model.CheckInResponse
 import com.prayer.pointfinder.core.model.GameStatus
 import com.prayer.pointfinder.core.model.PlayerNotificationResponse
@@ -196,6 +197,9 @@ class PlayerViewModel @Inject constructor(
                     scanError = null,
                     authExpired = false,
                 )
+                // Optimistic update: mark base as checked-in locally before
+                // refresh() replaces progress with (potentially stale) API data.
+                updateLocalBaseStatus(baseId, BaseStatus.CHECKED_IN)
                 // If the action was queued offline, trigger sync immediately
                 // so it retries as soon as connectivity allows.
                 if (result.queued) {
@@ -298,6 +302,7 @@ class PlayerViewModel @Inject constructor(
                     presenceVerified = false,
                     authExpired = false,
                 )
+                updateLocalBaseStatus(baseId, BaseStatus.SUBMITTED)
                 // If the action was queued offline, trigger sync immediately
                 // so it retries as soon as connectivity allows.
                 if (result.queued) {
@@ -423,6 +428,7 @@ class PlayerViewModel @Inject constructor(
                     presenceVerified = false,
                     authExpired = false,
                 )
+                updateLocalBaseStatus(baseId, BaseStatus.SUBMITTED)
                 launch { playerRepository.trySyncPendingActions(auth) }
                 OfflineSyncWorker.enqueue(context)
                 refresh(auth, online)
@@ -477,6 +483,27 @@ class PlayerViewModel @Inject constructor(
         if (original.endsWith(".mp4")) return "mp4"
         if (original.endsWith(".mov")) return "mov"
         return "jpg"
+    }
+
+    /**
+     * Optimistically update the local progress list so the UI reflects
+     * the new status immediately, before the server round-trip completes.
+     */
+    private fun updateLocalBaseStatus(baseId: String, status: BaseStatus) {
+        val current = _state.value.progress
+        val index = current.indexOfFirst { it.baseId == baseId }
+        if (index < 0) return
+        val updated = current.toMutableList()
+        updated[index] = updated[index].copy(
+            status = status,
+            checkedInAt = if (status == BaseStatus.CHECKED_IN) {
+                java.time.Instant.now().toString()
+            } else {
+                updated[index].checkedInAt
+            },
+            submissionStatus = if (status == BaseStatus.SUBMITTED) "pending" else updated[index].submissionStatus,
+        )
+        _state.value = _state.value.copy(progress = updated)
     }
 
     companion object {
