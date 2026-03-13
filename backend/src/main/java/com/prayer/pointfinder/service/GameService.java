@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -289,6 +290,31 @@ public class GameService {
         List<String> variableErrors = teamVariableService.validateVariableCompleteness(game.getId());
         if (!variableErrors.isEmpty()) {
             throw new BadRequestException("Team variables incomplete: " + variableErrors.get(0));
+        }
+
+        // Ensure all location-bound challenges are assigned (via fixedChallengeId or assignment record)
+        List<Challenge> locationBoundChallenges = challengeRepository.findByGameId(game.getId()).stream()
+                .filter(c -> Boolean.TRUE.equals(c.getLocationBound()))
+                .collect(Collectors.toList());
+        if (!locationBoundChallenges.isEmpty()) {
+            List<Base> bases = baseRepository.findByGameId(game.getId());
+            Set<UUID> fixedChallengeIds = bases.stream()
+                    .map(Base::getFixedChallenge)
+                    .filter(java.util.Objects::nonNull)
+                    .map(Challenge::getId)
+                    .collect(Collectors.toSet());
+            List<Assignment> assignments = assignmentRepository.findByGameId(game.getId());
+            Set<UUID> assignedChallengeIds = assignments.stream()
+                    .map(a -> a.getChallenge().getId())
+                    .collect(Collectors.toSet());
+
+            long unassignedCount = locationBoundChallenges.stream()
+                    .filter(c -> !fixedChallengeIds.contains(c.getId()) && !assignedChallengeIds.contains(c.getId()))
+                    .count();
+            if (unassignedCount > 0) {
+                throw new BadRequestException(
+                        String.format("%d location-bound challenge(s) not assigned to any base", unassignedCount));
+            }
         }
     }
 
