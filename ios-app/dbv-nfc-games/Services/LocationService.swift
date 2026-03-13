@@ -41,6 +41,18 @@ final class LocationService: NSObject, ObservableObject {
         scheduleSendTimer()
     }
 
+    /// Re-check location services and restart updates if tracking is active.
+    /// Call on foreground return to handle device-wide location toggle.
+    func resumeIfNeeded() {
+        guard apiClient != nil, gameId != nil, token != nil else { return }
+        guard CLLocationManager.locationServicesEnabled() else { return }
+        let status = locationManager.authorizationStatus
+        if status == .authorizedWhenInUse || status == .authorizedAlways {
+            locationManager.startUpdatingLocation()
+            scheduleSendTimer()
+        }
+    }
+
     /// Stop tracking and sending location.
     func stopTracking() {
         locationManager.stopUpdatingLocation()

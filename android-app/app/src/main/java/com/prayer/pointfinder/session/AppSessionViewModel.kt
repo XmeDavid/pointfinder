@@ -244,6 +244,11 @@ class AppSessionViewModel @Inject constructor(
         }
     }
 
+    /** Re-check device location on resume (handles device-wide GPS toggle). */
+    fun resumeLocationIfNeeded() {
+        locationService.resumeIfNeeded()
+    }
+
     fun clearError() {
         _state.value = _state.value.copy(errorMessage = null)
     }

@@ -566,8 +566,9 @@ private fun PlayerRootScreen(
 
     DisposableEffect(lifecycleOwner, auth.gameId, isOnline) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME && isOnline) {
-                viewModel.refresh(auth, true)
+            if (event == Lifecycle.Event.ON_RESUME) {
+                sessionViewModel.resumeLocationIfNeeded()
+                if (isOnline) viewModel.refresh(auth, true)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)

@@ -101,6 +101,31 @@ class PlayerLocationService @Inject constructor(
         startPeriodicSend()
     }
 
+    /**
+     * Re-check location availability and restart updates if tracking is active.
+     * Call on resume to handle device-wide location toggle.
+     */
+    @SuppressLint("MissingPermission")
+    fun resumeIfNeeded() {
+        if (gameId == null) return
+        if (!hasLocationPermission()) return
+        val lm = context.getSystemService(android.location.LocationManager::class.java) ?: return
+        if (!lm.isLocationEnabled) return
+
+        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 30_000L)
+            .setMinUpdateDistanceMeters(10f)
+            .setWaitForAccurateLocation(false)
+            .build()
+        client.requestLocationUpdates(request, callback, context.mainLooper)
+
+        if (scope == null) {
+            scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        }
+        if (sendJob == null || sendJob?.isActive != true) {
+            startPeriodicSend()
+        }
+    }
+
     fun stop() {
         client.removeLocationUpdates(callback)
         sendJob?.cancel()
