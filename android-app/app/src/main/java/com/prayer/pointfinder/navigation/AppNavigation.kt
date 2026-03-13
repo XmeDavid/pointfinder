@@ -10,6 +10,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.provider.OpenableColumns
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -600,6 +601,7 @@ private fun PlayerRootScreen(
                 )
             }
             state.latestSubmission != null -> {
+                BackHandler { backToMapFromSubmission() }
                 val submission = state.latestSubmission!!
                 SubmissionResultScreen(
                     submission = submission,
@@ -608,6 +610,7 @@ private fun PlayerRootScreen(
             }
 
             solving != null -> {
+                BackHandler { solving = null }
                 val (baseId, challengeId) = solving ?: return@PlayerHomeScaffold
 
                 // Closure that performs the actual submission (reused by direct and NFC paths).
@@ -723,6 +726,10 @@ private fun PlayerRootScreen(
             }
 
             state.activeCheckIn != null -> {
+                BackHandler {
+                    viewModel.clearCheckIn()
+                    viewModel.refresh(auth, isOnline)
+                }
                 val checkIn = state.activeCheckIn!!
                 BaseCheckInDetailScreen(
                     response = checkIn,
@@ -805,6 +812,7 @@ private fun PlayerRootScreen(
 
     val selectedBase = state.selectedBase
     if (selectedBase != null) {
+        BackHandler { viewModel.clearSelectedBase() }
         BaseDetailBottomSheet(
             baseProgress = selectedBase,
             challenge = state.selectedChallenge,
