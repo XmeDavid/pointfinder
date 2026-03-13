@@ -64,6 +64,14 @@ final class LocationService: NSObject, ObservableObject {
         lastLocation = nil
     }
 
+    /// Pause location updates and timer without clearing credentials.
+    /// Allows recovery via `resumeIfNeeded()` or authorization callback.
+    private func pauseUpdates() {
+        locationManager.stopUpdatingLocation()
+        sendTimer?.invalidate()
+        sendTimer = nil
+    }
+
     /// Send the current location immediately (e.g. after a check-in or submission).
     /// Also resets the timer so the next periodic send is a full interval later.
     func sendLocationNow() async {
@@ -134,8 +142,14 @@ extension LocationService: CLLocationManagerDelegate {
         switch manager.authorizationStatus {
         case .authorizedWhenInUse, .authorizedAlways:
             manager.startUpdatingLocation()
+            Task { @MainActor in
+                self.scheduleSendTimer()
+            }
         case .denied, .restricted:
             Logger(subsystem: "com.prayer.pointfinder", category: "LocationService").debug(" Location access denied")
+            Task { @MainActor in
+                self.pauseUpdates()
+            }
         default:
             break
         }
