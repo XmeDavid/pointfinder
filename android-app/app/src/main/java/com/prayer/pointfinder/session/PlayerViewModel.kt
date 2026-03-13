@@ -26,6 +26,7 @@ import java.io.File
 import java.io.IOException
 import java.util.UUID
 import javax.inject.Inject
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -86,6 +87,7 @@ class PlayerViewModel @Inject constructor(
 
     private var lastAuth: AuthType.Player? = null
     private var lastOnline: Boolean = true
+    private var checkInJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -188,7 +190,8 @@ class PlayerViewModel @Inject constructor(
     }
 
     fun startCheckIn(auth: AuthType.Player, baseId: String, online: Boolean) {
-        viewModelScope.launch {
+        checkInJob?.cancel()
+        checkInJob = viewModelScope.launch {
             runCatching {
                 playerRepository.checkIn(auth, baseId, online)
             }.onSuccess { result ->
@@ -220,6 +223,8 @@ class PlayerViewModel @Inject constructor(
     }
 
     fun clearCheckIn() {
+        checkInJob?.cancel()
+        checkInJob = null
         _state.value = _state.value.copy(activeCheckIn = null)
     }
 
