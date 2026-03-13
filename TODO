@@ -4,9 +4,12 @@
 iPhone strings not rendering
 Location permissions not syncing
 Android check in, exit, appears checked in, mas is locked
-iOS operator not syncing
-Mapa on web is broken
-
+iOS operator not syncing,
+XiOS operator, missing business logic on creating bases/challanges, example: assigned location bound challange to base, but base didnt automatically set with fixed challagen, is working on base. -> Tested on iOS, double check android.
+iOS operator could no
+X Map works on the base view, but when editing is not there, full blank.
+Notifications, iOS operator, didn't receive, double check if everything ok, i think the apns was not poiting to prod correctly.
+Map coordinates not perfectly synced on all devices: At least visually the pin is slightly different places on the map, we need high percision.
 
 
 ## To review and merge
