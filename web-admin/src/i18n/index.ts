@@ -46,6 +46,7 @@ i18n
       caches: ["localStorage"],
       lookupLocalStorage: "pointfinder-lang",
     },
+    initImmediate: false,
   });
 
 export default i18n;
