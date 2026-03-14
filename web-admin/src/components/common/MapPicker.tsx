@@ -83,7 +83,7 @@ export function MapPicker({ value, onChange, className, tileSource }: MapPickerP
             <button
               type="button"
               onClick={() => setLocked(false)}
-              className="flex items-center gap-2 px-4 py-2 rounded-md bg-white text-gray-800 text-sm font-medium shadow-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 rounded-md bg-white text-gray-800 text-sm font-medium shadow-lg hover:bg-gray-50 transition-colors cursor-pointer"
             >
               <Unlock className="h-4 w-4" />
               Unlock map
@@ -95,7 +95,7 @@ export function MapPicker({ value, onChange, className, tileSource }: MapPickerP
           <button
             type="button"
             onClick={() => setLocked(true)}
-            className="absolute top-2 right-2 z-20 p-2 rounded-md border border-input bg-background/90 backdrop-blur-sm hover:bg-accent text-muted-foreground transition-colors shadow-sm"
+            className="absolute top-2 right-2 z-20 p-2 rounded-md border border-input bg-background/90 backdrop-blur-sm hover:bg-accent text-muted-foreground transition-colors shadow-sm cursor-pointer"
             title="Lock map"
           >
             <Lock className="h-4 w-4" />
