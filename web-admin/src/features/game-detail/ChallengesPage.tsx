@@ -138,7 +138,9 @@ export function ChallengesPage() {
   function closeDialog() { setDialogOpen(false); setEditing(null); }
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const payload = { ...form };
+    const trimmedTitle = (form.title ?? "").trim();
+    if (!trimmedTitle) return;
+    const payload = { ...form, title: trimmedTitle };
     if (!payload.locationBound) {
       delete payload.fixedBaseId;
       delete payload.unlocksBaseId;

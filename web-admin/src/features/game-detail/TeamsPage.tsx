@@ -34,7 +34,7 @@ export function TeamsPage() {
   const [varsSaving, setVarsSaving] = useState(false);
 
   const createTeam = useMutation({
-    mutationFn: () => teamsApi.create({ gameId: gameId!, name: teamName }),
+    mutationFn: (name: string) => teamsApi.create({ gameId: gameId!, name }),
     onSuccess: () => { setActionError(""); queryClient.invalidateQueries({ queryKey: ["teams", gameId] }); setCreateOpen(false); setTeamName(""); toast.success(t("common.saved")); },
     onError: (error: unknown) => setActionError(getApiErrorMessage(error)),
   });
@@ -123,7 +123,7 @@ export function TeamsPage() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent onClose={() => setCreateOpen(false)}>
           <DialogHeader><DialogTitle>{t("teams.createTitle")}</DialogTitle></DialogHeader>
-          <form onSubmit={(e) => { e.preventDefault(); createTeam.mutate(); }}>
+          <form onSubmit={(e) => { e.preventDefault(); const trimmed = teamName.trim(); if (!trimmed) return; createTeam.mutate(trimmed); }}>
             <div className="space-y-2">
               <FormLabel htmlFor="teamName" required>
                 {t("teams.teamName")}

@@ -113,8 +113,11 @@ export function BasesPage() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (editing) { updateBase.mutate({ id: editing.id, data: form }); }
-    else { createBase.mutate(form as CreateBaseDto); }
+    const trimmedName = (form.name ?? "").trim();
+    if (!trimmedName) return;
+    const trimmedForm = { ...form, name: trimmedName };
+    if (editing) { updateBase.mutate({ id: editing.id, data: trimmedForm }); }
+    else { createBase.mutate(trimmedForm as CreateBaseDto); }
   }
 
   return (
