@@ -8,6 +8,7 @@ struct CheckInTabView: View {
     @State private var isScanning = false
     @State private var scanError: String?
     @State private var navigationPath = NavigationPath()
+    @State private var failedSyncCount = 0
 
     var body: some View {
         NavigationStack(path: $navigationPath) {
@@ -63,6 +64,17 @@ struct CheckInTabView: View {
                             Text(locale.t(key, appState.pendingActionsCount))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
+                        }
+                        .padding(.horizontal)
+                    }
+
+                    if failedSyncCount > 0 {
+                        HStack(spacing: 8) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.red)
+                            Text(locale.t("offline.failedSubmissions", String(failedSyncCount)))
+                                .font(.caption)
+                                .foregroundStyle(.red)
                         }
                         .padding(.horizontal)
                     }
@@ -130,6 +142,9 @@ struct CheckInTabView: View {
                 appState.locationService.resumeIfNeeded()
                 guard appState.isOnline, appState.currentGame?.status != "live" else { return }
                 Task { await appState.loadProgress() }
+            }
+            .task {
+                failedSyncCount = await OfflineQueue.shared.failedCount
             }
             .onAppear { consumeDeepLink() }
             .onChange(of: appState.pendingDeepLinkBaseId) { consumeDeepLink() }

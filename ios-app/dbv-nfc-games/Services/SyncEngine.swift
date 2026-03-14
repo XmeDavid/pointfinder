@@ -92,14 +92,13 @@ final class SyncEngine {
     }
 
     private func processAction(_ action: PendingAction) async {
-        // Skip if already at max retries
+        // Skip permanently failed actions
+        guard !action.permanentlyFailed else { return }
+
+        // Mark as permanently failed if at max retries
         if action.retryCount >= self.maxRetries {
-            // Remove failed action after max retries
-            await OfflineQueue.shared.dequeue(action.id)
-            if let localPath = action.mediaLocalFilePath {
-                try? FileManager.default.removeItem(atPath: localPath)
-            }
-            Logger(subsystem: "com.prayer.pointfinder", category: "SyncEngine").info(" Removed action \(action.id) after \(self.maxRetries) retries")
+            await OfflineQueue.shared.markFailed(action.id, reason: "Failed after \(self.maxRetries) retries")
+            Logger(subsystem: "com.prayer.pointfinder", category: "SyncEngine").info(" Marked action \(action.id) as permanently failed after \(self.maxRetries) retries")
             return
         }
 

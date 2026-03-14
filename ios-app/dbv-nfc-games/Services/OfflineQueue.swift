@@ -209,6 +209,25 @@ actor OfflineQueue {
         saveToDisk()
     }
 
+    /// Mark an action as permanently failed (will not be retried).
+    func markFailed(_ id: UUID, reason: String) {
+        if let index = pendingActions.firstIndex(where: { $0.id == id }) {
+            pendingActions[index].permanentlyFailed = true
+            pendingActions[index].failureReason = reason
+            saveToDisk()
+        }
+    }
+
+    /// Get all permanently failed actions.
+    var failedActions: [PendingAction] {
+        pendingActions.filter { $0.permanentlyFailed }
+    }
+
+    /// Count of permanently failed actions.
+    var failedCount: Int {
+        pendingActions.filter { $0.permanentlyFailed }.count
+    }
+
     /// Mark a media action as requiring user re-selection (source unavailable).
     func markNeedsReselect(id: UUID, message: String) {
         guard let index = pendingActions.firstIndex(where: { $0.id == id }) else { return }

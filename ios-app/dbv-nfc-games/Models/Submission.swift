@@ -120,6 +120,8 @@ struct PendingAction: Codable, Identifiable {
     var mediaItems: [PendingMediaItem]?
     var needsReselect: Bool
     var lastError: String?
+    var permanentlyFailed: Bool
+    var failureReason: String?
 
     init(type: PendingActionType, gameId: UUID, baseId: UUID, challengeId: UUID? = nil, answer: String? = nil) {
         self.id = UUID()
@@ -141,5 +143,33 @@ struct PendingAction: Codable, Identifiable {
         self.mediaItems = nil
         self.needsReselect = false
         self.lastError = nil
+        self.permanentlyFailed = false
+        self.failureReason = nil
+    }
+
+    // Backward-compatible decoding for existing JSON on user devices
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        type = try container.decode(PendingActionType.self, forKey: .type)
+        gameId = try container.decode(UUID.self, forKey: .gameId)
+        baseId = try container.decode(UUID.self, forKey: .baseId)
+        challengeId = try container.decodeIfPresent(UUID.self, forKey: .challengeId)
+        answer = try container.decodeIfPresent(String.self, forKey: .answer)
+        createdAt = try container.decode(Date.self, forKey: .createdAt)
+        retryCount = try container.decode(Int.self, forKey: .retryCount)
+        mediaContentType = try container.decodeIfPresent(String.self, forKey: .mediaContentType)
+        mediaLocalFilePath = try container.decodeIfPresent(String.self, forKey: .mediaLocalFilePath)
+        mediaSourcePath = try container.decodeIfPresent(String.self, forKey: .mediaSourcePath)
+        mediaSizeBytes = try container.decodeIfPresent(Int64.self, forKey: .mediaSizeBytes)
+        mediaFileName = try container.decodeIfPresent(String.self, forKey: .mediaFileName)
+        uploadSessionId = try container.decodeIfPresent(UUID.self, forKey: .uploadSessionId)
+        uploadChunkIndex = try container.decodeIfPresent(Int.self, forKey: .uploadChunkIndex)
+        uploadTotalChunks = try container.decodeIfPresent(Int.self, forKey: .uploadTotalChunks)
+        mediaItems = try container.decodeIfPresent([PendingMediaItem].self, forKey: .mediaItems)
+        needsReselect = try container.decodeIfPresent(Bool.self, forKey: .needsReselect) ?? false
+        lastError = try container.decodeIfPresent(String.self, forKey: .lastError)
+        permanentlyFailed = try container.decodeIfPresent(Bool.self, forKey: .permanentlyFailed) ?? false
+        failureReason = try container.decodeIfPresent(String.self, forKey: .failureReason)
     }
 }
