@@ -13,6 +13,7 @@ export interface CreateChallengeDto {
   locationBound: boolean;
   fixedBaseId?: string;
   unlocksBaseId?: string;
+  requirePresenceToSubmit?: boolean;
 }
 
 export const challengesApi = {

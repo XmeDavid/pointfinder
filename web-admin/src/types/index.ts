@@ -33,7 +33,6 @@ export interface Base {
   lat: number;
   lng: number;
   nfcLinked: boolean;
-  requirePresenceToSubmit: boolean;
   hidden: boolean;
   fixedChallengeId?: string;
 }
@@ -53,6 +52,7 @@ export interface Challenge {
   points: number;
   locationBound: boolean;
   unlocksBaseId?: string;
+  requirePresenceToSubmit: boolean;
 }
 
 export interface Team {

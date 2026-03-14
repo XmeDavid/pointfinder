@@ -251,8 +251,6 @@
     "clickMapToSelect": "Klicken Sie auf die Karte, um einen Ort auszuwählen",
     "mapView": "Kartenansicht",
     "listView": "Listenansicht",
-    "requirePresence": "Anwesenheit zum Einreichen erforderlich",
-    "requirePresenceHint": "Spieler müssen sich physisch an dieser Station befinden, um ihre Antwort einzureichen",
     "hidden": "Auf Karte ausgeblendet",
     "hiddenHint": "Spieler sehen diese Station nicht auf der Karte, bis sie einchecken (z. B. per NFC-Scan)",
     "hiddenTag": "Ausgeblendet",
@@ -297,6 +295,8 @@
     "unlocksBaseToggle": "Versteckte Basis freischalten",
     "unlocksBaseLabel": "Schaltet frei: {{base}}",
     "noHiddenBasesAvailable": "Keine versteckten Basen zum Freischalten verfügbar",
+    "requirePresence": "Anwesenheit zum Einreichen erforderlich",
+    "requirePresenceHint": "Spieler müssen physisch anwesend sein, um ihre Antwort für diese Aufgabe einzureichen",
     "deleteConfirmTitle": "Diese Aufgabe löschen?",
     "deleteConfirmDescription": "Diese Aufgabe und alle ihre Zuweisungen werden dauerhaft gelöscht."
   },

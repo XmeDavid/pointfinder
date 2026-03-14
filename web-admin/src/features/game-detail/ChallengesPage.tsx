@@ -125,6 +125,7 @@ export function ChallengesPage() {
       autoValidate: false,
       points: 100,
       locationBound: false,
+      requirePresenceToSubmit: false,
     });
     setDialogOpen(true);
   }
@@ -141,6 +142,9 @@ export function ChallengesPage() {
     const trimmedTitle = (form.title ?? "").trim();
     if (!trimmedTitle) return;
     const payload = { ...form, title: trimmedTitle };
+    if (payload.answerType === "none") {
+      payload.requirePresenceToSubmit = false;
+    }
     if (!payload.locationBound) {
       delete payload.fixedBaseId;
       delete payload.unlocksBaseId;
@@ -268,7 +272,7 @@ export function ChallengesPage() {
               >
                 <ErrorBoundary>
                   <Suspense fallback={<div className="h-[200px] animate-pulse rounded-md border border-input bg-muted/30" />}>
-                    <RichTextEditor value={form.content ?? ""} onChange={(html) => setForm((f) => ({ ...f, content: html }))} placeholder={t("challenges.contentPlaceholder")} availableVariables={editing ? availableVariables : undefined} />
+                    <RichTextEditor value={form.content ?? ""} onChange={(html) => setForm((f) => ({ ...f, content: html }))} placeholder={t("challenges.contentPlaceholder")} availableVariables={availableVariables.length > 0 ? availableVariables : undefined} />
                   </Suspense>
                 </ErrorBoundary>
               </Collapsible>
@@ -283,7 +287,7 @@ export function ChallengesPage() {
                     value={form.completionContent ?? ""}
                     onChange={(html) => setForm((f) => ({ ...f, completionContent: html }))}
                     placeholder={t("challenges.completionContentPlaceholder")}
-                    availableVariables={editing ? availableVariables : undefined}
+                    availableVariables={availableVariables.length > 0 ? availableVariables : undefined}
                   />
                 </Suspense>
               </ErrorBoundary>
@@ -294,7 +298,7 @@ export function ChallengesPage() {
                 <div className="flex gap-2" data-testid="challenge-type-select">
                   <Button type="button" variant={form.answerType === "text" ? "default" : "outline"} size="sm" onClick={() => setForm((f) => ({ ...f, answerType: "text" }))}><FileText className="mr-1 h-4 w-4" /> {t("challenges.text")}</Button>
                   <Button type="button" variant={form.answerType === "file" ? "default" : "outline"} size="sm" onClick={() => setForm((f) => ({ ...f, answerType: "file", autoValidate: false }))}><Image className="mr-1 h-4 w-4" /> {t("challenges.fileUpload")}</Button>
-                  <Button type="button" variant={form.answerType === "none" ? "default" : "outline"} size="sm" onClick={() => setForm((f) => ({ ...f, answerType: "none", autoValidate: false }))}><CircleCheck className="mr-1 h-4 w-4" /> {t("challenges.checkIn")}</Button>
+                  <Button type="button" variant={form.answerType === "none" ? "default" : "outline"} size="sm" onClick={() => setForm((f) => ({ ...f, answerType: "none", autoValidate: false, requirePresenceToSubmit: false }))} disabled={form.requirePresenceToSubmit}><CircleCheck className="mr-1 h-4 w-4" /> {t("challenges.checkIn")}</Button>
                 </div>
                 {form.answerType === "none" && (
                   <p className="text-xs text-muted-foreground">{t("challenges.checkInDescription")}</p>
@@ -307,6 +311,16 @@ export function ChallengesPage() {
                       checked={form.autoValidate ?? false}
                       onCheckedChange={(v) => setForm((f) => ({ ...f, autoValidate: v }))}
                       disabled={form.answerType === "file"}
+                    />
+                  </div>
+                )}
+                {form.answerType !== "none" && (
+                  <div className="flex items-center justify-between">
+                    <FormLabel htmlFor="challengeRequirePresence">{t("challenges.requirePresence")}</FormLabel>
+                    <Switch
+                      id="challengeRequirePresence"
+                      checked={form.requirePresenceToSubmit ?? false}
+                      onCheckedChange={(v) => setForm((f) => ({ ...f, requirePresenceToSubmit: v }))}
                     />
                   </div>
                 )}
@@ -407,30 +421,34 @@ export function ChallengesPage() {
                 </Button>
               </div>
             )}
-            {editing && teams.length > 0 && (
+            {teams.length > 0 && (
               <Collapsible
                 title={t("teamVariables.challengeVariables")}
                 icon={<Variable className="h-4 w-4 text-muted-foreground" />}
                 description={t("teamVariables.challengeVariablesDescription")}
                 className="border-t border-border pt-2"
               >
-                <TeamVariablesEditor
-                  teams={teams}
-                  variables={challengeVarsData?.variables ?? []}
-                  saving={varsSaving}
-                  onSave={async (vars) => {
-                    setVarsSaving(true);
-                    try {
-                      await teamVariablesApi.saveChallengeVariables(gameId!, editing.id, { variables: vars });
-                      queryClient.invalidateQueries({ queryKey: ["challenge-variables", gameId, editing.id] });
-                      setActionError("");
-                    } catch (error) {
-                      setActionError(getApiErrorMessage(error));
-                    } finally {
-                      setVarsSaving(false);
-                    }
-                  }}
-                />
+                {editing ? (
+                  <TeamVariablesEditor
+                    teams={teams}
+                    variables={challengeVarsData?.variables ?? []}
+                    saving={varsSaving}
+                    onSave={async (vars) => {
+                      setVarsSaving(true);
+                      try {
+                        await teamVariablesApi.saveChallengeVariables(gameId!, editing.id, { variables: vars });
+                        queryClient.invalidateQueries({ queryKey: ["challenge-variables", gameId, editing.id] });
+                        setActionError("");
+                      } catch (error) {
+                        setActionError(getApiErrorMessage(error));
+                      } finally {
+                        setVarsSaving(false);
+                      }
+                    }}
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground">{t("teamVariables.saveFirstToAddChallengeVariables")}</p>
+                )}
               </Collapsible>
             )}
             {editing && availableVariables.length > 0 && teams.length > 0 && (

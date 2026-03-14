@@ -99,13 +99,13 @@ export function BasesPage() {
     const lastBase = bases.length > 0 ? bases[bases.length - 1] : null;
     const lat = lastBase ? lastBase.lat : defaultLocation.lat;
     const lng = lastBase ? lastBase.lng : defaultLocation.lng;
-    setForm({ name: "", description: "", lat, lng, requirePresenceToSubmit: false, hidden: false });
+    setForm({ name: "", description: "", lat, lng, hidden: false });
     setDialogOpen(true);
   }
 
   function openEdit(base: Base) {
     setEditing(base);
-    setForm({ name: base.name, description: base.description, lat: base.lat, lng: base.lng, fixedChallengeId: base.fixedChallengeId, requirePresenceToSubmit: base.requirePresenceToSubmit, hidden: base.hidden });
+    setForm({ name: base.name, description: base.description, lat: base.lat, lng: base.lng, fixedChallengeId: base.fixedChallengeId, hidden: base.hidden });
     setDialogOpen(true);
   }
 
@@ -258,17 +258,6 @@ export function BasesPage() {
               </Select>
               {availableFixedChallenges.length === 0 && <p className="text-xs text-muted-foreground">{t("bases.noFixedChallengesAvailable")}</p>}
               <p className="text-xs text-muted-foreground">{t("bases.fixedChallengeHint")}</p>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div className="space-y-0.5">
-                <FormLabel htmlFor="requirePresence">{t("bases.requirePresence")}</FormLabel>
-                <p className="text-xs text-muted-foreground">{t("bases.requirePresenceHint")}</p>
-              </div>
-              <Switch
-                id="requirePresence"
-                checked={form.requirePresenceToSubmit ?? false}
-                onCheckedChange={(checked) => setForm((f) => ({ ...f, requirePresenceToSubmit: checked }))}
-              />
             </div>
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">

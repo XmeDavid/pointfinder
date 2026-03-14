@@ -18,7 +18,6 @@ function base(
     lat: 0,
     lng: 0,
     nfcLinked: false,
-    requirePresenceToSubmit: false,
     hidden: false,
     ...overrides,
   };
@@ -39,6 +38,7 @@ function challenge(
     autoValidate: false,
     points: 10,
     locationBound: false,
+    requirePresenceToSubmit: false,
     ...overrides,
   };
 }

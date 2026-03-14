@@ -30,7 +30,6 @@ export interface BaseExportDto {
   lat: number;
   lng: number;
   hidden?: boolean;
-  requirePresenceToSubmit?: boolean;
   fixedChallengeTempId?: string | null;
 }
 
@@ -45,6 +44,7 @@ export interface ChallengeExportDto {
   correctAnswer?: string[];
   points: number;
   locationBound?: boolean;
+  requirePresenceToSubmit?: boolean;
 }
 
 export interface TeamExportDto {
