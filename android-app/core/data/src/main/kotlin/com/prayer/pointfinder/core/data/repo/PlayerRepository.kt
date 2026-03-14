@@ -659,11 +659,15 @@ class PlayerRepository @Inject constructor(
                     if (action.requiresReselect) continue
                     when (syncMediaSubmission(auth, action)) {
                         MediaSyncOutcome.Synced -> markSynced(action.id)
-                        MediaSyncOutcome.PermanentFailure -> markSynced(action.id)
+                        MediaSyncOutcome.PermanentFailure -> markPermanentlyFailed(
+                            action.id, "Submission permanently failed"
+                        )
                         MediaSyncOutcome.NeedsReselect -> continue
                         MediaSyncOutcome.Retry -> {
                             if (action.retryCount >= MAX_RETRIES) {
-                                markSynced(action.id)
+                                markPermanentlyFailed(
+                                    action.id, "Submission failed after $MAX_RETRIES retries"
+                                )
                             } else {
                                 incrementRetry(action.id)
                                 return
@@ -693,7 +697,9 @@ class PlayerRepository @Inject constructor(
                         markSynced(action.id)
                     } else {
                         if (action.retryCount >= MAX_RETRIES) {
-                            markSynced(action.id)
+                            markPermanentlyFailed(
+                                action.id, "Submission failed after $MAX_RETRIES retries"
+                            )
                         } else {
                             incrementRetry(action.id)
                             return
@@ -710,7 +716,14 @@ class PlayerRepository @Inject constructor(
         return db.challengeDao().challengeForBase(auth.gameId, auth.teamId, baseId)?.toChallengeInfo()
     }
 
-    suspend fun pendingActions(): List<PendingActionEntity> = db.pendingActionDao().pendingActions()
+    suspend fun pendingActions(): List<PendingActionEntity> =
+        db.pendingActionDao().pendingActions().filter { !it.permanentlyFailed }
+
+    suspend fun failedActions(): List<PendingActionEntity> = db.pendingActionDao().getFailedActions()
+
+    suspend fun markPermanentlyFailed(actionId: String, reason: String) {
+        db.pendingActionDao().markPermanentlyFailed(actionId, reason)
+    }
 
     suspend fun markSynced(actionId: String) {
         val action = db.pendingActionDao().findById(actionId)

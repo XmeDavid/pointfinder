@@ -7,6 +7,7 @@ import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.prayer.pointfinder.BuildConfig
 import com.prayer.pointfinder.core.data.local.CompanionDatabase
+import com.prayer.pointfinder.core.data.local.MIGRATION_3_4
 import com.prayer.pointfinder.core.data.repo.OperatorTokenRefresher
 import com.prayer.pointfinder.core.data.repo.SessionStore
 import com.prayer.pointfinder.core.network.ApiFactory
@@ -119,6 +120,7 @@ object AppModule {
             DB_NAME,
         )
             .openHelperFactory(factory)
+            .addMigrations(MIGRATION_3_4)
             .fallbackToDestructiveMigration()
             .build()
     }

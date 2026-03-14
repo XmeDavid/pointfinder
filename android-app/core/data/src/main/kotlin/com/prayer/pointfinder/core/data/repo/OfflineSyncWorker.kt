@@ -44,10 +44,14 @@ class OfflineSyncWorker @AssistedInject constructor(
                     MediaSyncOutcome.NeedsReselect -> {
                         // Keep action persisted with requiresReselect so UI can prompt re-selection.
                     }
-                    MediaSyncOutcome.PermanentFailure -> playerRepository.markSynced(action.id)
+                    MediaSyncOutcome.PermanentFailure -> playerRepository.markPermanentlyFailed(
+                        action.id, "Submission permanently failed"
+                    )
                     MediaSyncOutcome.Retry -> {
                         if (action.retryCount >= 5) {
-                            playerRepository.markSynced(action.id)
+                            playerRepository.markPermanentlyFailed(
+                                action.id, "Submission failed after 5 retries"
+                            )
                         } else {
                             playerRepository.incrementRetry(action.id)
                             return Result.retry()
@@ -80,8 +84,9 @@ class OfflineSyncWorker @AssistedInject constructor(
                 playerRepository.markSynced(action.id)
             } else {
                 if (action.retryCount >= 5) {
-                    // Drop permanently failing actions after cap to avoid deadlock.
-                    playerRepository.markSynced(action.id)
+                    playerRepository.markPermanentlyFailed(
+                        action.id, "Submission failed after 5 retries"
+                    )
                 } else {
                     playerRepository.incrementRetry(action.id)
                     return Result.retry()

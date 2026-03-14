@@ -9,6 +9,8 @@ import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.prayer.pointfinder.core.model.BaseProgress
 import com.prayer.pointfinder.core.model.BaseStatus
 import com.prayer.pointfinder.core.model.CheckInResponse
@@ -35,6 +37,8 @@ data class PendingActionEntity(
     val lastError: String? = null,
     /** JSON-encoded list of media items for multi-media submissions. */
     val mediaItemsJson: String? = null,
+    val permanentlyFailed: Boolean = false,
+    val failureReason: String? = null,
 )
 
 @Entity(tableName = "cached_progress", primaryKeys = ["gameId", "baseId"])
@@ -122,6 +126,12 @@ interface PendingActionDao {
 
     @Query("DELETE FROM pending_actions")
     suspend fun clearAll()
+
+    @Query("UPDATE pending_actions SET permanentlyFailed = 1, failureReason = :reason WHERE id = :id")
+    suspend fun markPermanentlyFailed(id: String, reason: String)
+
+    @Query("SELECT * FROM pending_actions WHERE permanentlyFailed = 1")
+    suspend fun getFailedActions(): List<PendingActionEntity>
 }
 
 @Dao
@@ -163,13 +173,20 @@ interface ChallengeDao {
         CachedProgressEntity::class,
         CachedChallengeEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = false,
 )
 abstract class CompanionDatabase : RoomDatabase() {
     abstract fun pendingActionDao(): PendingActionDao
     abstract fun progressDao(): ProgressDao
     abstract fun challengeDao(): ChallengeDao
+}
+
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE pending_actions ADD COLUMN permanentlyFailed INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE pending_actions ADD COLUMN failureReason TEXT")
+    }
 }
 
 fun BaseProgress.toCached(gameId: String): CachedProgressEntity {
