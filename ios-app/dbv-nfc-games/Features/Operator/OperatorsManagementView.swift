@@ -13,6 +13,7 @@ struct OperatorsManagementView: View {
     @State private var inviteEmail = ""
     @State private var isSendingInvite = false
     @State private var errorMessage: String?
+    @State private var operatorToRemove: OperatorUserResponse?
 
     private var token: String? {
         if case .userOperator(let token, _, _) = appState.authType {
@@ -49,6 +50,15 @@ struct OperatorsManagementView: View {
                                 .background(op.role == "admin" ? Color.blue.opacity(0.15) : Color(.systemGray5))
                                 .foregroundStyle(op.role == "admin" ? .blue : .secondary)
                                 .clipShape(Capsule())
+                        }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            if op.role != "admin" {
+                                Button(role: .destructive) {
+                                    operatorToRemove = op
+                                } label: {
+                                    Label(locale.t("common.remove"), systemImage: "trash")
+                                }
+                            }
                         }
                     }
                 }
@@ -119,6 +129,19 @@ struct OperatorsManagementView: View {
             }
             Button(locale.t("common.cancel"), role: .cancel) {}
         }
+        .alert(locale.t("operator.removeOperator"), isPresented: Binding(
+            get: { operatorToRemove != nil },
+            set: { if !$0 { operatorToRemove = nil } }
+        )) {
+            Button(locale.t("common.remove"), role: .destructive) {
+                if let op = operatorToRemove {
+                    Task { await removeOperator(op) }
+                }
+            }
+            Button(locale.t("common.cancel"), role: .cancel) {}
+        } message: {
+            Text(locale.t("operator.removeOperatorConfirm", operatorToRemove?.name ?? ""))
+        }
     }
 
     // MARK: - Helpers
@@ -149,6 +172,16 @@ struct OperatorsManagementView: View {
     }
 
     // MARK: - Actions
+
+    private func removeOperator(_ op: OperatorUserResponse) async {
+        guard let token else { return }
+        do {
+            try await appState.apiClient.removeOperator(gameId: game.id, userId: op.id, token: token)
+            operators.removeAll { $0.id == op.id }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
 
     private func sendInvite() async {
         guard let token else { return }
