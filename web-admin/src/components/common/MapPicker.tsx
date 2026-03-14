@@ -30,12 +30,21 @@ export function MapPicker({ value, onChange, className, tileSource }: MapPickerP
     }
   }, [onChange]);
 
+  const rafRef = useRef<number>(0);
+
   const handleLoad = useCallback(() => {
     // MapLibre canvas may render at 0×0 when inside a dialog/modal.
     // A deferred resize forces it to re-measure the container.
-    requestAnimationFrame(() => {
+    rafRef.current = requestAnimationFrame(() => {
       mapRef.current?.resize();
     });
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      mapRef.current?.getMap().remove();
+    };
   }, []);
 
   return (
