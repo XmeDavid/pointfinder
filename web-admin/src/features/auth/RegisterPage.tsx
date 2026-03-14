@@ -8,6 +8,7 @@ import { Alert } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
+import { getApiErrorMessage } from "@/lib/api/errors";
 import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL || "/api";
@@ -40,16 +41,25 @@ export function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      setError(t("auth.nameRequired"));
+      return;
+    }
+    if (password.length < 6) {
+      setError(t("auth.passwordTooShort"));
+      return;
+    }
     if (password !== confirmPassword) {
       setError(t("auth.passwordsNoMatch"));
       return;
     }
     setLoading(true);
     try {
-      await register(token ?? "", name, email, password);
+      await register(token ?? "", trimmedName, email, password);
       navigate("/games");
-    } catch {
-      setError(t("auth.registrationFailed"));
+    } catch (err) {
+      setError(getApiErrorMessage(err, t("auth.registrationFailed")));
     } finally {
       setLoading(false);
     }
@@ -86,7 +96,7 @@ export function RegisterPage() {
               <FormLabel htmlFor="password" required>
                 {t("auth.password")}
               </FormLabel>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
             </div>
             <div className="space-y-2">
               <FormLabel htmlFor="confirm" required>

@@ -55,6 +55,8 @@
     "createAccount": "Konto erstellen",
     "creatingAccount": "Konto wird erstellt...",
     "passwordsNoMatch": "Passwörter stimmen nicht überein",
+    "nameRequired": "Bitte geben Sie Ihren Namen ein",
+    "passwordTooShort": "Das Passwort muss mindestens 6 Zeichen lang sein",
     "registrationFailed": "Registrierung fehlgeschlagen. Die Einladung ist möglicherweise abgelaufen.",
     "forgotPassword": "Passwort vergessen?",
     "forgotPasswordTitle": "Passwort vergessen",

@@ -55,6 +55,8 @@
     "createAccount": "Criar Conta",
     "creatingAccount": "A criar conta...",
     "passwordsNoMatch": "As palavras-passe não coincidem",
+    "nameRequired": "Por favor, insira o seu nome",
+    "passwordTooShort": "A palavra-passe deve ter pelo menos 6 caracteres",
     "registrationFailed": "Registo falhou. O convite pode ter expirado.",
     "forgotPassword": "Esqueceu a palavra-passe?",
     "forgotPasswordTitle": "Recuperar Palavra-passe",

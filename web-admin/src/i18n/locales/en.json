@@ -55,6 +55,8 @@
     "createAccount": "Create Account",
     "creatingAccount": "Creating account...",
     "passwordsNoMatch": "Passwords do not match",
+    "nameRequired": "Please enter your name",
+    "passwordTooShort": "Password must be at least 6 characters",
     "registrationFailed": "Registration failed. The invite may have expired.",
     "forgotPassword": "Forgot password?",
     "forgotPasswordTitle": "Forgot Password",
