@@ -46,6 +46,21 @@ struct SolveView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                // Game not live warning
+                if appState.currentGame?.status != "live" {
+                    HStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                        Text(locale.t("solve.gameNotLive"))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color.orange.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+
                 // Instructions
                 VStack(alignment: .leading, spacing: 8) {
                     Label(isPhotoType ? locale.t("solve.submitPhoto") : locale.t("solve.submitAnswer"),
@@ -360,6 +375,7 @@ struct SolveView: View {
     // MARK: - Submit Logic
 
     private var canSubmit: Bool {
+        guard appState.currentGame?.status == "live" else { return false }
         if isPhotoType {
             return !selectedMedia.isEmpty
         } else {

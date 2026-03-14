@@ -399,6 +399,15 @@ enum Translations {
         "error.photoProcessing": "Failed to process photo.",
         "error.mediaSourceRequired": "Large media must keep an accessible source file. Please reselect it.",
         "error.mediaUploadDisabled": "Media uploads are temporarily unavailable.",
+
+        // Gap fixes
+        "solve.gameNotLive": "This game is not currently active",
+        "join.codeTooShort": "Join code must be at least 6 characters",
+        "offline.failedSubmissions": "%@ submission(s) failed to sync. Check your connection and try again.",
+        "operator.removeOperator": "Remove Operator",
+        "operator.removeOperatorConfirm": "Remove %@ as an operator from this game?",
+        "common.remove": "Remove",
+        "setup.teamVariablesIncomplete": "Some teams have incomplete variable values",
     ]
 
     // MARK: - Portuguese
@@ -811,6 +820,15 @@ enum Translations {
         "error.photoProcessing": "Falha ao processar foto.",
         "error.mediaSourceRequired": "Media grande precisa manter o ficheiro de origem acessível. Seleciona-o novamente.",
         "error.mediaUploadDisabled": "Envio de media está temporariamente indisponível.",
+
+        // Gap fixes
+        "solve.gameNotLive": "Este jogo não está ativo no momento",
+        "join.codeTooShort": "O código deve ter pelo menos 6 caracteres",
+        "offline.failedSubmissions": "%@ submissão(ões) falharam ao sincronizar. Verifique a conexão e tente novamente.",
+        "operator.removeOperator": "Remover Operador",
+        "operator.removeOperatorConfirm": "Remover %@ como operador deste jogo?",
+        "common.remove": "Remover",
+        "setup.teamVariablesIncomplete": "Algumas equipas têm valores de variáveis incompletos",
     ]
 
     // MARK: - German
@@ -1223,6 +1241,15 @@ enum Translations {
         "error.photoProcessing": "Foto konnte nicht verarbeitet werden.",
         "error.mediaSourceRequired": "Große Medien benötigen eine verfügbare Quelldatei. Bitte erneut auswählen.",
         "error.mediaUploadDisabled": "Medien-Uploads sind vorübergehend nicht verfügbar.",
+
+        // Gap fixes
+        "solve.gameNotLive": "Dieses Spiel ist derzeit nicht aktiv",
+        "join.codeTooShort": "Der Code muss mindestens 6 Zeichen lang sein",
+        "offline.failedSubmissions": "%@ Einreichung(en) konnten nicht synchronisiert werden. Überprüfen Sie Ihre Verbindung.",
+        "operator.removeOperator": "Operator entfernen",
+        "operator.removeOperatorConfirm": "%@ als Operator aus diesem Spiel entfernen?",
+        "common.remove": "Entfernen",
+        "setup.teamVariablesIncomplete": "Einige Teams haben unvollständige Variablenwerte",
     ]
 }
 
