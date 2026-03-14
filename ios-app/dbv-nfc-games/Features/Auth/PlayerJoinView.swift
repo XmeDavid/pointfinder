@@ -62,6 +62,13 @@ struct PlayerJoinView: View {
                 .padding(.horizontal, 24)
                 .accessibilityIdentifier("player-join-code-input")
 
+            if !joinCode.isEmpty && joinCode.trimmingCharacters(in: .whitespacesAndNewlines).count < 6 {
+                Text(locale.t("join.codeTooShort"))
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .padding(.horizontal, 24)
+            }
+
             // Next button
             Button {
                 isCodeFocused = false
@@ -98,7 +105,8 @@ struct PlayerJoinView: View {
     }
 
     private var canProceed: Bool {
-        !joinCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let trimmed = joinCode.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.count >= 6 && trimmed.count <= 20
     }
 }
 
