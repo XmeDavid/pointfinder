@@ -5,7 +5,7 @@
 
 set -e
 
-domains=(pointfinder.pt pointfinder.ch)
+domains=(pointfinder.pt pointfinder.ch grafana.pointfinder.pt grafana.pointfinder.ch)
 primary_domain="${domains[0]}"
 rsa_key_size=4096
 data_path="./certbot"
@@ -70,4 +70,5 @@ docker compose exec nginx nginx -s reload
 echo
 
 echo "### SSL certificates successfully installed!"
-echo "### Your site is now available at https://pointfinder.pt and https://pointfinder.ch"
+echo "### Your site is now available at https://pointfinder.pt, https://pointfinder.ch"
+echo "### Grafana available at https://grafana.pointfinder.pt, https://grafana.pointfinder.ch"
