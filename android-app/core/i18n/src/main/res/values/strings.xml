@@ -354,6 +354,9 @@
     <string name="label_no_operators">No operators yet</string>
     <string name="label_no_invites">No pending invites</string>
     <string name="action_invite">Invite</string>
+    <string name="action_remove_operator">Remove operator</string>
+    <string name="confirm_remove_operator">Remove Operator</string>
+    <string name="confirm_remove_operator_message">Remove %1$s as an operator?</string>
     <string name="label_exporting">Exporting\u2026</string>
 
     <!-- Toast / Snackbar -->

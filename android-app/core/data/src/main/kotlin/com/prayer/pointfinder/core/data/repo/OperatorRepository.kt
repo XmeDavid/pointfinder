@@ -157,6 +157,10 @@ class OperatorRepository @Inject constructor(
     suspend fun removeGameOperator(gameId: String, userId: String): Response<Unit> =
         api.removeGameOperator(gameId, userId)
 
+    suspend fun removeGameOperatorUnit(gameId: String, userId: String) {
+        api.removeGameOperator(gameId, userId)
+    }
+
     // === Invites ===
 
     suspend fun getGameInvites(gameId: String): List<InviteResponse> = api.getGameInvites(gameId)

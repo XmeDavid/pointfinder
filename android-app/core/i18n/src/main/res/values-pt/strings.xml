@@ -354,5 +354,8 @@
     <string name="label_no_operators">Nenhum operador ainda</string>
     <string name="label_no_invites">Nenhum convite pendente</string>
     <string name="action_invite">Convidar</string>
+    <string name="action_remove_operator">Remover operador</string>
+    <string name="confirm_remove_operator">Remover Operador</string>
+    <string name="confirm_remove_operator_message">Remover %1$s como operador?</string>
     <string name="label_exporting">A exportar\u2026</string>
 </resources>

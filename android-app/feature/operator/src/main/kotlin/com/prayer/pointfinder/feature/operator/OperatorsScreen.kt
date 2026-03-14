@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import com.prayer.pointfinder.core.i18n.R
 import com.prayer.pointfinder.core.model.InviteResponse
 import com.prayer.pointfinder.core.model.OperatorUserResponse
+import androidx.compose.material.icons.filled.PersonRemove
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,12 +47,15 @@ fun OperatorsScreen(
     operators: List<OperatorUserResponse>,
     invites: List<InviteResponse>,
     onInvite: (String) -> Unit,
+    onRemove: (String) -> Unit = {},
+    currentUserId: String? = null,
     onRefresh: () -> Unit,
     isRefreshing: Boolean,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showInviteDialog by remember { mutableStateOf(false) }
+    var operatorToRemove by remember { mutableStateOf<OperatorUserResponse?>(null) }
 
     Column(modifier = modifier.fillMaxSize()) {
         TopAppBar(
@@ -94,7 +98,11 @@ fun OperatorsScreen(
                 }
 
                 items(operators, key = { it.id }) { operator ->
-                    OperatorRow(operator = operator)
+                    OperatorRow(
+                        operator = operator,
+                        showRemove = operator.id != currentUserId && operator.role.lowercase() != "admin",
+                        onRemove = { operatorToRemove = operator },
+                    )
                 }
 
                 // Invite button
@@ -138,6 +146,27 @@ fun OperatorsScreen(
         }
     }
 
+    if (operatorToRemove != null) {
+        AlertDialog(
+            onDismissRequest = { operatorToRemove = null },
+            title = { Text(stringResource(R.string.confirm_remove_operator)) },
+            text = { Text(stringResource(R.string.confirm_remove_operator_message, operatorToRemove!!.name)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    operatorToRemove?.let { onRemove(it.id) }
+                    operatorToRemove = null
+                }) {
+                    Text(stringResource(R.string.action_remove))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { operatorToRemove = null }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+
     if (showInviteDialog) {
         InviteOperatorDialog(
             onDismiss = { showInviteDialog = false },
@@ -150,7 +179,11 @@ fun OperatorsScreen(
 }
 
 @Composable
-private fun OperatorRow(operator: OperatorUserResponse) {
+private fun OperatorRow(
+    operator: OperatorUserResponse,
+    showRemove: Boolean = false,
+    onRemove: () -> Unit = {},
+) {
     Surface(
         shape = MaterialTheme.shapes.small,
         tonalElevation = 1.dp,
@@ -163,7 +196,7 @@ private fun OperatorRow(operator: OperatorUserResponse) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     operator.name,
                     style = MaterialTheme.typography.bodyMedium,
@@ -185,6 +218,15 @@ private fun OperatorRow(operator: OperatorUserResponse) {
                     color = BadgeIndigo,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                 )
+            }
+            if (showRemove) {
+                IconButton(onClick = onRemove) {
+                    Icon(
+                        Icons.Default.PersonRemove,
+                        contentDescription = stringResource(R.string.action_remove_operator),
+                        tint = MaterialTheme.colorScheme.error,
+                    )
+                }
             }
         }
     }

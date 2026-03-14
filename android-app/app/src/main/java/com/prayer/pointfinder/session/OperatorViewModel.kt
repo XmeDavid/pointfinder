@@ -30,6 +30,7 @@ import com.prayer.pointfinder.core.model.UpdateChallengeRequest
 import com.prayer.pointfinder.core.model.UpdateGameRequest
 import com.prayer.pointfinder.core.model.UpdateTeamRequest
 import com.prayer.pointfinder.core.model.OperatorNotificationSettingsResponse
+import com.prayer.pointfinder.core.model.AuthType
 import com.prayer.pointfinder.core.model.ActivityEvent
 import com.prayer.pointfinder.core.model.LeaderboardEntry
 import com.prayer.pointfinder.core.model.SubmissionResponse
@@ -823,6 +824,20 @@ class OperatorViewModel @Inject constructor(
         }
     }
 
+    fun removeOperator(userId: String) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            try {
+                operatorRepository.removeGameOperatorUnit(gameId, userId)
+                _state.value = _state.value.copy(authExpired = false)
+                loadOperators()
+            } catch (err: Exception) {
+                if (markAuthExpiredIfNeeded(err)) return@launch
+                _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(err))
+            }
+        }
+    }
+
     fun inviteOperator(email: String, onSuccess: () -> Unit) {
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
@@ -852,6 +867,10 @@ class OperatorViewModel @Inject constructor(
                 _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(err))
             }
         }
+    }
+
+    fun currentOperatorUserId(): String? {
+        return (sessionStore.authType() as? AuthType.Operator)?.userId
     }
 
     fun clearError() {

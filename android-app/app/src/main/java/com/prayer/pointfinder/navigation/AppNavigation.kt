@@ -1402,6 +1402,8 @@ private fun OperatorGameRoot(
                             onInvite = { email ->
                                 viewModel.inviteOperator(email) {}
                             },
+                            onRemove = { userId -> viewModel.removeOperator(userId) },
+                            currentUserId = viewModel.currentOperatorUserId(),
                             onRefresh = viewModel::loadOperators,
                             isRefreshing = state.isLoading,
                             onBack = { moreSubScreen = null },
