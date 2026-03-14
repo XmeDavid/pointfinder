@@ -48,9 +48,9 @@ export function MapPicker({ value, onChange, className, tileSource }: MapPickerP
   }, []);
 
   return (
-    <div className="flex items-start gap-2">
+    <div className="relative">
       <div
-        className={`${className} relative flex-1 min-w-0`}
+        className={`${className} relative`}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
@@ -91,12 +91,12 @@ export function MapPicker({ value, onChange, className, tileSource }: MapPickerP
           </div>
         )}
       </div>
-      {/* Lock button outside the map */}
+      {/* Lock button — absolute, floats outside the map */}
       {!locked && (
         <button
           type="button"
           onClick={() => setLocked(true)}
-          className="shrink-0 p-2 rounded-md border border-input bg-background hover:bg-accent text-muted-foreground transition-colors"
+          className="absolute -right-10 top-0 p-2 rounded-md border border-input bg-background hover:bg-accent text-muted-foreground transition-colors shadow-sm"
           title="Lock map"
         >
           <Lock className="h-4 w-4" />
