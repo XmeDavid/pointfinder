@@ -13,7 +13,7 @@ actor OfflineQueue {
     private let decoder = JSONDecoder()
 
     var pendingCount: Int {
-        pendingActions.count
+        pendingActions.filter { !$0.permanentlyFailed }.count
     }
 
     private init() {

@@ -200,14 +200,12 @@ struct OperatorSetupHubView: View {
             async let challengesResult = appState.apiClient.getChallenges(gameId: game.id, token: token)
             async let teamsResult = appState.apiClient.getTeams(gameId: game.id, token: token)
             async let assignmentsResult = appState.apiClient.getAssignments(gameId: game.id, token: token)
-            async let completenessResult = appState.apiClient.getTeamVariablesCompleteness(gameId: game.id, token: token)
-
-            let (b, c, t, a, comp) = try await (basesResult, challengesResult, teamsResult, assignmentsResult, completenessResult)
+            let (b, c, t, a) = try await (basesResult, challengesResult, teamsResult, assignmentsResult)
             bases = b
             challenges = c
             teams = t
             assignments = a
-            teamVariablesComplete = comp.complete
+            teamVariablesComplete = ((try? await appState.apiClient.getTeamVariablesCompleteness(gameId: game.id, token: token))?.complete) ?? true
         } catch {
             appState.setError(error.localizedDescription)
         }
