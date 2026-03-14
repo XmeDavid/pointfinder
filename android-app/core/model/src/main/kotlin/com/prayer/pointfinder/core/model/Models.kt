@@ -89,7 +89,7 @@ data class Game(
     val name: String,
     val description: String,
     val status: GameStatus,
-    val tileSource: String = "osm",
+    val tileSource: String = "osm-classic",
     val startDate: String? = null,
     val endDate: String? = null,
     val createdBy: String? = null,

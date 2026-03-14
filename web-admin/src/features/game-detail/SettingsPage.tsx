@@ -33,7 +33,7 @@ export function SettingsPage() {
 
   const { data: game } = useQuery({ queryKey: ["game", gameId], queryFn: () => gamesApi.getById(gameId!) });
 
-  const [form, setForm] = useState({ name: "", description: "", startDate: "", endDate: "", uniformAssignment: false, tileSource: "osm" });
+  const [form, setForm] = useState({ name: "", description: "", startDate: "", endDate: "", uniformAssignment: false, tileSource: "osm-classic" });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [actionError, setActionError] = useState("");
@@ -50,7 +50,7 @@ export function SettingsPage() {
         startDate: formatDateTimeInputValue(game.startDate),
         endDate: formatDateTimeInputValue(game.endDate),
         uniformAssignment: game.uniformAssignment ?? false,
-        tileSource: game.tileSource ?? "osm",
+        tileSource: game.tileSource ?? "osm-classic",
       });
     }
   }, [game]);

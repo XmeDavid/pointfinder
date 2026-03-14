@@ -34,7 +34,7 @@ class TileSourcesTest {
     @Test
     fun `getStyleUrl falls back for unknown key`() {
         val url = TileSources.getStyleUrl("unknown")
-        assertEquals(TileSources.getStyleUrl("osm"), url)
+        assertEquals(TileSources.getStyleUrl("osm-classic"), url)
     }
 
     @Test

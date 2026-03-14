@@ -20,7 +20,7 @@ export function CreateGamePage() {
   const toast = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({ name: "", description: "", startDate: "", endDate: "", uniformAssignment: true, tileSource: "osm" });
+  const [form, setForm] = useState({ name: "", description: "", startDate: "", endDate: "", uniformAssignment: true, tileSource: "osm-classic" });
   const [actionError, setActionError] = useState("");
 
   const createGame = useMutation({
