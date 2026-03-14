@@ -37,6 +37,17 @@ struct PlayerNameView: View {
                 .focused($isNameFocused)
                 .accessibilityIdentifier("player-name-field")
                 .padding(.horizontal, 24)
+                .onChange(of: displayName) { _, newValue in
+                    if newValue.count > 100 {
+                        displayName = String(newValue.prefix(100))
+                    }
+                }
+
+            Text("\(displayName.count)/100")
+                .font(.caption)
+                .foregroundStyle(displayName.count >= 90 ? .orange : .secondary)
+                .padding(.horizontal, 24)
+                .frame(maxWidth: .infinity, alignment: .trailing)
 
             Button {
                 isNameFocused = false
