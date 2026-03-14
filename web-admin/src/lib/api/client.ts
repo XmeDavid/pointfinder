@@ -89,7 +89,7 @@ apiClient.interceptors.request.use(async (config) => {
 });
 
 // ---------------------------------------------------------------------------
-// Response interceptor: on 401/403, attempt one refresh then retry.
+// Response interceptor: on 401, attempt one refresh then retry.
 // Uses the same deduplicating refreshAccessToken() so concurrent 401s
 // don't each fire their own refresh call.
 // ---------------------------------------------------------------------------
@@ -100,8 +100,8 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config;
     const status = error.response?.status;
 
-    // 401/403 with no prior retry = token may have expired mid-session
-    if ((status === 401 || status === 403) && !originalRequest._retry) {
+    // 401 with no prior retry = token may have expired mid-session
+    if (status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       // Invalidate the in-memory token so refreshAccessToken() actually fires
