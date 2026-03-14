@@ -90,18 +90,18 @@ export function MapPicker({ value, onChange, className, tileSource }: MapPickerP
             </button>
           </div>
         )}
+        {/* Lock button — inside map, top-right corner */}
+        {!locked && (
+          <button
+            type="button"
+            onClick={() => setLocked(true)}
+            className="absolute top-2 right-2 z-20 p-2 rounded-md border border-input bg-background/90 backdrop-blur-sm hover:bg-accent text-muted-foreground transition-colors shadow-sm"
+            title="Lock map"
+          >
+            <Lock className="h-4 w-4" />
+          </button>
+        )}
       </div>
-      {/* Lock button — absolute, floats outside the map */}
-      {!locked && (
-        <button
-          type="button"
-          onClick={() => setLocked(true)}
-          className="absolute -right-10 top-0 p-2 rounded-md border border-input bg-background hover:bg-accent text-muted-foreground transition-colors shadow-sm"
-          title="Lock map"
-        >
-          <Lock className="h-4 w-4" />
-        </button>
-      )}
     </div>
   );
 }
