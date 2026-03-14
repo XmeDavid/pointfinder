@@ -563,10 +563,13 @@ fun PlayerNameScreen(
                 Spacer(Modifier.height(12.dp))
                 OutlinedTextField(
                     value = name,
-                    onValueChange = onNameChange,
+                    onValueChange = { if (it.length <= 100) onNameChange(it) },
                     label = { Text(stringResource(R.string.label_display_name)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
+                    supportingText = {
+                        Text("${name.length}/100")
+                    },
                 )
                 if (!errorMessage.isNullOrBlank()) {
                     Spacer(Modifier.height(8.dp))
