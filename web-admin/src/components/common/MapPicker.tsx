@@ -75,7 +75,7 @@ export function MapPicker({ value, onChange, className, tileSource }: MapPickerP
         {/* Lock overlay — fades in on hover when locked */}
         {locked && (
           <div
-            className={`absolute inset-0 rounded-md flex items-center justify-center transition-opacity duration-300 ${
+            className={`absolute inset-0 z-20 rounded-md flex items-center justify-center transition-opacity duration-300 ${
               hovered ? "opacity-100" : "opacity-0"
             }`}
             style={{ background: "rgba(0,0,0,0.35)" }}
