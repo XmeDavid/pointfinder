@@ -165,7 +165,7 @@ class PlayerViewModel @Inject constructor(
                 val authExpired = ApiErrorParser.isAuthExpired(err)
                 _state.value = _state.value.copy(
                     isLoading = false,
-                    solveError = if (authExpired) null else ApiErrorParser.extractMessage(err),
+                    solveError = if (authExpired) null else friendlyError(err),
                     authExpired = _state.value.authExpired || authExpired,
                 )
             }
@@ -215,7 +215,7 @@ class PlayerViewModel @Inject constructor(
             }.onFailure { err ->
                 val authExpired = ApiErrorParser.isAuthExpired(err)
                 _state.value = _state.value.copy(
-                    scanError = if (authExpired) null else ApiErrorParser.extractMessage(err),
+                    scanError = if (authExpired) null else friendlyError(err),
                     authExpired = _state.value.authExpired || authExpired,
                 )
             }
@@ -283,6 +283,39 @@ class PlayerViewModel @Inject constructor(
         startCheckIn(auth, baseId, online)
     }
 
+    fun submitNone(
+        auth: AuthType.Player,
+        baseId: String,
+        challengeId: String,
+        online: Boolean,
+    ) {
+        viewModelScope.launch {
+            runCatching {
+                playerRepository.submitText(auth, baseId, challengeId, "", online)
+            }.onSuccess { result ->
+                _state.value = _state.value.copy(
+                    latestSubmission = result.response,
+                    solveError = null,
+                    presenceVerified = false,
+                    authExpired = false,
+                )
+                updateLocalBaseStatus(baseId, BaseStatus.SUBMITTED)
+                if (result.queued) {
+                    launch { playerRepository.trySyncPendingActions(auth) }
+                    OfflineSyncWorker.enqueue(context)
+                }
+                refresh(auth, online)
+                launch { locationService.sendLocationNow() }
+            }.onFailure { err ->
+                val authExpired = ApiErrorParser.isAuthExpired(err)
+                _state.value = _state.value.copy(
+                    solveError = if (authExpired) null else friendlyError(err),
+                    authExpired = _state.value.authExpired || authExpired,
+                )
+            }
+        }
+    }
+
     fun submitText(
         auth: AuthType.Player,
         baseId: String,
@@ -320,7 +353,7 @@ class PlayerViewModel @Inject constructor(
             }.onFailure { err ->
                 val authExpired = ApiErrorParser.isAuthExpired(err)
                 _state.value = _state.value.copy(
-                    solveError = if (authExpired) null else ApiErrorParser.extractMessage(err),
+                    solveError = if (authExpired) null else friendlyError(err),
                     authExpired = _state.value.authExpired || authExpired,
                 )
             }
@@ -442,7 +475,7 @@ class PlayerViewModel @Inject constructor(
             }.onFailure { err ->
                 val authExpired = ApiErrorParser.isAuthExpired(err)
                 _state.value = _state.value.copy(
-                    solveError = if (authExpired) null else ApiErrorParser.extractMessage(err),
+                    solveError = if (authExpired) null else friendlyError(err),
                     authExpired = _state.value.authExpired || authExpired,
                 )
             }
@@ -514,6 +547,11 @@ class PlayerViewModel @Inject constructor(
     companion object {
         private const val MEDIA_COPY_THRESHOLD_BYTES = 100L * 1024L * 1024L
     }
+
+    private fun friendlyError(err: Throwable): String =
+        if (ApiErrorParser.isNetworkError(err))
+            context.getString(StringR.string.error_network_unavailable)
+        else ApiErrorParser.extractMessage(err)
 
     fun clearSubmissionResult() {
         _state.value = _state.value.copy(latestSubmission = null)

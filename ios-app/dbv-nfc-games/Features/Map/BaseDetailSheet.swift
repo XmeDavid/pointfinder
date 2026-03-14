@@ -10,6 +10,9 @@ struct BaseDetailSheet: View {
     @State private var challenge: CheckInResponse.ChallengeInfo?
     @State private var isLoading = true
     @State private var showSolve = false
+    @State private var isAutoSubmitting = false
+    @State private var autoSubmitResult: SubmissionResponse?
+    @State private var showAutoSubmitResult = false
 
     /// Live progress data from AppState -- always current.
     private var base: BaseProgress? {
@@ -92,17 +95,32 @@ struct BaseDetailSheet: View {
 
                         // Solve button (only for checked-in or rejected bases)
                         if status == .checkedIn || status == .rejected {
-                            Button {
-                                appState.startSolving(baseId: baseId, challengeId: challenge.id)
-                                showSolve = true
-                            } label: {
-                                Label(locale.t("base.solveChallenge"), systemImage: "lightbulb.fill")
-                                    .font(.headline)
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                                    .background(Color.accentColor)
-                                    .foregroundStyle(.white)
-                                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                            if challenge.answerType == "none" {
+                                // Auto-submit for check-in-only challenges
+                                if isAutoSubmitting {
+                                    ProgressView()
+                                        .frame(maxWidth: .infinity)
+                                        .padding()
+                                } else {
+                                    // Auto-submit triggers on appear
+                                    Color.clear.frame(height: 0)
+                                        .task(id: status) {
+                                            await autoSubmitNone(challengeId: challenge.id)
+                                        }
+                                }
+                            } else {
+                                Button {
+                                    appState.startSolving(baseId: baseId, challengeId: challenge.id)
+                                    showSolve = true
+                                } label: {
+                                    Label(locale.t("base.solveChallenge"), systemImage: "lightbulb.fill")
+                                        .font(.headline)
+                                        .frame(maxWidth: .infinity)
+                                        .padding()
+                                        .background(Color.accentColor)
+                                        .foregroundStyle(.white)
+                                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                                }
                             }
                         } else if status == .completed {
                             Label(locale.t("base.challengeCompleted"), systemImage: "checkmark.seal.fill")
@@ -154,6 +172,15 @@ struct BaseDetailSheet: View {
                     )
                 }
             }
+            .navigationDestination(isPresented: $showAutoSubmitResult) {
+                if let result = autoSubmitResult {
+                    SubmissionResultView(
+                        submission: result,
+                        baseName: base?.baseName ?? locale.t("base.defaultName"),
+                        dismissToMap: { dismiss() }
+                    )
+                }
+            }
         }
         .presentationDetents([.medium, .large])
         .task {
@@ -182,5 +209,20 @@ struct BaseDetailSheet: View {
         // If checked in but not cached, the check-in response should have cached it
         // This shouldn't normally happen, but handle gracefully
         isLoading = false
+    }
+
+    private func autoSubmitNone(challengeId: UUID) async {
+        guard !isAutoSubmitting else { return }
+        isAutoSubmitting = true
+        let result = await appState.submitAnswer(
+            baseId: baseId,
+            challengeId: challengeId,
+            answer: ""
+        )
+        isAutoSubmitting = false
+        if let result {
+            autoSubmitResult = result
+            showAutoSubmitResult = true
+        }
     }
 }

@@ -306,10 +306,10 @@ fun ChallengeEditScreen(
             Spacer(Modifier.height(8.dp))
 
             // Answer type dropdown
-            val answerTypeLabel = if (answerType == "file") {
-                stringResource(R.string.label_file_upload)
-            } else {
-                stringResource(R.string.label_text_input)
+            val answerTypeLabel = when (answerType) {
+                "file" -> stringResource(R.string.label_file_upload)
+                "none" -> stringResource(R.string.label_check_in_only)
+                else -> stringResource(R.string.label_text_input)
             }
             ExposedDropdownMenuBox(
                 expanded = answerTypeExpanded,
@@ -341,6 +341,14 @@ fun ChallengeEditScreen(
                         text = { Text(stringResource(R.string.label_file_upload)) },
                         onClick = {
                             answerType = "file"
+                            autoValidate = false
+                            answerTypeExpanded = false
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.label_check_in_only)) },
+                        onClick = {
+                            answerType = "none"
                             autoValidate = false
                             answerTypeExpanded = false
                         },

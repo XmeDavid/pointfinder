@@ -157,7 +157,7 @@ class OperatorViewModel @Inject constructor(
                 if (markAuthExpiredIfNeeded(err)) return@onFailure
                 _state.value = _state.value.copy(
                     isLoading = false,
-                    errorMessage = ApiErrorParser.extractMessage(err),
+                    errorMessage = friendlyError(err),
                 )
             }
         }
@@ -269,7 +269,7 @@ class OperatorViewModel @Inject constructor(
             }.onFailure { err ->
                 if (markAuthExpiredIfNeeded(err)) return@onFailure
                 _state.value = _state.value.copy(
-                    errorMessage = ApiErrorParser.extractMessage(err),
+                    errorMessage = friendlyError(err),
                 )
             }
         }
@@ -341,7 +341,7 @@ class OperatorViewModel @Inject constructor(
                 refreshSelectedGameData()
             }.onFailure { err ->
                 if (markAuthExpiredIfNeeded(err)) return@onFailure
-                _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(err))
+                _state.value = _state.value.copy(errorMessage = friendlyError(err))
             }
         }
     }
@@ -362,7 +362,7 @@ class OperatorViewModel @Inject constructor(
                 if (markAuthExpiredIfNeeded(err)) return@onFailure
                 _state.value = _state.value.copy(
                     isLoadingNotificationSettings = false,
-                    errorMessage = ApiErrorParser.extractMessage(err),
+                    errorMessage = friendlyError(err),
                 )
             }
         }
@@ -395,7 +395,7 @@ class OperatorViewModel @Inject constructor(
                 if (markAuthExpiredIfNeeded(err)) return@onFailure
                 _state.value = _state.value.copy(
                     isSavingNotificationSettings = false,
-                    errorMessage = ApiErrorParser.extractMessage(err),
+                    errorMessage = friendlyError(err),
                 )
             }
         }
@@ -490,7 +490,7 @@ class OperatorViewModel @Inject constructor(
                 }.onFailure { err ->
                     if (markAuthExpiredIfNeeded(err)) return@onFailure
                     _state.value = _state.value.copy(
-                        writeStatus = context.getString(StringR.string.error_nfc_link_failed, ApiErrorParser.extractMessage(err)),
+                        writeStatus = context.getString(StringR.string.error_nfc_link_failed, friendlyError(err)),
                         writeSuccess = false,
                     )
                 }
@@ -515,7 +515,7 @@ class OperatorViewModel @Inject constructor(
                 }
                 .onFailure { e ->
                     if (markAuthExpiredIfNeeded(e)) return@onFailure
-                    _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(e))
+                    _state.value = _state.value.copy(errorMessage = friendlyError(e))
                 }
         }
     }
@@ -531,7 +531,7 @@ class OperatorViewModel @Inject constructor(
                 }
                 .onFailure { e ->
                     if (markAuthExpiredIfNeeded(e)) return@onFailure
-                    _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(e))
+                    _state.value = _state.value.copy(errorMessage = friendlyError(e))
                 }
         }
     }
@@ -547,7 +547,7 @@ class OperatorViewModel @Inject constructor(
                 }
                 .onFailure { e ->
                     if (markAuthExpiredIfNeeded(e)) return@onFailure
-                    _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(e))
+                    _state.value = _state.value.copy(errorMessage = friendlyError(e))
                 }
         }
     }
@@ -563,7 +563,7 @@ class OperatorViewModel @Inject constructor(
                 }
                 .onFailure { e ->
                     if (markAuthExpiredIfNeeded(e)) return@onFailure
-                    _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(e))
+                    _state.value = _state.value.copy(errorMessage = friendlyError(e))
                 }
         }
     }
@@ -579,7 +579,7 @@ class OperatorViewModel @Inject constructor(
                 }
                 .onFailure { e ->
                     if (markAuthExpiredIfNeeded(e)) return@onFailure
-                    _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(e))
+                    _state.value = _state.value.copy(errorMessage = friendlyError(e))
                 }
         }
     }
@@ -595,7 +595,7 @@ class OperatorViewModel @Inject constructor(
                 }
                 .onFailure { e ->
                     if (markAuthExpiredIfNeeded(e)) return@onFailure
-                    _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(e))
+                    _state.value = _state.value.copy(errorMessage = friendlyError(e))
                 }
         }
     }
@@ -613,7 +613,7 @@ class OperatorViewModel @Inject constructor(
                 _state.value = _state.value.copy(variables = response.variables)
             }.onFailure { e ->
                 if (markAuthExpiredIfNeeded(e)) return@onFailure
-                _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(e))
+                _state.value = _state.value.copy(errorMessage = friendlyError(e))
             }
         }
     }
@@ -628,7 +628,7 @@ class OperatorViewModel @Inject constructor(
                 _state.value = _state.value.copy(variables = response.variables)
             }.onFailure { e ->
                 if (markAuthExpiredIfNeeded(e)) return@onFailure
-                _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(e))
+                _state.value = _state.value.copy(errorMessage = friendlyError(e))
             }
         }
     }
@@ -644,7 +644,7 @@ class OperatorViewModel @Inject constructor(
                 onSuccess(team)
             }.onFailure { e ->
                 if (markAuthExpiredIfNeeded(e)) return@onFailure
-                _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(e))
+                _state.value = _state.value.copy(errorMessage = friendlyError(e))
             }
         }
     }
@@ -656,7 +656,7 @@ class OperatorViewModel @Inject constructor(
                 .onSuccess { loadGameMeta(gameId); onSuccess() }
                 .onFailure { e ->
                     if (markAuthExpiredIfNeeded(e)) return@onFailure
-                    _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(e))
+                    _state.value = _state.value.copy(errorMessage = friendlyError(e))
                 }
         }
     }
@@ -668,7 +668,7 @@ class OperatorViewModel @Inject constructor(
                 .onSuccess { loadGameMeta(gameId); onSuccess() }
                 .onFailure { e ->
                     if (markAuthExpiredIfNeeded(e)) return@onFailure
-                    _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(e))
+                    _state.value = _state.value.copy(errorMessage = friendlyError(e))
                 }
         }
     }
@@ -689,7 +689,7 @@ class OperatorViewModel @Inject constructor(
                 .onSuccess { onSuccess() }
                 .onFailure { e ->
                     if (markAuthExpiredIfNeeded(e)) return@onFailure
-                    _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(e))
+                    _state.value = _state.value.copy(errorMessage = friendlyError(e))
                 }
         }
     }
@@ -723,7 +723,7 @@ class OperatorViewModel @Inject constructor(
                 loadGames()
                 onSuccess(game)
             }.onFailure { e ->
-                _state.value = _state.value.copy(isLoading = false, errorMessage = ApiErrorParser.extractMessage(e))
+                _state.value = _state.value.copy(isLoading = false, errorMessage = friendlyError(e))
             }
         }
     }
@@ -742,7 +742,7 @@ class OperatorViewModel @Inject constructor(
                 loadGames()
                 onSuccess(game)
             }.onFailure { e ->
-                _state.value = _state.value.copy(isLoading = false, errorMessage = ApiErrorParser.extractMessage(e))
+                _state.value = _state.value.copy(isLoading = false, errorMessage = friendlyError(e))
             }
         }
     }
@@ -757,7 +757,7 @@ class OperatorViewModel @Inject constructor(
                 loadGames()
             }.onFailure { e ->
                 if (markAuthExpiredIfNeeded(e)) return@onFailure
-                _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(e))
+                _state.value = _state.value.copy(errorMessage = friendlyError(e))
             }
         }
     }
@@ -773,7 +773,7 @@ class OperatorViewModel @Inject constructor(
                 onSuccess()
             }.onFailure { e ->
                 if (markAuthExpiredIfNeeded(e)) return@onFailure
-                _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(e))
+                _state.value = _state.value.copy(errorMessage = friendlyError(e))
             }
         }
     }
@@ -787,7 +787,7 @@ class OperatorViewModel @Inject constructor(
                 _state.value = _state.value.copy(notifications = list, authExpired = false)
             }.onFailure { err ->
                 if (markAuthExpiredIfNeeded(err)) return@onFailure
-                _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(err))
+                _state.value = _state.value.copy(errorMessage = friendlyError(err))
             }
         }
     }
@@ -803,7 +803,7 @@ class OperatorViewModel @Inject constructor(
                 onSuccess()
             }.onFailure { err ->
                 if (markAuthExpiredIfNeeded(err)) return@onFailure
-                _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(err))
+                _state.value = _state.value.copy(errorMessage = friendlyError(err))
             }
         }
     }
@@ -819,7 +819,7 @@ class OperatorViewModel @Inject constructor(
                 _state.value = _state.value.copy(operators = ops, invites = inv, authExpired = false)
             }.onFailure { err ->
                 if (markAuthExpiredIfNeeded(err)) return@onFailure
-                _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(err))
+                _state.value = _state.value.copy(errorMessage = friendlyError(err))
             }
         }
     }
@@ -833,7 +833,7 @@ class OperatorViewModel @Inject constructor(
                 loadOperators()
             } catch (err: Exception) {
                 if (markAuthExpiredIfNeeded(err)) return@launch
-                _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(err))
+                _state.value = _state.value.copy(errorMessage = friendlyError(err))
             }
         }
     }
@@ -849,7 +849,7 @@ class OperatorViewModel @Inject constructor(
                 onSuccess()
             }.onFailure { err ->
                 if (markAuthExpiredIfNeeded(err)) return@onFailure
-                _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(err))
+                _state.value = _state.value.copy(errorMessage = friendlyError(err))
             }
         }
     }
@@ -864,7 +864,7 @@ class OperatorViewModel @Inject constructor(
                 onSuccess(export)
             }.onFailure { err ->
                 if (markAuthExpiredIfNeeded(err)) return@onFailure
-                _state.value = _state.value.copy(errorMessage = ApiErrorParser.extractMessage(err))
+                _state.value = _state.value.copy(errorMessage = friendlyError(err))
             }
         }
     }
@@ -872,6 +872,11 @@ class OperatorViewModel @Inject constructor(
     fun currentOperatorUserId(): String? {
         return (sessionStore.authType() as? AuthType.Operator)?.userId
     }
+
+    private fun friendlyError(err: Throwable): String =
+        if (ApiErrorParser.isNetworkError(err))
+            context.getString(StringR.string.error_network_unavailable)
+        else friendlyError(err)
 
     fun clearError() {
         _state.value = _state.value.copy(errorMessage = null)

@@ -71,7 +71,7 @@ struct MapLibreMapView: UIViewRepresentable {
         // Only remove/re-add annotations when they actually change to avoid
         // tearing down annotation views on every SwiftUI render cycle (which
         // causes taps to miss while MapLibre repositions views).
-        let newFingerprint = annotations.map { "\($0.id):\($0.coordinate.latitude),\($0.coordinate.longitude)" }.joined(separator: "|")
+        let newFingerprint = annotations.map { "\($0.id):\($0.coordinate.latitude),\($0.coordinate.longitude):\($0.subtitle ?? "")" }.joined(separator: "|")
 
         // Always update the items array so tap handlers use fresh closures
         coordinator.annotationItems = annotations

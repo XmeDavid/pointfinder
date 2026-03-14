@@ -137,6 +137,7 @@ struct ChallengeEditView: View {
                 Picker(locale.t("operator.answerType"), selection: $answerType) {
                     Text(locale.t("operator.textInput")).tag("text")
                     Text(locale.t("operator.fileUpload")).tag("file")
+                    Text(locale.t("operator.checkInOnly")).tag("none")
                 }
                 .pickerStyle(.segmented)
                 .accessibilityIdentifier("challenge-type-select")

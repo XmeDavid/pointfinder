@@ -735,12 +735,16 @@ private fun PlayerRootScreen(
                     response = checkIn,
                     isOffline = !isOnline,
                     onSolve = { baseId, challengeId ->
-                        solving = baseId to challengeId
-                        viewModel.setPresenceRequired(
-                            state.progress.firstOrNull { it.baseId == baseId }?.requirePresenceToSubmit == true,
-                        )
                         val checkInChallenge = state.activeCheckIn?.challenge
-                        viewModel.setPhotoMode(checkInChallenge?.answerType == "file")
+                        if (checkInChallenge?.answerType == "none") {
+                            viewModel.submitNone(auth, baseId, challengeId, isOnline)
+                        } else {
+                            solving = baseId to challengeId
+                            viewModel.setPresenceRequired(
+                                state.progress.firstOrNull { it.baseId == baseId }?.requirePresenceToSubmit == true,
+                            )
+                            viewModel.setPhotoMode(checkInChallenge?.answerType == "file")
+                        }
                     },
                     onBack = {
                         viewModel.clearCheckIn()
@@ -825,9 +829,13 @@ private fun PlayerRootScreen(
                 if (shouldBlockGameplay) return@BaseDetailBottomSheet
                 val challengeId = state.selectedChallenge?.id ?: selectedBase.challengeId
                 if (challengeId != null) {
-                    solving = selectedBase.baseId to challengeId
-                    viewModel.setPresenceRequired(selectedBase.requirePresenceToSubmit)
-                    viewModel.setPhotoMode(state.selectedChallenge?.answerType == "file")
+                    if (state.selectedChallenge?.answerType == "none") {
+                        viewModel.submitNone(auth, selectedBase.baseId, challengeId, isOnline)
+                    } else {
+                        solving = selectedBase.baseId to challengeId
+                        viewModel.setPresenceRequired(selectedBase.requirePresenceToSubmit)
+                        viewModel.setPhotoMode(state.selectedChallenge?.answerType == "file")
+                    }
                 }
                 viewModel.clearSelectedBase()
             },

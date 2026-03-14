@@ -3,6 +3,7 @@ package com.prayer.pointfinder.core.network
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import retrofit2.HttpException
+import java.io.IOException
 
 /**
  * Parses backend error responses from Retrofit [HttpException].
@@ -64,6 +65,12 @@ object ApiErrorParser {
         }
         return errors.values.firstOrNull { it.isNotBlank() }
     }
+
+    /**
+     * Returns `true` when the failure is a connectivity problem
+     * (DNS resolution, timeout, connection refused, etc.).
+     */
+    fun isNetworkError(throwable: Throwable): Boolean = throwable is IOException
 
     fun isAuthExpired(throwable: Throwable): Boolean {
         if (throwable is HttpException) {

@@ -278,6 +278,7 @@
     <string name="label_answer_type_label">Answer Type</string>
     <string name="label_text_input">Text Input</string>
     <string name="label_file_upload">File Upload</string>
+    <string name="label_check_in_only">Check-in Only</string>
     <string name="label_auto_validate">Auto-validate</string>
     <string name="label_correct_answers">Correct Answers</string>
     <string name="label_add_answer">Add Answer</string>

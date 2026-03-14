@@ -148,7 +148,7 @@ class AppSessionViewModel @Inject constructor(
             }.onFailure { err ->
                 _state.value = _state.value.copy(
                     isLoading = false,
-                    errorMessage = ApiErrorParser.extractMessage(err),
+                    errorMessage = friendlyError(err),
                 )
             }
         }
@@ -172,7 +172,7 @@ class AppSessionViewModel @Inject constructor(
             }.onFailure { err ->
                 _state.value = _state.value.copy(
                     isLoading = false,
-                    errorMessage = ApiErrorParser.extractMessage(err),
+                    errorMessage = friendlyError(err),
                 )
             }
         }
@@ -216,7 +216,7 @@ class AppSessionViewModel @Inject constructor(
             }.onFailure { err ->
                 _state.value = _state.value.copy(
                     isDeletingAccount = false,
-                    errorMessage = ApiErrorParser.extractMessage(err),
+                    errorMessage = friendlyError(err),
                 )
             }
         }
@@ -248,6 +248,11 @@ class AppSessionViewModel @Inject constructor(
     fun resumeLocationIfNeeded() {
         locationService.resumeIfNeeded()
     }
+
+    private fun friendlyError(err: Throwable): String =
+        if (ApiErrorParser.isNetworkError(err))
+            context.getString(com.prayer.pointfinder.core.i18n.R.string.error_network_unavailable)
+        else ApiErrorParser.extractMessage(err)
 
     fun clearError() {
         _state.value = _state.value.copy(errorMessage = null)
