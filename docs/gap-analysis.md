@@ -178,12 +178,12 @@
 
 ### Critical Gaps
 
-#### GAP-F-1: Broadcast mode missing on mobile
+<!-- IGNORE FOR NOW #### GAP-F-1: Broadcast mode missing on mobile
 - **Platforms**: Android, iOS
 - **Severity**: Critical
 - **Description**: Public broadcast mode (spectator screens via 6-char code) is only available on web-admin. Backend supports it, mobile clients don't implement it.
 - **Endpoints unused**: `GET /broadcast/{code}`, `/broadcast/{code}/leaderboard`, `/broadcast/{code}/locations`, `/broadcast/{code}/progress`
-- **Fix**: Add broadcast viewer screens to both mobile apps.
+- **Fix**: Add broadcast viewer screens to both mobile apps. -->
 
 #### GAP-F-2: Operator add/remove missing on mobile UI
 - **Platforms**: Android, iOS
@@ -192,50 +192,36 @@
 - **Endpoints unused by mobile UI**: `POST /games/{gameId}/operators/{userId}`, `DELETE /games/{gameId}/operators/{userId}`
 - **Fix**: Add add/remove buttons to operator management screens on both mobile apps.
 
-#### GAP-F-3: Operator notification settings missing on web-admin
+<!-- IGNORE FOR NOW #### GAP-F-3: Operator notification settings missing on web-admin
 - **Platforms**: Web-admin
 - **Severity**: Critical
 - **Description**: Web-admin operators cannot configure push notification preferences. Only mobile apps have this feature.
 - **Endpoints unused by web**: `GET/PUT /games/{gameId}/operator-notification-settings/me`, `PUT /users/me/push-token`
-- **Fix**: Add notification settings page to web-admin game settings.
+- **Fix**: Add notification settings page to web-admin game settings. -->
 
 ### Important Gaps
-
-#### GAP-F-4: Dashboard monitoring stats missing on mobile
+<!-- IGNORE FOR NOW #### GAP-F-4: Dashboard monitoring stats missing on mobile
 - **Platforms**: Android, iOS
 - **Severity**: Important
 - **Description**: Mobile operators lack the quick dashboard stats view (team count, submission count, pending reviews).
 - **Endpoint unused**: `GET /games/{gameId}/monitoring/dashboard`
-- **Fix**: Add dashboard widget to mobile operator home screen.
+- **Fix**: Add dashboard widget to mobile operator home screen. -->
 
 ### Minor Gaps
 
 #### GAP-F-5: NFC writing only on iOS
-- **Platforms**: Android, Web-admin
+- **Platforms**: Android
 - **Severity**: Minor
-- **Description**: Only iOS has NFC tag writing UI (`NFCWriteView`). Android has NFC read but not write UI. Web-admin has neither.
+- **Description**: Only iOS has NFC tag writing UI (`NFCWriteView`). Android has NFC read but not write UI.
 - **Fix**: Implement NFC writing screen in Android operator flow.
 
-#### GAP-F-6: Web-admin cannot mark bases as NFC-linked
-- **Platforms**: Web-admin
-- **Severity**: Minor
-- **Description**: `PATCH /games/{gameId}/bases/{baseId}/nfc-link` is not called from web-admin. Operators must use mobile apps to link NFC tags.
-- **Fix**: Add NFC link toggle/button to base management in web-admin.
-
-#### GAP-F-7: Team variable completeness check missing on iOS
+#### GAP-F-6: Team variable completeness check missing on iOS
 - **Platforms**: iOS
 - **Severity**: Minor
 - **Description**: iOS doesn't call `GET /games/{gameId}/team-variables/completeness` before go-live.
 - **Fix**: Add completeness check to go-live confirmation flow.
 
-#### GAP-F-8: Invite management missing on mobile
-- **Platforms**: Android, iOS
-- **Severity**: Minor
-- **Description**: Mobile operators cannot view their pending invites or accept them in-app. They must use the web-admin or registration link.
-- **Endpoints unused**: `GET /invites/my`, `POST /invites/{inviteId}/accept`
-- **Fix**: Add invite management screen to mobile operator settings.
-
-#### GAP-F-9: Android WebSocket real-time is skeleton only
+#### GAP-F-7: Android WebSocket real-time is skeleton only
 - **Platforms**: Android
 - **Severity**: Minor
 - **Description**: `MobileRealtimeClient` exists but is not fully implemented. Android uses HTTP polling instead of WebSocket for real-time updates.

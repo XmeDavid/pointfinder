@@ -18,7 +18,7 @@
     <string name="action_write_nfc">NFC-Tag schreiben</string>
     <string name="action_link_backend">Im Backend verknüpfen</string>
     <string name="action_verify_with_nfc">Mit NFC verifizieren</string>
-    <string name="action_choose_photo">Foto wählen</string>
+    <string name="action_choose_photo">Medien wählen</string>
     <string name="action_take_photo">Foto aufnehmen</string>
     <string name="action_refresh">Aktualisieren</string>
     <string name="action_back">Zurück</string>
@@ -71,7 +71,7 @@
     <string name="label_solve_title">Aufgabe lösen</string>
     <string name="label_presence_required">Präsenzprüfung erforderlich.</string>
     <string name="label_presence_verified">Präsenz bestätigt</string>
-    <string name="label_photo_mode">Foto-Antwortmodus</string>
+    <string name="label_photo_mode">Medien-Antwortmodus</string>
     <string name="label_submission_status">Abgabestatus: %1$s</string>
     <string name="label_teams_count">Teams: %1$d</string>
     <string name="label_team_status_row">Team %1$s - %2$s</string>
@@ -93,7 +93,7 @@
     <!-- Hints -->
     <string name="hint_checkin_instructions">Halte dein Telefon an den Marker an der Basis, um einzuchecken</string>
     <string name="hint_offline_sync">Offline: Daten werden synchronisiert, sobald wieder Verbindung besteht.</string>
-    <string name="hint_photo_required_online">Fotoeinsendungen benötigen Internet.</string>
+    <string name="hint_photo_required_online">Medieneinsendungen benötigen Internet.</string>
     <string name="hint_presence_required">NFC-Präsenz vor dem Senden erforderlich.</string>
 
     <!-- Status -->
