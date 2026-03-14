@@ -22,7 +22,7 @@
       ]
     },
     {
-      "title": "HTTP Response Time (p95)",
+      "title": "HTTP Response Time (max)",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
@@ -32,8 +32,8 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job=\"pointfinder-backend\"}[5m])) by (le, uri))",
-          "legendFormat": "{{uri}}"
+          "expr": "http_server_requests_seconds_max{job=\"pointfinder-backend\"}",
+          "legendFormat": "{{method}} {{uri}}"
         }
       ]
     },
@@ -154,14 +154,22 @@
       ]
     },
     {
-      "title": "WebSocket Sessions",
+      "title": "Executor Thread Pool",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "spring_websocket_sessions{job=\"pointfinder-backend\"}",
-          "legendFormat": "Active Sessions"
+          "expr": "executor_active_threads{job=\"pointfinder-backend\"}",
+          "legendFormat": "Active"
+        },
+        {
+          "expr": "executor_pool_size_threads{job=\"pointfinder-backend\"}",
+          "legendFormat": "Pool Size"
+        },
+        {
+          "expr": "executor_queued_tasks{job=\"pointfinder-backend\"}",
+          "legendFormat": "Queued"
         }
       ]
     }
