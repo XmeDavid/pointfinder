@@ -340,7 +340,7 @@ public class GameService {
     }
 
     private String validateTileSource(String tileSource) {
-        if (tileSource == null || tileSource.isBlank()) return "osm";
+        if (tileSource == null || tileSource.isBlank()) return "osm-classic";
         if (!VALID_TILE_SOURCES.contains(tileSource)) {
             throw new BadRequestException("Invalid tile source: " + tileSource + ". Valid values: " + VALID_TILE_SOURCES);
         }

@@ -19,16 +19,16 @@ enum TileSources {
     static let darkStyleURL = URL(string: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json")!
 
     static func styleURL(for key: String?) -> URL {
-        let urlString = styles[key ?? "osm"] ?? styles["osm"]!
+        let urlString = styles[key ?? "osm-classic"] ?? styles["osm-classic"]!
         return URL(string: urlString)!
     }
 
     static func resolvedStyleURL(for key: String?, isDark: Bool) -> URL {
-        let resolvedKey = key ?? "osm"
+        let resolvedKey = key ?? "osm-classic"
         if isDark, let darkURLString = darkStyles[resolvedKey] {
             return URL(string: darkURLString)!
         }
-        let urlString = styles[resolvedKey] ?? styles["osm"]!
+        let urlString = styles[resolvedKey] ?? styles["osm-classic"]!
         return URL(string: urlString)!
     }
 }

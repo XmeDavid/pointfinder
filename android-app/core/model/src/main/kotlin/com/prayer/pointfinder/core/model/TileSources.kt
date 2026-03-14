@@ -19,11 +19,11 @@ object TileSources {
     )
 
     fun getStyleUrl(key: String?): String =
-        STYLES[key] ?: STYLES["osm"]!!
+        STYLES[key] ?: STYLES["osm-classic"]!!
 
     fun getResolvedStyleUrl(key: String?, isDark: Boolean): String {
         if (isDark) {
-            val darkUrl = DARK_STYLES[key ?: "osm"]
+            val darkUrl = DARK_STYLES[key ?: "osm-classic"]
             if (darkUrl != null) return darkUrl
         }
         return getStyleUrl(key)

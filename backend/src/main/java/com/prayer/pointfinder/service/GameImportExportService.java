@@ -147,7 +147,7 @@ public class GameImportExportService {
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .uniformAssignment(data.getGame().getUniformAssignment() != null ? data.getGame().getUniformAssignment() : false)
-                .tileSource(data.getGame().getTileSource() != null ? data.getGame().getTileSource() : "osm")
+                .tileSource(data.getGame().getTileSource() != null ? data.getGame().getTileSource() : "osm-classic")
                 .status(GameStatus.setup)
                 .createdBy(currentUser)
                 .build();
