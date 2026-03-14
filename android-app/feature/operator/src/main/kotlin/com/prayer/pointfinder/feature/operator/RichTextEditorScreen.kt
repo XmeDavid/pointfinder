@@ -280,7 +280,7 @@ private fun FormattingToolbar(
             isActive = isH1,
             contentDescription = stringResource(R.string.label_heading1),
         ) {
-            Text("H1", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.label_heading1), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
         }
 
         // H2 (medium-large font size)
@@ -290,7 +290,7 @@ private fun FormattingToolbar(
             isActive = isH2,
             contentDescription = stringResource(R.string.label_heading2),
         ) {
-            Text("H2", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.label_heading2), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
         }
 
         // Unordered list
