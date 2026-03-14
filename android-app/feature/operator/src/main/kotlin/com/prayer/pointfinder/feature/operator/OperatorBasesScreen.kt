@@ -236,9 +236,6 @@ fun OperatorBaseDetailScreen(
                     val nfcColor = if (base.nfcLinked) StatusCompleted else StatusSubmitted
                     val nfcLabel = if (base.nfcLinked) stringResource(R.string.label_nfc_linked) else stringResource(R.string.label_nfc_not_linked)
                     CapsuleBadge(label = nfcLabel, color = nfcColor)
-                    if (base.requirePresenceToSubmit) {
-                        CapsuleBadge(label = stringResource(R.string.label_presence_required), color = StatusCheckedIn)
-                    }
                 }
             }
 

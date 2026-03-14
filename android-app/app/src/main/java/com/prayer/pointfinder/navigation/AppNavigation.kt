@@ -741,7 +741,7 @@ private fun PlayerRootScreen(
                         } else {
                             solving = baseId to challengeId
                             viewModel.setPresenceRequired(
-                                state.progress.firstOrNull { it.baseId == baseId }?.requirePresenceToSubmit == true,
+                                checkInChallenge?.requirePresenceToSubmit == true,
                             )
                             viewModel.setPhotoMode(checkInChallenge?.answerType == "file")
                         }
@@ -833,7 +833,7 @@ private fun PlayerRootScreen(
                         viewModel.submitNone(auth, selectedBase.baseId, challengeId, isOnline)
                     } else {
                         solving = selectedBase.baseId to challengeId
-                        viewModel.setPresenceRequired(selectedBase.requirePresenceToSubmit)
+                        viewModel.setPresenceRequired(state.selectedChallenge?.requirePresenceToSubmit == true)
                         viewModel.setPhotoMode(state.selectedChallenge?.answerType == "file")
                     }
                 }

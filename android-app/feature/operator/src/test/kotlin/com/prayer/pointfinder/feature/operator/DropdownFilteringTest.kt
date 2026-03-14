@@ -21,7 +21,6 @@ class DropdownFilteringTest {
         lat = 0.0,
         lng = 0.0,
         nfcLinked = false,
-        requirePresenceToSubmit = false,
         hidden = hidden,
         fixedChallengeId = fixedChallengeId,
     )

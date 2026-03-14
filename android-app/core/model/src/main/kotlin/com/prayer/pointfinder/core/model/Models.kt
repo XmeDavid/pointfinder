@@ -108,7 +108,6 @@ data class Base(
     val lat: Double,
     val lng: Double,
     val nfcLinked: Boolean,
-    val requirePresenceToSubmit: Boolean,
     val hidden: Boolean = false,
     val fixedChallengeId: EntityId? = null,
 )
@@ -127,6 +126,7 @@ data class Challenge(
     val autoValidate: Boolean = false,
     val correctAnswer: List<String>? = null,
     val locationBound: Boolean = false,
+    val requirePresenceToSubmit: Boolean = false,
 )
 
 @Serializable
@@ -199,7 +199,6 @@ data class BaseProgress(
     val lat: Double,
     val lng: Double,
     val nfcLinked: Boolean,
-    val requirePresenceToSubmit: Boolean,
     val status: BaseStatus,
     val checkedInAt: String? = null,
     val challengeId: EntityId? = null,
@@ -223,6 +222,7 @@ data class CheckInResponse(
         val completionContent: String? = null,
         val answerType: String,
         val points: Int,
+        val requirePresenceToSubmit: Boolean = false,
     )
 }
 
@@ -438,7 +438,6 @@ data class CreateBaseRequest(
     val lat: Double,
     val lng: Double,
     val fixedChallengeId: String? = null,
-    val requirePresenceToSubmit: Boolean = false,
     val hidden: Boolean = false,
 )
 
@@ -449,7 +448,6 @@ data class UpdateBaseRequest(
     val lat: Double,
     val lng: Double,
     val fixedChallengeId: String? = null,
-    val requirePresenceToSubmit: Boolean = false,
     val hidden: Boolean = false,
 )
 
@@ -468,6 +466,7 @@ data class CreateChallengeRequest(
     val locationBound: Boolean = false,
     val fixedBaseId: String? = null,
     val unlocksBaseId: String? = null,
+    val requirePresenceToSubmit: Boolean = false,
 )
 
 @Serializable
@@ -483,6 +482,7 @@ data class UpdateChallengeRequest(
     val locationBound: Boolean = false,
     val fixedBaseId: String? = null,
     val unlocksBaseId: String? = null,
+    val requirePresenceToSubmit: Boolean = false,
 )
 
 // === Team CRUD Requests ===
@@ -624,7 +624,6 @@ data class GameExportBase(
     val lat: Double,
     val lng: Double,
     val hidden: Boolean,
-    val requirePresenceToSubmit: Boolean,
     val fixedChallengeTempId: String?,
 )
 
@@ -641,6 +640,7 @@ data class GameExportChallenge(
     val points: Int,
     val locationBound: Boolean,
     val unlocksBaseTempId: String?,
+    val requirePresenceToSubmit: Boolean = false,
 )
 
 @Serializable

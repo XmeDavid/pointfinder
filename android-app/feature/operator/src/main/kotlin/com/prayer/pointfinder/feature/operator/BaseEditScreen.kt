@@ -98,7 +98,6 @@ fun BaseEditScreen(
     // Form state
     var name by remember { mutableStateOf(base?.name ?: "") }
     var description by remember { mutableStateOf(base?.description ?: "") }
-    var requirePresence by remember { mutableStateOf(base?.requirePresenceToSubmit ?: false) }
     var hidden by remember { mutableStateOf(base?.hidden ?: false) }
     var fixedChallengeId by remember { mutableStateOf<String?>(base?.fixedChallengeId) }
 
@@ -284,24 +283,6 @@ fun BaseEditScreen(
             Spacer(Modifier.height(20.dp))
 
             // Options section
-            // Require presence toggle
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(R.string.label_require_presence),
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-                Switch(
-                    checked = requirePresence,
-                    onCheckedChange = { requirePresence = it },
-                )
-            }
-
-            Spacer(Modifier.height(8.dp))
-
             // Hidden base toggle
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -470,7 +451,6 @@ fun BaseEditScreen(
                                 lat = pinLat,
                                 lng = pinLng,
                                 fixedChallengeId = fixedChallengeId,
-                                requirePresenceToSubmit = requirePresence,
                                 hidden = hidden,
                             ),
                         )
@@ -482,7 +462,6 @@ fun BaseEditScreen(
                                 lat = pinLat,
                                 lng = pinLng,
                                 fixedChallengeId = fixedChallengeId,
-                                requirePresenceToSubmit = requirePresence,
                                 hidden = hidden,
                             ),
                         )

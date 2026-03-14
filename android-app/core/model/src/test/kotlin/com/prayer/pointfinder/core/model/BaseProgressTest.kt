@@ -12,7 +12,6 @@ class BaseProgressTest {
             lat = 0.0,
             lng = 0.0,
             nfcLinked = false,
-            requirePresenceToSubmit = false,
             status = BaseStatus.COMPLETED,
         )
         assertEquals(BaseStatus.COMPLETED, progress.status)

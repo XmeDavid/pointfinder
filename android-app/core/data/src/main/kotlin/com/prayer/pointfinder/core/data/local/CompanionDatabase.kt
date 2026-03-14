@@ -49,7 +49,6 @@ data class CachedProgressEntity(
     val lat: Double,
     val lng: Double,
     val nfcLinked: Boolean,
-    val requirePresenceToSubmit: Boolean,
     val status: String,
     val checkedInAt: String?,
     val challengeId: String?,
@@ -68,6 +67,7 @@ data class CachedChallengeEntity(
     val completionContent: String?,
     val answerType: String,
     val points: Int,
+    val requirePresenceToSubmit: Boolean = false,
 )
 
 @Dao
@@ -173,7 +173,7 @@ interface ChallengeDao {
         CachedProgressEntity::class,
         CachedChallengeEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = false,
 )
 abstract class CompanionDatabase : RoomDatabase() {
@@ -189,6 +189,17 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
     }
 }
 
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // Move requirePresenceToSubmit from cached_progress to cached_challenge
+        db.execSQL("CREATE TABLE cached_progress_new (gameId TEXT NOT NULL, baseId TEXT NOT NULL, baseName TEXT NOT NULL, lat REAL NOT NULL, lng REAL NOT NULL, nfcLinked INTEGER NOT NULL, status TEXT NOT NULL, checkedInAt TEXT, challengeId TEXT, submissionStatus TEXT, PRIMARY KEY(gameId, baseId))")
+        db.execSQL("INSERT INTO cached_progress_new (gameId, baseId, baseName, lat, lng, nfcLinked, status, checkedInAt, challengeId, submissionStatus) SELECT gameId, baseId, baseName, lat, lng, nfcLinked, status, checkedInAt, challengeId, submissionStatus FROM cached_progress")
+        db.execSQL("DROP TABLE cached_progress")
+        db.execSQL("ALTER TABLE cached_progress_new RENAME TO cached_progress")
+        db.execSQL("ALTER TABLE cached_challenge ADD COLUMN requirePresenceToSubmit INTEGER NOT NULL DEFAULT 0")
+    }
+}
+
 fun BaseProgress.toCached(gameId: String): CachedProgressEntity {
     return CachedProgressEntity(
         gameId = gameId,
@@ -197,7 +208,6 @@ fun BaseProgress.toCached(gameId: String): CachedProgressEntity {
         lat = lat,
         lng = lng,
         nfcLinked = nfcLinked,
-        requirePresenceToSubmit = requirePresenceToSubmit,
         status = status.name.lowercase(),
         checkedInAt = checkedInAt,
         challengeId = challengeId,
@@ -212,7 +222,6 @@ fun CachedProgressEntity.toBaseProgress(): BaseProgress {
         lat = lat,
         lng = lng,
         nfcLinked = nfcLinked,
-        requirePresenceToSubmit = requirePresenceToSubmit,
         status = BaseStatus.valueOf(status.uppercase()),
         checkedInAt = checkedInAt,
         challengeId = challengeId,
@@ -236,6 +245,7 @@ fun CheckInResponse.ChallengeInfo.toCached(
         completionContent = completionContent,
         answerType = answerType,
         points = points,
+        requirePresenceToSubmit = requirePresenceToSubmit,
     )
 }
 
@@ -248,5 +258,6 @@ fun CachedChallengeEntity.toChallengeInfo(): CheckInResponse.ChallengeInfo {
         completionContent = completionContent,
         answerType = answerType,
         points = points,
+        requirePresenceToSubmit = requirePresenceToSubmit,
     )
 }

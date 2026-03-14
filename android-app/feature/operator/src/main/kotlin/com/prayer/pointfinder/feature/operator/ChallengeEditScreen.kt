@@ -101,6 +101,7 @@ fun ChallengeEditScreen(
         }
         mutableStateOf(fromBase ?: preLinkedBaseId)
     }
+    var requirePresence by remember { mutableStateOf(challenge?.requirePresenceToSubmit ?: false) }
     var locationBound by remember { mutableStateOf(challenge?.locationBound ?: false) }
     var unlocksBaseId by remember { mutableStateOf<String?>(challenge?.unlocksBaseId) }
 
@@ -350,8 +351,29 @@ fun ChallengeEditScreen(
                         onClick = {
                             answerType = "none"
                             autoValidate = false
+                            requirePresence = false
                             answerTypeExpanded = false
                         },
+                        enabled = !requirePresence,
+                    )
+                }
+            }
+
+            // Require presence toggle (hidden when answerType is "none")
+            if (answerType != "none") {
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.label_require_presence),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                    Switch(
+                        checked = requirePresence,
+                        onCheckedChange = { requirePresence = it },
                     )
                 }
             }
@@ -545,6 +567,7 @@ fun ChallengeEditScreen(
                                 locationBound = locationBound,
                                 fixedBaseId = fixedBaseId,
                                 unlocksBaseId = unlocksBaseId,
+                                requirePresenceToSubmit = requirePresence,
                             ),
                         )
                     } else {
@@ -561,6 +584,7 @@ fun ChallengeEditScreen(
                                 locationBound = locationBound,
                                 fixedBaseId = fixedBaseId,
                                 unlocksBaseId = unlocksBaseId,
+                                requirePresenceToSubmit = requirePresence,
                             ),
                         )
                     }
