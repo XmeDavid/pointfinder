@@ -223,6 +223,7 @@
     <string name="label_nfc_missing">NFC em falta (%1$d bases)</string>
     <string name="label_location_bound_unassigned">Desafios com localização não atribuídos (%1$d)</string>
     <string name="label_not_enough_challenges">Desafios insuficientes</string>
+    <string name="warning_team_variables_incomplete">Algumas equipas têm valores de variáveis incompletos</string>
     <string name="label_go_live_confirm_title">Iniciar jogo?</string>
     <string name="label_go_live_confirm_message">As equipas poderão entrar e jogar. Podes continuar a editar bases e desafios durante o jogo.</string>
     <string name="label_challenges">Desafios</string>

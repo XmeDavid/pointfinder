@@ -1329,6 +1329,7 @@ private fun OperatorGameRoot(
                             challenges = state.challenges,
                             teams = state.teams,
                             assignments = state.assignments,
+                            teamVariablesIncomplete = state.teamVariablesIncomplete,
                             onNavigateToBases = { setupSubScreen = "bases_list" },
                             onNavigateToChallenges = { setupSubScreen = "challenges_list" },
                             onNavigateToTeams = { setupSubScreen = "teams_list" },

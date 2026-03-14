@@ -223,6 +223,7 @@
     <string name="label_nfc_missing">NFC fehlt (%1$d Basen)</string>
     <string name="label_location_bound_unassigned">Ortsgebundene Challenges nicht zugewiesen (%1$d)</string>
     <string name="label_not_enough_challenges">Nicht genug Challenges</string>
+    <string name="warning_team_variables_incomplete">Einige Teams haben unvollständige Variablenwerte</string>
     <string name="label_go_live_confirm_title">Spiel starten?</string>
     <string name="label_go_live_confirm_message">Teams können beitreten und spielen. Basen und Challenges können weiterhin bearbeitet werden.</string>
     <string name="label_challenges">Challenges</string>

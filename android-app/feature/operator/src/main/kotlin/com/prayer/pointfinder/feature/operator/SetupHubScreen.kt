@@ -52,13 +52,14 @@ fun SetupHubScreen(
     challenges: List<Challenge>,
     teams: List<Team>,
     assignments: List<Assignment>,
+    teamVariablesIncomplete: Boolean = false,
     onNavigateToBases: () -> Unit,
     onNavigateToChallenges: () -> Unit,
     onNavigateToTeams: () -> Unit,
     onGoLive: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val warnings = buildWarnings(bases, challenges, teams, assignments)
+    val warnings = buildWarnings(bases, challenges, teams, assignments, teamVariablesIncomplete)
     val hasWarnings = warnings.isNotEmpty()
     var showGoLiveDialog by remember { mutableStateOf(false) }
 
@@ -248,6 +249,7 @@ private fun buildWarnings(
     challenges: List<Challenge>,
     teams: List<Team>,
     assignments: List<Assignment>,
+    teamVariablesIncomplete: Boolean,
 ): List<SetupWarning> {
     val warnings = mutableListOf<SetupWarning>()
 
@@ -295,6 +297,13 @@ private fun buildWarnings(
     if (challenges.isNotEmpty() && bases.isNotEmpty() && challenges.size < bases.size) {
         warnings += SetupWarning(
             text = stringResource(R.string.label_not_enough_challenges),
+            onClick = {},
+        )
+    }
+
+    if (teamVariablesIncomplete) {
+        warnings += SetupWarning(
+            text = stringResource(R.string.warning_team_variables_incomplete),
             onClick = {},
         )
     }

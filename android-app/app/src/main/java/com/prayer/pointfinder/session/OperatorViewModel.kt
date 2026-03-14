@@ -70,6 +70,7 @@ data class OperatorState(
     val challenges: List<Challenge> = emptyList(),
     val assignments: List<Assignment> = emptyList(),
     val variables: List<TeamVariable> = emptyList(),
+    val teamVariablesIncomplete: Boolean = false,
     val leaderboard: List<LeaderboardEntry> = emptyList(),
     val activity: List<ActivityEvent> = emptyList(),
     val isLiveRefreshing: Boolean = false,
@@ -186,12 +187,20 @@ class OperatorViewModel @Inject constructor(
             val variables = runCatching { operatorRepository.getGameVariables(gameId).variables }
                 .onFailure { Log.e("OperatorVM", "Failed to load variables", it) }
                 .getOrDefault(emptyList())
+            val teamVariablesIncomplete = if (variables.isNotEmpty()) {
+                runCatching { !operatorRepository.getVariablesCompleteness(gameId).complete }
+                    .onFailure { Log.e("OperatorVM", "Failed to check variables completeness", it) }
+                    .getOrDefault(false)
+            } else {
+                false
+            }
 
             _state.value = _state.value.copy(
                 teams = teams,
                 challenges = challenges,
                 assignments = assignments,
                 variables = variables,
+                teamVariablesIncomplete = teamVariablesIncomplete,
                 authExpired = false,
             )
         }
