@@ -50,7 +50,7 @@ export function MapPicker({ value, onChange, className, tileSource }: MapPickerP
   return (
     <div className="flex items-start gap-2">
       <div
-        className={`${className} relative`}
+        className={`${className} relative flex-1 min-w-0`}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
