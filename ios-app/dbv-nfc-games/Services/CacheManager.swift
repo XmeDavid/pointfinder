@@ -95,7 +95,8 @@ actor GameDataCache {
             content: challenge.content,
             completionContent: challenge.completionContent,
             answerType: challenge.answerType,
-            points: challenge.points
+            points: challenge.points,
+            requirePresenceToSubmit: challenge.requirePresenceToSubmit
         )
     }
 
@@ -132,7 +133,6 @@ actor GameDataCache {
                 lat: old.lat,
                 lng: old.lng,
                 nfcLinked: old.nfcLinked,
-                requirePresenceToSubmit: old.requirePresenceToSubmit,
                 status: status,
                 checkedInAt: status == "checked_in" ? DateFormatting.iso8601String() : old.checkedInAt,
                 challengeId: old.challengeId,

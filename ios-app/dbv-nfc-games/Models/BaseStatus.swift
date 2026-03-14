@@ -51,7 +51,6 @@ struct BaseProgress: Codable, Identifiable {
     var lat: Double
     var lng: Double
     var nfcLinked: Bool
-    var requirePresenceToSubmit: Bool
     var status: String
     var checkedInAt: String?
     var challengeId: UUID?
@@ -79,5 +78,29 @@ struct CheckInResponse: Codable {
         let completionContent: String?
         let answerType: String
         let points: Int
+        let requirePresenceToSubmit: Bool
+
+        init(id: UUID, title: String, description: String, content: String, completionContent: String?, answerType: String, points: Int, requirePresenceToSubmit: Bool = false) {
+            self.id = id
+            self.title = title
+            self.description = description
+            self.content = content
+            self.completionContent = completionContent
+            self.answerType = answerType
+            self.points = points
+            self.requirePresenceToSubmit = requirePresenceToSubmit
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            id = try container.decode(UUID.self, forKey: .id)
+            title = try container.decode(String.self, forKey: .title)
+            description = try container.decode(String.self, forKey: .description)
+            content = try container.decode(String.self, forKey: .content)
+            completionContent = try container.decodeIfPresent(String.self, forKey: .completionContent)
+            answerType = try container.decode(String.self, forKey: .answerType)
+            points = try container.decode(Int.self, forKey: .points)
+            requirePresenceToSubmit = try container.decodeIfPresent(Bool.self, forKey: .requirePresenceToSubmit) ?? false
+        }
     }
 }

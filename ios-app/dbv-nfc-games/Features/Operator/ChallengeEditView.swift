@@ -24,6 +24,7 @@ struct ChallengeEditView: View {
     @State private var correctAnswers: [String]
     @State private var fixedBaseId: UUID?
     @State private var locationBound: Bool
+    @State private var requirePresenceToSubmit: Bool
     @State private var unlocksBaseId: UUID?
     @State private var isSaving = false
     @State private var showDeleteAlert = false
@@ -90,6 +91,7 @@ struct ChallengeEditView: View {
         let fixedBase = bases.first(where: { $0.fixedChallengeId == challenge?.id })
         self._fixedBaseId = State(initialValue: fixedBase?.id)
         self._locationBound = State(initialValue: challenge?.locationBound ?? false)
+        self._requirePresenceToSubmit = State(initialValue: challenge?.requirePresenceToSubmit ?? false)
         self._unlocksBaseId = State(initialValue: challenge?.unlocksBaseId)
     }
 
@@ -141,6 +143,11 @@ struct ChallengeEditView: View {
                 }
                 .pickerStyle(.segmented)
                 .accessibilityIdentifier("challenge-type-select")
+                .onChange(of: answerType) { _, newValue in
+                    if newValue == "none" {
+                        requirePresenceToSubmit = false
+                    }
+                }
 
                 if answerType == "text" {
                     Toggle(locale.t("operator.autoValidate"), isOn: $autoValidate)
@@ -180,6 +187,13 @@ struct ChallengeEditView: View {
                             }
                         }
                     }
+                }
+            }
+
+            // Presence requirement (hidden when answerType is "none")
+            if answerType != "none" {
+                Section {
+                    Toggle(locale.t("operator.requirePresence"), isOn: $requirePresenceToSubmit)
                 }
             }
 
@@ -480,7 +494,8 @@ struct ChallengeEditView: View {
                         points: points,
                         locationBound: locationBound,
                         fixedBaseId: fixedBaseId,
-                        unlocksBaseId: unlocksBaseId
+                        unlocksBaseId: unlocksBaseId,
+                        requirePresenceToSubmit: requirePresenceToSubmit
                     ),
                     token: token
                 )
@@ -501,7 +516,8 @@ struct ChallengeEditView: View {
                         points: points,
                         locationBound: locationBound,
                         fixedBaseId: fixedBaseId,
-                        unlocksBaseId: unlocksBaseId
+                        unlocksBaseId: unlocksBaseId,
+                        requirePresenceToSubmit: requirePresenceToSubmit
                     ),
                     token: token
                 )

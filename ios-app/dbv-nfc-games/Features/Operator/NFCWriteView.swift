@@ -81,20 +81,6 @@ struct BaseDetailView: View {
                 .background((base.nfcLinked ? Color.green : Color.orange).opacity(0.15))
                 .clipShape(Capsule())
 
-                // Require presence
-                if base.requirePresenceToSubmit {
-                    HStack(spacing: 4) {
-                        Image(systemName: "location.circle.fill")
-                        Text(locale.t("nfc.presenceRequired"))
-                    }
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.blue)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(Color.blue.opacity(0.15))
-                    .clipShape(Capsule())
-                }
             }
         }
         .padding()

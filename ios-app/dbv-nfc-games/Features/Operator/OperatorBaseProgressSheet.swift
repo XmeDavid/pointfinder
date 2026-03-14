@@ -209,7 +209,6 @@ struct TeamStatusRow: View {
             lat: 40.123,
             lng: -8.456,
             nfcLinked: true,
-            requirePresenceToSubmit: false,
             fixedChallengeId: nil
         ),
         teams: [

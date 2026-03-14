@@ -71,7 +71,6 @@ struct Base: Codable, Identifiable {
     let lat: Double
     let lng: Double
     var nfcLinked: Bool
-    let requirePresenceToSubmit: Bool
     let hidden: Bool
     let fixedChallengeId: UUID?
 
@@ -83,7 +82,6 @@ struct Base: Codable, Identifiable {
         lat: Double,
         lng: Double,
         nfcLinked: Bool,
-        requirePresenceToSubmit: Bool,
         hidden: Bool = false,
         fixedChallengeId: UUID? = nil
     ) {
@@ -94,7 +92,6 @@ struct Base: Codable, Identifiable {
         self.lat = lat
         self.lng = lng
         self.nfcLinked = nfcLinked
-        self.requirePresenceToSubmit = requirePresenceToSubmit
         self.hidden = hidden
         self.fixedChallengeId = fixedChallengeId
     }
@@ -108,7 +105,6 @@ struct Base: Codable, Identifiable {
         lat = try container.decode(Double.self, forKey: .lat)
         lng = try container.decode(Double.self, forKey: .lng)
         nfcLinked = try container.decode(Bool.self, forKey: .nfcLinked)
-        requirePresenceToSubmit = try container.decode(Bool.self, forKey: .requirePresenceToSubmit)
         hidden = try container.decodeIfPresent(Bool.self, forKey: .hidden) ?? false
         fixedChallengeId = try container.decodeIfPresent(UUID.self, forKey: .fixedChallengeId)
     }
@@ -128,6 +124,7 @@ struct Challenge: Codable, Identifiable {
     let correctAnswer: [String]?
     let locationBound: Bool
     let fixedBaseId: UUID?
+    let requirePresenceToSubmit: Bool
 
     init(
         id: UUID,
@@ -142,7 +139,8 @@ struct Challenge: Codable, Identifiable {
         autoValidate: Bool = false,
         correctAnswer: [String]? = nil,
         locationBound: Bool = false,
-        fixedBaseId: UUID? = nil
+        fixedBaseId: UUID? = nil,
+        requirePresenceToSubmit: Bool = false
     ) {
         self.id = id
         self.gameId = gameId
@@ -157,6 +155,7 @@ struct Challenge: Codable, Identifiable {
         self.correctAnswer = correctAnswer
         self.locationBound = locationBound
         self.fixedBaseId = fixedBaseId
+        self.requirePresenceToSubmit = requirePresenceToSubmit
     }
 
     init(from decoder: Decoder) throws {
@@ -174,6 +173,7 @@ struct Challenge: Codable, Identifiable {
         correctAnswer = try container.decodeIfPresent([String].self, forKey: .correctAnswer)
         locationBound = try container.decodeIfPresent(Bool.self, forKey: .locationBound) ?? false
         fixedBaseId = try container.decodeIfPresent(UUID.self, forKey: .fixedBaseId)
+        requirePresenceToSubmit = try container.decodeIfPresent(Bool.self, forKey: .requirePresenceToSubmit) ?? false
     }
 }
 

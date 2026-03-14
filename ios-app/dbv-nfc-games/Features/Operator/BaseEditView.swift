@@ -18,7 +18,6 @@ struct BaseEditView: View {
     @State private var description: String
     @State private var lat: Double
     @State private var lng: Double
-    @State private var requirePresenceToSubmit: Bool
     @State private var hidden: Bool
     @State private var fixedChallengeId: UUID?
     @State private var isSaving = false
@@ -65,7 +64,6 @@ struct BaseEditView: View {
         self._description = State(initialValue: base?.description ?? "")
         self._lat = State(initialValue: base?.lat ?? initialCoordinate?.latitude ?? 0)
         self._lng = State(initialValue: base?.lng ?? initialCoordinate?.longitude ?? 0)
-        self._requirePresenceToSubmit = State(initialValue: base?.requirePresenceToSubmit ?? false)
         self._hidden = State(initialValue: base?.hidden ?? false)
         self._fixedChallengeId = State(initialValue: base?.fixedChallengeId)
         self._nfcLinked = State(initialValue: base?.nfcLinked ?? false)
@@ -127,7 +125,6 @@ struct BaseEditView: View {
 
             // Toggles
             Section {
-                Toggle(locale.t("operator.requirePresence"), isOn: $requirePresenceToSubmit)
                 Toggle(locale.t("operator.hiddenBase"), isOn: $hidden)
             }
 
@@ -257,7 +254,6 @@ struct BaseEditView: View {
                         lat: lat,
                         lng: lng,
                         fixedChallengeId: fixedChallengeId,
-                        requirePresenceToSubmit: requirePresenceToSubmit,
                         hidden: hidden
                     ),
                     token: token
@@ -274,7 +270,6 @@ struct BaseEditView: View {
                         lat: lat,
                         lng: lng,
                         fixedChallengeId: fixedChallengeId,
-                        requirePresenceToSubmit: requirePresenceToSubmit,
                         hidden: hidden
                     ),
                     token: token

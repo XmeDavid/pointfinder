@@ -27,7 +27,6 @@ struct CreateBaseRequest: Encodable {
     let lat: Double
     let lng: Double
     let fixedChallengeId: UUID?
-    let requirePresenceToSubmit: Bool
     let hidden: Bool
 }
 
@@ -37,7 +36,6 @@ struct UpdateBaseRequest: Encodable {
     let lat: Double
     let lng: Double
     let fixedChallengeId: UUID?
-    let requirePresenceToSubmit: Bool
     let hidden: Bool
 }
 
@@ -54,6 +52,7 @@ struct CreateChallengeRequest: Encodable {
     let locationBound: Bool
     let fixedBaseId: UUID?
     let unlocksBaseId: UUID?
+    let requirePresenceToSubmit: Bool
 }
 
 struct UpdateChallengeRequest: Encodable {
@@ -68,6 +67,7 @@ struct UpdateChallengeRequest: Encodable {
     let locationBound: Bool
     let fixedBaseId: UUID?
     let unlocksBaseId: UUID?
+    let requirePresenceToSubmit: Bool
 }
 
 // MARK: - Team Requests

@@ -118,7 +118,7 @@ struct BaseCheckInDetailView: View {
                                 baseId: baseId,
                                 challengeId: challenge.id,
                                 baseName: base?.baseName ?? locale.t("base.defaultName"),
-                                requirePresenceToSubmit: base?.requirePresenceToSubmit ?? false,
+                                requirePresenceToSubmit: challenge.requirePresenceToSubmit,
                                 answerType: challenge.answerType,
                                 dismissToMap: popToRoot
                             )
