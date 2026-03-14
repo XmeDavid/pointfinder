@@ -373,6 +373,10 @@ actor APIClient {
         try await put("/api/games/\(gameId)/challenges/\(challengeId)/team-variables", body: request, token: token)
     }
 
+    func getTeamVariablesCompleteness(gameId: UUID, token: String) async throws -> VariableCompletenessResponse {
+        try await get("/api/games/\(gameId)/team-variables/completeness", token: token)
+    }
+
     // MARK: - Monitoring
 
     func getLeaderboard(gameId: UUID, token: String) async throws -> [LeaderboardEntry] {

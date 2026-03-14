@@ -12,6 +12,7 @@ struct OperatorSetupHubView: View {
     @State private var assignments: [Assignment] = []
     @State private var isLoading = true
     @State private var showGoLiveAlert = false
+    @State private var teamVariablesComplete: Bool = true
     @State private var showBases = false
     @State private var showChallenges = false
     @State private var showTeams = false
@@ -60,6 +61,13 @@ struct OperatorSetupHubView: View {
 
         if !challenges.isEmpty && !bases.isEmpty && challenges.count < bases.count {
             result.append(SetupWarning(text: locale.t("operator.warningNotEnoughChallenges"), icon: "exclamationmark.triangle"))
+        }
+
+        if !teamVariablesComplete {
+            result.append(SetupWarning(
+                text: locale.t("setup.teamVariablesIncomplete"),
+                icon: "exclamationmark.triangle.fill"
+            ))
         }
 
         return result
@@ -192,12 +200,14 @@ struct OperatorSetupHubView: View {
             async let challengesResult = appState.apiClient.getChallenges(gameId: game.id, token: token)
             async let teamsResult = appState.apiClient.getTeams(gameId: game.id, token: token)
             async let assignmentsResult = appState.apiClient.getAssignments(gameId: game.id, token: token)
+            async let completenessResult = appState.apiClient.getTeamVariablesCompleteness(gameId: game.id, token: token)
 
-            let (b, c, t, a) = try await (basesResult, challengesResult, teamsResult, assignmentsResult)
+            let (b, c, t, a, comp) = try await (basesResult, challengesResult, teamsResult, assignmentsResult, completenessResult)
             bases = b
             challenges = c
             teams = t
             assignments = a
+            teamVariablesComplete = comp.complete
         } catch {
             appState.setError(error.localizedDescription)
         }

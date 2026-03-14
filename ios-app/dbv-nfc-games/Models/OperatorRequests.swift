@@ -94,6 +94,11 @@ struct TeamVariablesResponse: Codable {
     let variables: [TeamVariable]
 }
 
+struct VariableCompletenessResponse: Codable {
+    let complete: Bool
+    let errors: [String]
+}
+
 // MARK: - Notifications
 struct OperatorNotificationResponse: Codable, Identifiable {
     let id: UUID
