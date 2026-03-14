@@ -23,7 +23,7 @@ struct Game: Codable, Identifiable {
         name: String,
         description: String,
         status: String,
-        tileSource: String = "osm",
+        tileSource: String = "osm-classic",
         startDate: String? = nil,
         endDate: String? = nil,
         createdBy: UUID? = nil,
@@ -52,7 +52,7 @@ struct Game: Codable, Identifiable {
         name = try container.decode(String.self, forKey: .name)
         description = try container.decode(String.self, forKey: .description)
         status = try container.decode(String.self, forKey: .status)
-        tileSource = try container.decodeIfPresent(String.self, forKey: .tileSource) ?? "osm"
+        tileSource = try container.decodeIfPresent(String.self, forKey: .tileSource) ?? "osm-classic"
         startDate = try container.decodeIfPresent(String.self, forKey: .startDate)
         endDate = try container.decodeIfPresent(String.self, forKey: .endDate)
         createdBy = try container.decodeIfPresent(UUID.self, forKey: .createdBy)
