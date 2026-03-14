@@ -358,4 +358,13 @@
     <string name="confirm_remove_operator">Remover Operador</string>
     <string name="confirm_remove_operator_message">Remover %1$s como operador?</string>
     <string name="label_exporting">A exportar\u2026</string>
+
+    <!-- Toast / Snackbar -->
+    <string name="toast_base_created">Base criada</string>
+    <string name="toast_base_saved">Base guardada</string>
+    <string name="toast_challenge_created">Desafio criado</string>
+    <string name="toast_challenge_saved">Desafio guardado</string>
+    <string name="toast_team_saved">Equipa guardada</string>
+    <string name="toast_game_created">Jogo criado</string>
+    <string name="toast_game_saved">Jogo guardado</string>
 </resources>
