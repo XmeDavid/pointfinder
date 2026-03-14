@@ -61,7 +61,7 @@ export function MapPicker({ value, onChange, className, tileSource }: MapPickerP
           mapStyle={getResolvedStyleUrl(tileSource, dark)}
           onLoad={handleLoad}
           onMoveEnd={handleMoveEnd}
-          scrollZoom={!locked}
+          scrollZoom={!locked ? { around: "center" } : false}
           dragPan={!locked}
           dragRotate={!locked}
           touchZoomRotate={!locked}
