@@ -28,5 +28,6 @@ public class CheckInResponse {
         private String completionContent;
         private String answerType;
         private Integer points;
+        private Boolean requirePresenceToSubmit;
     }
 }

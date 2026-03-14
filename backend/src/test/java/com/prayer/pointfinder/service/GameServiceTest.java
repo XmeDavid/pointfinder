@@ -121,7 +121,7 @@ class GameServiceTest {
     }
 
     @Test
-    void exportGameIncludesRequirePresenceToSubmitInBasePayload() {
+    void exportGameIncludesRequirePresenceToSubmitInChallengePayload() {
         UUID gameId = UUID.randomUUID();
         Game game = Game.builder()
                 .id(gameId)
@@ -131,28 +131,30 @@ class GameServiceTest {
                 .createdBy(authenticatedUser)
                 .build();
 
-        Base base = Base.builder()
+        Challenge challenge = Challenge.builder()
                 .id(UUID.randomUUID())
                 .game(game)
-                .name("Base A")
+                .title("Challenge A")
                 .description("Desc")
-                .lat(40.0)
-                .lng(-8.0)
-                .nfcLinked(true)
-                .hidden(false)
+                .content("content")
+                .completionContent("done")
+                .answerType(AnswerType.text)
+                .autoValidate(false)
+                .points(10)
+                .locationBound(false)
                 .requirePresenceToSubmit(true)
                 .build();
 
         when(gameAccessService.getAccessibleGame(gameId)).thenReturn(game);
-        when(baseRepository.findByGameId(gameId)).thenReturn(List.of(base));
-        when(challengeRepository.findByGameId(gameId)).thenReturn(List.of());
+        when(baseRepository.findByGameId(gameId)).thenReturn(List.of());
+        when(challengeRepository.findByGameId(gameId)).thenReturn(List.of(challenge));
         when(teamRepository.findByGameId(gameId)).thenReturn(List.of());
         when(assignmentRepository.findByGameId(gameId)).thenReturn(List.of());
 
         GameExportDto exported = gameService.exportGame(gameId);
 
-        assertEquals(1, exported.getBases().size());
-        assertTrue(exported.getBases().get(0).getRequirePresenceToSubmit());
+        assertEquals(1, exported.getChallenges().size());
+        assertTrue(exported.getChallenges().get(0).getRequirePresenceToSubmit());
     }
 
     @Test
@@ -188,7 +190,6 @@ class GameServiceTest {
                         .lat(11.0)
                         .lng(12.0)
                         .hidden(false)
-                        .requirePresenceToSubmit(true)
                         .build()))
                 .challenges(List.of(ChallengeExportDto.builder()
                         .tempId("challenge_1")
@@ -200,6 +201,7 @@ class GameServiceTest {
                         .autoValidate(null)
                         .points(100)
                         .locationBound(null)
+                        .requirePresenceToSubmit(true)
                         .build()))
                 .assignments(List.of())
                 .teams(List.of())
@@ -210,7 +212,6 @@ class GameServiceTest {
         ArgumentCaptor<Base> baseCaptor = ArgumentCaptor.forClass(Base.class);
         verify(baseRepository).save(baseCaptor.capture());
         Base savedBase = baseCaptor.getValue();
-        assertTrue(savedBase.getRequirePresenceToSubmit());
         assertEquals("", savedBase.getDescription());
 
         ArgumentCaptor<Challenge> challengeCaptor = ArgumentCaptor.forClass(Challenge.class);
@@ -221,6 +222,7 @@ class GameServiceTest {
         assertEquals("", savedChallenge.getCompletionContent());
         assertFalse(savedChallenge.getAutoValidate());
         assertFalse(savedChallenge.getLocationBound());
+        assertTrue(savedChallenge.getRequirePresenceToSubmit());
 
         assertEquals(importedGameId, imported.getId());
     }
@@ -258,7 +260,7 @@ class GameServiceTest {
                         .lat(1.0)
                         .lng(2.0)
                         .hidden(false)
-                        .requirePresenceToSubmit(false)
+
                         .build()))
                 .challenges(List.of(ChallengeExportDto.builder()
                         .tempId("challenge_1")
@@ -292,7 +294,7 @@ class GameServiceTest {
                                 .lng(2.0)
                                 .hidden(false)
                                 .fixedChallengeTempId("challenge_1")
-                                .requirePresenceToSubmit(false)
+        
                                 .build(),
                         BaseExportDto.builder()
                                 .tempId("base_2")
@@ -301,7 +303,7 @@ class GameServiceTest {
                                 .lat(3.0)
                                 .lng(4.0)
                                 .hidden(false)
-                                .requirePresenceToSubmit(false)
+        
                                 .build()
                 ))
                 .challenges(List.of(ChallengeExportDto.builder()
@@ -338,7 +340,7 @@ class GameServiceTest {
                                 .lng(2.0)
                                 .hidden(false)
                                 .fixedChallengeTempId("challenge_1")
-                                .requirePresenceToSubmit(false)
+        
                                 .build(),
                         BaseExportDto.builder()
                                 .tempId("base_2")
@@ -348,7 +350,7 @@ class GameServiceTest {
                                 .lng(6.0)
                                 .hidden(false)
                                 .fixedChallengeTempId("challenge_2")
-                                .requirePresenceToSubmit(false)
+        
                                 .build(),
                         BaseExportDto.builder()
                                 .tempId("base_3")
@@ -357,7 +359,7 @@ class GameServiceTest {
                                 .lat(3.0)
                                 .lng(4.0)
                                 .hidden(true)
-                                .requirePresenceToSubmit(false)
+        
                                 .build()
                 ))
                 .challenges(List.of(
@@ -404,7 +406,7 @@ class GameServiceTest {
                                 .lng(2.0)
                                 .hidden(true)
                                 .fixedChallengeTempId("challenge_1")
-                                .requirePresenceToSubmit(false)
+        
                                 .build()
                 ))
                 .challenges(List.of(ChallengeExportDto.builder()

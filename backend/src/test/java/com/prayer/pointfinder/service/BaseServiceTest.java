@@ -64,7 +64,6 @@ class BaseServiceTest {
                 .lng(2.0)
                 .hidden(true)
                 .nfcLinked(false)
-                .requirePresenceToSubmit(false)
                 .build();
 
         Challenge unlocker = Challenge.builder()
@@ -113,7 +112,6 @@ class BaseServiceTest {
                 .hidden(false)
                 .fixedChallenge(fixedChallenge)
                 .nfcLinked(false)
-                .requirePresenceToSubmit(false)
                 .build();
 
         UpdateBaseRequest request = baseUpdateRequest("Base", false, null);
@@ -143,7 +141,6 @@ class BaseServiceTest {
                 .lng(2.0)
                 .hidden(true)
                 .nfcLinked(false)
-                .requirePresenceToSubmit(false)
                 .build();
 
         Challenge challenge = Challenge.builder()
@@ -179,7 +176,6 @@ class BaseServiceTest {
                 .lng(2.0)
                 .hidden(true)
                 .nfcLinked(false)
-                .requirePresenceToSubmit(false)
                 .build();
 
         Challenge unlocker = Challenge.builder()
@@ -210,7 +206,6 @@ class BaseServiceTest {
                 .lng(2.0)
                 .hidden(false)
                 .nfcLinked(false)
-                .requirePresenceToSubmit(false)
                 .build();
 
         when(baseRepository.findById(baseId)).thenReturn(Optional.of(base));
@@ -227,7 +222,6 @@ class BaseServiceTest {
         request.setLat(1.0);
         request.setLng(2.0);
         request.setHidden(hidden);
-        request.setRequirePresenceToSubmit(false);
         request.setNfcLinked(false);
         request.setFixedChallengeId(fixedChallengeId);
         return request;

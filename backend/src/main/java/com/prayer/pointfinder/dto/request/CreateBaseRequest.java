@@ -27,7 +27,5 @@ public class CreateBaseRequest {
 
     private UUID fixedChallengeId;
 
-    private Boolean requirePresenceToSubmit = false;
-
     private Boolean hidden = false;
 }

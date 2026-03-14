@@ -173,7 +173,7 @@ class OperatorPushNotificationServiceTest {
                 .lat(1.0)
                 .lng(2.0)
                 .nfcLinked(true)
-                .requirePresenceToSubmit(false)
+
                 .hidden(false)
                 .build();
     }

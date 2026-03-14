@@ -53,6 +53,10 @@ public class Challenge {
     @Column(name = "location_bound", nullable = false)
     private Boolean locationBound;
 
+    @Column(name = "require_presence_to_submit", nullable = false)
+    @Builder.Default
+    private Boolean requirePresenceToSubmit = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "unlocks_base_id")
     private Base unlocksBase;

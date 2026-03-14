@@ -255,7 +255,6 @@ public class PlayerService {
                     .lat(base.getLat())
                     .lng(base.getLng())
                     .nfcLinked(base.getNfcLinked())
-                    .requirePresenceToSubmit(base.getRequirePresenceToSubmit())
                     .status(status.name())
                     .checkedInAt(ci != null ? ci.getCheckedInAt() : null)
                     .challengeId(assignment != null ? assignment.getChallenge().getId() : null)
@@ -280,7 +279,6 @@ public class PlayerService {
                         .lat(base.getLat())
                         .lng(base.getLng())
                         .nfcLinked(base.getNfcLinked())
-                        .requirePresenceToSubmit(base.getRequirePresenceToSubmit())
                         .hidden(base.getHidden())
                         .fixedChallengeId(base.getFixedChallenge() != null ? base.getFixedChallenge().getId() : null)
                         .build())
@@ -358,6 +356,7 @@ public class PlayerService {
                         .correctAnswer(null) // Don't expose correct answer to players
                         .points(c.getPoints())
                         .locationBound(c.getLocationBound())
+                        .requirePresenceToSubmit(c.getRequirePresenceToSubmit())
                         .build())
                 .collect(Collectors.toList());
 
@@ -499,6 +498,7 @@ public class PlayerService {
                             challenge.getCompletionContent(), gameId, challenge.getId(), team.getId()))
                     .answerType(challenge.getAnswerType().name())
                     .points(challenge.getPoints())
+                    .requirePresenceToSubmit(challenge.getRequirePresenceToSubmit())
                     .build();
         }
 

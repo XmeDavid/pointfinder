@@ -392,7 +392,7 @@ class PlayerServiceTest {
                 .lng(2.0)
                 .hidden(false)
                 .nfcLinked(false)
-                .requirePresenceToSubmit(false)
+
                 .build();
         Base hiddenBase = Base.builder()
                 .id(hiddenBaseId)
@@ -403,7 +403,7 @@ class PlayerServiceTest {
                 .lng(4.0)
                 .hidden(true)
                 .nfcLinked(false)
-                .requirePresenceToSubmit(false)
+
                 .build();
         Challenge unlockChallenge = Challenge.builder()
                 .id(challengeId)
@@ -475,7 +475,7 @@ class PlayerServiceTest {
                 .lat(1.0)
                 .lng(2.0)
                 .nfcLinked(true)
-                .requirePresenceToSubmit(false)
+
                 .build();
         CheckIn checkIn = CheckIn.builder()
                 .id(checkInId)

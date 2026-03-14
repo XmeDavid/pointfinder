@@ -22,5 +22,6 @@ public class ChallengeResponse {
     private List<String> correctAnswer;
     private Integer points;
     private Boolean locationBound;
+    private Boolean requirePresenceToSubmit;
     private UUID unlocksBaseId;
 }

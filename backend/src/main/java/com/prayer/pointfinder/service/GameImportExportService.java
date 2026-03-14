@@ -74,7 +74,6 @@ public class GameImportExportService {
                         .lat(base.getLat())
                         .lng(base.getLng())
                         .hidden(base.getHidden())
-                        .requirePresenceToSubmit(base.getRequirePresenceToSubmit())
                         .fixedChallengeTempId(base.getFixedChallenge() != null ?
                                 challengeIdMap.get(base.getFixedChallenge().getId()) : null)
                         .build())
@@ -92,6 +91,7 @@ public class GameImportExportService {
                         .correctAnswer(challenge.getCorrectAnswer())
                         .points(challenge.getPoints())
                         .locationBound(challenge.getLocationBound())
+                        .requirePresenceToSubmit(challenge.getRequirePresenceToSubmit())
                         .unlocksBaseTempId(challenge.getUnlocksBase() != null ?
                                 baseIdMap.get(challenge.getUnlocksBase().getId()) : null)
                         .build())
@@ -166,6 +166,7 @@ public class GameImportExportService {
                     .correctAnswer(chDto.getCorrectAnswer())
                     .points(chDto.getPoints())
                     .locationBound(chDto.getLocationBound() != null ? chDto.getLocationBound() : false)
+                    .requirePresenceToSubmit(chDto.getRequirePresenceToSubmit() != null ? chDto.getRequirePresenceToSubmit() : false)
                     .build();
             challenge = challengeRepository.save(challenge);
             challengeEntityMap.put(chDto.getTempId(), challenge);
@@ -188,8 +189,6 @@ public class GameImportExportService {
                     .lng(baseDto.getLng())
                     .nfcLinked(false)
                     .hidden(baseDto.getHidden() != null ? baseDto.getHidden() : false)
-                    .requirePresenceToSubmit(baseDto.getRequirePresenceToSubmit() != null
-                            ? baseDto.getRequirePresenceToSubmit() : false)
                     .fixedChallenge(fixedChallenge)
                     .build();
             base = baseRepository.save(base);

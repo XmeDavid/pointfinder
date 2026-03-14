@@ -52,7 +52,13 @@ public class ChallengeService {
                 .correctAnswer(request.getCorrectAnswer())
                 .points(request.getPoints())
                 .locationBound(request.getLocationBound() != null ? request.getLocationBound() : false)
+                .requirePresenceToSubmit(request.getRequirePresenceToSubmit() != null ? request.getRequirePresenceToSubmit() : false)
                 .build();
+
+        // Enforce: answerType=none → requirePresenceToSubmit must be false
+        if (challenge.getAnswerType() == AnswerType.none) {
+            challenge.setRequirePresenceToSubmit(false);
+        }
 
         challenge = challengeRepository.save(challenge);
 
@@ -87,6 +93,12 @@ public class ChallengeService {
         challenge.setCorrectAnswer(request.getCorrectAnswer());
         challenge.setPoints(request.getPoints());
         challenge.setLocationBound(request.getLocationBound() != null ? request.getLocationBound() : false);
+        challenge.setRequirePresenceToSubmit(request.getRequirePresenceToSubmit() != null ? request.getRequirePresenceToSubmit() : false);
+
+        // Enforce: answerType=none → requirePresenceToSubmit must be false
+        if (challenge.getAnswerType() == AnswerType.none) {
+            challenge.setRequirePresenceToSubmit(false);
+        }
 
         challenge = challengeRepository.save(challenge);
 
@@ -215,6 +227,7 @@ public class ChallengeService {
                 .correctAnswer(c.getCorrectAnswer())
                 .points(c.getPoints())
                 .locationBound(c.getLocationBound())
+                .requirePresenceToSubmit(c.getRequirePresenceToSubmit())
                 .unlocksBaseId(c.getUnlocksBase() != null ? c.getUnlocksBase().getId() : null)
                 .build();
     }

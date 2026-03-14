@@ -37,10 +37,6 @@ public class Base {
     @Column(name = "nfc_linked", nullable = false)
     private Boolean nfcLinked;
 
-    @Column(name = "require_presence_to_submit", nullable = false)
-    @Builder.Default
-    private Boolean requirePresenceToSubmit = false;
-
     @Column(name = "hidden", nullable = false)
     @Builder.Default
     private Boolean hidden = false;

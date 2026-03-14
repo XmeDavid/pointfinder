@@ -31,6 +31,8 @@ public class CreateChallengeRequest {
 
     private Boolean locationBound = false;
 
+    private Boolean requirePresenceToSubmit = false;
+
     private UUID fixedBaseId;
 
     private UUID unlocksBaseId;
