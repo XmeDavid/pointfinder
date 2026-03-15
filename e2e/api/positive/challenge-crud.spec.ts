@@ -1,4 +1,4 @@
-// @scenarios P4, P13, P14
+// @scenarios P4, P13, P14, P25
 import { test, expect } from '@playwright/test';
 import {
   createGame,
@@ -48,6 +48,23 @@ test.describe('Challenge CRUD - positive', () => {
     expect(status).toBe(201);
     expect(data).toHaveProperty('id');
     expect(data.answerType).toBe('file');
+  });
+
+  test('P25: create challenge with requirePresenceToSubmit', async () => {
+    const { status, data } = await createChallenge(token, gameId, {
+      ...challengeFixture('text', 10),
+      requirePresenceToSubmit: true,
+    });
+    expect(status).toBe(201);
+    expect(data).toHaveProperty('id');
+    expect(data.requirePresenceToSubmit).toBe(true);
+
+    // Verify it persists when fetched via list
+    const listRes = await getChallenges(token, gameId);
+    expect(listRes.status).toBe(200);
+    const fetched = listRes.data.find((c: any) => c.id === data.id);
+    expect(fetched).toBeDefined();
+    expect(fetched.requirePresenceToSubmit).toBe(true);
   });
 
   test('P13: update challenge title', async () => {

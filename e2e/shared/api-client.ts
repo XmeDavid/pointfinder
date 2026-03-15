@@ -161,6 +161,7 @@ export async function createChallenge(
     points: number;
     correctAnswer?: string[];
     autoValidate?: boolean;
+    requirePresenceToSubmit?: boolean;
   },
 ) {
   const res = await request('POST', `/api/games/${gameId}/challenges`, { body, token });

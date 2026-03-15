@@ -1,10 +1,11 @@
-// @scenarios N6, N8, N9, N10
+// @scenarios N6, N8, N9, N10, N14
 import { test, expect } from '@playwright/test';
 import {
   createGame,
   createBase,
   createChallenge,
   createTeam,
+  getBases,
   nfcLinkBase,
   updateBase,
   updateGameStatus,
@@ -141,5 +142,36 @@ test.describe('business rules', { tag: '@negative' }, () => {
 
     const { status } = await updateGameStatus(token, gameId, 'live');
     expect(status).toBe(400);
+  });
+
+  test('answerType=none forces requirePresenceToSubmit to false', async () => {
+    // N14: Backend enforces mutual exclusion — answerType=none cannot have requirePresenceToSubmit
+    const gameRes = await createGame(token, throwawayGameFixture(config.runId, 'none-presence'));
+    expect(gameRes.status).toBe(201);
+    const gameId = gameRes.data.id;
+    throwawayGameIds.push(gameId);
+    appendCreatedGameId(gameId);
+
+    const { status, data } = await createChallenge(token, gameId, {
+      title: 'None Challenge',
+      description: 'E2E none challenge with presence flag',
+      answerType: 'none',
+      points: 5,
+      requirePresenceToSubmit: true,
+    });
+    expect(status).toBe(201);
+    // Backend must force requirePresenceToSubmit to false for answerType=none
+    expect(data.requirePresenceToSubmit).toBe(false);
+    expect(data.answerType).toBe('none');
+  });
+
+  test('requirePresenceToSubmit does not appear in base response', async () => {
+    // Verify field was moved from Base to Challenge — base responses should not contain it
+    const { status, data } = await getBases(token, mainGameId);
+    expect(status).toBe(200);
+    expect(data.length).toBeGreaterThan(0);
+    for (const base of data) {
+      expect(base).not.toHaveProperty('requirePresenceToSubmit');
+    }
   });
 });
