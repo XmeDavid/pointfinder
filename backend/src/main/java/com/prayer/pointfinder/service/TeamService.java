@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.regex.Pattern;
+
 import java.util.stream.Collectors;
 
 @Service
@@ -74,7 +74,6 @@ public class TeamService {
 
         team.setName(request.getName());
         if (request.getColor() != null) {
-            validateColor(request.getColor());
             team.setColor(request.getColor());
         }
         team = teamRepository.save(team);
@@ -131,14 +130,6 @@ public class TeamService {
         }
 
         playerRepository.delete(player);
-    }
-
-    private static final Pattern HEX_COLOR_PATTERN = Pattern.compile("^#[0-9a-fA-F]{6}$");
-
-    private void validateColor(String color) {
-        if (!HEX_COLOR_PATTERN.matcher(color).matches()) {
-            throw new BadRequestException("Invalid color format. Expected hex color like #FF0000");
-        }
     }
 
     private String generateUniqueJoinCode() {
