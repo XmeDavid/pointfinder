@@ -260,7 +260,6 @@ class GameServiceTest {
                         .lat(1.0)
                         .lng(2.0)
                         .hidden(false)
-
                         .build()))
                 .challenges(List.of(ChallengeExportDto.builder()
                         .tempId("challenge_1")
@@ -294,7 +293,6 @@ class GameServiceTest {
                                 .lng(2.0)
                                 .hidden(false)
                                 .fixedChallengeTempId("challenge_1")
-        
                                 .build(),
                         BaseExportDto.builder()
                                 .tempId("base_2")
@@ -303,7 +301,6 @@ class GameServiceTest {
                                 .lat(3.0)
                                 .lng(4.0)
                                 .hidden(false)
-        
                                 .build()
                 ))
                 .challenges(List.of(ChallengeExportDto.builder()
@@ -340,7 +337,6 @@ class GameServiceTest {
                                 .lng(2.0)
                                 .hidden(false)
                                 .fixedChallengeTempId("challenge_1")
-        
                                 .build(),
                         BaseExportDto.builder()
                                 .tempId("base_2")
@@ -350,7 +346,6 @@ class GameServiceTest {
                                 .lng(6.0)
                                 .hidden(false)
                                 .fixedChallengeTempId("challenge_2")
-        
                                 .build(),
                         BaseExportDto.builder()
                                 .tempId("base_3")
@@ -359,7 +354,6 @@ class GameServiceTest {
                                 .lat(3.0)
                                 .lng(4.0)
                                 .hidden(true)
-        
                                 .build()
                 ))
                 .challenges(List.of(
@@ -406,7 +400,6 @@ class GameServiceTest {
                                 .lng(2.0)
                                 .hidden(true)
                                 .fixedChallengeTempId("challenge_1")
-        
                                 .build()
                 ))
                 .challenges(List.of(ChallengeExportDto.builder()

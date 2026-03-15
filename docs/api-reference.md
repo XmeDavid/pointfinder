@@ -132,8 +132,8 @@ Header: `X-Forwarded-Host` (for email link generation)
   "exportVersion": "string",
   "exportedAt": "ISO8601",
   "game": { "name", "description", "uniformAssignment" },
-  "bases": [{ "tempId", "name", "description", "lat", "lng", "hidden", "requirePresenceToSubmit", "fixedChallengeTempId" }],
-  "challenges": [{ "tempId", "title", "description", "content", "completionContent", "answerType", "autoValidate", "correctAnswer", "points", "locationBound" }],
+  "bases": [{ "tempId", "name", "description", "lat", "lng", "hidden", "fixedChallengeTempId" }],
+  "challenges": [{ "tempId", "title", "description", "content", "completionContent", "answerType", "autoValidate", "correctAnswer", "points", "locationBound", "requirePresenceToSubmit" }],
   "assignments": [{ "baseTempId", "challengeTempId", "teamTempId" }],
   "teams": [{ "tempId", "name", "color" }]
 }
@@ -164,12 +164,10 @@ Header: `X-Forwarded-Host` (for email link generation)
   "lat": 0.0,
   "lng": 0.0,
   "fixedChallengeId": "UUID (optional)",
-  "requirePresenceToSubmit": false,
   "hidden": false
 }
 ```
 
-> `requirePresenceToSubmit: true` requires players to be physically present (NFC scan) to submit answers.
 > `hidden: true` hides the base from players' map view.
 > `PATCH /nfc-link` is called by the iOS app after writing an NFC tag to a physical marker.
 
@@ -201,6 +199,7 @@ Header: `X-Forwarded-Host` (for email link generation)
   "correctAnswer": ["string (optional, for autoValidate=true)"],
   "points": 10,
   "locationBound": false,
+  "requirePresenceToSubmit": false,
   "fixedBaseId": "UUID (optional)",
   "unlocksBaseId": "UUID (optional)"
 }

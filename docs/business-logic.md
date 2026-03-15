@@ -230,11 +230,11 @@ Request body:
 
 ### requirePresenceToSubmit (NFC Re-scan Before Submission)
 
-When `base.requirePresenceToSubmit = true`, a player must scan the NFC tag **again** (after the initial check-in) before the submission form is submitted.
+When `challenge.requirePresenceToSubmit = true`, a player must scan the NFC tag **again** (after the initial check-in) before the submission form is submitted.
 
 - iOS: `SolveView` checks this flag; if `requirePresenceToSubmit` is true, NFC scan is triggered before `submitAnswer()` is called.
-- Android: Base model includes `requirePresenceToSubmit` boolean; logic is partially implemented.
-- Backend: The flag is stored on the `bases` table but the presence enforcement is primarily a client-side UX gate; the backend itself does not block submission on this flag.
+- Android: Challenge model includes `requirePresenceToSubmit` boolean; logic is partially implemented.
+- Backend: The flag is stored on the `challenges` table but the presence enforcement is primarily a client-side UX gate; the backend itself does not block submission on this flag.
 
 ---
 
@@ -481,7 +481,7 @@ A separate WebSocket client connects to `/ws` with an `X-Broadcast-Code` header 
 | Auto-validation (text answers) | Full | Displays result | N/A | N/A |
 | Template variable resolution | Full | Editor + preview | Not implemented | Endpoint tested |
 | Submission idempotency | DB unique key | N/A | Offline queue | Offline queue |
-| requirePresenceToSubmit | Stored (no server enforcement) | N/A | Partial | Full (client gate) |
+| requirePresenceToSubmit | Stored on challenges (no server enforcement) | N/A | Partial | Full (client gate) |
 | Operator auth (access + refresh) | Full | Full | Full | Full |
 | Player auth (join code + JWT) | Full | N/A | Full | Full |
 | Password reset | Full | Full | N/A | N/A |
