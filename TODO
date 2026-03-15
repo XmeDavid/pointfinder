@@ -33,8 +33,10 @@ dev/todos branch with various old todos done + audio in rich text
 
 
 ## Code Quality / Tech Debt
-- [LOW] Backend: N+1 query in PlayerService.getProgress() — assignment.getChallenge() lazy loads inside loop. Add JOIN FETCH to assignmentRepository.findByGameId().
-- [LOW] Backend: Broadcast code generation loop hardcoded to 10 attempts — works fine at current scale but should log attempts (GameService.java:324-336).
+- [DONE] Backend: N+1 query in PlayerService.getProgress() — was already resolved; assignmentRepository.findByGameId() includes LEFT JOIN FETCH a.challenge.
+- [DONE] Backend: Broadcast code generation loop now logs attempts at debug level and warns when multiple attempts are needed (GameService.java).
+- [DONE] Backend: Activity feed query was unbounded and caused N+1 on game/team/base/challenge. Now uses JOIN FETCH and LIMIT 500 (ActivityEventRepository + MonitoringService).
+- [DONE] Frontend: Added ErrorBoundary wrappers around all monitoring pages (Dashboard, Map, Leaderboard, Activity, Submissions, TeamDetail).
 
 ---
 

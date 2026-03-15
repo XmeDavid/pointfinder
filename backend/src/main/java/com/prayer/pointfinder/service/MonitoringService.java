@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.PageRequest;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -96,10 +98,14 @@ public class MonitoringService {
         .collect(Collectors.toList());
     }
 
+    private static final int ACTIVITY_FEED_LIMIT = 500;
+
     @Transactional(readOnly = true)
     public List<ActivityEventResponse> getActivity(UUID gameId) {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
-        return activityEventRepository.findByGameIdOrderByTimestampDesc(gameId).stream()
+        return activityEventRepository
+                .findRecentByGameId(gameId, PageRequest.of(0, ACTIVITY_FEED_LIMIT))
+                .stream()
                 .map(e -> ActivityEventResponse.builder()
                         .id(e.getId())
                         .gameId(e.getGame().getId())

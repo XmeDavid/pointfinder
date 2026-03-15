@@ -96,7 +96,8 @@ describe("getValidAccessToken", () => {
     expect(token).toBe("new-access-token");
     expect(axios.post).toHaveBeenCalledWith(
       expect.stringContaining("/auth/refresh"),
-      { refreshToken: "valid-refresh" }
+      { refreshToken: "valid-refresh" },
+      { timeout: 10_000 }
     );
 
     // Verify the store was updated

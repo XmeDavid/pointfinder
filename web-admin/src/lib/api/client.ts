@@ -31,9 +31,17 @@ function refreshAccessToken(): Promise<string> {
       const refreshToken = useAuthStore.getState().refreshToken;
       if (!refreshToken) throw new Error("No refresh token");
 
-      // Use raw axios to bypass apiClient interceptors and avoid loops
-      const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
+      // Use raw axios to bypass apiClient interceptors and avoid loops.
+      // Timeout prevents hanging if refresh endpoint is unresponsive.
+      const response = await axios.post(
+        `${API_URL}/auth/refresh`,
+        { refreshToken },
+        { timeout: 10_000 }
+      );
       const { accessToken: newAccessToken, refreshToken: newRefreshToken, user } = response.data;
+      if (!newAccessToken || !newRefreshToken) {
+        throw new Error("Invalid refresh response: missing tokens");
+      }
       useAuthStore.getState().setTokens(newAccessToken, newRefreshToken, user);
       return newAccessToken as string;
     } finally {

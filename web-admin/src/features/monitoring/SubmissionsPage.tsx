@@ -79,19 +79,23 @@ export function SubmissionsPage() {
   const cacheBlobUrl = useCallback((apiUrl: string, blobUrl: string) => {
     const cache = blobCache.current;
     if (cache.size >= MAX_BLOB_CACHE && !cache.has(apiUrl)) {
-      // Evict the oldest entry (first key in insertion order)
+      // Evict the oldest entry (first key in insertion order) and revoke its blob URL
       const oldest = cache.keys().next().value;
       if (oldest !== undefined) {
+        const oldBlobUrl = cache.get(oldest);
+        if (oldBlobUrl) URL.revokeObjectURL(oldBlobUrl);
         cache.delete(oldest);
       }
     }
     cache.set(apiUrl, blobUrl);
   }, []);
 
-  // Clear blob cache when switching games to avoid stale references
+  // Clear blob cache when switching games to avoid stale references.
+  // Revoke all blob URLs to free memory.
   useEffect(() => {
     const cache = blobCache.current;
     return () => {
+      cache.forEach((blobUrl) => URL.revokeObjectURL(blobUrl));
       cache.clear();
     };
   }, [gameId]);

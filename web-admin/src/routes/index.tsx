@@ -46,6 +46,9 @@ import { LiveBroadcastPage } from "@/features/live/LiveBroadcastPage";
 import { AuthGuard } from "./AuthGuard";
 import { GuestGuard } from "./GuestGuard";
 
+// Error boundary
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
+
 export const router = createBrowserRouter([
   /* -------- Public landing page -------- */
   {
@@ -153,12 +156,12 @@ export const router = createBrowserRouter([
       {
         path: "monitor",
         children: [
-          { index: true, element: <DashboardPage /> },
-          { path: "map", element: <MapPage /> },
-          { path: "leaderboard", element: <LeaderboardPage /> },
-          { path: "activity", element: <ActivityPage /> },
-          { path: "submissions", element: <SubmissionsPage /> },
-          { path: "teams/:teamId", element: <TeamDetailPage /> },
+          { index: true, element: <ErrorBoundary><DashboardPage /></ErrorBoundary> },
+          { path: "map", element: <ErrorBoundary><MapPage /></ErrorBoundary> },
+          { path: "leaderboard", element: <ErrorBoundary><LeaderboardPage /></ErrorBoundary> },
+          { path: "activity", element: <ErrorBoundary><ActivityPage /></ErrorBoundary> },
+          { path: "submissions", element: <ErrorBoundary><SubmissionsPage /></ErrorBoundary> },
+          { path: "teams/:teamId", element: <ErrorBoundary><TeamDetailPage /></ErrorBoundary> },
         ],
       },
     ],

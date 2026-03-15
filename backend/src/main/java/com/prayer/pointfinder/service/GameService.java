@@ -355,9 +355,14 @@ public class GameService {
             }
             String code = sb.toString();
             if (!gameRepository.findByBroadcastCodeAndBroadcastEnabledTrue(code).isPresent()) {
+                if (attempt > 0) {
+                    log.warn("Broadcast code generation required {} attempts before finding a unique code", attempt + 1);
+                }
                 return code;
             }
+            log.debug("Broadcast code collision on attempt {}, retrying", attempt + 1);
         }
+        log.error("Failed to generate unique broadcast code after 10 attempts");
         throw new IllegalStateException("Unable to generate unique broadcast code after 10 attempts");
     }
 }
