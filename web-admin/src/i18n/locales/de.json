@@ -199,6 +199,7 @@
     "gameVariablesDescription": "Variablen für alle Aufgaben gemeinsam, einzigartig pro Team",
     "challengeVariables": "Aufgaben-Variablen",
     "challengeVariablesDescription": "Variablen spezifisch für diese Aufgabe, einzigartig pro Team. Verwende {{variableName}} im Inhalt, Abschlussinhalt oder korrekten Antworten.",
+    "saveFirstToAddChallengeVariables": "Speichere die Aufgabe zuerst, um aufgabenspezifische Variablen hinzuzufügen.",
     "addVariable": "Variable hinzufügen",
     "variableKeyPlaceholder": "z.B. naechsteKoordinaten",
     "variableKeyHint": "Muss mit einem Buchstaben beginnen, nur Buchstaben, Ziffern und Unterstriche",
