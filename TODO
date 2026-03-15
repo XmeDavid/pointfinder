@@ -20,7 +20,7 @@ dev/todos branch with various old todos done + audio in rich text
 - [LOW] When logging in without internet iOS has an alert saying internet connection is not available, while android just shows red under the text box that pointfinder host was not reachable.
 
 ## New Features [Prio]
-- [HIGH] Challange submission type: None - BACKEND + WEB DONE. Mobile apps still need UI changes: Android (PlayerGameplayScreens.kt) and iOS (SolveView.swift) need a "none" answer type path that auto-submits without showing text/file input. The operator mobile challenge edit screens also need the "none" option in the answer type picker.
+- [DONE] Challange submission type: None - COMPLETE on all platforms (backend, web, mobile players, operator screens)
 - [HIGH] Send notifications to teams as operator from mobile.
 - [HIGH] Pin dragging when setting the pin for a base is awful on web, not draggable, just clicking around and not very precise
 - [MED] Show feedback to the teams after completing a challange, if feedback was added on the submission review.
