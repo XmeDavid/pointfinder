@@ -252,10 +252,10 @@ fun RichTextEditorScreen(
     if (showAudioSizeError) {
         AlertDialog(
             onDismissRequest = { showAudioSizeError = false },
-            title = { Text("File Too Large") },
-            text = { Text("Audio file must be under 5 MB") },
+            title = { Text(stringResource(R.string.error_audio_too_large_title)) },
+            text = { Text(stringResource(R.string.error_audio_too_large_message)) },
             confirmButton = {
-                TextButton(onClick = { showAudioSizeError = false }) { Text("OK") }
+                TextButton(onClick = { showAudioSizeError = false }) { Text(stringResource(R.string.action_done)) }
             },
         )
     }
@@ -320,7 +320,7 @@ private fun FormattingToolbar(
 
         // Audio
         IconButton(onClick = onAudioClick) {
-            Icon(Icons.Default.MusicNote, contentDescription = "Insert Audio")
+            Icon(Icons.Default.MusicNote, contentDescription = stringResource(R.string.label_insert_audio))
         }
     }
 }

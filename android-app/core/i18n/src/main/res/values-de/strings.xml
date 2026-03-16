@@ -263,6 +263,9 @@
     <string name="label_ordered_list">Nummerierte Liste</string>
     <string name="label_code">Code</string>
     <string name="label_link">Link</string>
+    <string name="label_insert_audio">Audio einfügen</string>
+    <string name="error_audio_too_large_title">Datei zu groß</string>
+    <string name="error_audio_too_large_message">Audiodatei muss kleiner als 5 MB sein</string>
     <string name="label_url">URL</string>
     <string name="label_link_text">Linktext</string>
     <string name="label_preview">Vorschau</string>

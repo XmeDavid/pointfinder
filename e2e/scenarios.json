@@ -37,6 +37,8 @@
     { "id": "P23", "name": "Concurrent multi-player submissions",       "api": true,  "web": false, "mobile": false },
     { "id": "P24", "name": "Wrong answer auto-rejected",                "api": true,  "web": false, "mobile": true  },
     { "id": "N13", "name": "Duplicate submission (idempotency key)",    "api": true,  "web": false, "mobile": false },
-    { "id": "P25", "name": "WebSocket real-time broadcasts",              "api": true,  "web": false, "mobile": false }
+    { "id": "N14", "name": "answerType=none forces presence false",      "api": true,  "web": false, "mobile": false },
+    { "id": "P25", "name": "requirePresenceToSubmit enforcement",        "api": true,  "web": false, "mobile": false },
+    { "id": "P26", "name": "WebSocket real-time broadcasts",             "api": true,  "web": false, "mobile": false }
   ]
 }

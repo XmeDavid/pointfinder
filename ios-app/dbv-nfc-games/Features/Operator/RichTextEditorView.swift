@@ -215,10 +215,10 @@ struct RichTextEditorView: View {
                 let html = "<audio controls style=\"width:100%;margin:0.5em 0\" src=\"data:\(mime);base64,\(b64)\"></audio>"
                 webViewCoordinator.insertHTML(html)
             }
-            .alert("File Too Large", isPresented: $showAudioSizeError) {
-                Button("OK", role: .cancel) {}
+            .alert(locale.t("editor.fileTooLarge"), isPresented: $showAudioSizeError) {
+                Button(locale.t("common.ok"), role: .cancel) {}
             } message: {
-                Text("Audio file must be under 5 MB")
+                Text(locale.t("editor.audioTooLargeMessage"))
             }
         }
     }
@@ -439,6 +439,10 @@ private struct RichTextWebView: UIViewRepresentable {
         let placeholderColor = isDark ? "#636366" : "#C7C7CC"
         let sanitized = content.replacingOccurrences(of: "<script", with: "&lt;script", options: .caseInsensitive)
             .replacingOccurrences(of: "</script", with: "&lt;/script", options: .caseInsensitive)
+            .replacingOccurrences(of: "<iframe", with: "&lt;iframe", options: .caseInsensitive)
+            .replacingOccurrences(of: "<object", with: "&lt;object", options: .caseInsensitive)
+            .replacingOccurrences(of: "<embed", with: "&lt;embed", options: .caseInsensitive)
+            .replacingOccurrences(of: "\\bon\\w+\\s*=", with: "", options: [.regularExpression, .caseInsensitive])
         let escaped = sanitized.replacingOccurrences(of: "`", with: "\\`")
 
         return """

@@ -1,4 +1,4 @@
-// @scenarios P25
+// @scenarios P26
 import { test, expect } from '@playwright/test';
 import {
   createGame,
@@ -21,12 +21,13 @@ import { getOperatorToken, joinPlayerAndStoreToken } from '../../shared/auth';
 import { config } from '../../shared/config';
 import { connectToGameTopic, BroadcastEnvelope } from '../../shared/ws-client';
 
-test.describe('P25: WebSocket real-time broadcasts', () => {
+test.describe('P26: WebSocket real-time broadcasts', () => {
   test.describe.configure({ mode: 'serial' });
 
   let gameId: string;
   let baseId: string;
   let challengeId: string;
+  let challengeId2: string;
   let operatorToken: string;
   let playerToken: string;
   let teamId: string;
@@ -48,7 +49,12 @@ test.describe('P25: WebSocket real-time broadcasts', () => {
     expect(challengeRes.status).toBe(201);
     challengeId = challengeRes.data.id;
 
+    const challengeRes2 = await createChallenge(operatorToken, gameId, challengeFixture('text', 1));
+    expect(challengeRes2.status).toBe(201);
+    challengeId2 = challengeRes2.data.id;
+
     await createAssignment(operatorToken, gameId, { baseId, challengeId });
+    await createAssignment(operatorToken, gameId, { baseId, challengeId: challengeId2 });
 
     const teamRes = await createTeam(operatorToken, gameId, teamFixture(0));
     expect(teamRes.status).toBe(201);
@@ -115,13 +121,22 @@ test.describe('P25: WebSocket real-time broadcasts', () => {
   });
 
   test('operator receives leaderboard broadcast after review', async () => {
-    // The leaderboard broadcast may have been sent with the review above.
-    // We create a fresh connection and trigger a new submission+review cycle.
     const ws = await connectToGameTopic(gameId, { token: operatorToken });
     try {
       await new Promise((r) => setTimeout(r, 500));
 
-      // Check for a leaderboard broadcast (may arrive from the prior review)
+      // Submit and review a fresh answer to trigger a new leaderboard broadcast
+      await submitAnswer(playerToken, gameId, { baseId, challengeId: challengeId2, answer: 'ws-leaderboard-test' });
+      const subRes = await getSubmissions(operatorToken, gameId);
+      expect(subRes.status).toBe(200);
+      const pending = subRes.data.find((s: any) => s.status === 'pending');
+      expect(pending).toBeTruthy();
+      await reviewSubmission(operatorToken, gameId, pending.id, {
+        status: 'approved',
+        feedback: 'Leaderboard test',
+        points: 5,
+      });
+
       const envelope = await ws.waitForBroadcast('leaderboard', 10_000);
       expect(envelope.type).toBe('leaderboard');
       expect(envelope.gameId).toBe(gameId);

@@ -34,7 +34,12 @@ class RichTextWebEditorState {
 
     suspend fun getHTML(): String = suspendCoroutine { cont ->
         webView?.evaluateJavascript("document.getElementById('editor').innerHTML") { result ->
-            cont.resume(result?.trim('"') ?: "")
+            val html = try {
+                org.json.JSONTokener(result).nextValue() as? String ?: ""
+            } catch (_: Exception) {
+                result?.trim('"') ?: ""
+            }
+            cont.resume(html)
         } ?: cont.resume("")
     }
 }
@@ -83,6 +88,10 @@ private fun editorHTML(content: String, isDark: Boolean): String {
     val sanitized = content
         .replace("<script", "&lt;script", ignoreCase = true)
         .replace("</script", "&lt;/script", ignoreCase = true)
+        .replace("<iframe", "&lt;iframe", ignoreCase = true)
+        .replace("<object", "&lt;object", ignoreCase = true)
+        .replace("<embed", "&lt;embed", ignoreCase = true)
+        .replace(Regex("\\bon\\w+\\s*=", RegexOption.IGNORE_CASE), "")
         .replace("`", "\\`")
     return """<!DOCTYPE html>
 <html><head>

@@ -41,6 +41,12 @@ public class ChallengeService {
     public ChallengeResponse createChallenge(UUID gameId, CreateChallengeRequest request) {
         Game game = gameAccessService.getAccessibleGame(gameId);
 
+        long contentSize = (request.getContent() != null ? request.getContent().length() : 0)
+                + (request.getCompletionContent() != null ? request.getCompletionContent().length() : 0);
+        if (contentSize > 8_000_000) {
+            throw new BadRequestException("Combined content and completion content size exceeds the 8 MB limit");
+        }
+
         Challenge challenge = Challenge.builder()
                 .game(game)
                 .title(request.getTitle())
@@ -83,6 +89,12 @@ public class ChallengeService {
         Challenge challenge = challengeRepository.findById(challengeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Challenge", challengeId));
         ensureChallengeBelongsToGame(challenge, gameId);
+
+        long contentSize = (request.getContent() != null ? request.getContent().length() : 0)
+                + (request.getCompletionContent() != null ? request.getCompletionContent().length() : 0);
+        if (contentSize > 8_000_000) {
+            throw new BadRequestException("Combined content and completion content size exceeds the 8 MB limit");
+        }
 
         challenge.setTitle(request.getTitle());
         challenge.setDescription(request.getDescription() != null ? request.getDescription() : "");

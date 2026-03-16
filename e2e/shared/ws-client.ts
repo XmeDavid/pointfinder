@@ -38,7 +38,7 @@ export async function connectToGameTopic(
   }
 
   const messages: BroadcastEnvelope[] = [];
-  const waiters: Array<{ type: string; resolve: (msg: BroadcastEnvelope) => void }> = [];
+  const waiters: Array<{ type: string; resolve: (msg: BroadcastEnvelope) => void; reject?: (err: Error) => void }> = [];
 
   return new Promise<{
     waitForBroadcast: (type: string, timeout?: number) => Promise<BroadcastEnvelope>;
@@ -79,26 +79,30 @@ export async function connectToGameTopic(
           if (existing) return Promise.resolve(existing);
 
           return new Promise<BroadcastEnvelope>((res, rej) => {
-            const timer = setTimeout(() => {
-              const idx = waiters.findIndex((w) => w.resolve === res);
-              if (idx >= 0) waiters.splice(idx, 1);
-              rej(new Error(`Timed out waiting for broadcast type "${type}" after ${timeout}ms`));
-            }, timeout);
-
-            waiters.push({
+            let timer: ReturnType<typeof setTimeout>;
+            const waiter = {
               type,
-              resolve: (msg) => {
+              resolve: (msg: BroadcastEnvelope) => {
                 clearTimeout(timer);
                 res(msg);
               },
-            });
+              reject: (err: Error) => {
+                clearTimeout(timer);
+                rej(err);
+              },
+            };
+            timer = setTimeout(() => {
+              const idx = waiters.indexOf(waiter);
+              if (idx >= 0) waiters.splice(idx, 1);
+              rej(new Error(`Timed out waiting for broadcast type "${type}" after ${timeout}ms`));
+            }, timeout);
+            waiters.push(waiter);
           });
         },
 
         async disconnect() {
-          // Reject pending waiters
           for (const w of waiters) {
-            // swallow — test will see the timeout error already
+            w.reject?.(new Error('WebSocket disconnected'));
           }
           waiters.length = 0;
           if (client.connected) {
