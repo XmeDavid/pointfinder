@@ -48,6 +48,7 @@ fun OperatorsScreen(
     invites: List<InviteResponse>,
     onInvite: (String) -> Unit,
     onRemove: (String) -> Unit = {},
+    onRevokeInvite: (String) -> Unit = {},
     currentUserId: String? = null,
     onRefresh: () -> Unit,
     isRefreshing: Boolean,
@@ -56,6 +57,8 @@ fun OperatorsScreen(
 ) {
     var showInviteDialog by remember { mutableStateOf(false) }
     var operatorToRemove by remember { mutableStateOf<OperatorUserResponse?>(null) }
+    var inviteToRevoke by remember { mutableStateOf<InviteResponse?>(null) }
+    val pendingInvites = invites.filter { it.status.lowercase() == "pending" }
 
     Column(modifier = modifier.fillMaxSize()) {
         TopAppBar(
@@ -127,7 +130,7 @@ fun OperatorsScreen(
                     )
                 }
 
-                if (invites.isEmpty()) {
+                if (pendingInvites.isEmpty()) {
                     item {
                         Text(
                             stringResource(R.string.label_no_invites),
@@ -137,8 +140,11 @@ fun OperatorsScreen(
                     }
                 }
 
-                items(invites, key = { it.id }) { invite ->
-                    InviteRow(invite = invite)
+                items(pendingInvites, key = { it.id }) { invite ->
+                    InviteRow(
+                        invite = invite,
+                        onRevoke = { inviteToRevoke = invite },
+                    )
                 }
 
                 item { Spacer(Modifier.height(16.dp)) }
@@ -161,6 +167,27 @@ fun OperatorsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { operatorToRemove = null }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+
+    if (inviteToRevoke != null) {
+        AlertDialog(
+            onDismissRequest = { inviteToRevoke = null },
+            title = { Text(stringResource(R.string.confirm_revoke_invite)) },
+            text = { Text(stringResource(R.string.confirm_revoke_invite_message, inviteToRevoke!!.email)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    inviteToRevoke?.let { onRevokeInvite(it.id) }
+                    inviteToRevoke = null
+                }) {
+                    Text(stringResource(R.string.action_remove))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { inviteToRevoke = null }) {
                     Text(stringResource(R.string.action_cancel))
                 }
             },
@@ -233,7 +260,10 @@ private fun OperatorRow(
 }
 
 @Composable
-private fun InviteRow(invite: InviteResponse) {
+private fun InviteRow(
+    invite: InviteResponse,
+    onRevoke: () -> Unit = {},
+) {
     val statusColor = when (invite.status.lowercase()) {
         "accepted" -> StatusCompleted
         "declined" -> StatusRejected
@@ -251,7 +281,7 @@ private fun InviteRow(invite: InviteResponse) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     invite.email,
                     style = MaterialTheme.typography.bodyMedium,
@@ -271,6 +301,13 @@ private fun InviteRow(invite: InviteResponse) {
                     style = MaterialTheme.typography.labelSmall,
                     color = statusColor,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                )
+            }
+            IconButton(onClick = onRevoke) {
+                Icon(
+                    Icons.Default.PersonRemove,
+                    contentDescription = stringResource(R.string.action_revoke_invite),
+                    tint = MaterialTheme.colorScheme.error,
                 )
             }
         }

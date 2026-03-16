@@ -358,6 +358,9 @@
     <string name="action_remove_operator">Operator entfernen</string>
     <string name="confirm_remove_operator">Operator entfernen</string>
     <string name="confirm_remove_operator_message">%1$s als Operator entfernen?</string>
+    <string name="action_revoke_invite">Einladung widerrufen</string>
+    <string name="confirm_revoke_invite">Einladung widerrufen</string>
+    <string name="confirm_revoke_invite_message">Die Einladung an %1$s widerrufen?</string>
     <string name="label_exporting">Exportieren\u2026</string>
 
     <!-- Toast / Snackbar -->

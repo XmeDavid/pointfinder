@@ -854,6 +854,20 @@ class OperatorViewModel @Inject constructor(
         }
     }
 
+    fun revokeInvite(inviteId: String) {
+        viewModelScope.launch {
+            runCatching {
+                operatorRepository.deleteInvite(inviteId)
+            }.onSuccess {
+                _state.value = _state.value.copy(authExpired = false)
+                loadOperators()
+            }.onFailure { err ->
+                if (markAuthExpiredIfNeeded(err)) return@onFailure
+                _state.value = _state.value.copy(errorMessage = friendlyError(err))
+            }
+        }
+    }
+
     fun exportGame(onSuccess: (GameExportDto) -> Unit) {
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {

@@ -167,6 +167,10 @@ class OperatorRepository @Inject constructor(
 
     suspend fun createInvite(request: InviteRequest): InviteResponse = api.createInvite(request)
 
+    suspend fun deleteInvite(inviteId: String) {
+        api.deleteInvite(inviteId)
+    }
+
     // === Team Variables ===
 
     suspend fun getGameVariables(gameId: String): TeamVariablesResponse = api.getGameVariables(gameId)

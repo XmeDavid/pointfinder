@@ -1411,6 +1411,7 @@ private fun OperatorGameRoot(
                                 viewModel.inviteOperator(email) {}
                             },
                             onRemove = { userId -> viewModel.removeOperator(userId) },
+                            onRevokeInvite = { inviteId -> viewModel.revokeInvite(inviteId) },
                             currentUserId = viewModel.currentOperatorUserId(),
                             onRefresh = viewModel::loadOperators,
                             isRefreshing = state.isLoading,
