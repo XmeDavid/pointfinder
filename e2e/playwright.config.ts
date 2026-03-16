@@ -11,8 +11,6 @@ export default defineConfig({
   testDir: '.',
   testMatch: ['api/**/*.spec.ts', 'web/**/*.spec.ts'],
   fullyParallel: false,
-  workers: 1,
-  retries: 0,
   timeout: 60_000,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
@@ -28,6 +26,9 @@ export default defineConfig({
     {
       name: 'api',
       testMatch: 'api/**/*.spec.ts',
+      fullyParallel: true,
+      workers: 4,
+      retries: 0,
     },
     {
       name: 'web',
@@ -35,6 +36,26 @@ export default defineConfig({
       use: {
         browserName: 'chromium',
       },
+      workers: 1,
+      retries: 1,
+    },
+    {
+      name: 'web-firefox',
+      testMatch: 'web/**/*.spec.ts',
+      use: {
+        browserName: 'firefox',
+      },
+      workers: 1,
+      retries: 1,
+    },
+    {
+      name: 'web-webkit',
+      testMatch: 'web/**/*.spec.ts',
+      use: {
+        browserName: 'webkit',
+      },
+      workers: 1,
+      retries: 1,
     },
   ],
 });

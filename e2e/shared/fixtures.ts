@@ -59,7 +59,13 @@ export function autoValidateChallengeFixture(index?: number) {
 }
 
 export function teamFixture(index: number) {
-  const colors = ['#FF5733', '#33FF57', '#3357FF', '#FF33F5'];
+  const colors = [
+    '#FF5733', '#33FF57', '#3357FF', '#FF33F5',
+    '#F5FF33', '#33FFF5', '#F533FF', '#FF8833',
+    '#8833FF', '#33FF88', '#FF3388', '#88FF33',
+    '#3388FF', '#FF5588', '#55FF88', '#8855FF',
+    '#FF8855', '#55FF55', '#5555FF', '#FF5555',
+  ];
   return {
     name: `Team ${index}`,
     color: colors[index % colors.length],
