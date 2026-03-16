@@ -641,7 +641,8 @@
     }
   },
   "errors": {
-    "invalidUrl": "Ungültige URL"
+    "invalidUrl": "Ungültige URL",
+    "audioTooLarge": "Audiodatei muss kleiner als 5 MB sein"
   },
   "editor": {
     "bold": "Fett",
@@ -654,6 +655,7 @@
     "blockquote": "Zitat",
     "codeBlock": "Codeblock",
     "uploadImage": "Bild hochladen",
+    "uploadAudio": "Audio hochladen",
     "imageFromUrl": "Bild von URL",
     "insertVariable": "Variable einfugen",
     "undo": "Ruckgangig",

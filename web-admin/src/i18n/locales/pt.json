@@ -641,7 +641,8 @@
     }
   },
   "errors": {
-    "invalidUrl": "URL inválido"
+    "invalidUrl": "URL inválido",
+    "audioTooLarge": "O ficheiro de áudio deve ter menos de 5 MB"
   },
   "editor": {
     "bold": "Negrito",
@@ -654,6 +655,7 @@
     "blockquote": "Citação",
     "codeBlock": "Bloco de Código",
     "uploadImage": "Carregar Imagem",
+    "uploadAudio": "Carregar Áudio",
     "imageFromUrl": "Imagem por URL",
     "insertVariable": "Inserir Variável",
     "undo": "Desfazer",

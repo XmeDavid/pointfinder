@@ -24,6 +24,7 @@ struct HTMLContentView: UIViewRepresentable {
         // Disable data detection (links, phone numbers, etc.)
         configuration.dataDetectorTypes = []
         configuration.defaultWebpagePreferences.allowsContentJavaScript = false
+        configuration.allowsInlineMediaPlayback = true
 
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
@@ -172,7 +173,13 @@ struct HTMLContentView: UIViewRepresentable {
                     border-radius: 8px;
                     margin: 0.5em 0;
                 }
-                
+
+                audio {
+                    width: 100%;
+                    margin: 0.5em 0;
+                    border-radius: 8px;
+                }
+
                 hr {
                     border: none;
                     border-top: 1px solid \(blockquoteBorder);

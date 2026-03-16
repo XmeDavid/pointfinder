@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 import WebKit
 
 // MARK: - Rich Text Editor View
@@ -21,6 +22,8 @@ struct RichTextEditorView: View {
     @State private var webViewCoordinator = RichTextWebViewCoordinator()
     @State private var showVariablePicker = false
     @State private var showCreateVariable = false
+    @State private var showAudioFilePicker = false
+    @State private var showAudioSizeError = false
     @State private var showPreviewTeamPicker = false
     @State private var newVariableName = ""
     @State private var previewTeam: Team?
@@ -73,6 +76,10 @@ struct RichTextEditorView: View {
                         FormatButton(icon: "minus") {
                             webViewCoordinator.execCommand("insertHorizontalRule")
                         }
+
+                        Divider().frame(height: 24)
+
+                        FormatButton(icon: "music.note") { showAudioFilePicker = true }
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
@@ -184,6 +191,34 @@ struct RichTextEditorView: View {
             }
             .sheet(item: $previewTeam) { team in
                 ResolvedPreviewSheet(team: team, html: previewHtml)
+            }
+            .fileImporter(isPresented: $showAudioFilePicker, allowedContentTypes: [.audio]) { result in
+                guard let url = try? result.get() else { return }
+                guard url.startAccessingSecurityScopedResource() else { return }
+                defer { url.stopAccessingSecurityScopedResource() }
+                guard let data = try? Data(contentsOf: url) else { return }
+                guard data.count <= 5_000_000 else {
+                    showAudioSizeError = true
+                    return
+                }
+                let ext = url.pathExtension.lowercased()
+                let mime: String
+                switch ext {
+                case "mp3": mime = "audio/mpeg"
+                case "aac": mime = "audio/aac"
+                case "ogg": mime = "audio/ogg"
+                case "wav": mime = "audio/wav"
+                case "m4a": mime = "audio/mp4"
+                default: mime = "audio/\(ext)"
+                }
+                let b64 = data.base64EncodedString()
+                let html = "<audio controls style=\"width:100%;margin:0.5em 0\" src=\"data:\(mime);base64,\(b64)\"></audio>"
+                webViewCoordinator.insertHTML(html)
+            }
+            .alert("File Too Large", isPresented: $showAudioSizeError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Audio file must be under 5 MB")
             }
         }
     }

@@ -1,6 +1,7 @@
 package com.prayer.pointfinder.feature.player
 
 import android.view.ViewGroup
+import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -44,6 +45,8 @@ fun HtmlContentView(
                 isVerticalScrollBarEnabled = false
                 isHorizontalScrollBarEnabled = false
                 setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                webChromeClient = WebChromeClient()
+                settings.mediaPlaybackRequiresUserGesture = true
 
                 webViewClient = object : WebViewClient() {
                     override fun shouldOverrideUrlLoading(
@@ -178,6 +181,12 @@ private fun wrapHtml(content: String, isDark: Boolean): String {
                     border-radius: 8px;
                     margin: 0.5em 0;
                     display: block;
+                }
+
+                audio {
+                    width: 100%;
+                    margin: 0.5em 0;
+                    border-radius: 8px;
                 }
 
                 hr {

@@ -14,10 +14,12 @@ import {
   Quote,
   Code,
   ImageIcon,
+  Music,
   Undo,
   Redo,
   Variable,
 } from "lucide-react";
+import { AudioExtension } from "./AudioExtension";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/useToast";
 import { useTranslation } from "react-i18next";
@@ -97,6 +99,7 @@ export function RichTextEditor({ value, onChange, placeholder, availableVariable
   const toast = useToast();
   const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const audioInputRef = useRef<HTMLInputElement>(null);
   const [varDropdownOpen, setVarDropdownOpen] = useState(false);
   const varBtnRef = useRef<HTMLDivElement>(null);
 
@@ -148,6 +151,7 @@ export function RichTextEditor({ value, onChange, placeholder, availableVariable
       StarterKit,
       TiptapImage.configure({ inline: false, allowBase64: true }),
       Placeholder.configure({ placeholder: placeholder ?? "" }),
+      AudioExtension,
     ],
     content: value,
     onUpdate: ({ editor: e }) => {
@@ -221,6 +225,27 @@ export function RichTextEditor({ value, onChange, placeholder, availableVariable
     },
     [editor]
   );
+
+  const addAudio = () => {
+    audioInputRef.current?.click();
+  };
+
+  const handleAudioFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(t("errors.audioTooLarge"));
+      e.target.value = "";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      editor?.chain().focus().insertContent({ type: "audio", attrs: { src: dataUrl } }).run();
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
 
   const addImageUrl = useCallback(() => {
     if (!editor) return;
@@ -348,6 +373,9 @@ export function RichTextEditor({ value, onChange, placeholder, availableVariable
         <ToolbarButton onClick={addImageUrl} title={t("editor.imageFromUrl")}>
           <span className="text-xs font-medium">URL</span>
         </ToolbarButton>
+        <ToolbarButton onClick={addAudio} title={t("editor.uploadAudio")}>
+          <Music className="h-4 w-4" />
+        </ToolbarButton>
 
         {hasVariables && (
           <>
@@ -439,6 +467,14 @@ export function RichTextEditor({ value, onChange, placeholder, availableVariable
         type="file"
         accept="image/*"
         onChange={handleFileChange}
+        className="hidden"
+      />
+      {/* Hidden file input for audio uploads */}
+      <input
+        ref={audioInputRef}
+        type="file"
+        accept="audio/*"
+        onChange={handleAudioFileChange}
         className="hidden"
       />
     </div>

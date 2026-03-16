@@ -34,6 +34,7 @@ dependencies {
 
     implementation(project(":core:model"))
     implementation(project(":core:i18n"))
+    implementation(project(":feature:player"))
 
     implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")

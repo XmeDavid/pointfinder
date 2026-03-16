@@ -1,5 +1,8 @@
 package com.prayer.pointfinder.feature.operator
 
+import android.util.Base64
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -23,6 +25,7 @@ import androidx.compose.material.icons.filled.FormatListNumbered
 import androidx.compose.material.icons.filled.FormatUnderlined
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
@@ -31,7 +34,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -39,24 +41,20 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.mohamedrejeb.richeditor.model.rememberRichTextState
-import com.mohamedrejeb.richeditor.ui.material3.RichTextEditor
 import com.prayer.pointfinder.core.i18n.R
 import com.prayer.pointfinder.core.model.Team
 import com.prayer.pointfinder.core.model.TeamVariable
+import com.prayer.pointfinder.feature.player.HtmlContentView
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,11 +67,8 @@ fun RichTextEditorScreen(
     onCreateVariable: ((String) -> Unit)? = null,
     teams: List<Team>? = null,
 ) {
-    val richTextState = rememberRichTextState()
-
-    LaunchedEffect(Unit) {
-        richTextState.setHtml(initialHtml)
-    }
+    val editorState = rememberRichTextWebEditorState()
+    val scope = rememberCoroutineScope()
 
     var showOverflowMenu by remember { mutableStateOf(false) }
     var showVariablePicker by remember { mutableStateOf(false) }
@@ -81,6 +76,26 @@ fun RichTextEditorScreen(
     var showLinkDialog by remember { mutableStateOf(false) }
     var showPreviewTeamPicker by remember { mutableStateOf(false) }
     var previewTeam by remember { mutableStateOf<Team?>(null) }
+    var previewHtml by remember { mutableStateOf("") }
+    var showAudioSizeError by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val audioLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri ?: return@rememberLauncherForActivityResult
+        val bytes = context.contentResolver.openInputStream(uri)?.readBytes()
+            ?: return@rememberLauncherForActivityResult
+        if (bytes.size > 5 * 1024 * 1024) {
+            showAudioSizeError = true
+            return@rememberLauncherForActivityResult
+        }
+        val mime = context.contentResolver.getType(uri) ?: "audio/mpeg"
+        val b64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
+        editorState.insertHTML(
+            "<audio controls style=\"width:100%;margin:0.5em 0\" src=\"data:$mime;base64,$b64\"></audio>"
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -145,24 +160,25 @@ fun RichTextEditorScreen(
         ) {
             // Formatting toolbar
             FormattingToolbar(
-                richTextState = richTextState,
+                editorState = editorState,
                 onLinkClick = { showLinkDialog = true },
+                onAudioClick = { audioLauncher.launch("audio/*") },
             )
 
             HorizontalDivider()
 
             // Rich text editor area
-            RichTextEditor(
-                state = richTextState,
+            RichTextWebEditor(
+                state = editorState,
+                initialHtml = initialHtml,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .weight(1f),
             )
 
             // Done button
             Button(
-                onClick = { onDone(richTextState.toHtml()) },
+                onClick = { scope.launch { onDone(editorState.getHTML()) } },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -177,7 +193,7 @@ fun RichTextEditorScreen(
         VariablePickerDialog(
             variables = variables,
             onSelect = { key ->
-                richTextState.addTextAfterSelection("{{$key}}")
+                editorState.insertHTML("<span class=\"variable-tag\">{{$key}}</span>&nbsp;")
                 showVariablePicker = false
             },
             onDismiss = { showVariablePicker = false },
@@ -189,7 +205,7 @@ fun RichTextEditorScreen(
         CreateVariableDialog(
             onCreate = { name ->
                 onCreateVariable(name)
-                richTextState.addTextAfterSelection("{{$name}}")
+                editorState.insertHTML("<span class=\"variable-tag\">{{$name}}</span>&nbsp;")
                 showCreateVariable = false
             },
             onDismiss = { showCreateVariable = false },
@@ -200,7 +216,7 @@ fun RichTextEditorScreen(
     if (showLinkDialog) {
         LinkDialog(
             onInsert = { text, url ->
-                richTextState.addLink(text = text, url = url)
+                editorState.insertHTML("<a href=\"$url\">$text</a>")
                 showLinkDialog = false
             },
             onDismiss = { showLinkDialog = false },
@@ -213,7 +229,10 @@ fun RichTextEditorScreen(
             teams = teams,
             onSelect = { team ->
                 showPreviewTeamPicker = false
-                previewTeam = team
+                scope.launch {
+                    previewHtml = editorState.getHTML()
+                    previewTeam = team
+                }
             },
             onDismiss = { showPreviewTeamPicker = false },
         )
@@ -222,24 +241,32 @@ fun RichTextEditorScreen(
     // Preview dialog
     if (previewTeam != null && variables != null) {
         PreviewDialog(
-            html = richTextState.toHtml(),
+            html = previewHtml,
             team = previewTeam!!,
             variables = variables,
             onDismiss = { previewTeam = null },
+        )
+    }
+
+    // Audio size error dialog
+    if (showAudioSizeError) {
+        AlertDialog(
+            onDismissRequest = { showAudioSizeError = false },
+            title = { Text("File Too Large") },
+            text = { Text("Audio file must be under 5 MB") },
+            confirmButton = {
+                TextButton(onClick = { showAudioSizeError = false }) { Text("OK") }
+            },
         )
     }
 }
 
 @Composable
 private fun FormattingToolbar(
-    richTextState: com.mohamedrejeb.richeditor.model.RichTextState,
+    editorState: RichTextWebEditorState,
     onLinkClick: () -> Unit,
+    onAudioClick: () -> Unit,
 ) {
-    val currentSpanStyle = richTextState.currentSpanStyle
-    val isBold = currentSpanStyle.fontWeight == FontWeight.Bold
-    val isItalic = currentSpanStyle.fontStyle == FontStyle.Italic
-    val isUnderline = currentSpanStyle.textDecoration == TextDecoration.Underline
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -247,109 +274,54 @@ private fun FormattingToolbar(
             .padding(horizontal = 4.dp, vertical = 2.dp),
     ) {
         // Bold
-        ToolbarButton(
-            onClick = { richTextState.toggleSpanStyle(SpanStyle(fontWeight = FontWeight.Bold)) },
-            isActive = isBold,
-            contentDescription = stringResource(R.string.label_bold),
-        ) {
-            Icon(Icons.Default.FormatBold, contentDescription = null)
+        IconButton(onClick = { editorState.execCommand("bold") }) {
+            Icon(Icons.Default.FormatBold, contentDescription = stringResource(R.string.label_bold))
         }
 
         // Italic
-        ToolbarButton(
-            onClick = { richTextState.toggleSpanStyle(SpanStyle(fontStyle = FontStyle.Italic)) },
-            isActive = isItalic,
-            contentDescription = stringResource(R.string.label_italic),
-        ) {
-            Icon(Icons.Default.FormatItalic, contentDescription = null)
+        IconButton(onClick = { editorState.execCommand("italic") }) {
+            Icon(Icons.Default.FormatItalic, contentDescription = stringResource(R.string.label_italic))
         }
 
         // Underline
-        ToolbarButton(
-            onClick = { richTextState.toggleSpanStyle(SpanStyle(textDecoration = TextDecoration.Underline)) },
-            isActive = isUnderline,
-            contentDescription = stringResource(R.string.label_underline),
-        ) {
-            Icon(Icons.Default.FormatUnderlined, contentDescription = null)
+        IconButton(onClick = { editorState.execCommand("underline") }) {
+            Icon(Icons.Default.FormatUnderlined, contentDescription = stringResource(R.string.label_underline))
         }
 
-        // H1 (large font size)
-        val isH1 = currentSpanStyle.fontSize == 24.sp
-        ToolbarButton(
-            onClick = { richTextState.toggleSpanStyle(SpanStyle(fontSize = 24.sp)) },
-            isActive = isH1,
-            contentDescription = stringResource(R.string.label_heading1),
-        ) {
-            Text(stringResource(R.string.label_heading1), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+        // H1
+        IconButton(onClick = { editorState.execFormat("formatBlock", "h1") }) {
+            Text(stringResource(R.string.label_heading1), style = MaterialTheme.typography.labelLarge)
         }
 
-        // H2 (medium-large font size)
-        val isH2 = currentSpanStyle.fontSize == 20.sp
-        ToolbarButton(
-            onClick = { richTextState.toggleSpanStyle(SpanStyle(fontSize = 20.sp)) },
-            isActive = isH2,
-            contentDescription = stringResource(R.string.label_heading2),
-        ) {
-            Text(stringResource(R.string.label_heading2), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+        // H2
+        IconButton(onClick = { editorState.execFormat("formatBlock", "h2") }) {
+            Text(stringResource(R.string.label_heading2), style = MaterialTheme.typography.labelLarge)
         }
 
         // Unordered list
-        ToolbarButton(
-            onClick = { richTextState.toggleUnorderedList() },
-            isActive = richTextState.isUnorderedList,
-            contentDescription = stringResource(R.string.label_bullet_list),
-        ) {
-            Icon(Icons.AutoMirrored.Filled.FormatListBulleted, contentDescription = null)
+        IconButton(onClick = { editorState.execCommand("insertUnorderedList") }) {
+            Icon(Icons.AutoMirrored.Filled.FormatListBulleted, contentDescription = stringResource(R.string.label_bullet_list))
         }
 
         // Ordered list
-        ToolbarButton(
-            onClick = { richTextState.toggleOrderedList() },
-            isActive = richTextState.isOrderedList,
-            contentDescription = stringResource(R.string.label_ordered_list),
-        ) {
-            Icon(Icons.Default.FormatListNumbered, contentDescription = null)
+        IconButton(onClick = { editorState.execCommand("insertOrderedList") }) {
+            Icon(Icons.Default.FormatListNumbered, contentDescription = stringResource(R.string.label_ordered_list))
         }
 
         // Code span
-        ToolbarButton(
-            onClick = { richTextState.toggleCodeSpan() },
-            isActive = richTextState.isCodeSpan,
-            contentDescription = stringResource(R.string.label_code),
-        ) {
-            Icon(Icons.Default.Code, contentDescription = null)
+        IconButton(onClick = { editorState.insertHTML("<code></code>") }) {
+            Icon(Icons.Default.Code, contentDescription = stringResource(R.string.label_code))
         }
 
         // Link
-        ToolbarButton(
-            onClick = onLinkClick,
-            isActive = richTextState.isLink,
-            contentDescription = stringResource(R.string.label_link),
-        ) {
-            Icon(Icons.Default.Link, contentDescription = null)
+        IconButton(onClick = onLinkClick) {
+            Icon(Icons.Default.Link, contentDescription = stringResource(R.string.label_link))
         }
-    }
-}
 
-@Composable
-private fun ToolbarButton(
-    onClick: () -> Unit,
-    isActive: Boolean,
-    contentDescription: String,
-    content: @Composable () -> Unit,
-) {
-    IconButton(
-        onClick = onClick,
-        colors = if (isActive) {
-            IconButtonDefaults.iconButtonColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            )
-        } else {
-            IconButtonDefaults.iconButtonColors()
-        },
-    ) {
-        content()
+        // Audio
+        IconButton(onClick = onAudioClick) {
+            Icon(Icons.Default.MusicNote, contentDescription = "Insert Audio")
+        }
     }
 }
 
@@ -524,11 +496,6 @@ private fun PreviewDialog(
         result
     }
 
-    val previewState = rememberRichTextState()
-    LaunchedEffect(resolvedHtml) {
-        previewState.setHtml(resolvedHtml)
-    }
-
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -537,17 +504,12 @@ private fun PreviewDialog(
             )
         },
         text = {
-            Column(
+            HtmlContentView(
+                html = resolvedHtml,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(300.dp),
-            ) {
-                com.mohamedrejeb.richeditor.ui.material3.RichTextEditor(
-                    state = previewState,
-                    readOnly = true,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
+            )
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
