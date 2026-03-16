@@ -43,6 +43,7 @@ public class AssignmentService {
         Team team = resolveTeamForGame(gameId, request.getTeamId());
 
         validateNoConflictingAssignment(gameId, base.getId(), team != null ? team.getId() : null);
+        validateChallengeNotAlreadyAssignedToTeam(gameId, challenge.getId(), team != null ? team.getId() : null);
 
         Assignment assignment = Assignment.builder()
                 .game(game)
@@ -145,14 +146,29 @@ public class AssignmentService {
         }
     }
 
+    private void validateChallengeNotAlreadyAssignedToTeam(UUID gameId, UUID challengeId, UUID teamId) {
+        if (teamId != null) {
+            if (assignmentRepository.existsByGameIdAndChallengeIdAndTeamId(gameId, challengeId, teamId)) {
+                throw new ConflictException("This challenge is already assigned to this team at another base");
+            }
+        } else {
+            if (assignmentRepository.existsByGameIdAndChallengeIdAndTeamIdIsNull(gameId, challengeId)) {
+                throw new ConflictException("This challenge is already assigned as an 'All Teams' assignment at another base");
+            }
+        }
+    }
+
     private void validateBulkRequestConflicts(List<CreateAssignmentRequest> requests) {
         Set<String> seenTeamSpecific = new HashSet<>();
         Set<UUID> basesWithAllTeams = new HashSet<>();
         Set<UUID> basesWithTeamSpecific = new HashSet<>();
+        Set<String> seenChallengeTeam = new HashSet<>();
+        Set<UUID> seenChallengeAllTeams = new HashSet<>();
 
         for (CreateAssignmentRequest req : requests) {
             UUID baseId = req.getBaseId();
             UUID teamId = req.getTeamId();
+            UUID challengeId = req.getChallengeId();
 
             if (teamId == null) {
                 if (basesWithTeamSpecific.contains(baseId)) {
@@ -160,6 +176,9 @@ public class AssignmentService {
                 }
                 if (!basesWithAllTeams.add(baseId)) {
                     throw new ConflictException("Duplicate 'All Teams' assignment for the same base");
+                }
+                if (!seenChallengeAllTeams.add(challengeId)) {
+                    throw new ConflictException("Same challenge assigned as 'All Teams' at multiple bases");
                 }
                 continue;
             }
@@ -173,6 +192,11 @@ public class AssignmentService {
                 throw new ConflictException("Duplicate assignment for the same base and team");
             }
             basesWithTeamSpecific.add(baseId);
+
+            String challengeTeamKey = challengeId + ":" + teamId;
+            if (!seenChallengeTeam.add(challengeTeamKey)) {
+                throw new ConflictException("Same challenge assigned to the same team at multiple bases");
+            }
         }
     }
 
