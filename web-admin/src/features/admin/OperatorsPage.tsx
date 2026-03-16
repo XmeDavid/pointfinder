@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Mail, Clock, CheckCircle, UserCog } from "lucide-react";
+import { Plus, Mail, Clock, UserCog, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormLabel } from "@/components/ui/form-label";
@@ -31,6 +31,14 @@ export function OperatorsPage() {
     onError: (error: unknown) => setInviteError(getApiErrorMessage(error)),
   });
 
+  const revokeInvite = useMutation({
+    mutationFn: (inviteId: string) => invitesApi.delete(inviteId),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["invites"] }); },
+    onError: (error: unknown) => setInviteError(getApiErrorMessage(error)),
+  });
+
+  const pendingInvites = globalInvites.filter((i) => i.status === "pending");
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -59,12 +67,12 @@ export function OperatorsPage() {
         ))}
       </div>
 
-      {globalInvites.length > 0 && (
+      {pendingInvites.length > 0 && (
         <Card>
           <CardHeader><CardTitle className="text-lg">{t("admin.pendingInvitations")}</CardTitle></CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {globalInvites.map((invite) => (
+              {pendingInvites.map((invite) => (
                 <div key={invite.id} className="flex items-center justify-between rounded-md border border-border p-3">
                   <div className="flex items-center gap-3">
                     <Mail className="h-4 w-4 text-muted-foreground" />
@@ -73,9 +81,10 @@ export function OperatorsPage() {
                       <p className="text-xs text-muted-foreground">{t("admin.invited")} {formatDate(invite.createdAt)}</p>
                     </div>
                   </div>
-                  <Badge variant={invite.status === "accepted" ? "success" : "warning"}>
-                    {invite.status === "accepted" ? (<><CheckCircle className="mr-1 h-3 w-3" /> {t("admin.accepted")}</>) : (<><Clock className="mr-1 h-3 w-3" /> {t("admin.pending")}</>)}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="warning"><Clock className="mr-1 h-3 w-3" /> {t("admin.pending")}</Badge>
+                    <Button variant="ghost" size="icon" onClick={() => revokeInvite.mutate(invite.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
+                  </div>
                 </div>
               ))}
             </div>

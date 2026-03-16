@@ -30,4 +30,8 @@ export const invitesApi = {
   accept: async (inviteId: string): Promise<void> => {
     await apiClient.post(`/invites/${inviteId}/accept`);
   },
+
+  delete: async (inviteId: string): Promise<void> => {
+    await apiClient.delete(`/invites/${inviteId}`);
+  },
 };

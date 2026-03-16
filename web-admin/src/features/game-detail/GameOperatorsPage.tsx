@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Mail, Clock, CheckCircle, Trash2, UserCog } from "lucide-react";
+import { Plus, Mail, Clock, Trash2, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormLabel } from "@/components/ui/form-label";
@@ -51,6 +51,14 @@ export function GameOperatorsPage() {
     onError: (error: unknown) => { toast.error(getApiErrorMessage(error)); },
   });
 
+  const revokeInvite = useMutation({
+    mutationFn: (inviteId: string) => invitesApi.delete(inviteId),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["game-invites", gameId] }); toast.success(t("common.deleted")); },
+    onError: (error: unknown) => { toast.error(getApiErrorMessage(error)); },
+  });
+
+  const pendingInvites = invites.filter((i) => i.status === "pending");
+
   const { user } = useAuthStore();
 
   if (!game) return null;
@@ -76,15 +84,18 @@ export function GameOperatorsPage() {
         ))}
       </div>
 
-      {invites.length > 0 && (
+      {pendingInvites.length > 0 && (
         <Card>
           <CardHeader><CardTitle className="text-lg">{t("gameOperators.pendingInvitations")}</CardTitle></CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {invites.map((invite) => (
+              {pendingInvites.map((invite) => (
                 <div key={invite.id} className="flex items-center justify-between rounded-md border border-border p-3">
                   <div className="flex items-center gap-3"><Mail className="h-4 w-4 text-muted-foreground" /><div><p className="text-sm font-medium">{invite.email}</p><p className="text-xs text-muted-foreground">{t("admin.invited")} {formatDate(invite.createdAt)}</p></div></div>
-                  <Badge variant={invite.status === "accepted" ? "success" : "warning"}>{invite.status === "accepted" ? (<><CheckCircle className="mr-1 h-3 w-3" /> {t("admin.accepted")}</>) : (<><Clock className="mr-1 h-3 w-3" /> {t("admin.pending")}</>)}</Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="warning"><Clock className="mr-1 h-3 w-3" /> {t("admin.pending")}</Badge>
+                    <Button variant="ghost" size="icon" onClick={() => revokeInvite.mutate(invite.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
+                  </div>
                 </div>
               ))}
             </div>
