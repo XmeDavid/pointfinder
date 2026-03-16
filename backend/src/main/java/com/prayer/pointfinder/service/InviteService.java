@@ -6,6 +6,7 @@ import com.prayer.pointfinder.entity.Game;
 import com.prayer.pointfinder.entity.InviteStatus;
 import com.prayer.pointfinder.entity.OperatorInvite;
 import com.prayer.pointfinder.entity.User;
+import com.prayer.pointfinder.entity.UserRole;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.OperatorInviteRepository;
@@ -31,7 +32,7 @@ public class InviteService {
     @Transactional(readOnly = true)
     public List<InviteResponse> getGlobalInvites() {
         gameAccessService.ensureCurrentUserIsAdmin();
-        return inviteRepository.findByGameIdIsNull().stream()
+        return inviteRepository.findByGameIdIsNullAndStatus(InviteStatus.pending).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
@@ -39,7 +40,7 @@ public class InviteService {
     @Transactional(readOnly = true)
     public List<InviteResponse> getGameInvites(UUID gameId) {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
-        return inviteRepository.findByGameId(gameId).stream()
+        return inviteRepository.findByGameIdAndStatus(gameId, InviteStatus.pending).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
@@ -125,6 +126,31 @@ public class InviteService {
 
         // Add user to the game's operators
         invite.getGame().getOperators().add(currentUser);
+    }
+
+    @Transactional
+    public void deleteInvite(UUID inviteId) {
+        User currentUser = SecurityUtils.getCurrentUser();
+        OperatorInvite invite = inviteRepository.findById(inviteId)
+                .orElseThrow(() -> new ResourceNotFoundException("Invite", inviteId));
+
+        if (invite.getStatus() != InviteStatus.pending) {
+            throw new BadRequestException("Only pending invites can be revoked.");
+        }
+
+        // Allow admin or the person who created the invite
+        boolean isAdmin = currentUser.getRole() == UserRole.admin;
+        boolean isCreator = invite.getInvitedBy().getId().equals(currentUser.getId());
+        if (!isAdmin && !isCreator) {
+            // Also allow if the user has access to the game
+            if (invite.getGame() != null) {
+                gameAccessService.ensureCurrentUserCanAccessGame(invite.getGame().getId());
+            } else {
+                throw new BadRequestException("You do not have permission to revoke this invite.");
+            }
+        }
+
+        inviteRepository.delete(invite);
     }
 
     private InviteResponse toResponse(OperatorInvite inv) {

@@ -49,4 +49,10 @@ public class InviteController {
         inviteService.acceptInvite(inviteId);
         return ResponseEntity.ok().build();
     }
+
+    @DeleteMapping("/{inviteId}")
+    public ResponseEntity<Void> deleteInvite(@PathVariable UUID inviteId) {
+        inviteService.deleteInvite(inviteId);
+        return ResponseEntity.noContent().build();
+    }
 }
