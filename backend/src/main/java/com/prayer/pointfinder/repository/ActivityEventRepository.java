@@ -25,12 +25,5 @@ public interface ActivityEventRepository extends JpaRepository<ActivityEvent, UU
     List<ActivityEvent> findRecentByGameId(@Param("gameId") UUID gameId,
                                            org.springframework.data.domain.Pageable pageable);
 
-    /**
-     * @deprecated Use {@link #findRecentByGameId(UUID, org.springframework.data.domain.Pageable)} instead
-     *             to avoid unbounded result sets and N+1 queries.
-     */
-    @Deprecated
-    List<ActivityEvent> findByGameIdOrderByTimestampDesc(UUID gameId);
-
     void deleteByGameId(UUID gameId);
 }
