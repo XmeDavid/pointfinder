@@ -351,6 +351,10 @@ actor APIClient {
         try await post("/api/invites", body: request, token: token)
     }
 
+    func deleteInvite(inviteId: UUID, token: String) async throws {
+        try await deleteVoid("/api/invites/\(inviteId)", token: token)
+    }
+
     func removeOperator(gameId: UUID, userId: UUID, token: String) async throws {
         try await deleteVoid("/api/games/\(gameId)/operators/\(userId)", token: token)
     }

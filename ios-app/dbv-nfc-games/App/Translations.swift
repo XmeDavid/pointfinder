@@ -406,6 +406,8 @@ enum Translations {
         "offline.failedSubmissions": "%@ submission(s) failed to sync. Check your connection and try again.",
         "operator.removeOperator": "Remove Operator",
         "operator.removeOperatorConfirm": "Remove %@ as an operator from this game?",
+        "operator.revokeInvite": "Revoke Invite",
+        "operator.revokeInviteConfirm": "Revoke the invitation sent to %@?",
         "common.remove": "Remove",
         "setup.teamVariablesIncomplete": "Some teams have incomplete variable values",
     ]
@@ -828,6 +830,8 @@ enum Translations {
         "offline.failedSubmissions": "%@ submissão(ões) falharam ao sincronizar. Verifique a conexão e tente novamente.",
         "operator.removeOperator": "Remover Operador",
         "operator.removeOperatorConfirm": "Remover %@ como operador deste jogo?",
+        "operator.revokeInvite": "Revogar Convite",
+        "operator.revokeInviteConfirm": "Revogar o convite enviado para %@?",
         "common.remove": "Remover",
         "setup.teamVariablesIncomplete": "Algumas equipas têm valores de variáveis incompletos",
     ]
@@ -1250,6 +1254,8 @@ enum Translations {
         "offline.failedSubmissions": "%@ Einreichung(en) konnten nicht synchronisiert werden. Überprüfen Sie Ihre Verbindung.",
         "operator.removeOperator": "Operator entfernen",
         "operator.removeOperatorConfirm": "%@ als Operator aus diesem Spiel entfernen?",
+        "operator.revokeInvite": "Einladung widerrufen",
+        "operator.revokeInviteConfirm": "Die Einladung an %@ widerrufen?",
         "common.remove": "Entfernen",
         "setup.teamVariablesIncomplete": "Einige Teams haben unvollständige Variablenwerte",
     ]

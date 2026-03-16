@@ -14,6 +14,7 @@ struct OperatorsManagementView: View {
     @State private var isSendingInvite = false
     @State private var errorMessage: String?
     @State private var operatorToRemove: OperatorUserResponse?
+    @State private var inviteToRevoke: InviteResponse?
 
     private var token: String? {
         if case .userOperator(let token, _, _) = appState.authType {
@@ -64,16 +65,16 @@ struct OperatorsManagementView: View {
                 }
             }
 
-            // Invites
+            // Invites (pending only)
             Section(locale.t("operator.invites")) {
                 if isLoading {
                     ProgressView(locale.t("operator.loading"))
-                } else if invites.isEmpty {
+                } else if pendingInvites.isEmpty {
                     Text(locale.t("operator.noInvites"))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 } else {
-                    ForEach(invites) { invite in
+                    ForEach(pendingInvites) { invite in
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(invite.email)
@@ -92,6 +93,13 @@ struct OperatorsManagementView: View {
                                 .background(statusColor(invite.status).opacity(0.15))
                                 .foregroundStyle(statusColor(invite.status))
                                 .clipShape(Capsule())
+                        }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) {
+                                inviteToRevoke = invite
+                            } label: {
+                                Label(locale.t("common.remove"), systemImage: "trash")
+                            }
                         }
                     }
                 }
@@ -142,6 +150,25 @@ struct OperatorsManagementView: View {
         } message: {
             Text(locale.t("operator.removeOperatorConfirm", operatorToRemove?.name ?? ""))
         }
+        .alert(locale.t("operator.revokeInvite"), isPresented: Binding(
+            get: { inviteToRevoke != nil },
+            set: { if !$0 { inviteToRevoke = nil } }
+        )) {
+            Button(locale.t("common.remove"), role: .destructive) {
+                if let invite = inviteToRevoke {
+                    Task { await revokeInvite(invite) }
+                }
+            }
+            Button(locale.t("common.cancel"), role: .cancel) {}
+        } message: {
+            Text(locale.t("operator.revokeInviteConfirm", inviteToRevoke?.email ?? ""))
+        }
+    }
+
+    // MARK: - Computed
+
+    private var pendingInvites: [InviteResponse] {
+        invites.filter { $0.status.lowercased() == "pending" }
     }
 
     // MARK: - Helpers
@@ -178,6 +205,16 @@ struct OperatorsManagementView: View {
         do {
             try await appState.apiClient.removeOperator(gameId: game.id, userId: op.id, token: token)
             operators.removeAll { $0.id == op.id }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func revokeInvite(_ invite: InviteResponse) async {
+        guard let token else { return }
+        do {
+            try await appState.apiClient.deleteInvite(inviteId: invite.id, token: token)
+            invites.removeAll { $0.id == invite.id }
         } catch {
             errorMessage = error.localizedDescription
         }
