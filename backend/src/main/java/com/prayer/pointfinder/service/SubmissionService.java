@@ -40,6 +40,7 @@ public class SubmissionService {
     private final OperatorPushNotificationService operatorPushNotificationService;
     private final TemplateVariableService templateVariableService;
     private final ThumbnailService thumbnailService;
+    private final MonitoringService monitoringService;
 
     @org.springframework.beans.factory.annotation.Value("${app.uploads.path:/uploads}")
     private String uploadsPath;
@@ -266,6 +267,7 @@ public class SubmissionService {
 
         eventBroadcaster.broadcastActivityEvent(gameId, event);
         eventBroadcaster.broadcastSubmissionStatus(gameId, submission);
+        eventBroadcaster.broadcastLeaderboardUpdate(gameId, monitoringService.computeLeaderboard(gameId));
 
         return toResponse(submission);
     }

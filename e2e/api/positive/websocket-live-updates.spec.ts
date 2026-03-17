@@ -114,9 +114,31 @@ test.describe('P26: WebSocket real-time broadcasts', () => {
     }
   });
 
-  // Skipped: backend does not broadcast 'leaderboard' over WebSocket after review.
-  // broadcastLeaderboardUpdate() exists but is never called from the review flow.
-  test.skip('operator receives leaderboard broadcast after review', async () => {});
+  test('operator receives leaderboard broadcast after review', async () => {
+    const ws = await connectToGameTopic(gameId, { token: operatorToken });
+    try {
+      await new Promise((r) => setTimeout(r, 500));
+
+      // Review a submission to trigger leaderboard broadcast
+      const subs = await getSubmissions(operatorToken, gameId);
+      const pending = subs.find((s: any) => s.status === 'pending');
+      if (pending) {
+        await reviewSubmission(operatorToken, gameId, pending.id, { status: 'approved' });
+      } else {
+        // Re-review an existing submission to trigger the broadcast
+        const any = subs[0];
+        if (any) {
+          await reviewSubmission(operatorToken, gameId, any.id, { status: 'approved' });
+        }
+      }
+
+      const envelope = await ws.waitForBroadcast('leaderboard', 10_000);
+      expect(envelope.type).toBe('leaderboard');
+      expect(envelope.gameId).toBe(gameId);
+    } finally {
+      await ws.disconnect();
+    }
+  });
 
   test('operator receives notification broadcast', async () => {
     const ws = await connectToGameTopic(gameId, { token: operatorToken });
