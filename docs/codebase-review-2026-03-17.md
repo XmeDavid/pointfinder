@@ -159,6 +159,7 @@ Multiple reviewers independently praised these aspects:
 ## Part 6: Recommended Action Plan
 
 ### Security Hardening
+- [x] Remove WebSocket token query param fallback (2.2) — no client uses it; header-only auth now
 - [ ] Add CSP header (2.4)
 - [ ] Fix password policy + frontend mismatch (3.1)
 - [ ] Bind Prometheus to localhost (3.4)

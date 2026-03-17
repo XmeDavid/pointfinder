@@ -39,8 +39,6 @@ import java.util.UUID;
 public class MobileWebSocketAuthHandshakeInterceptor implements HandshakeInterceptor {
 
     private static final String QUERY_GAME_ID = "gameId";
-    private static final String QUERY_TOKEN = "token";
-
     private final JwtTokenProvider tokenProvider;
     private final UserRepository userRepository;
     private final GameRepository gameRepository;
@@ -155,15 +153,10 @@ public class MobileWebSocketAuthHandshakeInterceptor implements HandshakeInterce
 
     private String resolveToken(ServerHttpRequest request) {
         String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-        if (StringUtils.hasText(authHeader)) {
-            if (authHeader.startsWith("Bearer ")) {
-                return authHeader.substring(7);
-            }
-            return authHeader;
+        if (StringUtils.hasText(authHeader) && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
         }
-
-        MultiValueMap<String, String> params = UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams();
-        return params.getFirst(QUERY_TOKEN);
+        return null;
     }
 }
 
