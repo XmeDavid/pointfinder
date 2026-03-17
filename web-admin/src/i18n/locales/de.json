@@ -648,6 +648,7 @@
     "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten. Bitte lade die Seite neu.",
     "reload": "Neu laden",
     "boundaryInline": "Etwas ist schiefgelaufen. Bitte aktualisiere die Seite.",
+    "tryAgain": "Erneut versuchen",
     "liveUpdatesRetrying": "Live-Updates vorübergehend nicht verfügbar. Erneuter Versuch\u2026"
   },
   "editor": {

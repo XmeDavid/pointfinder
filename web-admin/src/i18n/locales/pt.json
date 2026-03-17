@@ -648,6 +648,7 @@
     "unexpectedError": "Ocorreu um erro inesperado. Por favor, recarrega a página.",
     "reload": "Recarregar",
     "boundaryInline": "Algo correu mal. Por favor, atualiza a página.",
+    "tryAgain": "Tentar novamente",
     "liveUpdatesRetrying": "Atualizações em tempo real temporariamente indisponíveis. A tentar novamente\u2026"
   },
   "editor": {

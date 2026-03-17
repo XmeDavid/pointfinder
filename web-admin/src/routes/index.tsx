@@ -115,8 +115,8 @@ export const router = createBrowserRouter([
       {
         path: "games",
         children: [
-          { index: true, element: <GamesListPage /> },
-          { path: "new", element: <CreateGamePage /> },
+          { index: true, element: <ErrorBoundary><GamesListPage /></ErrorBoundary> },
+          { path: "new", element: <ErrorBoundary><CreateGamePage /></ErrorBoundary> },
         ],
       },
       {
@@ -124,7 +124,7 @@ export const router = createBrowserRouter([
         children: [
           {
             path: "operators",
-            element: <OperatorsPage />,
+            element: <ErrorBoundary><OperatorsPage /></ErrorBoundary>,
           },
         ],
       },
@@ -144,15 +144,15 @@ export const router = createBrowserRouter([
         index: true,
         element: <Navigate to="overview" replace />,
       },
-      { path: "overview", element: <OverviewPage /> },
-      { path: "operators", element: <GameOperatorsPage /> },
-      { path: "bases", element: <BasesPage /> },
-      { path: "challenges", element: <ChallengesPage /> },
-      { path: "assignments", element: <AssignmentsPage /> },
-      { path: "teams", element: <TeamsPage /> },
-      { path: "notifications", element: <NotificationsPage /> },
-      { path: "settings", element: <SettingsPage /> },
-      { path: "results", element: <ResultsPage /> },
+      { path: "overview", element: <ErrorBoundary><OverviewPage /></ErrorBoundary> },
+      { path: "operators", element: <ErrorBoundary><GameOperatorsPage /></ErrorBoundary> },
+      { path: "bases", element: <ErrorBoundary><BasesPage /></ErrorBoundary> },
+      { path: "challenges", element: <ErrorBoundary><ChallengesPage /></ErrorBoundary> },
+      { path: "assignments", element: <ErrorBoundary><AssignmentsPage /></ErrorBoundary> },
+      { path: "teams", element: <ErrorBoundary><TeamsPage /></ErrorBoundary> },
+      { path: "notifications", element: <ErrorBoundary><NotificationsPage /></ErrorBoundary> },
+      { path: "settings", element: <ErrorBoundary><SettingsPage /></ErrorBoundary> },
+      { path: "results", element: <ErrorBoundary><ResultsPage /></ErrorBoundary> },
       {
         path: "monitor",
         children: [

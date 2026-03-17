@@ -1,5 +1,6 @@
 package com.prayer.pointfinder.dto.request;
 
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
@@ -11,6 +12,6 @@ public class ReviewSubmissionRequest {
 
     private String feedback;
 
-    @Min(0)
+    @Min(0) @Max(100000)
     private Integer points;
 }

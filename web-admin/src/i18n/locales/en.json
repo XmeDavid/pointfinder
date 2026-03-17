@@ -648,6 +648,7 @@
     "unexpectedError": "An unexpected error occurred. Please reload the page.",
     "reload": "Reload",
     "boundaryInline": "Something went wrong. Please refresh the page.",
+    "tryAgain": "Try again",
     "liveUpdatesRetrying": "Live updates temporarily unavailable. Retrying\u2026"
   },
   "editor": {

@@ -1,5 +1,6 @@
 package com.prayer.pointfinder.dto.request;
 
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -26,7 +27,7 @@ public class UpdateChallengeRequest {
 
     private List<String> correctAnswer;
 
-    @NotNull @Min(0)
+    @NotNull @Min(0) @Max(100000)
     private Integer points;
 
     private Boolean locationBound = false;

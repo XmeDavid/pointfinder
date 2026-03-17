@@ -12,6 +12,7 @@ import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.BaseRepository;
 import com.prayer.pointfinder.repository.ChallengeRepository;
 import com.prayer.pointfinder.repository.SubmissionRepository;
+import com.prayer.pointfinder.util.HtmlSanitizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,8 +52,8 @@ public class ChallengeService {
                 .game(game)
                 .title(request.getTitle())
                 .description(request.getDescription() != null ? request.getDescription() : "")
-                .content(request.getContent() != null ? request.getContent() : "")
-                .completionContent(request.getCompletionContent() != null ? request.getCompletionContent() : "")
+                .content(HtmlSanitizer.sanitize(request.getContent() != null ? request.getContent() : ""))
+                .completionContent(HtmlSanitizer.sanitize(request.getCompletionContent() != null ? request.getCompletionContent() : ""))
                 .answerType(AnswerType.valueOf(request.getAnswerType()))
                 .autoValidate(request.getAutoValidate() != null ? request.getAutoValidate() : false)
                 .correctAnswer(request.getCorrectAnswer())
@@ -98,8 +99,8 @@ public class ChallengeService {
 
         challenge.setTitle(request.getTitle());
         challenge.setDescription(request.getDescription() != null ? request.getDescription() : "");
-        challenge.setContent(request.getContent() != null ? request.getContent() : "");
-        challenge.setCompletionContent(request.getCompletionContent() != null ? request.getCompletionContent() : "");
+        challenge.setContent(HtmlSanitizer.sanitize(request.getContent() != null ? request.getContent() : ""));
+        challenge.setCompletionContent(HtmlSanitizer.sanitize(request.getCompletionContent() != null ? request.getCompletionContent() : ""));
         challenge.setAnswerType(AnswerType.valueOf(request.getAnswerType()));
         challenge.setAutoValidate(request.getAutoValidate() != null ? request.getAutoValidate() : false);
         challenge.setCorrectAnswer(request.getCorrectAnswer());

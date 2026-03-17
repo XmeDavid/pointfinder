@@ -21,11 +21,21 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error("ErrorBoundary caught:", error, info);
   }
 
+  resetError = () => {
+    this.setState({ hasError: false });
+  };
+
   render() {
     if (this.state.hasError) {
       return this.props.fallback ?? (
-        <div className="flex h-[200px] items-center justify-center rounded-md border border-destructive/30 bg-destructive/10 text-sm text-destructive">
-          {i18n.t("errors.boundaryInline")}
+        <div className="flex h-[200px] flex-col items-center justify-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 text-sm text-destructive">
+          <span>{i18n.t("errors.boundaryInline")}</span>
+          <button
+            onClick={this.resetError}
+            className="rounded-md bg-destructive px-3 py-1.5 text-xs font-medium text-destructive-foreground hover:bg-destructive/90"
+          >
+            {i18n.t("errors.tryAgain")}
+          </button>
         </div>
       );
     }
