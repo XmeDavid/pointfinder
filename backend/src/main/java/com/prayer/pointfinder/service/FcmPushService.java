@@ -13,12 +13,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @Slf4j
 @Service
@@ -61,6 +64,7 @@ public class FcmPushService {
         }
     }
 
+    @Async("pushNotificationExecutor")
     public void sendPush(List<String> tokens, String title, String body, Map<String, String> customData) {
         if (!fcmConfig.isEnabled() || firebaseApp == null) {
             log.debug("FCM disabled or not initialized, skipping push to {} tokens", tokens.size());
@@ -79,7 +83,7 @@ public class FcmPushService {
             if (customData != null && !customData.isEmpty()) {
                 builder.putAllData(customData);
             }
-            var response = FirebaseMessaging.getInstance(firebaseApp).sendEachForMulticastAsync(builder.build()).get();
+            var response = FirebaseMessaging.getInstance(firebaseApp).sendEachForMulticastAsync(builder.build()).get(30, TimeUnit.SECONDS);
             if (response.getFailureCount() > 0) {
                 for (int i = 0; i < response.getResponses().size(); i++) {
                     var sendResponse = response.getResponses().get(i);
@@ -97,6 +101,8 @@ public class FcmPushService {
             log.error("FCM send interrupted: {}", e.getMessage(), e);
         } catch (ExecutionException e) {
             log.error("FCM send execution failed: {}", e.getMessage(), e);
+        } catch (TimeoutException e) {
+            log.error("FCM send timed out after 30s for {} tokens", tokens.size());
         }
     }
 

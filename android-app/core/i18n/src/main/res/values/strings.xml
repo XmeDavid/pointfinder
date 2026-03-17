@@ -165,6 +165,9 @@
     <string name="disclosure_footer">You can change these permissions later in Settings.</string>
     <string name="disclosure_continue">Continue</string>
 
+    <string name="dialog_leave_game_title">Leave Game?</string>
+    <string name="dialog_leave_game_message">You will be disconnected from the current game. You can rejoin with the same code.</string>
+
     <string name="dialog_delete_account_title">Delete Account</string>
     <string name="dialog_delete_account_message">This will permanently delete your player account data for PointFinder. This action cannot be undone.</string>
     <string name="dialog_delete_account_confirm">Delete</string>

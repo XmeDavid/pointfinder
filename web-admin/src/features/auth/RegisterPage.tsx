@@ -46,7 +46,7 @@ export function RegisterPage() {
       setError(t("auth.nameRequired"));
       return;
     }
-    if (password.length < 6) {
+    if (password.length < 8) {
       setError(t("auth.passwordTooShort"));
       return;
     }
@@ -96,7 +96,7 @@ export function RegisterPage() {
               <FormLabel htmlFor="password" required>
                 {t("auth.password")}
               </FormLabel>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
             </div>
             <div className="space-y-2">
               <FormLabel htmlFor="confirm" required>

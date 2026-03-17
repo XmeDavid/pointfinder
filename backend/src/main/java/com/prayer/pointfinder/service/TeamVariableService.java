@@ -36,7 +36,7 @@ public class TeamVariableService {
         return groupGameVariables(all);
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public TeamVariablesResponse saveGameVariables(UUID gameId, TeamVariablesBulkRequest request) {
         Game game = gameAccessService.getAccessibleGame(gameId);
         List<Team> teams = teamRepository.findByGameId(gameId);
@@ -78,7 +78,7 @@ public class TeamVariableService {
         return groupChallengeVariables(all);
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public TeamVariablesResponse saveChallengeVariables(UUID gameId, UUID challengeId,
                                                          TeamVariablesBulkRequest request) {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);

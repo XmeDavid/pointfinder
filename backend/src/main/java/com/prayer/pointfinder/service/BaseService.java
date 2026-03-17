@@ -38,7 +38,7 @@ public class BaseService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public BaseResponse createBase(UUID gameId, CreateBaseRequest request) {
         Game game = gameAccessService.getAccessibleGame(gameId);
 
@@ -72,7 +72,7 @@ public class BaseService {
         return toResponse(base);
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public BaseResponse updateBase(UUID gameId, UUID baseId, UpdateBaseRequest request) {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         Base base = baseRepository.findById(baseId)
@@ -141,7 +141,7 @@ public class BaseService {
         return toResponse(base);
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public BaseResponse setNfcLinked(UUID gameId, UUID baseId, boolean linked) {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         Base base = baseRepository.findById(baseId)
@@ -152,7 +152,7 @@ public class BaseService {
         return toResponse(base);
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public void deleteBase(UUID gameId, UUID baseId) {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         Base base = baseRepository.findById(baseId)

@@ -54,7 +54,7 @@ public class InviteService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public InviteResponse createInvite(CreateInviteRequest request, String requestHost) {
         User currentUser = SecurityUtils.getCurrentUser();
         UUID userId = currentUser.getId();
@@ -100,7 +100,7 @@ public class InviteService {
         return toResponse(invite);
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public void acceptInvite(UUID inviteId) {
         UUID userId = SecurityUtils.getCurrentUser().getId();
         User currentUser = userRepository.findById(userId)
@@ -128,7 +128,7 @@ public class InviteService {
         invite.getGame().getOperators().add(currentUser);
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public void deleteInvite(UUID inviteId) {
         User currentUser = SecurityUtils.getCurrentUser();
         OperatorInvite invite = inviteRepository.findById(inviteId)

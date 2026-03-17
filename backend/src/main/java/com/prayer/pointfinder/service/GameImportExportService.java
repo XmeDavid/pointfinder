@@ -125,7 +125,7 @@ public class GameImportExportService {
                 .build();
     }
 
-    @Transactional
+    @Transactional(timeout = 60)
     public GameResponse importGame(GameImportRequest request) {
         User currentUser = SecurityUtils.getCurrentUser();
         UUID userId = currentUser.getId();

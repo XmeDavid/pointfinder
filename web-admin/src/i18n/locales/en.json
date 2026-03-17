@@ -56,7 +56,7 @@
     "creatingAccount": "Creating account...",
     "passwordsNoMatch": "Passwords do not match",
     "nameRequired": "Please enter your name",
-    "passwordTooShort": "Password must be at least 6 characters",
+    "passwordTooShort": "Password must be at least 8 characters",
     "registrationFailed": "Registration failed. The invite may have expired.",
     "forgotPassword": "Forgot password?",
     "forgotPasswordTitle": "Forgot Password",
@@ -164,7 +164,11 @@
   },
   "lifecycle": {
     "goLive": "Go Live",
-    "endGame": "End Game"
+    "goLiveConfirmTitle": "Go Live?",
+    "goLiveConfirmDescription": "This will make the game visible to all {{teams}} teams. {{bases}} bases and {{challenges}} challenges are ready. Are you sure?",
+    "endGame": "End Game",
+    "endGameConfirmTitle": "End Game?",
+    "endGameConfirmDescription": "This will end the game for all {{teams}} teams. Players will no longer be able to scan bases or submit answers."
   },
   "overview": {
     "nfcLinked": "NFC Linked",

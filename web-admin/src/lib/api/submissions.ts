@@ -8,9 +8,10 @@ export const submissionsApi = {
   },
 
   listByTeam: async (teamId: string, gameId: string): Promise<Submission[]> => {
-    // We use the game-level endpoint and the backend filters by team in the response
-    const { data } = await apiClient.get(`/games/${gameId}/submissions`);
-    return (data as Submission[]).filter((s) => s.teamId === teamId);
+    const { data } = await apiClient.get(`/games/${gameId}/submissions`, {
+      params: { teamId },
+    });
+    return data;
   },
 
   review: async (

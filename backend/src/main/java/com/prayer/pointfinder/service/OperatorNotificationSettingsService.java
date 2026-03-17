@@ -35,7 +35,7 @@ public class OperatorNotificationSettingsService {
                 .orElseGet(() -> defaultResponse(gameId, currentUser.getId()));
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public OperatorNotificationSettingsResponse updateCurrentUserSettings(
             UUID gameId,
             UpdateOperatorNotificationSettingsRequest request

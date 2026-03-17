@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/useToast";
 import type { GameStatus } from "@/types";
 import { useState } from "react";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-dialog";
 
 export function OverviewPage() {
   const { t } = useTranslation();
@@ -24,6 +25,8 @@ export function OverviewPage() {
   const { gameId } = useParams<{ gameId: string }>();
   const queryClient = useQueryClient();
   const [actionError, setActionError] = useState("");
+  const [showGoLiveConfirm, setShowGoLiveConfirm] = useState(false);
+  const [showEndGameConfirm, setShowEndGameConfirm] = useState(false);
 
   const { data: game } = useQuery({ queryKey: ["game", gameId], queryFn: () => gamesApi.getById(gameId!) });
   const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!) });
@@ -86,10 +89,31 @@ export function OverviewPage() {
         </div>
         <div className="flex items-center gap-2 self-end sm:self-auto">
           {nextStep && (
-            <Button onClick={() => transition.mutate(nextStep.next)} disabled={transition.isPending || !canGoLive} variant={nextStep.next === "ended" ? "destructive" : "default"}>
+            <Button onClick={() => {
+              if (nextStep.next === "live") setShowGoLiveConfirm(true);
+              else if (nextStep.next === "ended") setShowEndGameConfirm(true);
+              else transition.mutate(nextStep.next);
+            }} disabled={transition.isPending || !canGoLive} variant={nextStep.next === "ended" ? "destructive" : "default"}>
               {nextStep.icon}{nextStep.label}
             </Button>
           )}
+          <ConfirmDeleteDialog
+            open={showGoLiveConfirm}
+            onConfirm={() => { setShowGoLiveConfirm(false); transition.mutate("live"); }}
+            onCancel={() => setShowGoLiveConfirm(false)}
+            title={t("lifecycle.goLiveConfirmTitle")}
+            description={t("lifecycle.goLiveConfirmDescription", { bases: bases.length, challenges: challenges.length, teams: teams.length })}
+            confirmLabel={t("lifecycle.goLive")}
+            variant="default"
+          />
+          <ConfirmDeleteDialog
+            open={showEndGameConfirm}
+            onConfirm={() => { setShowEndGameConfirm(false); transition.mutate("ended"); }}
+            onCancel={() => setShowEndGameConfirm(false)}
+            title={t("lifecycle.endGameConfirmTitle")}
+            description={t("lifecycle.endGameConfirmDescription", { teams: teams.length })}
+            confirmLabel={t("lifecycle.endGame")}
+          />
         </div>
       </div>
       {actionError && <Alert onDismiss={() => setActionError("")}>{actionError}</Alert>}

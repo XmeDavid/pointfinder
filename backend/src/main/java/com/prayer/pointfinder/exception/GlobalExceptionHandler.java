@@ -13,12 +13,13 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    public record ErrorResponse(int status, String message, Map<String, String> errors, Instant timestamp) {}
+    public record ErrorResponse(int status, String message, Map<String, String> errors, Instant timestamp, String traceId) {}
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex) {
@@ -70,7 +71,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ErrorResponse> handleIllegalState(IllegalStateException ex) {
-        if (ex.getMessage() != null && ex.getMessage().startsWith("No authenticated")) {
+        String msg = ex.getMessage();
+        if (msg != null && (msg.contains("No authenticated") || msg.contains("authentication"))) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(error(HttpStatus.UNAUTHORIZED, "Authentication required"));
         }
@@ -80,17 +82,22 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneral(Exception ex) {
-        log.error("Unhandled exception", ex);
+        String traceId = UUID.randomUUID().toString();
+        log.error("Unhandled exception [traceId={}]", traceId, ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(error(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error"));
+                .body(error(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error", null, traceId));
     }
 
     private ErrorResponse error(HttpStatus status, String message) {
-        return error(status, message, null);
+        return error(status, message, null, null);
     }
 
     private ErrorResponse error(HttpStatus status, String message, Map<String, String> errors) {
-        return new ErrorResponse(status.value(), message, errors, Instant.now());
+        return error(status, message, errors, null);
+    }
+
+    private ErrorResponse error(HttpStatus status, String message, Map<String, String> errors, String traceId) {
+        return new ErrorResponse(status.value(), message, errors, Instant.now(), traceId);
     }
 
     private String mapDataIntegrityMessage(DataIntegrityViolationException ex) {

@@ -49,7 +49,7 @@ public class NotificationService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public NotificationResponse createNotification(UUID gameId, CreateNotificationRequest request) {
         Game game = gameAccessService.getAccessibleGame(gameId);
         User currentUser = SecurityUtils.getCurrentUser();

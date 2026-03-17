@@ -17,7 +17,7 @@ public class OperatorPresenceTracker {
     private final ConcurrentHashMap<String, SessionInfo> sessionMap = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, Integer> sessionCount = new ConcurrentHashMap<>();
 
-    public void register(String sessionId, UUID gameId, UUID userId, String name) {
+    public synchronized void register(String sessionId, UUID gameId, UUID userId, String name) {
         String initials = computeInitials(name);
         OperatorInfo info = new OperatorInfo(userId, name, initials);
         sessionMap.put(sessionId, new SessionInfo(gameId, userId));
@@ -28,7 +28,7 @@ public class OperatorPresenceTracker {
         }
     }
 
-    public UUID unregister(String sessionId) {
+    public synchronized UUID unregister(String sessionId) {
         SessionInfo info = sessionMap.remove(sessionId);
         if (info == null) return null;
         int remaining = sessionCount.merge(info.userId(), -1, Integer::sum);

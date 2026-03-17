@@ -56,7 +56,7 @@
     "creatingAccount": "A criar conta...",
     "passwordsNoMatch": "As palavras-passe não coincidem",
     "nameRequired": "Por favor, insira o seu nome",
-    "passwordTooShort": "A palavra-passe deve ter pelo menos 6 caracteres",
+    "passwordTooShort": "A palavra-passe deve ter pelo menos 8 caracteres",
     "registrationFailed": "Registo falhou. O convite pode ter expirado.",
     "forgotPassword": "Esqueceu a palavra-passe?",
     "forgotPasswordTitle": "Recuperar Palavra-passe",
@@ -164,7 +164,11 @@
   },
   "lifecycle": {
     "goLive": "Iniciar Jogo",
-    "endGame": "Terminar Jogo"
+    "goLiveConfirmTitle": "Iniciar Jogo?",
+    "goLiveConfirmDescription": "Isto tornará o jogo visível para as {{teams}} equipas. {{bases}} bases e {{challenges}} desafios estão prontos. Tens a certeza?",
+    "endGame": "Terminar Jogo",
+    "endGameConfirmTitle": "Terminar Jogo?",
+    "endGameConfirmDescription": "Isto terminará o jogo para as {{teams}} equipas. Os jogadores não poderão mais digitalizar bases ou enviar respostas."
   },
   "overview": {
     "nfcLinked": "NFC Ligado",

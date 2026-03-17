@@ -35,7 +35,7 @@ public class AssignmentService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public AssignmentResponse createAssignment(UUID gameId, CreateAssignmentRequest request) {
         Game game = resolveGame(gameId);
         Base base = resolveBaseForGame(gameId, request.getBaseId());
@@ -56,7 +56,7 @@ public class AssignmentService {
         return toResponse(assignment);
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public List<AssignmentResponse> bulkSetAssignments(UUID gameId, List<CreateAssignmentRequest> requests) {
         List<CreateAssignmentRequest> safeRequests = requests != null ? requests : List.of();
 
@@ -84,7 +84,7 @@ public class AssignmentService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public void deleteAssignment(UUID gameId, UUID assignmentId) {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         Assignment assignment = assignmentRepository.findByIdAndGameId(assignmentId, gameId)

@@ -13,6 +13,7 @@ import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
@@ -86,6 +87,7 @@ public class ApnsPushService {
      * @param body     Notification body text
      * @param customData Additional data to include in the payload
      */
+    @Async("pushNotificationExecutor")
     public void sendPush(List<String> tokens, String title, String body, Map<String, String> customData) {
         if (!apnsConfig.isEnabled() || apnsClient == null) {
             log.debug("APNs disabled or not initialized, skipping push to {} tokens", tokens.size());

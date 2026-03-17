@@ -3,6 +3,7 @@ package com.prayer.pointfinder.service;
 import com.prayer.pointfinder.dto.request.CreateSubmissionRequest;
 import com.prayer.pointfinder.dto.request.PlayerJoinRequest;
 import com.prayer.pointfinder.dto.request.PlayerSubmissionRequest;
+import com.prayer.pointfinder.util.LazyInitHelper;
 import com.prayer.pointfinder.dto.response.*;
 import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.exception.BadRequestException;
@@ -23,13 +24,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PlayerService {
 
-    private static final Comparator<Assignment> ASSIGNMENT_RECENCY_COMPARATOR =
-            Comparator.comparing(
-                            Assignment::getCreatedAt,
-                            Comparator.nullsLast(Comparator.reverseOrder())
-                    )
-                    .thenComparing(a -> a.getId().toString(), Comparator.reverseOrder());
-
     private final PlayerRepository playerRepository;
     private final TeamRepository teamRepository;
     private final BaseRepository baseRepository;
@@ -48,7 +42,7 @@ public class PlayerService {
     private final TemplateVariableService templateVariableService;
     private final GameNotificationRepository gameNotificationRepository;
 
-    @Transactional
+    @Transactional(timeout = 10)
     public PlayerAuthResponse joinTeam(PlayerJoinRequest request) {
         Team team = teamRepository.findByJoinCode(request.getJoinCode())
                 .orElseThrow(() -> new BadRequestException("Invalid join code"));
@@ -103,7 +97,7 @@ public class PlayerService {
                 .build();
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public CheckInResponse checkIn(UUID gameId, UUID baseId, Player player) {
         // Re-fetch player within transaction to get fresh entity with proper session
         UUID playerId = player.getId();
@@ -159,12 +153,7 @@ public class PlayerService {
                 .build();
         activityEventRepository.save(event);
 
-        // Initialize lazy relationships before broadcasting (fixes LazyInitializationException)
-        event.getGame().getId();
-        event.getTeam().getId();
-        if (event.getBase() != null) event.getBase().getId();
-        if (event.getChallenge() != null) event.getChallenge().getId();
-
+        LazyInitHelper.initializeForBroadcast(event);
         eventBroadcaster.broadcastActivityEvent(gameId, event);
         operatorPushNotificationService.notifyOperatorsForCheckIn(base.getGame(), team, base);
 
@@ -212,31 +201,15 @@ public class PlayerService {
                 ));
 
         List<Assignment> sortedAssignments = assignments.stream()
-                .sorted(ASSIGNMENT_RECENCY_COMPARATOR)
+                .sorted(AssignmentResolver.RECENCY_COMPARATOR)
                 .toList();
 
-        Map<UUID, Assignment> teamSpecificByBase = sortedAssignments.stream()
-                .filter(a -> a.getTeam() != null && a.getTeam().getId().equals(team.getId()))
-                .collect(Collectors.toMap(
-                        a -> a.getBase().getId(),
-                        a -> a,
-                        (first, ignored) -> first
-                ));
-        Map<UUID, Assignment> globalByBase = sortedAssignments.stream()
-                .filter(a -> a.getTeam() == null)
-                .collect(Collectors.toMap(
-                        a -> a.getBase().getId(),
-                        a -> a,
-                        (first, ignored) -> first
-                ));
-        Map<UUID, Assignment> assignmentByBase = new HashMap<>(globalByBase);
-        assignmentByBase.putAll(teamSpecificByBase);
-
+        final UUID teamId = team.getId();
         return bases.stream().map(base -> {
             UUID bId = base.getId();
             CheckIn ci = checkInByBase.get(bId);
             Submission sub = submissionByBase.get(bId);
-            Assignment assignment = assignmentByBase.get(bId);
+            Challenge assignment = AssignmentResolver.resolve(base, teamId, sortedAssignments);
 
             BaseStatus status = BaseStatus.compute(sub, ci);
             String submissionStatus = sub != null ? sub.getStatus().name() : null;
@@ -266,7 +239,7 @@ public class PlayerService {
                     .nfcLinked(base.getNfcLinked())
                     .status(status.name())
                     .checkedInAt(ci != null ? ci.getCheckedInAt() : null)
-                    .challengeId(assignment != null ? assignment.getChallenge().getId() : null)
+                    .challengeId(assignment != null ? assignment.getId() : null)
                     .submissionStatus(submissionStatus)
                     .build();
         }).filter(Objects::nonNull).collect(Collectors.toList());
@@ -402,7 +375,10 @@ public class PlayerService {
             throw new BadRequestException("Team has not checked in to this base");
         }
 
-        Challenge assignedChallenge = resolveAssignedChallenge(base, team);
+        List<Assignment> baseAssignments = assignmentRepository.findByBaseId(base.getId());
+        List<Assignment> sortedBaseAssignments = baseAssignments.stream()
+                .sorted(AssignmentResolver.RECENCY_COMPARATOR).toList();
+        Challenge assignedChallenge = AssignmentResolver.resolve(base, team.getId(), sortedBaseAssignments);
         if (assignedChallenge == null) {
             throw new BadRequestException("No challenge is assigned for this base");
         }
@@ -426,7 +402,7 @@ public class PlayerService {
         return response;
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public void updatePushToken(Player player, String pushToken, PushPlatform platform) {
         UUID playerId = player.getId();
         player = playerRepository.findById(playerId)
@@ -442,7 +418,7 @@ public class PlayerService {
      * Team-level data (submissions, check-ins, team location) is preserved
      * as it belongs to the team, not the individual player.
      */
-    @Transactional
+    @Transactional(timeout = 10)
     public void deletePlayerData(Player player) {
         UUID playerId = player.getId();
         player = playerRepository.findById(playerId)
@@ -452,7 +428,7 @@ public class PlayerService {
         playerRepository.delete(player);
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public void updateLocation(UUID gameId, Player player, Double lat, Double lng) {
         if (lat == null || lng == null || !Double.isFinite(lat) || !Double.isFinite(lng)
                 || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
@@ -492,7 +468,7 @@ public class PlayerService {
         eventBroadcaster.broadcastLocationUpdate(gameId, locationData);
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public void markNotificationsSeen(Player player) {
         UUID playerId = player.getId();
         player = playerRepository.findById(playerId)
@@ -540,7 +516,10 @@ public class PlayerService {
     }
 
     private CheckInResponse buildCheckInResponse(CheckIn checkIn, Base base, Team team, UUID gameId) {
-        Challenge challenge = resolveAssignedChallenge(base, team);
+        List<Assignment> baseAssignments2 = assignmentRepository.findByBaseId(base.getId());
+        List<Assignment> sortedBaseAssignments2 = baseAssignments2.stream()
+                .sorted(AssignmentResolver.RECENCY_COMPARATOR).toList();
+        Challenge challenge = AssignmentResolver.resolve(base, team.getId(), sortedBaseAssignments2);
 
         CheckInResponse.ChallengeInfo challengeInfo = null;
         if (challenge != null) {
@@ -565,24 +544,6 @@ public class PlayerService {
                 .checkedInAt(checkIn.getCheckedInAt())
                 .challenge(challengeInfo)
                 .build();
-    }
-
-    private Challenge resolveAssignedChallenge(Base base, Team team) {
-        List<Assignment> assignments = assignmentRepository.findByBaseId(base.getId());
-        List<Assignment> sortedAssignments = assignments.stream()
-                .sorted(ASSIGNMENT_RECENCY_COMPARATOR)
-                .toList();
-
-        Assignment teamSpecificAssignment = sortedAssignments.stream()
-                .filter(a -> a.getTeam() != null && a.getTeam().getId().equals(team.getId()))
-                .findFirst()
-                .orElse(null);
-        Assignment globalAssignment = sortedAssignments.stream()
-                .filter(a -> a.getTeam() == null)
-                .findFirst()
-                .orElse(null);
-        Assignment assignment = teamSpecificAssignment != null ? teamSpecificAssignment : globalAssignment;
-        return assignment != null ? assignment.getChallenge() : base.getFixedChallenge();
     }
 
     private void ensureGameIsLiveForPlayerActions(Team team) {

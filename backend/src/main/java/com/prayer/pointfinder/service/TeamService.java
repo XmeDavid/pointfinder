@@ -43,7 +43,7 @@ public class TeamService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public TeamResponse createTeam(UUID gameId, CreateTeamRequest request) {
         Game game = gameAccessService.getAccessibleGame(gameId);
 
@@ -62,7 +62,7 @@ public class TeamService {
         return toResponse(team);
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public TeamResponse updateTeam(UUID gameId, UUID teamId, UpdateTeamRequest request) {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         Team team = teamRepository.findById(teamId)
@@ -80,7 +80,7 @@ public class TeamService {
         return toResponse(team);
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public void deleteTeam(UUID gameId, UUID teamId) {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         Team team = teamRepository.findById(teamId)
@@ -110,7 +110,7 @@ public class TeamService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public void removePlayer(UUID gameId, UUID teamId, UUID playerId) {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
 

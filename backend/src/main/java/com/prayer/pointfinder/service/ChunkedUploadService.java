@@ -64,7 +64,7 @@ public class ChunkedUploadService {
     @Value("${app.uploads.limits.max-active-bytes-per-game:17179869184}")
     private long maxActiveBytesPerGame;
 
-    @Transactional
+    @Transactional(timeout = 10)
     public UploadSessionResponse createSession(UUID gameId, Player authPlayer, UploadSessionInitRequest request) {
         if (!chunkedUploadEnabled) {
             throw new BadRequestException("Chunked uploads are temporarily disabled");
@@ -125,7 +125,7 @@ public class ChunkedUploadService {
         return buildResponse(session);
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public UploadSessionResponse uploadChunk(
             UUID gameId,
             UUID sessionId,
@@ -175,7 +175,7 @@ public class ChunkedUploadService {
         return buildResponse(session);
     }
 
-    @Transactional
+    @Transactional(timeout = 60)
     public UploadSessionResponse completeSession(UUID gameId, UUID sessionId, Player authPlayer) {
         UploadSession session = getAuthorizedSession(gameId, sessionId, authPlayer);
         ensureGameIsLive(session.getPlayer());
@@ -210,7 +210,7 @@ public class ChunkedUploadService {
         return buildResponse(session);
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public void cancelSession(UUID gameId, UUID sessionId, Player authPlayer) {
         UploadSession session = getAuthorizedSession(gameId, sessionId, authPlayer);
         if (session.getStatus() == UploadSessionStatus.completed) {
@@ -222,7 +222,7 @@ public class ChunkedUploadService {
         cleanupSessionStorage(sessionId);
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public int expireStaleSessions() {
         List<UploadSession> stale = uploadSessionRepository.findByStatusAndExpiresAtBefore(
                 UploadSessionStatus.active,

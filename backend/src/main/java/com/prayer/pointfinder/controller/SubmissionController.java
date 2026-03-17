@@ -21,7 +21,12 @@ public class SubmissionController {
     private final SubmissionService submissionService;
 
     @GetMapping
-    public ResponseEntity<List<SubmissionResponse>> getSubmissions(@PathVariable UUID gameId) {
+    public ResponseEntity<List<SubmissionResponse>> getSubmissions(
+            @PathVariable UUID gameId,
+            @RequestParam(required = false) UUID teamId) {
+        if (teamId != null) {
+            return ResponseEntity.ok(submissionService.getSubmissionsByTeam(gameId, teamId));
+        }
         return ResponseEntity.ok(submissionService.getSubmissionsByGame(gameId));
     }
 

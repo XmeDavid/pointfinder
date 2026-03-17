@@ -37,7 +37,7 @@ public class AuthService {
     private final JwtTokenProvider tokenProvider;
     private final EmailService emailService;
 
-    @Transactional
+    @Transactional(timeout = 10)
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
@@ -49,7 +49,7 @@ public class AuthService {
         return generateAuthResponse(user);
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public AuthResponse register(String inviteToken, RegisterRequest request) {
         OperatorInvite invite = inviteRepository.findByToken(inviteToken)
                 .orElseThrow(() -> new ResourceNotFoundException("Invalid invite token"));
@@ -83,7 +83,7 @@ public class AuthService {
         return generateAuthResponse(user);
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public AuthResponse refreshToken(String refreshTokenStr) {
         RefreshToken storedToken = refreshTokenRepository.findByToken(refreshTokenStr)
                 .orElseThrow(() -> new BadRequestException("Invalid refresh token"));
@@ -99,12 +99,12 @@ public class AuthService {
         return generateAuthResponse(storedToken.getUser());
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public void logout(String refreshTokenStr) {
         refreshTokenRepository.deleteByToken(refreshTokenStr);
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public void requestPasswordReset(String email, String requestHost) {
         Optional<User> userOpt = userRepository.findByEmail(email);
         if (userOpt.isEmpty()) {
@@ -130,7 +130,7 @@ public class AuthService {
         emailService.sendPasswordResetEmail(user.getEmail(), token, requestHost);
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public void resetPassword(String token, String newPassword) {
         PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
                 .orElseThrow(() -> new BadRequestException("Invalid reset token"));

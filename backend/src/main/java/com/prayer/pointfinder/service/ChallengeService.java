@@ -38,7 +38,7 @@ public class ChallengeService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public ChallengeResponse createChallenge(UUID gameId, CreateChallengeRequest request) {
         Game game = gameAccessService.getAccessibleGame(gameId);
 
@@ -84,7 +84,7 @@ public class ChallengeService {
         return toResponse(challenge);
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public ChallengeResponse updateChallenge(UUID gameId, UUID challengeId, UpdateChallengeRequest request) {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         Challenge challenge = challengeRepository.findById(challengeId)
@@ -130,7 +130,7 @@ public class ChallengeService {
         return toResponse(challenge);
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public void deleteChallenge(UUID gameId, UUID challengeId) {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         Challenge challenge = challengeRepository.findById(challengeId)

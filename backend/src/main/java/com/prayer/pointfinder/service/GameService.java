@@ -97,7 +97,7 @@ public class GameService {
 
     // ── Create / Update / Delete ─────────────────────────────────────
 
-    @Transactional
+    @Transactional(timeout = 10)
     public GameResponse createGame(CreateGameRequest request) {
         User currentUser = SecurityUtils.getCurrentUser();
         UUID userId = currentUser.getId();
@@ -120,7 +120,7 @@ public class GameService {
         return toResponse(game);
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public GameResponse updateGame(UUID id, UpdateGameRequest request) {
         Game game = gameAccessService.getAccessibleGame(id);
 
@@ -150,9 +150,10 @@ public class GameService {
         return toResponse(game);
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public void deleteGame(UUID id) {
         gameAccessService.ensureCurrentUserCanAccessGame(id);
+        eventBroadcaster.broadcastGameStatus(id, "ended");
         gameRepository.deleteById(id);
         try {
             fileStorageService.deleteGameFiles(id);
@@ -163,7 +164,7 @@ public class GameService {
 
     // ── Status transitions ───────────────────────────────────────────
 
-    @Transactional
+    @Transactional(timeout = 10)
     public GameResponse updateStatus(UUID id, String newStatus, boolean resetProgress) {
         Game game = gameAccessService.getAccessibleGame(id);
 
@@ -203,7 +204,7 @@ public class GameService {
 
     // ── Operator management ──────────────────────────────────────────
 
-    @Transactional
+    @Transactional(timeout = 10)
     public void addOperator(UUID gameId, UUID userId) {
         Game game = gameAccessService.getAccessibleGame(gameId);
         User user = userRepository.findById(userId)
@@ -212,7 +213,7 @@ public class GameService {
         gameRepository.save(game);
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public void removeOperator(UUID gameId, UUID userId) {
         Game game = gameAccessService.getAccessibleGame(gameId);
         User currentUser = SecurityUtils.getCurrentUser();
@@ -236,7 +237,7 @@ public class GameService {
         return gameImportExportService.exportGame(gameId);
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public GameResponse importGame(GameImportRequest request) {
         return gameImportExportService.importGame(request);
     }

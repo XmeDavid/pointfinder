@@ -132,13 +132,7 @@ public class MonitoringService {
         List<Submission> submissions = submissionRepository.findByGameIdWithRelations(gameId);
         List<Assignment> assignments = assignmentRepository.findByGameIdWithRelations(gameId);
         List<Assignment> sortedAssignments = assignments.stream()
-                .sorted(
-                        Comparator.comparing(
-                                        Assignment::getCreatedAt,
-                                        Comparator.nullsLast(Comparator.reverseOrder())
-                                )
-                                .thenComparing(a -> a.getId().toString(), Comparator.reverseOrder())
-                )
+                .sorted(AssignmentResolver.RECENCY_COMPARATOR)
                 .toList();
 
         Map<UUID, Map<UUID, CheckIn>> checkInsByTeamBase = checkIns.stream()
@@ -157,35 +151,19 @@ public class MonitoringService {
                         )
                 ));
 
-        Map<UUID, Map<UUID, Assignment>> teamAssignments = new HashMap<>();
-        Map<UUID, Assignment> globalAssignments = new HashMap<>();
-        for (Assignment a : sortedAssignments) {
-            if (a.getTeam() != null) {
-                teamAssignments
-                        .computeIfAbsent(a.getTeam().getId(), k -> new HashMap<>())
-                        .putIfAbsent(a.getBase().getId(), a);
-            } else {
-                globalAssignments.putIfAbsent(a.getBase().getId(), a);
-            }
-        }
-
         List<TeamBaseProgressResponse> result = new ArrayList<>();
 
         for (Team team : teams) {
             UUID teamId = team.getId();
             Map<UUID, CheckIn> teamCheckIns = checkInsByTeamBase.getOrDefault(teamId, Map.of());
             Map<UUID, Submission> teamSubs = submissionsByTeamBase.getOrDefault(teamId, Map.of());
-            Map<UUID, Assignment> teamSpecific = teamAssignments.getOrDefault(teamId, Map.of());
 
             for (Base base : bases) {
                 UUID baseId = base.getId();
                 CheckIn ci = teamCheckIns.get(baseId);
                 Submission sub = teamSubs.get(baseId);
 
-                Assignment assignment = teamSpecific.get(baseId);
-                if (assignment == null) {
-                    assignment = globalAssignments.get(baseId);
-                }
+                Challenge challenge = AssignmentResolver.resolve(base, teamId, sortedAssignments);
 
                 BaseStatus status = BaseStatus.compute(sub, ci);
                 String submissionStatus = sub != null ? sub.getStatus().name() : null;
@@ -195,7 +173,7 @@ public class MonitoringService {
                         .teamId(teamId)
                         .status(status.name())
                         .checkedInAt(ci != null ? ci.getCheckedInAt() : null)
-                        .challengeId(assignment != null ? assignment.getChallenge().getId() : null)
+                        .challengeId(challenge != null ? challenge.getId() : null)
                         .submissionStatus(submissionStatus)
                         .build());
             }

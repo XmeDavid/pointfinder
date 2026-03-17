@@ -9,6 +9,7 @@ import com.prayer.pointfinder.exception.ForbiddenException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.*;
 import com.prayer.pointfinder.security.SecurityUtils;
+import com.prayer.pointfinder.util.LazyInitHelper;
 import com.prayer.pointfinder.websocket.GameEventBroadcaster;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -52,13 +53,19 @@ public class SubmissionService {
     }
 
     @Transactional(readOnly = true)
-    public List<SubmissionResponse> getSubmissionsByTeam(UUID teamId) {
+    public List<SubmissionResponse> getSubmissionsByTeam(UUID gameId, UUID teamId) {
+        gameAccessService.ensureCurrentUserCanAccessGame(gameId);
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new ResourceNotFoundException("Team", teamId));
+        if (!team.getGame().getId().equals(gameId)) {
+            throw new BadRequestException("Team does not belong to this game");
+        }
         return submissionRepository.findByTeamId(teamId).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public SubmissionResponse createSubmission(UUID gameId, CreateSubmissionRequest request) {
         ensureCallerCanCreateSubmission(gameId, request.getTeamId());
 
@@ -161,11 +168,7 @@ public class SubmissionService {
                 .build();
         activityEventRepository.save(event);
 
-        // Initialize lazy relationships before broadcasting (fixes LazyInitializationException)
-        event.getGame().getId();
-        event.getTeam().getId();
-        if (event.getBase() != null) event.getBase().getId();
-        if (event.getChallenge() != null) event.getChallenge().getId();
+        LazyInitHelper.initializeForBroadcast(event);
 
         // Broadcast via WebSocket
         eventBroadcaster.broadcastActivityEvent(gameId, event);
@@ -189,7 +192,7 @@ public class SubmissionService {
         return toResponse(submission);
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public SubmissionResponse reviewSubmission(UUID gameId, UUID submissionId, ReviewSubmissionRequest request) {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         Submission submission = submissionRepository.findById(submissionId)
@@ -259,11 +262,7 @@ public class SubmissionService {
                 .build();
         activityEventRepository.save(event);
 
-        // Initialize lazy relationships before broadcasting (fixes LazyInitializationException)
-        event.getGame().getId();
-        event.getTeam().getId();
-        if (event.getBase() != null) event.getBase().getId();
-        if (event.getChallenge() != null) event.getChallenge().getId();
+        LazyInitHelper.initializeForBroadcast(event);
 
         eventBroadcaster.broadcastActivityEvent(gameId, event);
         eventBroadcaster.broadcastSubmissionStatus(gameId, submission);

@@ -6,6 +6,7 @@ struct SettingsView: View {
     @Environment(AppearanceManager.self) private var appearance
     @State private var showDeleteAccountConfirm = false
     @State private var isDeletingAccount = false
+    @State private var showLeaveGameConfirm = false
 
     var body: some View {
         NavigationStack {
@@ -157,7 +158,7 @@ struct SettingsView: View {
                 // Logout
                 Section {
                     Button(role: .destructive) {
-                        appState.logout()
+                        showLeaveGameConfirm = true
                     } label: {
                         HStack {
                             Spacer()
@@ -168,6 +169,16 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle(locale.t("settings.title"))
+            .alert(locale.t("settings.leaveGameTitle"), isPresented: $showLeaveGameConfirm) {
+                Button(locale.t("settings.leaveGame"), role: .destructive) {
+                    appState.logout()
+                }
+                Button(locale.t("common.cancel"), role: .cancel) {
+                    showLeaveGameConfirm = false
+                }
+            } message: {
+                Text(locale.t("settings.leaveGameMessage"))
+            }
             .alert(locale.t("settings.deleteAccountTitle"), isPresented: $showDeleteAccountConfirm) {
                 Button(locale.t("settings.deleteAccountConfirm"), role: .destructive) {
                     Task {

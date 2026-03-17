@@ -165,6 +165,9 @@
     <string name="disclosure_footer">Du kannst diese Berechtigungen später in den Einstellungen ändern.</string>
     <string name="disclosure_continue">Weiter</string>
 
+    <string name="dialog_leave_game_title">Spiel verlassen?</string>
+    <string name="dialog_leave_game_message">Du wirst vom aktuellen Spiel getrennt. Du kannst mit dem gleichen Code wieder beitreten.</string>
+
     <string name="dialog_delete_account_title">Konto löschen</string>
     <string name="dialog_delete_account_message">Dadurch werden deine Spielerkontodaten für PointFinder dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.</string>
     <string name="dialog_delete_account_confirm">Löschen</string>

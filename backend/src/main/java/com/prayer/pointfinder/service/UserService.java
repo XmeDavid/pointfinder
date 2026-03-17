@@ -33,7 +33,7 @@ public class UserService {
         return toResponse(user);
     }
 
-    @Transactional
+    @Transactional(timeout = 10)
     public void updateCurrentUserPushToken(String pushToken, PushPlatform platform) {
         User currentUser = SecurityUtils.getCurrentUser();
         UUID userId = currentUser.getId();

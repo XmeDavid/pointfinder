@@ -3,6 +3,11 @@ services:
     image: postgres:16
     container_name: pointfinder-db
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
     environment:
       POSTGRES_DB: pointfinder
       POSTGRES_USER: scout
@@ -66,6 +71,11 @@ services:
       # Mount your Firebase service account JSON from the host into the container (read-only)
       - ./secrets/firebase-service-account.json:/app/config/firebase-service-account.json:ro
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
+          cpus: "2.0"
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:8080/actuator/health || exit 1"]
       interval: 10s
@@ -98,6 +108,11 @@ services:
       dockerfile: Dockerfile
     container_name: pointfinder-nginx
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.5"
     ports:
       - "80:80"
       - "443:443"
@@ -142,7 +157,7 @@ services:
     restart: unless-stopped
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD must be set in .env}
       GF_SERVER_ROOT_URL: https://grafana.pointfinder.pt
     expose:
       - "3000"

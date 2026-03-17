@@ -60,6 +60,7 @@ fun PlayerSettingsScreen(
 ) {
     val context = LocalContext.current
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showLeaveDialog by remember { mutableStateOf(false) }
     val completedCount = progress.count { it.status == BaseStatus.COMPLETED }
     val checkedInCount = progress.count { it.status == BaseStatus.CHECKED_IN }
     val pendingReviewCount = progress.count { it.status == BaseStatus.SUBMITTED }
@@ -210,7 +211,7 @@ fun PlayerSettingsScreen(
         // Account actions
         item {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = onLogout, modifier = Modifier.fillMaxWidth()) {
+                TextButton(onClick = { showLeaveDialog = true }, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.action_leave_game))
                 }
                 TextButton(
@@ -233,6 +234,29 @@ fun PlayerSettingsScreen(
         }
 
         item { Spacer(Modifier.height(16.dp)) }
+    }
+
+    if (showLeaveDialog) {
+        AlertDialog(
+            onDismissRequest = { showLeaveDialog = false },
+            title = { Text(stringResource(R.string.dialog_leave_game_title)) },
+            text = { Text(stringResource(R.string.dialog_leave_game_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showLeaveDialog = false
+                        onLogout()
+                    },
+                ) {
+                    Text(stringResource(R.string.action_leave_game))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLeaveDialog = false }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+        )
     }
 
     if (showDeleteDialog) {

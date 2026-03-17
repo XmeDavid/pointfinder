@@ -40,35 +40,30 @@ describe("submissionsApi.listByGame", () => {
 describe("submissionsApi.listByTeam", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("filters submissions to only those matching the team", async () => {
+  it("passes teamId as query param to backend", async () => {
     const subs = [
       makeSubmission({ id: "s1", teamId: "team-a" }),
-      makeSubmission({ id: "s2", teamId: "team-b" }),
       makeSubmission({ id: "s3", teamId: "team-a" }),
     ];
     (apiClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({ data: subs });
 
     const result = await submissionsApi.listByTeam("team-a", "g1");
 
-    expect(apiClient.get).toHaveBeenCalledWith("/games/g1/submissions");
+    expect(apiClient.get).toHaveBeenCalledWith("/games/g1/submissions", {
+      params: { teamId: "team-a" },
+    });
     expect(result).toHaveLength(2);
     expect(result.map((s: Submission) => s.id)).toEqual(["s1", "s3"]);
   });
 
-  it("returns empty array when no submissions match the team", async () => {
-    const subs = [makeSubmission({ teamId: "team-x" })];
-    (apiClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({ data: subs });
+  it("returns empty array when backend returns no submissions", async () => {
+    (apiClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({ data: [] });
 
     const result = await submissionsApi.listByTeam("team-z", "g1");
 
-    expect(result).toEqual([]);
-  });
-
-  it("returns empty array when game has no submissions", async () => {
-    (apiClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({ data: [] });
-
-    const result = await submissionsApi.listByTeam("team-a", "g1");
-
+    expect(apiClient.get).toHaveBeenCalledWith("/games/g1/submissions", {
+      params: { teamId: "team-z" },
+    });
     expect(result).toEqual([]);
   });
 });

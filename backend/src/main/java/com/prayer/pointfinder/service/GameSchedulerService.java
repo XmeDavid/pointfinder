@@ -31,7 +31,7 @@ public class GameSchedulerService {
      * and automatically transitions them to ended.
      */
     @Scheduled(fixedRate = 60000)
-    @Transactional
+    @Transactional(timeout = 10)
     public void autoEndGames() {
         List<Game> expiredGames = gameRepository.findByStatusAndEndDateBefore(
                 GameStatus.live, Instant.now());
@@ -49,7 +49,7 @@ public class GameSchedulerService {
      * Runs every hour to purge expired refresh tokens from the database.
      */
     @Scheduled(fixedRate = 3600000)
-    @Transactional
+    @Transactional(timeout = 10)
     public void purgeExpiredRefreshTokens() {
         int deleted = refreshTokenRepository.deleteExpiredBefore(Instant.now());
         if (deleted > 0) {
@@ -61,7 +61,7 @@ public class GameSchedulerService {
      * Runs every hour to purge expired or used password reset tokens from the database.
      */
     @Scheduled(fixedRate = 3600000)
-    @Transactional
+    @Transactional(timeout = 10)
     public void purgeExpiredPasswordResetTokens() {
         int deleted = passwordResetTokenRepository.deleteExpiredOrUsed(Instant.now());
         if (deleted > 0) {
@@ -73,7 +73,7 @@ public class GameSchedulerService {
      * Runs every 15 minutes to expire stale chunk upload sessions and clean temporary chunk files.
      */
     @Scheduled(fixedRate = 900000)
-    @Transactional
+    @Transactional(timeout = 10)
     public void expireStaleChunkUploadSessions() {
         int expired = chunkedUploadService.expireStaleSessions();
         if (expired > 0) {
