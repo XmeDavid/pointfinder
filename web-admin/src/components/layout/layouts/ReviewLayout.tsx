@@ -109,8 +109,8 @@ export function ReviewLayout({ gameId, gameStatus }: ReviewLayoutProps) {
   }, [challenges]);
 
   const reviewMutation = useMutation({
-    mutationFn: ({ id, status, points }: { id: string; status: SubmissionStatus; points?: number }) =>
-      submissionsApi.review(id, status, user!.id, feedback || undefined, gameId, points),
+    mutationFn: ({ id, status, points, feedback: fb }: { id: string; status: SubmissionStatus; points?: number; feedback?: string }) =>
+      submissionsApi.review(id, status, user!.id, fb, gameId, points),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["submissions", gameId] });
       // Auto-advance to next
@@ -133,9 +133,9 @@ export function ReviewLayout({ gameId, gameStatus }: ReviewLayoutProps) {
     const handler = (e: KeyboardEvent) => {
       if (!selected || e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       if (e.key === "a" || e.key === "A") {
-        reviewMutation.mutate({ id: selected.id, status: "approved", points: reviewPoints });
+        reviewMutation.mutate({ id: selected.id, status: "approved", points: reviewPoints, feedback: feedback || undefined });
       } else if (e.key === "r" || e.key === "R") {
-        reviewMutation.mutate({ id: selected.id, status: "rejected" });
+        reviewMutation.mutate({ id: selected.id, status: "rejected", feedback: feedback || undefined });
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
         const idx = filtered.findIndex((s) => s.id === selected.id);

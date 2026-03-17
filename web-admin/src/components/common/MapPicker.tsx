@@ -41,9 +41,10 @@ export function MapPicker({ value, onChange, className, tileSource }: MapPickerP
   }, []);
 
   useEffect(() => {
+    const map = mapRef.current;
     return () => {
       cancelAnimationFrame(rafRef.current);
-      mapRef.current?.getMap().remove();
+      map?.getMap().remove();
     };
   }, []);
 

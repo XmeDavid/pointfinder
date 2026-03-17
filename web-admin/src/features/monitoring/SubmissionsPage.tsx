@@ -121,7 +121,7 @@ export function SubmissionsPage() {
   }, []);
 
   const reviewMutation = useMutation({
-    mutationFn: ({ id, status, points }: { id: string; status: SubmissionStatus; points?: number }) => submissionsApi.review(id, status, user!.id, feedback || undefined, gameId, points),
+    mutationFn: ({ id, status, points, feedback: fb }: { id: string; status: SubmissionStatus; points?: number; feedback?: string }) => submissionsApi.review(id, status, user!.id, fb, gameId, points),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["submissions", gameId] }); setReviewingSub(null); setFeedback(""); setReviewPoints(0); toast.success(t("common.saved")); },
     onError: (error: unknown) => { toast.error(getApiErrorMessage(error)); },
   });
@@ -284,8 +284,8 @@ export function SubmissionsPage() {
               <div className="space-y-2"><p className="text-sm font-medium">{t("submissions.feedbackLabel")}</p><Textarea value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder={t("submissions.feedbackPlaceholder")} rows={2} /></div>
             </div>
             <DialogFooter>
-              <Button variant="destructive" onClick={() => reviewMutation.mutate({ id: reviewingSub.id, status: "rejected" })} loading={reviewMutation.isPending} data-testid="submission-reject-btn"><XCircle className="mr-1 h-4 w-4" /> {t("submissions.reject")}</Button>
-              <Button onClick={() => reviewMutation.mutate({ id: reviewingSub.id, status: "approved", points: reviewPoints })} loading={reviewMutation.isPending} data-testid="submission-approve-btn"><CheckCircle className="mr-1 h-4 w-4" /> {t("submissions.approve")}</Button>
+              <Button variant="destructive" onClick={() => reviewMutation.mutate({ id: reviewingSub.id, status: "rejected", feedback: feedback || undefined })} loading={reviewMutation.isPending} data-testid="submission-reject-btn"><XCircle className="mr-1 h-4 w-4" /> {t("submissions.reject")}</Button>
+              <Button onClick={() => reviewMutation.mutate({ id: reviewingSub.id, status: "approved", points: reviewPoints, feedback: feedback || undefined })} loading={reviewMutation.isPending} data-testid="submission-approve-btn"><CheckCircle className="mr-1 h-4 w-4" /> {t("submissions.approve")}</Button>
             </DialogFooter>
           </DialogContent>
         )}
