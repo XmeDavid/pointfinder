@@ -3,7 +3,9 @@ package com.prayer.pointfinder.service;
 import com.prayer.pointfinder.entity.Game;
 import com.prayer.pointfinder.entity.GameStatus;
 import com.prayer.pointfinder.repository.GameRepository;
+import com.prayer.pointfinder.repository.PasswordResetTokenRepository;
 import com.prayer.pointfinder.repository.RefreshTokenRepository;
+import com.prayer.pointfinder.websocket.GameEventBroadcaster;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -20,7 +22,9 @@ public class GameSchedulerService {
 
     private final GameRepository gameRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final ChunkedUploadService chunkedUploadService;
+    private final GameEventBroadcaster eventBroadcaster;
 
     /**
      * Runs every 60 seconds to check for live games that have passed their end date
@@ -37,6 +41,7 @@ public class GameSchedulerService {
                     game.getName(), game.getId(), game.getEndDate());
             game.setStatus(GameStatus.ended);
             gameRepository.save(game);
+            eventBroadcaster.broadcastGameStatus(game.getId(), GameStatus.ended.name());
         }
     }
 
@@ -49,6 +54,18 @@ public class GameSchedulerService {
         int deleted = refreshTokenRepository.deleteExpiredBefore(Instant.now());
         if (deleted > 0) {
             log.info("Purged {} expired refresh tokens", deleted);
+        }
+    }
+
+    /**
+     * Runs every hour to purge expired or used password reset tokens from the database.
+     */
+    @Scheduled(fixedRate = 3600000)
+    @Transactional
+    public void purgeExpiredPasswordResetTokens() {
+        int deleted = passwordResetTokenRepository.deleteExpiredOrUsed(Instant.now());
+        if (deleted > 0) {
+            log.info("Purged {} expired/used password reset tokens", deleted);
         }
     }
 

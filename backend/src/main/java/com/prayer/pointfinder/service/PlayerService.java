@@ -46,6 +46,7 @@ public class PlayerService {
     private final GameAccessService gameAccessService;
     private final OperatorPushNotificationService operatorPushNotificationService;
     private final TemplateVariableService templateVariableService;
+    private final GameNotificationRepository gameNotificationRepository;
 
     @Transactional
     public PlayerAuthResponse joinTeam(PlayerJoinRequest request) {
@@ -498,6 +499,44 @@ public class PlayerService {
                 .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
         player.setLastNotificationsSeenAt(Instant.now());
         playerRepository.save(player);
+    }
+
+    @Transactional(readOnly = true)
+    public List<NotificationResponse> getNotifications(Player player) {
+        UUID playerId = player.getId();
+        player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
+        UUID gameId = player.getTeam().getGame().getId();
+        UUID teamId = player.getTeam().getId();
+        return gameNotificationRepository.findByGameIdForTeam(gameId, teamId)
+                .stream()
+                .map(this::toNotificationResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public UnseenCountResponse getUnseenNotificationCount(Player player) {
+        UUID playerId = player.getId();
+        player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
+        UUID gameId = player.getTeam().getGame().getId();
+        UUID teamId = player.getTeam().getId();
+        Instant since = player.getLastNotificationsSeenAt() != null
+                ? player.getLastNotificationsSeenAt()
+                : Instant.EPOCH;
+        long count = gameNotificationRepository.countUnseenForTeam(gameId, teamId, since);
+        return new UnseenCountResponse(count);
+    }
+
+    private NotificationResponse toNotificationResponse(GameNotification n) {
+        return NotificationResponse.builder()
+                .id(n.getId())
+                .gameId(n.getGame().getId())
+                .message(n.getMessage())
+                .targetTeamId(n.getTargetTeam() != null ? n.getTargetTeam().getId() : null)
+                .sentAt(n.getSentAt())
+                .sentBy(n.getSentBy().getId())
+                .build();
     }
 
     private CheckInResponse buildCheckInResponse(CheckIn checkIn, Base base, Team team, UUID gameId) {
