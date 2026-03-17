@@ -2,6 +2,7 @@ services:
   postgres:
     image: postgres:16
     container_name: pointfinder-db
+    restart: unless-stopped
     environment:
       POSTGRES_DB: pointfinder
       POSTGRES_USER: scout
@@ -64,6 +65,13 @@ services:
       - ./secrets/AuthKey_${APPLE_PROD_APNS_KEY}.p8:/app/config/apns-key.p8:ro
       # Mount your Firebase service account JSON from the host into the container (read-only)
       - ./secrets/firebase-service-account.json:/app/config/firebase-service-account.json:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "cat < /dev/tcp/localhost/8080 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     depends_on:
       postgres:
         condition: service_healthy
@@ -89,6 +97,7 @@ services:
       context: ./nginx
       dockerfile: Dockerfile
     container_name: pointfinder-nginx
+    restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
@@ -99,7 +108,7 @@ services:
       - frontend_dist:/usr/share/nginx/html/app:ro
     depends_on:
       backend:
-        condition: service_started
+        condition: service_healthy
       frontend:
         condition: service_healthy
       grafana:
@@ -117,6 +126,7 @@ services:
   prometheus:
     image: prom/prometheus:latest
     container_name: pointfinder-prometheus
+    restart: unless-stopped
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
@@ -129,6 +139,7 @@ services:
   grafana:
     image: grafana/grafana:latest
     container_name: pointfinder-grafana
+    restart: unless-stopped
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}

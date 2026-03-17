@@ -67,7 +67,7 @@ public class GameService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
 
         List<Game> games;
-        if (currentUser.getRole().name().equals("admin")) {
+        if (currentUser.getRole() == UserRole.admin) {
             games = gameRepository.findAll();
         } else {
             games = gameRepository.findByOperatorOrCreator(currentUser.getId());
