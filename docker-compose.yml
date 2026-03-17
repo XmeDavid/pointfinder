@@ -67,11 +67,11 @@ services:
       - ./secrets/firebase-service-account.json:/app/config/firebase-service-account.json:ro
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "cat < /dev/tcp/localhost/8080 || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 60s
     depends_on:
       postgres:
         condition: service_healthy
