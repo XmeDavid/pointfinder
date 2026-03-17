@@ -106,6 +106,10 @@
     <string name="label_presence_required">Präsenzprüfung erforderlich.</string>
     <string name="label_presence_verified">Präsenz bestätigt</string>
     <string name="label_photo_mode">Medien-Antwortmodus</string>
+    <string name="label_media_selected">%1$d von 5 ausgewählt</string>
+    <string name="game_status_setup">Einrichtung</string>
+    <string name="game_status_live">Live</string>
+    <string name="game_status_ended">Beendet</string>
     <string name="label_submission_status">Abgabestatus: %1$s</string>
     <string name="label_teams_count">Teams: %1$d</string>
     <string name="label_team_status_row">Team %1$s - %2$s</string>
@@ -209,6 +213,8 @@
     <string name="error_invalid_join_code">Bitte gib einen gültigen Beitrittscode ein.</string>
     <string name="error_answer_required">Bitte gib eine Antwort ein.</string>
     <string name="error_photo_required">Mindestens eine Mediendatei ist erforderlich.</string>
+    <string name="error_max_media">Maximal 5 Mediendateien erlaubt.</string>
+    <string name="notification_new_message">Neue Nachricht</string>
     <string name="error_nfc_write_failed">NFC-Schreiben fehlgeschlagen.</string>
     <string name="error_nfc_link_failed">NFC geschrieben, aber Verknüpfung fehlgeschlagen: %1$s</string>
     <string name="error_network_unavailable">Netzwerk nicht verfügbar. Überprüfe deine Verbindung.</string>

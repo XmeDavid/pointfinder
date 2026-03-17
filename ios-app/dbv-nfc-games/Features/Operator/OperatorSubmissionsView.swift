@@ -224,7 +224,7 @@ struct OperatorSubmissionsView: View {
         case "correct":
             return locale.t("submissions.statusCorrect")
         default:
-            return status.capitalized
+            return locale.t("submissions.status.\(status)")
         }
     }
 

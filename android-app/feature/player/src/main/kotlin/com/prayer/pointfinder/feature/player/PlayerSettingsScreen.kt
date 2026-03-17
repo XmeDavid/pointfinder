@@ -127,7 +127,12 @@ fun PlayerSettingsScreen(
         item {
             SettingsSection(title = stringResource(R.string.label_current_game)) {
                 SettingValueRow(label = stringResource(R.string.label_game), value = gameName ?: "-")
-                SettingValueRow(label = stringResource(R.string.label_status), value = gameStatus?.name?.lowercase()?.replaceFirstChar { it.uppercase() } ?: "-")
+                SettingValueRow(label = stringResource(R.string.label_status), value = when (gameStatus) {
+                    GameStatus.SETUP -> stringResource(R.string.game_status_setup)
+                    GameStatus.LIVE -> stringResource(R.string.game_status_live)
+                    GameStatus.ENDED -> stringResource(R.string.game_status_ended)
+                    null -> "-"
+                })
             }
         }
 

@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import i18n from "@/i18n";
 
 interface Props {
   children: ReactNode;
@@ -24,7 +25,7 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return this.props.fallback ?? (
         <div className="flex h-[200px] items-center justify-center rounded-md border border-destructive/30 bg-destructive/10 text-sm text-destructive">
-          Something went wrong. Please refresh the page.
+          {i18n.t("errors.boundaryInline")}
         </div>
       );
     }
@@ -39,13 +40,13 @@ export class ErrorBoundary extends Component<Props, State> {
 export function AppErrorFallback() {
   return (
     <div className="flex h-screen flex-col items-center justify-center gap-4 bg-background text-foreground">
-      <h1 className="text-2xl font-semibold">Something went wrong</h1>
-      <p className="text-muted-foreground">An unexpected error occurred. Please reload the page.</p>
+      <h1 className="text-2xl font-semibold">{i18n.t("errors.somethingWentWrong")}</h1>
+      <p className="text-muted-foreground">{i18n.t("errors.unexpectedError")}</p>
       <button
         onClick={() => window.location.reload()}
         className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
       >
-        Reload
+        {i18n.t("errors.reload")}
       </button>
     </div>
   );

@@ -22,7 +22,7 @@ services:
     expose:
       - "8080"
     environment:
-      JAVA_OPTS: "-Xms256m -Xmx1200m"
+      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx1200m"
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/pointfinder?stringtype=unspecified
       SPRING_DATASOURCE_USERNAME: scout
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}

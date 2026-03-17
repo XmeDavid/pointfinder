@@ -267,7 +267,7 @@ fun SolveScreen(
                 }
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    "${mediaItems.size} of 5",
+                    stringResource(R.string.label_media_selected, mediaItems.size),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

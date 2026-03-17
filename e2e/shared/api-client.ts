@@ -252,8 +252,13 @@ export async function submitAnswerWithFile(
 ) {
   const fileBytes = fs.readFileSync(body.filePath);
   const fileName = body.filePath.split('/').pop() ?? 'upload';
+  const ext = fileName.split('.').pop()?.toLowerCase();
+  const mimeTypes: Record<string, string> = {
+    jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp',
+    heic: 'image/heic', mp4: 'video/mp4', mov: 'video/quicktime',
+  };
   const formData = new FormData();
-  formData.append('file', new Blob([fileBytes]), fileName);
+  formData.append('file', new Blob([fileBytes], { type: mimeTypes[ext ?? ''] ?? 'application/octet-stream' }), fileName);
   formData.append('baseId', body.baseId);
   formData.append('challengeId', body.challengeId);
   if (body.answer !== undefined) formData.append('answer', body.answer);

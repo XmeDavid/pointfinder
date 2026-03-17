@@ -11,6 +11,7 @@ import com.prayer.pointfinder.repository.*;
 import com.prayer.pointfinder.security.JwtTokenProvider;
 import com.prayer.pointfinder.websocket.GameEventBroadcaster;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -137,7 +138,14 @@ public class PlayerService {
                 .player(player)
                 .checkedInAt(Instant.now())
                 .build();
-        checkIn = checkInRepository.save(checkIn);
+        try {
+            checkIn = checkInRepository.save(checkIn);
+        } catch (DataIntegrityViolationException ex) {
+            // Concurrent check-in won the race — return the existing one
+            CheckIn existing2 = checkInRepository.findByTeamIdAndBaseId(team.getId(), baseId)
+                    .orElseThrow(() -> new BadRequestException("Check-in failed"));
+            return buildCheckInResponse(existing2, base, team, gameId);
+        }
 
         // Create activity event
         ActivityEvent event = ActivityEvent.builder()
@@ -481,6 +489,15 @@ public class PlayerService {
         locationData.put("lng", lng);
         locationData.put("updatedAt", Instant.now().toString());
         eventBroadcaster.broadcastLocationUpdate(gameId, locationData);
+    }
+
+    @Transactional
+    public void markNotificationsSeen(Player player) {
+        UUID playerId = player.getId();
+        player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
+        player.setLastNotificationsSeenAt(Instant.now());
+        playerRepository.save(player);
     }
 
     private CheckInResponse buildCheckInResponse(CheckIn checkIn, Base base, Team team, UUID gameId) {

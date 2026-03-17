@@ -72,6 +72,10 @@
     <string name="label_presence_required">Präsenzprüfung erforderlich.</string>
     <string name="label_presence_verified">Präsenz bestätigt</string>
     <string name="label_photo_mode">Medien-Antwortmodus</string>
+    <string name="label_media_selected">%1$d von 5 ausgewählt</string>
+    <string name="game_status_setup">Einrichtung</string>
+    <string name="game_status_live">Live</string>
+    <string name="game_status_ended">Beendet</string>
     <string name="label_submission_status">Abgabestatus: %1$s</string>
     <string name="label_teams_count">Teams: %1$d</string>
     <string name="label_team_status_row">Team %1$s - %2$s</string>

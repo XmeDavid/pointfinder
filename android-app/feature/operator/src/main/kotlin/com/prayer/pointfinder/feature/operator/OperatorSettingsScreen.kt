@@ -117,7 +117,12 @@ fun OperatorSettingsScreen(
                 ) {
                     Text(stringResource(R.string.label_status))
                     Text(
-                        gameStatus?.name?.lowercase()?.replaceFirstChar { it.uppercase() } ?: "-",
+                        when (gameStatus) {
+                            GameStatus.SETUP -> stringResource(R.string.game_status_setup)
+                            GameStatus.LIVE -> stringResource(R.string.game_status_live)
+                            GameStatus.ENDED -> stringResource(R.string.game_status_ended)
+                            null -> "-"
+                        },
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }

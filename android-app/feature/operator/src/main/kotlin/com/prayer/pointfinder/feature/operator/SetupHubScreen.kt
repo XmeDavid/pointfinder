@@ -84,7 +84,11 @@ fun SetupHubScreen(
             GameStatus.ENDED -> Color(0xFFD32F2F)
         }
         Text(
-            text = "${stringResource(R.string.label_status)}: ${game.status.name.uppercase()}",
+            text = "${stringResource(R.string.label_status)}: ${when (game.status) {
+                GameStatus.SETUP -> stringResource(R.string.game_status_setup)
+                GameStatus.LIVE -> stringResource(R.string.game_status_live)
+                GameStatus.ENDED -> stringResource(R.string.game_status_ended)
+            }.uppercase()}",
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Medium,
             color = statusColor,

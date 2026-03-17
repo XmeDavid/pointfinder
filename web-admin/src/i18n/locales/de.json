@@ -642,23 +642,29 @@
   },
   "errors": {
     "invalidUrl": "Ungültige URL",
-    "audioTooLarge": "Audiodatei muss kleiner als 5 MB sein"
+    "audioTooLarge": "Audiodatei muss kleiner als 5 MB sein",
+    "unexpected": "Unerwarteter Fehler",
+    "somethingWentWrong": "Etwas ist schiefgelaufen",
+    "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten. Bitte lade die Seite neu.",
+    "reload": "Neu laden",
+    "boundaryInline": "Etwas ist schiefgelaufen. Bitte aktualisiere die Seite.",
+    "liveUpdatesRetrying": "Live-Updates vorübergehend nicht verfügbar. Erneuter Versuch\u2026"
   },
   "editor": {
     "bold": "Fett",
     "italic": "Kursiv",
-    "heading1": "Uberschrift 1",
-    "heading2": "Uberschrift 2",
-    "heading3": "Uberschrift 3",
-    "bulletList": "Aufzahlung",
+    "heading1": "Überschrift 1",
+    "heading2": "Überschrift 2",
+    "heading3": "Überschrift 3",
+    "bulletList": "Aufzählung",
     "orderedList": "Nummerierte Liste",
     "blockquote": "Zitat",
     "codeBlock": "Codeblock",
     "uploadImage": "Bild hochladen",
     "uploadAudio": "Audio hochladen",
     "imageFromUrl": "Bild von URL",
-    "insertVariable": "Variable einfugen",
-    "undo": "Ruckgangig",
+    "insertVariable": "Variable einfügen",
+    "undo": "Rückgängig",
     "redo": "Wiederholen"
   }
 }

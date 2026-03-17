@@ -44,7 +44,7 @@ struct SettingsView: View {
                         HStack {
                             Text(locale.t("settings.status"))
                             Spacer()
-                            Text(game.status.capitalized)
+                            Text(locale.t("game.status.\(game.status)"))
                                 .foregroundStyle(.secondary)
                         }
                     }

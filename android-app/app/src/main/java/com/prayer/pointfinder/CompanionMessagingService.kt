@@ -49,15 +49,15 @@ class CompanionMessagingService : FirebaseMessagingService() {
             manager.createNotificationChannel(
                 NotificationChannel(
                     channelId,
-                    "PointFinder",
+                    getString(R.string.app_name),
                     NotificationManager.IMPORTANCE_DEFAULT,
                 ),
             )
         }
         val notification = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle(remoteMessage.notification?.title ?: "PointFinder")
-            .setContentText(remoteMessage.notification?.body ?: "New message")
+            .setContentTitle(remoteMessage.notification?.title ?: getString(R.string.app_name))
+            .setContentText(remoteMessage.notification?.body ?: getString(R.string.notification_new_message))
             .setAutoCancel(true)
             .build()
         manager.notify(System.currentTimeMillis().toInt(), notification)

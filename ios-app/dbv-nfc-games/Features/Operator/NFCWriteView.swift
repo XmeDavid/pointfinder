@@ -368,7 +368,7 @@ struct ChallengeCardView: View {
 
                 Spacer()
 
-                Label("\(challenge.points) pts", systemImage: "star.fill")
+                Label("\(challenge.points) \(locale.t("common.pts"))", systemImage: "star.fill")
                     .font(.caption)
                     .foregroundStyle(.orange)
             }
@@ -383,7 +383,7 @@ struct ChallengeCardView: View {
             HStack(spacing: 12) {
                 HStack(spacing: 4) {
                     Image(systemName: "doc.text")
-                    Text(challenge.answerType.capitalized)
+                    Text(locale.t("operator.answerTypeValue.\(challenge.answerType)"))
                 }
                 .font(.caption2)
                 .foregroundStyle(.secondary)

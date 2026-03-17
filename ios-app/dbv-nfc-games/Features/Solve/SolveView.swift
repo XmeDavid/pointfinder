@@ -247,7 +247,7 @@ struct SolveView: View {
                     .padding(.vertical, 4)
                 }
 
-                Text("\(selectedMedia.count) of 5 selected")
+                Text(locale.t("solve.mediaSelected", "\(selectedMedia.count)"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

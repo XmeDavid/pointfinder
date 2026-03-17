@@ -390,7 +390,7 @@ class PlayerViewModel @Inject constructor(
         }
         if (mediaItemDataList.size > 5) {
             _state.value = _state.value.copy(
-                solveError = "Maximum 5 media items allowed.",
+                solveError = context.getString(StringR.string.error_max_media),
             )
             return
         }

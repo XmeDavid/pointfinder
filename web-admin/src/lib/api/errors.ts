@@ -1,3 +1,5 @@
+import i18n from "@/i18n";
+
 type ApiErrorPayload = {
   message?: unknown;
   errors?: Record<string, unknown>;
@@ -17,7 +19,7 @@ export function getApiErrorMessage(error: unknown, fallback?: string): string {
       return message;
     }
   }
-  return fallback ?? "Unexpected error";
+  return fallback ?? i18n.t("errors.unexpected");
 }
 
 export function getApiValidationErrors(error: unknown): Record<string, string> {

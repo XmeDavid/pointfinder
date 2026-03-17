@@ -69,6 +69,12 @@ enum Translations {
         "offline.checkInSync": "You're offline. Check-in will sync when connected.",
 
         "offline.submissionSync": "You're offline. Submission will sync when connected.",
+        "sync.failedAfterRetries": "Failed after %@ retries",
+        "sync.networkRetry": "Network error, will retry",
+        "sync.mediaUnavailable": "Media source unavailable. Please reselect.",
+        "sync.errorNoAuth": "No authentication token available",
+        "sync.errorNoClient": "API client is not configured",
+        "sync.errorInvalidAction": "Invalid action data",
 
         // Map legend
         "map.defaultTitle": "Map",
@@ -132,6 +138,7 @@ enum Translations {
         "solve.camera": "Camera",
         "solve.notesOptional": "Notes (optional)",
         "solve.addNote": "Add a note about the submission...",
+        "solve.mediaSelected": "%@ of 5 selected",
 
         // Submission result
         "result.correct": "Correct!",
@@ -250,6 +257,17 @@ enum Translations {
         "operator.inviteEmail": "Email Address",
         "operator.noOperators": "No operators",
         "operator.noInvites": "No pending invites",
+        "operator.role.admin": "Admin",
+        "operator.role.operator": "Operator",
+        "operator.invite.pending": "Pending",
+        "operator.invite.accepted": "Accepted",
+        "operator.invite.expired": "Expired",
+        "operator.answerTypeValue.text": "Text",
+        "operator.answerTypeValue.file": "File",
+        "operator.answerTypeValue.none": "None",
+        "game.status.setup": "Setup",
+        "game.status.live": "Live",
+        "game.status.ended": "Ended",
         "operator.exportGame": "Export Game",
         "operator.exporting": "Exporting...",
         "operator.exportError": "Export failed",
@@ -462,6 +480,12 @@ enum Translations {
         "offline.checkInSync": "Estás offline. O check-in será sincronizado quando ligares.",
 
         "offline.submissionSync": "Estás offline. A submissão será sincronizada quando ligares.",
+        "sync.failedAfterRetries": "Falhou após %@ tentativas",
+        "sync.networkRetry": "Erro de rede, vai tentar novamente",
+        "sync.mediaUnavailable": "Fonte de média indisponível. Por favor, seleciona novamente.",
+        "sync.errorNoAuth": "Token de autenticação indisponível",
+        "sync.errorNoClient": "Cliente API não configurado",
+        "sync.errorInvalidAction": "Dados de ação inválidos",
 
         // Map legend
         "map.defaultTitle": "Mapa",
@@ -525,6 +549,7 @@ enum Translations {
         "solve.camera": "Câmara",
         "solve.notesOptional": "Notas (opcional)",
         "solve.addNote": "Adiciona uma nota sobre a submissão...",
+        "solve.mediaSelected": "%@ de 5 selecionados",
 
         // Submission result
         "result.correct": "Correto!",
@@ -643,6 +668,17 @@ enum Translations {
         "operator.inviteEmail": "Endere\u{00E7}o de Email",
         "operator.noOperators": "Sem operadores",
         "operator.noInvites": "Sem convites pendentes",
+        "operator.role.admin": "Admin",
+        "operator.role.operator": "Operador",
+        "operator.invite.pending": "Pendente",
+        "operator.invite.accepted": "Aceite",
+        "operator.invite.expired": "Expirado",
+        "operator.answerTypeValue.text": "Texto",
+        "operator.answerTypeValue.file": "Ficheiro",
+        "operator.answerTypeValue.none": "Nenhum",
+        "game.status.setup": "Preparação",
+        "game.status.live": "Em Jogo",
+        "game.status.ended": "Terminado",
         "operator.exportGame": "Exportar Jogo",
         "operator.exporting": "A exportar...",
         "operator.exportError": "Falha na exporta\u{00E7}\u{00E3}o",
@@ -889,6 +925,12 @@ enum Translations {
         "offline.checkInSync": "Du bist offline. Der Check-in wird synchronisiert, sobald du wieder verbunden bist.",
 
         "offline.submissionSync": "Du bist offline. Die Einreichung wird synchronisiert, sobald du wieder verbunden bist.",
+        "sync.failedAfterRetries": "Fehlgeschlagen nach %@ Versuchen",
+        "sync.networkRetry": "Netzwerkfehler, wird erneut versucht",
+        "sync.mediaUnavailable": "Medienquelle nicht verfügbar. Bitte erneut auswählen.",
+        "sync.errorNoAuth": "Kein Authentifizierungstoken verfügbar",
+        "sync.errorNoClient": "API-Client nicht konfiguriert",
+        "sync.errorInvalidAction": "Ungültige Aktionsdaten",
 
         // Map legend
         "map.defaultTitle": "Karte",
@@ -952,6 +994,7 @@ enum Translations {
         "solve.camera": "Kamera",
         "solve.notesOptional": "Notizen (optional)",
         "solve.addNote": "Notiz zur Einreichung hinzufügen...",
+        "solve.mediaSelected": "%@ von 5 ausgewählt",
 
         // Submission result
         "result.correct": "Richtig!",
@@ -1070,6 +1113,17 @@ enum Translations {
         "operator.inviteEmail": "E-Mail-Adresse",
         "operator.noOperators": "Keine Operatoren",
         "operator.noInvites": "Keine ausstehenden Einladungen",
+        "operator.role.admin": "Admin",
+        "operator.role.operator": "Operator",
+        "operator.invite.pending": "Ausstehend",
+        "operator.invite.accepted": "Angenommen",
+        "operator.invite.expired": "Abgelaufen",
+        "operator.answerTypeValue.text": "Text",
+        "operator.answerTypeValue.file": "Datei",
+        "operator.answerTypeValue.none": "Keine",
+        "game.status.setup": "Einrichtung",
+        "game.status.live": "Live",
+        "game.status.ended": "Beendet",
         "operator.exportGame": "Spiel Exportieren",
         "operator.exporting": "Exportieren...",
         "operator.exportError": "Export fehlgeschlagen",

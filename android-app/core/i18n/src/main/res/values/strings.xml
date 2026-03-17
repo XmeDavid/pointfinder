@@ -106,6 +106,10 @@
     <string name="label_presence_required">Presence verification required.</string>
     <string name="label_presence_verified">Presence verified</string>
     <string name="label_photo_mode">Media answer mode</string>
+    <string name="label_media_selected">%1$d of 5 selected</string>
+    <string name="game_status_setup">Setup</string>
+    <string name="game_status_live">Live</string>
+    <string name="game_status_ended">Ended</string>
     <string name="label_submission_status">Submission status: %1$s</string>
     <string name="label_teams_count">Teams: %1$d</string>
     <string name="label_team_status_row">Team %1$s - %2$s</string>
@@ -209,6 +213,8 @@
     <string name="error_invalid_join_code">Please enter a valid join code.</string>
     <string name="error_answer_required">Please provide an answer.</string>
     <string name="error_photo_required">At least one media file is required.</string>
+    <string name="error_max_media">Maximum 5 media items allowed.</string>
+    <string name="notification_new_message">New message</string>
     <string name="error_nfc_write_failed">NFC write failed.</string>
     <string name="error_nfc_link_failed">NFC written but link failed: %1$s</string>
     <string name="error_network_unavailable">Network unavailable. Please check your connection.</string>

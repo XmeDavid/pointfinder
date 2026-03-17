@@ -49,7 +49,7 @@ struct OperatorHomeView: View {
 
                                 Spacer()
 
-                                Text(game.status.capitalized)
+                                Text(locale.t("game.status.\(game.status)"))
                                     .font(.caption)
                                     .fontWeight(.medium)
                                     .padding(.horizontal, 8)

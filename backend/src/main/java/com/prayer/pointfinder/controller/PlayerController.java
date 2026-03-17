@@ -9,7 +9,6 @@ import com.prayer.pointfinder.dto.response.*;
 import com.prayer.pointfinder.entity.GameNotification;
 import com.prayer.pointfinder.entity.Player;
 import com.prayer.pointfinder.repository.GameNotificationRepository;
-import com.prayer.pointfinder.repository.PlayerRepository;
 import com.prayer.pointfinder.security.SecurityUtils;
 import com.prayer.pointfinder.service.ChunkedUploadService;
 import com.prayer.pointfinder.service.FileStorageService;
@@ -35,7 +34,6 @@ public class PlayerController {
     private final ChunkedUploadService chunkedUploadService;
     private final FileStorageService fileStorageService;
     private final GameNotificationRepository gameNotificationRepository;
-    private final PlayerRepository playerRepository;
 
     // Public endpoint - no auth required
     @PostMapping("/api/auth/player/join")
@@ -210,8 +208,7 @@ public class PlayerController {
     @PostMapping("/api/player/notifications/mark-seen")
     public ResponseEntity<Void> markNotificationsSeen() {
         Player player = SecurityUtils.getCurrentPlayer();
-        player.setLastNotificationsSeenAt(Instant.now());
-        playerRepository.save(player);
+        playerService.markNotificationsSeen(player);
         return ResponseEntity.ok().build();
     }
 

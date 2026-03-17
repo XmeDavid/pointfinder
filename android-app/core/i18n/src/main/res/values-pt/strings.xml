@@ -106,6 +106,10 @@
     <string name="label_presence_required">Verificação de presença obrigatória.</string>
     <string name="label_presence_verified">Presença verificada</string>
     <string name="label_photo_mode">Modo de resposta por média</string>
+    <string name="label_media_selected">%1$d de 5 selecionados</string>
+    <string name="game_status_setup">Preparação</string>
+    <string name="game_status_live">Em Jogo</string>
+    <string name="game_status_ended">Terminado</string>
     <string name="label_submission_status">Status da submissão: %1$s</string>
     <string name="label_teams_count">Equipes: %1$d</string>
     <string name="label_team_status_row">Equipe %1$s - %2$s</string>
@@ -209,6 +213,8 @@
     <string name="error_invalid_join_code">Introduza um código de entrada válido.</string>
     <string name="error_answer_required">Forneça uma resposta.</string>
     <string name="error_photo_required">Pelo menos um ficheiro de média é obrigatório.</string>
+    <string name="error_max_media">Máximo de 5 ficheiros de média permitidos.</string>
+    <string name="notification_new_message">Nova mensagem</string>
     <string name="error_nfc_write_failed">Falha ao gravar NFC.</string>
     <string name="error_nfc_link_failed">NFC gravado mas associação falhou: %1$s</string>
     <string name="error_network_unavailable">Rede indisponível. Verifique sua conexão.</string>

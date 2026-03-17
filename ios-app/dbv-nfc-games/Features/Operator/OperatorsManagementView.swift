@@ -44,7 +44,7 @@ struct OperatorsManagementView: View {
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
-                            Text(op.role.capitalized)
+                            Text(locale.t("operator.role.\(op.role)"))
                                 .font(.caption)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
@@ -86,7 +86,7 @@ struct OperatorsManagementView: View {
                                 }
                             }
                             Spacer()
-                            Text(invite.status.capitalized)
+                            Text(locale.t("operator.invite.\(invite.status)"))
                                 .font(.caption)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)

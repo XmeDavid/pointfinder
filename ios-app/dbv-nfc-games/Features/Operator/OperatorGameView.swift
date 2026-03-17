@@ -174,7 +174,7 @@ struct OperatorSettingsView: View {
                     HStack {
                         Label(locale.t("settings.status"), systemImage: "circle.fill")
                         Spacer()
-                        Text(game.status.capitalized)
+                        Text(locale.t("game.status.\(game.status)"))
                             .foregroundStyle(.secondary)
                     }
                 } header: {

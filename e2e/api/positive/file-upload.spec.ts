@@ -21,7 +21,14 @@ import { getOperatorToken, joinPlayerAndStoreToken } from '../../shared/auth';
 import { config } from '../../shared/config';
 
 const ARTIFACTS_DIR = path.resolve(__dirname, '..', '..', 'artifacts');
-const TEST_FILE_PATH = path.join(ARTIFACTS_DIR, `test-upload-${config.runId}.txt`);
+const TEST_FILE_PATH = path.join(ARTIFACTS_DIR, `test-upload-${config.runId}.png`);
+
+// Minimal valid 1x1 pixel PNG (67 bytes)
+const MINIMAL_PNG = Buffer.from(
+  '89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c489' +
+  '0000000a49444154789c626000000002000198e1938a0000000049454e44ae426082',
+  'hex',
+);
 
 test.describe('file upload submission', () => {
   test.describe.configure({ mode: 'serial' });
@@ -75,7 +82,7 @@ test.describe('file upload submission', () => {
 
     // Create the test file to upload
     fs.mkdirSync(ARTIFACTS_DIR, { recursive: true });
-    fs.writeFileSync(TEST_FILE_PATH, `E2E file upload test content - runId: ${config.runId}`);
+    fs.writeFileSync(TEST_FILE_PATH, MINIMAL_PNG);
   });
 
   test.afterAll(async () => {

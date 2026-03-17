@@ -510,7 +510,7 @@
       "operatorLogin": "Entrar"
     },
     "hero": {
-      "tagline": "Jogos de aventura ao ar livre com NFC para organizações de escotismo. Crie missões, posicione bases e deixe as equipas explorar o mundo real.",
+      "tagline": "Jogos de aventura ao ar livre com NFC para organizações de desbravadores, escutismo e jovens. Crie missões, posicione bases e deixe as equipas explorar o mundo real.",
       "availableOn": "Disponível na",
       "appStore": "App Store",
       "googlePlay": "Google Play",
@@ -595,7 +595,7 @@
     },
     "gettingStarted": {
       "whatIsQ": "O que é o PointFinder?",
-      "whatIsA": "O PointFinder é uma plataforma de jogos de aventura baseada em NFC, concebida para organizações de escotismo e jovens. Os organizadores colocam tags NFC físicas em locais exteriores (bases), criam desafios para as equipas completarem e monitorizam tudo em tempo real através de um painel web.",
+      "whatIsA": "O PointFinder é uma plataforma de jogos de aventura baseada em NFC, concebida para organizações de desbravadores, escutismo e jovens. Os organizadores colocam tags NFC físicas em locais exteriores (bases), criam desafios para as equipas completarem e monitorizam tudo em tempo real através de um painel web.",
       "firstGameQ": "Como crio o meu primeiro jogo?",
       "firstGameA": "Registe-se como operador e crie um novo jogo a partir do painel. Adicione bases com coordenadas GPS, escreva desafios (foto, texto ou quiz), organize os jogadores em equipas e inicie o jogo quando estiver pronto. A plataforma guia-o em cada passo com uma checklist de preparação.",
       "equipmentQ": "Que equipamento preciso?",
@@ -642,7 +642,13 @@
   },
   "errors": {
     "invalidUrl": "URL inválido",
-    "audioTooLarge": "O ficheiro de áudio deve ter menos de 5 MB"
+    "audioTooLarge": "O ficheiro de áudio deve ter menos de 5 MB",
+    "unexpected": "Erro inesperado",
+    "somethingWentWrong": "Algo correu mal",
+    "unexpectedError": "Ocorreu um erro inesperado. Por favor, recarrega a página.",
+    "reload": "Recarregar",
+    "boundaryInline": "Algo correu mal. Por favor, atualiza a página.",
+    "liveUpdatesRetrying": "Atualizações em tempo real temporariamente indisponíveis. A tentar novamente\u2026"
   },
   "editor": {
     "bold": "Negrito",

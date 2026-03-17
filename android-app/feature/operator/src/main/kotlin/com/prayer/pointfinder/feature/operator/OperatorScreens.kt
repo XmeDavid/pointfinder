@@ -170,7 +170,11 @@ fun OperatorHomeScreen(
                                         GameStatus.ENDED -> Color(0xFFD32F2F)
                                     }
                                     Text(
-                                        text = game.status.name.uppercase(),
+                                        text = when (game.status) {
+                                            GameStatus.SETUP -> stringResource(R.string.game_status_setup)
+                                            GameStatus.LIVE -> stringResource(R.string.game_status_live)
+                                            GameStatus.ENDED -> stringResource(R.string.game_status_ended)
+                                        }.uppercase(),
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Medium,
                                         color = statusColor,

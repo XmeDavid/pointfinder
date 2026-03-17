@@ -97,7 +97,7 @@ final class SyncEngine {
 
         // Mark as permanently failed if at max retries
         if action.retryCount >= self.maxRetries {
-            await OfflineQueue.shared.markFailed(action.id, reason: "Failed after \(self.maxRetries) retries")
+            await OfflineQueue.shared.markFailed(action.id, reason: LocaleManager.shared.t("sync.failedAfterRetries", "\(self.maxRetries)"))
             Logger(subsystem: "com.prayer.pointfinder", category: "SyncEngine").info(" Marked action \(action.id) as permanently failed after \(self.maxRetries) retries")
             return
         }
@@ -130,7 +130,7 @@ final class SyncEngine {
             // Check if this is a network error (retry) vs a server error (don't retry)
             if isNetworkError(error) {
                 await OfflineQueue.shared.incrementRetryCount(action.id)
-                self.lastSyncError = "Network error, will retry"
+                self.lastSyncError = LocaleManager.shared.t("sync.networkRetry")
                 Logger(subsystem: "com.prayer.pointfinder", category: "SyncEngine").info(" Network error for \(action.id), will retry: \(error.localizedDescription)")
             } else {
                 // Server returned an error - remove the action to avoid infinite retries
@@ -248,7 +248,7 @@ final class SyncEngine {
             guard FileManager.default.fileExists(atPath: mediaURL.path) else {
                 await OfflineQueue.shared.markNeedsReselect(
                     id: action.id,
-                    message: "Media source unavailable. Please reselect."
+                    message: LocaleManager.shared.t("sync.mediaUnavailable")
                 )
                 throw SyncError.needsReselect
             }
@@ -527,13 +527,13 @@ enum SyncError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .noAuth:
-            return "No authentication token available"
+            return LocaleManager.shared.t("sync.errorNoAuth")
         case .noAPIClient:
-            return "API client is not configured"
+            return LocaleManager.shared.t("sync.errorNoClient")
         case .invalidAction:
-            return "Invalid action data"
+            return LocaleManager.shared.t("sync.errorInvalidAction")
         case .needsReselect:
-            return "Media source unavailable, user must reselect"
+            return LocaleManager.shared.t("sync.mediaUnavailable")
         }
     }
 }

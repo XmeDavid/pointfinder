@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
+import i18n from "@/i18n";
 
 const WS_URL = import.meta.env.VITE_WS_URL || "/ws";
 
@@ -60,13 +61,12 @@ export function useBroadcastWebSocket(
         });
       },
       onStompError: (frame) => {
-        const message =
-          frame.headers["message"] || "Broadcast WebSocket connection error";
+        const message = frame.headers["message"] || i18n.t("errors.liveUpdatesRetrying");
         console.error("STOMP error:", message);
         setConnectionError(message);
       },
       onWebSocketError: () => {
-        setConnectionError("WebSocket transport error");
+        setConnectionError(i18n.t("errors.liveUpdatesRetrying"));
       },
     });
 
