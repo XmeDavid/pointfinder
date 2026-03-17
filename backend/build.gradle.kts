@@ -49,7 +49,7 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
 
     // HTML sanitization
-    implementation("org.owasp.html-sanitizer:owasp-java-html-sanitizer:20240325.1")
+    implementation("com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20240325.1")
 
     // Lombok
     compileOnly("org.projectlombok:lombok")
