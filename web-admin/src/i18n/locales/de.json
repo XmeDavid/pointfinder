@@ -72,7 +72,13 @@
     "resetPassword": "Passwort zurücksetzen",
     "resettingPassword": "Wird zurückgesetzt...",
     "resetPasswordSuccess": "Ihr Passwort wurde erfolgreich zurückgesetzt. Sie können sich jetzt mit Ihrem neuen Passwort anmelden.",
-    "resetPasswordError": "Passwort konnte nicht zurückgesetzt werden. Der Link ist möglicherweise ungültig oder abgelaufen."
+    "resetPasswordError": "Passwort konnte nicht zurückgesetzt werden. Der Link ist möglicherweise ungültig oder abgelaufen.",
+    "registerTitle": "Konto erstellen",
+    "registerDescription": "Geben Sie Ihre E-Mail-Adresse ein, um loszulegen.",
+    "registrationEmailSent": "Wir haben Ihnen eine E-Mail mit einem Link zur Fortsetzung Ihrer Registrierung gesendet. Bitte überprüfen Sie Ihren Posteingang.",
+    "sendRegistrationLink": "Weiter",
+    "sendingRegistrationLink": "Wird gesendet...",
+    "registrationRequestFailed": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
   },
   "nav": {
     "games": "Spiele",

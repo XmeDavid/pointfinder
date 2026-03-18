@@ -21,4 +21,6 @@ public interface OperatorInviteRepository extends JpaRepository<OperatorInvite, 
     List<OperatorInvite> findByGameIdAndStatus(UUID gameId, InviteStatus status);
 
     List<OperatorInvite> findByGameIdIsNullAndStatus(InviteStatus status);
+
+    Optional<OperatorInvite> findByEmailAndStatusAndInvitedByIsNull(String email, InviteStatus status);
 }

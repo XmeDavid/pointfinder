@@ -60,6 +60,29 @@ public class EmailService {
     }
 
     @Async
+    public void sendSelfRegistrationEmail(String toEmail, String token, String requestHost) {
+        String frontendBaseUrl = resolveFrontendBaseUrl(requestHost);
+        String subject = "Complete your " + BRAND_NAME + " registration";
+        String registrationLink = frontendBaseUrl + "/register/" + token;
+        String html = buildEmailTemplate(
+                "Registration",
+                "Complete your registration",
+                """
+                <p style="margin: 0 0 14px; color: #404040; font-size: 16px; line-height: 1.6;">
+                    You requested to create an account on <strong>%s</strong>.
+                </p>
+                <p style="margin: 0 0 14px; color: #404040; font-size: 16px; line-height: 1.6;">
+                    Click the button below to continue your registration and set up your account.
+                </p>
+                """.formatted(BRAND_NAME),
+                "Continue Registration",
+                registrationLink
+        );
+
+        sendHtmlEmail(toEmail, subject, html);
+    }
+
+    @Async
     public void sendPasswordResetEmail(String toEmail, String token, String requestHost) {
         String frontendBaseUrl = resolveFrontendBaseUrl(requestHost);
         String subject = "Reset your " + BRAND_NAME + " password";

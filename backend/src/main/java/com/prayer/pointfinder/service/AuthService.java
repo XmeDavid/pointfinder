@@ -84,22 +84,29 @@ public class AuthService {
     }
 
     @Transactional(timeout = 10)
-    public AuthResponse registerOpen(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new BadRequestException("Email already registered");
+    public void requestRegistration(String email, String requestHost) {
+        // Silent return if already registered — no email enumeration
+        if (userRepository.existsByEmail(email)) {
+            return;
         }
 
-        validatePassword(request.getPassword());
+        // If there's already a pending self-registration invite for this email, don't create another
+        Optional<OperatorInvite> existing = inviteRepository.findByEmailAndStatusAndInvitedByIsNull(
+                email, InviteStatus.pending);
+        if (existing.isPresent()) {
+            // Re-send the email with the existing token
+            emailService.sendSelfRegistrationEmail(email, existing.get().getToken(), requestHost);
+            return;
+        }
 
-        User user = User.builder()
-                .email(request.getEmail())
-                .name(request.getName())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .role(UserRole.operator)
+        OperatorInvite invite = OperatorInvite.builder()
+                .email(email)
+                .token(UUID.randomUUID().toString())
+                .status(InviteStatus.pending)
                 .build();
-        user = userRepository.save(user);
+        inviteRepository.save(invite);
 
-        return generateAuthResponse(user);
+        emailService.sendSelfRegistrationEmail(email, invite.getToken(), requestHost);
     }
 
     @Transactional(timeout = 10)

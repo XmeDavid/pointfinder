@@ -8,6 +8,7 @@ import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.entity.InviteStatus;
 import com.prayer.pointfinder.repository.OperatorInviteRepository;
 import com.prayer.pointfinder.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -44,9 +45,17 @@ public class AuthController {
         return ResponseEntity.ok(authService.register(token, request));
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<AuthResponse> registerOpen(@Valid @RequestBody RegisterRequest request) {
-        return ResponseEntity.ok(authService.registerOpen(request));
+    @PostMapping("/request-registration")
+    public ResponseEntity<Map<String, String>> requestRegistration(
+            @RequestBody Map<String, String> body,
+            HttpServletRequest httpRequest) {
+        String email = body.get("email");
+        if (email == null || email.isBlank()) {
+            throw new BadRequestException("Email is required");
+        }
+        String requestHost = httpRequest.getHeader("Host");
+        authService.requestRegistration(email.trim(), requestHost);
+        return ResponseEntity.ok(Map.of("message", "If eligible, a registration link has been sent."));
     }
 
     @PostMapping("/refresh")

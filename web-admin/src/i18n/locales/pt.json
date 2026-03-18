@@ -72,7 +72,13 @@
     "resetPassword": "Redefinir Palavra-passe",
     "resettingPassword": "A redefinir...",
     "resetPasswordSuccess": "A sua palavra-passe foi redefinida com sucesso. Pode agora iniciar sessão com a nova palavra-passe.",
-    "resetPasswordError": "Falha ao redefinir a palavra-passe. O link pode ser inválido ou ter expirado."
+    "resetPasswordError": "Falha ao redefinir a palavra-passe. O link pode ser inválido ou ter expirado.",
+    "registerTitle": "Criar Conta",
+    "registerDescription": "Introduza o seu email para começar.",
+    "registrationEmailSent": "Enviámos-lhe um email com um link para continuar o registo. Verifique a sua caixa de entrada.",
+    "sendRegistrationLink": "Continuar",
+    "sendingRegistrationLink": "A enviar...",
+    "registrationRequestFailed": "Algo correu mal. Por favor, tente novamente."
   },
   "nav": {
     "games": "Jogos",

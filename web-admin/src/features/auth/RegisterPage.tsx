@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Compass } from "lucide-react";
+import { Compass, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormLabel } from "@/components/ui/form-label";
@@ -23,6 +23,7 @@ export function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
   const register = useAuthStore((s) => s.register);
   const navigate = useNavigate();
 
@@ -35,7 +36,21 @@ export function RegisterPage() {
   const emailLocked = !!invite?.email;
   const effectiveEmail = emailLocked ? invite.email : email;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleRequestRegistration = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      await axios.post(`${API_URL}/auth/request-registration`, { email: email.trim() });
+      setEmailSent(true);
+    } catch (err) {
+      setError(getApiErrorMessage(err, t("auth.registrationRequestFailed")));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     const trimmedName = name.trim();
@@ -53,7 +68,7 @@ export function RegisterPage() {
     }
     setLoading(true);
     try {
-      await register(token, trimmedName, effectiveEmail, password);
+      await register(token!, trimmedName, effectiveEmail, password);
       navigate("/games");
     } catch (err) {
       setError(getApiErrorMessage(err, t("auth.registrationFailed")));
@@ -62,6 +77,56 @@ export function RegisterPage() {
     }
   };
 
+  // No token — email request flow
+  if (!token) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary">
+              <Compass className="h-6 w-6 text-primary-foreground" />
+            </div>
+            <CardTitle className="text-2xl">{t("auth.registerTitle")}</CardTitle>
+            <CardDescription>{t("auth.registerDescription")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {emailSent ? (
+              <div className="text-center space-y-3">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                  <Mail className="h-6 w-6 text-primary" />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {t("auth.registrationEmailSent")}
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleRequestRegistration} className="space-y-4">
+                {error && <Alert>{error}</Alert>}
+                <div className="space-y-2">
+                  <FormLabel htmlFor="email" required>
+                    {t("auth.email")}
+                  </FormLabel>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? t("auth.sendingRegistrationLink") : t("auth.sendRegistrationLink")}
+                </Button>
+              </form>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Token present — full registration form
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
       <Card className="w-full max-w-md">
@@ -73,7 +138,7 @@ export function RegisterPage() {
           <CardDescription>{t("auth.joinDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleRegister} className="space-y-4">
             {error && (
               <Alert>{error}</Alert>
             )}
