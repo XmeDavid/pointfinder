@@ -84,6 +84,25 @@ public class AuthService {
     }
 
     @Transactional(timeout = 10)
+    public AuthResponse registerOpen(RegisterRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new BadRequestException("Email already registered");
+        }
+
+        validatePassword(request.getPassword());
+
+        User user = User.builder()
+                .email(request.getEmail())
+                .name(request.getName())
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .role(UserRole.operator)
+                .build();
+        user = userRepository.save(user);
+
+        return generateAuthResponse(user);
+    }
+
+    @Transactional(timeout = 10)
     public AuthResponse refreshToken(String refreshTokenStr) {
         RefreshToken storedToken = refreshTokenRepository.findByToken(refreshTokenStr)
                 .orElseThrow(() -> new BadRequestException("Invalid refresh token"));

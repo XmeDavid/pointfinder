@@ -12,7 +12,7 @@ interface AuthState {
   isAuthenticated: boolean;
   hasHydrated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (token: string, name: string, email: string, password: string) => Promise<void>;
+  register: (token: string | undefined, name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   /** Called by the API client when tokens are refreshed successfully */
   setTokens: (accessToken: string, refreshToken: string, user: User) => void;
@@ -45,8 +45,11 @@ export const useAuthStore = create<AuthState>()(
         });
       },
 
-      register: async (token: string, name: string, email: string, password: string) => {
-        const { data } = await axios.post(`${API_URL}/auth/register/${token}`, {
+      register: async (token: string | undefined, name: string, email: string, password: string) => {
+        const url = token
+          ? `${API_URL}/auth/register/${token}`
+          : `${API_URL}/auth/register`;
+        const { data } = await axios.post(url, {
           name,
           email,
           password,

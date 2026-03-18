@@ -44,6 +44,11 @@ public class AuthController {
         return ResponseEntity.ok(authService.register(token, request));
     }
 
+    @PostMapping("/register")
+    public ResponseEntity<AuthResponse> registerOpen(@Valid @RequestBody RegisterRequest request) {
+        return ResponseEntity.ok(authService.registerOpen(request));
+    }
+
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
         return ResponseEntity.ok(authService.refreshToken(request.getRefreshToken()));

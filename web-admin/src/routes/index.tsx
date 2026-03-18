@@ -70,7 +70,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: "/register/:token",
+    path: "/register/:token?",
     element: (
       <GuestGuard>
         <RegisterPage />

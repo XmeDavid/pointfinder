@@ -53,7 +53,7 @@ export function RegisterPage() {
     }
     setLoading(true);
     try {
-      await register(token ?? "", trimmedName, effectiveEmail, password);
+      await register(token, trimmedName, effectiveEmail, password);
       navigate("/games");
     } catch (err) {
       setError(getApiErrorMessage(err, t("auth.registrationFailed")));
