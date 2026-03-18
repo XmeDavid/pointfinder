@@ -713,6 +713,35 @@ class OperatorViewModel @Inject constructor(
         }
     }
 
+    suspend fun loadChallengeVariables(challengeId: String): List<TeamVariable> {
+        val gameId = _state.value.selectedGame?.id ?: return emptyList()
+        return runCatching {
+            operatorRepository.getChallengeVariables(gameId, challengeId).variables
+        }.getOrElse { emptyList() }
+    }
+
+    suspend fun saveChallengeVariablesList(
+        challengeId: String,
+        variables: List<TeamVariable>,
+    ): List<TeamVariable> {
+        val gameId = _state.value.selectedGame?.id
+            ?: throw IllegalStateException("No game selected")
+        val response = operatorRepository.saveChallengeVariables(
+            gameId, challengeId, TeamVariablesRequest(variables = variables),
+        )
+        return response.variables
+    }
+
+    suspend fun saveGameVariablesList(variables: List<TeamVariable>): List<TeamVariable> {
+        val gameId = _state.value.selectedGame?.id
+            ?: throw IllegalStateException("No game selected")
+        val response = operatorRepository.saveGameVariables(
+            gameId, TeamVariablesRequest(variables = variables),
+        )
+        _state.value = _state.value.copy(variables = response.variables)
+        return response.variables
+    }
+
     fun createGame(name: String, description: String, onSuccess: (Game) -> Unit) {
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)

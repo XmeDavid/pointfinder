@@ -122,11 +122,13 @@ struct ChallengeEditView: View {
 
             // Content (rich text)
             Section(locale.t("operator.content")) {
-                htmlEditorRow(
-                    label: locale.t("operator.content"),
-                    html: contentHtml,
-                    field: .content
-                )
+                if answerType != "none" {
+                    htmlEditorRow(
+                        label: locale.t("operator.content"),
+                        html: contentHtml,
+                        field: .content
+                    )
+                }
                 htmlEditorRow(
                     label: locale.t("operator.completionMessage"),
                     html: completionContentHtml,

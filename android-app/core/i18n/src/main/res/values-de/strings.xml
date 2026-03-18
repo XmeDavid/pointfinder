@@ -320,6 +320,11 @@
     <string name="label_team_color">Farbe</string>
     <string name="label_create_team">Team erstellen</string>
     <string name="label_copied">Kopiert!</string>
+    <string name="label_manage_variables">Variablen verwalten</string>
+    <string name="label_game_variables">Spielvariablen</string>
+    <string name="label_challenge_variables">Herausforderungsvariablen</string>
+    <string name="label_no_teams_in_game">Keine Teams in diesem Spiel</string>
+    <string name="label_saving">Speichern…</string>
 
     <!-- Map Edit Mode -->
     <string name="label_edit_on">Bearbeiten: AN</string>

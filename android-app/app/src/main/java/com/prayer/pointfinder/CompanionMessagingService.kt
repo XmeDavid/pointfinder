@@ -57,7 +57,7 @@ class CompanionMessagingService : FirebaseMessagingService() {
         val notification = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle(remoteMessage.notification?.title ?: getString(R.string.app_name))
-            .setContentText(remoteMessage.notification?.body ?: getString(R.string.notification_new_message))
+            .setContentText(remoteMessage.notification?.body ?: getString(com.prayer.pointfinder.core.i18n.R.string.notification_new_message))
             .setAutoCancel(true)
             .build()
         manager.notify(System.currentTimeMillis().toInt(), notification)

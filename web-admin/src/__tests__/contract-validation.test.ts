@@ -21,7 +21,6 @@ function assertFieldType(
   obj: Record<string, unknown>,
   field: string,
   expectedType: string,
-  context: string,
 ) {
   expect(obj).toHaveProperty(field);
   const value = obj[field];
@@ -36,7 +35,6 @@ function assertOptionalFieldType(
   obj: Record<string, unknown>,
   field: string,
   expectedType: string,
-  context: string,
 ) {
   if (!(field in obj) || obj[field] === null || obj[field] === undefined) return;
   const value = obj[field];
@@ -52,15 +50,15 @@ describe("Cross-platform DTO contract validation", () => {
     it("matches frontend AuthResponse / OperatorAuthResponse shape", () => {
       const snapshot = readSnapshot("AuthResponse");
 
-      assertFieldType(snapshot, "accessToken", "string", "AuthResponse");
-      assertFieldType(snapshot, "refreshToken", "string", "AuthResponse");
-      assertFieldType(snapshot, "user", "object", "AuthResponse");
+      assertFieldType(snapshot, "accessToken", "string");
+      assertFieldType(snapshot, "refreshToken", "string");
+      assertFieldType(snapshot, "user", "object");
 
       const user = snapshot.user as Record<string, unknown>;
-      assertFieldType(user, "id", "string", "AuthResponse.user");
-      assertFieldType(user, "email", "string", "AuthResponse.user");
-      assertFieldType(user, "name", "string", "AuthResponse.user");
-      assertFieldType(user, "role", "string", "AuthResponse.user");
+      assertFieldType(user, "id", "string");
+      assertFieldType(user, "email", "string");
+      assertFieldType(user, "name", "string");
+      assertFieldType(user, "role", "string");
     });
   });
 
@@ -68,27 +66,27 @@ describe("Cross-platform DTO contract validation", () => {
     it("matches frontend PlayerAuthResponse shape", () => {
       const snapshot = readSnapshot("PlayerAuthResponse");
 
-      assertFieldType(snapshot, "token", "string", "PlayerAuthResponse");
-      assertFieldType(snapshot, "player", "object", "PlayerAuthResponse");
-      assertFieldType(snapshot, "team", "object", "PlayerAuthResponse");
-      assertFieldType(snapshot, "game", "object", "PlayerAuthResponse");
+      assertFieldType(snapshot, "token", "string");
+      assertFieldType(snapshot, "player", "object");
+      assertFieldType(snapshot, "team", "object");
+      assertFieldType(snapshot, "game", "object");
 
       const player = snapshot.player as Record<string, unknown>;
-      assertFieldType(player, "id", "string", "PlayerAuthResponse.player");
-      assertFieldType(player, "displayName", "string", "PlayerAuthResponse.player");
-      assertFieldType(player, "deviceId", "string", "PlayerAuthResponse.player");
+      assertFieldType(player, "id", "string");
+      assertFieldType(player, "displayName", "string");
+      assertFieldType(player, "deviceId", "string");
 
       const team = snapshot.team as Record<string, unknown>;
-      assertFieldType(team, "id", "string", "PlayerAuthResponse.team");
-      assertFieldType(team, "name", "string", "PlayerAuthResponse.team");
-      assertFieldType(team, "color", "string", "PlayerAuthResponse.team");
+      assertFieldType(team, "id", "string");
+      assertFieldType(team, "name", "string");
+      assertFieldType(team, "color", "string");
 
       const game = snapshot.game as Record<string, unknown>;
-      assertFieldType(game, "id", "string", "PlayerAuthResponse.game");
-      assertFieldType(game, "name", "string", "PlayerAuthResponse.game");
-      assertFieldType(game, "description", "string", "PlayerAuthResponse.game");
-      assertFieldType(game, "status", "string", "PlayerAuthResponse.game");
-      assertOptionalFieldType(game, "tileSource", "string", "PlayerAuthResponse.game");
+      assertFieldType(game, "id", "string");
+      assertFieldType(game, "name", "string");
+      assertFieldType(game, "description", "string");
+      assertFieldType(game, "status", "string");
+      assertOptionalFieldType(game, "tileSource", "string");
     });
   });
 
@@ -96,19 +94,19 @@ describe("Cross-platform DTO contract validation", () => {
     it("matches frontend Game interface shape", () => {
       const snapshot = readSnapshot("GameResponse");
 
-      assertFieldType(snapshot, "id", "string", "GameResponse");
-      assertFieldType(snapshot, "name", "string", "GameResponse");
-      assertFieldType(snapshot, "description", "string", "GameResponse");
-      assertFieldType(snapshot, "status", "string", "GameResponse");
-      assertFieldType(snapshot, "tileSource", "string", "GameResponse");
-      assertFieldType(snapshot, "uniformAssignment", "boolean", "GameResponse");
-      assertFieldType(snapshot, "broadcastEnabled", "boolean", "GameResponse");
-      assertFieldType(snapshot, "operatorIds", "array", "GameResponse");
+      assertFieldType(snapshot, "id", "string");
+      assertFieldType(snapshot, "name", "string");
+      assertFieldType(snapshot, "description", "string");
+      assertFieldType(snapshot, "status", "string");
+      assertFieldType(snapshot, "tileSource", "string");
+      assertFieldType(snapshot, "uniformAssignment", "boolean");
+      assertFieldType(snapshot, "broadcastEnabled", "boolean");
+      assertFieldType(snapshot, "operatorIds", "array");
 
-      assertOptionalFieldType(snapshot, "startDate", "string", "GameResponse");
-      assertOptionalFieldType(snapshot, "endDate", "string", "GameResponse");
-      assertOptionalFieldType(snapshot, "createdBy", "string", "GameResponse");
-      assertOptionalFieldType(snapshot, "broadcastCode", "string", "GameResponse");
+      assertOptionalFieldType(snapshot, "startDate", "string");
+      assertOptionalFieldType(snapshot, "endDate", "string");
+      assertOptionalFieldType(snapshot, "createdBy", "string");
+      assertOptionalFieldType(snapshot, "broadcastCode", "string");
 
       // Validate status is a known GameStatus value
       expect(["setup", "live", "ended"]).toContain(snapshot.status);
@@ -119,20 +117,20 @@ describe("Cross-platform DTO contract validation", () => {
     it("matches frontend Submission interface shape", () => {
       const snapshot = readSnapshot("SubmissionResponse");
 
-      assertFieldType(snapshot, "id", "string", "SubmissionResponse");
-      assertFieldType(snapshot, "teamId", "string", "SubmissionResponse");
-      assertFieldType(snapshot, "challengeId", "string", "SubmissionResponse");
-      assertFieldType(snapshot, "baseId", "string", "SubmissionResponse");
-      assertFieldType(snapshot, "answer", "string", "SubmissionResponse");
-      assertFieldType(snapshot, "status", "string", "SubmissionResponse");
-      assertFieldType(snapshot, "submittedAt", "string", "SubmissionResponse");
+      assertFieldType(snapshot, "id", "string");
+      assertFieldType(snapshot, "teamId", "string");
+      assertFieldType(snapshot, "challengeId", "string");
+      assertFieldType(snapshot, "baseId", "string");
+      assertFieldType(snapshot, "answer", "string");
+      assertFieldType(snapshot, "status", "string");
+      assertFieldType(snapshot, "submittedAt", "string");
 
-      assertOptionalFieldType(snapshot, "fileUrl", "string", "SubmissionResponse");
-      assertOptionalFieldType(snapshot, "fileUrls", "array", "SubmissionResponse");
-      assertOptionalFieldType(snapshot, "reviewedBy", "string", "SubmissionResponse");
-      assertOptionalFieldType(snapshot, "feedback", "string", "SubmissionResponse");
-      assertOptionalFieldType(snapshot, "points", "number", "SubmissionResponse");
-      assertOptionalFieldType(snapshot, "completionContent", "string", "SubmissionResponse");
+      assertOptionalFieldType(snapshot, "fileUrl", "string");
+      assertOptionalFieldType(snapshot, "fileUrls", "array");
+      assertOptionalFieldType(snapshot, "reviewedBy", "string");
+      assertOptionalFieldType(snapshot, "feedback", "string");
+      assertOptionalFieldType(snapshot, "points", "number");
+      assertOptionalFieldType(snapshot, "completionContent", "string");
 
       // Validate status is a known SubmissionStatus value
       expect(["pending", "approved", "rejected", "correct"]).toContain(snapshot.status);
@@ -143,16 +141,16 @@ describe("Cross-platform DTO contract validation", () => {
     it("matches frontend TeamBaseProgress-like shape", () => {
       const snapshot = readSnapshot("BaseProgressResponse");
 
-      assertFieldType(snapshot, "baseId", "string", "BaseProgressResponse");
-      assertFieldType(snapshot, "baseName", "string", "BaseProgressResponse");
-      assertFieldType(snapshot, "lat", "number", "BaseProgressResponse");
-      assertFieldType(snapshot, "lng", "number", "BaseProgressResponse");
-      assertFieldType(snapshot, "nfcLinked", "boolean", "BaseProgressResponse");
-      assertFieldType(snapshot, "status", "string", "BaseProgressResponse");
+      assertFieldType(snapshot, "baseId", "string");
+      assertFieldType(snapshot, "baseName", "string");
+      assertFieldType(snapshot, "lat", "number");
+      assertFieldType(snapshot, "lng", "number");
+      assertFieldType(snapshot, "nfcLinked", "boolean");
+      assertFieldType(snapshot, "status", "string");
 
-      assertOptionalFieldType(snapshot, "checkedInAt", "string", "BaseProgressResponse");
-      assertOptionalFieldType(snapshot, "challengeId", "string", "BaseProgressResponse");
-      assertOptionalFieldType(snapshot, "submissionStatus", "string", "BaseProgressResponse");
+      assertOptionalFieldType(snapshot, "checkedInAt", "string");
+      assertOptionalFieldType(snapshot, "challengeId", "string");
+      assertOptionalFieldType(snapshot, "submissionStatus", "string");
 
       // Validate status is a known BaseStatus value
       expect(["not_visited", "checked_in", "submitted", "completed", "rejected"]).toContain(
@@ -165,11 +163,11 @@ describe("Cross-platform DTO contract validation", () => {
     it("matches frontend LeaderboardEntry / BroadcastLeaderboardEntry shape", () => {
       const snapshot = readSnapshot("LeaderboardEntry");
 
-      assertFieldType(snapshot, "teamId", "string", "LeaderboardEntry");
-      assertFieldType(snapshot, "teamName", "string", "LeaderboardEntry");
-      assertFieldType(snapshot, "color", "string", "LeaderboardEntry");
-      assertFieldType(snapshot, "points", "number", "LeaderboardEntry");
-      assertFieldType(snapshot, "completedChallenges", "number", "LeaderboardEntry");
+      assertFieldType(snapshot, "teamId", "string");
+      assertFieldType(snapshot, "teamName", "string");
+      assertFieldType(snapshot, "color", "string");
+      assertFieldType(snapshot, "points", "number");
+      assertFieldType(snapshot, "completedChallenges", "number");
     });
   });
 });

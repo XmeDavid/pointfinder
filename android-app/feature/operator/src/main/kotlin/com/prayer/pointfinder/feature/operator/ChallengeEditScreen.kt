@@ -72,6 +72,8 @@ fun ChallengeEditScreen(
     teams: List<Team>,
     variables: List<TeamVariable>,
     assignments: List<Assignment> = emptyList(),
+    challengeVariables: List<TeamVariable> = emptyList(),
+    onSaveChallengeVariables: (suspend (List<TeamVariable>) -> List<TeamVariable>)? = null,
     onSave: (Any) -> Unit,
     onDelete: (() -> Unit)?,
     onBack: () -> Unit,
@@ -273,19 +275,21 @@ fun ChallengeEditScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            // Content preview (main rich content)
-            Text(
-                text = stringResource(R.string.label_content),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(4.dp))
-            HtmlPreviewCard(
-                html = contentHtml,
-                onClick = { showContentEditor = true },
-            )
+            // Content preview (main rich content) — hidden for check-in only
+            if (answerType != "none") {
+                Text(
+                    text = stringResource(R.string.label_content),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(4.dp))
+                HtmlPreviewCard(
+                    html = contentHtml,
+                    onClick = { showContentEditor = true },
+                )
 
-            Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(12.dp))
+            }
 
             // Completion Message preview
             Text(
@@ -546,6 +550,21 @@ fun ChallengeEditScreen(
                         )
                     }
                 }
+            }
+
+            // Challenge Variables section (only in edit mode when callback provided)
+            if (isEditMode && onSaveChallengeVariables != null) {
+                Spacer(Modifier.height(20.dp))
+
+                SectionHeader(stringResource(R.string.label_challenge_variables))
+
+                Spacer(Modifier.height(8.dp))
+
+                TeamVariablesEditorSection(
+                    teams = teams,
+                    variables = challengeVariables,
+                    onSave = onSaveChallengeVariables,
+                )
             }
 
             Spacer(Modifier.height(24.dp))

@@ -79,6 +79,7 @@ import com.prayer.pointfinder.core.model.CreateBaseRequest
 import com.prayer.pointfinder.core.model.CreateChallengeRequest
 import com.prayer.pointfinder.core.model.UpdateBaseRequest
 import com.prayer.pointfinder.core.model.UpdateChallengeRequest
+import com.prayer.pointfinder.core.model.TeamVariable
 import com.prayer.pointfinder.core.model.UpdateTeamRequest
 import com.prayer.pointfinder.core.model.PlayerResponse
 import com.prayer.pointfinder.feature.operator.BaseEditScreen
@@ -87,6 +88,7 @@ import com.prayer.pointfinder.feature.operator.ChallengeEditScreen
 import com.prayer.pointfinder.feature.operator.ChallengesListScreen
 import com.prayer.pointfinder.feature.operator.TeamDetailScreen
 import com.prayer.pointfinder.feature.operator.TeamsListScreen
+import com.prayer.pointfinder.feature.operator.TeamVariablesManagementScreen
 import com.prayer.pointfinder.feature.operator.LiveScreen
 import com.prayer.pointfinder.feature.operator.OperatorGameScaffold
 import com.prayer.pointfinder.feature.operator.CreateGameScreen
@@ -1252,12 +1254,22 @@ private fun OperatorGameRoot(
                         val challengeId = setupSubScreen!!.removePrefix("challenge_edit:")
                         val challenge = state.challenges.firstOrNull { it.id == challengeId }
                         if (challenge != null) {
+                            var challengeVars by remember(challengeId) { mutableStateOf<List<TeamVariable>>(emptyList()) }
+                            LaunchedEffect(challengeId) {
+                                challengeVars = viewModel.loadChallengeVariables(challengeId)
+                            }
                             ChallengeEditScreen(
                                 challenge = challenge,
                                 bases = state.bases,
                                 challenges = state.challenges,
                                 teams = state.teams,
                                 variables = state.variables,
+                                challengeVariables = challengeVars,
+                                onSaveChallengeVariables = { variables ->
+                                    val saved = viewModel.saveChallengeVariablesList(challengeId, variables)
+                                    challengeVars = saved
+                                    saved
+                                },
                                 assignments = state.assignments,
                                 onSave = { request ->
                                     viewModel.updateChallenge(challenge.id, request as UpdateChallengeRequest) {
@@ -1284,7 +1296,23 @@ private fun OperatorGameRoot(
                             onCreateTeam = { name, color ->
                                 viewModel.createTeam(name, color) { /* created */ }
                             },
+                            onManageVariables = { setupSubScreen = "team_variables" },
                             onBack = { setupSubScreen = null },
+                        )
+                    }
+                    setupSubScreen == "team_variables" -> {
+                        var gameVariables by remember { mutableStateOf<List<TeamVariable>>(emptyList()) }
+                        var isLoadingVars by remember { mutableStateOf(true) }
+                        LaunchedEffect(Unit) {
+                            gameVariables = state.variables
+                            isLoadingVars = false
+                        }
+                        TeamVariablesManagementScreen(
+                            teams = state.teams,
+                            initialVariables = gameVariables,
+                            isLoading = isLoadingVars,
+                            onSave = { variables -> viewModel.saveGameVariablesList(variables) },
+                            onBack = { setupSubScreen = "teams_list" },
                         )
                     }
                     setupSubScreen?.startsWith("team_detail:") == true -> {
