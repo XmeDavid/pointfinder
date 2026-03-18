@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +19,6 @@ export function RegisterPage() {
   const { token } = useParams<{ token: string }>();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [emailLocked, setEmailLocked] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -26,17 +26,14 @@ export function RegisterPage() {
   const register = useAuthStore((s) => s.register);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!token) return;
-    axios.get(`${API_URL}/auth/invite/${token}`)
-      .then(({ data }) => {
-        setEmail(data.email);
-        setEmailLocked(true);
-      })
-      .catch(() => {
-        // Token invalid or expired — let the form submit handle the error
-      });
-  }, [token]);
+  const { data: invite } = useQuery({
+    queryKey: ["invite", token],
+    queryFn: () => axios.get<{ email: string }>(`${API_URL}/auth/invite/${token}`).then(r => r.data),
+    enabled: !!token,
+    retry: false,
+  });
+  const emailLocked = !!invite?.email;
+  const effectiveEmail = emailLocked ? invite.email : email;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +53,7 @@ export function RegisterPage() {
     }
     setLoading(true);
     try {
-      await register(token ?? "", trimmedName, email, password);
+      await register(token ?? "", trimmedName, effectiveEmail, password);
       navigate("/games");
     } catch (err) {
       setError(getApiErrorMessage(err, t("auth.registrationFailed")));
@@ -90,7 +87,7 @@ export function RegisterPage() {
               <FormLabel htmlFor="email" required>
                 {t("auth.email")}
               </FormLabel>
-              <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={emailLocked} className={emailLocked ? "bg-muted" : ""} />
+              <Input id="email" type="email" placeholder="you@example.com" value={effectiveEmail} onChange={(e) => setEmail(e.target.value)} required disabled={emailLocked} className={emailLocked ? "bg-muted" : ""} />
             </div>
             <div className="space-y-2">
               <FormLabel htmlFor="password" required>

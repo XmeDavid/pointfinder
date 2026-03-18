@@ -23,7 +23,6 @@ import { useAuthStore } from "@/hooks/useAuth";
 import { gamesApi } from "@/lib/api/games";
 import { submissionsApi } from "@/lib/api/submissions";
 import type { GameStatus } from "@/types";
-import { useEffect, useRef } from "react";
 
 interface NavItem {
   label: string;
@@ -71,16 +70,6 @@ export function Sidebar({ gameStatus, open, onClose }: SidebarProps) {
   const location = useLocation();
   const isAdmin = user?.role === "admin";
   const onRealtimePage = location.pathname.includes("/monitor") || location.pathname.endsWith("/notifications");
-
-  // Close sidebar on route change (mobile)
-  const onCloseRef = useRef(onClose);
-  useEffect(() => {
-    onCloseRef.current = onClose;
-  }, [onClose]);
-
-  useEffect(() => {
-    onCloseRef.current();
-  }, [location.pathname]);
 
   const { data: game } = useQuery({
     queryKey: ["game", gameId],
@@ -158,7 +147,7 @@ export function Sidebar({ gameStatus, open, onClose }: SidebarProps) {
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
         <div className="space-y-1">
           {mainNav.map((item) => (
-            <SidebarLink key={item.to} item={item} />
+            <SidebarLink key={item.to} item={item} onClick={onClose} />
           ))}
         </div>
 
@@ -168,7 +157,7 @@ export function Sidebar({ gameStatus, open, onClose }: SidebarProps) {
               {game?.name ?? t("nav.gameSetup")}
             </p>
             {gameNav.map((item) => (
-              <SidebarLink key={item.to} item={item} />
+              <SidebarLink key={item.to} item={item} onClick={onClose} />
             ))}
           </div>
         )}
@@ -179,7 +168,7 @@ export function Sidebar({ gameStatus, open, onClose }: SidebarProps) {
               {t("nav.monitor")}
             </p>
             {monitorNav.map((item) => (
-              <SidebarLink key={item.to} item={item} />
+              <SidebarLink key={item.to} item={item} onClick={onClose} />
             ))}
           </div>
         )}

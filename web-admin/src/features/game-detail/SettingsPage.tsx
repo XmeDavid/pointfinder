@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Trash2, RotateCcw, Play, AlertTriangle, Database, Eraser, Download, Radio, Copy } from "lucide-react";
@@ -16,7 +16,7 @@ import { getApiErrorMessage } from "@/lib/api/errors";
 import { formatDateTimeInputValue, parseDateTimeInputValue } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/useToast";
-import type { GameStatus } from "@/types";
+import type { Game, GameStatus } from "@/types";
 
 const statusColors: Record<GameStatus, string> = {
   setup: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
@@ -25,15 +25,28 @@ const statusColors: Record<GameStatus, string> = {
 };
 
 export function SettingsPage() {
+  const { gameId } = useParams<{ gameId: string }>();
+  const { data: game } = useQuery({ queryKey: ["game", gameId], queryFn: () => gamesApi.getById(gameId!) });
+
+  if (!game) return null;
+
+  return <SettingsPageContent game={game} gameId={gameId!} />;
+}
+
+function SettingsPageContent({ game, gameId }: { game: Game; gameId: string }) {
   const { t } = useTranslation();
   const toast = useToast();
-  const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { data: game } = useQuery({ queryKey: ["game", gameId], queryFn: () => gamesApi.getById(gameId!) });
-
-  const [form, setForm] = useState({ name: "", description: "", startDate: "", endDate: "", uniformAssignment: false, tileSource: "osm-classic" });
+  const [form, setForm] = useState({
+    name: game.name,
+    description: game.description,
+    startDate: formatDateTimeInputValue(game.startDate),
+    endDate: formatDateTimeInputValue(game.endDate),
+    uniformAssignment: game.uniformAssignment ?? false,
+    tileSource: game.tileSource ?? "osm-classic",
+  });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [actionError, setActionError] = useState("");
@@ -41,19 +54,6 @@ export function SettingsPage() {
   // State override dialog
   const [stateTarget, setStateTarget] = useState<GameStatus | null>(null);
   const [progressChoice, setProgressChoice] = useState<"keep" | "erase" | null>(null);
-
-  useEffect(() => {
-    if (game) {
-      setForm({
-        name: game.name,
-        description: game.description,
-        startDate: formatDateTimeInputValue(game.startDate),
-        endDate: formatDateTimeInputValue(game.endDate),
-        uniformAssignment: game.uniformAssignment ?? false,
-        tileSource: game.tileSource ?? "osm-classic",
-      });
-    }
-  }, [game]);
 
   const updateGame = useMutation({
     mutationFn: () => {
@@ -139,8 +139,6 @@ export function SettingsPage() {
       setExporting(false);
     }
   };
-
-  if (!game) return null;
 
   const currentStatus = game.status as GameStatus;
 
