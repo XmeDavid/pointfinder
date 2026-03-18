@@ -150,7 +150,7 @@ export function ReviewLayout({ gameId, gameStatus }: ReviewLayoutProps) {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [selected, filtered, reviewPoints, reviewMutation, selectSubmission]);
+  }, [selected, filtered, reviewPoints, reviewMutation, selectSubmission, feedback]);
 
   const pendingCount = submissions.filter((s) => s.status === "pending").length;
 
