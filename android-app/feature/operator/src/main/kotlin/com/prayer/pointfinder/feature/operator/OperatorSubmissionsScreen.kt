@@ -14,8 +14,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -80,11 +80,13 @@ fun OperatorSubmissionsScreen(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            AssistChip(
+            FilterChip(
+                selected = showPendingOnly,
                 onClick = { showPendingOnly = true },
                 label = { Text(stringResource(R.string.label_pending)) },
             )
-            AssistChip(
+            FilterChip(
+                selected = !showPendingOnly,
                 onClick = { showPendingOnly = false },
                 label = { Text(stringResource(R.string.label_all)) },
             )

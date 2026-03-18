@@ -70,6 +70,18 @@ fun LiveBaseProgressBottomSheet(
                 Spacer(Modifier.height(4.dp))
                 Text(base.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "${base.lat}, ${base.lng}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                val nfcColor = if (base.nfcLinked) StatusCompleted else StatusSubmitted
+                val nfcLabel = if (base.nfcLinked) stringResource(R.string.label_nfc_linked) else stringResource(R.string.label_nfc_not_linked)
+                CapsuleBadge(label = nfcLabel, color = nfcColor)
+            }
             Spacer(Modifier.height(12.dp))
 
             Button(

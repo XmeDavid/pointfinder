@@ -39,6 +39,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -115,6 +116,13 @@ fun OperatorMapScreen(
     var editSheetBase by remember { mutableStateOf<Base?>(null) }
     var locationFocusState by remember { mutableStateOf(LocationFocusState.CENTER_ON_ME) }
     var hasInitialFit by remember { mutableStateOf(false) }
+
+    // rememberUpdatedState for values captured inside AndroidView.factory callbacks
+    // (factory runs once, so plain parameters would be stale)
+    val currentBases by rememberUpdatedState(bases)
+    val currentOnBaseSelected by rememberUpdatedState(onBaseSelected)
+    val currentGameStatus by rememberUpdatedState(gameStatus)
+    val currentOnCreateBaseAt by rememberUpdatedState(onCreateBaseAt)
 
     DisposableEffect(lifecycle) {
         val observer = LifecycleEventObserver { _, event ->
@@ -277,14 +285,14 @@ fun OperatorMapScreen(
                         })
 
                         mapLibreMap.setOnMarkerClickListener { marker ->
-                            val base = bases.firstOrNull {
+                            val base = currentBases.firstOrNull {
                                 it.lat == marker.position.latitude && it.lng == marker.position.longitude
                             }
                             if (base != null) {
                                 if (isEditMode) {
                                     editSheetBase = base
                                 } else {
-                                    onBaseSelected(base)
+                                    currentOnBaseSelected(base)
                                 }
                                 true
                             } else {
@@ -292,8 +300,8 @@ fun OperatorMapScreen(
                             }
                         }
                         mapLibreMap.addOnMapLongClickListener { point ->
-                            if (isEditMode && gameStatus != GameStatus.ENDED) {
-                                onCreateBaseAt(point.latitude, point.longitude)
+                            if (isEditMode && currentGameStatus != GameStatus.ENDED) {
+                                currentOnCreateBaseAt(point.latitude, point.longitude)
                             }
                             true
                         }
