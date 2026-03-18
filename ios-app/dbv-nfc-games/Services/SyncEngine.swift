@@ -30,21 +30,44 @@ final class SyncEngine {
     private(set) var isSyncing = false
     private(set) var lastSyncError: String?
 
-    private let maxRetries = 5
-    private let baseBackoffSeconds: TimeInterval = 2
+    let maxRetries: Int
+    private let baseBackoffSeconds: TimeInterval
 
     private var apiClient: SyncAPIClient?
+    let offlineQueue: OfflineQueue
+    private let connectivityCheck: () -> Bool
+    private let tokenProvider: () -> String?
 
     /// Callback to refresh progress after sync (injected by AppState)
     var onSyncComplete: (() async -> Void)?
 
     private init() {
+        self.maxRetries = 5
+        self.baseBackoffSeconds = 2
+        self.offlineQueue = .shared
+        self.connectivityCheck = { NetworkMonitor.shared.isOnline }
+        self.tokenProvider = { KeychainService.load(key: AppConfiguration.playerTokenKey) }
         // Listen for network reconnection events
         NetworkMonitor.shared.onReconnect = { [weak self] in
             Task { @MainActor in
                 await self?.syncPendingActions()
             }
         }
+    }
+
+    /// Testable initializer with injectable dependencies.
+    init(
+        offlineQueue: OfflineQueue,
+        connectivityCheck: @escaping () -> Bool,
+        tokenProvider: @escaping () -> String?,
+        maxRetries: Int = 5,
+        baseBackoffSeconds: TimeInterval = 0
+    ) {
+        self.offlineQueue = offlineQueue
+        self.connectivityCheck = connectivityCheck
+        self.tokenProvider = tokenProvider
+        self.maxRetries = maxRetries
+        self.baseBackoffSeconds = baseBackoffSeconds
     }
 
     func configure(apiClient: SyncAPIClient) {
@@ -54,19 +77,19 @@ final class SyncEngine {
     /// Number of pending actions in the queue
     var pendingCount: Int {
         get async {
-            await OfflineQueue.shared.pendingCount
+            await offlineQueue.pendingCount
         }
     }
 
     /// Manually trigger a sync (can be called from UI)
     func syncPendingActions() async {
         guard !isSyncing else { return }
-        guard NetworkMonitor.shared.isOnline else { return }
+        guard connectivityCheck() else { return }
 
         isSyncing = true
         lastSyncError = nil
 
-        let actions = await OfflineQueue.shared.allPending()
+        let actions = await offlineQueue.allPending()
 
         // Process check-ins first, then submissions (submissions may depend on check-ins)
         let checkIns = actions.filter { $0.type == .checkIn }
@@ -97,7 +120,7 @@ final class SyncEngine {
 
         // Mark as permanently failed if at max retries
         if action.retryCount >= self.maxRetries {
-            await OfflineQueue.shared.markFailed(action.id, reason: LocaleManager.shared.t("sync.failedAfterRetries", "\(self.maxRetries)"))
+            await offlineQueue.markFailed(action.id, reason: LocaleManager.shared.t("sync.failedAfterRetries", "\(self.maxRetries)"))
             Logger(subsystem: "com.prayer.pointfinder", category: "SyncEngine").info(" Marked action \(action.id) as permanently failed after \(self.maxRetries) retries")
             return
         }
@@ -119,7 +142,7 @@ final class SyncEngine {
             }
 
             // Success - remove from queue
-            await OfflineQueue.shared.dequeue(action.id)
+            await offlineQueue.dequeue(action.id)
             Logger(subsystem: "com.prayer.pointfinder", category: "SyncEngine").info(" Synced action: \(action.type.rawValue) for base \(action.baseId)")
 
         } catch {
@@ -129,12 +152,12 @@ final class SyncEngine {
             }
             // Check if this is a network error (retry) vs a server error (don't retry)
             if isNetworkError(error) {
-                await OfflineQueue.shared.incrementRetryCount(action.id)
+                await offlineQueue.incrementRetryCount(action.id)
                 self.lastSyncError = LocaleManager.shared.t("sync.networkRetry")
                 Logger(subsystem: "com.prayer.pointfinder", category: "SyncEngine").info(" Network error for \(action.id), will retry: \(error.localizedDescription)")
             } else {
                 // Server returned an error - remove the action to avoid infinite retries
-                await OfflineQueue.shared.dequeue(action.id)
+                await offlineQueue.dequeue(action.id)
                 self.lastSyncError = error.localizedDescription
                 Logger(subsystem: "com.prayer.pointfinder", category: "SyncEngine").info(" Server error for \(action.id), removing: \(error.localizedDescription)")
             }
@@ -143,7 +166,7 @@ final class SyncEngine {
 
     private func syncCheckIn(_ action: PendingAction) async throws {
         // Get auth token from AppState
-        guard let token = getPlayerToken() else {
+        guard let token = tokenProvider() else {
             throw SyncError.noAuth
         }
         guard let apiClient else {
@@ -153,7 +176,7 @@ final class SyncEngine {
     }
 
     private func syncSubmission(_ action: PendingAction) async throws {
-        guard let token = getPlayerToken() else {
+        guard let token = tokenProvider() else {
             throw SyncError.noAuth
         }
         guard let apiClient else {
@@ -176,7 +199,7 @@ final class SyncEngine {
         if action.needsReselect {
             throw SyncError.needsReselect
         }
-        guard let token = getPlayerToken() else {
+        guard let token = tokenProvider() else {
             throw SyncError.noAuth
         }
         guard let apiClient else {
@@ -198,7 +221,7 @@ final class SyncEngine {
         }
 
         guard let mediaURL = resolveMediaURL(for: action) else {
-            await OfflineQueue.shared.markNeedsReselect(
+            await offlineQueue.markNeedsReselect(
                 id: action.id,
                 message: "Media source unavailable. Please reselect."
             )
@@ -246,7 +269,7 @@ final class SyncEngine {
             }
             let mediaURL = URL(fileURLWithPath: localPath)
             guard FileManager.default.fileExists(atPath: mediaURL.path) else {
-                await OfflineQueue.shared.markNeedsReselect(
+                await offlineQueue.markNeedsReselect(
                     id: action.id,
                     message: LocaleManager.shared.t("sync.mediaUnavailable")
                 )
@@ -337,7 +360,7 @@ final class SyncEngine {
                 chunkData: chunkData,
                 token: token
             )
-            await OfflineQueue.shared.updateUploadProgress(
+            await offlineQueue.updateUploadProgress(
                 id: action.id,
                 uploadSessionId: session.sessionId,
                 uploadedChunkIndex: chunkIndex + 1,
@@ -444,7 +467,7 @@ final class SyncEngine {
             ),
             token: token
         )
-        await OfflineQueue.shared.updateUploadProgress(
+        await offlineQueue.updateUploadProgress(
             id: action.id,
             uploadSessionId: created.sessionId,
             uploadedChunkIndex: 0,
@@ -482,11 +505,6 @@ final class SyncEngine {
     private func cleanupLocalCopyIfNeeded(action: PendingAction) {
         guard let localPath = action.mediaLocalFilePath else { return }
         try? FileManager.default.removeItem(atPath: localPath)
-    }
-
-    private func getPlayerToken() -> String? {
-        // Load from keychain
-        KeychainService.load(key: AppConfiguration.playerTokenKey)
     }
 
     private func isNetworkError(_ error: Error) -> Bool {
@@ -527,13 +545,13 @@ enum SyncError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .noAuth:
-            return LocaleManager.shared.t("sync.errorNoAuth")
+            return Translations.string("sync.errorNoAuth")
         case .noAPIClient:
-            return LocaleManager.shared.t("sync.errorNoClient")
+            return Translations.string("sync.errorNoClient")
         case .invalidAction:
-            return LocaleManager.shared.t("sync.errorInvalidAction")
+            return Translations.string("sync.errorInvalidAction")
         case .needsReselect:
-            return LocaleManager.shared.t("sync.mediaUnavailable")
+            return Translations.string("sync.mediaUnavailable")
         }
     }
 }

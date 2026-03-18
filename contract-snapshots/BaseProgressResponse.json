@@ -1,0 +1,11 @@
+{
+  "baseId": "a7b8c9d0-e1f2-3456-abcd-567890123456",
+  "baseName": "Forest Clearing",
+  "lat": 47.3769,
+  "lng": 8.5417,
+  "nfcLinked": true,
+  "status": "completed",
+  "checkedInAt": "2025-03-01T09:15:00Z",
+  "challengeId": "f6a7b8c9-d0e1-2345-fabc-456789012345",
+  "submissionStatus": "approved"
+}

@@ -438,6 +438,7 @@ export function ChallengesPage() {
                       try {
                         await teamVariablesApi.saveChallengeVariables(gameId!, editing.id, { variables: vars });
                         queryClient.invalidateQueries({ queryKey: ["challenge-variables", gameId, editing.id] });
+                        queryClient.invalidateQueries({ queryKey: ["team-variables-completeness", gameId] });
                         setActionError("");
                       } catch (error) {
                         setActionError(getApiErrorMessage(error));

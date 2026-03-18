@@ -31,6 +31,20 @@ actor OfflineQueue {
         }
     }
 
+    /// Testable initializer that uses a custom file URL for isolation.
+    init(fileURL: URL) {
+        self.fileURL = fileURL
+        if FileManager.default.fileExists(atPath: fileURL.path) {
+            do {
+                let data = try Data(contentsOf: fileURL)
+                pendingActions = try decoder.decode([PendingAction].self, from: data)
+            } catch {
+                Logger(subsystem: "com.prayer.pointfinder", category: "OfflineQueue").warning(" Failed to load from disk: \(error.localizedDescription)")
+                pendingActions = []
+            }
+        }
+    }
+
     // MARK: - Queue Operations
 
     /// Add an action to the pending queue

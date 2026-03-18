@@ -108,6 +108,7 @@ export function TeamsPage() {
                 try {
                   await teamVariablesApi.saveGameVariables(gameId!, { variables: vars });
                   queryClient.invalidateQueries({ queryKey: ["game-variables", gameId] });
+                  queryClient.invalidateQueries({ queryKey: ["team-variables-completeness", gameId] });
                   setActionError("");
                 } catch (error) {
                   setActionError(getApiErrorMessage(error));

@@ -1,0 +1,16 @@
+{
+  "id": "d4e5f6a7-b8c9-0123-defa-234567890123",
+  "name": "Forest Adventure",
+  "description": "A scouting game in the forest",
+  "startDate": "2025-03-01T08:00:00Z",
+  "endDate": "2025-03-01T18:00:00Z",
+  "status": "live",
+  "createdBy": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "operatorIds": [
+    "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  ],
+  "uniformAssignment": false,
+  "broadcastEnabled": true,
+  "broadcastCode": "FOREST2025",
+  "tileSource": "osm-classic"
+}

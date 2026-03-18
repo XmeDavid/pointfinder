@@ -3,6 +3,7 @@ import { renderHook, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createElement } from "react";
 import { useGameWebSocket } from "./useGameWebSocket";
+import { useOperatorPresenceStore } from "./useOperatorPresence";
 
 // Mock the websocket module
 const mockConnectWebSocket = vi.fn();
@@ -200,5 +201,65 @@ describe("useGameWebSocket", () => {
 
     unmount();
     expect(globalThis.cancelAnimationFrame).toHaveBeenCalled();
+  });
+
+  it("invalidates game query key on game_status event", () => {
+    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+    renderHook(() => useGameWebSocket("game-1"), { wrapper });
+
+    const onMessage = mockConnectWebSocket.mock.calls[0][1];
+
+    act(() => {
+      onMessage({ type: "game_status", data: { status: "live" } });
+      flushRaf();
+    });
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["game", "game-1"] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["dashboard-stats", "game-1"] });
+    // game_status also invalidates the global games list (non-scoped)
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["games"] });
+  });
+
+  it("updates presence store on presence event with operators", () => {
+    renderHook(() => useGameWebSocket("game-1"), { wrapper });
+
+    const onMessage = mockConnectWebSocket.mock.calls[0][1];
+    const operators = [
+      { id: "u1", name: "Alice", initials: "A" },
+      { id: "u2", name: "Bob", initials: "B" },
+    ];
+
+    act(() => {
+      onMessage({ type: "presence", data: { operators } });
+    });
+
+    // Presence events update the store directly rather than invalidating queries
+    expect(useOperatorPresenceStore.getState().operators).toEqual(operators);
+  });
+
+  it("re-subscribes after disconnect and reconnect", () => {
+    const { unmount } = renderHook(() => useGameWebSocket("game-1"), { wrapper });
+
+    // First connection
+    expect(mockConnectWebSocket).toHaveBeenCalledTimes(1);
+
+    // Unmount disconnects
+    unmount();
+    expect(mockDisconnectWebSocket).toHaveBeenCalledTimes(1);
+
+    // Re-render (simulating component remount) re-subscribes
+    mockConnectWebSocket.mockClear();
+    mockDisconnectWebSocket.mockClear();
+
+    const { unmount: unmount2 } = renderHook(() => useGameWebSocket("game-1"), { wrapper });
+    expect(mockConnectWebSocket).toHaveBeenCalledTimes(1);
+    expect(mockConnectWebSocket).toHaveBeenCalledWith(
+      "game-1",
+      expect.any(Function),
+      expect.any(Function)
+    );
+
+    unmount2();
+    expect(mockDisconnectWebSocket).toHaveBeenCalledTimes(1);
   });
 });

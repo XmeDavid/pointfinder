@@ -24,6 +24,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -59,6 +60,8 @@ class SubmissionServiceTest {
     private TemplateVariableService templateVariableService;
     @Mock
     private ThumbnailService thumbnailService;
+    @Mock
+    private MonitoringService monitoringService;
 
     @InjectMocks
     private SubmissionService submissionService;
@@ -373,5 +376,186 @@ class SubmissionServiceTest {
         verify(submissionRepository).save(submissionCaptor.capture());
         assertEquals(SubmissionStatus.rejected, submissionCaptor.getValue().getStatus());
         assertEquals(SubmissionStatus.rejected.name(), response.getStatus());
+    }
+
+    @Test
+    void createSubmissionWithAnswerTypeNoneAutoApproves() {
+        UUID createdSubmissionId = UUID.randomUUID();
+        challenge.setAnswerType(AnswerType.none);
+
+        CreateSubmissionRequest request = new CreateSubmissionRequest();
+        request.setTeamId(teamId);
+        request.setChallengeId(challengeId);
+        request.setBaseId(baseId);
+        request.setAnswer("");
+
+        when(fileStorageService.validateStoredFileUrl(null, gameId)).thenReturn(null);
+        when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
+        when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
+        when(baseRepository.findById(baseId)).thenReturn(Optional.of(base));
+        when(submissionRepository.save(any(Submission.class))).thenAnswer(invocation -> {
+            Submission saved = invocation.getArgument(0);
+            saved.setId(createdSubmissionId);
+            saved.setSubmittedAt(Instant.now());
+            return saved;
+        });
+
+        SubmissionResponse response = submissionService.createSubmission(gameId, request);
+
+        ArgumentCaptor<Submission> submissionCaptor = ArgumentCaptor.forClass(Submission.class);
+        verify(submissionRepository).save(submissionCaptor.capture());
+        assertEquals(SubmissionStatus.approved, submissionCaptor.getValue().getStatus());
+        assertEquals(SubmissionStatus.approved.name(), response.getStatus());
+        assertEquals(challenge.getPoints(), submissionCaptor.getValue().getPoints());
+    }
+
+    @Test
+    void createSubmissionAutoValidationIsCaseInsensitive() {
+        UUID createdSubmissionId = UUID.randomUUID();
+        challenge.setAutoValidate(true);
+        challenge.setCorrectAnswer(List.of("Hello World"));
+
+        CreateSubmissionRequest request = new CreateSubmissionRequest();
+        request.setTeamId(teamId);
+        request.setChallengeId(challengeId);
+        request.setBaseId(baseId);
+        request.setAnswer("  HELLO WORLD  ");
+
+        when(fileStorageService.validateStoredFileUrl(null, gameId)).thenReturn(null);
+        when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
+        when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
+        when(baseRepository.findById(baseId)).thenReturn(Optional.of(base));
+        when(submissionRepository.save(any(Submission.class))).thenAnswer(invocation -> {
+            Submission saved = invocation.getArgument(0);
+            saved.setId(createdSubmissionId);
+            saved.setSubmittedAt(Instant.now());
+            return saved;
+        });
+
+        SubmissionResponse response = submissionService.createSubmission(gameId, request);
+
+        ArgumentCaptor<Submission> submissionCaptor = ArgumentCaptor.forClass(Submission.class);
+        verify(submissionRepository).save(submissionCaptor.capture());
+        assertEquals(SubmissionStatus.correct, submissionCaptor.getValue().getStatus());
+    }
+
+    @Test
+    void createSubmissionAutoValidationResolvesTemplateVariablesBeforeMatching() {
+        UUID createdSubmissionId = UUID.randomUUID();
+        challenge.setAutoValidate(true);
+        challenge.setCorrectAnswer(List.of("{{teamColor}}"));
+
+        // Template resolution replaces {{teamColor}} with the actual team-specific value
+        when(templateVariableService.resolveTemplates(
+                eq(List.of("{{teamColor}}")), eq(gameId), eq(challengeId), eq(teamId)))
+                .thenReturn(List.of("red"));
+
+        CreateSubmissionRequest request = new CreateSubmissionRequest();
+        request.setTeamId(teamId);
+        request.setChallengeId(challengeId);
+        request.setBaseId(baseId);
+        request.setAnswer("red");
+
+        when(fileStorageService.validateStoredFileUrl(null, gameId)).thenReturn(null);
+        when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
+        when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
+        when(baseRepository.findById(baseId)).thenReturn(Optional.of(base));
+        when(submissionRepository.save(any(Submission.class))).thenAnswer(invocation -> {
+            Submission saved = invocation.getArgument(0);
+            saved.setId(createdSubmissionId);
+            saved.setSubmittedAt(Instant.now());
+            return saved;
+        });
+
+        SubmissionResponse response = submissionService.createSubmission(gameId, request);
+
+        ArgumentCaptor<Submission> submissionCaptor = ArgumentCaptor.forClass(Submission.class);
+        verify(submissionRepository).save(submissionCaptor.capture());
+        assertEquals(SubmissionStatus.correct, submissionCaptor.getValue().getStatus());
+    }
+
+    @Test
+    void createSubmissionWithDuplicateIdempotencyKeyReturnsExisting() {
+        UUID idempotencyKey = UUID.randomUUID();
+        UUID existingSubmissionId = UUID.randomUUID();
+
+        Submission existing = Submission.builder()
+                .id(existingSubmissionId)
+                .team(team)
+                .challenge(challenge)
+                .base(base)
+                .answer("answer")
+                .status(SubmissionStatus.pending)
+                .submittedAt(Instant.now())
+                .idempotencyKey(idempotencyKey)
+                .build();
+
+        CreateSubmissionRequest request = new CreateSubmissionRequest();
+        request.setTeamId(teamId);
+        request.setChallengeId(challengeId);
+        request.setBaseId(baseId);
+        request.setAnswer("answer");
+        request.setIdempotencyKey(idempotencyKey);
+
+        // First call finds existing - returns it directly without saving
+        when(submissionRepository.findByIdempotencyKey(idempotencyKey))
+                .thenReturn(Optional.of(existing));
+
+        SubmissionResponse response = submissionService.createSubmission(gameId, request);
+
+        assertEquals(existingSubmissionId, response.getId());
+        // save() should never be called since we returned early
+        verify(submissionRepository, times(0)).save(any(Submission.class));
+    }
+
+    @Test
+    void createSubmissionAutoValidationWithNullCorrectAnswerStaysPending() {
+        UUID createdSubmissionId = UUID.randomUUID();
+        challenge.setAutoValidate(true);
+        challenge.setCorrectAnswer(null);
+
+        CreateSubmissionRequest request = new CreateSubmissionRequest();
+        request.setTeamId(teamId);
+        request.setChallengeId(challengeId);
+        request.setBaseId(baseId);
+        request.setAnswer("any answer");
+
+        when(fileStorageService.validateStoredFileUrl(null, gameId)).thenReturn(null);
+        when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
+        when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
+        when(baseRepository.findById(baseId)).thenReturn(Optional.of(base));
+        when(submissionRepository.save(any(Submission.class))).thenAnswer(invocation -> {
+            Submission saved = invocation.getArgument(0);
+            saved.setId(createdSubmissionId);
+            saved.setSubmittedAt(Instant.now());
+            return saved;
+        });
+
+        SubmissionResponse response = submissionService.createSubmission(gameId, request);
+
+        ArgumentCaptor<Submission> submissionCaptor = ArgumentCaptor.forClass(Submission.class);
+        verify(submissionRepository).save(submissionCaptor.capture());
+        assertEquals(SubmissionStatus.pending, submissionCaptor.getValue().getStatus());
+        assertEquals(SubmissionStatus.pending.name(), response.getStatus());
+    }
+
+    @Test
+    void createSubmissionDataIntegrityWithoutIdempotencyKeyRethrows() {
+        CreateSubmissionRequest request = new CreateSubmissionRequest();
+        request.setTeamId(teamId);
+        request.setChallengeId(challengeId);
+        request.setBaseId(baseId);
+        request.setAnswer("answer");
+        // No idempotencyKey set
+
+        when(fileStorageService.validateStoredFileUrl(null, gameId)).thenReturn(null);
+        when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
+        when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
+        when(baseRepository.findById(baseId)).thenReturn(Optional.of(base));
+        when(submissionRepository.save(any(Submission.class)))
+                .thenThrow(new DataIntegrityViolationException("some constraint"));
+
+        assertThrows(DataIntegrityViolationException.class,
+                () -> submissionService.createSubmission(gameId, request));
     }
 }

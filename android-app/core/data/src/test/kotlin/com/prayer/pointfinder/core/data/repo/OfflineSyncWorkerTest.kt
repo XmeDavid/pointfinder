@@ -49,4 +49,43 @@ class OfflineSyncWorkerTest {
             sorted.map { it.id },
         )
     }
+
+    @Test
+    fun `prioritized actions with same timestamp maintains type priority`() {
+        val actions = listOf(
+            PendingActionEntity("s-1", "submission", "g", "b", "c", "a", 1000, 0),
+            PendingActionEntity("c-1", "check_in", "g", "b", null, null, 1000, 0),
+            PendingActionEntity("s-2", "submission", "g", "b", "c", "a", 1000, 0),
+            PendingActionEntity("c-2", "check_in", "g", "b", null, null, 1000, 0),
+        )
+
+        val sorted = prioritizedPendingActions(actions)
+        // Check-ins should come before submissions even at the same timestamp
+        assertEquals("check_in", sorted[0].type)
+        assertEquals("check_in", sorted[1].type)
+        assertEquals("submission", sorted[2].type)
+        assertEquals("submission", sorted[3].type)
+    }
+
+    @Test
+    fun `prioritized actions with empty list returns empty`() {
+        val sorted = prioritizedPendingActions(emptyList())
+        assertEquals(emptyList<PendingActionEntity>(), sorted)
+    }
+
+    @Test
+    fun `prioritized actions excludes nothing based on retry count`() {
+        // prioritizedPendingActions only sorts; filtering by retry limit happens in doWork.
+        // Actions with high retry counts are still present after prioritization.
+        val actions = listOf(
+            PendingActionEntity("over-limit", "submission", "g", "b", "c", "a", 1000, 10),
+            PendingActionEntity("normal", "check_in", "g", "b", null, null, 2000, 0),
+        )
+
+        val sorted = prioritizedPendingActions(actions)
+        assertEquals(2, sorted.size)
+        // Check-in still comes first by type priority
+        assertEquals("normal", sorted[0].id)
+        assertEquals("over-limit", sorted[1].id)
+    }
 }

@@ -1,0 +1,38 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  mail:
+    host: localhost
+    port: 25
+
+app:
+  jwt:
+    secret: test-secret-key-that-is-at-least-256-bits-long-for-hs256-algorithm
+    enforce-prod-secret: false
+    access-token-expiration-ms: 900000
+    refresh-token-expiration-ms: 604800000
+  cors:
+    allowed-origins: http://localhost:5173
+  frontend-url: http://localhost:5173
+  mail:
+    from: test@pointfinder.pt
+    enabled: false
+  apns:
+    enabled: false
+  fcm:
+    enabled: false
+  uploads:
+    path: ${java.io.tmpdir}/pointfinder-test-uploads
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus

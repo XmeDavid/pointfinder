@@ -72,7 +72,7 @@ export function OverviewPage() {
     { ok: basesWithoutNfc.length === 0, label: basesWithoutNfc.length === 0 ? t("overview.allNfcLinked") : t("overview.nfcMissing", { count: basesWithoutNfc.length }) },
     { ok: unassignedLocationBound.length === 0, label: unassignedLocationBound.length === 0 ? t("overview.allLocationBoundAssigned") : t("overview.locationBoundUnassigned", { count: unassignedLocationBound.length }) },
     { ok: enoughChallenges, label: enoughChallenges ? t("overview.enoughChallenges") : t("overview.notEnoughChallenges", { bases: bases.length, challenges: challenges.length }) },
-    ...(varCompleteness && !varsComplete ? [{ ok: false, label: t("overview.variablesIncomplete", { count: varCompleteness.errors.length }) }] : []),
+    ...(varCompleteness && !varsComplete ? varCompleteness.errors.map((err) => ({ ok: false, label: err })) : []),
   ];
 
   const canGoLive = game.status !== "setup" || readinessChecks.every((check) => check.ok);

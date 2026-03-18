@@ -75,7 +75,6 @@ Five independent reviewers analyzed the PointFinder codebase from security, UX, 
 | 3.13 | Assignment resolution logic duplicated between PlayerService and MonitoringService | `PlayerService.java:514-530`, `MonitoringService.java:160-189` |
 | 3.14 | `findByTeamId` in SubmissionRepository missing JOIN FETCH (N+1) | `SubmissionRepository.java:23` |
 | 3.15 | Missing composite index on `submissions(team_id, base_id)` | `V1__initial_schema.sql:172-176` |
-| 3.16 | `activity_events` table grows unbounded with no retention policy | Schema + `MonitoringService.java:101` |
 | 3.17 | IllegalStateException handler uses fragile string prefix matching | `GlobalExceptionHandler.java:72-79` |
 | 3.18 | No error correlation ID in API responses | `GlobalExceptionHandler.java:81-86` |
 
@@ -160,26 +159,35 @@ Multiple reviewers independently praised these aspects:
 
 ### Security Hardening
 - [x] Remove WebSocket token query param fallback (2.2) — no client uses it; header-only auth now
-- [ ] Add CSP header (2.4)
-- [ ] Fix password policy + frontend mismatch (3.1)
-- [ ] Bind Prometheus to localhost (3.4)
-- [ ] Remove Grafana default password (3.5)
-- [ ] Add backend health check to docker-compose (3.10)
-- [ ] Add Docker resource constraints (2.9)
+- [x] Add CSP header (2.4) — already present in nginx.conf
+- [x] Fix password policy + frontend mismatch (3.1)
+- [x] Bind Prometheus to localhost (3.4) — already bound to 127.0.0.1:9090
+- [x] Remove Grafana default password (3.5)
+- [x] Add backend health check to docker-compose (3.10) — already present
+- [x] Add Docker resource constraints (2.9)
 
 ### Performance & Reliability
-- [ ] Add @Transactional timeouts (2.6)
-- [ ] Make FCM push async (2.7)
-- [ ] Fix nginx rate limits for player endpoints (2.10)
-- [ ] Add WebSocket connection limits (2.8)
-- [ ] Add backend team submissions filter endpoint (2.11)
-- [ ] Add JOIN FETCH to findByTeamId (3.14)
-- [ ] Add composite index on submissions (3.15)
-- [ ] Configure @Async executor (3.9)
+- [x] Add @Transactional timeouts (2.6)
+- [x] Make FCM push async (2.7)
+- [x] Fix nginx rate limits for player endpoints (2.10)
+- [x] Add WebSocket connection limits (2.8)
+- [x] Add backend team submissions filter endpoint (2.11)
+- [x] Add JOIN FETCH to findByTeamId (3.14)
+- [x] Add composite index on submissions (3.15)
+- [x] Configure @Async executor (3.9)
+
+### Architecture & Reliability
+- [x] Fix stale WebSocket session cleanup (3.7)
+- [x] Fix OperatorPresenceTracker race condition (3.8)
+- [x] Game deletion broadcasts to connected clients (3.11)
+- [x] Extract LazyInitHelper to deduplicate force-init pattern (3.12)
+- [x] Extract AssignmentResolver to deduplicate assignment logic (3.13)
+- [x] Fix fragile IllegalStateException string matching (3.17)
+- [x] Add error correlation ID to 500 responses (3.18)
 
 ### UX
-- [ ] Add "Leave Game" confirmation (3.20)
-- [ ] Add "Go Live" confirmation dialog (3.24)
+- [x] Add "Leave Game" confirmation (3.20) — iOS, Android, all 3 languages
+- [x] Add "Go Live" confirmation dialog (3.24) — web, all 3 languages
 
 ### Next Quarter: Product Enhancement
 - [ ] NFC scan celebration (4.1) — highest-leverage product improvement

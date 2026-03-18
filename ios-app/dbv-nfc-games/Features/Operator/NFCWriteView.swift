@@ -357,6 +357,7 @@ struct BaseDetailView: View {
 // MARK: - Challenge Card View
 
 struct ChallengeCardView: View {
+    @Environment(LocaleManager.self) private var locale
     let challenge: Challenge
 
     var body: some View {

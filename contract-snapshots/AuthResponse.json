@@ -1,0 +1,11 @@
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiJ9.test-access-token",
+  "refreshToken": "eyJhbGciOiJIUzI1NiJ9.test-refresh-token",
+  "user": {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "email": "operator@example.com",
+    "name": "Test Operator",
+    "role": "operator",
+    "createdAt": "2025-01-15T10:30:00Z"
+  }
+}
