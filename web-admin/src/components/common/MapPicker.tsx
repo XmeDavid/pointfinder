@@ -70,7 +70,7 @@ export function MapPicker({ value, onChange, className, tileSource }: MapPickerP
           touchPitch={!locked}
         />
         {/* Fixed center pin */}
-        <div className="absolute left-1/2 top-1/2 pointer-events-none z-10">
+        <div className="absolute left-1/2 top-1/2 pointer-events-none z-10" style={{ transform: "translate(-50%, -100%)" }}>
           <PinMarkerSvg color="#3b82f6" />
         </div>
         {/* Lock overlay — fades in on hover when locked */}

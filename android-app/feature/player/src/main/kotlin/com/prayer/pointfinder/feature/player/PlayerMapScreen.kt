@@ -226,7 +226,10 @@ private fun createPinMarkerBitmap(colorInt: Int, status: BaseStatus, density: Fl
     val triangleHeightPx = (6 * density).toInt()
     val shadowPx = (4 * density).toInt()
     val width = circleDiameterPx + shadowPx * 2
-    val height = circleDiameterPx + triangleHeightPx + shadowPx * 2
+    // MapLibre Marker anchors at bitmap center. Size the bitmap so
+    // the center coincides with the triangle tip, matching iOS behavior.
+    val tipFromTop = circleDiameterPx + shadowPx + triangleHeightPx
+    val height = tipFromTop * 2
     val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
 
