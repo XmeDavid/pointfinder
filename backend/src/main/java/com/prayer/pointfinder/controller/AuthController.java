@@ -47,14 +47,10 @@ public class AuthController {
 
     @PostMapping("/request-registration")
     public ResponseEntity<Map<String, String>> requestRegistration(
-            @RequestBody Map<String, String> body,
+            @Valid @RequestBody RequestRegistrationRequest request,
             HttpServletRequest httpRequest) {
-        String email = body.get("email");
-        if (email == null || email.isBlank()) {
-            throw new BadRequestException("Email is required");
-        }
         String requestHost = httpRequest.getHeader("Host");
-        authService.requestRegistration(email.trim(), requestHost);
+        authService.requestRegistration(request.getEmail().trim(), requestHost);
         return ResponseEntity.ok(Map.of("message", "If eligible, a registration link has been sent."));
     }
 

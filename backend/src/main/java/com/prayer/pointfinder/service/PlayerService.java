@@ -68,7 +68,17 @@ public class PlayerService {
             player.setDisplayName(request.getDisplayName());
         }
 
-        player = playerRepository.save(player);
+        try {
+            player = playerRepository.save(player);
+        } catch (DataIntegrityViolationException ex) {
+            // Concurrent join with same deviceId -- re-fetch the winner
+            player = playerRepository.findFirstByDeviceIdAndTeamGameIdOrderByCreatedAtDesc(
+                    request.getDeviceId(), game.getId())
+                    .orElseThrow(() -> new BadRequestException("Join failed, please try again"));
+            player.setTeam(team);
+            player.setDisplayName(request.getDisplayName());
+            player = playerRepository.save(player);
+        }
 
         // Generate JWT token using the persisted player ID
         String jwt = tokenProvider.generatePlayerToken(player.getId(), team.getId(), game.getId());

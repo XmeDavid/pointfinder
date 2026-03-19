@@ -121,7 +121,10 @@ export function SubmissionsPage() {
   }, []);
 
   const reviewMutation = useMutation({
-    mutationFn: ({ id, status, points, feedback: fb }: { id: string; status: SubmissionStatus; points?: number; feedback?: string }) => submissionsApi.review(id, status, user!.id, fb, gameId, points),
+    mutationFn: ({ id, status, points, feedback: fb }: { id: string; status: SubmissionStatus; points?: number; feedback?: string }) => {
+      if (!user) throw new Error("User not authenticated");
+      return submissionsApi.review(id, status, user.id, fb, gameId, points);
+    },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["submissions", gameId] }); setReviewingSub(null); setFeedback(""); setReviewPoints(0); toast.success(t("common.saved")); },
     onError: (error: unknown) => { toast.error(getApiErrorMessage(error)); },
   });
@@ -276,7 +279,7 @@ export function SubmissionsPage() {
                 return shouldShowCorrectAnswer ? (
                   <div>
                     <p className="text-sm font-medium mb-1">{t("submissions.correctAnswer")}</p>
-                    <div className="rounded-md bg-muted p-3 text-sm">{ch.correctAnswer!.join(", ")}</div>
+                    <div className="rounded-md bg-muted p-3 text-sm">{ch.correctAnswer?.join(", ")}</div>
                   </div>
                 ) : null;
               })()}
