@@ -141,6 +141,7 @@ struct MapLegendView: View {
             legendItem(color: .blue, label: locale.t("map.checkedIn"))
             legendItem(color: .orange, label: locale.t("map.pending"))
             legendItem(color: .green, label: locale.t("map.completed"))
+            legendItem(color: .red, label: locale.t("map.rejected"))
         }
         .font(.caption2)
         .padding(.horizontal, 12)

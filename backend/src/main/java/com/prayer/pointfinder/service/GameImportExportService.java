@@ -9,6 +9,7 @@ import com.prayer.pointfinder.exception.ConflictException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.*;
 import com.prayer.pointfinder.security.SecurityUtils;
+import com.prayer.pointfinder.util.HtmlSanitizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -159,8 +160,8 @@ public class GameImportExportService {
                     .game(newGame)
                     .title(chDto.getTitle())
                     .description(chDto.getDescription() != null ? chDto.getDescription() : "")
-                    .content(chDto.getContent() != null ? chDto.getContent() : "")
-                    .completionContent(chDto.getCompletionContent() != null ? chDto.getCompletionContent() : "")
+                    .content(HtmlSanitizer.sanitize(chDto.getContent() != null ? chDto.getContent() : ""))
+                    .completionContent(HtmlSanitizer.sanitize(chDto.getCompletionContent() != null ? chDto.getCompletionContent() : ""))
                     .answerType(chDto.getAnswerType())
                     .autoValidate(chDto.getAutoValidate() != null ? chDto.getAutoValidate() : false)
                     .correctAnswer(chDto.getCorrectAnswer())

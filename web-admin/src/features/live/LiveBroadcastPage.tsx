@@ -114,6 +114,7 @@ export function LiveBroadcastPage() {
               teams={teams}
               locations={locations}
               progress={progress}
+              tileSource={initialData?.tileSource}
             />
           </div>
           <div className="h-1/3 min-h-0">

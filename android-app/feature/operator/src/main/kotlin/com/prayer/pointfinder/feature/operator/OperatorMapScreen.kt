@@ -7,8 +7,10 @@ import android.graphics.Bitmap
 import android.location.LocationManager
 import android.graphics.Canvas
 import android.graphics.Paint
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -43,9 +45,12 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
@@ -404,6 +409,22 @@ fun OperatorMapScreen(
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.label_add_base_here))
             }
         }
+
+        // Status legend
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 12.dp, start = 16.dp, end = 16.dp)
+                .background(Color.Black.copy(alpha = 0.55f), shape = MaterialTheme.shapes.small)
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            LegendDot(color = Color.Gray, label = stringResource(R.string.status_not_visited))
+            LegendDot(color = StatusCheckedIn, label = stringResource(R.string.status_checked_in))
+            LegendDot(color = StatusSubmitted, label = stringResource(R.string.status_submitted))
+            LegendDot(color = StatusCompleted, label = stringResource(R.string.status_completed))
+            LegendDot(color = StatusRejected, label = stringResource(R.string.status_rejected))
+        }
     }
 
     // Edit mode bottom sheet for base actions
@@ -518,9 +539,9 @@ private fun aggregateBaseStatus(
 
 private fun statusColor(status: BaseStatus): Int = when (status) {
     BaseStatus.NOT_VISITED -> android.graphics.Color.GRAY
-    BaseStatus.CHECKED_IN -> android.graphics.Color.parseColor("#1976D2")
-    BaseStatus.SUBMITTED -> android.graphics.Color.parseColor("#F57C00")
-    BaseStatus.COMPLETED -> android.graphics.Color.parseColor("#388E3C")
+    BaseStatus.CHECKED_IN -> android.graphics.Color.parseColor("#1565C0")
+    BaseStatus.SUBMITTED -> android.graphics.Color.parseColor("#E08A00")
+    BaseStatus.COMPLETED -> android.graphics.Color.parseColor("#2E7D32")
     BaseStatus.REJECTED -> android.graphics.Color.parseColor("#D32F2F")
 }
 
@@ -664,6 +685,20 @@ private fun getLastKnownLocation(context: android.content.Context): android.loca
     return lm.getLastKnownLocation(LocationManager.FUSED_PROVIDER)
         ?: lm.getLastKnownLocation(LocationManager.GPS_PROVIDER)
         ?: lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+}
+
+@Composable
+private fun LegendDot(color: Color, label: String) {
+    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(color))
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            color = Color.White,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
 }
 
 internal fun formatTimestamp(iso: String): String {

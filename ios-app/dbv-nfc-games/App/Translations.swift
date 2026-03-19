@@ -82,6 +82,7 @@ enum Translations {
         "map.checkedIn": "Checked In",
         "map.pending": "Pending",
         "map.completed": "Completed",
+        "map.rejected": "Rejected",
         "player.gameNotLiveTitle": "Game not active yet",
         "player.gameNotLiveMessage": "Please wait until your operator sets the game live.",
 
@@ -495,6 +496,7 @@ enum Translations {
         "map.checkedIn": "Check-in",
         "map.pending": "Pendente",
         "map.completed": "Concluído",
+        "map.rejected": "Rejeitado",
         "player.gameNotLiveTitle": "Jogo ainda não está ativo",
         "player.gameNotLiveMessage": "Aguarda até que o operador coloque o jogo em direto.",
 
@@ -942,6 +944,7 @@ enum Translations {
         "map.checkedIn": "Eingecheckt",
         "map.pending": "Ausstehend",
         "map.completed": "Abgeschlossen",
+        "map.rejected": "Abgelehnt",
         "player.gameNotLiveTitle": "Spiel ist noch nicht aktiv",
         "player.gameNotLiveMessage": "Bitte warte, bis dein Operator das Spiel live schaltet.",
 

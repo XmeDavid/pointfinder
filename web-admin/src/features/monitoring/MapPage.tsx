@@ -2,7 +2,7 @@ import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { MapPin, Radio, Eye, EyeOff, Users, User } from "lucide-react";
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
-import { Map as MapGL, Marker } from "react-map-gl/maplibre";
+import { Map as MapGL, Marker, Source, Layer } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -180,6 +180,29 @@ export function MapPage() {
     });
     return map;
   }, [locations]);
+
+  const connectionsGeoJson = useMemo(() => {
+    if (!challenges || !bases) return null;
+    const features = challenges
+      .filter((c) => c.unlocksBaseId)
+      .map((challenge) => {
+        const from = bases.find((b) => b.fixedChallengeId === challenge.id);
+        const to = bases.find((b) => b.id === challenge.unlocksBaseId);
+        if (!from || !to) return null;
+        return {
+          type: "Feature" as const,
+          properties: {},
+          geometry: {
+            type: "LineString" as const,
+            coordinates: [[from.lng, from.lat], [to.lng, to.lat]],
+          },
+        };
+      })
+      .filter(Boolean) as GeoJSON.Feature[];
+    return features.length > 0
+      ? { type: "FeatureCollection" as const, features }
+      : null;
+  }, [challenges, bases]);
 
   const selectedTeam = viewMode !== "all" ? teams.find((t) => t.id === viewMode) : null;
   const markerLocations = useMemo(() => {
@@ -363,6 +386,22 @@ export function MapPage() {
                 </Marker>
               );
             })}
+
+            {/* Unlock connection lines */}
+            {connectionsGeoJson && (
+              <Source id="unlock-connections" type="geojson" data={connectionsGeoJson}>
+                <Layer
+                  id="unlock-connection-lines"
+                  type="line"
+                  paint={{
+                    "line-color": "#6b7280",
+                    "line-width": 2,
+                    "line-opacity": 0.5,
+                    "line-dasharray": [8, 8],
+                  }}
+                />
+              </Source>
+            )}
 
             {/* Team location markers in all-view; player markers in team-view */}
             {showTeams && markerLocations.map((loc) => {

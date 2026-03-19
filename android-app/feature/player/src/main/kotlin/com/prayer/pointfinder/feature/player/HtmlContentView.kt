@@ -46,7 +46,8 @@ fun HtmlContentView(
                 isHorizontalScrollBarEnabled = false
                 setBackgroundColor(android.graphics.Color.TRANSPARENT)
                 webChromeClient = WebChromeClient()
-                settings.mediaPlaybackRequiresUserGesture = true
+                settings.javaScriptEnabled = true
+                settings.mediaPlaybackRequiresUserGesture = false
 
                 webViewClient = object : WebViewClient() {
                     override fun shouldOverrideUrlLoading(
@@ -61,13 +62,13 @@ fun HtmlContentView(
                 }
 
                 lastLoadedHtml[0] = wrappedHtml
-                loadDataWithBaseURL(null, wrappedHtml, "text/html", "UTF-8", null)
+                loadDataWithBaseURL("https://localhost/", wrappedHtml, "text/html", "UTF-8", null)
             }
         },
         update = { webView ->
             if (lastLoadedHtml[0] != wrappedHtml) {
                 lastLoadedHtml[0] = wrappedHtml
-                webView.loadDataWithBaseURL(null, wrappedHtml, "text/html", "UTF-8", null)
+                webView.loadDataWithBaseURL("https://localhost/", wrappedHtml, "text/html", "UTF-8", null)
             }
         },
     )

@@ -40,6 +40,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -88,12 +89,14 @@ fun BaseEditScreen(
     onBack: () -> Unit,
     initialLat: Double?,
     initialLng: Double?,
+    tileSource: String? = null,
     modifier: Modifier = Modifier,
 ) {
     val isEditMode = base != null
     val context = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val density = context.resources.displayMetrics.density
+    val isDark = isSystemInDarkTheme()
 
     // Form state
     var name by remember { mutableStateOf(base?.name ?: "") }
@@ -138,6 +141,27 @@ fun BaseEditScreen(
         onDispose {
             lifecycle.removeObserver(observer)
             mapView.onDestroy()
+        }
+    }
+
+    // Style is set by LaunchedEffect — not in the factory
+    LaunchedEffect(mapInstance, tileSource, isDark) {
+        val map = mapInstance ?: return@LaunchedEffect
+        map.setStyle(Style.Builder().fromUri(TileSources.getResolvedStyleUrl(tileSource, isDark))) { style ->
+            if (hasPin) {
+                currentMarker?.let { map.removeMarker(it) }
+                val icon = IconFactory.getInstance(context)
+                    .fromBitmap(createPinBitmap(density))
+                val marker = map.addMarker(
+                    MarkerOptions()
+                        .position(LatLng(pinLat, pinLng))
+                        .icon(icon),
+                )
+                currentMarker = marker
+                map.moveCamera(
+                    CameraUpdateFactory.newLatLngZoom(LatLng(pinLat, pinLng), 15.0),
+                )
+            }
         }
     }
 
@@ -212,24 +236,10 @@ fun BaseEditScreen(
                 factory = {
                     mapView.apply {
                         getMapAsync { map ->
+                            // Style is set by LaunchedEffect(mapInstance, tileSource, isDark) — not here
                             mapInstance = map
                             map.uiSettings.isRotateGesturesEnabled = false
                             map.uiSettings.isTiltGesturesEnabled = false
-                            map.setStyle(Style.Builder().fromUri(TileSources.getStyleUrl(null))) { style ->
-                                if (hasPin) {
-                                    val icon = IconFactory.getInstance(context)
-                                        .fromBitmap(createPinBitmap(density))
-                                    val marker = map.addMarker(
-                                        MarkerOptions()
-                                            .position(LatLng(pinLat, pinLng))
-                                            .icon(icon),
-                                    )
-                                    currentMarker = marker
-                                    map.moveCamera(
-                                        CameraUpdateFactory.newLatLngZoom(LatLng(pinLat, pinLng), 15.0),
-                                    )
-                                }
-                            }
                             map.addOnMapClickListener { point ->
                                 pinLat = point.latitude
                                 pinLng = point.longitude

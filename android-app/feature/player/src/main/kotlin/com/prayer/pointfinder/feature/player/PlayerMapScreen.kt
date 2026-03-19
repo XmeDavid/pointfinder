@@ -174,6 +174,7 @@ fun PlayerMapScreen(
             LegendDot(color = StatusCheckedIn, label = stringResource(R.string.status_checked_in))
             LegendDot(color = StatusSubmitted, label = stringResource(R.string.status_submitted))
             LegendDot(color = StatusCompleted, label = stringResource(R.string.status_completed))
+            LegendDot(color = StatusRejected, label = stringResource(R.string.status_rejected))
         }
 
         Row(

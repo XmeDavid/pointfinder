@@ -1033,6 +1033,7 @@ private fun OperatorGameRoot(
                             onBack = { mapSubScreen = null },
                             initialLat = lat,
                             initialLng = lng,
+                            tileSource = selectedGame.tileSource,
                         )
                     }
                     mapSubScreen?.startsWith("base_edit:") == true -> {
@@ -1069,6 +1070,7 @@ private fun OperatorGameRoot(
                                 onBack = { mapSubScreen = null },
                                 initialLat = null,
                                 initialLng = null,
+                                tileSource = selectedGame.tileSource,
                             )
                         } else {
                             mapSubScreen = null
@@ -1172,6 +1174,7 @@ private fun OperatorGameRoot(
                             onBack = { setupSubScreen = "bases_list" },
                             initialLat = null,
                             initialLng = null,
+                            tileSource = selectedGame.tileSource,
                         )
                     }
                     setupSubScreen?.startsWith("base_edit:") == true -> {
@@ -1208,6 +1211,7 @@ private fun OperatorGameRoot(
                                 onBack = { setupSubScreen = "bases_list" },
                                 initialLat = null,
                                 initialLng = null,
+                                tileSource = selectedGame.tileSource,
                             )
                         } else {
                             setupSubScreen = "bases_list"

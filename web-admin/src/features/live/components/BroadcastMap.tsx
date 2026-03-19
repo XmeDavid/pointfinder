@@ -9,7 +9,7 @@ import type {
 } from "@/lib/api/broadcast";
 import { STATUS_COLORS, STATUS_PRIORITY, computeBounds } from "@/lib/map-utils";
 import { PinMarkerSvg, CircleDot } from "@/components/common/MapMarkers";
-import { DARK_STYLE_URL } from "@/lib/tile-sources";
+import { getResolvedStyleUrl, getDefaultCenter } from "@/lib/tile-sources";
 import type { BaseStatus } from "@/types";
 import type { MapRef } from "react-map-gl/maplibre";
 
@@ -20,9 +20,10 @@ interface Props {
   teams: BroadcastTeam[];
   locations: BroadcastLocation[];
   progress: BroadcastProgress[];
+  tileSource?: string;
 }
 
-export function BroadcastMap({ bases, teams, locations, progress }: Props) {
+export function BroadcastMap({ bases, teams, locations, progress, tileSource }: Props) {
   const mapRef = useRef<MapRef>(null);
   const fittedRef = useRef(false);
 
@@ -71,13 +72,14 @@ export function BroadcastMap({ bases, teams, locations, progress }: Props) {
     return Array.from(map.values());
   }, [locations]);
 
+  const fallback = getDefaultCenter(tileSource);
   const defaultCenter: [number, number] =
     bases.length > 0
       ? [
           bases.reduce((s, b) => s + b.lng, 0) / bases.length,
           bases.reduce((s, b) => s + b.lat, 0) / bases.length,
         ]
-      : [-8.869, 40.088];
+      : [fallback.lng, fallback.lat];
 
   useEffect(() => {
     if (bases.length > 0 && mapRef.current && !fittedRef.current) {
@@ -101,7 +103,7 @@ export function BroadcastMap({ bases, teams, locations, progress }: Props) {
         ref={mapRef}
         initialViewState={{ longitude: defaultCenter[0], latitude: defaultCenter[1], zoom: 13 }}
         style={{ width: "100%", height: "100%" }}
-        mapStyle={DARK_STYLE_URL}
+        mapStyle={getResolvedStyleUrl(tileSource, true)}
         scrollZoom={false}
         dragPan={false}
         dragRotate={false}

@@ -45,6 +45,15 @@ public class TemplateVariableService {
         while (matcher.find()) {
             String key = matcher.group(1) != null ? matcher.group(1) : matcher.group(2);
             String replacement = variables.getOrDefault(key, matcher.group(0));
+            // HTML-escape variable values to prevent post-sanitization XSS injection
+            if (!replacement.equals(matcher.group(0))) {
+                replacement = replacement
+                    .replace("&", "&amp;")
+                    .replace("<", "&lt;")
+                    .replace(">", "&gt;")
+                    .replace("\"", "&quot;")
+                    .replace("'", "&#39;");
+            }
             matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
         }
         matcher.appendTail(result);

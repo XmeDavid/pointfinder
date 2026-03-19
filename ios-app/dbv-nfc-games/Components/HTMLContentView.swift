@@ -23,8 +23,9 @@ struct HTMLContentView: UIViewRepresentable {
         let configuration = WKWebViewConfiguration()
         // Disable data detection (links, phone numbers, etc.)
         configuration.dataDetectorTypes = []
-        configuration.defaultWebpagePreferences.allowsContentJavaScript = false
+        configuration.defaultWebpagePreferences.allowsContentJavaScript = true
         configuration.allowsInlineMediaPlayback = true
+        configuration.mediaTypesRequiringUserActionForPlayback = []
 
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
