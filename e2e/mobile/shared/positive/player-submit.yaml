@@ -19,6 +19,13 @@ appId: ${APP_ID}
 - tapOn:
     id: "player-join-btn"
 
+# App navigates to PlayerNameView — enter display name
+- tapOn:
+    id: "player-name-field"
+- inputText: "Test Player"
+- hideKeyboard
+- tapOn: "Join Game"
+
 - assertVisible:
     id: "player-base-list"
 

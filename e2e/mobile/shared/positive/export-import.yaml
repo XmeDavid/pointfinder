@@ -25,6 +25,9 @@ appId: ${APP_ID}
 
 - tapOn: "${GAME_NAME:-E2E Test Game}"
 
+# Navigate to the More tab where export lives
+- tapOn: "More"
+
 # Verify export button is present
 - assertVisible:
     id: "game-export-btn"
@@ -32,5 +35,5 @@ appId: ${APP_ID}
 - tapOn:
     id: "game-export-btn"
 
-# Expect a share sheet or confirmation — just assert it appeared
-- assertVisible: "Export"
+# Expect a UIActivityViewController (share sheet) — assert its Cancel button is visible
+- assertVisible: "Cancel"

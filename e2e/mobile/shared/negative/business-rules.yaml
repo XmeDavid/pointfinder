@@ -22,6 +22,13 @@ appId: ${APP_ID}
 - tapOn:
     id: "player-join-btn"
 
+# App navigates to PlayerNameView — enter display name and attempt join
+- tapOn:
+    id: "player-name-field"
+- inputText: "Test Player"
+- hideKeyboard
+- tapOn: "Join Game"
+
 # Verify error is displayed and player stays on join screen
 - assertNotVisible:
     id: "player-base-list"
@@ -68,7 +75,7 @@ appId: ${APP_ID}
     id: "game-activate-btn"
 
 # Should show a validation error, not activate
-- assertNotVisible: "Active"
+- assertNotVisible: "Live"
 
 # --- N11: Dropdown filtering parity ---
 # Verify that the fixed challenge dropdown on a base edit screen

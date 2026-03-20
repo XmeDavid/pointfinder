@@ -15,6 +15,13 @@ appId: ${APP_ID}
 - tapOn:
     id: "player-join-btn"
 
+# App navigates to PlayerNameView — enter display name
+- tapOn:
+    id: "player-name-field"
+- inputText: "Test Player"
+- hideKeyboard
+- tapOn: "Join Game"
+
 # Verify player is now in the game and sees their team assignment
 - assertVisible: "${JOIN_TEAM_NAME:-Team Eagle}"
 - assertVisible:

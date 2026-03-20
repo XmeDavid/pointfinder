@@ -28,10 +28,10 @@ appId: ${APP_ID}
 - tapOn:
     id: "game-activate-btn"
 
-# Confirm activation dialog if present
-- tapOn: "Activate"
+# Confirm activation dialog — button text is "Go Live"
+- tapOn: "Go Live"
 
-# Verify the game status has changed to active
+# Verify the game status has changed to live
 - assertVisible:
     id: "game-status-label"
-- assertVisible: "Active"
+- assertVisible: "Live"

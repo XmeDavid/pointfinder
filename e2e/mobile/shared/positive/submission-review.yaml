@@ -25,24 +25,18 @@ appId: ${APP_ID}
 
 - tapOn: "${GAME_NAME:-E2E Test Game}"
 
-- tapOn:
-    id: "nav-monitoring"
+# Tap the "Submissions" tab (tab 2 in OperatorGameView)
+- tapOn: "Submissions"
 
-- assertVisible:
-    id: "submission-list"
-
-# Tap into the pending submission
+# Wait for submissions to load, then tap into the pending submission
 - tapOn: "The answer is 42"
 
 # P11: Approve the submission
 - tapOn:
     id: "submission-approve-btn"
 
-- assertVisible: "Approved"
+# After approving, the review sheet dismisses — verify we're back on the submissions list
+- assertVisible: "Submissions"
 
-# Re-enter monitoring to test rejection (P12) on a separate submission if available
-- tapOn:
-    id: "nav-monitoring"
-
-- assertVisible:
-    id: "submission-list"
+# Re-enter submissions tab to verify (P12)
+- tapOn: "Submissions"

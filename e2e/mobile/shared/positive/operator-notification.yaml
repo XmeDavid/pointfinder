@@ -25,8 +25,11 @@ appId: ${APP_ID}
 
 - tapOn: "${GAME_NAME:-E2E Test Game}"
 
-- tapOn:
-    id: "nav-monitoring"
+# Tap the "More" tab (tab 3 in OperatorGameView) to access notifications
+- tapOn: "More"
+
+# Navigate to Notifications management
+- tapOn: "Notifications"
 
 - tapOn:
     id: "notification-message-input"
@@ -35,5 +38,5 @@ appId: ${APP_ID}
 - tapOn:
     id: "notification-send-btn"
 
-# Verify confirmation that notification was sent
-- assertVisible: "Notification sent"
+# After sending, the message field is cleared — verify by asserting the sent message appears in history
+- assertVisible: "Attention teams: bonus challenge available at Base Alpha!"

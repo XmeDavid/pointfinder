@@ -25,16 +25,19 @@ appId: ${APP_ID}
 
 - tapOn: "${GAME_NAME:-E2E Test Game}"
 
-- tapOn:
-    id: "nav-monitoring"
+# Tap the "Live" tab (tab 1 in OperatorGameView)
+- tapOn: "Live"
 
 # Verify the monitoring/dashboard view is visible
 - assertVisible:
     id: "monitoring-tab"
 
-# Verify leaderboard section is present
+# Verify leaderboard section is present (default segment)
 - assertVisible:
     id: "leaderboard-view"
+
+# Switch to Activity segment to see submission feed
+- tapOn: "Activity"
 
 # Verify submission activity feed is present
 - assertVisible:
