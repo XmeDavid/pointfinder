@@ -60,7 +60,7 @@ fun Project.resolveApiBaseUrl(keys: List<String>, defaultValue: String): String 
 
 val debugApiBaseUrl = project.resolveApiBaseUrl(
     keys = listOf("API_BASE_URL_DEBUG", "API_BASE_URL"),
-    defaultValue = "http://192.168.0.1:8080",
+    defaultValue = "http://10.0.2.2:8080",
 )
 val releaseApiBaseUrl = project.resolveApiBaseUrl(
     keys = listOf("API_BASE_URL_RELEASE", "API_BASE_URL"),

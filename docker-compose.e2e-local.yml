@@ -56,6 +56,12 @@ services:
       - ./data/local-e2e/uploads:/uploads
       - ./data/local-e2e/secrets/AuthKey_LOCAL_E2E.p8:/app/config/apns-key.p8:ro
       - ./data/local-e2e/secrets/firebase-service-account.json:/app/config/firebase-service-account.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
     depends_on:
       postgres:
         condition: service_healthy
@@ -91,7 +97,7 @@ services:
       - frontend_dist_local_e2e:/usr/share/nginx/html/app:ro
     depends_on:
       backend:
-        condition: service_started
+        condition: service_healthy
       frontend:
         condition: service_healthy
     command: "/bin/sh -c 'nginx -g \"daemon off;\"'"
