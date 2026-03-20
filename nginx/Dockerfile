@@ -2,6 +2,7 @@ FROM nginx:1.27-alpine
 
 # Copy custom nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
+COPY security-headers.conf /etc/nginx/security-headers.conf
 
 # Expose port 80
 EXPOSE 80
