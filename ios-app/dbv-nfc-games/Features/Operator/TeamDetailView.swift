@@ -54,6 +54,7 @@ struct TeamDetailView: View {
             // Name & Color
             Section {
                 TextField(locale.t("operator.teamName"), text: $name)
+                    .accessibilityIdentifier("team-name-input")
                 VStack(alignment: .leading, spacing: 8) {
                     Text(locale.t("operator.teamColor"))
                         .font(.subheadline)
@@ -179,6 +180,7 @@ struct TeamDetailView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .disabled(name.isEmpty || isSaving)
+                .accessibilityIdentifier("team-save-btn")
             }
 
             if let errorMessage {
@@ -197,6 +199,7 @@ struct TeamDetailView: View {
                     Label(locale.t("operator.deleteTeam"), systemImage: "trash")
                         .frame(maxWidth: .infinity)
                 }
+                .accessibilityIdentifier("team-delete-btn")
             }
         }
         .navigationTitle(team.name)

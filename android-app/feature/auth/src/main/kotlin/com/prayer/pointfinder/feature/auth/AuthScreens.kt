@@ -565,7 +565,7 @@ fun PlayerNameScreen(
                     value = name,
                     onValueChange = { if (it.length <= 100) onNameChange(it) },
                     label = { Text(stringResource(R.string.label_display_name)) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("player-name-field"),
                     singleLine = true,
                     supportingText = {
                         Text("${name.length}/100")
