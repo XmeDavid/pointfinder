@@ -17,7 +17,6 @@ import { teamsApi } from "@/lib/api/teams";
 import { challengesApi } from "@/lib/api/challenges";
 import { basesApi } from "@/lib/api/bases";
 import { getApiErrorMessage } from "@/lib/api/errors";
-import { useAuthStore } from "@/hooks/useAuth";
 import { formatDateTime } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/useToast";
@@ -66,7 +65,6 @@ export function SubmissionsPage() {
   const { gameId } = useParams<{ gameId: string }>();
   const websocketError = useGameWebSocket(gameId);
   const queryClient = useQueryClient();
-  const user = useAuthStore((s) => s.user);
   const [filter, setFilter] = useState<"all" | "pending">("all");
   const [reviewingSub, setReviewingSub] = useState<Submission | null>(null);
   const [feedback, setFeedback] = useState("");
@@ -122,8 +120,7 @@ export function SubmissionsPage() {
 
   const reviewMutation = useMutation({
     mutationFn: ({ id, status, points, feedback: fb }: { id: string; status: SubmissionStatus; points?: number; feedback?: string }) => {
-      if (!user) throw new Error("User not authenticated");
-      return submissionsApi.review(id, status, user.id, fb, gameId, points);
+      return submissionsApi.review(id, status, fb, gameId, points);
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["submissions", gameId] }); setReviewingSub(null); setFeedback(""); setReviewPoints(0); toast.success(t("common.saved")); },
     onError: (error: unknown) => { toast.error(getApiErrorMessage(error)); },

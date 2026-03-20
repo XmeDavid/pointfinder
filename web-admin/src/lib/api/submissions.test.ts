@@ -81,7 +81,6 @@ describe("submissionsApi.review", () => {
     const result = await submissionsApi.review(
       "s1",
       "approved" as SubmissionStatus,
-      "operator-1",
       "Great work!",
       "game-1",
       10
@@ -102,7 +101,6 @@ describe("submissionsApi.review", () => {
     await submissionsApi.review(
       "s1",
       "rejected" as SubmissionStatus,
-      "operator-1",
       undefined,
       "game-1",
       undefined
@@ -122,7 +120,6 @@ describe("submissionsApi.review", () => {
     await submissionsApi.review(
       "s1",
       "approved" as SubmissionStatus,
-      "operator-1",
       "OK",
       "game-1",
       5

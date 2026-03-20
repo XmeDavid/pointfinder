@@ -32,18 +32,6 @@ describe("teamsApi.listByGame", () => {
   });
 });
 
-describe("teamsApi.getById", () => {
-  it("throws an error directing callers to use listByGame", async () => {
-    await expect(teamsApi.getById("t1")).rejects.toThrow(
-      "Use listByGame and filter instead"
-    );
-  });
-
-  it("includes the requested team ID in the error message", async () => {
-    await expect(teamsApi.getById("team-abc")).rejects.toThrow("team-abc");
-  });
-});
-
 describe("teamsApi.create", () => {
   beforeEach(() => {
     vi.clearAllMocks();

@@ -17,7 +17,6 @@ export const submissionsApi = {
   review: async (
     id: string,
     status: SubmissionStatus,
-    _reviewedBy: string,
     feedback?: string,
     gameId?: string,
     points?: number

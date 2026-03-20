@@ -97,6 +97,7 @@ export interface Submission {
   reviewedBy?: string;
   feedback?: string;
   points?: number;
+  completionContent?: string;
 }
 
 export interface GameNotification {
