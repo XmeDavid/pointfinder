@@ -42,6 +42,7 @@ services:
       FCM_CREDENTIALS_PATH: file:/app/config/firebase-service-account.json
       FCM_PROJECT_ID: local-e2e
       MAIL_ENABLED: "false"
+      MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
       MAIL_PASSWORD: ""
       MAIL_FROM: info@localhost
       APP_UPLOADS_PATH: /uploads
