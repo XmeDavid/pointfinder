@@ -10,6 +10,7 @@ android-app/local.properties
 **/xcuserdata/
 
 # Sensitive / release artifacts
+secrets/
 android-app/app-key.jks
 android-app/pepk.jar
 android-app/app/release/

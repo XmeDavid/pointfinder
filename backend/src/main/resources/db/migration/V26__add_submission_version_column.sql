@@ -1,0 +1,1 @@
+ALTER TABLE submissions ADD COLUMN version BIGINT DEFAULT 0;

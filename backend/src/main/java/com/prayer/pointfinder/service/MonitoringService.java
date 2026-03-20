@@ -40,7 +40,8 @@ public class MonitoringService {
         long totalChallenges = challengeRepository.countByGameId(gameId);
         long pendingSubmissions = submissionRepository.countByGameIdAndStatus(gameId, SubmissionStatus.pending);
         long totalSubmissions = submissionRepository.countByGameId(gameId);
-        long completedSubmissions = totalSubmissions - pendingSubmissions;
+        long completedSubmissions = submissionRepository.countByGameIdAndStatusIn(gameId,
+                List.of(SubmissionStatus.approved, SubmissionStatus.correct));
 
         return DashboardResponse.builder()
                 .totalTeams(totalTeams)

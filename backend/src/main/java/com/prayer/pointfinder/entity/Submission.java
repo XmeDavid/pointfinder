@@ -61,6 +61,9 @@ public class Submission {
     @Column(name = "idempotency_key", unique = true)
     private UUID idempotencyKey;
 
+    @Version
+    private Long version;
+
     @PrePersist
     protected void onCreate() {
         if (submittedAt == null) submittedAt = Instant.now();

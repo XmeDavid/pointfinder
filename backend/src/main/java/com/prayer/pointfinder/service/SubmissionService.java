@@ -5,6 +5,7 @@ import com.prayer.pointfinder.dto.request.ReviewSubmissionRequest;
 import com.prayer.pointfinder.dto.response.SubmissionResponse;
 import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.exception.BadRequestException;
+import com.prayer.pointfinder.exception.ConflictException;
 import com.prayer.pointfinder.exception.ForbiddenException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.*;
@@ -13,6 +14,7 @@ import com.prayer.pointfinder.util.LazyInitHelper;
 import com.prayer.pointfinder.websocket.GameEventBroadcaster;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -237,7 +239,12 @@ public class SubmissionService {
             }
         }
 
-        submission = submissionRepository.save(submission);
+        try {
+            submission = submissionRepository.save(submission);
+        } catch (ObjectOptimisticLockingFailureException ex) {
+            throw new ConflictException(
+                    "This submission was already reviewed by another operator. Please refresh.");
+        }
 
         // Create activity event for the review
         ActivityEventType eventType = newStatus == SubmissionStatus.approved
