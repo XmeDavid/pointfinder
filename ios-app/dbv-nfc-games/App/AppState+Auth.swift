@@ -111,8 +111,6 @@ extension AppState {
         notifications = []
         unseenNotificationCount = 0
         lastNotificationsSeenAt = nil
-        pendingCountTask?.cancel()
-        pendingCountTask = nil
         progressLoadTask?.cancel()
         progressLoadTask = nil
 
