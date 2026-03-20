@@ -72,6 +72,8 @@ struct TeamDetailView: View {
                                                 .foregroundStyle(.white)
                                         }
                                     }
+                                    .accessibilityLabel(hex)
+                                    .accessibilityAddTraits(color == hex ? [.isSelected] : [])
                                     .onTapGesture {
                                         color = hex
                                     }

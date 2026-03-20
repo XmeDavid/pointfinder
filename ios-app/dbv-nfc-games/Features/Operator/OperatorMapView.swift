@@ -128,6 +128,8 @@ struct OperatorMapView: View {
                                 .background(.ultraThinMaterial)
                                 .clipShape(Circle())
                         }
+                        .accessibilityLabel(editMode ? locale.t("operator.editModeOn") : locale.t("operator.editModeOff"))
+                        .accessibilityIdentifier("map-edit-button")
 
                         Button {
                             switch mapFocusState {
@@ -150,6 +152,7 @@ struct OperatorMapView: View {
                                 .background(.ultraThinMaterial)
                                 .clipShape(Circle())
                         }
+                        .accessibilityLabel(mapFocusState == .centerOnMe ? locale.t("map.centerOnMe") : locale.t("map.showAllBases"))
                         .accessibilityIdentifier("map-focus-button")
                     }
                     .padding(.trailing, 16)
@@ -193,6 +196,8 @@ struct OperatorMapView: View {
                                 .clipShape(Circle())
                                 .shadow(radius: 4)
                         }
+                        .accessibilityLabel(locale.t("operator.addBaseAtLocation"))
+                        .accessibilityIdentifier("map-add-base-button")
                         .padding(.trailing, 16)
                         .padding(.bottom, 80)
                     }

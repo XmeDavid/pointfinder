@@ -84,11 +84,13 @@ struct GameMapView: View {
                                     }
                                 }
                         }
+                        .accessibilityLabel(locale.t("common.notifications"))
                         Button {
                             Task { await appState.loadProgress() }
                         } label: {
                             Image(systemName: "arrow.clockwise")
                         }
+                        .accessibilityLabel(locale.t("common.refresh"))
                     }
                 }
             }

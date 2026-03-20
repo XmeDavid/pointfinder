@@ -49,6 +49,8 @@ enum Translations {
         "common.error": "Error",
         "common.ok": "OK",
         "common.cancel": "Cancel",
+        "common.notifications": "Notifications",
+        "common.refresh": "Refresh",
         "common.unknownError": "An unknown error occurred",
         "common.done": "Done",
         "common.all": "All",
@@ -86,9 +88,16 @@ enum Translations {
         "sync.errorInvalidAction": "Invalid action data",
 
         // Map legend
+        "map.notVisited": "Not visited",
+        "map.checkedIn": "Checked in",
         "map.pending": "Pending",
         "map.completed": "Completed",
         "map.rejected": "Rejected",
+        "map.centerOnMe": "Center on my location",
+        "map.showAllBases": "Show all bases",
+        "operator.editModeOn": "Disable edit mode",
+        "operator.editModeOff": "Enable edit mode",
+        "operator.addBaseAtLocation": "Add base at current location",
         "player.gameNotLiveTitle": "Game not active yet",
         "player.gameNotLiveMessage": "Please wait until your operator sets the game live.",
 
@@ -459,6 +468,8 @@ enum Translations {
         "common.error": "Erro",
         "common.ok": "OK",
         "common.cancel": "Cancelar",
+        "common.notifications": "Notificações",
+        "common.refresh": "Atualizar",
         "common.unknownError": "Ocorreu um erro desconhecido",
         "common.done": "Feito",
         "common.all": "Todos",
@@ -496,9 +507,16 @@ enum Translations {
         "sync.errorInvalidAction": "Dados de ação inválidos",
 
         // Map legend
+        "map.notVisited": "Não visitado",
+        "map.checkedIn": "Check-in feito",
         "map.pending": "Pendente",
         "map.completed": "Concluído",
         "map.rejected": "Rejeitado",
+        "map.centerOnMe": "Centrar na minha localização",
+        "map.showAllBases": "Mostrar todas as bases",
+        "operator.editModeOn": "Desativar modo de edição",
+        "operator.editModeOff": "Ativar modo de edição",
+        "operator.addBaseAtLocation": "Adicionar base na localização atual",
         "player.gameNotLiveTitle": "Jogo ainda não está ativo",
         "player.gameNotLiveMessage": "Aguarda até que o operador coloque o jogo em direto.",
 
@@ -869,6 +887,8 @@ enum Translations {
         "common.error": "Fehler",
         "common.ok": "OK",
         "common.cancel": "Abbrechen",
+        "common.notifications": "Benachrichtigungen",
+        "common.refresh": "Aktualisieren",
         "common.unknownError": "Ein unbekannter Fehler ist aufgetreten",
         "common.done": "Fertig",
         "common.all": "Alle",
@@ -906,9 +926,16 @@ enum Translations {
         "sync.errorInvalidAction": "Ungültige Aktionsdaten",
 
         // Map legend
+        "map.notVisited": "Nicht besucht",
+        "map.checkedIn": "Eingecheckt",
         "map.pending": "Ausstehend",
         "map.completed": "Abgeschlossen",
         "map.rejected": "Abgelehnt",
+        "map.centerOnMe": "Auf meinen Standort zentrieren",
+        "map.showAllBases": "Alle Basen anzeigen",
+        "operator.editModeOn": "Bearbeitungsmodus deaktivieren",
+        "operator.editModeOff": "Bearbeitungsmodus aktivieren",
+        "operator.addBaseAtLocation": "Basis am aktuellen Standort hinzufügen",
         "player.gameNotLiveTitle": "Spiel ist noch nicht aktiv",
         "player.gameNotLiveMessage": "Bitte warte, bis dein Operator das Spiel live schaltet.",
 

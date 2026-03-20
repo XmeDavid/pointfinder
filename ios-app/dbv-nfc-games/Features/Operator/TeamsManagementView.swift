@@ -211,6 +211,8 @@ private struct TeamCreateSheet: View {
                                                 .foregroundStyle(.white)
                                         }
                                     }
+                                    .accessibilityLabel(hex)
+                                    .accessibilityAddTraits(selectedColor == hex ? [.isSelected] : [])
                                     .onTapGesture {
                                         selectedColor = hex
                                     }
