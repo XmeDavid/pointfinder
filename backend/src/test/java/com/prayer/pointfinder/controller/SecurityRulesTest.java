@@ -63,7 +63,7 @@ class SecurityRulesTest {
     private com.prayer.pointfinder.service.AuthService authService;
 
     @MockBean
-    private com.prayer.pointfinder.repository.OperatorInviteRepository inviteRepository;
+    private com.prayer.pointfinder.service.InviteService inviteService;
 
     @MockBean
     private com.prayer.pointfinder.service.GameService gameService;

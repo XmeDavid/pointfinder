@@ -7,13 +7,12 @@ import com.prayer.pointfinder.dto.request.RefreshTokenRequest;
 import com.prayer.pointfinder.dto.request.RegisterRequest;
 import com.prayer.pointfinder.dto.response.AuthResponse;
 import com.prayer.pointfinder.dto.response.UserResponse;
-import com.prayer.pointfinder.entity.InviteStatus;
-import com.prayer.pointfinder.entity.OperatorInvite;
+import com.prayer.pointfinder.dto.response.InviteTokenResponse;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.GlobalExceptionHandler;
-import com.prayer.pointfinder.repository.OperatorInviteRepository;
 import com.prayer.pointfinder.security.JwtAuthenticationFilter;
 import com.prayer.pointfinder.service.AuthService;
+import com.prayer.pointfinder.service.InviteService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -24,7 +23,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -50,7 +48,7 @@ class AuthControllerTest {
     private AuthService authService;
 
     @MockBean
-    private OperatorInviteRepository inviteRepository;
+    private InviteService inviteService;
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -210,14 +208,8 @@ class AuthControllerTest {
 
     @Test
     void getUsedInviteReturns400() throws Exception {
-        OperatorInvite invite = OperatorInvite.builder()
-                .id(UUID.randomUUID())
-                .token("used-token")
-                .email("used@test.com")
-                .status(InviteStatus.accepted)
-                .build();
-
-        when(inviteRepository.findByToken("used-token")).thenReturn(Optional.of(invite));
+        when(inviteService.getInviteByToken("used-token"))
+                .thenThrow(new BadRequestException("Invite has already been used or expired"));
 
         mockMvc.perform(get("/api/auth/invite/used-token"))
                 .andExpect(status().isBadRequest());
@@ -225,14 +217,8 @@ class AuthControllerTest {
 
     @Test
     void getPendingInviteReturns200WithEmail() throws Exception {
-        OperatorInvite invite = OperatorInvite.builder()
-                .id(UUID.randomUUID())
-                .token("pending-token")
-                .email("invited@test.com")
-                .status(InviteStatus.pending)
-                .build();
-
-        when(inviteRepository.findByToken("pending-token")).thenReturn(Optional.of(invite));
+        when(inviteService.getInviteByToken("pending-token"))
+                .thenReturn(new InviteTokenResponse("invited@test.com"));
 
         mockMvc.perform(get("/api/auth/invite/pending-token"))
                 .andExpect(status().isOk())
