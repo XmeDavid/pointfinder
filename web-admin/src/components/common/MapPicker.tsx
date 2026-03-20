@@ -226,7 +226,7 @@ export function BaseMapView({ bases, connections, className, onEdit, tileSource 
               className="bg-white rounded-lg shadow-lg p-3 min-w-[200px] max-w-[280px] -translate-y-12"
               onClick={(e) => e.stopPropagation()}
             >
-              <button className="absolute top-1 right-1 text-gray-400 hover:text-gray-600 text-xs px-1" onClick={() => setPopup(null)}>x</button>
+              <button aria-label="Close" className="absolute top-1 right-1 text-gray-400 hover:text-gray-600 text-xs px-1" onClick={() => setPopup(null)}>x</button>
               <p className="text-sm font-semibold leading-tight">{popup.name}</p>
               {popup.description && (
                 <p className="text-xs text-gray-500 mt-1 line-clamp-2">{popup.description}</p>
