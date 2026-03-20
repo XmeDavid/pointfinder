@@ -58,8 +58,9 @@ appId: ${APP_ID}
 - assertVisible: "${UPDATED_CHALLENGE_TITLE:-Find the Hidden Clue v2}"
 
 # --- Edit a team ---
-- tapOn:
-    id: "nav-teams"
+# Navigate back to Setup hub, then into Teams
+- back
+- tapOn: "Teams"
 
 - tapOn: "${TEAM_NAME:-Team Eagle}"
 

@@ -28,20 +28,27 @@ appId: ${APP_ID}
 # --- Delete a base ---
 - tapOn: "${UPDATED_BASE_NAME:-Base Alpha v2}"
 
+# Open the overflow menu first, then tap delete
+- tapOn:
+    id: "base-overflow-btn"
 - tapOn:
     id: "base-delete-btn"
 
-# Confirm deletion dialog
-- tapOn: "Delete"
+# Confirm deletion dialog — button text is "Delete Base"
+- tapOn: "Delete Base"
 
 - assertNotVisible: "${UPDATED_BASE_NAME:-Base Alpha v2}"
 
 # --- Delete a challenge ---
 - tapOn: "${UPDATED_CHALLENGE_TITLE:-Find the Hidden Clue v2}"
 
+# Open the overflow menu first, then tap delete
+- tapOn:
+    id: "challenge-overflow-btn"
 - tapOn:
     id: "challenge-delete-btn"
 
-- tapOn: "Delete"
+# Confirm deletion dialog — button text is "Delete Challenge"
+- tapOn: "Delete Challenge"
 
 - assertNotVisible: "${UPDATED_CHALLENGE_TITLE:-Find the Hidden Clue v2}"

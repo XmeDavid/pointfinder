@@ -1,5 +1,5 @@
 # @scenarios P5
-# Assignment linking - link a challenge to a base within a game
+# Assignment linking - link a challenge to a base via the fixed challenge dropdown
 appId: ${APP_ID}
 ---
 - launchApp:
@@ -25,16 +25,18 @@ appId: ${APP_ID}
 
 - tapOn: "${GAME_NAME:-E2E Test Game}"
 
-# Navigate to the base to assign a challenge to it
+# Navigate to the base to assign a challenge via the Fixed Challenge dropdown
 - tapOn: "${BASE_NAME:-Base Alpha Edited}"
 
-- tapOn:
-    id: "assign-challenge-btn"
+# Tap the Fixed Challenge dropdown to expand it
+- tapOn: "Fixed Challenge"
 
-# Pick the challenge from the list
+# Pick the challenge from the dropdown menu
 - tapOn: "${CHALLENGE_TITLE:-Find the Hidden Clue (Updated)}"
 
+# Save the base with the new fixed challenge assignment
 - tapOn:
-    id: "assignment-save-btn"
+    id: "base-save-btn"
 
+# Verify the challenge is now shown under the base
 - assertVisible: "${CHALLENGE_TITLE:-Find the Hidden Clue (Updated)}"

@@ -25,8 +25,8 @@ appId: ${APP_ID}
 
 - tapOn: "${GAME_NAME:-E2E Test Game}"
 
-- tapOn:
-    id: "nav-teams"
+# Navigate to Teams via Setup hub
+- tapOn: "Teams"
 
 - tapOn:
     id: "create-team-btn"

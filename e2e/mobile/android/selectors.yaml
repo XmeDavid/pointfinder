@@ -27,6 +27,7 @@ BASE_NAME_INPUT: "base-name-input"
 BASE_LAT_INPUT: "base-lat-input"
 BASE_LNG_INPUT: "base-lng-input"
 BASE_SAVE_BTN: "base-save-btn"
+BASE_OVERFLOW_BTN: "base-overflow-btn"
 BASE_DELETE_BTN: "base-delete-btn"
 BASE_EDIT_BTN: "base-edit-btn"
 
@@ -35,12 +36,12 @@ CREATE_CHALLENGE_BTN: "create-challenge-btn"
 CHALLENGE_TITLE_INPUT: "challenge-title-input"
 CHALLENGE_TYPE_SELECT: "challenge-type-select"
 CHALLENGE_SAVE_BTN: "challenge-save-btn"
+CHALLENGE_OVERFLOW_BTN: "challenge-overflow-btn"
 CHALLENGE_DELETE_BTN: "challenge-delete-btn"
 CHALLENGE_EDIT_BTN: "challenge-edit-btn"
 
 # Assignments
 ASSIGN_CHALLENGE_BTN: "assign-challenge-btn"
-ASSIGNMENT_SAVE_BTN: "assignment-save-btn"
 
 # Teams
 CREATE_TEAM_BTN: "create-team-btn"
