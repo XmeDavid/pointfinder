@@ -49,7 +49,7 @@ export async function connectToGameTopic(
       webSocketFactory: () => new WebSocket(wsUrl, { rejectUnauthorized: false }) as unknown as globalThis.WebSocket,
       connectHeaders,
       reconnectDelay: 0, // no auto-reconnect in tests
-      debug: () => {},    // silent
+      debug: () => {},
     });
 
     client.onConnect = () => {

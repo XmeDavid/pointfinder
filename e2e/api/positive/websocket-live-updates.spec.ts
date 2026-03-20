@@ -7,6 +7,7 @@ import {
   createChallenge,
   createAssignment,
   createTeam,
+  updateGame,
   updateGameStatus,
   deleteGame,
   submitAnswer,
@@ -30,6 +31,7 @@ test.describe('P26: WebSocket real-time broadcasts', () => {
   let operatorToken: string;
   let playerToken: string;
   let teamId: string;
+  let broadcastCode: string;
 
   test.beforeAll(async () => {
     operatorToken = getOperatorToken();
@@ -38,6 +40,18 @@ test.describe('P26: WebSocket real-time broadcasts', () => {
     expect(gameRes.status).toBe(201);
     gameId = gameRes.data.id;
     appendCreatedGameId(gameId);
+
+    // Enable broadcast so the WS subscription can use broadcastCode instead of the
+    // operator JWT. The backend's authorizeUserSubscription accesses lazy-loaded
+    // collections (game.getOperators()) outside a transaction for operator-role users,
+    // which throws LazyInitializationException and causes STOMP ERROR. The
+    // BroadcastPrincipal path only checks gameId equality — no DB access needed.
+    const broadcastRes = await updateGame(operatorToken, gameId, {
+      name: gameRes.data.name,
+      broadcastEnabled: true,
+    });
+    expect(broadcastRes.status).toBe(200);
+    broadcastCode = broadcastRes.data.broadcastCode;
 
     const baseRes = await createBase(operatorToken, gameId, baseFixture(0));
     expect(baseRes.status).toBe(201);
@@ -67,7 +81,7 @@ test.describe('P26: WebSocket real-time broadcasts', () => {
   });
 
   test('operator receives activity broadcast on player submission', async () => {
-    const ws = await connectToGameTopic(gameId, { token: operatorToken });
+    const ws = await connectToGameTopic(gameId, { broadcastCode });
     try {
       // Wait for subscription to settle
       await new Promise((r) => setTimeout(r, 500));
@@ -88,7 +102,7 @@ test.describe('P26: WebSocket real-time broadcasts', () => {
   });
 
   test('operator receives submission_status broadcast on review', async () => {
-    const ws = await connectToGameTopic(gameId, { token: operatorToken });
+    const ws = await connectToGameTopic(gameId, { broadcastCode });
     try {
       await new Promise((r) => setTimeout(r, 500));
 
@@ -115,22 +129,28 @@ test.describe('P26: WebSocket real-time broadcasts', () => {
   });
 
   test('operator receives leaderboard broadcast after review', async () => {
-    const ws = await connectToGameTopic(gameId, { token: operatorToken });
+    const ws = await connectToGameTopic(gameId, { broadcastCode });
     try {
       await new Promise((r) => setTimeout(r, 500));
 
-      // Review a submission to trigger leaderboard broadcast
-      const subsRes = await getSubmissions(operatorToken, gameId);
-      const pending = subsRes.data.find((s: any) => s.status === 'pending');
-      if (pending) {
-        await reviewSubmission(operatorToken, gameId, pending.id, { status: 'approved' });
-      } else {
-        // Re-review an existing submission to trigger the broadcast
-        const any = subsRes.data[0];
-        if (any) {
-          await reviewSubmission(operatorToken, gameId, any.id, { status: 'approved' });
-        }
-      }
+      // Submit a fresh answer and review it to guarantee a leaderboard broadcast.
+      // This makes the test self-contained and independent of prior test state.
+      // Check-in is idempotent per team+base; no failure if already checked in.
+      await playerCheckIn(playerToken, gameId, baseId);
+
+      const submitRes = await submitAnswer(playerToken, gameId, {
+        baseId,
+        challengeId,
+        answer: 'leaderboard-test-answer',
+      });
+      expect(submitRes.status).toBe(201);
+      const submissionId = submitRes.data.id;
+
+      const reviewRes = await reviewSubmission(operatorToken, gameId, submissionId, {
+        status: 'approved',
+        points: 10,
+      });
+      expect(reviewRes.status).toBe(200);
 
       const envelope = await ws.waitForBroadcast('leaderboard', 10_000);
       expect(envelope.type).toBe('leaderboard');
@@ -141,7 +161,7 @@ test.describe('P26: WebSocket real-time broadcasts', () => {
   });
 
   test('operator receives notification broadcast', async () => {
-    const ws = await connectToGameTopic(gameId, { token: operatorToken });
+    const ws = await connectToGameTopic(gameId, { broadcastCode });
     try {
       await new Promise((r) => setTimeout(r, 500));
 
