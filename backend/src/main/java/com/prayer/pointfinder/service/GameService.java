@@ -287,17 +287,10 @@ public class GameService {
         }
 
         long challengeCount = challengeRepository.countByGameId(game.getId());
-        long requiredChallenges = Boolean.TRUE.equals(game.getUniformAssignment())
-                ? baseCount
-                : baseCount * teamCount;
-        if (requiredChallenges > challengeCount) {
-            String mode = Boolean.TRUE.equals(game.getUniformAssignment()) ? "uniform" : "per-team";
+        if (challengeCount < baseCount) {
             throw new BadRequestException(
-                    String.format("Not enough challenges for %s assignment. Need %d challenges (%d bases x %s), but only %d available.",
-                            mode, requiredChallenges,
-                            baseCount,
-                            Boolean.TRUE.equals(game.getUniformAssignment()) ? "1" : teamCount + " teams",
-                            challengeCount));
+                    String.format("Need at least %d challenges (one per base), but only %d available.",
+                            baseCount, challengeCount));
         }
 
         // Ensure all team variables have values for every team
