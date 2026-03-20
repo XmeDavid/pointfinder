@@ -13,6 +13,7 @@ import com.prayer.pointfinder.security.JwtTokenProvider;
 import com.prayer.pointfinder.websocket.GameEventBroadcaster;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -470,7 +471,7 @@ public class PlayerService {
         Player player = loadPlayer(authPlayer);
         UUID gameId = player.getTeam().getGame().getId();
         UUID teamId = player.getTeam().getId();
-        return gameNotificationRepository.findByGameIdForTeam(gameId, teamId)
+        return gameNotificationRepository.findByGameIdForTeam(gameId, teamId, PageRequest.of(0, 500))
                 .stream()
                 .map(this::toNotificationResponse)
                 .collect(Collectors.toList());

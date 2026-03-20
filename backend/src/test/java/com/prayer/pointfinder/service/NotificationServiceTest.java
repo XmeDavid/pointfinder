@@ -109,7 +109,7 @@ class NotificationServiceTest {
                 .sentBy(operator)
                 .build();
 
-        when(notificationRepository.findByGameIdOrderBySentAtDesc(gameId))
+        when(notificationRepository.findByGameIdOrderBySentAtDesc(eq(gameId), any()))
                 .thenReturn(List.of(notification));
 
         List<NotificationResponse> result = notificationService.getNotificationsByGame(gameId);

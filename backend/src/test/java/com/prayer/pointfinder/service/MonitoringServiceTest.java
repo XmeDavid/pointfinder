@@ -52,19 +52,10 @@ class MonitoringServiceTest {
 
         Team team = Team.builder().id(teamId).name("Team A").color("#FF0000").build();
 
-        // Submission with null challenge but has its own points
-        Submission sub = Submission.builder()
-                .id(UUID.randomUUID())
-                .team(team)
-                .challenge(null)
-                .status(SubmissionStatus.approved)
-                .points(10)
-                .submittedAt(Instant.now())
-                .answer("")
-                .build();
-
+        // The aggregate query filters out null challenges at DB level,
+        // so an empty result set is returned
         when(teamRepository.findByGameId(gameId)).thenReturn(List.of(team));
-        when(submissionRepository.findByGameIdWithRelations(gameId)).thenReturn(List.of(sub));
+        when(submissionRepository.findScoredSubmissionsByGameId(gameId)).thenReturn(List.of());
 
         // Should not throw NPE
         List<LeaderboardEntry> leaderboard = assertDoesNotThrow(
@@ -72,8 +63,9 @@ class MonitoringServiceTest {
         );
 
         assertEquals(1, leaderboard.size());
-        // The null-challenge submission is filtered out, so points = 0
+        // No scored submissions, so points = 0
         assertEquals(teamId, leaderboard.get(0).getTeamId());
+        assertEquals(0, leaderboard.get(0).getPoints());
     }
 
     @Test
@@ -83,20 +75,14 @@ class MonitoringServiceTest {
         UUID challengeId = UUID.randomUUID();
 
         Team team = Team.builder().id(teamId).name("Team B").color("#00FF00").build();
-        Challenge challenge = Challenge.builder().id(challengeId).points(5).build();
 
-        Submission sub = Submission.builder()
-                .id(UUID.randomUUID())
-                .team(team)
-                .challenge(challenge)
-                .status(SubmissionStatus.approved)
-                .points(15)
-                .submittedAt(Instant.now())
-                .answer("")
-                .build();
+        // The aggregate query returns [teamId, challengeId, COALESCE(points, challenge.points), submittedAt]
+        Object[] row = new Object[]{teamId, challengeId, 15, Instant.now()};
+        List<Object[]> rows = new java.util.ArrayList<>();
+        rows.add(row);
 
         when(teamRepository.findByGameId(gameId)).thenReturn(List.of(team));
-        when(submissionRepository.findByGameIdWithRelations(gameId)).thenReturn(List.of(sub));
+        when(submissionRepository.findScoredSubmissionsByGameId(gameId)).thenReturn(rows);
 
         List<LeaderboardEntry> leaderboard = monitoringService.computeLeaderboard(gameId);
 

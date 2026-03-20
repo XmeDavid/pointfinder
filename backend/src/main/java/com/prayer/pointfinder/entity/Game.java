@@ -47,15 +47,15 @@ public class Game {
     @Builder.Default
     private Set<User> operators = new HashSet<>();
 
-    @OneToMany(mappedBy = "game", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "game", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
     @Builder.Default
     private List<Base> bases = new ArrayList<>();
 
-    @OneToMany(mappedBy = "game", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "game", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
     @Builder.Default
     private List<Challenge> challenges = new ArrayList<>();
 
-    @OneToMany(mappedBy = "game", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "game", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
     @Builder.Default
     private List<Team> teams = new ArrayList<>();
 

@@ -62,29 +62,30 @@ public class MonitoringService {
 
     List<LeaderboardEntry> computeLeaderboard(UUID gameId) {
         List<Team> teams = teamRepository.findByGameId(gameId);
-        List<Submission> submissions = submissionRepository.findByGameIdWithRelations(gameId);
+        List<Object[]> scoredRows = submissionRepository.findScoredSubmissionsByGameId(gameId);
 
-        Map<UUID, List<Submission>> byTeam = submissions.stream()
-                .filter(s -> s.getChallenge() != null)
-                .collect(Collectors.groupingBy(s -> s.getTeam().getId()));
+        // Deduplicate: keep only the latest submission per team+challenge pair
+        // Each row: [teamId, challengeId, points (long/int), submittedAt]
+        record ScoredSub(UUID teamId, UUID challengeId, long points, java.time.Instant submittedAt) {}
+        Map<UUID, Map<UUID, ScoredSub>> byTeamChallenge = new HashMap<>();
+
+        for (Object[] row : scoredRows) {
+            UUID teamId = (UUID) row[0];
+            UUID challengeId = (UUID) row[1];
+            long pts = row[2] != null ? ((Number) row[2]).longValue() : 0L;
+            java.time.Instant submittedAt = (java.time.Instant) row[3];
+            ScoredSub sub = new ScoredSub(teamId, challengeId, pts, submittedAt);
+
+            byTeamChallenge
+                    .computeIfAbsent(teamId, k -> new HashMap<>())
+                    .merge(challengeId, sub, (existing, incoming) ->
+                            incoming.submittedAt().isAfter(existing.submittedAt()) ? incoming : existing);
+        }
 
         return teams.stream().map(team -> {
-            List<Submission> teamSubs = byTeam.getOrDefault(team.getId(), List.of());
-
-            Map<UUID, Submission> scoredByChallenge = teamSubs.stream()
-                    .filter(s -> s.getStatus() == SubmissionStatus.correct
-                            || s.getStatus() == SubmissionStatus.approved)
-                    .collect(Collectors.toMap(
-                            s -> s.getChallenge().getId(),
-                            s -> s,
-                            (first, second) -> first.getSubmittedAt().isAfter(second.getSubmittedAt()) ? first : second
-                    ));
-
-            long points = scoredByChallenge.values().stream()
-                    .mapToLong(s -> s.getPoints() != null ? s.getPoints() : s.getChallenge().getPoints())
-                    .sum();
-
-            int completed = scoredByChallenge.size();
+            Map<UUID, ScoredSub> challengeMap = byTeamChallenge.getOrDefault(team.getId(), Map.of());
+            long points = challengeMap.values().stream().mapToLong(ScoredSub::points).sum();
+            int completed = challengeMap.size();
 
             return LeaderboardEntry.builder()
                     .teamId(team.getId())

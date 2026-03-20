@@ -1,6 +1,7 @@
 package com.prayer.pointfinder.repository;
 
 import com.prayer.pointfinder.entity.GameNotification;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,13 +12,14 @@ import java.util.UUID;
 
 public interface GameNotificationRepository extends JpaRepository<GameNotification, UUID> {
 
-    List<GameNotification> findByGameIdOrderBySentAtDesc(UUID gameId);
+    List<GameNotification> findByGameIdOrderBySentAtDesc(UUID gameId, Pageable pageable);
 
     @Query("SELECT n FROM GameNotification n WHERE n.game.id = :gameId " +
            "AND (n.targetTeam IS NULL OR n.targetTeam.id = :teamId) " +
            "ORDER BY n.sentAt DESC")
     List<GameNotification> findByGameIdForTeam(@Param("gameId") UUID gameId,
-                                               @Param("teamId") UUID teamId);
+                                               @Param("teamId") UUID teamId,
+                                               Pageable pageable);
 
     @Query("SELECT COUNT(n) FROM GameNotification n WHERE n.game.id = :gameId " +
            "AND (n.targetTeam IS NULL OR n.targetTeam.id = :teamId) " +

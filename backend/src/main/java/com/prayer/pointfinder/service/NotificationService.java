@@ -21,6 +21,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.PageRequest;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +46,7 @@ public class NotificationService {
     @Transactional(readOnly = true)
     public List<NotificationResponse> getNotificationsByGame(UUID gameId) {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
-        return notificationRepository.findByGameIdOrderBySentAtDesc(gameId).stream()
+        return notificationRepository.findByGameIdOrderBySentAtDesc(gameId, PageRequest.of(0, 500)).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
@@ -93,10 +95,12 @@ public class NotificationService {
             List<String> apnsTokens = pushTargets.stream()
                     .filter(p -> p.getPushPlatform() == null || p.getPushPlatform() == PushPlatform.ios)
                     .map(Player::getPushToken)
+                    .filter(java.util.Objects::nonNull)
                     .toList();
             List<String> fcmTokens = pushTargets.stream()
                     .filter(p -> p.getPushPlatform() == PushPlatform.android)
                     .map(Player::getPushToken)
+                    .filter(java.util.Objects::nonNull)
                     .toList();
 
             if (!apnsTokens.isEmpty()) {
