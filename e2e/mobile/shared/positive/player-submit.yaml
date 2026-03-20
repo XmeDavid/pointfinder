@@ -5,8 +5,7 @@ appId: ${APP_ID}
 - launchApp:
     clearState: true
 
-# Welcome screen button is "Join a Game" on both iOS and Android
-- tapOn: "Join a Game"
+- tapOn: "Join Game"
 
 # Verify join screen is shown (works on both platforms via the input field)
 - assertVisible:
@@ -24,13 +23,7 @@ appId: ${APP_ID}
     id: "player-name-field"
 - inputText: "Test Player"
 - hideKeyboard
-# Android button text is "Join a Game", iOS is "Join Game"
-- tapOn:
-    text: "Join a Game"
-    optional: true
-- tapOn:
-    text: "Join Game"
-    optional: true
+- tapOn: "Join Game"
 
 # Permission disclosure dialog appears on fresh install — dismiss it
 - tapOn:

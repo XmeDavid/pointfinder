@@ -25,7 +25,8 @@ appId: ${APP_ID}
 
 - tapOn: "${GAME_NAME:-E2E Test Game}"
 
-# --- Delete a base (platform-specific) ---
+# --- Delete a base ---
+# Platform-specific sub-flows handle navigation to the delete button (overflow menu on Android, direct on iOS)
 - runFlow:
     when:
       platform: "iOS"
@@ -35,9 +36,13 @@ appId: ${APP_ID}
       platform: "Android"
     file: ../../android/delete-base.yaml
 
+# Confirm deletion dialog — both platforms now use "Delete"
+- tapOn: "Delete"
+
 - assertNotVisible: "${UPDATED_BASE_NAME:-Base Alpha v2}"
 
-# --- Delete a challenge (platform-specific) ---
+# --- Delete a challenge ---
+# Platform-specific sub-flows handle navigation to the delete button (overflow menu on Android, direct on iOS)
 - runFlow:
     when:
       platform: "iOS"
@@ -46,5 +51,8 @@ appId: ${APP_ID}
     when:
       platform: "Android"
     file: ../../android/delete-challenge.yaml
+
+# Confirm deletion dialog — both platforms now use "Delete"
+- tapOn: "Delete"
 
 - assertNotVisible: "${UPDATED_CHALLENGE_TITLE:-Find the Hidden Clue v2}"

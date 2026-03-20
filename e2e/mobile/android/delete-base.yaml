@@ -7,5 +7,5 @@
 - tapOn:
     id: "base-delete-btn"
 
-# Confirm deletion dialog — button text is "Delete Base"
-- tapOn: "Delete Base"
+# Confirm deletion dialog — button text is "Delete"
+- tapOn: "Delete"

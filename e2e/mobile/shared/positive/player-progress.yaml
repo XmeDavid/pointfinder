@@ -6,7 +6,7 @@ appId: ${APP_ID}
     clearState: true
 
 - assertVisible: "PointFinder"
-- tapOn: "Join a Game"
+- tapOn: "Join Game"
 
 - tapOn:
     id: "player-join-code-input"
@@ -20,13 +20,7 @@ appId: ${APP_ID}
     id: "player-name-field"
 - inputText: "Test Player"
 - hideKeyboard
-# Android button text is "Join a Game", iOS is "Join Game"
-- tapOn:
-    text: "Join a Game"
-    optional: true
-- tapOn:
-    text: "Join Game"
-    optional: true
+- tapOn: "Join Game"
 
 # Permission disclosure dialog appears on fresh install — dismiss it
 - tapOn:

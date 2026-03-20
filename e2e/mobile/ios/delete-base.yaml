@@ -10,6 +10,3 @@
 
 - tapOn:
     id: "base-delete-btn"
-
-# Confirm deletion dialog — button text is "Delete" (from operator.delete)
-- tapOn: "Delete"
