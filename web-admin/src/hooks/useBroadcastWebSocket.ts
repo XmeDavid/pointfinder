@@ -1,10 +1,14 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Client } from "@stomp/stompjs";
-import SockJS from "sockjs-client";
 import i18n from "@/i18n";
 
-const WS_URL = import.meta.env.VITE_WS_URL || "/ws";
+const WS_PATH = import.meta.env.VITE_WS_URL || "/ws-native";
+
+function getBrokerURL(): string {
+  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+  return `${protocol}://${window.location.host}${WS_PATH}`;
+}
 
 export function useBroadcastWebSocket(
   gameId: string | undefined,
@@ -31,7 +35,7 @@ export function useBroadcastWebSocket(
     if (!gameId || !code) return;
 
     const client = new Client({
-      webSocketFactory: () => new SockJS(WS_URL) as WebSocket,
+      brokerURL: getBrokerURL(),
       connectHeaders: { "X-Broadcast-Code": code.toUpperCase() },
       reconnectDelay: 5000,
       heartbeatIncoming: 10000,

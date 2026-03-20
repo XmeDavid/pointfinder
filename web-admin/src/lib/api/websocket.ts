@@ -1,10 +1,14 @@
 import { Client } from "@stomp/stompjs";
-import SockJS from "sockjs-client";
 import { getValidAccessToken } from "@/lib/api/client";
 import { useAuthStore } from "@/hooks/useAuth";
 import i18n from "@/i18n";
 
-const WS_URL = import.meta.env.VITE_WS_URL || "/ws";
+const WS_PATH = import.meta.env.VITE_WS_URL || "/ws-native";
+
+function getBrokerURL(): string {
+  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+  return `${protocol}://${window.location.host}${WS_PATH}`;
+}
 
 let stompClient: Client | null = null;
 
@@ -19,7 +23,7 @@ export function connectWebSocket(
   }
 
   const client = new Client({
-    webSocketFactory: () => new SockJS(WS_URL) as WebSocket,
+    brokerURL: getBrokerURL(),
     // connectHeaders are set dynamically in beforeConnect
     connectHeaders: {},
     beforeConnect: async () => {

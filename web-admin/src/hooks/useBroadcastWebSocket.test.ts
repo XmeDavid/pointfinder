@@ -33,10 +33,6 @@ vi.mock("@stomp/stompjs", () => {
   return { Client: MockClient };
 });
 
-vi.mock("sockjs-client", () => ({
-  default: vi.fn(),
-}));
-
 vi.mock("@/i18n", () => ({
   default: {
     t: (key: string) => key,
