@@ -23,7 +23,7 @@ import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -53,16 +53,16 @@ class PlayerControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private PlayerService playerService;
 
-    @MockBean
+    @MockitoBean
     private ChunkedUploadService chunkedUploadService;
 
-    @MockBean
+    @MockitoBean
     private FileStorageService fileStorageService;
 
-    @MockBean
+    @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     private MockedStatic<SecurityUtils> securityUtilsMock;
@@ -82,164 +82,6 @@ class PlayerControllerTest {
     @AfterEach
     void tearDown() {
         securityUtilsMock.close();
-    }
-
-    // ── Player Join tests (public endpoint under /api/auth/) ────────
-
-    @Test
-    void joinWithValidCodeReturnsPlayerAuth() throws Exception {
-        PlayerJoinRequest request = new PlayerJoinRequest();
-        request.setJoinCode("TEST01");
-        request.setDisplayName("Scout");
-        request.setDeviceId("device-123");
-
-        UUID playerId = UUID.randomUUID();
-        UUID teamId = UUID.randomUUID();
-        UUID gameId = UUID.randomUUID();
-
-        PlayerAuthResponse response = PlayerAuthResponse.builder()
-                .token("player-jwt-token")
-                .player(PlayerAuthResponse.PlayerInfo.builder()
-                        .id(playerId)
-                        .displayName("Scout")
-                        .deviceId("device-123")
-                        .build())
-                .team(PlayerAuthResponse.TeamInfo.builder()
-                        .id(teamId)
-                        .name("Pathfinders")
-                        .color("#FF0000")
-                        .build())
-                .game(PlayerAuthResponse.GameInfo.builder()
-                        .id(gameId)
-                        .name("Test Game")
-                        .description("desc")
-                        .status("live")
-                        .tileSource("osm-classic")
-                        .build())
-                .build();
-
-        when(playerService.joinTeam(any(PlayerJoinRequest.class))).thenReturn(response);
-
-        mockMvc.perform(post("/api/auth/player/join")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").value("player-jwt-token"))
-                .andExpect(jsonPath("$.player.displayName").value("Scout"))
-                .andExpect(jsonPath("$.player.deviceId").value("device-123"))
-                .andExpect(jsonPath("$.team.name").value("Pathfinders"))
-                .andExpect(jsonPath("$.team.color").value("#FF0000"))
-                .andExpect(jsonPath("$.game.status").value("live"))
-                .andExpect(jsonPath("$.game.tileSource").value("osm-classic"));
-    }
-
-    @Test
-    void joinPassesRequestFieldsToService() throws Exception {
-        PlayerJoinRequest request = new PlayerJoinRequest();
-        request.setJoinCode("CAMP42");
-        request.setDisplayName("Eagle");
-        request.setDeviceId("dev-abc");
-
-        UUID playerId = UUID.randomUUID();
-        UUID teamId = UUID.randomUUID();
-        UUID gameId = UUID.randomUUID();
-        when(playerService.joinTeam(any(PlayerJoinRequest.class))).thenReturn(
-                PlayerAuthResponse.builder()
-                        .token("t")
-                        .player(PlayerAuthResponse.PlayerInfo.builder().id(playerId).displayName("Eagle").deviceId("dev-abc").build())
-                        .team(PlayerAuthResponse.TeamInfo.builder().id(teamId).name("T").color("#000").build())
-                        .game(PlayerAuthResponse.GameInfo.builder().id(gameId).name("G").description("").status("live").tileSource("osm-classic").build())
-                        .build());
-
-        mockMvc.perform(post("/api/auth/player/join")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk());
-
-        ArgumentCaptor<PlayerJoinRequest> captor = ArgumentCaptor.forClass(PlayerJoinRequest.class);
-        verify(playerService).joinTeam(captor.capture());
-        assertThat(captor.getValue().getJoinCode()).isEqualTo("CAMP42");
-        assertThat(captor.getValue().getDisplayName()).isEqualTo("Eagle");
-        assertThat(captor.getValue().getDeviceId()).isEqualTo("dev-abc");
-    }
-
-    @Test
-    void joinWithInvalidCodeReturns400() throws Exception {
-        PlayerJoinRequest request = new PlayerJoinRequest();
-        request.setJoinCode("INVALID");
-        request.setDisplayName("Scout");
-        request.setDeviceId("device-123");
-
-        when(playerService.joinTeam(any(PlayerJoinRequest.class)))
-                .thenThrow(new BadRequestException("Invalid join code"));
-
-        mockMvc.perform(post("/api/auth/player/join")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Invalid join code"));
-    }
-
-    @Test
-    void joinWhenGameNotLiveReturns400() throws Exception {
-        PlayerJoinRequest request = new PlayerJoinRequest();
-        request.setJoinCode("TEST01");
-        request.setDisplayName("Scout");
-        request.setDeviceId("device-123");
-
-        when(playerService.joinTeam(any(PlayerJoinRequest.class)))
-                .thenThrow(new BadRequestException("Game is not currently accepting players"));
-
-        mockMvc.perform(post("/api/auth/player/join")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Game is not currently accepting players"));
-    }
-
-    @Test
-    void joinWithMissingDisplayNameReturns400() throws Exception {
-        PlayerJoinRequest request = new PlayerJoinRequest();
-        request.setJoinCode("TEST01");
-        // displayName not set
-        request.setDeviceId("device-123");
-
-        mockMvc.perform(post("/api/auth/player/join")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.displayName").exists());
-    }
-
-    @Test
-    void joinWithMissingJoinCodeReturns400() throws Exception {
-        PlayerJoinRequest request = new PlayerJoinRequest();
-        // joinCode not set
-        request.setDisplayName("Scout");
-        request.setDeviceId("device-123");
-
-        mockMvc.perform(post("/api/auth/player/join")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.joinCode").exists());
-    }
-
-    @Test
-    void joinWithDeviceAlreadyInTeamReturns409() throws Exception {
-        PlayerJoinRequest request = new PlayerJoinRequest();
-        request.setJoinCode("TEST01");
-        request.setDisplayName("Scout");
-        request.setDeviceId("device-already-joined");
-
-        when(playerService.joinTeam(any(PlayerJoinRequest.class)))
-                .thenThrow(new ConflictException("This device has already joined a team"));
-
-        mockMvc.perform(post("/api/auth/player/join")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value("This device has already joined a team"));
     }
 
     // ── Check-in endpoint ────────

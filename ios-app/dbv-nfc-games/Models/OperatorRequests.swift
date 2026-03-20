@@ -194,6 +194,7 @@ struct GameExportBase: Codable {
     let description: String
     let lat: Double
     let lng: Double
+    let hidden: Bool
     let fixedChallengeTempId: String?
 }
 

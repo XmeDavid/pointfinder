@@ -39,8 +39,8 @@ public class BroadcastService {
                 .collect(Collectors.toList());
 
         List<BroadcastBaseResponse> bases = baseRepository.findByGameId(gameId).stream()
-                .limit(500)
                 .filter(b -> !Boolean.TRUE.equals(b.getHidden()))
+                .limit(500)
                 .map(b -> BroadcastBaseResponse.builder()
                         .id(b.getId())
                         .name(b.getName())

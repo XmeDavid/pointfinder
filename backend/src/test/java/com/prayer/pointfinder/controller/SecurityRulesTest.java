@@ -13,7 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -49,32 +49,32 @@ class SecurityRulesTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private JwtTokenProvider tokenProvider;
 
-    @MockBean
+    @MockitoBean
     private UserRepository userRepository;
 
-    @MockBean
+    @MockitoBean
     private PlayerRepository playerRepository;
 
     // MockBeans needed by the loaded controllers
-    @MockBean
+    @MockitoBean
     private com.prayer.pointfinder.service.AuthService authService;
 
-    @MockBean
+    @MockitoBean
     private com.prayer.pointfinder.service.InviteService inviteService;
 
-    @MockBean
+    @MockitoBean
     private com.prayer.pointfinder.service.GameService gameService;
 
-    @MockBean
+    @MockitoBean
     private com.prayer.pointfinder.service.PlayerService playerService;
 
-    @MockBean
+    @MockitoBean
     private com.prayer.pointfinder.service.ChunkedUploadService chunkedUploadService;
 
-    @MockBean
+    @MockitoBean
     private com.prayer.pointfinder.service.FileStorageService fileStorageService;
 
     private static final String OPERATOR_TOKEN = "operator-jwt";

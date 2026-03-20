@@ -3,8 +3,10 @@ package com.prayer.pointfinder.controller;
 import com.prayer.pointfinder.dto.request.*;
 import com.prayer.pointfinder.dto.response.AuthResponse;
 import com.prayer.pointfinder.dto.response.InviteTokenResponse;
+import com.prayer.pointfinder.dto.response.PlayerAuthResponse;
 import com.prayer.pointfinder.service.AuthService;
 import com.prayer.pointfinder.service.InviteService;
+import com.prayer.pointfinder.service.PlayerService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,12 @@ public class AuthController {
 
     private final AuthService authService;
     private final InviteService inviteService;
+    private final PlayerService playerService;
+
+    @PostMapping("/player/join")
+    public ResponseEntity<PlayerAuthResponse> joinTeam(@Valid @RequestBody PlayerJoinRequest request) {
+        return ResponseEntity.ok(playerService.joinTeam(request));
+    }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {

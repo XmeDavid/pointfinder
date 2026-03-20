@@ -37,12 +37,6 @@ public class PlayerController {
     private final FileStorageService fileStorageService;
     private final Validator validator;
 
-    // Public endpoint - no auth required (absolute path overrides class-level prefix)
-    @PostMapping("/api/auth/player/join")
-    public ResponseEntity<PlayerAuthResponse> joinTeam(@Valid @RequestBody PlayerJoinRequest request) {
-        return ResponseEntity.ok(playerService.joinTeam(request));
-    }
-
     // Player-authenticated endpoints below
 
     @PostMapping("/games/{gameId}/bases/{baseId}/check-in")
