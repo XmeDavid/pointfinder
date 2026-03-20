@@ -18,13 +18,18 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+
+    static final int MAX_CONCURRENT_REFRESH_TOKENS = 5;
+    static final Duration ABSOLUTE_SESSION_LIFETIME = Duration.ofDays(30);
 
     private static final int MAX_ACTIVE_RESET_TOKENS = 3;
     private static final long RESET_TOKEN_EXPIRY_MS = 3_600_000; // 1 hour
@@ -36,16 +41,26 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
     private final EmailService emailService;
+    private final LoginAttemptService loginAttemptService;
 
     @Transactional(timeout = 10)
     public AuthResponse login(LoginRequest request) {
+        if (loginAttemptService.isBlocked(request.getEmail())) {
+            throw new BadRequestException("Too many login attempts. Please try again later.");
+        }
+
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
+                .orElseThrow(() -> {
+                    loginAttemptService.recordFailure(request.getEmail());
+                    return new BadCredentialsException("Invalid credentials");
+                });
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            loginAttemptService.recordFailure(request.getEmail());
             throw new BadCredentialsException("Invalid credentials");
         }
 
+        loginAttemptService.recordSuccess(request.getEmail());
         return generateAuthResponse(user);
     }
 
@@ -56,6 +71,10 @@ public class AuthService {
 
         if (invite.getStatus() != InviteStatus.pending) {
             throw new BadRequestException("Invite has already been used or expired");
+        }
+
+        if (!invite.getEmail().equalsIgnoreCase(request.getEmail())) {
+            throw new BadRequestException("Email does not match the invitation");
         }
 
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -117,6 +136,13 @@ public class AuthService {
         if (storedToken.isExpired()) {
             refreshTokenRepository.delete(storedToken);
             throw new BadRequestException("Refresh token expired");
+        }
+
+        // Absolute session lifetime: reject tokens created more than 30 days ago
+        if (storedToken.getCreatedAt() != null &&
+                Instant.now().isAfter(storedToken.getCreatedAt().plus(ABSOLUTE_SESSION_LIFETIME))) {
+            refreshTokenRepository.delete(storedToken);
+            throw new BadRequestException("Session expired. Please log in again.");
         }
 
         // Delete old refresh token
@@ -185,9 +211,18 @@ public class AuthService {
         refreshTokenRepository.deleteByUserId(user.getId());
     }
 
-    private void validatePassword(String password) {
+    void validatePassword(String password) {
         if (password == null || password.length() < 8) {
             throw new BadRequestException("Password must be at least 8 characters long");
+        }
+        if (password.length() > 128) {
+            throw new BadRequestException("Password must not exceed 128 characters");
+        }
+        if (!password.chars().anyMatch(Character::isUpperCase)) {
+            throw new BadRequestException("Password must contain at least one uppercase letter");
+        }
+        if (!password.chars().anyMatch(Character::isDigit)) {
+            throw new BadRequestException("Password must contain at least one digit");
         }
     }
 
@@ -204,6 +239,9 @@ public class AuthService {
                 .build();
         refreshTokenRepository.save(refreshToken);
 
+        // Enforce concurrent refresh token limit per user
+        enforceTokenLimit(user.getId());
+
         UserResponse userResponse = UserResponse.builder()
                 .id(user.getId())
                 .email(user.getEmail())
@@ -217,5 +255,17 @@ public class AuthService {
                 .refreshToken(refreshTokenStr)
                 .user(userResponse)
                 .build();
+    }
+
+    private void enforceTokenLimit(UUID userId) {
+        long tokenCount = refreshTokenRepository.countByUserId(userId);
+        if (tokenCount > MAX_CONCURRENT_REFRESH_TOKENS) {
+            List<RefreshToken> tokens = refreshTokenRepository.findByUserIdOrderByCreatedAtAsc(userId);
+            // Delete the oldest tokens to bring count within limit
+            long toDelete = tokenCount - MAX_CONCURRENT_REFRESH_TOKENS;
+            for (int i = 0; i < toDelete && i < tokens.size(); i++) {
+                refreshTokenRepository.delete(tokens.get(i));
+            }
+        }
     }
 }

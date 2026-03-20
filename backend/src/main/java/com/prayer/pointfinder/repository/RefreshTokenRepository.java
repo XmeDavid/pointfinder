@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,6 +18,10 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID
     int deleteExpiredBefore(@Param("cutoff") Instant cutoff);
 
     Optional<RefreshToken> findByToken(String token);
+
+    long countByUserId(UUID userId);
+
+    List<RefreshToken> findByUserIdOrderByCreatedAtAsc(UUID userId);
 
     @Modifying
     @Query("DELETE FROM RefreshToken rt WHERE rt.user.id = :userId")
