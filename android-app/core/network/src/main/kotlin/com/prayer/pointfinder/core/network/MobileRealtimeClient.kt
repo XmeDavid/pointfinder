@@ -67,7 +67,11 @@ class MobileRealtimeClient(
     private val apiBaseUrl: String,
     private val enabled: Boolean = true,
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    // Single-threaded dispatcher serialises all reads/writes of mutable state
+    // (webSocket, reconnectAttempt, desiredSession) so OkHttp callback threads
+    // and the IO dispatcher never race.
+    private val singleThread = Dispatchers.IO.limitedParallelism(1)
+    private val scope = CoroutineScope(SupervisorJob() + singleThread)
     private val json = Json { ignoreUnknownKeys = true; isLenient = true; explicitNulls = false }
     private val okHttpClient = OkHttpClient.Builder()
         .pingInterval(20, TimeUnit.SECONDS)
@@ -79,35 +83,40 @@ class MobileRealtimeClient(
     private val _connectionState = MutableStateFlow<RealtimeConnectionState>(RealtimeConnectionState.Disconnected)
     val connectionState: StateFlow<RealtimeConnectionState> = _connectionState.asStateFlow()
 
+    // Guarded by singleThread – all access must happen within withContext(singleThread)
     private var webSocket: WebSocket? = null
     private var reconnectJob: Job? = null
     private var desiredSession: SessionParams? = null
     private var reconnectAttempt = 0
 
     fun connect(gameId: String, token: String) {
-        if (!enabled) {
-            updateState(RealtimeConnectionState.Disconnected)
-            return
-        }
-        val next = SessionParams(gameId = gameId, token = token)
-        if (desiredSession == next && _connectionState.value == RealtimeConnectionState.Connected) {
-            return
-        }
+        scope.launch {
+            if (!enabled) {
+                updateState(RealtimeConnectionState.Disconnected)
+                return@launch
+            }
+            val next = SessionParams(gameId = gameId, token = token)
+            if (desiredSession == next && _connectionState.value == RealtimeConnectionState.Connected) {
+                return@launch
+            }
 
-        desiredSession = next
-        reconnectAttempt = 0
-        reconnectJob?.cancel()
-        openSocket()
+            desiredSession = next
+            reconnectAttempt = 0
+            reconnectJob?.cancel()
+            openSocket()
+        }
     }
 
     fun disconnect() {
-        desiredSession = null
-        reconnectAttempt = 0
-        reconnectJob?.cancel()
-        reconnectJob = null
-        webSocket?.close(1000, "manual_disconnect")
-        webSocket = null
-        updateState(RealtimeConnectionState.Disconnected)
+        scope.launch {
+            desiredSession = null
+            reconnectAttempt = 0
+            reconnectJob?.cancel()
+            reconnectJob = null
+            webSocket?.close(1000, "manual_disconnect")
+            webSocket = null
+            updateState(RealtimeConnectionState.Disconnected)
+        }
     }
 
     private fun openSocket() {
@@ -130,8 +139,10 @@ class MobileRealtimeClient(
 
         webSocket = okHttpClient.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
-                reconnectAttempt = 0
-                updateState(RealtimeConnectionState.Connected)
+                scope.launch {
+                    reconnectAttempt = 0
+                    updateState(RealtimeConnectionState.Connected)
+                }
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
@@ -149,13 +160,17 @@ class MobileRealtimeClient(
             }
 
             override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-                this@MobileRealtimeClient.webSocket = null
-                scheduleReconnect()
+                scope.launch {
+                    this@MobileRealtimeClient.webSocket = null
+                    scheduleReconnect()
+                }
             }
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                this@MobileRealtimeClient.webSocket = null
-                scheduleReconnect()
+                scope.launch {
+                    this@MobileRealtimeClient.webSocket = null
+                    scheduleReconnect()
+                }
             }
         })
     }
