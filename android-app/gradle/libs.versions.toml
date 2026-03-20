@@ -22,7 +22,7 @@ hilt = "2.52"
 hiltNavigation = "1.2.0"
 
 # Room
-room = "2.6.1"
+room = "2.7.2"
 sqlcipher = "4.5.4"
 sqlite = "2.4.0"
 
