@@ -193,25 +193,12 @@ extension AppState {
                   let token = KeychainService.load(key: AppConfiguration.operatorTokenKey),
                   let refreshToken = KeychainService.load(key: AppConfiguration.operatorRefreshTokenKey) {
 
-            if let userIdString = defaults.string(forKey: AppConfiguration.operatorUserIdKey),
-               let userId = UUID(uuidString: userIdString) {
-                authType = .userOperator(accessToken: token, refreshToken: refreshToken, userId: userId)
-            } else {
-                // Backward compatibility for sessions saved before operator user ID persistence.
-                authType = .userOperator(accessToken: token, refreshToken: refreshToken, userId: UUID())
-                Task { [weak self] in
-                    guard let self else { return }
-                    if let user = try? await self.apiClient.getCurrentUser(token: token) {
-                        guard case .userOperator(let accessToken, let currentRefreshToken, _) = self.authType else { return }
-                        UserDefaults.standard.set(user.id.uuidString, forKey: AppConfiguration.operatorUserIdKey)
-                        self.authType = .userOperator(
-                            accessToken: accessToken,
-                            refreshToken: currentRefreshToken,
-                            userId: user.id
-                        )
-                    }
-                }
+            guard let userIdString = defaults.string(forKey: AppConfiguration.operatorUserIdKey),
+                  let userId = UUID(uuidString: userIdString) else {
+                // No persisted operator user ID — session is invalid; treat as logged out.
+                return
             }
+            authType = .userOperator(accessToken: token, refreshToken: refreshToken, userId: userId)
 
             Task { await configureApiClientAuth(refreshToken: refreshToken) }
             PushNotificationService.shared.configureForOperator(apiClient: apiClient, operatorToken: token)
