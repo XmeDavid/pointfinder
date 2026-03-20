@@ -11,14 +11,13 @@ import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.PlayerRepository;
 import com.prayer.pointfinder.repository.TeamRepository;
+import com.prayer.pointfinder.util.CodeGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
-
 import java.util.stream.Collectors;
 
 @Service
@@ -67,10 +66,7 @@ public class TeamService {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new ResourceNotFoundException("Team", teamId));
-
-        if (!team.getGame().getId().equals(gameId)) {
-            throw new BadRequestException("Team does not belong to this game");
-        }
+        gameAccessService.ensureBelongsToGame("Team", team.getGame().getId(), gameId);
 
         team.setName(request.getName());
         if (request.getColor() != null) {
@@ -85,9 +81,7 @@ public class TeamService {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new ResourceNotFoundException("Team", teamId));
-        if (!team.getGame().getId().equals(gameId)) {
-            throw new BadRequestException("Team does not belong to this game");
-        }
+        gameAccessService.ensureBelongsToGame("Team", team.getGame().getId(), gameId);
         teamRepository.delete(team);
     }
 
@@ -96,9 +90,7 @@ public class TeamService {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new ResourceNotFoundException("Team", teamId));
-        if (!team.getGame().getId().equals(gameId)) {
-            throw new BadRequestException("Team does not belong to this game");
-        }
+        gameAccessService.ensureBelongsToGame("Team", team.getGame().getId(), gameId);
 
         return playerRepository.findByTeamId(teamId).stream()
                 .map(p -> PlayerResponse.builder()
@@ -116,39 +108,26 @@ public class TeamService {
 
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new ResourceNotFoundException("Team", teamId));
-        if (!team.getGame().getId().equals(gameId)) {
-            throw new BadRequestException("Team does not belong to this game");
-        }
+        gameAccessService.ensureBelongsToGame("Team", team.getGame().getId(), gameId);
 
         Player player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
         if (!player.getTeam().getId().equals(teamId)) {
             throw new BadRequestException("Player does not belong to this team");
         }
-        if (!player.getTeam().getGame().getId().equals(gameId)) {
-            throw new BadRequestException("Player does not belong to this game");
-        }
+        gameAccessService.ensureBelongsToGame("Player", player.getTeam().getGame().getId(), gameId);
 
         playerRepository.delete(player);
     }
 
     private String generateUniqueJoinCode() {
         for (int attempt = 0; attempt < MAX_JOIN_CODE_ATTEMPTS; attempt++) {
-            String code = generateJoinCode();
+            String code = CodeGenerator.generate(7, CodeGenerator.FULL_ALPHANUMERIC);
             if (teamRepository.findByJoinCode(code).isEmpty()) {
                 return code;
             }
         }
         throw new IllegalStateException("Unable to generate unique team join code");
-    }
-
-    private String generateJoinCode() {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        StringBuilder sb = new StringBuilder(7);
-        for (int i = 0; i < 7; i++) {
-            sb.append(chars.charAt(ThreadLocalRandom.current().nextInt(chars.length())));
-        }
-        return sb.toString();
     }
 
     private TeamResponse toResponse(Team team) {

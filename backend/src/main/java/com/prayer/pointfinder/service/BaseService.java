@@ -206,15 +206,11 @@ public class BaseService {
     }
 
     private void ensureBaseBelongsToGame(Base base, UUID gameId) {
-        if (!base.getGame().getId().equals(gameId)) {
-            throw new BadRequestException("Base does not belong to this game");
-        }
+        gameAccessService.ensureBelongsToGame("Base", base.getGame().getId(), gameId);
     }
 
     private void ensureChallengeBelongsToGame(Challenge challenge, UUID gameId) {
-        if (!challenge.getGame().getId().equals(gameId)) {
-            throw new BadRequestException("Challenge does not belong to this game");
-        }
+        gameAccessService.ensureBelongsToGame("Challenge", challenge.getGame().getId(), gameId);
     }
 
     private BaseResponse toResponse(Base base) {

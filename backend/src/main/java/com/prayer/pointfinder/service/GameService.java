@@ -10,15 +10,18 @@ import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ForbiddenException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
+import com.prayer.pointfinder.mapper.GameResponseMapper;
 import com.prayer.pointfinder.repository.*;
 import com.prayer.pointfinder.security.SecurityUtils;
+import com.prayer.pointfinder.util.CodeGenerator;
 import com.prayer.pointfinder.websocket.GameEventBroadcaster;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
@@ -52,9 +55,7 @@ public class GameService {
     private final GameImportExportService gameImportExportService;
     private final TeamVariableService teamVariableService;
 
-    private static final String BROADCAST_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     private static final int BROADCAST_CODE_LENGTH = 6;
-    private static final SecureRandom RANDOM = new SecureRandom();
     private static final java.util.Set<String> VALID_TILE_SOURCES = java.util.Set.of("osm", "osm-classic", "voyager", "positron", "swisstopo", "swisstopo-sat");
 
     // ── Read ─────────────────────────────────────────────────────────
@@ -153,13 +154,18 @@ public class GameService {
     @Transactional(timeout = 10)
     public void deleteGame(UUID id) {
         gameAccessService.ensureCurrentUserCanAccessGame(id);
-        eventBroadcaster.broadcastGameStatus(id, "ended");
         gameRepository.deleteById(id);
         try {
             fileStorageService.deleteGameFiles(id);
         } catch (Exception e) {
             log.warn("Failed to clean up files for deleted game {}: {}", id, e.getMessage());
         }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                eventBroadcaster.broadcastGameStatus(id, "ended");
+            }
+        });
     }
 
     // ── Status transitions ───────────────────────────────────────────
@@ -320,24 +326,7 @@ public class GameService {
     }
 
     private GameResponse toResponse(Game game) {
-        List<UUID> operatorIds = game.getOperators().stream()
-                .map(User::getId)
-                .collect(Collectors.toList());
-
-        return GameResponse.builder()
-                .id(game.getId())
-                .name(game.getName())
-                .description(game.getDescription())
-                .startDate(game.getStartDate())
-                .endDate(game.getEndDate())
-                .status(game.getStatus().name())
-                .createdBy(game.getCreatedBy().getId())
-                .operatorIds(operatorIds)
-                .uniformAssignment(game.getUniformAssignment())
-                .broadcastEnabled(game.getBroadcastEnabled())
-                .broadcastCode(game.getBroadcastCode())
-                .tileSource(game.getTileSource())
-                .build();
+        return GameResponseMapper.toResponse(game);
     }
 
     private String validateTileSource(String tileSource) {
@@ -350,11 +339,7 @@ public class GameService {
 
     private String generateBroadcastCode() {
         for (int attempt = 0; attempt < 10; attempt++) {
-            StringBuilder sb = new StringBuilder(BROADCAST_CODE_LENGTH);
-            for (int i = 0; i < BROADCAST_CODE_LENGTH; i++) {
-                sb.append(BROADCAST_CODE_CHARS.charAt(RANDOM.nextInt(BROADCAST_CODE_CHARS.length())));
-            }
-            String code = sb.toString();
+            String code = CodeGenerator.generate(BROADCAST_CODE_LENGTH);
             if (!gameRepository.findByBroadcastCodeAndBroadcastEnabledTrue(code).isPresent()) {
                 if (attempt > 0) {
                     log.warn("Broadcast code generation required {} attempts before finding a unique code", attempt + 1);

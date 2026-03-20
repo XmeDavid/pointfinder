@@ -7,14 +7,15 @@ import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ConflictException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
+import com.prayer.pointfinder.mapper.GameResponseMapper;
 import com.prayer.pointfinder.repository.*;
 import com.prayer.pointfinder.security.SecurityUtils;
+import com.prayer.pointfinder.util.CodeGenerator;
 import com.prayer.pointfinder.util.HtmlSanitizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -26,8 +27,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class GameImportExportService {
-
-    private static final SecureRandom RANDOM = new SecureRandom();
 
     private final GameRepository gameRepository;
     private final UserRepository userRepository;
@@ -464,43 +463,17 @@ public class GameImportExportService {
     // ── Utility helpers ──────────────────────────────────────────────
 
     private GameResponse toResponse(Game game) {
-        List<UUID> operatorIds = game.getOperators().stream()
-                .map(User::getId)
-                .collect(Collectors.toList());
-
-        return GameResponse.builder()
-                .id(game.getId())
-                .name(game.getName())
-                .description(game.getDescription())
-                .startDate(game.getStartDate())
-                .endDate(game.getEndDate())
-                .status(game.getStatus().name())
-                .createdBy(game.getCreatedBy().getId())
-                .operatorIds(operatorIds)
-                .uniformAssignment(game.getUniformAssignment())
-                .tileSource(game.getTileSource())
-                .build();
+        return GameResponseMapper.toResponse(game);
     }
 
     private String generateUniqueJoinCode() {
-        String code;
-        int attempts = 0;
-        do {
-            code = generateRandomCode(6);
-            attempts++;
-            if (attempts > 100) {
-                throw new IllegalStateException("Unable to generate unique join code");
+        for (int attempt = 0; attempt < 100; attempt++) {
+            String code = CodeGenerator.generate(6, CodeGenerator.FULL_ALPHANUMERIC);
+            if (teamRepository.findByJoinCode(code).isEmpty()) {
+                return code;
             }
-        } while (teamRepository.findByJoinCode(code).isPresent());
-        return code;
-    }
-
-    private String generateRandomCode(int length) {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        return RANDOM.ints(length, 0, chars.length())
-                .mapToObj(chars::charAt)
-                .map(String::valueOf)
-                .collect(Collectors.joining());
+        }
+        throw new IllegalStateException("Unable to generate unique join code");
     }
 
     private void requireNotBlank(String value, String fieldName) {

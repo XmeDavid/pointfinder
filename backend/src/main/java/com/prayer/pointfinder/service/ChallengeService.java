@@ -222,9 +222,7 @@ public class ChallengeService {
     }
 
     private void ensureChallengeBelongsToGame(Challenge challenge, UUID gameId) {
-        if (!challenge.getGame().getId().equals(gameId)) {
-            throw new BadRequestException("Challenge does not belong to this game");
-        }
+        gameAccessService.ensureBelongsToGame("Challenge", challenge.getGame().getId(), gameId);
     }
 
     private ChallengeResponse toResponse(Challenge c) {

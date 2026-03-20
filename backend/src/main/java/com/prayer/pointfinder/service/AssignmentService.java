@@ -122,9 +122,7 @@ public class AssignmentService {
     }
 
     private void ensureBelongsToGame(String entityName, UUID entityGameId, UUID expectedGameId) {
-        if (!entityGameId.equals(expectedGameId)) {
-            throw new BadRequestException(entityName + " does not belong to this game");
-        }
+        gameAccessService.ensureBelongsToGame(entityName, entityGameId, expectedGameId);
     }
 
     private void validateNoConflictingAssignment(UUID gameId, UUID baseId, UUID teamId) {

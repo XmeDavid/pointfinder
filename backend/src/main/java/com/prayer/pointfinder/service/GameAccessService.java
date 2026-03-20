@@ -4,6 +4,7 @@ import com.prayer.pointfinder.entity.Game;
 import com.prayer.pointfinder.entity.Player;
 import com.prayer.pointfinder.entity.User;
 import com.prayer.pointfinder.entity.UserRole;
+import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ForbiddenException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.GameRepository;
@@ -63,6 +64,20 @@ public class GameAccessService {
         UUID playerGameId = player.getTeam().getGame().getId();
         if (!playerGameId.equals(gameId)) {
             throw new ForbiddenException("Player does not belong to this game");
+        }
+    }
+
+    /**
+     * Generic guard: ensures the given entity's game ID matches the expected game ID.
+     *
+     * @param entityName   human-readable entity name for the error message (e.g. "Base", "Challenge")
+     * @param entityGameId the game ID from the entity being checked
+     * @param expectedGameId the game ID the entity should belong to
+     * @throws BadRequestException if the IDs do not match
+     */
+    public void ensureBelongsToGame(String entityName, UUID entityGameId, UUID expectedGameId) {
+        if (!entityGameId.equals(expectedGameId)) {
+            throw new BadRequestException(entityName + " does not belong to this game");
         }
     }
 }

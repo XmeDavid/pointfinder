@@ -17,21 +17,21 @@ public class BroadcastController {
 
     @GetMapping("/{code}")
     public ResponseEntity<BroadcastDataResponse> getBroadcastData(@PathVariable String code) {
-        return ResponseEntity.ok(broadcastService.getBroadcastData(code.toUpperCase()));
+        return ResponseEntity.ok(broadcastService.getBroadcastData(code));
     }
 
     @GetMapping("/{code}/leaderboard")
     public ResponseEntity<List<LeaderboardEntry>> getLeaderboard(@PathVariable String code) {
-        return ResponseEntity.ok(broadcastService.getLeaderboard(code.toUpperCase()));
+        return ResponseEntity.ok(broadcastService.getLeaderboard(code));
     }
 
     @GetMapping("/{code}/locations")
     public ResponseEntity<List<TeamLocationResponse>> getLocations(@PathVariable String code) {
-        return ResponseEntity.ok(broadcastService.getLocations(code.toUpperCase()));
+        return ResponseEntity.ok(broadcastService.getLocations(code));
     }
 
     @GetMapping("/{code}/progress")
     public ResponseEntity<List<TeamBaseProgressResponse>> getProgress(@PathVariable String code) {
-        return ResponseEntity.ok(broadcastService.getProgress(code.toUpperCase()));
+        return ResponseEntity.ok(broadcastService.getProgress(code));
     }
 }
