@@ -24,6 +24,9 @@ WORKDIR /app
 
 COPY --from=build /app/build/libs/*.jar app.jar
 
+RUN addgroup --system app && adduser --system --ingroup app app
+USER app
+
 EXPOSE 8080
 
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
