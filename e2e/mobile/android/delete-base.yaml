@@ -1,0 +1,11 @@
+# Android: delete a base via overflow menu
+- tapOn: "${UPDATED_BASE_NAME:-Base Alpha v2}"
+
+# Open the overflow menu first, then tap delete
+- tapOn:
+    id: "base-overflow-btn"
+- tapOn:
+    id: "base-delete-btn"
+
+# Confirm deletion dialog — button text is "Delete Base"
+- tapOn: "Delete Base"

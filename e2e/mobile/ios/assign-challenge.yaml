@@ -1,0 +1,7 @@
+# iOS: assign a challenge via the Picker (.menu style) with accessibilityIdentifier
+# Tap the picker to open the menu, then select the challenge
+- tapOn:
+    id: "assign-challenge-btn"
+
+# Pick the challenge from the dropdown menu
+- tapOn: "${CHALLENGE_TITLE:-Find the Hidden Clue (Updated)}"

@@ -1,0 +1,6 @@
+# Android: assign a challenge via the Fixed Challenge dropdown
+# Tap the Fixed Challenge dropdown to expand it
+- tapOn: "Fixed Challenge"
+
+# Pick the challenge from the dropdown menu
+- tapOn: "${CHALLENGE_TITLE:-Find the Hidden Clue (Updated)}"

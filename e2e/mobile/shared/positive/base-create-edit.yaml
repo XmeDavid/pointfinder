@@ -45,8 +45,18 @@ appId: ${APP_ID}
 - assertVisible: "${CREATED_BASE_NAME:-Base Alpha}"
 
 # Edit the base name
-- tapOn:
-    id: "base-edit-btn"
+# iOS: after creation, the app auto-navigates into the edit view — go back to list first
+- runFlow:
+    when:
+      platform: "iOS"
+    file: ../../ios/navigate-to-base-edit.yaml
+    env:
+      BASE_ITEM_NAME: "${CREATED_BASE_NAME:-Base Alpha}"
+# Android: tap the edit button from the list
+- runFlow:
+    when:
+      platform: "Android"
+    file: ../../android/navigate-to-base-edit.yaml
 
 - tapOn:
     id: "base-name-input"

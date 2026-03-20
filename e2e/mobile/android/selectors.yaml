@@ -66,6 +66,7 @@ NOTIFICATION_SEND_BTN: "notification-send-btn"
 # Player
 PLAYER_JOIN_CODE_INPUT: "player-join-code-input"
 PLAYER_JOIN_BTN: "player-join-btn"
+PLAYER_NAME_FIELD: "player-name-field"
 PLAYER_BASE_LIST: "player-base-list"
 PLAYER_CHALLENGE_LIST: "player-challenge-list"
 PLAYER_ANSWER_INPUT: "player-answer-input"

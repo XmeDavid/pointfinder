@@ -1,0 +1,3 @@
+# Android: tap the team edit button (separate from list item tap)
+- tapOn:
+    id: "team-edit-btn"

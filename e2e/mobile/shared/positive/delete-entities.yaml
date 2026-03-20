@@ -25,30 +25,26 @@ appId: ${APP_ID}
 
 - tapOn: "${GAME_NAME:-E2E Test Game}"
 
-# --- Delete a base ---
-- tapOn: "${UPDATED_BASE_NAME:-Base Alpha v2}"
-
-# Open the overflow menu first, then tap delete
-- tapOn:
-    id: "base-overflow-btn"
-- tapOn:
-    id: "base-delete-btn"
-
-# Confirm deletion dialog — button text is "Delete Base"
-- tapOn: "Delete Base"
+# --- Delete a base (platform-specific) ---
+- runFlow:
+    when:
+      platform: "iOS"
+    file: ../../ios/delete-base.yaml
+- runFlow:
+    when:
+      platform: "Android"
+    file: ../../android/delete-base.yaml
 
 - assertNotVisible: "${UPDATED_BASE_NAME:-Base Alpha v2}"
 
-# --- Delete a challenge ---
-- tapOn: "${UPDATED_CHALLENGE_TITLE:-Find the Hidden Clue v2}"
-
-# Open the overflow menu first, then tap delete
-- tapOn:
-    id: "challenge-overflow-btn"
-- tapOn:
-    id: "challenge-delete-btn"
-
-# Confirm deletion dialog — button text is "Delete Challenge"
-- tapOn: "Delete Challenge"
+# --- Delete a challenge (platform-specific) ---
+- runFlow:
+    when:
+      platform: "iOS"
+    file: ../../ios/delete-challenge.yaml
+- runFlow:
+    when:
+      platform: "Android"
+    file: ../../android/delete-challenge.yaml
 
 - assertNotVisible: "${UPDATED_CHALLENGE_TITLE:-Find the Hidden Clue v2}"

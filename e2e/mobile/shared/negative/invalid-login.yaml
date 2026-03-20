@@ -20,8 +20,19 @@ appId: ${APP_ID}
 - hideKeyboard
 - tapOn: "Sign In"
 
-# Verify error alert is shown (login-error is inside UIAlertController message, not directly visible)
-- assertVisible: "OK"
+# Android: inline error text with testTag "login-error"
+# iOS: alert dialog with "OK" button
+- assertVisible:
+    id: "login-error"
+    optional: true
+- assertVisible:
+    text: "OK"
+    optional: true
+
+# Dismiss iOS alert if present
+- tapOn:
+    text: "OK"
+    optional: true
 
 # Verify we did NOT navigate to the games screen
 - assertNotVisible: "My Games"

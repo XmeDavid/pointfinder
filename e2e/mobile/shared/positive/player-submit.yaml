@@ -24,7 +24,18 @@ appId: ${APP_ID}
     id: "player-name-field"
 - inputText: "Test Player"
 - hideKeyboard
-- tapOn: "Join Game"
+# Android button text is "Join a Game", iOS is "Join Game"
+- tapOn:
+    text: "Join a Game"
+    optional: true
+- tapOn:
+    text: "Join Game"
+    optional: true
+
+# Permission disclosure dialog appears on fresh install — dismiss it
+- tapOn:
+    text: "Continue"
+    optional: true
 
 - assertVisible:
     id: "player-base-list"

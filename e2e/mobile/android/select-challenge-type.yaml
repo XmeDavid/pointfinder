@@ -1,0 +1,4 @@
+# Android: select challenge answer type via dropdown/spinner
+- tapOn:
+    id: "challenge-type-select"
+- tapOn: "Text"

@@ -40,6 +40,9 @@ appId: ${APP_ID}
 
 - assertVisible: "${TEAM_NAME:-Team Eagle}"
 
-# Verify join code is shown after creation
+# Navigate into the team detail to verify join code is shown
+- tapOn:
+    id: "team-edit-btn"
+
 - assertVisible:
     id: "team-join-code"

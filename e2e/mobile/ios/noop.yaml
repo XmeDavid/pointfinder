@@ -1,0 +1,2 @@
+# iOS: no-op — on iOS, tapping the list item already navigates to the edit view
+- evalScript: "true"

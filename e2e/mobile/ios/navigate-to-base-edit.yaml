@@ -1,0 +1,4 @@
+# iOS: after base creation, the app auto-navigates to the base edit view.
+# We need to go back to the list first, then tap into the base to edit.
+- back
+- tapOn: "${BASE_ITEM_NAME}"

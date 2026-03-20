@@ -32,9 +32,15 @@ appId: ${APP_ID}
     id: "challenge-title-input"
 - inputText: "${CREATED_CHALLENGE_TITLE:-Find the Hidden Clue}"
 
-- tapOn:
-    id: "challenge-type-select"
-- tapOn: "Text"
+# Select answer type (platform-specific picker interaction)
+- runFlow:
+    when:
+      platform: "iOS"
+    file: ../../ios/select-challenge-type.yaml
+- runFlow:
+    when:
+      platform: "Android"
+    file: ../../android/select-challenge-type.yaml
 
 - tapOn:
     id: "challenge-save-btn"

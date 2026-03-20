@@ -26,10 +26,14 @@ appId: ${APP_ID}
 - tapOn: "${GAME_NAME:-E2E Test Game}"
 
 # --- Edit a base ---
+# On iOS, tapping the list item navigates directly into BaseEditView
+# On Android, an additional tap on the edit button is needed
 - tapOn: "${BASE_NAME:-Base Alpha Edited}"
 
-- tapOn:
-    id: "base-edit-btn"
+- runFlow:
+    when:
+      platform: "Android"
+    file: ../../android/tap-base-edit-btn.yaml
 
 - tapOn:
     id: "base-name-input"
@@ -44,8 +48,10 @@ appId: ${APP_ID}
 # --- Edit a challenge ---
 - tapOn: "${CHALLENGE_TITLE:-Find the Hidden Clue (Updated)}"
 
-- tapOn:
-    id: "challenge-edit-btn"
+- runFlow:
+    when:
+      platform: "Android"
+    file: ../../android/tap-challenge-edit-btn.yaml
 
 - tapOn:
     id: "challenge-title-input"
@@ -64,8 +70,10 @@ appId: ${APP_ID}
 
 - tapOn: "${TEAM_NAME:-Team Eagle}"
 
-- tapOn:
-    id: "team-edit-btn"
+- runFlow:
+    when:
+      platform: "Android"
+    file: ../../android/tap-team-edit-btn.yaml
 
 - tapOn:
     id: "team-name-input"

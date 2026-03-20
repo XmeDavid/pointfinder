@@ -28,11 +28,15 @@ appId: ${APP_ID}
 # Navigate to the base to assign a challenge via the Fixed Challenge dropdown
 - tapOn: "${BASE_NAME:-Base Alpha Edited}"
 
-# Tap the Fixed Challenge dropdown to expand it
-- tapOn: "Fixed Challenge"
-
-# Pick the challenge from the dropdown menu
-- tapOn: "${CHALLENGE_TITLE:-Find the Hidden Clue (Updated)}"
+# Select the challenge (platform-specific picker interaction)
+- runFlow:
+    when:
+      platform: "iOS"
+    file: ../../ios/assign-challenge.yaml
+- runFlow:
+    when:
+      platform: "Android"
+    file: ../../android/assign-challenge.yaml
 
 # Save the base with the new fixed challenge assignment
 - tapOn:

@@ -1,0 +1,3 @@
+# iOS: select challenge answer type via segmented picker
+# With .segmented style, just tap the label directly (no need to tap the picker first)
+- tapOn: "Text"

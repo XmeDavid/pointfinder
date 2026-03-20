@@ -1,0 +1,15 @@
+# iOS: delete a base by navigating into the edit view (no overflow menu)
+# The list NavigationLink has id "base-edit-btn" and opens BaseEditView directly
+- tapOn: "${UPDATED_BASE_NAME:-Base Alpha v2}"
+
+# In iOS, tapping the list item navigates into BaseEditView where delete is directly available
+- scrollUntilVisible:
+    element:
+      id: "base-delete-btn"
+    direction: DOWN
+
+- tapOn:
+    id: "base-delete-btn"
+
+# Confirm deletion dialog — button text is "Delete" (from operator.delete)
+- tapOn: "Delete"

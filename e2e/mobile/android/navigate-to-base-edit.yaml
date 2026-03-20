@@ -1,0 +1,3 @@
+# Android: navigate to base edit via the edit button
+- tapOn:
+    id: "base-edit-btn"

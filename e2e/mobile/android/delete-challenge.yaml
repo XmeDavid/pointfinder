@@ -1,0 +1,11 @@
+# Android: delete a challenge via overflow menu
+- tapOn: "${UPDATED_CHALLENGE_TITLE:-Find the Hidden Clue v2}"
+
+# Open the overflow menu first, then tap delete
+- tapOn:
+    id: "challenge-overflow-btn"
+- tapOn:
+    id: "challenge-delete-btn"
+
+# Confirm deletion dialog — button text is "Delete Challenge"
+- tapOn: "Delete Challenge"

@@ -1,0 +1,15 @@
+# iOS: delete a challenge by navigating into the edit view (no overflow menu)
+# The list NavigationLink has id "challenge-edit-btn" and opens ChallengeEditView directly
+- tapOn: "${UPDATED_CHALLENGE_TITLE:-Find the Hidden Clue v2}"
+
+# In iOS, tapping the list item navigates into ChallengeEditView where delete is directly available
+- scrollUntilVisible:
+    element:
+      id: "challenge-delete-btn"
+    direction: DOWN
+
+- tapOn:
+    id: "challenge-delete-btn"
+
+# Confirm deletion dialog — button text is "Delete" (from operator.delete)
+- tapOn: "Delete"
