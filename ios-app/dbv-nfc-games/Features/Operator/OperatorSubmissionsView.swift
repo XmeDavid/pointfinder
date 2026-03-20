@@ -298,17 +298,17 @@ private struct OperatorSubmissionReviewSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section(locale.t("submissions.team")) {
+                Section(locale.t("common.team")) {
                     Text(teamName)
                 }
-                Section(locale.t("submissions.challenge")) {
+                Section(locale.t("common.challenge")) {
                     Text(challengeTitle)
                 }
                 Section(locale.t("operator.base")) {
                     Text(baseName)
                 }
                 if !submission.answer.isEmpty {
-                    Section(locale.t("submissions.answer")) {
+                    Section(locale.t("common.answer")) {
                         Text(submission.answer)
                     }
                 }
@@ -322,7 +322,7 @@ private struct OperatorSubmissionReviewSheet: View {
                     }
                 }
                 Section(locale.t("submissions.pointsLabelWithExpected", defaultPoints)) {
-                    TextField(locale.t("submissions.pointsLabel"), text: $pointsText)
+                    TextField(locale.t("common.points"), text: $pointsText)
                         .keyboardType(.numberPad)
                 }
                 Section(locale.t("submissions.feedbackLabel")) {

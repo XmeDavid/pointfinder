@@ -165,7 +165,7 @@ export function ChallengesPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">{t("challenges.title")}</h1>
+          <h1 className="text-2xl font-bold">{t("nav.challenges")}</h1>
           <p className="text-muted-foreground">{t("challenges.summary", { count: challenges.length })} &middot; {t("challenges.totalPoints", { total: totalPoints })}</p>
         </div>
         <Button className="self-end sm:self-auto" onClick={openCreate}><Plus className="mr-2 h-4 w-4" />{t("challenges.addChallenge")}</Button>
@@ -242,7 +242,7 @@ export function ChallengesPage() {
               </div>
               <div className="space-y-2">
                 <FormLabel htmlFor="challengePoints" required>
-                  {t("challenges.pointsLabel")}
+                  {t("common.points_label")}
                 </FormLabel>
                 <Input
                   id="challengePoints"

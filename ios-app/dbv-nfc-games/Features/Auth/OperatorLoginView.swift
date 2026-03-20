@@ -20,7 +20,7 @@ struct OperatorLoginView: View {
                     .font(.system(size: 60))
                     .foregroundStyle(.secondary)
 
-                Text(locale.t("auth.operatorLogin"))
+                Text(locale.t("common.operatorLogin"))
                     .font(.title2)
                     .fontWeight(.bold)
 
@@ -76,7 +76,7 @@ struct OperatorLoginView: View {
 
             Spacer()
         }
-        .navigationTitle(locale.t("auth.operatorLogin"))
+        .navigationTitle(locale.t("common.operatorLogin"))
         .navigationBarTitleDisplayMode(.inline)
         .alert(locale.t("common.error"), isPresented: $appState.showError) {
             Button(locale.t("common.ok")) {}

@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">PointFinder</string>
-
     <!-- Actions -->
     <string name="action_join_game">Entrar num jogo</string>
     <string name="action_operator_login">Login de operador</string>
@@ -28,11 +27,8 @@
     <string name="action_reject">Rejeitar</string>
     <string name="nfc_scan_dialog_title">Ler Tag NFC</string>
     <string name="nfc_scan_dialog_message">Segura o telemóvel perto da tag NFC na base</string>
-    <string name="nfc_write_dialog_title">Gravar tag NFC</string>
     <string name="nfc_write_dialog_message">Segura o telemóvel perto da tag NFC que queres gravar</string>
-
     <!-- Labels -->
-    <string name="label_welcome">PointFinder</string>
     <string name="label_join_with_qr_or_code">Entrar com QR ou código</string>
     <string name="label_join_code">Código de entrada</string>
     <string name="label_display_name">Nome de exibição</string>
@@ -52,7 +48,6 @@
     <string name="label_more">Mais</string>
     <string name="label_create_game">Criar Jogo</string>
     <string name="label_game_name">Nome do Jogo</string>
-    <string name="label_game_description">Descrição</string>
     <string name="label_start_from">Começar a partir de</string>
     <string name="label_empty_game">Jogo vazio</string>
     <string name="label_import_from_file">Importar de ficheiro</string>
@@ -92,7 +87,6 @@
     <string name="label_challenge_locked">Desafio bloqueado</string>
     <string name="label_challenge_locked_hint">Visita esta base para desbloquear o desafio</string>
     <string name="label_awaiting_review">Aguardando revisão</string>
-    <string name="label_solve_title">Resolver desafio</string>
     <string name="label_photo_mode">Modo de resposta por média</string>
     <string name="label_media_selected">%1$d de 5 selecionados</string>
     <string name="game_status_setup">Preparação</string>
@@ -107,11 +101,8 @@
     <string name="label_unknown_challenge">Desafio desconhecido</string>
     <string name="label_unknown_base">Base desconhecida</string>
     <string name="label_review_submission">Rever submissão</string>
-    <string name="submissions_team_label">Equipa</string>
     <string name="submissions_challenge_label">Desafio</string>
     <string name="submissions_base_label">Base</string>
-    <string name="submissions_answer_label">Resposta</string>
-    <string name="submissions_points_label">Pontos</string>
     <string name="submissions_points_label_with_expected">Pontos (%1$d)</string>
     <string name="submissions_feedback_label">Feedback (opcional)</string>
     <string name="label_notification_settings">Definições de notificações</string>
@@ -133,26 +124,19 @@
     <string name="label_no_games_description">Não tens jogos ainda. Puxa para atualizar ou verifica mais tarde.</string>
     <string name="label_game_not_active_title">Jogo ainda não está ativo</string>
     <string name="label_game_not_active_message">Aguarda até que o operador coloque o jogo em direto.</string>
-
     <!-- Permission Disclosure -->
     <string name="disclosure_title">Antes de Começar</string>
     <string name="disclosure_subtitle">O PointFinder precisa de algumas permissões para a tua experiência de jogo.</string>
     <string name="disclosure_location_title">Localização</string>
     <string name="disclosure_location_detail">Mostra a tua equipa no mapa ao vivo para os operadores monitorizarem o jogo.</string>
-    <string name="disclosure_notifications_title">Notificações</string>
     <string name="disclosure_notifications_detail">Envia atualizações de jogo e mensagens do operador.</string>
     <string name="disclosure_camera_title">Câmara e Fotos</string>
     <string name="disclosure_camera_detail">Lê códigos QR para entrar e submete fotos para desafios.</string>
     <string name="disclosure_footer">Podes alterar estas permissões mais tarde nas Definições.</string>
-    <string name="disclosure_continue">Continuar</string>
-
     <string name="dialog_leave_game_title">Sair do Jogo?</string>
     <string name="dialog_leave_game_message">Serás desconectado do jogo atual. Podes voltar a entrar com o mesmo código.</string>
-
-    <string name="dialog_delete_account_title">Eliminar Conta</string>
     <string name="dialog_delete_account_message">Isto irá eliminar permanentemente os teus dados de conta de jogador no PointFinder. Esta ação não pode ser desfeita.</string>
     <string name="dialog_delete_account_confirm">Eliminar</string>
-
     <!-- Hints -->
     <string name="hint_checkin_instructions">Aproxime seu telefone do marcador na base para fazer check-in</string>
     <string name="hint_offline_sync">Offline: os dados serão sincronizados quando voltar conexão.</string>
@@ -160,30 +144,24 @@
     <string name="hint_media_reselect_required">O ficheiro original já não está disponível. Seleciona-o novamente.</string>
     <string name="hint_media_upload_disabled">Envio de media está temporariamente indisponível. Tenta novamente mais tarde.</string>
     <string name="hint_nfc_hold_near">Aproxime uma tag NFC do dispositivo para gravar a base.</string>
-
     <!-- Status -->
     <string name="status_not_visited">Não visitado</string>
-    <string name="status_pending">Pendente</string>
     <string name="status_approved">Aprovada</string>
     <string name="status_checked_in">Check-in feito</string>
     <string name="status_submitted">Aguardando revisão</string>
     <string name="status_completed">Concluído</string>
     <string name="status_correct">Correta</string>
     <string name="status_rejected">Rejeitado</string>
-
     <!-- Submission result -->
     <string name="result_correct">Correto!</string>
     <string name="result_approved">Aprovado!</string>
-    <string name="result_rejected">Rejeitado</string>
     <string name="result_submitted">Submetido</string>
     <string name="result_correct_msg">Bom trabalho! A tua resposta está correta.</string>
     <string name="result_approved_msg">A tua submissão foi aprovada.</string>
     <string name="result_rejected_msg">A tua submissão foi rejeitada. Verifica o feedback e tenta novamente.</string>
     <string name="result_submitted_msg">A tua resposta foi submetida e está a aguardar revisão por um operador.</string>
-
     <!-- Status messages -->
     <string name="success_nfc_written">NFC gravado e associado com sucesso.</string>
-
     <!-- Errors -->
     <string name="error_generic">Algo deu errado.</string>
     <string name="error_invalid_nfc">Payload NFC inválido.</string>
@@ -200,7 +178,6 @@
     <string name="error_nfc_write_failed">Falha ao gravar NFC.</string>
     <string name="error_nfc_link_failed">NFC gravado mas associação falhou: %1$s</string>
     <string name="error_network_unavailable">Rede indisponível. Verifique sua conexão.</string>
-
     <!-- Setup Hub -->
     <string name="label_needs_attention">Atenção necessária</string>
     <string name="label_manage">Gerir</string>
@@ -216,12 +193,10 @@
     <string name="label_go_live_confirm_message">As equipas poderão entrar e jogar. Podes continuar a editar bases e desafios durante o jogo.</string>
     <string name="label_challenges">Desafios</string>
     <string name="label_teams">Equipas</string>
-
     <!-- Base Management -->
     <string name="label_new_base">Nova Base</string>
     <string name="label_edit_base">Editar Base</string>
     <string name="label_base_name">Nome da Base</string>
-    <string name="label_base_description">Descrição</string>
     <string name="label_require_presence">Exigir Presença</string>
     <string name="label_hidden_base">Base Oculta</string>
     <string name="label_none">Nenhum</string>
@@ -232,7 +207,6 @@
     <string name="label_tap_map_to_set_location">Toca no mapa para definir a localização</string>
     <string name="action_save">Guardar</string>
     <string name="label_write_nfc">Gravar NFC</string>
-
     <!-- Rich Text Editor -->
     <string name="action_done">Concluir</string>
     <string name="label_insert_variable">Inserir Variável</string>
@@ -258,7 +232,6 @@
     <string name="label_link_text">Texto da Ligação</string>
     <string name="label_preview">Pré-visualização</string>
     <string name="label_select_team">Selecionar Equipa</string>
-
     <!-- Challenge Management -->
     <string name="label_challenge_title">Título</string>
     <string name="label_challenge_points">Pontos</string>
@@ -283,7 +256,6 @@
     <string name="label_edit_challenge">Editar Desafio</string>
     <string name="label_no_content">Sem conteúdo ainda</string>
     <string name="label_no_base">Sem base</string>
-
     <!-- Team Management -->
     <string name="label_join_code_section">Código de Entrada</string>
     <string name="label_show_qr">Mostrar QR</string>
@@ -304,13 +276,11 @@
     <string name="label_challenge_variables">Variáveis do Desafio</string>
     <string name="label_no_teams_in_game">Sem equipas neste jogo</string>
     <string name="label_saving">A guardar…</string>
-
     <!-- Map Edit Mode -->
     <string name="label_edit_on">Editar: ATIVO</string>
     <string name="label_edit_off">Editar: INATIVO</string>
     <string name="label_add_base_here">Criar Base Aqui</string>
     <string name="label_center_on_me">Centrar em Mim</string>
-
     <!-- Live Tab -->
     <string name="label_leaderboard">Classificação</string>
     <string name="label_activity">Atividade</string>
@@ -318,18 +288,15 @@
     <string name="label_no_activity">Nenhuma atividade ainda</string>
     <string name="label_completed_count">%1$d concluídos</string>
     <string name="label_rank">%1$d.</string>
-
     <!-- Notifications -->
     <string name="label_notifications">Notificações</string>
     <string name="label_no_notifications">Sem notificações ainda</string>
-
     <!-- More Tab -->
     <string name="label_game_settings">Definições do Jogo</string>
     <string name="label_send_notifications">Enviar Notificações</string>
     <string name="label_manage_operators">Gerir Operadores</string>
     <string name="label_export_game">Exportar Jogo</string>
     <string name="label_app_settings">Definições da App</string>
-    <string name="label_game_section">Jogo</string>
     <string name="label_data_section">Dados</string>
     <string name="label_start_date">Data de Início</string>
     <string name="label_end_date">Data de Fim</string>
@@ -356,7 +323,6 @@
     <string name="action_revoke_invite">Revogar convite</string>
     <string name="confirm_revoke_invite">Revogar Convite</string>
     <string name="confirm_revoke_invite_message">Revogar o convite enviado para %1$s?</string>
-
     <!-- Toast / Snackbar -->
     <string name="toast_base_created">Base criada</string>
     <string name="toast_base_saved">Base guardada</string>

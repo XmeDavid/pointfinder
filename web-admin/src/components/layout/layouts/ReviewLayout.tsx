@@ -155,9 +155,9 @@ export function ReviewLayout({ gameId, gameStatus }: ReviewLayoutProps) {
   const pendingCount = submissions.filter((s) => s.status === "pending").length;
 
   const filterTabs: { key: FilterTab; label: string; count?: number }[] = [
-    { key: "pending", label: t("submissions.statusPending"), count: pendingCount },
+    { key: "pending", label: t("common.pending"), count: pendingCount },
     { key: "approved", label: t("submissions.statusApproved") },
-    { key: "rejected", label: t("submissions.statusRejected") },
+    { key: "rejected", label: t("common.rejected") },
     { key: "all", label: t("common.all"), count: submissions.length },
   ];
 
@@ -206,7 +206,7 @@ export function ReviewLayout({ gameId, gameStatus }: ReviewLayoutProps) {
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
             <FileText className="h-6 w-6 mb-2" />
-            <p className="text-sm">{filterTab === "pending" ? t("submissions.noPending") : t("submissions.noSubmissions")}</p>
+            <p className="text-sm">{filterTab === "pending" ? t("submissions.noPending") : t("common.noSubmissions")}</p>
           </div>
         ) : (
           filtered.map((sub) => {
@@ -328,7 +328,7 @@ export function ReviewLayout({ gameId, gameStatus }: ReviewLayoutProps) {
             {/* Points */}
             <div>
               <p className="text-sm font-medium mb-1">
-                {expectedPoints != null ? t("submissions.pointsLabelWithExpected", { points: expectedPoints }) : t("submissions.pointsLabel")}
+                {expectedPoints != null ? t("submissions.pointsLabelWithExpected", { points: expectedPoints }) : t("common.points_label")}
               </p>
               <Input type="number" min={0} value={reviewPoints} onChange={(e) => setSelection((s) => ({ ...s, points: parseInt(e.target.value) || 0 }))} />
             </div>
@@ -366,7 +366,7 @@ export function ReviewLayout({ gameId, gameStatus }: ReviewLayoutProps) {
       ) : (
         <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2">
           <FileText className="h-10 w-10" />
-          <p className="text-sm">{t("submissions.noSubmissions")}</p>
+          <p className="text-sm">{t("common.noSubmissions")}</p>
         </div>
       )}
     </div>

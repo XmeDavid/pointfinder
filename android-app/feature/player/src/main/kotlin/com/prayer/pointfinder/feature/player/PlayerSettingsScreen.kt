@@ -262,7 +262,7 @@ fun PlayerSettingsScreen(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text(stringResource(R.string.dialog_delete_account_title)) },
+            title = { Text(stringResource(R.string.action_delete_account)) },
             text = { Text(stringResource(R.string.dialog_delete_account_message)) },
             confirmButton = {
                 TextButton(

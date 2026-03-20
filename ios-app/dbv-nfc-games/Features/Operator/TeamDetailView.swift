@@ -208,7 +208,7 @@ struct TeamDetailView: View {
             }
             Button(locale.t("common.cancel"), role: .cancel) {}
         } message: {
-            Text(locale.t("operator.deleteTeamConfirmMessage"))
+            Text(locale.t("common.cannotUndo"))
         }
         .alert(locale.t("operator.removePlayer"), isPresented: $showRemovePlayerAlert) {
             Button(locale.t("operator.removePlayer"), role: .destructive) {

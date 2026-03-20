@@ -55,7 +55,7 @@ struct GameSettingsView: View {
             Section {
                 TextField(locale.t("operator.gameName"), text: $name)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(locale.t("operator.gameDescription"))
+                    Text(locale.t("common.description"))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     TextEditor(text: $gameDescription)
@@ -145,9 +145,9 @@ struct GameSettingsView: View {
             }
 
             // Status section
-            Section(locale.t("operator.status")) {
+            Section(locale.t("common.status")) {
                 HStack {
-                    Text(locale.t("operator.status"))
+                    Text(locale.t("common.status"))
                     Spacer()
                     Text(locale.t("game.status.\(gameStatus)"))
                         .foregroundStyle(.secondary)

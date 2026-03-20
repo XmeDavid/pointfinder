@@ -22,7 +22,18 @@
     "required": "required",
     "saved": "Saved",
     "deleted": "Deleted",
-    "serverError": "An error occurred. Please try again."
+    "serverError": "An error occurred. Please try again.",
+    "team": "Team",
+    "challenge": "Challenge",
+    "points_label": "Points",
+    "description": "Description",
+    "pending": "Pending",
+    "rejected": "Rejected",
+    "allTeams": "All Teams",
+    "noSubmissions": "No submissions yet",
+    "totalSubmissions": "Total Submissions",
+    "pendingInvitations": "Pending Invitations",
+    "inviteOperator": "Invite Operator"
   },
   "auth": {
     "signIn": "Sign In",
@@ -51,20 +62,16 @@
     "forgotPasswordSuccess": "If an account with that email exists, we've sent a password reset link. Please check your inbox.",
     "forgotPasswordError": "Something went wrong. Please try again.",
     "sendResetLink": "Send Reset Link",
-    "sendingResetLink": "Sending...",
     "backToSignIn": "Back to sign in",
-    "resetPasswordTitle": "Reset Password",
+    "resetPassword": "Reset Password",
     "resetPasswordDescription": "Enter your new password below.",
     "newPassword": "New Password",
-    "resetPassword": "Reset Password",
     "resettingPassword": "Resetting...",
     "resetPasswordSuccess": "Your password has been reset successfully. You can now sign in with your new password.",
     "resetPasswordError": "Failed to reset password. The link may be invalid or expired.",
-    "registerTitle": "Create Account",
     "registerDescription": "Enter your email to get started.",
     "registrationEmailSent": "We've sent you an email with a link to continue your registration. Please check your inbox.",
     "sendRegistrationLink": "Continue",
-    "sendingRegistrationLink": "Sending...",
     "registrationRequestFailed": "Something went wrong. Please try again."
   },
   "nav": {
@@ -87,17 +94,12 @@
     "settings": "Settings"
   },
   "admin": {
-    "title": "Operators",
     "description": "Manage game operators and send invitations",
-    "inviteOperator": "Invite Operator",
-    "inviteTitle": "Invite Operator",
     "inviteDescription": "Send an email invitation. They will receive a link to create their account.",
     "emailAddress": "Email address",
     "emailPlaceholder": "operator@example.com",
     "sendInvite": "Send Invite",
-    "pendingInvitations": "Pending Invitations",
-    "invited": "Invited",
-    "pending": "Pending"
+    "invited": "Invited"
   },
   "game": {
     "export": "Export Game",
@@ -116,7 +118,6 @@
     "selectedFile": "Selected file"
   },
   "games": {
-    "title": "Games",
     "description": "Manage your PointFinder games and events",
     "newGame": "New Game",
     "createGame": "Create Game",
@@ -125,7 +126,6 @@
     "createDescription": "Set up the basics. You can configure bases, challenges, and teams after creation.",
     "gameName": "Game Name",
     "gameNamePlaceholder": "PointFinder Summer Challenge 2026",
-    "gameDescription": "Description",
     "gameDescriptionPlaceholder": "Describe what this game is about...",
     "startDate": "Start Date",
     "endDate": "End Date",
@@ -198,11 +198,9 @@
   "gameOperators": {
     "title": "Game Operators",
     "description": "Manage who can operate this game",
-    "inviteOperator": "Invite Operator",
     "inviteTitle": "Invite Operator to Game",
     "inviteDescription": "Enter the email of an existing operator to invite them to this game. They will be notified by email and can accept the invitation on the platform.",
     "owner": "Owner",
-    "pendingInvitations": "Pending Invitations",
     "inviteError": "Failed to send invitation. Please try again.",
     "removeConfirmTitle": "Remove this operator?",
     "removeConfirmDescription": "This operator will lose access to this game."
@@ -214,7 +212,6 @@
     "accept": "Accept"
   },
   "bases": {
-    "title": "Bases",
     "addBase": "Add Base",
     "createBase": "Create Base",
     "editBase": "Edit Base",
@@ -222,7 +219,6 @@
     "noBasesDescription": "Add your first base to get started!",
     "name": "Name",
     "namePlaceholder": "Base name",
-    "description": "Description",
     "descriptionPlaceholder": "Describe the location...",
     "latitude": "Latitude",
     "longitude": "Longitude",
@@ -243,7 +239,6 @@
     "deleteConfirmDescription": "This base and its assignments will be permanently deleted."
   },
   "challenges": {
-    "title": "Challenges",
     "addChallenge": "Add Challenge",
     "createChallenge": "Create Challenge",
     "editChallenge": "Edit Challenge",
@@ -251,7 +246,6 @@
     "noChallengesDescription": "Create your first challenge!",
     "challengeTitle": "Title",
     "titlePlaceholder": "Challenge title",
-    "pointsLabel": "Points",
     "shortDescription": "Short Description",
     "shortDescriptionPlaceholder": "Brief summary shown in lists",
     "content": "Challenge Instructions",
@@ -298,10 +292,7 @@
     "selectChallenge": "Select challenge...",
     "assign": "Assign",
     "base": "Base",
-    "challenge": "Challenge",
-    "team": "Team",
     "selectTeam": "Select team...",
-    "allTeams": "All Teams",
     "addForBase": "Add or manage assignments for this base.",
     "fullyAssigned": "This base is fully assigned for all teams.",
     "modeLockedAllTeams": "This base uses an \"All Teams\" assignment. Remove it before adding team-specific assignments.",
@@ -314,7 +305,6 @@
     "deleteConfirmDescription": "This assignment will be permanently removed."
   },
   "teams": {
-    "title": "Teams",
     "createTeam": "Create Team",
     "createTitle": "Create Team",
     "noTeamsTitle": "No teams yet",
@@ -333,12 +323,10 @@
     "deleteConfirmDescription": "This team and all its members will be permanently removed."
   },
   "notifications": {
-    "title": "Notifications",
     "description": "Send messages to teams in the field",
     "compose": "Compose",
     "composeDescription": "Send a notification to all teams or a specific team",
     "target": "Target",
-    "allTeams": "All Teams",
     "message": "Message",
     "messagePlaceholder": "Type your notification message...",
     "sendNotification": "Send Notification",
@@ -354,26 +342,21 @@
     "timeRemaining": "Time Remaining",
     "quickLeaderboard": "Quick Leaderboard",
     "noScores": "No scores yet",
-    "gameSummary": "Game Summary",
-    "totalSubmissions": "Total Submissions"
+    "gameSummary": "Game Summary"
   },
   "mapPage": {
     "title": "Live Map",
     "description": "Track bases and team locations in real-time",
-    "allTeams": "All Teams",
     "viewingTeam": "Viewing: {{team}}",
     "notVisited": "Not Visited",
     "checkedIn": "Checked In",
     "submitted": "Submitted",
     "completed": "Completed",
-    "rejected": "Rejected",
-    "challenge": "Challenge",
     "noChallenge": "No challenge assigned",
     "latestPingBy": "Latest ping: {{player}}",
     "loadError": "Failed to load map data. Some information may be missing."
   },
   "leaderboard": {
-    "title": "Leaderboard",
     "description": "Team rankings by points",
     "noScores": "No scores yet. The game is just getting started!",
     "challengesCompleted": "{{count}} challenges completed",
@@ -393,26 +376,19 @@
     }
   },
   "submissions": {
-    "title": "Submissions",
     "pendingReview_one": "{{count}} pending review",
     "pendingReview_other": "{{count}} pending review",
-    "noSubmissions": "No submissions yet",
     "noPending": "No pending submissions",
     "reviewTitle": "Review Submission",
-    "team": "Team",
-    "challenge": "Challenge",
     "answer": "Answer",
     "notes": "Notes",
     "noNotes": "No notes",
-    "pointsLabel": "Points",
     "feedbackLabel": "Feedback (optional)",
     "feedbackPlaceholder": "Optional feedback for the team...",
     "reject": "Reject",
     "approve": "Approve",
     "review": "Review",
-    "statusPending": "Pending",
     "statusApproved": "Approved",
-    "statusRejected": "Rejected",
     "statusCorrect": "Correct",
     "actions": "Actions",
     "override": "Override",
@@ -424,9 +400,7 @@
     "backToLeaderboard": "Back to Leaderboard",
     "totalPoints": "Total Points",
     "completedChallenges": "Completed Challenges",
-    "totalSubmissions": "Total Submissions",
-    "submissionHistory": "Submission History",
-    "noSubmissions": "No submissions yet"
+    "submissionHistory": "Submission History"
   },
   "results": {
     "title": "Final Results",

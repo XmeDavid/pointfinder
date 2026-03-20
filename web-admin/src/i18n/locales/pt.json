@@ -22,7 +22,18 @@
     "required": "obrigatório",
     "saved": "Guardado",
     "deleted": "Eliminado",
-    "serverError": "Ocorreu um erro. Tenta novamente."
+    "serverError": "Ocorreu um erro. Tenta novamente.",
+    "team": "Equipa",
+    "challenge": "Desafio",
+    "points_label": "Pontos",
+    "description": "Descrição",
+    "pending": "Pendente",
+    "rejected": "Rejeitado",
+    "allTeams": "Todas as Equipas",
+    "noSubmissions": "Sem submissões ainda",
+    "totalSubmissions": "Total de Submissões",
+    "pendingInvitations": "Convites Pendentes",
+    "inviteOperator": "Convidar Operador"
   },
   "auth": {
     "signIn": "Entrar",
@@ -51,20 +62,16 @@
     "forgotPasswordSuccess": "Se existir uma conta com esse email, enviámos um link de recuperação. Verifique a sua caixa de entrada.",
     "forgotPasswordError": "Algo correu mal. Tente novamente.",
     "sendResetLink": "Enviar Link de Recuperação",
-    "sendingResetLink": "A enviar...",
     "backToSignIn": "Voltar ao início de sessão",
-    "resetPasswordTitle": "Redefinir Palavra-passe",
+    "resetPassword": "Redefinir Palavra-passe",
     "resetPasswordDescription": "Introduza a sua nova palavra-passe abaixo.",
     "newPassword": "Nova Palavra-passe",
-    "resetPassword": "Redefinir Palavra-passe",
     "resettingPassword": "A redefinir...",
     "resetPasswordSuccess": "A sua palavra-passe foi redefinida com sucesso. Pode agora iniciar sessão com a nova palavra-passe.",
     "resetPasswordError": "Falha ao redefinir a palavra-passe. O link pode ser inválido ou ter expirado.",
-    "registerTitle": "Criar Conta",
     "registerDescription": "Introduza o seu email para começar.",
     "registrationEmailSent": "Enviámos-lhe um email com um link para continuar o registo. Verifique a sua caixa de entrada.",
     "sendRegistrationLink": "Continuar",
-    "sendingRegistrationLink": "A enviar...",
     "registrationRequestFailed": "Algo correu mal. Por favor, tente novamente."
   },
   "nav": {
@@ -87,17 +94,12 @@
     "settings": "Definições"
   },
   "admin": {
-    "title": "Operadores",
     "description": "Gerir operadores de jogo e enviar convites",
-    "inviteOperator": "Convidar Operador",
-    "inviteTitle": "Convidar Operador",
     "inviteDescription": "Enviar um convite por email. A pessoa receberá um link para criar a sua conta.",
     "emailAddress": "Endereço de email",
     "emailPlaceholder": "operador@exemplo.com",
     "sendInvite": "Enviar Convite",
-    "pendingInvitations": "Convites Pendentes",
-    "invited": "Convidado",
-    "pending": "Pendente"
+    "invited": "Convidado"
   },
   "game": {
     "export": "Exportar Jogo",
@@ -116,7 +118,6 @@
     "selectedFile": "Ficheiro selecionado"
   },
   "games": {
-    "title": "Jogos",
     "description": "Gerir os seus jogos e eventos PointFinder",
     "newGame": "Novo Jogo",
     "createGame": "Criar Jogo",
@@ -125,7 +126,6 @@
     "createDescription": "Configure o básico. Pode configurar bases, desafios e equipas depois de criar.",
     "gameName": "Nome do Jogo",
     "gameNamePlaceholder": "ACREG 2026",
-    "gameDescription": "Descrição",
     "gameDescriptionPlaceholder": "Descreva o jogo...",
     "startDate": "Data de Início",
     "endDate": "Data de Fim",
@@ -198,11 +198,9 @@
   "gameOperators": {
     "title": "Operadores do Jogo",
     "description": "Gerir quem pode operar este jogo",
-    "inviteOperator": "Convidar Operador",
     "inviteTitle": "Convidar Operador para o Jogo",
     "inviteDescription": "Introduza o email de um operador existente para convidá-lo para este jogo. Será notificado por email e poderá aceitar o convite na plataforma.",
     "owner": "Dono",
-    "pendingInvitations": "Convites Pendentes",
     "inviteError": "Falha ao enviar convite. Tente novamente.",
     "removeConfirmTitle": "Remover este operador?",
     "removeConfirmDescription": "Este operador perderá o acesso a este jogo."
@@ -214,7 +212,6 @@
     "accept": "Aceitar"
   },
   "bases": {
-    "title": "Bases",
     "addBase": "Adicionar Base",
     "createBase": "Criar Base",
     "editBase": "Editar Base",
@@ -222,7 +219,6 @@
     "noBasesDescription": "Adicione a primeira base para começar!",
     "name": "Nome",
     "namePlaceholder": "Nome da base",
-    "description": "Descrição",
     "descriptionPlaceholder": "Descreva a localização...",
     "latitude": "Latitude",
     "longitude": "Longitude",
@@ -243,7 +239,6 @@
     "deleteConfirmDescription": "Esta base e as suas atribuições serão permanentemente eliminadas."
   },
   "challenges": {
-    "title": "Desafios",
     "addChallenge": "Adicionar Desafio",
     "createChallenge": "Criar Desafio",
     "editChallenge": "Editar Desafio",
@@ -251,7 +246,6 @@
     "noChallengesDescription": "Crie o primeiro desafio!",
     "challengeTitle": "Título",
     "titlePlaceholder": "Título do desafio",
-    "pointsLabel": "Pontos",
     "shortDescription": "Descrição Curta",
     "shortDescriptionPlaceholder": "Resumo breve mostrado nas listas",
     "content": "Instruções do Desafio",
@@ -298,10 +292,7 @@
     "selectChallenge": "Selecionar desafio...",
     "assign": "Atribuir",
     "base": "Base",
-    "challenge": "Desafio",
-    "team": "Equipa",
     "selectTeam": "Selecionar equipa...",
-    "allTeams": "Todas as Equipas",
     "addForBase": "Adicionar ou gerir atribuições para esta base.",
     "fullyAssigned": "Esta base já está totalmente atribuída para todas as equipas.",
     "modeLockedAllTeams": "Esta base usa uma atribuição para \"Todas as Equipas\". Remova-a antes de adicionar atribuições por equipa.",
@@ -314,7 +305,6 @@
     "deleteConfirmDescription": "Esta atribuição será permanentemente removida."
   },
   "teams": {
-    "title": "Equipas",
     "createTeam": "Criar Equipa",
     "createTitle": "Criar Equipa",
     "noTeamsTitle": "Ainda não há equipas",
@@ -333,12 +323,10 @@
     "deleteConfirmDescription": "Esta equipa e todos os seus membros serão permanentemente removidos."
   },
   "notifications": {
-    "title": "Notificações",
     "description": "Enviar mensagens para as equipas no terreno",
     "compose": "Compor",
     "composeDescription": "Enviar uma notificação para todas as equipas ou uma equipa específica",
     "target": "Destinatário",
-    "allTeams": "Todas as Equipas",
     "message": "Mensagem",
     "messagePlaceholder": "Escreva a sua mensagem...",
     "sendNotification": "Enviar Notificação",
@@ -354,26 +342,21 @@
     "timeRemaining": "Tempo Restante",
     "quickLeaderboard": "Classificação Rápida",
     "noScores": "Sem pontuações ainda",
-    "gameSummary": "Resumo do Jogo",
-    "totalSubmissions": "Total de Submissões"
+    "gameSummary": "Resumo do Jogo"
   },
   "mapPage": {
     "title": "Mapa em Direto",
     "description": "Seguir bases e localizações das equipas em tempo real",
-    "allTeams": "Todas as Equipas",
     "viewingTeam": "A ver: {{team}}",
     "notVisited": "Não Visitado",
     "checkedIn": "Check-in",
     "submitted": "Submetido",
     "completed": "Concluído",
-    "rejected": "Rejeitado",
-    "challenge": "Desafio",
     "noChallenge": "Sem desafio atribuído",
     "latestPingBy": "Último ping: {{player}}",
     "loadError": "Falha ao carregar dados do mapa. Algumas informações podem estar em falta."
   },
   "leaderboard": {
-    "title": "Classificação",
     "description": "Ranking das equipas por pontos",
     "noScores": "Sem pontuações ainda. O jogo está a começar!",
     "challengesCompleted": "{{count}} desafios completados",
@@ -393,26 +376,19 @@
     }
   },
   "submissions": {
-    "title": "Submissões",
     "pendingReview_one": "{{count}} pendente de revisão",
     "pendingReview_other": "{{count}} pendentes de revisão",
-    "noSubmissions": "Sem submissões ainda",
     "noPending": "Sem submissões pendentes",
     "reviewTitle": "Rever Submissão",
-    "team": "Equipa",
-    "challenge": "Desafio",
     "answer": "Resposta",
     "notes": "Notas",
     "noNotes": "Sem notas",
-    "pointsLabel": "Pontos",
     "feedbackLabel": "Feedback (opcional)",
     "feedbackPlaceholder": "Feedback opcional para a equipa...",
     "reject": "Rejeitar",
     "approve": "Aprovar",
     "review": "Rever",
-    "statusPending": "Pendente",
     "statusApproved": "Aprovado",
-    "statusRejected": "Rejeitado",
     "statusCorrect": "Correto",
     "actions": "Ações",
     "override": "Substituir",
@@ -424,9 +400,7 @@
     "backToLeaderboard": "Voltar à Classificação",
     "totalPoints": "Pontos Totais",
     "completedChallenges": "Desafios Completados",
-    "totalSubmissions": "Total de Submissões",
-    "submissionHistory": "Histórico de Submissões",
-    "noSubmissions": "Sem submissões ainda"
+    "submissionHistory": "Histórico de Submissões"
   },
   "results": {
     "title": "Resultados Finais",
@@ -598,20 +572,20 @@
       "offlineA": "Sim. As funcionalidades principais como leitura NFC e visualização de desafios funcionam sem ligação à internet. As submissões são guardadas localmente e sincronizadas automaticamente quando a ligação é restabelecida."
     },
     "operator": {
-      "monitorQ": "Como monitorizo um jogo ao vivo?",
-      "monitorA": "O painel de administração oferece um dashboard em tempo real com um mapa ao vivo mostrando as posições das equipas, uma classificação com atualizações instantâneas, um feed de atividade de todos os eventos e uma fila de revisão de submissões.",
+      "monitorQ": "Como é que monitorizo um jogo ao vivo?",
+      "monitorA": "O admin web fornece um painel em tempo real com um mapa ao vivo com as posições das equipas, classificação com atualizações instantâneas, feed de atividade de todos os eventos e fila de revisão de submissões.",
       "reviewQ": "Como funciona a revisão de submissões?",
-      "reviewA": "Quando as equipas submetem fotos, estas aparecem na fila de revisão do operador. Os operadores podem aprovar ou rejeitar cada submissão com feedback opcional. As submissões aprovadas atribuem pontos; as rejeitadas notificam a equipa para tentar novamente.",
+      "reviewA": "Quando as equipas submetem fotos, estas aparecem na fila de revisão do operador. Os operadores podem aprovar ou rejeitar cada submissão com feedback opcional. Submissões aprovadas atribuem pontos; rejeitadas notificam a equipa para tentar novamente.",
       "broadcastQ": "Posso transmitir o jogo publicamente?",
-      "broadcastA": "Sim. Ative o modo de transmissão nas definições do jogo para gerar um link público. Os espetadores podem acompanhar a classificação, mapa e feed de atividade ao vivo sem iniciar sessão — perfeito para projetar em eventos.",
+      "broadcastA": "Sim. Ative o modo de transmissão nas definições do jogo para gerar um link público. Espectadores podem assistir à classificação ao vivo, mapa e feed de atividade sem iniciar sessão — perfeito para projetar em eventos.",
       "multipleQ": "Várias pessoas podem gerir um jogo?",
-      "multipleA": "Sim. O proprietário do jogo pode convidar outros operadores por email. Os operadores convidados têm acesso total ao painel, revisão de submissões e ferramentas de monitorização."
+      "multipleA": "Sim. O dono do jogo pode convidar outros operadores por email. Operadores convidados obtêm acesso total ao painel, revisão de submissões e ferramentas de monitorização."
     },
     "platform": {
       "supportedQ": "Que plataformas são suportadas?",
-      "supportedA": "O PointFinder oferece apps nativas para iOS e Android (para jogadores e operadores no terreno) e um painel de administração web completo (para criação de jogos, gestão e monitorização ao vivo).",
-      "mapsQ": "Que opções de mapa estão disponíveis?",
-      "mapsA": "Pode escolher entre vários fornecedores de mapas por jogo: OpenStreetMap, OpenStreetMap Classic, CartoDB Voyager, CartoDB Positron e SwissTopo (incluindo vista de satélite). A escolha do mapa aplica-se a todas as plataformas.",
+      "supportedA": "O PointFinder oferece aplicações nativas para iOS e Android (para jogadores e operadores no terreno) e um painel de administração web completo (para criação de jogos, gestão e monitorização ao vivo).",
+      "mapsQ": "Que opções de mapa existem?",
+      "mapsA": "Pode escolher entre vários fornecedores de mapas por jogo: OpenStreetMap, OpenStreetMap Clássico, CartoDB Voyager, CartoDB Positron e SwissTopo (incluindo vista satélite). A escolha do mapa aplica-se em todas as plataformas.",
       "languagesQ": "Que idiomas são suportados?",
       "languagesA": "O PointFinder está disponível em Inglês, Português e Alemão. A app deteta automaticamente o idioma do dispositivo e adapta-se."
     }
@@ -621,11 +595,11 @@
     "audioTooLarge": "O ficheiro de áudio deve ter menos de 5 MB",
     "unexpected": "Erro inesperado",
     "somethingWentWrong": "Algo correu mal",
-    "unexpectedError": "Ocorreu um erro inesperado. Por favor, recarrega a página.",
+    "unexpectedError": "Ocorreu um erro inesperado. Por favor recarregue a página.",
     "reload": "Recarregar",
-    "boundaryInline": "Algo correu mal. Por favor, atualiza a página.",
+    "boundaryInline": "Algo correu mal. Por favor atualize a página.",
     "tryAgain": "Tentar novamente",
-    "liveUpdatesRetrying": "Atualizações em tempo real temporariamente indisponíveis. A tentar novamente\u2026"
+    "liveUpdatesRetrying": "Atualizações ao vivo temporariamente indisponíveis. A tentar novamente\u2026"
   },
   "editor": {
     "bold": "Negrito",

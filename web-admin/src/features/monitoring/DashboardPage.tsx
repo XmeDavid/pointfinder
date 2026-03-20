@@ -70,7 +70,7 @@ export function DashboardPage() {
             <div className="flex items-center justify-between text-sm"><span className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4" /> {t("nav.bases")}</span><span className="font-medium">{stats.totalBases}</span></div>
             <div className="flex items-center justify-between text-sm"><span className="flex items-center gap-2 text-muted-foreground"><Puzzle className="h-4 w-4" /> {t("nav.challenges")}</span><span className="font-medium">{stats.totalChallenges}</span></div>
             <div className="flex items-center justify-between text-sm"><span className="flex items-center gap-2 text-muted-foreground"><Users className="h-4 w-4" /> {t("nav.teams")}</span><span className="font-medium">{stats.totalTeams}</span></div>
-            <div className="flex items-center justify-between text-sm"><span className="flex items-center gap-2 text-muted-foreground"><ClipboardCheck className="h-4 w-4" /> {t("monitor.totalSubmissions")}</span><span className="font-medium">{stats.totalSubmissions}</span></div>
+            <div className="flex items-center justify-between text-sm"><span className="flex items-center gap-2 text-muted-foreground"><ClipboardCheck className="h-4 w-4" /> {t("common.totalSubmissions")}</span><span className="font-medium">{stats.totalSubmissions}</span></div>
           </CardContent>
         </Card>
       </div>

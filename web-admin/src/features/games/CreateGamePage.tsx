@@ -68,7 +68,7 @@ export function CreateGamePage() {
             </div>
             <div className="space-y-2">
               <FormLabel htmlFor="description" optional>
-                {t("games.gameDescription")}
+                {t("common.description")}
               </FormLabel>
               <Textarea id="description" placeholder={t("games.gameDescriptionPlaceholder")} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} rows={4} />
             </div>

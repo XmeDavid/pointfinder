@@ -160,7 +160,7 @@ export function AssignmentsPage() {
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <Badge variant="secondary">{base.name}</Badge>
-                    {hasAllTeamsAssignment && <Badge variant="outline">{t("assignments.allTeams")}</Badge>}
+                    {hasAllTeamsAssignment && <Badge variant="outline">{t("common.allTeams")}</Badge>}
                   </CardTitle>
                   <CardDescription>{t("assignments.addForBase")}</CardDescription>
                 </CardHeader>
@@ -179,7 +179,7 @@ export function AssignmentsPage() {
                               {team.name}
                             </Badge>
                           ) : (
-                            <Badge variant="outline">{t("assignments.allTeams")}</Badge>
+                            <Badge variant="outline">{t("common.allTeams")}</Badge>
                           )}
                         </div>
                         <Button
@@ -198,7 +198,7 @@ export function AssignmentsPage() {
                     <div className="flex flex-col sm:flex-row sm:items-end gap-3 rounded-md border border-dashed border-border p-3">
                       <div className="flex-1 space-y-1">
                         <FormLabel htmlFor={challengeSelectId} className="text-xs text-muted-foreground" required>
-                          {t("assignments.challenge")}
+                          {t("common.challenge")}
                         </FormLabel>
                         <Select
                           id={challengeSelectId}
@@ -217,7 +217,7 @@ export function AssignmentsPage() {
 
                       <div className="flex-1 space-y-1">
                         <FormLabel htmlFor={teamSelectId} className="text-xs text-muted-foreground" required={requiresTeamSelection} optional={!requiresTeamSelection}>
-                          {t("assignments.team")}
+                          {t("common.team")}
                         </FormLabel>
                         <Select
                           id={teamSelectId}
@@ -225,7 +225,7 @@ export function AssignmentsPage() {
                           onChange={(e) => updateDraft(base.id, { teamId: e.target.value, error: undefined })}
                         >
                           <option value="">
-                            {showAllTeamsOption ? t("assignments.allTeams") : t("assignments.selectTeam")}
+                            {showAllTeamsOption ? t("common.allTeams") : t("assignments.selectTeam")}
                           </option>
                           {availableTeams.map((team) => (
                             <option key={team.id} value={team.id}>{team.name}</option>

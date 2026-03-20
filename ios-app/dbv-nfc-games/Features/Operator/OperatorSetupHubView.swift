@@ -87,7 +87,7 @@ struct OperatorSetupHubView: View {
                                 Text(game.name)
                                     .font(.title2)
                                     .fontWeight(.bold)
-                                Text("\(locale.t("operator.status")): \(game.status.uppercased())")
+                                Text("\(locale.t("common.status")): \(game.status.uppercased())")
                                     .font(.caption)
                                     .fontWeight(.medium)
                                     .foregroundStyle(game.status == "setup" ? .orange : .green)

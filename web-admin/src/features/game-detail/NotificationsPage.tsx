@@ -40,7 +40,7 @@ export function NotificationsPage() {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold">{t("notifications.title")}</h1><p className="text-muted-foreground">{t("notifications.description")}</p></div>
+      <div><h1 className="text-2xl font-bold">{t("nav.notifications")}</h1><p className="text-muted-foreground">{t("notifications.description")}</p></div>
       {websocketError && <Alert>{websocketError}</Alert>}
       {actionError && <Alert onDismiss={() => setActionError("")}>{actionError}</Alert>}
       <Card>
@@ -52,7 +52,7 @@ export function NotificationsPage() {
                 {t("notifications.target")}
               </FormLabel>
               <Select id="notificationTarget" value={targetTeamId} onChange={(e) => setTargetTeamId(e.target.value)}>
-                <option value="">{t("notifications.allTeams")}</option>
+                <option value="">{t("common.allTeams")}</option>
                 {teams.map((tm) => <option key={tm.id} value={tm.id}>{tm.name}</option>)}
               </Select>
             </div>
@@ -72,7 +72,7 @@ export function NotificationsPage() {
           {sorted.length === 0 ? (
             <div className="py-8 text-center"><Bell className="mx-auto h-8 w-8 text-muted-foreground mb-2" /><p className="text-muted-foreground">{t("notifications.noNotifications")}</p></div>
           ) : (
-            <div className="space-y-3">{sorted.map((n) => { const team = teams.find((tm) => tm.id === n.targetTeamId); return (<div key={n.id} className="rounded-md border border-border p-3"><div className="flex items-start justify-between mb-1"><Badge variant={n.targetTeamId ? "secondary" : "default"}><Users className="mr-1 h-3 w-3" />{team?.name ?? t("notifications.allTeams")}</Badge><span className="text-xs text-muted-foreground">{formatDateTime(n.sentAt)}</span></div><p className="text-sm mt-2">{n.message}</p></div>); })}</div>
+            <div className="space-y-3">{sorted.map((n) => { const team = teams.find((tm) => tm.id === n.targetTeamId); return (<div key={n.id} className="rounded-md border border-border p-3"><div className="flex items-start justify-between mb-1"><Badge variant={n.targetTeamId ? "secondary" : "default"}><Users className="mr-1 h-3 w-3" />{team?.name ?? t("common.allTeams")}</Badge><span className="text-xs text-muted-foreground">{formatDateTime(n.sentAt)}</span></div><p className="text-sm mt-2">{n.message}</p></div>); })}</div>
           )}
         </CardContent>
       </Card>

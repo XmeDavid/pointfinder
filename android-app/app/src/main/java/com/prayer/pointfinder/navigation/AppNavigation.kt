@@ -1497,7 +1497,7 @@ private fun OperatorGameRoot(
     if (state.awaitingNfcWrite && state.selectedBase != null) {
         NfcScanDialog(
             onDismiss = viewModel::cancelWriteNfc,
-            title = stringResource(com.prayer.pointfinder.core.i18n.R.string.nfc_write_dialog_title),
+            title = stringResource(com.prayer.pointfinder.core.i18n.R.string.action_write_nfc),
             message = stringResource(com.prayer.pointfinder.core.i18n.R.string.nfc_write_dialog_message),
         )
     }
@@ -1528,7 +1528,7 @@ private fun PermissionDisclosureDialog(onContinue: () -> Unit) {
                 )
                 DisclosureRow(
                     icon = { Icon(Icons.Default.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp)) },
-                    title = stringResource(com.prayer.pointfinder.core.i18n.R.string.disclosure_notifications_title),
+                    title = stringResource(com.prayer.pointfinder.core.i18n.R.string.label_notifications),
                     detail = stringResource(com.prayer.pointfinder.core.i18n.R.string.disclosure_notifications_detail),
                 )
                 DisclosureRow(
@@ -1548,7 +1548,7 @@ private fun PermissionDisclosureDialog(onContinue: () -> Unit) {
         },
         confirmButton = {
             Button(onClick = onContinue, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(com.prayer.pointfinder.core.i18n.R.string.disclosure_continue))
+                Text(stringResource(com.prayer.pointfinder.core.i18n.R.string.action_continue))
             }
         },
     )

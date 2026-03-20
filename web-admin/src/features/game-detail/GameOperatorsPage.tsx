@@ -69,7 +69,7 @@ export function GameOperatorsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold">{t("gameOperators.title")}</h1><p className="text-muted-foreground">{t("gameOperators.description")}</p></div>
-        <Button onClick={() => setInviteOpen(true)}><Plus className="mr-2 h-4 w-4" />{t("gameOperators.inviteOperator")}</Button>
+        <Button onClick={() => setInviteOpen(true)}><Plus className="mr-2 h-4 w-4" />{t("common.inviteOperator")}</Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -86,14 +86,14 @@ export function GameOperatorsPage() {
 
       {pendingInvites.length > 0 && (
         <Card>
-          <CardHeader><CardTitle className="text-lg">{t("gameOperators.pendingInvitations")}</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-lg">{t("common.pendingInvitations")}</CardTitle></CardHeader>
           <CardContent>
             <div className="space-y-3">
               {pendingInvites.map((invite) => (
                 <div key={invite.id} className="flex items-center justify-between rounded-md border border-border p-3">
                   <div className="flex items-center gap-3"><Mail className="h-4 w-4 text-muted-foreground" /><div><p className="text-sm font-medium">{invite.email}</p><p className="text-xs text-muted-foreground">{t("admin.invited")} {formatDate(invite.createdAt)}</p></div></div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="warning"><Clock className="mr-1 h-3 w-3" /> {t("admin.pending")}</Badge>
+                    <Badge variant="warning"><Clock className="mr-1 h-3 w-3" /> {t("common.pending")}</Badge>
                     <Button variant="ghost" size="icon" onClick={() => revokeInvite.mutate(invite.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
                   </div>
                 </div>

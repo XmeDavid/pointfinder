@@ -43,11 +43,11 @@ export function OperatorsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{t("admin.title")}</h1>
+          <h1 className="text-2xl font-bold">{t("nav.operators")}</h1>
           <p className="text-muted-foreground">{t("admin.description")}</p>
         </div>
         <Button onClick={() => setInviteOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />{t("admin.inviteOperator")}
+          <Plus className="mr-2 h-4 w-4" />{t("common.inviteOperator")}
         </Button>
       </div>
       {inviteError && <Alert onDismiss={() => setInviteError("")}>{inviteError}</Alert>}
@@ -69,7 +69,7 @@ export function OperatorsPage() {
 
       {pendingInvites.length > 0 && (
         <Card>
-          <CardHeader><CardTitle className="text-lg">{t("admin.pendingInvitations")}</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-lg">{t("common.pendingInvitations")}</CardTitle></CardHeader>
           <CardContent>
             <div className="space-y-3">
               {pendingInvites.map((invite) => (
@@ -82,7 +82,7 @@ export function OperatorsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="warning"><Clock className="mr-1 h-3 w-3" /> {t("admin.pending")}</Badge>
+                    <Badge variant="warning"><Clock className="mr-1 h-3 w-3" /> {t("common.pending")}</Badge>
                     <Button variant="ghost" size="icon" onClick={() => revokeInvite.mutate(invite.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
                   </div>
                 </div>
@@ -95,7 +95,7 @@ export function OperatorsPage() {
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
         <DialogContent onClose={() => setInviteOpen(false)}>
           <DialogHeader>
-            <DialogTitle>{t("admin.inviteTitle")}</DialogTitle>
+            <DialogTitle>{t("common.inviteOperator")}</DialogTitle>
             <DialogDescription>{t("admin.inviteDescription")}</DialogDescription>
           </DialogHeader>
           <form onSubmit={(e) => { e.preventDefault(); sendInvite.mutate(inviteEmail); }}>

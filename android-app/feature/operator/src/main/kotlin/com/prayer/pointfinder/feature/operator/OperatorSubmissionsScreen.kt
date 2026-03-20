@@ -175,11 +175,11 @@ fun OperatorSubmissionsScreen(
             title = { Text(stringResource(R.string.label_review_submission)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("${stringResource(R.string.submissions_team_label)}: $teamName")
+                    Text("${stringResource(R.string.label_team)}: $teamName")
                     Text("${stringResource(R.string.submissions_challenge_label)}: $challengeTitle")
                     Text("${stringResource(R.string.submissions_base_label)}: $baseName")
                     if (reviewingSubmission.answer.isNotBlank()) {
-                        Text("${stringResource(R.string.submissions_answer_label)}: ${reviewingSubmission.answer}")
+                        Text("${stringResource(R.string.label_answer)}: ${reviewingSubmission.answer}")
                     }
                     reviewingSubmission.fileUrl
                         ?.takeIf { it.isNotBlank() }
@@ -197,7 +197,7 @@ fun OperatorSubmissionsScreen(
                             Text(
                                 expectedChallengePoints?.let {
                                     stringResource(R.string.submissions_points_label_with_expected, it)
-                                } ?: stringResource(R.string.submissions_points_label)
+                                } ?: stringResource(R.string.label_challenge_points)
                             )
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -303,7 +303,7 @@ private fun resolveSubmissionFileUrl(fileUrl: String, apiBaseUrl: String): Strin
 @Composable
 private fun statusLabel(status: SubmissionStatus): String {
     return when (status) {
-        SubmissionStatus.PENDING -> stringResource(R.string.status_pending)
+        SubmissionStatus.PENDING -> stringResource(R.string.label_pending)
         SubmissionStatus.APPROVED -> stringResource(R.string.status_approved)
         SubmissionStatus.REJECTED -> stringResource(R.string.status_rejected)
         SubmissionStatus.CORRECT -> stringResource(R.string.status_correct)

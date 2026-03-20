@@ -119,7 +119,7 @@ struct BaseEditView: View {
             Section {
                 TextField(locale.t("operator.baseName"), text: $name)
                     .accessibilityIdentifier("base-name-input")
-                TextField(locale.t("operator.baseDescription"), text: $description, axis: .vertical)
+                TextField(locale.t("common.description"), text: $description, axis: .vertical)
                     .lineLimit(2...4)
             }
 
@@ -129,8 +129,8 @@ struct BaseEditView: View {
             }
 
             // Fixed Challenge picker
-            Section(locale.t("operator.fixedChallenge")) {
-                Picker(locale.t("operator.fixedChallenge"), selection: $fixedChallengeId) {
+            Section(locale.t("common.fixedChallenge")) {
+                Picker(locale.t("common.fixedChallenge"), selection: $fixedChallengeId) {
                     Text(locale.t("operator.none")).tag(nil as UUID?)
                     ForEach(availableChallenges) { challenge in
                         Text(challenge.title).tag(challenge.id as UUID?)

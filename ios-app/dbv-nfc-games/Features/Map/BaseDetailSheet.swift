@@ -84,7 +84,7 @@ struct BaseDetailSheet: View {
 
                             if status == .completed && !completionContent.isEmpty {
                                 Divider()
-                                Text(locale.t("base.completionContent"))
+                                Text(locale.t("common.unlockedInformation"))
                                     .font(.headline)
                                 AutoSizingHTMLView(html: completionContent)
                             } else if !challenge.content.isEmpty {

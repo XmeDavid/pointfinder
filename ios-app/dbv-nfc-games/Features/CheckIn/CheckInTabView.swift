@@ -125,7 +125,7 @@ struct CheckInTabView: View {
                     .padding(.horizontal, 24)
                 }
             }
-            .navigationTitle(locale.t("checkIn.navTitle"))
+            .navigationTitle(locale.t("common.checkIn"))
             .navigationDestination(for: UUID.self) { baseId in
                 BaseCheckInDetailView(baseId: baseId, popToRoot: popToRoot)
             }

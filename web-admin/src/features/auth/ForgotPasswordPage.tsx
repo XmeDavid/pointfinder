@@ -64,7 +64,7 @@ export function ForgotPasswordPage() {
                 <Input id="email" type="email" placeholder="admin@pointfinder.dev" value={email} onChange={(e) => setEmail(e.target.value)} required />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? t("auth.sendingResetLink") : t("auth.sendResetLink")}
+                {loading ? t("common.sending") : t("auth.sendResetLink")}
               </Button>
               <Link to="/login" className="block text-center text-sm text-muted-foreground hover:underline">
                 {t("auth.backToSignIn")}

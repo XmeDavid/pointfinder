@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">PointFinder</string>
-
     <!-- Actions -->
     <string name="action_join_game">Join a Game</string>
     <string name="action_operator_login">Operator Login</string>
@@ -28,11 +27,8 @@
     <string name="action_reject">Reject</string>
     <string name="nfc_scan_dialog_title">Scan NFC Tag</string>
     <string name="nfc_scan_dialog_message">Hold your phone near the NFC tag at the base</string>
-    <string name="nfc_write_dialog_title">Write NFC Tag</string>
     <string name="nfc_write_dialog_message">Hold your phone near the NFC tag you want to write</string>
-
     <!-- Labels -->
-    <string name="label_welcome">PointFinder</string>
     <string name="label_join_with_qr_or_code">Join with QR or code</string>
     <string name="label_join_code">Join code</string>
     <string name="label_display_name">Display name</string>
@@ -52,7 +48,6 @@
     <string name="label_more">More</string>
     <string name="label_create_game">Create Game</string>
     <string name="label_game_name">Game Name</string>
-    <string name="label_game_description">Description</string>
     <string name="label_start_from">Start From</string>
     <string name="label_empty_game">Empty game</string>
     <string name="label_import_from_file">Import from file</string>
@@ -92,7 +87,6 @@
     <string name="label_challenge_locked">Challenge locked</string>
     <string name="label_challenge_locked_hint">Visit this base to unlock the challenge</string>
     <string name="label_awaiting_review">Awaiting review</string>
-    <string name="label_solve_title">Solve challenge</string>
     <string name="label_photo_mode">Media answer mode</string>
     <string name="label_media_selected">%1$d of 5 selected</string>
     <string name="game_status_setup">Setup</string>
@@ -107,11 +101,8 @@
     <string name="label_unknown_challenge">Unknown challenge</string>
     <string name="label_unknown_base">Unknown base</string>
     <string name="label_review_submission">Review submission</string>
-    <string name="submissions_team_label">Team</string>
     <string name="submissions_challenge_label">Challenge</string>
     <string name="submissions_base_label">Base</string>
-    <string name="submissions_answer_label">Answer</string>
-    <string name="submissions_points_label">Points</string>
     <string name="submissions_points_label_with_expected">Points (%1$d)</string>
     <string name="submissions_feedback_label">Feedback (optional)</string>
     <string name="label_notification_settings">Notification settings</string>
@@ -133,26 +124,19 @@
     <string name="label_no_games_description">You have no games yet. Pull to refresh or check back later.</string>
     <string name="label_game_not_active_title">Game not active yet</string>
     <string name="label_game_not_active_message">Please wait until your operator sets the game live.</string>
-
     <!-- Permission Disclosure -->
     <string name="disclosure_title">Before You Start</string>
     <string name="disclosure_subtitle">PointFinder needs a few permissions to run your game experience.</string>
     <string name="disclosure_location_title">Location</string>
     <string name="disclosure_location_detail">Shows your team on the live map so operators can monitor the game.</string>
-    <string name="disclosure_notifications_title">Notifications</string>
     <string name="disclosure_notifications_detail">Delivers game updates and messages from your operator.</string>
     <string name="disclosure_camera_title">Camera &amp; Photos</string>
     <string name="disclosure_camera_detail">Scan QR codes to join and submit photos for challenges.</string>
     <string name="disclosure_footer">You can change these permissions later in Settings.</string>
-    <string name="disclosure_continue">Continue</string>
-
     <string name="dialog_leave_game_title">Leave Game?</string>
     <string name="dialog_leave_game_message">You will be disconnected from the current game. You can rejoin with the same code.</string>
-
-    <string name="dialog_delete_account_title">Delete Account</string>
     <string name="dialog_delete_account_message">This will permanently delete your player account data for PointFinder. This action cannot be undone.</string>
     <string name="dialog_delete_account_confirm">Delete</string>
-
     <!-- Hints -->
     <string name="hint_checkin_instructions">Hold your phone near the marker at a base to check in</string>
     <string name="hint_offline_sync">Offline: data will sync when online.</string>
@@ -160,30 +144,24 @@
     <string name="hint_media_reselect_required">The original media is no longer available. Please reselect it.</string>
     <string name="hint_media_upload_disabled">Media uploads are temporarily unavailable. Try again later.</string>
     <string name="hint_nfc_hold_near">Hold an NFC tag near the device to write base payload.</string>
-
     <!-- Status -->
     <string name="status_not_visited">Not visited</string>
-    <string name="status_pending">Pending</string>
     <string name="status_approved">Approved</string>
     <string name="status_checked_in">Checked in</string>
     <string name="status_submitted">Pending review</string>
     <string name="status_completed">Completed</string>
     <string name="status_correct">Correct</string>
     <string name="status_rejected">Rejected</string>
-
     <!-- Submission result -->
     <string name="result_correct">Correct!</string>
     <string name="result_approved">Approved!</string>
-    <string name="result_rejected">Rejected</string>
     <string name="result_submitted">Submitted</string>
     <string name="result_correct_msg">Great job! Your answer is correct.</string>
     <string name="result_approved_msg">Your submission has been approved.</string>
     <string name="result_rejected_msg">Your submission was rejected. Check the feedback and try again.</string>
     <string name="result_submitted_msg">Your answer has been submitted and is awaiting review.</string>
-
     <!-- Status messages -->
     <string name="success_nfc_written">NFC written and linked successfully.</string>
-
     <!-- Errors -->
     <string name="error_generic">Something went wrong.</string>
     <string name="error_invalid_nfc">Invalid NFC payload.</string>
@@ -200,7 +178,6 @@
     <string name="error_nfc_write_failed">NFC write failed.</string>
     <string name="error_nfc_link_failed">NFC written but link failed: %1$s</string>
     <string name="error_network_unavailable">Network unavailable. Please check your connection.</string>
-
     <!-- Setup Hub -->
     <string name="label_needs_attention">Needs Attention</string>
     <string name="label_manage">Manage</string>
@@ -216,12 +193,10 @@
     <string name="label_go_live_confirm_message">Teams will be able to join and play. You can still edit bases and challenges during the game.</string>
     <string name="label_challenges">Challenges</string>
     <string name="label_teams">Teams</string>
-
     <!-- Base Management -->
     <string name="label_new_base">New Base</string>
     <string name="label_edit_base">Edit Base</string>
     <string name="label_base_name">Base Name</string>
-    <string name="label_base_description">Description</string>
     <string name="label_require_presence">Require Presence</string>
     <string name="label_hidden_base">Hidden Base</string>
     <string name="label_none">None</string>
@@ -232,7 +207,6 @@
     <string name="label_tap_map_to_set_location">Tap map to set location</string>
     <string name="action_save">Save</string>
     <string name="label_write_nfc">Write NFC</string>
-
     <!-- Rich Text Editor -->
     <string name="action_done">Done</string>
     <string name="label_insert_variable">Insert Variable</string>
@@ -258,7 +232,6 @@
     <string name="label_link_text">Link Text</string>
     <string name="label_preview">Preview</string>
     <string name="label_select_team">Select Team</string>
-
     <!-- Challenge Management -->
     <string name="label_challenge_title">Title</string>
     <string name="label_challenge_points">Points</string>
@@ -283,7 +256,6 @@
     <string name="label_edit_challenge">Edit Challenge</string>
     <string name="label_no_content">No content yet</string>
     <string name="label_no_base">No base</string>
-
     <!-- Team Management -->
     <string name="label_join_code_section">Join Code</string>
     <string name="label_show_qr">Show QR</string>
@@ -304,13 +276,11 @@
     <string name="label_challenge_variables">Challenge Variables</string>
     <string name="label_no_teams_in_game">No teams in this game</string>
     <string name="label_saving">Saving…</string>
-
     <!-- Map Edit Mode -->
     <string name="label_edit_on">Edit: ON</string>
     <string name="label_edit_off">Edit: OFF</string>
     <string name="label_add_base_here">Add Base Here</string>
     <string name="label_center_on_me">Center on Me</string>
-
     <!-- Live Tab -->
     <string name="label_leaderboard">Leaderboard</string>
     <string name="label_activity">Activity</string>
@@ -318,18 +288,15 @@
     <string name="label_no_activity">No activity yet</string>
     <string name="label_completed_count">%1$d completed</string>
     <string name="label_rank">%1$d.</string>
-
     <!-- Notifications -->
     <string name="label_notifications">Notifications</string>
     <string name="label_no_notifications">No notifications yet</string>
-
     <!-- More Tab -->
     <string name="label_game_settings">Game Settings</string>
     <string name="label_send_notifications">Send Notifications</string>
     <string name="label_manage_operators">Manage Operators</string>
     <string name="label_export_game">Export Game</string>
     <string name="label_app_settings">App Settings</string>
-    <string name="label_game_section">Game</string>
     <string name="label_data_section">Data</string>
     <string name="label_start_date">Start Date</string>
     <string name="label_end_date">End Date</string>
@@ -356,7 +323,6 @@
     <string name="action_revoke_invite">Revoke invite</string>
     <string name="confirm_revoke_invite">Revoke Invite</string>
     <string name="confirm_revoke_invite_message">Revoke the invitation sent to %1$s?</string>
-
     <!-- Toast / Snackbar -->
     <string name="toast_base_created">Base created</string>
     <string name="toast_base_saved">Base saved</string>

@@ -49,7 +49,7 @@ export function ResetPasswordPage() {
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary">
             <Compass className="h-6 w-6 text-primary-foreground" />
           </div>
-          <CardTitle className="text-2xl">{t("auth.resetPasswordTitle")}</CardTitle>
+          <CardTitle className="text-2xl">{t("auth.resetPassword")}</CardTitle>
           <CardDescription>{t("auth.resetPasswordDescription")}</CardDescription>
         </CardHeader>
         <CardContent>

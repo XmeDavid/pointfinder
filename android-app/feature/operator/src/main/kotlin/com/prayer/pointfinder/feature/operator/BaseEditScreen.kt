@@ -284,7 +284,7 @@ fun BaseEditScreen(
             OutlinedTextField(
                 value = description,
                 onValueChange = { description = it },
-                label = { Text(stringResource(R.string.label_base_description)) },
+                label = { Text(stringResource(R.string.label_description)) },
                 minLines = 3,
                 maxLines = 5,
                 modifier = Modifier.fillMaxWidth(),

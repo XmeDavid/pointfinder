@@ -34,7 +34,7 @@ function StatusBadge({ status }: { status: BaseStatus }) {
     checked_in: t("mapPage.checkedIn"),
     submitted: t("mapPage.submitted"),
     completed: t("mapPage.completed"),
-    rejected: t("mapPage.rejected"),
+    rejected: t("common.rejected"),
   };
 
   const classes: Record<BaseStatus, string> = {
@@ -275,7 +275,7 @@ export function MapPage() {
           </Badge>
           <Button variant="ghost" size="sm" onClick={() => setViewMode("all")}>
             <Users className="mr-1.5 h-3.5 w-3.5" />
-            {t("mapPage.allTeams")}
+            {t("common.allTeams")}
           </Button>
         </div>
       )}
@@ -357,7 +357,7 @@ export function MapPage() {
                               {challengeInfo ? (
                                 <div className="border rounded p-1.5 mt-1">
                                   <p className="text-xs font-medium text-gray-700">
-                                    {t("mapPage.challenge")}: {challengeInfo.title}
+                                    {t("common.challenge")}: {challengeInfo.title}
                                   </p>
                                   {challengeInfo.description && (
                                     <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">

@@ -164,7 +164,7 @@ fun CreateGameScreen(
             OutlinedTextField(
                 value = description,
                 onValueChange = { description = it },
-                label = { Text(stringResource(R.string.label_game_description)) },
+                label = { Text(stringResource(R.string.label_description)) },
                 minLines = 3,
                 maxLines = 5,
                 modifier = Modifier.fillMaxWidth(),

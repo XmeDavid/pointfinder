@@ -124,7 +124,7 @@ export function BasesPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">{t("bases.title")}</h1>
+          <h1 className="text-2xl font-bold">{t("nav.bases")}</h1>
           <p className="text-muted-foreground">{t("bases.summary", { count: bases.length, linked: bases.filter((b) => b.nfcLinked).length })}</p>
         </div>
         <div className="flex items-center gap-2 self-end sm:self-auto">
@@ -220,7 +220,7 @@ export function BasesPage() {
             </div>
             <div className="space-y-2">
               <FormLabel htmlFor="baseDescription" optional>
-                {t("bases.description")}
+                {t("common.description")}
               </FormLabel>
               <Textarea id="baseDescription" value={form.description ?? ""} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder={t("bases.descriptionPlaceholder")} rows={3} />
             </div>

@@ -17,7 +17,7 @@ export function LeaderboardPage() {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold">{t("leaderboard.title")}</h1><p className="text-muted-foreground">{t("leaderboard.description")}</p></div>
+      <div><h1 className="text-2xl font-bold">{t("nav.leaderboard")}</h1><p className="text-muted-foreground">{t("leaderboard.description")}</p></div>
       {websocketError && <Alert>{websocketError}</Alert>}
       {isError && <Alert>{t("common.serverError")}</Alert>}
       {isLoading ? (

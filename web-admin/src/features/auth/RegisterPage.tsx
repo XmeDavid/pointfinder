@@ -86,7 +86,7 @@ export function RegisterPage() {
             <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary">
               <Compass className="h-6 w-6 text-primary-foreground" />
             </div>
-            <CardTitle className="text-2xl">{t("auth.registerTitle")}</CardTitle>
+            <CardTitle className="text-2xl">{t("auth.createAccount")}</CardTitle>
             <CardDescription>{t("auth.registerDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
@@ -116,7 +116,7 @@ export function RegisterPage() {
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? t("auth.sendingRegistrationLink") : t("auth.sendRegistrationLink")}
+                  {loading ? t("common.sending") : t("auth.sendRegistrationLink")}
                 </Button>
               </form>
             )}

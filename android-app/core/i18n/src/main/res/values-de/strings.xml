@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">PointFinder</string>
-
     <!-- Actions -->
     <string name="action_join_game">Spiel beitreten</string>
     <string name="action_operator_login">Operator-Anmeldung</string>
@@ -28,11 +27,8 @@
     <string name="action_reject">Ablehnen</string>
     <string name="nfc_scan_dialog_title">NFC-Tag scannen</string>
     <string name="nfc_scan_dialog_message">Halte dein Telefon an den NFC-Tag an der Station</string>
-    <string name="nfc_write_dialog_title">NFC-Tag schreiben</string>
     <string name="nfc_write_dialog_message">Halte dein Telefon an den NFC-Tag, den du schreiben möchtest</string>
-
     <!-- Labels -->
-    <string name="label_welcome">PointFinder</string>
     <string name="label_join_with_qr_or_code">Mit QR oder Code beitreten</string>
     <string name="label_join_code">Beitrittscode</string>
     <string name="label_display_name">Anzeigename</string>
@@ -52,7 +48,6 @@
     <string name="label_more">Mehr</string>
     <string name="label_create_game">Spiel erstellen</string>
     <string name="label_game_name">Spielname</string>
-    <string name="label_game_description">Beschreibung</string>
     <string name="label_start_from">Starten mit</string>
     <string name="label_empty_game">Leeres Spiel</string>
     <string name="label_import_from_file">Aus Datei importieren</string>
@@ -92,7 +87,6 @@
     <string name="label_challenge_locked">Challenge gesperrt</string>
     <string name="label_challenge_locked_hint">Besuche diese Station, um die Challenge freizuschalten</string>
     <string name="label_awaiting_review">Warten auf Prüfung</string>
-    <string name="label_solve_title">Challenge lösen</string>
     <string name="label_photo_mode">Medien-Antwortmodus</string>
     <string name="label_media_selected">%1$d von 5 ausgewählt</string>
     <string name="game_status_setup">Einrichtung</string>
@@ -107,11 +101,8 @@
     <string name="label_unknown_challenge">Unbekannte Challenge</string>
     <string name="label_unknown_base">Unbekannte Station</string>
     <string name="label_review_submission">Einreichung prüfen</string>
-    <string name="submissions_team_label">Team</string>
     <string name="submissions_challenge_label">Challenge</string>
     <string name="submissions_base_label">Station</string>
-    <string name="submissions_answer_label">Antwort</string>
-    <string name="submissions_points_label">Punkte</string>
     <string name="submissions_points_label_with_expected">Punkte (%1$d)</string>
     <string name="submissions_feedback_label">Feedback (optional)</string>
     <string name="label_notification_settings">Benachrichtigungseinstellungen</string>
@@ -133,26 +124,19 @@
     <string name="label_no_games_description">Du hast noch keine Spiele. Ziehe zum Aktualisieren oder schaue später wieder vorbei.</string>
     <string name="label_game_not_active_title">Spiel ist noch nicht aktiv</string>
     <string name="label_game_not_active_message">Bitte warte, bis dein Operator das Spiel live schaltet.</string>
-
     <!-- Permission Disclosure -->
     <string name="disclosure_title">Bevor du startest</string>
     <string name="disclosure_subtitle">PointFinder benötigt einige Berechtigungen für dein Spielerlebnis.</string>
     <string name="disclosure_location_title">Standort</string>
     <string name="disclosure_location_detail">Zeigt dein Team auf der Live-Karte, damit Operatoren das Spiel überwachen können.</string>
-    <string name="disclosure_notifications_title">Benachrichtigungen</string>
     <string name="disclosure_notifications_detail">Liefert Spiel-Updates und Nachrichten von deinem Operator.</string>
     <string name="disclosure_camera_title">Kamera &amp; Fotos</string>
     <string name="disclosure_camera_detail">QR-Codes scannen und Fotos für Challenges einreichen.</string>
     <string name="disclosure_footer">Du kannst diese Berechtigungen später in den Einstellungen ändern.</string>
-    <string name="disclosure_continue">Weiter</string>
-
     <string name="dialog_leave_game_title">Spiel verlassen?</string>
     <string name="dialog_leave_game_message">Du wirst vom aktuellen Spiel getrennt. Du kannst mit dem gleichen Code wieder beitreten.</string>
-
-    <string name="dialog_delete_account_title">Konto löschen</string>
     <string name="dialog_delete_account_message">Dadurch werden deine Spielerkontodaten für PointFinder dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.</string>
     <string name="dialog_delete_account_confirm">Löschen</string>
-
     <!-- Hints -->
     <string name="hint_checkin_instructions">Halte dein Telefon an den Marker an der Station, um einzuchecken</string>
     <string name="hint_offline_sync">Offline: Daten werden synchronisiert, sobald wieder Verbindung besteht.</string>
@@ -160,30 +144,24 @@
     <string name="hint_media_reselect_required">Die Originaldatei ist nicht mehr verfügbar. Bitte erneut auswählen.</string>
     <string name="hint_media_upload_disabled">Medien-Uploads sind vorübergehend nicht verfügbar. Bitte später erneut versuchen.</string>
     <string name="hint_nfc_hold_near">Halte einen NFC-Tag an das Gerät, um die Station zu schreiben.</string>
-
     <!-- Status -->
     <string name="status_not_visited">Nicht besucht</string>
-    <string name="status_pending">Ausstehend</string>
     <string name="status_approved">Freigegeben</string>
     <string name="status_checked_in">Eingecheckt</string>
     <string name="status_submitted">Warten auf Prüfung</string>
     <string name="status_completed">Abgeschlossen</string>
     <string name="status_correct">Korrekt</string>
     <string name="status_rejected">Abgelehnt</string>
-
     <!-- Submission result -->
     <string name="result_correct">Richtig!</string>
     <string name="result_approved">Freigegeben!</string>
-    <string name="result_rejected">Abgelehnt</string>
     <string name="result_submitted">Eingereicht</string>
     <string name="result_correct_msg">Super gemacht! Deine Antwort ist richtig.</string>
     <string name="result_approved_msg">Deine Einreichung wurde freigegeben.</string>
     <string name="result_rejected_msg">Deine Einreichung wurde abgelehnt. Prüfe das Feedback und versuche es erneut.</string>
     <string name="result_submitted_msg">Deine Antwort wurde eingereicht und wartet auf Prüfung durch einen Operator.</string>
-
     <!-- Status messages -->
     <string name="success_nfc_written">NFC erfolgreich geschrieben und verknüpft.</string>
-
     <!-- Errors -->
     <string name="error_generic">Etwas ist schiefgelaufen.</string>
     <string name="error_invalid_nfc">Ungültige NFC-Daten.</string>
@@ -200,7 +178,6 @@
     <string name="error_nfc_write_failed">NFC-Schreiben fehlgeschlagen.</string>
     <string name="error_nfc_link_failed">NFC geschrieben, aber Verknüpfung fehlgeschlagen: %1$s</string>
     <string name="error_network_unavailable">Netzwerk nicht verfügbar. Überprüfe deine Verbindung.</string>
-
     <!-- Setup Hub -->
     <string name="label_needs_attention">Handlungsbedarf</string>
     <string name="label_manage">Verwalten</string>
@@ -216,12 +193,10 @@
     <string name="label_go_live_confirm_message">Teams können beitreten und spielen. Stationen und Challenges können weiterhin bearbeitet werden.</string>
     <string name="label_challenges">Challenges</string>
     <string name="label_teams">Teams</string>
-
     <!-- Base Management -->
     <string name="label_new_base">Neue Station</string>
     <string name="label_edit_base">Station bearbeiten</string>
     <string name="label_base_name">Stationsname</string>
-    <string name="label_base_description">Beschreibung</string>
     <string name="label_require_presence">Pr\u00e4senz erforderlich</string>
     <string name="label_hidden_base">Versteckte Station</string>
     <string name="label_none">Keine</string>
@@ -232,7 +207,6 @@
     <string name="label_tap_map_to_set_location">Tippe auf die Karte, um den Standort festzulegen</string>
     <string name="action_save">Speichern</string>
     <string name="label_write_nfc">NFC schreiben</string>
-
     <!-- Rich Text Editor -->
     <string name="action_done">Fertig</string>
     <string name="label_insert_variable">Variable einf\u00fcgen</string>
@@ -258,7 +232,6 @@
     <string name="label_link_text">Linktext</string>
     <string name="label_preview">Vorschau</string>
     <string name="label_select_team">Team ausw\u00e4hlen</string>
-
     <!-- Challenge Management -->
     <string name="label_challenge_title">Titel</string>
     <string name="label_challenge_points">Punkte</string>
@@ -283,7 +256,6 @@
     <string name="label_edit_challenge">Challenge bearbeiten</string>
     <string name="label_no_content">Noch kein Inhalt</string>
     <string name="label_no_base">Keine Station</string>
-
     <!-- Team Management -->
     <string name="label_join_code_section">Beitrittscode</string>
     <string name="label_show_qr">QR anzeigen</string>
@@ -304,13 +276,11 @@
     <string name="label_challenge_variables">Challenge-Variablen</string>
     <string name="label_no_teams_in_game">Keine Teams in diesem Spiel</string>
     <string name="label_saving">Speichern…</string>
-
     <!-- Map Edit Mode -->
     <string name="label_edit_on">Bearbeiten: AN</string>
     <string name="label_edit_off">Bearbeiten: AUS</string>
     <string name="label_add_base_here">Station hier erstellen</string>
     <string name="label_center_on_me">Auf mich zentrieren</string>
-
     <!-- Live Tab -->
     <string name="label_leaderboard">Rangliste</string>
     <string name="label_activity">Aktivität</string>
@@ -318,18 +288,15 @@
     <string name="label_no_activity">Noch keine Aktivität</string>
     <string name="label_completed_count">%1$d abgeschlossen</string>
     <string name="label_rank">%1$d.</string>
-
     <!-- Notifications -->
     <string name="label_notifications">Benachrichtigungen</string>
     <string name="label_no_notifications">Noch keine Benachrichtigungen</string>
-
     <!-- More Tab -->
     <string name="label_game_settings">Spieleinstellungen</string>
     <string name="label_send_notifications">Benachrichtigungen senden</string>
     <string name="label_manage_operators">Operatoren verwalten</string>
     <string name="label_export_game">Spiel exportieren</string>
     <string name="label_app_settings">App-Einstellungen</string>
-    <string name="label_game_section">Spiel</string>
     <string name="label_data_section">Daten</string>
     <string name="label_start_date">Startdatum</string>
     <string name="label_end_date">Enddatum</string>
@@ -356,7 +323,6 @@
     <string name="action_revoke_invite">Einladung widerrufen</string>
     <string name="confirm_revoke_invite">Einladung widerrufen</string>
     <string name="confirm_revoke_invite_message">Die Einladung an %1$s widerrufen?</string>
-
     <!-- Toast / Snackbar -->
     <string name="toast_base_created">Station erstellt</string>
     <string name="toast_base_saved">Station gespeichert</string>

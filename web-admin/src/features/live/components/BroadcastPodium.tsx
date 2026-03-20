@@ -33,7 +33,7 @@ export function BroadcastPodium({ leaderboard }: Props) {
     <div className="flex h-full flex-col rounded-xl border border-white/10 bg-white/5 p-3 overflow-hidden">
       <div className="flex items-center gap-2 mb-2">
         <Trophy className="h-4 w-4 text-yellow-400" />
-        <h2 className="text-sm font-semibold text-white/70">{t("leaderboard.title")}</h2>
+        <h2 className="text-sm font-semibold text-white/70">{t("nav.leaderboard")}</h2>
       </div>
 
       <div className="flex-1 flex items-end justify-center gap-2">

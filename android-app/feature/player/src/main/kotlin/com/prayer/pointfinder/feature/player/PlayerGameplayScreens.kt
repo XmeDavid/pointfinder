@@ -211,7 +211,7 @@ fun SolveScreen(
         Row(verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = onBack) { Text(stringResource(R.string.action_back)) }
             Spacer(Modifier.size(8.dp))
-            Text(stringResource(R.string.label_solve_title), style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.action_solve_challenge), style = MaterialTheme.typography.titleLarge)
         }
         Spacer(Modifier.height(12.dp))
 
@@ -350,7 +350,7 @@ fun SubmissionResultScreen(
     val resultTitle = when (submission.status) {
         SubmissionStatus.CORRECT -> stringResource(R.string.result_correct)
         SubmissionStatus.APPROVED -> stringResource(R.string.result_approved)
-        SubmissionStatus.REJECTED -> stringResource(R.string.result_rejected)
+        SubmissionStatus.REJECTED -> stringResource(R.string.status_rejected)
         else -> stringResource(R.string.result_submitted)
     }
     val resultMessage = when (submission.status) {

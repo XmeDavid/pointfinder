@@ -139,7 +139,7 @@ struct BaseDetailView: View {
     @ViewBuilder
     private var challengeAssignmentSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label(locale.t("nfc.challenge"), systemImage: "lightbulb.fill")
+            Label(locale.t("common.challenge"), systemImage: "lightbulb.fill")
                 .font(.headline)
 
             if isLoadingData {
@@ -169,7 +169,7 @@ struct BaseDetailView: View {
     private func fixedChallengeView(challengeId: UUID) -> some View {
         HStack(spacing: 6) {
             Image(systemName: "pin.fill")
-            Text(locale.t("nfc.fixedChallenge"))
+            Text(locale.t("common.fixedChallenge"))
         }
         .font(.caption)
         .fontWeight(.medium)

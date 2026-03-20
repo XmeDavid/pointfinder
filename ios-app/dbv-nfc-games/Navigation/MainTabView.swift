@@ -18,19 +18,19 @@ struct MainTabView: View {
                 GameMapView()
                     .tag(0)
                     .tabItem {
-                        Label(locale.t("tabs.map"), systemImage: "map.fill")
+                        Label(locale.t("common.map"), systemImage: "map.fill")
                     }
 
                 CheckInTabView()
                     .tag(1)
                     .tabItem {
-                        Label(locale.t("tabs.checkIn"), systemImage: "mappin.and.ellipse")
+                        Label(locale.t("common.checkIn"), systemImage: "mappin.and.ellipse")
                     }
 
                 SettingsView()
                     .tag(2)
                     .tabItem {
-                        Label(locale.t("tabs.settings"), systemImage: "gearshape.fill")
+                        Label(locale.t("common.settings"), systemImage: "gearshape.fill")
                     }
             }
         }

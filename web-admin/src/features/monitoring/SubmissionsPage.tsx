@@ -129,7 +129,7 @@ export function SubmissionsPage() {
     onError: (error: unknown) => { toast.error(getApiErrorMessage(error)); },
   });
 
-  const statusLabels: Record<SubmissionStatus, string> = { pending: t("submissions.statusPending"), approved: t("submissions.statusApproved"), rejected: t("submissions.statusRejected"), correct: t("submissions.statusCorrect") };
+  const statusLabels: Record<SubmissionStatus, string> = { pending: t("common.pending"), approved: t("submissions.statusApproved"), rejected: t("common.rejected"), correct: t("submissions.statusCorrect") };
   const statusVariants: Record<SubmissionStatus, "warning" | "success" | "destructive"> = { pending: "warning", approved: "success", rejected: "destructive", correct: "success" };
   const statusIcons: Record<SubmissionStatus, React.ReactNode> = { pending: <Clock className="h-3 w-3" />, approved: <CheckCircle className="h-3 w-3" />, rejected: <XCircle className="h-3 w-3" />, correct: <CheckCircle className="h-3 w-3" /> };
 
@@ -143,10 +143,10 @@ export function SubmissionsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold">{t("submissions.title")}</h1><p className="text-muted-foreground">{t("submissions.pendingReview", { count: pendingCount })}</p></div>
+        <div><h1 className="text-2xl font-bold">{t("nav.submissions")}</h1><p className="text-muted-foreground">{t("submissions.pendingReview", { count: pendingCount })}</p></div>
         <div className="flex gap-2">
           <Button variant={filter === "all" ? "secondary" : "ghost"} size="sm" onClick={() => setFilter("all")}>{t("common.all")} ({submissions.length})</Button>
-          <Button variant={filter === "pending" ? "secondary" : "ghost"} size="sm" onClick={() => setFilter("pending")}><Filter className="mr-1 h-3 w-3" />{t("submissions.statusPending")} ({pendingCount})</Button>
+          <Button variant={filter === "pending" ? "secondary" : "ghost"} size="sm" onClick={() => setFilter("pending")}><Filter className="mr-1 h-3 w-3" />{t("common.pending")} ({pendingCount})</Button>
         </div>
       </div>
       {websocketError && <Alert>{websocketError}</Alert>}
@@ -165,7 +165,7 @@ export function SubmissionsPage() {
           ))}
         </div>
       ) : sorted.length === 0 ? (
-        <Card className="py-12"><CardContent className="text-center"><FileText className="mx-auto h-8 w-8 text-muted-foreground mb-2" /><p className="text-muted-foreground">{filter === "pending" ? t("submissions.noPending") : t("submissions.noSubmissions")}</p></CardContent></Card>
+        <Card className="py-12"><CardContent className="text-center"><FileText className="mx-auto h-8 w-8 text-muted-foreground mb-2" /><p className="text-muted-foreground">{filter === "pending" ? t("submissions.noPending") : t("common.noSubmissions")}</p></CardContent></Card>
       ) : (
         <div className="space-y-3">{sorted.map((sub) => {
           const isPending = sub.status === "pending";
@@ -249,8 +249,8 @@ export function SubmissionsPage() {
           <DialogContent onClose={closeReview}>
             <DialogHeader><DialogTitle>{t("submissions.reviewTitle")}</DialogTitle></DialogHeader>
             <div className="space-y-4">
-              <div><p className="text-sm font-medium mb-1">{t("submissions.team")}</p><p className="text-sm text-muted-foreground">{teams.find((tm) => tm.id === reviewingSub.teamId)?.name}</p></div>
-              <div><p className="text-sm font-medium mb-1">{t("submissions.challenge")}</p><p className="text-sm text-muted-foreground">{challenges.find((c) => c.id === reviewingSub.challengeId)?.title}</p></div>
+              <div><p className="text-sm font-medium mb-1">{t("common.team")}</p><p className="text-sm text-muted-foreground">{teams.find((tm) => tm.id === reviewingSub.teamId)?.name}</p></div>
+              <div><p className="text-sm font-medium mb-1">{t("common.challenge")}</p><p className="text-sm text-muted-foreground">{challenges.find((c) => c.id === reviewingSub.challengeId)?.title}</p></div>
               {(() => {
                 const mediaUrls = getMediaUrls(reviewingSub);
                 if (mediaUrls.length > 0) {
@@ -283,7 +283,7 @@ export function SubmissionsPage() {
                   </div>
                 ) : null;
               })()}
-              <div className="space-y-2"><p className="text-sm font-medium">{expectedReviewPoints != null ? t("submissions.pointsLabelWithExpected", { points: expectedReviewPoints }) : t("submissions.pointsLabel")}</p><Input type="number" min={0} value={reviewPoints} onChange={(e) => setReviewPoints(parseInt(e.target.value) || 0)} /></div>
+              <div className="space-y-2"><p className="text-sm font-medium">{expectedReviewPoints != null ? t("submissions.pointsLabelWithExpected", { points: expectedReviewPoints }) : t("common.points_label")}</p><Input type="number" min={0} value={reviewPoints} onChange={(e) => setReviewPoints(parseInt(e.target.value) || 0)} /></div>
               <div className="space-y-2"><p className="text-sm font-medium">{t("submissions.feedbackLabel")}</p><Textarea value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder={t("submissions.feedbackPlaceholder")} rows={2} /></div>
             </div>
             <DialogFooter>

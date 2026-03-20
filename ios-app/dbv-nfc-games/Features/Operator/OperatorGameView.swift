@@ -172,7 +172,7 @@ struct OperatorSettingsView: View {
                     }
 
                     HStack {
-                        Label(locale.t("settings.status"), systemImage: "circle.fill")
+                        Label(locale.t("common.status"), systemImage: "circle.fill")
                         Spacer()
                         Text(locale.t("game.status.\(game.status)"))
                             .foregroundStyle(.secondary)
@@ -243,7 +243,7 @@ struct OperatorSettingsView: View {
                     }
                 }
             }
-            .navigationTitle(locale.t("settings.title"))
+            .navigationTitle(locale.t("common.settings"))
             .navigationBarTitleDisplayMode(.inline)
             .task {
                 await loadNotificationSettings()

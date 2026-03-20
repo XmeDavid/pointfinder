@@ -41,7 +41,7 @@ struct WelcomeView: View {
                     Button {
                         showOperatorLogin = true
                     } label: {
-                        Label(locale.t("welcome.operatorLogin"), systemImage: "gearshape.fill")
+                        Label(locale.t("common.operatorLogin"), systemImage: "gearshape.fill")
                             .font(.subheadline)
                             .frame(maxWidth: .infinity)
                             .padding()

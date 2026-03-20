@@ -43,7 +43,7 @@ struct SettingsView: View {
                                 .foregroundStyle(.secondary)
                         }
                         HStack {
-                            Text(locale.t("settings.status"))
+                            Text(locale.t("common.status"))
                             Spacer()
                             Text(locale.t("game.status.\(game.status)"))
                                 .foregroundStyle(.secondary)
@@ -52,7 +52,7 @@ struct SettingsView: View {
 
                     Section(locale.t("settings.yourTeam")) {
                         HStack {
-                            Text(locale.t("settings.team"))
+                            Text(locale.t("common.team"))
                             Spacer()
                             HStack(spacing: 6) {
                                 Circle()
@@ -147,7 +147,7 @@ struct SettingsView: View {
                         } label: {
                             HStack {
                                 Spacer()
-                                Text(isDeletingAccount ? locale.t("settings.deletingAccount") : locale.t("settings.deleteAccount"))
+                                Text(isDeletingAccount ? locale.t("settings.deletingAccount") : locale.t("common.deleteAccount"))
                                 Spacer()
                             }
                         }
@@ -168,7 +168,7 @@ struct SettingsView: View {
                     }
                 }
             }
-            .navigationTitle(locale.t("settings.title"))
+            .navigationTitle(locale.t("common.settings"))
             .alert(locale.t("settings.leaveGameTitle"), isPresented: $showLeaveGameConfirm) {
                 Button(locale.t("settings.leaveGame"), role: .destructive) {
                     appState.logout()
@@ -179,7 +179,7 @@ struct SettingsView: View {
             } message: {
                 Text(locale.t("settings.leaveGameMessage"))
             }
-            .alert(locale.t("settings.deleteAccountTitle"), isPresented: $showDeleteAccountConfirm) {
+            .alert(locale.t("common.deleteAccount"), isPresented: $showDeleteAccountConfirm) {
                 Button(locale.t("settings.deleteAccountConfirm"), role: .destructive) {
                     Task {
                         isDeletingAccount = true

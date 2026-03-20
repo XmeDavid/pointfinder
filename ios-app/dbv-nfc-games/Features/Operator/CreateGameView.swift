@@ -30,7 +30,7 @@ struct CreateGameView: View {
                     TextField(locale.t("operator.gameName"), text: $name)
                         .accessibilityIdentifier("game-name-input")
                     if !importMode {
-                        TextField(locale.t("operator.gameDescription"), text: $description, axis: .vertical)
+                        TextField(locale.t("common.description"), text: $description, axis: .vertical)
                             .lineLimit(3...6)
                     }
                 }

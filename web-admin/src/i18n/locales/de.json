@@ -22,7 +22,18 @@
     "required": "erforderlich",
     "saved": "Gespeichert",
     "deleted": "Gelöscht",
-    "serverError": "Ein Fehler ist aufgetreten. Bitte versuche es erneut."
+    "serverError": "Ein Fehler ist aufgetreten. Bitte versuche es erneut.",
+    "team": "Team",
+    "challenge": "Challenge",
+    "points_label": "Punkte",
+    "description": "Beschreibung",
+    "pending": "Ausstehend",
+    "rejected": "Abgelehnt",
+    "allTeams": "Alle Teams",
+    "noSubmissions": "Noch keine Einreichungen",
+    "totalSubmissions": "Einreichungen gesamt",
+    "pendingInvitations": "Ausstehende Einladungen",
+    "inviteOperator": "Operator einladen"
   },
   "auth": {
     "signIn": "Anmelden",
@@ -51,20 +62,16 @@
     "forgotPasswordSuccess": "Falls ein Konto mit dieser E-Mail existiert, haben wir einen Link zum Zurücksetzen gesendet. Bitte prüfen Sie Ihren Posteingang.",
     "forgotPasswordError": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
     "sendResetLink": "Link senden",
-    "sendingResetLink": "Wird gesendet...",
     "backToSignIn": "Zurück zur Anmeldung",
-    "resetPasswordTitle": "Passwort zurücksetzen",
+    "resetPassword": "Passwort zurücksetzen",
     "resetPasswordDescription": "Geben Sie unten Ihr neues Passwort ein.",
     "newPassword": "Neues Passwort",
-    "resetPassword": "Passwort zurücksetzen",
     "resettingPassword": "Wird zurückgesetzt...",
     "resetPasswordSuccess": "Ihr Passwort wurde erfolgreich zurückgesetzt. Sie können sich jetzt mit Ihrem neuen Passwort anmelden.",
     "resetPasswordError": "Passwort konnte nicht zurückgesetzt werden. Der Link ist möglicherweise ungültig oder abgelaufen.",
-    "registerTitle": "Konto erstellen",
     "registerDescription": "Geben Sie Ihre E-Mail-Adresse ein, um loszulegen.",
     "registrationEmailSent": "Wir haben Ihnen eine E-Mail mit einem Link zur Fortsetzung Ihrer Registrierung gesendet. Bitte überprüfen Sie Ihren Posteingang.",
     "sendRegistrationLink": "Weiter",
-    "sendingRegistrationLink": "Wird gesendet...",
     "registrationRequestFailed": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
   },
   "nav": {
@@ -87,17 +94,12 @@
     "settings": "Einstellungen"
   },
   "admin": {
-    "title": "Operatoren",
     "description": "Spiel-Operatoren verwalten und Einladungen versenden",
-    "inviteOperator": "Operator einladen",
-    "inviteTitle": "Operator einladen",
     "inviteDescription": "Senden Sie eine Einladung per E-Mail. Die Person erhält einen Link, um ein Konto zu erstellen.",
     "emailAddress": "E-Mail-Adresse",
     "emailPlaceholder": "operator@beispiel.com",
     "sendInvite": "Einladung senden",
-    "pendingInvitations": "Ausstehende Einladungen",
-    "invited": "Eingeladen",
-    "pending": "Ausstehend"
+    "invited": "Eingeladen"
   },
   "game": {
     "export": "Spiel exportieren",
@@ -116,7 +118,6 @@
     "selectedFile": "Ausgewählte Datei"
   },
   "games": {
-    "title": "Spiele",
     "description": "Verwalten Sie Ihre PointFinder-Spiele und Events",
     "newGame": "Neues Spiel",
     "createGame": "Spiel erstellen",
@@ -125,7 +126,6 @@
     "createDescription": "Richten Sie die Grundlagen ein. Stationen, Challenges und Teams können Sie danach konfigurieren.",
     "gameName": "Spielname",
     "gameNamePlaceholder": "PointFinder Sommer-Challenge 2026",
-    "gameDescription": "Beschreibung",
     "gameDescriptionPlaceholder": "Beschreiben Sie, worum es in diesem Spiel geht...",
     "startDate": "Startdatum",
     "endDate": "Enddatum",
@@ -198,11 +198,9 @@
   "gameOperators": {
     "title": "Spiel-Operatoren",
     "description": "Verwalten, wer dieses Spiel steuern darf",
-    "inviteOperator": "Operator einladen",
     "inviteTitle": "Operator zum Spiel einladen",
     "inviteDescription": "Geben Sie die E-Mail eines bestehenden Operators ein, um ihn zum Spiel einzuladen. Er wird per E-Mail benachrichtigt und kann die Einladung auf der Plattform annehmen.",
     "owner": "Besitzer",
-    "pendingInvitations": "Ausstehende Einladungen",
     "inviteError": "Einladung konnte nicht gesendet werden. Bitte erneut versuchen.",
     "removeConfirmTitle": "Diesen Operator entfernen?",
     "removeConfirmDescription": "Dieser Operator verliert den Zugang zu diesem Spiel."
@@ -214,7 +212,6 @@
     "accept": "Annehmen"
   },
   "bases": {
-    "title": "Stationen",
     "addBase": "Station hinzufügen",
     "createBase": "Station erstellen",
     "editBase": "Station bearbeiten",
@@ -222,7 +219,6 @@
     "noBasesDescription": "Fügen Sie Ihre erste Station hinzu!",
     "name": "Name",
     "namePlaceholder": "Stationsname",
-    "description": "Beschreibung",
     "descriptionPlaceholder": "Ort beschreiben...",
     "latitude": "Breitengrad",
     "longitude": "Längengrad",
@@ -243,7 +239,6 @@
     "deleteConfirmDescription": "Diese Station und ihre Zuweisungen werden dauerhaft gelöscht."
   },
   "challenges": {
-    "title": "Challenges",
     "addChallenge": "Challenge hinzufügen",
     "createChallenge": "Challenge erstellen",
     "editChallenge": "Challenge bearbeiten",
@@ -251,7 +246,6 @@
     "noChallengesDescription": "Erstellen Sie Ihre erste Challenge!",
     "challengeTitle": "Titel",
     "titlePlaceholder": "Challenge-Titel",
-    "pointsLabel": "Punkte",
     "shortDescription": "Kurzbeschreibung",
     "shortDescriptionPlaceholder": "Kurze Zusammenfassung, die in Listen angezeigt wird",
     "content": "Challenge-Anweisungen",
@@ -298,10 +292,7 @@
     "selectChallenge": "Challenge auswählen...",
     "assign": "Zuweisen",
     "base": "Station",
-    "challenge": "Challenge",
-    "team": "Team",
     "selectTeam": "Team auswählen...",
-    "allTeams": "Alle Teams",
     "addForBase": "Zuweisungen für diese Station hinzufügen oder verwalten.",
     "fullyAssigned": "Diese Station ist für alle Teams vollständig zugewiesen.",
     "modeLockedAllTeams": "Diese Station verwendet eine \"Alle Teams\"-Zuweisung. Entfernen Sie diese, bevor Sie teamspezifische Zuweisungen hinzufügen.",
@@ -314,7 +305,6 @@
     "deleteConfirmDescription": "Diese Zuweisung wird dauerhaft entfernt."
   },
   "teams": {
-    "title": "Teams",
     "createTeam": "Team erstellen",
     "createTitle": "Team erstellen",
     "noTeamsTitle": "Noch keine Teams",
@@ -333,12 +323,10 @@
     "deleteConfirmDescription": "Dieses Team und alle seine Mitglieder werden dauerhaft entfernt."
   },
   "notifications": {
-    "title": "Benachrichtigungen",
     "description": "Nachrichten an Teams im Feld senden",
     "compose": "Verfassen",
     "composeDescription": "Senden Sie eine Benachrichtigung an alle Teams oder ein bestimmtes Team",
     "target": "Ziel",
-    "allTeams": "Alle Teams",
     "message": "Nachricht",
     "messagePlaceholder": "Benachrichtigung eingeben...",
     "sendNotification": "Benachrichtigung senden",
@@ -354,26 +342,21 @@
     "timeRemaining": "Verbleibende Zeit",
     "quickLeaderboard": "Schnelle Rangliste",
     "noScores": "Noch keine Punktstände",
-    "gameSummary": "Spielzusammenfassung",
-    "totalSubmissions": "Einreichungen gesamt"
+    "gameSummary": "Spielzusammenfassung"
   },
   "mapPage": {
     "title": "Live-Karte",
     "description": "Stationen und Team-Positionen in Echtzeit verfolgen",
-    "allTeams": "Alle Teams",
     "viewingTeam": "Ansicht: {{team}}",
     "notVisited": "Nicht besucht",
     "checkedIn": "Eingecheckt",
     "submitted": "Eingereicht",
     "completed": "Abgeschlossen",
-    "rejected": "Abgelehnt",
-    "challenge": "Challenge",
     "noChallenge": "Keine Challenge zugewiesen",
     "latestPingBy": "Letzter Ping: {{player}}",
     "loadError": "Kartendaten konnten nicht geladen werden. Einige Informationen fehlen möglicherweise."
   },
   "leaderboard": {
-    "title": "Rangliste",
     "description": "Team-Ranking nach Punkten",
     "noScores": "Noch keine Punktstände. Das Spiel hat gerade erst begonnen!",
     "challengesCompleted": "{{count}} Challenges abgeschlossen",
@@ -393,26 +376,19 @@
     }
   },
   "submissions": {
-    "title": "Einreichungen",
     "pendingReview_one": "{{count}} ausstehende Prüfung",
     "pendingReview_other": "{{count}} ausstehende Prüfungen",
-    "noSubmissions": "Noch keine Einreichungen",
     "noPending": "Keine ausstehenden Einreichungen",
     "reviewTitle": "Einreichung prüfen",
-    "team": "Team",
-    "challenge": "Challenge",
     "answer": "Antwort",
     "notes": "Notizen",
     "noNotes": "Keine Notizen",
-    "pointsLabel": "Punkte",
     "feedbackLabel": "Feedback (optional)",
     "feedbackPlaceholder": "Optionales Feedback für das Team...",
     "reject": "Ablehnen",
     "approve": "Freigeben",
     "review": "Prüfen",
-    "statusPending": "Ausstehend",
     "statusApproved": "Freigegeben",
-    "statusRejected": "Abgelehnt",
     "statusCorrect": "Korrekt",
     "actions": "Aktionen",
     "override": "Überschreiben",
@@ -424,9 +400,7 @@
     "backToLeaderboard": "Zurück zur Rangliste",
     "totalPoints": "Gesamtpunkte",
     "completedChallenges": "Abgeschlossene Challenges",
-    "totalSubmissions": "Einreichungen gesamt",
-    "submissionHistory": "Einreichungsverlauf",
-    "noSubmissions": "Noch keine Einreichungen"
+    "submissionHistory": "Einreichungsverlauf"
   },
   "results": {
     "title": "Endergebnisse",

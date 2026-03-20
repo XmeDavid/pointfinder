@@ -64,7 +64,7 @@ struct GameMapView: View {
                     .padding(.horizontal, 24)
                 }
             }
-            .navigationTitle(appState.currentGame?.name ?? locale.t("map.defaultTitle"))
+            .navigationTitle(appState.currentGame?.name ?? locale.t("common.map"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

@@ -78,7 +78,7 @@ fun MoreScreen(
 
         // Game section
         item {
-            OperatorSettingsSection(title = stringResource(R.string.label_game_section)) {
+            OperatorSettingsSection(title = stringResource(R.string.label_game)) {
                 NavigationRow(
                     icon = Icons.Default.Settings,
                     label = stringResource(R.string.label_game_settings),

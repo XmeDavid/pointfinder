@@ -102,7 +102,7 @@ struct ChallengeEditView: View {
                 TextField(locale.t("operator.challengeTitle"), text: $title)
                     .accessibilityIdentifier("challenge-title-input")
                 HStack {
-                    Text(locale.t("operator.challengePoints"))
+                    Text(locale.t("common.points"))
                     Spacer()
                     TextField("", text: $pointsText)
                         .keyboardType(.numberPad)
@@ -115,8 +115,8 @@ struct ChallengeEditView: View {
             }
 
             // Description (plain text)
-            Section(locale.t("operator.description")) {
-                TextField(locale.t("operator.description"), text: $descriptionText, axis: .vertical)
+            Section(locale.t("common.description")) {
+                TextField(locale.t("common.description"), text: $descriptionText, axis: .vertical)
                     .lineLimit(2...6)
             }
 
@@ -130,7 +130,7 @@ struct ChallengeEditView: View {
                     )
                 }
                 htmlEditorRow(
-                    label: locale.t("operator.completionMessage"),
+                    label: locale.t("common.unlockedInformation"),
                     html: completionContentHtml,
                     field: .completionContent
                 )
@@ -141,7 +141,7 @@ struct ChallengeEditView: View {
                 Picker(locale.t("operator.answerType"), selection: $answerType) {
                     Text(locale.t("operator.textInput")).tag("text")
                     Text(locale.t("operator.fileUpload")).tag("file")
-                    Text(locale.t("operator.checkInOnly")).tag("none")
+                    Text(locale.t("common.checkIn")).tag("none")
                 }
                 .pickerStyle(.segmented)
                 .accessibilityIdentifier("challenge-type-select")
@@ -294,10 +294,10 @@ struct ChallengeEditView: View {
             }
             Button(locale.t("common.cancel"), role: .cancel) {}
         } message: {
-            Text(locale.t("operator.deleteChallengeConfirmMessage"))
+            Text(locale.t("common.cannotUndo"))
         }
         .alert(locale.t("operator.addAnswer"), isPresented: $showAddAnswerAlert) {
-            TextField(locale.t("operator.answer"), text: $newAnswerText)
+            TextField(locale.t("common.answer"), text: $newAnswerText)
             Button(locale.t("common.ok")) {
                 let trimmed = newAnswerText.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !trimmed.isEmpty {
@@ -369,7 +369,7 @@ struct ChallengeEditView: View {
     private func titleForField(_ field: EditableField) -> String {
         switch field {
         case .content: return locale.t("operator.content")
-        case .completionContent: return locale.t("operator.completionMessage")
+        case .completionContent: return locale.t("common.unlockedInformation")
         }
     }
 

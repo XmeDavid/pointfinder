@@ -439,7 +439,7 @@ fun WelcomeScreen(
             Spacer(Modifier.height(48.dp))
 
             Text(
-                stringResource(R.string.label_welcome),
+                stringResource(R.string.app_name),
                 style = MaterialTheme.typography.headlineLarge,
                 color = Color.White,
             )

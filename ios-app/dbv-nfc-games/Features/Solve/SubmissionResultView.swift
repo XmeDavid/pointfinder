@@ -46,7 +46,7 @@ struct SubmissionResultView: View {
 
                     if showCompletionContent {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text(locale.t("result.completionContent"))
+                            Text(locale.t("common.unlockedInformation"))
                                 .font(.headline)
                             AutoSizingHTMLView(html: completionContent)
                         }
