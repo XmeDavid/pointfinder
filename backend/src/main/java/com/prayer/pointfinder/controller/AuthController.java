@@ -3,12 +3,8 @@ package com.prayer.pointfinder.controller;
 import com.prayer.pointfinder.dto.request.*;
 import com.prayer.pointfinder.dto.response.AuthResponse;
 import com.prayer.pointfinder.dto.response.InviteTokenResponse;
-import com.prayer.pointfinder.entity.OperatorInvite;
-import com.prayer.pointfinder.exception.BadRequestException;
-import com.prayer.pointfinder.exception.ResourceNotFoundException;
-import com.prayer.pointfinder.entity.InviteStatus;
-import com.prayer.pointfinder.repository.OperatorInviteRepository;
 import com.prayer.pointfinder.service.AuthService;
+import com.prayer.pointfinder.service.InviteService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +19,7 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
-    private final OperatorInviteRepository inviteRepository;
+    private final InviteService inviteService;
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
@@ -32,12 +28,7 @@ public class AuthController {
 
     @GetMapping("/invite/{token}")
     public ResponseEntity<InviteTokenResponse> getInviteByToken(@PathVariable String token) {
-        OperatorInvite invite = inviteRepository.findByToken(token)
-                .orElseThrow(() -> new ResourceNotFoundException("Invalid invite token"));
-        if (invite.getStatus() != InviteStatus.pending) {
-            throw new BadRequestException("Invite has already been used or expired");
-        }
-        return ResponseEntity.ok(new InviteTokenResponse(invite.getEmail()));
+        return ResponseEntity.ok(inviteService.getInviteByToken(token));
     }
 
     @PostMapping("/register/{token}")

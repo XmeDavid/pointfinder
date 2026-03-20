@@ -16,6 +16,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.prayer.pointfinder.dto.response.InviteTokenResponse;
+
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -52,6 +54,16 @@ public class InviteService {
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public InviteTokenResponse getInviteByToken(String token) {
+        OperatorInvite invite = inviteRepository.findByToken(token)
+                .orElseThrow(() -> new ResourceNotFoundException("Invalid invite token"));
+        if (invite.getStatus() != InviteStatus.pending) {
+            throw new BadRequestException("Invite has already been used or expired");
+        }
+        return new InviteTokenResponse(invite.getEmail());
     }
 
     @Transactional(timeout = 10)
