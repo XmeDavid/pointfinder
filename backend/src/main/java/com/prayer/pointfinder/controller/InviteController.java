@@ -47,7 +47,7 @@ public class InviteController {
     @PostMapping("/{inviteId}/accept")
     public ResponseEntity<Void> acceptInvite(@PathVariable UUID inviteId) {
         inviteService.acceptInvite(inviteId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{inviteId}")

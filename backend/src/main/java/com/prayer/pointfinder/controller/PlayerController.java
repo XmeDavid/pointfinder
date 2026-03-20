@@ -153,14 +153,14 @@ public class PlayerController {
                                                 @Valid @RequestBody UpdateLocationRequest request) {
         Player player = SecurityUtils.getCurrentPlayer();
         playerService.updateLocation(gameId, player, request.getLat(), request.getLng());
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/api/player/push-token")
     public ResponseEntity<Void> updatePushToken(@Valid @RequestBody UpdatePushTokenRequest request) {
         Player player = SecurityUtils.getCurrentPlayer();
         playerService.updatePushToken(player, request.getPushToken(), request.resolvePlatform());
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     /**
