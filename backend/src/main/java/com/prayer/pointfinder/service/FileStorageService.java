@@ -1,6 +1,7 @@
 package com.prayer.pointfinder.service;
 
 import com.prayer.pointfinder.exception.BadRequestException;
+import com.prayer.pointfinder.exception.FileStorageException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
@@ -79,7 +80,7 @@ public class FileStorageService {
             Files.createDirectories(uploadsRoot);
             log.info("File uploads directory: {}", uploadsRoot.toAbsolutePath());
         } catch (IOException e) {
-            throw new RuntimeException("Could not create uploads directory", e);
+            throw new FileStorageException("Could not create uploads directory", e);
         }
     }
 
@@ -101,7 +102,7 @@ public class FileStorageService {
             log.info("Stored file: {}", target);
             return "/api/games/" + gameId + "/files/" + filename;
         } catch (IOException e) {
-            throw new RuntimeException("Failed to store file", e);
+            throw new FileStorageException("Failed to store file", e);
         }
     }
 
@@ -134,7 +135,7 @@ public class FileStorageService {
             log.info("Stored assembled upload: {}", target);
             return "/api/games/" + gameId + "/files/" + filename;
         } catch (IOException e) {
-            throw new RuntimeException("Failed to store assembled upload", e);
+            throw new FileStorageException("Failed to store assembled upload", e);
         }
     }
 
