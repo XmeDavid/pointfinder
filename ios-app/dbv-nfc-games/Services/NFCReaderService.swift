@@ -32,6 +32,11 @@ final class NFCReaderService: NSObject {
         }
 
         return try await withCheckedThrowingContinuation { continuation in
+            // If a scan is already in progress, cancel it before starting a new one.
+            if let existing = self.continuation {
+                existing.resume(throwing: NFCError.cancelled)
+                self.continuation = nil
+            }
             self.continuation = continuation
             self.errorMessage = nil
             self.isReading = true

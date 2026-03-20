@@ -60,14 +60,20 @@ class NfcService @Inject constructor(
             val ndef = Ndef.get(tag)
             if (ndef != null) {
                 ndef.connect()
-                ndef.writeNdefMessage(message)
-                ndef.close()
+                try {
+                    ndef.writeNdefMessage(message)
+                } finally {
+                    ndef.close()
+                }
                 return@runCatching
             }
             val formatable = NdefFormatable.get(tag) ?: error("Tag does not support NDEF")
             formatable.connect()
-            formatable.format(message)
-            formatable.close()
+            try {
+                formatable.format(message)
+            } finally {
+                formatable.close()
+            }
         }
     }
 }

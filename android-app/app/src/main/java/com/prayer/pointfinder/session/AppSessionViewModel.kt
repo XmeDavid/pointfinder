@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.prayer.pointfinder.core.data.repo.AuthRepository
 import com.prayer.pointfinder.core.data.repo.OfflineSyncWorker
+import com.prayer.pointfinder.core.data.repo.OperatorRepository
 import com.prayer.pointfinder.core.data.repo.PlayerRepository
 import com.prayer.pointfinder.core.data.repo.SessionStore
 import com.prayer.pointfinder.core.i18n.LocaleManager
@@ -42,6 +43,7 @@ data class AppSessionState(
 class AppSessionViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val playerRepository: PlayerRepository,
+    private val operatorRepository: OperatorRepository,
     private val sessionStore: SessionStore,
     private val networkMonitor: NetworkMonitor,
     private val deviceIdProvider: DeviceIdProvider,
@@ -182,6 +184,7 @@ class AppSessionViewModel @Inject constructor(
             val isOnline = _state.value.isOnline
             authRepository.clearSession()
             playerRepository.clearAll()
+            operatorRepository.clearCache()
             locationService.stop()
             realtimeClient.disconnect()
             _state.value = AppSessionState(

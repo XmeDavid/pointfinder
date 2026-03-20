@@ -27,6 +27,11 @@ final class NFCWriterService: NSObject {
         payloadToWrite = NFCNDEFPayload.wellKnownTypeURIPayload(url: url)!
 
         return try await withCheckedThrowingContinuation { continuation in
+            // If a write is already in progress, cancel it before starting a new one.
+            if let existing = self.continuation {
+                existing.resume(throwing: NFCError.cancelled)
+                self.continuation = nil
+            }
             self.continuation = continuation
             self.errorMessage = nil
             self.successMessage = nil

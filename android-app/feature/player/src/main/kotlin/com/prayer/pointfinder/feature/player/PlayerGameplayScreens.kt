@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.PlayCircleFilled
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -200,6 +201,7 @@ fun SolveScreen(
     onSubmit: () -> Unit,
     onBack: () -> Unit,
     isOnline: Boolean,
+    isSubmitting: Boolean,
     errorMessage: String?,
     modifier: Modifier = Modifier,
 ) {
@@ -316,14 +318,22 @@ fun SolveScreen(
         Spacer(Modifier.height(12.dp))
         Button(
             onClick = onSubmit,
-            enabled = !isPhotoMode || mediaItems.isNotEmpty(),
+            enabled = !isSubmitting && (!isPhotoMode || mediaItems.isNotEmpty()),
             modifier = Modifier.testTag("player-submit-btn"),
         ) {
-            Text(
-                stringResource(
-                    if (presenceRequired) R.string.action_confirm_at_base else R.string.action_submit,
-                ),
-            )
+            if (isSubmitting) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                )
+            } else {
+                Text(
+                    stringResource(
+                        if (presenceRequired) R.string.action_confirm_at_base else R.string.action_submit,
+                    ),
+                )
+            }
         }
     }
 }

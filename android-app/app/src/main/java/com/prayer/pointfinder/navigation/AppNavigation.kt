@@ -703,6 +703,7 @@ private fun PlayerRootScreen(
                         selectedMediaItems = selectedMediaItems.toMutableList().apply { removeAt(index) }
                     },
                     onBack = { solving = null },
+                    isSubmitting = state.isSubmitting,
                     onSubmit = {
                         if (state.presenceRequired) {
                             // Show NFC scan dialog; on scan, verify base match then submit

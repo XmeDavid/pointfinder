@@ -193,6 +193,19 @@ struct SettingsView: View {
             } message: {
                 Text(locale.t("settings.deleteAccountMessage"))
             }
+            .alert(locale.t("settings.leaveGameUnsyncedTitle"), isPresented: Binding(
+                get: { appState.showLogoutUnsyncedAlert },
+                set: { if !$0 { appState.showLogoutUnsyncedAlert = false } }
+            )) {
+                Button(locale.t("settings.leaveGame"), role: .destructive) {
+                    appState.confirmLogout()
+                }
+                Button(locale.t("common.cancel"), role: .cancel) {
+                    appState.showLogoutUnsyncedAlert = false
+                }
+            } message: {
+                Text(locale.t("settings.leaveGameUnsyncedMessage", appState.pendingLogoutCount))
+            }
         }
     }
 }

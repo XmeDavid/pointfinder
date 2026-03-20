@@ -52,6 +52,7 @@ data class PlayerState(
     val lastScannedBaseId: String? = null,
     val scanError: String? = null,
     val solveError: String? = null,
+    val isSubmitting: Boolean = false,
     val latestSubmission: SubmissionResponse? = null,
     val authExpired: Boolean = false,
     val realtimeConnected: Boolean = false,
@@ -290,10 +291,12 @@ class PlayerViewModel @Inject constructor(
         online: Boolean,
     ) {
         viewModelScope.launch {
+            _state.value = _state.value.copy(isSubmitting = true, solveError = null)
             runCatching {
                 playerRepository.submitText(auth, baseId, challengeId, "", online)
             }.onSuccess { result ->
                 _state.value = _state.value.copy(
+                    isSubmitting = false,
                     latestSubmission = result.response,
                     solveError = null,
                     presenceVerified = false,
@@ -309,6 +312,7 @@ class PlayerViewModel @Inject constructor(
             }.onFailure { err ->
                 val authExpired = ApiErrorParser.isAuthExpired(err)
                 _state.value = _state.value.copy(
+                    isSubmitting = false,
                     solveError = if (authExpired) null else friendlyError(err),
                     authExpired = _state.value.authExpired || authExpired,
                 )
@@ -330,10 +334,12 @@ class PlayerViewModel @Inject constructor(
             return
         }
         viewModelScope.launch {
+            _state.value = _state.value.copy(isSubmitting = true, solveError = null)
             runCatching {
                 playerRepository.submitText(auth, baseId, challengeId, answer, online)
             }.onSuccess { result ->
                 _state.value = _state.value.copy(
+                    isSubmitting = false,
                     latestSubmission = result.response,
                     solveError = null,
                     answerText = "",
@@ -353,6 +359,7 @@ class PlayerViewModel @Inject constructor(
             }.onFailure { err ->
                 val authExpired = ApiErrorParser.isAuthExpired(err)
                 _state.value = _state.value.copy(
+                    isSubmitting = false,
                     solveError = if (authExpired) null else friendlyError(err),
                     authExpired = _state.value.authExpired || authExpired,
                 )
@@ -451,6 +458,7 @@ class PlayerViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
+            _state.value = _state.value.copy(isSubmitting = true, solveError = null)
             runCatching {
                 playerRepository.submitMultiMedia(
                     auth = auth,
@@ -461,6 +469,7 @@ class PlayerViewModel @Inject constructor(
                 )
             }.onSuccess { result ->
                 _state.value = _state.value.copy(
+                    isSubmitting = false,
                     latestSubmission = result.response,
                     solveError = null,
                     presenceVerified = false,
@@ -475,6 +484,7 @@ class PlayerViewModel @Inject constructor(
             }.onFailure { err ->
                 val authExpired = ApiErrorParser.isAuthExpired(err)
                 _state.value = _state.value.copy(
+                    isSubmitting = false,
                     solveError = if (authExpired) null else friendlyError(err),
                     authExpired = _state.value.authExpired || authExpired,
                 )

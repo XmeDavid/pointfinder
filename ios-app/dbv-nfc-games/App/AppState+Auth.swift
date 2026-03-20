@@ -87,7 +87,44 @@ extension AppState {
 
     // MARK: - Logout
 
+    /// Initiates a voluntary logout. If there are unsynced offline actions the user is
+    /// prompted to confirm; otherwise the session is torn down immediately.
     func logout() {
+        Task { [weak self] in
+            guard let self else { return }
+            let pending = await OfflineQueue.shared.pendingCount
+            await MainActor.run { [weak self] in
+                guard let self else { return }
+                if pending > 0 {
+                    self.pendingLogoutCount = pending
+                    self.showLogoutUnsyncedAlert = true
+                } else {
+                    self.performLogout(clearOfflineQueue: true)
+                }
+            }
+        }
+    }
+
+    /// Called when the user confirms they want to discard unsynced actions and log out.
+    func confirmLogout() {
+        performLogout(clearOfflineQueue: true)
+    }
+
+    /// Called by the API client on auth expiry (forced logout). Preserves the offline
+    /// queue so the user doesn't silently lose unsynced data.
+    func forceLogout() {
+        Task {
+            let pending = await OfflineQueue.shared.pendingCount
+            if pending > 0 {
+                logger.warning("Force-logout with \(pending) unsynced offline action(s) — offline queue preserved on disk")
+            }
+        }
+        performLogout(clearOfflineQueue: false)
+    }
+
+    /// Tears down the current session. Pass `clearOfflineQueue: true` only when the
+    /// user has explicitly confirmed they want to discard any pending actions.
+    private func performLogout(clearOfflineQueue: Bool) {
         locationService.stopTracking()
         PushNotificationService.shared.reset()
         realtimeClient.disconnect()
@@ -118,7 +155,9 @@ extension AppState {
             guard let self else { return }
             await self.apiClient.clearAuth()
             await GameDataCache.shared.clearAll()
-            await OfflineQueue.shared.clearAll()
+            if clearOfflineQueue {
+                await OfflineQueue.shared.clearAll()
+            }
         }
     }
 

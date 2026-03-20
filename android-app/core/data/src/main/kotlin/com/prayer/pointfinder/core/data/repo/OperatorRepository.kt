@@ -340,6 +340,13 @@ class OperatorRepository @Inject constructor(
     suspend fun getActivity(gameId: String): List<ActivityEvent> =
         apiCall { api.getActivity(gameId) }
 
+    fun clearCache() {
+        basesCache.clear()
+        challengesCache.clear()
+        teamsCache.clear()
+        assignmentsCache.clear()
+    }
+
     // === Export/Import ===
 
     suspend fun exportGame(gameId: String): GameExportDto =

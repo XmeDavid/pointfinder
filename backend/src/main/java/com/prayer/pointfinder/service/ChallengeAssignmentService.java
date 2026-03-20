@@ -3,6 +3,7 @@ package com.prayer.pointfinder.service;
 import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
  * Extracted from GameService to reduce complexity.
  */
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class ChallengeAssignmentService {
 
@@ -100,6 +102,10 @@ public class ChallengeAssignmentService {
                                     .game(game).base(base).challenge(selected).team(team).build());
                             teamAssignedChallenges.get(team.getId()).add(selected.getId());
                         }
+                    } else {
+                        log.warn("Shared challenge pool exhausted at base {} in game {}. " +
+                                        "This should have been caught by go-live validation.",
+                                base.getId(), gameId);
                     }
                 } else {
                     for (Team team : teams) {
@@ -113,6 +119,10 @@ public class ChallengeAssignmentService {
                             assignmentRepository.save(Assignment.builder()
                                     .game(game).base(base).challenge(selected).team(team).build());
                             usedByTeam.add(selected.getId());
+                        } else {
+                            log.warn("Challenge pool exhausted for team {} at base {} in game {}. " +
+                                            "This should have been caught by go-live validation.",
+                                    team.getId(), base.getId(), gameId);
                         }
                     }
                 }

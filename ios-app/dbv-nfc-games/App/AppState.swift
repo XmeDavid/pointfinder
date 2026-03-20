@@ -46,6 +46,13 @@ final class AppState {
     var errorMessage: String?
     var showError = false
 
+    // MARK: - Logout Confirmation (unsynced data guard)
+
+    /// Number of pending offline actions at the time the user triggered logout.
+    var pendingLogoutCount = 0
+    /// Set to true when logout is requested but there are unsynced offline actions.
+    var showLogoutUnsyncedAlert = false
+
     // MARK: - Network Status
 
     let networkMonitor = NetworkMonitor.shared
@@ -76,7 +83,7 @@ final class AppState {
             guard let self else { return }
             await self.apiClient.setAuthFailureHandler { [weak self] in
                 await MainActor.run { [weak self] in
-                    self?.logout()
+                    self?.forceLogout()
                 }
             }
         }
