@@ -24,8 +24,6 @@ GAME_IMPORT_BTN: "game-import-btn"
 # Bases
 CREATE_BASE_BTN: "create-base-btn"
 BASE_NAME_INPUT: "base-name-input"
-BASE_LAT_INPUT: "base-lat-input"
-BASE_LNG_INPUT: "base-lng-input"
 BASE_SAVE_BTN: "base-save-btn"
 BASE_DELETE_BTN: "base-delete-btn"
 BASE_EDIT_BTN: "base-edit-btn"
