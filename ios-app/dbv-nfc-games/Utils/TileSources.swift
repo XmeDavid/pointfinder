@@ -16,19 +16,22 @@ enum TileSources {
         "positron": "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
     ]
 
+    // Safe compile-time constant — guaranteed valid URL literal
+    private static let defaultStyleURL = URL(string: "https://tile.openstreetmap.org/{z}/{x}/{y}.png")!
+
     static let darkStyleURL = URL(string: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json")!
 
     static func styleURL(for key: String?) -> URL {
-        let urlString = styles[key ?? "osm-classic"] ?? styles["osm-classic"]!
-        return URL(string: urlString)!
+        let urlString = styles[key ?? "osm-classic"] ?? styles["osm-classic", default: ""]
+        return URL(string: urlString) ?? Self.defaultStyleURL
     }
 
     static func resolvedStyleURL(for key: String?, isDark: Bool) -> URL {
         let resolvedKey = key ?? "osm-classic"
         if isDark, let darkURLString = darkStyles[resolvedKey] {
-            return URL(string: darkURLString)!
+            return URL(string: darkURLString) ?? Self.defaultStyleURL
         }
-        let urlString = styles[resolvedKey] ?? styles["osm-classic"]!
-        return URL(string: urlString)!
+        let urlString = styles[resolvedKey] ?? styles["osm-classic", default: ""]
+        return URL(string: urlString) ?? Self.defaultStyleURL
     }
 }
