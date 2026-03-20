@@ -128,7 +128,7 @@ public class NotificationService {
                 .message(n.getMessage())
                 .targetTeamId(n.getTargetTeam() != null ? n.getTargetTeam().getId() : null)
                 .sentAt(n.getSentAt())
-                .sentBy(n.getSentBy().getId())
+                .sentBy(n.getSentBy() != null ? n.getSentBy().getId() : null)
                 .build();
     }
 }

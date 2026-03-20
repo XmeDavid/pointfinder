@@ -32,7 +32,7 @@ public class GameNotification {
     private Instant sentAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sent_by", nullable = false)
+    @JoinColumn(name = "sent_by")
     private User sentBy;
 
     @PrePersist
