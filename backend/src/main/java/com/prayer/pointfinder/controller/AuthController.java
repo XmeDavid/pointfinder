@@ -2,6 +2,7 @@ package com.prayer.pointfinder.controller;
 
 import com.prayer.pointfinder.dto.request.*;
 import com.prayer.pointfinder.dto.response.AuthResponse;
+import com.prayer.pointfinder.dto.response.InviteTokenResponse;
 import com.prayer.pointfinder.entity.OperatorInvite;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
@@ -30,13 +31,13 @@ public class AuthController {
     }
 
     @GetMapping("/invite/{token}")
-    public ResponseEntity<Map<String, String>> getInviteByToken(@PathVariable String token) {
+    public ResponseEntity<InviteTokenResponse> getInviteByToken(@PathVariable String token) {
         OperatorInvite invite = inviteRepository.findByToken(token)
                 .orElseThrow(() -> new ResourceNotFoundException("Invalid invite token"));
         if (invite.getStatus() != InviteStatus.pending) {
             throw new BadRequestException("Invite has already been used or expired");
         }
-        return ResponseEntity.ok(Map.of("email", invite.getEmail()));
+        return ResponseEntity.ok(new InviteTokenResponse(invite.getEmail()));
     }
 
     @PostMapping("/register/{token}")
