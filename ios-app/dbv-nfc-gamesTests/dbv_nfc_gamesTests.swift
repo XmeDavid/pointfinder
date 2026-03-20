@@ -52,7 +52,7 @@ struct PointFinderTests {
             TeamVariable(
                 key: "greeting",
                 teamValues: [
-                    team1.id.uuidString: "hello",
+                    team1.id.uuidString.lowercased(): "hello",
                     "archived-team": "legacy"
                 ]
             )
@@ -61,8 +61,8 @@ struct PointFinderTests {
         let normalized = normalizedTeamVariables(variables, teams: [team1, team2])
 
         #expect(normalized.count == 1)
-        #expect(normalized[0].teamValues[team1.id.uuidString] == "hello")
-        #expect(normalized[0].teamValues[team2.id.uuidString] == "")
+        #expect(normalized[0].teamValues[team1.id.uuidString.lowercased()] == "hello")
+        #expect(normalized[0].teamValues[team2.id.uuidString.lowercased()] == "")
         #expect(normalized[0].teamValues["archived-team"] == nil)
     }
 
