@@ -44,11 +44,16 @@ public class JwtTokenProvider {
         this.key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
+    private static final String ISSUER = "pointfinder";
+    private static final String AUDIENCE = "pointfinder-api";
+
     public String generateAccessToken(UUID userId, String email, String role) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + accessTokenExpirationMs);
 
         return Jwts.builder()
+                .issuer(ISSUER)
+                .audience().add(AUDIENCE).and()
                 .subject(userId.toString())
                 .claim("email", email)
                 .claim("role", role)
@@ -64,6 +69,8 @@ public class JwtTokenProvider {
         Date expiry = new Date(now.getTime() + refreshTokenExpirationMs); // longer-lived for players
 
         return Jwts.builder()
+                .issuer(ISSUER)
+                .audience().add(AUDIENCE).and()
                 .subject(playerId.toString())
                 .claim("teamId", teamId.toString())
                 .claim("gameId", gameId.toString())
@@ -100,6 +107,8 @@ public class JwtTokenProvider {
     public Claims getClaims(String token) {
         return Jwts.parser()
                 .verifyWith(key)
+                .requireIssuer(ISSUER)
+                .requireAudience(AUDIENCE)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
@@ -107,7 +116,12 @@ public class JwtTokenProvider {
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
+            Jwts.parser()
+                    .verifyWith(key)
+                    .requireIssuer(ISSUER)
+                    .requireAudience(AUDIENCE)
+                    .build()
+                    .parseSignedClaims(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             return false;

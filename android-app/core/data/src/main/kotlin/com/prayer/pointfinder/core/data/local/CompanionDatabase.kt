@@ -178,7 +178,7 @@ interface ChallengeDao {
         CachedChallengeEntity::class,
     ],
     version = 5,
-    exportSchema = false,
+    exportSchema = true,
 )
 abstract class CompanionDatabase : RoomDatabase() {
     abstract fun pendingActionDao(): PendingActionDao

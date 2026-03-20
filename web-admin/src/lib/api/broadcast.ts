@@ -2,6 +2,9 @@ import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL || "/api";
 
+// Intentionally uses a separate axios instance (not the shared apiClient) because
+// broadcast endpoints are public and unauthenticated — they must not go through
+// the auth interceptors that attach Bearer tokens or trigger token refresh.
 const broadcastClient = axios.create({
   baseURL: API_URL,
   headers: { "Content-Type": "application/json" },

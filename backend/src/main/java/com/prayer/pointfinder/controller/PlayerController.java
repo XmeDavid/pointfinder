@@ -28,6 +28,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
+@RequestMapping("/api/player")
 @RequiredArgsConstructor
 public class PlayerController {
 
@@ -36,7 +37,7 @@ public class PlayerController {
     private final FileStorageService fileStorageService;
     private final Validator validator;
 
-    // Public endpoint - no auth required
+    // Public endpoint - no auth required (absolute path overrides class-level prefix)
     @PostMapping("/api/auth/player/join")
     public ResponseEntity<PlayerAuthResponse> joinTeam(@Valid @RequestBody PlayerJoinRequest request) {
         return ResponseEntity.ok(playerService.joinTeam(request));
@@ -44,32 +45,32 @@ public class PlayerController {
 
     // Player-authenticated endpoints below
 
-    @PostMapping("/api/player/games/{gameId}/bases/{baseId}/check-in")
+    @PostMapping("/games/{gameId}/bases/{baseId}/check-in")
     public ResponseEntity<CheckInResponse> checkIn(@PathVariable UUID gameId,
                                                     @PathVariable UUID baseId) {
         Player player = SecurityUtils.getCurrentPlayer();
         return ResponseEntity.ok(playerService.checkIn(gameId, baseId, player));
     }
 
-    @GetMapping("/api/player/games/{gameId}/progress")
+    @GetMapping("/games/{gameId}/progress")
     public ResponseEntity<List<BaseProgressResponse>> getProgress(@PathVariable UUID gameId) {
         Player player = SecurityUtils.getCurrentPlayer();
         return ResponseEntity.ok(playerService.getProgress(gameId, player));
     }
 
-    @GetMapping("/api/player/games/{gameId}/bases")
+    @GetMapping("/games/{gameId}/bases")
     public ResponseEntity<List<BaseResponse>> getBases(@PathVariable UUID gameId) {
         Player player = SecurityUtils.getCurrentPlayer();
         return ResponseEntity.ok(playerService.getBases(gameId, player));
     }
 
-    @GetMapping("/api/player/games/{gameId}/data")
+    @GetMapping("/games/{gameId}/data")
     public ResponseEntity<GameDataResponse> getGameData(@PathVariable UUID gameId) {
         Player player = SecurityUtils.getCurrentPlayer();
         return ResponseEntity.ok(playerService.getGameData(gameId, player));
     }
 
-    @PostMapping("/api/player/games/{gameId}/submissions")
+    @PostMapping("/games/{gameId}/submissions")
     public ResponseEntity<SubmissionResponse> submitAnswer(@PathVariable UUID gameId,
                                                             @Valid @RequestBody PlayerSubmissionRequest request) {
         Player player = SecurityUtils.getCurrentPlayer();
@@ -77,7 +78,7 @@ public class PlayerController {
                 .body(playerService.submitAnswer(gameId, request, player));
     }
 
-    @PostMapping(value = "/api/player/games/{gameId}/submissions/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/games/{gameId}/submissions/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<SubmissionResponse> submitAnswerWithFile(
             @PathVariable UUID gameId,
             @RequestParam("file") MultipartFile file,
@@ -111,7 +112,7 @@ public class PlayerController {
                 .body(playerService.submitAnswer(gameId, request, player));
     }
 
-    @PostMapping("/api/player/games/{gameId}/uploads/sessions")
+    @PostMapping("/games/{gameId}/uploads/sessions")
     public ResponseEntity<UploadSessionResponse> createUploadSession(
             @PathVariable UUID gameId,
             @Valid @RequestBody UploadSessionInitRequest request
@@ -121,7 +122,7 @@ public class PlayerController {
                 .body(chunkedUploadService.createSession(gameId, player, request));
     }
 
-    @PutMapping(value = "/api/player/games/{gameId}/uploads/sessions/{sessionId}/chunks/{chunkIndex}",
+    @PutMapping(value = "/games/{gameId}/uploads/sessions/{sessionId}/chunks/{chunkIndex}",
             consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<UploadSessionResponse> uploadSessionChunk(
             @PathVariable UUID gameId,
@@ -135,7 +136,7 @@ public class PlayerController {
         );
     }
 
-    @GetMapping("/api/player/games/{gameId}/uploads/sessions/{sessionId}")
+    @GetMapping("/games/{gameId}/uploads/sessions/{sessionId}")
     public ResponseEntity<UploadSessionResponse> getUploadSession(
             @PathVariable UUID gameId,
             @PathVariable UUID sessionId
@@ -144,7 +145,7 @@ public class PlayerController {
         return ResponseEntity.ok(chunkedUploadService.getSession(gameId, sessionId, player));
     }
 
-    @PostMapping("/api/player/games/{gameId}/uploads/sessions/{sessionId}/complete")
+    @PostMapping("/games/{gameId}/uploads/sessions/{sessionId}/complete")
     public ResponseEntity<UploadSessionResponse> completeUploadSession(
             @PathVariable UUID gameId,
             @PathVariable UUID sessionId
@@ -153,7 +154,7 @@ public class PlayerController {
         return ResponseEntity.ok(chunkedUploadService.completeSession(gameId, sessionId, player));
     }
 
-    @DeleteMapping("/api/player/games/{gameId}/uploads/sessions/{sessionId}")
+    @DeleteMapping("/games/{gameId}/uploads/sessions/{sessionId}")
     public ResponseEntity<Void> cancelUploadSession(
             @PathVariable UUID gameId,
             @PathVariable UUID sessionId
@@ -163,7 +164,7 @@ public class PlayerController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/api/player/games/{gameId}/location")
+    @PostMapping("/games/{gameId}/location")
     public ResponseEntity<Void> updateLocation(@PathVariable UUID gameId,
                                                 @Valid @RequestBody UpdateLocationRequest request) {
         Player player = SecurityUtils.getCurrentPlayer();
@@ -171,7 +172,7 @@ public class PlayerController {
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("/api/player/push-token")
+    @PutMapping("/push-token")
     public ResponseEntity<Void> updatePushToken(@Valid @RequestBody UpdatePushTokenRequest request) {
         Player player = SecurityUtils.getCurrentPlayer();
         playerService.updatePushToken(player, request.getPushToken(), request.resolvePlatform());
@@ -183,26 +184,26 @@ public class PlayerController {
      * Deletes the player record, their push token, and any associated data.
      * Team-level data (submissions, check-ins) is preserved as it belongs to the team.
      */
-    @DeleteMapping("/api/player/me")
+    @DeleteMapping("/me")
     public ResponseEntity<Void> deleteMyData() {
         Player player = SecurityUtils.getCurrentPlayer();
         playerService.deletePlayerData(player);
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/api/player/notifications")
+    @GetMapping("/notifications")
     public ResponseEntity<List<NotificationResponse>> getPlayerNotifications() {
         Player player = SecurityUtils.getCurrentPlayer();
         return ResponseEntity.ok(playerService.getNotifications(player));
     }
 
-    @GetMapping("/api/player/notifications/unseen-count")
+    @GetMapping("/notifications/unseen-count")
     public ResponseEntity<UnseenCountResponse> getUnseenNotificationCount() {
         Player player = SecurityUtils.getCurrentPlayer();
         return ResponseEntity.ok(playerService.getUnseenNotificationCount(player));
     }
 
-    @PostMapping("/api/player/notifications/mark-seen")
+    @PostMapping("/notifications/mark-seen")
     public ResponseEntity<Void> markNotificationsSeen() {
         Player player = SecurityUtils.getCurrentPlayer();
         playerService.markNotificationsSeen(player);
