@@ -66,7 +66,6 @@ final class AppState {
         subsystem: Bundle.main.bundleIdentifier ?? "com.prayer.pointfinder",
         category: "AppState"
     )
-    var pendingCountTask: Task<Void, Never>?
     var progressLoadTask: Task<Void, Never>?
     var realtimeConnected = false
 
@@ -150,14 +149,15 @@ final class AppState {
             await self?.loadProgress()
         }
 
-        // Start periodic pending count updates
-        pendingCountTask?.cancel()
-        pendingCountTask = Task { [weak self] in
-            while !Task.isCancelled {
-                guard let self else { return }
-                self.pendingActionsCount = await OfflineQueue.shared.pendingCount
-                try? await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
+        // Reactively update pending count when OfflineQueue changes
+        Task {
+            await OfflineQueue.shared.setOnCountChanged { [weak self] count in
+                Task { @MainActor [weak self] in
+                    self?.pendingActionsCount = count
+                }
             }
+            // Set initial value
+            self.pendingActionsCount = await OfflineQueue.shared.pendingCount
         }
     }
 

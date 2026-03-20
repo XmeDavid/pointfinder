@@ -16,6 +16,19 @@ actor OfflineQueue {
         pendingActions.filter { !$0.permanentlyFailed }.count
     }
 
+    /// Callback invoked whenever the queue changes (enqueue/dequeue/clear).
+    /// Set by AppState to reactively update `pendingActionsCount`.
+    private var onCountChanged: ((Int) -> Void)?
+
+    /// Set the callback for queue count changes (actor-safe setter).
+    func setOnCountChanged(_ callback: @escaping (Int) -> Void) {
+        onCountChanged = callback
+    }
+
+    private func notifyCountChanged() {
+        onCountChanged?(pendingCount)
+    }
+
     private init() {
         let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         fileURL = documentsPath.appendingPathComponent("pending_actions.json")
@@ -51,6 +64,7 @@ actor OfflineQueue {
     func enqueue(_ action: PendingAction) {
         pendingActions.append(action)
         saveToDisk()
+        notifyCountChanged()
     }
 
     /// Remove an action from the queue (after successful sync)
@@ -60,6 +74,7 @@ actor OfflineQueue {
         }
         pendingActions.removeAll { $0.id == id }
         saveToDisk()
+        notifyCountChanged()
     }
 
     /// Get all pending actions (FIFO order)
@@ -116,6 +131,7 @@ actor OfflineQueue {
         }
         pendingActions.removeAll()
         saveToDisk()
+        notifyCountChanged()
     }
 
     /// Clear pending actions for a specific game
@@ -125,6 +141,7 @@ actor OfflineQueue {
         }
         pendingActions.removeAll { $0.gameId == gameId }
         saveToDisk()
+        notifyCountChanged()
     }
 
     // MARK: - Convenience Methods
