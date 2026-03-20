@@ -678,7 +678,9 @@ class OperatorViewModel @Inject constructor(
         viewModelScope.launch {
             runCatching { operatorRepository.getTeamPlayers(gameId, teamId) }
                 .onSuccess(onSuccess)
-                .onFailure { /* ignore */ }
+                .onFailure { err ->
+                    _state.value = _state.value.copy(errorMessage = friendlyError(err))
+                }
         }
     }
 
@@ -709,7 +711,9 @@ class OperatorViewModel @Inject constructor(
                 operatorRepository.saveGameVariables(gameId, TeamVariablesRequest(variables = currentVars))
             }.onSuccess { response ->
                 _state.value = _state.value.copy(variables = response.variables)
-            }.onFailure { /* ignore */ }
+            }.onFailure { err ->
+                _state.value = _state.value.copy(errorMessage = friendlyError(err))
+            }
         }
     }
 
@@ -919,7 +923,7 @@ class OperatorViewModel @Inject constructor(
     private fun friendlyError(err: Throwable): String =
         if (ApiErrorParser.isNetworkError(err))
             context.getString(StringR.string.error_network_unavailable)
-        else friendlyError(err)
+        else ApiErrorParser.extractMessage(err)
 
     fun clearError() {
         _state.value = _state.value.copy(errorMessage = null)
