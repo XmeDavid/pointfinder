@@ -5,20 +5,15 @@
     <string name="action_join_game">Entrar num jogo</string>
     <string name="action_operator_login">Login de operador</string>
     <string name="action_continue">Continuar</string>
-    <string name="action_join">Entrar</string>
     <string name="action_sign_in">Iniciar sessão</string>
     <string name="action_logout">Sair</string>
     <string name="action_leave_game">Sair do jogo</string>
     <string name="action_scan_qr">Ler QR</string>
-    <string name="action_scan_nfc">Ler NFC</string>
     <string name="action_check_in_at_base">Check-in na base</string>
     <string name="action_submit">Enviar</string>
     <string name="action_confirm_at_base">Confirmar na Base para Submeter</string>
-    <string name="action_solve">Resolver</string>
     <string name="action_solve_challenge">Resolver desafio</string>
     <string name="action_write_nfc">Gravar tag NFC</string>
-    <string name="action_link_backend">Associar no backend</string>
-    <string name="action_verify_with_nfc">Verificar com NFC</string>
     <string name="action_choose_media">Escolher média</string>
     <string name="action_take_photo">Tirar foto</string>
     <string name="action_refresh">Atualizar</string>
@@ -38,7 +33,6 @@
 
     <!-- Labels -->
     <string name="label_welcome">PointFinder</string>
-    <string name="label_subtitle">PointFinder</string>
     <string name="label_join_with_qr_or_code">Entrar com QR ou código</string>
     <string name="label_join_code">Código de entrada</string>
     <string name="label_display_name">Nome de exibição</string>
@@ -67,18 +61,14 @@
     <string name="action_create">Criar</string>
     <string name="label_creating">A criar…</string>
     <string name="label_offline">Modo offline</string>
-    <string name="label_operator">Operador</string>
     <string name="label_my_games">Os Meus Jogos</string>
-    <string name="label_player">Jogador</string>
     <string name="label_language">Idioma</string>
     <string name="label_theme">Tema</string>
     <string name="label_theme_system">Sistema</string>
     <string name="label_theme_light">Claro</string>
     <string name="label_theme_dark">Escuro</string>
-    <string name="label_legend">Legenda</string>
     <string name="label_game">Jogo</string>
     <string name="label_team">Equipe</string>
-    <string name="label_profile">Perfil</string>
     <string name="label_privacy">Privacidade</string>
     <string name="label_name">Nome</string>
     <string name="label_progress">Progresso</string>
@@ -103,22 +93,13 @@
     <string name="label_challenge_locked_hint">Visita esta base para desbloquear o desafio</string>
     <string name="label_awaiting_review">Aguardando revisão</string>
     <string name="label_solve_title">Resolver desafio</string>
-    <string name="label_presence_required">Verificação de presença obrigatória.</string>
-    <string name="label_presence_verified">Presença verificada</string>
     <string name="label_photo_mode">Modo de resposta por média</string>
     <string name="label_media_selected">%1$d de 5 selecionados</string>
     <string name="game_status_setup">Preparação</string>
     <string name="game_status_live">Em Jogo</string>
     <string name="game_status_ended">Terminado</string>
-    <string name="label_submission_status">Status da submissão: %1$s</string>
-    <string name="label_teams_count">Equipes: %1$d</string>
-    <string name="label_team_status_row">Equipe %1$s - %2$s</string>
-    <string name="label_base_marker">Base</string>
-    <string name="label_team_marker">Equipe %1$s</string>
     <string name="label_nfc_linked">NFC associado</string>
     <string name="label_nfc_not_linked">NFC não associado</string>
-    <string name="label_presence_required_value">Presença obrigatória: %1$s</string>
-    <string name="label_assignments_value">Atribuições: %1$s</string>
     <string name="label_no_games">Sem jogos</string>
     <string name="label_no_submissions">Sem submissões ainda</string>
     <string name="label_no_pending_submissions">Sem submissões pendentes</string>
@@ -175,11 +156,9 @@
     <!-- Hints -->
     <string name="hint_checkin_instructions">Aproxime seu telefone do marcador na base para fazer check-in</string>
     <string name="hint_offline_sync">Offline: os dados serão sincronizados quando voltar conexão.</string>
-    <string name="hint_photo_required_online">Envios de foto exigem internet.</string>
     <string name="hint_media_offline_queue">Submissões de media ficam em fila offline e enviam quando houver internet.</string>
     <string name="hint_media_reselect_required">O ficheiro original já não está disponível. Seleciona-o novamente.</string>
     <string name="hint_media_upload_disabled">Envio de media está temporariamente indisponível. Tenta novamente mais tarde.</string>
-    <string name="hint_presence_required">Presença NFC obrigatória antes do envio.</string>
     <string name="hint_nfc_hold_near">Aproxime uma tag NFC do dispositivo para gravar a base.</string>
 
     <!-- Status -->
@@ -285,7 +264,7 @@
     <string name="label_challenge_points">Pontos</string>
     <string name="label_content">Conteúdo</string>
     <string name="label_description">Descrição</string>
-    <string name="label_completion_message">Mensagem de Conclusão</string>
+    <string name="label_completion_message">Informação Desbloqueada</string>
     <string name="action_edit">Editar</string>
     <string name="label_answer_type_label">Tipo de Resposta</string>
     <string name="label_text_input">Texto</string>
@@ -367,7 +346,6 @@
     <string name="label_sent_to">Enviado para %1$s</string>
     <string name="label_invite_operator">Convidar Operador</string>
     <string name="label_operator_email">Endereço de e-mail</string>
-    <string name="label_pending_invites">Convites Pendentes</string>
     <string name="label_invites">Convites</string>
     <string name="label_no_operators">Nenhum operador ainda</string>
     <string name="label_no_invites">Nenhum convite pendente</string>
@@ -375,7 +353,9 @@
     <string name="action_remove_operator">Remover operador</string>
     <string name="confirm_remove_operator">Remover Operador</string>
     <string name="confirm_remove_operator_message">Remover %1$s como operador?</string>
-    <string name="label_exporting">A exportar\u2026</string>
+    <string name="action_revoke_invite">Revogar convite</string>
+    <string name="confirm_revoke_invite">Revogar Convite</string>
+    <string name="confirm_revoke_invite_message">Revogar o convite enviado para %1$s?</string>
 
     <!-- Toast / Snackbar -->
     <string name="toast_base_created">Base criada</string>
@@ -383,6 +363,5 @@
     <string name="toast_challenge_created">Desafio criado</string>
     <string name="toast_challenge_saved">Desafio guardado</string>
     <string name="toast_team_saved">Equipa guardada</string>
-    <string name="toast_game_created">Jogo criado</string>
     <string name="toast_game_saved">Jogo guardado</string>
 </resources>

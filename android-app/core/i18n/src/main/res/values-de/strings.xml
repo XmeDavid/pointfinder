@@ -5,20 +5,15 @@
     <string name="action_join_game">Spiel beitreten</string>
     <string name="action_operator_login">Operator-Anmeldung</string>
     <string name="action_continue">Weiter</string>
-    <string name="action_join">Beitreten</string>
     <string name="action_sign_in">Anmelden</string>
     <string name="action_logout">Abmelden</string>
     <string name="action_leave_game">Spiel verlassen</string>
     <string name="action_scan_qr">QR scannen</string>
-    <string name="action_scan_nfc">NFC scannen</string>
-    <string name="action_check_in_at_base">An Basis einchecken</string>
+    <string name="action_check_in_at_base">An Station einchecken</string>
     <string name="action_submit">Senden</string>
-    <string name="action_confirm_at_base">An Basis bestätigen zum Senden</string>
-    <string name="action_solve">Lösen</string>
-    <string name="action_solve_challenge">Aufgabe lösen</string>
+    <string name="action_confirm_at_base">An Station bestätigen zum Senden</string>
+    <string name="action_solve_challenge">Challenge lösen</string>
     <string name="action_write_nfc">NFC-Tag schreiben</string>
-    <string name="action_link_backend">Im Backend verknüpfen</string>
-    <string name="action_verify_with_nfc">Mit NFC verifizieren</string>
     <string name="action_choose_media">Medien wählen</string>
     <string name="action_take_photo">Foto aufnehmen</string>
     <string name="action_refresh">Aktualisieren</string>
@@ -32,13 +27,12 @@
     <string name="action_approve">Freigeben</string>
     <string name="action_reject">Ablehnen</string>
     <string name="nfc_scan_dialog_title">NFC-Tag scannen</string>
-    <string name="nfc_scan_dialog_message">Halte dein Telefon an den NFC-Tag an der Basis</string>
+    <string name="nfc_scan_dialog_message">Halte dein Telefon an den NFC-Tag an der Station</string>
     <string name="nfc_write_dialog_title">NFC-Tag schreiben</string>
     <string name="nfc_write_dialog_message">Halte dein Telefon an den NFC-Tag, den du schreiben möchtest</string>
 
     <!-- Labels -->
     <string name="label_welcome">PointFinder</string>
-    <string name="label_subtitle">PointFinder</string>
     <string name="label_join_with_qr_or_code">Mit QR oder Code beitreten</string>
     <string name="label_join_code">Beitrittscode</string>
     <string name="label_display_name">Anzeigename</string>
@@ -52,7 +46,7 @@
     <string name="label_all">Alle</string>
     <string name="label_settings">Einstellungen</string>
     <string name="label_live_map">Live-Karte</string>
-    <string name="label_bases">Basen</string>
+    <string name="label_bases">Stationen</string>
     <string name="label_setup">Setup</string>
     <string name="label_live">Live</string>
     <string name="label_more">Mehr</string>
@@ -67,18 +61,14 @@
     <string name="action_create">Erstellen</string>
     <string name="label_creating">Wird erstellt…</string>
     <string name="label_offline">Offline-Modus</string>
-    <string name="label_operator">Operator</string>
     <string name="label_my_games">Meine Spiele</string>
-    <string name="label_player">Spieler</string>
     <string name="label_language">Sprache</string>
     <string name="label_theme">Design</string>
     <string name="label_theme_system">System</string>
     <string name="label_theme_light">Hell</string>
     <string name="label_theme_dark">Dunkel</string>
-    <string name="label_legend">Legende</string>
     <string name="label_game">Spiel</string>
     <string name="label_team">Team</string>
-    <string name="label_profile">Profil</string>
     <string name="label_privacy">Datenschutz</string>
     <string name="label_name">Name</string>
     <string name="label_progress">Fortschritt</string>
@@ -91,34 +81,25 @@
     <string name="label_current_game">Aktuelles Spiel</string>
     <string name="label_your_team">Dein Team</string>
     <string name="label_your_profile">Dein Profil</string>
-    <string name="label_total_bases">Gesamtbasen</string>
+    <string name="label_total_bases">Stationen gesamt</string>
     <string name="label_pending_actions">Ausstehende Aktionen</string>
     <string name="label_pending_sync_one">%1$d ausstehende Aktion zum Synchronisieren</string>
     <string name="label_pending_sync_other">%1$d ausstehende Aktionen zum Synchronisieren</string>
-    <string name="label_base_check_in">Basis-Check-in</string>
+    <string name="label_base_check_in">Station-Check-in</string>
     <string name="label_checked_in_at_base">Eingecheckt bei %1$s</string>
-    <string name="label_no_challenge_details">Noch keine Aufgabendetails.</string>
-    <string name="label_no_challenge_assigned">Keine Aufgabe zugewiesen.</string>
+    <string name="label_no_challenge_details">Noch keine Challenge-Details.</string>
+    <string name="label_no_challenge_assigned">Keine Challenge zugewiesen.</string>
     <string name="label_challenge_locked">Challenge gesperrt</string>
     <string name="label_challenge_locked_hint">Besuche diese Station, um die Challenge freizuschalten</string>
     <string name="label_awaiting_review">Warten auf Prüfung</string>
-    <string name="label_solve_title">Aufgabe lösen</string>
-    <string name="label_presence_required">Präsenzprüfung erforderlich.</string>
-    <string name="label_presence_verified">Präsenz bestätigt</string>
+    <string name="label_solve_title">Challenge lösen</string>
     <string name="label_photo_mode">Medien-Antwortmodus</string>
     <string name="label_media_selected">%1$d von 5 ausgewählt</string>
     <string name="game_status_setup">Einrichtung</string>
     <string name="game_status_live">Live</string>
     <string name="game_status_ended">Beendet</string>
-    <string name="label_submission_status">Abgabestatus: %1$s</string>
-    <string name="label_teams_count">Teams: %1$d</string>
-    <string name="label_team_status_row">Team %1$s - %2$s</string>
-    <string name="label_base_marker">Basis</string>
-    <string name="label_team_marker">Team %1$s</string>
     <string name="label_nfc_linked">NFC verknüpft</string>
     <string name="label_nfc_not_linked">NFC nicht verknüpft</string>
-    <string name="label_presence_required_value">Präsenz erforderlich: %1$s</string>
-    <string name="label_assignments_value">Zuweisungen: %1$s</string>
     <string name="label_no_games">Keine Spiele</string>
     <string name="label_no_submissions">Noch keine Einreichungen</string>
     <string name="label_no_pending_submissions">Keine ausstehenden Einreichungen</string>
@@ -139,15 +120,15 @@
     <string name="label_notify_check_ins">Check-ins benachrichtigen</string>
     <string name="common_saving">Wird gespeichert...</string>
     <string name="label_remaining">Verbleibend</string>
-    <string name="label_challenge_assignment">Aufgabenzuweisung</string>
-    <string name="label_fixed_challenge">Feste Aufgabe</string>
+    <string name="label_challenge_assignment">Challenge-Zuweisung</string>
+    <string name="label_fixed_challenge">Feste Challenge</string>
     <string name="label_randomly_assigned">Zufällig Zugewiesen</string>
     <string name="label_random_not_started">Zufällige Zuweisung (noch nicht gestartet)</string>
     <string name="label_answer_type">Antwort: %1$s</string>
     <string name="label_pts">%1$d Punkte</string>
     <string name="label_deleting_account">Konto wird gelöscht...</string>
     <string name="label_assignment_random_not_started">Zufällige Zuweisung nicht gestartet</string>
-    <string name="label_assignment_fixed">Feste Aufgabenzuweisung</string>
+    <string name="label_assignment_fixed">Feste Challenge-Zuweisung</string>
     <string name="label_assignment_per_team">Zuweisungen pro Team (%1$d)</string>
     <string name="label_no_games_description">Du hast noch keine Spiele. Ziehe zum Aktualisieren oder schaue später wieder vorbei.</string>
     <string name="label_game_not_active_title">Spiel ist noch nicht aktiv</string>
@@ -173,14 +154,12 @@
     <string name="dialog_delete_account_confirm">Löschen</string>
 
     <!-- Hints -->
-    <string name="hint_checkin_instructions">Halte dein Telefon an den Marker an der Basis, um einzuchecken</string>
+    <string name="hint_checkin_instructions">Halte dein Telefon an den Marker an der Station, um einzuchecken</string>
     <string name="hint_offline_sync">Offline: Daten werden synchronisiert, sobald wieder Verbindung besteht.</string>
-    <string name="hint_photo_required_online">Fotoeinsendungen benötigen Internet.</string>
     <string name="hint_media_offline_queue">Medien-Einreichungen werden offline vorgemerkt und bei Verbindung hochgeladen.</string>
     <string name="hint_media_reselect_required">Die Originaldatei ist nicht mehr verfügbar. Bitte erneut auswählen.</string>
     <string name="hint_media_upload_disabled">Medien-Uploads sind vorübergehend nicht verfügbar. Bitte später erneut versuchen.</string>
-    <string name="hint_presence_required">NFC-Präsenz vor dem Senden erforderlich.</string>
-    <string name="hint_nfc_hold_near">Halte einen NFC-Tag an das Gerät, um die Basis zu schreiben.</string>
+    <string name="hint_nfc_hold_near">Halte einen NFC-Tag an das Gerät, um die Station zu schreiben.</string>
 
     <!-- Status -->
     <string name="status_not_visited">Nicht besucht</string>
@@ -209,10 +188,10 @@
     <string name="error_generic">Etwas ist schiefgelaufen.</string>
     <string name="error_invalid_nfc">Ungültige NFC-Daten.</string>
     <string name="error_missing_fields">Bitte Pflichtfelder ausfüllen.</string>
-    <string name="error_presence_wrong_base">NFC-Tag passt nicht zu dieser Basis.</string>
+    <string name="error_presence_wrong_base">NFC-Tag passt nicht zu dieser Station.</string>
     <string name="error_camera_denied">Kameraberechtigung verweigert.</string>
     <string name="error_nfc_unavailable">NFC ist auf diesem Gerät nicht verfügbar.</string>
-    <string name="error_scan_nfc_first">Scanne zuerst einen Basis-NFC-Tag.</string>
+    <string name="error_scan_nfc_first">Scanne zuerst einen Station-NFC-Tag.</string>
     <string name="error_invalid_join_code">Bitte gib einen gültigen Beitrittscode ein.</string>
     <string name="error_answer_required">Bitte gib eine Antwort ein.</string>
     <string name="error_photo_required">Mindestens eine Mediendatei ist erforderlich.</string>
@@ -226,30 +205,30 @@
     <string name="label_needs_attention">Handlungsbedarf</string>
     <string name="label_manage">Verwalten</string>
     <string name="label_go_live">Spiel starten</string>
-    <string name="label_no_bases">Keine Basen erstellt</string>
+    <string name="label_no_bases">Keine Stationen erstellt</string>
     <string name="label_no_challenges">Keine Challenges erstellt</string>
     <string name="label_no_teams">Keine Teams erstellt</string>
-    <string name="label_nfc_missing">NFC fehlt (%1$d Basen)</string>
+    <string name="label_nfc_missing">NFC fehlt (%1$d Stationen)</string>
     <string name="label_location_bound_unassigned">Ortsgebundene Challenges nicht zugewiesen (%1$d)</string>
     <string name="label_not_enough_challenges">Nicht genug Challenges</string>
     <string name="warning_team_variables_incomplete">Einige Teams haben unvollständige Variablenwerte</string>
     <string name="label_go_live_confirm_title">Spiel starten?</string>
-    <string name="label_go_live_confirm_message">Teams können beitreten und spielen. Basen und Challenges können weiterhin bearbeitet werden.</string>
+    <string name="label_go_live_confirm_message">Teams können beitreten und spielen. Stationen und Challenges können weiterhin bearbeitet werden.</string>
     <string name="label_challenges">Challenges</string>
     <string name="label_teams">Teams</string>
 
     <!-- Base Management -->
-    <string name="label_new_base">Neue Basis</string>
-    <string name="label_edit_base">Basis bearbeiten</string>
-    <string name="label_base_name">Basisname</string>
+    <string name="label_new_base">Neue Station</string>
+    <string name="label_edit_base">Station bearbeiten</string>
+    <string name="label_base_name">Stationsname</string>
     <string name="label_base_description">Beschreibung</string>
     <string name="label_require_presence">Pr\u00e4senz erforderlich</string>
-    <string name="label_hidden_base">Versteckte Basis</string>
+    <string name="label_hidden_base">Versteckte Station</string>
     <string name="label_none">Keine</string>
     <string name="label_challenges_at_base">Challenges (%1$d)</string>
     <string name="label_add_challenge">Challenge hinzuf\u00fcgen</string>
-    <string name="label_delete_base">Basis l\u00f6schen</string>
-    <string name="label_delete_base_confirm">Diese Basis l\u00f6schen? Dies kann nicht r\u00fcckg\u00e4ngig gemacht werden.</string>
+    <string name="label_delete_base">Station l\u00f6schen</string>
+    <string name="label_delete_base_confirm">Diese Station l\u00f6schen? Dies kann nicht r\u00fcckg\u00e4ngig gemacht werden.</string>
     <string name="label_tap_map_to_set_location">Tippe auf die Karte, um den Standort festzulegen</string>
     <string name="action_save">Speichern</string>
     <string name="label_write_nfc">NFC schreiben</string>
@@ -285,7 +264,7 @@
     <string name="label_challenge_points">Punkte</string>
     <string name="label_content">Inhalt</string>
     <string name="label_description">Beschreibung</string>
-    <string name="label_completion_message">Abschlussnachricht</string>
+    <string name="label_completion_message">Freigeschaltete Information</string>
     <string name="action_edit">Bearbeiten</string>
     <string name="label_answer_type_label">Antworttyp</string>
     <string name="label_text_input">Texteingabe</string>
@@ -295,15 +274,15 @@
     <string name="label_correct_answers">Richtige Antworten</string>
     <string name="label_add_answer">Antwort hinzuf\u00fcgen</string>
     <string name="label_linking">Verkn\u00fcpfung</string>
-    <string name="label_fixed_to_base">Feste Basis</string>
+    <string name="label_fixed_to_base">Feste Station</string>
     <string name="label_location_bound">Ortsgebunden</string>
-    <string name="label_unlocks_base">Schaltet Basis frei</string>
+    <string name="label_unlocks_base">Schaltet Station frei</string>
     <string name="label_delete_challenge">Challenge l\u00f6schen</string>
     <string name="label_delete_challenge_confirm">Diese Challenge l\u00f6schen? Dies kann nicht r\u00fcckg\u00e4ngig gemacht werden.</string>
     <string name="label_new_challenge">Neue Challenge</string>
     <string name="label_edit_challenge">Challenge bearbeiten</string>
     <string name="label_no_content">Noch kein Inhalt</string>
-    <string name="label_no_base">Keine Basis</string>
+    <string name="label_no_base">Keine Station</string>
 
     <!-- Team Management -->
     <string name="label_join_code_section">Beitrittscode</string>
@@ -322,14 +301,14 @@
     <string name="label_copied">Kopiert!</string>
     <string name="label_manage_variables">Variablen verwalten</string>
     <string name="label_game_variables">Spielvariablen</string>
-    <string name="label_challenge_variables">Herausforderungsvariablen</string>
+    <string name="label_challenge_variables">Challenge-Variablen</string>
     <string name="label_no_teams_in_game">Keine Teams in diesem Spiel</string>
     <string name="label_saving">Speichern…</string>
 
     <!-- Map Edit Mode -->
     <string name="label_edit_on">Bearbeiten: AN</string>
     <string name="label_edit_off">Bearbeiten: AUS</string>
-    <string name="label_add_base_here">Basis hier erstellen</string>
+    <string name="label_add_base_here">Station hier erstellen</string>
     <string name="label_center_on_me">Auf mich zentrieren</string>
 
     <!-- Live Tab -->
@@ -367,7 +346,6 @@
     <string name="label_sent_to">Gesendet an %1$s</string>
     <string name="label_invite_operator">Operator einladen</string>
     <string name="label_operator_email">E-Mail-Adresse</string>
-    <string name="label_pending_invites">Ausstehende Einladungen</string>
     <string name="label_invites">Einladungen</string>
     <string name="label_no_operators">Noch keine Operatoren</string>
     <string name="label_no_invites">Keine ausstehenden Einladungen</string>
@@ -378,14 +356,12 @@
     <string name="action_revoke_invite">Einladung widerrufen</string>
     <string name="confirm_revoke_invite">Einladung widerrufen</string>
     <string name="confirm_revoke_invite_message">Die Einladung an %1$s widerrufen?</string>
-    <string name="label_exporting">Exportieren\u2026</string>
 
     <!-- Toast / Snackbar -->
-    <string name="toast_base_created">Basis erstellt</string>
-    <string name="toast_base_saved">Basis gespeichert</string>
+    <string name="toast_base_created">Station erstellt</string>
+    <string name="toast_base_saved">Station gespeichert</string>
     <string name="toast_challenge_created">Challenge erstellt</string>
     <string name="toast_challenge_saved">Challenge gespeichert</string>
     <string name="toast_team_saved">Team gespeichert</string>
-    <string name="toast_game_created">Spiel erstellt</string>
     <string name="toast_game_saved">Spiel gespeichert</string>
 </resources>

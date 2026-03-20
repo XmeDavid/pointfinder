@@ -27,7 +27,6 @@ enum Translations {
     static let en: [String: String] = [
         // Welcome
         "welcome.title": "PointFinder",
-        "welcome.subtitle": "Explore, discover, and complete challenges with your team",
         "welcome.joinGame": "Join a Game",
         "welcome.operatorLogin": "Operator Login",
 
@@ -39,7 +38,6 @@ enum Translations {
         "auth.signIn": "Sign In",
 
         // Join (Player Join)
-        "join.title": "Join Your Team",
         "join.subtitle": "Enter the code your team leader gave you",
         "join.joinCode": "Join Code",
         "join.yourName": "Your Name",
@@ -57,11 +55,12 @@ enum Translations {
         "common.done": "Done",
         "common.all": "All",
         "common.saving": "Saving...",
+        "common.saved": "Saved",
         "common.pts": "pts",
 
         // Tabs
         "tabs.map": "Map",
-        "tabs.checkIn": "Check In",
+        "tabs.checkIn": "Check-in",
         "tabs.settings": "Settings",
 
         // Offline
@@ -99,7 +98,6 @@ enum Translations {
         "base.solveChallenge": "Solve Challenge",
         "base.challengeCompleted": "Challenge completed!",
         "base.awaitingReview": "Awaiting review...",
-        "base.checkInToSee": "Check in at this base to see the challenge",
         "base.challengeLocked": "Challenge locked",
         "base.challengeLockedHint": "Visit this base to unlock the challenge",
         "base.noChallengeAssigned": "No challenge assigned to this base",
@@ -107,16 +105,16 @@ enum Translations {
         "base.checkedInBanner": "Checked In!",
         "base.noChallengeYet": "No challenge assigned to this base yet",
         "base.answerType": "Answer type: %@",
-        "base.completionContent": "Completion Info",
+        "base.completionContent": "Unlocked Information",
 
         // Check In
-        "checkIn.title": "Base Check-In",
+        "checkIn.title": "Base Check-in",
         "checkIn.instructions": "Hold your phone near the marker at a base to check in",
         "checkIn.checkingIn": "Checking In...",
-        "checkIn.checkInAtBase": "Check In at Base",
+        "checkIn.checkInAtBase": "Check-in at Base",
         "checkIn.pendingSyncOne": "%d pending action to sync",
         "checkIn.pendingSyncOther": "%d pending actions to sync",
-        "checkIn.navTitle": "Check In",
+        "checkIn.navTitle": "Check-in",
 
         // Solve
         "solve.submitPhoto": "Submit Your Media",
@@ -151,7 +149,7 @@ enum Translations {
         "result.rejectedMsg": "Your submission was rejected. Check the feedback and try again.",
         "result.submittedMsg": "Your answer has been submitted and is awaiting review by an operator.",
         "result.feedback": "Feedback: %@",
-        "result.completionContent": "Completion Info",
+        "result.completionContent": "Unlocked Information",
         "result.backToMap": "Back to Map",
 
         // Settings
@@ -288,9 +286,6 @@ enum Translations {
         "operator.fileAccessError": "Could not access file",
         "operator.baseName": "Base Name",
         "operator.baseDescription": "Description",
-        "operator.location": "Location",
-        "operator.latitude": "Latitude",
-        "operator.longitude": "Longitude",
         "operator.createBase": "Create Base",
         "operator.editBase": "Edit Base",
         "operator.requirePresence": "Require presence to submit",
@@ -303,20 +298,15 @@ enum Translations {
         "operator.deleteBaseConfirmMessage": "This will permanently delete this base and its assignments.",
         "operator.delete": "Delete",
         "operator.editContent": "Edit Content",
-        "operator.editCompletionContent": "Edit Completion Content",
         "editor.fileTooLarge": "File Too Large",
         "editor.audioTooLargeMessage": "Audio file must be under 5 MB",
-        "editor.insertAudio": "Insert Audio",
         "operator.insertVariable": "Insert Variable",
         "operator.createVariable": "Create Variable",
         "operator.previewAsTeam": "Preview as Team",
         "operator.variableName": "Variable Name",
         "operator.invalidVariableName": "Variable names must start with a letter and use only letters, numbers, or underscores",
         "operator.duplicateVariable": "A variable with that name already exists",
-        "operator.acquiringLocation": "Acquiring GPS location...",
-        "operator.longPressToMovePin": "Long press on map to reposition pin",
         "operator.tapToMovePin": "Tap on the map to reposition the pin",
-        "operator.previewContent": "Preview",
         "operator.showQR": "Show QR Code",
         "operator.qrCode": "QR Code",
         "operator.variables": "Variables",
@@ -330,7 +320,6 @@ enum Translations {
         "operator.deleteTeam": "Delete Team",
         "operator.deleteTeamConfirmTitle": "Delete Team?",
         "operator.deleteTeamConfirmMessage": "This action cannot be undone.",
-        "operator.playersCount": "%d players",
         "operator.pts": "%d pts",
         "operator.leaderboard": "Leaderboard",
         "operator.activity": "Activity",
@@ -339,9 +328,6 @@ enum Translations {
         "operator.noActivity": "No activity yet",
         "operator.noActivityDesc": "Events will appear as teams interact with the game",
         "operator.completedCount": "%d completed",
-        "operator.editMode": "Edit Mode",
-        "operator.centerOnMe": "Center on me",
-        "operator.addBaseHere": "Add base at GPS location",
         "operator.longPressHint": "Long press on map to add a base",
         "operator.noChallenges": "No challenges yet",
         "operator.noChallengesDesc": "Create your first challenge to get started",
@@ -364,7 +350,7 @@ enum Translations {
         "operator.noBase": "No base",
         "operator.noContent": "No content",
         "operator.content": "Content",
-        "operator.completionMessage": "Completion Message",
+        "operator.completionMessage": "Unlocked Information",
         "operator.deleteChallengeConfirmTitle": "Delete Challenge?",
         "operator.deleteChallengeConfirmMessage": "This action cannot be undone.",
         "operator.deleteChallenge": "Delete Challenge",
@@ -399,7 +385,6 @@ enum Translations {
         "nfc.writeSuccess": "Tag written and linked successfully!",
         "nfc.nfcLinked": "NFC Linked",
         "nfc.nfcNotLinked": "NFC Not Linked",
-        "nfc.presenceRequired": "Presence Required",
         "nfc.writing": "Writing...",
         "nfc.writeToTag": "Write to NFC Tag",
         "nfc.fixedChallenge": "Fixed Challenge",
@@ -475,7 +460,6 @@ enum Translations {
     static let pt: [String: String] = [
         // Welcome
         "welcome.title": "PointFinder",
-        "welcome.subtitle": "Explora, descobre e completa desafios com a tua equipa",
         "welcome.joinGame": "Entrar num Jogo",
         "welcome.operatorLogin": "Login Operador",
 
@@ -487,7 +471,6 @@ enum Translations {
         "auth.signIn": "Entrar",
 
         // Join (Player Join)
-        "join.title": "Junta-te à tua Equipa",
         "join.subtitle": "Introduz o código que o teu líder de equipa te deu",
         "join.joinCode": "Código de Entrada",
         "join.yourName": "O teu Nome",
@@ -504,12 +487,13 @@ enum Translations {
         "common.unknownError": "Ocorreu um erro desconhecido",
         "common.done": "Feito",
         "common.all": "Todos",
+        "common.saved": "Guardado",
         "common.saving": "A guardar...",
         "common.pts": "pts",
 
         // Tabs
         "tabs.map": "Mapa",
-        "tabs.checkIn": "Check In",
+        "tabs.checkIn": "Check-in",
         "tabs.settings": "Definições",
 
         // Offline
@@ -547,7 +531,6 @@ enum Translations {
         "base.solveChallenge": "Resolver Desafio",
         "base.challengeCompleted": "Desafio concluído!",
         "base.awaitingReview": "A aguardar revisão...",
-        "base.checkInToSee": "Faz check-in nesta base para ver o desafio",
         "base.challengeLocked": "Desafio bloqueado",
         "base.challengeLockedHint": "Visita esta base para desbloquear o desafio",
         "base.noChallengeAssigned": "Nenhum desafio atribuído a esta base",
@@ -555,16 +538,16 @@ enum Translations {
         "base.checkedInBanner": "Check-in feito!",
         "base.noChallengeYet": "Nenhum desafio atribuído a esta base ainda",
         "base.answerType": "Tipo de resposta: %@",
-        "base.completionContent": "Informação de conclusão",
+        "base.completionContent": "Informação Desbloqueada",
 
         // Check In
-        "checkIn.title": "Check-In de Base",
+        "checkIn.title": "Check-in de Base",
         "checkIn.instructions": "Segura o telemóvel perto do marcador numa base para fazeres check-in",
-        "checkIn.checkingIn": "A fazer Check-In...",
-        "checkIn.checkInAtBase": "Check-In na Base",
+        "checkIn.checkingIn": "A fazer Check-in...",
+        "checkIn.checkInAtBase": "Check-in na Base",
         "checkIn.pendingSyncOne": "%d ação pendente para sincronizar",
         "checkIn.pendingSyncOther": "%d ações pendentes para sincronizar",
-        "checkIn.navTitle": "Check In",
+        "checkIn.navTitle": "Check-in",
 
         // Solve
         "solve.submitPhoto": "Submeter a tua Média",
@@ -599,7 +582,7 @@ enum Translations {
         "result.rejectedMsg": "A tua submissão foi rejeitada. Verifica o feedback e tenta novamente.",
         "result.submittedMsg": "A tua resposta foi submetida e está a aguardar revisão por um operador.",
         "result.feedback": "Feedback: %@",
-        "result.completionContent": "Informação de conclusão",
+        "result.completionContent": "Informação Desbloqueada",
         "result.backToMap": "Voltar ao Mapa",
 
         // Settings
@@ -735,9 +718,6 @@ enum Translations {
         "operator.fileAccessError": "N\u{00E3}o foi poss\u{00ED}vel aceder ao ficheiro",
         "operator.baseName": "Nome da Base",
         "operator.baseDescription": "Descri\u{00E7}\u{00E3}o",
-        "operator.location": "Localiza\u{00E7}\u{00E3}o",
-        "operator.latitude": "Latitude",
-        "operator.longitude": "Longitude",
         "operator.createBase": "Criar Base",
         "operator.editBase": "Editar Base",
         "operator.requirePresence": "Exigir presen\u{00E7}a para submeter",
@@ -750,20 +730,15 @@ enum Translations {
         "operator.deleteBaseConfirmMessage": "Isto ir\u{00E1} eliminar permanentemente esta base e as suas atribui\u{00E7}\u{00F5}es.",
         "operator.delete": "Eliminar",
         "operator.editContent": "Editar Conte\u{00FA}do",
-        "operator.editCompletionContent": "Editar Conte\u{00FA}do de Conclus\u{00E3}o",
         "editor.fileTooLarge": "Ficheiro Demasiado Grande",
         "editor.audioTooLargeMessage": "O ficheiro de \u{00E1}udio deve ter menos de 5 MB",
-        "editor.insertAudio": "Inserir \u{00C1}udio",
         "operator.insertVariable": "Inserir Vari\u{00E1}vel",
         "operator.createVariable": "Criar Vari\u{00E1}vel",
         "operator.previewAsTeam": "Pr\u{00E9}-visualizar como Equipa",
         "operator.variableName": "Nome da Vari\u{00E1}vel",
         "operator.invalidVariableName": "Os nomes das vari\u{00E1}veis devem come\u{00E7}ar por uma letra e usar apenas letras, n\u{00FA}meros ou underscores",
         "operator.duplicateVariable": "J\u{00E1} existe uma vari\u{00E1}vel com esse nome",
-        "operator.acquiringLocation": "A obter localiza\u{00E7}\u{00E3}o GPS...",
-        "operator.longPressToMovePin": "Toque longo no mapa para reposicionar o pin",
         "operator.tapToMovePin": "Toca no mapa para reposicionar o pin",
-        "operator.previewContent": "Pr\u{00E9}-visualizar",
         "operator.noChallenges": "Ainda sem desafios",
         "operator.noChallengesDesc": "Cria o teu primeiro desafio para come\u{00E7}ar",
         "operator.challengeTitle": "T\u{00ED}tulo",
@@ -786,7 +761,7 @@ enum Translations {
         "operator.noContent": "Sem conte\u{00FA}do",
         "operator.description": "Descri\u{00E7}\u{00E3}o",
         "operator.content": "Conte\u{00FA}do",
-        "operator.completionMessage": "Mensagem de Conclus\u{00E3}o",
+        "operator.completionMessage": "Informação Desbloqueada",
         "operator.deleteChallengeConfirmTitle": "Apagar Desafio?",
         "operator.deleteChallengeConfirmMessage": "Esta a\u{00E7}\u{00E3}o n\u{00E3}o pode ser desfeita.",
         "operator.deleteChallenge": "Apagar Desafio",
@@ -811,7 +786,6 @@ enum Translations {
         "operator.deleteTeam": "Apagar Equipa",
         "operator.deleteTeamConfirmTitle": "Apagar Equipa?",
         "operator.deleteTeamConfirmMessage": "Esta a\u{00E7}\u{00E3}o n\u{00E3}o pode ser desfeita.",
-        "operator.playersCount": "%d jogadores",
         "operator.pts": "%d pts",
         "operator.leaderboard": "Classifica\u{00E7}\u{00E3}o",
         "operator.activity": "Atividade",
@@ -820,9 +794,6 @@ enum Translations {
         "operator.noActivity": "Sem atividade ainda",
         "operator.noActivityDesc": "Os eventos aparecer\u{00E3}o \u{00E0} medida que as equipas interagem com o jogo",
         "operator.completedCount": "%d conclu\u{00ED}dos",
-        "operator.editMode": "Modo de Edi\u{00E7}\u{00E3}o",
-        "operator.centerOnMe": "Centrar em mim",
-        "operator.addBaseHere": "Adicionar base na localiza\u{00E7}\u{00E3}o GPS",
         "operator.longPressHint": "Manter premido no mapa para adicionar uma base",
         "common.create": "Criar",
 
@@ -847,7 +818,6 @@ enum Translations {
         "nfc.writeSuccess": "Etiqueta escrita e ligada com sucesso!",
         "nfc.nfcLinked": "NFC Ligado",
         "nfc.nfcNotLinked": "NFC Não Ligado",
-        "nfc.presenceRequired": "Presença Obrigatória",
         "nfc.writing": "A escrever...",
         "nfc.writeToTag": "Escrever na Etiqueta NFC",
         "nfc.fixedChallenge": "Desafio Fixo",
@@ -923,7 +893,6 @@ enum Translations {
     static let de: [String: String] = [
         // Welcome
         "welcome.title": "PointFinder",
-        "welcome.subtitle": "Erkunde, entdecke und meistere Challenges mit deinem Team",
         "welcome.joinGame": "Einem Spiel beitreten",
         "welcome.operatorLogin": "Operator-Anmeldung",
 
@@ -935,7 +904,6 @@ enum Translations {
         "auth.signIn": "Anmelden",
 
         // Join (Player Join)
-        "join.title": "Deinem Team beitreten",
         "join.subtitle": "Gib den Code ein, den dir dein Teamleiter gegeben hat",
         "join.joinCode": "Beitrittscode",
         "join.yourName": "Dein Name",
@@ -952,6 +920,7 @@ enum Translations {
         "common.unknownError": "Ein unbekannter Fehler ist aufgetreten",
         "common.done": "Fertig",
         "common.all": "Alle",
+        "common.saved": "Gespeichert",
         "common.saving": "Wird gespeichert...",
         "common.pts": "Pkt",
 
@@ -995,7 +964,6 @@ enum Translations {
         "base.solveChallenge": "Challenge lösen",
         "base.challengeCompleted": "Challenge abgeschlossen!",
         "base.awaitingReview": "Warte auf Prüfung...",
-        "base.checkInToSee": "Checke an dieser Station ein, um die Challenge zu sehen",
         "base.challengeLocked": "Challenge gesperrt",
         "base.challengeLockedHint": "Besuche diese Station, um die Challenge freizuschalten",
         "base.noChallengeAssigned": "Dieser Station ist keine Challenge zugewiesen",
@@ -1003,7 +971,7 @@ enum Translations {
         "base.checkedInBanner": "Eingecheckt!",
         "base.noChallengeYet": "Dieser Station ist noch keine Challenge zugewiesen",
         "base.answerType": "Antworttyp: %@",
-        "base.completionContent": "Abschlussinfos",
+        "base.completionContent": "Freigeschaltete Information",
 
         // Check In
         "checkIn.title": "Stations-Check-in",
@@ -1047,7 +1015,7 @@ enum Translations {
         "result.rejectedMsg": "Deine Einreichung wurde abgelehnt. Prüfe das Feedback und versuche es erneut.",
         "result.submittedMsg": "Deine Antwort wurde eingereicht und wartet auf Prüfung durch einen Operator.",
         "result.feedback": "Feedback: %@",
-        "result.completionContent": "Abschlussinfos",
+        "result.completionContent": "Freigeschaltete Information",
         "result.backToMap": "Zurück zur Karte",
 
         // Settings
@@ -1183,9 +1151,6 @@ enum Translations {
         "operator.fileAccessError": "Auf Datei konnte nicht zugegriffen werden",
         "operator.baseName": "Stationsname",
         "operator.baseDescription": "Beschreibung",
-        "operator.location": "Standort",
-        "operator.latitude": "Breitengrad",
-        "operator.longitude": "L\u{00E4}ngengrad",
         "operator.createBase": "Station erstellen",
         "operator.editBase": "Station bearbeiten",
         "operator.requirePresence": "Anwesenheit zum Einreichen erforderlich",
@@ -1198,20 +1163,15 @@ enum Translations {
         "operator.deleteBaseConfirmMessage": "Dadurch wird diese Station und ihre Zuweisungen dauerhaft gel\u{00F6}scht.",
         "operator.delete": "L\u{00F6}schen",
         "operator.editContent": "Inhalt bearbeiten",
-        "operator.editCompletionContent": "Abschlussinhalt bearbeiten",
         "editor.fileTooLarge": "Datei zu gro\u{00DF}",
         "editor.audioTooLargeMessage": "Audiodatei muss kleiner als 5 MB sein",
-        "editor.insertAudio": "Audio einf\u{00FC}gen",
         "operator.insertVariable": "Variable einf\u{00FC}gen",
         "operator.createVariable": "Variable erstellen",
         "operator.previewAsTeam": "Als Team vorschauen",
         "operator.variableName": "Variablenname",
         "operator.invalidVariableName": "Variablennamen m\u{00FC}ssen mit einem Buchstaben beginnen und d\u{00FC}rfen nur Buchstaben, Zahlen oder Unterstriche enthalten",
         "operator.duplicateVariable": "Eine Variable mit diesem Namen existiert bereits",
-        "operator.acquiringLocation": "GPS-Position wird ermittelt...",
-        "operator.longPressToMovePin": "Lang dr\u{00FC}cken um Pin zu verschieben",
         "operator.tapToMovePin": "Tippe auf die Karte, um den Pin zu verschieben",
-        "operator.previewContent": "Vorschau",
         "operator.noChallenges": "Noch keine Challenges",
         "operator.noChallengesDesc": "Erstelle deine erste Challenge",
         "operator.challengeTitle": "Titel",
@@ -1234,7 +1194,7 @@ enum Translations {
         "operator.noContent": "Kein Inhalt",
         "operator.description": "Beschreibung",
         "operator.content": "Inhalt",
-        "operator.completionMessage": "Abschlussnachricht",
+        "operator.completionMessage": "Freigeschaltete Information",
         "operator.deleteChallengeConfirmTitle": "Challenge l\u{00F6}schen?",
         "operator.deleteChallengeConfirmMessage": "Diese Aktion kann nicht r\u{00FC}ckg\u{00E4}ngig gemacht werden.",
         "operator.deleteChallenge": "Challenge l\u{00F6}schen",
@@ -1259,7 +1219,6 @@ enum Translations {
         "operator.deleteTeam": "Team l\u{00F6}schen",
         "operator.deleteTeamConfirmTitle": "Team l\u{00F6}schen?",
         "operator.deleteTeamConfirmMessage": "Diese Aktion kann nicht r\u{00FC}ckg\u{00E4}ngig gemacht werden.",
-        "operator.playersCount": "%d Spieler",
         "operator.pts": "%d Pkt",
         "operator.leaderboard": "Rangliste",
         "operator.activity": "Aktivit\u{00E4}t",
@@ -1268,9 +1227,6 @@ enum Translations {
         "operator.noActivity": "Noch keine Aktivit\u{00E4}t",
         "operator.noActivityDesc": "Ereignisse erscheinen, wenn Teams mit dem Spiel interagieren",
         "operator.completedCount": "%d abgeschlossen",
-        "operator.editMode": "Bearbeitungsmodus",
-        "operator.centerOnMe": "Auf mich zentrieren",
-        "operator.addBaseHere": "Station an GPS-Position hinzuf\u{00FC}gen",
         "operator.longPressHint": "Lange auf die Karte dr\u{00FC}cken, um eine Station hinzuzuf\u{00FC}gen",
         "common.create": "Erstellen",
 
@@ -1295,7 +1251,6 @@ enum Translations {
         "nfc.writeSuccess": "Tag erfolgreich beschrieben und verknüpft!",
         "nfc.nfcLinked": "NFC verknüpft",
         "nfc.nfcNotLinked": "NFC nicht verknüpft",
-        "nfc.presenceRequired": "Anwesenheit erforderlich",
         "nfc.writing": "Wird geschrieben...",
         "nfc.writeToTag": "Auf NFC-Tag schreiben",
         "nfc.fixedChallenge": "Feste Challenge",
@@ -1357,7 +1312,7 @@ enum Translations {
         // Gap fixes
         "solve.gameNotLive": "Dieses Spiel ist derzeit nicht aktiv",
         "join.codeTooShort": "Der Code muss mindestens 6 Zeichen lang sein",
-        "offline.failedSubmissions": "%@ Einreichung(en) konnten nicht synchronisiert werden. Überprüfen Sie Ihre Verbindung.",
+        "offline.failedSubmissions": "%@ Einreichung(en) konnten nicht synchronisiert werden. Überprüfe deine Verbindung.",
         "operator.removeOperator": "Operator entfernen",
         "operator.removeOperatorConfirm": "%@ als Operator aus diesem Spiel entfernen?",
         "operator.revokeInvite": "Einladung widerrufen",

@@ -5,20 +5,15 @@
     <string name="action_join_game">Join a Game</string>
     <string name="action_operator_login">Operator Login</string>
     <string name="action_continue">Continue</string>
-    <string name="action_join">Join</string>
     <string name="action_sign_in">Sign In</string>
     <string name="action_logout">Logout</string>
     <string name="action_leave_game">Leave Game</string>
     <string name="action_scan_qr">Scan QR</string>
-    <string name="action_scan_nfc">Scan NFC</string>
-    <string name="action_check_in_at_base">Check In at Base</string>
+    <string name="action_check_in_at_base">Check-in at Base</string>
     <string name="action_submit">Submit</string>
     <string name="action_confirm_at_base">Confirm at Base to Submit</string>
-    <string name="action_solve">Solve</string>
     <string name="action_solve_challenge">Solve challenge</string>
     <string name="action_write_nfc">Write NFC Tag</string>
-    <string name="action_link_backend">Link in Backend</string>
-    <string name="action_verify_with_nfc">Verify with NFC</string>
     <string name="action_choose_media">Choose Media</string>
     <string name="action_take_photo">Take Photo</string>
     <string name="action_refresh">Refresh</string>
@@ -38,7 +33,6 @@
 
     <!-- Labels -->
     <string name="label_welcome">PointFinder</string>
-    <string name="label_subtitle">PointFinder</string>
     <string name="label_join_with_qr_or_code">Join with QR or code</string>
     <string name="label_join_code">Join code</string>
     <string name="label_display_name">Display name</string>
@@ -46,7 +40,7 @@
     <string name="label_email">Email</string>
     <string name="label_password">Password</string>
     <string name="label_map">Map</string>
-    <string name="label_check_in">Check In</string>
+    <string name="label_check_in">Check-in</string>
     <string name="label_submissions">Submissions</string>
     <string name="label_pending">Pending</string>
     <string name="label_all">All</string>
@@ -67,18 +61,14 @@
     <string name="action_create">Create</string>
     <string name="label_creating">Creating\u2026</string>
     <string name="label_offline">Offline mode</string>
-    <string name="label_operator">Operator</string>
     <string name="label_my_games">My Games</string>
-    <string name="label_player">Player</string>
     <string name="label_language">Language</string>
     <string name="label_theme">Theme</string>
     <string name="label_theme_system">System</string>
     <string name="label_theme_light">Light</string>
     <string name="label_theme_dark">Dark</string>
-    <string name="label_legend">Legend</string>
     <string name="label_game">Game</string>
     <string name="label_team">Team</string>
-    <string name="label_profile">Profile</string>
     <string name="label_privacy">Privacy</string>
     <string name="label_name">Name</string>
     <string name="label_progress">Progress</string>
@@ -95,7 +85,7 @@
     <string name="label_pending_actions">Pending actions</string>
     <string name="label_pending_sync_one">%1$d pending action to sync</string>
     <string name="label_pending_sync_other">%1$d pending actions to sync</string>
-    <string name="label_base_check_in">Base Check-In</string>
+    <string name="label_base_check_in">Base Check-in</string>
     <string name="label_checked_in_at_base">Checked in at %1$s</string>
     <string name="label_no_challenge_details">No challenge details yet.</string>
     <string name="label_no_challenge_assigned">No challenge assigned.</string>
@@ -103,22 +93,13 @@
     <string name="label_challenge_locked_hint">Visit this base to unlock the challenge</string>
     <string name="label_awaiting_review">Awaiting review</string>
     <string name="label_solve_title">Solve challenge</string>
-    <string name="label_presence_required">Presence verification required.</string>
-    <string name="label_presence_verified">Presence verified</string>
     <string name="label_photo_mode">Media answer mode</string>
     <string name="label_media_selected">%1$d of 5 selected</string>
     <string name="game_status_setup">Setup</string>
     <string name="game_status_live">Live</string>
     <string name="game_status_ended">Ended</string>
-    <string name="label_submission_status">Submission status: %1$s</string>
-    <string name="label_teams_count">Teams: %1$d</string>
-    <string name="label_team_status_row">Team %1$s - %2$s</string>
-    <string name="label_base_marker">Base</string>
-    <string name="label_team_marker">Team %1$s</string>
     <string name="label_nfc_linked">NFC linked</string>
     <string name="label_nfc_not_linked">NFC not linked</string>
-    <string name="label_presence_required_value">Presence required: %1$s</string>
-    <string name="label_assignments_value">Assignments: %1$s</string>
     <string name="label_no_games">No Games</string>
     <string name="label_no_submissions">No submissions yet</string>
     <string name="label_no_pending_submissions">No pending submissions</string>
@@ -175,11 +156,9 @@
     <!-- Hints -->
     <string name="hint_checkin_instructions">Hold your phone near the marker at a base to check in</string>
     <string name="hint_offline_sync">Offline: data will sync when online.</string>
-    <string name="hint_photo_required_online">Photo submissions require internet.</string>
     <string name="hint_media_offline_queue">Media submissions queue offline and upload when network returns.</string>
     <string name="hint_media_reselect_required">The original media is no longer available. Please reselect it.</string>
     <string name="hint_media_upload_disabled">Media uploads are temporarily unavailable. Try again later.</string>
-    <string name="hint_presence_required">NFC presence required before submit.</string>
     <string name="hint_nfc_hold_near">Hold an NFC tag near the device to write base payload.</string>
 
     <!-- Status -->
@@ -285,7 +264,7 @@
     <string name="label_challenge_points">Points</string>
     <string name="label_content">Content</string>
     <string name="label_description">Description</string>
-    <string name="label_completion_message">Completion Message</string>
+    <string name="label_completion_message">Unlocked Information</string>
     <string name="action_edit">Edit</string>
     <string name="label_answer_type_label">Answer Type</string>
     <string name="label_text_input">Text Input</string>
@@ -367,7 +346,6 @@
     <string name="label_sent_to">Sent to %1$s</string>
     <string name="label_invite_operator">Invite Operator</string>
     <string name="label_operator_email">Email address</string>
-    <string name="label_pending_invites">Pending Invites</string>
     <string name="label_invites">Invites</string>
     <string name="label_no_operators">No operators yet</string>
     <string name="label_no_invites">No pending invites</string>
@@ -378,7 +356,6 @@
     <string name="action_revoke_invite">Revoke invite</string>
     <string name="confirm_revoke_invite">Revoke Invite</string>
     <string name="confirm_revoke_invite_message">Revoke the invitation sent to %1$s?</string>
-    <string name="label_exporting">Exporting\u2026</string>
 
     <!-- Toast / Snackbar -->
     <string name="toast_base_created">Base created</string>
@@ -386,6 +363,5 @@
     <string name="toast_challenge_created">Challenge created</string>
     <string name="toast_challenge_saved">Challenge saved</string>
     <string name="toast_team_saved">Team saved</string>
-    <string name="toast_game_created">Game created</string>
     <string name="toast_game_saved">Game saved</string>
 </resources>
