@@ -120,13 +120,13 @@ test.describe('P26: WebSocket real-time broadcasts', () => {
       await new Promise((r) => setTimeout(r, 500));
 
       // Review a submission to trigger leaderboard broadcast
-      const subs = await getSubmissions(operatorToken, gameId);
-      const pending = subs.find((s: any) => s.status === 'pending');
+      const subsRes = await getSubmissions(operatorToken, gameId);
+      const pending = subsRes.data.find((s: any) => s.status === 'pending');
       if (pending) {
         await reviewSubmission(operatorToken, gameId, pending.id, { status: 'approved' });
       } else {
         // Re-review an existing submission to trigger the broadcast
-        const any = subs[0];
+        const any = subsRes.data[0];
         if (any) {
           await reviewSubmission(operatorToken, gameId, any.id, { status: 'approved' });
         }
