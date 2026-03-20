@@ -11,7 +11,7 @@ import { submissionsApi } from "@/lib/api/submissions";
 import { teamsApi } from "@/lib/api/teams";
 import { challengesApi } from "@/lib/api/challenges";
 import { basesApi } from "@/lib/api/bases";
-import { useAuthStore } from "@/hooks/useAuth";
+
 import { formatDateTime } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useGameWebSocket } from "@/hooks/useGameWebSocket";
@@ -68,7 +68,7 @@ export function ReviewLayout({ gameId, gameStatus }: ReviewLayoutProps) {
   const toast = useToast();
   useGameWebSocket(gameId);
   const queryClient = useQueryClient();
-  const user = useAuthStore((s) => s.user);
+
 
   const [filterTab, setFilterTab] = useState<FilterTab>("pending");
   const [mobileView, setMobileView] = useState<"list" | "detail">("list");
@@ -110,7 +110,7 @@ export function ReviewLayout({ gameId, gameStatus }: ReviewLayoutProps) {
 
   const reviewMutation = useMutation({
     mutationFn: ({ id, status, points, feedback: fb }: { id: string; status: SubmissionStatus; points?: number; feedback?: string }) =>
-      submissionsApi.review(id, status, user!.id, fb, gameId, points),
+      submissionsApi.review(id, status, fb, gameId, points),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["submissions", gameId] });
       // Auto-advance to next
