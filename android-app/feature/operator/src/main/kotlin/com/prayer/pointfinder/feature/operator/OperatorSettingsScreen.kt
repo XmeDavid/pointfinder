@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.prayer.pointfinder.core.i18n.LocaleManager
 import com.prayer.pointfinder.core.i18n.R
 import com.prayer.pointfinder.core.model.GameStatus
 import com.prayer.pointfinder.core.model.OperatorNotificationSettingsResponse
@@ -71,7 +72,8 @@ fun OperatorSettingsScreen(
         item {
             OperatorSettingsSection(title = stringResource(R.string.label_language)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf("en" to "English", "pt" to "Portugues", "de" to "Deutsch").forEach { (code, label) ->
+                    LocaleManager.supportedLanguages.forEach { code ->
+                        val label = LocaleManager.displayNames[code] ?: code.uppercase()
                         val isSelected = code == currentLanguage
                         if (isSelected) {
                             Button(onClick = {}) { Text(label) }

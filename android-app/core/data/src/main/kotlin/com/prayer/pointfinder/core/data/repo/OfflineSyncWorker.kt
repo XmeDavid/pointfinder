@@ -18,6 +18,9 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import java.time.Duration
 
+/** Maximum retry attempts before permanently dropping a failing offline action. */
+const val MAX_OFFLINE_RETRIES = 5
+
 @HiltWorker
 class OfflineSyncWorker @AssistedInject constructor(
     @Assisted appContext: Context,

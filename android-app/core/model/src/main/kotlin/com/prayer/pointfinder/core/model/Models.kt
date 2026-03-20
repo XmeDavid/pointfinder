@@ -190,6 +190,33 @@ enum class BaseStatus {
 
     @SerialName("rejected")
     REJECTED,
+    ;
+
+    companion object {
+        /** Canonical ARGB color values for each status, usable with `Color(Long)` in Compose. */
+        const val COLOR_NOT_VISITED: Long = 0xFF9E9E9E // Gray
+        const val COLOR_CHECKED_IN: Long = 0xFF1565C0  // Blue
+        const val COLOR_SUBMITTED: Long = 0xFFE08A00   // Orange
+        const val COLOR_COMPLETED: Long = 0xFF2E7D32   // Green
+        const val COLOR_REJECTED: Long = 0xFFD32F2F    // Red
+
+        fun colorFor(status: BaseStatus): Long = when (status) {
+            NOT_VISITED -> COLOR_NOT_VISITED
+            CHECKED_IN -> COLOR_CHECKED_IN
+            SUBMITTED -> COLOR_SUBMITTED
+            COMPLETED -> COLOR_COMPLETED
+            REJECTED -> COLOR_REJECTED
+        }
+
+        /** Resolve a color from a raw status string (as returned by the backend). */
+        fun colorForRawStatus(status: String): Long = when (status) {
+            "completed" -> COLOR_COMPLETED
+            "checked_in" -> COLOR_CHECKED_IN
+            "submitted" -> COLOR_SUBMITTED
+            "rejected" -> COLOR_REJECTED
+            else -> COLOR_NOT_VISITED
+        }
+    }
 }
 
 @Serializable
