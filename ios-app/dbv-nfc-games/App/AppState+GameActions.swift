@@ -79,7 +79,7 @@ extension AppState {
                 return response
             } catch {
                 // If network error, fall through to offline handling
-                if !isNetworkError(error) {
+                if !NetworkErrorHelper.isNetworkError(error) {
                     setError(error.localizedDescription)
                     return nil
                 }
@@ -150,7 +150,7 @@ extension AppState {
                 return response
             } catch {
                 // If network error, fall through to offline handling
-                if !isNetworkError(error) {
+                if !NetworkErrorHelper.isNetworkError(error) {
                     setError(error.localizedDescription)
                     return nil
                 }
@@ -468,33 +468,6 @@ extension AppState {
 
     func progressForBase(_ baseId: UUID) -> BaseProgress? {
         baseProgress.first(where: { $0.baseId == baseId })
-    }
-
-    // MARK: - Offline Helpers
-
-    private func isNetworkError(_ error: Error) -> Bool {
-        if let apiError = error as? APIError {
-            switch apiError {
-            case .networkError:
-                return true
-            default:
-                return false
-            }
-        }
-        let nsError = error as NSError
-        guard nsError.domain == NSURLErrorDomain else { return false }
-        let transientNetworkCodes: Set<Int> = [
-            NSURLErrorNotConnectedToInternet,
-            NSURLErrorNetworkConnectionLost,
-            NSURLErrorTimedOut,
-            NSURLErrorCannotFindHost,
-            NSURLErrorCannotConnectToHost,
-            NSURLErrorDNSLookupFailed,
-            NSURLErrorInternationalRoamingOff,
-            NSURLErrorCallIsActive,
-            NSURLErrorDataNotAllowed
-        ]
-        return transientNetworkCodes.contains(nsError.code)
     }
 
     private func updateLocalBaseStatus(baseId: UUID, status: BaseStatus) {

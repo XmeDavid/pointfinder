@@ -83,40 +83,13 @@ extension NFCReaderService: NFCTagReaderSessionDelegate {
                 return
             }
 
-            // Check if the tag supports NDEF
-            guard case let .iso7816(ndefTag) = tag else {
-                // Try other tag types
-                self?.handleNonISO7816Tag(tag, session: session)
+            guard let ndefTag = NFCTagHelper.ndefTag(from: tag) else {
+                session.invalidate(errorMessage: Translations.string("nfc.noTagFound"))
                 return
             }
 
             self?.readNDEFFromTag(ndefTag, session: session)
         }
-    }
-
-    private func handleNonISO7816Tag(_ tag: NFCTag, session: NFCTagReaderSession) {
-        // Try to get NDEF interface from other tag types
-        let ndefTag: NFCNDEFTag?
-
-        switch tag {
-        case .miFare(let mifareTag):
-            ndefTag = mifareTag
-        case .iso15693(let iso15693Tag):
-            ndefTag = iso15693Tag
-        case .feliCa(let felicaTag):
-            ndefTag = felicaTag
-        case .iso7816:
-            ndefTag = nil
-        @unknown default:
-            ndefTag = nil
-        }
-
-        guard let ndefTag = ndefTag else {
-            session.invalidate(errorMessage: Translations.string("nfc.noTagFound"))
-            return
-        }
-
-        readNDEFFromTag(ndefTag, session: session)
     }
 
     private func readNDEFFromTag(_ tag: NFCNDEFTag, session: NFCTagReaderSession) {

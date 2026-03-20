@@ -151,7 +151,7 @@ final class SyncEngine {
                 return
             }
             // Check if this is a network error (retry) vs a server error (don't retry)
-            if isNetworkError(error) {
+            if NetworkErrorHelper.isNetworkError(error) {
                 await offlineQueue.incrementRetryCount(action.id)
                 self.lastSyncError = LocaleManager.shared.t("sync.networkRetry")
                 Logger(subsystem: "com.prayer.pointfinder", category: "SyncEngine").info(" Network error for \(action.id), will retry: \(error.localizedDescription)")
@@ -507,31 +507,6 @@ final class SyncEngine {
         try? FileManager.default.removeItem(atPath: localPath)
     }
 
-    private func isNetworkError(_ error: Error) -> Bool {
-        if let apiError = error as? APIError {
-            switch apiError {
-            case .networkError:
-                return true
-            default:
-                return false
-            }
-        }
-        // URLSession network errors
-        let nsError = error as NSError
-        guard nsError.domain == NSURLErrorDomain else { return false }
-        let transientNetworkCodes: Set<Int> = [
-            NSURLErrorNotConnectedToInternet,
-            NSURLErrorNetworkConnectionLost,
-            NSURLErrorTimedOut,
-            NSURLErrorCannotFindHost,
-            NSURLErrorCannotConnectToHost,
-            NSURLErrorDNSLookupFailed,
-            NSURLErrorInternationalRoamingOff,
-            NSURLErrorCallIsActive,
-            NSURLErrorDataNotAllowed
-        ]
-        return transientNetworkCodes.contains(nsError.code)
-    }
 }
 
 // MARK: - Errors
