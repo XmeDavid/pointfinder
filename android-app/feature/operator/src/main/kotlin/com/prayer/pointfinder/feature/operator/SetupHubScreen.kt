@@ -141,7 +141,7 @@ fun SetupHubScreen(
         Button(
             onClick = { showGoLiveDialog = true },
             enabled = !hasWarnings,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag("game-activate-btn"),
         ) {
             Text(stringResource(R.string.label_go_live))
         }

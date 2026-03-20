@@ -354,7 +354,7 @@ fun TeamDetailScreen(
                     )
                 },
                 enabled = editedName.isNotBlank(),
-                modifier = Modifier.fillMaxWidth().testTag("assignment-save-btn"),
+                modifier = Modifier.fillMaxWidth().testTag("team-save-btn"),
             ) {
                 Text(stringResource(R.string.action_save))
             }

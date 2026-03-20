@@ -189,7 +189,7 @@ fun ChallengeEditScreen(
                 actions = {
                     if (isEditMode && onDelete != null) {
                         Box {
-                            IconButton(onClick = { showOverflowMenu = true }) {
+                            IconButton(onClick = { showOverflowMenu = true }, modifier = Modifier.testTag("challenge-overflow-btn")) {
                                 Icon(Icons.Default.MoreVert, contentDescription = null)
                             }
                             DropdownMenu(

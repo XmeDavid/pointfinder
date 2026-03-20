@@ -180,7 +180,7 @@ fun BaseEditScreen(
                 actions = {
                     if (isEditMode) {
                         Box {
-                            IconButton(onClick = { showOverflowMenu = true }) {
+                            IconButton(onClick = { showOverflowMenu = true }, modifier = Modifier.testTag("base-overflow-btn")) {
                                 Icon(Icons.Default.MoreVert, contentDescription = null)
                             }
                             DropdownMenu(
