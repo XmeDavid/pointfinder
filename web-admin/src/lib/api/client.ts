@@ -1,7 +1,6 @@
 import axios from "axios";
 import { useAuthStore } from "@/hooks/useAuth";
-
-const API_URL = import.meta.env.VITE_API_URL || "/api";
+import { API_URL } from "@/lib/api/config";
 
 const apiClient = axios.create({
   baseURL: API_URL,

@@ -72,7 +72,8 @@
     "registerDescription": "Introduza o seu email para começar.",
     "registrationEmailSent": "Enviámos-lhe um email com um link para continuar o registo. Verifique a sua caixa de entrada.",
     "sendRegistrationLink": "Continuar",
-    "registrationRequestFailed": "Algo correu mal. Por favor, tente novamente."
+    "registrationRequestFailed": "Algo correu mal. Por favor, tente novamente.",
+    "emailPlaceholder": "email@exemplo.com"
   },
   "nav": {
     "games": "Jogos",
@@ -614,6 +615,7 @@
     "uploadImage": "Carregar Imagem",
     "uploadAudio": "Carregar Áudio",
     "imageFromUrl": "Imagem por URL",
+    "imageUrlPrompt": "URL da imagem:",
     "insertVariable": "Inserir Variável",
     "undo": "Desfazer",
     "redo": "Refazer"

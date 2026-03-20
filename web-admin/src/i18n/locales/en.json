@@ -72,7 +72,8 @@
     "registerDescription": "Enter your email to get started.",
     "registrationEmailSent": "We've sent you an email with a link to continue your registration. Please check your inbox.",
     "sendRegistrationLink": "Continue",
-    "registrationRequestFailed": "Something went wrong. Please try again."
+    "registrationRequestFailed": "Something went wrong. Please try again.",
+    "emailPlaceholder": "email@example.com"
   },
   "nav": {
     "games": "Games",
@@ -614,6 +615,7 @@
     "uploadImage": "Upload Image",
     "uploadAudio": "Upload Audio",
     "imageFromUrl": "Image from URL",
+    "imageUrlPrompt": "Image URL:",
     "insertVariable": "Insert Variable",
     "undo": "Undo",
     "redo": "Redo"

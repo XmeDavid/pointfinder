@@ -11,8 +11,7 @@ import { useAuthStore } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import axios from "axios";
-
-const API_URL = import.meta.env.VITE_API_URL || "/api";
+import { API_URL } from "@/lib/api/config";
 
 export function RegisterPage() {
   const { t } = useTranslation();

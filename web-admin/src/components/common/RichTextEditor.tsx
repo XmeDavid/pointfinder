@@ -249,7 +249,7 @@ export function RichTextEditor({ value, onChange, placeholder, availableVariable
 
   const addImageUrl = useCallback(() => {
     if (!editor) return;
-    const url = window.prompt("Image URL:");
+    const url = window.prompt(t("editor.imageUrlPrompt"));
     if (url) {
       try {
         const parsed = new URL(url);

@@ -59,7 +59,7 @@ export function LoginPage() {
               <FormLabel htmlFor="email" required>
                 {t("auth.email")}
               </FormLabel>
-              <Input id="email" type="email" placeholder="admin@pointfinder.dev" value={email} onChange={(e) => setEmail(e.target.value)} required data-testid="login-email" />
+              <Input id="email" type="email" placeholder={t("auth.emailPlaceholder")} value={email} onChange={(e) => setEmail(e.target.value)} required data-testid="login-email" />
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
