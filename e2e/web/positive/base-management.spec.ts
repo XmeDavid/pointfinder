@@ -113,8 +113,11 @@ test.describe('Base management via web UI', () => {
       expect(existingBase).toBeDefined();
 
       if (existingBase?.name !== 'Web Base Renamed') {
-        const updateRes = await apiUpdateBase(token, gameId, existingBase!.id, {
+        const base = existingBase as { id: string; name: string; lat: number; lng: number };
+        const updateRes = await apiUpdateBase(token, gameId, base.id, {
           name: 'Web Base Renamed',
+          lat: base.lat,
+          lng: base.lng,
         });
         expect(updateRes.status).toBe(200);
       }
