@@ -253,6 +253,8 @@ public class PlayerService {
         gameAccessService.ensurePlayerBelongsToGame(player, gameId);
 
         return baseRepository.findByGameId(gameId).stream()
+                .filter(b -> !Boolean.TRUE.equals(b.getHidden()))
+                .limit(500)
                 .map(base -> BaseResponse.builder()
                         .id(base.getId())
                         .gameId(gameId)
