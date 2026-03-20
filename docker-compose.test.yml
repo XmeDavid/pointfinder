@@ -15,6 +15,7 @@ services:
       CI: "true"
     volumes:
       - ./web-admin:/workspace/web-admin
+      - ./contract-snapshots:/workspace/contract-snapshots
       - npm-cache:/root/.npm
       - web-node-modules:/workspace/web-admin/node_modules
 
