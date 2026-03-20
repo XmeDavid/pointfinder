@@ -130,7 +130,7 @@ class PlayerServiceTest {
         assertEquals("jwt-token", response.getToken());
         assertEquals("New Name", existingPlayer.getDisplayName());
         verify(playerRepository).findFirstByDeviceIdAndTeamGameIdOrderByCreatedAtDesc(deviceId, gameId);
-        verify(playerRepository, times(2)).save(existingPlayer);
+        verify(playerRepository).save(existingPlayer);
     }
 
     @Test
@@ -187,7 +187,7 @@ class PlayerServiceTest {
         assertEquals(newTeamId, existingPlayer.getTeam().getId());
         assertEquals("jwt-token", response.getToken());
         verify(playerRepository).findFirstByDeviceIdAndTeamGameIdOrderByCreatedAtDesc(deviceId, gameId);
-        verify(playerRepository, times(2)).save(existingPlayer);
+        verify(playerRepository).save(existingPlayer);
     }
 
     @Test
