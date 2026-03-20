@@ -16,7 +16,7 @@ class OperatorManagementUseCase @Inject constructor(
     }
 
     suspend fun removeOperator(gameId: String, userId: String) =
-        operatorRepository.removeGameOperatorUnit(gameId, userId)
+        operatorRepository.removeGameOperator(gameId, userId)
 
     suspend fun inviteOperator(email: String, gameId: String): InviteResponse =
         operatorRepository.createInvite(InviteRequest(email = email, gameId = gameId))

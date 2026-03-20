@@ -19,11 +19,11 @@ class TeamManagementUseCase @Inject constructor(
         operatorRepository.updateTeam(gameId, teamId, request)
 
     suspend fun deleteTeam(gameId: String, teamId: String) =
-        operatorRepository.deleteTeamUnit(gameId, teamId)
+        operatorRepository.deleteTeam(gameId, teamId)
 
     suspend fun loadTeamPlayers(gameId: String, teamId: String): List<PlayerResponse> =
         operatorRepository.getTeamPlayers(gameId, teamId)
 
     suspend fun removePlayer(gameId: String, teamId: String, playerId: String) =
-        operatorRepository.removePlayerUnit(gameId, teamId, playerId)
+        operatorRepository.removePlayer(gameId, teamId, playerId)
 }

@@ -17,7 +17,7 @@ class BaseManagementUseCase @Inject constructor(
         operatorRepository.updateBase(gameId, baseId, request)
 
     suspend fun deleteBase(gameId: String, baseId: String) =
-        operatorRepository.deleteBaseUnit(gameId, baseId)
+        operatorRepository.deleteBase(gameId, baseId)
 
     suspend fun loadAssignments(gameId: String): List<Assignment> =
         operatorRepository.gameAssignments(gameId)

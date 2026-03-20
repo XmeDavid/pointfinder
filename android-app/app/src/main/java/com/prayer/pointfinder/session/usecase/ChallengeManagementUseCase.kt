@@ -19,5 +19,5 @@ class ChallengeManagementUseCase @Inject constructor(
     ): Challenge = operatorRepository.updateChallenge(gameId, challengeId, request)
 
     suspend fun deleteChallenge(gameId: String, challengeId: String) =
-        operatorRepository.deleteChallengeUnit(gameId, challengeId)
+        operatorRepository.deleteChallenge(gameId, challengeId)
 }
