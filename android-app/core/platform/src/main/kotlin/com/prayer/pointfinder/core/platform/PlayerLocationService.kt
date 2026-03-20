@@ -70,6 +70,7 @@ class PlayerLocationService @Inject constructor(
 
     @SuppressLint("MissingPermission")
     fun start(gameId: String) {
+        if (scope != null) return  // Already started, idempotent
         if (!hasLocationPermission()) return
 
         this.gameId = gameId
