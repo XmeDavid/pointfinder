@@ -13,7 +13,7 @@ export const invitesApi = {
   },
 
   listByGame: async (gameId: string): Promise<OperatorInvite[]> => {
-    const { data } = await apiClient.get(`/invites/game/${gameId}`);
+    const { data } = await apiClient.get(`/games/${gameId}/invites`);
     return data;
   },
 

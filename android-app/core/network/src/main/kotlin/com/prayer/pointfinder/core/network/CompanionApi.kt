@@ -322,7 +322,7 @@ interface CompanionApi {
 
     // === Invites ===
 
-    @GET("api/invites/game/{gameId}")
+    @GET("api/games/{gameId}/invites")
     suspend fun getGameInvites(@Path("gameId") gameId: String): List<InviteResponse>
 
     @POST("api/invites")

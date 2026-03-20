@@ -14,28 +14,27 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/invites")
 @RequiredArgsConstructor
 public class InviteController {
 
     private final InviteService inviteService;
 
-    @GetMapping
+    @GetMapping("/api/invites")
     public ResponseEntity<List<InviteResponse>> getGlobalInvites() {
         return ResponseEntity.ok(inviteService.getGlobalInvites());
     }
 
-    @GetMapping("/game/{gameId}")
+    @GetMapping("/api/games/{gameId}/invites")
     public ResponseEntity<List<InviteResponse>> getGameInvites(@PathVariable UUID gameId) {
         return ResponseEntity.ok(inviteService.getGameInvites(gameId));
     }
 
-    @GetMapping("/my")
+    @GetMapping("/api/invites/my")
     public ResponseEntity<List<InviteResponse>> getMyInvites() {
         return ResponseEntity.ok(inviteService.getMyInvites());
     }
 
-    @PostMapping
+    @PostMapping("/api/invites")
     public ResponseEntity<InviteResponse> createInvite(
             @Valid @RequestBody CreateInviteRequest request,
             HttpServletRequest httpRequest
@@ -44,13 +43,13 @@ public class InviteController {
         return ResponseEntity.status(HttpStatus.CREATED).body(inviteService.createInvite(request, requestHost));
     }
 
-    @PostMapping("/{inviteId}/accept")
+    @PostMapping("/api/invites/{inviteId}/accept")
     public ResponseEntity<Void> acceptInvite(@PathVariable UUID inviteId) {
         inviteService.acceptInvite(inviteId);
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{inviteId}")
+    @DeleteMapping("/api/invites/{inviteId}")
     public ResponseEntity<Void> deleteInvite(@PathVariable UUID inviteId) {
         inviteService.deleteInvite(inviteId);
         return ResponseEntity.noContent().build();

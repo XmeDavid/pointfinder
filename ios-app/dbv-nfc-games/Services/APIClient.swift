@@ -344,7 +344,7 @@ actor APIClient {
     }
 
     func getGameInvites(gameId: UUID, token: String) async throws -> [InviteResponse] {
-        try await get("/api/invites/game/\(gameId)", token: token)
+        try await get("/api/games/\(gameId)/invites", token: token)
     }
 
     func createInvite(request: InviteRequest, token: String) async throws -> InviteResponse {
@@ -471,43 +471,7 @@ actor APIClient {
     }
 
     private func execute<T: Decodable>(_ request: URLRequest) async throws -> T {
-        let data: Data
-        let response: URLResponse
-
-        do {
-            (data, response) = try await session.data(for: request)
-        } catch {
-            throw APIError.networkError(error)
-        }
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.invalidResponse
-        }
-
-        guard (200...299).contains(httpResponse.statusCode) else {
-            let isAuthRequest = request.value(forHTTPHeaderField: "Authorization") != nil
-            let isAuthFailureStatus = httpResponse.statusCode == 401 || httpResponse.statusCode == 403
-
-            // If 401/403 on an authenticated request and we have a refresh token, attempt refresh.
-            if isAuthFailureStatus, isAuthRequest, storedRefreshToken != nil {
-                let newAccessToken = try await getRefreshedAccessToken()
-
-                // Retry with the new token
-                var retryRequest = request
-                retryRequest.setValue("Bearer \(newAccessToken)", forHTTPHeaderField: "Authorization")
-                return try await executeWithoutRetry(retryRequest)
-            }
-
-            // Player sessions do not refresh tokens. Treat 401/403 as auth-expired.
-            if isAuthFailureStatus, isAuthRequest {
-                await onAuthFailure?()
-                throw APIError.authExpired
-            }
-
-            let message = String(data: data, encoding: .utf8) ?? "Unknown error"
-            throw APIError.httpError(statusCode: httpResponse.statusCode, message: message)
-        }
-
+        let (data, _) = try await executeRaw(request, retry: true)
         do {
             return try decoder.decode(T.self, from: data)
         } catch {
@@ -516,39 +480,7 @@ actor APIClient {
     }
 
     private func executeVoid(_ request: URLRequest) async throws {
-        let data: Data
-        let response: URLResponse
-
-        do {
-            (data, response) = try await session.data(for: request)
-        } catch {
-            throw APIError.networkError(error)
-        }
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.invalidResponse
-        }
-
-        guard (200...299).contains(httpResponse.statusCode) else {
-            let isAuthRequest = request.value(forHTTPHeaderField: "Authorization") != nil
-            let isAuthFailureStatus = httpResponse.statusCode == 401 || httpResponse.statusCode == 403
-
-            if isAuthFailureStatus, isAuthRequest, storedRefreshToken != nil {
-                let newAccessToken = try await getRefreshedAccessToken()
-                var retryRequest = request
-                retryRequest.setValue("Bearer \(newAccessToken)", forHTTPHeaderField: "Authorization")
-                try await executeVoidWithoutRetry(retryRequest)
-                return
-            }
-
-            if isAuthFailureStatus, isAuthRequest {
-                await onAuthFailure?()
-                throw APIError.authExpired
-            }
-
-            let message = String(data: data, encoding: .utf8) ?? "Unknown error"
-            throw APIError.httpError(statusCode: httpResponse.statusCode, message: message)
-        }
+        _ = try await executeRaw(request, retry: true)
     }
 
     // MARK: - Token Refresh
@@ -614,29 +546,7 @@ actor APIClient {
 
     /// Execute a request without token-refresh retry (used for the retry after refresh to avoid infinite loops).
     private func executeWithoutRetry<T: Decodable>(_ request: URLRequest) async throws -> T {
-        let data: Data
-        let response: URLResponse
-
-        do {
-            (data, response) = try await session.data(for: request)
-        } catch {
-            throw APIError.networkError(error)
-        }
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.invalidResponse
-        }
-
-        guard (200...299).contains(httpResponse.statusCode) else {
-            if (httpResponse.statusCode == 401 || httpResponse.statusCode == 403),
-               request.value(forHTTPHeaderField: "Authorization") != nil {
-                await onAuthFailure?()
-                throw APIError.authExpired
-            }
-            let message = String(data: data, encoding: .utf8) ?? "Unknown error"
-            throw APIError.httpError(statusCode: httpResponse.statusCode, message: message)
-        }
-
+        let (data, _) = try await executeRaw(request, retry: false)
         do {
             return try decoder.decode(T.self, from: data)
         } catch {
@@ -645,6 +555,14 @@ actor APIClient {
     }
 
     private func executeVoidWithoutRetry(_ request: URLRequest) async throws {
+        _ = try await executeRaw(request, retry: false)
+    }
+
+    /// Core fetch primitive: sends the request, validates the HTTP response, and handles 401/403.
+    /// - Parameter retry: When `true` and a refresh token is available, attempts one token refresh on 401/403.
+    /// - Returns: The raw response body and the HTTP response.
+    @discardableResult
+    private func executeRaw(_ request: URLRequest, retry: Bool) async throws -> (Data, HTTPURLResponse) {
         let data: Data
         let response: URLResponse
 
@@ -659,14 +577,28 @@ actor APIClient {
         }
 
         guard (200...299).contains(httpResponse.statusCode) else {
-            if (httpResponse.statusCode == 401 || httpResponse.statusCode == 403),
-               request.value(forHTTPHeaderField: "Authorization") != nil {
+            let isAuthRequest = request.value(forHTTPHeaderField: "Authorization") != nil
+            let isAuthFailureStatus = httpResponse.statusCode == 401 || httpResponse.statusCode == 403
+
+            // If retry is enabled and we have a refresh token, attempt one token refresh.
+            if retry, isAuthFailureStatus, isAuthRequest, storedRefreshToken != nil {
+                let newAccessToken = try await getRefreshedAccessToken()
+                var retryRequest = request
+                retryRequest.setValue("Bearer \(newAccessToken)", forHTTPHeaderField: "Authorization")
+                return try await executeRaw(retryRequest, retry: false)
+            }
+
+            // No refresh possible — treat auth failure as expired session.
+            if isAuthFailureStatus, isAuthRequest {
                 await onAuthFailure?()
                 throw APIError.authExpired
             }
+
             let message = String(data: data, encoding: .utf8) ?? "Unknown error"
             throw APIError.httpError(statusCode: httpResponse.statusCode, message: message)
         }
+
+        return (data, httpResponse)
     }
 }
 

@@ -85,7 +85,7 @@ class InviteControllerTest {
                 .andExpect(jsonPath("$").isEmpty());
     }
 
-    // ── GET /api/invites/game/{gameId} ────────────────────────────────
+    // ── GET /api/games/{gameId}/invites ───────────────────────────────
 
     @Test
     void getGameInvitesReturns200() throws Exception {
@@ -102,7 +102,7 @@ class InviteControllerTest {
 
         when(inviteService.getGameInvites(GAME_ID)).thenReturn(List.of(invite));
 
-        mockMvc.perform(get("/api/invites/game/" + GAME_ID))
+        mockMvc.perform(get("/api/games/" + GAME_ID + "/invites"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].gameId").value(GAME_ID.toString()))
                 .andExpect(jsonPath("$[0].gameName").value("Scout Rally"));
