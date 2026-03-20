@@ -82,8 +82,6 @@ public class PlayerService {
 
         // Generate JWT token using the persisted player ID
         String jwt = tokenProvider.generatePlayerToken(player.getId(), team.getId(), game.getId());
-        player.setToken(jwt);
-        playerRepository.save(player);
 
         return PlayerAuthResponse.builder()
                 .token(jwt)
@@ -108,11 +106,8 @@ public class PlayerService {
     }
 
     @Transactional(timeout = 10)
-    public CheckInResponse checkIn(UUID gameId, UUID baseId, Player player) {
-        // Re-fetch player within transaction to get fresh entity with proper session
-        UUID playerId = player.getId();
-        player = playerRepository.findById(playerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
+    public CheckInResponse checkIn(UUID gameId, UUID baseId, Player authPlayer) {
+        Player player = loadPlayer(authPlayer);
 
         Team team = player.getTeam();
         // Force initialization of lazy proxy within this transaction
@@ -171,11 +166,8 @@ public class PlayerService {
     }
 
     @Transactional(readOnly = true)
-    public List<BaseProgressResponse> getProgress(UUID gameId, Player player) {
-        // Re-fetch player within transaction to get fresh entity with proper session
-        UUID playerId = player.getId();
-        player = playerRepository.findById(playerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
+    public List<BaseProgressResponse> getProgress(UUID gameId, Player authPlayer) {
+        Player player = loadPlayer(authPlayer);
 
         Team team = player.getTeam();
         // Force initialization of lazy proxy within this transaction
@@ -256,10 +248,8 @@ public class PlayerService {
     }
 
     @Transactional(readOnly = true)
-    public List<BaseResponse> getBases(UUID gameId, Player player) {
-        UUID playerId = player.getId();
-        player = playerRepository.findById(playerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
+    public List<BaseResponse> getBases(UUID gameId, Player authPlayer) {
+        Player player = loadPlayer(authPlayer);
         gameAccessService.ensurePlayerBelongsToGame(player, gameId);
 
         return baseRepository.findByGameId(gameId).stream()
@@ -282,11 +272,8 @@ public class PlayerService {
      * Includes: bases, assigned challenges, assignments, and current progress.
      */
     @Transactional(readOnly = true)
-    public GameDataResponse getGameData(UUID gameId, Player player) {
-        // Re-fetch player within transaction
-        UUID playerId = player.getId();
-        player = playerRepository.findById(playerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
+    public GameDataResponse getGameData(UUID gameId, Player authPlayer) {
+        Player player = loadPlayer(authPlayer);
 
         Team team = player.getTeam();
         team.getId(); // Force initialization
@@ -362,11 +349,8 @@ public class PlayerService {
     }
 
     @Transactional(timeout = 10)
-    public SubmissionResponse submitAnswer(UUID gameId, PlayerSubmissionRequest request, Player player) {
-        // Re-fetch player within transaction to get fresh entity with proper session
-        UUID playerId = player.getId();
-        player = playerRepository.findById(playerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
+    public SubmissionResponse submitAnswer(UUID gameId, PlayerSubmissionRequest request, Player authPlayer) {
+        Player player = loadPlayer(authPlayer);
 
         Team team = player.getTeam();
         // Force initialization of lazy proxy within this transaction
@@ -413,10 +397,8 @@ public class PlayerService {
     }
 
     @Transactional(timeout = 10)
-    public void updatePushToken(Player player, String pushToken, PushPlatform platform) {
-        UUID playerId = player.getId();
-        player = playerRepository.findById(playerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
+    public void updatePushToken(Player authPlayer, String pushToken, PushPlatform platform) {
+        Player player = loadPlayer(authPlayer);
         player.setPushToken(pushToken);
         player.setPushPlatform(platform);
         playerRepository.save(player);
@@ -424,30 +406,26 @@ public class PlayerService {
 
     /**
      * Self-service player data deletion.
-     * Removes the player record (including token, push token, device ID).
+     * Removes the player record (including push token, device ID).
      * Team-level data (submissions, check-ins, team location) is preserved
      * as it belongs to the team, not the individual player.
      */
     @Transactional(timeout = 10)
-    public void deletePlayerData(Player player) {
-        UUID playerId = player.getId();
-        player = playerRepository.findById(playerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
+    public void deletePlayerData(Player authPlayer) {
+        Player player = loadPlayer(authPlayer);
 
         // Delete the player record (cascading from FK will be handled by DB)
         playerRepository.delete(player);
     }
 
     @Transactional(timeout = 10)
-    public void updateLocation(UUID gameId, Player player, Double lat, Double lng) {
+    public void updateLocation(UUID gameId, Player authPlayer, Double lat, Double lng) {
         if (lat == null || lng == null || !Double.isFinite(lat) || !Double.isFinite(lng)
                 || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
             throw new BadRequestException("Invalid coordinates");
         }
 
-        UUID playerId = player.getId();
-        player = playerRepository.findById(playerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
+        Player player = loadPlayer(authPlayer);
 
         Team team = player.getTeam();
         team.getId(); // force initialization
@@ -479,19 +457,15 @@ public class PlayerService {
     }
 
     @Transactional(timeout = 10)
-    public void markNotificationsSeen(Player player) {
-        UUID playerId = player.getId();
-        player = playerRepository.findById(playerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
+    public void markNotificationsSeen(Player authPlayer) {
+        Player player = loadPlayer(authPlayer);
         player.setLastNotificationsSeenAt(Instant.now());
         playerRepository.save(player);
     }
 
     @Transactional(readOnly = true)
-    public List<NotificationResponse> getNotifications(Player player) {
-        UUID playerId = player.getId();
-        player = playerRepository.findById(playerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
+    public List<NotificationResponse> getNotifications(Player authPlayer) {
+        Player player = loadPlayer(authPlayer);
         UUID gameId = player.getTeam().getGame().getId();
         UUID teamId = player.getTeam().getId();
         return gameNotificationRepository.findByGameIdForTeam(gameId, teamId)
@@ -501,10 +475,8 @@ public class PlayerService {
     }
 
     @Transactional(readOnly = true)
-    public UnseenCountResponse getUnseenNotificationCount(Player player) {
-        UUID playerId = player.getId();
-        player = playerRepository.findById(playerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
+    public UnseenCountResponse getUnseenNotificationCount(Player authPlayer) {
+        Player player = loadPlayer(authPlayer);
         UUID gameId = player.getTeam().getGame().getId();
         UUID teamId = player.getTeam().getId();
         Instant since = player.getLastNotificationsSeenAt() != null
@@ -523,6 +495,16 @@ public class PlayerService {
                 .sentAt(n.getSentAt())
                 .sentBy(n.getSentBy().getId())
                 .build();
+    }
+
+    /**
+     * Re-fetches the player entity within the current transaction to get a fresh
+     * entity with a proper Hibernate session, avoiding LazyInitializationException.
+     */
+    private Player loadPlayer(Player authPlayer) {
+        UUID playerId = authPlayer.getId();
+        return playerRepository.findById(playerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
     }
 
     private CheckInResponse buildCheckInResponse(CheckIn checkIn, Base base, Team team, UUID gameId) {

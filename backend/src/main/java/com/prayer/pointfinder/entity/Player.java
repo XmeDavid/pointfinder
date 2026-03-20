@@ -28,9 +28,6 @@ public class Player {
     @Column(name = "display_name", nullable = false)
     private String displayName;
 
-    @Column(unique = true)
-    private String token;
-
     @Column(name = "push_token")
     private String pushToken;
 
