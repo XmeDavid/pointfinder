@@ -10,6 +10,8 @@ public interface BaseRepository extends JpaRepository<Base, UUID> {
 
     List<Base> findByGameId(UUID gameId);
 
+    List<Base> findByGameIdOrderByCreatedAtAsc(UUID gameId);
+
     long countByGameId(UUID gameId);
 
     long countByGameIdAndNfcLinkedTrue(UUID gameId);

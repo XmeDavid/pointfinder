@@ -33,7 +33,7 @@ public class ChallengeService {
     @Transactional(readOnly = true)
     public List<ChallengeResponse> getChallengesByGame(UUID gameId) {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
-        return challengeRepository.findByGameId(gameId).stream()
+        return challengeRepository.findByGameIdOrderByCreatedAtAsc(gameId).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }

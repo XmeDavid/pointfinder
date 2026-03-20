@@ -11,6 +11,8 @@ public interface ChallengeRepository extends JpaRepository<Challenge, UUID> {
 
     List<Challenge> findByGameId(UUID gameId);
 
+    List<Challenge> findByGameIdOrderByCreatedAtAsc(UUID gameId);
+
     long countByGameId(UUID gameId);
 
     List<Challenge> findByGameIdAndUnlocksBaseIsNotNull(UUID gameId);

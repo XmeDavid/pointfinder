@@ -33,7 +33,7 @@ public class BaseService {
     @Transactional(readOnly = true)
     public List<BaseResponse> getBasesByGame(UUID gameId) {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
-        return baseRepository.findByGameId(gameId).stream()
+        return baseRepository.findByGameIdOrderByCreatedAtAsc(gameId).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
