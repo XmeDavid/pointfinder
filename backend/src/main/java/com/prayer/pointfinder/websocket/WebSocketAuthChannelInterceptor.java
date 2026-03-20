@@ -167,15 +167,19 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
             return;
         }
 
-        Game game = gameRepository.findById(gameId)
-                .orElseThrow(() -> new AccessDeniedException("Game not found"));
         UUID userId = principal.userId();
 
-        boolean isCreator = game.getCreatedBy() != null && game.getCreatedBy().getId().equals(userId);
-        boolean isOperator = game.getOperators().stream()
-                .anyMatch(operator -> operator.getId().equals(userId));
-        if (!isCreator && !isOperator) {
-            throw new AccessDeniedException("User cannot subscribe to this game topic");
+        // Use a COUNT query to avoid lazy-loading the operators collection
+        // (loading it outside a transaction causes LazyInitializationException
+        // with open-in-view disabled)
+        if (!gameRepository.isUserOperator(gameId, userId)) {
+            // Also check if they're the game creator
+            Game game = gameRepository.findById(gameId)
+                    .orElseThrow(() -> new AccessDeniedException("Game not found"));
+            boolean isCreator = game.getCreatedBy() != null && game.getCreatedBy().getId().equals(userId);
+            if (!isCreator) {
+                throw new AccessDeniedException("User cannot subscribe to this game topic");
+            }
         }
     }
 
