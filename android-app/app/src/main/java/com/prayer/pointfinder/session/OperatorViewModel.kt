@@ -2,29 +2,21 @@ package com.prayer.pointfinder.session
 
 import android.content.Context
 import android.nfc.Tag
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.prayer.pointfinder.core.data.repo.OperatorRepository
 import com.prayer.pointfinder.core.data.repo.SessionStore
 import com.prayer.pointfinder.core.model.Assignment
 import com.prayer.pointfinder.core.model.Base
 import com.prayer.pointfinder.core.model.Challenge
 import com.prayer.pointfinder.core.model.CreateBaseRequest
 import com.prayer.pointfinder.core.model.CreateChallengeRequest
-import com.prayer.pointfinder.core.model.CreateGameRequest
-import com.prayer.pointfinder.core.model.CreateTeamRequest
 import com.prayer.pointfinder.core.model.Game
 import com.prayer.pointfinder.core.model.GameExportDto
-import com.prayer.pointfinder.core.model.ImportGameRequest
-import com.prayer.pointfinder.core.model.InviteRequest
 import com.prayer.pointfinder.core.model.InviteResponse
 import com.prayer.pointfinder.core.model.NotificationResponse
 import com.prayer.pointfinder.core.model.OperatorUserResponse
-import com.prayer.pointfinder.core.model.SendNotificationRequest
 import com.prayer.pointfinder.core.model.PlayerResponse
 import com.prayer.pointfinder.core.model.TeamVariable
-import com.prayer.pointfinder.core.model.TeamVariablesRequest
 import com.prayer.pointfinder.core.model.UpdateBaseRequest
 import com.prayer.pointfinder.core.model.UpdateChallengeRequest
 import com.prayer.pointfinder.core.model.UpdateGameRequest
@@ -38,14 +30,21 @@ import com.prayer.pointfinder.core.model.SubmissionStatus
 import com.prayer.pointfinder.core.model.Team
 import com.prayer.pointfinder.core.model.TeamBaseProgressResponse
 import com.prayer.pointfinder.core.model.TeamLocationResponse
-import com.prayer.pointfinder.core.model.UpdateGameStatusRequest
-import com.prayer.pointfinder.core.model.UpdateOperatorNotificationSettingsRequest
 import com.prayer.pointfinder.core.network.ApiErrorParser
 import com.prayer.pointfinder.core.network.MobileRealtimeClient
 import com.prayer.pointfinder.core.network.RealtimeConnectionState
 import com.prayer.pointfinder.core.platform.NfcEventBus
 import com.prayer.pointfinder.core.platform.NfcService
 import com.prayer.pointfinder.feature.operator.OperatorTab
+import com.prayer.pointfinder.session.usecase.BaseManagementUseCase
+import com.prayer.pointfinder.session.usecase.ChallengeManagementUseCase
+import com.prayer.pointfinder.session.usecase.GameCrudUseCase
+import com.prayer.pointfinder.session.usecase.LiveDataUseCase
+import com.prayer.pointfinder.session.usecase.NotificationUseCase
+import com.prayer.pointfinder.session.usecase.OperatorManagementUseCase
+import com.prayer.pointfinder.session.usecase.SubmissionUseCase
+import com.prayer.pointfinder.session.usecase.TeamManagementUseCase
+import com.prayer.pointfinder.session.usecase.VariableManagementUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -92,7 +91,15 @@ data class OperatorState(
 
 @HiltViewModel
 class OperatorViewModel @Inject constructor(
-    private val operatorRepository: OperatorRepository,
+    private val gameCrudUseCase: GameCrudUseCase,
+    private val baseManagementUseCase: BaseManagementUseCase,
+    private val challengeManagementUseCase: ChallengeManagementUseCase,
+    private val teamManagementUseCase: TeamManagementUseCase,
+    private val variableManagementUseCase: VariableManagementUseCase,
+    private val submissionUseCase: SubmissionUseCase,
+    private val notificationUseCase: NotificationUseCase,
+    private val operatorManagementUseCase: OperatorManagementUseCase,
+    private val liveDataUseCase: LiveDataUseCase,
     private val sessionStore: SessionStore,
     private val realtimeClient: MobileRealtimeClient,
     private val nfcService: NfcService,
@@ -139,11 +146,13 @@ class OperatorViewModel @Inject constructor(
         }
     }
 
+    // ── Game CRUD ────────────────────────────────────────────────────────
+
     fun loadGames() {
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, errorMessage = null)
             runCatching {
-                operatorRepository.games()
+                gameCrudUseCase.loadGames()
             }.onSuccess { games ->
                 val selectedId = _state.value.selectedGame?.id
                 val updatedSelectedGame = selectedId?.let { id -> games.firstOrNull { it.id == id } }
@@ -163,6 +172,84 @@ class OperatorViewModel @Inject constructor(
         }
     }
 
+    fun createGame(name: String, description: String, onSuccess: (Game) -> Unit) {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isLoading = true)
+            runCatching {
+                gameCrudUseCase.createGame(name, description)
+            }.onSuccess { game ->
+                _state.value = _state.value.copy(isLoading = false)
+                loadGames()
+                onSuccess(game)
+            }.onFailure { e ->
+                _state.value = _state.value.copy(isLoading = false, errorMessage = friendlyError(e))
+            }
+        }
+    }
+
+    fun importGame(name: String, exportData: GameExportDto, onSuccess: (Game) -> Unit) {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isLoading = true)
+            runCatching {
+                gameCrudUseCase.importGame(name, exportData)
+            }.onSuccess { game ->
+                _state.value = _state.value.copy(isLoading = false)
+                loadGames()
+                onSuccess(game)
+            }.onFailure { e ->
+                _state.value = _state.value.copy(isLoading = false, errorMessage = friendlyError(e))
+            }
+        }
+    }
+
+    fun updateGameStatus(status: String) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching {
+                gameCrudUseCase.updateGameStatus(gameId, status)
+            }.onSuccess { updatedGame ->
+                _state.value = _state.value.copy(selectedGame = updatedGame, authExpired = false)
+                loadGames()
+            }.onFailure { e ->
+                if (markAuthExpiredIfNeeded(e)) return@onFailure
+                _state.value = _state.value.copy(errorMessage = friendlyError(e))
+            }
+        }
+    }
+
+    fun updateGame(request: UpdateGameRequest, onSuccess: () -> Unit) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching {
+                gameCrudUseCase.updateGame(gameId, request)
+            }.onSuccess { updatedGame ->
+                _state.value = _state.value.copy(selectedGame = updatedGame, authExpired = false)
+                loadGames()
+                onSuccess()
+            }.onFailure { e ->
+                if (markAuthExpiredIfNeeded(e)) return@onFailure
+                _state.value = _state.value.copy(errorMessage = friendlyError(e))
+            }
+        }
+    }
+
+    fun exportGame(onSuccess: (GameExportDto) -> Unit) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching {
+                gameCrudUseCase.exportGame(gameId)
+            }.onSuccess { export ->
+                _state.value = _state.value.copy(authExpired = false)
+                onSuccess(export)
+            }.onFailure { err ->
+                if (markAuthExpiredIfNeeded(err)) return@onFailure
+                _state.value = _state.value.copy(errorMessage = friendlyError(err))
+            }
+        }
+    }
+
+    // ── Game selection & navigation ─────────────────────────────────────
+
     fun selectGame(game: Game) {
         _state.value = _state.value.copy(selectedGame = game, selectedTab = OperatorTab.LIVE_MAP)
         sessionStore.operatorToken()?.let { token ->
@@ -173,46 +260,6 @@ class OperatorViewModel @Inject constructor(
         loadNotificationSettings()
         startPolling()
     }
-
-    private fun loadGameMeta(gameId: String) {
-        viewModelScope.launch {
-            val teams = runCatching { operatorRepository.gameTeams(gameId) }
-                .onFailure { Log.e("OperatorVM", "Failed to load teams", it) }
-                .getOrDefault(emptyList())
-            val challenges = runCatching { operatorRepository.gameChallenges(gameId) }
-                .onFailure { Log.e("OperatorVM", "Failed to load challenges", it) }
-                .getOrDefault(emptyList())
-            val assignments = runCatching { operatorRepository.gameAssignments(gameId) }
-                .onFailure { Log.e("OperatorVM", "Failed to load assignments", it) }
-                .getOrDefault(emptyList())
-            val variables = runCatching { operatorRepository.getGameVariables(gameId).variables }
-                .onFailure { Log.e("OperatorVM", "Failed to load variables", it) }
-                .getOrDefault(emptyList())
-            val teamVariablesIncomplete = if (variables.isNotEmpty()) {
-                runCatching { !operatorRepository.getVariablesCompleteness(gameId).complete }
-                    .onFailure { Log.e("OperatorVM", "Failed to check variables completeness", it) }
-                    .getOrDefault(false)
-            } else {
-                false
-            }
-
-            _state.value = _state.value.copy(
-                teams = teams,
-                challenges = challenges,
-                assignments = assignments,
-                variables = variables,
-                teamVariablesIncomplete = teamVariablesIncomplete,
-                authExpired = false,
-            )
-        }
-    }
-
-    private data class GameMeta(
-        val teams: List<Team>,
-        val challenges: List<Challenge>,
-        val assignments: List<Assignment>,
-        val variables: List<TeamVariable>,
-    )
 
     fun clearSelectedGame() {
         pollingJob?.cancel()
@@ -244,20 +291,13 @@ class OperatorViewModel @Inject constructor(
         }
     }
 
+    // ── Live data & polling ─────────────────────────────────────────────
+
     fun refreshSelectedGameData() {
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
             runCatching {
-                val bases = operatorRepository.gameBases(gameId)
-                val locations = operatorRepository.teamLocations(gameId)
-                val progress = operatorRepository.teamProgress(gameId)
-                val submissions = operatorRepository.gameSubmissions(gameId)
-                RefreshData(
-                    bases = bases,
-                    locations = locations,
-                    progress = progress,
-                    submissions = submissions,
-                )
+                liveDataUseCase.refreshGameData(gameId)
             }.onSuccess { refreshed ->
                 _state.value = _state.value.copy(
                     bases = refreshed.bases,
@@ -280,7 +320,7 @@ class OperatorViewModel @Inject constructor(
     fun loadLeaderboard() {
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
-            runCatching { operatorRepository.getLeaderboard(gameId) }
+            runCatching { liveDataUseCase.loadLeaderboard(gameId) }
                 .onSuccess { entries ->
                     _state.value = _state.value.copy(leaderboard = entries, authExpired = false)
                 }
@@ -293,7 +333,7 @@ class OperatorViewModel @Inject constructor(
     fun loadActivity() {
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
-            runCatching { operatorRepository.getActivity(gameId) }
+            runCatching { liveDataUseCase.loadActivity(gameId) }
                 .onSuccess { events ->
                     _state.value = _state.value.copy(activity = events, authExpired = false)
                 }
@@ -308,8 +348,8 @@ class OperatorViewModel @Inject constructor(
         viewModelScope.launch {
             _state.value = _state.value.copy(isLiveRefreshing = true)
             runCatching {
-                val leaderboard = operatorRepository.getLeaderboard(gameId)
-                val activity = operatorRepository.getActivity(gameId)
+                val leaderboard = liveDataUseCase.loadLeaderboard(gameId)
+                val activity = liveDataUseCase.loadActivity(gameId)
                 leaderboard to activity
             }.onSuccess { (leaderboard, activity) ->
                 _state.value = _state.value.copy(
@@ -325,11 +365,27 @@ class OperatorViewModel @Inject constructor(
         }
     }
 
+    private fun loadGameMeta(gameId: String) {
+        viewModelScope.launch {
+            val meta = liveDataUseCase.loadGameMeta(gameId)
+            _state.value = _state.value.copy(
+                teams = meta.teams,
+                challenges = meta.challenges,
+                assignments = meta.assignments,
+                variables = meta.variables,
+                teamVariablesIncomplete = meta.teamVariablesIncomplete,
+                authExpired = false,
+            )
+        }
+    }
+
+    // ── Submission review ───────────────────────────────────────────────
+
     fun reviewSubmission(submissionId: String, status: SubmissionStatus, feedback: String?, points: Int? = null) {
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
             runCatching {
-                operatorRepository.reviewSubmission(
+                submissionUseCase.reviewSubmission(
                     gameId = gameId,
                     submissionId = submissionId,
                     status = status,
@@ -346,12 +402,14 @@ class OperatorViewModel @Inject constructor(
         }
     }
 
+    // ── Notification settings ───────────────────────────────────────────
+
     fun loadNotificationSettings() {
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoadingNotificationSettings = true)
             runCatching {
-                operatorRepository.getOperatorNotificationSettings(gameId)
+                notificationUseCase.loadNotificationSettings(gameId)
             }.onSuccess { settings ->
                 _state.value = _state.value.copy(
                     notificationSettings = settings,
@@ -377,13 +435,11 @@ class OperatorViewModel @Inject constructor(
         viewModelScope.launch {
             _state.value = _state.value.copy(isSavingNotificationSettings = true)
             runCatching {
-                operatorRepository.updateOperatorNotificationSettings(
+                notificationUseCase.updateNotificationSettings(
                     gameId = gameId,
-                    request = UpdateOperatorNotificationSettingsRequest(
-                        notifyPendingSubmissions = notifyPendingSubmissions,
-                        notifyAllSubmissions = notifyAllSubmissions,
-                        notifyCheckIns = notifyCheckIns,
-                    ),
+                    notifyPendingSubmissions = notifyPendingSubmissions,
+                    notifyAllSubmissions = notifyAllSubmissions,
+                    notifyCheckIns = notifyCheckIns,
                 )
             }.onSuccess { settings ->
                 _state.value = _state.value.copy(
@@ -401,11 +457,13 @@ class OperatorViewModel @Inject constructor(
         }
     }
 
+    // ── Base management ─────────────────────────────────────────────────
+
     fun selectBase(base: Base) {
         val game = _state.value.selectedGame ?: return
         viewModelScope.launch {
             runCatching {
-                val assignments = operatorRepository.gameAssignments(game.id)
+                val assignments = baseManagementUseCase.loadAssignments(game.id)
                 val matching = assignments.filter { it.baseId == base.id }
                 when {
                     matching.isEmpty() -> context.getString(StringR.string.label_assignment_random_not_started)
@@ -442,6 +500,56 @@ class OperatorViewModel @Inject constructor(
         )
     }
 
+    fun createBase(request: CreateBaseRequest, onSuccess: (Base) -> Unit) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching { baseManagementUseCase.createBase(gameId, request) }
+                .onSuccess { base ->
+                    refreshSelectedGameData()
+                    loadGameMeta(gameId)
+                    onSuccess(base)
+                }
+                .onFailure { e ->
+                    if (markAuthExpiredIfNeeded(e)) return@onFailure
+                    _state.value = _state.value.copy(errorMessage = friendlyError(e))
+                }
+        }
+    }
+
+    fun updateBase(baseId: String, request: UpdateBaseRequest, onSuccess: (Base) -> Unit) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching { baseManagementUseCase.updateBase(gameId, baseId, request) }
+                .onSuccess { base ->
+                    refreshSelectedGameData()
+                    loadGameMeta(gameId)
+                    onSuccess(base)
+                }
+                .onFailure { e ->
+                    if (markAuthExpiredIfNeeded(e)) return@onFailure
+                    _state.value = _state.value.copy(errorMessage = friendlyError(e))
+                }
+        }
+    }
+
+    fun deleteBase(baseId: String, onSuccess: () -> Unit) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching { baseManagementUseCase.deleteBase(gameId, baseId) }
+                .onSuccess {
+                    refreshSelectedGameData()
+                    loadGameMeta(gameId)
+                    onSuccess()
+                }
+                .onFailure { e ->
+                    if (markAuthExpiredIfNeeded(e)) return@onFailure
+                    _state.value = _state.value.copy(errorMessage = friendlyError(e))
+                }
+        }
+    }
+
+    // ── NFC write ───────────────────────────────────────────────────────
+
     fun beginWriteNfc() {
         if (!nfcService.isAvailable()) {
             _state.value = _state.value.copy(
@@ -476,10 +584,9 @@ class OperatorViewModel @Inject constructor(
                 writeStatus = null,
                 writeSuccess = null,
             )
-            // Auto-link in backend after successful write
             viewModelScope.launch {
                 runCatching {
-                    operatorRepository.linkBaseNfc(game.id, base.id)
+                    baseManagementUseCase.linkBaseNfc(game.id, base.id)
                 }.onSuccess {
                     _state.value = _state.value.copy(
                         writeStatus = context.getString(StringR.string.success_nfc_written),
@@ -504,58 +611,12 @@ class OperatorViewModel @Inject constructor(
         }
     }
 
-    fun createBase(request: CreateBaseRequest, onSuccess: (Base) -> Unit) {
-        val gameId = _state.value.selectedGame?.id ?: return
-        viewModelScope.launch {
-            runCatching { operatorRepository.createBase(gameId, request) }
-                .onSuccess { base ->
-                    refreshSelectedGameData()
-                    loadGameMeta(gameId)
-                    onSuccess(base)
-                }
-                .onFailure { e ->
-                    if (markAuthExpiredIfNeeded(e)) return@onFailure
-                    _state.value = _state.value.copy(errorMessage = friendlyError(e))
-                }
-        }
-    }
-
-    fun updateBase(baseId: String, request: UpdateBaseRequest, onSuccess: (Base) -> Unit) {
-        val gameId = _state.value.selectedGame?.id ?: return
-        viewModelScope.launch {
-            runCatching { operatorRepository.updateBase(gameId, baseId, request) }
-                .onSuccess { base ->
-                    refreshSelectedGameData()
-                    loadGameMeta(gameId)
-                    onSuccess(base)
-                }
-                .onFailure { e ->
-                    if (markAuthExpiredIfNeeded(e)) return@onFailure
-                    _state.value = _state.value.copy(errorMessage = friendlyError(e))
-                }
-        }
-    }
-
-    fun deleteBase(baseId: String, onSuccess: () -> Unit) {
-        val gameId = _state.value.selectedGame?.id ?: return
-        viewModelScope.launch {
-            runCatching { operatorRepository.deleteBaseUnit(gameId, baseId) }
-                .onSuccess {
-                    refreshSelectedGameData()
-                    loadGameMeta(gameId)
-                    onSuccess()
-                }
-                .onFailure { e ->
-                    if (markAuthExpiredIfNeeded(e)) return@onFailure
-                    _state.value = _state.value.copy(errorMessage = friendlyError(e))
-                }
-        }
-    }
+    // ── Challenge management ────────────────────────────────────────────
 
     fun createChallenge(request: CreateChallengeRequest, onSuccess: (Challenge) -> Unit) {
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
-            runCatching { operatorRepository.createChallenge(gameId, request) }
+            runCatching { challengeManagementUseCase.createChallenge(gameId, request) }
                 .onSuccess { challenge ->
                     refreshSelectedGameData()
                     loadGameMeta(gameId)
@@ -571,7 +632,7 @@ class OperatorViewModel @Inject constructor(
     fun updateChallenge(challengeId: String, request: UpdateChallengeRequest, onSuccess: (Challenge) -> Unit) {
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
-            runCatching { operatorRepository.updateChallenge(gameId, challengeId, request) }
+            runCatching { challengeManagementUseCase.updateChallenge(gameId, challengeId, request) }
                 .onSuccess { challenge ->
                     refreshSelectedGameData()
                     loadGameMeta(gameId)
@@ -587,7 +648,7 @@ class OperatorViewModel @Inject constructor(
     fun deleteChallenge(challengeId: String, onSuccess: () -> Unit) {
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
-            runCatching { operatorRepository.deleteChallengeUnit(gameId, challengeId) }
+            runCatching { challengeManagementUseCase.deleteChallenge(gameId, challengeId) }
                 .onSuccess {
                     refreshSelectedGameData()
                     loadGameMeta(gameId)
@@ -600,45 +661,13 @@ class OperatorViewModel @Inject constructor(
         }
     }
 
-    fun createVariable(variableName: String) {
-        val gameId = _state.value.selectedGame?.id ?: return
-        viewModelScope.launch {
-            runCatching {
-                val currentVars = _state.value.variables.toMutableList()
-                if (currentVars.none { it.key == variableName }) {
-                    currentVars.add(TeamVariable(key = variableName, teamValues = emptyMap()))
-                }
-                operatorRepository.saveGameVariables(gameId, TeamVariablesRequest(variables = currentVars))
-            }.onSuccess { response ->
-                _state.value = _state.value.copy(variables = response.variables)
-            }.onFailure { e ->
-                if (markAuthExpiredIfNeeded(e)) return@onFailure
-                _state.value = _state.value.copy(errorMessage = friendlyError(e))
-            }
-        }
-    }
-
-    fun deleteVariable(variableKey: String) {
-        val gameId = _state.value.selectedGame?.id ?: return
-        viewModelScope.launch {
-            runCatching {
-                val currentVars = _state.value.variables.filter { it.key != variableKey }
-                operatorRepository.saveGameVariables(gameId, TeamVariablesRequest(variables = currentVars))
-            }.onSuccess { response ->
-                _state.value = _state.value.copy(variables = response.variables)
-            }.onFailure { e ->
-                if (markAuthExpiredIfNeeded(e)) return@onFailure
-                _state.value = _state.value.copy(errorMessage = friendlyError(e))
-            }
-        }
-    }
+    // ── Team management ─────────────────────────────────────────────────
 
     fun createTeam(name: String, color: String, onSuccess: (Team) -> Unit) {
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
             runCatching {
-                val team = operatorRepository.createTeam(gameId, CreateTeamRequest(name = name))
-                operatorRepository.updateTeam(gameId, team.id, UpdateTeamRequest(name = name, color = color))
+                teamManagementUseCase.createTeam(gameId, name, color)
             }.onSuccess { team ->
                 loadGameMeta(gameId)
                 onSuccess(team)
@@ -652,7 +681,7 @@ class OperatorViewModel @Inject constructor(
     fun updateTeam(teamId: String, request: UpdateTeamRequest, onSuccess: () -> Unit) {
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
-            runCatching { operatorRepository.updateTeam(gameId, teamId, request) }
+            runCatching { teamManagementUseCase.updateTeam(gameId, teamId, request) }
                 .onSuccess { loadGameMeta(gameId); onSuccess() }
                 .onFailure { e ->
                     if (markAuthExpiredIfNeeded(e)) return@onFailure
@@ -664,7 +693,7 @@ class OperatorViewModel @Inject constructor(
     fun deleteTeam(teamId: String, onSuccess: () -> Unit) {
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
-            runCatching { operatorRepository.deleteTeamUnit(gameId, teamId) }
+            runCatching { teamManagementUseCase.deleteTeam(gameId, teamId) }
                 .onSuccess { loadGameMeta(gameId); onSuccess() }
                 .onFailure { e ->
                     if (markAuthExpiredIfNeeded(e)) return@onFailure
@@ -676,7 +705,7 @@ class OperatorViewModel @Inject constructor(
     fun loadTeamPlayers(teamId: String, onSuccess: (List<PlayerResponse>) -> Unit) {
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
-            runCatching { operatorRepository.getTeamPlayers(gameId, teamId) }
+            runCatching { teamManagementUseCase.loadTeamPlayers(gameId, teamId) }
                 .onSuccess(onSuccess)
                 .onFailure { err ->
                     _state.value = _state.value.copy(errorMessage = friendlyError(err))
@@ -687,7 +716,7 @@ class OperatorViewModel @Inject constructor(
     fun removePlayer(teamId: String, playerId: String, onSuccess: () -> Unit) {
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
-            runCatching { operatorRepository.removePlayerUnit(gameId, teamId, playerId) }
+            runCatching { teamManagementUseCase.removePlayer(gameId, teamId, playerId) }
                 .onSuccess { onSuccess() }
                 .onFailure { e ->
                     if (markAuthExpiredIfNeeded(e)) return@onFailure
@@ -696,21 +725,45 @@ class OperatorViewModel @Inject constructor(
         }
     }
 
+    // ── Variable management ─────────────────────────────────────────────
+
+    fun createVariable(variableName: String) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching {
+                variableManagementUseCase.createVariable(gameId, variableName, _state.value.variables)
+            }.onSuccess { variables ->
+                _state.value = _state.value.copy(variables = variables)
+            }.onFailure { e ->
+                if (markAuthExpiredIfNeeded(e)) return@onFailure
+                _state.value = _state.value.copy(errorMessage = friendlyError(e))
+            }
+        }
+    }
+
+    fun deleteVariable(variableKey: String) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching {
+                variableManagementUseCase.deleteVariable(gameId, variableKey, _state.value.variables)
+            }.onSuccess { variables ->
+                _state.value = _state.value.copy(variables = variables)
+            }.onFailure { e ->
+                if (markAuthExpiredIfNeeded(e)) return@onFailure
+                _state.value = _state.value.copy(errorMessage = friendlyError(e))
+            }
+        }
+    }
+
     fun saveTeamVariableValue(variableKey: String, teamId: String, value: String) {
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
-            val currentVars = _state.value.variables.toMutableList()
-            val varIndex = currentVars.indexOfFirst { it.key == variableKey }
-            if (varIndex >= 0) {
-                val updated = currentVars[varIndex].let { v ->
-                    v.copy(teamValues = v.teamValues.toMutableMap().apply { put(teamId, value) })
-                }
-                currentVars[varIndex] = updated
-            }
             runCatching {
-                operatorRepository.saveGameVariables(gameId, TeamVariablesRequest(variables = currentVars))
-            }.onSuccess { response ->
-                _state.value = _state.value.copy(variables = response.variables)
+                variableManagementUseCase.saveTeamVariableValue(
+                    gameId, variableKey, teamId, value, _state.value.variables,
+                )
+            }.onSuccess { variables ->
+                _state.value = _state.value.copy(variables = variables)
             }.onFailure { err ->
                 _state.value = _state.value.copy(errorMessage = friendlyError(err))
             }
@@ -720,7 +773,7 @@ class OperatorViewModel @Inject constructor(
     suspend fun loadChallengeVariables(challengeId: String): List<TeamVariable> {
         val gameId = _state.value.selectedGame?.id ?: return emptyList()
         return runCatching {
-            operatorRepository.getChallengeVariables(gameId, challengeId).variables
+            variableManagementUseCase.loadChallengeVariables(gameId, challengeId)
         }.getOrElse { emptyList() }
     }
 
@@ -730,92 +783,24 @@ class OperatorViewModel @Inject constructor(
     ): List<TeamVariable> {
         val gameId = _state.value.selectedGame?.id
             ?: throw IllegalStateException("No game selected")
-        val response = operatorRepository.saveChallengeVariables(
-            gameId, challengeId, TeamVariablesRequest(variables = variables),
-        )
-        return response.variables
+        return variableManagementUseCase.saveChallengeVariables(gameId, challengeId, variables)
     }
 
     suspend fun saveGameVariablesList(variables: List<TeamVariable>): List<TeamVariable> {
         val gameId = _state.value.selectedGame?.id
             ?: throw IllegalStateException("No game selected")
-        val response = operatorRepository.saveGameVariables(
-            gameId, TeamVariablesRequest(variables = variables),
-        )
-        _state.value = _state.value.copy(variables = response.variables)
-        return response.variables
+        val result = variableManagementUseCase.saveGameVariables(gameId, variables)
+        _state.value = _state.value.copy(variables = result)
+        return result
     }
 
-    fun createGame(name: String, description: String, onSuccess: (Game) -> Unit) {
-        viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true)
-            runCatching {
-                operatorRepository.createGame(CreateGameRequest(name = name, description = description))
-            }.onSuccess { game ->
-                _state.value = _state.value.copy(isLoading = false)
-                loadGames()
-                onSuccess(game)
-            }.onFailure { e ->
-                _state.value = _state.value.copy(isLoading = false, errorMessage = friendlyError(e))
-            }
-        }
-    }
-
-    fun importGame(name: String, exportData: GameExportDto, onSuccess: (Game) -> Unit) {
-        viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true)
-            runCatching {
-                operatorRepository.importGame(
-                    ImportGameRequest(
-                        gameData = exportData.copy(game = exportData.game.copy(name = name)),
-                    ),
-                )
-            }.onSuccess { game ->
-                _state.value = _state.value.copy(isLoading = false)
-                loadGames()
-                onSuccess(game)
-            }.onFailure { e ->
-                _state.value = _state.value.copy(isLoading = false, errorMessage = friendlyError(e))
-            }
-        }
-    }
-
-    fun updateGameStatus(status: String) {
-        val gameId = _state.value.selectedGame?.id ?: return
-        viewModelScope.launch {
-            runCatching {
-                operatorRepository.updateGameStatus(gameId, UpdateGameStatusRequest(status = status))
-            }.onSuccess { updatedGame ->
-                _state.value = _state.value.copy(selectedGame = updatedGame, authExpired = false)
-                loadGames()
-            }.onFailure { e ->
-                if (markAuthExpiredIfNeeded(e)) return@onFailure
-                _state.value = _state.value.copy(errorMessage = friendlyError(e))
-            }
-        }
-    }
-
-    fun updateGame(request: UpdateGameRequest, onSuccess: () -> Unit) {
-        val gameId = _state.value.selectedGame?.id ?: return
-        viewModelScope.launch {
-            runCatching {
-                operatorRepository.updateGame(gameId, request)
-            }.onSuccess { updatedGame ->
-                _state.value = _state.value.copy(selectedGame = updatedGame, authExpired = false)
-                loadGames()
-                onSuccess()
-            }.onFailure { e ->
-                if (markAuthExpiredIfNeeded(e)) return@onFailure
-                _state.value = _state.value.copy(errorMessage = friendlyError(e))
-            }
-        }
-    }
+    // ── Notifications ───────────────────────────────────────────────────
 
     fun loadNotifications() {
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
             runCatching {
-                operatorRepository.getNotifications(gameId)
+                notificationUseCase.loadNotifications(gameId)
             }.onSuccess { list ->
                 _state.value = _state.value.copy(notifications = list, authExpired = false)
             }.onFailure { err ->
@@ -829,7 +814,7 @@ class OperatorViewModel @Inject constructor(
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
             runCatching {
-                operatorRepository.sendNotification(gameId, SendNotificationRequest(message = message, targetTeamId = targetTeamId))
+                notificationUseCase.sendNotification(gameId, message, targetTeamId)
             }.onSuccess {
                 _state.value = _state.value.copy(authExpired = false)
                 loadNotifications()
@@ -841,13 +826,13 @@ class OperatorViewModel @Inject constructor(
         }
     }
 
+    // ── Operator management ─────────────────────────────────────────────
+
     fun loadOperators() {
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
             runCatching {
-                val ops = operatorRepository.getGameOperators(gameId)
-                val inv = operatorRepository.getGameInvites(gameId)
-                ops to inv
+                operatorManagementUseCase.loadOperators(gameId)
             }.onSuccess { (ops, inv) ->
                 _state.value = _state.value.copy(operators = ops, invites = inv, authExpired = false)
             }.onFailure { err ->
@@ -861,7 +846,7 @@ class OperatorViewModel @Inject constructor(
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
             try {
-                operatorRepository.removeGameOperatorUnit(gameId, userId)
+                operatorManagementUseCase.removeOperator(gameId, userId)
                 _state.value = _state.value.copy(authExpired = false)
                 loadOperators()
             } catch (err: Exception) {
@@ -875,7 +860,7 @@ class OperatorViewModel @Inject constructor(
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
             runCatching {
-                operatorRepository.createInvite(InviteRequest(email = email, gameId = gameId))
+                operatorManagementUseCase.inviteOperator(email, gameId)
             }.onSuccess {
                 _state.value = _state.value.copy(authExpired = false)
                 loadOperators()
@@ -890,7 +875,7 @@ class OperatorViewModel @Inject constructor(
     fun revokeInvite(inviteId: String) {
         viewModelScope.launch {
             runCatching {
-                operatorRepository.deleteInvite(inviteId)
+                operatorManagementUseCase.revokeInvite(inviteId)
             }.onSuccess {
                 _state.value = _state.value.copy(authExpired = false)
                 loadOperators()
@@ -901,29 +886,11 @@ class OperatorViewModel @Inject constructor(
         }
     }
 
-    fun exportGame(onSuccess: (GameExportDto) -> Unit) {
-        val gameId = _state.value.selectedGame?.id ?: return
-        viewModelScope.launch {
-            runCatching {
-                operatorRepository.exportGame(gameId)
-            }.onSuccess { export ->
-                _state.value = _state.value.copy(authExpired = false)
-                onSuccess(export)
-            }.onFailure { err ->
-                if (markAuthExpiredIfNeeded(err)) return@onFailure
-                _state.value = _state.value.copy(errorMessage = friendlyError(err))
-            }
-        }
-    }
+    // ── Utilities ───────────────────────────────────────────────────────
 
     fun currentOperatorUserId(): String? {
         return (sessionStore.authType() as? AuthType.Operator)?.userId
     }
-
-    private fun friendlyError(err: Throwable): String =
-        if (ApiErrorParser.isNetworkError(err))
-            context.getString(StringR.string.error_network_unavailable)
-        else ApiErrorParser.extractMessage(err)
 
     fun clearError() {
         _state.value = _state.value.copy(errorMessage = null)
@@ -932,6 +899,11 @@ class OperatorViewModel @Inject constructor(
     fun clearAuthExpired() {
         _state.value = _state.value.copy(authExpired = false)
     }
+
+    private fun friendlyError(err: Throwable): String =
+        if (ApiErrorParser.isNetworkError(err))
+            context.getString(StringR.string.error_network_unavailable)
+        else ApiErrorParser.extractMessage(err)
 
     private fun startPolling() {
         pollingJob?.cancel()
@@ -956,11 +928,4 @@ class OperatorViewModel @Inject constructor(
         )
         return true
     }
-
-    private data class RefreshData(
-        val bases: List<Base>,
-        val locations: List<TeamLocationResponse>,
-        val progress: List<TeamBaseProgressResponse>,
-        val submissions: List<SubmissionResponse>,
-    )
 }
