@@ -573,7 +573,7 @@ case "$CMD" in
     ;;
   all)
     if forces_local_stack || uses_local_base_url; then
-      local_up
+      E2E_LOCAL_REBUILD=1 local_up
     fi
     setup
     trap cleanup_trap EXIT
@@ -584,7 +584,7 @@ case "$CMD" in
     ;;
   all:local)
     if forces_local_stack || uses_local_base_url; then
-      local_up
+      E2E_LOCAL_REBUILD=1 local_up
     fi
     setup
     trap cleanup_trap EXIT
