@@ -1,5 +1,6 @@
 package com.prayer.pointfinder.service;
 
+import com.prayer.pointfinder.dto.projection.TeamKeyCount;
 import com.prayer.pointfinder.dto.request.TeamVariablesBulkRequest;
 import com.prayer.pointfinder.dto.response.TeamVariablesResponse;
 import com.prayer.pointfinder.dto.response.VariableCompletenessResponse;
@@ -130,12 +131,10 @@ public class TeamVariableService {
         if (teamCount == 0) return errors;
 
         // Check game-level variables
-        List<Object[]> gameCounts = teamVariableRepository.countTeamsPerKeyByGameId(gameId);
-        for (Object[] row : gameCounts) {
-            String key = (String) row[0];
-            long count = (Long) row[1];
-            if (count < teamCount) {
-                errors.add("Game variable '" + key + "' missing for " + (teamCount - count) + " team(s)");
+        List<TeamKeyCount> gameCounts = teamVariableRepository.countTeamsPerKeyByGameId(gameId);
+        for (TeamKeyCount tkc : gameCounts) {
+            if (tkc.count() < teamCount) {
+                errors.add("Game variable '" + tkc.key() + "' missing for " + (teamCount - tkc.count()) + " team(s)");
             }
         }
 

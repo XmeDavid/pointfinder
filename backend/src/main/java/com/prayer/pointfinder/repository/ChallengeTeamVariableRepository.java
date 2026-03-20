@@ -1,5 +1,6 @@
 package com.prayer.pointfinder.repository;
 
+import com.prayer.pointfinder.dto.projection.TeamKeyCount;
 import com.prayer.pointfinder.entity.ChallengeTeamVariable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,9 +17,8 @@ public interface ChallengeTeamVariableRepository extends JpaRepository<Challenge
 
     void deleteByChallengeId(UUID challengeId);
 
-    @Query("SELECT ctv.variableKey, COUNT(DISTINCT ctv.team.id) FROM ChallengeTeamVariable ctv " +
-           "WHERE ctv.challenge.id = :challengeId GROUP BY ctv.variableKey")
-    List<Object[]> countTeamsPerKeyByChallengeId(@Param("challengeId") UUID challengeId);
+    @Query("SELECT new com.prayer.pointfinder.dto.projection.TeamKeyCount(ctv.variableKey, COUNT(DISTINCT ctv.team.id)) FROM ChallengeTeamVariable ctv WHERE ctv.challenge.id = :challengeId GROUP BY ctv.variableKey")
+    List<TeamKeyCount> countTeamsPerKeyByChallengeId(@Param("challengeId") UUID challengeId);
 
     @Query("SELECT ctv FROM ChallengeTeamVariable ctv WHERE ctv.challenge.game.id = :gameId")
     List<ChallengeTeamVariable> findByGameId(@Param("gameId") UUID gameId);
