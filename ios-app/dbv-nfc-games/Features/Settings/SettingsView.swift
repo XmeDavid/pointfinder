@@ -130,7 +130,7 @@ struct SettingsView: View {
 
                 // Privacy
                 Section(locale.t("settings.privacy")) {
-                    Link(destination: URL(string: AppConfiguration.privacyPolicyURL)!) {
+                    Link(destination: AppConfiguration.privacyPolicyLink) {
                         HStack {
                             Spacer()
                             Text(locale.t("settings.privacyPolicy"))

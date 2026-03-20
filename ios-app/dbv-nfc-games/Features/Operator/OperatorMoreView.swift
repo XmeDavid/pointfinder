@@ -141,7 +141,7 @@ struct OperatorMoreView: View {
 
                 // Account section
                 Section(locale.t("operator.account")) {
-                    Link(destination: URL(string: AppConfiguration.privacyPolicyURL)!) {
+                    Link(destination: AppConfiguration.privacyPolicyLink) {
                         Label(locale.t("settings.privacyPolicy"), systemImage: "hand.raised")
                     }
 

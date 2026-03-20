@@ -15,6 +15,7 @@ enum AppConfiguration {
 
     static let appName = "PointFinder"
     static let privacyPolicyURL = "https://pointfinder.pt/privacy/"
+    static let privacyPolicyLink = URL(string: privacyPolicyURL)!
     static let mobileRealtimeEnabled = true
     static var chunkedMediaUploadEnabled: Bool {
         if UserDefaults.standard.object(forKey: "feature.chunkedMediaUploadEnabled") != nil {

@@ -224,7 +224,7 @@ struct OperatorSettingsView: View {
                 }
 
                 Section(locale.t("settings.privacy")) {
-                    Link(destination: URL(string: AppConfiguration.privacyPolicyURL)!) {
+                    Link(destination: AppConfiguration.privacyPolicyLink) {
                         Label(locale.t("settings.privacyPolicy"), systemImage: "hand.raised")
                     }
                 }
