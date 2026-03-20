@@ -3,6 +3,7 @@
     <!-- Actions -->
     <string name="action_join_game">Spiel beitreten</string>
     <string name="action_operator_login">Operator-Anmeldung</string>
+    <string name="label_sign_in_subtitle">Mit deinem Operator-Konto anmelden</string>
     <string name="action_continue">Weiter</string>
     <string name="action_sign_in">Anmelden</string>
     <string name="action_logout">Abmelden</string>
@@ -55,7 +56,7 @@
     <string name="label_file_loaded">Datei geladen</string>
     <string name="action_create">Erstellen</string>
     <string name="label_creating">Wird erstellt…</string>
-    <string name="label_offline">Offline-Modus</string>
+    <string name="label_offline">Du bist offline. Änderungen werden synchronisiert, wenn du verbunden bist.</string>
     <string name="label_my_games">Meine Spiele</string>
     <string name="label_language">Sprache</string>
     <string name="label_theme">Design</string>
@@ -121,7 +122,7 @@
     <string name="label_assignment_random_not_started">Zufällige Zuweisung nicht gestartet</string>
     <string name="label_assignment_fixed">Feste Challenge-Zuweisung</string>
     <string name="label_assignment_per_team">Zuweisungen pro Team (%1$d)</string>
-    <string name="label_no_games_description">Du hast noch keine Spiele. Ziehe zum Aktualisieren oder schaue später wieder vorbei.</string>
+    <string name="label_no_games_description">Dir sind noch keine Spiele zugewiesen.</string>
     <string name="label_game_not_active_title">Spiel ist noch nicht aktiv</string>
     <string name="label_game_not_active_message">Bitte warte, bis dein Operator das Spiel live schaltet.</string>
     <!-- Permission Disclosure -->
@@ -189,7 +190,7 @@
     <string name="label_location_bound_unassigned">Ortsgebundene Challenges nicht zugewiesen (%1$d)</string>
     <string name="label_not_enough_challenges">Nicht genug Challenges</string>
     <string name="warning_team_variables_incomplete">Einige Teams haben unvollständige Variablenwerte</string>
-    <string name="label_go_live_confirm_title">Spiel starten?</string>
+    <string name="label_go_live_confirm_title">Live gehen?</string>
     <string name="label_go_live_confirm_message">Teams können beitreten und spielen. Stationen und Challenges können weiterhin bearbeitet werden.</string>
     <string name="label_challenges">Challenges</string>
     <string name="label_teams">Teams</string>
@@ -202,7 +203,7 @@
     <string name="label_none">Keine</string>
     <string name="label_challenges_at_base">Challenges (%1$d)</string>
     <string name="label_add_challenge">Challenge hinzuf\u00fcgen</string>
-    <string name="label_delete_base">Station l\u00f6schen</string>
+    <string name="label_delete_base">Löschen</string>
     <string name="label_delete_base_confirm">Diese Station l\u00f6schen? Dies kann nicht r\u00fcckg\u00e4ngig gemacht werden.</string>
     <string name="label_tap_map_to_set_location">Tippe auf die Karte, um den Standort festzulegen</string>
     <string name="action_save">Speichern</string>
@@ -240,9 +241,9 @@
     <string name="label_completion_message">Freigeschaltete Information</string>
     <string name="action_edit">Bearbeiten</string>
     <string name="label_answer_type_label">Antworttyp</string>
-    <string name="label_text_input">Texteingabe</string>
-    <string name="label_file_upload">Datei-Upload</string>
-    <string name="label_check_in_only">Nur Check-in</string>
+    <string name="label_text_input">Text</string>
+    <string name="label_file_upload">Datei</string>
+    <string name="label_check_in_only">Check-in</string>
     <string name="label_auto_validate">Automatisch pr\u00fcfen</string>
     <string name="label_correct_answers">Richtige Antworten</string>
     <string name="label_add_answer">Antwort hinzuf\u00fcgen</string>
@@ -250,7 +251,7 @@
     <string name="label_fixed_to_base">Feste Station</string>
     <string name="label_location_bound">Ortsgebunden</string>
     <string name="label_unlocks_base">Schaltet Station frei</string>
-    <string name="label_delete_challenge">Challenge l\u00f6schen</string>
+    <string name="label_delete_challenge">Löschen</string>
     <string name="label_delete_challenge_confirm">Diese Challenge l\u00f6schen? Dies kann nicht r\u00fcckg\u00e4ngig gemacht werden.</string>
     <string name="label_new_challenge">Neue Challenge</string>
     <string name="label_edit_challenge">Challenge bearbeiten</string>
@@ -265,7 +266,7 @@
     <string name="label_no_players">Noch keine Spieler</string>
     <string name="label_remove_player">Spieler entfernen</string>
     <string name="label_remove_player_confirm">%1$s aus diesem Team entfernen?</string>
-    <string name="label_delete_team">Team l\u00f6schen</string>
+    <string name="label_delete_team">Löschen</string>
     <string name="label_delete_team_confirm">Dieses Team l\u00f6schen? Dies kann nicht r\u00fcckg\u00e4ngig gemacht werden.</string>
     <string name="label_team_name">Teamname</string>
     <string name="label_team_color">Farbe</string>

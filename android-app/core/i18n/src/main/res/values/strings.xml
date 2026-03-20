@@ -1,8 +1,9 @@
 <resources>
     <string name="app_name">PointFinder</string>
     <!-- Actions -->
-    <string name="action_join_game">Join a Game</string>
+    <string name="action_join_game">Join Game</string>
     <string name="action_operator_login">Operator Login</string>
+    <string name="label_sign_in_subtitle">Sign in with your operator account</string>
     <string name="action_continue">Continue</string>
     <string name="action_sign_in">Sign In</string>
     <string name="action_logout">Logout</string>
@@ -55,7 +56,7 @@
     <string name="label_file_loaded">File loaded</string>
     <string name="action_create">Create</string>
     <string name="label_creating">Creating\u2026</string>
-    <string name="label_offline">Offline mode</string>
+    <string name="label_offline">You\'re offline. Changes will sync when connected.</string>
     <string name="label_my_games">My Games</string>
     <string name="label_language">Language</string>
     <string name="label_theme">Theme</string>
@@ -121,7 +122,7 @@
     <string name="label_assignment_random_not_started">Random assignment not started</string>
     <string name="label_assignment_fixed">Fixed challenge assignment</string>
     <string name="label_assignment_per_team">Per-team assignments (%1$d)</string>
-    <string name="label_no_games_description">You have no games yet. Pull to refresh or check back later.</string>
+    <string name="label_no_games_description">You don\'t have any games assigned yet.</string>
     <string name="label_game_not_active_title">Game not active yet</string>
     <string name="label_game_not_active_message">Please wait until your operator sets the game live.</string>
     <!-- Permission Disclosure -->
@@ -189,7 +190,7 @@
     <string name="label_location_bound_unassigned">Location-bound challenges unassigned (%1$d)</string>
     <string name="label_not_enough_challenges">Not enough challenges</string>
     <string name="warning_team_variables_incomplete">Some teams have incomplete variable values</string>
-    <string name="label_go_live_confirm_title">Start Game?</string>
+    <string name="label_go_live_confirm_title">Go Live?</string>
     <string name="label_go_live_confirm_message">Teams will be able to join and play. You can still edit bases and challenges during the game.</string>
     <string name="label_challenges">Challenges</string>
     <string name="label_teams">Teams</string>
@@ -202,7 +203,7 @@
     <string name="label_none">None</string>
     <string name="label_challenges_at_base">Challenges (%1$d)</string>
     <string name="label_add_challenge">Add Challenge</string>
-    <string name="label_delete_base">Delete Base</string>
+    <string name="label_delete_base">Delete</string>
     <string name="label_delete_base_confirm">Delete this base? This cannot be undone.</string>
     <string name="label_tap_map_to_set_location">Tap map to set location</string>
     <string name="action_save">Save</string>
@@ -240,9 +241,9 @@
     <string name="label_completion_message">Unlocked Information</string>
     <string name="action_edit">Edit</string>
     <string name="label_answer_type_label">Answer Type</string>
-    <string name="label_text_input">Text Input</string>
-    <string name="label_file_upload">File Upload</string>
-    <string name="label_check_in_only">Check-in Only</string>
+    <string name="label_text_input">Text</string>
+    <string name="label_file_upload">File</string>
+    <string name="label_check_in_only">Check-in</string>
     <string name="label_auto_validate">Auto-validate</string>
     <string name="label_correct_answers">Correct Answers</string>
     <string name="label_add_answer">Add Answer</string>
@@ -250,7 +251,7 @@
     <string name="label_fixed_to_base">Fixed to Base</string>
     <string name="label_location_bound">Location-bound</string>
     <string name="label_unlocks_base">Unlocks Base</string>
-    <string name="label_delete_challenge">Delete Challenge</string>
+    <string name="label_delete_challenge">Delete</string>
     <string name="label_delete_challenge_confirm">Delete this challenge? This cannot be undone.</string>
     <string name="label_new_challenge">New Challenge</string>
     <string name="label_edit_challenge">Edit Challenge</string>
@@ -265,7 +266,7 @@
     <string name="label_no_players">No players yet</string>
     <string name="label_remove_player">Remove Player</string>
     <string name="label_remove_player_confirm">Remove %1$s from this team?</string>
-    <string name="label_delete_team">Delete Team</string>
+    <string name="label_delete_team">Delete</string>
     <string name="label_delete_team_confirm">Delete this team? This cannot be undone.</string>
     <string name="label_team_name">Team Name</string>
     <string name="label_team_color">Color</string>

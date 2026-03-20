@@ -626,6 +626,12 @@ fun OperatorLoginScreen(
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onBackground,
                 )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    stringResource(R.string.label_sign_in_subtitle),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 Spacer(Modifier.height(12.dp))
                 OutlinedTextField(
                     value = email,
