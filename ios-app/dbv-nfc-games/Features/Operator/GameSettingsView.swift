@@ -18,6 +18,8 @@ struct GameSettingsView: View {
     @State private var errorMessage: String?
     @State private var showGoLiveAlert = false
     @State private var showEndGameAlert = false
+    @State private var showRevertToSetupSheet = false
+    @State private var showRevertToLiveAlert = false
     @State private var gameStatus: String
 
     private var token: String? {
@@ -167,6 +169,19 @@ struct GameSettingsView: View {
                         Label(locale.t("operator.endGame"), systemImage: "stop.circle.fill")
                             .frame(maxWidth: .infinity)
                     }
+                } else if gameStatus == "ended" {
+                    Button {
+                        showRevertToLiveAlert = true
+                    } label: {
+                        Label(locale.t("operator.revertToLive"), systemImage: "play.circle")
+                            .frame(maxWidth: .infinity)
+                    }
+                    Button {
+                        showRevertToSetupSheet = true
+                    } label: {
+                        Label(locale.t("operator.revertToSetup"), systemImage: "arrow.uturn.backward.circle")
+                            .frame(maxWidth: .infinity)
+                    }
                 }
             }
         }
@@ -187,6 +202,25 @@ struct GameSettingsView: View {
             Button(locale.t("common.cancel"), role: .cancel) {}
         } message: {
             Text(locale.t("operator.endGameConfirmMessage"))
+        }
+        .alert(locale.t("operator.revertToLive"), isPresented: $showRevertToLiveAlert) {
+            Button(locale.t("operator.revertToLive")) {
+                Task { await updateStatus("live") }
+            }
+            Button(locale.t("common.cancel"), role: .cancel) {}
+        } message: {
+            Text(locale.t("operator.revertToLiveDesc"))
+        }
+        .confirmationDialog(locale.t("operator.revertToSetup"), isPresented: $showRevertToSetupSheet, titleVisibility: .visible) {
+            Button(locale.t("operator.keepProgress")) {
+                Task { await updateStatus("setup", resetProgress: false) }
+            }
+            Button(locale.t("operator.eraseProgress"), role: .destructive) {
+                Task { await updateStatus("setup", resetProgress: true) }
+            }
+            Button(locale.t("common.cancel"), role: .cancel) {}
+        } message: {
+            Text(locale.t("operator.progressQuestion"))
         }
     }
 
@@ -216,13 +250,13 @@ struct GameSettingsView: View {
         isSaving = false
     }
 
-    private func updateStatus(_ newStatus: String) async {
+    private func updateStatus(_ newStatus: String, resetProgress: Bool? = nil) async {
         guard let token else { return }
         errorMessage = nil
         do {
             _ = try await appState.apiClient.updateGameStatus(
                 gameId: game.id,
-                request: UpdateGameStatusRequest(status: newStatus),
+                request: UpdateGameStatusRequest(status: newStatus, resetProgress: resetProgress),
                 token: token
             )
             gameStatus = newStatus

@@ -4,6 +4,19 @@ import Foundation
 struct CreateGameRequest: Encodable {
     let name: String
     let description: String
+    let startDate: String?
+    let endDate: String?
+    let uniformAssignment: Bool?
+    let tileSource: String?
+
+    init(name: String, description: String, startDate: String? = nil, endDate: String? = nil, uniformAssignment: Bool? = nil, tileSource: String? = nil) {
+        self.name = name
+        self.description = description
+        self.startDate = startDate
+        self.endDate = endDate
+        self.uniformAssignment = uniformAssignment
+        self.tileSource = tileSource
+    }
 }
 
 struct UpdateGameRequest: Encodable {
@@ -18,6 +31,12 @@ struct UpdateGameRequest: Encodable {
 
 struct UpdateGameStatusRequest: Encodable {
     let status: String
+    let resetProgress: Bool?
+
+    init(status: String, resetProgress: Bool? = nil) {
+        self.status = status
+        self.resetProgress = resetProgress
+    }
 }
 
 // MARK: - Base Requests
@@ -205,7 +224,11 @@ struct GameExportChallenge: Codable {
     let content: String
     let completionContent: String?
     let answerType: String
+    let autoValidate: Bool?
+    let correctAnswer: [String]?
     let points: Int
+    let locationBound: Bool?
+    let requirePresenceToSubmit: Bool?
     let fixedBaseTempId: String?
     let unlocksBaseTempId: String?
 }
@@ -224,4 +247,12 @@ struct GameExportTeam: Codable {
 
 struct ImportGameRequest: Encodable {
     let gameData: GameExportDto
+    let startDate: String?
+    let endDate: String?
+
+    init(gameData: GameExportDto, startDate: String? = nil, endDate: String? = nil) {
+        self.gameData = gameData
+        self.startDate = startDate
+        self.endDate = endDate
+    }
 }

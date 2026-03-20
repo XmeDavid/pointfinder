@@ -18,6 +18,7 @@ struct Team: Codable, Identifiable {
 
 struct Player: Codable, Identifiable {
     let id: UUID
+    let teamId: UUID?
     let displayName: String
     let deviceId: String
 }
