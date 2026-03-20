@@ -1,6 +1,7 @@
 package com.prayer.pointfinder.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.prayer.pointfinder.dto.request.ReviewStatus;
 import com.prayer.pointfinder.dto.request.ReviewSubmissionRequest;
 import com.prayer.pointfinder.dto.response.SubmissionResponse;
 import com.prayer.pointfinder.exception.GlobalExceptionHandler;
@@ -122,7 +123,7 @@ class SubmissionControllerTest {
         UUID reviewerId = UUID.randomUUID();
 
         ReviewSubmissionRequest request = new ReviewSubmissionRequest();
-        request.setStatus("approved");
+        request.setStatus(ReviewStatus.approved);
         request.setPoints(50);
 
         SubmissionResponse response = SubmissionResponse.builder()
@@ -155,7 +156,7 @@ class SubmissionControllerTest {
         UUID submissionId = UUID.randomUUID();
 
         ReviewSubmissionRequest request = new ReviewSubmissionRequest();
-        request.setStatus("rejected");
+        request.setStatus(ReviewStatus.rejected);
         request.setFeedback("Wrong answer, try again");
 
         SubmissionResponse response = SubmissionResponse.builder()

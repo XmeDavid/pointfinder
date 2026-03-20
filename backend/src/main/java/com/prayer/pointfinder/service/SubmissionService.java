@@ -18,6 +18,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.PageRequest;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -48,7 +50,7 @@ public class SubmissionService {
     @Transactional(readOnly = true)
     public List<SubmissionResponse> getSubmissionsByGame(UUID gameId) {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
-        return submissionRepository.findByGameId(gameId).stream()
+        return submissionRepository.findByGameId(gameId, PageRequest.of(0, 500)).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
@@ -215,16 +217,7 @@ public class SubmissionService {
             throw new BadRequestException("Submission in status '" + currentStatus + "' cannot be reviewed");
         }
 
-        SubmissionStatus newStatus;
-        try {
-            newStatus = SubmissionStatus.valueOf(request.getStatus());
-        } catch (IllegalArgumentException e) {
-            throw new BadRequestException("Invalid status: " + request.getStatus());
-        }
-
-        if (newStatus != SubmissionStatus.approved && newStatus != SubmissionStatus.rejected) {
-            throw new BadRequestException("Review status must be 'approved' or 'rejected'");
-        }
+        SubmissionStatus newStatus = SubmissionStatus.valueOf(request.getStatus().name());
 
         User currentUser = SecurityUtils.getCurrentUser();
         // Re-fetch user within transaction to get fresh entity with proper session
@@ -298,9 +291,7 @@ public class SubmissionService {
     }
 
     private void ensureBelongsToGame(UUID entityGameId, UUID expectedGameId, String entityName) {
-        if (!entityGameId.equals(expectedGameId)) {
-            throw new BadRequestException(entityName + " does not belong to this game");
-        }
+        gameAccessService.ensureBelongsToGame(entityName, entityGameId, expectedGameId);
     }
 
     private static final int MAX_FILES_PER_SUBMISSION = 5;

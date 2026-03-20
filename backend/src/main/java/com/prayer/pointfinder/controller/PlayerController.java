@@ -7,11 +7,14 @@ import com.prayer.pointfinder.dto.request.UpdatePushTokenRequest;
 import com.prayer.pointfinder.dto.request.UploadSessionInitRequest;
 import com.prayer.pointfinder.dto.response.*;
 import com.prayer.pointfinder.entity.Player;
+import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.security.SecurityUtils;
 import com.prayer.pointfinder.service.ChunkedUploadService;
 import com.prayer.pointfinder.service.FileStorageService;
 import com.prayer.pointfinder.service.PlayerService;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
+import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -20,7 +23,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -29,6 +34,7 @@ public class PlayerController {
     private final PlayerService playerService;
     private final ChunkedUploadService chunkedUploadService;
     private final FileStorageService fileStorageService;
+    private final Validator validator;
 
     // Public endpoint - no auth required
     @PostMapping("/api/auth/player/join")
@@ -91,6 +97,15 @@ public class PlayerController {
         request.setAnswer(answer);
         request.setFileUrl(fileUrl);
         request.setIdempotencyKey(idempotencyKey);
+
+        // Validate the manually constructed request (bypasses @Valid since not @RequestBody)
+        Set<ConstraintViolation<PlayerSubmissionRequest>> violations = validator.validate(request);
+        if (!violations.isEmpty()) {
+            String message = violations.stream()
+                    .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                    .collect(Collectors.joining(", "));
+            throw new BadRequestException("Validation failed: " + message);
+        }
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(playerService.submitAnswer(gameId, request, player));

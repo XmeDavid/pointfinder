@@ -123,7 +123,7 @@ class SubmissionFlowIntegrationTest extends IntegrationTestBase {
 
         // ── Step 6: Operator reviews and approves ───────────────────
         ReviewSubmissionRequest reviewReq = new ReviewSubmissionRequest();
-        reviewReq.setStatus("approved");
+        reviewReq.setStatus(ReviewStatus.approved);
         reviewReq.setPoints(100);
 
         ResponseEntity<SubmissionResponse> reviewResp = restTemplate.exchange(

@@ -2,13 +2,13 @@ package com.prayer.pointfinder.dto.request;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
 public class ReviewSubmissionRequest {
-    @NotBlank
-    private String status; // "approved" or "rejected"
+    @NotNull
+    private ReviewStatus status;
 
     private String feedback;
 

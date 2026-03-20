@@ -14,10 +14,14 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Pattern AUTH_MESSAGE_PATTERN = Pattern.compile(
+            "No authenticated (user|player|operator) found", Pattern.CASE_INSENSITIVE);
 
     public record ErrorResponse(int status, String message, Map<String, String> errors, Instant timestamp, String traceId) {}
 
@@ -69,9 +73,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach(error -> {
-            String field = ((FieldError) error).getField();
-            String msg = error.getDefaultMessage();
-            errors.put(field, msg);
+            if (error instanceof FieldError fieldError) {
+                errors.put(fieldError.getField(), fieldError.getDefaultMessage());
+            } else {
+                errors.put(error.getObjectName(), error.getDefaultMessage());
+            }
         });
         return ResponseEntity.badRequest().body(error(HttpStatus.BAD_REQUEST, "Validation failed", errors));
     }
@@ -79,7 +85,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ErrorResponse> handleIllegalState(IllegalStateException ex) {
         String msg = ex.getMessage();
-        if (msg != null && (msg.contains("No authenticated") || msg.contains("authentication"))) {
+        if (msg != null && AUTH_MESSAGE_PATTERN.matcher(msg).find()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(error(HttpStatus.UNAUTHORIZED, "Authentication required"));
         }
