@@ -20,7 +20,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import java.util.Locale
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -59,7 +58,7 @@ class AppSessionViewModel @Inject constructor(
     init {
         restoreSession()
         observeNetwork()
-        pollPendingCount()
+        observePendingCount()
     }
 
     private fun observeNetwork() {
@@ -74,12 +73,10 @@ class AppSessionViewModel @Inject constructor(
         }
     }
 
-    private fun pollPendingCount() {
+    private fun observePendingCount() {
         viewModelScope.launch {
-            while (true) {
-                val count = playerRepository.pendingCount()
+            playerRepository.pendingCountFlow().collectLatest { count ->
                 _state.value = _state.value.copy(pendingActionsCount = count)
-                delay(2_000L)
             }
         }
     }

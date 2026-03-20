@@ -23,6 +23,7 @@ import com.prayer.pointfinder.core.model.UploadSessionResponse
 import com.prayer.pointfinder.core.network.CompanionApi
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
+import kotlinx.coroutines.flow.Flow
 import java.io.IOException
 import java.io.InputStream
 import java.util.UUID
@@ -70,6 +71,8 @@ class PlayerRepository @Inject constructor(
     private val syncMutex = Mutex()
 
     suspend fun pendingCount(): Int = db.pendingActionDao().pendingCount()
+
+    fun pendingCountFlow(): Flow<Int> = db.pendingActionDao().pendingCountFlow()
 
     suspend fun loadProgress(auth: AuthType.Player, online: Boolean): ProgressResult {
         if (online) {

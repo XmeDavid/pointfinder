@@ -12,6 +12,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.prayer.pointfinder.core.model.BaseProgress
+import kotlinx.coroutines.flow.Flow
 import com.prayer.pointfinder.core.model.BaseStatus
 import com.prayer.pointfinder.core.model.CheckInResponse
 
@@ -80,6 +81,9 @@ interface PendingActionDao {
 
     @Query("SELECT COUNT(*) FROM pending_actions")
     suspend fun pendingCount(): Int
+
+    @Query("SELECT COUNT(*) FROM pending_actions")
+    fun pendingCountFlow(): Flow<Int>
 
     @Query(
         "SELECT COUNT(*) > 0 FROM pending_actions " +
