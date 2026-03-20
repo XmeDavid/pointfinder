@@ -435,7 +435,7 @@ public class PlayerService {
         gameAccessService.ensurePlayerBelongsToGame(player, gameId);
         ensureGameIsLiveForPlayerActions(team);
 
-        PlayerLocation location = playerLocationRepository.findById(playerId).orElse(null);
+        PlayerLocation location = playerLocationRepository.findById(player.getId()).orElse(null);
         if (location == null) {
             location = PlayerLocation.builder()
                     .player(player)
@@ -450,7 +450,7 @@ public class PlayerService {
 
         Map<String, Object> locationData = new HashMap<>();
         locationData.put("teamId", team.getId());
-        locationData.put("playerId", playerId);
+        locationData.put("playerId", player.getId());
         locationData.put("displayName", player.getDisplayName());
         locationData.put("lat", lat);
         locationData.put("lng", lng);
