@@ -30,6 +30,49 @@ describe("teamsApi.listByGame", () => {
     expect(apiClient.get).toHaveBeenCalledWith("/games/game-1/teams");
     expect(result).toEqual(mockTeams);
   });
+
+  it("returns the unwrapped .data array, not the axios envelope", async () => {
+    const mockTeams = [{ id: "t1" }];
+    (apiClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({
+      data: mockTeams,
+      status: 200,
+    });
+
+    const result = await teamsApi.listByGame("game-1");
+
+    expect(Array.isArray(result)).toBe(true);
+    expect(result).not.toHaveProperty("status");
+  });
+
+  it("embeds the gameId in the URL path", async () => {
+    (apiClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({ data: [] });
+
+    await teamsApi.listByGame("xyz-999");
+
+    const calledUrl = (apiClient.get as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(calledUrl).toContain("xyz-999");
+    expect(calledUrl).not.toContain("gameId");
+  });
+
+  it("propagates 404 errors to the caller", async () => {
+    const error = Object.assign(new Error("Not Found"), { response: { status: 404 } });
+    (apiClient.get as ReturnType<typeof vi.fn>).mockRejectedValue(error);
+
+    await expect(teamsApi.listByGame("missing")).rejects.toMatchObject({
+      response: { status: 404 },
+    });
+  });
+
+  it("propagates 500 server errors to the caller", async () => {
+    const error = Object.assign(new Error("Internal Server Error"), {
+      response: { status: 500 },
+    });
+    (apiClient.get as ReturnType<typeof vi.fn>).mockRejectedValue(error);
+
+    await expect(teamsApi.listByGame("game-1")).rejects.toMatchObject({
+      response: { status: 500 },
+    });
+  });
 });
 
 describe("teamsApi.create", () => {
@@ -65,6 +108,39 @@ describe("teamsApi.create", () => {
     const payload = (apiClient.post as ReturnType<typeof vi.fn>).mock.calls[0][1];
     expect(payload).not.toHaveProperty("gameId");
   });
+
+  it("returns the unwrapped .data object, not the axios envelope", async () => {
+    const newTeam = { id: "t2", name: "Bears" };
+    (apiClient.post as ReturnType<typeof vi.fn>).mockResolvedValue({
+      data: newTeam,
+      status: 201,
+    });
+
+    const result = await teamsApi.create({ name: "Bears", gameId: "game-1" });
+
+    expect(result).toEqual(newTeam);
+    expect(result).not.toHaveProperty("status");
+  });
+
+  it("propagates 400 validation errors to the caller", async () => {
+    const error = Object.assign(new Error("Bad Request"), { response: { status: 400 } });
+    (apiClient.post as ReturnType<typeof vi.fn>).mockRejectedValue(error);
+
+    await expect(teamsApi.create({ name: "", gameId: "game-1" })).rejects.toMatchObject({
+      response: { status: 400 },
+    });
+  });
+
+  it("propagates 500 server errors to the caller", async () => {
+    const error = Object.assign(new Error("Internal Server Error"), {
+      response: { status: 500 },
+    });
+    (apiClient.post as ReturnType<typeof vi.fn>).mockRejectedValue(error);
+
+    await expect(teamsApi.create({ name: "Foxes", gameId: "game-1" })).rejects.toMatchObject({
+      response: { status: 500 },
+    });
+  });
 });
 
 describe("teamsApi.update", () => {
@@ -82,6 +158,83 @@ describe("teamsApi.update", () => {
 
     expect(apiClient.put).toHaveBeenCalledWith("/games/game-1/teams/t1", dto);
   });
+
+  it("passes name field in the request body", async () => {
+    (apiClient.put as ReturnType<typeof vi.fn>).mockResolvedValue({
+      data: { id: "t1" },
+    });
+
+    await teamsApi.update("t1", "game-1", { name: "Raptors", color: "#ff0000" });
+
+    const payload = (apiClient.put as ReturnType<typeof vi.fn>).mock.calls[0][1] as UpdateTeamDto;
+    expect(payload.name).toBe("Raptors");
+  });
+
+  it("passes color field in the request body", async () => {
+    (apiClient.put as ReturnType<typeof vi.fn>).mockResolvedValue({
+      data: { id: "t1" },
+    });
+
+    await teamsApi.update("t1", "game-1", { name: "Raptors", color: "#aabbcc" });
+
+    const payload = (apiClient.put as ReturnType<typeof vi.fn>).mock.calls[0][1] as UpdateTeamDto;
+    expect(payload.color).toBe("#aabbcc");
+  });
+
+  it("sends update without optional color", async () => {
+    (apiClient.put as ReturnType<typeof vi.fn>).mockResolvedValue({
+      data: { id: "t1" },
+    });
+
+    await teamsApi.update("t1", "game-1", { name: "Falcons" });
+
+    const payload = (apiClient.put as ReturnType<typeof vi.fn>).mock.calls[0][1] as UpdateTeamDto;
+    expect(payload.name).toBe("Falcons");
+    expect(payload.color).toBeUndefined();
+  });
+
+  it("embeds teamId and gameId in the URL path", async () => {
+    (apiClient.put as ReturnType<typeof vi.fn>).mockResolvedValue({
+      data: { id: "team-55" },
+    });
+
+    await teamsApi.update("team-55", "game-77", { name: "Owls" });
+
+    const calledUrl = (apiClient.put as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(calledUrl).toContain("team-55");
+    expect(calledUrl).toContain("game-77");
+  });
+
+  it("returns the unwrapped .data object, not the axios envelope", async () => {
+    const updated = { id: "t1", name: "Hawks" };
+    (apiClient.put as ReturnType<typeof vi.fn>).mockResolvedValue({
+      data: updated,
+      status: 200,
+    });
+
+    const result = await teamsApi.update("t1", "game-1", { name: "Hawks" });
+
+    expect(result).toEqual(updated);
+    expect(result).not.toHaveProperty("status");
+  });
+
+  it("propagates 400 errors to the caller", async () => {
+    const error = Object.assign(new Error("Bad Request"), { response: { status: 400 } });
+    (apiClient.put as ReturnType<typeof vi.fn>).mockRejectedValue(error);
+
+    await expect(teamsApi.update("t1", "game-1", { name: "" })).rejects.toMatchObject({
+      response: { status: 400 },
+    });
+  });
+
+  it("propagates 404 when team is not found", async () => {
+    const error = Object.assign(new Error("Not Found"), { response: { status: 404 } });
+    (apiClient.put as ReturnType<typeof vi.fn>).mockRejectedValue(error);
+
+    await expect(teamsApi.update("missing", "game-1", { name: "X" })).rejects.toMatchObject({
+      response: { status: 404 },
+    });
+  });
 });
 
 describe("teamsApi.delete", () => {
@@ -95,6 +248,15 @@ describe("teamsApi.delete", () => {
     await teamsApi.delete("t1", "game-1");
 
     expect(apiClient.delete).toHaveBeenCalledWith("/games/game-1/teams/t1");
+  });
+
+  it("propagates 404 errors to the caller", async () => {
+    const error = Object.assign(new Error("Not Found"), { response: { status: 404 } });
+    (apiClient.delete as ReturnType<typeof vi.fn>).mockRejectedValue(error);
+
+    await expect(teamsApi.delete("missing", "game-1")).rejects.toMatchObject({
+      response: { status: 404 },
+    });
   });
 });
 
@@ -130,6 +292,17 @@ describe("teamsApi.getPlayers", () => {
     expect(apiClient.get).not.toHaveBeenCalled();
     expect(result).toEqual([]);
   });
+
+  it("propagates 500 server errors to the caller", async () => {
+    const error = Object.assign(new Error("Internal Server Error"), {
+      response: { status: 500 },
+    });
+    (apiClient.get as ReturnType<typeof vi.fn>).mockRejectedValue(error);
+
+    await expect(teamsApi.getPlayers("t1", "game-1")).rejects.toMatchObject({
+      response: { status: 500 },
+    });
+  });
 });
 
 describe("teamsApi.removePlayer", () => {
@@ -151,5 +324,14 @@ describe("teamsApi.removePlayer", () => {
     await teamsApi.removePlayer("t1", "p1");
 
     expect(apiClient.delete).not.toHaveBeenCalled();
+  });
+
+  it("propagates 404 errors to the caller", async () => {
+    const error = Object.assign(new Error("Not Found"), { response: { status: 404 } });
+    (apiClient.delete as ReturnType<typeof vi.fn>).mockRejectedValue(error);
+
+    await expect(teamsApi.removePlayer("t1", "missing-player", "game-1")).rejects.toMatchObject({
+      response: { status: 404 },
+    });
   });
 });
