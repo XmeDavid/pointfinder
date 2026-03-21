@@ -15,6 +15,7 @@ import { ResetPasswordPage } from "@/features/auth/ResetPasswordPage";
 
 // Public pages (lazy)
 const FaqPage = lazy(() => import("@/features/faq/FaqPage").then(m => ({ default: m.FaqPage })));
+const PrivacyPage = lazy(() => import("@/features/legal/PrivacyPage").then(m => ({ default: m.PrivacyPage })));
 const LiveEntryPage = lazy(() => import("@/features/live/LiveEntryPage").then(m => ({ default: m.LiveEntryPage })));
 const LiveBroadcastPage = lazy(() => import("@/features/live/LiveBroadcastPage").then(m => ({ default: m.LiveBroadcastPage })));
 
@@ -59,6 +60,11 @@ export const router = createBrowserRouter([
   {
     path: "/faq",
     element: <LazyPage component={FaqPage} />,
+  },
+  /* -------- Privacy policy (public, no auth required) -------- */
+  {
+    path: "/privacy",
+    element: <LazyPage component={PrivacyPage} />,
   },
   /* -------- Auth pages -------- */
   {

@@ -643,12 +643,12 @@ function Footer() {
           >
             {t("faq.label")}
           </Link>
-          <a
-            href="/privacy"
+          <Link
+            to="/privacy"
             className="text-white/25 transition-colors duration-200 hover:text-green-400"
           >
             {t("landing.footer.privacyPolicy")}
-          </a>
+          </Link>
           <Link
             to="/login"
             className="text-white/25 transition-colors duration-200 hover:text-green-400"

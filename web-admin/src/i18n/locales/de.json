@@ -92,7 +92,8 @@
     "leaderboard": "Rangliste",
     "activity": "Aktivität",
     "submissions": "Einreichungen",
-    "settings": "Einstellungen"
+    "settings": "Einstellungen",
+    "results": "Ergebnisse"
   },
   "admin": {
     "description": "Spiel-Operatoren verwalten und Einladungen versenden",
@@ -402,6 +403,29 @@
     "totalPoints": "Gesamtpunkte",
     "completedChallenges": "Abgeschlossene Challenges",
     "submissionHistory": "Einreichungsverlauf"
+  },
+  "privacy": {
+    "title": "Datenschutzerklärung",
+    "backHome": "Zurück zur Startseite",
+    "lastUpdated": "PointFinder — pointfinder.pt",
+    "intro": "PointFinder ist eine NFC-basierte Gaming-Plattform für Pfadfinderorganisationen und Outdoor-Events. Datenschutz nehmen wir ernst – besonders weil unsere Plattform bei Lagern mit jüngeren Teilnehmenden eingesetzt wird. Diese Richtlinie erklärt, welche Daten wir erheben und wie wir sie verwenden.",
+    "collectTitle": "Welche Daten wir erheben",
+    "collectIntro": "Wir erheben nur die Informationen, die für den Spielbetrieb notwendig sind:",
+    "collect": {
+      "displayName": "Anzeigename — der Name, den ein Spieler beim Beitreten eines Spiels eingibt. Er wird anderen Spielern und Operatoren während des Events angezeigt.",
+      "deviceId": "Geräte-ID — ein zufälliger Bezeichner, der auf dem Gerät gespeichert wird, um wiederkehrende Spieler innerhalb derselben Spielsitzung zu erkennen. Er ist mit keiner persönlichen Identität verknüpft.",
+      "location": "Standort — GPS-Koordinaten werden während des aktiven Spiels erfasst, um Teamstandorte auf der Karte anzuzeigen. Der Standort wird nur während eines laufenden Spiels abgefragt.",
+      "media": "Fotos und Videos — werden als Antworten auf Challenges eingereicht. Sie werden für die Dauer des Spiels gespeichert, damit Operatoren sie prüfen können.",
+      "nfc": "NFC-Scandaten — wenn ein Spieler einen Stations-Tag scannt, wird die Tag-ID registriert, um den Check-in zu erfassen."
+    },
+    "useTitle": "Wie wir Ihre Daten verwenden",
+    "useBody": "Alle Daten werden ausschließlich für den Spielbetrieb verwendet: Fortschrittsverfolgung, Anzeige der Rangliste, Ermöglichung der Einreichungsprüfung durch Operatoren und Darstellung von Teamstandorten auf der Karte. Wir geben keine Daten an Dritte weiter, verwenden sie nicht für Werbung und verarbeiten sie für keinen anderen Zweck als die Durchführung des Events.",
+    "retentionTitle": "Datenspeicherung",
+    "retentionBody": "Spieldaten (Check-ins, Einreichungen, Standortverlauf und hochgeladene Medien) werden gelöscht, wenn der Operator das Spiel löscht. Spieler können jederzeit die Löschung ihres Kontos beantragen, indem sie den Operator kontaktieren oder sich direkt an uns wenden.",
+    "childrenTitle": "Datenschutz für Kinder",
+    "childrenBody": "PointFinder ist darauf ausgelegt, für jüngere Teilnehmende sicher zu sein. Wir erfassen keine Namen, E-Mail-Adressen oder andere persönlich identifizierbare Informationen außer einem gewählten Anzeigenamen. Der Standort wird nur während des aktiven Spiels erfasst und nicht über die Spielsitzung hinaus gespeichert. Keine Daten werden für Marketing verwendet oder an externe Dienste weitergegeben.",
+    "contactTitle": "Kontakt",
+    "contactBody": "Wenn Sie Fragen zu dieser Datenschutzerklärung haben oder eine Datenlöschung beantragen möchten, kontaktieren Sie uns unter"
   },
   "results": {
     "title": "Endergebnisse",
