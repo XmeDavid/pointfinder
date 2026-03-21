@@ -1,7 +1,8 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { lazy } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { GameShell } from "@/features/game-detail/GameShell";
+import { LazyPage } from "./LazyPage";
 
 // Landing (eager)
 import { LandingPage } from "@/features/landing/LandingPage";
@@ -47,20 +48,6 @@ const TeamDetailPage = lazy(() => import("@/features/monitoring/TeamDetailPage")
 import { AuthGuard } from "./AuthGuard";
 import { GuestGuard } from "./GuestGuard";
 
-// Error boundary
-import { ErrorBoundary } from "@/components/common/ErrorBoundary";
-
-// Loading fallback
-const LoadingFallback = () => <div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>;
-
-// Wrapper for lazy pages
-const LazyPage = ({ component: Component }: { component: React.ComponentType }) => (
-  <Suspense fallback={<LoadingFallback />}>
-    <ErrorBoundary>
-      <Component />
-    </ErrorBoundary>
-  </Suspense>
-);
 
 export const router = createBrowserRouter([
   /* -------- Public landing page -------- */

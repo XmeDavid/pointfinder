@@ -21,7 +21,7 @@ import type { CreateGameDto, GameExportDto } from "./games";
 describe("isGameExportDto", () => {
   const validExport: GameExportDto = {
     exportVersion: "1",
-    game: { name: "Test Game" },
+    game: { name: "Test Game", description: "" },
     bases: [],
     challenges: [],
     assignments: [],

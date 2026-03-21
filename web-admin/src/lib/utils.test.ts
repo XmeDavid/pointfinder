@@ -9,9 +9,10 @@ vi.mock("@/i18n", () => ({
 import { formatDateTimeInputValue, parseDateTimeInputValue } from "./utils";
 
 describe("formatDateTimeInputValue", () => {
-  it("formats date values as dd/mm/yyyy HH:mm", () => {
+  it("formats date values as dd/mm/yyyy HH:mm with timezone", () => {
     const date = new Date(2026, 1, 10, 14, 5);
-    expect(formatDateTimeInputValue(date)).toBe("10/02/2026 14:05");
+    const result = formatDateTimeInputValue(date);
+    expect(result).toMatch(/^10\/02\/2026 14:05 \(UTC[+-]\d{2}:\d{2}\)$/);
   });
 
   it("returns empty string for null and invalid values", () => {
