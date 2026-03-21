@@ -117,6 +117,11 @@ export function Sidebar({ gameStatus, open, onClose }: SidebarProps) {
       ]
     : [];
 
+  const resultsNav: NavItem[] =
+    gameId && gameStatus === "ended"
+      ? [{ label: t("nav.results"), to: `/games/${gameId}/results`, icon: <Trophy className="h-4 w-4" /> }]
+      : [];
+
   const monitorNav: NavItem[] =
     gameId && (gameStatus === "live" || gameStatus === "ended")
       ? [
@@ -157,6 +162,14 @@ export function Sidebar({ gameStatus, open, onClose }: SidebarProps) {
               {game?.name ?? t("nav.gameSetup")}
             </p>
             {gameNav.map((item) => (
+              <SidebarLink key={item.to} item={item} onClick={onClose} />
+            ))}
+          </div>
+        )}
+
+        {resultsNav.length > 0 && (
+          <div className="space-y-1">
+            {resultsNav.map((item) => (
               <SidebarLink key={item.to} item={item} onClick={onClose} />
             ))}
           </div>
