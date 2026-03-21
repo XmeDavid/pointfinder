@@ -67,7 +67,7 @@ public class TemplateVariableService {
         if (templates == null) return null;
         return templates.stream()
                 .map(t -> resolveTemplate(t, gameId, challengeId, teamId))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private Map<String, String> buildVariableMap(UUID gameId, UUID challengeId, UUID teamId) {

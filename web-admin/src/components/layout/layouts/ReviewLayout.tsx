@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle, XCircle, Clock, FileText, ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
 import { Header } from "../Header";
@@ -28,7 +28,7 @@ function FullScreenMediaViewer({ urls, index, onPrev, onNext }: { urls: string[]
     <div className="relative">
       <AuthMedia
         src={currentUrl}
-        alt="Submission media"
+        alt={currentUrl.includes("video") ? "Submission video" : "Submission image"}
         className="w-full h-auto max-h-[85vh] object-contain rounded"
       />
       {hasMultiple && (
@@ -37,15 +37,17 @@ function FullScreenMediaViewer({ urls, index, onPrev, onNext }: { urls: string[]
             className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors disabled:opacity-30"
             disabled={index === 0}
             onClick={onPrev}
+            aria-label="Previous image"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-5 w-5" aria-hidden="true" />
           </button>
           <button
             className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors disabled:opacity-30"
             disabled={index === urls.length - 1}
             onClick={onNext}
+            aria-label="Next image"
           >
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-5 w-5" aria-hidden="true" />
           </button>
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 text-white text-xs px-2 py-1 rounded">
             {index + 1} / {urls.length}
@@ -79,11 +81,14 @@ export function ReviewLayout({ gameId, gameStatus }: ReviewLayoutProps) {
   const { data: submissions = [] } = useQuery({
     queryKey: ["submissions", gameId],
     queryFn: () => submissionsApi.listByGame(gameId),
-    refetchInterval: 15000,
   });
   const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId) });
   const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId) });
   const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId) });
+
+  const teamMap = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
+  const challengeMap = useMemo(() => new Map(challenges.map((c) => [c.id, c])), [challenges]);
+  const baseMap = useMemo(() => new Map(bases.map((b) => [b.id, b])), [bases]);
 
   const filtered = submissions
     .filter((s) => {
@@ -98,26 +103,34 @@ export function ReviewLayout({ gameId, gameStatus }: ReviewLayoutProps) {
   const selected = filtered.find((s) => s.id === selection.id) ?? filtered[0] ?? null;
   const feedback = selection.id === selected?.id ? selection.feedback : (selected?.feedback ?? "");
   const reviewPoints = selection.id === selected?.id ? selection.points : (() => {
-    const ch = challenges.find((c) => c.id === selected?.challengeId);
+    const ch = challengeMap.get(selected?.challengeId ?? "");
     return selected?.points ?? ch?.points ?? 0;
   })();
 
   const selectSubmission = useCallback((sub: Submission) => {
-    const ch = challenges.find((c) => c.id === sub.challengeId);
+    const ch = challengeMap.get(sub.challengeId);
     setSelection({ id: sub.id, feedback: sub.feedback ?? "", points: sub.points ?? ch?.points ?? 0 });
     setMobileView("detail");
-  }, [challenges]);
+  }, [challengeMap]);
 
   const reviewMutation = useMutation({
     mutationFn: ({ id, status, points, feedback: fb }: { id: string; status: SubmissionStatus; points?: number; feedback?: string }) =>
       submissionsApi.review(id, status, fb, gameId, points),
+    onMutate: ({ id, status, points, feedback: fb }) => {
+      // Optimistic update: immediately update the submission in cache
+      queryClient.setQueryData(["submissions", gameId], (old: Submission[] | undefined) => {
+        if (!old) return old;
+        return old.map((sub) =>
+          sub.id === id ? { ...sub, status, points: points ?? sub.points, feedback: fb ?? sub.feedback } : sub
+        );
+      });
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["submissions", gameId] });
       // Auto-advance to next
       const idx = filtered.findIndex((s) => s.id === selected?.id);
       const next = filtered[idx + 1] ?? filtered[idx - 1] ?? null;
       if (next) {
-        const ch = challenges.find((c) => c.id === next.challengeId);
+        const ch = challengeMap.get(next.challengeId);
         setSelection({ id: next.id, feedback: next.feedback ?? "", points: next.points ?? ch?.points ?? 0 });
       } else {
         setSelection({ id: null, feedback: "", points: 0 });
@@ -125,7 +138,11 @@ export function ReviewLayout({ gameId, gameStatus }: ReviewLayoutProps) {
       }
       toast.success(t("common.saved"));
     },
-    onError: (error: unknown) => { toast.error(getApiErrorMessage(error)); },
+    onError: (error: unknown) => {
+      // Refetch submissions on error to restore correct state
+      queryClient.invalidateQueries({ queryKey: ["submissions", gameId] });
+      toast.error(getApiErrorMessage(error));
+    },
   });
 
   // Keyboard shortcuts
@@ -168,9 +185,9 @@ export function ReviewLayout({ gameId, gameStatus }: ReviewLayoutProps) {
     correct: <CheckCircle className="h-3 w-3 text-green-500" />,
   };
 
-  const selectedTeam = teams.find((tm) => tm.id === selected?.teamId);
-  const selectedChallenge = challenges.find((c) => c.id === selected?.challengeId);
-  const selectedBase = bases.find((b) => b.id === selected?.baseId);
+  const selectedTeam = teamMap.get(selected?.teamId ?? "");
+  const selectedChallenge = challengeMap.get(selected?.challengeId ?? "");
+  const selectedBase = baseMap.get(selected?.baseId ?? "");
   const expectedPoints = selectedChallenge?.points;
 
   const listPanel = (
@@ -210,8 +227,8 @@ export function ReviewLayout({ gameId, gameStatus }: ReviewLayoutProps) {
           </div>
         ) : (
           filtered.map((sub) => {
-            const team = teams.find((tm) => tm.id === sub.teamId);
-            const challenge = challenges.find((c) => c.id === sub.challengeId);
+            const team = teamMap.get(sub.teamId);
+            const challenge = challengeMap.get(sub.challengeId);
             const isSelected = sub.id === (selected?.id);
             return (
               <button
@@ -284,7 +301,7 @@ export function ReviewLayout({ gameId, gameStatus }: ReviewLayoutProps) {
                         <div key={url} className="relative group">
                           <AuthMedia
                             src={url}
-                            alt="Submission media"
+                            alt={url.includes("video") ? "Submission video" : "Submission image"}
                             className="rounded-md max-h-80 w-full object-contain bg-muted cursor-pointer"
                             onClick={() => setFullScreenMedia({ urls: mediaUrls, index: idx })}
                             onBlobReady={(blob) => blobCache.current.set(url, blob)}

@@ -97,7 +97,7 @@ public class MonitoringService {
                     .build();
         })
         .sorted(Comparator.comparingLong(LeaderboardEntry::getPoints).reversed())
-        .collect(Collectors.toList());
+        .toList();
     }
 
     private static final int ACTIVITY_FEED_LIMIT = 500;
@@ -118,7 +118,7 @@ public class MonitoringService {
                         .message(e.getMessage())
                         .timestamp(e.getTimestamp())
                         .build())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -200,6 +200,6 @@ public class MonitoringService {
                         .lng(pl.getLng())
                         .updatedAt(pl.getUpdatedAt())
                         .build())
-                .collect(Collectors.toList());
+                .toList();
     }
 }

@@ -1,6 +1,7 @@
 package com.prayer.pointfinder.service;
 
 import com.prayer.pointfinder.config.ApnsConfig;
+import com.prayer.pointfinder.repository.PlayerRepository;
 import com.eatthepath.pushy.apns.ApnsClient;
 import com.eatthepath.pushy.apns.ApnsClientBuilder;
 import com.eatthepath.pushy.apns.PushNotificationResponse;
@@ -15,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
 import java.time.Instant;
@@ -30,6 +32,7 @@ public class ApnsPushService {
 
     private final ApnsConfig apnsConfig;
     private final ResourceLoader resourceLoader;
+    private final PlayerRepository playerRepository;
 
     private ApnsClient apnsClient;
 
@@ -136,9 +139,10 @@ public class ApnsPushService {
                                 maskedToken, response.getRejectionReason().orElse("unknown"),
                                 response.getTokenInvalidationTimestamp().orElse(null));
 
-                        // If token is invalid, it should be cleaned up
-                        response.getTokenInvalidationTimestamp().ifPresent(ts ->
-                                log.info("Token {} was invalidated at {}, should be removed", maskedToken, ts));
+                        // Clean up invalid tokens from the database
+                        if (response.getTokenInvalidationTimestamp().isPresent()) {
+                            cleanupInvalidToken(token);
+                        }
                     } else {
                         log.debug("Push notification accepted for token {}", maskedToken);
                     }
@@ -146,6 +150,16 @@ public class ApnsPushService {
             } catch (Exception e) {
                 log.error("Error sending push to token {}: {}", maskToken(token), e.getMessage(), e);
             }
+        }
+    }
+
+    @Transactional
+    private void cleanupInvalidToken(String token) {
+        try {
+            playerRepository.setInvalidPushTokenToNull(token);
+            log.info("Cleaned up invalid push token from database");
+        } catch (Exception e) {
+            log.warn("Failed to clean up invalid push token: {}", e.getMessage());
         }
     }
 

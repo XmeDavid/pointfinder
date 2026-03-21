@@ -14,7 +14,7 @@ The backend exposes a STOMP WebSocket endpoint with SockJS fallback.
 - **Message broker prefix**: `/topic`
 - **Auth**: JWT token passed in STOMP `CONNECT` headers
 
-**7 broadcast topics** under `/topic/game/{gameId}/`:
+**7 broadcast topics** under `/topic/games/{gameId}`:
 
 | Topic | Purpose |
 |---|---|
@@ -23,8 +23,8 @@ The backend exposes a STOMP WebSocket endpoint with SockJS fallback.
 | `leaderboard` | Leaderboard score changes |
 | `location` | Team location updates |
 | `notification` | Player/operator notifications |
-| `game_status` | Game status transitions (CREATED → ACTIVE → COMPLETED) |
-| `presence` | Player presence at bases |
+| `game_status` | Game status transitions (setup → live → ended) |
+| `presence` | Operator online status |
 
 ### Frontend (STOMP Client)
 
@@ -67,6 +67,13 @@ connect(gameId, token)
 
 **Foreground resumption**: `ensureConnected()` pings to verify connection when app returns to foreground.
 
+### Mobile WebSocket Session Limits
+
+The backend (`MobileRealtimeHub`) enforces:
+- **Max 200 WebSocket sessions per game** — additional connections are rejected
+- **Stale session cleanup** every 60 seconds — disconnected sessions are automatically purged
+- **Transaction-safe broadcasting** — all events are deferred until the database transaction commits via `TransactionSynchronization`
+
 ### Android (Skeleton)
 
 - **Class**: `MobileRealtimeClient` (singleton, Hilt-managed)
@@ -87,7 +94,7 @@ Both APNs (iOS) and FCM (Android) are supported. Both are **disabled by default*
 - Submission reviewed (approved/rejected)
 - Game status change
 
-**Operator preferences**: Each operator can configure per-game which events they receive notifications for, via `GET/PATCH /api/games/{gameId}/notifications/settings`.
+**Operator preferences**: Each operator can configure per-game which events they receive notifications for, via `GET/PUT /api/games/{gameId}/operator-notification-settings/me`.
 
 ### iOS (APNs)
 
@@ -256,7 +263,7 @@ Always writes with `pointfinder.pt` domain (canonical).
 
 - Constructs NDEF message with URI payload (`https://pointfinder.pt/tag/{baseId}`)
 - Operator-only — accessible via `OperatorMapScreen`
-- After writing tag: calls `OperatorRepository.linkBaseNfc(gameId, baseId)` to register the tag server-side (`POST /api/games/{gameId}/bases/{baseId}/nfc/link`)
+- After writing tag: calls `OperatorRepository.linkBaseNfc(gameId, baseId)` to register the tag server-side (`PATCH /api/games/{gameId}/bases/{baseId}/nfc-link`)
 
 ---
 

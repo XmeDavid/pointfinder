@@ -2,6 +2,7 @@ import Foundation
 import CoreNFC
 
 @Observable
+@MainActor
 final class NFCReaderService: NSObject {
 
     var lastReadBaseId: UUID?

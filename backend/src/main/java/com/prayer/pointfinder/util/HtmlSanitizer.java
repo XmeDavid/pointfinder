@@ -21,16 +21,16 @@ public final class HtmlSanitizer {
             .allowAttributes("href", "target", "rel").onElements("a")
             .allowUrlProtocols("https", "http")
             .requireRelNofollowOnLinks()
-            // Images
+            // Images - only allow safe protocols (no data: URIs)
             .allowElements("img")
             .allowAttributes("src", "alt", "width", "height").onElements("img")
-            .allowUrlProtocols("https", "http", "data")
+            .allowUrlProtocols("https", "http")
             // Audio (rich text editor support)
             .allowElements("audio", "source")
             .allowAttributes("controls", "preload").onElements("audio")
             .allowAttributes("src", "type").onElements("source")
-            // Common styling attributes for rich text editor output
-            .allowAttributes("class", "style").globally()
+            // Class attribute only for styling (not inline style attribute)
+            .allowAttributes("class").globally()
             .toFactory();
 
     private HtmlSanitizer() {}

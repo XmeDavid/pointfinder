@@ -33,8 +33,8 @@ export const monitoringApi = {
     pendingSubmissions: number;
     completedSubmissions: number;
     totalSubmissions: number;
-    startDate?: string;
-    endDate?: string;
+    startDate: string;
+    endDate: string;
   }> => {
     const { data } = await apiClient.get(`/games/${gameId}/monitoring/dashboard`);
     return data;

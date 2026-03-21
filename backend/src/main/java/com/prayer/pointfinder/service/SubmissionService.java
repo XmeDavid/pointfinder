@@ -54,7 +54,7 @@ public class SubmissionService {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         return submissionRepository.findByGameId(gameId, PageRequest.of(0, 500)).stream()
                 .map(this::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -67,12 +67,19 @@ public class SubmissionService {
         }
         return submissionRepository.findByTeamId(teamId).stream()
                 .map(this::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(timeout = 10)
     public SubmissionResponse createSubmission(UUID gameId, CreateSubmissionRequest request) {
         ensureCallerCanCreateSubmission(gameId, request.getTeamId());
+
+        // Verify game is in live status before accepting submissions
+        Game game = gameRepository.findById(gameId)
+                .orElseThrow(() -> new ResourceNotFoundException("Game", gameId));
+        if (game.getStatus() != GameStatus.live) {
+            throw new BadRequestException("Submissions can only be created when the game is live. Current status: " + game.getStatus());
+        }
 
         // Check for idempotency - if submission with this key exists, return it
         if (request.getIdempotencyKey() != null) {
@@ -130,6 +137,12 @@ public class SubmissionService {
         Integer points = (status == SubmissionStatus.approved || status == SubmissionStatus.correct)
                 ? challenge.getPoints() : null;
 
+        // Ensure every submission has a unique idempotency key to prevent duplicates
+        UUID idempotencyKey = request.getIdempotencyKey();
+        if (idempotencyKey == null) {
+            idempotencyKey = java.util.UUID.randomUUID();
+        }
+
         Submission submission = Submission.builder()
                 .team(team)
                 .challenge(challenge)
@@ -140,7 +153,7 @@ public class SubmissionService {
                 .status(status)
                 .points(points)
                 .submittedAt(Instant.now())
-                .idempotencyKey(request.getIdempotencyKey())
+                .idempotencyKey(idempotencyKey)
                 .build();
 
         try {

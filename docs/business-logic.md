@@ -1,7 +1,7 @@
 # PointFinder Business Logic Reference
 
-**Date**: 2026-03-14
-**Source of truth**: Backend (Spring Boot 3.4.1). All other platforms are consumers of backend rules.
+**Date**: 2026-03-21
+**Source of truth**: Backend (Spring Boot 3.4.13). All other platforms are consumers of backend rules.
 
 ---
 
@@ -28,7 +28,7 @@
 | `ended` | Game is frozen. Submissions are blocked. |
 
 **Backend enum**: `game_status` with values `setup`, `live`, `ended`.
-**Android enum**: `GameStatus` uses `CREATED`, `ACTIVE`, `COMPLETED`, `ARCHIVED` — these map to the three backend states at the API boundary.
+**Android enum**: `GameStatus` uses `SETUP`, `LIVE`, `ENDED` — matching the backend states via `@SerialName` annotations.
 
 ### Transitions
 
@@ -126,15 +126,8 @@ After writing, the operator calls `PATCH /api/games/{gameId}/bases/{baseId}/nfc-
 1. **Game must be live**: Backend rejects check-in if `game.status != live`.
 2. **One check-in per team per base**: Enforced by `UNIQUE INDEX idx_check_ins_team_base ON check_ins (team_id, base_id)`. Duplicate check-ins return a 409 with "Team already checked in at this base." The operation is idempotent on the client side — both iOS and Android treat a duplicate-check-in 409 as a success and continue.
 3. **Team must belong to game**: Backend validates team membership in `PlayerService.checkIn()`.
-4. **Assignment must exist**: Backend verifies the base has a challenge assigned to the team before completing check-in.
 
-### Assignment Verification at Check-In
-
-Before completing a check-in, the backend looks up the assignment for `(gameId, baseId, teamId)`. It checks:
-1. A team-specific assignment for `(game, base, team)`, or
-2. A global assignment for `(game, base)` with `team_id IS NULL`.
-
-If no assignment is found, the check-in is rejected.
+> **Note**: Check-in does NOT validate that an assignment exists for the team-base pair. A player can check in at any base belonging to the game. Assignment validation occurs later during submission creation.
 
 ### Location-Bound Assignments
 
@@ -189,12 +182,10 @@ When a challenge has `location_bound = true` and is assigned to a base:
 ### Auto-Validation for Text Answers
 
 When `challenge.autoValidate = true` and `challenge.answerType = text`:
-1. Backend reads `challenge.correctAnswer` (VARCHAR 1000, may contain comma-separated alternatives and `{{variable}}` templates).
-2. `TemplateVariableService.resolveTemplates()` replaces `{{key}}` with team-specific values (see Section 4).
-3. The player's submitted answer is compared **case-insensitively** against all resolved answers.
+1. Backend reads `challenge.correctAnswer` — stored as a **JSON array of strings** (`List<String>` with JSON converter, migration V11).
+2. `TemplateVariableService.resolveTemplates()` replaces `{{key}}` with team-specific values in each answer (see Section 4).
+3. The player's submitted answer is compared **case-insensitively** against any resolved answer in the array.
 4. Match → status `correct`, points awarded. No match → status `rejected`.
-
-The `correctAnswer` field supports comma-separated values (added in migration V11), allowing multiple acceptable answers. Each is resolved independently.
 
 **Platform coverage**: Backend only (authoritative). No client performs auto-validation.
 
@@ -235,6 +226,8 @@ When `challenge.requirePresenceToSubmit = true`, a player must scan the NFC tag 
 - iOS: `SolveView` checks this flag; if `requirePresenceToSubmit` is true, NFC scan is triggered before `submitAnswer()` is called.
 - Android: Challenge model includes `requirePresenceToSubmit` boolean; logic is partially implemented.
 - Backend: The flag is stored on the `challenges` table but the presence enforcement is primarily a client-side UX gate; the backend itself does not block submission on this flag.
+
+**Backend constraint**: If `answerType = "none"` (check-in only), the backend silently forces `requirePresenceToSubmit = false` during challenge create/update. A check-in-only challenge cannot require presence re-verification.
 
 ---
 
@@ -290,6 +283,15 @@ Before go-live, all team variables must have values for all teams. This is check
 
 ## 5. Authentication & Authorization
 
+### Login Brute-Force Protection
+
+The backend tracks failed login attempts per email address in memory (`LoginAttemptService`):
+- **Max attempts**: 10 failed logins per email
+- **Lockout duration**: 15 minutes after threshold reached
+- **Cleanup**: Expired entries purged every 30 minutes
+
+When locked out, `POST /api/auth/login` returns 400 with "Too many login attempts. Please try again later."
+
 ### Operator Authentication
 
 | Property | Value |
@@ -298,6 +300,8 @@ Before go-live, all team variables must have values for all teams. This is check
 | Access token | JWT (HS256), TTL **15 minutes** |
 | Refresh token | UUID string stored in DB, TTL **7 days** |
 | Refresh endpoint | `POST /api/auth/refresh` — old token deleted, new pair issued (one-time use) |
+| Absolute session lifetime | **30 days** — refresh tokens older than 30 days are rejected regardless of activity |
+| Max concurrent refresh tokens | **5** per user — oldest tokens pruned when limit exceeded |
 | Logout | `POST /api/auth/logout` — deletes refresh token from DB |
 | Storage (web) | Access token: in-memory only (XSS safety); refresh token: localStorage |
 | Storage (iOS) | Both tokens in Keychain |

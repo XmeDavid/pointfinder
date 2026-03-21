@@ -1,6 +1,6 @@
 # PointFinder Gap Analysis Report
 
-**Date**: 2026-03-14
+**Date**: 2026-03-14 (updated 2026-03-21)
 **Scope**: Cross-platform analysis of backend, web-admin, Android, and iOS
 **Method**: Exhaustive codebase audit followed by cross-referencing actual source code
 
@@ -34,12 +34,8 @@
 - **Impact**: Acceptable since backend enforces all rules, but UX is worse than web-admin and Android.
 - **Fix**: Optional — add readiness summary before go-live confirmation dialog.
 
-#### GAP-BL-3: iOS player submissions not pre-blocked when game not live
-- **Platforms**: iOS
-- **Severity**: Minor
-- **Description**: `SolveView.swift` does not check `appState.currentGame?.status == "live"` before submission. Check-in IS blocked correctly, but submission is not.
-- **Impact**: Player can waste time filling out an answer after game ends → backend rejects. No data integrity risk.
-- **Fix**: Add status check in `handleSubmit()` before proceeding.
+#### ~~GAP-BL-3: iOS player submissions not pre-blocked when game not live~~ FIXED
+- **Status**: Fixed. `SolveView.swift` now checks `appState.currentGame?.status == "live"` in `canSubmit` (line 378) and shows a warning banner when game is not live.
 
 ### 1.2 NFC & Submission Flow
 
@@ -124,11 +120,8 @@
 - **Description**: Backend requires `@Size(min=6)` for passwords. Frontend only checks non-empty.
 - **Fix**: Add minLength=6 validation to password fields on registration page.
 
-#### GAP-V-10: Coordinate range not validated
-- **Platforms**: Backend, Web-admin
-- **Severity**: Minor
-- **Description**: Backend accepts any double for lat/lng without range validation. Frontend uses map picker (which prevents invalid coords), but direct API calls could set invalid values.
-- **Fix**: Add `@Min(-90) @Max(90)` for lat and `@Min(-180) @Max(180)` for lng at backend level.
+#### ~~GAP-V-10: Coordinate range not validated~~ FIXED
+- **Status**: Fixed. Backend now has `@DecimalMin/@DecimalMax` validation on lat (-90 to 90) and lng (-180 to 180) in both `CreateBaseRequest` and `UpdateBaseRequest`.
 
 ---
 
@@ -209,11 +202,8 @@
 
 ### Minor Gaps
 
-#### GAP-F-5: NFC writing only on iOS
-- **Platforms**: Android
-- **Severity**: Minor
-- **Description**: Only iOS has NFC tag writing UI (`NFCWriteView`). Android has NFC read but not write UI.
-- **Fix**: Implement NFC writing screen in Android operator flow.
+#### ~~GAP-F-5: NFC writing only on iOS~~ FIXED
+- **Status**: Fixed. Android now has `NfcService.writeBaseTag()` and the operator flow supports NFC writing via `OperatorViewModel`.
 
 #### GAP-F-6: Team variable completeness check missing on iOS
 - **Platforms**: iOS
@@ -259,17 +249,11 @@
 
 ### Important Gaps
 
-#### GAP-L-5: Portuguese accent marks missing in web frontend
-- **Platforms**: Web-admin
-- **Severity**: Important
-- **Description**: Editor section in `pt.json` has 6 typos with missing accents: "Titulo" (→ Título), "Citacao" (→ Citação), "Codigo" (→ Código), "Variavel" (→ Variável).
-- **Fix**: Correct the accent marks in `web-admin/src/i18n/locales/pt.json`.
+#### ~~GAP-L-5: Portuguese accent marks missing in web frontend~~ FIXED
+- **Status**: Fixed. All accent marks corrected in `pt.json`: Título, Citação, Código, Variável.
 
-#### GAP-L-6: German umlaut escaping inconsistent in Android
-- **Platforms**: Android
-- **Severity**: Important
-- **Description**: Some German strings use Unicode escapes (`\u00e4` for ä) while others use raw characters. One instance uses ASCII approximation ("moechtest" instead of "möchtest").
-- **Fix**: Standardize to either raw UTF-8 characters or Unicode escapes. Fix "moechtest" → "möchtest".
+#### ~~GAP-L-6: German umlaut escaping inconsistent in Android~~ FIXED
+- **Status**: Fixed. "moechtest" corrected to "möchtest". Strings now use raw UTF-8 characters consistently.
 
 #### GAP-L-7: Cross-platform terminology inconsistency
 - **Platforms**: All
@@ -294,11 +278,11 @@
 
 ### By Severity
 
-| Severity | Count | Key Areas |
-|----------|-------|-----------|
-| **Critical** | 12 | Silent offline failures (2), localization gaps (4), feature parity (3), validation (3) |
-| **Important** | 14 | Go-live checks, error handling, validation, localization, feature parity |
-| **Minor** | 11 | NFC format, template vars, terminology, coordinate validation |
+| Severity | Count | Fixed | Remaining | Key Areas |
+|----------|-------|-------|-----------|-----------|
+| **Critical** | 12 | 0 | 12 | Silent offline failures (2), localization gaps (4), feature parity (3), validation (3) |
+| **Important** | 14 | 2 | 12 | Go-live checks, error handling, validation, localization, feature parity |
+| **Minor** | 11 | 4 | 7 | NFC format, template vars, terminology |
 
 ### By Platform
 

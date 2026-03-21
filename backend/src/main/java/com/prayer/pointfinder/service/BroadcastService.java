@@ -36,7 +36,7 @@ public class BroadcastService {
                         .name(t.getName())
                         .color(t.getColor())
                         .build())
-                .collect(Collectors.toList());
+                .toList();
 
         List<BroadcastBaseResponse> bases = baseRepository.findByGameId(gameId).stream()
                 .filter(b -> !Boolean.TRUE.equals(b.getHidden()))
@@ -47,7 +47,7 @@ public class BroadcastService {
                         .lat(b.getLat())
                         .lng(b.getLng())
                         .build())
-                .collect(Collectors.toList());
+                .toList();
 
         List<LeaderboardEntry> leaderboard = monitoringService.computeLeaderboard(gameId);
         if (leaderboard.size() > 100) {
@@ -63,7 +63,7 @@ public class BroadcastService {
                 .teams(teams)
                 .bases(bases)
                 .locations(game.getStatus() == GameStatus.live
-                        ? monitoringService.computeLocations(gameId).stream().limit(500).collect(Collectors.toList())
+                        ? monitoringService.computeLocations(gameId).stream().limit(500).toList()
                         : java.util.Collections.emptyList())
                 .progress(monitoringService.computeProgress(gameId))
                 .build();

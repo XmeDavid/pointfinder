@@ -42,6 +42,7 @@
 | POST | `/auth/logout` | None | Invalidate refresh token |
 | POST | `/auth/forgot-password` | None | Send password reset email (silent on missing user) |
 | POST | `/auth/reset-password` | None | Complete password reset with token + new password |
+| POST | `/auth/request-registration` | None | Request operator registration (sends link if eligible) |
 | POST | `/auth/player/join` | None | Join a team via join code; returns player JWT |
 
 ### Key Payloads
@@ -63,6 +64,12 @@ Response: same as login
 { "refreshToken": "string" }
 ```
 Response: same as login
+
+**POST /auth/request-registration**
+```json
+{ "email": "string" }
+```
+Response: `{ "message": "If eligible, a registration link has been sent." }`
 
 **POST /auth/player/join**
 ```json
@@ -448,9 +455,9 @@ Supported content types: `video/mp4`, `video/quicktime`, `image/jpeg`, `image/pn
 { "teamId": "UUID", "lat": 47.3, "lng": 8.5, "updatedAt": "ISO8601" }
 ```
 
-**Progress entry**:
+**Progress entry** (`TeamBaseProgressResponse`):
 ```json
-{ "teamId": "UUID", "baseId": "UUID", "submissionStatus": "pending | approved | correct | rejected | null" }
+{ "teamId": "UUID", "baseId": "UUID", "challengeId": "UUID", "status": "not_visited | checked_in | submitted | completed | rejected", "checkedInAt": "ISO8601", "submissionStatus": "pending | approved | correct | rejected | null" }
 ```
 
 ---
@@ -617,10 +624,11 @@ Per-game, per-operator push notification preferences.
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | GET | `/invites` | Admin | List all pending invites |
-| GET | `/invites/game/:gameId` | Operator | List invites for a specific game |
+| GET | `/games/:gameId/invites` | Operator | List invites for a specific game |
 | GET | `/invites/my` | Operator | List invites sent by current user |
 | POST | `/invites` | Operator | Send operator invite by email |
 | POST | `/invites/:inviteId/accept` | Operator | Accept invite (normally called by register flow) |
+| DELETE | `/invites/:inviteId` | Operator | Delete/revoke a pending invite |
 
 **POST /invites** (CreateInviteRequest)
 ```json

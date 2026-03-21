@@ -32,7 +32,7 @@ public class AssignmentService {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         return assignmentRepository.findByGameId(gameId).stream()
                 .map(this::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(timeout = 10)
@@ -74,14 +74,14 @@ public class AssignmentService {
                     .challenge(challenge)
                     .team(team)
                     .build();
-        }).collect(Collectors.toList());
+        }).toList();
 
         assignmentRepository.deleteByGameId(gameId);
 
         return assignmentsToSave.stream()
                 .map(assignmentRepository::save)
                 .map(this::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(timeout = 10)

@@ -161,18 +161,26 @@ public class ChunkedUploadService {
             throw new BadRequestException("Chunk size mismatch for index " + chunkIndex);
         }
 
-        Path chunkPath = chunkPathFor(session.getId(), chunkIndex);
-        writeChunk(chunkPath, chunkBytes);
-        uploadSessionChunkRepository.save(
-                UploadSessionChunk.builder()
-                        .sessionId(session.getId())
-                        .chunkIndex(chunkIndex)
-                        .chunkSizeBytes(chunkBytes.length)
-                        .build()
+        // Check if chunk already exists to prevent duplicates
+        boolean chunkExists = uploadSessionChunkRepository.existsBySessionIdAndChunkIndex(
+                session.getId(), chunkIndex
         );
+        if (chunkExists) {
+            log.debug("Chunk {} already uploaded for session {}, skipping", chunkIndex, sessionId);
+        } else {
+            Path chunkPath = chunkPathFor(session.getId(), chunkIndex);
+            writeChunk(chunkPath, chunkBytes);
+            uploadSessionChunkRepository.save(
+                    UploadSessionChunk.builder()
+                            .sessionId(session.getId())
+                            .chunkIndex(chunkIndex)
+                            .chunkSizeBytes(chunkBytes.length)
+                            .build()
+            );
+            meterRegistry.counter("uploads.chunks.uploaded").increment();
+        }
         session.setExpiresAt(Instant.now().plusSeconds(uploadSessionTtlSeconds));
         uploadSessionRepository.save(session);
-        meterRegistry.counter("uploads.chunks.uploaded").increment();
         return buildResponse(session);
     }
 

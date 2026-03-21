@@ -91,6 +91,8 @@ struct MapLibreMapView: UIViewRepresentable {
                 point.coordinate = item.coordinate
                 point.title = item.title
                 point.subtitle = item.subtitle
+                // Tag annotation with item ID for identifier-based matching
+                point.accessibilityIdentifier = item.id
                 mapView.addAnnotation(point)
             }
         }
@@ -214,13 +216,12 @@ struct MapLibreMapView: UIViewRepresentable {
                 for annotation in visibleAnnotations {
                     if annotation is MLNUserLocation { continue }
                     guard let pointAnnotation = annotation as? MLNPointAnnotation else { continue }
-                    if let item = annotationItems.first(where: {
-                        $0.coordinate.latitude == pointAnnotation.coordinate.latitude &&
-                        $0.coordinate.longitude == pointAnnotation.coordinate.longitude
-                    }) {
-                        item.onTap?()
-                        return
-                    }
+                    // Use ID-based matching instead of coordinate equality
+                    guard let annotationId = pointAnnotation.accessibilityIdentifier,
+                          let item = annotationItems.first(where: { $0.id == annotationId })
+                    else { continue }
+                    item.onTap?()
+                    return
                 }
             }
 
@@ -240,11 +241,10 @@ struct MapLibreMapView: UIViewRepresentable {
         func mapView(_ mapView: MLNMapView, viewFor annotation: MLNAnnotation) -> MLNAnnotationView? {
             guard let pointAnnotation = annotation as? MLNPointAnnotation else { return nil }
 
-            // Find matching annotation item
-            guard let item = annotationItems.first(where: {
-                $0.coordinate.latitude == pointAnnotation.coordinate.latitude &&
-                $0.coordinate.longitude == pointAnnotation.coordinate.longitude
-            }) else { return nil }
+            // Find matching annotation item using ID-based matching instead of coordinate equality
+            guard let annotationId = pointAnnotation.accessibilityIdentifier,
+                  let item = annotationItems.first(where: { $0.id == annotationId })
+            else { return nil }
 
             let reuseId = "annotation-\(item.id)"
             let annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: reuseId)
@@ -261,12 +261,11 @@ struct MapLibreMapView: UIViewRepresentable {
             mapView.deselectAnnotation(annotation, animated: false)
 
             guard let pointAnnotation = annotation as? MLNPointAnnotation else { return }
-            if let item = annotationItems.first(where: {
-                $0.coordinate.latitude == pointAnnotation.coordinate.latitude &&
-                $0.coordinate.longitude == pointAnnotation.coordinate.longitude
-            }) {
-                item.onTap?()
-            }
+            // Use ID-based matching instead of coordinate equality
+            guard let annotationId = pointAnnotation.accessibilityIdentifier,
+                  let item = annotationItems.first(where: { $0.id == annotationId })
+            else { return }
+            item.onTap?()
         }
 
         func mapView(_ mapView: MLNMapView, didFinishLoading style: MLNStyle) {
@@ -310,8 +309,10 @@ struct MapLibreMapView: UIViewRepresentable {
 
 class SwiftUIAnnotationView: MLNAnnotationView {
     private var hostingController: UIHostingController<AnyView>?
+    private weak var parentViewController: UIViewController?
 
-    func configure(with view: AnyView) {
+    func configure(with view: AnyView, parentViewController: UIViewController? = nil) {
+        self.parentViewController = parentViewController
         if let hc = hostingController {
             hc.rootView = view
             hc.view.invalidateIntrinsicContentSize()
@@ -324,6 +325,11 @@ class SwiftUIAnnotationView: MLNAnnotationView {
                 hc.view.centerXAnchor.constraint(equalTo: centerXAnchor),
                 hc.view.centerYAnchor.constraint(equalTo: centerYAnchor),
             ])
+            // Add hosting controller as a child view controller if parent is available
+            if let parentViewController = parentViewController {
+                parentViewController.addChild(hc)
+                hc.didMove(toParent: parentViewController)
+            }
             hostingController = hc
         }
 
@@ -334,5 +340,9 @@ class SwiftUIAnnotationView: MLNAnnotationView {
 
     override func prepareForReuse() {
         super.prepareForReuse()
+        if let hc = hostingController {
+            hc.willMove(toParent: nil)
+            hc.removeFromParent()
+        }
     }
 }

@@ -259,7 +259,7 @@ internal fun ColorPickerRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        items(teamColors) { hex ->
+        items(teamColors, key = { it }) { hex ->
             val color = parseTeamColor(hex)
             val isSelected = hex == selectedColor
             Box(

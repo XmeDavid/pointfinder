@@ -4,6 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
@@ -16,7 +17,13 @@ import kotlinx.coroutines.flow.Flow
 import com.prayer.pointfinder.core.model.BaseStatus
 import com.prayer.pointfinder.core.model.CheckInResponse
 
-@Entity(tableName = "pending_actions")
+@Entity(
+    tableName = "pending_actions",
+    indices = [
+        Index(value = ["gameId", "baseId", "type"]),
+        Index(value = ["permanentlyFailed"]),
+    ],
+)
 data class PendingActionEntity(
     @PrimaryKey val id: String,
     val type: String,
@@ -136,6 +143,9 @@ interface PendingActionDao {
 
     @Query("SELECT * FROM pending_actions WHERE permanentlyFailed = 1")
     suspend fun getFailedActions(): List<PendingActionEntity>
+
+    @Query("SELECT COUNT(*) FROM pending_actions WHERE gameId = :gameId AND permanentlyFailed = 1")
+    suspend fun getPermanentlyFailedCount(gameId: String): Int
 }
 
 @Dao

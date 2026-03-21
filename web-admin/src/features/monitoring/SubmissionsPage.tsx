@@ -31,7 +31,7 @@ function FullScreenMediaViewer({ urls, index, onPrev, onNext }: { urls: string[]
     <div className="relative">
       <AuthMedia
         src={currentUrl}
-        alt="Submission media"
+        alt={currentUrl.includes("video") ? "Submission video" : "Submission image"}
         className="w-full h-auto max-h-[85vh] object-contain rounded"
       />
       {hasMultiple && (
@@ -40,15 +40,17 @@ function FullScreenMediaViewer({ urls, index, onPrev, onNext }: { urls: string[]
             className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors disabled:opacity-30"
             disabled={index === 0}
             onClick={onPrev}
+            aria-label="Previous image"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-5 w-5" aria-hidden="true" />
           </button>
           <button
             className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors disabled:opacity-30"
             disabled={index === urls.length - 1}
             onClick={onNext}
+            aria-label="Next image"
           >
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-5 w-5" aria-hidden="true" />
           </button>
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 text-white text-xs px-2 py-1 rounded">
             {index + 1} / {urls.length}
@@ -101,17 +103,17 @@ export function SubmissionsPage() {
     setFullScreenMedia({ urls, index });
   }, []);
 
-  const { data: submissions = [], isLoading: subsLoading } = useQuery({ queryKey: ["submissions", gameId], queryFn: () => submissionsApi.listByGame(gameId!) });
-  const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!) });
-  const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!) });
-  const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!) });
+  const { data: submissions = [], isLoading: subsLoading } = useQuery({ queryKey: ["submissions", gameId], queryFn: () => submissionsApi.listByGame(gameId!), enabled: !!gameId });
+  const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!), enabled: !!gameId });
+  const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!), enabled: !!gameId });
+  const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!), enabled: !!gameId });
 
   const openReview = useCallback((submission: Submission) => {
     setReviewingSub(submission);
     setFeedback(submission.feedback ?? "");
     const ch = challengeMap.get(submission.challengeId);
     setReviewPoints(submission.points ?? ch?.points ?? 0);
-  }, [challengeMap]);
+  }, [challengeMap.get]);
   const closeReview = useCallback(() => {
     setReviewingSub(null);
     setFeedback("");
@@ -261,7 +263,7 @@ export function SubmissionsPage() {
                       <div className="space-y-2">
                         {mediaUrls.map((url, idx) => (
                           <div key={url} className="relative group">
-                            <AuthMedia src={url} alt="Submission media" className="rounded-md max-h-64 w-full object-contain bg-muted cursor-pointer" onClick={() => openFullScreen(mediaUrls, idx)} onBlobReady={(blob) => cacheBlobUrl(url, blob)} />
+                            <AuthMedia src={url} alt={url.includes("video") ? "Submission video" : "Submission image"} className="rounded-md max-h-64 w-full object-contain bg-muted cursor-pointer" onClick={() => openFullScreen(mediaUrls, idx)} onBlobReady={(blob) => cacheBlobUrl(url, blob)} />
                             <button className="absolute top-2 right-2 p-1 rounded bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => openFullScreen(mediaUrls, idx)}><Maximize2 className="h-4 w-4" /></button>
                           </div>
                         ))}

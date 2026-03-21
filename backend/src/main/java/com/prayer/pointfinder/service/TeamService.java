@@ -39,7 +39,7 @@ public class TeamService {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         return teamRepository.findByGameId(gameId).stream()
                 .map(this::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(timeout = 10)
@@ -99,7 +99,7 @@ public class TeamService {
                         .deviceId(p.getDeviceId())
                         .displayName(p.getDisplayName())
                         .build())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(timeout = 10)

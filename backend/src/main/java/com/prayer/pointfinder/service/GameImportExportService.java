@@ -77,7 +77,7 @@ public class GameImportExportService {
                         .fixedChallengeTempId(base.getFixedChallenge() != null ?
                                 challengeIdMap.get(base.getFixedChallenge().getId()) : null)
                         .build())
-                .collect(Collectors.toList());
+                .toList();
 
         List<ChallengeExportDto> challengeExportDtos = challenges.stream()
                 .map(challenge -> ChallengeExportDto.builder()
@@ -95,7 +95,7 @@ public class GameImportExportService {
                         .unlocksBaseTempId(challenge.getUnlocksBase() != null ?
                                 baseIdMap.get(challenge.getUnlocksBase().getId()) : null)
                         .build())
-                .collect(Collectors.toList());
+                .toList();
 
         List<TeamExportDto> teamExportDtos = teams.stream()
                 .map(team -> TeamExportDto.builder()
@@ -103,7 +103,7 @@ public class GameImportExportService {
                         .name(team.getName())
                         .color(team.getColor())
                         .build())
-                .collect(Collectors.toList());
+                .toList();
 
         List<AssignmentExportDto> assignmentExportDtos = assignments.stream()
                 .map(assignment -> AssignmentExportDto.builder()
@@ -112,7 +112,7 @@ public class GameImportExportService {
                         .teamTempId(assignment.getTeam() != null ?
                                 teamIdMap.get(assignment.getTeam().getId()) : null)
                         .build())
-                .collect(Collectors.toList());
+                .toList();
 
         return GameExportDto.builder()
                 .exportVersion("1.0")

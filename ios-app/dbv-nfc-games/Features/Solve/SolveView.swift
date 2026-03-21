@@ -8,7 +8,7 @@ struct SelectedMediaItem: Identifiable {
     let id = UUID()
     let thumbnail: UIImage
     let isVideo: Bool
-    let data: Data
+    let url: URL  // Store URL for chunked reading instead of full data
     let contentType: String
 }
 
@@ -46,17 +46,23 @@ struct SolveView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                // Game not live warning
+                // Game not live warning - explain why submission is blocked
                 if appState.currentGame?.status != "live" {
-                    HStack(spacing: 8) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.orange)
-                        Text(locale.t("solve.gameNotLive"))
-                            .font(.subheadline)
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.orange)
+                                .font(.headline)
+                            Text(locale.t("solve.gameNotLive"))
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                        }
+                        Text(locale.t("solve.gameNotLiveExplanation"))
+                            .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                     .padding()
-                    .frame(maxWidth: .infinity)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .background(Color.orange.opacity(0.1))
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
@@ -301,13 +307,12 @@ struct SolveView: View {
             // Try loading as video first
             if let movieTransferable = try? await item.loadTransferable(type: VideoTransferable.self) {
                 let videoURL = movieTransferable.url
-                if let thumbnail = generateVideoThumbnail(url: videoURL),
-                   let videoData = try? Data(contentsOf: videoURL) {
+                if let thumbnail = generateVideoThumbnail(url: videoURL) {
                     let contentType = videoURL.pathExtension.lowercased() == "mov" ? "video/quicktime" : "video/mp4"
                     newMedia.append(SelectedMediaItem(
                         thumbnail: thumbnail,
                         isVideo: true,
-                        data: videoData,
+                        url: videoURL,  // Store URL for chunked reading, not full data
                         contentType: contentType
                     ))
                 }
@@ -328,18 +333,30 @@ struct SolveView: View {
                 } else {
                     contentType = "image/jpeg"
                 }
-                newMedia.append(SelectedMediaItem(
-                    thumbnail: uiImage,
-                    isVideo: false,
-                    data: data,
-                    contentType: contentType
-                ))
+                // For images, save to temp file to get a URL
+                if let tempURL = saveTempFile(data: data) {
+                    newMedia.append(SelectedMediaItem(
+                        thumbnail: uiImage,
+                        isVideo: false,
+                        url: tempURL,  // Store URL for consistent handling
+                        contentType: contentType
+                    ))
+                }
             }
         }
 
         await MainActor.run {
             selectedMedia = newMedia
         }
+    }
+
+    /// Save image data to a temporary file to get a URL for consistent upload handling.
+    private func saveTempFile(data: Data) -> URL? {
+        let tempDir = FileManager.default.temporaryDirectory
+        let fileName = UUID().uuidString + ".tmp"
+        let tempURL = tempDir.appendingPathComponent(fileName)
+        try? data.write(to: tempURL)
+        return FileManager.default.fileExists(atPath: tempURL.path) ? tempURL : nil
     }
 
     private func generateVideoThumbnail(url: URL) -> UIImage? {
@@ -357,10 +374,12 @@ struct SolveView: View {
     private func addCameraImageToMedia(_ image: UIImage) {
         guard selectedMedia.count < 5 else { return }
         guard let imageData = image.jpegData(compressionQuality: 0.7) else { return }
+        // Save image to temp file to get a URL for consistent upload handling
+        guard let tempURL = saveTempFile(data: imageData) else { return }
         let item = SelectedMediaItem(
             thumbnail: image,
             isVideo: false,
-            data: imageData,
+            url: tempURL,
             contentType: "image/jpeg"
         )
         selectedMedia.append(item)

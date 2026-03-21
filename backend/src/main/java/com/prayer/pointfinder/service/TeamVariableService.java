@@ -186,7 +186,7 @@ public class TeamVariableService {
                         .key(e.getKey())
                         .teamValues(e.getValue())
                         .build())
-                .collect(Collectors.toList());
+                .toList();
         return TeamVariablesResponse.builder().variables(defs).build();
     }
 
@@ -201,7 +201,7 @@ public class TeamVariableService {
                         .key(e.getKey())
                         .teamValues(e.getValue())
                         .build())
-                .collect(Collectors.toList());
+                .toList();
         return TeamVariablesResponse.builder().variables(defs).build();
     }
 }

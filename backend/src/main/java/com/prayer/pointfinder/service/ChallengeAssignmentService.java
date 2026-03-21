@@ -51,7 +51,7 @@ public class ChallengeAssignmentService {
         List<Challenge> randomPool = challenges.stream()
                 .filter(c -> !c.getLocationBound())
                 .filter(c -> !fixedChallengeIds.contains(c.getId()))
-                .collect(Collectors.toList());
+                .toList();
 
         // Use class-level SecureRandom instead of local Random
 
@@ -75,6 +75,8 @@ public class ChallengeAssignmentService {
             teamAssignedChallenges.put(team.getId(), usedChallenges);
         }
 
+        List<Assignment> assignmentsToCreate = new ArrayList<>();
+
         for (Base base : bases) {
             boolean hasAssignments = existingAssignments.stream()
                     .anyMatch(a -> a.getBase().getId().equals(base.getId()));
@@ -84,7 +86,7 @@ public class ChallengeAssignmentService {
                     for (Team team : teams) {
                         Assignment assignment = Assignment.builder()
                                 .game(game).base(base).challenge(base.getFixedChallenge()).team(team).build();
-                        assignmentRepository.save(assignment);
+                        assignmentsToCreate.add(assignment);
                         teamAssignedChallenges.get(team.getId()).add(base.getFixedChallenge().getId());
                     }
                 }
@@ -92,13 +94,13 @@ public class ChallengeAssignmentService {
                 if (Boolean.TRUE.equals(game.getUniformAssignment())) {
                     List<Challenge> sharedPool = randomPool.stream()
                             .filter(c -> !usedGlobally.contains(c.getId()))
-                            .collect(Collectors.toList());
+                            .toList();
 
                     if (!sharedPool.isEmpty()) {
                         Challenge selected = sharedPool.get(RANDOM.nextInt(sharedPool.size()));
                         usedGlobally.add(selected.getId());
                         for (Team team : teams) {
-                            assignmentRepository.save(Assignment.builder()
+                            assignmentsToCreate.add(Assignment.builder()
                                     .game(game).base(base).challenge(selected).team(team).build());
                             teamAssignedChallenges.get(team.getId()).add(selected.getId());
                         }
@@ -112,11 +114,11 @@ public class ChallengeAssignmentService {
                         Set<UUID> usedByTeam = teamAssignedChallenges.get(team.getId());
                         List<Challenge> teamPool = randomPool.stream()
                                 .filter(c -> !usedByTeam.contains(c.getId()))
-                                .collect(Collectors.toList());
+                                .toList();
 
                         if (!teamPool.isEmpty()) {
                             Challenge selected = teamPool.get(RANDOM.nextInt(teamPool.size()));
-                            assignmentRepository.save(Assignment.builder()
+                            assignmentsToCreate.add(Assignment.builder()
                                     .game(game).base(base).challenge(selected).team(team).build());
                             usedByTeam.add(selected.getId());
                         } else {
@@ -127,6 +129,11 @@ public class ChallengeAssignmentService {
                     }
                 }
             }
+        }
+
+        // Use saveAll() to avoid N+1 database writes
+        if (!assignmentsToCreate.isEmpty()) {
+            assignmentRepository.saveAll(assignmentsToCreate);
         }
     }
 }

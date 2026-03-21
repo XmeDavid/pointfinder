@@ -1,46 +1,47 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
+import { lazy, Suspense } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { GameShell } from "@/features/game-detail/GameShell";
 
-// Landing
+// Landing (eager)
 import { LandingPage } from "@/features/landing/LandingPage";
-import { FaqPage } from "@/features/faq/FaqPage";
 
-// Auth
+// Auth (eager)
 import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
 import { ForgotPasswordPage } from "@/features/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "@/features/auth/ResetPasswordPage";
 
-// Admin
-import { OperatorsPage } from "@/features/admin/OperatorsPage";
+// Public pages (lazy)
+const FaqPage = lazy(() => import("@/features/faq/FaqPage").then(m => ({ default: m.FaqPage })));
+const LiveEntryPage = lazy(() => import("@/features/live/LiveEntryPage").then(m => ({ default: m.LiveEntryPage })));
+const LiveBroadcastPage = lazy(() => import("@/features/live/LiveBroadcastPage").then(m => ({ default: m.LiveBroadcastPage })));
 
-// Games
-import { GamesListPage } from "@/features/games/GamesListPage";
-import { CreateGamePage } from "@/features/games/CreateGamePage";
+// Admin (lazy)
+const OperatorsPage = lazy(() => import("@/features/admin/OperatorsPage").then(m => ({ default: m.OperatorsPage })));
 
-// Game Detail
-import { OverviewPage } from "@/features/game-detail/OverviewPage";
-import { GameOperatorsPage } from "@/features/game-detail/GameOperatorsPage";
-import { BasesPage } from "@/features/game-detail/BasesPage";
-import { ChallengesPage } from "@/features/game-detail/ChallengesPage";
-import { AssignmentsPage } from "@/features/game-detail/AssignmentsPage";
-import { TeamsPage } from "@/features/game-detail/TeamsPage";
-import { NotificationsPage } from "@/features/game-detail/NotificationsPage";
-import { ResultsPage } from "@/features/game-detail/ResultsPage";
-import { SettingsPage } from "@/features/game-detail/SettingsPage";
+// Games (lazy)
+const GamesListPage = lazy(() => import("@/features/games/GamesListPage").then(m => ({ default: m.GamesListPage })));
+const CreateGamePage = lazy(() => import("@/features/games/CreateGamePage").then(m => ({ default: m.CreateGamePage })));
 
-// Monitoring
-import { DashboardPage } from "@/features/monitoring/DashboardPage";
-import { MapPage } from "@/features/monitoring/MapPage";
-import { LeaderboardPage } from "@/features/monitoring/LeaderboardPage";
-import { ActivityPage } from "@/features/monitoring/ActivityPage";
-import { SubmissionsPage } from "@/features/monitoring/SubmissionsPage";
-import { TeamDetailPage } from "@/features/monitoring/TeamDetailPage";
+// Game Detail (lazy)
+const OverviewPage = lazy(() => import("@/features/game-detail/OverviewPage").then(m => ({ default: m.OverviewPage })));
+const GameOperatorsPage = lazy(() => import("@/features/game-detail/GameOperatorsPage").then(m => ({ default: m.GameOperatorsPage })));
+const BasesPage = lazy(() => import("@/features/game-detail/BasesPage").then(m => ({ default: m.BasesPage })));
+const ChallengesPage = lazy(() => import("@/features/game-detail/ChallengesPage").then(m => ({ default: m.ChallengesPage })));
+const AssignmentsPage = lazy(() => import("@/features/game-detail/AssignmentsPage").then(m => ({ default: m.AssignmentsPage })));
+const TeamsPage = lazy(() => import("@/features/game-detail/TeamsPage").then(m => ({ default: m.TeamsPage })));
+const NotificationsPage = lazy(() => import("@/features/game-detail/NotificationsPage").then(m => ({ default: m.NotificationsPage })));
+const ResultsPage = lazy(() => import("@/features/game-detail/ResultsPage").then(m => ({ default: m.ResultsPage })));
+const SettingsPage = lazy(() => import("@/features/game-detail/SettingsPage").then(m => ({ default: m.SettingsPage })));
 
-// Live broadcast (public)
-import { LiveEntryPage } from "@/features/live/LiveEntryPage";
-import { LiveBroadcastPage } from "@/features/live/LiveBroadcastPage";
+// Monitoring (lazy)
+const DashboardPage = lazy(() => import("@/features/monitoring/DashboardPage").then(m => ({ default: m.DashboardPage })));
+const MapPage = lazy(() => import("@/features/monitoring/MapPage").then(m => ({ default: m.MapPage })));
+const LeaderboardPage = lazy(() => import("@/features/monitoring/LeaderboardPage").then(m => ({ default: m.LeaderboardPage })));
+const ActivityPage = lazy(() => import("@/features/monitoring/ActivityPage").then(m => ({ default: m.ActivityPage })));
+const SubmissionsPage = lazy(() => import("@/features/monitoring/SubmissionsPage").then(m => ({ default: m.SubmissionsPage })));
+const TeamDetailPage = lazy(() => import("@/features/monitoring/TeamDetailPage").then(m => ({ default: m.TeamDetailPage })));
 
 // Auth guards
 import { AuthGuard } from "./AuthGuard";
@@ -48,6 +49,18 @@ import { GuestGuard } from "./GuestGuard";
 
 // Error boundary
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
+
+// Loading fallback
+const LoadingFallback = () => <div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>;
+
+// Wrapper for lazy pages
+const LazyPage = ({ component: Component }: { component: React.ComponentType }) => (
+  <Suspense fallback={<LoadingFallback />}>
+    <ErrorBoundary>
+      <Component />
+    </ErrorBoundary>
+  </Suspense>
+);
 
 export const router = createBrowserRouter([
   /* -------- Public landing page -------- */
@@ -58,7 +71,7 @@ export const router = createBrowserRouter([
   /* -------- FAQ page -------- */
   {
     path: "/faq",
-    element: <FaqPage />,
+    element: <LazyPage component={FaqPage} />,
   },
   /* -------- Auth pages -------- */
   {
@@ -97,11 +110,11 @@ export const router = createBrowserRouter([
   /* -------- Public live broadcast -------- */
   {
     path: "/live",
-    element: <LiveEntryPage />,
+    element: <LazyPage component={LiveEntryPage} />,
   },
   {
     path: "/live/:code",
-    element: <LiveBroadcastPage />,
+    element: <LazyPage component={LiveBroadcastPage} />,
   },
 
   /* -------- Authenticated admin shell (pathless layout route) -------- */
@@ -115,8 +128,8 @@ export const router = createBrowserRouter([
       {
         path: "games",
         children: [
-          { index: true, element: <ErrorBoundary><GamesListPage /></ErrorBoundary> },
-          { path: "new", element: <ErrorBoundary><CreateGamePage /></ErrorBoundary> },
+          { index: true, element: <LazyPage component={GamesListPage} /> },
+          { path: "new", element: <LazyPage component={CreateGamePage} /> },
         ],
       },
       {
@@ -124,7 +137,7 @@ export const router = createBrowserRouter([
         children: [
           {
             path: "operators",
-            element: <ErrorBoundary><OperatorsPage /></ErrorBoundary>,
+            element: <LazyPage component={OperatorsPage} />,
           },
         ],
       },
@@ -144,24 +157,24 @@ export const router = createBrowserRouter([
         index: true,
         element: <Navigate to="overview" replace />,
       },
-      { path: "overview", element: <ErrorBoundary><OverviewPage /></ErrorBoundary> },
-      { path: "operators", element: <ErrorBoundary><GameOperatorsPage /></ErrorBoundary> },
-      { path: "bases", element: <ErrorBoundary><BasesPage /></ErrorBoundary> },
-      { path: "challenges", element: <ErrorBoundary><ChallengesPage /></ErrorBoundary> },
-      { path: "assignments", element: <ErrorBoundary><AssignmentsPage /></ErrorBoundary> },
-      { path: "teams", element: <ErrorBoundary><TeamsPage /></ErrorBoundary> },
-      { path: "notifications", element: <ErrorBoundary><NotificationsPage /></ErrorBoundary> },
-      { path: "settings", element: <ErrorBoundary><SettingsPage /></ErrorBoundary> },
-      { path: "results", element: <ErrorBoundary><ResultsPage /></ErrorBoundary> },
+      { path: "overview", element: <LazyPage component={OverviewPage} /> },
+      { path: "operators", element: <LazyPage component={GameOperatorsPage} /> },
+      { path: "bases", element: <LazyPage component={BasesPage} /> },
+      { path: "challenges", element: <LazyPage component={ChallengesPage} /> },
+      { path: "assignments", element: <LazyPage component={AssignmentsPage} /> },
+      { path: "teams", element: <LazyPage component={TeamsPage} /> },
+      { path: "notifications", element: <LazyPage component={NotificationsPage} /> },
+      { path: "settings", element: <LazyPage component={SettingsPage} /> },
+      { path: "results", element: <LazyPage component={ResultsPage} /> },
       {
         path: "monitor",
         children: [
-          { index: true, element: <ErrorBoundary><DashboardPage /></ErrorBoundary> },
-          { path: "map", element: <ErrorBoundary><MapPage /></ErrorBoundary> },
-          { path: "leaderboard", element: <ErrorBoundary><LeaderboardPage /></ErrorBoundary> },
-          { path: "activity", element: <ErrorBoundary><ActivityPage /></ErrorBoundary> },
-          { path: "submissions", element: <ErrorBoundary><SubmissionsPage /></ErrorBoundary> },
-          { path: "teams/:teamId", element: <ErrorBoundary><TeamDetailPage /></ErrorBoundary> },
+          { index: true, element: <LazyPage component={DashboardPage} /> },
+          { path: "map", element: <LazyPage component={MapPage} /> },
+          { path: "leaderboard", element: <LazyPage component={LeaderboardPage} /> },
+          { path: "activity", element: <LazyPage component={ActivityPage} /> },
+          { path: "submissions", element: <LazyPage component={SubmissionsPage} /> },
+          { path: "teams/:teamId", element: <LazyPage component={TeamDetailPage} /> },
         ],
       },
     ],

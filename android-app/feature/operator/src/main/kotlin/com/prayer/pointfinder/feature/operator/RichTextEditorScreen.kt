@@ -339,7 +339,7 @@ private fun VariablePickerDialog(
                 Text(stringResource(R.string.label_no_variables))
             } else {
                 LazyColumn {
-                    items(variables) { variable ->
+                    items(variables, key = { it.key }) { variable ->
                         TextButton(
                             onClick = { onSelect(variable.key) },
                             modifier = Modifier.fillMaxWidth(),
@@ -458,7 +458,7 @@ private fun TeamPickerDialog(
         title = { Text(stringResource(R.string.label_select_team)) },
         text = {
             LazyColumn {
-                items(teams) { team ->
+                items(teams, key = { it.id }) { team ->
                     TextButton(
                         onClick = { onSelect(team) },
                         modifier = Modifier.fillMaxWidth(),

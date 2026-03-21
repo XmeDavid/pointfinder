@@ -450,7 +450,8 @@ private fun PlayerRootScreen(
     // Camera temp file URI
     val cameraPhotoUri = remember {
         val photoDir = File(context.cacheDir, "photos").apply { mkdirs() }
-        val photoFile = File(photoDir, "capture.jpg")
+        val timestamp = System.currentTimeMillis()
+        val photoFile = File(photoDir, "capture_$timestamp.jpg")
         FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", photoFile)
     }
 
@@ -529,13 +530,15 @@ private fun PlayerRootScreen(
                     val out = ByteArrayOutputStream()
                     scaled.compress(Bitmap.CompressFormat.JPEG, 70, out)
                     val jpegBytes = out.toByteArray()
+                    // Extract filename from the URI path
+                    val fileName = cameraPhotoUri.path?.substringAfterLast('/') ?: "capture.jpg"
                     selectedMediaItems = selectedMediaItems + MediaItem(
                         uri = cameraPhotoUri.toString(),
                         thumbnail = thumbnail,
                         isVideo = false,
                         contentType = "image/jpeg",
                         sizeBytes = jpegBytes.size.toLong(),
-                        fileName = "capture.jpg",
+                        fileName = fileName,
                     )
                 }
             }
@@ -560,9 +563,9 @@ private fun PlayerRootScreen(
 
     LaunchedEffect(auth.gameId, isOnline, state.realtimeConnected) {
         if (!isOnline) return@LaunchedEffect
-        while ((state.gameStatus ?: auth.gameStatus) != GameStatus.LIVE) {
+        while (viewModel.state.value.gameStatus?.let { it != GameStatus.LIVE } != false) {
             // Keep polling as fallback, but back off when realtime socket is healthy.
-            delay(if (state.realtimeConnected) 30_000L else 10_000L)
+            delay(if (viewModel.state.value.realtimeConnected) 30_000L else 10_000L)
             viewModel.refresh(auth, true)
         }
     }

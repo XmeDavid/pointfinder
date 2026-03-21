@@ -40,7 +40,11 @@ export function formatDateTimeInputValue(date: Date | string | null | undefined)
   if (!date) return "";
   const parsed = new Date(date);
   if (Number.isNaN(parsed.getTime())) return "";
-  return `${pad2(parsed.getDate())}/${pad2(parsed.getMonth() + 1)}/${parsed.getFullYear()} ${pad2(parsed.getHours())}:${pad2(parsed.getMinutes())}`;
+  const offset = -parsed.getTimezoneOffset();
+  const offsetSign = offset >= 0 ? "+" : "-";
+  const offsetHours = pad2(Math.abs(Math.floor(offset / 60)));
+  const offsetMinutes = pad2(Math.abs(offset % 60));
+  return `${pad2(parsed.getDate())}/${pad2(parsed.getMonth() + 1)}/${parsed.getFullYear()} ${pad2(parsed.getHours())}:${pad2(parsed.getMinutes())} (UTC${offsetSign}${offsetHours}:${offsetMinutes})`;
 }
 
 export function parseDateTimeInputValue(value: string): Date | null {

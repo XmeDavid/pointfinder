@@ -35,7 +35,7 @@ public class BaseService {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         return baseRepository.findByGameIdOrderByCreatedAtAsc(gameId).stream()
                 .map(this::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(timeout = 10)

@@ -80,7 +80,7 @@ struct PlayerNotificationResponse: Codable, Identifiable {
 }
 
 struct UnseenCountResponse: Codable {
-    let count: Int
+    let count: Int64
 }
 
 // MARK: - Pending Media Item

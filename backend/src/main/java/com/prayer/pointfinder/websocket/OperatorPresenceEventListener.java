@@ -81,7 +81,7 @@ public class OperatorPresenceEventListener {
                     m.put("initials", op.initials());
                     return m;
                 })
-                .collect(Collectors.toList());
+                .toList();
 
         Map<String, Object> data = new HashMap<>();
         data.put("operators", operatorList);

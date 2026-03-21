@@ -79,9 +79,13 @@ export function isGameExportDto(value: unknown): value is GameExportDto {
     typeof data.exportVersion === "string" &&
     !!game &&
     typeof game.name === "string" &&
+    typeof game.description === "string" &&
     Array.isArray(data.bases) &&
     Array.isArray(data.challenges) &&
-    Array.isArray(data.assignments)
+    Array.isArray(data.assignments) &&
+    data.bases.every((b: unknown) => typeof (b as Record<string, unknown>).tempId === "string" && typeof (b as Record<string, unknown>).name === "string" && typeof (b as Record<string, unknown>).lat === "number" && typeof (b as Record<string, unknown>).lng === "number") &&
+    data.challenges.every((c: unknown) => typeof (c as Record<string, unknown>).tempId === "string" && typeof (c as Record<string, unknown>).title === "string" && typeof (c as Record<string, unknown>).points === "number" && typeof (c as Record<string, unknown>).answerType === "string") &&
+    data.assignments.every((a: unknown) => typeof (a as Record<string, unknown>).baseTempId === "string" && typeof (a as Record<string, unknown>).challengeTempId === "string")
   );
 }
 

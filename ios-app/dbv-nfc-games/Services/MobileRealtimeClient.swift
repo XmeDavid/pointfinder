@@ -12,6 +12,8 @@ final class MobileRealtimeClient {
 
     var onEvent: (([String: Any]) -> Void)?
     var onConnectionStateChange: ((ConnectionState) -> Void)?
+    /// Called when connection is re-established after a disconnection
+    var onReconnect: (() async -> Void)?
 
     private let urlSession = URLSession(configuration: .default)
     private var socketTask: URLSessionWebSocketTask?
@@ -114,8 +116,13 @@ final class MobileRealtimeClient {
                     let message = try await task.receive()
                     if firstMessage {
                         firstMessage = false
+                        let wasReconnecting = self?.reconnectAttempt ?? 0 > 0
                         self?.connectionState = .connected
                         self?.reconnectAttempt = 0
+                        // Trigger data refresh if this was a reconnection
+                        if wasReconnecting {
+                            await self?.onReconnect?()
+                        }
                     }
                     self?.handleMessage(message)
                 } catch {
@@ -128,12 +135,8 @@ final class MobileRealtimeClient {
 
     private func startPingLoop(task: URLSessionWebSocketTask) {
         pingTask = Task { [weak self] in
-            // Mark connected optimistically after a short delay if no message yet
-            try? await Task.sleep(nanoseconds: 2_000_000_000)
-            if !Task.isCancelled, let self, self.connectionState != .connected {
-                self.connectionState = .connected
-                self.reconnectAttempt = 0
-            }
+            // Don't mark as connected until a message is actually received
+            // The receiveLoop will set .connected when the first message arrives
 
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 15_000_000_000) // 15 seconds

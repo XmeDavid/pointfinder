@@ -18,10 +18,10 @@ actor OfflineQueue {
 
     /// Callback invoked whenever the queue changes (enqueue/dequeue/clear).
     /// Set by AppState to reactively update `pendingActionsCount`.
-    private var onCountChanged: ((Int) -> Void)?
+    private var onCountChanged: (@Sendable (Int) -> Void)?
 
     /// Set the callback for queue count changes (actor-safe setter).
-    func setOnCountChanged(_ callback: @escaping (Int) -> Void) {
+    func setOnCountChanged(_ callback: @escaping @Sendable (Int) -> Void) {
         onCountChanged = callback
     }
 

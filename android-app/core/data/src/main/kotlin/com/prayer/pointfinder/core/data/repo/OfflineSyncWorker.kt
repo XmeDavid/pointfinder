@@ -12,6 +12,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.prayer.pointfinder.core.data.local.PendingActionEntity
 import com.prayer.pointfinder.core.model.AuthType
+import com.prayer.pointfinder.core.model.GameStatus
 import com.prayer.pointfinder.core.model.PlayerSubmissionRequest
 import com.prayer.pointfinder.core.network.CompanionApi
 import dagger.assisted.Assisted
@@ -33,6 +34,11 @@ class OfflineSyncWorker @AssistedInject constructor(
     override suspend fun doWork(): Result {
         val auth = sessionStore.currentAuthType()
         if (auth !is AuthType.Player) return Result.success()
+
+        // Check game status before syncing queued actions
+        val gameStatus = runCatching {
+            playerRepository.loadProgress(auth, true).gameStatus
+        }.getOrNull()
 
         val pending = prioritizedPendingActions(playerRepository.pendingActions())
 

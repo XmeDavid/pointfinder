@@ -79,6 +79,14 @@ final class AppState {
     // MARK: - Init
 
     init() {
+        configureRealtimeClient()
+        restoreSession()
+        configureSyncEngine()
+        // Defer auth failure handler setup to avoid capturing self before init completes
+        setupAuthFailureHandler()
+    }
+
+    private func setupAuthFailureHandler() {
         Task { [weak self] in
             guard let self else { return }
             await self.apiClient.setAuthFailureHandler { [weak self] in
@@ -87,9 +95,6 @@ final class AppState {
                 }
             }
         }
-        configureRealtimeClient()
-        restoreSession()
-        configureSyncEngine()
     }
 
     // MARK: - Realtime Configuration

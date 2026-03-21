@@ -170,7 +170,7 @@ struct LeaderboardEntry: Codable, Identifiable {
     let teamId: UUID
     let teamName: String
     let color: String
-    let points: Int
+    let points: Int64
     let completedChallenges: Int
 
     var id: UUID { teamId }
@@ -201,8 +201,6 @@ struct GameExportDto: Codable {
 struct GameExportGame: Codable {
     var name: String
     let description: String
-    let startDate: String?
-    let endDate: String?
     let uniformAssignment: Bool?
     let tileSource: String?
 }

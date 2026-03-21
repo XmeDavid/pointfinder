@@ -143,6 +143,8 @@ struct OperatorMapView: View {
                                 mapFocusState = .showAllBases
                             case .showAllBases:
                                 fitAllBasesId = UUID()
+                                // Request location permission when user explicitly taps "center on me"
+                                locationManager.requestLocationPermission()
                                 mapFocusState = .centerOnMe
                             }
                         } label: {
@@ -376,17 +378,30 @@ struct OperatorMapView: View {
 private class LocationManagerHelper: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var lastLocation: CLLocationCoordinate2D?
     private let manager = CLLocationManager()
+    private var hasRequestedPermission = false
 
     override init() {
         super.init()
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyBest
+        // Defer permission request and location updates until explicitly requested
+    }
+
+    func requestLocationPermission() {
+        guard !hasRequestedPermission else { return }
+        hasRequestedPermission = true
         manager.requestWhenInUseAuthorization()
         manager.startUpdatingLocation()
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         lastLocation = locations.last?.coordinate
+    }
+
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        if manager.authorizationStatus == .authorizedWhenInUse || manager.authorizationStatus == .authorizedAlways {
+            manager.startUpdatingLocation()
+        }
     }
 }
 

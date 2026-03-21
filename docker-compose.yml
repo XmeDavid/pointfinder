@@ -28,7 +28,7 @@ services:
     expose:
       - "8080"
     environment:
-      JAVA_OPTS: "-Xms256m -Xmx1200m"
+      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx1200m"
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/pointfinder?stringtype=unspecified
       SPRING_DATASOURCE_USERNAME: scout
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
@@ -71,6 +71,7 @@ services:
       # Mount your Firebase service account JSON from the host into the container (read-only)
       - ./secrets/firebase-service-account.json:/app/config/firebase-service-account.json:ro
     restart: unless-stopped
+    stop_grace_period: 40s
     deploy:
       resources:
         limits:
@@ -94,6 +95,7 @@ services:
         VITE_API_URL: /api
         VITE_WS_URL: /ws
     container_name: pointfinder-web
+    restart: unless-stopped
     volumes:
       - frontend_dist:/app/dist
     healthcheck:
@@ -117,8 +119,8 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
       - ${UPLOADS_PATH:-./data/uploads}:/uploads:ro
       - frontend_dist:/usr/share/nginx/html/app:ro
     depends_on:
@@ -131,8 +133,9 @@ services:
     command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
 
   certbot:
-    image: certbot/certbot
+    image: certbot/certbot:v2.9.0
     container_name: pointfinder-certbot
+    restart: unless-stopped
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot

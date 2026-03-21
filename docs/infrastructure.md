@@ -1,13 +1,13 @@
 # Infrastructure Guide
 
 **Platform:** PointFinder NFC Gaming Platform
-**Last updated:** 2026-03-14
+**Last updated:** 2026-03-21
 
 ---
 
 ## 1. Docker Services
 
-Five services compose the production stack. Start order is enforced via `depends_on`.
+Seven services compose the production stack. Start order is enforced via `depends_on`.
 
 | Service | Container | Image / Build | Purpose |
 |---------|-----------|---------------|---------|
@@ -16,6 +16,8 @@ Five services compose the production stack. Start order is enforced via `depends
 | `frontend` | `pointfinder-web` | `./web-admin` (multi-stage Node → Alpine) | Builds Vite SPA into `frontend_dist` volume, then idles |
 | `nginx` | `pointfinder-nginx` | `./nginx` (nginx:alpine) | Reverse proxy; only container with published ports 80/443 |
 | `certbot` | `pointfinder-certbot` | `certbot/certbot` | Let's Encrypt certificate renewal loop |
+| `prometheus` | — | `prom/prometheus:v2.53.0` | Metrics collection, port 127.0.0.1:9090 (host-only) |
+| `grafana` | — | `grafana/grafana:11.1.0` | Metrics dashboard, port 3000 (internal) |
 
 ### Startup order
 
@@ -99,6 +101,7 @@ Enable by setting `FCM_ENABLED=true` and placing `firebase-service-account.json`
 
 | Variable | Default | Description |
 |----------|---------|-------------|
+| `PGDATA_PATH` | `./data/pgdata` | Host path for PostgreSQL data directory |
 | `SPRING_PROFILES_ACTIVE` | `prod` | Spring active profile |
 
 ---
@@ -109,20 +112,22 @@ Source: `nginx/nginx.conf`
 
 ### Rate limiting
 
-Two limit zones are defined in `http {}`:
+Four limit zones are defined in `http {}`:
 
 | Zone | Limit | Memory | Applied to |
 |------|-------|--------|------------|
-| `api_limit` | 100 req/min per IP | 10 MB | All `/api/` endpoints |
-| `auth_limit` | 20 req/min per IP | 10 MB | `/api/auth/` endpoints (overrides api_limit) |
-
-Auth endpoints also have a tighter burst: `burst=5` vs `burst=20` for general API.
+| `api_limit` | 30 req/s per IP | 10 MB | All `/api/` endpoints (`burst=20`) |
+| `auth_limit` | 20 req/min per IP | 10 MB | `/api/auth/` endpoints (`burst=5`, overrides api_limit) |
+| `player_join_limit` | 5 req/min per IP | 10 MB | `/api/auth/player/join` (`burst=2`, brute-force protection) |
+| `broadcast_limit` | 10 req/min per IP | 10 MB | `/api/broadcast/` endpoints (`burst=5`) |
 
 ### Key location blocks
 
 | Pattern | Purpose | Notes |
 |---------|---------|-------|
+| `^~ /api/auth/player/join` | Player join | `player_join_limit burst=2`; brute-force protection on join codes |
 | `^~ /api/auth/` | Auth endpoints | `auth_limit burst=5`; takes precedence over `/api/` |
+| `^~ /api/broadcast/` | Broadcast endpoints | `broadcast_limit burst=5`; public spectator rate limit |
 | `^~ /api/` | All other API routes | `api_limit burst=20`; proxied to `backend:8080` |
 | `/ws/` | WebSocket upgrades | No rate limit; 24-hour read/send timeouts |
 | `/.well-known/apple-app-site-association` | iOS Universal Links | Served as static JSON |
@@ -131,7 +136,7 @@ Auth endpoints also have a tighter burst: `burst=5` vs `burst=20` for general AP
 | `/health` | Upstream health check | Proxied to `backend:8080`; access log disabled |
 | `/actuator/` | Spring Boot Actuator | **Blocked** — `deny all`, returns 404 |
 | `~* \.(js\|css\|png\|...)$` | Static assets | 1-year `Cache-Control: immutable` |
-| `/` | SPA fallback | Serves `index.html` for client-side routing |
+| `/` | SPA fallback | `try_files $uri $uri/ /__spa.html` for client-side routing |
 
 ### Security headers
 
@@ -140,7 +145,10 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains  (HSTS, 1 year)
 X-Frame-Options: SAMEORIGIN
 X-Content-Type-Options: nosniff
 Referrer-Policy: strict-origin-when-cross-origin
+Content-Security-Policy: detailed CSP with script/style/img/connect-src directives
 ```
+
+The CSP includes SHA256 hashes for inline scripts, map tile sources (OpenStreetMap, CartoDB, Swisstopo), and WebSocket connections to `pointfinder.pt` / `pointfinder.ch`. See `nginx/security-headers.conf` for the full policy.
 
 ### WebSocket proxy
 
@@ -272,7 +280,24 @@ rsync -az ./data/uploads/ remote:/backups/uploads/
 
 ---
 
-## 8. Performance Tuning
+## 8. Scheduled Background Tasks
+
+The backend runs several scheduled maintenance tasks:
+
+| Task | Interval | Description |
+|------|----------|-------------|
+| Auto-end games | 60 seconds | Ends games past their `endDate` |
+| Purge expired refresh tokens | 1 hour | Removes expired refresh tokens from DB |
+| Purge password reset tokens | 1 hour | Removes expired password reset tokens |
+| Expire stale upload sessions | 15 minutes | Cleans up upload sessions past TTL |
+| Cleanup login attempt records | 30 minutes | Purges expired brute-force lockout entries |
+| Cleanup stale WebSocket sessions | 60 seconds | Removes disconnected mobile WebSocket sessions |
+
+Source: `GameSchedulerService.java`, `LoginAttemptService.java`, `MobileRealtimeHub.java`
+
+---
+
+## 9. Performance Tuning
 
 ### JVM heap (backend)
 

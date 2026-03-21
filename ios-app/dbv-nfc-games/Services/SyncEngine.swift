@@ -41,6 +41,10 @@ final class SyncEngine {
     /// Callback to refresh progress after sync (injected by AppState)
     var onSyncComplete: (() async -> Void)?
 
+    /// Callback to get current game state (injected by AppState)
+    /// Returns true if game is still active, false if game has ended
+    var gameStateProvider: (() -> Bool)? = nil
+
     private init() {
         self.maxRetries = 5
         self.baseBackoffSeconds = 2
@@ -85,6 +89,13 @@ final class SyncEngine {
     func syncPendingActions() async {
         guard !isSyncing else { return }
         guard connectivityCheck() else { return }
+
+        // Check if game is still active before syncing
+        let gameIsActive = gameStateProvider?() ?? true
+        if !gameIsActive {
+            lastSyncError = LocaleManager.shared.t("sync.gameEnded", "Game has ended. Pending actions cannot be synced.")
+            return
+        }
 
         isSyncing = true
         lastSyncError = nil
@@ -346,12 +357,17 @@ final class SyncEngine {
                 totalChunks: session.totalChunks,
                 chunkIndex: chunkIndex
             )
+
+            // Skip already-uploaded chunks by seeking directly to the next position
+            if uploadedSet.contains(chunkIndex) {
+                let skipOffset = Int64(chunkIndex) * Int64(session.chunkSizeBytes)
+                try fileHandle.seek(toOffset: skipOffset)
+                continue
+            }
+
             let chunkData = try fileHandle.read(upToCount: expectedSize) ?? Data()
             guard chunkData.count == expectedSize else {
                 throw SyncError.invalidAction
-            }
-            if uploadedSet.contains(chunkIndex) {
-                continue
             }
             session = try await apiClient.uploadSessionChunk(
                 gameId: gameId,
@@ -417,12 +433,17 @@ final class SyncEngine {
                 totalChunks: session.totalChunks,
                 chunkIndex: chunkIndex
             )
+
+            // Skip already-uploaded chunks by seeking directly to the next position
+            if uploadedSet.contains(chunkIndex) {
+                let skipOffset = Int64(chunkIndex) * Int64(session.chunkSizeBytes)
+                try fileHandle.seek(toOffset: skipOffset)
+                continue
+            }
+
             let chunkData = try fileHandle.read(upToCount: expectedSize) ?? Data()
             guard chunkData.count == expectedSize else {
                 throw SyncError.invalidAction
-            }
-            if uploadedSet.contains(chunkIndex) {
-                continue
             }
             session = try await apiClient.uploadSessionChunk(
                 gameId: gameId,
@@ -531,4 +552,4 @@ enum SyncError: LocalizedError {
     }
 }
 
-private let DEFAULT_CHUNK_SIZE_BYTES = 8 * 1024 * 1024
+private let defaultChunkSizeBytes = 8 * 1024 * 1024

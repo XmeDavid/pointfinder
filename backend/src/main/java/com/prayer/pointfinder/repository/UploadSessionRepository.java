@@ -3,6 +3,7 @@ package com.prayer.pointfinder.repository;
 import com.prayer.pointfinder.entity.UploadSession;
 import com.prayer.pointfinder.entity.UploadSessionStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -21,4 +22,8 @@ public interface UploadSessionRepository extends JpaRepository<UploadSession, UU
             WHERE s.game.id = :gameId AND s.status = :status
             """)
     long sumTotalSizeByGameAndStatus(@Param("gameId") UUID gameId, @Param("status") UploadSessionStatus status);
+
+    @Modifying
+    @Query("DELETE FROM UploadSession s WHERE s.game.id = :gameId")
+    void deleteByGameId(@Param("gameId") UUID gameId);
 }

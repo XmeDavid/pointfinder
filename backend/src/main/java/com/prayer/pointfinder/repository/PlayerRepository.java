@@ -2,6 +2,7 @@ package com.prayer.pointfinder.repository;
 
 import com.prayer.pointfinder.entity.Player;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -29,4 +30,8 @@ public interface PlayerRepository extends JpaRepository<Player, UUID> {
             WHERE p.id = :playerId
             """)
     Optional<Player> findAuthPlayerById(@Param("playerId") UUID playerId);
+
+    @Modifying
+    @Query("UPDATE Player p SET p.pushToken = NULL WHERE p.pushToken = :token")
+    void setInvalidPushTokenToNull(@Param("token") String token);
 }

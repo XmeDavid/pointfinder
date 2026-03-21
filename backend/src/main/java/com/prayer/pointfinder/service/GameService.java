@@ -73,7 +73,7 @@ public class GameService {
         } else {
             games = gameRepository.findByOperatorOrCreator(currentUser.getId());
         }
-        return games.stream().map(this::toResponse).collect(Collectors.toList());
+        return games.stream().map(this::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
@@ -93,7 +93,7 @@ public class GameService {
                         .role(user.getRole().name())
                         .createdAt(user.getCreatedAt())
                         .build())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     // ── Create / Update / Delete ─────────────────────────────────────
@@ -155,14 +155,14 @@ public class GameService {
     public void deleteGame(UUID id) {
         gameAccessService.ensureCurrentUserCanAccessGame(id);
         gameRepository.deleteById(id);
-        try {
-            fileStorageService.deleteGameFiles(id);
-        } catch (Exception e) {
-            log.warn("Failed to clean up files for deleted game {}: {}", id, e.getMessage());
-        }
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
+                try {
+                    fileStorageService.deleteGameFiles(id);
+                } catch (Exception e) {
+                    log.warn("Failed to clean up files for deleted game {}: {}", id, e.getMessage());
+                }
                 eventBroadcaster.broadcastGameStatus(id, "ended");
             }
         });
@@ -302,7 +302,7 @@ public class GameService {
         // Ensure all location-bound challenges are assigned (via fixedChallengeId or assignment record)
         List<Challenge> locationBoundChallenges = challengeRepository.findByGameId(game.getId()).stream()
                 .filter(c -> Boolean.TRUE.equals(c.getLocationBound()))
-                .collect(Collectors.toList());
+                .toList();
         if (!locationBoundChallenges.isEmpty()) {
             List<Base> bases = baseRepository.findByGameId(game.getId());
             Set<UUID> fixedChallengeIds = bases.stream()

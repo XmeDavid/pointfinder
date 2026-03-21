@@ -113,9 +113,9 @@ struct OperatorLiveView: View {
 
     private func rankColor(_ rank: Int) -> Color {
         switch rank {
-        case 1: return Color(red: 1, green: 0.84, blue: 0)       // Gold
-        case 2: return Color(red: 0.75, green: 0.75, blue: 0.75) // Silver
-        case 3: return Color(red: 0.80, green: 0.50, blue: 0.20) // Bronze
+        case 1: return .yellow       // Gold
+        case 2: return Color(UIColor.systemGray)  // Silver
+        case 3: return .orange       // Bronze
         default: return .primary
         }
     }

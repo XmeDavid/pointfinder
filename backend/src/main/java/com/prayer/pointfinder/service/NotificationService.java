@@ -16,6 +16,7 @@ import com.prayer.pointfinder.repository.PlayerRepository;
 import com.prayer.pointfinder.repository.TeamRepository;
 import com.prayer.pointfinder.repository.UserRepository;
 import com.prayer.pointfinder.security.SecurityUtils;
+import com.prayer.pointfinder.util.NotificationMapper;
 import com.prayer.pointfinder.websocket.GameEventBroadcaster;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -48,7 +49,7 @@ public class NotificationService {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         return notificationRepository.findByGameIdOrderBySentAtDesc(gameId, PageRequest.of(0, 500)).stream()
                 .map(this::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(timeout = 10)
@@ -126,13 +127,6 @@ public class NotificationService {
     }
 
     private NotificationResponse toResponse(GameNotification n) {
-        return NotificationResponse.builder()
-                .id(n.getId())
-                .gameId(n.getGame().getId())
-                .message(n.getMessage())
-                .targetTeamId(n.getTargetTeam() != null ? n.getTargetTeam().getId() : null)
-                .sentAt(n.getSentAt())
-                .sentBy(n.getSentBy() != null ? n.getSentBy().getId() : null)
-                .build();
+        return NotificationMapper.toResponse(n);
     }
 }

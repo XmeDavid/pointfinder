@@ -33,8 +33,8 @@ public class Player {
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
-    @Column(name = "push_platform", nullable = false)
-    private PushPlatform pushPlatform = PushPlatform.ios;
+    @Column(name = "push_platform", nullable = true)
+    private PushPlatform pushPlatform;
 
     @Column(name = "last_notifications_seen_at")
     private Instant lastNotificationsSeenAt;

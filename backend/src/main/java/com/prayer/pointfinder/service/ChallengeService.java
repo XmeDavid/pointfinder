@@ -35,7 +35,7 @@ public class ChallengeService {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         return challengeRepository.findByGameIdOrderByCreatedAtAsc(gameId).stream()
                 .map(this::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(timeout = 10)

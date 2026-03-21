@@ -14,6 +14,7 @@ final class LocationService: NSObject, ObservableObject {
     private var token: String?
     private var sendTimer: Timer?
     private var lastLocation: CLLocation?
+    private var isSending = false
 
     /// How often to send location updates to the server (seconds).
     private let sendInterval: TimeInterval = 30
@@ -111,8 +112,12 @@ final class LocationService: NSObject, ObservableObject {
 
         sendTimer = Timer.scheduledTimer(withTimeInterval: sendInterval, repeats: true) { [weak self] _ in
             guard let self else { return }
+            // Prevent overlapping sends with isSending guard
+            guard !self.isSending else { return }
+            self.isSending = true
             Task { @MainActor in
                 await self.sendCurrentLocation()
+                self.isSending = false
             }
         }
     }

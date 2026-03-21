@@ -38,7 +38,7 @@ export function BasesPage() {
   const [actionError, setActionError] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
-  const { data: game } = useQuery({ queryKey: ["game", gameId], queryFn: () => gamesApi.getById(gameId!) });
+  const { data: game } = useQuery({ queryKey: ["game", gameId], queryFn: () => gamesApi.getById(gameId!), enabled: !!gameId });
 
   const tileSourceCenter = getDefaultCenter(game?.tileSource);
   const [geoLocation, setGeoLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -57,8 +57,8 @@ export function BasesPage() {
   }, []);
 
   const defaultLocation = geoLocation ?? tileSourceCenter;
-  const { data: bases = [], isLoading } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!) });
-  const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!) });
+  const { data: bases = [], isLoading } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!), enabled: !!gameId });
+  const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!), enabled: !!gameId });
   const challengeById = useMemo(() => new Map(challenges.map((challenge) => [challenge.id, challenge])), [challenges]);
   const availableFixedChallenges = useMemo(
     () => filterAvailableFixedChallenges(challenges, bases, editing?.id, form.fixedChallengeId),
@@ -238,13 +238,13 @@ export function BasesPage() {
                   <FormLabel htmlFor="baseLatitude" className="text-xs text-muted-foreground" required>
                     {t("bases.latitude")}
                   </FormLabel>
-                  <Input id="baseLatitude" type="number" step="any" value={form.lat ?? ""} onChange={(e) => setForm((f) => ({ ...f, lat: parseFloat(e.target.value) }))} required data-testid="base-lat-input" />
+                  <Input id="baseLatitude" type="number" step="any" value={form.lat ?? ""} onChange={(e) => { const val = parseFloat(e.target.value); setForm((f) => ({ ...f, lat: Number.isNaN(val) ? undefined : val })); }} required data-testid="base-lat-input" />
                 </div>
                 <div className="space-y-1">
                   <FormLabel htmlFor="baseLongitude" className="text-xs text-muted-foreground" required>
                     {t("bases.longitude")}
                   </FormLabel>
-                  <Input id="baseLongitude" type="number" step="any" value={form.lng ?? ""} onChange={(e) => setForm((f) => ({ ...f, lng: parseFloat(e.target.value) }))} required data-testid="base-lng-input" />
+                  <Input id="baseLongitude" type="number" step="any" value={form.lng ?? ""} onChange={(e) => { const val = parseFloat(e.target.value); setForm((f) => ({ ...f, lng: Number.isNaN(val) ? undefined : val })); }} required data-testid="base-lng-input" />
                 </div>
               </div>
             </div>

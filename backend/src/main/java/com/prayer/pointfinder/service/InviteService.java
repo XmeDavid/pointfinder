@@ -36,7 +36,7 @@ public class InviteService {
         gameAccessService.ensureCurrentUserIsAdmin();
         return inviteRepository.findByGameIdIsNullAndStatus(InviteStatus.pending).stream()
                 .map(this::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -44,7 +44,7 @@ public class InviteService {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         return inviteRepository.findByGameIdAndStatus(gameId, InviteStatus.pending).stream()
                 .map(this::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -53,7 +53,7 @@ public class InviteService {
         return inviteRepository.findByEmailAndStatusAndGameIdIsNotNull(currentUser.getEmail(), InviteStatus.pending)
                 .stream()
                 .map(this::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)

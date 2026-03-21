@@ -41,9 +41,9 @@ export function ChallengesPage() {
   const [actionError, setActionError] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
-  const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!) });
-  const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!) });
-  const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!) });
+  const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!), enabled: !!gameId });
+  const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!), enabled: !!gameId });
+  const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!), enabled: !!gameId });
   const [varsSaving, setVarsSaving] = useState(false);
   const [previewTeamId, setPreviewTeamId] = useState<string>("");
   const fixedBaseByChallengeId = useMemo(() => {
@@ -127,6 +127,7 @@ export function ChallengesPage() {
       locationBound: false,
       requirePresenceToSubmit: false,
     });
+    setActionError("");
     setDialogOpen(true);
   }
 
@@ -134,6 +135,7 @@ export function ChallengesPage() {
     setEditing(ch);
     const fixedBase = fixedBaseByChallengeId.get(ch.id);
     setForm({ ...ch, fixedBaseId: fixedBase?.id, unlocksBaseId: ch.unlocksBaseId });
+    setActionError("");
     setDialogOpen(true);
   }
   function closeDialog() { setDialogOpen(false); setEditing(null); }
@@ -249,7 +251,7 @@ export function ChallengesPage() {
                   type="number"
                   min={0}
                   value={form.points ?? 100}
-                  onChange={(e) => setForm((f) => ({ ...f, points: parseInt(e.target.value) || 0 }))}
+                  onChange={(e) => setForm((f) => ({ ...f, points: Math.max(0, parseInt(e.target.value) || 0) }))}
                   required
                 />
               </div>

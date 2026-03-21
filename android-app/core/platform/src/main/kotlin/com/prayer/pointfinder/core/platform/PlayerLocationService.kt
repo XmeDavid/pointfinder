@@ -77,7 +77,6 @@ class PlayerLocationService @Inject constructor(
         this.sentFirstLocation = false
 
         // Create a new coroutine scope for location sending
-        scope?.cancel()
         scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
         // Bootstrap: request last known location immediately so we don't
@@ -92,7 +91,7 @@ class PlayerLocationService @Inject constructor(
             }
         }
 
-        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 30_000L)
+        val request = LocationRequest.Builder(Priority.PRIORITY_BALANCED_POWER_ACCURACY, 30_000L)
             .setMinUpdateDistanceMeters(10f)
             .setWaitForAccurateLocation(false)
             .build()
@@ -113,7 +112,7 @@ class PlayerLocationService @Inject constructor(
         val lm = context.getSystemService(android.location.LocationManager::class.java) ?: return
         if (!lm.isLocationEnabled) return
 
-        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 30_000L)
+        val request = LocationRequest.Builder(Priority.PRIORITY_BALANCED_POWER_ACCURACY, 30_000L)
             .setMinUpdateDistanceMeters(10f)
             .setWaitForAccurateLocation(false)
             .build()

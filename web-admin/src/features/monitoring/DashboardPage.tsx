@@ -13,9 +13,9 @@ export function DashboardPage() {
   const { t } = useTranslation();
   const { gameId } = useParams<{ gameId: string }>();
   const websocketError = useGameWebSocket(gameId);
-  const { data: game } = useQuery({ queryKey: ["game", gameId], queryFn: () => gamesApi.getById(gameId!) });
-  const { data: stats } = useQuery({ queryKey: ["dashboard-stats", gameId], queryFn: () => monitoringApi.getDashboardStats(gameId!) });
-  const { data: leaderboard = [] } = useQuery({ queryKey: ["leaderboard", gameId], queryFn: () => monitoringApi.getLeaderboard(gameId!) });
+  const { data: game } = useQuery({ queryKey: ["game", gameId], queryFn: () => gamesApi.getById(gameId!), enabled: !!gameId });
+  const { data: stats } = useQuery({ queryKey: ["dashboard-stats", gameId], queryFn: () => monitoringApi.getDashboardStats(gameId!), enabled: !!gameId });
+  const { data: leaderboard = [] } = useQuery({ queryKey: ["leaderboard", gameId], queryFn: () => monitoringApi.getLeaderboard(gameId!), enabled: !!gameId });
 
   if (!stats || !game) {
     return (

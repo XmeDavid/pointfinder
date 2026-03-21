@@ -140,7 +140,7 @@ function SettingsPageContent({ game, gameId }: { game: Game; gameId: string }) {
     }
   };
 
-  const currentStatus = game.status as GameStatus;
+  const currentStatus = game.status;
 
   // Determine which backward transitions are available
   const canRevertToSetup = currentStatus === "live" || currentStatus === "ended";

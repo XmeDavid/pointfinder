@@ -109,21 +109,32 @@ fun PlayerMapScreen(
 
     val density = context.resources.displayMetrics.density
 
-    // Update markers whenever progress changes
+    // Update markers whenever progress changes (incremental: remove only changed markers, add new ones)
     LaunchedEffect(map, progress) {
         val m = map ?: return@LaunchedEffect
-        m.annotations.forEach { m.removeAnnotation(it) }
+        val currentMarkers = m.annotations.toList()
+        val progressIds = progress.map { it.baseId }.toSet()
 
+        // Remove markers for bases no longer in progress
+        currentMarkers.forEach { marker ->
+            if (marker.snippet !in progressIds) {
+                m.removeAnnotation(marker)
+            }
+        }
+
+        // Update or add markers
         progress.forEach { item ->
-            val colorInt = statusColorInt(item.status)
-            val icon = iconFactory.fromBitmap(createPinMarkerBitmap(colorInt, item.status, density))
-            m.addMarker(
-                MarkerOptions()
-                    .position(LatLng(item.lat, item.lng))
-                    .title(item.baseName)
-                    .snippet(item.status.name.lowercase())
-                    .icon(icon),
-            )
+            val existingMarker = currentMarkers.firstOrNull { it.snippet == item.baseId }
+            if (existingMarker != null) {
+                // Marker already exists, check if status changed (would require removal and re-add)
+                if (existingMarker.snippet != item.baseId) {
+                    m.removeAnnotation(existingMarker)
+                    addMarkerForProgress(m, item, iconFactory, density)
+                }
+            } else {
+                // New marker
+                addMarkerForProgress(m, item, iconFactory, density)
+            }
         }
 
         if (progress.isNotEmpty()) {
@@ -145,9 +156,8 @@ fun PlayerMapScreen(
                         val compassMarginTop = (64 * context.resources.displayMetrics.density).toInt()
                         mapLibreMap.uiSettings.setCompassMargins(0, compassMarginTop, (12 * context.resources.displayMetrics.density).toInt(), 0)
                         mapLibreMap.setOnMarkerClickListener { marker ->
-                            val item = progress.firstOrNull {
-                                it.lat == marker.position.latitude && it.lng == marker.position.longitude
-                            }
+                            val baseId = marker.snippet
+                            val item = progress.firstOrNull { it.baseId == baseId }
                             if (item != null) {
                                 onBaseSelected(item)
                                 true
@@ -213,76 +223,29 @@ fun PlayerMapScreen(
     }
 }
 
+private fun addMarkerForProgress(
+    map: MapLibreMap,
+    item: BaseProgress,
+    iconFactory: IconFactory,
+    density: Float,
+) {
+    val colorInt = statusColorInt(item.status)
+    val icon = iconFactory.fromBitmap(createPinMarkerBitmap(colorInt, item.status, density))
+    map.addMarker(
+        MarkerOptions()
+            .position(LatLng(item.lat, item.lng))
+            .title(item.baseName)
+            .snippet(item.baseId)
+            .icon(icon),
+    )
+}
+
 private fun statusColorInt(status: BaseStatus): Int = when (status) {
     BaseStatus.NOT_VISITED -> android.graphics.Color.GRAY
     BaseStatus.CHECKED_IN -> android.graphics.Color.parseColor("#1565C0")
     BaseStatus.SUBMITTED -> android.graphics.Color.parseColor("#E08A00")
     BaseStatus.COMPLETED -> android.graphics.Color.parseColor("#2E7D32")
     BaseStatus.REJECTED -> android.graphics.Color.parseColor("#D32F2F")
-}
-
-private fun createPinMarkerBitmap(colorInt: Int, status: BaseStatus, density: Float): Bitmap {
-    // Target: 36dp circle + 6dp triangle, matching iOS BaseAnnotationView
-    val circleDiameterPx = (36 * density).toInt()
-    val triangleHeightPx = (6 * density).toInt()
-    val shadowPx = (4 * density).toInt()
-    val width = circleDiameterPx + shadowPx * 2
-    // MapLibre Marker anchors at bitmap center. Size the bitmap so
-    // the center coincides with the triangle tip, matching iOS behavior.
-    val tipFromTop = circleDiameterPx + shadowPx + triangleHeightPx
-    val height = tipFromTop * 2
-    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(bitmap)
-
-    val cx = width / 2f
-    val radius = circleDiameterPx / 2f
-    val cy = radius + shadowPx
-
-    // Shadow
-    val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = colorInt
-        alpha = 100
-        maskFilter = android.graphics.BlurMaskFilter(shadowPx.toFloat(), android.graphics.BlurMaskFilter.Blur.NORMAL)
-    }
-    canvas.drawCircle(cx, cy + shadowPx * 0.5f, radius, shadowPaint)
-
-    // Main circle
-    val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = colorInt
-        style = Paint.Style.FILL
-    }
-    canvas.drawCircle(cx, cy, radius, fillPaint)
-
-    // Triangle pointer
-    val triTop = cy + radius * 0.7f
-    val triBottom = cy + radius + triangleHeightPx
-    val triPath = android.graphics.Path().apply {
-        moveTo(cx - radius * 0.35f, triTop)
-        lineTo(cx, triBottom)
-        lineTo(cx + radius * 0.35f, triTop)
-        close()
-    }
-    canvas.drawPath(triPath, fillPaint)
-
-    // White icon — draw using unicode text for clean rendering
-    val iconChar = when (status) {
-        BaseStatus.NOT_VISITED -> "\u25CB"   // ○ circle outline (mappin)
-        BaseStatus.CHECKED_IN -> "\u2691"    // ⚑ flag
-        BaseStatus.SUBMITTED -> "\u25F4"     // ◴ clock
-        BaseStatus.COMPLETED -> "\u2713"     // ✓ checkmark
-        BaseStatus.REJECTED -> "\u2717"      // ✗ xmark
-    }
-    val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = android.graphics.Color.WHITE
-        textSize = radius * 0.95f
-        textAlign = Paint.Align.CENTER
-        typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
-    }
-    val textBounds = android.graphics.Rect()
-    textPaint.getTextBounds(iconChar, 0, iconChar.length, textBounds)
-    canvas.drawText(iconChar, cx, cy + textBounds.height() / 2f, textPaint)
-
-    return bitmap
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -385,7 +348,10 @@ fun BaseDetailBottomSheet(
 
             when (status) {
                 BaseStatus.NOT_VISITED -> {
-                    // No action button -- player must use the Check-In tab (NFC scan)
+                    Button(
+                        onClick = onCheckIn,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text(stringResource(R.string.action_go_to_checkin)) }
                 }
                 BaseStatus.CHECKED_IN, BaseStatus.REJECTED -> {
                     Button(

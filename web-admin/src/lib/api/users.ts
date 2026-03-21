@@ -14,12 +14,12 @@ export const usersApi = {
 
   getByIds: async (ids: string[]): Promise<User[]> => {
     if (ids.length === 0) return [];
-    const { data } = await apiClient.get("/users");
-    return (data as User[]).filter((u) => ids.includes(u.id));
+    const { data } = await apiClient.get<User[]>("/users");
+    return data.filter((u) => ids.includes(u.id));
   },
 
   listOperators: async (): Promise<User[]> => {
-    const { data } = await apiClient.get("/users");
-    return (data as User[]).filter((u) => u.role === "operator");
+    const { data } = await apiClient.get<User[]>("/users");
+    return data.filter((u) => u.role === "operator");
   },
 };

@@ -44,6 +44,9 @@ enum Translations {
         "join.next": "Continue",
         "join.enterYourName": "Your name",
         "join.cameraDisabled": "Camera access is needed to scan QR codes",
+        "join.qrCodeScanned": "Code Scanned",
+        "join.qrCodeConfirm": "Is this the correct join code? %@",
+        "join.invalidCharacters": "Join code can only contain uppercase letters and numbers",
 
         // Common
         "common.error": "Error",
@@ -118,6 +121,8 @@ enum Translations {
         "base.checkedInBanner": "Checked In!",
         "base.noChallengeYet": "No challenge assigned to this base yet",
         "base.answerType": "Answer type: %@",
+        "base.offlineNoChallengeCache": "Challenge data not available offline",
+        "base.offlineNoChallegeCacheDesc": "Connect to the internet and check in again to load the challenge.",
 
         // Check In
         "checkIn.title": "Base Check-in",
@@ -442,6 +447,7 @@ enum Translations {
 
         // Gap fixes
         "solve.gameNotLive": "This game is not currently active",
+        "solve.gameNotLiveExplanation": "Submissions are disabled because the game has ended or is not yet live. Contact your operator for more information.",
         "join.codeTooShort": "Join code must be at least 6 characters",
         "offline.failedSubmissions": "%@ submission(s) failed to sync. Check your connection and try again.",
         "operator.removeOperator": "Remove Operator",
@@ -474,6 +480,9 @@ enum Translations {
         "join.next": "Continuar",
         "join.enterYourName": "O teu nome",
         "join.cameraDisabled": "O acesso à câmara é necessário para ler códigos QR",
+        "join.qrCodeScanned": "Código Lido",
+        "join.qrCodeConfirm": "Este é o código correto? %@",
+        "join.invalidCharacters": "O código de entrada só pode conter letras maiúsculas e números",
 
         // Common
         "common.error": "Erro",
@@ -548,6 +557,8 @@ enum Translations {
         "base.checkedInBanner": "Check-in feito!",
         "base.noChallengeYet": "Nenhum desafio atribuído a esta base ainda",
         "base.answerType": "Tipo de resposta: %@",
+        "base.offlineNoChallengeCache": "Dados do desafio não estão disponíveis offline",
+        "base.offlineNoChallegeCacheDesc": "Conecta-te à internet e faz check-in novamente para carregar o desafio.",
 
         // Check In
         "checkIn.title": "Check-in de Base",
@@ -872,6 +883,7 @@ enum Translations {
 
         // Gap fixes
         "solve.gameNotLive": "Este jogo não está ativo no momento",
+        "solve.gameNotLiveExplanation": "Os envios estão desabilitados porque o jogo terminou ou ainda não está ativo. Contacte o seu operador para mais informações.",
         "join.codeTooShort": "O código deve ter pelo menos 6 caracteres",
         "offline.failedSubmissions": "%@ submissão(ões) falharam ao sincronizar. Verifique a conexão e tente novamente.",
         "operator.removeOperator": "Remover Operador",
@@ -904,6 +916,9 @@ enum Translations {
         "join.next": "Weiter",
         "join.enterYourName": "Dein Name",
         "join.cameraDisabled": "Kamerazugriff wird benötigt, um QR-Codes zu scannen",
+        "join.qrCodeScanned": "Code gescannt",
+        "join.qrCodeConfirm": "Ist dies der richtige Beitrittscode? %@",
+        "join.invalidCharacters": "Der Beitrittscode darf nur Großbuchstaben und Zahlen enthalten",
 
         // Common
         "common.error": "Fehler",
@@ -978,6 +993,8 @@ enum Translations {
         "base.checkedInBanner": "Eingecheckt!",
         "base.noChallengeYet": "Dieser Station ist noch keine Challenge zugewiesen",
         "base.answerType": "Antworttyp: %@",
+        "base.offlineNoChallengeCache": "Challenge-Daten sind offline nicht verfügbar",
+        "base.offlineNoChallegeCacheDesc": "Verbinde dich mit dem Internet und checke dich erneut ein, um die Challenge zu laden.",
 
         // Check In
         "checkIn.title": "Stations-Check-in",
@@ -1302,6 +1319,7 @@ enum Translations {
 
         // Gap fixes
         "solve.gameNotLive": "Dieses Spiel ist derzeit nicht aktiv",
+        "solve.gameNotLiveExplanation": "Einreichungen sind deaktiviert, da das Spiel beendet ist oder noch nicht aktiv ist. Kontaktiere deinen Operator für weitere Informationen.",
         "join.codeTooShort": "Der Code muss mindestens 6 Zeichen lang sein",
         "offline.failedSubmissions": "%@ Einreichung(en) konnten nicht synchronisiert werden. Überprüfe deine Verbindung.",
         "operator.removeOperator": "Operator entfernen",

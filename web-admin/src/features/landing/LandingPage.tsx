@@ -97,6 +97,7 @@ function CompassRose() {
       <svg
         viewBox="0 0 200 200"
         className="relative w-52 h-52 md:w-72 md:h-72 lg:w-80 lg:h-80 landing-rotate-slow"
+        aria-hidden="true"
       >
         {/* Outer rings */}
         <circle
@@ -358,7 +359,7 @@ function HowItWorks() {
               {/* Icon circle */}
               <div className="relative z-10 mb-6">
                 <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full border border-green-500/15 bg-green-500/[0.04]">
-                  <step.icon className="h-7 w-7 text-green-500/60" />
+                  <step.icon className="h-7 w-7 text-green-500/60" aria-hidden="true" />
                 </div>
                 <span className="absolute -right-1.5 -top-1.5 rounded-full border border-green-500/10 bg-[#060b06] px-2 py-0.5 text-[10px] font-bold text-green-500/50">
                   {step.num}
@@ -416,7 +417,7 @@ function Features() {
             >
               {/* Icon */}
               <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-green-500/10 bg-green-500/[0.06] transition-colors duration-300 group-hover:bg-green-500/[0.1]">
-                <f.icon className="h-5 w-5 text-green-500/60" />
+                <f.icon className="h-5 w-5 text-green-500/60" aria-hidden="true" />
               </div>
 
               <h3 className={`mb-2 font-semibold text-white ${f.large ? "text-xl" : "text-base"}`}>
@@ -429,7 +430,7 @@ function Features() {
               {/* Decorative corner arcs on the hero card */}
               {f.large && (
                 <div className="pointer-events-none absolute -right-6 -top-6 opacity-[0.025]">
-                  <svg width="160" height="160" viewBox="0 0 160 160" fill="none">
+                  <svg width="160" height="160" viewBox="0 0 160 160" fill="none" aria-hidden="true">
                     <circle cx="120" cy="40" r="100" stroke="#22c55e" strokeWidth="0.8" />
                     <circle cx="120" cy="40" r="70" stroke="#22c55e" strokeWidth="0.6" />
                     <circle cx="120" cy="40" r="40" stroke="#22c55e" strokeWidth="0.4" />

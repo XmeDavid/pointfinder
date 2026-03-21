@@ -8,6 +8,8 @@ struct PlayerJoinView: View {
     @State private var showNameScreen = false
     @State private var cameraPermission: AVAuthorizationStatus = AVCaptureDevice.authorizationStatus(for: .video)
     @FocusState private var isCodeFocused: Bool
+    @State private var scannedCode: String?  // Temporary storage for QR scan pending confirmation
+    @State private var showQRConfirmation = false
 
     var body: some View {
         VStack(spacing: 24) {
@@ -15,8 +17,8 @@ struct PlayerJoinView: View {
             ZStack {
                 if cameraPermission == .authorized {
                     QRScannerView { code in
-                        joinCode = code
-                        showNameScreen = true
+                        scannedCode = code
+                        showQRConfirmation = true
                     }
                 } else if cameraPermission == .notDetermined {
                     ProgressView()
@@ -58,15 +60,31 @@ struct PlayerJoinView: View {
                 .multilineTextAlignment(.center)
                 .textInputAutocapitalization(.characters)
                 .autocorrectionDisabled()
+                .onChange(of: joinCode) { _, newValue in
+                    // Enforce uppercase and alphanumeric only [A-Z0-9]
+                    let filtered = newValue.filter { $0.isUppercase || $0.isNumber }
+                    if filtered != newValue {
+                        joinCode = filtered
+                    }
+                }
                 .focused($isCodeFocused)
                 .padding(.horizontal, 24)
                 .accessibilityIdentifier("player-join-code-input")
 
-            if !joinCode.isEmpty && joinCode.trimmingCharacters(in: .whitespacesAndNewlines).count < 6 {
-                Text(locale.t("join.codeTooShort"))
-                    .font(.caption)
-                    .foregroundStyle(.orange)
-                    .padding(.horizontal, 24)
+            // Validation feedback
+            if !joinCode.isEmpty {
+                let trimmed = joinCode.trimmingCharacters(in: .whitespacesAndNewlines)
+                if trimmed.count < 6 {
+                    Text(locale.t("join.codeTooShort"))
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                        .padding(.horizontal, 24)
+                } else if isInvalidCharacters {
+                    Text(locale.t("join.invalidCharacters"))
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                        .padding(.horizontal, 24)
+                }
             }
 
             // Next button
@@ -93,6 +111,23 @@ struct PlayerJoinView: View {
         .navigationDestination(isPresented: $showNameScreen) {
             PlayerNameView(joinCode: joinCode.trimmingCharacters(in: .whitespacesAndNewlines))
         }
+        .alert(locale.t("join.qrCodeScanned"), isPresented: $showQRConfirmation) {
+            Button(locale.t("common.cancel")) {
+                scannedCode = nil
+                showQRConfirmation = false
+            }
+            Button(locale.t("common.ok")) {
+                if let code = scannedCode {
+                    joinCode = code
+                    showNameScreen = true
+                }
+                scannedCode = nil
+            }
+        } message: {
+            if let code = scannedCode {
+                Text(locale.t("join.qrCodeConfirm", code))
+            }
+        }
         .onAppear {
             if cameraPermission == .notDetermined {
                 AVCaptureDevice.requestAccess(for: .video) { granted in
@@ -106,7 +141,15 @@ struct PlayerJoinView: View {
 
     private var canProceed: Bool {
         let trimmed = joinCode.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.count >= 6 && trimmed.count <= 20
+        // Validate length and character set: [A-Z0-9] only
+        guard trimmed.count >= 6 && trimmed.count <= 20 else { return false }
+        return trimmed.allSatisfy { $0.isUppercase || $0.isNumber }
+    }
+
+    private var isInvalidCharacters: Bool {
+        let trimmed = joinCode.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
+        return !trimmed.allSatisfy { $0.isUppercase || $0.isNumber }
     }
 }
 

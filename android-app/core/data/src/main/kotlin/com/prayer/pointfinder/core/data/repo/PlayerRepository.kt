@@ -76,7 +76,7 @@ class PlayerRepository @Inject constructor(
 
     suspend fun loadProgress(auth: AuthType.Player, online: Boolean): ProgressResult {
         if (online) {
-            runCatching {
+            try {
                 val gameData = api.getGameData(auth.gameId)
                 db.progressDao().deleteForGame(auth.gameId)
                 db.progressDao().upsertAll(gameData.progress.map { it.toCached(auth.gameId) })
@@ -85,6 +85,14 @@ class PlayerRepository @Inject constructor(
                     progress = gameData.progress,
                     gameStatus = gameData.gameStatus ?: auth.gameStatus,
                 )
+            } catch (e: HttpException) {
+                // Rethrow auth errors (401/403)
+                if (e.code() == 401 || e.code() == 403) {
+                    throw e
+                }
+                // For other HTTP errors, fall back to cache
+            } catch (_: IOException) {
+                // Fall back to cache for network errors
             }
         }
         return ProgressResult(
@@ -110,6 +118,7 @@ class PlayerRepository @Inject constructor(
                         completionContent = challenge.completionContent,
                         answerType = challenge.answerType,
                         points = challenge.points,
+                        requirePresenceToSubmit = challenge.requirePresenceToSubmit,
                     ),
                 )
             }
@@ -133,6 +142,7 @@ class PlayerRepository @Inject constructor(
                             completionContent = challenge.completionContent,
                             answerType = challenge.answerType,
                             points = challenge.points,
+                            requirePresenceToSubmit = challenge.requirePresenceToSubmit,
                         ),
                     )
                 }
@@ -190,6 +200,9 @@ class PlayerRepository @Inject constructor(
         answer: String,
         online: Boolean,
     ): SubmitResult {
+        if (auth.gameStatus != GameStatus.LIVE) {
+            throw IOException("Game has ended or is not live")
+        }
         if (online) {
             try {
                 val response = api.submitAnswer(
@@ -254,6 +267,9 @@ class PlayerRepository @Inject constructor(
         mediaSourceUri: String?,
         mediaFileName: String?,
     ): SubmitResult {
+        if (auth.gameStatus != GameStatus.LIVE) {
+            throw IOException("Game has ended or is not live")
+        }
         val idempotencyKey = UUID.randomUUID().toString()
         db.pendingActionDao().upsert(
             PendingActionEntity(
@@ -304,6 +320,9 @@ class PlayerRepository @Inject constructor(
         answer: String,
         mediaItems: List<PendingMediaItem>,
     ): SubmitResult {
+        if (auth.gameStatus != GameStatus.LIVE) {
+            throw IOException("Game has ended or is not live")
+        }
         val idempotencyKey = UUID.randomUUID().toString()
         val mediaItemsJson = kotlinx.serialization.json.Json.encodeToString(
             kotlinx.serialization.builtins.ListSerializer(PendingMediaItem.serializer()),
@@ -723,6 +742,10 @@ class PlayerRepository @Inject constructor(
         db.pendingActionDao().pendingActions().filter { !it.permanentlyFailed }
 
     suspend fun failedActions(): List<PendingActionEntity> = db.pendingActionDao().getFailedActions()
+
+    suspend fun hasPermanentlyFailedActions(auth: AuthType.Player): Boolean {
+        return db.pendingActionDao().getPermanentlyFailedCount(auth.gameId) > 0
+    }
 
     suspend fun markPermanentlyFailed(actionId: String, reason: String) {
         db.pendingActionDao().markPermanentlyFailed(actionId, reason)

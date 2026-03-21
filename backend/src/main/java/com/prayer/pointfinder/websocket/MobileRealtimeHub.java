@@ -29,6 +29,8 @@ public class MobileRealtimeHub {
     private static final int MAX_SESSIONS_PER_GAME = 200;
 
     private final Map<UUID, Set<WebSocketSession>> sessionsByGame = new ConcurrentHashMap<>();
+    // Reverse mapping for O(1) lookup during unregister
+    private final Map<WebSocketSession, UUID> gameBySession = new ConcurrentHashMap<>();
 
     public void register(UUID gameId, WebSocketSession session) {
         Set<WebSocketSession> sessions = sessionsByGame.computeIfAbsent(gameId, ignored -> ConcurrentHashMap.newKeySet());
@@ -38,12 +40,21 @@ public class MobileRealtimeHub {
             return;
         }
         sessions.add(session);
+        gameBySession.put(session, gameId);
         log.debug("Mobile realtime session connected for game {} (sessions={})", gameId, sessions.size());
     }
 
     public void unregister(WebSocketSession session) {
-        sessionsByGame.values().forEach(sessions -> sessions.remove(session));
-        sessionsByGame.entrySet().removeIf(entry -> entry.getValue().isEmpty());
+        UUID gameId = gameBySession.remove(session);
+        if (gameId != null) {
+            Set<WebSocketSession> sessions = sessionsByGame.get(gameId);
+            if (sessions != null) {
+                sessions.remove(session);
+                if (sessions.isEmpty()) {
+                    sessionsByGame.remove(gameId);
+                }
+            }
+        }
     }
 
     public void broadcast(UUID gameId, Object payload) {

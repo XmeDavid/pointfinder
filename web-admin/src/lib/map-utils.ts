@@ -16,6 +16,10 @@ export const STATUS_PRIORITY: Record<BaseStatus, number> = {
   completed: 4,
 };
 
+function isBaseStatus(value: unknown): value is BaseStatus {
+  return typeof value === "string" && value in STATUS_PRIORITY;
+}
+
 export function getAggregateStatus(
   baseId: string,
   progressIndex: Map<string, Map<string, { status: string }>>,
@@ -25,7 +29,8 @@ export function getAggregateStatus(
 
   let minPriority = Infinity;
   baseProgress.forEach((p) => {
-    const priority = STATUS_PRIORITY[p.status as BaseStatus] ?? 0;
+    const status = isBaseStatus(p.status) ? p.status : "not_visited";
+    const priority = STATUS_PRIORITY[status] ?? 0;
     if (priority < minPriority) minPriority = priority;
   });
 

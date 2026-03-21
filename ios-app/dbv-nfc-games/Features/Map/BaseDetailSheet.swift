@@ -13,6 +13,7 @@ struct BaseDetailSheet: View {
     @State private var isAutoSubmitting = false
     @State private var autoSubmitResult: SubmissionResponse?
     @State private var showAutoSubmitResult = false
+    @State private var usingCachedData = false
 
     /// Live progress data from AppState -- always current.
     private var base: BaseProgress? {
@@ -135,6 +136,22 @@ struct BaseDetailSheet: View {
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .padding()
                         }
+                    } else if !appState.isOnline {
+                        // Offline and no cached data
+                        VStack(spacing: 12) {
+                            Image(systemName: "wifi.slash")
+                                .font(.system(size: 48))
+                                .foregroundStyle(.orange)
+                            Text(locale.t("base.offlineNoChallengeCache"))
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                            Text(locale.t("base.offlineNoChallegeCacheDesc"))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.top, 40)
                     } else {
                         VStack(spacing: 12) {
                             Image(systemName: "exclamationmark.triangle")
@@ -202,12 +219,14 @@ struct BaseDetailSheet: View {
         // Try to load from cache
         if let cached = await appState.getCachedChallenge(forBaseId: baseId) {
             challenge = cached
+            usingCachedData = !appState.isOnline  // Mark as cached if offline or fresh cache hit
             isLoading = false
             return
         }
 
         // If checked in but not cached, the check-in response should have cached it
         // This shouldn't normally happen, but handle gracefully
+        usingCachedData = false
         isLoading = false
     }
 

@@ -4,6 +4,7 @@ import com.prayer.pointfinder.dto.request.CreateSubmissionRequest;
 import com.prayer.pointfinder.dto.request.PlayerJoinRequest;
 import com.prayer.pointfinder.dto.request.PlayerSubmissionRequest;
 import com.prayer.pointfinder.util.LazyInitHelper;
+import com.prayer.pointfinder.util.NotificationMapper;
 import com.prayer.pointfinder.dto.response.*;
 import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.exception.BadRequestException;
@@ -178,7 +179,7 @@ public class PlayerService {
         List<Base> bases = baseRepository.findByGameId(gameId);
         List<CheckIn> checkIns = checkInRepository.findByGameIdAndTeamId(gameId, team.getId());
         List<Submission> submissions = submissionRepository.findByTeamId(team.getId());
-        List<Assignment> assignments = assignmentRepository.findByGameId(gameId);
+        List<Assignment> assignments = assignmentRepository.findByGameIdAndTeamId(gameId, team.getId());
 
         // Build unlock maps: targetBaseId -> challengeId that unlocks it
         List<Challenge> unlockChallenges = challengeRepository.findByGameIdAndUnlocksBaseIsNotNull(gameId);
@@ -245,7 +246,7 @@ public class PlayerService {
                     .challengeId(assignment != null ? assignment.getId() : null)
                     .submissionStatus(submissionStatus)
                     .build();
-        }).filter(Objects::nonNull).collect(Collectors.toList());
+        }).filter(Objects::nonNull).toList();
     }
 
     @Transactional(readOnly = true)
@@ -267,7 +268,7 @@ public class PlayerService {
                         .hidden(base.getHidden())
                         .fixedChallengeId(base.getFixedChallenge() != null ? base.getFixedChallenge().getId() : null)
                         .build())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -293,7 +294,7 @@ public class PlayerService {
         // Get all bases, then filter to only visible ones
         List<BaseResponse> bases = getBases(gameId, player).stream()
                 .filter(b -> visibleBaseIds.contains(b.getId()))
-                .collect(Collectors.toList());
+                .toList();
 
         // Get all assignments for this game (both team-specific and global), filtered to visible bases
         List<Assignment> assignmentEntities = assignmentRepository.findByGameId(gameId);
@@ -307,7 +308,7 @@ public class PlayerService {
                         .challengeId(a.getChallenge().getId())
                         .teamId(a.getTeam() != null ? a.getTeam().getId() : null)
                         .build())
-                .collect(Collectors.toList());
+                .toList();
 
         // Collect all challenge IDs from assignments and fixed challenges
         Set<UUID> challengeIds = new HashSet<>();
@@ -340,7 +341,7 @@ public class PlayerService {
                         .locationBound(c.getLocationBound())
                         .requirePresenceToSubmit(c.getRequirePresenceToSubmit())
                         .build())
-                .collect(Collectors.toList());
+                .toList();
 
         return GameDataResponse.builder()
                 .gameStatus(team.getGame().getStatus().name())
@@ -474,7 +475,7 @@ public class PlayerService {
         return gameNotificationRepository.findByGameIdForTeam(gameId, teamId, PageRequest.of(0, 500))
                 .stream()
                 .map(this::toNotificationResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -490,14 +491,7 @@ public class PlayerService {
     }
 
     private NotificationResponse toNotificationResponse(GameNotification n) {
-        return NotificationResponse.builder()
-                .id(n.getId())
-                .gameId(n.getGame().getId())
-                .message(n.getMessage())
-                .targetTeamId(n.getTargetTeam() != null ? n.getTargetTeam().getId() : null)
-                .sentAt(n.getSentAt())
-                .sentBy(n.getSentBy() != null ? n.getSentBy().getId() : null)
-                .build();
+        return NotificationMapper.toResponse(n);
     }
 
     /**

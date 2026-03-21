@@ -170,6 +170,10 @@ public class FileStorageService {
     }
 
     public void deleteGameFiles(UUID gameId) {
+        // Delete upload session database records and associated chunk files.
+        // UploadSession records are cascade deleted via Game delete,
+        // and their UploadSessionChunk records follow via cascade.
+        // This method handles the filesystem cleanup of chunk directories.
         Path gameDir = uploadsRoot.resolve(gameId.toString());
         if (!Files.isDirectory(gameDir)) {
             return;

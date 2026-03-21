@@ -137,10 +137,15 @@ public class JwtTokenProvider {
             throw new IllegalStateException("JWT secret must be at least 32 bytes");
         }
 
-        if (enforceProdSecret
-                && environment.acceptsProfiles(Profiles.of("prod", "production"))
+        // Always prevent default secret in production
+        if (environment.acceptsProfiles(Profiles.of("prod", "production"))
                 && INSECURE_DEFAULT_SECRET.equals(jwtSecret)) {
-            throw new IllegalStateException("JWT_SECRET must be configured in production");
+            throw new IllegalStateException("JWT_SECRET must be configured in production. Do not use the default insecure secret.");
+        }
+
+        // Warn in non-production but still allow (developer convenience)
+        if (enforceProdSecret && INSECURE_DEFAULT_SECRET.equals(jwtSecret)) {
+            System.err.println("WARNING: Using default insecure JWT secret. This is only acceptable in development. Set JWT_SECRET environment variable for any non-development deployment.");
         }
     }
 }

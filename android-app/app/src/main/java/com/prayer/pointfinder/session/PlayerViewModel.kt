@@ -60,6 +60,7 @@ data class PlayerState(
     val unseenNotificationCount: Long = 0,
     val isLoadingNotifications: Boolean = false,
     val showingNotifications: Boolean = false,
+    val notificationError: String? = null,
     val lastNotificationsSeenAt: String? = null,
 )
 
@@ -100,9 +101,14 @@ class PlayerViewModel @Inject constructor(
         }
         viewModelScope.launch {
             realtimeClient.connectionState.collectLatest { state ->
+                val isNowConnected = state is RealtimeConnectionState.Connected
                 _state.value = _state.value.copy(
-                    realtimeConnected = state is RealtimeConnectionState.Connected,
+                    realtimeConnected = isNowConnected,
                 )
+                // Trigger data refresh when WebSocket reconnects
+                if (isNowConnected && lastAuth != null) {
+                    refresh(lastAuth!!, lastOnline)
+                }
             }
         }
         viewModelScope.launch {
@@ -373,7 +379,26 @@ class PlayerViewModel @Inject constructor(
         val contentType: String,
         val sizeBytes: Long,
         val fileName: String? = null,
-    )
+    ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is MediaItemData) return false
+            return bytes.contentEquals(other.bytes) &&
+                sourceUri == other.sourceUri &&
+                contentType == other.contentType &&
+                sizeBytes == other.sizeBytes &&
+                fileName == other.fileName
+        }
+
+        override fun hashCode(): Int {
+            var result = bytes?.contentHashCode() ?: 0
+            result = 31 * result + (sourceUri?.hashCode() ?: 0)
+            result = 31 * result + contentType.hashCode()
+            result = 31 * result + sizeBytes.hashCode()
+            result = 31 * result + (fileName?.hashCode() ?: 0)
+            return result
+        }
+    }
 
     fun submitPhoto(
         auth: AuthType.Player,
@@ -581,21 +606,45 @@ class PlayerViewModel @Inject constructor(
                 .onSuccess { response ->
                     _state.value = _state.value.copy(unseenNotificationCount = response.count)
                 }
+                .onFailure { err ->
+                    // Log error instead of silently swallowing
+                    android.util.Log.e("PlayerViewModel", "Failed to load unseen notification count", err)
+                }
+        }
+    }
+
+    /**
+     * Check for permanently failed offline actions and show warning to user if any exist.
+     */
+    fun checkForFailedActions(auth: AuthType.Player) {
+        viewModelScope.launch {
+            runCatching { playerRepository.hasPermanentlyFailedActions(auth) }
+                .onSuccess { hasFailedActions ->
+                    if (hasFailedActions) {
+                        _state.value = _state.value.copy(
+                            solveError = context.getString(StringR.string.error_sync_permanently_failed),
+                        )
+                    }
+                }
         }
     }
 
     fun openNotifications() {
-        _state.value = _state.value.copy(showingNotifications = true, isLoadingNotifications = true)
+        _state.value = _state.value.copy(showingNotifications = true, isLoadingNotifications = true, notificationError = null)
         viewModelScope.launch {
             runCatching { api.getPlayerNotifications() }
                 .onSuccess { notifications ->
                     _state.value = _state.value.copy(
                         notifications = notifications,
                         isLoadingNotifications = false,
+                        notificationError = null,
                     )
                 }
-                .onFailure {
-                    _state.value = _state.value.copy(isLoadingNotifications = false)
+                .onFailure { err ->
+                    _state.value = _state.value.copy(
+                        isLoadingNotifications = false,
+                        notificationError = friendlyError(err),
+                    )
                 }
             runCatching { api.markNotificationsSeen() }
                 .onSuccess {

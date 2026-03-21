@@ -100,7 +100,7 @@ class OperatorTokenRefresher @Inject constructor(
             return null
         }
 
-        return runBlocking {
+        return kotlinx.coroutines.runBlocking(kotlinx.coroutines.newSingleThreadContext("TokenRefresh")) {
             refreshLock.withLock {
                 // Re-read inside the lock so concurrent 401s don't refresh with stale tokens.
                 val auth = sessionStore.authType() as? AuthType.Operator ?: return@withLock null

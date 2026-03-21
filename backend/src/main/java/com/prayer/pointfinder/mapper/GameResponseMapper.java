@@ -21,7 +21,7 @@ public final class GameResponseMapper {
     public static GameResponse toResponse(Game game) {
         List<UUID> operatorIds = game.getOperators().stream()
                 .map(User::getId)
-                .collect(Collectors.toList());
+                .toList();
 
         return GameResponse.builder()
                 .id(game.getId())

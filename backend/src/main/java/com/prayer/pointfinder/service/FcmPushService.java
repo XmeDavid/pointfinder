@@ -1,6 +1,7 @@
 package com.prayer.pointfinder.service;
 
 import com.prayer.pointfinder.config.FcmConfig;
+import com.prayer.pointfinder.repository.PlayerRepository;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
@@ -15,6 +16,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
 import java.util.List;
@@ -30,6 +32,7 @@ public class FcmPushService {
 
     private final FcmConfig fcmConfig;
     private final ResourceLoader resourceLoader;
+    private final PlayerRepository playerRepository;
 
     private FirebaseApp firebaseApp;
 
@@ -88,9 +91,16 @@ public class FcmPushService {
                 for (int i = 0; i < response.getResponses().size(); i++) {
                     var sendResponse = response.getResponses().get(i);
                     if (!sendResponse.isSuccessful()) {
+                        String token = tokens.get(i);
                         log.warn("FCM push failed for token {}: {}",
-                                maskToken(tokens.get(i)),
+                                maskToken(token),
                                 sendResponse.getException() != null ? sendResponse.getException().getMessage() : "unknown");
+                        // Clean up invalid tokens (e.g., "Registration token is invalid")
+                        if (sendResponse.getException() != null &&
+                            sendResponse.getException().getMessage() != null &&
+                            sendResponse.getException().getMessage().contains("invalid")) {
+                            cleanupInvalidToken(token);
+                        }
                     }
                 }
             } else {
@@ -103,6 +113,16 @@ public class FcmPushService {
             log.error("FCM send execution failed: {}", e.getMessage(), e);
         } catch (TimeoutException e) {
             log.error("FCM send timed out after 30s for {} tokens", tokens.size());
+        }
+    }
+
+    @Transactional
+    private void cleanupInvalidToken(String token) {
+        try {
+            playerRepository.setInvalidPushTokenToNull(token);
+            log.info("Cleaned up invalid push token from database");
+        } catch (Exception e) {
+            log.warn("Failed to clean up invalid push token: {}", e.getMessage());
         }
     }
 

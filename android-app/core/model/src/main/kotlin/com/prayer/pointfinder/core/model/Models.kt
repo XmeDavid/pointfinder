@@ -595,7 +595,7 @@ data class InviteResponse(
     val email: String,
     val status: String,
     val invitedBy: String,
-    val inviterName: String,
+    val inviterName: String?,
     val createdAt: String,
 )
 
@@ -606,7 +606,7 @@ data class LeaderboardEntry(
     val teamId: String,
     val teamName: String,
     val color: String,
-    val points: Int,
+    val points: Long,
     val completedChallenges: Int,
 )
 

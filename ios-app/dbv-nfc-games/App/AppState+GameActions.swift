@@ -247,7 +247,13 @@ extension AppState {
         // Persist each media item locally and build PendingMediaItem array
         var pendingItems: [PendingMediaItem] = []
         for item in mediaItems {
-            let sizeBytes = Int64(item.data.count)
+            let sizeBytes: Int64
+            do {
+                let attrs = try FileManager.default.attributesOfItem(atPath: item.url.path)
+                sizeBytes = attrs[.size] as? Int64 ?? 0
+            } catch {
+                sizeBytes = 0
+            }
             guard sizeBytes > 0 else { continue }
 
             let fileName = item.isVideo
@@ -255,9 +261,10 @@ extension AppState {
                 : "photo.\(fileExtension(for: item.contentType))"
 
             do {
+                // Use the URL directly (already temp-saved for videos, or will be persisted here for images)
                 let localPath = try persistMediaCopy(
-                    data: item.data,
-                    sourceURL: nil,
+                    data: nil,  // Pass nil since we're using sourceURL
+                    sourceURL: item.url,
                     preferredFileName: fileName,
                     contentType: item.contentType
                 )
@@ -524,4 +531,20 @@ extension AppState {
     }
 
     private var mediaCopyThresholdBytes: Int64 { 100 * 1024 * 1024 }
+
+    // MARK: - Polling Helper
+
+    /// Creates a Task that polls progress while the app is online and game is live.
+    /// Adjusts poll interval based on realtime connection status.
+    func startProgressPollingTask() -> Task<Void, Never> {
+        Task {
+            while !Task.isCancelled && self.isOnline && self.currentGame?.status == "live" {
+                let intervalNs: UInt64 = self.realtimeConnected ? 30_000_000_000 : 10_000_000_000
+                try? await Task.sleep(nanoseconds: intervalNs)
+                if !Task.isCancelled {
+                    await self.loadProgress()
+                }
+            }
+        }
+    }
 }

@@ -59,15 +59,16 @@ export function MapPage() {
   const mapRef = useRef<MapRef>(null);
   const fittedRef = useRef(false);
 
-  const gameQuery = useQuery({ queryKey: ["game", gameId], queryFn: () => gamesApi.getById(gameId!) });
-  const basesQuery = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!) });
-  const teamsQuery = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!) });
-  const challengesQuery = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!) });
-  const progressQuery = useQuery({ queryKey: ["progress", gameId], queryFn: () => monitoringApi.getProgress(gameId!) });
+  const gameQuery = useQuery({ queryKey: ["game", gameId], queryFn: () => gamesApi.getById(gameId!), enabled: !!gameId });
+  const basesQuery = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!), enabled: !!gameId });
+  const teamsQuery = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!), enabled: !!gameId });
+  const challengesQuery = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!), enabled: !!gameId });
+  const progressQuery = useQuery({ queryKey: ["progress", gameId], queryFn: () => monitoringApi.getProgress(gameId!), enabled: !!gameId });
   const websocketError = useGameWebSocket(gameId);
   const locationsQuery = useQuery({
     queryKey: ["team-locations", gameId],
     queryFn: () => monitoringApi.getTeamLocations(gameId!),
+    enabled: !!gameId,
   });
 
   const game = gameQuery.data;
@@ -309,7 +310,7 @@ export function MapPage() {
                       className="absolute bottom-12 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg p-3 min-w-[220px] max-w-[300px] z-10"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <button aria-label="Close" className="absolute top-1 right-1 text-gray-400 hover:text-gray-600 text-xs px-1" onClick={() => setPopupBase(null)}>x</button>
+                      <button aria-label="Close" className="absolute top-1 right-1 text-gray-400 hover:text-gray-600 text-xs px-1" onClick={() => setPopupBase(null)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setPopupBase(null); } }}>x</button>
                       <p className="font-semibold text-sm">{base.name}</p>
                       {base.description && (
                         <p className="text-xs text-gray-500 mt-0.5">{base.description}</p>
@@ -428,7 +429,7 @@ export function MapPage() {
                       className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg p-3 min-w-[140px] z-10"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <button aria-label="Close" className="absolute top-1 right-1 text-gray-400 hover:text-gray-600 text-xs px-1" onClick={() => setPopupLoc(null)}>x</button>
+                      <button aria-label="Close" className="absolute top-1 right-1 text-gray-400 hover:text-gray-600 text-xs px-1" onClick={() => setPopupLoc(null)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setPopupLoc(null); } }}>x</button>
                       <p className="font-semibold text-sm">{isAggregateView ? team.name : playerName}</p>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <div
