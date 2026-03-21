@@ -36,7 +36,7 @@ export function filterAvailableBases(
 }
 
 /**
- * Filters bases for the unlocks-base dropdown on a challenge edit form.
+ * Filters bases for the unlocks-base multi-select on a challenge edit form.
  * Only shows hidden bases, excludes the challenge's own fixed base,
  * and excludes bases already unlocked by other challenges.
  */
@@ -48,8 +48,8 @@ export function filterAvailableUnlockBases(
 ): Base[] {
   const alreadyUnlockedBaseIds = new Set(
     challenges
-      .filter((ch) => ch.unlocksBaseId && ch.id !== editingChallengeId)
-      .map((ch) => ch.unlocksBaseId as string),
+      .filter((ch) => ch.id !== editingChallengeId)
+      .flatMap((ch) => ch.unlocksBaseIds ?? []),
   );
   return bases.filter(
     (b) =>

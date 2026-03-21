@@ -123,8 +123,8 @@ describe("filterAvailableUnlockBases", () => {
       base("b3", { hidden: true }),
     ];
     const challenges = [
-      challenge("c1", { unlocksBaseId: "b1" }),
-      challenge("c2", { unlocksBaseId: "b2" }),
+      challenge("c1", { unlocksBaseIds: ["b1"] }),
+      challenge("c2", { unlocksBaseIds: ["b2"] }),
     ];
     const result = filterAvailableUnlockBases(bases, challenges, undefined, undefined);
     expect(result.map((b) => b.id)).toEqual(["b3"]);
@@ -133,8 +133,8 @@ describe("filterAvailableUnlockBases", () => {
   it("keeps base unlocked by current challenge", () => {
     const bases = [base("b1", { hidden: true }), base("b2", { hidden: true })];
     const challenges = [
-      challenge("c1", { unlocksBaseId: "b1" }),
-      challenge("c2", { unlocksBaseId: "b2" }),
+      challenge("c1", { unlocksBaseIds: ["b1"] }),
+      challenge("c2", { unlocksBaseIds: ["b2"] }),
     ];
     const result = filterAvailableUnlockBases(bases, challenges, "c1", undefined);
     expect(result.map((b) => b.id)).toEqual(["b1"]);

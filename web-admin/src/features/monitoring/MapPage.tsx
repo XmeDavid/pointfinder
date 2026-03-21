@@ -185,21 +185,23 @@ export function MapPage() {
   const connectionsGeoJson = useMemo(() => {
     if (!challenges || !bases) return null;
     const features = challenges
-      .filter((c) => c.unlocksBaseId)
-      .map((challenge) => {
+      .filter((c) => c.unlocksBaseIds && c.unlocksBaseIds.length > 0)
+      .flatMap((challenge) => {
         const from = bases.find((b) => b.fixedChallengeId === challenge.id);
-        const to = bases.find((b) => b.id === challenge.unlocksBaseId);
-        if (!from || !to) return null;
-        return {
-          type: "Feature" as const,
-          properties: {},
-          geometry: {
-            type: "LineString" as const,
-            coordinates: [[from.lng, from.lat], [to.lng, to.lat]],
-          },
-        };
-      })
-      .filter(Boolean) as GeoJSON.Feature[];
+        if (!from) return [];
+        return challenge.unlocksBaseIds!.map((toBaseId) => {
+          const to = bases.find((b) => b.id === toBaseId);
+          if (!to) return null;
+          return {
+            type: "Feature" as const,
+            properties: {},
+            geometry: {
+              type: "LineString" as const,
+              coordinates: [[from.lng, from.lat], [to.lng, to.lat]],
+            },
+          };
+        }).filter(Boolean);
+      }) as GeoJSON.Feature[];
     return features.length > 0
       ? { type: "FeatureCollection" as const, features }
       : null;

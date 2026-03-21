@@ -272,7 +272,7 @@
     "totalPoints": "{{total}} Gesamtpunkte",
     "summary_one": "{{count}} Challenge",
     "summary_other": "{{count}} Challenges",
-    "unlocksBaseToggle": "Versteckte Station freischalten",
+    "unlocksBaseToggle": "Versteckte Stationen freischalten",
     "unlocksBaseLabel": "Schaltet frei: {{base}}",
     "noHiddenBasesAvailable": "Keine versteckten Stationen zum Freischalten verfügbar",
     "requirePresence": "Anwesenheit zum Einreichen erforderlich",
@@ -402,7 +402,16 @@
     "backToLeaderboard": "Zurück zur Rangliste",
     "totalPoints": "Gesamtpunkte",
     "completedChallenges": "Abgeschlossene Challenges",
-    "submissionHistory": "Einreichungsverlauf"
+    "submissionHistory": "Einreichungsverlauf",
+    "baseProgress": "Fortschritt an Stationen",
+    "noBases": "Keine Stationen in diesem Spiel.",
+    "checkedIn": "Eingecheckt",
+    "notVisited": "Nicht besucht",
+    "manualCheckIn": "Manuelles Einchecken",
+    "manualCheckInTitle": "Manuelles Einchecken",
+    "manualCheckInConfirm": "{{team}} an Station {{base}} einchecken?",
+    "checkInSuccess": "Team erfolgreich eingecheckt.",
+    "checkInAlreadyDone": "Dieses Team hat sich bereits an dieser Station eingecheckt."
   },
   "privacy": {
     "title": "Datenschutzerklärung",

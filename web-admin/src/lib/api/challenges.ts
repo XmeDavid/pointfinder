@@ -12,7 +12,7 @@ export interface CreateChallengeDto {
   points: number;
   locationBound: boolean;
   fixedBaseId?: string;
-  unlocksBaseId?: string;
+  unlocksBaseIds?: string[];
   requirePresenceToSubmit?: boolean;
 }
 

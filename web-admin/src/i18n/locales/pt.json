@@ -272,7 +272,7 @@
     "totalPoints": "{{total}} pontos totais",
     "summary_one": "{{count}} desafio",
     "summary_other": "{{count}} desafios",
-    "unlocksBaseToggle": "Desbloqueia uma base oculta",
+    "unlocksBaseToggle": "Desbloqueia bases ocultas",
     "unlocksBaseLabel": "Desbloqueia: {{base}}",
     "noHiddenBasesAvailable": "Nenhuma base oculta disponível para desbloquear",
     "requirePresence": "Requer presença para submeter",
@@ -402,7 +402,16 @@
     "backToLeaderboard": "Voltar à Classificação",
     "totalPoints": "Pontos Totais",
     "completedChallenges": "Desafios Completados",
-    "submissionHistory": "Histórico de Submissões"
+    "submissionHistory": "Histórico de Submissões",
+    "baseProgress": "Progresso nas Bases",
+    "noBases": "Sem bases neste jogo.",
+    "checkedIn": "Check-in feito",
+    "notVisited": "Não visitada",
+    "manualCheckIn": "Check-in Manual",
+    "manualCheckInTitle": "Check-in Manual",
+    "manualCheckInConfirm": "Fazer check-in de {{team}} na base {{base}}?",
+    "checkInSuccess": "Check-in da equipa realizado com sucesso.",
+    "checkInAlreadyDone": "Esta equipa já fez check-in nesta base."
   },
   "privacy": {
     "title": "Política de Privacidade",

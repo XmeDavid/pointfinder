@@ -67,10 +67,12 @@ export function ChallengesPage() {
     () => filterAvailableUnlockBases(bases, challenges, editing?.id, form.fixedBaseId),
     [bases, challenges, editing?.id, form.fixedBaseId],
   );
-  const effectiveUnlocksBaseId = useMemo(() => {
-    if (!form.unlocksBaseId) return undefined;
-    return hiddenBases.some((base) => base.id === form.unlocksBaseId) ? form.unlocksBaseId : undefined;
-  }, [hiddenBases, form.unlocksBaseId]);
+  const effectiveUnlocksBaseIds = useMemo(() => {
+    const ids = form.unlocksBaseIds ?? [];
+    if (ids.length === 0) return [];
+    const hiddenBaseIdSet = new Set(hiddenBases.map((b) => b.id));
+    return ids.filter((id) => hiddenBaseIdSet.has(id));
+  }, [hiddenBases, form.unlocksBaseIds]);
 
   const { data: challengeVarsData } = useQuery({
     queryKey: ["challenge-variables", gameId, editing?.id],
@@ -134,7 +136,7 @@ export function ChallengesPage() {
   function openEdit(ch: Challenge) {
     setEditing(ch);
     const fixedBase = fixedBaseByChallengeId.get(ch.id);
-    setForm({ ...ch, fixedBaseId: fixedBase?.id, unlocksBaseId: ch.unlocksBaseId });
+    setForm({ ...ch, fixedBaseId: fixedBase?.id, unlocksBaseIds: ch.unlocksBaseIds });
     setActionError("");
     setDialogOpen(true);
   }
@@ -149,13 +151,17 @@ export function ChallengesPage() {
     }
     if (!payload.locationBound) {
       delete payload.fixedBaseId;
-      delete payload.unlocksBaseId;
+      delete payload.unlocksBaseIds;
     }
     if (!payload.fixedBaseId) {
-      delete payload.unlocksBaseId;
+      delete payload.unlocksBaseIds;
     }
-    if (payload.unlocksBaseId && !hiddenBases.some((base) => base.id === payload.unlocksBaseId)) {
-      delete payload.unlocksBaseId;
+    if (payload.unlocksBaseIds) {
+      const hiddenBaseIdSet = new Set(hiddenBases.map((b) => b.id));
+      payload.unlocksBaseIds = payload.unlocksBaseIds.filter((id) => hiddenBaseIdSet.has(id));
+      if (payload.unlocksBaseIds.length === 0) {
+        delete payload.unlocksBaseIds;
+      }
     }
     if (editing) updateChallenge.mutate({ id: editing.id, data: payload });
     else createChallenge.mutate(payload as CreateChallengeDto);
@@ -205,15 +211,15 @@ export function ChallengesPage() {
                             <span className="truncate">{t("challenges.fixedToBase", { base: fixedBase.name })}</span>
                           </Badge>
                         )}
-                        {ch.unlocksBaseId && (() => {
-                          const unlockTarget = baseById.get(ch.unlocksBaseId);
+                        {ch.unlocksBaseIds && ch.unlocksBaseIds.length > 0 && ch.unlocksBaseIds.map((ubId) => {
+                          const unlockTarget = baseById.get(ubId);
                           return unlockTarget ? (
-                            <Badge variant="outline" className="max-w-full">
+                            <Badge key={ubId} variant="outline" className="max-w-full">
                               <Unlock className="mr-1 h-3 w-3 shrink-0" />
                               <span className="truncate">{t("challenges.unlocksBaseLabel", { base: unlockTarget.name })}</span>
                             </Badge>
                           ) : null;
-                        })()}
+                        })}
                       </div>
                     </CardContent>
                   </>
@@ -344,7 +350,7 @@ export function ChallengesPage() {
                     <Select
                       id="challengeFixedBase"
                       value={form.fixedBaseId ?? ""}
-                      onChange={(e) => setForm((f) => ({ ...f, fixedBaseId: e.target.value || undefined, unlocksBaseId: undefined }))}
+                      onChange={(e) => setForm((f) => ({ ...f, fixedBaseId: e.target.value || undefined, unlocksBaseIds: undefined }))}
                     >
                       <option value="">{t("challenges.selectBasePlaceholder")}</option>
                       {availableBases.map((base) => <option key={base.id} value={base.id}>{base.name}</option>)}
@@ -354,28 +360,32 @@ export function ChallengesPage() {
                 )}
                 {form.locationBound && form.fixedBaseId && (
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <FormLabel htmlFor="challengeUnlocksBase">{t("challenges.unlocksBaseToggle")}</FormLabel>
-                      <Switch
-                        id="challengeUnlocksBase"
-                        checked={!!effectiveUnlocksBaseId}
-                        disabled={hiddenBases.length === 0}
-                        onCheckedChange={(v) => setForm((f) => ({ ...f, unlocksBaseId: v ? (hiddenBases[0]?.id ?? undefined) : undefined }))}
-                      />
-                    </div>
-                    {hiddenBases.length === 0 && (
+                    <FormLabel>{t("challenges.unlocksBaseToggle")}</FormLabel>
+                    {hiddenBases.length === 0 ? (
                       <p className="text-xs text-muted-foreground">{t("challenges.noHiddenBasesAvailable")}</p>
-                    )}
-                    {effectiveUnlocksBaseId && hiddenBases.length > 0 && (
-                      <>
-                        <Select
-                          id="challengeUnlocksBaseSelect"
-                          value={effectiveUnlocksBaseId}
-                          onChange={(e) => setForm((f) => ({ ...f, unlocksBaseId: e.target.value || undefined }))}
-                        >
-                          {hiddenBases.map((base) => <option key={base.id} value={base.id}>{base.name}</option>)}
-                        </Select>
-                      </>
+                    ) : (
+                      <div className="space-y-1.5 rounded-md border border-input p-2 max-h-[160px] overflow-y-auto">
+                        {hiddenBases.map((base) => {
+                          const checked = effectiveUnlocksBaseIds.includes(base.id);
+                          return (
+                            <label key={base.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5">
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() => {
+                                  setForm((f) => {
+                                    const prev = f.unlocksBaseIds ?? [];
+                                    const next = checked ? prev.filter((id) => id !== base.id) : [...prev, base.id];
+                                    return { ...f, unlocksBaseIds: next.length > 0 ? next : undefined };
+                                  });
+                                }}
+                                className="rounded border-input"
+                              />
+                              {base.name}
+                            </label>
+                          );
+                        })}
+                      </div>
                     )}
                   </div>
                 )}

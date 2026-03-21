@@ -272,7 +272,7 @@
     "totalPoints": "{{total}} total points",
     "summary_one": "{{count}} challenge",
     "summary_other": "{{count}} challenges",
-    "unlocksBaseToggle": "Unlocks a hidden base",
+    "unlocksBaseToggle": "Unlocks hidden bases",
     "unlocksBaseLabel": "Unlocks: {{base}}",
     "noHiddenBasesAvailable": "No hidden bases available to unlock",
     "requirePresence": "Require presence to submit",
@@ -402,7 +402,16 @@
     "backToLeaderboard": "Back to Leaderboard",
     "totalPoints": "Total Points",
     "completedChallenges": "Completed Challenges",
-    "submissionHistory": "Submission History"
+    "submissionHistory": "Submission History",
+    "baseProgress": "Base Progress",
+    "noBases": "No bases in this game.",
+    "checkedIn": "Checked in",
+    "notVisited": "Not visited",
+    "manualCheckIn": "Manual Check-in",
+    "manualCheckInTitle": "Manual Check-in",
+    "manualCheckInConfirm": "Check in {{team}} at {{base}}?",
+    "checkInSuccess": "Team checked in successfully.",
+    "checkInAlreadyDone": "This team has already checked in at this base."
   },
   "privacy": {
     "title": "Privacy Policy",

@@ -67,12 +67,12 @@ export function BasesPage() {
 
   const unlockConnections = useMemo<UnlockConnection[]>(() => {
     return challenges
-      .filter((ch) => ch.unlocksBaseId)
-      .map((ch) => {
+      .filter((ch) => ch.unlocksBaseIds && ch.unlocksBaseIds.length > 0)
+      .flatMap((ch) => {
         const sourceBase = bases.find((b) => b.fixedChallengeId === ch.id);
-        return sourceBase ? { fromBaseId: sourceBase.id, toBaseId: ch.unlocksBaseId! } : null;
-      })
-      .filter((c): c is UnlockConnection => c !== null);
+        if (!sourceBase) return [];
+        return ch.unlocksBaseIds!.map((toBaseId) => ({ fromBaseId: sourceBase.id, toBaseId }));
+      });
   }, [challenges, bases]);
 
   const createBase = useMutation({

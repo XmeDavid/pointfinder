@@ -51,7 +51,7 @@ export interface Challenge {
   correctAnswer?: string[];
   points: number;
   locationBound: boolean;
-  unlocksBaseId?: string;
+  unlocksBaseIds?: string[];
   requirePresenceToSubmit: boolean;
 }
 

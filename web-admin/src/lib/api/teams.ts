@@ -41,4 +41,8 @@ export const teamsApi = {
     if (!gameId) return;
     await apiClient.delete(`/games/${gameId}/teams/${teamId}/players/${playerId}`);
   },
+
+  manualCheckIn: async (gameId: string, teamId: string, baseId: string): Promise<void> => {
+    await apiClient.post(`/games/${gameId}/teams/${teamId}/check-in/${baseId}`);
+  },
 };
