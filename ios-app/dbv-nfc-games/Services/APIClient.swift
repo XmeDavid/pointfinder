@@ -212,6 +212,14 @@ actor APIClient {
         try await get("/api/games/\(gameId)/teams", token: token)
     }
 
+    func manualCheckIn(gameId: UUID, teamId: UUID, baseId: UUID, token: String) async throws -> CheckInResponse {
+        try await post(
+            "/api/games/\(gameId)/teams/\(teamId)/check-in/\(baseId)",
+            body: EmptyBody(),
+            token: token
+        )
+    }
+
     func getTeamLocations(gameId: UUID, token: String) async throws -> [TeamLocationResponse] {
         try await get("/api/games/\(gameId)/monitoring/locations", token: token)
     }

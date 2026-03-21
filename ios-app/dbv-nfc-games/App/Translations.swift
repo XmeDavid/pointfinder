@@ -456,6 +456,17 @@ enum Translations {
         "operator.revokeInviteConfirm": "Revoke the invitation sent to %@?",
         "common.remove": "Remove",
         "setup.teamVariablesIncomplete": "Some teams have incomplete variable values",
+
+        // Manual check-in
+        "operator.manualCheckIn": "Manual Check-In",
+        "operator.manualCheckInTitle": "Manual Check-In",
+        "operator.manualCheckInMessage": "Check in a team at this base manually when the NFC tag is unavailable.",
+        "operator.manualCheckInSelectTeam": "Select a team",
+        "operator.manualCheckInConfirmTitle": "Confirm Check-In",
+        "operator.manualCheckInConfirmMessage": "Check in %@ at %@?",
+        "operator.manualCheckInSuccess": "Check-in successful",
+        "operator.manualCheckInError": "Check-in failed",
+        "operator.alreadyCheckedIn": "Already checked in",
     ]
 
     // MARK: - Portuguese
@@ -892,6 +903,17 @@ enum Translations {
         "operator.revokeInviteConfirm": "Revogar o convite enviado para %@?",
         "common.remove": "Remover",
         "setup.teamVariablesIncomplete": "Algumas equipas têm valores de variáveis incompletos",
+
+        // Manual check-in
+        "operator.manualCheckIn": "Check-In Manual",
+        "operator.manualCheckInTitle": "Check-In Manual",
+        "operator.manualCheckInMessage": "Faz o check-in de uma equipa nesta base manualmente quando a etiqueta NFC não está disponível.",
+        "operator.manualCheckInSelectTeam": "Seleciona uma equipa",
+        "operator.manualCheckInConfirmTitle": "Confirmar Check-In",
+        "operator.manualCheckInConfirmMessage": "Fazer check-in de %@ em %@?",
+        "operator.manualCheckInSuccess": "Check-in realizado com sucesso",
+        "operator.manualCheckInError": "Erro no check-in",
+        "operator.alreadyCheckedIn": "Já fez check-in",
     ]
 
     // MARK: - German
@@ -1328,6 +1350,17 @@ enum Translations {
         "operator.revokeInviteConfirm": "Die Einladung an %@ widerrufen?",
         "common.remove": "Entfernen",
         "setup.teamVariablesIncomplete": "Einige Teams haben unvollständige Variablenwerte",
+
+        // Manual check-in
+        "operator.manualCheckIn": "Manueller Check-In",
+        "operator.manualCheckInTitle": "Manueller Check-In",
+        "operator.manualCheckInMessage": "Checke ein Team manuell an dieser Station ein, wenn der NFC-Tag nicht verfügbar ist.",
+        "operator.manualCheckInSelectTeam": "Team auswählen",
+        "operator.manualCheckInConfirmTitle": "Check-In bestätigen",
+        "operator.manualCheckInConfirmMessage": "%@ bei %@ einchecken?",
+        "operator.manualCheckInSuccess": "Check-In erfolgreich",
+        "operator.manualCheckInError": "Check-In fehlgeschlagen",
+        "operator.alreadyCheckedIn": "Bereits eingecheckt",
     ]
 }
 

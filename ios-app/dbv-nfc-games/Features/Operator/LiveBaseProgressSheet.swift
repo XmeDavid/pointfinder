@@ -27,6 +27,14 @@ struct LiveBaseProgressSheet: View {
     @State private var writeSuccess = false
     @State private var writeError: String?
 
+    // Manual check-in
+    @State private var showManualCheckIn = false
+    @State private var selectedTeamForCheckIn: Team?
+    @State private var showManualCheckInConfirm = false
+    @State private var isDoingManualCheckIn = false
+    @State private var manualCheckInMessage: String?
+    @State private var manualCheckInIsError = false
+
     init(gameId: UUID, token: String, base: Base, onNfcLinked: ((UUID) -> Void)? = nil) {
         self.gameId = gameId
         self.token = token
@@ -138,11 +146,34 @@ struct LiveBaseProgressSheet: View {
                                     .padding()
                             } else {
                                 ForEach(teams) { team in
-                                    TeamStatusRow(
-                                        team: team,
-                                        progress: progress.first { $0.teamId == team.id }
-                                    )
+                                    let teamProgress = progress.first { $0.teamId == team.id }
+                                    HStack(spacing: 8) {
+                                        TeamStatusRow(
+                                            team: team,
+                                            progress: teamProgress
+                                        )
+                                        if teamProgress == nil {
+                                            Button {
+                                                selectedTeamForCheckIn = team
+                                                showManualCheckInConfirm = true
+                                            } label: {
+                                                Image(systemName: "checkmark.circle")
+                                                    .font(.title3)
+                                                    .foregroundStyle(.blue)
+                                            }
+                                            .buttonStyle(.plain)
+                                            .disabled(isDoingManualCheckIn)
+                                            .accessibilityLabel(locale.t("operator.manualCheckIn"))
+                                        }
+                                    }
                                 }
+                            }
+
+                            if let msg = manualCheckInMessage {
+                                Label(msg, systemImage: manualCheckInIsError ? "xmark.circle.fill" : "checkmark.circle.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(manualCheckInIsError ? .red : .green)
+                                    .padding(.top, 4)
                             }
                         }
                     }
@@ -171,6 +202,20 @@ struct LiveBaseProgressSheet: View {
         .onDisappear {
             pollingTask?.cancel()
             pollingTask = nil
+        }
+        .alert(locale.t("operator.manualCheckInConfirmTitle"), isPresented: $showManualCheckInConfirm) {
+            Button(locale.t("common.ok")) {
+                if let team = selectedTeamForCheckIn {
+                    Task { await performManualCheckIn(team: team) }
+                }
+            }
+            Button(locale.t("common.cancel"), role: .cancel) {
+                selectedTeamForCheckIn = nil
+            }
+        } message: {
+            if let team = selectedTeamForCheckIn {
+                Text(String(format: locale.t("operator.manualCheckInConfirmMessage"), team.name, base.name))
+            }
         }
     }
 
@@ -204,6 +249,35 @@ struct LiveBaseProgressSheet: View {
                     }
                 }
             }
+        }
+    }
+
+    // MARK: - Manual Check-In
+
+    private func performManualCheckIn(team: Team) async {
+        isDoingManualCheckIn = true
+        manualCheckInMessage = nil
+        do {
+            _ = try await appState.apiClient.manualCheckIn(
+                gameId: gameId,
+                teamId: team.id,
+                baseId: base.id,
+                token: token
+            )
+            manualCheckInMessage = locale.t("operator.manualCheckInSuccess")
+            manualCheckInIsError = false
+            await loadData()
+        } catch {
+            manualCheckInMessage = error.localizedDescription
+            manualCheckInIsError = true
+        }
+        isDoingManualCheckIn = false
+        selectedTeamForCheckIn = nil
+
+        // Auto-clear the success/error message after 3 seconds
+        Task {
+            try? await Task.sleep(for: .seconds(3))
+            manualCheckInMessage = nil
         }
     }
 
