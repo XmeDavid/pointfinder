@@ -115,7 +115,7 @@ export function ReviewLayout({ gameId, gameStatus }: ReviewLayoutProps) {
 
   const reviewMutation = useMutation({
     mutationFn: ({ id, status, points, feedback: fb }: { id: string; status: SubmissionStatus; points?: number; feedback?: string }) =>
-      submissionsApi.review(id, status, fb, gameId, points),
+      submissionsApi.review(id, status, gameId, fb, points),
     onMutate: ({ id, status, points, feedback: fb }) => {
       // Optimistic update: immediately update the submission in cache
       queryClient.setQueryData(["submissions", gameId], (old: Submission[] | undefined) => {

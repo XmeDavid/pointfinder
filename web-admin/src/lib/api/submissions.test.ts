@@ -147,8 +147,8 @@ describe("submissionsApi.review", () => {
     const result = await submissionsApi.review(
       "s1",
       "approved" as SubmissionStatus,
-      "Great work!",
       "game-1",
+      "Great work!",
       10
     );
 
@@ -169,8 +169,8 @@ describe("submissionsApi.review", () => {
     const result = await submissionsApi.review(
       "s1",
       "approved" as SubmissionStatus,
-      undefined,
       "game-1",
+      undefined,
       10
     );
 
@@ -186,8 +186,8 @@ describe("submissionsApi.review", () => {
     await submissionsApi.review(
       "s1",
       "rejected" as SubmissionStatus,
-      undefined,
       "game-1",
+      undefined,
       undefined
     );
 
@@ -205,8 +205,8 @@ describe("submissionsApi.review", () => {
     await submissionsApi.review(
       "s1",
       "approved" as SubmissionStatus,
-      "Nice",
       "game-1",
+      "Nice",
       42
     );
 
@@ -222,8 +222,8 @@ describe("submissionsApi.review", () => {
     await submissionsApi.review(
       "sub-99",
       "approved" as SubmissionStatus,
-      undefined,
       "game-77",
+      undefined,
       0
     );
 
@@ -240,8 +240,8 @@ describe("submissionsApi.review", () => {
     await submissionsApi.review(
       "s1",
       "approved" as SubmissionStatus,
-      "OK",
       "game-1",
+      "OK",
       5
     );
 
@@ -255,7 +255,7 @@ describe("submissionsApi.review", () => {
     (apiClient.patch as ReturnType<typeof vi.fn>).mockRejectedValue(error);
 
     await expect(
-      submissionsApi.review("s1", "approved" as SubmissionStatus, undefined, "game-1", 10)
+      submissionsApi.review("s1", "approved" as SubmissionStatus, "game-1", undefined, 10)
     ).rejects.toMatchObject({ response: { status: 400 } });
   });
 
@@ -264,7 +264,7 @@ describe("submissionsApi.review", () => {
     (apiClient.patch as ReturnType<typeof vi.fn>).mockRejectedValue(error);
 
     await expect(
-      submissionsApi.review("missing", "approved" as SubmissionStatus, undefined, "game-1", 0)
+      submissionsApi.review("missing", "approved" as SubmissionStatus, "game-1", undefined, 0)
     ).rejects.toMatchObject({ response: { status: 404 } });
   });
 
@@ -275,7 +275,7 @@ describe("submissionsApi.review", () => {
     (apiClient.patch as ReturnType<typeof vi.fn>).mockRejectedValue(error);
 
     await expect(
-      submissionsApi.review("s1", "approved" as SubmissionStatus, undefined, "game-1", 0)
+      submissionsApi.review("s1", "approved" as SubmissionStatus, "game-1", undefined, 0)
     ).rejects.toMatchObject({ response: { status: 500 } });
   });
 });

@@ -126,7 +126,7 @@ export function SubmissionsPage() {
 
   const reviewMutation = useMutation({
     mutationFn: ({ id, status, points, feedback: fb }: { id: string; status: SubmissionStatus; points?: number; feedback?: string }) => {
-      return submissionsApi.review(id, status, fb, gameId, points);
+      return submissionsApi.review(id, status, gameId!, fb, points);
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["submissions", gameId] }); setReviewingSub(null); setFeedback(""); setReviewPoints(0); toast.success(t("common.saved")); },
     onError: (error: unknown) => { toast.error(getApiErrorMessage(error)); },

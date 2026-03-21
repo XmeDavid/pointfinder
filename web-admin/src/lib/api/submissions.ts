@@ -17,8 +17,8 @@ export const submissionsApi = {
   review: async (
     id: string,
     status: SubmissionStatus,
-    feedback?: string,
     gameId: string,
+    feedback?: string,
     points?: number
   ): Promise<Submission> => {
     const { data } = await apiClient.patch(
