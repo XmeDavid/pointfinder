@@ -27,7 +27,7 @@ class DropdownFilteringTest {
 
     private fun challenge(
         id: String,
-        unlocksBaseId: String? = null,
+        unlocksBaseIds: List<String>? = null,
     ) = Challenge(
         id = id,
         title = "Challenge $id",
@@ -35,7 +35,7 @@ class DropdownFilteringTest {
         content = "",
         answerType = "text",
         points = 10,
-        unlocksBaseId = unlocksBaseId,
+        unlocksBaseIds = unlocksBaseIds,
     )
 
     // -- filterAvailableChallenges tests --
@@ -143,8 +143,8 @@ class DropdownFilteringTest {
             base("b3", hidden = true),
         )
         val challenges = listOf(
-            challenge("c1", unlocksBaseId = "b1"),
-            challenge("c2", unlocksBaseId = "b2"),
+            challenge("c1", unlocksBaseIds = listOf("b1")),
+            challenge("c2", unlocksBaseIds = listOf("b2")),
         )
         val result = filterAvailableUnlockBases(bases, challenges, editingChallengeId = null, fixedBaseId = null)
         assertEquals(listOf("b3"), result.map { it.id })
@@ -157,8 +157,8 @@ class DropdownFilteringTest {
             base("b2", hidden = true),
         )
         val challenges = listOf(
-            challenge("c1", unlocksBaseId = "b1"),
-            challenge("c2", unlocksBaseId = "b2"),
+            challenge("c1", unlocksBaseIds = listOf("b1")),
+            challenge("c2", unlocksBaseIds = listOf("b2")),
         )
         // Editing c1 — b1 is unlocked by c1 itself, so it should remain available
         val result = filterAvailableUnlockBases(bases, challenges, editingChallengeId = "c1", fixedBaseId = null)

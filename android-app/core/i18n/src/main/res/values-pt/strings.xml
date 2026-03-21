@@ -249,7 +249,7 @@
     <string name="label_linking">Ligação</string>
     <string name="label_fixed_to_base">Fixa a Base</string>
     <string name="label_location_bound">Localização obrigatória</string>
-    <string name="label_unlocks_base">Desbloqueia Base</string>
+    <string name="label_unlocks_base">Desbloqueia Bases</string>
     <string name="label_delete_challenge">Eliminar Desafio</string>
     <string name="label_delete_challenge_confirm">Eliminar este desafio? Esta ação não pode ser desfeita.</string>
     <string name="label_new_challenge">Novo Desafio</string>

@@ -122,7 +122,7 @@ data class Challenge(
     val completionContent: String? = null,
     val answerType: String,
     val points: Int,
-    val unlocksBaseId: EntityId? = null,
+    val unlocksBaseIds: List<EntityId>? = null,
     val autoValidate: Boolean = false,
     val correctAnswer: List<String>? = null,
     val locationBound: Boolean = false,
@@ -492,7 +492,7 @@ data class CreateChallengeRequest(
     val points: Int = 0,
     val locationBound: Boolean = false,
     val fixedBaseId: String? = null,
-    val unlocksBaseId: String? = null,
+    val unlocksBaseIds: List<String>? = null,
     val requirePresenceToSubmit: Boolean = false,
 )
 
@@ -508,7 +508,7 @@ data class UpdateChallengeRequest(
     val points: Int = 0,
     val locationBound: Boolean = false,
     val fixedBaseId: String? = null,
-    val unlocksBaseId: String? = null,
+    val unlocksBaseIds: List<String>? = null,
     val requirePresenceToSubmit: Boolean = false,
 )
 
@@ -666,7 +666,7 @@ data class GameExportChallenge(
     val correctAnswer: List<String>,
     val points: Int,
     val locationBound: Boolean,
-    val unlocksBaseTempId: String?,
+    val unlocksBaseTempIds: List<String>?,
     val requirePresenceToSubmit: Boolean = false,
 )
 

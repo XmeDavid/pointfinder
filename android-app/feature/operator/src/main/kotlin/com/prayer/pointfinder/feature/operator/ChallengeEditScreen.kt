@@ -105,7 +105,11 @@ fun ChallengeEditScreen(
     }
     var requirePresence by remember { mutableStateOf(challenge?.requirePresenceToSubmit ?: false) }
     var locationBound by remember { mutableStateOf(challenge?.locationBound ?: false) }
-    var unlocksBaseId by remember { mutableStateOf<String?>(challenge?.unlocksBaseId) }
+    val unlocksBaseIds = remember {
+        mutableStateListOf<String>().apply {
+            challenge?.unlocksBaseIds?.let { addAll(it) }
+        }
+    }
 
     // Filter bases for fixed-to-base dropdown: exclude bases that already have a fixed challenge
     val availableBases = remember(bases, challenge?.id) {
@@ -511,41 +515,41 @@ fun ChallengeEditScreen(
 
             Spacer(Modifier.height(8.dp))
 
-            // Unlocks base dropdown
-            val unlocksBaseName = unlocksBaseId?.let { id ->
-                bases.firstOrNull { it.id == id }?.name
-            } ?: stringResource(R.string.label_none)
-            ExposedDropdownMenuBox(
-                expanded = unlocksBaseExpanded,
-                onExpandedChange = { unlocksBaseExpanded = it },
-            ) {
-                OutlinedTextField(
-                    value = unlocksBaseName,
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text(stringResource(R.string.label_unlocks_base)) },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = unlocksBaseExpanded) },
-                    modifier = Modifier
-                        .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-                        .fillMaxWidth(),
+            // Unlocks bases multi-select
+            Text(
+                text = stringResource(R.string.label_unlocks_base),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(4.dp))
+            if (availableUnlockBases.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.label_none),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                ExposedDropdownMenu(
-                    expanded = unlocksBaseExpanded,
-                    onDismissRequest = { unlocksBaseExpanded = false },
-                ) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.label_none)) },
-                        onClick = {
-                            unlocksBaseId = null
-                            unlocksBaseExpanded = false
-                        },
-                    )
-                    availableUnlockBases.forEach { base ->
-                        DropdownMenuItem(
-                            text = { Text(base.name) },
-                            onClick = {
-                                unlocksBaseId = base.id
-                                unlocksBaseExpanded = false
+            } else {
+                availableUnlockBases.forEach { base ->
+                    val checked = base.id in unlocksBaseIds
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 2.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = base.name,
+                            style = MaterialTheme.typography.bodyLarge,
+                        )
+                        Switch(
+                            checked = checked,
+                            onCheckedChange = { isOn ->
+                                if (isOn) {
+                                    unlocksBaseIds.add(base.id)
+                                } else {
+                                    unlocksBaseIds.remove(base.id)
+                                }
                             },
                         )
                     }
@@ -572,6 +576,7 @@ fun ChallengeEditScreen(
             // Save button
             Button(
                 onClick = {
+                    val effectiveUnlocksBaseIds = unlocksBaseIds.toList().ifEmpty { null }
                     if (isEditMode) {
                         onSave(
                             UpdateChallengeRequest(
@@ -585,7 +590,7 @@ fun ChallengeEditScreen(
                                 points = points,
                                 locationBound = locationBound,
                                 fixedBaseId = fixedBaseId,
-                                unlocksBaseId = unlocksBaseId,
+                                unlocksBaseIds = effectiveUnlocksBaseIds,
                                 requirePresenceToSubmit = requirePresence,
                             ),
                         )
@@ -602,7 +607,7 @@ fun ChallengeEditScreen(
                                 points = points,
                                 locationBound = locationBound,
                                 fixedBaseId = fixedBaseId,
-                                unlocksBaseId = unlocksBaseId,
+                                unlocksBaseIds = effectiveUnlocksBaseIds,
                                 requirePresenceToSubmit = requirePresence,
                             ),
                         )
@@ -750,7 +755,7 @@ internal fun filterAvailableBases(
 }
 
 /**
- * Filters bases for the unlocks-base dropdown on a challenge edit screen.
+ * Filters bases for the unlocks-base multi-select on a challenge edit screen.
  * Only shows hidden bases, excludes the challenge's own fixed base,
  * and excludes bases already unlocked by other challenges.
  */
@@ -761,8 +766,8 @@ internal fun filterAvailableUnlockBases(
     fixedBaseId: String?,
 ): List<Base> {
     val alreadyUnlockedBaseIds = challenges
-        .filter { it.unlocksBaseId != null && it.id != editingChallengeId }
-        .map { it.unlocksBaseId }
+        .filter { it.id != editingChallengeId }
+        .flatMap { it.unlocksBaseIds ?: emptyList() }
         .toSet()
     return bases.filter { base ->
         base.hidden && base.id != fixedBaseId && base.id !in alreadyUnlockedBaseIds

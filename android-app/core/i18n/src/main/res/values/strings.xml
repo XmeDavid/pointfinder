@@ -250,7 +250,7 @@
     <string name="label_linking">Linking</string>
     <string name="label_fixed_to_base">Fixed to Base</string>
     <string name="label_location_bound">Location-bound</string>
-    <string name="label_unlocks_base">Unlocks Base</string>
+    <string name="label_unlocks_base">Unlocks Bases</string>
     <string name="label_delete_challenge">Delete</string>
     <string name="label_delete_challenge_confirm">Delete this challenge? This cannot be undone.</string>
     <string name="label_new_challenge">New Challenge</string>

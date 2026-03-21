@@ -235,11 +235,14 @@ fun OperatorMapScreen(
             style.getSource("unlock-lines")?.let { style.removeSource(it) }
 
             val connections = challenges
-                .filter { it.unlocksBaseId != null }
-                .mapNotNull { challenge ->
+                .filter { !it.unlocksBaseIds.isNullOrEmpty() }
+                .flatMap { challenge ->
                     val sourceBase = bases.find { it.fixedChallengeId == challenge.id }
-                    val targetBase = bases.find { it.id == challenge.unlocksBaseId }
-                    if (sourceBase != null && targetBase != null) Pair(sourceBase, targetBase) else null
+                        ?: return@flatMap emptyList()
+                    challenge.unlocksBaseIds!!.mapNotNull { targetId ->
+                        val targetBase = bases.find { it.id == targetId }
+                        if (targetBase != null) Pair(sourceBase, targetBase) else null
+                    }
                 }
 
             if (connections.isNotEmpty()) {
