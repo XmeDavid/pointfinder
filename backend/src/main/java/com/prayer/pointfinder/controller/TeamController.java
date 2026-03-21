@@ -2,6 +2,7 @@ package com.prayer.pointfinder.controller;
 
 import com.prayer.pointfinder.dto.request.CreateTeamRequest;
 import com.prayer.pointfinder.dto.request.UpdateTeamRequest;
+import com.prayer.pointfinder.dto.response.CheckInResponse;
 import com.prayer.pointfinder.dto.response.PlayerResponse;
 import com.prayer.pointfinder.dto.response.TeamResponse;
 import com.prayer.pointfinder.service.TeamService;
@@ -57,5 +58,14 @@ public class TeamController {
                                              @PathVariable UUID playerId) {
         teamService.removePlayer(gameId, teamId, playerId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{teamId}/check-in/{baseId}")
+    public ResponseEntity<CheckInResponse> manualCheckIn(
+            @PathVariable UUID gameId,
+            @PathVariable UUID teamId,
+            @PathVariable UUID baseId) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(teamService.operatorCheckIn(gameId, teamId, baseId));
     }
 }

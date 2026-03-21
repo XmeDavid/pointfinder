@@ -30,7 +30,7 @@ public class CheckIn {
     private Base base;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "player_id", nullable = false)
+    @JoinColumn(name = "player_id", nullable = true)
     private Player player;
 
     @Column(name = "checked_in_at", nullable = false)

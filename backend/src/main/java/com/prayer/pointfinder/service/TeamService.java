@@ -2,23 +2,25 @@ package com.prayer.pointfinder.service;
 
 import com.prayer.pointfinder.dto.request.CreateTeamRequest;
 import com.prayer.pointfinder.dto.request.UpdateTeamRequest;
+import com.prayer.pointfinder.dto.response.CheckInResponse;
 import com.prayer.pointfinder.dto.response.PlayerResponse;
 import com.prayer.pointfinder.dto.response.TeamResponse;
-import com.prayer.pointfinder.entity.Game;
-import com.prayer.pointfinder.entity.Player;
-import com.prayer.pointfinder.entity.Team;
+import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
-import com.prayer.pointfinder.repository.PlayerRepository;
-import com.prayer.pointfinder.repository.TeamRepository;
+import com.prayer.pointfinder.repository.*;
 import com.prayer.pointfinder.util.CodeGenerator;
+import com.prayer.pointfinder.util.LazyInitHelper;
+import com.prayer.pointfinder.websocket.GameEventBroadcaster;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +34,11 @@ public class TeamService {
 
     private final TeamRepository teamRepository;
     private final PlayerRepository playerRepository;
+    private final BaseRepository baseRepository;
+    private final CheckInRepository checkInRepository;
+    private final AssignmentRepository assignmentRepository;
+    private final ActivityEventRepository activityEventRepository;
+    private final GameEventBroadcaster eventBroadcaster;
     private final GameAccessService gameAccessService;
 
     @Transactional(readOnly = true)
@@ -118,6 +125,87 @@ public class TeamService {
         gameAccessService.ensureBelongsToGame("Player", player.getTeam().getGame().getId(), gameId);
 
         playerRepository.delete(player);
+    }
+
+    @Transactional(timeout = 10)
+    public CheckInResponse operatorCheckIn(UUID gameId, UUID teamId, UUID baseId) {
+        Game game = gameAccessService.getAccessibleGame(gameId);
+        if (game.getStatus() != GameStatus.live) {
+            throw new BadRequestException("Game is not active");
+        }
+
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new ResourceNotFoundException("Team", teamId));
+        gameAccessService.ensureBelongsToGame("Team", team.getGame().getId(), gameId);
+
+        Base base = baseRepository.findById(baseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Base", baseId));
+        gameAccessService.ensureBelongsToGame("Base", base.getGame().getId(), gameId);
+
+        // Idempotent: return existing check-in if present
+        Optional<CheckIn> existing = checkInRepository.findByTeamIdAndBaseId(teamId, baseId);
+        if (existing.isPresent()) {
+            return buildCheckInResponse(existing.get(), base, team);
+        }
+
+        CheckIn checkIn = CheckIn.builder()
+                .game(game)
+                .team(team)
+                .base(base)
+                .player(null)
+                .checkedInAt(Instant.now())
+                .build();
+        try {
+            checkIn = checkInRepository.save(checkIn);
+        } catch (DataIntegrityViolationException ex) {
+            CheckIn existing2 = checkInRepository.findByTeamIdAndBaseId(teamId, baseId)
+                    .orElseThrow(() -> new BadRequestException("Check-in failed"));
+            return buildCheckInResponse(existing2, base, team);
+        }
+
+        ActivityEvent event = ActivityEvent.builder()
+                .game(game)
+                .type(ActivityEventType.check_in)
+                .team(team)
+                .base(base)
+                .message(team.getName() + " manually checked in at " + base.getName() + " by operator")
+                .timestamp(Instant.now())
+                .build();
+        activityEventRepository.save(event);
+
+        LazyInitHelper.initializeForBroadcast(event);
+        eventBroadcaster.broadcastActivityEvent(gameId, event);
+
+        return buildCheckInResponse(checkIn, base, team);
+    }
+
+    private CheckInResponse buildCheckInResponse(CheckIn checkIn, Base base, Team team) {
+        List<Assignment> baseAssignments = assignmentRepository.findByBaseId(base.getId());
+        List<Assignment> sorted = baseAssignments.stream()
+                .sorted(AssignmentResolver.RECENCY_COMPARATOR).toList();
+        Challenge challenge = AssignmentResolver.resolve(base, team.getId(), sorted);
+
+        CheckInResponse.ChallengeInfo challengeInfo = null;
+        if (challenge != null) {
+            challengeInfo = CheckInResponse.ChallengeInfo.builder()
+                    .id(challenge.getId())
+                    .title(challenge.getTitle())
+                    .description(challenge.getDescription())
+                    .content(challenge.getContent())
+                    .completionContent(challenge.getCompletionContent())
+                    .answerType(challenge.getAnswerType().name())
+                    .points(challenge.getPoints())
+                    .requirePresenceToSubmit(challenge.getRequirePresenceToSubmit())
+                    .build();
+        }
+
+        return CheckInResponse.builder()
+                .checkInId(checkIn.getId())
+                .baseId(base.getId())
+                .baseName(base.getName())
+                .checkedInAt(checkIn.getCheckedInAt())
+                .challenge(challengeInfo)
+                .build();
     }
 
     private String generateUniqueJoinCode() {
