@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import com.prayer.pointfinder.core.i18n.R
 import com.prayer.pointfinder.core.model.Game
 import com.prayer.pointfinder.core.model.GameStatus
+import com.prayer.pointfinder.core.model.PRIVACY_POLICY_URL
 
 enum class OperatorTab {
     LIVE_MAP,
@@ -54,8 +55,6 @@ enum class OperatorTab {
     SUBMISSIONS,
     MORE,
 }
-
-internal const val PRIVACY_POLICY_URL = "https://pointfinder.pt/privacy/"
 
 // Semantic color constants shared across operator screens
 internal val StatusCheckedIn = Color(0xFF1565C0)

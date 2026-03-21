@@ -8,6 +8,7 @@ import com.prayer.pointfinder.entity.UploadSession;
 import com.prayer.pointfinder.entity.UploadSessionChunk;
 import com.prayer.pointfinder.entity.UploadSessionStatus;
 import com.prayer.pointfinder.exception.BadRequestException;
+import com.prayer.pointfinder.exception.FileStorageException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.PlayerRepository;
 import com.prayer.pointfinder.repository.UploadSessionChunkRepository;
@@ -308,7 +309,7 @@ public class ChunkedUploadService {
         try {
             Files.createDirectories(dir);
         } catch (IOException e) {
-            throw new RuntimeException("Could not create upload session directory", e);
+            throw new FileStorageException("Could not create upload session directory", e);
         }
     }
 
@@ -317,7 +318,7 @@ public class ChunkedUploadService {
             Files.createDirectories(chunkPath.getParent());
             Files.write(chunkPath, chunkBytes, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to store upload chunk", e);
+            throw new FileStorageException("Failed to store upload chunk", e);
         }
     }
 
@@ -344,7 +345,7 @@ public class ChunkedUploadService {
                 Files.copy(chunkPath, outputStream);
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to assemble uploaded chunks", e);
+            throw new FileStorageException("Failed to assemble uploaded chunks", e);
         }
         return assembledPath;
     }

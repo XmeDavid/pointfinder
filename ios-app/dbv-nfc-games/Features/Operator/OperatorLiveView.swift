@@ -185,9 +185,7 @@ struct OperatorLiveView: View {
     }
 
     private func formatTimestamp(_ timestamp: String) -> String {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        guard let date = formatter.date(from: timestamp) ?? ISO8601DateFormatter().date(from: timestamp) else {
+        guard let date = DateFormatting.parseISO8601(timestamp) else {
             return timestamp
         }
         let relative = RelativeDateTimeFormatter()

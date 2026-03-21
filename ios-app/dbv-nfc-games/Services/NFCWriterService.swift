@@ -23,8 +23,11 @@ final class NFCWriterService: NSObject {
             throw NFCError.notAvailable
         }
 
-        let url = URL(string: "\(Self.tagURLPrefix)\(baseId.uuidString)")!
-        payloadToWrite = NFCNDEFPayload.wellKnownTypeURIPayload(url: url)!
+        guard let url = URL(string: "\(Self.tagURLPrefix)\(baseId.uuidString)"),
+              let payload = NFCNDEFPayload.wellKnownTypeURIPayload(url: url) else {
+            throw NFCError.writeFailed("Failed to construct NFC payload for base \(baseId)")
+        }
+        payloadToWrite = payload
 
         return try await withCheckedThrowingContinuation { continuation in
             // If a write is already in progress, cancel it before starting a new one.

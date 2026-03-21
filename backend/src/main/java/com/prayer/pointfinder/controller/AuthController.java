@@ -3,6 +3,7 @@ package com.prayer.pointfinder.controller;
 import com.prayer.pointfinder.dto.request.*;
 import com.prayer.pointfinder.dto.response.AuthResponse;
 import com.prayer.pointfinder.dto.response.InviteTokenResponse;
+import com.prayer.pointfinder.dto.response.MessageResponse;
 import com.prayer.pointfinder.dto.response.PlayerAuthResponse;
 import com.prayer.pointfinder.service.AuthService;
 import com.prayer.pointfinder.service.InviteService;
@@ -12,8 +13,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -46,12 +45,12 @@ public class AuthController {
     }
 
     @PostMapping("/request-registration")
-    public ResponseEntity<Map<String, String>> requestRegistration(
+    public ResponseEntity<MessageResponse> requestRegistration(
             @Valid @RequestBody RequestRegistrationRequest request,
             HttpServletRequest httpRequest) {
         String requestHost = httpRequest.getHeader("Host");
         authService.requestRegistration(request.getEmail().trim(), requestHost);
-        return ResponseEntity.ok(Map.of("message", "If eligible, a registration link has been sent."));
+        return ResponseEntity.ok(new MessageResponse("If eligible, a registration link has been sent."));
     }
 
     @PostMapping("/refresh")
@@ -66,16 +65,16 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<Map<String, String>> forgotPassword(
+    public ResponseEntity<MessageResponse> forgotPassword(
             @Valid @RequestBody ForgotPasswordRequest request,
             @RequestHeader(value = "X-Forwarded-Host", required = false) String forwardedHost) {
         authService.requestPasswordReset(request.getEmail(), forwardedHost);
-        return ResponseEntity.ok(Map.of("message", "If an account with that email exists, a reset link has been sent."));
+        return ResponseEntity.ok(new MessageResponse("If an account with that email exists, a reset link has been sent."));
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<Map<String, String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+    public ResponseEntity<MessageResponse> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authService.resetPassword(request.getToken(), request.getPassword());
-        return ResponseEntity.ok(Map.of("message", "Password has been reset successfully."));
+        return ResponseEntity.ok(new MessageResponse("Password has been reset successfully."));
     }
 }

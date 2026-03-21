@@ -15,6 +15,7 @@ enum AppConfiguration {
 
     static let appName = "PointFinder"
     static let privacyPolicyURL = "https://pointfinder.pt/privacy/"
+    // Safe: privacyPolicyURL is a compile-time constant known-valid URL.
     static let privacyPolicyLink = URL(string: privacyPolicyURL)!
     static let mobileRealtimeEnabled = true
     static var chunkedMediaUploadEnabled: Bool {

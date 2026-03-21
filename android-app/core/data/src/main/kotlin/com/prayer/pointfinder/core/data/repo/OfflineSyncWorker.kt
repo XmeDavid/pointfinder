@@ -51,9 +51,9 @@ class OfflineSyncWorker @AssistedInject constructor(
                         action.id, "Submission permanently failed"
                     )
                     MediaSyncOutcome.Retry -> {
-                        if (action.retryCount >= 5) {
+                        if (action.retryCount >= MAX_OFFLINE_RETRIES) {
                             playerRepository.markPermanentlyFailed(
-                                action.id, "Submission failed after 5 retries"
+                                action.id, "Submission failed after $MAX_OFFLINE_RETRIES retries"
                             )
                         } else {
                             playerRepository.incrementRetry(action.id)
@@ -86,9 +86,9 @@ class OfflineSyncWorker @AssistedInject constructor(
             if (synced) {
                 playerRepository.markSynced(action.id)
             } else {
-                if (action.retryCount >= 5) {
+                if (action.retryCount >= MAX_OFFLINE_RETRIES) {
                     playerRepository.markPermanentlyFailed(
-                        action.id, "Submission failed after 5 retries"
+                        action.id, "Submission failed after $MAX_OFFLINE_RETRIES retries"
                     )
                 } else {
                     playerRepository.incrementRetry(action.id)

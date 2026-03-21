@@ -109,9 +109,9 @@ export function SubmissionsPage() {
   const openReview = useCallback((submission: Submission) => {
     setReviewingSub(submission);
     setFeedback(submission.feedback ?? "");
-    const ch = challenges.find((c) => c.id === submission.challengeId);
+    const ch = challengeMap.get(submission.challengeId);
     setReviewPoints(submission.points ?? ch?.points ?? 0);
-  }, [challenges]);
+  }, [challengeMap]);
   const closeReview = useCallback(() => {
     setReviewingSub(null);
     setFeedback("");
@@ -130,12 +130,16 @@ export function SubmissionsPage() {
   const statusVariants: Record<SubmissionStatus, "warning" | "success" | "destructive"> = { pending: "warning", approved: "success", rejected: "destructive", correct: "success" };
   const statusIcons: Record<SubmissionStatus, React.ReactNode> = { pending: <Clock className="h-3 w-3" />, approved: <CheckCircle className="h-3 w-3" />, rejected: <XCircle className="h-3 w-3" />, correct: <CheckCircle className="h-3 w-3" /> };
 
+  const teamMap = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
+  const challengeMap = useMemo(() => new Map(challenges.map((c) => [c.id, c])), [challenges]);
+  const baseMap = useMemo(() => new Map(bases.map((b) => [b.id, b])), [bases]);
+
   const pendingCount = useMemo(() => submissions.filter((s) => s.status === "pending").length, [submissions]);
   const sorted = useMemo(() => {
     const filtered = filter === "pending" ? submissions.filter((s) => s.status === "pending") : submissions;
     return [...filtered].sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
   }, [submissions, filter]);
-  const expectedReviewPoints = reviewingSub ? challenges.find((c) => c.id === reviewingSub.challengeId)?.points : undefined;
+  const expectedReviewPoints = reviewingSub ? challengeMap.get(reviewingSub.challengeId)?.points : undefined;
 
   return (
     <div className="space-y-6">
@@ -166,9 +170,9 @@ export function SubmissionsPage() {
       ) : (
         <div className="space-y-3">{sorted.map((sub) => {
           const isPending = sub.status === "pending";
-          const team = teams.find((tm) => tm.id === sub.teamId);
-          const challenge = challenges.find((c) => c.id === sub.challengeId);
-          const base = bases.find((b) => b.id === sub.baseId);
+          const team = teamMap.get(sub.teamId);
+          const challenge = challengeMap.get(sub.challengeId);
+          const base = sub.baseId ? baseMap.get(sub.baseId) : undefined;
           return (
             <Card
               key={sub.id}
@@ -246,8 +250,8 @@ export function SubmissionsPage() {
           <DialogContent onClose={closeReview}>
             <DialogHeader><DialogTitle>{t("submissions.reviewTitle")}</DialogTitle></DialogHeader>
             <div className="space-y-4">
-              <div><p className="text-sm font-medium mb-1">{t("common.team")}</p><p className="text-sm text-muted-foreground">{teams.find((tm) => tm.id === reviewingSub.teamId)?.name}</p></div>
-              <div><p className="text-sm font-medium mb-1">{t("common.challenge")}</p><p className="text-sm text-muted-foreground">{challenges.find((c) => c.id === reviewingSub.challengeId)?.title}</p></div>
+              <div><p className="text-sm font-medium mb-1">{t("common.team")}</p><p className="text-sm text-muted-foreground">{teamMap.get(reviewingSub.teamId)?.name}</p></div>
+              <div><p className="text-sm font-medium mb-1">{t("common.challenge")}</p><p className="text-sm text-muted-foreground">{challengeMap.get(reviewingSub.challengeId)?.title}</p></div>
               {(() => {
                 const mediaUrls = getMediaUrls(reviewingSub);
                 if (mediaUrls.length > 0) {
@@ -271,7 +275,7 @@ export function SubmissionsPage() {
                 <div><p className="text-sm font-medium mb-1">{getMediaUrls(reviewingSub).length > 0 ? t("submissions.notes") : t("submissions.answer")}</p><div className="rounded-md bg-muted p-3 text-sm">{reviewingSub.answer || <span className="text-muted-foreground italic">{t("submissions.noNotes")}</span>}</div></div>
               )}
               {(() => {
-                const ch = challenges.find((c) => c.id === reviewingSub.challengeId);
+                const ch = challengeMap.get(reviewingSub.challengeId);
                 const shouldShowCorrectAnswer = ch?.correctAnswer && ch.correctAnswer.length > 0 && ch.answerType === "text" && ch.autoValidate;
                 return shouldShowCorrectAnswer ? (
                   <div>

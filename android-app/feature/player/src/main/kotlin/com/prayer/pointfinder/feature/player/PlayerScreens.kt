@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.prayer.pointfinder.core.i18n.R
+import com.prayer.pointfinder.core.model.PRIVACY_POLICY_URL
 import com.prayer.pointfinder.core.model.BaseStatus
 
 enum class PlayerTab {
@@ -37,8 +38,6 @@ enum class PlayerTab {
     CHECK_IN,
     SETTINGS,
 }
-
-internal const val PRIVACY_POLICY_URL = "https://pointfinder.pt/privacy/"
 
 // Semantic color constants for status, accents, and indicators
 internal val StatusCheckedIn = Color(0xFF1565C0)
