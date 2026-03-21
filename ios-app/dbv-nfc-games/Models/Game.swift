@@ -119,7 +119,7 @@ struct Challenge: Codable, Identifiable {
     let completionContent: String?
     let answerType: String
     let points: Int
-    let unlocksBaseId: UUID?
+    let unlocksBaseIds: [UUID]?
     let autoValidate: Bool
     let correctAnswer: [String]?
     let locationBound: Bool
@@ -135,7 +135,7 @@ struct Challenge: Codable, Identifiable {
         completionContent: String? = nil,
         answerType: String,
         points: Int,
-        unlocksBaseId: UUID? = nil,
+        unlocksBaseIds: [UUID]? = nil,
         autoValidate: Bool = false,
         correctAnswer: [String]? = nil,
         locationBound: Bool = false,
@@ -150,7 +150,7 @@ struct Challenge: Codable, Identifiable {
         self.completionContent = completionContent
         self.answerType = answerType
         self.points = points
-        self.unlocksBaseId = unlocksBaseId
+        self.unlocksBaseIds = unlocksBaseIds
         self.autoValidate = autoValidate
         self.correctAnswer = correctAnswer
         self.locationBound = locationBound
@@ -168,7 +168,7 @@ struct Challenge: Codable, Identifiable {
         completionContent = try container.decodeIfPresent(String.self, forKey: .completionContent)
         answerType = try container.decode(String.self, forKey: .answerType)
         points = try container.decode(Int.self, forKey: .points)
-        unlocksBaseId = try container.decodeIfPresent(UUID.self, forKey: .unlocksBaseId)
+        unlocksBaseIds = try container.decodeIfPresent([UUID].self, forKey: .unlocksBaseIds)
         autoValidate = try container.decodeIfPresent(Bool.self, forKey: .autoValidate) ?? false
         correctAnswer = try container.decodeIfPresent([String].self, forKey: .correctAnswer)
         locationBound = try container.decodeIfPresent(Bool.self, forKey: .locationBound) ?? false

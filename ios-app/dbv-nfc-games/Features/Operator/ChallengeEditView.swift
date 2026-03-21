@@ -25,7 +25,7 @@ struct ChallengeEditView: View {
     @State private var fixedBaseId: UUID?
     @State private var locationBound: Bool
     @State private var requirePresenceToSubmit: Bool
-    @State private var unlocksBaseId: UUID?
+    @State private var unlocksBaseIds: [UUID]
     @State private var isSaving = false
     @State private var showDeleteAlert = false
     @State private var errorMessage: String?
@@ -61,8 +61,8 @@ struct ChallengeEditView: View {
     private var availableUnlockBases: [Base] {
         let alreadyUnlockedBaseIds = Set(
             challenges
-                .filter { $0.unlocksBaseId != nil && $0.id != challenge?.id }
-                .compactMap { $0.unlocksBaseId }
+                .filter { $0.id != challenge?.id }
+                .flatMap { $0.unlocksBaseIds ?? [] }
         )
         return bases.filter { $0.hidden && $0.id != fixedBaseId && !alreadyUnlockedBaseIds.contains($0.id) }
     }
@@ -92,7 +92,7 @@ struct ChallengeEditView: View {
         self._fixedBaseId = State(initialValue: fixedBase?.id)
         self._locationBound = State(initialValue: challenge?.locationBound ?? false)
         self._requirePresenceToSubmit = State(initialValue: challenge?.requirePresenceToSubmit ?? false)
-        self._unlocksBaseId = State(initialValue: challenge?.unlocksBaseId)
+        self._unlocksBaseIds = State(initialValue: challenge?.unlocksBaseIds ?? [])
     }
 
     var body: some View {
@@ -211,13 +211,26 @@ struct ChallengeEditView: View {
 
                 Toggle(locale.t("operator.locationBound"), isOn: $locationBound)
 
-                Picker(locale.t("operator.unlocksBase"), selection: $unlocksBaseId) {
-                    Text(locale.t("operator.none")).tag(nil as UUID?)
-                    ForEach(availableUnlockBases) { base in
-                        Text(base.name).tag(base.id as UUID?)
+                DisclosureGroup(locale.t("operator.unlocksBase")) {
+                    if availableUnlockBases.isEmpty {
+                        Text(locale.t("operator.none"))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(availableUnlockBases) { base in
+                            Toggle(base.name, isOn: Binding(
+                                get: { unlocksBaseIds.contains(base.id) },
+                                set: { isOn in
+                                    if isOn {
+                                        unlocksBaseIds.append(base.id)
+                                    } else {
+                                        unlocksBaseIds.removeAll { $0 == base.id }
+                                    }
+                                }
+                            ))
+                        }
                     }
                 }
-                .pickerStyle(.menu)
             }
 
             Section(locale.t("operator.challengeVariables")) {
@@ -496,7 +509,7 @@ struct ChallengeEditView: View {
                         points: points,
                         locationBound: locationBound,
                         fixedBaseId: fixedBaseId,
-                        unlocksBaseId: unlocksBaseId,
+                        unlocksBaseIds: unlocksBaseIds.isEmpty ? nil : unlocksBaseIds,
                         requirePresenceToSubmit: requirePresenceToSubmit
                     ),
                     token: token
@@ -518,7 +531,7 @@ struct ChallengeEditView: View {
                         points: points,
                         locationBound: locationBound,
                         fixedBaseId: fixedBaseId,
-                        unlocksBaseId: unlocksBaseId,
+                        unlocksBaseIds: unlocksBaseIds.isEmpty ? nil : unlocksBaseIds,
                         requirePresenceToSubmit: requirePresenceToSubmit
                     ),
                     token: token

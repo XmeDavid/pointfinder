@@ -70,7 +70,7 @@ struct CreateChallengeRequest: Encodable {
     let points: Int
     let locationBound: Bool
     let fixedBaseId: UUID?
-    let unlocksBaseId: UUID?
+    let unlocksBaseIds: [UUID]?
     let requirePresenceToSubmit: Bool
 }
 
@@ -85,7 +85,7 @@ struct UpdateChallengeRequest: Encodable {
     let points: Int
     let locationBound: Bool
     let fixedBaseId: UUID?
-    let unlocksBaseId: UUID?
+    let unlocksBaseIds: [UUID]?
     let requirePresenceToSubmit: Bool
 }
 
@@ -228,7 +228,7 @@ struct GameExportChallenge: Codable {
     let locationBound: Bool?
     let requirePresenceToSubmit: Bool?
     let fixedBaseTempId: String?
-    let unlocksBaseTempId: String?
+    let unlocksBaseTempIds: [String]?
 }
 
 struct GameExportAssignment: Codable {

@@ -78,15 +78,16 @@ struct OperatorMapView: View {
             }
 
             let unlockConnections: [(CLLocationCoordinate2D, CLLocationCoordinate2D)] = challenges
-                .filter { $0.unlocksBaseId != nil }
-                .compactMap { challenge in
-                    guard let sourceBase = bases.first(where: { $0.fixedChallengeId == challenge.id }),
-                          let targetBase = bases.first(where: { $0.id == challenge.unlocksBaseId })
-                    else { return nil }
-                    return (
-                        CLLocationCoordinate2D(latitude: sourceBase.lat, longitude: sourceBase.lng),
-                        CLLocationCoordinate2D(latitude: targetBase.lat, longitude: targetBase.lng)
-                    )
+                .filter { $0.unlocksBaseIds != nil && !$0.unlocksBaseIds!.isEmpty }
+                .flatMap { challenge -> [(CLLocationCoordinate2D, CLLocationCoordinate2D)] in
+                    guard let sourceBase = bases.first(where: { $0.fixedChallengeId == challenge.id }) else { return [] }
+                    return challenge.unlocksBaseIds!.compactMap { targetId in
+                        guard let targetBase = bases.first(where: { $0.id == targetId }) else { return nil }
+                        return (
+                            CLLocationCoordinate2D(latitude: sourceBase.lat, longitude: sourceBase.lng),
+                            CLLocationCoordinate2D(latitude: targetBase.lat, longitude: targetBase.lng)
+                        )
+                    }
                 }
 
             MapLibreMapView(
