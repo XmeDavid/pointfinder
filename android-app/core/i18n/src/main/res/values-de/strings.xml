@@ -324,6 +324,12 @@
     <string name="action_revoke_invite">Einladung widerrufen</string>
     <string name="confirm_revoke_invite">Einladung widerrufen</string>
     <string name="confirm_revoke_invite_message">Die Einladung an %1$s widerrufen?</string>
+    <!-- Manual Check-In -->
+    <string name="action_manual_check_in">Manueller Check-In</string>
+    <string name="action_confirm">Bestätigen</string>
+    <string name="label_manual_check_in_confirm_title">Check-In bestätigen</string>
+    <string name="label_manual_check_in_confirm_message">%1$s bei %2$s einchecken?</string>
+    <string name="label_manual_check_in_success">Check-In erfolgreich</string>
     <!-- Toast / Snackbar -->
     <string name="toast_base_created">Station erstellt</string>
     <string name="toast_base_saved">Station gespeichert</string>

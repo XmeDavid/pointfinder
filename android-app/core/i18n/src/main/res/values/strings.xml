@@ -324,6 +324,12 @@
     <string name="action_revoke_invite">Revoke invite</string>
     <string name="confirm_revoke_invite">Revoke Invite</string>
     <string name="confirm_revoke_invite_message">Revoke the invitation sent to %1$s?</string>
+    <!-- Manual Check-In -->
+    <string name="action_manual_check_in">Manual Check-In</string>
+    <string name="action_confirm">Confirm</string>
+    <string name="label_manual_check_in_confirm_title">Confirm Check-In</string>
+    <string name="label_manual_check_in_confirm_message">Check in %1$s at %2$s?</string>
+    <string name="label_manual_check_in_success">Check-in successful</string>
     <!-- Toast / Snackbar -->
     <string name="toast_base_created">Base created</string>
     <string name="toast_base_saved">Base saved</string>

@@ -3,6 +3,7 @@ package com.prayer.pointfinder.core.data.repo
 import com.prayer.pointfinder.core.model.ActivityEvent
 import com.prayer.pointfinder.core.model.Assignment
 import com.prayer.pointfinder.core.model.Base
+import com.prayer.pointfinder.core.model.CheckInResponse
 import com.prayer.pointfinder.core.model.Challenge
 import com.prayer.pointfinder.core.model.CreateBaseRequest
 import com.prayer.pointfinder.core.model.CreateChallengeRequest
@@ -164,6 +165,9 @@ class OperatorRepository @Inject constructor(
 
     suspend fun linkBaseNfc(gameId: String, baseId: String): Base =
         apiCall { api.linkBaseNfc(gameId, baseId) }
+
+    suspend fun manualCheckIn(gameId: String, teamId: String, baseId: String): CheckInResponse =
+        apiCall { api.manualCheckIn(gameId, teamId, baseId) }
 
     // === Game CRUD ===
 

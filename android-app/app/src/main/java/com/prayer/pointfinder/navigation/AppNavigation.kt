@@ -1142,6 +1142,14 @@ private fun OperatorGameRoot(
                                 writeStatus = state.writeStatus,
                                 writeSuccess = state.writeSuccess,
                                 onDismiss = viewModel::clearSelectedBase,
+                                onManualCheckIn = { teamId, baseId ->
+                                    viewModel.manualCheckIn(
+                                        teamId = teamId,
+                                        baseId = baseId,
+                                        onSuccess = { viewModel.clearSelectedBase() },
+                                        onError = { /* error shown by ViewModel state */ },
+                                    )
+                                },
                             )
                         }
                     }

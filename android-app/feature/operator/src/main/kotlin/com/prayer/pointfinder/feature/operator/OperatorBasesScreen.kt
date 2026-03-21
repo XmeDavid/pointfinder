@@ -20,17 +20,24 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,12 +63,16 @@ fun LiveBaseProgressBottomSheet(
     writeStatus: String?,
     writeSuccess: Boolean?,
     onDismiss: () -> Unit,
+    onManualCheckIn: ((teamId: String, baseId: String) -> Unit)? = null,
 ) {
     val grouped = progress.filter { it.baseId == base.id }
     val completedCount = grouped.count { it.status == BaseStatus.COMPLETED }
     val checkedInCount = grouped.count { it.status == BaseStatus.CHECKED_IN }
     val pendingCount = grouped.count { it.status == BaseStatus.SUBMITTED }
     val remainingCount = grouped.size - completedCount - checkedInCount - pendingCount
+
+    var showTeamPicker by remember { mutableStateOf(false) }
+    var teamToConfirm by remember { mutableStateOf<Team?>(null) }
 
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -157,8 +168,89 @@ fun LiveBaseProgressBottomSheet(
                     )
                 }
             }
+
+            // Manual check-in for teams that haven't visited yet
+            if (onManualCheckIn != null) {
+                val notVisitedTeams = teams.filter { team -> grouped.none { it.teamId == team.id } }
+                if (notVisitedTeams.isNotEmpty()) {
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedButton(
+                        onClick = { showTeamPicker = true },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.action_manual_check_in))
+                    }
+                }
+            }
+
             Spacer(Modifier.height(16.dp))
         }
+    }
+
+    // Team picker dialog
+    if (showTeamPicker) {
+        val notVisitedTeams = teams.filter { team -> grouped.none { it.teamId == team.id } }
+        AlertDialog(
+            onDismissRequest = { showTeamPicker = false },
+            title = { Text(stringResource(R.string.action_manual_check_in)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    notVisitedTeams.forEach { team ->
+                        val teamColor = team.color.let { c ->
+                            runCatching { Color(android.graphics.Color.parseColor(c)) }.getOrDefault(Color.Gray)
+                        }
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    teamToConfirm = team
+                                    showTeamPicker = false
+                                },
+                            tonalElevation = 1.dp,
+                            shape = MaterialTheme.shapes.small,
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(teamColor))
+                                Text(team.name, style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showTeamPicker = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+
+    // Confirmation dialog
+    teamToConfirm?.let { team ->
+        AlertDialog(
+            onDismissRequest = { teamToConfirm = null },
+            title = { Text(stringResource(R.string.label_manual_check_in_confirm_title)) },
+            text = { Text(stringResource(R.string.label_manual_check_in_confirm_message, team.name, base.name)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    onManualCheckIn?.invoke(team.id, base.id)
+                    teamToConfirm = null
+                    onDismiss()
+                }) {
+                    Text(stringResource(R.string.action_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { teamToConfirm = null }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
     }
 }
 

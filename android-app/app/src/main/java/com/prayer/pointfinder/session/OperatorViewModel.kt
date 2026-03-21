@@ -548,6 +548,23 @@ class OperatorViewModel @Inject constructor(
         }
     }
 
+    // ── Manual check-in ─────────────────────────────────────────────────
+
+    fun manualCheckIn(teamId: String, baseId: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching { baseManagementUseCase.manualCheckIn(gameId, teamId, baseId) }
+                .onSuccess {
+                    refreshSelectedGameData()
+                    onSuccess()
+                }
+                .onFailure { e ->
+                    if (markAuthExpiredIfNeeded(e)) return@onFailure
+                    onError(friendlyError(e))
+                }
+        }
+    }
+
     // ── NFC write ───────────────────────────────────────────────────────
 
     fun beginWriteNfc() {

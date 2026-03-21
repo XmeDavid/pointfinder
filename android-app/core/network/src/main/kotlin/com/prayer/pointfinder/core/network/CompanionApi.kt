@@ -181,6 +181,14 @@ interface CompanionApi {
     @GET("api/games/{gameId}/teams")
     suspend fun getTeams(@Path("gameId") gameId: String): List<Team>
 
+    @POST("api/games/{gameId}/teams/{teamId}/check-in/{baseId}")
+    suspend fun manualCheckIn(
+        @Path("gameId") gameId: String,
+        @Path("teamId") teamId: String,
+        @Path("baseId") baseId: String,
+        @Body body: EmptyBody = EmptyBody,
+    ): CheckInResponse
+
     @GET("api/games/{gameId}/monitoring/locations")
     suspend fun getTeamLocations(@Path("gameId") gameId: String): List<TeamLocationResponse>
 
