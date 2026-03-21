@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Trophy, Download } from "lucide-react";
@@ -10,9 +11,27 @@ import { useTranslation } from "react-i18next";
 export function ResultsPage() {
   const { t } = useTranslation();
   const { gameId } = useParams<{ gameId: string }>();
+  const [exporting, setExporting] = useState(false);
   const { data: game } = useQuery({ queryKey: ["game", gameId], queryFn: () => gamesApi.getById(gameId!) });
   const { data: leaderboard = [] } = useQuery({ queryKey: ["leaderboard", gameId], queryFn: () => monitoringApi.getLeaderboard(gameId!) });
   const { data: stats } = useQuery({ queryKey: ["dashboard-stats", gameId], queryFn: () => monitoringApi.getDashboardStats(gameId!) });
+
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+      const blob = await gamesApi.exportGame(gameId!);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${game!.name.replace(/[^a-z0-9]/gi, "-")}-results.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   if (!game || !stats) return null;
 
@@ -20,7 +39,7 @@ export function ResultsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div><h1 className="text-2xl font-bold">{t("results.title")}</h1><p className="text-muted-foreground">{game.name}</p></div>
-        <Button className="self-end sm:self-auto" variant="outline"><Download className="mr-2 h-4 w-4" />{t("results.exportResults")}</Button>
+        <Button className="self-end sm:self-auto" variant="outline" onClick={handleExport} disabled={exporting}><Download className="mr-2 h-4 w-4" />{exporting ? t("game.exporting") : t("results.exportResults")}</Button>
       </div>
       {leaderboard.length > 0 && (
         <Card className="border-yellow-500/50 bg-gradient-to-r from-yellow-500/5 to-transparent">
