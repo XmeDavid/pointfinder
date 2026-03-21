@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 public class SubmissionService {
 
     private final SubmissionRepository submissionRepository;
+    private final GameRepository gameRepository;
     private final TeamRepository teamRepository;
     private final ChallengeRepository challengeRepository;
     private final BaseRepository baseRepository;

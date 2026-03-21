@@ -37,6 +37,8 @@ class SubmissionServiceTest {
     @Mock
     private SubmissionRepository submissionRepository;
     @Mock
+    private GameRepository gameRepository;
+    @Mock
     private TeamRepository teamRepository;
     @Mock
     private ChallengeRepository challengeRepository;
@@ -129,6 +131,10 @@ class SubmissionServiceTest {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(operator, null)
         );
+
+        // Default: gameRepository returns the live game
+        org.mockito.Mockito.lenient().when(gameRepository.findById(gameId))
+                .thenReturn(Optional.of(game));
 
         // Default: resolveTemplates passes through the input list unchanged
         org.mockito.Mockito.lenient().when(templateVariableService.resolveTemplates(any(), any(), any(), any()))

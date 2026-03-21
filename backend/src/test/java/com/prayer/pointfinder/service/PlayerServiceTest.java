@@ -424,7 +424,7 @@ class PlayerServiceTest {
         when(baseRepository.findByGameId(gameId)).thenReturn(List.of(sourceBase, hiddenBase));
         when(checkInRepository.findByGameIdAndTeamId(gameId, teamId)).thenReturn(List.of());
         when(submissionRepository.findByTeamId(teamId)).thenReturn(List.of(unlockSubmission));
-        when(assignmentRepository.findByGameId(gameId)).thenReturn(List.of());
+        when(assignmentRepository.findByGameIdAndTeamId(gameId, teamId)).thenReturn(List.of());
         when(challengeRepository.findByGameIdAndUnlocksBaseIsNotNull(gameId)).thenReturn(List.of(unlockChallenge));
 
         List<BaseProgressResponse> progress = playerService.getProgress(gameId, player);

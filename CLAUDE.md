@@ -12,7 +12,7 @@ PointFinder is an NFC-based gaming platform for scouting organizations. Teams sc
 
 ```
 dbvnfc/
-├── backend/         # Spring Boot 3.4.1 + Java 21 API
+├── backend/         # Spring Boot 3.4.13 + Java 21 API
 ├── web-admin/       # React 19 + TypeScript admin panel
 ├── android-app/     # Kotlin Android app (modular architecture)
 ├── ios-app/         # Swift iOS app (native NFC)
@@ -83,7 +83,7 @@ docker-compose up -d       # Start full stack
 
 ## Key Technologies
 
-- **Backend**: Spring Boot 3.4.1, Java 21, PostgreSQL 16, Flyway, JWT auth (HS256, 15-min access / 7-day refresh), WebSocket (STOMP), APNs/FCM push
+- **Backend**: Spring Boot 3.4.13, Java 21, PostgreSQL 16, Flyway, JWT auth (HS256, 15-min access / 7-day refresh), WebSocket (STOMP), APNs/FCM push
 - **Frontend**: React 19, Vite, TypeScript, Tailwind CSS, Zustand (auth store), React Query (30s staleTime), MapLibre GL maps, i18next (EN/PT/DE, hostname-based detection)
 - **Android**: Kotlin, Jetpack Compose, Hilt DI, Room (SQLCipher encrypted), Retrofit, FCM, MapLibre GL, offline queue with WorkManager sync
 - **iOS**: Swift, SwiftUI, Core NFC (read/write), Core Location, URLSessionWebSocketTask, APNs, Keychain, offline queue with SyncEngine, async/await Actors
@@ -97,14 +97,14 @@ docker-compose up -d       # Start full stack
 
 ## Database
 
-- 20 tables, 18 Flyway migrations in `backend/src/main/resources/db/migration/`
+- 22 tables, 27 Flyway migrations in `backend/src/main/resources/db/migration/`
 - Flyway runs in validation mode (no auto-DDL) on startup
 - Key entities: Game, Base, Challenge, Assignment, Team, Player, Submission, CheckIn, UploadSession, TeamVariable
 - Unique constraints: one check-in per team per base, idempotent submissions via idempotency_key
 
 ## Localization
 
-Three languages: EN, PT, DE (659 keys each in frontend)
+Three languages: EN, PT, DE (533 keys each in frontend)
 - Frontend: `web-admin/src/i18n/locales/{en,pt,de}.json` — hostname-based detection (pointfinder.pt → PT, pointfinder.ch → DE)
 - Android: `android-app/app/src/main/res/values{,-de}/strings.xml`
 - iOS: Standard .strings localization
@@ -112,7 +112,7 @@ Three languages: EN, PT, DE (659 keys each in frontend)
 ## Real-time Features
 
 - **WebSocket**: Endpoint `/ws` (STOMP protocol, SockJS fallback). Mobile endpoint `/ws/mobile?gameId={uuid}` (native WebSocket).
-- **Broadcast topics** (via `/topic/game/{gameId}/...`):
+- **Broadcast topics** (via `/topic/games/{gameId}`):
   - `activity` - submission updates
   - `submission_status` - review decisions
   - `leaderboard` - score changes
@@ -145,13 +145,19 @@ android-app/
 ```
 ios-app/dbv-nfc-games/
 ├── App/              # AppDelegate, root ContentView
+├── Components/       # Shared UI components
 ├── Features/
 │   ├── Auth/         # WelcomeView, PlayerJoinView, OperatorLoginView
-│   ├── Player/       # MainTabView (3 tabs: Map, CheckIn, Settings), SolveView
-│   └── Operator/     # OperatorHomeView, game management (16 screens)
+│   ├── CheckIn/      # Check-in flow
+│   ├── Map/          # Map views
+│   ├── Notifications/ # Notification views
+│   ├── Operator/     # OperatorHomeView, game management
+│   ├── Settings/     # Settings views
+│   └── Solve/        # Challenge solving
+├── Navigation/       # Navigation management
 ├── Services/         # APIClient (actor), NFC read/write, Location, Push, OfflineQueue, SyncEngine, MobileRealtimeClient
 ├── Models/           # DTOs matching backend responses
-└── Resources/        # Assets, localization
+└── Utils/            # Utility helpers
 ```
 
 ## File Upload
@@ -163,22 +169,24 @@ ios-app/dbv-nfc-games/
 
 ## E2E Testing
 
-End-to-end tests live in `e2e/` and run against production (`https://pointfinder.pt`).
+End-to-end tests live in `e2e/` and run against a local Docker-backed E2E stack by default.
 
 ```bash
 cd e2e
-cp .env.example .env       # Fill in credentials
+cp .env.example .env       # Default template targets local Docker stack
 npm install
 npx playwright install chromium
 
-./run.sh smoke             # API smoke test (critical path)
-./run.sh api               # Full API test suite
-./run.sh web               # Web UI tests (Playwright)
+./run.sh smoke             # Local API smoke test (critical path)
+./run.sh api               # Local stack + full API test suite
+./run.sh web               # Local stack + web UI tests (Playwright)
 ./run.sh ios               # iOS Maestro flows
 ./run.sh android           # Android Maestro flows
-./run.sh all               # Everything
+./run.sh all               # Everything: API + web + iOS + Android
 ./run.sh parity            # Check scenario coverage across layers
 ./run.sh cleanup           # Delete orphaned E2E games
+./run.sh local:up          # Start local Docker E2E stack
+./run.sh local:down        # Stop local Docker E2E stack
 ```
 
 **Architecture:** Runner-owned lifecycle (`setup.ts` → tests → `cleanup.ts`). Two-tier fixtures: persistent main game (cross-layer continuity) + throwaway games (destructive tests). Parity registry in `scenarios.json` ensures API/web/mobile coverage stays in sync.
@@ -195,4 +203,4 @@ Additional documentation in `docs/`:
 - `infrastructure.md` - Docker, nginx, CI/CD, environment variables
 - `realtime-and-mobile.md` - WebSocket, push notifications, offline sync, NFC
 - `resumable-media-upload-rollout.md` - Chunked upload feature details
-- `store-submission/` - App Store and Play Store submission checklists
+- `gap-analysis.md` - Cross-platform feature gap analysis

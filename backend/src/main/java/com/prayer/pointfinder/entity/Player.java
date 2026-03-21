@@ -31,7 +31,6 @@ public class Player {
     @Column(name = "push_token")
     private String pushToken;
 
-    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "push_platform", nullable = true)
     private PushPlatform pushPlatform;
