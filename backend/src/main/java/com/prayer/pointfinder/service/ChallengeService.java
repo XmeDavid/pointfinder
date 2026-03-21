@@ -17,8 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -74,12 +73,12 @@ public class ChallengeService {
         }
 
         UUID effectiveFixedBaseId = resolveEffectiveFixedBaseId(challenge.getId(), request.getFixedBaseId());
-        UUID unlocksBaseId = normalizeUnlocksBaseRequest(
+        List<UUID> unlocksBaseIds = normalizeUnlocksBasesRequest(
                 request.getLocationBound(),
                 effectiveFixedBaseId,
-                request.getUnlocksBaseId()
+                request.getUnlocksBaseIds()
         );
-        handleUnlocksBase(challenge, unlocksBaseId, gameId, effectiveFixedBaseId);
+        handleUnlocksBases(challenge, unlocksBaseIds, gameId, effectiveFixedBaseId);
 
         return toResponse(challenge);
     }
@@ -120,12 +119,12 @@ public class ChallengeService {
         }
 
         UUID effectiveFixedBaseId = resolveEffectiveFixedBaseId(challenge.getId(), request.getFixedBaseId());
-        UUID unlocksBaseId = normalizeUnlocksBaseRequest(
+        List<UUID> unlocksBaseIds = normalizeUnlocksBasesRequest(
                 request.getLocationBound(),
                 effectiveFixedBaseId,
-                request.getUnlocksBaseId()
+                request.getUnlocksBaseIds()
         );
-        handleUnlocksBase(challenge, unlocksBaseId, gameId, effectiveFixedBaseId);
+        handleUnlocksBases(challenge, unlocksBaseIds, gameId, effectiveFixedBaseId);
 
         return toResponse(challenge);
     }
@@ -176,18 +175,19 @@ public class ChallengeService {
                 .orElse(null);
     }
 
-    private UUID normalizeUnlocksBaseRequest(Boolean locationBound, UUID effectiveFixedBaseId, UUID requestedUnlocksBaseId) {
+    private List<UUID> normalizeUnlocksBasesRequest(Boolean locationBound, UUID effectiveFixedBaseId, List<UUID> requestedUnlocksBaseIds) {
         boolean isLocationBound = Boolean.TRUE.equals(locationBound);
-        if (requestedUnlocksBaseId != null && (!isLocationBound || effectiveFixedBaseId == null)) {
+        List<UUID> ids = requestedUnlocksBaseIds != null ? requestedUnlocksBaseIds : List.of();
+        if (!ids.isEmpty() && (!isLocationBound || effectiveFixedBaseId == null)) {
             throw new BadRequestException("Unlock target requires challenge to be location-bound and fixed to a base");
         }
-        return isLocationBound && effectiveFixedBaseId != null ? requestedUnlocksBaseId : null;
+        return isLocationBound && effectiveFixedBaseId != null ? ids : List.of();
     }
 
-    private void handleUnlocksBase(Challenge challenge, UUID unlocksBaseId, UUID gameId, UUID effectiveFixedBaseId) {
-        if (unlocksBaseId == null) {
-            if (challenge.getUnlocksBase() != null) {
-                challenge.setUnlocksBase(null);
+    private void handleUnlocksBases(Challenge challenge, List<UUID> unlocksBaseIds, UUID gameId, UUID effectiveFixedBaseId) {
+        if (unlocksBaseIds.isEmpty()) {
+            if (!challenge.getUnlocksBases().isEmpty()) {
+                challenge.getUnlocksBases().clear();
                 challengeRepository.save(challenge);
             }
             return;
@@ -196,28 +196,34 @@ public class ChallengeService {
             throw new BadRequestException("Unlock target requires challenge to be fixed to a base");
         }
 
-        Base targetBase = baseRepository.findById(unlocksBaseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Base", unlocksBaseId));
-        if (!targetBase.getGame().getId().equals(gameId)) {
-            throw new BadRequestException("Target base does not belong to this game");
-        }
-        if (!Boolean.TRUE.equals(targetBase.getHidden())) {
-            throw new BadRequestException("Target base must be hidden to be used as an unlock target");
-        }
-
-        // Ensure target is not the challenge's own fixed base
-        if (effectiveFixedBaseId.equals(unlocksBaseId)) {
-            throw new BadRequestException("Cannot unlock the same base the challenge is fixed to");
-        }
-
-        // Ensure no other challenge already unlocks this base
-        challengeRepository.findByUnlocksBaseId(unlocksBaseId).ifPresent(existing -> {
-            if (!existing.getId().equals(challenge.getId())) {
-                throw new BadRequestException("Another challenge already unlocks this base");
+        Set<Base> newUnlocksBases = new LinkedHashSet<>();
+        for (UUID unlocksBaseId : unlocksBaseIds) {
+            Base targetBase = baseRepository.findById(unlocksBaseId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Base", unlocksBaseId));
+            if (!targetBase.getGame().getId().equals(gameId)) {
+                throw new BadRequestException("Target base does not belong to this game");
             }
-        });
+            if (!Boolean.TRUE.equals(targetBase.getHidden())) {
+                throw new BadRequestException("Target base must be hidden to be used as an unlock target");
+            }
 
-        challenge.setUnlocksBase(targetBase);
+            // Ensure target is not the challenge's own fixed base
+            if (effectiveFixedBaseId.equals(unlocksBaseId)) {
+                throw new BadRequestException("Cannot unlock the same base the challenge is fixed to");
+            }
+
+            // Ensure no other challenge already unlocks this base
+            challengeRepository.findByUnlocksBasesContaining(unlocksBaseId).ifPresent(existing -> {
+                if (!existing.getId().equals(challenge.getId())) {
+                    throw new BadRequestException("Another challenge already unlocks this base");
+                }
+            });
+
+            newUnlocksBases.add(targetBase);
+        }
+
+        challenge.getUnlocksBases().clear();
+        challenge.getUnlocksBases().addAll(newUnlocksBases);
         challengeRepository.save(challenge);
     }
 
@@ -226,6 +232,9 @@ public class ChallengeService {
     }
 
     private ChallengeResponse toResponse(Challenge c) {
+        List<UUID> unlocksBaseIds = c.getUnlocksBases().stream()
+                .map(Base::getId)
+                .collect(Collectors.toList());
         return ChallengeResponse.builder()
                 .id(c.getId())
                 .gameId(c.getGame().getId())
@@ -239,7 +248,7 @@ public class ChallengeService {
                 .points(c.getPoints())
                 .locationBound(c.getLocationBound())
                 .requirePresenceToSubmit(c.getRequirePresenceToSubmit())
-                .unlocksBaseId(c.getUnlocksBase() != null ? c.getUnlocksBase().getId() : null)
+                .unlocksBaseIds(unlocksBaseIds)
                 .build();
     }
 }

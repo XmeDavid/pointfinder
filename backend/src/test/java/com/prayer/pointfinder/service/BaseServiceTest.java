@@ -16,13 +16,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
+import java.util.*;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -70,20 +70,20 @@ class BaseServiceTest {
                 .id(UUID.randomUUID())
                 .game(game)
                 .locationBound(true)
-                .unlocksBase(base)
+                .unlocksBases(new HashSet<>(Set.of(base)))
                 .build();
 
         UpdateBaseRequest request = baseUpdateRequest("Target", false, null);
 
         when(baseRepository.findById(baseId)).thenReturn(Optional.of(base));
         when(baseRepository.save(any(Base.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(challengeRepository.findByUnlocksBaseId(baseId)).thenReturn(Optional.of(unlocker));
+        when(challengeRepository.findByUnlocksBasesContaining(baseId)).thenReturn(Optional.of(unlocker));
         when(challengeRepository.save(any(Challenge.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         BaseResponse response = baseService.updateBase(gameId, baseId, request);
 
         assertEquals(false, response.getHidden());
-        assertNull(unlocker.getUnlocksBase());
+        assertTrue(unlocker.getUnlocksBases().isEmpty());
     }
 
     @Test
@@ -100,7 +100,7 @@ class BaseServiceTest {
                 .id(challengeId)
                 .game(game)
                 .locationBound(true)
-                .unlocksBase(unlockTarget)
+                .unlocksBases(new HashSet<>(Set.of(unlockTarget)))
                 .build();
         Base base = Base.builder()
                 .id(baseId)
@@ -124,7 +124,7 @@ class BaseServiceTest {
 
         baseService.updateBase(gameId, baseId, request);
 
-        assertNull(fixedChallenge.getUnlocksBase());
+        assertTrue(fixedChallenge.getUnlocksBases().isEmpty());
     }
 
     @Test
@@ -147,7 +147,7 @@ class BaseServiceTest {
                 .id(challengeId)
                 .game(game)
                 .locationBound(true)
-                .unlocksBase(base)
+                .unlocksBases(new HashSet<>(Set.of(base)))
                 .build();
 
         UpdateBaseRequest request = baseUpdateRequest("Base", true, challengeId);
@@ -156,12 +156,11 @@ class BaseServiceTest {
         when(baseRepository.save(any(Base.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
         when(baseRepository.findByFixedChallengeId(challengeId)).thenReturn(List.of(base));
-        when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
         when(challengeRepository.save(any(Challenge.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         baseService.updateBase(gameId, baseId, request);
 
-        assertNull(challenge.getUnlocksBase());
+        assertTrue(challenge.getUnlocksBases().isEmpty());
     }
 
     @Test
@@ -182,16 +181,16 @@ class BaseServiceTest {
                 .id(UUID.randomUUID())
                 .game(game)
                 .locationBound(true)
-                .unlocksBase(base)
+                .unlocksBases(new HashSet<>(Set.of(base)))
                 .build();
 
         when(baseRepository.findById(baseId)).thenReturn(Optional.of(base));
-        when(challengeRepository.findByUnlocksBaseId(baseId)).thenReturn(Optional.of(unlocker));
+        when(challengeRepository.findByUnlocksBasesContaining(baseId)).thenReturn(Optional.of(unlocker));
         when(challengeRepository.save(any(Challenge.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         baseService.deleteBase(gameId, baseId);
 
-        assertNull(unlocker.getUnlocksBase());
+        assertTrue(unlocker.getUnlocksBases().isEmpty());
     }
 
     @Test

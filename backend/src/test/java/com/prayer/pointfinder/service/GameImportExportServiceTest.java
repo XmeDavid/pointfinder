@@ -208,7 +208,7 @@ class GameImportExportServiceTest {
         assertEquals(50, dto.getPoints());
         assertTrue(dto.getLocationBound());
         assertTrue(dto.getRequirePresenceToSubmit());
-        assertNull(dto.getUnlocksBaseTempId());
+        assertNull(dto.getUnlocksBaseTempIds());
     }
 
     @Test
@@ -290,7 +290,7 @@ class GameImportExportServiceTest {
                 .points(10)
                 .locationBound(true)
                 .requirePresenceToSubmit(false)
-                .unlocksBase(targetBase)
+                .unlocksBases(new java.util.HashSet<>(java.util.Set.of(targetBase)))
                 .build();
 
         when(gameAccessService.getAccessibleGame(gameId)).thenReturn(game);
@@ -301,7 +301,9 @@ class GameImportExportServiceTest {
 
         ChallengeExportDto dto = service.exportGame(gameId).getChallenges().get(0);
 
-        assertEquals("base_1", dto.getUnlocksBaseTempId());
+        assertNotNull(dto.getUnlocksBaseTempIds(), "Expected unlocksBaseTempIds to be non-null");
+        assertEquals(1, dto.getUnlocksBaseTempIds().size());
+        assertEquals("base_1", dto.getUnlocksBaseTempIds().get(0));
     }
 
     @Test
@@ -763,7 +765,7 @@ class GameImportExportServiceTest {
     // ── Import: unlocks_base entity persistence ──────────────────────
 
     @Test
-    void importGame_setsUnlocksBaseOnChallenge() {
+    void importGame_setsUnlocksBasesOnChallenge() {
         UUID gameId = UUID.randomUUID();
         UUID sourceBaseId = UUID.randomUUID();
         UUID hiddenBaseId = UUID.randomUUID();
@@ -776,13 +778,13 @@ class GameImportExportServiceTest {
             return g;
         });
 
-        // challenge saved first (no unlocksBase yet), then saved again with unlocksBase set
+        // challenge saved first (empty unlocksBases), then saved again with the hidden base added
         when(challengeRepository.save(any(Challenge.class))).thenAnswer(inv -> {
             Challenge c = inv.getArgument(0);
             if (c.getId() == null) c.setId(challengeId);
             return c;
         });
-        when(challengeRepository.findByUnlocksBaseId(any())).thenReturn(Optional.empty());
+        when(challengeRepository.findByUnlocksBasesContaining(any())).thenReturn(Optional.empty());
 
         when(baseRepository.save(any(Base.class))).thenAnswer(inv -> {
             Base b = inv.getArgument(0);
@@ -800,7 +802,7 @@ class GameImportExportServiceTest {
                         .answerType(AnswerType.text)
                         .points(10)
                         .locationBound(true)
-                        .unlocksBaseTempId("base_hidden")
+                        .unlocksBaseTempIds(List.of("base_hidden"))
                         .build()
         );
         request.getGameData().getBases().add(
@@ -825,13 +827,98 @@ class GameImportExportServiceTest {
 
         ArgumentCaptor<Challenge> captor = ArgumentCaptor.forClass(Challenge.class);
         verify(challengeRepository, atLeast(2)).save(captor.capture());
-        // The last save of the challenge should have unlocksBase set
-        Challenge lastSave = captor.getAllValues().stream()
-                .filter(c -> c.getUnlocksBase() != null)
+        // The second save of the challenge should have the hidden base in unlocksBases
+        Challenge savedWithUnlocks = captor.getAllValues().stream()
+                .filter(c -> !c.getUnlocksBases().isEmpty())
                 .findFirst()
                 .orElse(null);
-        assertNotNull(lastSave, "Expected challenge to be saved with unlocksBase");
-        assertEquals(hiddenBaseId, lastSave.getUnlocksBase().getId());
+        assertNotNull(savedWithUnlocks, "Expected challenge to be saved with unlocksBases populated");
+        assertEquals(1, savedWithUnlocks.getUnlocksBases().size());
+        assertEquals(hiddenBaseId, savedWithUnlocks.getUnlocksBases().iterator().next().getId());
+    }
+
+    @Test
+    void importGame_setsMultipleUnlocksBasesOnChallenge() {
+        UUID gameId = UUID.randomUUID();
+        UUID sourceBaseId = UUID.randomUUID();
+        UUID hiddenBaseId1 = UUID.randomUUID();
+        UUID hiddenBaseId2 = UUID.randomUUID();
+        UUID challengeId = UUID.randomUUID();
+
+        when(userRepository.findById(authenticatedUser.getId())).thenReturn(Optional.of(authenticatedUser));
+        when(gameRepository.save(any(Game.class))).thenAnswer(inv -> {
+            Game g = inv.getArgument(0);
+            g.setId(gameId);
+            return g;
+        });
+        when(challengeRepository.save(any(Challenge.class))).thenAnswer(inv -> {
+            Challenge c = inv.getArgument(0);
+            if (c.getId() == null) c.setId(challengeId);
+            return c;
+        });
+        when(challengeRepository.findByUnlocksBasesContaining(any())).thenReturn(Optional.empty());
+        when(baseRepository.save(any(Base.class))).thenAnswer(inv -> {
+            Base b = inv.getArgument(0);
+            if (b.getId() == null) {
+                if ("Hidden Base 1".equals(b.getName())) b.setId(hiddenBaseId1);
+                else if ("Hidden Base 2".equals(b.getName())) b.setId(hiddenBaseId2);
+                else b.setId(sourceBaseId);
+            }
+            return b;
+        });
+
+        GameImportRequest request = buildMinimalRequest();
+        request.getGameData().getChallenges().add(
+                ChallengeExportDto.builder()
+                        .tempId("challenge_1")
+                        .title("Multi-Unlock Ch")
+                        .answerType(AnswerType.text)
+                        .points(10)
+                        .locationBound(true)
+                        .unlocksBaseTempIds(List.of("base_hidden_1", "base_hidden_2"))
+                        .build()
+        );
+        request.getGameData().getBases().add(
+                BaseExportDto.builder()
+                        .tempId("base_source")
+                        .name("Source Base")
+                        .lat(1.0).lng(2.0)
+                        .hidden(false)
+                        .fixedChallengeTempId("challenge_1")
+                        .build()
+        );
+        request.getGameData().getBases().add(
+                BaseExportDto.builder()
+                        .tempId("base_hidden_1")
+                        .name("Hidden Base 1")
+                        .lat(3.0).lng(4.0)
+                        .hidden(true)
+                        .build()
+        );
+        request.getGameData().getBases().add(
+                BaseExportDto.builder()
+                        .tempId("base_hidden_2")
+                        .name("Hidden Base 2")
+                        .lat(5.0).lng(6.0)
+                        .hidden(true)
+                        .build()
+        );
+
+        service.importGame(request);
+
+        ArgumentCaptor<Challenge> captor = ArgumentCaptor.forClass(Challenge.class);
+        verify(challengeRepository, atLeast(2)).save(captor.capture());
+        Challenge savedWithUnlocks = captor.getAllValues().stream()
+                .filter(c -> !c.getUnlocksBases().isEmpty())
+                .findFirst()
+                .orElse(null);
+        assertNotNull(savedWithUnlocks, "Expected challenge to be saved with unlocksBases populated");
+        assertEquals(2, savedWithUnlocks.getUnlocksBases().size());
+        java.util.Set<UUID> savedIds = savedWithUnlocks.getUnlocksBases().stream()
+                .map(Base::getId)
+                .collect(java.util.stream.Collectors.toSet());
+        assertTrue(savedIds.contains(hiddenBaseId1));
+        assertTrue(savedIds.contains(hiddenBaseId2));
     }
 
     // ── Import: date validation ───────────────────────────────────────
@@ -1180,11 +1267,11 @@ class GameImportExportServiceTest {
         GameImportRequest request = buildMinimalRequest();
         request.getGameData().getChallenges().add(
                 ChallengeExportDto.builder().tempId("challenge_1").title("C").answerType(AnswerType.text)
-                        .points(10).unlocksBaseTempId("  ").build()
+                        .points(10).unlocksBaseTempIds(List.of("  ")).build()
         );
 
         BadRequestException ex = assertThrows(BadRequestException.class, () -> service.importGame(request));
-        assertTrue(ex.getMessage().contains("unlocksBaseTempId cannot be blank"));
+        assertTrue(ex.getMessage().contains("unlocksBaseTempIds[0] cannot be blank"));
     }
 
     @Test
@@ -1198,7 +1285,7 @@ class GameImportExportServiceTest {
         );
         request.getGameData().getChallenges().add(
                 ChallengeExportDto.builder().tempId("challenge_1").title("C").answerType(AnswerType.text)
-                        .points(10).locationBound(true).unlocksBaseTempId("base_nonexistent").build()
+                        .points(10).locationBound(true).unlocksBaseTempIds(List.of("base_nonexistent")).build()
         );
 
         BadRequestException ex = assertThrows(BadRequestException.class, () -> service.importGame(request));
@@ -1222,11 +1309,11 @@ class GameImportExportServiceTest {
         );
         request.getGameData().getChallenges().add(
                 ChallengeExportDto.builder().tempId("challenge_1").title("C").answerType(AnswerType.text)
-                        .points(10).locationBound(false).unlocksBaseTempId("base_hidden").build()
+                        .points(10).locationBound(false).unlocksBaseTempIds(List.of("base_hidden")).build()
         );
 
         BadRequestException ex = assertThrows(BadRequestException.class, () -> service.importGame(request));
-        assertTrue(ex.getMessage().contains("locationBound=true when unlocksBaseTempId is set"));
+        assertTrue(ex.getMessage().contains("locationBound=true when unlocksBaseTempIds is set"));
     }
 
     @Test
@@ -1244,11 +1331,11 @@ class GameImportExportServiceTest {
         );
         request.getGameData().getChallenges().add(
                 ChallengeExportDto.builder().tempId("challenge_1").title("C").answerType(AnswerType.text)
-                        .points(10).locationBound(true).unlocksBaseTempId("base_hidden").build()
+                        .points(10).locationBound(true).unlocksBaseTempIds(List.of("base_hidden")).build()
         );
 
         BadRequestException ex = assertThrows(BadRequestException.class, () -> service.importGame(request));
-        assertTrue(ex.getMessage().contains("must be fixed to a base when unlocksBaseTempId is set"));
+        assertTrue(ex.getMessage().contains("must be fixed to a base"));
     }
 
     @Test
@@ -1266,7 +1353,7 @@ class GameImportExportServiceTest {
         );
         request.getGameData().getChallenges().add(
                 ChallengeExportDto.builder().tempId("challenge_1").title("C").answerType(AnswerType.text)
-                        .points(10).locationBound(true).unlocksBaseTempId("base_target").build()
+                        .points(10).locationBound(true).unlocksBaseTempIds(List.of("base_target")).build()
         );
 
         BadRequestException ex = assertThrows(BadRequestException.class, () -> service.importGame(request));
@@ -1284,7 +1371,7 @@ class GameImportExportServiceTest {
         );
         request.getGameData().getChallenges().add(
                 ChallengeExportDto.builder().tempId("challenge_1").title("C").answerType(AnswerType.text)
-                        .points(10).locationBound(true).unlocksBaseTempId("base_1").build()
+                        .points(10).locationBound(true).unlocksBaseTempIds(List.of("base_1")).build()
         );
 
         BadRequestException ex = assertThrows(BadRequestException.class, () -> service.importGame(request));
@@ -1310,11 +1397,11 @@ class GameImportExportServiceTest {
         );
         request.getGameData().getChallenges().add(
                 ChallengeExportDto.builder().tempId("challenge_1").title("C1").answerType(AnswerType.text)
-                        .points(10).locationBound(true).unlocksBaseTempId("base_hidden").build()
+                        .points(10).locationBound(true).unlocksBaseTempIds(List.of("base_hidden")).build()
         );
         request.getGameData().getChallenges().add(
                 ChallengeExportDto.builder().tempId("challenge_2").title("C2").answerType(AnswerType.text)
-                        .points(10).locationBound(true).unlocksBaseTempId("base_hidden").build()
+                        .points(10).locationBound(true).unlocksBaseTempIds(List.of("base_hidden")).build()
         );
 
         BadRequestException ex = assertThrows(BadRequestException.class, () -> service.importGame(request));

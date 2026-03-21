@@ -80,21 +80,26 @@ public class GameImportExportService {
                 .toList();
 
         List<ChallengeExportDto> challengeExportDtos = challenges.stream()
-                .map(challenge -> ChallengeExportDto.builder()
-                        .tempId(challengeIdMap.get(challenge.getId()))
-                        .title(challenge.getTitle())
-                        .description(challenge.getDescription())
-                        .content(challenge.getContent())
-                        .completionContent(challenge.getCompletionContent())
-                        .answerType(challenge.getAnswerType())
-                        .autoValidate(challenge.getAutoValidate())
-                        .correctAnswer(challenge.getCorrectAnswer())
-                        .points(challenge.getPoints())
-                        .locationBound(challenge.getLocationBound())
-                        .requirePresenceToSubmit(challenge.getRequirePresenceToSubmit())
-                        .unlocksBaseTempId(challenge.getUnlocksBase() != null ?
-                                baseIdMap.get(challenge.getUnlocksBase().getId()) : null)
-                        .build())
+                .map(challenge -> {
+                    List<String> unlocksTempIds = challenge.getUnlocksBases().stream()
+                            .map(b -> baseIdMap.get(b.getId()))
+                            .filter(Objects::nonNull)
+                            .toList();
+                    return ChallengeExportDto.builder()
+                            .tempId(challengeIdMap.get(challenge.getId()))
+                            .title(challenge.getTitle())
+                            .description(challenge.getDescription())
+                            .content(challenge.getContent())
+                            .completionContent(challenge.getCompletionContent())
+                            .answerType(challenge.getAnswerType())
+                            .autoValidate(challenge.getAutoValidate())
+                            .correctAnswer(challenge.getCorrectAnswer())
+                            .points(challenge.getPoints())
+                            .locationBound(challenge.getLocationBound())
+                            .requirePresenceToSubmit(challenge.getRequirePresenceToSubmit())
+                            .unlocksBaseTempIds(unlocksTempIds.isEmpty() ? null : unlocksTempIds)
+                            .build();
+                })
                 .toList();
 
         List<TeamExportDto> teamExportDtos = teams.stream()
@@ -212,26 +217,37 @@ public class GameImportExportService {
         Map<String, List<String>> fixedBaseTempIdsByChallengeTempId =
                 buildFixedBaseTempIdsByChallenge(data.getBases());
 
-        // Restore unlocks_base relationships (challenges already created, bases now exist)
+        // Restore unlocks_bases relationships (challenges already created, bases now exist)
         for (ChallengeExportDto chDto : data.getChallenges()) {
-            if (chDto.getUnlocksBaseTempId() != null) {
-                Challenge challenge = challengeEntityMap.get(chDto.getTempId());
-                Base targetBase = baseEntityMap.get(chDto.getUnlocksBaseTempId());
-                if (challenge == null || targetBase == null) {
+            List<String> unlocksTempIds = chDto.getUnlocksBaseTempIds();
+            if (unlocksTempIds == null || unlocksTempIds.isEmpty()) {
+                continue;
+            }
+
+            Challenge challenge = challengeEntityMap.get(chDto.getTempId());
+            if (challenge == null) {
+                throw new BadRequestException("Invalid unlock relationship for challenge: " + chDto.getTempId());
+            }
+
+            if (!Boolean.TRUE.equals(challenge.getLocationBound())) {
+                throw new BadRequestException("Challenge " + chDto.getTempId()
+                        + " must be location-bound to unlock a base");
+            }
+            List<String> sourceBaseTempIds = fixedBaseTempIdsByChallengeTempId
+                    .getOrDefault(chDto.getTempId(), List.of());
+            if (sourceBaseTempIds.isEmpty()) {
+                throw new BadRequestException("Challenge " + chDto.getTempId()
+                        + " must be fixed to a base to unlock another base");
+            }
+
+            Set<Base> unlockTargets = new LinkedHashSet<>();
+            for (String unlockTempId : unlocksTempIds) {
+                Base targetBase = baseEntityMap.get(unlockTempId);
+                if (targetBase == null) {
                     throw new BadRequestException("Invalid unlock relationship for challenge: " + chDto.getTempId());
                 }
 
-                if (!Boolean.TRUE.equals(challenge.getLocationBound())) {
-                    throw new BadRequestException("Challenge " + chDto.getTempId()
-                            + " must be location-bound to unlock a base");
-                }
-                List<String> sourceBaseTempIds = fixedBaseTempIdsByChallengeTempId
-                        .getOrDefault(chDto.getTempId(), List.of());
-                if (sourceBaseTempIds.isEmpty()) {
-                    throw new BadRequestException("Challenge " + chDto.getTempId()
-                            + " must be fixed to a base to unlock another base");
-                }
-                if (sourceBaseTempIds.contains(chDto.getUnlocksBaseTempId())) {
+                if (sourceBaseTempIds.contains(unlockTempId)) {
                     throw new BadRequestException("Challenge " + chDto.getTempId()
                             + " cannot unlock its own fixed base");
                 }
@@ -239,16 +255,18 @@ public class GameImportExportService {
                     throw new BadRequestException("Unlock target base must be hidden for challenge: " + chDto.getTempId());
                 }
 
-                challengeRepository.findByUnlocksBaseId(targetBase.getId()).ifPresent(existing -> {
+                challengeRepository.findByUnlocksBasesContaining(targetBase.getId()).ifPresent(existing -> {
                     if (!existing.getId().equals(challenge.getId())) {
                         throw new BadRequestException("Multiple challenges cannot unlock the same base: "
-                                + chDto.getUnlocksBaseTempId());
+                                + unlockTempId);
                     }
                 });
 
-                challenge.setUnlocksBase(targetBase);
-                challengeRepository.save(challenge);
+                unlockTargets.add(targetBase);
             }
+
+            challenge.getUnlocksBases().addAll(unlockTargets);
+            challengeRepository.save(challenge);
         }
 
         for (AssignmentExportDto assignDto : data.getAssignments()) {
@@ -307,8 +325,13 @@ public class GameImportExportService {
             if (ch.getPoints() < 0) {
                 throw new BadRequestException(fp + ".points must be greater than or equal to 0");
             }
-            if (ch.getUnlocksBaseTempId() != null && ch.getUnlocksBaseTempId().isBlank()) {
-                throw new BadRequestException(fp + ".unlocksBaseTempId cannot be blank");
+            if (ch.getUnlocksBaseTempIds() != null) {
+                for (int j = 0; j < ch.getUnlocksBaseTempIds().size(); j++) {
+                    String tempId = ch.getUnlocksBaseTempIds().get(j);
+                    if (tempId == null || tempId.isBlank()) {
+                        throw new BadRequestException(fp + ".unlocksBaseTempIds[" + j + "] cannot be blank");
+                    }
+                }
             }
             if (!challengeTempIds.add(ch.getTempId())) {
                 throw new BadRequestException("Duplicate challenge tempId: " + ch.getTempId());
@@ -363,10 +386,13 @@ public class GameImportExportService {
 
         for (int i = 0; i < data.getChallenges().size(); i++) {
             ChallengeExportDto ch = data.getChallenges().get(i);
-            if (ch.getUnlocksBaseTempId() != null &&
-                    !baseTempIds.contains(ch.getUnlocksBaseTempId())) {
-                throw new BadRequestException("Challenge at index " + i
-                        + " references non-existent unlock base: " + ch.getUnlocksBaseTempId());
+            if (ch.getUnlocksBaseTempIds() != null) {
+                for (String unlockTempId : ch.getUnlocksBaseTempIds()) {
+                    if (!baseTempIds.contains(unlockTempId)) {
+                        throw new BadRequestException("Challenge at index " + i
+                                + " references non-existent unlock base: " + unlockTempId);
+                    }
+                }
             }
         }
 
@@ -378,34 +404,37 @@ public class GameImportExportService {
 
         for (int i = 0; i < data.getChallenges().size(); i++) {
             ChallengeExportDto challenge = data.getChallenges().get(i);
-            String unlocksBaseTempId = challenge.getUnlocksBaseTempId();
-            if (unlocksBaseTempId == null) {
+            List<String> unlocksTempIds = challenge.getUnlocksBaseTempIds();
+            if (unlocksTempIds == null || unlocksTempIds.isEmpty()) {
                 continue;
             }
 
             if (!Boolean.TRUE.equals(challenge.getLocationBound())) {
                 throw new BadRequestException("Challenge at index " + i
-                        + " must be locationBound=true when unlocksBaseTempId is set");
+                        + " must be locationBound=true when unlocksBaseTempIds is set");
             }
 
             List<String> sourceBaseTempIds = fixedBaseTempIdsByChallengeTempId
                     .getOrDefault(challenge.getTempId(), List.of());
             if (sourceBaseTempIds.isEmpty()) {
                 throw new BadRequestException("Challenge at index " + i
-                        + " must be fixed to a base when unlocksBaseTempId is set");
-            }
-            if (sourceBaseTempIds.contains(unlocksBaseTempId)) {
-                throw new BadRequestException("Challenge at index " + i
-                        + " cannot unlock its own fixed base: " + unlocksBaseTempId);
+                        + " must be fixed to a base when unlocksBaseTempIds is set");
             }
 
-            BaseExportDto targetBase = baseByTempId.get(unlocksBaseTempId);
-            if (targetBase == null || !Boolean.TRUE.equals(targetBase.getHidden())) {
-                throw new BadRequestException("Challenge at index " + i
-                        + " must reference a hidden base as unlock target: " + unlocksBaseTempId);
-            }
-            if (!seenUnlockTargetBaseTempIds.add(unlocksBaseTempId)) {
-                throw new BadRequestException("Multiple challenges cannot unlock the same base: " + unlocksBaseTempId);
+            for (String unlockTempId : unlocksTempIds) {
+                if (sourceBaseTempIds.contains(unlockTempId)) {
+                    throw new BadRequestException("Challenge at index " + i
+                            + " cannot unlock its own fixed base: " + unlockTempId);
+                }
+
+                BaseExportDto targetBase = baseByTempId.get(unlockTempId);
+                if (targetBase == null || !Boolean.TRUE.equals(targetBase.getHidden())) {
+                    throw new BadRequestException("Challenge at index " + i
+                            + " must reference a hidden base as unlock target: " + unlockTempId);
+                }
+                if (!seenUnlockTargetBaseTempIds.add(unlockTempId)) {
+                    throw new BadRequestException("Multiple challenges cannot unlock the same base: " + unlockTempId);
+                }
             }
         }
     }
@@ -488,4 +517,3 @@ public class GameImportExportService {
         }
     }
 }
-

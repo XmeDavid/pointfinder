@@ -36,5 +36,5 @@ public class UpdateChallengeRequest {
 
     private UUID fixedBaseId;
 
-    private UUID unlocksBaseId;
+    private List<UUID> unlocksBaseIds;
 }

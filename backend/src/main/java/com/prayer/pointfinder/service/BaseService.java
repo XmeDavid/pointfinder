@@ -177,29 +177,35 @@ public class BaseService {
     }
 
     private void clearUnlockTarget(UUID targetBaseId) {
-        challengeRepository.findByUnlocksBaseId(targetBaseId).ifPresent(challenge -> {
-            challenge.setUnlocksBase(null);
+        challengeRepository.findByUnlocksBasesContaining(targetBaseId).ifPresent(challenge -> {
+            challenge.getUnlocksBases().removeIf(b -> b.getId().equals(targetBaseId));
             challengeRepository.save(challenge);
         });
     }
 
     private void enforceChallengeUnlockGuardrails(UUID challengeId) {
         challengeRepository.findById(challengeId).ifPresent(challenge -> {
-            if (challenge.getUnlocksBase() == null) {
+            if (challenge.getUnlocksBases().isEmpty()) {
                 return;
             }
 
             List<Base> fixedBases = baseRepository.findByFixedChallengeId(challengeId);
-            UUID unlockTargetBaseId = challenge.getUnlocksBase().getId();
-
             boolean hasFixedBase = !fixedBases.isEmpty();
-            boolean unlocksOwnFixedBase = fixedBases.stream()
-                    .anyMatch(base -> base.getId().equals(unlockTargetBaseId));
             boolean locationBound = Boolean.TRUE.equals(challenge.getLocationBound());
-            boolean targetHidden = Boolean.TRUE.equals(challenge.getUnlocksBase().getHidden());
+            Set<UUID> fixedBaseIds = fixedBases.stream()
+                    .map(Base::getId)
+                    .collect(Collectors.toSet());
 
-            if (!locationBound || !hasFixedBase || unlocksOwnFixedBase || !targetHidden) {
-                challenge.setUnlocksBase(null);
+            if (!locationBound || !hasFixedBase) {
+                challenge.getUnlocksBases().clear();
+                challengeRepository.save(challenge);
+                return;
+            }
+
+            // Remove any unlock targets that are the challenge's own fixed base or no longer hidden
+            boolean changed = challenge.getUnlocksBases().removeIf(target ->
+                    fixedBaseIds.contains(target.getId()) || !Boolean.TRUE.equals(target.getHidden()));
+            if (changed) {
                 challengeRepository.save(challenge);
             }
         });

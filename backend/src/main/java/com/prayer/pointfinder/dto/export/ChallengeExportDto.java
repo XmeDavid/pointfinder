@@ -24,5 +24,5 @@ public class ChallengeExportDto {
     private Integer points;
     private Boolean locationBound;
     private Boolean requirePresenceToSubmit;
-    private String unlocksBaseTempId;
+    private List<String> unlocksBaseTempIds;
 }

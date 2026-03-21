@@ -408,7 +408,7 @@ class PlayerServiceTest {
                 .game(game)
                 .title("Unlock challenge")
                 .locationBound(true)
-                .unlocksBase(hiddenBase)
+                .unlocksBases(new java.util.HashSet<>(java.util.Set.of(hiddenBase)))
                 .build();
         Submission unlockSubmission = Submission.builder()
                 .id(UUID.randomUUID())
@@ -425,7 +425,7 @@ class PlayerServiceTest {
         when(checkInRepository.findByGameIdAndTeamId(gameId, teamId)).thenReturn(List.of());
         when(submissionRepository.findByTeamId(teamId)).thenReturn(List.of(unlockSubmission));
         when(assignmentRepository.findByGameIdAndTeamId(gameId, teamId)).thenReturn(List.of());
-        when(challengeRepository.findByGameIdAndUnlocksBaseIsNotNull(gameId)).thenReturn(List.of(unlockChallenge));
+        when(challengeRepository.findByGameIdAndUnlocksBasesNotEmpty(gameId)).thenReturn(List.of(unlockChallenge));
 
         List<BaseProgressResponse> progress = playerService.getProgress(gameId, player);
 

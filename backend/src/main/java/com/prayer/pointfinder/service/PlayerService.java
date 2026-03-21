@@ -182,10 +182,12 @@ public class PlayerService {
         List<Assignment> assignments = assignmentRepository.findByGameIdAndTeamId(gameId, team.getId());
 
         // Build unlock maps: targetBaseId -> challengeId that unlocks it
-        List<Challenge> unlockChallenges = challengeRepository.findByGameIdAndUnlocksBaseIsNotNull(gameId);
+        List<Challenge> unlockChallenges = challengeRepository.findByGameIdAndUnlocksBasesNotEmpty(gameId);
         Map<UUID, UUID> unlockChallengeByTargetBase = new HashMap<>();
         for (Challenge uc : unlockChallenges) {
-            unlockChallengeByTargetBase.put(uc.getUnlocksBase().getId(), uc.getId());
+            for (Base unlockedBase : uc.getUnlocksBases()) {
+                unlockChallengeByTargetBase.put(unlockedBase.getId(), uc.getId());
+            }
         }
 
         // Build lookup maps

@@ -2,6 +2,8 @@ package com.prayer.pointfinder.repository;
 
 import com.prayer.pointfinder.entity.Challenge;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,7 +17,9 @@ public interface ChallengeRepository extends JpaRepository<Challenge, UUID> {
 
     long countByGameId(UUID gameId);
 
-    List<Challenge> findByGameIdAndUnlocksBaseIsNotNull(UUID gameId);
+    @Query("SELECT c FROM Challenge c WHERE c.game.id = :gameId AND c.unlocksBases IS NOT EMPTY")
+    List<Challenge> findByGameIdAndUnlocksBasesNotEmpty(@Param("gameId") UUID gameId);
 
-    Optional<Challenge> findByUnlocksBaseId(UUID unlocksBaseId);
+    @Query("SELECT c FROM Challenge c JOIN c.unlocksBases b WHERE b.id = :baseId")
+    Optional<Challenge> findByUnlocksBasesContaining(@Param("baseId") UUID baseId);
 }

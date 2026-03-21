@@ -6,7 +6,9 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -57,9 +59,14 @@ public class Challenge {
     @Builder.Default
     private Boolean requirePresenceToSubmit = false;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "unlocks_base_id")
-    private Base unlocksBase;
+    @ManyToMany
+    @JoinTable(
+            name = "challenge_unlocks_bases",
+            joinColumns = @JoinColumn(name = "challenge_id"),
+            inverseJoinColumns = @JoinColumn(name = "base_id")
+    )
+    @Builder.Default
+    private Set<Base> unlocksBases = new HashSet<>();
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
