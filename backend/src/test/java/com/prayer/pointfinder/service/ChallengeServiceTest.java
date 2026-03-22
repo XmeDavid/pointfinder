@@ -9,6 +9,7 @@ import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.repository.BaseRepository;
 import com.prayer.pointfinder.repository.ChallengeRepository;
 import com.prayer.pointfinder.repository.SubmissionRepository;
+import com.prayer.pointfinder.websocket.GameEventBroadcaster;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,6 +44,8 @@ class ChallengeServiceTest {
     private SubmissionRepository submissionRepository;
     @Mock
     private GameAccessService gameAccessService;
+    @Mock
+    private GameEventBroadcaster eventBroadcaster;
 
     @InjectMocks
     private ChallengeService challengeService;

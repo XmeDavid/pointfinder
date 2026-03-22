@@ -99,6 +99,13 @@ struct OperatorGameView: View {
                   let newStatus = data["status"] as? String else { return }
             gameStatus = newStatus
         }
+        .onReceive(NotificationCenter.default.publisher(for: .mobileRealtimeEvent)) { notification in
+            guard let rawGameId = notification.userInfo?["gameId"] as? String,
+                  rawGameId.lowercased() == game.id.uuidString.lowercased(),
+                  let type = notification.userInfo?["type"] as? String,
+                  type == "game_config" else { return }
+            Task { await loadBases() }
+        }
     }
 
     private func loadBases() async {

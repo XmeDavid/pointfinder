@@ -139,6 +139,16 @@ struct TeamsManagementView: View {
         .refreshable {
             await loadData()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .mobileRealtimeEvent)) { notification in
+            guard let rawGameId = notification.userInfo?["gameId"] as? String,
+                  rawGameId.lowercased() == game.id.uuidString.lowercased(),
+                  let type = notification.userInfo?["type"] as? String,
+                  type == "game_config",
+                  let data = notification.userInfo?["data"] as? [String: Any],
+                  let entity = data["entity"] as? String,
+                  entity == "teams" else { return }
+            Task { await loadData() }
+        }
         .overlay(alignment: .bottom) {
             if showCopiedToast {
                 Text(locale.t("operator.copied"))

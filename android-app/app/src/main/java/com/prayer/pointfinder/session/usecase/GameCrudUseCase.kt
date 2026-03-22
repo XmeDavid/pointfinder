@@ -35,4 +35,7 @@ class GameCrudUseCase @Inject constructor(
 
     suspend fun exportGame(gameId: String): GameExportDto =
         operatorRepository.exportGame(gameId)
+
+    fun invalidateConfigCache(entity: String, gameId: String) =
+        operatorRepository.invalidateConfigCache(entity, gameId)
 }

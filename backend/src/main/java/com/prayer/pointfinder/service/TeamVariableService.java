@@ -11,6 +11,7 @@ import com.prayer.pointfinder.repository.ChallengeRepository;
 import com.prayer.pointfinder.repository.ChallengeTeamVariableRepository;
 import com.prayer.pointfinder.repository.TeamRepository;
 import com.prayer.pointfinder.repository.TeamVariableRepository;
+import com.prayer.pointfinder.websocket.GameEventBroadcaster;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +28,7 @@ public class TeamVariableService {
     private final TeamRepository teamRepository;
     private final ChallengeRepository challengeRepository;
     private final GameAccessService gameAccessService;
+    private final GameEventBroadcaster eventBroadcaster;
 
     // ── Game-level variables ──
 
@@ -63,6 +65,7 @@ public class TeamVariableService {
         }
         teamVariableRepository.saveAll(newVars);
 
+        eventBroadcaster.broadcastGameConfig(gameId, "variables", "updated");
         return getGameVariables(gameId);
     }
 
@@ -110,6 +113,7 @@ public class TeamVariableService {
         }
         challengeTeamVariableRepository.saveAll(newVars);
 
+        eventBroadcaster.broadcastGameConfig(gameId, "variables", "updated");
         return getChallengeVariables(gameId, challengeId);
     }
 

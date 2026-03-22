@@ -49,6 +49,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.Job
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -140,6 +143,14 @@ class OperatorViewModel @Inject constructor(
                         refreshSelectedGameData()
                         loadLeaderboard()
                         loadActivity()
+                    }
+
+                    "game_config" -> {
+                        val entity = event.data?.jsonObject?.get("entity")?.jsonPrimitive?.contentOrNull
+                        val gameId = _state.value.selectedGame?.id ?: return@collectLatest
+                        gameCrudUseCase.invalidateConfigCache(entity ?: "", gameId)
+                        loadGameMeta(gameId)
+                        refreshSelectedGameData()
                     }
                 }
             }

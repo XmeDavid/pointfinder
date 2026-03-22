@@ -148,6 +148,7 @@ public class GameService {
         }
 
         game = gameRepository.save(game);
+        eventBroadcaster.broadcastGameConfig(id, "game_settings", "updated");
         return toResponse(game);
     }
 

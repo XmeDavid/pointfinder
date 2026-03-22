@@ -65,6 +65,7 @@ public class TeamService {
                 .build();
 
         team = teamRepository.save(team);
+        eventBroadcaster.broadcastGameConfig(game.getId(), "teams", "created");
         return toResponse(team);
     }
 
@@ -80,6 +81,7 @@ public class TeamService {
             team.setColor(request.getColor());
         }
         team = teamRepository.save(team);
+        eventBroadcaster.broadcastGameConfig(gameId, "teams", "updated");
         return toResponse(team);
     }
 
@@ -90,6 +92,7 @@ public class TeamService {
                 .orElseThrow(() -> new ResourceNotFoundException("Team", teamId));
         gameAccessService.ensureBelongsToGame("Team", team.getGame().getId(), gameId);
         teamRepository.delete(team);
+        eventBroadcaster.broadcastGameConfig(gameId, "teams", "deleted");
     }
 
     @Transactional(readOnly = true)

@@ -11,6 +11,7 @@ import com.prayer.pointfinder.repository.ChallengeRepository;
 import com.prayer.pointfinder.repository.ChallengeTeamVariableRepository;
 import com.prayer.pointfinder.repository.TeamRepository;
 import com.prayer.pointfinder.repository.TeamVariableRepository;
+import com.prayer.pointfinder.websocket.GameEventBroadcaster;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,6 +43,8 @@ class TeamVariableServiceTest {
     private ChallengeRepository challengeRepository;
     @Mock
     private GameAccessService gameAccessService;
+    @Mock
+    private GameEventBroadcaster eventBroadcaster;
 
     @InjectMocks
     private TeamVariableService teamVariableService;

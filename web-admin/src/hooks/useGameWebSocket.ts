@@ -68,6 +68,35 @@ export function useGameWebSocket(gameId: string | undefined): string | null {
           }
           break;
         }
+        case "game_config": {
+          const configData = payload.data as { entity?: string } | null;
+          switch (configData?.entity) {
+            case "challenges":
+              scheduleInvalidate("challenges");
+              break;
+            case "bases":
+              scheduleInvalidate("bases");
+              break;
+            case "teams":
+              scheduleInvalidate("teams");
+              break;
+            case "assignments":
+              scheduleInvalidate("assignments");
+              break;
+            case "game_settings":
+              scheduleInvalidate("game", "dashboard-stats");
+              break;
+            case "variables":
+              scheduleInvalidate("game-variables", "challenge-variables", "team-variables-completeness");
+              break;
+            case "notifications_config":
+              scheduleInvalidate("notifications");
+              break;
+            default:
+              scheduleInvalidate("challenges", "bases", "teams", "assignments", "game");
+          }
+          break;
+        }
         default:
           scheduleInvalidate("activity", "submissions", "dashboard-stats", "leaderboard", "progress");
       }

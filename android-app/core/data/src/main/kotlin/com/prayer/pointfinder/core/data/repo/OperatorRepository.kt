@@ -57,6 +57,24 @@ class OperatorRepository @Inject constructor(
     private val teamsCache = ConcurrentHashMap<String, CacheEntry<List<Team>>>()
     private val assignmentsCache = ConcurrentHashMap<String, CacheEntry<List<Assignment>>>()
 
+    fun invalidateConfigCache(entity: String, gameId: String) {
+        when (entity) {
+            "challenges" -> {
+                challengesCache.remove(gameId)
+                basesCache.remove(gameId)
+            }
+            "bases" -> basesCache.remove(gameId)
+            "teams" -> teamsCache.remove(gameId)
+            "assignments" -> assignmentsCache.remove(gameId)
+            else -> {
+                basesCache.remove(gameId)
+                challengesCache.remove(gameId)
+                teamsCache.remove(gameId)
+                assignmentsCache.remove(gameId)
+            }
+        }
+    }
+
     private fun <T> CacheEntry<T>?.isValid(): Boolean {
         if (this == null) return false
         return System.currentTimeMillis() - timestamp < CACHE_TTL_MS

@@ -11,6 +11,7 @@ import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.BaseRepository;
 import com.prayer.pointfinder.repository.ChallengeRepository;
 import com.prayer.pointfinder.repository.SubmissionRepository;
+import com.prayer.pointfinder.websocket.GameEventBroadcaster;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +30,7 @@ public class BaseService {
     private final ChallengeRepository challengeRepository;
     private final SubmissionRepository submissionRepository;
     private final GameAccessService gameAccessService;
+    private final GameEventBroadcaster eventBroadcaster;
 
     @Transactional(readOnly = true)
     public List<BaseResponse> getBasesByGame(UUID gameId) {
@@ -69,6 +71,7 @@ public class BaseService {
             }
             enforceChallengeUnlockGuardrails(fc.getId());
         }
+        eventBroadcaster.broadcastGameConfig(gameId, "bases", "created");
         return toResponse(base);
     }
 
@@ -138,6 +141,7 @@ public class BaseService {
         }
         impactedChallengeIds.forEach(this::enforceChallengeUnlockGuardrails);
 
+        eventBroadcaster.broadcastGameConfig(gameId, "bases", "updated");
         return toResponse(base);
     }
 
@@ -149,6 +153,7 @@ public class BaseService {
         ensureBaseBelongsToGame(base, gameId);
         base.setNfcLinked(linked);
         base = baseRepository.save(base);
+        eventBroadcaster.broadcastGameConfig(gameId, "bases", "updated");
         return toResponse(base);
     }
 
@@ -174,6 +179,7 @@ public class BaseService {
             });
             enforceChallengeUnlockGuardrails(fixedChallengeId);
         }
+        eventBroadcaster.broadcastGameConfig(gameId, "bases", "deleted");
     }
 
     private void clearUnlockTarget(UUID targetBaseId) {

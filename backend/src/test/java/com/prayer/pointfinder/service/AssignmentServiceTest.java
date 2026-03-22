@@ -5,6 +5,7 @@ import com.prayer.pointfinder.dto.response.AssignmentResponse;
 import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.exception.ConflictException;
 import com.prayer.pointfinder.repository.*;
+import com.prayer.pointfinder.websocket.GameEventBroadcaster;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,6 +33,8 @@ class AssignmentServiceTest {
     private TeamRepository teamRepository;
     @Mock
     private GameAccessService gameAccessService;
+    @Mock
+    private GameEventBroadcaster eventBroadcaster;
 
     private AssignmentService assignmentService;
 
@@ -46,7 +49,7 @@ class AssignmentServiceTest {
     void setUp() {
         assignmentService = new AssignmentService(
                 assignmentRepository, baseRepository, challengeRepository,
-                teamRepository, gameAccessService
+                teamRepository, gameAccessService, eventBroadcaster
         );
 
         gameId = UUID.randomUUID();

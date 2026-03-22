@@ -7,6 +7,7 @@ import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ConflictException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.*;
+import com.prayer.pointfinder.websocket.GameEventBroadcaster;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,7 @@ public class AssignmentService {
     private final ChallengeRepository challengeRepository;
     private final TeamRepository teamRepository;
     private final GameAccessService gameAccessService;
+    private final GameEventBroadcaster eventBroadcaster;
 
     @Transactional(readOnly = true)
     public List<AssignmentResponse> getAssignmentsByGame(UUID gameId) {
@@ -53,6 +55,7 @@ public class AssignmentService {
                 .build();
 
         assignment = assignmentRepository.save(assignment);
+        eventBroadcaster.broadcastGameConfig(gameId, "assignments", "created");
         return toResponse(assignment);
     }
 
@@ -78,10 +81,12 @@ public class AssignmentService {
 
         assignmentRepository.deleteByGameId(gameId);
 
-        return assignmentsToSave.stream()
+        List<AssignmentResponse> result = assignmentsToSave.stream()
                 .map(assignmentRepository::save)
                 .map(this::toResponse)
                 .toList();
+        eventBroadcaster.broadcastGameConfig(gameId, "assignments", "updated");
+        return result;
     }
 
     @Transactional(timeout = 10)
@@ -90,6 +95,7 @@ public class AssignmentService {
         Assignment assignment = assignmentRepository.findByIdAndGameId(assignmentId, gameId)
                 .orElseThrow(() -> new ResourceNotFoundException("Assignment", assignmentId));
         assignmentRepository.delete(assignment);
+        eventBroadcaster.broadcastGameConfig(gameId, "assignments", "deleted");
     }
 
     private Game resolveGame(UUID gameId) {

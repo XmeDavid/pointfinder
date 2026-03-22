@@ -13,6 +13,7 @@ import com.prayer.pointfinder.repository.BaseRepository;
 import com.prayer.pointfinder.repository.ChallengeRepository;
 import com.prayer.pointfinder.repository.SubmissionRepository;
 import com.prayer.pointfinder.util.HtmlSanitizer;
+import com.prayer.pointfinder.websocket.GameEventBroadcaster;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +29,7 @@ public class ChallengeService {
     private final BaseRepository baseRepository;
     private final SubmissionRepository submissionRepository;
     private final GameAccessService gameAccessService;
+    private final GameEventBroadcaster eventBroadcaster;
 
     @Transactional(readOnly = true)
     public List<ChallengeResponse> getChallengesByGame(UUID gameId) {
@@ -80,6 +82,7 @@ public class ChallengeService {
         );
         handleUnlocksBases(challenge, unlocksBaseIds, gameId, effectiveFixedBaseId);
 
+        eventBroadcaster.broadcastGameConfig(game.getId(), "challenges", "created");
         return toResponse(challenge);
     }
 
@@ -126,6 +129,7 @@ public class ChallengeService {
         );
         handleUnlocksBases(challenge, unlocksBaseIds, gameId, effectiveFixedBaseId);
 
+        eventBroadcaster.broadcastGameConfig(gameId, "challenges", "updated");
         return toResponse(challenge);
     }
 
@@ -139,6 +143,7 @@ public class ChallengeService {
             throw new BadRequestException("Cannot delete challenge with existing submissions");
         }
         challengeRepository.delete(challenge);
+        eventBroadcaster.broadcastGameConfig(gameId, "challenges", "deleted");
     }
 
     private void assignChallengeToBase(Challenge challenge, UUID baseId, UUID gameId) {

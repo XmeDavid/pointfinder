@@ -1,6 +1,8 @@
 import Foundation
 @preconcurrency import CoreNFC
 
+extension NFCTagReaderSession: @unchecked Sendable {}
+
 @Observable
 @MainActor
 final class NFCReaderService: NSObject {

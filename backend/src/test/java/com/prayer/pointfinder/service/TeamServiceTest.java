@@ -8,6 +8,7 @@ import com.prayer.pointfinder.entity.Team;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.repository.PlayerRepository;
 import com.prayer.pointfinder.repository.TeamRepository;
+import com.prayer.pointfinder.websocket.GameEventBroadcaster;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,6 +33,8 @@ class TeamServiceTest {
     private PlayerRepository playerRepository;
     @Mock
     private GameAccessService gameAccessService;
+    @Mock
+    private GameEventBroadcaster eventBroadcaster;
 
     @InjectMocks
     private TeamService teamService;
