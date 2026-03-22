@@ -200,9 +200,8 @@ class PlayerRepository @Inject constructor(
         answer: String,
         online: Boolean,
     ): SubmitResult {
-        if (auth.gameStatus != GameStatus.LIVE) {
-            throw IOException("Game has ended or is not live")
-        }
+        // Game-live guard removed: auth.gameStatus can be stale (set at join time,
+        // never updated). The backend enforces game-live status on submissions.
         if (online) {
             try {
                 val response = api.submitAnswer(
@@ -267,9 +266,8 @@ class PlayerRepository @Inject constructor(
         mediaSourceUri: String?,
         mediaFileName: String?,
     ): SubmitResult {
-        if (auth.gameStatus != GameStatus.LIVE) {
-            throw IOException("Game has ended or is not live")
-        }
+        // Game-live guard removed: auth.gameStatus can be stale (set at join time,
+        // never updated). The backend enforces game-live status on submissions.
         val idempotencyKey = UUID.randomUUID().toString()
         db.pendingActionDao().upsert(
             PendingActionEntity(
@@ -320,9 +318,8 @@ class PlayerRepository @Inject constructor(
         answer: String,
         mediaItems: List<PendingMediaItem>,
     ): SubmitResult {
-        if (auth.gameStatus != GameStatus.LIVE) {
-            throw IOException("Game has ended or is not live")
-        }
+        // Game-live guard removed: auth.gameStatus can be stale (set at join time,
+        // never updated). The backend enforces game-live status on submissions.
         val idempotencyKey = UUID.randomUUID().toString()
         val mediaItemsJson = kotlinx.serialization.json.Json.encodeToString(
             kotlinx.serialization.builtins.ListSerializer(PendingMediaItem.serializer()),
