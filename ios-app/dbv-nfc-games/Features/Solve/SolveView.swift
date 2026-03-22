@@ -46,8 +46,9 @@ struct SolveView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                // Game not live warning - explain why submission is blocked
-                if appState.currentGame?.status != "live" {
+                // Game not live warning - only show if we KNOW the game is not live
+                // (not when currentGame is nil / not yet loaded from API)
+                if let status = appState.currentGame?.status, status != "live" {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack(spacing: 8) {
                             Image(systemName: "exclamationmark.triangle.fill")
@@ -394,7 +395,8 @@ struct SolveView: View {
     // MARK: - Submit Logic
 
     private var canSubmit: Bool {
-        guard appState.currentGame?.status == "live" else { return false }
+        // Allow submit when game status is "live" OR unknown (nil = not yet loaded)
+        if let status = appState.currentGame?.status, status != "live" { return false }
         if isPhotoType {
             return !selectedMedia.isEmpty
         } else {
