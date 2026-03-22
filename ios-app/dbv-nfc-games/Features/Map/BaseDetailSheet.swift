@@ -185,6 +185,9 @@ struct BaseDetailSheet: View {
                         baseName: base?.baseName ?? locale.t("base.defaultName"),
                         requirePresenceToSubmit: challenge?.requirePresenceToSubmit ?? false,
                         answerType: challenge?.answerType ?? "text",
+                        challengeTitle: challenge?.title ?? "",
+                        challengeDescription: challenge?.description ?? "",
+                        challengeContent: challenge?.content ?? "",
                         dismissToMap: { dismiss() }
                     )
                 }

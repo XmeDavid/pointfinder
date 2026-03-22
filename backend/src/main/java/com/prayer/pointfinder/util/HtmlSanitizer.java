@@ -21,15 +21,18 @@ public final class HtmlSanitizer {
             .allowAttributes("href", "target", "rel").onElements("a")
             .allowUrlProtocols("https", "http")
             .requireRelNofollowOnLinks()
-            // Images - only allow safe protocols (no data: URIs)
+            // Images — allow data: URIs for inline base64 images
             .allowElements("img")
-            .allowAttributes("src", "alt", "width", "height").onElements("img")
-            .allowUrlProtocols("https", "http")
+            .allowAttributes("alt", "width", "height").onElements("img")
+            .allowAttributes("src").onElements("img")
+            .allowUrlProtocols("https", "http", "data")
+            .allowAttributes("style").onElements("img")
             // Audio (rich text editor support) — src on audio with data: for base64 inline audio
             .allowElements("audio", "source")
-            .allowAttributes("controls", "preload", "src").onElements("audio")
+            .allowAttributes("src").onElements("audio", "source")
             .allowUrlProtocols("https", "http", "data")
-            .allowAttributes("src", "type").onElements("source")
+            .allowAttributes("type").onElements("source")
+            .allowAttributes("style").onElements("audio")
             // Class attribute only for styling (not inline style attribute)
             .allowAttributes("class").globally()
             .toFactory();
@@ -40,6 +43,10 @@ public final class HtmlSanitizer {
         if (html == null || html.isEmpty()) {
             return html;
         }
-        return POLICY.sanitize(html);
+        String sanitized = POLICY.sanitize(html);
+        // OWASP strips boolean attributes like "controls" on <audio> elements.
+        // Re-add controls attribute to all audio tags after sanitization.
+        sanitized = sanitized.replaceAll("<audio ", "<audio controls ");
+        return sanitized;
     }
 }

@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.PlayCircleFilled
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -203,11 +204,15 @@ fun SolveScreen(
     isOnline: Boolean,
     isSubmitting: Boolean,
     errorMessage: String?,
+    challengeTitle: String = "",
+    challengeDescription: String = "",
+    challengeContent: String = "",
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(16.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -216,6 +221,21 @@ fun SolveScreen(
             Text(stringResource(R.string.action_solve_challenge), style = MaterialTheme.typography.titleLarge)
         }
         Spacer(Modifier.height(12.dp))
+
+        if (challengeTitle.isNotBlank()) {
+            Text(challengeTitle, style = MaterialTheme.typography.titleMedium)
+            if (challengeDescription.isNotBlank()) {
+                Spacer(Modifier.height(4.dp))
+                Text(challengeDescription, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            if (challengeContent.isNotBlank()) {
+                Spacer(Modifier.height(8.dp))
+                HtmlContentView(html = challengeContent)
+            }
+            Spacer(Modifier.height(12.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(12.dp))
+        }
 
         if (isPhotoMode) {
             Text(stringResource(R.string.label_photo_mode))

@@ -48,16 +48,33 @@ fun HtmlContentView(
                 webChromeClient = WebChromeClient()
                 settings.javaScriptEnabled = true
                 settings.mediaPlaybackRequiresUserGesture = false
+                settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
 
                 webViewClient = object : WebViewClient() {
                     override fun shouldOverrideUrlLoading(
                         view: WebView?,
                         request: WebResourceRequest?,
-                    ): Boolean = true // Prevent link navigation
+                    ): Boolean {
+                        val scheme = request?.url?.scheme
+                        // Allow data URIs (for inline audio/images), block link navigation
+                        return scheme != "data"
+                    }
 
                     override fun onPageFinished(view: WebView?, url: String?) {
                         // Re-request layout once the page is loaded
                         view?.requestLayout()
+                        // Debug: log audio tag HTML
+                        view?.evaluateJavascript("""
+                            (function() {
+                                var audios = document.querySelectorAll('audio');
+                                if (audios.length === 0) return 'no audio elements';
+                                var a = audios[0];
+                                return 'outerHTML(first 200): ' + a.outerHTML.substring(0, 200) + ' | controls=' + a.controls + ' hasAttr=' + a.hasAttribute('controls');
+                            })()
+                        """.trimIndent()
+                        ) { result ->
+                            android.util.Log.d("HtmlContentView", "Audio debug: $result")
+                        }
                     }
                 }
 
@@ -185,7 +202,9 @@ private fun wrapHtml(content: String, isDark: Boolean): String {
                 }
 
                 audio {
+                    display: block;
                     width: 100%;
+                    min-height: 54px;
                     margin: 0.5em 0;
                     border-radius: 8px;
                 }

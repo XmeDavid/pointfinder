@@ -176,7 +176,9 @@ struct HTMLContentView: UIViewRepresentable {
                 }
 
                 audio {
+                    display: block;
                     width: 100%;
+                    min-height: 54px;
                     margin: 0.5em 0;
                     border-radius: 8px;
                 }
@@ -231,6 +233,14 @@ struct HTMLContentView: UIViewRepresentable {
         
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             // Calculate content height after loading
+            updateHeight(webView)
+            // Re-measure after a short delay to account for async media elements (audio/video controls)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+                self?.updateHeight(webView)
+            }
+        }
+
+        private func updateHeight(_ webView: WKWebView) {
             webView.evaluateJavaScript("document.body.scrollHeight") { [weak self] height, error in
                 if let height = height as? CGFloat {
                     DispatchQueue.main.async {

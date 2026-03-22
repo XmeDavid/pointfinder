@@ -137,6 +137,9 @@ struct BaseCheckInDetailView: View {
                                     baseName: base?.baseName ?? locale.t("base.defaultName"),
                                     requirePresenceToSubmit: challenge.requirePresenceToSubmit,
                                     answerType: challenge.answerType,
+                                    challengeTitle: challenge.title,
+                                    challengeDescription: challenge.description,
+                                    challengeContent: challenge.content,
                                     dismissToMap: popToRoot
                                 )
                             } label: {

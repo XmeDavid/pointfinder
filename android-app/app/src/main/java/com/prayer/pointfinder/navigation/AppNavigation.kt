@@ -717,6 +717,7 @@ private fun PlayerRootScreen(
                     }
                 }
 
+                val solveChallenge = state.activeCheckIn?.challenge ?: state.selectedChallenge
                 SolveScreen(
                     answer = state.answerText,
                     onAnswerChange = viewModel::setAnswerText,
@@ -740,6 +741,9 @@ private fun PlayerRootScreen(
                     },
                     onBack = { solving = null },
                     isSubmitting = state.isSubmitting,
+                    challengeTitle = solveChallenge?.title ?: "",
+                    challengeDescription = solveChallenge?.description ?: "",
+                    challengeContent = solveChallenge?.content ?: "",
                     onSubmit = {
                         if (state.presenceRequired) {
                             // Show NFC scan dialog; on scan, verify base match then submit

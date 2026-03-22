@@ -22,6 +22,9 @@ struct SolveView: View {
     let baseName: String
     let requirePresenceToSubmit: Bool
     let answerType: String
+    let challengeTitle: String
+    let challengeDescription: String
+    let challengeContent: String
     /// Optional closure to dismiss all the way back to the map (dismisses the sheet)
     var dismissToMap: (() -> Void)?
 
@@ -46,6 +49,26 @@ struct SolveView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                // Challenge content
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(challengeTitle)
+                        .font(.title3)
+                        .fontWeight(.bold)
+
+                    if !challengeDescription.isEmpty {
+                        Text(challengeDescription)
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    if !challengeContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        AutoSizingHTMLView(html: challengeContent)
+                    }
+                }
+
+                Divider()
+
                 // Game not live warning - only show if we KNOW the game is not live
                 // (not when currentGame is nil / not yet loaded from API)
                 if let status = appState.currentGame?.status, status != "live" {
