@@ -53,6 +53,8 @@ fun MoreScreen(
     onNotificationSettingsChanged: (Boolean, Boolean, Boolean) -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToNotifications: () -> Unit,
+    onNavigateToBases: () -> Unit,
+    onNavigateToChallenges: () -> Unit,
     onNavigateToTeams: () -> Unit,
     onNavigateToOperators: () -> Unit,
     onExportGame: () -> Unit,
@@ -91,6 +93,16 @@ fun MoreScreen(
                     icon = Icons.Default.Notifications,
                     label = stringResource(R.string.label_send_notifications),
                     onClick = onNavigateToNotifications,
+                )
+                NavigationRow(
+                    icon = Icons.Default.Place,
+                    label = stringResource(R.string.label_bases),
+                    onClick = onNavigateToBases,
+                )
+                NavigationRow(
+                    icon = Icons.Default.Extension,
+                    label = stringResource(R.string.label_challenges),
+                    onClick = onNavigateToChallenges,
                 )
                 NavigationRow(
                     icon = Icons.Default.Group,

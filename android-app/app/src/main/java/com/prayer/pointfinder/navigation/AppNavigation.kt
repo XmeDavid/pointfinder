@@ -1503,6 +1503,34 @@ private fun OperatorGameRoot(
                             onBack = { moreSubScreen = null },
                         )
                     }
+                    "bases_list" -> {
+                        BasesListScreen(
+                            bases = state.bases,
+                            challenges = state.challenges,
+                            assignments = state.assignments,
+                            onSelectBase = { base -> moreSubScreen = "base_edit:${base.id}" },
+                            onCreateBase = { /* not available from More */ },
+                            onBack = { moreSubScreen = null },
+                        )
+                    }
+                    "challenges_list" -> {
+                        ChallengesListScreen(
+                            challenges = state.challenges,
+                            bases = state.bases,
+                            assignments = state.assignments,
+                            onSelectChallenge = { challenge -> moreSubScreen = "challenge_edit:${challenge.id}" },
+                            onCreateChallenge = { /* not available from More */ },
+                            onBack = { moreSubScreen = null },
+                        )
+                    }
+                    "teams_list" -> {
+                        TeamsListScreen(
+                            teams = state.teams,
+                            onSelectTeam = { team -> moreSubScreen = "team_detail:${team.id}" },
+                            onCreateTeam = { name, color -> viewModel.createTeam(name, color) {} },
+                            onBack = { moreSubScreen = null },
+                        )
+                    }
                     else -> {
                         MoreScreen(
                             currentLanguage = currentLanguage,
@@ -1515,6 +1543,9 @@ private fun OperatorGameRoot(
                             onNotificationSettingsChanged = viewModel::updateNotificationSettings,
                             onNavigateToSettings = { moreSubScreen = "settings" },
                             onNavigateToNotifications = { moreSubScreen = "notifications" },
+                            onNavigateToBases = { moreSubScreen = "bases_list" },
+                            onNavigateToChallenges = { moreSubScreen = "challenges_list" },
+                            onNavigateToTeams = { moreSubScreen = "teams_list" },
                             onNavigateToOperators = { moreSubScreen = "operators" },
                             onExportGame = {
                                 viewModel.exportGame { exportDto ->
