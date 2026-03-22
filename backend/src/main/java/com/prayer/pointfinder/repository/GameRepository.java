@@ -27,4 +27,6 @@ public interface GameRepository extends JpaRepository<Game, UUID> {
 
     @Query("SELECT COUNT(o) > 0 FROM Game g JOIN g.operators o WHERE g.id = :gameId AND o.id = :userId")
     boolean isUserOperator(@Param("gameId") UUID gameId, @Param("userId") UUID userId);
+
+    boolean existsByCreatedByIdAndStatusNot(@Param("createdById") UUID createdById, @Param("status") GameStatus status);
 }

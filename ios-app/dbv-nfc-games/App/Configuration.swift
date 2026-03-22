@@ -30,8 +30,10 @@ enum AppConfiguration {
     static let operatorTokenKey = "com.prayer.pointfinder.operatorToken"
     static let operatorRefreshTokenKey = "com.prayer.pointfinder.operatorRefreshToken"
 
-    // UserDefaults keys
+    // Keychain keys (continued)
     static let deviceIdKey = "com.prayer.pointfinder.deviceId"
+
+    // UserDefaults keys
     static let playerIdKey = "com.prayer.pointfinder.playerId"
     static let teamIdKey = "com.prayer.pointfinder.teamId"
     static let gameIdKey = "com.prayer.pointfinder.gameId"
@@ -39,11 +41,19 @@ enum AppConfiguration {
     static let authTypeKey = "com.prayer.pointfinder.authType"
 
     static var deviceId: String {
-        if let existing = UserDefaults.standard.string(forKey: deviceIdKey) {
+        // 1. Try Keychain first (survives reinstalls)
+        if let existing = KeychainService.load(key: deviceIdKey) {
             return existing
         }
+        // 2. Migrate from UserDefaults if present
+        if let migrated = UserDefaults.standard.string(forKey: deviceIdKey) {
+            KeychainService.save(key: deviceIdKey, value: migrated)
+            UserDefaults.standard.removeObject(forKey: deviceIdKey)
+            return migrated
+        }
+        // 3. Generate new ID and persist in Keychain
         let newId = UUID().uuidString
-        UserDefaults.standard.set(newId, forKey: deviceIdKey)
+        KeychainService.save(key: deviceIdKey, value: newId)
         return newId
     }
 }

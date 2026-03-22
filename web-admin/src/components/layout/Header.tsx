@@ -1,4 +1,5 @@
-import { Moon, Sun, LogOut, Globe, Bell, Check, Menu, LayoutGrid, Sidebar, ListChecks, Radio, SplitSquareHorizontal } from "lucide-react";
+import { Moon, Sun, LogOut, Globe, Bell, Check, Menu, LayoutGrid, Sidebar, ListChecks, Radio, SplitSquareHorizontal, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -7,6 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-dialog";
 import { useAuthStore } from "@/hooks/useAuth";
 import { useThemeStore } from "@/hooks/useTheme";
 import { useTranslation } from "react-i18next";
@@ -14,6 +16,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { invitesApi } from "@/lib/api/invites";
 import { useGameLayoutStore, type LayoutMode } from "@/hooks/useGameLayout";
 import { OperatorPresence } from "@/components/OperatorPresence";
+import { useToast } from "@/hooks/useToast";
+import apiClient from "@/lib/api/client";
 import type { GameStatus } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -71,6 +75,18 @@ export function Header({
   const queryClient = useQueryClient();
   const { getLayout, setLayout } = useGameLayoutStore();
   const currentLayout = gameId ? getLayout(gameId) : "classic";
+  const toast = useToast();
+  const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false);
+
+  async function handleDeleteAccount() {
+    try {
+      await apiClient.delete("/users/me");
+      logout();
+    } catch {
+      toast.error(t("common.error"));
+    }
+    setShowDeleteAccountDialog(false);
+  }
 
   const languages = [
     { code: "en", label: "English" },
@@ -225,6 +241,10 @@ export function Header({
               <p className="text-muted-foreground text-xs">{user?.email}</p>
             </div>
             <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setShowDeleteAccountDialog(true)} destructive>
+              <Trash2 className="mr-2 h-4 w-4" />
+              {t("settings.deleteAccount")}
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={logout} destructive>
               <LogOut className="mr-2 h-4 w-4" />
               {t("common.logOut")}
@@ -232,6 +252,15 @@ export function Header({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <ConfirmDeleteDialog
+        open={showDeleteAccountDialog}
+        title={t("settings.deleteAccount")}
+        description={t("settings.deleteAccountConfirm")}
+        confirmLabel={t("settings.deleteAccount")}
+        onConfirm={handleDeleteAccount}
+        onCancel={() => setShowDeleteAccountDialog(false)}
+      />
     </header>
   );
 }

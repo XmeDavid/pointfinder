@@ -172,6 +172,10 @@ actor APIClient {
         try await deleteVoid("/api/player/me", token: token)
     }
 
+    func deleteOperatorAccount(token: String) async throws {
+        try await deleteVoid("/api/users/me", token: token)
+    }
+
     func getPlayerNotifications(token: String) async throws -> [PlayerNotificationResponse] {
         try await get("/api/player/notifications", token: token)
     }

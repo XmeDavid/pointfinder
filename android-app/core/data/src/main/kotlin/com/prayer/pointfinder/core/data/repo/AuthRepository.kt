@@ -82,6 +82,11 @@ class AuthRepository @Inject constructor(
         sessionStore.clearSession()
     }
 
+    suspend fun deleteOperatorAccount() {
+        api.deleteAccount()
+        sessionStore.clearSession()
+    }
+
     suspend fun clearSession() {
         sessionStore.clearSession()
     }

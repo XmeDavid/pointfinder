@@ -195,6 +195,32 @@ class AppSessionViewModel @Inject constructor(
         }
     }
 
+    fun deleteOperatorAccount() {
+        if (_state.value.authType !is AuthType.Operator) return
+        viewModelScope.launch {
+            val currentLanguage = _state.value.currentLanguage
+            val currentTheme = _state.value.themeMode
+            val isOnline = _state.value.isOnline
+            _state.value = _state.value.copy(isDeletingAccount = true, errorMessage = null)
+            runCatching {
+                authRepository.deleteOperatorAccount()
+            }.onSuccess {
+                operatorRepository.clearCache()
+                realtimeClient.disconnect()
+                _state.value = AppSessionState(
+                    isOnline = isOnline,
+                    currentLanguage = currentLanguage,
+                    themeMode = currentTheme,
+                )
+            }.onFailure { err ->
+                _state.value = _state.value.copy(
+                    isDeletingAccount = false,
+                    errorMessage = friendlyError(err),
+                )
+            }
+        }
+    }
+
     fun deletePlayerAccount() {
         if (_state.value.authType !is AuthType.Player) return
         viewModelScope.launch {

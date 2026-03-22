@@ -37,9 +37,10 @@ public class InviteController {
     @PostMapping("/api/invites")
     public ResponseEntity<InviteResponse> createInvite(
             @Valid @RequestBody CreateInviteRequest request,
+            @RequestHeader(value = "X-Forwarded-Host", required = false) String forwardedHost,
             HttpServletRequest httpRequest
     ) {
-        String requestHost = httpRequest.getHeader("Host");
+        String requestHost = forwardedHost != null ? forwardedHost : httpRequest.getHeader("Host");
         return ResponseEntity.status(HttpStatus.CREATED).body(inviteService.createInvite(request, requestHost));
     }
 

@@ -415,29 +415,6 @@
     "checkInSuccess": "Check-in da equipa realizado com sucesso.",
     "checkInAlreadyDone": "Esta equipa já fez check-in nesta base."
   },
-  "privacy": {
-    "title": "Política de Privacidade",
-    "backHome": "Voltar ao início",
-    "lastUpdated": "PointFinder — pointfinder.pt",
-    "intro": "O PointFinder é uma plataforma de jogos baseada em NFC, concebida para organizações escutistas e eventos ao ar livre. Levamos a privacidade a sério, especialmente porque a nossa plataforma é utilizada em campos com participantes mais jovens. Esta política explica os dados que recolhemos e como os utilizamos.",
-    "collectTitle": "Dados que recolhemos",
-    "collectIntro": "Recolhemos apenas as informações necessárias para o funcionamento do jogo:",
-    "collect": {
-      "displayName": "Nome de exibição — o nome que o jogador introduz ao entrar num jogo. É mostrado a outros jogadores e operadores durante o evento.",
-      "deviceId": "ID do dispositivo — um identificador aleatório guardado no dispositivo para reconhecer jogadores que regressam à mesma sessão de jogo. Não está associado a nenhuma identidade pessoal.",
-      "location": "Localização — coordenadas GPS são recolhidas durante o jogo ativo para mostrar a posição das equipas no mapa. A localização só é solicitada enquanto o jogo está a decorrer.",
-      "media": "Fotos e vídeos — submetidos como respostas a desafios. São guardados durante o jogo para que os operadores possam revê-los.",
-      "nfc": "Dados de leitura NFC — quando um jogador lê uma etiqueta de base, o ID da etiqueta é registado para confirmar a presença."
-    },
-    "useTitle": "Como utilizamos os seus dados",
-    "useBody": "Todos os dados são utilizados exclusivamente para operar o jogo: acompanhar o progresso, mostrar a classificação, permitir que os operadores revejam as submissões e exibir as posições das equipas no mapa. Não partilhamos dados com terceiros, não os usamos para publicidade nem os processamos para qualquer outra finalidade além da realização do evento.",
-    "retentionTitle": "Retenção de dados",
-    "retentionBody": "Os dados do jogo (check-ins, submissões, histórico de localização e multimédia carregada) são eliminados quando o operador apaga o jogo. Os jogadores também podem solicitar a eliminação da conta a qualquer momento, contactando o operador ou entrando em contacto connosco diretamente.",
-    "childrenTitle": "Privacidade das crianças",
-    "childrenBody": "O PointFinder foi concebido para ser seguro para participantes mais jovens. Não recolhemos nomes, endereços de e-mail nem qualquer outra informação de identificação pessoal para além de um nome de exibição escolhido. A localização só é recolhida durante o jogo ativo e não é guardada após a sessão. Nenhum dado é utilizado para marketing ou partilhado com serviços externos.",
-    "contactTitle": "Contacto",
-    "contactBody": "Se tiver dúvidas sobre esta política de privacidade ou pretender solicitar a eliminação de dados, entre em contacto connosco em"
-  },
   "results": {
     "title": "Resultados Finais",
     "exportResults": "Exportar Resultados",
@@ -491,7 +468,9 @@
     "tileSourceVoyager": "CartoDB Voyager",
     "tileSourcePositron": "CartoDB Positron",
     "tileSourceSwisstopo": "SwissTopo",
-    "tileSourceSwisstopoSat": "SwissTopo Satélite"
+    "tileSourceSwisstopoSat": "SwissTopo Satélite",
+    "deleteAccount": "Eliminar Conta",
+    "deleteAccountConfirm": "Tens a certeza que queres eliminar a tua conta? Esta ação não pode ser desfeita. Deves eliminar todos os teus jogos primeiro."
   },
   "landing": {
     "nav": {
@@ -635,7 +614,7 @@
     "reload": "Recarregar",
     "boundaryInline": "Algo correu mal. Por favor atualize a página.",
     "tryAgain": "Tentar novamente",
-    "liveUpdatesRetrying": "Atualizações ao vivo temporariamente indisponíveis. A tentar novamente\u2026"
+    "liveUpdatesRetrying": "Atualizações ao vivo temporariamente indisponíveis. A tentar novamente…"
   },
   "editor": {
     "bold": "Negrito",

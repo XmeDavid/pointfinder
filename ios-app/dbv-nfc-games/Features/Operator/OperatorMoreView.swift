@@ -17,6 +17,10 @@ struct OperatorMoreView: View {
     @State private var showChallenges = false
     @State private var showTeams = false
 
+    @State private var showDeleteAccountAlert = false
+    @State private var isDeletingAccount = false
+    @State private var deleteAccountError: String?
+
     // Notification preference state
     @State private var notifyPendingSubmissions = true
     @State private var notifyAllSubmissions = false
@@ -178,6 +182,31 @@ struct OperatorMoreView: View {
                     } label: {
                         Label(locale.t("operator.logout"), systemImage: "rectangle.portrait.and.arrow.right")
                     }
+
+                    Button(role: .destructive) {
+                        showDeleteAccountAlert = true
+                    } label: {
+                        Label {
+                            if isDeletingAccount {
+                                Text(locale.t("settings.deletingAccount"))
+                            } else {
+                                Text(locale.t("settings.deleteAccount"))
+                            }
+                        } icon: {
+                            if isDeletingAccount {
+                                ProgressView()
+                            } else {
+                                Image(systemName: "person.crop.circle.badge.minus")
+                            }
+                        }
+                    }
+                    .disabled(isDeletingAccount)
+
+                    if let deleteAccountError {
+                        Text(deleteAccountError)
+                            .foregroundStyle(.red)
+                            .font(.caption)
+                    }
                 }
             }
             .navigationTitle(locale.t("operator.more"))
@@ -198,6 +227,14 @@ struct OperatorMoreView: View {
             }
             .fullScreenCover(isPresented: $showTeams) {
                 TeamsManagementView(game: game, onDismiss: { showTeams = false })
+            }
+            .alert(locale.t("settings.deleteAccountConfirmTitle"), isPresented: $showDeleteAccountAlert) {
+                Button(locale.t("settings.deleteAccountConfirm"), role: .destructive) {
+                    Task { await deleteOperatorAccount() }
+                }
+                Button(locale.t("common.cancel"), role: .cancel) {}
+            } message: {
+                Text(locale.t("settings.deleteAccountConfirmMessage"))
             }
         }
     }
@@ -274,6 +311,21 @@ struct OperatorMoreView: View {
                 notificationSettingsError = error.localizedDescription
             }
             isSavingNotificationSettings = false
+        }
+    }
+
+    // MARK: - Delete Account
+
+    private func deleteOperatorAccount() async {
+        guard let token else { return }
+        isDeletingAccount = true
+        deleteAccountError = nil
+        do {
+            try await appState.apiClient.deleteOperatorAccount(token: token)
+            await appState.logout()
+        } catch {
+            deleteAccountError = error.localizedDescription
+            isDeletingAccount = false
         }
     }
 }

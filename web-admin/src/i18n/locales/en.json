@@ -415,29 +415,6 @@
     "checkInSuccess": "Team checked in successfully.",
     "checkInAlreadyDone": "This team has already checked in at this base."
   },
-  "privacy": {
-    "title": "Privacy Policy",
-    "backHome": "Back to home",
-    "lastUpdated": "PointFinder — pointfinder.pt",
-    "intro": "PointFinder is an NFC-based gaming platform designed for scouting organisations and outdoor events. We take privacy seriously, especially because our platform is used at camps with younger participants. This policy explains what data we collect and how we use it.",
-    "collectTitle": "What data we collect",
-    "collectIntro": "We collect only the information needed to run the game:",
-    "collect": {
-      "displayName": "Display name — the name a player enters when joining a game. This is shown to other players and operators during the event.",
-      "deviceId": "Device ID — a random identifier stored on the device to recognise returning players within the same game session. It is not linked to any personal identity.",
-      "location": "Location — GPS coordinates are collected during active gameplay to show team positions on the map. Location is only requested while the game is live.",
-      "media": "Photos and videos — submitted as answers to challenges. These are stored for the duration of the game so operators can review them.",
-      "nfc": "NFC scan data — when a player scans a base tag, the tag ID is recorded to register the check-in."
-    },
-    "useTitle": "How we use your data",
-    "useBody": "All data is used solely to operate the game: tracking progress, showing the leaderboard, enabling operators to review submissions, and displaying team positions on the map. We do not share any data with third parties, use it for advertising, or process it for any purpose beyond running the event.",
-    "retentionTitle": "Data retention",
-    "retentionBody": "Game data (check-ins, submissions, location history, and uploaded media) is deleted when the operator deletes the game. Players can also request account deletion at any time by contacting the operator or reaching out to us directly.",
-    "childrenTitle": "Children's privacy",
-    "childrenBody": "PointFinder is designed to be safe for younger participants. We do not collect names, email addresses, or any other personally identifiable information beyond a chosen display name. Location is only collected during active gameplay and is not stored beyond the game session. No data is used for marketing or shared with external services.",
-    "contactTitle": "Contact",
-    "contactBody": "If you have questions about this privacy policy or want to request data deletion, please contact us at"
-  },
   "results": {
     "title": "Final Results",
     "exportResults": "Export Results",
@@ -491,7 +468,9 @@
     "tileSourceVoyager": "CartoDB Voyager",
     "tileSourcePositron": "CartoDB Positron",
     "tileSourceSwisstopo": "SwissTopo",
-    "tileSourceSwisstopoSat": "SwissTopo Satellite"
+    "tileSourceSwisstopoSat": "SwissTopo Satellite",
+    "deleteAccount": "Delete Account",
+    "deleteAccountConfirm": "Are you sure you want to delete your account? This action cannot be undone. You must delete all your games first."
   },
   "landing": {
     "nav": {
@@ -635,7 +614,7 @@
     "reload": "Reload",
     "boundaryInline": "Something went wrong. Please refresh the page.",
     "tryAgain": "Try again",
-    "liveUpdatesRetrying": "Live updates temporarily unavailable. Retrying\u2026"
+    "liveUpdatesRetrying": "Live updates temporarily unavailable. Retrying…"
   },
   "editor": {
     "bold": "Bold",

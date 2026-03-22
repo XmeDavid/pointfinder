@@ -6,9 +6,7 @@
   <meta name="description" content="Privacy Policy for PointFinder covering iOS, Android, and web admin data processing, sharing, retention, and user rights." />
   <title>Privacy Policy | PointFinder</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/fonts/inter.css" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -160,7 +158,7 @@
         <p>We share data only when needed to provide and secure the service:</p>
         <ul>
           <li><strong>Push providers:</strong> Apple Push Notification service (APNs) and Firebase Cloud Messaging (FCM).</li>
-          <li><strong>Mapping and map assets:</strong> Apple MapKit (iOS), Google Maps SDK (Android), OpenStreetMap tiles (web admin).</li>
+          <li><strong>Mapping and map assets:</strong> All platforms use MapLibre GL (an open-source, client-side map rendering library) with external tile providers. When the map view loads tiles, your IP address is sent to the tile provider. Tile providers used: <strong>OpenFreeMap</strong> (tiles.openfreemap.org), <strong>OpenStreetMap</strong> (tile.openstreetmap.org), <strong>CartoDB/CARTO</strong> (basemaps.cartocdn.com), and <strong>SwissTopo</strong> (vectortiles.geo.admin.ch).</li>
           <li><strong>Email delivery:</strong> SMTP provider used for invites and operational notifications.</li>
           <li><strong>Infrastructure:</strong> hosting, storage, networking, and security providers that process data on our behalf.</li>
           <li><strong>Legal/compliance disclosures:</strong> where required by applicable law, legal process, or to protect rights and safety.</li>

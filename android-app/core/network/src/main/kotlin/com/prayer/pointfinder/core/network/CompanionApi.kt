@@ -151,6 +151,9 @@ interface CompanionApi {
     @DELETE("api/player/me")
     suspend fun deleteMyPlayerData()
 
+    @HTTP(method = "DELETE", path = "api/users/me", hasBody = false)
+    suspend fun deleteAccount(): Response<Unit>
+
     @GET("api/player/notifications")
     suspend fun getPlayerNotifications(): List<PlayerNotificationResponse>
 
