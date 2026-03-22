@@ -76,8 +76,6 @@ struct OperatorGameView: View {
                         }
                         .tag(3)
                 }
-                .toolbarBackground(.visible, for: .tabBar)
-                .toolbarBackground(.ultraThinMaterial, for: .tabBar)
             }
         }
         .task {

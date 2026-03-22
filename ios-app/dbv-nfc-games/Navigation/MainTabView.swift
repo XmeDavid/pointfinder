@@ -33,8 +33,12 @@ struct MainTabView: View {
                         Label(locale.t("common.settings"), systemImage: "gearshape.fill")
                     }
             }
-            .toolbarBackground(.visible, for: .tabBar)
-            .toolbarBackground(.ultraThinMaterial, for: .tabBar)
+        }
+        .onAppear {
+            let appearance = UITabBarAppearance()
+            appearance.configureWithDefaultBackground()
+            UITabBar.appearance().standardAppearance = appearance
+            UITabBar.appearance().scrollEdgeAppearance = appearance
         }
         .onChange(of: appState.pendingDeepLinkBaseId) {
             if appState.pendingDeepLinkBaseId != nil {
