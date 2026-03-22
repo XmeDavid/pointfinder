@@ -152,13 +152,15 @@ struct ChallengesManagementView: View {
 
     private func baseNameForChallenge(_ challenge: Challenge) -> String {
         // Find assignment where teamId == nil (global assignment) for this challenge
-        guard let assignment = assignments.first(where: { $0.challengeId == challenge.id && $0.teamId == nil }) else {
-            return locale.t("operator.noBase")
+        if let assignment = assignments.first(where: { $0.challengeId == challenge.id && $0.teamId == nil }),
+           let base = bases.first(where: { $0.id == assignment.baseId }) {
+            return base.name
         }
-        guard let base = bases.first(where: { $0.id == assignment.baseId }) else {
-            return locale.t("operator.noBase")
+        // Fallback: check if any base has this challenge as its fixedChallengeId
+        if let base = bases.first(where: { $0.fixedChallengeId == challenge.id }) {
+            return base.name
         }
-        return base.name
+        return locale.t("operator.noBase")
     }
 
     private func loadData() async {

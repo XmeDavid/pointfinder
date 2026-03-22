@@ -264,6 +264,8 @@
     <string name="label_edit_challenge">Edit Challenge</string>
     <string name="label_no_content">No content yet</string>
     <string name="label_no_base">No base</string>
+    <string name="label_no_challenge">No challenge</string>
+    <string name="label_custom_assignment">Custom assignment</string>
     <!-- Team Management -->
     <string name="label_join_code_section">Join Code</string>
     <string name="label_show_qr">Show QR</string>

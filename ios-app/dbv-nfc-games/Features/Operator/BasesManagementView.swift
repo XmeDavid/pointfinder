@@ -1,5 +1,4 @@
 import SwiftUI
-import CoreLocation
 
 struct BasesManagementView: View {
     @Environment(AppState.self) private var appState
@@ -15,6 +14,7 @@ struct BasesManagementView: View {
 
     @State private var bases: [Base] = []
     @State private var challenges: [Challenge] = []
+    @State private var assignments: [Assignment] = []
     @State private var isLoading = true
     @State private var path = NavigationPath()
 
@@ -49,13 +49,15 @@ struct BasesManagementView: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(base.name)
                                         .font(.headline)
-                                    Text(base.description)
+                                    if !base.description.isEmpty {
+                                        Text(base.description)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                            .lineLimit(1)
+                                    }
+                                    Text(challengeInfoForBase(base))
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
-                                        .lineLimit(1)
-                                    Text("(\(String(format: "%.4f", base.lat)), \(String(format: "%.4f", base.lng)))")
-                                        .font(.caption2)
-                                        .foregroundStyle(.tertiary)
                                 }
                                 Spacer()
                                 if base.nfcLinked {
@@ -149,14 +151,35 @@ struct BasesManagementView: View {
             }
     }
 
+    private func challengeInfoForBase(_ base: Base) -> String {
+        let baseAssignments = assignments.filter { $0.baseId == base.id }
+        let perTeamCount = baseAssignments.filter { $0.teamId != nil }.count
+        let globalAssignment = baseAssignments.first(where: { $0.teamId == nil })
+
+        if perTeamCount >= 2 || (perTeamCount == 1 && globalAssignment == nil) {
+            return locale.t("operator.customAssignment")
+        }
+        if let global = globalAssignment,
+           let challenge = challenges.first(where: { $0.id == global.challengeId }) {
+            return challenge.title
+        }
+        if let fixedId = base.fixedChallengeId,
+           let challenge = challenges.first(where: { $0.id == fixedId }) {
+            return challenge.title
+        }
+        return locale.t("operator.noChallenge")
+    }
+
     private func loadData() async {
         guard let token else { return }
         do {
             async let basesResult = appState.apiClient.getGameBases(gameId: game.id, token: token)
             async let challengesResult = appState.apiClient.getChallenges(gameId: game.id, token: token)
-            let (b, c) = try await (basesResult, challengesResult)
+            async let assignmentsResult = appState.apiClient.getAssignments(gameId: game.id, token: token)
+            let (b, c, a) = try await (basesResult, challengesResult, assignmentsResult)
             bases = b
             challenges = c
+            assignments = a
         } catch is CancellationError {
             // Task cancelled during navigation — not an error
         } catch {

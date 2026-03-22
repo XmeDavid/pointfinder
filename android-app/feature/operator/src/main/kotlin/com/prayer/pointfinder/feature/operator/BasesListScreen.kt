@@ -86,9 +86,22 @@ fun BasesListScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(bases, key = { it.id }) { base ->
-                    val fromAssignments = assignments.count { it.baseId == base.id }
-                    val hasFixedChallenge = if (base.fixedChallengeId != null) 1 else 0
-                    val challengeCount = maxOf(fromAssignments, hasFixedChallenge)
+                    val baseAssignments = assignments.filter { it.baseId == base.id }
+                    val perTeamCount = baseAssignments.count { it.teamId != null }
+                    val globalAssignment = baseAssignments.firstOrNull { it.teamId == null }
+                    val challengeSubtitle = when {
+                        perTeamCount >= 2 -> stringResource(R.string.label_custom_assignment)
+                        perTeamCount == 1 && globalAssignment == null -> stringResource(R.string.label_custom_assignment)
+                        globalAssignment != null -> {
+                            challenges.firstOrNull { it.id == globalAssignment.challengeId }?.title
+                                ?: stringResource(R.string.label_no_challenge)
+                        }
+                        base.fixedChallengeId != null -> {
+                            challenges.firstOrNull { it.id == base.fixedChallengeId }?.title
+                                ?: stringResource(R.string.label_no_challenge)
+                        }
+                        else -> stringResource(R.string.label_no_challenge)
+                    }
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -104,9 +117,8 @@ fun BasesListScreen(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                val subtitle = "$challengeCount ${stringResource(R.string.label_challenges).lowercase()}"
                                 Text(
-                                    text = subtitle,
+                                    text = challengeSubtitle,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -117,6 +129,12 @@ fun BasesListScreen(
                                     stringResource(R.string.label_nfc_not_linked)
                                 }
                                 CapsuleBadge(label = nfcLabel, color = nfcColor)
+                                if (base.hidden) {
+                                    CapsuleBadge(
+                                        label = stringResource(R.string.label_hidden_base),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
                             }
                         }
                     }

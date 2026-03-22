@@ -264,6 +264,8 @@
     <string name="label_edit_challenge">Challenge bearbeiten</string>
     <string name="label_no_content">Noch kein Inhalt</string>
     <string name="label_no_base">Keine Station</string>
+    <string name="label_no_challenge">Kein Rätsel</string>
+    <string name="label_custom_assignment">Benutzerdefinierte Zuordnung</string>
     <!-- Team Management -->
     <string name="label_join_code_section">Beitrittscode</string>
     <string name="label_show_qr">QR anzeigen</string>
