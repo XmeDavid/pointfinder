@@ -60,12 +60,13 @@ struct BasesManagementView: View {
                                         .foregroundStyle(.secondary)
                                 }
                                 Spacer()
-                                if base.nfcLinked {
-                                    Label(locale.t("operator.linked"), systemImage: "checkmark.circle.fill")
-                                        .font(.caption)
-                                        .foregroundStyle(.green)
-                                        .labelStyle(.iconOnly)
-                                }
+                                Text(base.nfcLinked ? locale.t("operator.linked") : locale.t("operator.notLinked"))
+                                    .font(.caption2)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(base.nfcLinked ? Color.green.opacity(0.2) : Color.orange.opacity(0.2))
+                                    .foregroundStyle(base.nfcLinked ? .green : .orange)
+                                    .clipShape(Capsule())
                                 if base.hidden {
                                     Image(systemName: "eye.slash")
                                         .font(.caption)
