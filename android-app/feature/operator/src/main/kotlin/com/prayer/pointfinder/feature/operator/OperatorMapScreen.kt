@@ -9,6 +9,7 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import com.prayer.pointfinder.feature.player.createPinMarkerBitmap
 import com.prayer.pointfinder.feature.player.createCircleMarkerBitmap
+import com.prayer.pointfinder.feature.player.createMyLocationBitmap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,6 +39,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -124,6 +127,62 @@ fun OperatorMapScreen(
     var editSheetBase by remember { mutableStateOf<Base?>(null) }
     var locationFocusState by remember { mutableStateOf(LocationFocusState.CENTER_ON_ME) }
     var hasInitialFit by remember { mutableStateOf(false) }
+    var myLocation by remember { mutableStateOf<android.location.Location?>(null) }
+    var hasLocationPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context, Manifest.permission.ACCESS_FINE_LOCATION,
+            ) == PackageManager.PERMISSION_GRANTED,
+        )
+    }
+
+    // Request location permission on first composition if not already granted
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) { results ->
+        hasLocationPermission = results.values.any { it }
+    }
+    LaunchedEffect(Unit) {
+        if (!hasLocationPermission) {
+            permissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                ),
+            )
+        }
+    }
+
+    // Listen for location updates to show the blue dot (re-runs when permission is granted)
+    DisposableEffect(hasLocationPermission) {
+        val lm = context.getSystemService(LocationManager::class.java)
+        val listener = android.location.LocationListener { location ->
+            myLocation = location
+        }
+        if (hasLocationPermission && lm != null) {
+            // Seed with last known location immediately
+            @SuppressLint("MissingPermission")
+            val seed = lm.getLastKnownLocation(LocationManager.FUSED_PROVIDER)
+                ?: lm.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                ?: lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+            myLocation = seed
+            // Pick the best available provider for updates
+            @SuppressLint("MissingPermission")
+            val started = runCatching {
+                lm.requestLocationUpdates(LocationManager.FUSED_PROVIDER, 5000L, 10f, listener)
+                true
+            }.getOrDefault(false)
+            if (!started) {
+                @SuppressLint("MissingPermission")
+                val unused = runCatching {
+                    lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000L, 10f, listener)
+                }
+            }
+        }
+        onDispose {
+            lm?.removeUpdates(listener)
+        }
+    }
 
     // rememberUpdatedState for values captured inside AndroidView.factory callbacks
     // (factory runs once, so plain parameters would be stale)
@@ -151,9 +210,9 @@ fun OperatorMapScreen(
     }
 
     // Update style when tileSource or dark mode changes
-    // NOTE: LocationComponent is intentionally NOT used here — its animator
-    // races with setStyle() in Compose, causing IllegalStateException crashes.
-    // We use Android's LocationManager directly for location-dependent buttons.
+    // NOTE: LocationComponent is NOT used — its animator races with setStyle()
+    // in Compose, causing IllegalStateException crashes. Instead we render the
+    // operator's position as a custom blue-dot marker via LocationManager.
     LaunchedEffect(map, tileSource, isDark) {
         val m = map ?: return@LaunchedEffect
         m.setStyle(Style.Builder().fromUri(TileSources.getResolvedStyleUrl(tileSource, isDark))) { style ->
@@ -164,14 +223,15 @@ fun OperatorMapScreen(
     val density = context.resources.displayMetrics.density
 
     // Update markers and connection lines whenever data changes (incremental marker updates)
-    LaunchedEffect(map, mapStyle, bases, teamLocations, teams, baseProgress, challenges) {
+    LaunchedEffect(map, mapStyle, bases, teamLocations, teams, baseProgress, challenges, myLocation) {
         val m = map ?: return@LaunchedEffect
         val currentMarkers = m.annotations.filterIsInstance<org.maplibre.android.annotations.Marker>()
 
-        // Build set of all marker IDs we expect: bases and team locations
+        // Build set of all marker IDs we expect: bases, team locations, and my location
         val expectedBaseIds = bases.map { "base:${it.id}" }.toSet()
         val expectedTeamLocationIds = teamLocations.map { "team:${it.teamId}" }.toSet()
-        val expectedMarkerIds = expectedBaseIds + expectedTeamLocationIds
+        val myLocationId = if (myLocation != null) setOf("me") else emptySet()
+        val expectedMarkerIds = expectedBaseIds + expectedTeamLocationIds + myLocationId
 
         // Remove markers for bases/locations no longer in data
         currentMarkers.forEach { marker ->
@@ -229,6 +289,25 @@ fun OperatorMapScreen(
             }
             // Note: For now, existing markers are kept as-is. Full updates would require
             // removing and re-adding if position/title changed.
+        }
+
+        // My-location blue dot
+        myLocation?.let { loc ->
+            val markerId = "me"
+            val existingMarker = currentMarkers.firstOrNull { it.snippet == markerId }
+            val icon = iconFactory.fromBitmap(createMyLocationBitmap(density))
+            if (existingMarker == null) {
+                m.addMarker(
+                    MarkerOptions()
+                        .position(LatLng(loc.latitude, loc.longitude))
+                        .title("")
+                        .snippet(markerId)
+                        .icon(icon),
+                )
+            } else {
+                existingMarker.position = LatLng(loc.latitude, loc.longitude)
+                existingMarker.icon = icon
+            }
         }
 
         // Unlock connection lines and direction arrows
@@ -401,7 +480,7 @@ fun OperatorMapScreen(
             onClick = {
                 when (locationFocusState) {
                     LocationFocusState.CENTER_ON_ME -> {
-                        getLastKnownLocation(context)?.let { location ->
+                        (myLocation ?: getLastKnownLocation(context))?.let { location ->
                             map?.animateCamera(
                                 CameraUpdateFactory.newLatLngZoom(
                                     LatLng(location.latitude, location.longitude),

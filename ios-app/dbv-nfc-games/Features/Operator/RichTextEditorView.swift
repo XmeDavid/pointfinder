@@ -1,3 +1,4 @@
+import PhotosUI
 import SwiftUI
 import UniformTypeIdentifiers
 import WebKit
@@ -24,6 +25,8 @@ struct RichTextEditorView: View {
     @State private var showCreateVariable = false
     @State private var showAudioFilePicker = false
     @State private var showAudioSizeError = false
+    @State private var selectedImageItem: PhotosPickerItem?
+    @State private var showImageSizeError = false
     @State private var showPreviewTeamPicker = false
     @State private var newVariableName = ""
     @State private var previewTeam: Team?
@@ -80,6 +83,14 @@ struct RichTextEditorView: View {
                         Divider().frame(height: 24)
 
                         FormatButton(icon: "music.note") { showAudioFilePicker = true }
+
+                        PhotosPicker(selection: $selectedImageItem, matching: .images) {
+                            Image(systemName: "photo")
+                                .font(.system(size: 15))
+                                .frame(width: 36, height: 36)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
@@ -212,13 +223,43 @@ struct RichTextEditorView: View {
                 default: mime = "audio/\(ext)"
                 }
                 let b64 = data.base64EncodedString()
-                let html = "<audio controls style=\"width:100%;margin:0.5em 0\" src=\"data:\(mime);base64,\(b64)\"></audio>"
+                let html = "<audio controls style=\"width:100%;margin:0.5em 0\" src=\"data:\(mime);base64,\(b64)\"></audio><p><br></p>"
                 webViewCoordinator.insertHTML(html)
             }
             .alert(locale.t("editor.fileTooLarge"), isPresented: $showAudioSizeError) {
                 Button(locale.t("common.ok"), role: .cancel) {}
             } message: {
                 Text(locale.t("editor.audioTooLargeMessage"))
+            }
+            .alert(locale.t("editor.imageTooLargeTitle"), isPresented: $showImageSizeError) {
+                Button(locale.t("common.ok"), role: .cancel) {}
+            } message: {
+                Text(locale.t("editor.imageTooLargeMessage"))
+            }
+            .onChange(of: selectedImageItem) { _, item in
+                guard let item else { return }
+                Task {
+                    defer { selectedImageItem = nil }
+                    guard let data = try? await item.loadTransferable(type: Data.self) else { return }
+                    guard data.count <= 20_000_000 else {
+                        showImageSizeError = true
+                        return
+                    }
+                    guard let uiImage = UIImage(data: data) else { return }
+                    let maxDim: CGFloat = 1200
+                    let scale = min(1, maxDim / max(uiImage.size.width, uiImage.size.height))
+                    let targetSize = CGSize(
+                        width: uiImage.size.width * scale,
+                        height: uiImage.size.height * scale
+                    )
+                    let renderer = UIGraphicsImageRenderer(size: targetSize)
+                    let resized = renderer.jpegData(withCompressionQuality: 0.85) { ctx in
+                        uiImage.draw(in: CGRect(origin: .zero, size: targetSize))
+                    }
+                    let b64 = resized.base64EncodedString()
+                    let html = "<img src=\"data:image/jpeg;base64,\(b64)\" style=\"max-width:100%;height:auto;border-radius:8px;margin:0.5em 0\" /><p><br></p>"
+                    webViewCoordinator.insertHTML(html)
+                }
             }
         }
     }

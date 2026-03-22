@@ -1,5 +1,7 @@
 package com.prayer.pointfinder.feature.operator
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -23,6 +25,7 @@ import androidx.compose.material.icons.filled.FormatBold
 import androidx.compose.material.icons.filled.FormatItalic
 import androidx.compose.material.icons.filled.FormatListNumbered
 import androidx.compose.material.icons.filled.FormatUnderlined
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.MusicNote
@@ -54,6 +57,7 @@ import com.prayer.pointfinder.core.i18n.R
 import com.prayer.pointfinder.core.model.Team
 import com.prayer.pointfinder.core.model.TeamVariable
 import com.prayer.pointfinder.feature.player.HtmlContentView
+import java.io.ByteArrayOutputStream
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -78,6 +82,7 @@ fun RichTextEditorScreen(
     var previewTeam by remember { mutableStateOf<Team?>(null) }
     var previewHtml by remember { mutableStateOf("") }
     var showAudioSizeError by remember { mutableStateOf(false) }
+    var showImageSizeError by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val audioLauncher = rememberLauncherForActivityResult(
@@ -93,7 +98,38 @@ fun RichTextEditorScreen(
         val mime = context.contentResolver.getType(uri) ?: "audio/mpeg"
         val b64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
         editorState.insertHTML(
-            "<audio controls style=\"width:100%;margin:0.5em 0\" src=\"data:$mime;base64,$b64\"></audio>"
+            "<audio controls style=\"width:100%;margin:0.5em 0\" src=\"data:$mime;base64,$b64\"></audio><p><br></p>"
+        )
+    }
+
+    val imageLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri ?: return@rememberLauncherForActivityResult
+        val bytes = context.contentResolver.openInputStream(uri)?.readBytes()
+            ?: return@rememberLauncherForActivityResult
+        if (bytes.size > 20 * 1024 * 1024) {
+            showImageSizeError = true
+            return@rememberLauncherForActivityResult
+        }
+        val original = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+            ?: return@rememberLauncherForActivityResult
+        val maxDim = 1200f
+        val scale = minOf(1f, maxDim / maxOf(original.width, original.height).toFloat())
+        val targetW = (original.width * scale).toInt()
+        val targetH = (original.height * scale).toInt()
+        val scaled = if (scale < 1f) {
+            Bitmap.createScaledBitmap(original, targetW, targetH, true)
+        } else {
+            original
+        }
+        val out = ByteArrayOutputStream()
+        scaled.compress(Bitmap.CompressFormat.JPEG, 85, out)
+        if (scaled !== original) scaled.recycle()
+        original.recycle()
+        val b64 = Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP)
+        editorState.insertHTML(
+            "<img src=\"data:image/jpeg;base64,$b64\" style=\"max-width:100%;height:auto;border-radius:8px;margin:0.5em 0\" /><p><br></p>"
         )
     }
 
@@ -163,6 +199,7 @@ fun RichTextEditorScreen(
                 editorState = editorState,
                 onLinkClick = { showLinkDialog = true },
                 onAudioClick = { audioLauncher.launch("audio/*") },
+                onImageClick = { imageLauncher.launch("image/*") },
             )
 
             HorizontalDivider()
@@ -259,6 +296,18 @@ fun RichTextEditorScreen(
             },
         )
     }
+
+    // Image size error dialog
+    if (showImageSizeError) {
+        AlertDialog(
+            onDismissRequest = { showImageSizeError = false },
+            title = { Text(stringResource(R.string.error_image_too_large_title)) },
+            text = { Text(stringResource(R.string.error_image_too_large_message)) },
+            confirmButton = {
+                TextButton(onClick = { showImageSizeError = false }) { Text(stringResource(R.string.action_done)) }
+            },
+        )
+    }
 }
 
 @Composable
@@ -266,6 +315,7 @@ private fun FormattingToolbar(
     editorState: RichTextWebEditorState,
     onLinkClick: () -> Unit,
     onAudioClick: () -> Unit,
+    onImageClick: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -321,6 +371,11 @@ private fun FormattingToolbar(
         // Audio
         IconButton(onClick = onAudioClick) {
             Icon(Icons.Default.MusicNote, contentDescription = stringResource(R.string.label_insert_audio))
+        }
+
+        // Image
+        IconButton(onClick = onImageClick) {
+            Icon(Icons.Default.Image, contentDescription = stringResource(R.string.label_insert_image))
         }
     }
 }

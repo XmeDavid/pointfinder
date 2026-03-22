@@ -99,6 +99,44 @@ fun createPinMarkerBitmap(colorInt: Int, status: BaseStatus, density: Float, isH
 }
 
 /**
+ * Creates a blue-dot marker for the user's own location.
+ * Mimics MapLibre / iOS native user-location indicator:
+ * solid #4285F4 fill with white border and a subtle shadow ring.
+ */
+fun createMyLocationBitmap(density: Float): Bitmap {
+    val sizePx = (20 * density).toInt()
+    val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val cx = sizePx / 2f
+    val cy = sizePx / 2f
+    val radius = sizePx / 2f - 3f * density
+
+    // Outer glow / accuracy ring
+    val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.parseColor("#4285F4")
+        alpha = 40
+        style = Paint.Style.FILL
+    }
+    canvas.drawCircle(cx, cy, sizePx / 2f, glowPaint)
+
+    // White border
+    val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.WHITE
+        style = Paint.Style.FILL
+    }
+    canvas.drawCircle(cx, cy, radius + 2f * density, borderPaint)
+
+    // Blue fill
+    val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.parseColor("#4285F4")
+        style = Paint.Style.FILL
+    }
+    canvas.drawCircle(cx, cy, radius, fillPaint)
+
+    return bitmap
+}
+
+/**
  * Creates a circle marker bitmap for team locations.
  */
 fun createCircleMarkerBitmap(colorInt: Int, sizePx: Int = 48): Bitmap {
