@@ -203,11 +203,6 @@ class PlayerViewModel @Inject constructor(
             runCatching {
                 playerRepository.checkIn(auth, baseId, online)
             }.onSuccess { result ->
-                _state.value = _state.value.copy(
-                    activeCheckIn = result.response,
-                    scanError = null,
-                    authExpired = false,
-                )
                 // Optimistic update: mark base as checked-in locally before
                 // refresh() replaces progress with (potentially stale) API data.
                 updateLocalBaseStatus(baseId, BaseStatus.CHECKED_IN)
@@ -217,9 +212,20 @@ class PlayerViewModel @Inject constructor(
                     launch { playerRepository.trySyncPendingActions(auth) }
                     OfflineSyncWorker.enqueue(context)
                 }
-                refresh(auth, online)
                 // Send location immediately after check-in (matches iOS behavior)
                 launch { locationService.sendLocationNow() }
+                // Auto-submit for check-in-only challenges — no user interaction needed.
+                val challenge = result.response.challenge
+                if (challenge != null && challenge.answerType == "none") {
+                    submitNone(auth, baseId, challenge.id.toString(), online)
+                } else {
+                    _state.value = _state.value.copy(
+                        activeCheckIn = result.response,
+                        scanError = null,
+                        authExpired = false,
+                    )
+                    refresh(auth, online)
+                }
             }.onFailure { err ->
                 val authExpired = ApiErrorParser.isAuthExpired(err)
                 _state.value = _state.value.copy(

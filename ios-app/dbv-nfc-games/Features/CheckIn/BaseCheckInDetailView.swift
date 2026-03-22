@@ -12,6 +12,9 @@ struct BaseCheckInDetailView: View {
 
     @State private var challenge: CheckInResponse.ChallengeInfo?
     @State private var isLoading = true
+    @State private var isAutoSubmitting = false
+    @State private var autoSubmitResult: SubmissionResponse?
+    @State private var showAutoSubmitResult = false
 
     private var base: BaseProgress? {
         appState.progressForBase(baseId)
@@ -111,27 +114,42 @@ struct BaseCheckInDetailView: View {
                         .padding(.top, 4)
                     }
 
-                    // Solve button
+                    // Solve button / auto-submit
                     if status == .checkedIn || status == .rejected {
-                        NavigationLink {
-                            SolveView(
-                                baseId: baseId,
-                                challengeId: challenge.id,
-                                baseName: base?.baseName ?? locale.t("base.defaultName"),
-                                requirePresenceToSubmit: challenge.requirePresenceToSubmit,
-                                answerType: challenge.answerType,
-                                dismissToMap: popToRoot
-                            )
-                        } label: {
-                            Label(locale.t("base.solveChallenge"), systemImage: "lightbulb.fill")
-                                .font(.headline)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.accentColor)
-                                .foregroundStyle(.white)
-                                .clipShape(RoundedRectangle(cornerRadius: 14))
+                        if challenge.answerType == "none" {
+                            // Auto-submit for check-in-only challenges
+                            if isAutoSubmitting {
+                                ProgressView()
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                            } else {
+                                // Auto-submit triggers on appear
+                                Color.clear.frame(height: 0)
+                                    .task(id: status) {
+                                        await autoSubmitNone(challengeId: challenge.id)
+                                    }
+                            }
+                        } else {
+                            NavigationLink {
+                                SolveView(
+                                    baseId: baseId,
+                                    challengeId: challenge.id,
+                                    baseName: base?.baseName ?? locale.t("base.defaultName"),
+                                    requirePresenceToSubmit: challenge.requirePresenceToSubmit,
+                                    answerType: challenge.answerType,
+                                    dismissToMap: popToRoot
+                                )
+                            } label: {
+                                Label(locale.t("base.solveChallenge"), systemImage: "lightbulb.fill")
+                                    .font(.headline)
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Color.accentColor)
+                                    .foregroundStyle(.white)
+                                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                            }
+                            .padding(.top, 8)
                         }
-                        .padding(.top, 8)
                     } else if status == .completed {
                         Label(locale.t("base.challengeCompleted"), systemImage: "checkmark.seal.fill")
                             .font(.headline)
@@ -162,8 +180,32 @@ struct BaseCheckInDetailView: View {
         }
         .navigationTitle(base?.baseName ?? locale.t("base.defaultName"))
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(isPresented: $showAutoSubmitResult) {
+            if let result = autoSubmitResult {
+                SubmissionResultView(
+                    submission: result,
+                    baseName: base?.baseName ?? locale.t("base.defaultName"),
+                    dismissToMap: popToRoot
+                )
+            }
+        }
         .task {
             await loadChallenge()
+        }
+    }
+
+    private func autoSubmitNone(challengeId: UUID) async {
+        guard !isAutoSubmitting else { return }
+        isAutoSubmitting = true
+        let result = await appState.submitAnswer(
+            baseId: baseId,
+            challengeId: challengeId,
+            answer: ""
+        )
+        isAutoSubmitting = false
+        if let result {
+            autoSubmitResult = result
+            showAutoSubmitResult = true
         }
     }
 
