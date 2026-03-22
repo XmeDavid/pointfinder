@@ -35,11 +35,6 @@ class OfflineSyncWorker @AssistedInject constructor(
         val auth = sessionStore.currentAuthType()
         if (auth !is AuthType.Player) return Result.success()
 
-        // Check game status before syncing queued actions
-        val gameStatus = runCatching {
-            playerRepository.loadProgress(auth, true).gameStatus
-        }.getOrNull()
-
         val pending = prioritizedPendingActions(playerRepository.pendingActions())
 
         pending.forEach { action ->
@@ -132,7 +127,7 @@ class OfflineSyncWorker @AssistedInject constructor(
                 .setConstraints(constraints)
                 .build()
             WorkManager.getInstance(context)
-                .enqueueUniqueWork(UNIQUE_WORK, ExistingWorkPolicy.KEEP, request)
+                .enqueueUniqueWork(UNIQUE_WORK, ExistingWorkPolicy.APPEND_OR_REPLACE, request)
         }
     }
 }

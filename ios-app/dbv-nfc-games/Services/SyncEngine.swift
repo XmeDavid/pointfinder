@@ -99,6 +99,7 @@ final class SyncEngine {
 
         isSyncing = true
         lastSyncError = nil
+        defer { isSyncing = false }
 
         let actions = await offlineQueue.allPending()
 
@@ -118,8 +119,6 @@ final class SyncEngine {
         for action in mediaSubmissions {
             await processAction(action)
         }
-
-        isSyncing = false
 
         // Refresh progress from server after sync
         await onSyncComplete?()
