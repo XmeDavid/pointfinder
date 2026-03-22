@@ -116,7 +116,7 @@ struct SummaryStatsView: View {
         HStack(spacing: 12) {
             StatBadge(count: completedCount, label: locale.t("status.completed"), color: .green)
             StatBadge(count: pendingCount, label: locale.t("map.pending"), color: .orange)
-            StatBadge(count: checkedInCount, label: locale.t("status.checkedIn"), color: .blue)
+            StatBadge(count: checkedInCount, label: locale.t("common.checkedIn"), color: .blue)
             StatBadge(count: notVisitedCount + rejectedCount, label: locale.t("operator.remaining"), color: .gray)
         }
     }

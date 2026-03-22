@@ -20,9 +20,9 @@ enum BaseStatus: String, Codable {
     /// Translation key for use with `locale.t()` in views.
     var translationKey: String {
         switch self {
-        case .notVisited: return "status.notVisited"
-        case .checkedIn: return "status.checkedIn"
-        case .submitted: return "status.pendingReview"
+        case .notVisited: return "common.notVisited"
+        case .checkedIn: return "common.checkedIn"
+        case .submitted: return "common.pendingReview"
         case .completed: return "status.completed"
         case .rejected: return "status.rejected"
         }
