@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Settings
@@ -52,6 +53,7 @@ fun MoreScreen(
     onNotificationSettingsChanged: (Boolean, Boolean, Boolean) -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToNotifications: () -> Unit,
+    onNavigateToTeams: () -> Unit,
     onNavigateToOperators: () -> Unit,
     onExportGame: () -> Unit,
     onSwitchGame: () -> Unit,
@@ -89,6 +91,11 @@ fun MoreScreen(
                     icon = Icons.Default.Notifications,
                     label = stringResource(R.string.label_send_notifications),
                     onClick = onNavigateToNotifications,
+                )
+                NavigationRow(
+                    icon = Icons.Default.Group,
+                    label = stringResource(R.string.label_teams),
+                    onClick = onNavigateToTeams,
                 )
                 NavigationRow(
                     icon = Icons.Default.People,

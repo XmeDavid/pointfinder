@@ -47,6 +47,12 @@ struct OperatorMoreView: View {
                     }
 
                     NavigationLink {
+                        TeamsManagementView(game: game)
+                    } label: {
+                        Label(locale.t("operator.teams"), systemImage: "person.3")
+                    }
+
+                    NavigationLink {
                         OperatorsManagementView(game: game)
                     } label: {
                         Label(locale.t("operator.operators"), systemImage: "person.2")
