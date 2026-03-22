@@ -1,0 +1,1 @@
+ALTER TABLE players ALTER COLUMN push_platform DROP NOT NULL;
