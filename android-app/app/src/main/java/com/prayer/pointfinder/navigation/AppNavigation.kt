@@ -1531,6 +1531,43 @@ private fun OperatorGameRoot(
                             onBack = { moreSubScreen = null },
                         )
                     }
+                    moreSubScreen?.startsWith("team_detail:") == true -> {
+                        val teamId = moreSubScreen!!.removePrefix("team_detail:")
+                        val team = state.teams.firstOrNull { it.id == teamId }
+                        if (team != null) {
+                            var players by remember(teamId) { mutableStateOf<List<PlayerResponse>>(emptyList()) }
+                            LaunchedEffect(teamId) {
+                                viewModel.loadTeamPlayers(teamId) { players = it }
+                            }
+                            TeamDetailScreen(
+                                team = team,
+                                players = players,
+                                variables = state.variables,
+                                onSave = { request ->
+                                    viewModel.updateTeam(team.id, request) {
+                                        moreSubScreen = "teams_list"
+                                        scope.launch { snackbarHostState.showSnackbar(context.getString(com.prayer.pointfinder.core.i18n.R.string.toast_team_saved)) }
+                                    }
+                                },
+                                onDelete = {
+                                    viewModel.deleteTeam(team.id) {
+                                        moreSubScreen = "teams_list"
+                                    }
+                                },
+                                onRemovePlayer = { playerId ->
+                                    viewModel.removePlayer(team.id, playerId) {
+                                        viewModel.loadTeamPlayers(teamId) { players = it }
+                                    }
+                                },
+                                onSaveVariableValue = { variableKey, value ->
+                                    viewModel.saveTeamVariableValue(variableKey, team.id, value)
+                                },
+                                onBack = { moreSubScreen = "teams_list" },
+                            )
+                        } else {
+                            moreSubScreen = "teams_list"
+                        }
+                    }
                     else -> {
                         MoreScreen(
                             currentLanguage = currentLanguage,
