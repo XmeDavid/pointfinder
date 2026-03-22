@@ -132,7 +132,7 @@ fun PlayerMapScreen(
             val existingMarker = currentMarkers.firstOrNull { it.snippet == item.baseId }
             if (existingMarker != null) {
                 // Update existing marker icon/position in case status changed
-                val icon = iconFactory.fromBitmap(createPinMarkerBitmap(statusColor(item.status), item.status, density, false))
+                val icon = iconFactory.fromBitmap(createPinMarkerBitmap(statusColorInt(item.status), item.status, density))
                 existingMarker.icon = icon
                 existingMarker.position = LatLng(item.lat, item.lng)
                 existingMarker.title = item.baseName
