@@ -24,4 +24,5 @@ public class ChallengeResponse {
     private Boolean locationBound;
     private Boolean requirePresenceToSubmit;
     private List<UUID> unlocksBaseIds;
+    private UUID fixedBaseId;
 }

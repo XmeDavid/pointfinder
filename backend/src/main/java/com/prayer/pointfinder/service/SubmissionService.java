@@ -138,9 +138,22 @@ public class SubmissionService {
         Integer points = (status == SubmissionStatus.approved || status == SubmissionStatus.correct)
                 ? challenge.getPoints() : null;
 
-        // Ensure every submission has a unique idempotency key to prevent duplicates
+        // Guard against duplicate auto-approved submissions when no idempotency key is provided.
+        // Without this check, a client retry without an idempotency key would create duplicate
+        // submissions and award points multiple times (finding 7.2).
         UUID idempotencyKey = request.getIdempotencyKey();
         if (idempotencyKey == null) {
+            if (status == SubmissionStatus.approved || status == SubmissionStatus.correct) {
+                List<Submission> existing = submissionRepository.findByTeamIdAndChallengeIdAndBaseId(
+                        request.getTeamId(), request.getChallengeId(), request.getBaseId());
+                if (!existing.isEmpty()) {
+                    Submission sub = existing.get(0);
+                    sub.getTeam().getId();
+                    sub.getChallenge().getId();
+                    sub.getBase().getId();
+                    return toResponse(sub);
+                }
+            }
             idempotencyKey = java.util.UUID.randomUUID();
         }
 

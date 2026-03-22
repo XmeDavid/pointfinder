@@ -99,7 +99,7 @@ fun TeamDetailScreen(
                 actions = {
                     Box {
                         IconButton(onClick = { showMenuExpanded = true }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = null)
+                            Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.action_more_options))
                         }
                         DropdownMenu(
                             expanded = showMenuExpanded,

@@ -27,6 +27,7 @@
     <string name="action_cancel">Cancel</string>
     <string name="action_approve">Approve</string>
     <string name="action_reject">Reject</string>
+    <string name="action_more_options">More options</string>
     <string name="nfc_scan_dialog_title">Scan NFC Tag</string>
     <string name="nfc_scan_dialog_message">Hold your phone near the NFC tag at the base</string>
     <string name="nfc_write_dialog_message">Hold your phone near the NFC tag you want to write</string>

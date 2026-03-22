@@ -104,7 +104,7 @@ public class OperatorPushNotificationService {
 
     private void sendByPlatform(List<User> targets, String title, String body, Map<String, String> customData) {
         List<String> apnsTokens = targets.stream()
-                .filter(u -> u.getPushPlatform() == null || u.getPushPlatform() == PushPlatform.ios)
+                .filter(u -> u.getPushPlatform() == PushPlatform.ios)
                 .map(User::getPushToken)
                 .filter(Objects::nonNull)
                 .toList();

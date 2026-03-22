@@ -66,11 +66,11 @@ Design decisions made while fixing findings from `docs/full-codebase-audit-2026-
 
 ## Finding 7.2 -- Idempotency key for auto-approve submissions
 
-**Decision:** Generate a deterministic idempotency key (`player:{playerId}:challenge:{challengeId}:base:{baseId}`) when no key is provided in the submission request.
+**Decision:** Added a server-side duplicate check by team+challenge+base for auto-approved/correct submissions when no idempotency key is provided. If a matching submission already exists, return it instead of creating a duplicate.
 
-**Alternatives considered:** (a) Random UUID; (b) Require clients to always send a key.
+**Alternatives considered:** (a) Deterministic idempotency key from player+challenge+base (previous approach, but does not account for player identity in the key since submissions are team-scoped); (b) Require clients to always send a key (breaking change); (c) DB unique constraint on team+challenge+base (prevents legitimate re-submissions after rejection).
 
-**Rationale:** Deterministic key prevents duplicate auto-approve submissions from offline queues replaying. Random UUID would not prevent duplicates. Requiring client changes is more invasive.
+**Rationale:** The duplicate check only applies to auto-resolved submissions (approved/correct) where points are awarded immediately, which is where the real data integrity risk lies. Pending submissions that go through operator review are unaffected. This approach is backwards-compatible and preserves the ability to re-submit after rejection.
 
 ---
 

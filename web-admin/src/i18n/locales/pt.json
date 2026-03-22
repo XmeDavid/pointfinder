@@ -385,6 +385,8 @@
     "answer": "Resposta",
     "notes": "Notas",
     "noNotes": "Sem notas",
+    "altVideo": "Vídeo da submissão",
+    "altImage": "Imagem da submissão",
     "feedbackLabel": "Feedback (opcional)",
     "feedbackPlaceholder": "Feedback opcional para a equipa...",
     "reject": "Rejeitar",

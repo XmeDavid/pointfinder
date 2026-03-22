@@ -42,6 +42,13 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
     @Query("SELECT COUNT(s) FROM Submission s WHERE s.team.game.id = :gameId")
     long countByGameId(@Param("gameId") UUID gameId);
 
+    @Query("SELECT s FROM Submission s LEFT JOIN FETCH s.team LEFT JOIN FETCH s.challenge LEFT JOIN FETCH s.base " +
+           "WHERE s.team.id = :teamId AND s.challenge.id = :challengeId AND s.base.id = :baseId")
+    List<Submission> findByTeamIdAndChallengeIdAndBaseId(
+            @Param("teamId") UUID teamId,
+            @Param("challengeId") UUID challengeId,
+            @Param("baseId") UUID baseId);
+
     long countByBaseId(UUID baseId);
 
     long countByChallengeId(UUID challengeId);

@@ -59,8 +59,12 @@ public class FileController {
 
         String contentType = determineContentType(filename);
 
+        // Sanitize filename for Content-Disposition header to prevent header injection
+        String safeFilename = filename.replaceAll("[^a-zA-Z0-9._-]", "_");
+
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + safeFilename + "\"")
                 .header(HttpHeaders.CACHE_CONTROL, "private, max-age=86400")
                 .body(resource);
     }

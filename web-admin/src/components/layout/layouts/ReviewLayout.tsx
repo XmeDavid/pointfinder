@@ -28,7 +28,7 @@ function FullScreenMediaViewer({ urls, index, onPrev, onNext }: { urls: string[]
     <div className="relative">
       <AuthMedia
         src={currentUrl}
-        alt={currentUrl.includes("video") ? "Submission video" : "Submission image"}
+        alt={currentUrl.includes("video") ? t("submissions.altVideo") : t("submissions.altImage")}
         className="w-full h-auto max-h-[85vh] object-contain rounded"
       />
       {hasMultiple && (
@@ -301,7 +301,7 @@ export function ReviewLayout({ gameId, gameStatus }: ReviewLayoutProps) {
                         <div key={url} className="relative group">
                           <AuthMedia
                             src={url}
-                            alt={url.includes("video") ? "Submission video" : "Submission image"}
+                            alt={url.includes("video") ? t("submissions.altVideo") : t("submissions.altImage")}
                             className="rounded-md max-h-80 w-full object-contain bg-muted cursor-pointer"
                             onClick={() => setFullScreenMedia({ urls: mediaUrls, index: idx })}
                             onBlobReady={(blob) => blobCache.current.set(url, blob)}

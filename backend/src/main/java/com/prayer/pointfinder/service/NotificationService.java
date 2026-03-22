@@ -94,7 +94,7 @@ public class NotificationService {
 
         if (!pushTargets.isEmpty()) {
             List<String> apnsTokens = pushTargets.stream()
-                    .filter(p -> p.getPushPlatform() == null || p.getPushPlatform() == PushPlatform.ios)
+                    .filter(p -> p.getPushPlatform() == PushPlatform.ios)
                     .map(Player::getPushToken)
                     .filter(java.util.Objects::nonNull)
                     .toList();

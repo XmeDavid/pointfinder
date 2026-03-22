@@ -253,7 +253,10 @@ struct MapLibreMapView: UIViewRepresentable {
                 ?? SwiftUIAnnotationView(reuseIdentifier: reuseId)
 
             if let swiftUIView = annotationView as? SwiftUIAnnotationView {
-                swiftUIView.configure(with: item.view)
+                // Pass parentViewController so the hosting controller is properly added
+                // as a child VC, ensuring correct lifecycle events (Dynamic Type, dark mode)
+                let parentVC = mapView.parentViewController
+                swiftUIView.configure(with: item.view, parentViewController: parentVC)
             }
 
             return annotationView
@@ -345,5 +348,20 @@ class SwiftUIAnnotationView: MLNAnnotationView {
             hc.willMove(toParent: nil)
             hc.removeFromParent()
         }
+    }
+}
+
+// MARK: - UIView extension for finding parent view controller
+
+private extension UIView {
+    var parentViewController: UIViewController? {
+        var responder: UIResponder? = next
+        while let r = responder {
+            if let vc = r as? UIViewController {
+                return vc
+            }
+            responder = r.next
+        }
+        return nil
     }
 }

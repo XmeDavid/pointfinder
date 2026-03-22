@@ -559,6 +559,8 @@ private fun PlayerRootScreen(
     LaunchedEffect(auth.gameId, isOnline) {
         viewModel.refresh(auth, isOnline)
         if (isOnline) viewModel.loadUnseenCount()
+        // Check for permanently failed sync actions and warn the user (finding 11.2)
+        viewModel.checkForFailedActions(auth)
     }
 
     LaunchedEffect(auth.gameId, isOnline, state.realtimeConnected) {

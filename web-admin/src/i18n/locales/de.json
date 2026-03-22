@@ -385,6 +385,8 @@
     "answer": "Antwort",
     "notes": "Notizen",
     "noNotes": "Keine Notizen",
+    "altVideo": "Einreichungsvideo",
+    "altImage": "Einreichungsbild",
     "feedbackLabel": "Feedback (optional)",
     "feedbackPlaceholder": "Optionales Feedback für das Team...",
     "reject": "Ablehnen",

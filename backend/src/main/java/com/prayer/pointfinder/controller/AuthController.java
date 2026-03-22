@@ -47,8 +47,11 @@ public class AuthController {
     @PostMapping("/request-registration")
     public ResponseEntity<MessageResponse> requestRegistration(
             @Valid @RequestBody RequestRegistrationRequest request,
+            @RequestHeader(value = "X-Forwarded-Host", required = false) String forwardedHost,
             HttpServletRequest httpRequest) {
-        String requestHost = httpRequest.getHeader("Host");
+        // Prefer X-Forwarded-Host (set by reverse proxy) over Host header for consistency
+        // with other endpoints (e.g., forgot-password) and to avoid spoofing risks
+        String requestHost = forwardedHost != null ? forwardedHost : httpRequest.getHeader("Host");
         authService.requestRegistration(request.getEmail().trim(), requestHost);
         return ResponseEntity.ok(new MessageResponse("If eligible, a registration link has been sent."));
     }

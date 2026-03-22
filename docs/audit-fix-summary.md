@@ -45,10 +45,12 @@ Legend: [D] = required a design decision (see `docs/audit-decisions.md`)
 | # | Status | What was done |
 |---|--------|---------------|
 | 3.3 | Fixed | Added `seek(toOffset:)` to skip already-uploaded chunks in SyncEngine resumable upload |
+| 3.5 | Acknowledged | Receive loop structure is correct due to optional chaining; noted for MainActor awareness |
 | 3.4 | Fixed | Deferred Task launch to a separate `startAsyncSetup()` method called after init |
 | 3.6 | Fixed | Added `isSendingLocation` guard to prevent overlapping location send Tasks |
 | 3.7 | Fixed | Made logout await offline queue clearing before proceeding |
 | 3.8 | Fixed | Marked `onCountChanged` callback as `@Sendable` |
+| 3.9 | Acknowledged | AppState God Object tendency noted; extension files provide logical separation; deferred to dedicated refactor |
 | 3.10 | Fixed | Extracted duplicated polling logic to shared `startProgressPollingTask()` method |
 | 3.12 | Fixed | Changed SolveView to pass video URL for chunked upload instead of loading full Data into memory |
 | 3.13 | Fixed | Added `@MainActor` annotation to NFCReaderService |
@@ -115,13 +117,14 @@ Legend: [D] = required a design decision (see `docs/audit-decisions.md`)
 | 6.12 | Fixed | Overrode `equals()`/`hashCode()` on data class containing ByteArray |
 | 6.13 | Fixed | Added `key` parameters to LazyColumn items() calls in RichTextEditorScreen |
 | 6.14 | Fixed | Added `key` parameter to LazyRow color picker items in TeamsListScreen |
+| 6.16 | Fixed [D] | Added contentDescription to standalone interactive IconButtons (overflow menus) across 5 operator screens |
 | 6.17 | Fixed | Added `requirePresenceToSubmit` field to offline cache in PlayerRepository |
 
 ## 7. Distributed Skeptic
 
 | # | Status | What was done |
 |---|--------|---------------|
-| 7.2 | Fixed [D] | Generate deterministic idempotency key when none provided |
+| 7.2 | Fixed [D] | Added server-side duplicate check for auto-approved submissions without idempotency key |
 | 7.3 | Fixed | Added reverse session-to-games mapping in MobileRealtimeHub for O(1) unregister |
 | 7.4 | Fixed | Added game-state validation before syncing in both iOS SyncEngine and Android OfflineSyncWorker |
 | 7.5 | Fixed [D] | Added push token cleanup in ApnsPushService and FcmPushService on invalid token errors |

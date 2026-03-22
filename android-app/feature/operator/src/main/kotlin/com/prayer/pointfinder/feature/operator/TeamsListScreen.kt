@@ -90,7 +90,7 @@ fun TeamsListScreen(
                     if (onManageVariables != null) {
                         Box {
                             IconButton(onClick = { showOverflowMenu = true }) {
-                                Icon(Icons.Default.MoreVert, contentDescription = null)
+                                Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.action_more_options))
                             }
                             DropdownMenu(
                                 expanded = showOverflowMenu,

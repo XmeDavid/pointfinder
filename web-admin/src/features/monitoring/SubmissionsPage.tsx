@@ -31,7 +31,7 @@ function FullScreenMediaViewer({ urls, index, onPrev, onNext }: { urls: string[]
     <div className="relative">
       <AuthMedia
         src={currentUrl}
-        alt={currentUrl.includes("video") ? "Submission video" : "Submission image"}
+        alt={currentUrl.includes("video") ? t("submissions.altVideo") : t("submissions.altImage")}
         className="w-full h-auto max-h-[85vh] object-contain rounded"
       />
       {hasMultiple && (
@@ -263,7 +263,7 @@ export function SubmissionsPage() {
                       <div className="space-y-2">
                         {mediaUrls.map((url, idx) => (
                           <div key={url} className="relative group">
-                            <AuthMedia src={url} alt={url.includes("video") ? "Submission video" : "Submission image"} className="rounded-md max-h-64 w-full object-contain bg-muted cursor-pointer" onClick={() => openFullScreen(mediaUrls, idx)} onBlobReady={(blob) => cacheBlobUrl(url, blob)} />
+                            <AuthMedia src={url} alt={url.includes("video") ? t("submissions.altVideo") : t("submissions.altImage")} className="rounded-md max-h-64 w-full object-contain bg-muted cursor-pointer" onClick={() => openFullScreen(mediaUrls, idx)} onBlobReady={(blob) => cacheBlobUrl(url, blob)} />
                             <button className="absolute top-2 right-2 p-1 rounded bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => openFullScreen(mediaUrls, idx)}><Maximize2 className="h-4 w-4" /></button>
                           </div>
                         ))}

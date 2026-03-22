@@ -235,6 +235,8 @@ public class ChallengeService {
         List<UUID> unlocksBaseIds = c.getUnlocksBases().stream()
                 .map(Base::getId)
                 .collect(Collectors.toList());
+        List<Base> fixedBases = baseRepository.findByFixedChallengeId(c.getId());
+        UUID fixedBaseId = fixedBases.isEmpty() ? null : fixedBases.get(0).getId();
         return ChallengeResponse.builder()
                 .id(c.getId())
                 .gameId(c.getGame().getId())
@@ -249,6 +251,7 @@ public class ChallengeService {
                 .locationBound(c.getLocationBound())
                 .requirePresenceToSubmit(c.getRequirePresenceToSubmit())
                 .unlocksBaseIds(unlocksBaseIds)
+                .fixedBaseId(fixedBaseId)
                 .build();
     }
 }

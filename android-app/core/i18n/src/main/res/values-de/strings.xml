@@ -27,6 +27,7 @@
     <string name="action_cancel">Abbrechen</string>
     <string name="action_approve">Freigeben</string>
     <string name="action_reject">Ablehnen</string>
+    <string name="action_more_options">Weitere Optionen</string>
     <string name="nfc_scan_dialog_title">NFC-Tag scannen</string>
     <string name="nfc_scan_dialog_message">Halte dein Telefon an den NFC-Tag an der Station</string>
     <string name="nfc_write_dialog_message">Halte dein Telefon an den NFC-Tag, den du schreiben möchtest</string>
