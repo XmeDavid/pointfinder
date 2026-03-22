@@ -25,9 +25,10 @@ public final class HtmlSanitizer {
             .allowElements("img")
             .allowAttributes("src", "alt", "width", "height").onElements("img")
             .allowUrlProtocols("https", "http")
-            // Audio (rich text editor support)
+            // Audio (rich text editor support) — src on audio with data: for base64 inline audio
             .allowElements("audio", "source")
-            .allowAttributes("controls", "preload").onElements("audio")
+            .allowAttributes("controls", "preload", "src").onElements("audio")
+            .allowUrlProtocols("https", "http", "data")
             .allowAttributes("src", "type").onElements("source")
             // Class attribute only for styling (not inline style attribute)
             .allowAttributes("class").globally()
