@@ -50,7 +50,7 @@ struct ChallengesManagementView: View {
                                 Text(challenge.title)
                                     .font(.headline)
                                 HStack(spacing: 6) {
-                                    Text(challenge.answerType == "text" ? locale.t("operator.textInput") : locale.t("operator.fileUpload"))
+                                    Text(challenge.answerType == "none" ? locale.t("common.checkIn") : challenge.answerType == "file" ? locale.t("operator.fileUpload") : locale.t("operator.textInput"))
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
                                     if challenge.locationBound {

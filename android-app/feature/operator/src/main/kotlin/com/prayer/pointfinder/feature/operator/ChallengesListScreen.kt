@@ -92,10 +92,10 @@ fun ChallengesListScreen(
                     val linkedBaseName = fixedBaseAssignment?.let { assignment ->
                         bases.firstOrNull { it.id == assignment.baseId }?.name
                     } ?: bases.firstOrNull { it.fixedChallengeId == challenge.id }?.name
-                    val answerTypeBadge = if (challenge.answerType == "file") {
-                        stringResource(R.string.label_file_upload)
-                    } else {
-                        stringResource(R.string.label_text_input)
+                    val answerTypeBadge = when (challenge.answerType) {
+                        "file" -> stringResource(R.string.label_file_upload)
+                        "none" -> stringResource(R.string.label_check_in_only)
+                        else -> stringResource(R.string.label_text_input)
                     }
 
                     Surface(
