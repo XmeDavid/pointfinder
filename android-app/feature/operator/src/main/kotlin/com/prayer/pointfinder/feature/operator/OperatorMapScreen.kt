@@ -551,10 +551,21 @@ fun OperatorMapScreen(
     // Edit mode bottom sheet for base actions
     if (editSheetBase != null) {
         val base = editSheetBase!!
-        val challengeCount = assignments.count { it.baseId == base.id }
+        val baseAssignments = assignments.filter { it.baseId == base.id }
+        val perTeamCount = baseAssignments.count { it.teamId != null }
+        val globalAssignment = baseAssignments.firstOrNull { it.teamId == null }
+        val challengeSubtitle = when {
+            perTeamCount >= 2 -> context.getString(R.string.label_custom_assignment)
+            perTeamCount == 1 && globalAssignment == null -> context.getString(R.string.label_custom_assignment)
+            globalAssignment != null -> challenges.firstOrNull { it.id == globalAssignment.challengeId }?.title
+                ?: context.getString(R.string.label_no_challenge)
+            base.fixedChallengeId != null -> challenges.firstOrNull { it.id == base.fixedChallengeId }?.title
+                ?: context.getString(R.string.label_no_challenge)
+            else -> context.getString(R.string.label_no_challenge)
+        }
         BaseEditActionSheet(
             base = base,
-            challengeCount = challengeCount,
+            challengeSubtitle = challengeSubtitle,
             onEditBase = {
                 editSheetBase = null
                 onEditBase(base)
@@ -576,7 +587,7 @@ fun OperatorMapScreen(
 @Composable
 fun BaseEditActionSheet(
     base: Base,
-    challengeCount: Int,
+    challengeSubtitle: String,
     onEditBase: () -> Unit,
     onAddChallenge: () -> Unit,
     onWriteNfc: () -> Unit,
@@ -605,7 +616,7 @@ fun BaseEditActionSheet(
                 }
                 CapsuleBadge(label = nfcLabel, color = nfcColor)
                 CapsuleBadge(
-                    label = stringResource(R.string.label_challenges_at_base, challengeCount),
+                    label = challengeSubtitle,
                     color = BadgeIndigo,
                 )
             }
