@@ -80,8 +80,8 @@ struct ChallengeEditView: View {
         self.onSaved = onSaved
         self.onDeleted = onDeleted
         self._title = State(initialValue: challenge?.title ?? "")
-        self._points = State(initialValue: challenge?.points ?? 0)
-        self._pointsText = State(initialValue: String(challenge?.points ?? 0))
+        self._points = State(initialValue: challenge?.points ?? 100)
+        self._pointsText = State(initialValue: String(challenge?.points ?? 100))
         self._descriptionText = State(initialValue: challenge?.description ?? "")
         self._contentHtml = State(initialValue: challenge?.content ?? "")
         self._completionContentHtml = State(initialValue: challenge?.completionContent ?? "")

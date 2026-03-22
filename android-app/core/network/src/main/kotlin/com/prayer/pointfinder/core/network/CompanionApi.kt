@@ -420,6 +420,7 @@ class ApiFactory {
                 ignoreUnknownKeys = true
                 isLenient = true
                 explicitNulls = false
+                encodeDefaults = true
             },
         ): CompanionApi {
             val contentType = "application/json".toMediaType()

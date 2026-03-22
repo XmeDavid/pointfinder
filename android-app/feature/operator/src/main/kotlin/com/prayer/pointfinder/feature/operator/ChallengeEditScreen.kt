@@ -85,8 +85,8 @@ fun ChallengeEditScreen(
 
     // Form state
     var title by remember { mutableStateOf(challenge?.title ?: "") }
-    var points by remember { mutableIntStateOf(challenge?.points ?: 0) }
-    var pointsText by remember { mutableStateOf(challenge?.points?.toString() ?: "0") }
+    var points by remember { mutableIntStateOf(challenge?.points ?: 100) }
+    var pointsText by remember { mutableStateOf(challenge?.points?.toString() ?: "100") }
     var descriptionHtml by remember { mutableStateOf(challenge?.description ?: "") }
     var contentHtml by remember { mutableStateOf(challenge?.content ?: "") }
     var completionContentHtml by remember { mutableStateOf(challenge?.completionContent ?: "") }
