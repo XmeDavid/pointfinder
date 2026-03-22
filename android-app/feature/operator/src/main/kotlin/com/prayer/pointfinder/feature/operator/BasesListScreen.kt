@@ -86,7 +86,9 @@ fun BasesListScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(bases, key = { it.id }) { base ->
-                    val challengeCount = assignments.count { it.baseId == base.id }
+                    val fromAssignments = assignments.count { it.baseId == base.id }
+                    val hasFixedChallenge = if (base.fixedChallengeId != null) 1 else 0
+                    val challengeCount = maxOf(fromAssignments, hasFixedChallenge)
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
