@@ -1,7 +1,7 @@
 import Foundation
 @preconcurrency import CoreNFC
 
-extension NFCTagReaderSession: @unchecked Sendable {}
+extension NFCTagReaderSession: @retroactive @unchecked Sendable {}
 
 @Observable
 @MainActor
@@ -84,37 +84,35 @@ extension NFCReaderService: NFCTagReaderSessionDelegate {
             return
         }
 
-        nonisolated(unsafe) let capturedSession = session
         session.connect(to: tag) { [weak self] error in
             if let error = error {
-                capturedSession.invalidate(errorMessage: error.localizedDescription)
+                session.invalidate(errorMessage: error.localizedDescription)
                 return
             }
 
             guard let ndefTag = NFCTagHelper.ndefTag(from: tag) else {
-                capturedSession.invalidate(errorMessage: Translations.string("nfc.noTagFound"))
+                session.invalidate(errorMessage: Translations.string("nfc.noTagFound"))
                 return
             }
 
-            self?.readNDEFFromTag(ndefTag, session: capturedSession)
+            self?.readNDEFFromTag(ndefTag, session: session)
         }
     }
 
     private nonisolated func readNDEFFromTag(_ tag: NFCNDEFTag, session: NFCTagReaderSession) {
-        nonisolated(unsafe) let capturedSession = session
         tag.readNDEF { [weak self] message, error in
             if let error = error {
-                capturedSession.invalidate(errorMessage: error.localizedDescription)
+                session.invalidate(errorMessage: error.localizedDescription)
                 return
             }
 
             guard let message = message, let record = message.records.first else {
-                capturedSession.invalidate(errorMessage: Translations.string("nfc.noDataOnTag"))
+                session.invalidate(errorMessage: Translations.string("nfc.noDataOnTag"))
                 return
             }
 
             Task { @MainActor in
-                self?.processRecord(record, session: capturedSession)
+                self?.processRecord(record, session: session)
             }
         }
     }
