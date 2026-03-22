@@ -630,7 +630,7 @@ class OperatorViewModel @Inject constructor(
 
     // ── Challenge management ────────────────────────────────────────────
 
-    fun createChallenge(request: CreateChallengeRequest, onSuccess: (Challenge) -> Unit) {
+    fun createChallenge(request: CreateChallengeRequest, onSuccess: (Challenge) -> Unit, onError: (String) -> Unit = {}) {
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
             runCatching { challengeManagementUseCase.createChallenge(gameId, request) }
@@ -641,12 +641,14 @@ class OperatorViewModel @Inject constructor(
                 }
                 .onFailure { e ->
                     if (markAuthExpiredIfNeeded(e)) return@onFailure
-                    _state.value = _state.value.copy(errorMessage = friendlyError(e))
+                    val msg = friendlyError(e)
+                    _state.value = _state.value.copy(errorMessage = msg)
+                    onError(msg)
                 }
         }
     }
 
-    fun updateChallenge(challengeId: String, request: UpdateChallengeRequest, onSuccess: (Challenge) -> Unit) {
+    fun updateChallenge(challengeId: String, request: UpdateChallengeRequest, onSuccess: (Challenge) -> Unit, onError: (String) -> Unit = {}) {
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
             runCatching { challengeManagementUseCase.updateChallenge(gameId, challengeId, request) }
@@ -657,12 +659,14 @@ class OperatorViewModel @Inject constructor(
                 }
                 .onFailure { e ->
                     if (markAuthExpiredIfNeeded(e)) return@onFailure
-                    _state.value = _state.value.copy(errorMessage = friendlyError(e))
+                    val msg = friendlyError(e)
+                    _state.value = _state.value.copy(errorMessage = msg)
+                    onError(msg)
                 }
         }
     }
 
-    fun deleteChallenge(challengeId: String, onSuccess: () -> Unit) {
+    fun deleteChallenge(challengeId: String, onSuccess: () -> Unit, onError: (String) -> Unit = {}) {
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
             runCatching { challengeManagementUseCase.deleteChallenge(gameId, challengeId) }
@@ -673,7 +677,9 @@ class OperatorViewModel @Inject constructor(
                 }
                 .onFailure { e ->
                     if (markAuthExpiredIfNeeded(e)) return@onFailure
-                    _state.value = _state.value.copy(errorMessage = friendlyError(e))
+                    val msg = friendlyError(e)
+                    _state.value = _state.value.copy(errorMessage = msg)
+                    onError(msg)
                 }
         }
     }

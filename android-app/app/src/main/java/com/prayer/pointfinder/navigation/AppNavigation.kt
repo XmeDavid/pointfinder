@@ -1091,10 +1091,14 @@ private fun OperatorGameRoot(
                             teams = state.teams,
                             variables = state.variables,
                             onSave = { request ->
-                                viewModel.createChallenge(request as CreateChallengeRequest) {
-                                    mapSubScreen = null
-                                    scope.launch { snackbarHostState.showSnackbar(context.getString(com.prayer.pointfinder.core.i18n.R.string.toast_challenge_created)) }
-                                }
+                                viewModel.createChallenge(
+                                    request as CreateChallengeRequest,
+                                    onSuccess = {
+                                        mapSubScreen = null
+                                        scope.launch { snackbarHostState.showSnackbar(context.getString(com.prayer.pointfinder.core.i18n.R.string.toast_challenge_created)) }
+                                    },
+                                    onError = { msg -> scope.launch { snackbarHostState.showSnackbar(msg) } },
+                                )
                             },
                             onDelete = null,
                             onBack = { mapSubScreen = "base_edit:$preLinkedBaseId" },
@@ -1251,10 +1255,14 @@ private fun OperatorGameRoot(
                             teams = state.teams,
                             variables = state.variables,
                             onSave = { request ->
-                                viewModel.createChallenge(request as CreateChallengeRequest) { challenge ->
-                                    setupSubScreen = "challenge_edit:${challenge.id}"
-                                    scope.launch { snackbarHostState.showSnackbar(context.getString(com.prayer.pointfinder.core.i18n.R.string.toast_challenge_created)) }
-                                }
+                                viewModel.createChallenge(
+                                    request as CreateChallengeRequest,
+                                    onSuccess = { challenge ->
+                                        setupSubScreen = "challenge_edit:${challenge.id}"
+                                        scope.launch { snackbarHostState.showSnackbar(context.getString(com.prayer.pointfinder.core.i18n.R.string.toast_challenge_created)) }
+                                    },
+                                    onError = { msg -> scope.launch { snackbarHostState.showSnackbar(msg) } },
+                                )
                             },
                             onDelete = null,
                             onBack = {
@@ -1290,15 +1298,22 @@ private fun OperatorGameRoot(
                                 },
                                 assignments = state.assignments,
                                 onSave = { request ->
-                                    viewModel.updateChallenge(challenge.id, request as UpdateChallengeRequest) {
-                                        setupSubScreen = "challenges_list"
-                                        scope.launch { snackbarHostState.showSnackbar(context.getString(com.prayer.pointfinder.core.i18n.R.string.toast_challenge_saved)) }
-                                    }
+                                    viewModel.updateChallenge(
+                                        challenge.id,
+                                        request as UpdateChallengeRequest,
+                                        onSuccess = {
+                                            setupSubScreen = "challenges_list"
+                                            scope.launch { snackbarHostState.showSnackbar(context.getString(com.prayer.pointfinder.core.i18n.R.string.toast_challenge_saved)) }
+                                        },
+                                        onError = { msg -> scope.launch { snackbarHostState.showSnackbar(msg) } },
+                                    )
                                 },
                                 onDelete = {
-                                    viewModel.deleteChallenge(challenge.id) {
-                                        setupSubScreen = "challenges_list"
-                                    }
+                                    viewModel.deleteChallenge(
+                                        challenge.id,
+                                        onSuccess = { setupSubScreen = "challenges_list" },
+                                        onError = { msg -> scope.launch { snackbarHostState.showSnackbar(msg) } },
+                                    )
                                 },
                                 onBack = { setupSubScreen = "challenges_list" },
                                 onCreateVariable = viewModel::createVariable,

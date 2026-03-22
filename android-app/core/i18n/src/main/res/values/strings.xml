@@ -175,6 +175,7 @@
     <string name="error_scan_nfc_first">Scan a base NFC tag first.</string>
     <string name="error_invalid_join_code">Please enter a valid join code.</string>
     <string name="error_answer_required">Please provide an answer.</string>
+    <string name="error_title_required">Title is required.</string>
     <string name="error_photo_required">At least one media file is required.</string>
     <string name="error_sync_permanently_failed">Some actions could not be synced. Please try again or contact your operator.</string>
     <string name="error_max_media">Maximum 5 media items allowed.</string>
