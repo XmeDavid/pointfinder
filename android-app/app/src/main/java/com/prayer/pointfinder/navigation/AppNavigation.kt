@@ -1069,8 +1069,8 @@ private fun OperatorGameRoot(
                                 .mapNotNull { assignment ->
                                     state.challenges.firstOrNull { it.id == assignment.challengeId }
                                 }
-                            val fixedToBase = state.challenges.filter {
-                                bases.any { b -> b.id == base.id && b.fixedChallengeId == it.id }
+                            val fixedToBase = state.challenges.filter { ch ->
+                                base.fixedChallengeId == ch.id
                             }
                             val linkedChallenges = (fromAssignments + fixedToBase).distinctBy { it.id }
                             BaseEditScreen(
@@ -1225,8 +1225,8 @@ private fun OperatorGameRoot(
                                 .mapNotNull { assignment ->
                                     state.challenges.firstOrNull { it.id == assignment.challengeId }
                                 }
-                            val fixedToBase = state.challenges.filter {
-                                bases.any { b -> b.id == base.id && b.fixedChallengeId == it.id }
+                            val fixedToBase = state.challenges.filter { ch ->
+                                base.fixedChallengeId == ch.id
                             }
                             val linkedChallenges = (fromAssignments + fixedToBase).distinctBy { it.id }
                             BaseEditScreen(
