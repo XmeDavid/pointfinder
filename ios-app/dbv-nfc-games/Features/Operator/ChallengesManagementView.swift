@@ -6,6 +6,7 @@ struct ChallengesManagementView: View {
 
     let game: Game
     var onDismiss: (() -> Void)? = nil
+    var embedded: Bool = false
 
     enum ChallengeNavDestination: Hashable {
         case edit(UUID)
@@ -26,113 +27,121 @@ struct ChallengesManagementView: View {
     }
 
     var body: some View {
-        NavigationStack(path: $path) {
-            Group {
-                if isLoading {
-                    ProgressView(locale.t("operator.loading"))
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if challenges.isEmpty {
-                    ContentUnavailableView(
-                        locale.t("operator.noChallenges"),
-                        systemImage: "questionmark.circle",
-                        description: Text(locale.t("operator.noChallengesDesc"))
-                    )
-                } else {
-                    List(challenges) { challenge in
-                        NavigationLink(value: ChallengeNavDestination.edit(challenge.id)) {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(challenge.title)
-                                        .font(.headline)
-                                    HStack(spacing: 6) {
-                                        Text(challenge.answerType == "text" ? locale.t("operator.textInput") : locale.t("operator.fileUpload"))
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                        if challenge.locationBound {
-                                            Image(systemName: "location.fill")
-                                                .font(.caption2)
-                                                .foregroundStyle(.blue)
-                                        }
-                                    }
-                                    Text(baseNameForChallenge(challenge))
+        if embedded {
+            content
+        } else {
+            NavigationStack(path: $path) {
+                content
+            }
+        }
+    }
+
+    private var content: some View {
+        Group {
+            if isLoading {
+                ProgressView(locale.t("operator.loading"))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if challenges.isEmpty {
+                ContentUnavailableView(
+                    locale.t("operator.noChallenges"),
+                    systemImage: "questionmark.circle",
+                    description: Text(locale.t("operator.noChallengesDesc"))
+                )
+            } else {
+                List(challenges) { challenge in
+                    NavigationLink(value: ChallengeNavDestination.edit(challenge.id)) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(challenge.title)
+                                    .font(.headline)
+                                HStack(spacing: 6) {
+                                    Text(challenge.answerType == "text" ? locale.t("operator.textInput") : locale.t("operator.fileUpload"))
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
+                                    if challenge.locationBound {
+                                        Image(systemName: "location.fill")
+                                            .font(.caption2)
+                                            .foregroundStyle(.blue)
+                                    }
                                 }
-                                Spacer()
-                                Text(locale.t("operator.pts", challenge.points))
+                                Text(baseNameForChallenge(challenge))
                                     .font(.caption)
-                                    .fontWeight(.semibold)
-                                    .foregroundStyle(.orange)
+                                    .foregroundStyle(.secondary)
                             }
-                        }
-                        .accessibilityIdentifier("challenge-edit-btn")
-                    }
-                    .listStyle(.plain)
-                }
-            }
-            .navigationTitle(locale.t("operator.challenges"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                if let onDismiss {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button { onDismiss() } label: {
-                            Image(systemName: "xmark")
+                            Spacer()
+                            Text(locale.t("operator.pts", challenge.points))
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.orange)
                         }
                     }
+                    .accessibilityIdentifier("challenge-edit-btn")
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        path.append(ChallengeNavDestination.create)
-                    } label: {
-                        Image(systemName: "plus")
+                .listStyle(.plain)
+            }
+        }
+        .navigationTitle(locale.t("operator.challenges"))
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if let onDismiss {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button { onDismiss() } label: {
+                        Image(systemName: "xmark")
                     }
-                    .accessibilityIdentifier("create-challenge-btn")
                 }
             }
-            .navigationDestination(for: ChallengeNavDestination.self) { destination in
-                switch destination {
-                case .edit(let challengeId):
-                    if let challenge = challenges.first(where: { $0.id == challengeId }) {
-                        ChallengeEditView(
-                            game: game,
-                            challenge: challenge,
-                            bases: bases,
-                            challenges: challenges,
-                            assignments: assignments,
-                            onSaved: { updatedChallenge in
-                                if let index = challenges.firstIndex(where: { $0.id == updatedChallenge.id }) {
-                                    challenges[index] = updatedChallenge
-                                }
-                                Task { await loadData() }
-                            },
-                            onDeleted: {
-                                challenges.removeAll { $0.id == challengeId }
-                                path.removeLast()
-                            }
-                        )
-                    }
-                case .create:
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    path.append(ChallengeNavDestination.create)
+                } label: {
+                    Image(systemName: "plus")
+                }
+                .accessibilityIdentifier("create-challenge-btn")
+            }
+        }
+        .navigationDestination(for: ChallengeNavDestination.self) { destination in
+            switch destination {
+            case .edit(let challengeId):
+                if let challenge = challenges.first(where: { $0.id == challengeId }) {
                     ChallengeEditView(
                         game: game,
-                        challenge: nil,
+                        challenge: challenge,
                         bases: bases,
                         challenges: challenges,
                         assignments: assignments,
-                        onSaved: { newChallenge in
-                            challenges.append(newChallenge)
+                        onSaved: { updatedChallenge in
+                            if let index = challenges.firstIndex(where: { $0.id == updatedChallenge.id }) {
+                                challenges[index] = updatedChallenge
+                            }
                             Task { await loadData() }
+                        },
+                        onDeleted: {
+                            challenges.removeAll { $0.id == challengeId }
                             path.removeLast()
-                            path.append(ChallengeNavDestination.edit(newChallenge.id))
                         }
                     )
                 }
+            case .create:
+                ChallengeEditView(
+                    game: game,
+                    challenge: nil,
+                    bases: bases,
+                    challenges: challenges,
+                    assignments: assignments,
+                    onSaved: { newChallenge in
+                        challenges.append(newChallenge)
+                        Task { await loadData() }
+                        path.removeLast()
+                        path.append(ChallengeNavDestination.edit(newChallenge.id))
+                    }
+                )
             }
-            .task {
-                await loadData()
-            }
-            .refreshable {
-                await loadData()
-            }
+        }
+        .task {
+            await loadData()
+        }
+        .refreshable {
+            await loadData()
         }
     }
 

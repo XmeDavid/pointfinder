@@ -6,6 +6,7 @@ struct TeamsManagementView: View {
 
     let game: Game
     var onDismiss: (() -> Void)? = nil
+    var embedded: Bool = false
 
     @State private var teams: [Team] = []
     @State private var isLoading = true
@@ -22,130 +23,138 @@ struct TeamsManagementView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if isLoading {
-                    ProgressView(locale.t("operator.loading"))
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if teams.isEmpty {
-                    ContentUnavailableView(
-                        locale.t("operator.noTeams"),
-                        systemImage: "person.3",
-                        description: Text(locale.t("operator.noTeamsDesc"))
-                    )
-                } else {
-                    List(teams) { team in
-                        NavigationLink(value: team.id) {
-                            HStack(spacing: 12) {
-                                Circle()
-                                    .fill(Color(hex: team.color) ?? .blue)
-                                    .frame(width: 28, height: 28)
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(team.name)
-                                        .font(.headline)
-                                    if let joinCode = team.joinCode {
-                                        Text(joinCode)
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
-                                Spacer()
-                                if let joinCode = team.joinCode {
-                                    Button {
-                                        UIPasteboard.general.string = joinCode
-                                        copiedTeamId = team.id
-                                        withAnimation {
-                                            showCopiedToast = true
-                                        }
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                            if copiedTeamId == team.id {
-                                                copiedTeamId = nil
-                                            }
-                                            withAnimation {
-                                                showCopiedToast = false
-                                            }
-                                        }
-                                    } label: {
-                                        Image(systemName: copiedTeamId == team.id ? "checkmark" : "doc.on.doc")
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                            }
-                        }
-                        .accessibilityIdentifier("team-edit-btn")
-                    }
-                    .listStyle(.plain)
-                }
+        if embedded {
+            content
+        } else {
+            NavigationStack {
+                content
             }
-            .navigationTitle(locale.t("operator.teams"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                if let onDismiss {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button { onDismiss() } label: {
-                            Image(systemName: "xmark")
-                        }
-                    }
-                }
-                ToolbarItemGroup(placement: .topBarTrailing) {
-                    Button {
-                        showManageVariables = true
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
-                    }
+        }
+    }
 
-                    Button {
-                        showCreateTeam = true
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                    .accessibilityIdentifier("create-team-btn")
-                }
-            }
-            .navigationDestination(for: UUID.self) { teamId in
-                if let team = teams.first(where: { $0.id == teamId }) {
-                    TeamDetailView(
-                        game: game,
-                        team: team,
-                        onSaved: { updatedTeam in
-                            if let index = teams.firstIndex(where: { $0.id == updatedTeam.id }) {
-                                teams[index] = updatedTeam
+    private var content: some View {
+        Group {
+            if isLoading {
+                ProgressView(locale.t("operator.loading"))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if teams.isEmpty {
+                ContentUnavailableView(
+                    locale.t("operator.noTeams"),
+                    systemImage: "person.3",
+                    description: Text(locale.t("operator.noTeamsDesc"))
+                )
+            } else {
+                List(teams) { team in
+                    NavigationLink(value: team.id) {
+                        HStack(spacing: 12) {
+                            Circle()
+                                .fill(Color(hex: team.color) ?? .blue)
+                                .frame(width: 28, height: 28)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(team.name)
+                                    .font(.headline)
+                                if let joinCode = team.joinCode {
+                                    Text(joinCode)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
                             }
-                        },
-                        onDeleted: {
-                            teams.removeAll { $0.id == teamId }
+                            Spacer()
+                            if let joinCode = team.joinCode {
+                                Button {
+                                    UIPasteboard.general.string = joinCode
+                                    copiedTeamId = team.id
+                                    withAnimation {
+                                        showCopiedToast = true
+                                    }
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                        if copiedTeamId == team.id {
+                                            copiedTeamId = nil
+                                        }
+                                        withAnimation {
+                                            showCopiedToast = false
+                                        }
+                                    }
+                                } label: {
+                                    Image(systemName: copiedTeamId == team.id ? "checkmark" : "doc.on.doc")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                .buttonStyle(.plain)
+                            }
                         }
-                    )
+                    }
+                    .accessibilityIdentifier("team-edit-btn")
+                }
+                .listStyle(.plain)
+            }
+        }
+        .navigationTitle(locale.t("operator.teams"))
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if let onDismiss {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button { onDismiss() } label: {
+                        Image(systemName: "xmark")
+                    }
                 }
             }
-            .sheet(isPresented: $showCreateTeam) {
-                TeamCreateSheet(game: game) { newTeam in
-                    teams.append(newTeam)
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                Button {
+                    showManageVariables = true
+                } label: {
+                    Image(systemName: "ellipsis.circle")
                 }
-            }
-            .sheet(isPresented: $showManageVariables) {
-                TeamVariablesManagementSheet(game: game, teams: teams)
-            }
-            .task {
-                await loadData()
-            }
-            .refreshable {
-                await loadData()
-            }
-            .overlay(alignment: .bottom) {
-                if showCopiedToast {
-                    Text(locale.t("operator.copied"))
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
-                        .background(.ultraThinMaterial)
-                        .clipShape(Capsule())
-                        .padding(.bottom, 20)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
+
+                Button {
+                    showCreateTeam = true
+                } label: {
+                    Image(systemName: "plus")
                 }
+                .accessibilityIdentifier("create-team-btn")
+            }
+        }
+        .navigationDestination(for: UUID.self) { teamId in
+            if let team = teams.first(where: { $0.id == teamId }) {
+                TeamDetailView(
+                    game: game,
+                    team: team,
+                    onSaved: { updatedTeam in
+                        if let index = teams.firstIndex(where: { $0.id == updatedTeam.id }) {
+                            teams[index] = updatedTeam
+                        }
+                    },
+                    onDeleted: {
+                        teams.removeAll { $0.id == teamId }
+                    }
+                )
+            }
+        }
+        .sheet(isPresented: $showCreateTeam) {
+            TeamCreateSheet(game: game) { newTeam in
+                teams.append(newTeam)
+            }
+        }
+        .sheet(isPresented: $showManageVariables) {
+            TeamVariablesManagementSheet(game: game, teams: teams)
+        }
+        .task {
+            await loadData()
+        }
+        .refreshable {
+            await loadData()
+        }
+        .overlay(alignment: .bottom) {
+            if showCopiedToast {
+                Text(locale.t("operator.copied"))
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(.ultraThinMaterial)
+                    .clipShape(Capsule())
+                    .padding(.bottom, 20)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
     }
