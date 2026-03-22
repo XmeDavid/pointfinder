@@ -121,13 +121,16 @@ fun ChallengeEditScreen(
     }
 
     // Editor state -- alternates between form and rich text editor
-    var showDescriptionEditor by remember { mutableStateOf(false) }
+    // showDescriptionEditor removed — description is plain text, not rich HTML
     var showContentEditor by remember { mutableStateOf(false) }
     var showCompletionEditor by remember { mutableStateOf(false) }
 
     // Menu state
     var showOverflowMenu by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+
+    // Validation state
+    var titleTouched by remember { mutableStateOf(false) }
 
     // Add answer dialog
     var showAddAnswerDialog by remember { mutableStateOf(false) }
@@ -140,21 +143,9 @@ fun ChallengeEditScreen(
 
     // Show rich text editors as full-screen overlays
     when {
-        showDescriptionEditor -> {
-            RichTextEditorScreen(
-                title = stringResource(R.string.label_description),
-                initialHtml = descriptionHtml,
-                onDone = { html -> descriptionHtml = html; showDescriptionEditor = false },
-                onBack = { showDescriptionEditor = false },
-                variables = variables,
-                onCreateVariable = onCreateVariable,
-                teams = teams,
-            )
-            return
-        }
         showContentEditor -> {
             RichTextEditorScreen(
-                title = stringResource(R.string.label_description),
+                title = stringResource(R.string.label_content),
                 initialHtml = contentHtml,
                 onDone = { html -> contentHtml = html; showContentEditor = false },
                 onBack = { showContentEditor = false },
@@ -237,9 +228,13 @@ fun ChallengeEditScreen(
             // Title field
             OutlinedTextField(
                 value = title,
-                onValueChange = { title = it },
+                onValueChange = { title = it; titleTouched = true },
                 label = { Text(stringResource(R.string.label_challenge_title)) },
                 singleLine = true,
+                isError = titleTouched && title.isBlank(),
+                supportingText = if (titleTouched && title.isBlank()) {
+                    { Text(stringResource(R.string.error_title_required)) }
+                } else null,
                 modifier = Modifier.fillMaxWidth().testTag("challenge-title-input"),
             )
 
@@ -272,9 +267,13 @@ fun ChallengeEditScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(4.dp))
-            HtmlPreviewCard(
-                html = descriptionHtml,
-                onClick = { showDescriptionEditor = true },
+            OutlinedTextField(
+                value = descriptionHtml,
+                onValueChange = { descriptionHtml = it },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 2,
+                maxLines = 4,
+                placeholder = { Text(stringResource(R.string.label_description)) },
             )
 
             Spacer(Modifier.height(12.dp))
