@@ -63,18 +63,6 @@ fun HtmlContentView(
                     override fun onPageFinished(view: WebView?, url: String?) {
                         // Re-request layout once the page is loaded
                         view?.requestLayout()
-                        // Debug: log audio tag HTML
-                        view?.evaluateJavascript("""
-                            (function() {
-                                var audios = document.querySelectorAll('audio');
-                                if (audios.length === 0) return 'no audio elements';
-                                var a = audios[0];
-                                return 'outerHTML(first 200): ' + a.outerHTML.substring(0, 200) + ' | controls=' + a.controls + ' hasAttr=' + a.hasAttribute('controls');
-                            })()
-                        """.trimIndent()
-                        ) { result ->
-                            android.util.Log.d("HtmlContentView", "Audio debug: $result")
-                        }
                     }
                 }
 
