@@ -197,9 +197,12 @@ fun OperatorMapScreen(
                         .snippet(markerId)
                         .icon(icon),
                 )
+            } else {
+                // Update icon if status changed, and position if moved
+                existingMarker.icon = icon
+                existingMarker.position = LatLng(base.lat, base.lng)
+                existingMarker.title = base.name
             }
-            // Note: For now, existing markers are kept as-is. Full updates would require
-            // removing and re-adding if position/status changed.
         }
 
         // Update or add team location markers
@@ -573,7 +576,7 @@ private fun aggregateBaseStatus(
 ): BaseStatus {
     val statuses = baseProgress.filter { it.baseId == base.id }
     if (statuses.isEmpty()) return BaseStatus.NOT_VISITED
-    return statuses.maxByOrNull { it.status.ordinal }?.status ?: BaseStatus.NOT_VISITED
+    return statuses.minByOrNull { it.status.ordinal }?.status ?: BaseStatus.NOT_VISITED
 }
 
 private fun statusColor(status: BaseStatus): Int = when (status) {
