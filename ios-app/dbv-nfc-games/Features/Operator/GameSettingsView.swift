@@ -32,8 +32,9 @@ struct GameSettingsView: View {
         return nil
     }
 
-    init(game: Game) {
+    init(game: Game, onGameDeleted: (() -> Void)? = nil) {
         self.game = game
+        self.onGameDeleted = onGameDeleted
         self._name = State(initialValue: game.name)
         self._gameDescription = State(initialValue: game.description)
         self._startDate = State(initialValue: Self.parseDate(game.startDate))
