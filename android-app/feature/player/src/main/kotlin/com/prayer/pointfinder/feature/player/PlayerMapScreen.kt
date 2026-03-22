@@ -38,6 +38,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -102,6 +103,10 @@ fun PlayerMapScreen(
         }
     }
 
+    // Keep references fresh for the factory-captured click handler
+    val currentProgress by rememberUpdatedState(progress)
+    val currentOnBaseSelected by rememberUpdatedState(onBaseSelected)
+
     // Update style when tileSource or dark mode changes
     LaunchedEffect(map, tileSource, isDark) {
         map?.setStyle(Style.Builder().fromUri(TileSources.getResolvedStyleUrl(tileSource, isDark)))
@@ -126,11 +131,11 @@ fun PlayerMapScreen(
         progress.forEach { item ->
             val existingMarker = currentMarkers.firstOrNull { it.snippet == item.baseId }
             if (existingMarker != null) {
-                // Marker already exists, check if status changed (would require removal and re-add)
-                if (existingMarker.snippet != item.baseId) {
-                    m.removeAnnotation(existingMarker)
-                    addMarkerForProgress(m, item, iconFactory, density)
-                }
+                // Update existing marker icon/position in case status changed
+                val icon = iconFactory.fromBitmap(createPinMarkerBitmap(statusColor(item.status), item.status, density, false))
+                existingMarker.icon = icon
+                existingMarker.position = LatLng(item.lat, item.lng)
+                existingMarker.title = item.baseName
             } else {
                 // New marker
                 addMarkerForProgress(m, item, iconFactory, density)
@@ -157,9 +162,9 @@ fun PlayerMapScreen(
                         mapLibreMap.uiSettings.setCompassMargins(0, compassMarginTop, (12 * context.resources.displayMetrics.density).toInt(), 0)
                         mapLibreMap.setOnMarkerClickListener { marker ->
                             val baseId = marker.snippet
-                            val item = progress.firstOrNull { it.baseId == baseId }
+                            val item = currentProgress.firstOrNull { it.baseId == baseId }
                             if (item != null) {
-                                onBaseSelected(item)
+                                currentOnBaseSelected(item)
                                 true
                             } else {
                                 false
