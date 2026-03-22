@@ -118,6 +118,8 @@ struct NotificationsManagementView: View {
             let (t, n) = try await (teamsResult, notificationsResult)
             teams = t
             notifications = n
+        } catch is CancellationError {
+            // Task cancelled during navigation
         } catch {
             appState.setError(error.localizedDescription)
         }

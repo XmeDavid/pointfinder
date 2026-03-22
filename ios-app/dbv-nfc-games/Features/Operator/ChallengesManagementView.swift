@@ -157,6 +157,8 @@ struct ChallengesManagementView: View {
             challenges = c
             bases = b
             assignments = a
+        } catch is CancellationError {
+            // Task cancelled during navigation
         } catch {
             appState.setError(error.localizedDescription)
         }

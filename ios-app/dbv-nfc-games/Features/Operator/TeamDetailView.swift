@@ -281,6 +281,8 @@ struct TeamDetailView: View {
             for variable in variables {
                 variableValues[variable.key] = variable.teamValues[team.id.uuidString.lowercased()] ?? ""
             }
+        } catch is CancellationError {
+            // Task cancelled during navigation
         } catch {
             appState.setError(error.localizedDescription)
         }
@@ -329,6 +331,8 @@ struct TeamDetailView: View {
             try await appState.apiClient.deleteTeam(gameId: game.id, teamId: team.id, token: token)
             onDeleted()
             dismiss()
+        } catch is CancellationError {
+            // Task cancelled during navigation
         } catch {
             appState.setError(error.localizedDescription)
         }
@@ -339,6 +343,8 @@ struct TeamDetailView: View {
         do {
             try await appState.apiClient.removePlayer(gameId: game.id, teamId: team.id, playerId: player.id, token: token)
             players.removeAll { $0.id == player.id }
+        } catch is CancellationError {
+            // Task cancelled during navigation
         } catch {
             appState.setError(error.localizedDescription)
         }

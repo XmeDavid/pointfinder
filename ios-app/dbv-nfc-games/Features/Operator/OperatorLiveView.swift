@@ -205,6 +205,8 @@ struct OperatorLiveView: View {
             leaderboard = l
             activity = a
             teams = t
+        } catch is CancellationError {
+            // Task cancelled during navigation
         } catch {
             appState.setError(error.localizedDescription)
         }

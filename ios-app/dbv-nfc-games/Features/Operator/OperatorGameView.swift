@@ -106,6 +106,8 @@ struct OperatorGameView: View {
         isLoading = true
         do {
             bases = try await appState.apiClient.getGameBases(gameId: game.id, token: token)
+        } catch is CancellationError {
+            // Task cancelled during navigation
         } catch {
             appState.setError(error.localizedDescription)
         }

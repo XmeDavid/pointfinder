@@ -154,6 +154,8 @@ struct TeamsManagementView: View {
         guard let token else { return }
         do {
             teams = try await appState.apiClient.getTeams(gameId: game.id, token: token)
+        } catch is CancellationError {
+            // Task cancelled during navigation
         } catch {
             appState.setError(error.localizedDescription)
         }

@@ -206,6 +206,8 @@ struct OperatorSetupHubView: View {
             teams = t
             assignments = a
             teamVariablesComplete = ((try? await appState.apiClient.getTeamVariablesCompleteness(gameId: game.id, token: token))?.complete) ?? true
+        } catch is CancellationError {
+            // Task cancelled during navigation
         } catch {
             appState.setError(error.localizedDescription)
         }
@@ -230,6 +232,8 @@ struct OperatorSetupHubView: View {
                     "data": ["status": "live"]
                 ]
             )
+        } catch is CancellationError {
+            // Task cancelled during navigation
         } catch {
             appState.setError(error.localizedDescription)
         }

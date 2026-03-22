@@ -290,6 +290,8 @@ struct BaseEditView: View {
             try await appState.apiClient.deleteBase(gameId: game.id, baseId: base.id, token: token)
             onDeleted?()
             dismiss()
+        } catch is CancellationError {
+            // Task cancelled during navigation
         } catch {
             appState.setError(error.localizedDescription)
         }

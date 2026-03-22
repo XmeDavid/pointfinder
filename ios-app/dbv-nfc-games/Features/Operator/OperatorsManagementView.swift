@@ -192,6 +192,8 @@ struct OperatorsManagementView: View {
             let (o, i) = try await (operatorsResult, invitesResult)
             operators = o
             invites = i
+        } catch is CancellationError {
+            // Task cancelled during navigation
         } catch {
             appState.setError(error.localizedDescription)
         }

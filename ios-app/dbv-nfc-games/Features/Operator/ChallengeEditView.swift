@@ -420,6 +420,8 @@ struct ChallengeEditView: View {
                 teams = fetchedTeams
                 gameVariables = normalizedTeamVariables(gameResponse.variables, teams: fetchedTeams)
             }
+        } catch is CancellationError {
+            // Task cancelled during navigation
         } catch {
             appState.setError(error.localizedDescription)
         }
@@ -551,6 +553,8 @@ struct ChallengeEditView: View {
             try await appState.apiClient.deleteChallenge(gameId: game.id, challengeId: challenge.id, token: token)
             onDeleted?()
             dismiss()
+        } catch is CancellationError {
+            // Task cancelled during navigation
         } catch {
             appState.setError(error.localizedDescription)
         }
