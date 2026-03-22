@@ -146,17 +146,35 @@ fun AppNavigation(
     var operatorPassword by rememberSaveable { mutableStateOf("") }
 
     LaunchedEffect(sessionState.authType) {
+        val currentRoute = navController.currentBackStackEntry?.destination?.route
         when (sessionState.authType) {
-            is AuthType.Player -> navController.navigate(Routes.PLAYER_HOME) {
-                popUpTo(0) { inclusive = true }
+            is AuthType.Player -> {
+                if (currentRoute != Routes.PLAYER_HOME) {
+                    navController.navigate(Routes.PLAYER_HOME) { popUpTo(0) { inclusive = true } }
+                }
             }
 
-            is AuthType.Operator -> navController.navigate(Routes.OPERATOR_HOME) {
-                popUpTo(0) { inclusive = true }
+            is AuthType.Operator -> {
+                if (currentRoute !in setOf(
+                        Routes.OPERATOR_HOME,
+                        Routes.OPERATOR_GAME,
+                        Routes.OPERATOR_CREATE_GAME,
+                    )
+                ) {
+                    navController.navigate(Routes.OPERATOR_HOME) { popUpTo(0) { inclusive = true } }
+                }
             }
 
-            AuthType.None -> navController.navigate(Routes.WELCOME) {
-                popUpTo(0) { inclusive = true }
+            AuthType.None -> {
+                if (currentRoute !in setOf(
+                        Routes.WELCOME,
+                        Routes.OPERATOR_LOGIN,
+                        Routes.PLAYER_JOIN,
+                        Routes.PLAYER_NAME,
+                    )
+                ) {
+                    navController.navigate(Routes.WELCOME) { popUpTo(0) { inclusive = true } }
+                }
             }
         }
     }
