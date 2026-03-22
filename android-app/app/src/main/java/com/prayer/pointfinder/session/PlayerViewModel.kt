@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.prayer.pointfinder.BuildConfig
 import com.prayer.pointfinder.core.data.repo.OfflineSyncWorker
+import com.prayer.pointfinder.core.data.local.PendingActionEntity
 import com.prayer.pointfinder.core.data.repo.PlayerRepository
 import com.prayer.pointfinder.core.model.AuthType
 import com.prayer.pointfinder.core.model.BaseProgress
@@ -628,6 +629,9 @@ class PlayerViewModel @Inject constructor(
                 }
         }
     }
+
+    suspend fun loadPendingActions(): List<PendingActionEntity> =
+        playerRepository.pendingActions()
 
     fun openNotifications() {
         _state.value = _state.value.copy(showingNotifications = true, isLoadingNotifications = true, notificationError = null)

@@ -86,10 +86,10 @@ interface PendingActionDao {
     @Query("SELECT * FROM pending_actions ORDER BY createdAtEpochMs ASC")
     suspend fun pendingActions(): List<PendingActionEntity>
 
-    @Query("SELECT COUNT(*) FROM pending_actions")
+    @Query("SELECT COUNT(*) FROM pending_actions WHERE permanentlyFailed = 0")
     suspend fun pendingCount(): Int
 
-    @Query("SELECT COUNT(*) FROM pending_actions")
+    @Query("SELECT COUNT(*) FROM pending_actions WHERE permanentlyFailed = 0")
     fun pendingCountFlow(): Flow<Int>
 
     @Query(

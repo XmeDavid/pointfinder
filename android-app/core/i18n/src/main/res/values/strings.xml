@@ -81,8 +81,16 @@
     <string name="label_your_profile">Your Profile</string>
     <string name="label_total_bases">Total Bases</string>
     <string name="label_pending_actions">Pending actions</string>
+    <string name="label_no_pending_actions">All synced</string>
     <string name="label_pending_sync_one">%1$d pending action to sync</string>
     <string name="label_pending_sync_other">%1$d pending actions to sync</string>
+    <string name="label_syncing">Syncing %d</string>
+    <string name="label_offline_count">Offline (%d)</string>
+    <string name="label_uploading">UPLOADING</string>
+    <string name="label_queued">QUEUED</string>
+    <string name="label_no_connection">NO CONNECTION</string>
+    <string name="label_submission">Submission</string>
+    <string name="label_check_in_action">Check-in</string>
     <string name="label_base_check_in">Base Check-in</string>
     <string name="label_checked_in_at_base">Checked in at %1$s</string>
     <string name="label_no_challenge_details">No challenge details yet.</string>

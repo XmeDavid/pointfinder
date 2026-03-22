@@ -110,6 +110,7 @@ import com.prayer.pointfinder.feature.player.BaseCheckInDetailScreen
 import com.prayer.pointfinder.feature.player.BaseDetailBottomSheet
 import com.prayer.pointfinder.feature.player.CheckInScreen
 import com.prayer.pointfinder.feature.player.NfcScanDialog
+import com.prayer.pointfinder.feature.player.PendingActionUiItem
 import com.prayer.pointfinder.feature.player.PlayerHomeScaffold
 import com.prayer.pointfinder.feature.player.PlayerMapScreen
 import com.prayer.pointfinder.feature.player.PlayerNotificationListScreen
@@ -615,6 +616,18 @@ private fun PlayerRootScreen(
             selectedTab = tab
         },
         isOffline = !isOnline,
+        pendingActionsCount = pendingActionsCount,
+        onLoadPendingActions = {
+            viewModel.loadPendingActions().map { e ->
+                PendingActionUiItem(
+                    id = e.id,
+                    type = e.type,
+                    uploadSessionId = e.uploadSessionId,
+                    uploadChunkIndex = e.uploadChunkIndex,
+                    uploadTotalChunks = e.uploadTotalChunks,
+                )
+            }
+        },
     ) {
         when {
             state.showingNotifications -> {

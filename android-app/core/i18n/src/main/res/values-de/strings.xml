@@ -81,8 +81,16 @@
     <string name="label_your_profile">Dein Profil</string>
     <string name="label_total_bases">Stationen gesamt</string>
     <string name="label_pending_actions">Ausstehende Aktionen</string>
+    <string name="label_no_pending_actions">Alles synchronisiert</string>
     <string name="label_pending_sync_one">%1$d ausstehende Aktion zum Synchronisieren</string>
     <string name="label_pending_sync_other">%1$d ausstehende Aktionen zum Synchronisieren</string>
+    <string name="label_syncing">Synchronisiere %d</string>
+    <string name="label_offline_count">Offline (%d)</string>
+    <string name="label_uploading">WIRD HOCHGELADEN</string>
+    <string name="label_queued">WARTEND</string>
+    <string name="label_no_connection">KEINE VERBINDUNG</string>
+    <string name="label_submission">Einreichung</string>
+    <string name="label_check_in_action">Check-in</string>
     <string name="label_base_check_in">Station-Check-in</string>
     <string name="label_checked_in_at_base">Eingecheckt bei %1$s</string>
     <string name="label_no_challenge_details">Noch keine Challenge-Details.</string>

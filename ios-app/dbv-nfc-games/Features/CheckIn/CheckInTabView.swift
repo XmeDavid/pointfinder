@@ -9,6 +9,7 @@ struct CheckInTabView: View {
     @State private var scanError: String?
     @State private var navigationPath = NavigationPath()
     @State private var failedSyncCount = 0
+    @State private var showSyncSheet = false
 
     var body: some View {
         NavigationStack(path: $navigationPath) {
@@ -126,6 +127,14 @@ struct CheckInTabView: View {
                 }
             }
             .navigationTitle(locale.t("common.checkIn"))
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    SyncStatusBanner(showSheet: $showSyncSheet)
+                }
+            }
+            .sheet(isPresented: $showSyncSheet) {
+                SyncQueueSheet()
+            }
             .navigationDestination(for: UUID.self) { baseId in
                 BaseCheckInDetailView(baseId: baseId, popToRoot: popToRoot)
             }

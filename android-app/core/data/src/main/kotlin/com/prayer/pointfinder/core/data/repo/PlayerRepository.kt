@@ -382,7 +382,7 @@ class PlayerRepository @Inject constructor(
             }.getOrNull()
         }
 
-        if (multiMediaItems != null && multiMediaItems.size > 1) {
+        if (multiMediaItems != null && multiMediaItems.isNotEmpty()) {
             return syncMultiMediaSubmission(auth, action, challengeId, multiMediaItems)
         }
 

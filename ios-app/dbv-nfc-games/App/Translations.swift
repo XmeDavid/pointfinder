@@ -475,6 +475,14 @@ enum Translations {
         "operator.manualCheckInSuccess": "Check-in successful",
         "operator.manualCheckInError": "Check-in failed",
         "operator.alreadyCheckedIn": "Already checked in",
+
+        // Sync status banner
+        "sync.syncing": "Syncing %d",
+        "sync.offline": "Offline (%d)",
+        "sync.pendingActions": "Pending Actions",
+        "sync.uploading": "UPLOADING",
+        "sync.queued": "QUEUED",
+        "sync.noConnection": "NO CONNECTION",
     ]
 
     // MARK: - Portuguese
@@ -930,6 +938,14 @@ enum Translations {
         "operator.manualCheckInSuccess": "Check-in realizado com sucesso",
         "operator.manualCheckInError": "Erro no check-in",
         "operator.alreadyCheckedIn": "Já fez check-in",
+
+        // Sync status banner
+        "sync.syncing": "A sincronizar %d",
+        "sync.offline": "Sem ligação (%d)",
+        "sync.pendingActions": "Ações Pendentes",
+        "sync.uploading": "A ENVIAR",
+        "sync.queued": "EM FILA",
+        "sync.noConnection": "SEM LIGAÇÃO",
     ]
 
     // MARK: - German
@@ -1385,6 +1401,14 @@ enum Translations {
         "operator.manualCheckInSuccess": "Check-In erfolgreich",
         "operator.manualCheckInError": "Check-In fehlgeschlagen",
         "operator.alreadyCheckedIn": "Bereits eingecheckt",
+
+        // Sync status banner
+        "sync.syncing": "Synchronisiere %d",
+        "sync.offline": "Offline (%d)",
+        "sync.pendingActions": "Ausstehende Aktionen",
+        "sync.uploading": "WIRD HOCHGELADEN",
+        "sync.queued": "WARTEND",
+        "sync.noConnection": "KEINE VERBINDUNG",
     ]
 }
 

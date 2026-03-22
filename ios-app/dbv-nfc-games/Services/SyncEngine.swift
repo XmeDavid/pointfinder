@@ -220,7 +220,7 @@ final class SyncEngine {
         }
 
         // Multi-media path: upload each media item and collect URLs
-        if let mediaItems = action.mediaItems, mediaItems.count > 1 {
+        if let mediaItems = action.mediaItems, !mediaItems.isEmpty {
             try await syncMultiMediaSubmission(action: action, mediaItems: mediaItems, challengeId: challengeId, apiClient: apiClient, token: token)
             return
         }
