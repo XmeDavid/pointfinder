@@ -1046,12 +1046,15 @@ private fun OperatorGameRoot(
                         val baseId = mapSubScreen!!.removePrefix("base_edit:")
                         val base = state.bases.firstOrNull { it.id == baseId }
                         if (base != null) {
-                            val linkedChallenges = state.assignments
+                            val fromAssignments = state.assignments
                                 .filter { it.baseId == base.id }
                                 .mapNotNull { assignment ->
                                     state.challenges.firstOrNull { it.id == assignment.challengeId }
                                 }
-                                .distinctBy { it.id }
+                            val fixedToBase = state.challenges.filter {
+                                bases.any { b -> b.id == base.id && b.fixedChallengeId == it.id }
+                            }
+                            val linkedChallenges = (fromAssignments + fixedToBase).distinctBy { it.id }
                             BaseEditScreen(
                                 base = base,
                                 bases = state.bases,
@@ -1199,12 +1202,15 @@ private fun OperatorGameRoot(
                         val baseId = setupSubScreen!!.removePrefix("base_edit:")
                         val base = state.bases.firstOrNull { it.id == baseId }
                         if (base != null) {
-                            val linkedChallenges = state.assignments
+                            val fromAssignments = state.assignments
                                 .filter { it.baseId == base.id }
                                 .mapNotNull { assignment ->
                                     state.challenges.firstOrNull { it.id == assignment.challengeId }
                                 }
-                                .distinctBy { it.id }
+                            val fixedToBase = state.challenges.filter {
+                                bases.any { b -> b.id == base.id && b.fixedChallengeId == it.id }
+                            }
+                            val linkedChallenges = (fromAssignments + fixedToBase).distinctBy { it.id }
                             BaseEditScreen(
                                 base = base,
                                 bases = state.bases,
