@@ -30,6 +30,9 @@ class GameCrudUseCase @Inject constructor(
     suspend fun updateGameStatus(gameId: String, status: String): Game =
         operatorRepository.updateGameStatus(gameId, UpdateGameStatusRequest(status = status))
 
+    suspend fun deleteGame(gameId: String) =
+        operatorRepository.deleteGame(gameId)
+
     suspend fun exportGame(gameId: String): GameExportDto =
         operatorRepository.exportGame(gameId)
 }

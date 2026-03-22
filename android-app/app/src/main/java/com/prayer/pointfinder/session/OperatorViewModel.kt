@@ -233,6 +233,22 @@ class OperatorViewModel @Inject constructor(
         }
     }
 
+    fun deleteGame(onSuccess: () -> Unit) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching {
+                gameCrudUseCase.deleteGame(gameId)
+            }.onSuccess {
+                clearSelectedGame()
+                loadGames()
+                onSuccess()
+            }.onFailure { e ->
+                if (markAuthExpiredIfNeeded(e)) return@onFailure
+                _state.value = _state.value.copy(errorMessage = friendlyError(e))
+            }
+        }
+    }
+
     fun exportGame(onSuccess: (GameExportDto) -> Unit) {
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {

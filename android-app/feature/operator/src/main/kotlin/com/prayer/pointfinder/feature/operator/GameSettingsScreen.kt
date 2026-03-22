@@ -57,6 +57,7 @@ fun GameSettingsScreen(
     game: Game,
     onSave: (UpdateGameRequest) -> Unit,
     onUpdateStatus: (String) -> Unit,
+    onDeleteGame: () -> Unit = {},
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -72,6 +73,7 @@ fun GameSettingsScreen(
     var showEndDatePicker by remember { mutableStateOf(false) }
     var showGoLiveConfirm by remember { mutableStateOf(false) }
     var showEndGameConfirm by remember { mutableStateOf(false) }
+    var showDeleteGameConfirm by remember { mutableStateOf(false) }
 
     val tileSourceOptions = listOf(
         "osm" to "OpenStreetMap",
@@ -289,6 +291,19 @@ fun GameSettingsScreen(
                 }
             }
 
+            item {
+                Spacer(Modifier.height(8.dp))
+                Button(
+                    onClick = { showDeleteGameConfirm = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                    ),
+                ) {
+                    Text(stringResource(R.string.label_delete_game))
+                }
+            }
+
             item { Spacer(Modifier.height(16.dp)) }
         }
     }
@@ -386,6 +401,32 @@ fun GameSettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showEndGameConfirm = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+
+    if (showDeleteGameConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteGameConfirm = false },
+            title = { Text(stringResource(R.string.label_delete_game_confirm_title)) },
+            text = { Text(stringResource(R.string.label_delete_game_confirm_message)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDeleteGameConfirm = false
+                        onDeleteGame()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                    ),
+                ) {
+                    Text(stringResource(R.string.label_delete_game))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteGameConfirm = false }) {
                     Text(stringResource(R.string.action_cancel))
                 }
             },

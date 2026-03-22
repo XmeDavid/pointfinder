@@ -6,6 +6,7 @@ struct GameSettingsView: View {
     @Environment(\.dismiss) private var dismiss
 
     let game: Game
+    var onGameDeleted: (() -> Void)? = nil
 
     @State private var name: String
     @State private var gameDescription: String
@@ -15,11 +16,13 @@ struct GameSettingsView: View {
     @State private var broadcastEnabled: Bool
     @State private var tileSource: String
     @State private var isSaving = false
+    @State private var isDeleting = false
     @State private var errorMessage: String?
     @State private var showGoLiveAlert = false
     @State private var showEndGameAlert = false
     @State private var showRevertToSetupSheet = false
     @State private var showRevertToLiveAlert = false
+    @State private var showDeleteGameAlert = false
     @State private var gameStatus: String
 
     private var token: String? {
@@ -146,6 +149,17 @@ struct GameSettingsView: View {
                 }
             }
 
+            // Delete Game section
+            Section {
+                Button(role: .destructive) {
+                    showDeleteGameAlert = true
+                } label: {
+                    Label(locale.t("operator.deleteGame"), systemImage: "trash")
+                        .frame(maxWidth: .infinity)
+                }
+                .disabled(isDeleting)
+            }
+
             // Status section
             Section(locale.t("common.status")) {
                 HStack {
@@ -222,6 +236,14 @@ struct GameSettingsView: View {
         } message: {
             Text(locale.t("operator.progressQuestion"))
         }
+        .alert(locale.t("operator.deleteGameTitle"), isPresented: $showDeleteGameAlert) {
+            Button(locale.t("operator.deleteGame"), role: .destructive) {
+                Task { await deleteGame() }
+            }
+            Button(locale.t("common.cancel"), role: .cancel) {}
+        } message: {
+            Text(locale.t("operator.deleteGameMessage"))
+        }
     }
 
     // MARK: - Actions
@@ -248,6 +270,20 @@ struct GameSettingsView: View {
             errorMessage = error.localizedDescription
         }
         isSaving = false
+    }
+
+    private func deleteGame() async {
+        guard let token else { return }
+        isDeleting = true
+        errorMessage = nil
+        do {
+            try await appState.apiClient.deleteGame(gameId: game.id, token: token)
+            dismiss()
+            onGameDeleted?()
+        } catch {
+            errorMessage = error.localizedDescription
+            isDeleting = false
+        }
     }
 
     private func updateStatus(_ newStatus: String, resetProgress: Bool? = nil) async {

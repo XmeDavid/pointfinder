@@ -312,6 +312,9 @@
     <string name="label_end_game">Spiel beenden</string>
     <string name="label_end_game_confirm_title">Spiel beenden?</string>
     <string name="label_end_game_confirm_message">Das Spiel wird beendet. Teams können nicht mehr spielen.</string>
+    <string name="label_delete_game">Spiel löschen</string>
+    <string name="label_delete_game_confirm_title">Spiel löschen?</string>
+    <string name="label_delete_game_confirm_message">Dies löscht dieses Spiel und alle zugehörigen Daten dauerhaft. Diese Aktion kann nicht rückgängig gemacht werden.</string>
     <string name="label_message">Nachricht</string>
     <string name="label_all_teams">Alle Teams</string>
     <string name="action_send">Senden</string>

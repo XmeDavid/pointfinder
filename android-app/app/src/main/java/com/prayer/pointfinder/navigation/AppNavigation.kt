@@ -1471,6 +1471,11 @@ private fun OperatorGameRoot(
                                 }
                             },
                             onUpdateStatus = viewModel::updateGameStatus,
+                            onDeleteGame = {
+                                viewModel.deleteGame {
+                                    onSwitchGame()
+                                }
+                            },
                             onBack = { moreSubScreen = null },
                         )
                     }

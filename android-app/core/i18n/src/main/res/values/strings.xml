@@ -312,6 +312,9 @@
     <string name="label_end_game">End Game</string>
     <string name="label_end_game_confirm_title">End Game?</string>
     <string name="label_end_game_confirm_message">This will end the game. Teams will no longer be able to play.</string>
+    <string name="label_delete_game">Delete Game</string>
+    <string name="label_delete_game_confirm_title">Delete Game?</string>
+    <string name="label_delete_game_confirm_message">This will permanently delete this game and all its data. This action cannot be undone.</string>
     <string name="label_message">Message</string>
     <string name="label_all_teams">All Teams</string>
     <string name="action_send">Send</string>

@@ -39,7 +39,7 @@ struct OperatorMoreView: View {
                 // Game Management section
                 Section {
                     NavigationLink {
-                        GameSettingsView(game: game)
+                        GameSettingsView(game: game, onGameDeleted: onBack)
                     } label: {
                         Label(locale.t("operator.gameSettings"), systemImage: "gear")
                     }
@@ -55,21 +55,18 @@ struct OperatorMoreView: View {
                     } label: {
                         Label(locale.t("operator.bases"), systemImage: "mappin.and.ellipse")
                     }
-                    .foregroundStyle(.primary)
 
                     Button {
                         showChallenges = true
                     } label: {
                         Label(locale.t("operator.challenges"), systemImage: "puzzlepiece")
                     }
-                    .foregroundStyle(.primary)
 
                     Button {
                         showTeams = true
                     } label: {
                         Label(locale.t("operator.teams"), systemImage: "person.3")
                     }
-                    .foregroundStyle(.primary)
 
                     NavigationLink {
                         OperatorsManagementView(game: game)
