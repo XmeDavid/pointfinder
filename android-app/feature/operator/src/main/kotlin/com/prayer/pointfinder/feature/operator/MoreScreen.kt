@@ -95,12 +95,12 @@ fun MoreScreen(
                     onClick = onNavigateToNotifications,
                 )
                 NavigationRow(
-                    icon = Icons.Default.Place,
+                    icon = Icons.Default.LocationOn,
                     label = stringResource(R.string.label_bases),
                     onClick = onNavigateToBases,
                 )
                 NavigationRow(
-                    icon = Icons.Default.Extension,
+                    icon = Icons.Default.Star,
                     label = stringResource(R.string.label_challenges),
                     onClick = onNavigateToChallenges,
                 )
