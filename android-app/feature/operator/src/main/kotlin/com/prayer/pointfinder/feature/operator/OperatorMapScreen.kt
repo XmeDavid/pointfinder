@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -373,6 +374,9 @@ fun OperatorMapScreen(
                         )
                     },
                     leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                    ),
                 )
                 SmallFloatingActionButton(onClick = onRefresh) {
                     Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_refresh))
