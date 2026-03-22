@@ -272,6 +272,7 @@ private struct OperatorSubmissionReviewSheet: View {
     @State private var pointsText: String
     @State private var isSaving = false
     @State private var errorMessage: String?
+    @State private var pendingOverrideStatus: String?
 
     init(
         submission: SubmissionResponse,
@@ -349,18 +350,59 @@ private struct OperatorSubmissionReviewSheet: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack {
                         Button(locale.t("submissions.reject"), role: .destructive) {
-                            Task { await submit(status: "rejected") }
+                            handleReview(status: "rejected")
                         }
                         .disabled(isSaving)
                         .accessibilityIdentifier("submission-reject-btn")
                         Button(locale.t("submissions.approve")) {
-                            Task { await submit(status: "approved") }
+                            handleReview(status: "approved")
                         }
                         .disabled(isSaving)
                         .accessibilityIdentifier("submission-approve-btn")
                     }
                 }
             }
+            .alert(
+                locale.t("operator.overrideReviewTitle"),
+                isPresented: Binding(
+                    get: { pendingOverrideStatus != nil },
+                    set: { if !$0 { pendingOverrideStatus = nil } }
+                )
+            ) {
+                Button(locale.t("common.cancel"), role: .cancel) {
+                    pendingOverrideStatus = nil
+                }
+                Button(locale.t("common.ok")) {
+                    if let status = pendingOverrideStatus {
+                        pendingOverrideStatus = nil
+                        Task { await submit(status: status) }
+                    }
+                }
+            } message: {
+                if let status = pendingOverrideStatus {
+                    Text(locale.t("operator.overrideReviewMessage",
+                                  statusLabel(for: submission.status),
+                                  statusLabel(for: status)))
+                }
+            }
+        }
+    }
+
+    private func handleReview(status: String) {
+        if submission.status == "pending" {
+            Task { await submit(status: status) }
+        } else {
+            pendingOverrideStatus = status
+        }
+    }
+
+    private func statusLabel(for status: String) -> String {
+        switch status {
+        case "pending": return locale.t("submissions.statusPending")
+        case "approved": return locale.t("submissions.statusApproved")
+        case "rejected": return locale.t("submissions.statusRejected")
+        case "correct": return locale.t("submissions.statusCorrect")
+        default: return status
         }
     }
 

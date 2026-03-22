@@ -66,6 +66,8 @@ fun OperatorSubmissionsScreen(
     var selectedSubmission by remember { mutableStateOf<SubmissionResponse?>(null) }
     var feedback by rememberSaveable { mutableStateOf("") }
     var pointsText by rememberSaveable { mutableStateOf("") }
+    // Pending override confirmation: Pair(submissionId, newStatus)
+    var pendingOverride by remember { mutableStateOf<Pair<String, SubmissionStatus>?>(null) }
 
     val filteredSubmissions = submissions
         .asSequence()
@@ -216,8 +218,12 @@ fun OperatorSubmissionsScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        onReviewSubmission(reviewingSubmission.id, SubmissionStatus.APPROVED, feedback.takeIf { it.isNotBlank() }, pointsText.toIntOrNull())
-                        selectedSubmission = null
+                        if (reviewingSubmission.status != SubmissionStatus.PENDING) {
+                            pendingOverride = Pair(reviewingSubmission.id, SubmissionStatus.APPROVED)
+                        } else {
+                            onReviewSubmission(reviewingSubmission.id, SubmissionStatus.APPROVED, feedback.takeIf { it.isNotBlank() }, pointsText.toIntOrNull())
+                            selectedSubmission = null
+                        }
                     },
                     modifier = Modifier.testTag("submission-approve-btn"),
                 ) {
@@ -231,13 +237,52 @@ fun OperatorSubmissionsScreen(
                     }
                     TextButton(
                         onClick = {
-                            onReviewSubmission(reviewingSubmission.id, SubmissionStatus.REJECTED, feedback.takeIf { it.isNotBlank() }, null)
-                            selectedSubmission = null
+                            if (reviewingSubmission.status != SubmissionStatus.PENDING) {
+                                pendingOverride = Pair(reviewingSubmission.id, SubmissionStatus.REJECTED)
+                            } else {
+                                onReviewSubmission(reviewingSubmission.id, SubmissionStatus.REJECTED, feedback.takeIf { it.isNotBlank() }, null)
+                                selectedSubmission = null
+                            }
                         },
                         modifier = Modifier.testTag("submission-reject-btn"),
                     ) {
                         Text(stringResource(R.string.action_reject), color = MaterialTheme.colorScheme.error)
                     }
+                }
+            },
+        )
+    }
+
+    val override = pendingOverride
+    val overrideSubmission = selectedSubmission
+    if (override != null && overrideSubmission != null) {
+        val currentStatusLabel = statusLabel(overrideSubmission.status)
+        val newStatusLabel = if (override.second == SubmissionStatus.APPROVED) {
+            stringResource(R.string.status_approved)
+        } else {
+            stringResource(R.string.status_rejected)
+        }
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { pendingOverride = null },
+            title = { Text(stringResource(R.string.label_override_review_title)) },
+            text = {
+                Text(stringResource(R.string.label_override_review_message, currentStatusLabel, newStatusLabel))
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val pts = if (override.second == SubmissionStatus.APPROVED) pointsText.toIntOrNull() else null
+                        onReviewSubmission(override.first, override.second, feedback.takeIf { it.isNotBlank() }, pts)
+                        pendingOverride = null
+                        selectedSubmission = null
+                    },
+                ) {
+                    Text(stringResource(R.string.action_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingOverride = null }) {
+                    Text(stringResource(R.string.action_cancel))
                 }
             },
         )

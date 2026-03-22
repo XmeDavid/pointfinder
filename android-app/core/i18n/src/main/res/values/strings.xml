@@ -112,6 +112,8 @@
     <string name="label_unknown_challenge">Unknown challenge</string>
     <string name="label_unknown_base">Unknown base</string>
     <string name="label_review_submission">Review submission</string>
+    <string name="label_override_review_title">Override Review?</string>
+    <string name="label_override_review_message">This submission was already %1$s. Change to %2$s?</string>
     <string name="submissions_challenge_label">Challenge</string>
     <string name="submissions_base_label">Base</string>
     <string name="submissions_points_label_with_expected">Points (%1$d)</string>

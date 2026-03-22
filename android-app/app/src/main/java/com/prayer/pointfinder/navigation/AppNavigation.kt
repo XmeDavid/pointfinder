@@ -69,6 +69,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.prayer.pointfinder.BuildConfig
 import com.prayer.pointfinder.core.model.AuthType
+import com.prayer.pointfinder.core.model.CheckInResponse
 import com.prayer.pointfinder.core.model.GameStatus
 import com.prayer.pointfinder.core.model.ThemeMode
 import com.prayer.pointfinder.feature.auth.OperatorLoginScreen
@@ -387,6 +388,7 @@ private fun PlayerRootScreen(
 
     var selectedTab by rememberSaveable { mutableStateOf(PlayerTab.MAP) }
     var solving by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var solvingChallenge by remember { mutableStateOf<CheckInResponse.ChallengeInfo?>(null) }
     var selectedMediaItems by remember { mutableStateOf<List<MediaItem>>(emptyList()) }
     var showNfcScanDialog by remember { mutableStateOf(false) }
     // Callback to invoke when an NFC scan completes (used for both check-in and presence verification).
@@ -402,6 +404,7 @@ private fun PlayerRootScreen(
         viewModel.clearSubmissionResult()
         viewModel.clearCheckIn()
         solving = null
+        solvingChallenge = null
         selectedMediaItems = emptyList()
         showNfcScanDialog = false
         pendingNfcAction = null
@@ -609,6 +612,7 @@ private fun PlayerRootScreen(
         onTabSelected = { tab ->
             // Clear sub-screen state so tabs always navigate
             solving = null
+            solvingChallenge = null
             selectedMediaItems = emptyList()
             viewModel.clearCheckIn()
             viewModel.clearSubmissionResult()
@@ -648,7 +652,7 @@ private fun PlayerRootScreen(
             }
 
             solving != null -> {
-                BackHandler { solving = null }
+                BackHandler { solving = null; solvingChallenge = null }
                 val (baseId, challengeId) = solving ?: return@PlayerHomeScaffold
 
                 // Closure that performs the actual submission (reused by direct and NFC paths).
@@ -717,7 +721,7 @@ private fun PlayerRootScreen(
                     }
                 }
 
-                val solveChallenge = state.activeCheckIn?.challenge ?: state.selectedChallenge
+                val solveChallenge = state.activeCheckIn?.challenge ?: solvingChallenge
                 SolveScreen(
                     answer = state.answerText,
                     onAnswerChange = viewModel::setAnswerText,
@@ -739,7 +743,7 @@ private fun PlayerRootScreen(
                     onRemoveMedia = { index ->
                         selectedMediaItems = selectedMediaItems.toMutableList().apply { removeAt(index) }
                     },
-                    onBack = { solving = null },
+                    onBack = { solving = null; solvingChallenge = null },
                     isSubmitting = state.isSubmitting,
                     challengeTitle = solveChallenge?.title ?: "",
                     challengeDescription = solveChallenge?.description ?: "",
@@ -875,6 +879,7 @@ private fun PlayerRootScreen(
                     if (state.selectedChallenge?.answerType == "none") {
                         viewModel.submitNone(auth, selectedBase.baseId, challengeId, isOnline)
                     } else {
+                        solvingChallenge = state.selectedChallenge
                         solving = selectedBase.baseId to challengeId
                         viewModel.setPresenceRequired(state.selectedChallenge?.requirePresenceToSubmit == true)
                         viewModel.setPhotoMode(state.selectedChallenge?.answerType == "file")
