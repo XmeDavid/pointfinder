@@ -573,7 +573,7 @@ private fun aggregateBaseStatus(
 ): BaseStatus {
     val statuses = baseProgress.filter { it.baseId == base.id }
     if (statuses.isEmpty()) return BaseStatus.NOT_VISITED
-    return statuses.minByOrNull { it.status.ordinal }?.status ?: BaseStatus.NOT_VISITED
+    return statuses.maxByOrNull { it.status.ordinal }?.status ?: BaseStatus.NOT_VISITED
 }
 
 private fun statusColor(status: BaseStatus): Int = when (status) {
