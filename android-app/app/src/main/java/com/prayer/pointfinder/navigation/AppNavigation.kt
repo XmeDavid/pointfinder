@@ -1531,7 +1531,7 @@ private fun OperatorGameRoot(
                             onBack = { moreSubScreen = null },
                         )
                     }
-                    moreSubScreen?.startsWith("team_detail:") == true -> {
+                    else -> if (moreSubScreen?.startsWith("team_detail:") == true) {
                         val teamId = moreSubScreen!!.removePrefix("team_detail:")
                         val team = state.teams.firstOrNull { it.id == teamId }
                         if (team != null) {
@@ -1562,13 +1562,14 @@ private fun OperatorGameRoot(
                                 onSaveVariableValue = { variableKey, value ->
                                     viewModel.saveTeamVariableValue(variableKey, team.id, value)
                                 },
+                                onCreateVariable = { name -> viewModel.createVariable(name) },
+                                onDeleteVariable = { key -> viewModel.deleteVariable(key) },
                                 onBack = { moreSubScreen = "teams_list" },
                             )
                         } else {
                             moreSubScreen = "teams_list"
                         }
-                    }
-                    else -> {
+                    } else {
                         MoreScreen(
                             currentLanguage = currentLanguage,
                             currentThemeMode = currentThemeMode.name,
