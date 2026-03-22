@@ -12,6 +12,7 @@
     <string name="action_check_in_at_base">An Station einchecken</string>
     <string name="action_submit">Senden</string>
     <string name="action_confirm_at_base">An Station bestätigen zum Senden</string>
+    <string name="action_go_to_checkin">Zum Check-in</string>
     <string name="action_solve_challenge">Challenge lösen</string>
     <string name="action_write_nfc">NFC-Tag schreiben</string>
     <string name="action_choose_media">Medien wählen</string>
@@ -174,6 +175,7 @@
     <string name="error_invalid_join_code">Bitte gib einen gültigen Beitrittscode ein.</string>
     <string name="error_answer_required">Bitte gib eine Antwort ein.</string>
     <string name="error_photo_required">Mindestens eine Mediendatei ist erforderlich.</string>
+    <string name="error_sync_permanently_failed">Einige Aktionen konnten nicht synchronisiert werden. Bitte versuche es erneut oder kontaktiere deinen Leiter.</string>
     <string name="error_max_media">Maximal 5 Mediendateien erlaubt.</string>
     <string name="notification_new_message">Neue Nachricht</string>
     <string name="error_nfc_write_failed">NFC-Schreiben fehlgeschlagen.</string>

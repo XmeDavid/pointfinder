@@ -8,7 +8,7 @@ enum NFCTagHelper {
     static func ndefTag(from tag: NFCTag) -> NFCNDEFTag? {
         switch tag {
         case .iso7816(let iso7816Tag):
-            return iso7816Tag as? NFCNDEFTag
+            return iso7816Tag as NFCNDEFTag
         case .miFare(let mifareTag):
             return mifareTag
         case .iso15693(let iso15693Tag):

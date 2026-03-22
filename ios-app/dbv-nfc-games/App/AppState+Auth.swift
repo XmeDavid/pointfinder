@@ -165,7 +165,7 @@ extension AppState {
 
         do {
             try await apiClient.deletePlayerAccount(token: token)
-            logout()
+            await logout()
         } catch {
             setError(error.localizedDescription)
         }

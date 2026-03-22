@@ -72,7 +72,7 @@ struct OperatorHomeView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Menu {
                         Button(role: .destructive) {
-                            appState.logout()
+                            Task { await appState.logout() }
                         } label: {
                             Label(locale.t("operator.logout"), systemImage: "rectangle.portrait.and.arrow.right")
                         }

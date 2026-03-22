@@ -1,5 +1,5 @@
 import Foundation
-import CoreNFC
+@preconcurrency import CoreNFC
 
 @Observable
 @MainActor
@@ -60,11 +60,10 @@ final class NFCReaderService: NSObject {
 
 extension NFCReaderService: NFCTagReaderSessionDelegate {
 
-    func tagReaderSessionDidBecomeActive(_ session: NFCTagReaderSession) {}
+    nonisolated func tagReaderSessionDidBecomeActive(_ session: NFCTagReaderSession) {}
 
-    func tagReaderSession(_ session: NFCTagReaderSession, didInvalidateWithError error: Error) {
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
+    nonisolated func tagReaderSession(_ session: NFCTagReaderSession, didInvalidateWithError error: Error) {
+        Task { @MainActor in
             self.isReading = false
             self.session = nil
             if let nfcError = error as? NFCReaderError,
@@ -77,40 +76,44 @@ extension NFCReaderService: NFCTagReaderSessionDelegate {
         }
     }
 
-    func tagReaderSession(_ session: NFCTagReaderSession, didDetect tags: [NFCTag]) {
+    nonisolated func tagReaderSession(_ session: NFCTagReaderSession, didDetect tags: [NFCTag]) {
         guard let tag = tags.first else {
             session.invalidate(errorMessage: Translations.string("nfc.noTagFound"))
             return
         }
 
+        nonisolated(unsafe) let capturedSession = session
         session.connect(to: tag) { [weak self] error in
             if let error = error {
-                session.invalidate(errorMessage: error.localizedDescription)
+                capturedSession.invalidate(errorMessage: error.localizedDescription)
                 return
             }
 
             guard let ndefTag = NFCTagHelper.ndefTag(from: tag) else {
-                session.invalidate(errorMessage: Translations.string("nfc.noTagFound"))
+                capturedSession.invalidate(errorMessage: Translations.string("nfc.noTagFound"))
                 return
             }
 
-            self?.readNDEFFromTag(ndefTag, session: session)
+            self?.readNDEFFromTag(ndefTag, session: capturedSession)
         }
     }
 
-    private func readNDEFFromTag(_ tag: NFCNDEFTag, session: NFCTagReaderSession) {
+    private nonisolated func readNDEFFromTag(_ tag: NFCNDEFTag, session: NFCTagReaderSession) {
+        nonisolated(unsafe) let capturedSession = session
         tag.readNDEF { [weak self] message, error in
             if let error = error {
-                session.invalidate(errorMessage: error.localizedDescription)
+                capturedSession.invalidate(errorMessage: error.localizedDescription)
                 return
             }
 
             guard let message = message, let record = message.records.first else {
-                session.invalidate(errorMessage: Translations.string("nfc.noDataOnTag"))
+                capturedSession.invalidate(errorMessage: Translations.string("nfc.noDataOnTag"))
                 return
             }
 
-            self?.processRecord(record, session: session)
+            Task { @MainActor in
+                self?.processRecord(record, session: capturedSession)
+            }
         }
     }
 

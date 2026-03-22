@@ -9,7 +9,7 @@ extension AppState {
         guard case .player(let token, _, _, _) = authType, isOnline else { return }
         do {
             let response = try await apiClient.getUnseenNotificationCount(token: token)
-            unseenNotificationCount = response.count
+            unseenNotificationCount = Int(response.count)
         } catch {
             logger.debug("Failed to load unseen notification count: \(error.localizedDescription, privacy: .public)")
         }

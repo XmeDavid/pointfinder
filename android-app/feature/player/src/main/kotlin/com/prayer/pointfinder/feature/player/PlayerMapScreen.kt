@@ -112,7 +112,7 @@ fun PlayerMapScreen(
     // Update markers whenever progress changes (incremental: remove only changed markers, add new ones)
     LaunchedEffect(map, progress) {
         val m = map ?: return@LaunchedEffect
-        val currentMarkers = m.annotations.toList()
+        val currentMarkers = m.annotations.filterIsInstance<org.maplibre.android.annotations.Marker>()
         val progressIds = progress.map { it.baseId }.toSet()
 
         // Remove markers for bases no longer in progress

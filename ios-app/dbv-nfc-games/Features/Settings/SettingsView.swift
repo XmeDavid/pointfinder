@@ -171,7 +171,7 @@ struct SettingsView: View {
             .navigationTitle(locale.t("common.settings"))
             .alert(locale.t("settings.leaveGameTitle"), isPresented: $showLeaveGameConfirm) {
                 Button(locale.t("settings.leaveGame"), role: .destructive) {
-                    appState.logout()
+                    Task { await appState.logout() }
                 }
                 Button(locale.t("common.cancel"), role: .cancel) {
                     showLeaveGameConfirm = false
@@ -198,7 +198,7 @@ struct SettingsView: View {
                 set: { if !$0 { appState.showLogoutUnsyncedAlert = false } }
             )) {
                 Button(locale.t("settings.leaveGame"), role: .destructive) {
-                    appState.confirmLogout()
+                    Task { await appState.confirmLogout() }
                 }
                 Button(locale.t("common.cancel"), role: .cancel) {
                     appState.showLogoutUnsyncedAlert = false

@@ -12,6 +12,7 @@
     <string name="action_check_in_at_base">Check-in at Base</string>
     <string name="action_submit">Submit</string>
     <string name="action_confirm_at_base">Confirm at Base to Submit</string>
+    <string name="action_go_to_checkin">Go to check-in</string>
     <string name="action_solve_challenge">Solve challenge</string>
     <string name="action_write_nfc">Write NFC Tag</string>
     <string name="action_choose_media">Choose Media</string>
@@ -174,6 +175,7 @@
     <string name="error_invalid_join_code">Please enter a valid join code.</string>
     <string name="error_answer_required">Please provide an answer.</string>
     <string name="error_photo_required">At least one media file is required.</string>
+    <string name="error_sync_permanently_failed">Some actions could not be synced. Please try again or contact your operator.</string>
     <string name="error_max_media">Maximum 5 media items allowed.</string>
     <string name="notification_new_message">New message</string>
     <string name="error_nfc_write_failed">NFC write failed.</string>

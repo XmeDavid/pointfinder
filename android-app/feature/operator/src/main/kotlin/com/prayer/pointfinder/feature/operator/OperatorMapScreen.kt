@@ -165,7 +165,7 @@ fun OperatorMapScreen(
     // Update markers and connection lines whenever data changes (incremental marker updates)
     LaunchedEffect(map, mapStyle, bases, teamLocations, teams, baseProgress, challenges) {
         val m = map ?: return@LaunchedEffect
-        val currentMarkers = m.annotations.toList()
+        val currentMarkers = m.annotations.filterIsInstance<org.maplibre.android.annotations.Marker>()
 
         // Build set of all marker IDs we expect: bases and team locations
         val expectedBaseIds = bases.map { "base:${it.id}" }.toSet()

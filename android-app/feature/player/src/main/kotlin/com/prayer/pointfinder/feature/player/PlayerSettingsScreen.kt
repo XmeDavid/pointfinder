@@ -2,6 +2,7 @@ package com.prayer.pointfinder.feature.player
 
 import android.content.Intent
 import android.net.Uri
+import com.prayer.pointfinder.core.model.PRIVACY_POLICY_URL
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

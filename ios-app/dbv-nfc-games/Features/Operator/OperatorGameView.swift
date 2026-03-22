@@ -237,7 +237,7 @@ struct OperatorSettingsView: View {
                     }
 
                     Button(role: .destructive) {
-                        appState.logout()
+                        Task { await appState.logout() }
                     } label: {
                         Label(locale.t("operator.logout"), systemImage: "rectangle.portrait.and.arrow.right")
                     }

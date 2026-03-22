@@ -126,9 +126,7 @@ struct CreateGameView: View {
                 exportData.game.name = name
                 game = try await appState.apiClient.importGame(
                     request: ImportGameRequest(
-                        gameData: exportData,
-                        startDate: exportData.game.startDate,
-                        endDate: exportData.game.endDate
+                        gameData: exportData
                     ),
                     token: token
                 )

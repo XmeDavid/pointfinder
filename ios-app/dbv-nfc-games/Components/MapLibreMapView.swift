@@ -12,6 +12,11 @@ struct MapAnnotationItem: Identifiable {
     let onTap: (() -> Void)?
 }
 
+/// MLNPointAnnotation subclass that carries an identifier for ID-based matching.
+class IdentifiablePointAnnotation: MLNPointAnnotation {
+    var annotationId: String?
+}
+
 // MARK: - MapLibre SwiftUI Wrapper
 
 struct MapLibreMapView: UIViewRepresentable {
@@ -87,12 +92,11 @@ struct MapLibreMapView: UIViewRepresentable {
 
             // Add new annotations
             for item in annotations {
-                let point = MLNPointAnnotation()
+                let point = IdentifiablePointAnnotation()
                 point.coordinate = item.coordinate
                 point.title = item.title
                 point.subtitle = item.subtitle
-                // Tag annotation with item ID for identifier-based matching
-                point.accessibilityIdentifier = item.id
+                point.annotationId = item.id
                 mapView.addAnnotation(point)
             }
         }
@@ -215,9 +219,8 @@ struct MapLibreMapView: UIViewRepresentable {
             if let visibleAnnotations = mapView.visibleAnnotations(in: hitRect) {
                 for annotation in visibleAnnotations {
                     if annotation is MLNUserLocation { continue }
-                    guard let pointAnnotation = annotation as? MLNPointAnnotation else { continue }
-                    // Use ID-based matching instead of coordinate equality
-                    guard let annotationId = pointAnnotation.accessibilityIdentifier,
+                    guard let pointAnnotation = annotation as? IdentifiablePointAnnotation else { continue }
+                    guard let annotationId = pointAnnotation.annotationId,
                           let item = annotationItems.first(where: { $0.id == annotationId })
                     else { continue }
                     item.onTap?()
@@ -239,10 +242,9 @@ struct MapLibreMapView: UIViewRepresentable {
         }
 
         func mapView(_ mapView: MLNMapView, viewFor annotation: MLNAnnotation) -> MLNAnnotationView? {
-            guard let pointAnnotation = annotation as? MLNPointAnnotation else { return nil }
+            guard let pointAnnotation = annotation as? IdentifiablePointAnnotation else { return nil }
 
-            // Find matching annotation item using ID-based matching instead of coordinate equality
-            guard let annotationId = pointAnnotation.accessibilityIdentifier,
+            guard let annotationId = pointAnnotation.annotationId,
                   let item = annotationItems.first(where: { $0.id == annotationId })
             else { return nil }
 
@@ -260,9 +262,8 @@ struct MapLibreMapView: UIViewRepresentable {
         func mapView(_ mapView: MLNMapView, didSelect annotation: MLNAnnotation) {
             mapView.deselectAnnotation(annotation, animated: false)
 
-            guard let pointAnnotation = annotation as? MLNPointAnnotation else { return }
-            // Use ID-based matching instead of coordinate equality
-            guard let annotationId = pointAnnotation.accessibilityIdentifier,
+            guard let pointAnnotation = annotation as? IdentifiablePointAnnotation else { return }
+            guard let annotationId = pointAnnotation.annotationId,
                   let item = annotationItems.first(where: { $0.id == annotationId })
             else { return }
             item.onTap?()

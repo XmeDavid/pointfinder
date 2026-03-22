@@ -187,7 +187,7 @@ interface ChallengeDao {
         CachedProgressEntity::class,
         CachedChallengeEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = true,
 )
 abstract class CompanionDatabase : RoomDatabase() {
@@ -200,6 +200,13 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
     override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("ALTER TABLE pending_actions ADD COLUMN permanentlyFailed INTEGER NOT NULL DEFAULT 0")
         db.execSQL("ALTER TABLE pending_actions ADD COLUMN failureReason TEXT")
+    }
+}
+
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_pending_actions_gameId_baseId_type ON pending_actions (gameId, baseId, type)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_pending_actions_permanentlyFailed ON pending_actions (permanentlyFailed)")
     }
 }
 

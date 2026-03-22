@@ -111,11 +111,10 @@ final class LocationService: NSObject, ObservableObject {
         }
 
         sendTimer = Timer.scheduledTimer(withTimeInterval: sendInterval, repeats: true) { [weak self] _ in
-            guard let self else { return }
-            // Prevent overlapping sends with isSending guard
-            guard !self.isSending else { return }
-            self.isSending = true
             Task { @MainActor in
+                guard let self else { return }
+                guard !self.isSending else { return }
+                self.isSending = true
                 await self.sendCurrentLocation()
                 self.isSending = false
             }

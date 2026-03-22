@@ -360,7 +360,7 @@ final class SyncEngine {
 
             // Skip already-uploaded chunks by seeking directly to the next position
             if uploadedSet.contains(chunkIndex) {
-                let skipOffset = Int64(chunkIndex) * Int64(session.chunkSizeBytes)
+                let skipOffset = UInt64(chunkIndex) * UInt64(session.chunkSizeBytes)
                 try fileHandle.seek(toOffset: skipOffset)
                 continue
             }
@@ -413,7 +413,7 @@ final class SyncEngine {
                 originalFileName: fileName,
                 contentType: contentType,
                 totalSizeBytes: totalSize,
-                chunkSizeBytes: DEFAULT_CHUNK_SIZE_BYTES
+                chunkSizeBytes: defaultChunkSizeBytes
             ),
             token: token
         )
@@ -436,7 +436,7 @@ final class SyncEngine {
 
             // Skip already-uploaded chunks by seeking directly to the next position
             if uploadedSet.contains(chunkIndex) {
-                let skipOffset = Int64(chunkIndex) * Int64(session.chunkSizeBytes)
+                let skipOffset = UInt64(chunkIndex) * UInt64(session.chunkSizeBytes)
                 try fileHandle.seek(toOffset: skipOffset)
                 continue
             }
@@ -484,7 +484,7 @@ final class SyncEngine {
                 originalFileName: action.mediaFileName,
                 contentType: contentType,
                 totalSizeBytes: totalSize,
-                chunkSizeBytes: DEFAULT_CHUNK_SIZE_BYTES
+                chunkSizeBytes: defaultChunkSizeBytes
             ),
             token: token
         )
