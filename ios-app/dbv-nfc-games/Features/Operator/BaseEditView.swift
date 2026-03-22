@@ -95,7 +95,8 @@ struct BaseEditView: View {
                     onTap: { coordinate in
                         lat = coordinate.latitude
                         lng = coordinate.longitude
-                    }
+                    },
+                    disablesParentScrolling: true
                 )
                 .frame(height: 200)
                 .clipShape(RoundedRectangle(cornerRadius: 8))

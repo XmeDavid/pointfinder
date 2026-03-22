@@ -43,7 +43,7 @@ struct OperatorMapView: View {
             let baseAnnotations: [MapAnnotationItem] = bases.map { base in
                 let status = aggregateStatus(for: base).toBaseStatus
                 return MapAnnotationItem(
-                    id: "base-\(base.id.uuidString)",
+                    id: "base-\(base.id.uuidString)-\(status.rawValue)",
                     coordinate: CLLocationCoordinate2D(latitude: base.lat, longitude: base.lng),
                     title: base.name,
                     subtitle: nil,

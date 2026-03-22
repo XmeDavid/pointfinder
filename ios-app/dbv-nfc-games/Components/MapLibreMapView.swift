@@ -30,6 +30,9 @@ struct MapLibreMapView: UIViewRepresentable {
     var centerOnCoordinate: CLLocationCoordinate2D? = nil
     var fitAllBasesId: UUID? = nil
     var onUserInteraction: (() -> Void)? = nil
+    /// When true, installs a gesture recognizer that prevents a parent UIScrollView
+    /// from stealing touch events while the user is panning or zooming the map.
+    var disablesParentScrolling: Bool = false
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -53,6 +56,16 @@ struct MapLibreMapView: UIViewRepresentable {
         let longPress = UILongPressGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleLongPress(_:)))
         longPress.minimumPressDuration = 0.5
         mapView.addGestureRecognizer(longPress)
+
+        if disablesParentScrolling {
+            let scrollBlocker = ScrollBlockingPanRecognizer(
+                target: context.coordinator,
+                action: #selector(Coordinator.handleScrollBlocking(_:))
+            )
+            scrollBlocker.cancelsTouchesInView = false
+            scrollBlocker.delegate = context.coordinator
+            mapView.addGestureRecognizer(scrollBlocker)
+        }
 
         return mapView
     }
@@ -185,7 +198,7 @@ struct MapLibreMapView: UIViewRepresentable {
 
     // MARK: - Coordinator
 
-    class Coordinator: NSObject, MLNMapViewDelegate {
+    class Coordinator: NSObject, MLNMapViewDelegate, UIGestureRecognizerDelegate {
         var parent: MapLibreMapView
         var annotationItems: [MapAnnotationItem] = []
         var hasInitialized = false
@@ -239,6 +252,25 @@ struct MapLibreMapView: UIViewRepresentable {
             let point = gesture.location(in: mapView)
             let coordinate = mapView.convert(point, toCoordinateFrom: mapView)
             onLongPress?(coordinate)
+        }
+
+        /// Prevents the nearest ancestor UIScrollView from stealing pan/pinch events
+        /// when the user is interacting with the map inside a scroll container (e.g. Form).
+        @objc func handleScrollBlocking(_ gesture: UIPanGestureRecognizer) {
+            switch gesture.state {
+            case .began, .changed:
+                gesture.view?.findAncestorScrollView()?.isScrollEnabled = false
+            case .ended, .cancelled, .failed:
+                gesture.view?.findAncestorScrollView()?.isScrollEnabled = true
+            default:
+                break
+            }
+        }
+
+        // Allow the scroll-blocking recognizer to fire simultaneously with map gestures.
+        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
+                               shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+            return gestureRecognizer is ScrollBlockingPanRecognizer
         }
 
         func mapView(_ mapView: MLNMapView, viewFor annotation: MLNAnnotation) -> MLNAnnotationView? {
@@ -313,10 +345,10 @@ struct MapLibreMapView: UIViewRepresentable {
 
 class SwiftUIAnnotationView: MLNAnnotationView {
     private var hostingController: UIHostingController<AnyView>?
-    private weak var parentViewController: UIViewController?
+    private weak var hostingParentVC: UIViewController?
 
     func configure(with view: AnyView, parentViewController: UIViewController? = nil) {
-        self.parentViewController = parentViewController
+        self.hostingParentVC = parentViewController
         if let hc = hostingController {
             hc.rootView = view
             hc.view.invalidateIntrinsicContentSize()
@@ -364,4 +396,23 @@ private extension UIView {
         }
         return nil
     }
+
+    /// Walks the view hierarchy upward to find the nearest UIScrollView ancestor.
+    func findAncestorScrollView() -> UIScrollView? {
+        var view: UIView? = superview
+        while let v = view {
+            if let scrollView = v as? UIScrollView {
+                return scrollView
+            }
+            view = v.superview
+        }
+        return nil
+    }
 }
+
+// MARK: - Scroll-blocking pan recognizer
+
+/// A UIPanGestureRecognizer subclass used solely to detect touch-down/up events
+/// so the Coordinator can disable/re-enable a parent UIScrollView while the map
+/// is being panned. It never actually recognizes — it just uses the state callbacks.
+private class ScrollBlockingPanRecognizer: UIPanGestureRecognizer {}
