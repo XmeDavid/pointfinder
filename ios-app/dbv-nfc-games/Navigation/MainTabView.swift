@@ -33,6 +33,8 @@ struct MainTabView: View {
                         Label(locale.t("common.settings"), systemImage: "gearshape.fill")
                     }
             }
+            .toolbarBackground(.visible, for: .tabBar)
+            .toolbarBackground(.ultraThinMaterial, for: .tabBar)
         }
         .onChange(of: appState.pendingDeepLinkBaseId) {
             if appState.pendingDeepLinkBaseId != nil {
