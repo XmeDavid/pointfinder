@@ -1531,7 +1531,78 @@ private fun OperatorGameRoot(
                             onBack = { moreSubScreen = null },
                         )
                     }
-                    else -> if (moreSubScreen?.startsWith("team_detail:") == true) {
+                    else -> if (moreSubScreen?.startsWith("base_edit:") == true) {
+                        val baseId = moreSubScreen!!.removePrefix("base_edit:")
+                        val base = state.bases.firstOrNull { it.id == baseId }
+                        if (base != null) {
+                            val fromAssignments = state.assignments
+                                .filter { it.baseId == base.id }
+                                .mapNotNull { assignment ->
+                                    state.challenges.firstOrNull { it.id == assignment.challengeId }
+                                }
+                            val fixedToBase = state.challenges.filter { ch ->
+                                base.fixedChallengeId == ch.id
+                            }
+                            val linkedChallenges = (fromAssignments + fixedToBase).distinctBy { it.id }
+                            BaseEditScreen(
+                                base = base,
+                                bases = state.bases,
+                                challenges = state.challenges,
+                                linkedChallenges = linkedChallenges,
+                                onSave = { request ->
+                                    viewModel.updateBase(base.id, request as UpdateBaseRequest) {
+                                        moreSubScreen = "bases_list"
+                                        scope.launch { snackbarHostState.showSnackbar(context.getString(com.prayer.pointfinder.core.i18n.R.string.toast_base_saved)) }
+                                    }
+                                },
+                                onDelete = {
+                                    viewModel.deleteBase(base.id) {
+                                        moreSubScreen = "bases_list"
+                                    }
+                                },
+                                onWriteNfc = {
+                                    viewModel.selectBase(base)
+                                    viewModel.beginWriteNfc()
+                                },
+                                onNavigateToCreateChallenge = null,
+                                onBack = { moreSubScreen = "bases_list" },
+                                initialLat = null,
+                                initialLng = null,
+                                tileSource = selectedGame.tileSource,
+                            )
+                        } else {
+                            moreSubScreen = "bases_list"
+                        }
+                    } else if (moreSubScreen?.startsWith("challenge_edit:") == true) {
+                        val challengeId = moreSubScreen!!.removePrefix("challenge_edit:")
+                        val challenge = state.challenges.firstOrNull { it.id == challengeId }
+                        if (challenge != null) {
+                            ChallengeEditScreen(
+                                challenge = challenge,
+                                bases = state.bases,
+                                challenges = state.challenges,
+                                teams = state.teams,
+                                variables = state.variables,
+                                onSave = { request ->
+                                    viewModel.updateChallenge(
+                                        challenge.id,
+                                        request as UpdateChallengeRequest,
+                                        onSuccess = { moreSubScreen = "challenges_list" },
+                                        onError = { msg -> scope.launch { snackbarHostState.showSnackbar(msg) } },
+                                    )
+                                },
+                                onDelete = {
+                                    viewModel.deleteChallenge(challenge.id) {
+                                        moreSubScreen = "challenges_list"
+                                    }
+                                },
+                                onBack = { moreSubScreen = "challenges_list" },
+                                onCreateVariable = viewModel::createVariable,
+                            )
+                        } else {
+                            moreSubScreen = "challenges_list"
+                        }
+                    } else if (moreSubScreen?.startsWith("team_detail:") == true) {
                         val teamId = moreSubScreen!!.removePrefix("team_detail:")
                         val team = state.teams.firstOrNull { it.id == teamId }
                         if (team != null) {
