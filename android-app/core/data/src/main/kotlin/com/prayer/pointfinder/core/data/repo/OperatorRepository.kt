@@ -216,10 +216,16 @@ class OperatorRepository @Inject constructor(
     // === Challenge CRUD ===
 
     suspend fun createChallenge(gameId: String, request: CreateChallengeRequest): Challenge =
-        apiCall { api.createChallenge(gameId, request) }.also { challengesCache.remove(gameId) }
+        apiCall { api.createChallenge(gameId, request) }.also {
+            challengesCache.remove(gameId)
+            basesCache.remove(gameId) // fixedBaseId links update base's fixedChallengeId
+        }
 
     suspend fun updateChallenge(gameId: String, challengeId: String, request: UpdateChallengeRequest): Challenge =
-        apiCall { api.updateChallenge(gameId, challengeId, request) }.also { challengesCache.remove(gameId) }
+        apiCall { api.updateChallenge(gameId, challengeId, request) }.also {
+            challengesCache.remove(gameId)
+            basesCache.remove(gameId) // fixedBaseId links update base's fixedChallengeId
+        }
 
     suspend fun deleteChallenge(gameId: String, challengeId: String) {
         apiCall {
@@ -230,6 +236,7 @@ class OperatorRepository @Inject constructor(
             checkSuccess(response.code(), errorBody)
         }
         challengesCache.remove(gameId)
+        basesCache.remove(gameId) // deleting challenge clears base's fixedChallengeId
         assignmentsCache.remove(gameId)
     }
 
