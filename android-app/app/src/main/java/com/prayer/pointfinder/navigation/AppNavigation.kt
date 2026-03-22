@@ -1592,9 +1592,11 @@ private fun OperatorGameRoot(
                                     )
                                 },
                                 onDelete = {
-                                    viewModel.deleteChallenge(challenge.id) {
-                                        moreSubScreen = "challenges_list"
-                                    }
+                                    viewModel.deleteChallenge(
+                                        challenge.id,
+                                        onSuccess = { moreSubScreen = "challenges_list" },
+                                        onError = { msg -> scope.launch { snackbarHostState.showSnackbar(msg) } },
+                                    )
                                 },
                                 onBack = { moreSubScreen = "challenges_list" },
                                 onCreateVariable = viewModel::createVariable,
