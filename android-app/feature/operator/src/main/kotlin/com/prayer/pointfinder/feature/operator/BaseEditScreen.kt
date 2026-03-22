@@ -235,6 +235,20 @@ fun BaseEditScreen(
             AndroidView(
                 factory = {
                     mapView.apply {
+                        // Prevent parent ScrollView from stealing map touch events
+                        setOnTouchListener { v, event ->
+                            when (event.action) {
+                                android.view.MotionEvent.ACTION_DOWN,
+                                android.view.MotionEvent.ACTION_MOVE -> {
+                                    v.parent?.requestDisallowInterceptTouchEvent(true)
+                                }
+                                android.view.MotionEvent.ACTION_UP,
+                                android.view.MotionEvent.ACTION_CANCEL -> {
+                                    v.parent?.requestDisallowInterceptTouchEvent(false)
+                                }
+                            }
+                            false // don't consume — let MapView handle
+                        }
                         getMapAsync { map ->
                             // Style is set by LaunchedEffect(mapInstance, tileSource, isDark) — not here
                             mapInstance = map
