@@ -7,6 +7,7 @@ struct BasesManagementView: View {
 
     let game: Game
     var onDismiss: (() -> Void)? = nil
+    var embedded: Bool = false
 
     enum BaseNavDestination: Hashable {
         case edit(UUID)
@@ -26,7 +27,16 @@ struct BasesManagementView: View {
     }
 
     var body: some View {
-        NavigationStack(path: $path) {
+        if embedded {
+            content
+        } else {
+            NavigationStack(path: $path) {
+                content
+            }
+        }
+    }
+
+    private var content: some View {
             Group {
                 if isLoading {
                     ProgressView(locale.t("operator.loading"))
@@ -132,7 +142,6 @@ struct BasesManagementView: View {
             .refreshable {
                 await loadData()
             }
-        }
     }
 
     private func loadData() async {
@@ -143,6 +152,8 @@ struct BasesManagementView: View {
             let (b, c) = try await (basesResult, challengesResult)
             bases = b
             challenges = c
+        } catch is CancellationError {
+            // Task cancelled during navigation — not an error
         } catch {
             appState.setError(error.localizedDescription)
         }

@@ -47,19 +47,19 @@ struct OperatorMoreView: View {
                     }
 
                     NavigationLink {
-                        BasesManagementView(game: game)
+                        BasesManagementView(game: game, embedded: true)
                     } label: {
                         Label(locale.t("operator.bases"), systemImage: "mappin.and.ellipse")
                     }
 
                     NavigationLink {
-                        ChallengesManagementView(game: game)
+                        ChallengesManagementView(game: game, embedded: true)
                     } label: {
                         Label(locale.t("operator.challenges"), systemImage: "puzzlepiece")
                     }
 
                     NavigationLink {
-                        TeamsManagementView(game: game)
+                        TeamsManagementView(game: game, embedded: true)
                     } label: {
                         Label(locale.t("operator.teams"), systemImage: "person.3")
                     }
