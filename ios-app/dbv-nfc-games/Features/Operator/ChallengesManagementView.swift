@@ -6,7 +6,6 @@ struct ChallengesManagementView: View {
 
     let game: Game
     var onDismiss: (() -> Void)? = nil
-    var embedded: Bool = false
 
     enum ChallengeNavDestination: Hashable {
         case edit(UUID)
@@ -27,12 +26,8 @@ struct ChallengesManagementView: View {
     }
 
     var body: some View {
-        if embedded {
+        NavigationStack(path: $path) {
             content
-        } else {
-            NavigationStack(path: $path) {
-                content
-            }
         }
     }
 

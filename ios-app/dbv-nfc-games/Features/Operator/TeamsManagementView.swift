@@ -6,7 +6,6 @@ struct TeamsManagementView: View {
 
     let game: Game
     var onDismiss: (() -> Void)? = nil
-    var embedded: Bool = false
 
     @State private var teams: [Team] = []
     @State private var isLoading = true
@@ -23,12 +22,8 @@ struct TeamsManagementView: View {
     }
 
     var body: some View {
-        if embedded {
+        NavigationStack {
             content
-        } else {
-            NavigationStack {
-                content
-            }
         }
     }
 

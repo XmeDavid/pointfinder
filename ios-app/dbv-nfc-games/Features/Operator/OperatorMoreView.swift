@@ -13,6 +13,10 @@ struct OperatorMoreView: View {
     @State private var exportedFileURL: URL?
     @State private var showShareSheet = false
 
+    @State private var showBases = false
+    @State private var showChallenges = false
+    @State private var showTeams = false
+
     // Notification preference state
     @State private var notifyPendingSubmissions = true
     @State private var notifyAllSubmissions = false
@@ -46,23 +50,26 @@ struct OperatorMoreView: View {
                         Label(locale.t("operator.notifications"), systemImage: "bell.badge")
                     }
 
-                    NavigationLink {
-                        BasesManagementView(game: game, embedded: true)
+                    Button {
+                        showBases = true
                     } label: {
                         Label(locale.t("operator.bases"), systemImage: "mappin.and.ellipse")
                     }
+                    .foregroundStyle(.primary)
 
-                    NavigationLink {
-                        ChallengesManagementView(game: game, embedded: true)
+                    Button {
+                        showChallenges = true
                     } label: {
                         Label(locale.t("operator.challenges"), systemImage: "puzzlepiece")
                     }
+                    .foregroundStyle(.primary)
 
-                    NavigationLink {
-                        TeamsManagementView(game: game, embedded: true)
+                    Button {
+                        showTeams = true
                     } label: {
                         Label(locale.t("operator.teams"), systemImage: "person.3")
                     }
+                    .foregroundStyle(.primary)
 
                     NavigationLink {
                         OperatorsManagementView(game: game)
@@ -185,6 +192,15 @@ struct OperatorMoreView: View {
                 if let url = exportedFileURL {
                     ShareSheet(activityItems: [url])
                 }
+            }
+            .fullScreenCover(isPresented: $showBases) {
+                BasesManagementView(game: game, onDismiss: { showBases = false })
+            }
+            .fullScreenCover(isPresented: $showChallenges) {
+                ChallengesManagementView(game: game, onDismiss: { showChallenges = false })
+            }
+            .fullScreenCover(isPresented: $showTeams) {
+                TeamsManagementView(game: game, onDismiss: { showTeams = false })
             }
         }
     }
