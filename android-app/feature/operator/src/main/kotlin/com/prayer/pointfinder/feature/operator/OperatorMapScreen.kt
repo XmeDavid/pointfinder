@@ -324,8 +324,10 @@ fun OperatorMapScreen(
                         })
 
                         mapLibreMap.setOnMarkerClickListener { marker ->
-                            val baseId = marker.snippet
-                            val base = currentBases.firstOrNull { it.id == baseId }
+                            val snippet = marker.snippet ?: return@setOnMarkerClickListener false
+                            // Snippets are stored as "base:<id>" or "team:<id>" — strip the prefix
+                            val baseId = if (snippet.startsWith("base:")) snippet.removePrefix("base:") else null
+                            val base = baseId?.let { id -> currentBases.firstOrNull { it.id == id } }
                             if (base != null) {
                                 if (isEditMode) {
                                     editSheetBase = base
