@@ -23,6 +23,7 @@ const APP_STORE_COUNTRY: Record<string, string> = {
 };
 
 function appStoreUrl() {
+  if (typeof window === "undefined") return "https://apps.apple.com/app/pointfinder/id6759060734";
   const country = APP_STORE_COUNTRY[window.location.hostname.toLowerCase()];
   const prefix = country ? `/${country}` : "";
   return `https://apps.apple.com${prefix}/app/pointfinder/id6759060734`;
