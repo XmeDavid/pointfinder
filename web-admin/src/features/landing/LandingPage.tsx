@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -206,6 +206,34 @@ function Navbar() {
 }
 
 /* =================================================================
+   Scroll hint – fades out once the user starts scrolling
+   ================================================================= */
+
+function ScrollHint({ label }: { label: string }) {
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const onScroll = () => {
+      setVisible(window.scrollY < 50);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  return (
+    <div
+      className="landing-fade-in absolute bottom-8 left-1/2 -translate-x-1/2 transition-opacity duration-500"
+      style={{ animationDelay: "1.6s", opacity: visible ? 1 : 0, pointerEvents: visible ? "auto" : "none" }}
+    >
+      <div className="flex flex-col items-center gap-1.5 text-white/20">
+        <span className="text-[10px] font-medium uppercase tracking-[0.2em]">{label}</span>
+        <ChevronDown className="h-4 w-4 landing-bounce" />
+      </div>
+    </div>
+  );
+}
+
+/* =================================================================
    Hero
    ================================================================= */
 
@@ -287,16 +315,11 @@ function Hero() {
       {/* Store badges */}
       <div className="landing-fade-in mt-10 flex flex-wrap items-center justify-center gap-3" style={{ animationDelay: "1.1s" }}>
         <StoreBadge icon={<AppleLogo />} label={t("landing.hero.appStore")} availableOn={t("landing.hero.availableOn")} href={appStoreUrl()} />
-        <StoreBadge icon={<PlayLogo />} label={t("landing.hero.googlePlay")} availableOn={t("landing.hero.availableOn")} />
+        <StoreBadge icon={<PlayLogo />} label={t("landing.hero.googlePlay")} availableOn={t("landing.hero.availableOn")} href="https://play.google.com/store/apps/details?id=com.prayer.pointfinder" />
       </div>
 
       {/* Scroll hint */}
-      <div className="landing-fade-in absolute bottom-8 left-1/2 -translate-x-1/2" style={{ animationDelay: "1.6s" }}>
-        <div className="flex flex-col items-center gap-1.5 text-white/20">
-          <span className="text-[10px] font-medium uppercase tracking-[0.2em]">{t("landing.hero.scroll")}</span>
-          <ChevronDown className="h-4 w-4 landing-bounce" />
-        </div>
-      </div>
+      <ScrollHint label={t("landing.hero.scroll")} />
     </section>
   );
 }
