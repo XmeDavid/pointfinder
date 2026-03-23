@@ -17,6 +17,17 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+const APP_STORE_COUNTRY: Record<string, string> = {
+  "pointfinder.pt": "pt",
+  "pointfinder.ch": "ch",
+};
+
+function appStoreUrl() {
+  const country = APP_STORE_COUNTRY[window.location.hostname.toLowerCase()];
+  const prefix = country ? `/${country}` : "";
+  return `https://apps.apple.com${prefix}/app/pointfinder/id6759060734`;
+}
+
 /* =================================================================
    Scroll-reveal hook
    Observes all .scroll-reveal children within the container and
@@ -274,7 +285,7 @@ function Hero() {
 
       {/* Store badges */}
       <div className="landing-fade-in mt-10 flex flex-wrap items-center justify-center gap-3" style={{ animationDelay: "1.1s" }}>
-        <StoreBadge icon={<AppleLogo />} label={t("landing.hero.appStore")} availableOn={t("landing.hero.availableOn")} />
+        <StoreBadge icon={<AppleLogo />} label={t("landing.hero.appStore")} availableOn={t("landing.hero.availableOn")} href={appStoreUrl()} />
         <StoreBadge icon={<PlayLogo />} label={t("landing.hero.googlePlay")} availableOn={t("landing.hero.availableOn")} />
       </div>
 
@@ -291,16 +302,22 @@ function Hero() {
 
 /* Store badge helpers */
 
-function StoreBadge({ icon, label, availableOn }: { icon: React.ReactNode; label: string; availableOn: string }) {
-  return (
-    <div className="flex items-center gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.03] px-5 py-2.5 text-sm text-white/35">
+function StoreBadge({ icon, label, availableOn, href }: { icon: React.ReactNode; label: string; availableOn: string; href?: string }) {
+  const className = "flex items-center gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.03] px-5 py-2.5 text-sm text-white/35 transition-colors duration-200 hover:border-green-500/20 hover:bg-white/[0.05]";
+  const content = (
+    <>
       {icon}
       <div className="flex flex-col">
         <span className="text-[9px] uppercase tracking-wider text-white/25">{availableOn}</span>
         <span className="font-medium leading-tight">{label}</span>
       </div>
-    </div>
+    </>
   );
+
+  if (href) {
+    return <a href={href} target="_blank" rel="noopener noreferrer" className={className}>{content}</a>;
+  }
+  return <div className={className}>{content}</div>;
 }
 
 function AppleLogo() {
