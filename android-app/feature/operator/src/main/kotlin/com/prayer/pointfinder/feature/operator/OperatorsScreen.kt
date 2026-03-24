@@ -114,7 +114,7 @@ fun OperatorsScreen(
                         onClick = { showInviteDialog = true },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Icon(Icons.Default.PersonAdd, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.PersonAdd, contentDescription = stringResource(R.string.cd_invite), modifier = Modifier.size(18.dp))
                         Spacer(Modifier.size(8.dp))
                         Text(stringResource(R.string.label_invite_operator))
                     }

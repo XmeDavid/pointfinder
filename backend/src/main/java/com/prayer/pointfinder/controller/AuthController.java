@@ -70,8 +70,11 @@ public class AuthController {
     @PostMapping("/forgot-password")
     public ResponseEntity<MessageResponse> forgotPassword(
             @Valid @RequestBody ForgotPasswordRequest request,
-            @RequestHeader(value = "X-Forwarded-Host", required = false) String forwardedHost) {
-        authService.requestPasswordReset(request.getEmail(), forwardedHost);
+            @RequestHeader(value = "X-Forwarded-Host", required = false) String forwardedHost,
+            HttpServletRequest httpRequest) {
+        // Use X-Forwarded-Host with Host fallback, consistent with /request-registration
+        String requestHost = forwardedHost != null ? forwardedHost : httpRequest.getHeader("Host");
+        authService.requestPasswordReset(request.getEmail(), requestHost);
         return ResponseEntity.ok(new MessageResponse("If an account with that email exists, a reset link has been sent."));
     }
 

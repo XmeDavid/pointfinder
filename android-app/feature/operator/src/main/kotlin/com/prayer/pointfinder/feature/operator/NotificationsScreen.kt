@@ -143,7 +143,7 @@ fun NotificationsScreen(
                                 modifier = Modifier.fillMaxWidth().testTag("notification-send-btn"),
                                 enabled = message.isNotBlank(),
                             ) {
-                                Icon(Icons.Default.Send, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Icon(Icons.Default.Send, contentDescription = stringResource(R.string.cd_send), modifier = Modifier.size(18.dp))
                                 Spacer(Modifier.size(8.dp))
                                 Text(stringResource(R.string.action_send))
                             }

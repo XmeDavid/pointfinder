@@ -99,7 +99,7 @@ fun LiveBaseProgressBottomSheet(
                 onClick = onWriteNfc,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Icon(Icons.Default.Nfc, contentDescription = null)
+                Icon(Icons.Default.Nfc, contentDescription = stringResource(R.string.cd_nfc))
                 Spacer(Modifier.size(8.dp))
                 Text(stringResource(R.string.action_write_nfc))
             }
@@ -351,7 +351,7 @@ fun OperatorBaseDetailScreen(
                         onClick = onWriteNfc,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Icon(Icons.Default.Nfc, contentDescription = null)
+                        Icon(Icons.Default.Nfc, contentDescription = stringResource(R.string.cd_nfc))
                         Spacer(Modifier.size(8.dp))
                         Text(stringResource(R.string.action_write_nfc))
                     }

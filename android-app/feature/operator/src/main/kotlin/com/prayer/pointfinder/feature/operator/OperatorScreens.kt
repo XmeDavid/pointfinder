@@ -206,7 +206,7 @@ fun OperatorGameScaffold(
                 NavigationBarItem(
                     selected = selectedTab == OperatorTab.LIVE_MAP,
                     onClick = { onTabSelected(OperatorTab.LIVE_MAP) },
-                    icon = { androidx.compose.material3.Icon(Icons.Default.Map, contentDescription = null) },
+                    icon = { androidx.compose.material3.Icon(Icons.Default.Map, contentDescription = stringResource(R.string.cd_tab_map)) },
                     label = { Text(stringResource(R.string.label_live_map)) },
                     modifier = Modifier.testTag("nav-monitoring"),
                 )
@@ -214,7 +214,7 @@ fun OperatorGameScaffold(
                     NavigationBarItem(
                         selected = selectedTab == OperatorTab.SETUP,
                         onClick = { onTabSelected(OperatorTab.SETUP) },
-                        icon = { androidx.compose.material3.Icon(Icons.Default.Checklist, contentDescription = null) },
+                        icon = { androidx.compose.material3.Icon(Icons.Default.Checklist, contentDescription = stringResource(R.string.cd_tab_submissions)) },
                         label = { Text(stringResource(R.string.label_setup)) },
                         modifier = Modifier.testTag("nav-games"),
                     )
@@ -222,7 +222,7 @@ fun OperatorGameScaffold(
                     NavigationBarItem(
                         selected = selectedTab == OperatorTab.LIVE,
                         onClick = { onTabSelected(OperatorTab.LIVE) },
-                        icon = { androidx.compose.material3.Icon(Icons.Default.BarChart, contentDescription = null) },
+                        icon = { androidx.compose.material3.Icon(Icons.Default.BarChart, contentDescription = stringResource(R.string.cd_tab_leaderboard)) },
                         label = { Text(stringResource(R.string.label_live)) },
                         modifier = Modifier.testTag("nav-games"),
                     )
@@ -231,7 +231,7 @@ fun OperatorGameScaffold(
                     NavigationBarItem(
                         selected = selectedTab == OperatorTab.SUBMISSIONS,
                         onClick = { onTabSelected(OperatorTab.SUBMISSIONS) },
-                        icon = { androidx.compose.material3.Icon(Icons.Default.List, contentDescription = null) },
+                        icon = { androidx.compose.material3.Icon(Icons.Default.List, contentDescription = stringResource(R.string.cd_tab_activity)) },
                         label = { Text(stringResource(R.string.label_submissions)) },
                         modifier = Modifier.testTag("monitoring-tab"),
                     )
@@ -239,7 +239,7 @@ fun OperatorGameScaffold(
                 NavigationBarItem(
                     selected = selectedTab == OperatorTab.MORE,
                     onClick = { onTabSelected(OperatorTab.MORE) },
-                    icon = { androidx.compose.material3.Icon(Icons.Default.MoreHoriz, contentDescription = null) },
+                    icon = { androidx.compose.material3.Icon(Icons.Default.MoreHoriz, contentDescription = stringResource(R.string.cd_tab_more)) },
                     label = { Text(stringResource(R.string.label_more)) },
                     modifier = Modifier.testTag("nav-teams"),
                 )

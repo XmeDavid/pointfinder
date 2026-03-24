@@ -359,4 +359,22 @@
     <string name="toast_challenge_saved">Challenge gespeichert</string>
     <string name="toast_team_saved">Team gespeichert</string>
     <string name="toast_game_saved">Spiel gespeichert</string>
+    <!-- Accessibility content descriptions (finding 6.16) -->
+    <string name="cd_tab_map">Karte</string>
+    <string name="cd_tab_submissions">Einreichungen</string>
+    <string name="cd_tab_leaderboard">Rangliste</string>
+    <string name="cd_tab_activity">Aktivitaet</string>
+    <string name="cd_tab_more">Mehr</string>
+    <string name="cd_edit">Bearbeiten</string>
+    <string name="cd_add">Hinzufuegen</string>
+    <string name="cd_delete">Loeschen</string>
+    <string name="cd_nfc">NFC</string>
+    <string name="cd_send">Senden</string>
+    <string name="cd_invite">Operator einladen</string>
+    <string name="cd_back">Zurueck</string>
+    <string name="cd_expand">Aufklappen</string>
+    <string name="cd_collapse">Zuklappen</string>
+    <string name="cd_join_team">Team beitreten</string>
+    <string name="cd_operator_login">Operator-Anmeldung</string>
+    <string name="cd_scan_qr">QR-Code scannen</string>
 </resources>

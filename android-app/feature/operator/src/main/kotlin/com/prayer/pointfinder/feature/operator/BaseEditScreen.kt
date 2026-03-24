@@ -198,7 +198,7 @@ fun BaseEditScreen(
                                         leadingIcon = {
                                             Icon(
                                                 Icons.Default.Delete,
-                                                contentDescription = null,
+                                                contentDescription = stringResource(R.string.cd_delete),
                                                 tint = MaterialTheme.colorScheme.error,
                                             )
                                         },
@@ -358,7 +358,7 @@ fun BaseEditScreen(
                     onClick = onWriteNfc,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Icon(Icons.Default.Nfc, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.Nfc, contentDescription = stringResource(R.string.cd_nfc), modifier = Modifier.size(18.dp))
                     Spacer(Modifier.size(8.dp))
                     Text(stringResource(R.string.label_write_nfc))
                 }
@@ -453,7 +453,7 @@ fun BaseEditScreen(
                     TextButton(onClick = { onNavigateToCreateChallenge(base.id) }, modifier = Modifier.testTag("assign-challenge-btn")) {
                         Icon(
                             Icons.Default.Add,
-                            contentDescription = null,
+                            contentDescription = stringResource(R.string.cd_add),
                             modifier = Modifier.size(18.dp),
                         )
                         Spacer(Modifier.size(4.dp))

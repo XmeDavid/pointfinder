@@ -124,6 +124,16 @@ Design decisions made while fixing findings from `docs/full-codebase-audit-2026-
 
 ---
 
+## Finding 6.16 -- Android contentDescription = null (56 instances)
+
+**Decision:** Fixed all 23 interactive icon instances (NavigationBarItem, Button, IconButton, DropdownMenuItem, FilterChip icons) across 11 operator and auth screen files. Left 34 decorative instances as `contentDescription = null`, which is the correct accessibility pattern for icons that are purely visual or accompany descriptive text. Added 17 new accessibility string resources in both EN and DE.
+
+**Alternatives considered:** Adding contentDescription to all 56 instances indiscriminately.
+
+**Rationale:** Android accessibility guidelines recommend `contentDescription = null` for decorative elements to avoid redundant screen reader announcements. Only standalone interactive icons need descriptions. Icons inside buttons with text labels, status indicators next to descriptive text, and empty-state illustrations are decorative.
+
+---
+
 ## Finding 12.5 -- HTML sanitizer style attribute
 
 **Decision:** Removed the `style` attribute from the sanitizer's global allowed attributes entirely.

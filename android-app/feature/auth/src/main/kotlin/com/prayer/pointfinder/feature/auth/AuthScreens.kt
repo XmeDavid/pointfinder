@@ -455,13 +455,13 @@ fun WelcomeScreen(
             Spacer(Modifier.weight(1f))
 
             Button(onClick = onJoinGame, modifier = Modifier.fillMaxWidth()) {
-                Icon(Icons.Default.GroupAdd, contentDescription = null, modifier = Modifier.size(18.dp))
+                Icon(Icons.Default.GroupAdd, contentDescription = stringResource(R.string.cd_join_team), modifier = Modifier.size(18.dp))
                 Spacer(Modifier.size(8.dp))
                 Text(stringResource(R.string.action_join_game))
             }
             Spacer(Modifier.height(12.dp))
             OutlinedButton(onClick = onOperatorLogin, modifier = Modifier.fillMaxWidth()) {
-                Icon(Icons.Default.Login, contentDescription = null, modifier = Modifier.size(18.dp))
+                Icon(Icons.Default.Login, contentDescription = stringResource(R.string.cd_operator_login), modifier = Modifier.size(18.dp))
                 Spacer(Modifier.size(8.dp))
                 Text(stringResource(R.string.action_operator_login))
             }
@@ -500,7 +500,7 @@ fun PlayerJoinScreen(
             )
             Spacer(Modifier.height(12.dp))
             Button(onClick = onScanQr, modifier = Modifier.fillMaxWidth()) {
-                Icon(Icons.Default.QrCodeScanner, contentDescription = null, modifier = Modifier.size(18.dp))
+                Icon(Icons.Default.QrCodeScanner, contentDescription = stringResource(R.string.cd_scan_qr), modifier = Modifier.size(18.dp))
                 Spacer(Modifier.size(8.dp))
                 Text(stringResource(R.string.action_scan_qr))
             }
@@ -584,7 +584,7 @@ fun PlayerNameScreen(
                     if (isLoading) {
                         CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
                     } else {
-                        Icon(Icons.Default.GroupAdd, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.GroupAdd, contentDescription = stringResource(R.string.cd_join_team), modifier = Modifier.size(18.dp))
                         Spacer(Modifier.size(8.dp))
                         Text(stringResource(R.string.action_join_game))
                     }
@@ -662,7 +662,7 @@ fun OperatorLoginScreen(
                     if (isLoading) {
                         CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
                     } else {
-                        Icon(Icons.Default.Login, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Login, contentDescription = stringResource(R.string.cd_operator_login), modifier = Modifier.size(18.dp))
                         Spacer(Modifier.size(8.dp))
                         Text(stringResource(R.string.action_sign_in))
                     }

@@ -234,7 +234,7 @@ fun MoreScreen(
                     onClick = onSwitchGame,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.cd_back), modifier = Modifier.size(18.dp))
                     Spacer(Modifier.size(8.dp))
                     Text(stringResource(R.string.action_switch_game))
                 }

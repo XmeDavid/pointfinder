@@ -158,7 +158,7 @@ fun TeamVariablesEditorSection(
                 }
                 Icon(
                     if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = null,
+                    contentDescription = stringResource(if (isExpanded) R.string.cd_collapse else R.string.cd_expand),
                     modifier = Modifier.size(20.dp),
                 )
             }

@@ -117,7 +117,7 @@ Legend: [D] = required a design decision (see `docs/audit-decisions.md`)
 | 6.12 | Fixed | Overrode `equals()`/`hashCode()` on data class containing ByteArray |
 | 6.13 | Fixed | Added `key` parameters to LazyColumn items() calls in RichTextEditorScreen |
 | 6.14 | Fixed | Added `key` parameter to LazyRow color picker items in TeamsListScreen |
-| 6.16 | Fixed [D] | Added contentDescription to standalone interactive IconButtons (overflow menus) across 5 operator screens |
+| 6.16 | Fixed [D] | Added contentDescription to 23 interactive icons (NavigationBarItem, Button, DropdownMenuItem, FilterChip) across 11 operator and auth screen files; added 17 accessibility string resources in EN and DE |
 | 6.17 | Fixed | Added `requirePresenceToSubmit` field to offline cache in PlayerRepository |
 
 ## 7. Distributed Skeptic

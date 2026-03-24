@@ -455,7 +455,7 @@ fun OperatorMapScreen(
                             },
                         )
                     },
-                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.cd_edit)) },
                     colors = FilterChipDefaults.filterChipColors(
                         containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
                     ),
@@ -628,7 +628,7 @@ fun BaseEditActionSheet(
                 onClick = onEditBase,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Icon(Icons.Default.Edit, contentDescription = null)
+                Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.cd_edit))
                 Spacer(Modifier.size(8.dp))
                 Text(stringResource(R.string.label_edit_base))
             }
@@ -639,7 +639,7 @@ fun BaseEditActionSheet(
                 onClick = onAddChallenge,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Icon(Icons.Default.Add, contentDescription = null)
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_add))
                 Spacer(Modifier.size(8.dp))
                 Text(stringResource(R.string.label_add_challenge))
             }
@@ -650,7 +650,7 @@ fun BaseEditActionSheet(
                 onClick = onWriteNfc,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Icon(Icons.Default.Nfc, contentDescription = null)
+                Icon(Icons.Default.Nfc, contentDescription = stringResource(R.string.cd_nfc))
                 Spacer(Modifier.size(8.dp))
                 Text(stringResource(R.string.action_write_nfc))
             }

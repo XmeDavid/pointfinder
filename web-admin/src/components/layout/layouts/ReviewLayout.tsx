@@ -22,13 +22,14 @@ import type { Submission, SubmissionStatus, GameStatus } from "@/types";
 
 const getMediaUrls = (sub: Submission): string[] => sub.fileUrls ?? (sub.fileUrl ? [sub.fileUrl] : []);
 function FullScreenMediaViewer({ urls, index, onPrev, onNext }: { urls: string[]; index: number; onPrev: () => void; onNext: () => void }) {
+  const { t } = useTranslation();
   const currentUrl = urls[index];
   const hasMultiple = urls.length > 1;
   return (
     <div className="relative">
       <AuthMedia
         src={currentUrl}
-        alt={currentUrl.includes("video") ? "Submission video" : "Submission image"}
+        alt={currentUrl.includes("video") ? t("submissions.altVideo") : t("submissions.altImage")}
         className="w-full h-auto max-h-[85vh] object-contain rounded"
       />
       {hasMultiple && (
