@@ -1,0 +1,314 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 7,
+    "identityHash": "a493293ed69cc90ac16facffd05f53f9",
+    "entities": [
+      {
+        "tableName": "pending_actions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `type` TEXT NOT NULL, `gameId` TEXT NOT NULL, `baseId` TEXT NOT NULL, `challengeId` TEXT, `answer` TEXT, `createdAtEpochMs` INTEGER NOT NULL, `retryCount` INTEGER NOT NULL, `mediaContentType` TEXT, `mediaLocalPath` TEXT, `mediaSourceUri` TEXT, `mediaSizeBytes` INTEGER, `mediaFileName` TEXT, `uploadSessionId` TEXT, `uploadChunkIndex` INTEGER, `uploadTotalChunks` INTEGER, `requiresReselect` INTEGER NOT NULL, `lastError` TEXT, `mediaItemsJson` TEXT, `permanentlyFailed` INTEGER NOT NULL, `failureReason` TEXT, `nfcToken` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gameId",
+            "columnName": "gameId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseId",
+            "columnName": "baseId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "challengeId",
+            "columnName": "challengeId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "answer",
+            "columnName": "answer",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "createdAtEpochMs",
+            "columnName": "createdAtEpochMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "retryCount",
+            "columnName": "retryCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mediaContentType",
+            "columnName": "mediaContentType",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "mediaLocalPath",
+            "columnName": "mediaLocalPath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "mediaSourceUri",
+            "columnName": "mediaSourceUri",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "mediaSizeBytes",
+            "columnName": "mediaSizeBytes",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "mediaFileName",
+            "columnName": "mediaFileName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "uploadSessionId",
+            "columnName": "uploadSessionId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "uploadChunkIndex",
+            "columnName": "uploadChunkIndex",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "uploadTotalChunks",
+            "columnName": "uploadTotalChunks",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "requiresReselect",
+            "columnName": "requiresReselect",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastError",
+            "columnName": "lastError",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "mediaItemsJson",
+            "columnName": "mediaItemsJson",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "permanentlyFailed",
+            "columnName": "permanentlyFailed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "failureReason",
+            "columnName": "failureReason",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "nfcToken",
+            "columnName": "nfcToken",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_pending_actions_gameId_baseId_type",
+            "unique": false,
+            "columnNames": [
+              "gameId",
+              "baseId",
+              "type"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_pending_actions_gameId_baseId_type` ON `${TABLE_NAME}` (`gameId`, `baseId`, `type`)"
+          },
+          {
+            "name": "index_pending_actions_permanentlyFailed",
+            "unique": false,
+            "columnNames": [
+              "permanentlyFailed"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_pending_actions_permanentlyFailed` ON `${TABLE_NAME}` (`permanentlyFailed`)"
+          }
+        ]
+      },
+      {
+        "tableName": "cached_progress",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`gameId` TEXT NOT NULL, `baseId` TEXT NOT NULL, `baseName` TEXT NOT NULL, `lat` REAL NOT NULL, `lng` REAL NOT NULL, `nfcLinked` INTEGER NOT NULL, `status` TEXT NOT NULL, `checkedInAt` TEXT, `challengeId` TEXT, `submissionStatus` TEXT, PRIMARY KEY(`gameId`, `baseId`))",
+        "fields": [
+          {
+            "fieldPath": "gameId",
+            "columnName": "gameId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseId",
+            "columnName": "baseId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseName",
+            "columnName": "baseName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lat",
+            "columnName": "lat",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lng",
+            "columnName": "lng",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nfcLinked",
+            "columnName": "nfcLinked",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "checkedInAt",
+            "columnName": "checkedInAt",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "challengeId",
+            "columnName": "challengeId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "submissionStatus",
+            "columnName": "submissionStatus",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "gameId",
+            "baseId"
+          ]
+        }
+      },
+      {
+        "tableName": "cached_challenge",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`gameId` TEXT NOT NULL, `teamId` TEXT NOT NULL, `baseId` TEXT NOT NULL, `id` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `content` TEXT NOT NULL, `completionContent` TEXT, `answerType` TEXT NOT NULL, `points` INTEGER NOT NULL, `requirePresenceToSubmit` INTEGER NOT NULL, PRIMARY KEY(`gameId`, `teamId`, `baseId`))",
+        "fields": [
+          {
+            "fieldPath": "gameId",
+            "columnName": "gameId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "teamId",
+            "columnName": "teamId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseId",
+            "columnName": "baseId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "content",
+            "columnName": "content",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "completionContent",
+            "columnName": "completionContent",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "answerType",
+            "columnName": "answerType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "points",
+            "columnName": "points",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "requirePresenceToSubmit",
+            "columnName": "requirePresenceToSubmit",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "gameId",
+            "teamId",
+            "baseId"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a493293ed69cc90ac16facffd05f53f9')"
+    ]
+  }
+}
