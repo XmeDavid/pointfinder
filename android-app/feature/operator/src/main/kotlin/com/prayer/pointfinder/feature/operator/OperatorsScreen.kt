@@ -287,7 +287,7 @@ private fun InviteRow(
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 Text(
-                    formatTimestamp(invite.createdAt),
+                    invite.createdAt?.let { formatTimestamp(it) } ?: "",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.outline,
                 )

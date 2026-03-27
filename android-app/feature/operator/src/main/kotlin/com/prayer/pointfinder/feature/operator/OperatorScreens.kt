@@ -19,7 +19,11 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.IconButton
 import androidx.compose.foundation.background
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -75,6 +79,8 @@ fun OperatorHomeScreen(
     onRefresh: () -> Unit,
     isLoading: Boolean = false,
     errorMessage: String? = null,
+    pendingInviteCount: Int = 0,
+    onOpenMyInvites: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -82,6 +88,20 @@ fun OperatorHomeScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.label_my_games)) },
                 actions = {
+                    IconButton(onClick = onOpenMyInvites) {
+                        BadgedBox(
+                            badge = {
+                                if (pendingInviteCount > 0) {
+                                    Badge { Text(pendingInviteCount.toString()) }
+                                }
+                            },
+                        ) {
+                            Icon(
+                                Icons.Default.Notifications,
+                                contentDescription = stringResource(R.string.cd_notifications),
+                            )
+                        }
+                    }
                     TextButton(onClick = onLogout) { Text(stringResource(R.string.action_logout)) }
                 },
             )

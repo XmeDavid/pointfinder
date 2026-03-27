@@ -88,6 +88,7 @@ data class OperatorState(
     val notifications: List<NotificationResponse> = emptyList(),
     val operators: List<OperatorUserResponse> = emptyList(),
     val invites: List<InviteResponse> = emptyList(),
+    val myInvites: List<InviteResponse> = emptyList(),
     val errorMessage: String? = null,
     val authExpired: Boolean = false,
 )
@@ -934,6 +935,30 @@ class OperatorViewModel @Inject constructor(
             }.onSuccess {
                 _state.value = _state.value.copy(authExpired = false)
                 loadOperators()
+            }.onFailure { err ->
+                if (markAuthExpiredIfNeeded(err)) return@onFailure
+                _state.value = _state.value.copy(errorMessage = friendlyError(err))
+            }
+        }
+    }
+
+    fun loadMyInvites() {
+        viewModelScope.launch {
+            runCatching {
+                operatorManagementUseCase.getMyInvites()
+            }.onSuccess { invites ->
+                _state.value = _state.value.copy(myInvites = invites)
+            }.onFailure { /* ignore silently for polling */ }
+        }
+    }
+
+    fun acceptInvite(inviteId: String) {
+        viewModelScope.launch {
+            runCatching {
+                operatorManagementUseCase.acceptInvite(inviteId)
+            }.onSuccess {
+                loadMyInvites()
+                loadGames()
             }.onFailure { err ->
                 if (markAuthExpiredIfNeeded(err)) return@onFailure
                 _state.value = _state.value.copy(errorMessage = friendlyError(err))

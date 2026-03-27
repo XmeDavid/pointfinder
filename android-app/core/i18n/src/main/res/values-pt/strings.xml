@@ -343,4 +343,11 @@
     <string name="toast_challenge_saved">Desafio guardado</string>
     <string name="toast_team_saved">Equipa guardada</string>
     <string name="toast_game_saved">Jogo guardado</string>
+    <string name="toast_invite_sent">Convite enviado com sucesso</string>
+    <!-- My Invites -->
+    <string name="label_my_invites">Os Meus Convites</string>
+    <string name="label_no_pending_invites">Sem convites pendentes</string>
+    <string name="label_invite_message">%1$s convidou-te para %2$s</string>
+    <string name="action_accept">Aceitar</string>
+    <string name="cd_notifications">Notificações</string>
 </resources>

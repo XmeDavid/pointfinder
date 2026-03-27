@@ -343,6 +343,12 @@ interface CompanionApi {
     @DELETE("api/invites/{inviteId}")
     suspend fun deleteInvite(@Path("inviteId") inviteId: String): Response<Unit>
 
+    @GET("api/invites/my")
+    suspend fun getMyInvites(): List<InviteResponse>
+
+    @POST("api/invites/{inviteId}/accept")
+    suspend fun acceptInvite(@Path("inviteId") inviteId: String): Response<Unit>
+
     // === Team Variables ===
 
     @GET("api/games/{gameId}/team-variables")

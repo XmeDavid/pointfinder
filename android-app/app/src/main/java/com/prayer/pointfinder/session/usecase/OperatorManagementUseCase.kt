@@ -23,4 +23,10 @@ class OperatorManagementUseCase @Inject constructor(
 
     suspend fun revokeInvite(inviteId: String) =
         operatorRepository.deleteInvite(inviteId)
+
+    suspend fun getMyInvites(): List<InviteResponse> =
+        operatorRepository.getMyInvites()
+
+    suspend fun acceptInvite(inviteId: String) =
+        operatorRepository.acceptInvite(inviteId)
 }

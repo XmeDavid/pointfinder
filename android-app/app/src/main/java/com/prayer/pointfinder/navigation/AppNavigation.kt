@@ -104,6 +104,7 @@ import com.prayer.pointfinder.feature.operator.OperatorTab
 import com.prayer.pointfinder.feature.operator.MoreScreen
 import com.prayer.pointfinder.feature.operator.GameSettingsScreen
 import com.prayer.pointfinder.feature.operator.NotificationsScreen
+import com.prayer.pointfinder.feature.operator.MyInvitesScreen
 import com.prayer.pointfinder.feature.operator.OperatorsScreen
 import kotlinx.serialization.json.Json
 import com.prayer.pointfinder.core.platform.NfcEventBus
@@ -961,26 +962,49 @@ private fun OperatorHomeRoot(
     onCreateGame: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    var showMyInvites by remember { mutableStateOf(false) }
+
     LaunchedEffect(state.authExpired) {
         if (state.authExpired) {
             viewModel.clearAuthExpired()
             sessionViewModel.logout()
         }
     }
-    LaunchedEffect(Unit) { viewModel.loadGames() }
+    LaunchedEffect(Unit) {
+        viewModel.loadGames()
+        viewModel.loadMyInvites()
+    }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(30_000)
+            viewModel.loadMyInvites()
+        }
+    }
 
-    OperatorHomeScreen(
-        games = state.games,
-        onSelectGame = {
-            viewModel.selectGame(it)
-            onOpenGame()
-        },
-        onCreateGame = onCreateGame,
-        onLogout = sessionViewModel::logout,
-        onRefresh = viewModel::loadGames,
-        isLoading = state.isLoading,
-        errorMessage = state.errorMessage,
-    )
+    if (showMyInvites) {
+        MyInvitesScreen(
+            invites = state.myInvites,
+            onAccept = { inviteId ->
+                viewModel.acceptInvite(inviteId)
+            },
+            onBack = { showMyInvites = false },
+        )
+    } else {
+        OperatorHomeScreen(
+            games = state.games,
+            onSelectGame = {
+                viewModel.selectGame(it)
+                onOpenGame()
+            },
+            onCreateGame = onCreateGame,
+            onLogout = sessionViewModel::logout,
+            onRefresh = viewModel::loadGames,
+            isLoading = state.isLoading,
+            errorMessage = state.errorMessage,
+            pendingInviteCount = state.myInvites.count { it.status.lowercase() == "pending" },
+            onOpenMyInvites = { showMyInvites = true },
+        )
+    }
 }
 
 @Composable
@@ -1521,7 +1545,13 @@ private fun OperatorGameRoot(
                             operators = state.operators,
                             invites = state.invites,
                             onInvite = { email ->
-                                viewModel.inviteOperator(email) {}
+                                viewModel.inviteOperator(email) {
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            context.getString(com.prayer.pointfinder.core.i18n.R.string.toast_invite_sent)
+                                        )
+                                    }
+                                }
                             },
                             onRemove = { userId -> viewModel.removeOperator(userId) },
                             onRevokeInvite = { inviteId -> viewModel.revokeInvite(inviteId) },

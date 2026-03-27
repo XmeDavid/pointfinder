@@ -602,7 +602,7 @@ data class InviteResponse(
     val status: String,
     val invitedBy: String,
     val inviterName: String?,
-    val createdAt: String,
+    val createdAt: String? = null,
 )
 
 // === Monitoring ===

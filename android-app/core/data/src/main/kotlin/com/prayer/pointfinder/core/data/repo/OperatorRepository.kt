@@ -341,6 +341,19 @@ class OperatorRepository @Inject constructor(
         }
     }
 
+    suspend fun getMyInvites(): List<InviteResponse> =
+        apiCall { api.getMyInvites() }
+
+    suspend fun acceptInvite(inviteId: String) {
+        apiCall {
+            val response = api.acceptInvite(inviteId)
+            val errorBody = if (!response.isSuccessful) {
+                try { response.errorBody()?.string() } catch (_: Exception) { null }
+            } else null
+            checkSuccess(response.code(), errorBody)
+        }
+    }
+
     // === Team Variables ===
 
     suspend fun getGameVariables(gameId: String): TeamVariablesResponse =

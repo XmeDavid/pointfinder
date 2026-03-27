@@ -359,6 +359,13 @@
     <string name="toast_challenge_saved">Challenge saved</string>
     <string name="toast_team_saved">Team saved</string>
     <string name="toast_game_saved">Game saved</string>
+    <string name="toast_invite_sent">Invite sent successfully</string>
+    <!-- My Invites -->
+    <string name="label_my_invites">My Invites</string>
+    <string name="label_no_pending_invites">No pending invites</string>
+    <string name="label_invite_message">%1$s invited you to %2$s</string>
+    <string name="action_accept">Accept</string>
+    <string name="cd_notifications">Notifications</string>
     <!-- Accessibility content descriptions (finding 6.16) -->
     <string name="cd_tab_map">Map</string>
     <string name="cd_tab_submissions">Submissions</string>
