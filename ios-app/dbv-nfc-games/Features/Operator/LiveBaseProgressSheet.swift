@@ -289,7 +289,7 @@ struct LiveBaseProgressSheet: View {
         writeSuccess = false
 
         do {
-            try await nfcWriter.writeBaseId(base.id)
+            try await nfcWriter.writeBaseId(base.id, nfcToken: base.nfcToken)
 
             let _ = try await appState.apiClient.linkBaseNfc(
                 gameId: gameId,

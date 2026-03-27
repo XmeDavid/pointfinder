@@ -193,13 +193,10 @@ struct CheckInTabView: View {
         scanError = nil
 
         do {
-            let baseId = try await nfcReader.scanForBaseId()
-
-            // Regular check-in
-            let result = await appState.checkIn(baseId: baseId)
+            let payload = try await nfcReader.scanForBaseId()
+            let result = await appState.checkIn(baseId: payload.baseId, nfcToken: payload.nfcToken)
             if result != nil {
-                // Navigate to the base detail view
-                navigationPath.append(baseId)
+                navigationPath.append(payload.baseId)
             }
         } catch let error as NFCError {
             if case .cancelled = error {

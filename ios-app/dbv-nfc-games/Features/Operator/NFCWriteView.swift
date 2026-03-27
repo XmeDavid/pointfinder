@@ -329,7 +329,7 @@ struct BaseDetailView: View {
         writeSuccess = false
 
         do {
-            try await nfcWriter.writeBaseId(base.id)
+            try await nfcWriter.writeBaseId(base.id, nfcToken: base.nfcToken)
 
             guard let token = token else { return }
             _ = try await appState.apiClient.linkBaseNfc(

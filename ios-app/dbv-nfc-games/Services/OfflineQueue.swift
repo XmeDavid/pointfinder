@@ -147,8 +147,8 @@ actor OfflineQueue {
     // MARK: - Convenience Methods
 
     /// Create and enqueue a check-in action
-    func enqueueCheckIn(gameId: UUID, baseId: UUID) {
-        let action = PendingAction(type: .checkIn, gameId: gameId, baseId: baseId)
+    func enqueueCheckIn(gameId: UUID, baseId: UUID, nfcToken: String? = nil) {
+        let action = PendingAction(type: .checkIn, gameId: gameId, baseId: baseId, nfcToken: nfcToken)
         enqueue(action)
     }
 

@@ -301,7 +301,7 @@ struct BaseEditView: View {
         guard let token, let base else { return }
         isWritingNfc = true
         do {
-            try await nfcWriter.writeBaseId(base.id)
+            try await nfcWriter.writeBaseId(base.id, nfcToken: base.nfcToken)
             let _ = try await appState.apiClient.linkBaseNfc(
                 gameId: game.id,
                 baseId: base.id,

@@ -3,6 +3,11 @@ import Foundation
 
 extension NFCTagReaderSession: @retroactive @unchecked Sendable {}
 
+struct NfcTagPayload {
+    let baseId: UUID
+    let nfcToken: String?
+}
+
 @Observable
 @MainActor
 final class NFCReaderService: NSObject {
@@ -12,21 +17,21 @@ final class NFCReaderService: NSObject {
     var errorMessage: String?
 
     private var session: NFCTagReaderSession?
-    private var continuation: CheckedContinuation<UUID, Error>?
+    private var continuation: CheckedContinuation<NfcTagPayload, Error>?
 
-    private func resolveContinuation(_ result: Result<UUID, Error>) {
+    private func resolveContinuation(_ result: Result<NfcTagPayload, Error>) {
         guard let continuation else { return }
         self.continuation = nil
         switch result {
-        case .success(let baseId):
-            continuation.resume(returning: baseId)
+        case .success(let payload):
+            continuation.resume(returning: payload)
         case .failure(let error):
             continuation.resume(throwing: error)
         }
     }
 
-    /// Start an NFC read session and return the base ID found on the tag.
-    func scanForBaseId() async throws -> UUID {
+    /// Start an NFC read session and return the base ID and optional token found on the tag.
+    func scanForBaseId() async throws -> NfcTagPayload {
         #if targetEnvironment(simulator)
         throw NFCError.notAvailable
         #else
@@ -124,9 +129,9 @@ extension NFCReaderService: NFCTagReaderSessionDelegate {
     private static let tagPathPrefix = "/tag/"
 
     private func processRecord(_ record: NFCNDEFPayload, session: NFCTagReaderSession) {
-        // Try URL record first (new format: https://pointfinder.pt/tag/{baseId})
-        if let baseId = extractBaseIdFromURI(record) {
-            succeedWith(baseId: baseId, session: session)
+        // Try URL record first (new format: https://pointfinder.pt/tag/{baseId}?t={token})
+        if let tagPayload = extractPayloadFromURI(record) {
+            succeedWith(tagPayload: tagPayload, session: session)
             return
         }
 
@@ -135,7 +140,7 @@ extension NFCReaderService: NFCTagReaderSessionDelegate {
         if let json = try? JSONSerialization.jsonObject(with: payload) as? [String: Any],
            let baseIdString = json["baseId"] as? String,
            let baseId = UUID(uuidString: baseIdString) {
-            succeedWith(baseId: baseId, session: session)
+            succeedWith(tagPayload: NfcTagPayload(baseId: baseId, nfcToken: nil), session: session)
             return
         }
 
@@ -154,7 +159,7 @@ extension NFCReaderService: NFCTagReaderSessionDelegate {
                let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                let baseIdString = json["baseId"] as? String,
                let baseId = UUID(uuidString: baseIdString) {
-                succeedWith(baseId: baseId, session: session)
+                succeedWith(tagPayload: NfcTagPayload(baseId: baseId, nfcToken: nil), session: session)
                 return
             }
         }
@@ -167,25 +172,30 @@ extension NFCReaderService: NFCTagReaderSessionDelegate {
         }
     }
 
-    /// Extract baseId from a well-known URI record (https://pointfinder.{pt|ch}/tag/{uuid}).
-    private func extractBaseIdFromURI(_ record: NFCNDEFPayload) -> UUID? {
+    /// Extract baseId and optional nfcToken from a well-known URI record (https://pointfinder.{pt|ch}/tag/{uuid}?t={token}).
+    private func extractPayloadFromURI(_ record: NFCNDEFPayload) -> NfcTagPayload? {
         guard record.typeNameFormat == .nfcWellKnown else { return nil }
         guard let url = record.wellKnownTypeURIPayload() else { return nil }
         guard let host = url.host?.lowercased(), Self.supportedTagHosts.contains(host) else { return nil }
         let path = url.path
         guard path.hasPrefix(Self.tagPathPrefix) else { return nil }
         let idString = String(path.dropFirst(Self.tagPathPrefix.count))
-        return UUID(uuidString: idString)
+        guard let baseId = UUID(uuidString: idString) else { return nil }
+        if let components = URLComponents(url: url, resolvingAgainstBaseURL: false) {
+            let nfcToken = components.queryItems?.first(where: { $0.name == "t" })?.value
+            return NfcTagPayload(baseId: baseId, nfcToken: nfcToken)
+        }
+        return NfcTagPayload(baseId: baseId, nfcToken: nil)
     }
 
-    private func succeedWith(baseId: UUID, session: NFCTagReaderSession) {
+    private func succeedWith(tagPayload: NfcTagPayload, session: NFCTagReaderSession) {
         session.alertMessage = Translations.string("nfc.readSuccess")
         session.invalidate()
         DispatchQueue.main.async { [weak self] in
-            self?.lastReadBaseId = baseId
+            self?.lastReadBaseId = tagPayload.baseId
             self?.isReading = false
             self?.session = nil
-            self?.resolveContinuation(.success(baseId))
+            self?.resolveContinuation(.success(tagPayload))
         }
     }
 }

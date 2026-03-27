@@ -14,8 +14,8 @@ final class NFCWriterService: NSObject {
 
     private static let tagURLPrefix = "https://pointfinder.pt/tag/"
 
-    /// Write a base ID to an NFC tag.
-    func writeBaseId(_ baseId: UUID) async throws {
+    /// Write a base ID (and optional token) to an NFC tag.
+    func writeBaseId(_ baseId: UUID, nfcToken: String? = nil) async throws {
         #if targetEnvironment(simulator)
         throw NFCError.notAvailable
         #else
@@ -23,7 +23,13 @@ final class NFCWriterService: NSObject {
             throw NFCError.notAvailable
         }
 
-        guard let url = URL(string: "\(Self.tagURLPrefix)\(baseId.uuidString)"),
+        let urlString: String
+        if let token = nfcToken {
+            urlString = "\(Self.tagURLPrefix)\(baseId.uuidString)?t=\(token)"
+        } else {
+            urlString = "\(Self.tagURLPrefix)\(baseId.uuidString)"
+        }
+        guard let url = URL(string: urlString),
               let payload = NFCNDEFPayload.wellKnownTypeURIPayload(url: url) else {
             throw NFCError.writeFailed("Failed to construct NFC payload for base \(baseId)")
         }

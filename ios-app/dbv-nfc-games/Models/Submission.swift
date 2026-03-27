@@ -107,6 +107,7 @@ struct PendingAction: Codable, Identifiable {
     let baseId: UUID
     let challengeId: UUID?
     let answer: String?
+    let nfcToken: String?
     let createdAt: Date
     var retryCount: Int
     var mediaContentType: String?
@@ -123,13 +124,14 @@ struct PendingAction: Codable, Identifiable {
     var permanentlyFailed: Bool
     var failureReason: String?
 
-    init(type: PendingActionType, gameId: UUID, baseId: UUID, challengeId: UUID? = nil, answer: String? = nil) {
+    init(type: PendingActionType, gameId: UUID, baseId: UUID, challengeId: UUID? = nil, answer: String? = nil, nfcToken: String? = nil) {
         self.id = UUID()
         self.type = type
         self.gameId = gameId
         self.baseId = baseId
         self.challengeId = challengeId
         self.answer = answer
+        self.nfcToken = nfcToken
         self.createdAt = Date()
         self.retryCount = 0
         self.mediaContentType = nil
@@ -156,6 +158,7 @@ struct PendingAction: Codable, Identifiable {
         baseId = try container.decode(UUID.self, forKey: .baseId)
         challengeId = try container.decodeIfPresent(UUID.self, forKey: .challengeId)
         answer = try container.decodeIfPresent(String.self, forKey: .answer)
+        nfcToken = try container.decodeIfPresent(String.self, forKey: .nfcToken)
         createdAt = try container.decode(Date.self, forKey: .createdAt)
         retryCount = try container.decode(Int.self, forKey: .retryCount)
         mediaContentType = try container.decodeIfPresent(String.self, forKey: .mediaContentType)

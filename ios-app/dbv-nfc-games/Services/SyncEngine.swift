@@ -2,7 +2,7 @@ import Foundation
 import os
 
 protocol SyncAPIClient: AnyObject {
-    func checkIn(gameId: UUID, baseId: UUID, token: String) async throws -> CheckInResponse
+    func checkIn(gameId: UUID, baseId: UUID, nfcToken: String?, token: String) async throws -> CheckInResponse
     func submitAnswer(gameId: UUID, request: PlayerSubmissionRequest, token: String) async throws -> SubmissionResponse
     func createUploadSession(gameId: UUID, request: UploadSessionInitRequest, token: String) async throws -> UploadSessionResponse
     func uploadSessionChunk(
@@ -182,7 +182,7 @@ final class SyncEngine {
         guard let apiClient else {
             throw SyncError.noAPIClient
         }
-        _ = try await apiClient.checkIn(gameId: action.gameId, baseId: action.baseId, token: token)
+        _ = try await apiClient.checkIn(gameId: action.gameId, baseId: action.baseId, nfcToken: action.nfcToken, token: token)
     }
 
     private func syncSubmission(_ action: PendingAction) async throws {

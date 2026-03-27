@@ -73,6 +73,7 @@ struct Base: Codable, Identifiable {
     var nfcLinked: Bool
     let hidden: Bool
     let fixedChallengeId: UUID?
+    let nfcToken: String?
 
     init(
         id: UUID,
@@ -83,7 +84,8 @@ struct Base: Codable, Identifiable {
         lng: Double,
         nfcLinked: Bool,
         hidden: Bool = false,
-        fixedChallengeId: UUID? = nil
+        fixedChallengeId: UUID? = nil,
+        nfcToken: String? = nil
     ) {
         self.id = id
         self.gameId = gameId
@@ -94,6 +96,7 @@ struct Base: Codable, Identifiable {
         self.nfcLinked = nfcLinked
         self.hidden = hidden
         self.fixedChallengeId = fixedChallengeId
+        self.nfcToken = nfcToken
     }
 
     init(from decoder: Decoder) throws {
@@ -107,6 +110,7 @@ struct Base: Codable, Identifiable {
         nfcLinked = try container.decode(Bool.self, forKey: .nfcLinked)
         hidden = try container.decodeIfPresent(Bool.self, forKey: .hidden) ?? false
         fixedChallengeId = try container.decodeIfPresent(UUID.self, forKey: .fixedChallengeId)
+        nfcToken = try container.decodeIfPresent(String.self, forKey: .nfcToken)
     }
 }
 

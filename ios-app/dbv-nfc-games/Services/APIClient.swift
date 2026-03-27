@@ -92,9 +92,9 @@ actor APIClient {
 
     // MARK: - Player Endpoints
 
-    func checkIn(gameId: UUID, baseId: UUID, token: String) async throws -> CheckInResponse {
+    func checkIn(gameId: UUID, baseId: UUID, nfcToken: String? = nil, token: String) async throws -> CheckInResponse {
         try await post("/api/player/games/\(gameId)/bases/\(baseId)/check-in",
-                       body: EmptyBody(),
+                       body: CheckInRequest(nfcToken: nfcToken),
                        token: token)
     }
 
@@ -617,6 +617,10 @@ actor APIClient {
 // MARK: - Helper Types
 
 private struct EmptyBody: Encodable {}
+
+private struct CheckInRequest: Encodable {
+    let nfcToken: String?
+}
 
 private struct RefreshTokenBody: Encodable {
     let refreshToken: String

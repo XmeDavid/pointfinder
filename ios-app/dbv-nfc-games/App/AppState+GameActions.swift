@@ -55,12 +55,12 @@ extension AppState {
 
     /// Check in at a base. If online, calls API directly.
     /// If offline, queues the action and returns a locally-constructed response.
-    func checkIn(baseId: UUID) async -> CheckInResponse? {
+    func checkIn(baseId: UUID, nfcToken: String? = nil) async -> CheckInResponse? {
         guard case .player(let token, _, let teamId, let gameId) = authType else { return nil }
 
         if isOnline {
             do {
-                let response = try await apiClient.checkIn(gameId: gameId, baseId: baseId, token: token)
+                let response = try await apiClient.checkIn(gameId: gameId, baseId: baseId, nfcToken: nfcToken, token: token)
 
                 // Cache the challenge
                 if let challenge = response.challenge {
@@ -89,7 +89,7 @@ extension AppState {
         // Offline path: enqueue action once and return local response
         let alreadyQueued = await OfflineQueue.shared.hasPendingCheckIn(gameId: gameId, baseId: baseId)
         if !alreadyQueued {
-            await OfflineQueue.shared.enqueueCheckIn(gameId: gameId, baseId: baseId)
+            await OfflineQueue.shared.enqueueCheckIn(gameId: gameId, baseId: baseId, nfcToken: nfcToken)
         }
 
         // Trigger sync immediately so queued actions retry as soon as possible

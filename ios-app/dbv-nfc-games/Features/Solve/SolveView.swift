@@ -443,10 +443,10 @@ struct SolveView: View {
 
         do {
             // Scan NFC to verify presence
-            let scannedBaseId = try await nfcReader.scanForBaseId()
+            let scannedPayload = try await nfcReader.scanForBaseId()
 
             // Verify the scanned base matches
-            guard scannedBaseId == baseId else {
+            guard scannedPayload.baseId == baseId else {
                 scanError = locale.t("solve.wrongBase", baseName)
                 isSubmitting = false
                 return
