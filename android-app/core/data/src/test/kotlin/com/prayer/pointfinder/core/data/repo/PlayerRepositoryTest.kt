@@ -189,7 +189,7 @@ class PlayerRepositoryTest {
         )
         coEvery { api.checkIn("game-1", "base-1", any()) } returns checkInResponse
 
-        val result = repo.checkIn(playerAuth, "base-1", online = true)
+        val result = repo.checkIn(playerAuth, "base-1", nfcToken = null, online = true)
 
         coVerify { api.checkIn("game-1", "base-1", any()) }
         assertFalse(result.queued)
@@ -207,7 +207,7 @@ class PlayerRepositoryTest {
         )
         coEvery { api.checkIn("game-1", "base-1", any()) } returns checkInResponse
 
-        repo.checkIn(playerAuth, "base-1", online = true)
+        repo.checkIn(playerAuth, "base-1", nfcToken = null, online = true)
 
         coVerify { progressDao.updateStatus("game-1", "base-1", "checked_in") }
     }
@@ -231,7 +231,7 @@ class PlayerRepositoryTest {
         )
         coEvery { progressDao.progressForGame("game-1") } returns cached
 
-        val result = repo.checkIn(playerAuth, "base-1", online = false)
+        val result = repo.checkIn(playerAuth, "base-1", nfcToken = null, online = false)
 
         assertTrue(result.queued)
         val slot = slot<PendingActionEntity>()
@@ -246,7 +246,7 @@ class PlayerRepositoryTest {
         coEvery { pendingActionDao.hasPendingCheckIn("game-1", "base-1") } returns true
         coEvery { progressDao.progressForGame("game-1") } returns emptyList()
 
-        val result = repo.checkIn(playerAuth, "base-1", online = false)
+        val result = repo.checkIn(playerAuth, "base-1", nfcToken = null, online = false)
 
         assertTrue(result.queued)
         coVerify(exactly = 0) { pendingActionDao.upsert(any()) }
@@ -258,7 +258,7 @@ class PlayerRepositoryTest {
         coEvery { pendingActionDao.hasPendingCheckIn("game-1", "base-1") } returns false
         coEvery { progressDao.progressForGame("game-1") } returns emptyList()
 
-        val result = repo.checkIn(playerAuth, "base-1", online = true)
+        val result = repo.checkIn(playerAuth, "base-1", nfcToken = null, online = true)
 
         assertTrue(result.queued)
         coVerify { pendingActionDao.upsert(any()) }
@@ -382,7 +382,7 @@ class PlayerRepositoryTest {
         )
         coEvery { api.checkIn("game-1", "base-1", any()) } returns checkInResponse
 
-        repo.checkIn(playerAuth, "base-1", online = true)
+        repo.checkIn(playerAuth, "base-1", nfcToken = null, online = true)
 
         val slot = slot<CachedChallengeEntity>()
         coVerify { challengeDao.upsert(capture(slot)) }

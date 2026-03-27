@@ -202,7 +202,7 @@ private final class MockSyncAPIClient: SyncAPIClient {
     var submitError: Error?
     var checkInDelay: TimeInterval = 0
 
-    func checkIn(gameId: UUID, baseId: UUID, token: String) async throws -> CheckInResponse {
+    func checkIn(gameId: UUID, baseId: UUID, nfcToken: String?, token: String) async throws -> CheckInResponse {
         if checkInDelay > 0 {
             try? await Task.sleep(nanoseconds: UInt64(checkInDelay * 1_000_000_000))
         }
