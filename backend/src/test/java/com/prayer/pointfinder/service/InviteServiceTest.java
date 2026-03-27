@@ -158,7 +158,7 @@ class InviteServiceTest {
         request.setGameId(null);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(adminUser));
-        when(inviteRepository.save(any(OperatorInvite.class))).thenAnswer(invocation -> {
+        when(inviteRepository.saveAndFlush(any(OperatorInvite.class))).thenAnswer(invocation -> {
             OperatorInvite saved = invocation.getArgument(0);
             saved.setId(UUID.randomUUID());
             saved.setCreatedAt(Instant.now());
@@ -209,7 +209,7 @@ class InviteServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(adminUser));
         when(gameAccessService.getAccessibleGame(gameId)).thenReturn(game);
         when(userRepository.findByEmail("target@example.com")).thenReturn(Optional.of(targetUser));
-        when(inviteRepository.save(any(OperatorInvite.class))).thenAnswer(invocation -> {
+        when(inviteRepository.saveAndFlush(any(OperatorInvite.class))).thenAnswer(invocation -> {
             OperatorInvite saved = invocation.getArgument(0);
             saved.setId(UUID.randomUUID());
             saved.setCreatedAt(Instant.now());

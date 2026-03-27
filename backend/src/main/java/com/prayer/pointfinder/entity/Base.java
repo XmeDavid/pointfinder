@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -51,4 +52,18 @@ public class Base {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
+
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+    @PrePersist
+    private void generateNfcTokenIfMissing() {
+        if (this.nfcToken == null) {
+            String chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+            StringBuilder sb = new StringBuilder(8);
+            for (int i = 0; i < 8; i++) {
+                sb.append(chars.charAt(SECURE_RANDOM.nextInt(chars.length())));
+            }
+            this.nfcToken = sb.toString();
+        }
+    }
 }
