@@ -1,4 +1,5 @@
 import Foundation
+import CoreLocation
 
 enum TileSources {
     private static let styles: [String: String] = [
@@ -33,5 +34,19 @@ enum TileSources {
         }
         let urlString = styles[resolvedKey] ?? styles["osm-classic", default: ""]
         return URL(string: urlString) ?? Self.defaultStyleURL
+    }
+
+    private static let defaultCenters: [String: (lat: Double, lng: Double)] = [
+        "osm": (40.08789650218038, -8.869461715221407),
+        "osm-classic": (40.08789650218038, -8.869461715221407),
+        "voyager": (40.08789650218038, -8.869461715221407),
+        "positron": (40.08789650218038, -8.869461715221407),
+        "swisstopo": (46.8182, 8.2275),
+        "swisstopo-sat": (46.8182, 8.2275),
+    ]
+
+    static func defaultCenter(for key: String?) -> CLLocationCoordinate2D {
+        let center = defaultCenters[key ?? "osm-classic"] ?? defaultCenters["osm-classic"]!
+        return CLLocationCoordinate2D(latitude: center.lat, longitude: center.lng)
     }
 }

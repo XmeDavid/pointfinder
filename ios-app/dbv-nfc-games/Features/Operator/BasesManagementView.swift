@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreLocation
 
 struct BasesManagementView: View {
     @Environment(AppState.self) private var appState
@@ -120,11 +121,18 @@ struct BasesManagementView: View {
                         )
                     }
                 case .create:
+                    let lastBase = bases.last
+                    let initialCoord: CLLocationCoordinate2D = if let base = lastBase {
+                        CLLocationCoordinate2D(latitude: base.lat, longitude: base.lng)
+                    } else {
+                        TileSources.defaultCenter(for: game.tileSource)
+                    }
                     BaseEditView(
                         game: game,
                         base: nil,
                         bases: bases,
                         challenges: challenges,
+                        initialCoordinate: initialCoord,
                         onSaved: { newBase in
                             bases.append(newBase)
                             Task { await loadData() }
