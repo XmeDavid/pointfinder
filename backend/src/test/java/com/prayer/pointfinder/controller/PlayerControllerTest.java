@@ -107,7 +107,7 @@ class PlayerControllerTest {
                         .build())
                 .build();
 
-        when(playerService.checkIn(eq(gameId), eq(baseId), any(Player.class))).thenReturn(response);
+        when(playerService.checkIn(eq(gameId), eq(baseId), any(Player.class), any())).thenReturn(response);
 
         mockMvc.perform(post("/api/player/games/" + gameId + "/bases/" + baseId + "/check-in"))
                 .andExpect(status().isOk())
@@ -131,12 +131,12 @@ class PlayerControllerTest {
                         .answerType("text").points(10).build())
                 .build();
 
-        when(playerService.checkIn(eq(gameId), eq(baseId), any(Player.class))).thenReturn(response);
+        when(playerService.checkIn(eq(gameId), eq(baseId), any(Player.class), any())).thenReturn(response);
 
         mockMvc.perform(post("/api/player/games/" + gameId + "/bases/" + baseId + "/check-in"))
                 .andExpect(status().isOk());
 
-        verify(playerService).checkIn(eq(gameId), eq(baseId), any(Player.class));
+        verify(playerService).checkIn(eq(gameId), eq(baseId), any(Player.class), any());
     }
 
     @Test
@@ -144,7 +144,7 @@ class PlayerControllerTest {
         UUID gameId = UUID.randomUUID();
         UUID unknownBaseId = UUID.randomUUID();
 
-        when(playerService.checkIn(eq(gameId), eq(unknownBaseId), any(Player.class)))
+        when(playerService.checkIn(eq(gameId), eq(unknownBaseId), any(Player.class), any()))
                 .thenThrow(new ResourceNotFoundException("Base not found: " + unknownBaseId));
 
         mockMvc.perform(post("/api/player/games/" + gameId + "/bases/" + unknownBaseId + "/check-in"))
@@ -157,7 +157,7 @@ class PlayerControllerTest {
         UUID gameId = UUID.randomUUID();
         UUID baseId = UUID.randomUUID();
 
-        when(playerService.checkIn(eq(gameId), eq(baseId), any(Player.class)))
+        when(playerService.checkIn(eq(gameId), eq(baseId), any(Player.class), any()))
                 .thenThrow(new ConflictException("Team has already checked in at this base"));
 
         mockMvc.perform(post("/api/player/games/" + gameId + "/bases/" + baseId + "/check-in"))

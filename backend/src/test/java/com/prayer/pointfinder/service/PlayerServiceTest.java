@@ -489,7 +489,7 @@ class PlayerServiceTest {
         when(checkInRepository.save(any(CheckIn.class))).thenReturn(checkIn);
         when(assignmentRepository.findByBaseId(baseId)).thenReturn(java.util.List.of());
 
-        playerService.checkIn(gameId, baseId, player);
+        playerService.checkIn(gameId, baseId, player, null);
 
         verify(operatorPushNotificationService).notifyOperatorsForCheckIn(eq(game), eq(team), eq(base));
     }
