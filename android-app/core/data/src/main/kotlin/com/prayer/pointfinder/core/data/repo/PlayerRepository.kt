@@ -10,6 +10,7 @@ import com.prayer.pointfinder.core.data.local.toBaseProgress
 import com.prayer.pointfinder.core.data.local.toCached
 import com.prayer.pointfinder.core.data.local.toChallengeInfo
 import com.prayer.pointfinder.core.model.AuthType
+import com.prayer.pointfinder.core.model.CheckInRequest
 import com.prayer.pointfinder.core.model.BaseProgress
 import com.prayer.pointfinder.core.model.CheckInResponse
 import com.prayer.pointfinder.core.model.GameDataResponse
@@ -125,10 +126,10 @@ class PlayerRepository @Inject constructor(
         }
     }
 
-    suspend fun checkIn(auth: AuthType.Player, baseId: String, online: Boolean): CheckInResult {
+    suspend fun checkIn(auth: AuthType.Player, baseId: String, nfcToken: String?, online: Boolean): CheckInResult {
         if (online) {
             try {
-                val response = api.checkIn(auth.gameId, baseId)
+                val response = api.checkIn(auth.gameId, baseId, CheckInRequest(nfcToken = nfcToken))
                 response.challenge?.let { challenge ->
                     db.challengeDao().upsert(
                         CachedChallengeEntity(
@@ -171,6 +172,7 @@ class PlayerRepository @Inject constructor(
                     answer = null,
                     createdAtEpochMs = System.currentTimeMillis(),
                     retryCount = 0,
+                    nfcToken = nfcToken,
                 ),
             )
         }
@@ -696,7 +698,7 @@ class PlayerRepository @Inject constructor(
                 } else {
                     val synced = runCatching {
                         when (action.type) {
-                            "check_in" -> api.checkIn(action.gameId, action.baseId)
+                            "check_in" -> api.checkIn(action.gameId, action.baseId, CheckInRequest(nfcToken = action.nfcToken))
                             "submission" -> api.submitAnswer(
                                 gameId = action.gameId,
                                 request = PlayerSubmissionRequest(

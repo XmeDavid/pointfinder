@@ -12,6 +12,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.prayer.pointfinder.core.data.local.PendingActionEntity
 import com.prayer.pointfinder.core.model.AuthType
+import com.prayer.pointfinder.core.model.CheckInRequest
 import com.prayer.pointfinder.core.model.GameStatus
 import com.prayer.pointfinder.core.model.PlayerSubmissionRequest
 import com.prayer.pointfinder.core.network.CompanionApi
@@ -67,7 +68,7 @@ class OfflineSyncWorker @AssistedInject constructor(
 
             val synced = runCatching {
                 when (action.type) {
-                    "check_in" -> api.checkIn(action.gameId, action.baseId)
+                    "check_in" -> api.checkIn(action.gameId, action.baseId, CheckInRequest(nfcToken = action.nfcToken))
                     "submission" -> api.submitAnswer(
                         gameId = action.gameId,
                         request = PlayerSubmissionRequest(

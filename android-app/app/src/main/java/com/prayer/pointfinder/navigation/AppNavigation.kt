@@ -425,7 +425,7 @@ private fun PlayerRootScreen(
         val baseId = deepLinkBaseId ?: return@LaunchedEffect
         viewModel.consumeDeepLinkBaseId()
         selectedTab = PlayerTab.CHECK_IN
-        viewModel.startCheckIn(auth, baseId, isOnline)
+        viewModel.startCheckIn(auth, baseId, online = isOnline)
     }
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
@@ -869,7 +869,7 @@ private fun PlayerRootScreen(
             challenge = state.selectedChallenge,
             onCheckIn = {
                 if (shouldBlockGameplay) return@BaseDetailBottomSheet
-                viewModel.startCheckIn(auth, selectedBase.baseId, isOnline)
+                viewModel.startCheckIn(auth, selectedBase.baseId, online = isOnline)
                 viewModel.clearSelectedBase()
             },
             onSolve = {
@@ -896,15 +896,15 @@ private fun PlayerRootScreen(
     if (showNfcScanDialog) {
         val currentNfcAction = pendingNfcAction
         LaunchedEffect(Unit) {
-            viewModel.scannedBaseIds.collect { baseId ->
-                if (baseId != null) {
+            viewModel.scannedPayloads.collect { payload ->
+                if (payload != null) {
                     showNfcScanDialog = false
                     if (currentNfcAction != null) {
-                        currentNfcAction(baseId)
+                        currentNfcAction(payload.baseId)
                         pendingNfcAction = null
                     } else {
                         // Default: check-in flow
-                        viewModel.startCheckIn(auth, baseId, isOnline)
+                        viewModel.startCheckIn(auth, payload.baseId, payload.nfcToken, isOnline)
                     }
                 }
             }

@@ -47,6 +47,7 @@ data class PendingActionEntity(
     val mediaItemsJson: String? = null,
     val permanentlyFailed: Boolean = false,
     val failureReason: String? = null,
+    val nfcToken: String? = null,
 )
 
 @Entity(tableName = "cached_progress", primaryKeys = ["gameId", "baseId"])
@@ -187,7 +188,7 @@ interface ChallengeDao {
         CachedProgressEntity::class,
         CachedChallengeEntity::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = true,
 )
 abstract class CompanionDatabase : RoomDatabase() {
@@ -207,6 +208,12 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
     override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("CREATE INDEX IF NOT EXISTS index_pending_actions_gameId_baseId_type ON pending_actions (gameId, baseId, type)")
         db.execSQL("CREATE INDEX IF NOT EXISTS index_pending_actions_permanentlyFailed ON pending_actions (permanentlyFailed)")
+    }
+}
+
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE pending_actions ADD COLUMN nfcToken TEXT")
     }
 }
 

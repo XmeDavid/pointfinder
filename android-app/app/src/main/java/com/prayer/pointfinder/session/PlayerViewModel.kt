@@ -81,6 +81,9 @@ class PlayerViewModel @Inject constructor(
     /** Exposed so the NFC scan dialog can collect base IDs while open. */
     val scannedBaseIds: SharedFlow<String?> = nfcEventBus.scannedBaseIds
 
+    /** Exposed so the NFC scan dialog can collect full payloads (including nfcToken). */
+    val scannedPayloads = nfcEventBus.scannedPayloads
+
     /** Deep link base ID (StateFlow so late collectors get the value). */
     val deepLinkBaseId: StateFlow<String?> = nfcEventBus.deepLinkBaseId
 
@@ -197,11 +200,11 @@ class PlayerViewModel @Inject constructor(
         )
     }
 
-    fun startCheckIn(auth: AuthType.Player, baseId: String, online: Boolean) {
+    fun startCheckIn(auth: AuthType.Player, baseId: String, nfcToken: String? = null, online: Boolean) {
         checkInJob?.cancel()
         checkInJob = viewModelScope.launch {
             runCatching {
-                playerRepository.checkIn(auth, baseId, online)
+                playerRepository.checkIn(auth, baseId, nfcToken, online)
             }.onSuccess { result ->
                 // Optimistic update: mark base as checked-in locally before
                 // refresh() replaces progress with (potentially stale) API data.
@@ -294,7 +297,7 @@ class PlayerViewModel @Inject constructor(
             )
             return
         }
-        startCheckIn(auth, baseId, online)
+        startCheckIn(auth, baseId, nfcToken = null, online)
     }
 
     fun submitNone(

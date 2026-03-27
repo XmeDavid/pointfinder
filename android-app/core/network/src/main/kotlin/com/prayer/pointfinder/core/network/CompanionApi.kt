@@ -6,6 +6,7 @@ import com.prayer.pointfinder.core.model.AuthType
 import com.prayer.pointfinder.core.model.Base
 import com.prayer.pointfinder.core.model.BaseProgress
 import com.prayer.pointfinder.core.model.Challenge
+import com.prayer.pointfinder.core.model.CheckInRequest
 import com.prayer.pointfinder.core.model.CheckInResponse
 import com.prayer.pointfinder.core.model.CreateBaseRequest
 import com.prayer.pointfinder.core.model.CreateChallengeRequest
@@ -85,7 +86,7 @@ interface CompanionApi {
     suspend fun checkIn(
         @Path("gameId") gameId: String,
         @Path("baseId") baseId: String,
-        @Body body: EmptyBody = EmptyBody,
+        @Body body: CheckInRequest = CheckInRequest(),
     ): CheckInResponse
 
     @GET("api/player/games/{gameId}/progress")

@@ -100,6 +100,11 @@ data class Game(
 )
 
 @Serializable
+data class CheckInRequest(
+    val nfcToken: String? = null,
+)
+
+@Serializable
 data class Base(
     val id: EntityId,
     val gameId: EntityId? = null,
@@ -110,6 +115,7 @@ data class Base(
     val nfcLinked: Boolean,
     val hidden: Boolean = false,
     val fixedChallengeId: EntityId? = null,
+    val nfcToken: String? = null,
 )
 
 @Serializable
