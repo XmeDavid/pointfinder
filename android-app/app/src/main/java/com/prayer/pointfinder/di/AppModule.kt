@@ -28,7 +28,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import java.util.UUID
 import javax.inject.Singleton
-import net.sqlcipher.database.SupportFactory
+import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 
@@ -115,7 +115,8 @@ object AppModule {
         deleteOldUnencryptedDbIfNeeded(context)
 
         val passphrase = getOrCreateDbPassphrase(context)
-        val factory = SupportFactory(passphrase)
+        System.loadLibrary("sqlcipher")
+        val factory = SupportOpenHelperFactory(passphrase)
 
         return Room.databaseBuilder(
             context,
