@@ -3,6 +3,25 @@ import SwiftUI
 import UniformTypeIdentifiers
 import WebKit
 
+// MARK: - Image Transferable (handles HEIC, PNG, JPEG, etc.)
+
+private struct ImageTransferable: Transferable {
+    let image: UIImage
+
+    static var transferRepresentation: some TransferRepresentation {
+        DataRepresentation(importedContentType: .image) { data in
+            guard let image = UIImage(data: data) else {
+                throw TransferError.importFailed
+            }
+            return ImageTransferable(image: image)
+        }
+    }
+
+    enum TransferError: Error {
+        case importFailed
+    }
+}
+
 // MARK: - Rich Text Editor View
 
 struct RichTextEditorView: View {
@@ -27,6 +46,8 @@ struct RichTextEditorView: View {
     @State private var showAudioSizeError = false
     @State private var selectedImageItem: PhotosPickerItem?
     @State private var showImageSizeError = false
+    @State private var isLoadingImage = false
+    @State private var imageLoadError: String?
     @State private var showPreviewTeamPicker = false
     @State private var newVariableName = ""
     @State private var previewTeam: Team?
@@ -98,11 +119,30 @@ struct RichTextEditorView: View {
                 .background(Color(.systemGray6))
 
                 // Editor WebView
-                RichTextWebView(
-                    coordinator: webViewCoordinator,
-                    initialHtml: initialHtml,
-                    isDark: colorScheme == .dark
-                )
+                ZStack {
+                    RichTextWebView(
+                        coordinator: webViewCoordinator,
+                        initialHtml: initialHtml,
+                        isDark: colorScheme == .dark
+                    )
+
+                    if isLoadingImage {
+                        Color.black.opacity(0.3)
+                            .ignoresSafeArea()
+                        ProgressView(locale.t("editor.insertingImage"))
+                            .padding(20)
+                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                    }
+                }
+
+                if let imageLoadError {
+                    Text(imageLoadError)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 4)
+                }
 
                 if let createVariableErrorMessage {
                     Text(createVariableErrorMessage)
@@ -238,14 +278,37 @@ struct RichTextEditorView: View {
             }
             .onChange(of: selectedImageItem) { _, item in
                 guard let item else { return }
+                isLoadingImage = true
+                imageLoadError = nil
                 Task {
-                    defer { selectedImageItem = nil }
-                    guard let data = try? await item.loadTransferable(type: Data.self) else { return }
-                    guard data.count <= 20_000_000 else {
-                        showImageSizeError = true
+                    defer {
+                        selectedImageItem = nil
+                        isLoadingImage = false
+                    }
+                    // Load as UIImage — try ImageTransferable first (handles HEIC), fall back to raw Data
+                    var uiImage: UIImage?
+                    do {
+                        if let transferable = try await item.loadTransferable(type: ImageTransferable.self) {
+                            uiImage = transferable.image
+                        }
+                    } catch {
+                        let isNetworkError = error.localizedDescription.contains("3169")
+                            || error.localizedDescription.contains("helper application")
+                        if isNetworkError {
+                            imageLoadError = locale.t("editor.imageNotDownloaded")
+                            return
+                        }
+                        // Fall through to try Data loading
+                    }
+                    if uiImage == nil {
+                        if let data = try? await item.loadTransferable(type: Data.self) {
+                            uiImage = UIImage(data: data)
+                        }
+                    }
+                    guard let uiImage else {
+                        imageLoadError = locale.t("editor.imageLoadFailed")
                         return
                     }
-                    guard let uiImage = UIImage(data: data) else { return }
                     let maxDim: CGFloat = 1200
                     let scale = min(1, maxDim / max(uiImage.size.width, uiImage.size.height))
                     let targetSize = CGSize(
@@ -447,7 +510,9 @@ class RichTextWebViewCoordinator {
             document.execCommand('insertHTML', false, '\(jsEscape(html))');
         })();
         """
-        webView?.evaluateJavaScript(js)
+        webView?.evaluateJavaScript(js) { _, error in
+            if let error { print("[RichTextEditor] insertHTML JS error: \(error)") }
+        }
     }
 
     func getHTML(completion: @escaping (String) -> Void) {
