@@ -621,7 +621,7 @@ class OperatorViewModel @Inject constructor(
     private fun writeBaseNfc(tag: Tag) {
         val game = _state.value.selectedGame ?: return
         val base = _state.value.selectedBase ?: return
-        val result = nfcService.writeBaseTag(tag, base.id)
+        val result = nfcService.writeBaseTag(tag, base.id, base.nfcToken)
         if (result.isSuccess) {
             _state.value = _state.value.copy(
                 awaitingNfcWrite = false,
