@@ -353,10 +353,7 @@ fun BaseDetailBottomSheet(
 
             when (status) {
                 BaseStatus.NOT_VISITED -> {
-                    Button(
-                        onClick = onCheckIn,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) { Text(stringResource(R.string.action_go_to_checkin)) }
+                    // Check-in requires physical NFC tag scan — no direct check-in button
                 }
                 BaseStatus.CHECKED_IN, BaseStatus.REJECTED -> {
                     Button(
