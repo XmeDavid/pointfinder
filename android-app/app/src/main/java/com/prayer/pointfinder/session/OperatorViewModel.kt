@@ -326,11 +326,16 @@ class OperatorViewModel @Inject constructor(
             runCatching {
                 liveDataUseCase.refreshGameData(gameId)
             }.onSuccess { refreshed ->
+                val currentSelectedId = _state.value.selectedBase?.id
+                val updatedSelected = if (currentSelectedId != null) {
+                    refreshed.bases.firstOrNull { it.id == currentSelectedId }
+                } else null
                 _state.value = _state.value.copy(
                     bases = refreshed.bases,
                     locations = refreshed.locations,
                     baseProgress = refreshed.progress,
                     submissions = refreshed.submissions,
+                    selectedBase = updatedSelected ?: _state.value.selectedBase,
                     authExpired = false,
                 )
             }.onFailure { err ->
