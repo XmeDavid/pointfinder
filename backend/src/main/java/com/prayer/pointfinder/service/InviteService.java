@@ -100,7 +100,7 @@ public class InviteService {
                 .invitedBy(currentUser)
                 .build();
 
-        invite = inviteRepository.save(invite);
+        invite = inviteRepository.saveAndFlush(invite);
 
         // Send email notification
         if (game != null) {
