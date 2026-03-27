@@ -9,6 +9,8 @@ struct OperatorHomeView: View {
     @State private var errorMessage: String?
     @State private var selectedGame: Game?
     @State private var showCreateGame = false
+    @State private var showMyInvites = false
+    @State private var pendingInviteCount = 0
 
     var body: some View {
         if let game = selectedGame {
@@ -82,6 +84,24 @@ struct OperatorHomeView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
+                        showMyInvites = true
+                    } label: {
+                        ZStack(alignment: .topTrailing) {
+                            Image(systemName: "bell")
+                            if pendingInviteCount > 0 {
+                                Text("\(pendingInviteCount)")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundStyle(.white)
+                                    .padding(3)
+                                    .background(Color.red)
+                                    .clipShape(Circle())
+                                    .offset(x: 8, y: -8)
+                            }
+                        }
+                    }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
                         showCreateGame = true
                     } label: {
                         Image(systemName: "plus")
@@ -98,6 +118,34 @@ struct OperatorHomeView: View {
                     Task { await loadGames() }
                 }
             }
+            .sheet(isPresented: $showMyInvites) {
+                NavigationStack {
+                    MyInvitesView()
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) {
+                                Button(locale.t("common.cancel")) {
+                                    showMyInvites = false
+                                }
+                            }
+                        }
+                }
+            }
+            .task {
+                await pollInviteCount()
+            }
+        }
+    }
+
+    private func pollInviteCount() async {
+        guard case .userOperator(let token, _, _) = appState.authType else { return }
+        while !Task.isCancelled {
+            do {
+                let invites = try await appState.apiClient.getMyInvites(token: token)
+                pendingInviteCount = invites.filter { $0.status.lowercased() == "pending" }.count
+            } catch {
+                // Silent failure for background badge polling
+            }
+            try? await Task.sleep(for: .seconds(30))
         }
     }
 

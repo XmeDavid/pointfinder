@@ -13,6 +13,7 @@ struct OperatorsManagementView: View {
     @State private var inviteEmail = ""
     @State private var isSendingInvite = false
     @State private var errorMessage: String?
+    @State private var successMessage: String?
     @State private var operatorToRemove: OperatorUserResponse?
     @State private var inviteToRevoke: InviteResponse?
 
@@ -79,7 +80,7 @@ struct OperatorsManagementView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(invite.email)
                                     .font(.body)
-                                if let date = DateFormatting.parseISO8601(invite.createdAt) {
+                                if let createdAt = invite.createdAt, let date = DateFormatting.parseISO8601(createdAt) {
                                     Text(date, style: .relative)
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
@@ -102,6 +103,14 @@ struct OperatorsManagementView: View {
                             }
                         }
                     }
+                }
+            }
+
+            if let successMessage {
+                Section {
+                    Text(successMessage)
+                        .foregroundStyle(.green)
+                        .font(.caption)
                 }
             }
 
@@ -235,6 +244,8 @@ struct OperatorsManagementView: View {
             )
             invites.insert(newInvite, at: 0)
             inviteEmail = ""
+            successMessage = "Invite sent successfully"
+            Task { try? await Task.sleep(for: .seconds(3)); successMessage = nil }
         } catch {
             errorMessage = error.localizedDescription
         }

@@ -161,8 +161,8 @@ struct InviteResponse: Codable, Identifiable {
     let email: String
     let status: String
     let invitedBy: UUID
-    let inviterName: String
-    let createdAt: String
+    let inviterName: String?
+    let createdAt: String?
 }
 
 // MARK: - Monitoring
