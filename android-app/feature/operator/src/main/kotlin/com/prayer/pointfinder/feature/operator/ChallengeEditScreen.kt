@@ -776,7 +776,16 @@ private fun HtmlPreviewCard(
 }
 
 private fun stripHtml(html: String): String {
-    return html.replace(Regex("<[^>]*>"), "").replace("&nbsp;", " ").trim()
+    val text = html.replace(Regex("<[^>]*>"), "").replace("&nbsp;", " ").trim()
+    if (text.isNotBlank()) return text
+    val hasImage = html.contains("<img ", ignoreCase = true)
+    val hasAudio = html.contains("<audio", ignoreCase = true)
+    return when {
+        hasImage && hasAudio -> "[Image & Audio]"
+        hasImage -> "[Image]"
+        hasAudio -> "[Audio]"
+        else -> ""
+    }
 }
 
 /**
