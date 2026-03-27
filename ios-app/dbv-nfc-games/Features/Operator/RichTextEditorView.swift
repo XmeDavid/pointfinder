@@ -47,7 +47,8 @@ struct RichTextEditorView: View {
     @State private var selectedImageItem: PhotosPickerItem?
     @State private var showImageSizeError = false
     @State private var isLoadingImage = false
-    @State private var imageLoadError: String?
+    @State private var showImageLoadError = false
+    @State private var imageLoadErrorMessage = ""
     @State private var showPreviewTeamPicker = false
     @State private var newVariableName = ""
     @State private var previewTeam: Team?
@@ -135,14 +136,6 @@ struct RichTextEditorView: View {
                     }
                 }
 
-                if let imageLoadError {
-                    Text(imageLoadError)
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 4)
-                }
 
                 if let createVariableErrorMessage {
                     Text(createVariableErrorMessage)
@@ -276,10 +269,14 @@ struct RichTextEditorView: View {
             } message: {
                 Text(locale.t("editor.imageTooLargeMessage"))
             }
+            .alert(locale.t("editor.imageLoadFailed"), isPresented: $showImageLoadError) {
+                Button(locale.t("common.ok"), role: .cancel) {}
+            } message: {
+                Text(imageLoadErrorMessage)
+            }
             .onChange(of: selectedImageItem) { _, item in
                 guard let item else { return }
                 isLoadingImage = true
-                imageLoadError = nil
                 Task {
                     defer {
                         selectedImageItem = nil
@@ -295,7 +292,8 @@ struct RichTextEditorView: View {
                         let isNetworkError = error.localizedDescription.contains("3169")
                             || error.localizedDescription.contains("helper application")
                         if isNetworkError {
-                            imageLoadError = locale.t("editor.imageNotDownloaded")
+                            imageLoadErrorMessage = locale.t("editor.imageNotDownloaded")
+                            showImageLoadError = true
                             return
                         }
                         // Fall through to try Data loading
@@ -306,7 +304,8 @@ struct RichTextEditorView: View {
                         }
                     }
                     guard let uiImage else {
-                        imageLoadError = locale.t("editor.imageLoadFailed")
+                        imageLoadErrorMessage = locale.t("editor.imageLoadFailed")
+                        showImageLoadError = true
                         return
                     }
                     let maxDim: CGFloat = 1200
