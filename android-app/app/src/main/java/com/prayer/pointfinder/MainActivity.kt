@@ -54,9 +54,9 @@ class MainActivity : AppCompatActivity() {
         // Reader mode uses a direct callback (no PendingIntent), which avoids
         // Background Activity Launch (BAL) restrictions on Android 14+/API 35.
         nfcService.enableReaderMode(this) { tag ->
-            val baseId = nfcService.parseBaseIdFromTag(tag)
+            val payload = nfcService.parsePayloadFromTag(tag)
             nfcEventBus.emitDiscoveredTag(tag)
-            nfcEventBus.emitScannedBaseId(baseId)
+            nfcEventBus.emitScannedPayload(payload)
         }
     }
 

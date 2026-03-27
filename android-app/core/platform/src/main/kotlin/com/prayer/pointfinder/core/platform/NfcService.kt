@@ -54,8 +54,13 @@ class NfcService @Inject constructor(
         return NfcPayloadCodec.parseBaseId(ndef.cachedNdefMessage)
     }
 
-    fun writeBaseTag(tag: Tag, baseId: String): Result<Unit> {
-        val message = NfcPayloadCodec.buildBaseMessage(baseId)
+    fun parsePayloadFromTag(tag: Tag): NfcTagPayload? {
+        val ndef = Ndef.get(tag) ?: return null
+        return NfcPayloadCodec.parsePayload(ndef.cachedNdefMessage)
+    }
+
+    fun writeBaseTag(tag: Tag, baseId: String, nfcToken: String? = null): Result<Unit> {
+        val message = NfcPayloadCodec.buildBaseMessage(baseId, nfcToken)
         return runCatching {
             val ndef = Ndef.get(tag)
             if (ndef != null) {
