@@ -432,7 +432,21 @@ class RichTextWebViewCoordinator {
     }
 
     func insertHTML(_ html: String) {
-        let js = "document.getElementById('editor').focus(); document.execCommand('insertHTML', false, '\(jsEscape(html))');"
+        let js = """
+        (function() {
+            var editor = document.getElementById('editor');
+            editor.focus();
+            var sel = window.getSelection();
+            if (!sel.rangeCount || !editor.contains(sel.anchorNode)) {
+                var range = document.createRange();
+                range.selectNodeContents(editor);
+                range.collapse(false);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+            document.execCommand('insertHTML', false, '\(jsEscape(html))');
+        })();
+        """
         webView?.evaluateJavaScript(js)
     }
 
