@@ -17,6 +17,7 @@ public class BaseResponse {
     private Double lat;
     private Double lng;
     private Boolean nfcLinked;
+    private String nfcToken;
     private Boolean hidden;
     private UUID fixedChallengeId;
 }

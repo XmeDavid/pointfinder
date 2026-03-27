@@ -37,6 +37,9 @@ public class Base {
     @Column(name = "nfc_linked", nullable = false)
     private Boolean nfcLinked;
 
+    @Column(name = "nfc_token", nullable = false, length = 8)
+    private String nfcToken;
+
     @Column(name = "hidden", nullable = false)
     @Builder.Default
     private Boolean hidden = false;

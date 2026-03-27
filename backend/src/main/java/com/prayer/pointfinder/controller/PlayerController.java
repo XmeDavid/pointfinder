@@ -1,5 +1,6 @@
 package com.prayer.pointfinder.controller;
 
+import com.prayer.pointfinder.dto.request.CheckInRequest;
 import com.prayer.pointfinder.dto.request.PlayerJoinRequest;
 import com.prayer.pointfinder.dto.request.PlayerSubmissionRequest;
 import com.prayer.pointfinder.dto.request.UpdateLocationRequest;
@@ -41,9 +42,10 @@ public class PlayerController {
 
     @PostMapping("/games/{gameId}/bases/{baseId}/check-in")
     public ResponseEntity<CheckInResponse> checkIn(@PathVariable UUID gameId,
-                                                    @PathVariable UUID baseId) {
+                                                    @PathVariable UUID baseId,
+                                                    @RequestBody(required = false) CheckInRequest request) {
         Player player = SecurityUtils.getCurrentPlayer();
-        return ResponseEntity.ok(playerService.checkIn(gameId, baseId, player));
+        return ResponseEntity.ok(playerService.checkIn(gameId, baseId, player, request));
     }
 
     @GetMapping("/games/{gameId}/progress")

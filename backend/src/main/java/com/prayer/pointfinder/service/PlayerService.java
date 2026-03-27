@@ -1,5 +1,6 @@
 package com.prayer.pointfinder.service;
 
+import com.prayer.pointfinder.dto.request.CheckInRequest;
 import com.prayer.pointfinder.dto.request.CreateSubmissionRequest;
 import com.prayer.pointfinder.dto.request.PlayerJoinRequest;
 import com.prayer.pointfinder.dto.request.PlayerSubmissionRequest;
@@ -108,7 +109,7 @@ public class PlayerService {
     }
 
     @Transactional(timeout = 10)
-    public CheckInResponse checkIn(UUID gameId, UUID baseId, Player authPlayer) {
+    public CheckInResponse checkIn(UUID gameId, UUID baseId, Player authPlayer, CheckInRequest request) {
         Player player = loadPlayer(authPlayer);
 
         Team team = player.getTeam();
@@ -124,6 +125,14 @@ public class PlayerService {
         if (!base.getGame().getId().equals(gameId)) {
             throw new BadRequestException("Base does not belong to this game");
         }
+
+        // Validate NFC token if provided by client
+        if (request != null && request.getNfcToken() != null) {
+            if (!request.getNfcToken().equals(base.getNfcToken())) {
+                throw new BadRequestException("Invalid NFC verification token");
+            }
+        }
+        // TODO: Remove backwards-compat — require nfcToken for all check-ins once iOS app is updated
 
         // Check if already checked in
         Optional<CheckIn> existing = checkInRepository.findByTeamIdAndBaseId(team.getId(), baseId);

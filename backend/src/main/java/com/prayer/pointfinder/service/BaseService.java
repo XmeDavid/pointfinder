@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -25,6 +26,17 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class BaseService {
+
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+    private static String generateNfcToken() {
+        String chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder sb = new StringBuilder(8);
+        for (int i = 0; i < 8; i++) {
+            sb.append(chars.charAt(SECURE_RANDOM.nextInt(chars.length())));
+        }
+        return sb.toString();
+    }
 
     private final BaseRepository baseRepository;
     private final ChallengeRepository challengeRepository;
@@ -58,6 +70,7 @@ public class BaseService {
                 .lat(request.getLat())
                 .lng(request.getLng())
                 .nfcLinked(false)
+                .nfcToken(generateNfcToken())
                 .hidden(request.getHidden() != null ? request.getHidden() : false)
                 .fixedChallenge(fixedChallenge)
                 .build();
@@ -234,6 +247,7 @@ public class BaseService {
                 .lat(base.getLat())
                 .lng(base.getLng())
                 .nfcLinked(base.getNfcLinked())
+                .nfcToken(base.getNfcToken())
                 .hidden(base.getHidden())
                 .fixedChallengeId(base.getFixedChallenge() != null ? base.getFixedChallenge().getId() : null)
                 .build();
