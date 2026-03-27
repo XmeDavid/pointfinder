@@ -77,6 +77,7 @@ import com.prayer.pointfinder.feature.auth.PlayerJoinScreen
 import com.prayer.pointfinder.feature.auth.PlayerNameScreen
 import com.prayer.pointfinder.feature.auth.WelcomeScreen
 import com.prayer.pointfinder.core.model.CreateBaseRequest
+import com.prayer.pointfinder.core.model.TileSources
 import com.prayer.pointfinder.core.model.CreateChallengeRequest
 import com.prayer.pointfinder.core.model.UpdateBaseRequest
 import com.prayer.pointfinder.core.model.UpdateChallengeRequest
@@ -1181,7 +1182,7 @@ private fun OperatorGameRoot(
                             },
                             onRefresh = viewModel::refreshSelectedGameData,
                         )
-                        if (state.selectedBase != null) {
+                        if (state.selectedBase != null && !state.awaitingNfcWrite) {
                             val base = state.selectedBase!!
                             LiveBaseProgressBottomSheet(
                                 base = base,
@@ -1233,8 +1234,8 @@ private fun OperatorGameRoot(
                             onWriteNfc = null,
                             onNavigateToCreateChallenge = null,
                             onBack = { setupSubScreen = "bases_list" },
-                            initialLat = null,
-                            initialLng = null,
+                            initialLat = state.bases.lastOrNull()?.lat ?: TileSources.getDefaultCenter(selectedGame.tileSource).first,
+                            initialLng = state.bases.lastOrNull()?.lng ?: TileSources.getDefaultCenter(selectedGame.tileSource).second,
                             tileSource = selectedGame.tileSource,
                         )
                     }

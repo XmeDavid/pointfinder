@@ -18,6 +18,18 @@ object TileSources {
         "positron" to DARK_STYLE_URL,
     )
 
+    private val DEFAULT_CENTERS = mapOf(
+        "osm" to Pair(40.08789650218038, -8.869461715221407),
+        "osm-classic" to Pair(40.08789650218038, -8.869461715221407),
+        "voyager" to Pair(40.08789650218038, -8.869461715221407),
+        "positron" to Pair(40.08789650218038, -8.869461715221407),
+        "swisstopo" to Pair(46.8182, 8.2275),
+        "swisstopo-sat" to Pair(46.8182, 8.2275),
+    )
+
+    fun getDefaultCenter(key: String?): Pair<Double, Double> =
+        DEFAULT_CENTERS[key] ?: DEFAULT_CENTERS["osm-classic"]!!
+
     fun getStyleUrl(key: String?): String =
         STYLES[key] ?: STYLES["osm-classic"]!!
 
