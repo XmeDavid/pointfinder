@@ -432,7 +432,8 @@ class RichTextWebViewCoordinator {
     }
 
     func insertHTML(_ html: String) {
-        webView?.evaluateJavaScript("document.execCommand('insertHTML', false, '\(jsEscape(html))')")
+        let js = "document.getElementById('editor').focus(); document.execCommand('insertHTML', false, '\(jsEscape(html))');"
+        webView?.evaluateJavaScript(js)
     }
 
     func getHTML(completion: @escaping (String) -> Void) {

@@ -367,6 +367,20 @@ struct ChallengeEditView: View {
                     .foregroundStyle(.tertiary)
                     .italic()
             } else {
+                let textContent = html.replacingOccurrences(of: "<[^>]*>", with: "", options: .regularExpression)
+                    .replacingOccurrences(of: "&nbsp;", with: " ")
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                if textContent.isEmpty {
+                    let hasImage = html.range(of: "<img ", options: .caseInsensitive) != nil
+                    let hasAudio = html.range(of: "<audio", options: .caseInsensitive) != nil
+                    let mediaLabel = hasImage && hasAudio ? "[Image & Audio]"
+                        : hasImage ? "[Image]"
+                        : hasAudio ? "[Audio]"
+                        : "[Media content]"
+                    Text(mediaLabel)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
                 AutoSizingHTMLView(html: html)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
             }
