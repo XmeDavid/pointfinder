@@ -66,6 +66,10 @@ class GameServiceTest {
     private ChallengeAssignmentService challengeAssignmentService;
     @Mock
     private TeamVariableService teamVariableService;
+    @Mock
+    private TeamVariableRepository teamVariableRepository;
+    @Mock
+    private ChallengeTeamVariableRepository challengeTeamVariableRepository;
 
     private GameService gameService;
     private GameImportExportService gameImportExportService;
@@ -92,6 +96,8 @@ class GameServiceTest {
                 challengeRepository,
                 teamRepository,
                 assignmentRepository,
+                teamVariableRepository,
+                challengeTeamVariableRepository,
                 gameAccessService
         );
 

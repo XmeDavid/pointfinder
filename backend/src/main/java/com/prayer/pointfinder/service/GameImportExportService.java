@@ -34,6 +34,8 @@ public class GameImportExportService {
     private final ChallengeRepository challengeRepository;
     private final TeamRepository teamRepository;
     private final AssignmentRepository assignmentRepository;
+    private final TeamVariableRepository teamVariableRepository;
+    private final ChallengeTeamVariableRepository challengeTeamVariableRepository;
     private final GameAccessService gameAccessService;
 
     @Transactional(readOnly = true)
@@ -44,6 +46,8 @@ public class GameImportExportService {
         List<Challenge> challenges = challengeRepository.findByGameId(gameId);
         List<Team> teams = teamRepository.findByGameId(gameId);
         List<Assignment> assignments = assignmentRepository.findByGameId(gameId);
+        List<TeamVariable> teamVariables = teamVariableRepository.findByGameId(gameId);
+        List<ChallengeTeamVariable> challengeTeamVariables = challengeTeamVariableRepository.findByGameId(gameId);
 
         Map<UUID, String> baseIdMap = new HashMap<>();
         Map<UUID, String> challengeIdMap = new HashMap<>();
@@ -119,6 +123,25 @@ public class GameImportExportService {
                         .build())
                 .toList();
 
+        List<TeamVariableExportDto> teamVariableExportDtos = teamVariables.stream()
+                .map(tv -> TeamVariableExportDto.builder()
+                        .teamTempId(teamIdMap.get(tv.getTeam().getId()))
+                        .variableKey(tv.getVariableKey())
+                        .variableValue(tv.getVariableValue())
+                        .build())
+                .filter(tv -> tv.getTeamTempId() != null)
+                .toList();
+
+        List<ChallengeTeamVariableExportDto> challengeTeamVariableExportDtos = challengeTeamVariables.stream()
+                .map(ctv -> ChallengeTeamVariableExportDto.builder()
+                        .challengeTempId(challengeIdMap.get(ctv.getChallenge().getId()))
+                        .teamTempId(teamIdMap.get(ctv.getTeam().getId()))
+                        .variableKey(ctv.getVariableKey())
+                        .variableValue(ctv.getVariableValue())
+                        .build())
+                .filter(ctv -> ctv.getChallengeTempId() != null && ctv.getTeamTempId() != null)
+                .toList();
+
         return GameExportDto.builder()
                 .exportVersion("1.0")
                 .exportedAt(Instant.now())
@@ -127,6 +150,8 @@ public class GameImportExportService {
                 .challenges(challengeExportDtos)
                 .assignments(assignmentExportDtos)
                 .teams(teamExportDtos)
+                .teamVariables(teamVariableExportDtos.isEmpty() ? null : teamVariableExportDtos)
+                .challengeTeamVariables(challengeTeamVariableExportDtos.isEmpty() ? null : challengeTeamVariableExportDtos)
                 .build();
     }
 
@@ -279,6 +304,33 @@ public class GameImportExportService {
                     .game(newGame).base(base).challenge(challenge).team(team).build());
         }
 
+        if (data.getTeamVariables() != null) {
+            for (TeamVariableExportDto tvDto : data.getTeamVariables()) {
+                Team team = teamEntityMap.get(tvDto.getTeamTempId());
+                if (team == null) continue;
+                teamVariableRepository.save(TeamVariable.builder()
+                        .game(newGame)
+                        .team(team)
+                        .variableKey(tvDto.getVariableKey())
+                        .variableValue(tvDto.getVariableValue() != null ? tvDto.getVariableValue() : "")
+                        .build());
+            }
+        }
+
+        if (data.getChallengeTeamVariables() != null) {
+            for (ChallengeTeamVariableExportDto ctvDto : data.getChallengeTeamVariables()) {
+                Challenge challenge = challengeEntityMap.get(ctvDto.getChallengeTempId());
+                Team team = teamEntityMap.get(ctvDto.getTeamTempId());
+                if (challenge == null || team == null) continue;
+                challengeTeamVariableRepository.save(ChallengeTeamVariable.builder()
+                        .challenge(challenge)
+                        .team(team)
+                        .variableKey(ctvDto.getVariableKey())
+                        .variableValue(ctvDto.getVariableValue() != null ? ctvDto.getVariableValue() : "")
+                        .build());
+            }
+        }
+
         return toResponse(newGame);
     }
 
@@ -392,6 +444,34 @@ public class GameImportExportService {
                         throw new BadRequestException("Challenge at index " + i
                                 + " references non-existent unlock base: " + unlockTempId);
                     }
+                }
+            }
+        }
+
+        if (data.getTeamVariables() != null) {
+            for (int i = 0; i < data.getTeamVariables().size(); i++) {
+                TeamVariableExportDto tv = data.getTeamVariables().get(i);
+                String fp = "teamVariables[" + i + "]";
+                requireNotBlank(tv.getTeamTempId(), fp + ".teamTempId");
+                requireNotBlank(tv.getVariableKey(), fp + ".variableKey");
+                if (!teamTempIds.contains(tv.getTeamTempId())) {
+                    throw new BadRequestException(fp + " references non-existent team: " + tv.getTeamTempId());
+                }
+            }
+        }
+
+        if (data.getChallengeTeamVariables() != null) {
+            for (int i = 0; i < data.getChallengeTeamVariables().size(); i++) {
+                ChallengeTeamVariableExportDto ctv = data.getChallengeTeamVariables().get(i);
+                String fp = "challengeTeamVariables[" + i + "]";
+                requireNotBlank(ctv.getChallengeTempId(), fp + ".challengeTempId");
+                requireNotBlank(ctv.getTeamTempId(), fp + ".teamTempId");
+                requireNotBlank(ctv.getVariableKey(), fp + ".variableKey");
+                if (!challengeTempIds.contains(ctv.getChallengeTempId())) {
+                    throw new BadRequestException(fp + " references non-existent challenge: " + ctv.getChallengeTempId());
+                }
+                if (!teamTempIds.contains(ctv.getTeamTempId())) {
+                    throw new BadRequestException(fp + " references non-existent team: " + ctv.getTeamTempId());
                 }
             }
         }

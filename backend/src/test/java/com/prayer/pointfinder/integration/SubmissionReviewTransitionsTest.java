@@ -250,15 +250,15 @@ class SubmissionReviewTransitionsTest extends IntegrationTestBase {
         assertEquals("correct", submitResp.getBody().getStatus());
         assertEquals(80, submitResp.getBody().getPoints());
 
-        // "correct" submissions cannot be re-reviewed (business rule: only pending/approved/rejected)
+        // "correct" submissions can be re-reviewed by operators (e.g. to override auto-validation)
         UUID submissionId = submitResp.getBody().getId();
         ReviewSubmissionRequest reviewReq = new ReviewSubmissionRequest();
         reviewReq.setStatus(ReviewStatus.approved);
         reviewReq.setPoints(80);
-        ResponseEntity<String> reviewResp = restTemplate.exchange(
+        ResponseEntity<SubmissionResponse> reviewResp = restTemplate.exchange(
                 "/api/games/" + gameId + "/submissions/" + submissionId + "/review",
-                HttpMethod.PATCH, new HttpEntity<>(reviewReq, opHeaders), String.class);
-        assertEquals(HttpStatus.BAD_REQUEST, reviewResp.getStatusCode());
+                HttpMethod.PATCH, new HttpEntity<>(reviewReq, opHeaders), SubmissionResponse.class);
+        assertEquals(HttpStatus.OK, reviewResp.getStatusCode());
     }
 
     // ── Helper record ────────────────────────────────────────────────

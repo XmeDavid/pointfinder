@@ -21,6 +21,7 @@ export interface GameMetadataExportDto {
   name: string;
   description: string;
   uniformAssignment?: boolean;
+  tileSource?: string;
 }
 
 export interface BaseExportDto {
@@ -45,6 +46,7 @@ export interface ChallengeExportDto {
   points: number;
   locationBound?: boolean;
   requirePresenceToSubmit?: boolean;
+  unlocksBaseTempIds?: string[];
 }
 
 export interface TeamExportDto {
@@ -59,6 +61,19 @@ export interface AssignmentExportDto {
   teamTempId?: string | null;
 }
 
+export interface TeamVariableExportDto {
+  teamTempId: string;
+  variableKey: string;
+  variableValue: string;
+}
+
+export interface ChallengeTeamVariableExportDto {
+  challengeTempId: string;
+  teamTempId: string;
+  variableKey: string;
+  variableValue: string;
+}
+
 export interface GameExportDto {
   exportVersion: string;
   exportedAt?: string;
@@ -67,6 +82,8 @@ export interface GameExportDto {
   challenges: ChallengeExportDto[];
   assignments: AssignmentExportDto[];
   teams?: TeamExportDto[];
+  teamVariables?: TeamVariableExportDto[];
+  challengeTeamVariables?: ChallengeTeamVariableExportDto[];
 }
 
 export function isGameExportDto(value: unknown): value is GameExportDto {

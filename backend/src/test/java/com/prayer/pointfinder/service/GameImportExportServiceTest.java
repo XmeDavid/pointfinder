@@ -44,6 +44,10 @@ class GameImportExportServiceTest {
     @Mock
     private AssignmentRepository assignmentRepository;
     @Mock
+    private TeamVariableRepository teamVariableRepository;
+    @Mock
+    private ChallengeTeamVariableRepository challengeTeamVariableRepository;
+    @Mock
     private GameAccessService gameAccessService;
 
     private GameImportExportService service;
@@ -70,6 +74,8 @@ class GameImportExportServiceTest {
                 challengeRepository,
                 teamRepository,
                 assignmentRepository,
+                teamVariableRepository,
+                challengeTeamVariableRepository,
                 gameAccessService
         );
     }

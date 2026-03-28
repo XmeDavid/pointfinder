@@ -46,6 +46,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
         String message = mapDataIntegrityMessage(ex);
+        if ("Data integrity violation".equals(message)) {
+            log.warn("Unmapped data integrity violation", ex);
+        }
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(error(HttpStatus.CONFLICT, message));
     }

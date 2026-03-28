@@ -89,7 +89,7 @@ android {
         applicationId = "com.prayer.pointfinder"
         minSdk = 26
         targetSdk = 35
-        versionCode = 14
+        versionCode = 16
         versionName = "0.9.4"
         buildConfigField("Boolean", "ENABLE_MOBILE_REALTIME", "true")
         buildConfigField("Boolean", "ENABLE_CHUNKED_MEDIA_UPLOAD", enableChunkedMediaUpload)

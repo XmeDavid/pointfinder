@@ -20,4 +20,6 @@ public class GameExportDto {
     private List<ChallengeExportDto> challenges;
     private List<AssignmentExportDto> assignments;
     private List<TeamExportDto> teams;
+    private List<TeamVariableExportDto> teamVariables;
+    private List<ChallengeTeamVariableExportDto> challengeTeamVariables;
 }
