@@ -76,7 +76,11 @@ export function AuthMedia({ src, alt, className, onClick, onBlobReady, initialBl
             // Component unmounted while fetch was in-flight; do not create a blob URL
             return;
           }
-          objectUrl = URL.createObjectURL(response.data);
+          objectUrl = URL.createObjectURL(
+            isVideo(normalizedSrc)
+              ? new Blob([response.data], { type: "video/mp4" })
+              : response.data
+          );
           setFetchedMedia({ source: normalizedSrc, url: objectUrl });
           onBlobReady?.(objectUrl);
         })
@@ -104,7 +108,16 @@ export function AuthMedia({ src, alt, className, onClick, onBlobReady, initialBl
 
   const blobUrl = initialBlobUrl ?? (normalizedSrc && fetchedMedia?.source === normalizedSrc ? fetchedMedia.url : null);
 
-  if (!blobUrl) return null;
+  if (!blobUrl) {
+    return (
+      <div
+        className={className}
+        style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "hsl(var(--muted))" }}
+      >
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+      </div>
+    );
+  }
 
   const srcIsVideo = src ? isVideo(src) : false;
 
