@@ -56,6 +56,7 @@ interface AuthMediaProps {
  */
 export function AuthMedia({ src, alt, className, onClick, onBlobReady, initialBlobUrl, thumbnail }: AuthMediaProps) {
   const [fetchedMedia, setFetchedMedia] = useState<{ source: string; url: string } | null>(null);
+  const [videoError, setVideoError] = useState(false);
   const normalizedSrc = src ? normalizeApiMediaPath(src) : null;
 
   useEffect(() => {
@@ -137,6 +138,16 @@ export function AuthMedia({ src, alt, className, onClick, onBlobReady, initialBl
       );
     }
 
+    if (videoError) {
+      return (
+        <div className={className} style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "8px", padding: "16px", background: "hsl(var(--muted))", borderRadius: "8px" }}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}><polygon points="23 7 16 12 23 17 23 7" /><rect width="15" height="14" x="1" y="5" rx="2" ry="2" /></svg>
+          <span style={{ fontSize: "12px", color: "hsl(var(--muted-foreground))" }}>Video format not supported by browser</span>
+          <a href={blobUrl} download style={{ fontSize: "12px", color: "hsl(var(--primary))", textDecoration: "underline" }}>Download video</a>
+        </div>
+      );
+    }
+
     return (
       <video
         src={blobUrl}
@@ -144,6 +155,7 @@ export function AuthMedia({ src, alt, className, onClick, onBlobReady, initialBl
         onClick={onClick}
         controls
         preload="metadata"
+        onError={() => setVideoError(true)}
       />
     );
   }

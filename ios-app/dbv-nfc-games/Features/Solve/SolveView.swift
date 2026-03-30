@@ -413,11 +413,14 @@ struct SolveView: View {
 
     private func transcodeToMP4(source: URL) async -> URL? {
         let asset = AVAsset(url: source)
-        // Skip transcoding if already MP4
-        if source.pathExtension.lowercased() == "mp4" { return source }
-        // Use HighestQuality preset which guarantees a proper MP4 container (isom/mp41 brand)
-        // Passthrough may preserve the QuickTime brand which browsers can't play
-        guard let session = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHighestQuality) else { return nil }
+        // Transcode to H.264 in MP4 container for maximum browser compatibility.
+        // HEVC (H.265) is not playable in Chrome/Firefox.
+        // AVAssetExportPresetPassthrough keeps original codec, so we use a resolution
+        // preset which forces re-encoding to H.264.
+        let presets = [AVAssetExportPreset1920x1080, AVAssetExportPreset1280x720, AVAssetExportPresetMediumQuality]
+        let compatible = AVAssetExportSession.exportPresets(compatibleWith: asset)
+        let preset = presets.first { compatible.contains($0) } ?? AVAssetExportPresetMediumQuality
+        guard let session = AVAssetExportSession(asset: asset, presetName: preset) else { return nil }
         let outputURL = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString + ".mp4")
         session.outputURL = outputURL
