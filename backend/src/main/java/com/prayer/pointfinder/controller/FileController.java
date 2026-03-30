@@ -71,11 +71,12 @@ public class FileController {
 
     private String determineContentType(String filename) {
         String lower = filename.toLowerCase();
-        if (lower.endsWith(".mp4")) return "video/mp4";
-        if (lower.endsWith(".mov")) return "video/mp4"; // Serve as MP4 for browser compatibility
+        if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
         if (lower.endsWith(".png")) return "image/png";
         if (lower.endsWith(".webp")) return "image/webp";
         if (lower.endsWith(".heic") || lower.endsWith(".heif")) return "image/heic";
+        if (lower.endsWith(".mp4")) return "video/mp4";
+        if (lower.endsWith(".mov")) return "video/mp4";
         return "application/octet-stream";
     }
 }
