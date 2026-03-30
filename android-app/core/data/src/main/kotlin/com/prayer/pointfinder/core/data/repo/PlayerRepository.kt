@@ -458,8 +458,16 @@ class PlayerRepository @Inject constructor(
         mediaItems: List<PendingMediaItem>,
     ): MediaSyncOutcome {
         val fileUrls = mutableListOf<String>()
+        // Estimate total chunks across all files for overall progress tracking
+        val chunkSize = DEFAULT_CHUNK_SIZE_BYTES.toLong()
+        val estimatedChunksPerFile = mediaItems.map { item ->
+            val size = item.sizeBytes.takeIf { it > 0 } ?: chunkSize
+            ((size + chunkSize - 1) / chunkSize).toInt().coerceAtLeast(1)
+        }
+        val totalChunksAllFiles = estimatedChunksPerFile.sum()
+        var completedChunksAllFiles = 0
         try {
-            for (item in mediaItems) {
+            for ((itemIndex, item) in mediaItems.withIndex()) {
                 val source = resolveMediaItemSource(item) ?: run {
                     markNeedsReselect(action.id, "Media source missing. Please reselect files.")
                     return MediaSyncOutcome.NeedsReselect
@@ -475,6 +483,9 @@ class PlayerRepository @Inject constructor(
                     ),
                 )
 
+                // Recalculate total with actual chunk count from server
+                val actualTotalChunks = totalChunksAllFiles - estimatedChunksPerFile[itemIndex] + session.totalChunks
+
                 val uploadedSet = session.uploadedChunks.toMutableSet()
                 var currentSession = session
                 source.open().use { input ->
@@ -488,7 +499,10 @@ class PlayerRepository @Inject constructor(
                         val chunkBytes = readExactChunk(input, expectedSize)
                             ?: return MediaSyncOutcome.PermanentFailure
                         if (chunkBytes.size != expectedSize) return MediaSyncOutcome.PermanentFailure
-                        if (uploadedSet.contains(chunkIndex)) continue
+                        if (uploadedSet.contains(chunkIndex)) {
+                            completedChunksAllFiles++
+                            continue
+                        }
 
                         currentSession = api.uploadSessionChunk(
                             gameId = auth.gameId,
@@ -497,6 +511,14 @@ class PlayerRepository @Inject constructor(
                             chunkBody = chunkBytes.toRequestBody("application/octet-stream".toMediaType()),
                         )
                         uploadedSet.add(chunkIndex)
+                        completedChunksAllFiles++
+                        db.pendingActionDao().updateUploadProgress(
+                            id = action.id,
+                            uploadSessionId = currentSession.sessionId,
+                            uploadChunkIndex = completedChunksAllFiles,
+                            uploadTotalChunks = actualTotalChunks,
+                            lastError = null,
+                        )
                     }
                 }
 
