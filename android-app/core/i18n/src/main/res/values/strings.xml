@@ -89,6 +89,7 @@
     <string name="label_uploading">UPLOADING</string>
     <string name="label_uploading_percent">UPLOADING %d%%</string>
     <string name="label_queued">QUEUED</string>
+    <string name="label_download_video">Tap to download video</string>
     <string name="label_no_connection">NO CONNECTION</string>
     <string name="label_submission">Submission</string>
     <string name="label_check_in_action">Check-in</string>

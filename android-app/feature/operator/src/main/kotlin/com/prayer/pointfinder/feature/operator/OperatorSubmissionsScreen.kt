@@ -416,7 +416,7 @@ private fun FullscreenMediaViewer(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center,
                     ) {
-                        SubmissionVideoPreview(resolvedUrl = resolvedUrl)
+                        SubmissionVideoPreview(resolvedUrl = resolvedUrl, operatorAccessToken = operatorAccessToken)
                     }
                 } else if (resolvedUrl != null) {
                     ZoomableImage(
@@ -552,7 +552,7 @@ private fun SubmissionMediaItem(
     } ?: return
 
     if (isVideoUrl(resolvedUrl)) {
-        SubmissionVideoPreview(resolvedUrl = resolvedUrl)
+        SubmissionVideoPreview(resolvedUrl = resolvedUrl, operatorAccessToken = operatorAccessToken)
     } else {
         SubmissionPhotoPreview(
             resolvedUrl = resolvedUrl,
@@ -604,7 +604,7 @@ private fun SubmissionPhotoPreview(
 }
 
 @Composable
-private fun SubmissionVideoPreview(resolvedUrl: String) {
+private fun SubmissionVideoPreview(resolvedUrl: String, operatorAccessToken: String? = null) {
     val context = LocalContext.current
     Box(
         modifier = Modifier
@@ -613,10 +613,17 @@ private fun SubmissionVideoPreview(resolvedUrl: String) {
             .clip(MaterialTheme.shapes.medium)
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .clickable {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(resolvedUrl)).apply {
-                    setDataAndType(Uri.parse(resolvedUrl), "video/*")
+                val filename = resolvedUrl.substringAfterLast("/").ifBlank { "video.mp4" }
+                val request = android.app.DownloadManager.Request(Uri.parse(resolvedUrl))
+                    .setTitle(filename)
+                    .setDestinationInExternalPublicDir(android.os.Environment.DIRECTORY_DOWNLOADS, filename)
+                    .setNotificationVisibility(android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                if (!operatorAccessToken.isNullOrBlank()) {
+                    request.addRequestHeader("Authorization", "Bearer $operatorAccessToken")
                 }
-                context.startActivity(intent)
+                val dm = context.getSystemService(android.content.Context.DOWNLOAD_SERVICE) as android.app.DownloadManager
+                dm.enqueue(request)
+                android.widget.Toast.makeText(context, "Downloading video…", android.widget.Toast.LENGTH_SHORT).show()
             },
         contentAlignment = Alignment.Center,
     ) {
@@ -631,7 +638,7 @@ private fun SubmissionVideoPreview(resolvedUrl: String) {
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
-                text = "Video",
+                text = stringResource(R.string.label_download_video),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

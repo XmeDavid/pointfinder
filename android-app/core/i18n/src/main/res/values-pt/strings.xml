@@ -93,6 +93,7 @@
     <string name="label_checked_in_at_base">Check-in feito em %1$s</string>
     <string name="label_no_challenge_details">Sem detalhes do desafio ainda.</string>
     <string name="label_no_challenge_assigned">Nenhum desafio atribuído.</string>
+    <string name="label_download_video">Toque para descarregar vídeo</string>
     <string name="label_presence_warning_title">Leitura NFC necessária para submeter</string>
     <string name="label_presence_warning_body">Precisas de ler a tag NFC desta base para submeter a tua resposta. Fica por perto ou lembra-te de voltar!</string>
     <string name="label_challenge_locked">Desafio bloqueado</string>
