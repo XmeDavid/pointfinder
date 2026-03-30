@@ -53,9 +53,17 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
 
     long countByChallengeId(UUID challengeId);
 
-    boolean existsByTeamGameIdAndFileUrlIn(UUID gameId, List<String> fileUrls);
+    @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM Submission s " +
+           "WHERE s.team.game.id = :gameId AND (s.fileUrl IN :urls OR s.fileUrls LIKE :urlPattern)")
+    boolean existsByGameIdAndFileUrlOrFileUrls(@Param("gameId") UUID gameId,
+                                               @Param("urls") List<String> urls,
+                                               @Param("urlPattern") String urlPattern);
 
-    boolean existsByTeamIdAndFileUrlIn(UUID teamId, List<String> fileUrls);
+    @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM Submission s " +
+           "WHERE s.team.id = :teamId AND (s.fileUrl IN :urls OR s.fileUrls LIKE :urlPattern)")
+    boolean existsByTeamIdAndFileUrlOrFileUrls(@Param("teamId") UUID teamId,
+                                               @Param("urls") List<String> urls,
+                                               @Param("urlPattern") String urlPattern);
 
     @Query("DELETE FROM Submission s WHERE s.team.game.id = :gameId")
     @org.springframework.data.jpa.repository.Modifying

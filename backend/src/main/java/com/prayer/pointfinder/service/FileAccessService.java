@@ -20,7 +20,9 @@ public class FileAccessService {
     @Transactional(readOnly = true)
     public void ensureOperatorCanReadFile(UUID gameId, String filename) {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
-        if (!submissionRepository.existsByTeamGameIdAndFileUrlIn(gameId, fileUrlCandidates(gameId, filename))) {
+        List<String> candidates = fileUrlCandidates(gameId, filename);
+        String likePattern = "%" + filename + "%";
+        if (!submissionRepository.existsByGameIdAndFileUrlOrFileUrls(gameId, candidates, likePattern)) {
             throw new ResourceNotFoundException("File not found: " + filename);
         }
     }
@@ -28,7 +30,9 @@ public class FileAccessService {
     @Transactional(readOnly = true)
     public void ensurePlayerCanReadFile(UUID gameId, String filename, Player player) {
         gameAccessService.ensurePlayerBelongsToGame(player, gameId);
-        if (!submissionRepository.existsByTeamIdAndFileUrlIn(player.getTeam().getId(), fileUrlCandidates(gameId, filename))) {
+        List<String> candidates = fileUrlCandidates(gameId, filename);
+        String likePattern = "%" + filename + "%";
+        if (!submissionRepository.existsByTeamIdAndFileUrlOrFileUrls(player.getTeam().getId(), candidates, likePattern)) {
             throw new ResourceNotFoundException("File not found: " + filename);
         }
     }
