@@ -121,6 +121,8 @@ enum Translations {
         "base.checkedInBanner": "Checked In!",
         "base.noChallengeYet": "No challenge assigned to this base yet",
         "base.answerType": "Answer type: %@",
+        "base.presenceWarningTitle": "NFC scan required to submit",
+        "base.presenceWarningBody": "You'll need to scan this base's NFC tag to submit your answer. Stay nearby or remember to come back!",
         "base.offlineNoChallengeCache": "Challenge data not available offline",
         "base.offlineNoChallegeCacheDesc": "Connect to the internet and check in again to load the challenge.",
 
@@ -592,6 +594,8 @@ enum Translations {
         "base.checkedInBanner": "Check-in feito!",
         "base.noChallengeYet": "Nenhum desafio atribuído a esta base ainda",
         "base.answerType": "Tipo de resposta: %@",
+        "base.presenceWarningTitle": "Leitura NFC necess\u{00E1}ria para submeter",
+        "base.presenceWarningBody": "Precisas de ler a tag NFC desta base para submeter a tua resposta. Fica por perto ou lembra-te de voltar!",
         "base.offlineNoChallengeCache": "Dados do desafio não estão disponíveis offline",
         "base.offlineNoChallegeCacheDesc": "Conecta-te à internet e faz check-in novamente para carregar o desafio.",
 
@@ -1063,6 +1067,8 @@ enum Translations {
         "base.checkedInBanner": "Eingecheckt!",
         "base.noChallengeYet": "Dieser Station ist noch keine Challenge zugewiesen",
         "base.answerType": "Antworttyp: %@",
+        "base.presenceWarningTitle": "NFC-Scan zum Einreichen erforderlich",
+        "base.presenceWarningBody": "Du musst den NFC-Tag dieser Station scannen, um deine Antwort einzureichen. Bleib in der N\u{00E4}he oder denk daran, zur\u{00FC}ckzukommen!",
         "base.offlineNoChallengeCache": "Challenge-Daten sind offline nicht verfügbar",
         "base.offlineNoChallegeCacheDesc": "Verbinde dich mit dem Internet und checke dich erneut ein, um die Challenge zu laden.",
 

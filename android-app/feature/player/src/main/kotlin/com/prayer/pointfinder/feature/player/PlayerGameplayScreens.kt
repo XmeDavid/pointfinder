@@ -178,6 +178,38 @@ fun BaseCheckInDetailScreen(
                     Spacer(Modifier.height(8.dp))
                     HtmlContentView(html = challenge.content)
                 }
+                if (challenge.requirePresenceToSubmit) {
+                    Spacer(Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                OfflineOrange.copy(alpha = 0.1f),
+                                shape = MaterialTheme.shapes.medium,
+                            )
+                            .padding(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Icon(
+                            Icons.Default.LocationOn,
+                            contentDescription = null,
+                            tint = OfflineOrange,
+                        )
+                        Column {
+                            Text(
+                                stringResource(R.string.label_presence_warning_title),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            Spacer(Modifier.height(2.dp))
+                            Text(
+                                stringResource(R.string.label_presence_warning_body),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
                 Spacer(Modifier.height(12.dp))
                 Button(onClick = { onSolve(response.baseId, challenge.id) }) {
                     Text(stringResource(R.string.action_solve_challenge))
