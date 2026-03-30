@@ -59,6 +59,7 @@ import com.prayer.pointfinder.core.model.BaseStatus
 data class PendingActionUiItem(
     val id: String,
     val type: String,
+    val baseName: String? = null,
     val uploadSessionId: String? = null,
     val uploadChunkIndex: Int? = null,
     val uploadTotalChunks: Int? = null,
@@ -274,7 +275,9 @@ private fun SyncQueueItem(
         "media_submission" -> Icons.Default.CameraAlt
         else -> Icons.Default.TextFields
     }
-    val name = when (action.type) {
+    val name = if (action.baseName != null) {
+        "${action.baseName} ${stringResource(R.string.label_submission).lowercase()}"
+    } else when (action.type) {
         "check_in" -> stringResource(R.string.label_check_in_action)
         "media_submission" -> stringResource(R.string.label_photo_mode)
         else -> stringResource(R.string.label_submission)

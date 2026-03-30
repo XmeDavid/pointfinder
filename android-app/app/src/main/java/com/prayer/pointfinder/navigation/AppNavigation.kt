@@ -624,10 +624,13 @@ private fun PlayerRootScreen(
         isOffline = !isOnline,
         pendingActionsCount = pendingActionsCount,
         onLoadPendingActions = {
+            val progressList = state.progress
             viewModel.loadPendingActions().map { e ->
+                val baseName = progressList.firstOrNull { it.baseId == e.baseId }?.baseName
                 PendingActionUiItem(
                     id = e.id,
                     type = e.type,
+                    baseName = baseName,
                     uploadSessionId = e.uploadSessionId,
                     uploadChunkIndex = e.uploadChunkIndex,
                     uploadTotalChunks = e.uploadTotalChunks,
