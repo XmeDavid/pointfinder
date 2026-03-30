@@ -524,7 +524,7 @@ private struct FullscreenMediaViewer: View {
 
             TabView(selection: $currentIndex) {
                 ForEach(Array(mediaUrls.enumerated()), id: \.offset) { index, url in
-                    AuthenticatedSubmissionMediaView(fileUrl: url, token: token)
+                    ZoomableMediaView(fileUrl: url, token: token)
                         .tag(index)
                 }
             }
@@ -548,6 +548,73 @@ private struct FullscreenMediaViewer: View {
                         .padding(.bottom, 40)
                 }
             }
+        }
+    }
+}
+
+// MARK: - Zoomable wrapper for fullscreen
+
+private struct ZoomableMediaView: View {
+    let fileUrl: String
+    let token: String
+
+    @State private var scale: CGFloat = 1.0
+    @State private var lastScale: CGFloat = 1.0
+    @State private var offset: CGSize = .zero
+    @State private var lastOffset: CGSize = .zero
+
+    var body: some View {
+        let isVideo = fileUrl.lowercased().contains(".mp4") || fileUrl.lowercased().contains(".mov")
+        if isVideo {
+            AuthenticatedVideoView(fileUrl: fileUrl, token: token)
+        } else {
+            AuthenticatedImageView(fileUrl: fileUrl, token: token)
+                .scaleEffect(scale)
+                .offset(offset)
+                .gesture(
+                    MagnifyGesture()
+                        .onChanged { value in
+                            scale = max(1.0, lastScale * value.magnification)
+                        }
+                        .onEnded { value in
+                            lastScale = scale
+                            if scale <= 1.0 {
+                                withAnimation(.easeOut(duration: 0.2)) {
+                                    scale = 1.0
+                                    lastScale = 1.0
+                                    offset = .zero
+                                    lastOffset = .zero
+                                }
+                            }
+                        }
+                        .simultaneously(with:
+                            DragGesture()
+                                .onChanged { value in
+                                    if scale > 1.0 {
+                                        offset = CGSize(
+                                            width: lastOffset.width + value.translation.width,
+                                            height: lastOffset.height + value.translation.height
+                                        )
+                                    }
+                                }
+                                .onEnded { _ in
+                                    lastOffset = offset
+                                }
+                        )
+                )
+                .onTapGesture(count: 2) {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        if scale > 1.0 {
+                            scale = 1.0
+                            lastScale = 1.0
+                            offset = .zero
+                            lastOffset = .zero
+                        } else {
+                            scale = 2.5
+                            lastScale = 2.5
+                        }
+                    }
+                }
         }
     }
 }
