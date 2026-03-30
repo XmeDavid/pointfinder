@@ -349,6 +349,38 @@ fun BaseDetailBottomSheet(
                     HtmlContentView(html = detailHtml)
                 }
             }
+            if (challenge?.requirePresenceToSubmit == true && (status == BaseStatus.CHECKED_IN || status == BaseStatus.REJECTED)) {
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            OfflineOrange.copy(alpha = 0.1f),
+                            shape = MaterialTheme.shapes.medium,
+                        )
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Icon(
+                        Icons.Default.LocationOn,
+                        contentDescription = null,
+                        tint = OfflineOrange,
+                    )
+                    Column {
+                        Text(
+                            stringResource(R.string.label_presence_warning_title),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            stringResource(R.string.label_presence_warning_body),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
             Spacer(Modifier.height(16.dp))
 
             when (status) {

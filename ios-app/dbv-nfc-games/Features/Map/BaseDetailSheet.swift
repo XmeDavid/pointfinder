@@ -94,6 +94,27 @@ struct BaseDetailSheet: View {
                             }
                         }
 
+                        // Presence warning
+                        if challenge.requirePresenceToSubmit && (status == .checkedIn || status == .rejected) {
+                            HStack(alignment: .top, spacing: 10) {
+                                Image(systemName: "location.circle.fill")
+                                    .foregroundStyle(.orange)
+                                    .font(.title3)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(locale.t("base.presenceWarningTitle"))
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                    Text(locale.t("base.presenceWarningBody"))
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            .padding()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color.orange.opacity(0.1))
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                        }
+
                         // Solve button (only for checked-in or rejected bases)
                         if status == .checkedIn || status == .rejected {
                             if challenge.answerType == "none" {
