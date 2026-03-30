@@ -90,6 +90,25 @@ fun PlayerHomeScaffold(
 ) {
     var showQueueSheet by remember { mutableStateOf(false) }
     var queueItems by remember { mutableStateOf<List<PendingActionUiItem>>(emptyList()) }
+    var uploadPercent by remember { mutableStateOf<Int?>(null) }
+
+    // Poll upload progress for the pill
+    LaunchedEffect(pendingActionsCount) {
+        if (pendingActionsCount > 0 && onLoadPendingActions != null) {
+            while (true) {
+                val items = onLoadPendingActions()
+                val uploading = items.firstOrNull {
+                    it.type == "media_submission" && it.uploadTotalChunks != null && it.uploadTotalChunks > 0
+                }
+                uploadPercent = if (uploading != null) {
+                    ((uploading.uploadChunkIndex ?: 0).toFloat() / uploading.uploadTotalChunks!!.toFloat() * 100).toInt()
+                } else null
+                kotlinx.coroutines.delay(500)
+            }
+        } else {
+            uploadPercent = null
+        }
+    }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     // Auto-dismiss sheet when queue empties
@@ -100,8 +119,11 @@ fun PlayerHomeScaffold(
     }
 
     if (showQueueSheet && onLoadPendingActions != null) {
-        LaunchedEffect(showQueueSheet, pendingActionsCount) {
-            queueItems = onLoadPendingActions()
+        LaunchedEffect(showQueueSheet) {
+            while (showQueueSheet) {
+                queueItems = onLoadPendingActions()
+                kotlinx.coroutines.delay(500)
+            }
         }
         ModalBottomSheet(
             onDismissRequest = { showQueueSheet = false },
@@ -153,6 +175,7 @@ fun PlayerHomeScaffold(
                 SyncStatusPill(
                     isOffline = isOffline,
                     pendingActionsCount = pendingActionsCount,
+                    uploadPercent = uploadPercent,
                     onClick = { showQueueSheet = true },
                 )
             }
@@ -164,13 +187,14 @@ fun PlayerHomeScaffold(
 private fun SyncStatusPill(
     isOffline: Boolean,
     pendingActionsCount: Int,
+    uploadPercent: Int? = null,
     onClick: () -> Unit,
 ) {
     val pillColor = if (isOffline) Color(0xFFD32F2F) else Color(0xFF1565C0)
-    val label = if (isOffline) {
-        stringResource(R.string.label_offline_count, pendingActionsCount)
-    } else {
-        stringResource(R.string.label_syncing, pendingActionsCount)
+    val label = when {
+        isOffline -> stringResource(R.string.label_offline_count, pendingActionsCount)
+        uploadPercent != null -> stringResource(R.string.label_uploading_percent, uploadPercent)
+        else -> stringResource(R.string.label_syncing, pendingActionsCount)
     }
     Surface(
         shape = RoundedCornerShape(16.dp),

@@ -87,6 +87,7 @@
     <string name="label_syncing">Synchronisiere %d</string>
     <string name="label_offline_count">Offline (%d)</string>
     <string name="label_uploading">WIRD HOCHGELADEN</string>
+    <string name="label_uploading_percent">HOCHLADEN %d%%</string>
     <string name="label_queued">WARTEND</string>
     <string name="label_no_connection">KEINE VERBINDUNG</string>
     <string name="label_submission">Einreichung</string>

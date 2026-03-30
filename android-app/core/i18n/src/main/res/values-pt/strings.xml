@@ -84,6 +84,7 @@
     <string name="label_syncing">A sincronizar %d</string>
     <string name="label_offline_count">Sem ligação (%d)</string>
     <string name="label_uploading">A ENVIAR</string>
+    <string name="label_uploading_percent">A ENVIAR %d%%</string>
     <string name="label_queued">EM FILA</string>
     <string name="label_no_connection">SEM LIGAÇÃO</string>
     <string name="label_submission">Submissão</string>

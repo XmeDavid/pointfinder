@@ -87,6 +87,7 @@
     <string name="label_syncing">Syncing %d</string>
     <string name="label_offline_count">Offline (%d)</string>
     <string name="label_uploading">UPLOADING</string>
+    <string name="label_uploading_percent">UPLOADING %d%%</string>
     <string name="label_queued">QUEUED</string>
     <string name="label_no_connection">NO CONNECTION</string>
     <string name="label_submission">Submission</string>
