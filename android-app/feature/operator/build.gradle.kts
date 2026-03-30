@@ -45,6 +45,9 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.richeditor.compose)
     implementation(libs.zxing.core)
+    implementation(libs.media3.exoplayer)
+    implementation(libs.media3.ui)
+    implementation(libs.media3.datasource.okhttp)
 
     implementation(composeBom)
     implementation(libs.androidx.compose.ui)

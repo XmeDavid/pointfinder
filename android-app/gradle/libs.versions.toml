@@ -44,6 +44,9 @@ workRuntime = "2.10.0"
 playServicesLocation = "21.3.0"
 playServicesCodeScanner = "16.1.0"
 
+# Media3 (ExoPlayer)
+media3 = "1.5.1"
+
 # Third-party
 richeditor = "1.0.0-rc13"
 zxing = "3.5.3"
@@ -119,6 +122,9 @@ play-services-code-scanner = { group = "com.google.android.gms", name = "play-se
 # Third-party
 richeditor-compose = { group = "com.mohamedrejeb.richeditor", name = "richeditor-compose", version.ref = "richeditor" }
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
+media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
+media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3" }
+media3-datasource-okhttp = { group = "androidx.media3", name = "media3-datasource-okhttp", version.ref = "media3" }
 
 # Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }

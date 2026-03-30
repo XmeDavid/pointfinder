@@ -38,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -45,6 +46,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.Modifier
@@ -604,46 +606,52 @@ private fun SubmissionPhotoPreview(
 }
 
 @Composable
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 private fun SubmissionVideoPreview(resolvedUrl: String, operatorAccessToken: String? = null) {
     val context = LocalContext.current
-    Box(
+    val exoPlayer = remember(resolvedUrl, operatorAccessToken) {
+        val dataSourceFactory = if (!operatorAccessToken.isNullOrBlank()) {
+            androidx.media3.datasource.okhttp.OkHttpDataSource.Factory(
+                okhttp3.OkHttpClient.Builder()
+                    .addInterceptor { chain ->
+                        chain.proceed(
+                            chain.request().newBuilder()
+                                .addHeader("Authorization", "Bearer $operatorAccessToken")
+                                .build()
+                        )
+                    }
+                    .build()
+            )
+        } else {
+            androidx.media3.datasource.DefaultHttpDataSource.Factory()
+        }
+        androidx.media3.exoplayer.ExoPlayer.Builder(context)
+            .setMediaSourceFactory(
+                androidx.media3.exoplayer.source.DefaultMediaSourceFactory(dataSourceFactory)
+            )
+            .build()
+            .apply {
+                setMediaItem(androidx.media3.common.MediaItem.fromUri(resolvedUrl))
+                prepare()
+            }
+    }
+
+    DisposableEffect(exoPlayer) {
+        onDispose { exoPlayer.release() }
+    }
+
+    AndroidView(
+        factory = { ctx ->
+            androidx.media3.ui.PlayerView(ctx).apply {
+                player = exoPlayer
+                useController = true
+            }
+        },
         modifier = Modifier
             .fillMaxWidth()
             .height(220.dp)
-            .clip(MaterialTheme.shapes.medium)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .clickable {
-                val filename = resolvedUrl.substringAfterLast("/").ifBlank { "video.mp4" }
-                val request = android.app.DownloadManager.Request(Uri.parse(resolvedUrl))
-                    .setTitle(filename)
-                    .setDestinationInExternalPublicDir(android.os.Environment.DIRECTORY_DOWNLOADS, filename)
-                    .setNotificationVisibility(android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                if (!operatorAccessToken.isNullOrBlank()) {
-                    request.addRequestHeader("Authorization", "Bearer $operatorAccessToken")
-                }
-                val dm = context.getSystemService(android.content.Context.DOWNLOAD_SERVICE) as android.app.DownloadManager
-                dm.enqueue(request)
-                android.widget.Toast.makeText(context, "Downloading video…", android.widget.Toast.LENGTH_SHORT).show()
-            },
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Icon(
-                imageVector = Icons.Default.PlayCircle,
-                contentDescription = null,
-                modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = stringResource(R.string.label_download_video),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
+            .clip(MaterialTheme.shapes.medium),
+    )
 }
 
 private fun downloadImage(context: android.content.Context, url: String, token: String?) {
