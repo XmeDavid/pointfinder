@@ -1,5 +1,8 @@
 package com.prayer.pointfinder.feature.operator
 
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,10 +13,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Badge
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -48,6 +56,18 @@ import com.prayer.pointfinder.core.model.Team
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import java.time.Instant
+
+private fun getMediaUrls(sub: SubmissionResponse): List<String> {
+    val urls = sub.fileUrls?.takeIf { it.isNotEmpty() }
+    if (urls != null) return urls
+    val single = sub.fileUrl?.takeIf { it.isNotBlank() }
+    return if (single != null) listOf(single) else emptyList()
+}
+
+private fun isVideoUrl(url: String): Boolean {
+    val path = url.substringBefore("?").lowercase()
+    return path.endsWith(".mp4") || path.endsWith(".mov") || path.endsWith(".webm")
+}
 
 @Composable
 fun OperatorSubmissionsScreen(
@@ -124,6 +144,7 @@ fun OperatorSubmissionsScreen(
                             ?: stringResource(R.string.label_unknown_challenge)
                         val baseName = bases.firstOrNull { it.id == submission.baseId }?.name
                             ?: stringResource(R.string.label_unknown_base)
+                        val mediaUrls = getMediaUrls(submission)
 
                         Surface(
                             modifier = Modifier
@@ -143,6 +164,18 @@ fun OperatorSubmissionsScreen(
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(teamName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                                     Spacer(Modifier.weight(1f))
+                                    if (mediaUrls.size > 1) {
+                                        Badge(
+                                            modifier = Modifier.padding(end = 6.dp),
+                                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        ) {
+                                            Text(
+                                                "\uD83D\uDCF7 ${mediaUrls.size}",
+                                                style = MaterialTheme.typography.labelSmall,
+                                            )
+                                        }
+                                    }
                                     Text(
                                         statusLabel(submission.status),
                                         style = MaterialTheme.typography.labelSmall,
@@ -171,6 +204,7 @@ fun OperatorSubmissionsScreen(
         val baseName = bases.firstOrNull { it.id == reviewingSubmission.baseId }?.name
             ?: stringResource(R.string.label_unknown_base)
         val expectedChallengePoints = challenges.firstOrNull { it.id == reviewingSubmission.challengeId }?.points
+        val mediaUrls = getMediaUrls(reviewingSubmission)
 
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { selectedSubmission = null },
@@ -183,15 +217,13 @@ fun OperatorSubmissionsScreen(
                     if (reviewingSubmission.answer.isNotBlank()) {
                         Text("${stringResource(R.string.label_answer)}: ${reviewingSubmission.answer}")
                     }
-                    reviewingSubmission.fileUrl
-                        ?.takeIf { it.isNotBlank() }
-                        ?.let { fileUrl ->
-                            SubmissionPhotoPreview(
-                                fileUrl = fileUrl,
-                                apiBaseUrl = apiBaseUrl,
-                                operatorAccessToken = operatorAccessToken,
-                            )
-                        }
+                    if (mediaUrls.isNotEmpty()) {
+                        SubmissionMediaGallery(
+                            mediaUrls = mediaUrls,
+                            apiBaseUrl = apiBaseUrl,
+                            operatorAccessToken = operatorAccessToken,
+                        )
+                    }
                     OutlinedTextField(
                         value = pointsText,
                         onValueChange = { pointsText = it.filter { c -> c.isDigit() } },
@@ -290,7 +322,42 @@ fun OperatorSubmissionsScreen(
 }
 
 @Composable
-private fun SubmissionPhotoPreview(
+private fun SubmissionMediaGallery(
+    mediaUrls: List<String>,
+    apiBaseUrl: String,
+    operatorAccessToken: String?,
+) {
+    if (mediaUrls.size == 1) {
+        SubmissionMediaItem(
+            fileUrl = mediaUrls[0],
+            apiBaseUrl = apiBaseUrl,
+            operatorAccessToken = operatorAccessToken,
+        )
+    } else {
+        val pagerState = rememberPagerState(pageCount = { mediaUrls.size })
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxWidth(),
+            ) { page ->
+                SubmissionMediaItem(
+                    fileUrl = mediaUrls[page],
+                    apiBaseUrl = apiBaseUrl,
+                    operatorAccessToken = operatorAccessToken,
+                )
+            }
+            Text(
+                text = "${pagerState.currentPage + 1} / ${mediaUrls.size}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
+        }
+    }
+}
+
+@Composable
+private fun SubmissionMediaItem(
     fileUrl: String,
     apiBaseUrl: String,
     operatorAccessToken: String?,
@@ -298,6 +365,22 @@ private fun SubmissionPhotoPreview(
     val resolvedUrl = remember(fileUrl, apiBaseUrl) {
         resolveSubmissionFileUrl(fileUrl, apiBaseUrl)
     } ?: return
+
+    if (isVideoUrl(resolvedUrl)) {
+        SubmissionVideoPreview(resolvedUrl = resolvedUrl)
+    } else {
+        SubmissionPhotoPreview(
+            resolvedUrl = resolvedUrl,
+            operatorAccessToken = operatorAccessToken,
+        )
+    }
+}
+
+@Composable
+private fun SubmissionPhotoPreview(
+    resolvedUrl: String,
+    operatorAccessToken: String?,
+) {
     val context = LocalContext.current
     var loadFailed by remember(resolvedUrl, operatorAccessToken) { mutableStateOf(false) }
 
@@ -330,6 +413,42 @@ private fun SubmissionPhotoPreview(
                 text = stringResource(R.string.error_generic),
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SubmissionVideoPreview(resolvedUrl: String) {
+    val context = LocalContext.current
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(220.dp)
+            .clip(MaterialTheme.shapes.medium)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .clickable {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(resolvedUrl)).apply {
+                    setDataAndType(Uri.parse(resolvedUrl), "video/*")
+                }
+                context.startActivity(intent)
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Default.PlayCircle,
+                contentDescription = null,
+                modifier = Modifier.size(48.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = "Video",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
