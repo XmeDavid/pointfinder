@@ -510,6 +510,8 @@ private struct FullscreenMediaViewer: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var currentIndex: Int
+    @State private var loadedImages: [Int: UIImage] = [:]
+    @State private var showShareSheet = false
 
     init(mediaUrls: [String], startIndex: Int, token: String) {
         self.mediaUrls = mediaUrls
@@ -524,14 +526,26 @@ private struct FullscreenMediaViewer: View {
 
             TabView(selection: $currentIndex) {
                 ForEach(Array(mediaUrls.enumerated()), id: \.offset) { index, url in
-                    ZoomableMediaView(fileUrl: url, token: token)
-                        .tag(index)
+                    ZoomableMediaView(fileUrl: url, token: token) { image in
+                        loadedImages[index] = image
+                    }
+                    .tag(index)
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
 
             VStack {
                 HStack {
+                    if loadedImages[currentIndex] != nil {
+                        Button {
+                            showShareSheet = true
+                        } label: {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.title2)
+                                .foregroundStyle(.white.opacity(0.8))
+                        }
+                        .padding()
+                    }
                     Spacer()
                     Button { dismiss() } label: {
                         Image(systemName: "xmark.circle.fill")
@@ -549,7 +563,20 @@ private struct FullscreenMediaViewer: View {
                 }
             }
         }
+        .sheet(isPresented: $showShareSheet) {
+            if let image = loadedImages[currentIndex] {
+                ShareSheet(items: [image])
+            }
+        }
     }
+}
+
+private struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 // MARK: - Zoomable wrapper for fullscreen
@@ -557,26 +584,62 @@ private struct FullscreenMediaViewer: View {
 private struct ZoomableMediaView: View {
     let fileUrl: String
     let token: String
+    var onShareImage: ((UIImage) -> Void)?
 
     @State private var scale: CGFloat = 1.0
     @State private var lastScale: CGFloat = 1.0
     @State private var offset: CGSize = .zero
     @State private var lastOffset: CGSize = .zero
+    @State private var image: UIImage?
+    @State private var isLoading = true
+    @State private var viewSize: CGSize = .zero
+
+    private var isVideo: Bool {
+        fileUrl.lowercased().contains(".mp4") || fileUrl.lowercased().contains(".mov")
+    }
+
+    private func clampedOffset(_ raw: CGSize, in geometry: CGSize) -> CGSize {
+        guard scale > 1, let img = image else { return .zero }
+        let imgAspect = img.size.width / img.size.height
+        let viewAspect = geometry.width / geometry.height
+        let displaySize: CGSize
+        if imgAspect > viewAspect {
+            displaySize = CGSize(width: geometry.width, height: geometry.width / imgAspect)
+        } else {
+            displaySize = CGSize(width: geometry.height * imgAspect, height: geometry.height)
+        }
+        let maxX = max(0, (displaySize.width * scale - geometry.width) / 2)
+        let maxY = max(0, (displaySize.height * scale - geometry.height) / 2)
+        return CGSize(
+            width: min(maxX, max(-maxX, raw.width)),
+            height: min(maxY, max(-maxY, raw.height))
+        )
+    }
 
     var body: some View {
-        let isVideo = fileUrl.lowercased().contains(".mp4") || fileUrl.lowercased().contains(".mov")
         if isVideo {
             AuthenticatedVideoView(fileUrl: fileUrl, token: token)
         } else {
-            AuthenticatedImageView(fileUrl: fileUrl, token: token)
+            GeometryReader { geo in
+                Group {
+                    if let image {
+                        SwiftUI.Image(uiImage: image)
+                            .resizable()
+                            .scaledToFit()
+                    } else if isLoading {
+                        ProgressView()
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .scaleEffect(scale)
                 .offset(offset)
                 .gesture(
                     MagnifyGesture()
                         .onChanged { value in
-                            scale = max(1.0, lastScale * value.magnification)
+                            scale = min(5.0, max(1.0, lastScale * value.magnification))
+                            offset = clampedOffset(offset, in: geo.size)
                         }
-                        .onEnded { value in
+                        .onEnded { _ in
                             lastScale = scale
                             if scale <= 1.0 {
                                 withAnimation(.easeOut(duration: 0.2)) {
@@ -585,16 +648,23 @@ private struct ZoomableMediaView: View {
                                     offset = .zero
                                     lastOffset = .zero
                                 }
+                            } else {
+                                let clamped = clampedOffset(offset, in: geo.size)
+                                if clamped != offset {
+                                    withAnimation(.easeOut(duration: 0.15)) { offset = clamped }
+                                }
+                                lastOffset = clamped
                             }
                         }
                         .simultaneously(with:
                             DragGesture()
                                 .onChanged { value in
                                     if scale > 1.0 {
-                                        offset = CGSize(
+                                        let raw = CGSize(
                                             width: lastOffset.width + value.translation.width,
                                             height: lastOffset.height + value.translation.height
                                         )
+                                        offset = clampedOffset(raw, in: geo.size)
                                     }
                                 }
                                 .onEnded { _ in
@@ -615,7 +685,38 @@ private struct ZoomableMediaView: View {
                         }
                     }
                 }
+                .onChange(of: image) { _, newImage in
+                    if let img = newImage { onShareImage?(img) }
+                }
+            }
+            .task(id: fileUrl) { await loadImage() }
         }
+    }
+
+    private func resolvedURL() -> URL? {
+        let trimmed = fileUrl.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        if let absolute = URL(string: trimmed), absolute.scheme != nil { return absolute }
+        let normalizedPath = trimmed.hasPrefix("/") ? trimmed : "/\(trimmed)"
+        return URL(string: AppConfiguration.apiBaseURL + normalizedPath)
+    }
+
+    private func loadImage() async {
+        guard let url = resolvedURL() else { isLoading = false; return }
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 30
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200...299).contains(httpResponse.statusCode),
+                  let loadedImage = UIImage(data: data) else {
+                isLoading = false
+                return
+            }
+            image = loadedImage
+        } catch {}
+        isLoading = false
     }
 }
 

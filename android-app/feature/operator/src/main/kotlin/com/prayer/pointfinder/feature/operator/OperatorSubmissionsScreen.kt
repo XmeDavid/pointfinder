@@ -22,6 +22,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Badge
@@ -425,18 +426,36 @@ private fun FullscreenMediaViewer(
                 }
             }
 
-            // Close button
-            IconButton(
-                onClick = onDismiss,
+            // Top bar: download + close
+            Row(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(16.dp),
             ) {
-                Icon(
-                    Icons.Default.Close,
-                    contentDescription = stringResource(R.string.action_cancel),
-                    tint = Color.White,
-                )
+                val context = LocalContext.current
+                val currentUrl = remember(pagerState.currentPage) {
+                    resolveSubmissionFileUrl(mediaUrls[pagerState.currentPage], apiBaseUrl)
+                }
+                if (currentUrl != null && !isVideoUrl(currentUrl)) {
+                    IconButton(
+                        onClick = {
+                            downloadImage(context, currentUrl, operatorAccessToken)
+                        },
+                    ) {
+                        Icon(
+                            Icons.Default.Download,
+                            contentDescription = "Download",
+                            tint = Color.White,
+                        )
+                    }
+                }
+                IconButton(onClick = onDismiss) {
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = stringResource(R.string.action_cancel),
+                        tint = Color.White,
+                    )
+                }
             }
 
             // Counter
@@ -618,6 +637,20 @@ private fun SubmissionVideoPreview(resolvedUrl: String) {
             )
         }
     }
+}
+
+private fun downloadImage(context: android.content.Context, url: String, token: String?) {
+    val filename = url.substringAfterLast("/").ifBlank { "image.jpg" }
+    val request = android.app.DownloadManager.Request(Uri.parse(url))
+        .setTitle(filename)
+        .setDestinationInExternalPublicDir(android.os.Environment.DIRECTORY_DOWNLOADS, filename)
+        .setNotificationVisibility(android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+    if (!token.isNullOrBlank()) {
+        request.addRequestHeader("Authorization", "Bearer $token")
+    }
+    val dm = context.getSystemService(android.content.Context.DOWNLOAD_SERVICE) as android.app.DownloadManager
+    dm.enqueue(request)
+    android.widget.Toast.makeText(context, "Downloading…", android.widget.Toast.LENGTH_SHORT).show()
 }
 
 private fun resolveSubmissionFileUrl(fileUrl: String, apiBaseUrl: String): String? {
