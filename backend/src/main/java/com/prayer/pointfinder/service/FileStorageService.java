@@ -375,6 +375,9 @@ public class FileStorageService {
         if (declaredKind == MediaKind.HEIF && detectedKind == MediaKind.HEIF) return true;
         if (declaredKind == MediaKind.MP4 && detectedKind == MediaKind.MP4) return true;
         if (declaredKind == MediaKind.MOV && detectedKind == MediaKind.MOV) return true;
+        // MOV and MP4 are both ISO BMFF containers with compatible codecs (H.264/H.265)
+        if (declaredKind == MediaKind.MP4 && detectedKind == MediaKind.MOV) return true;
+        if (declaredKind == MediaKind.MOV && detectedKind == MediaKind.MP4) return true;
         return declaredKind == detectedKind;
     }
 
