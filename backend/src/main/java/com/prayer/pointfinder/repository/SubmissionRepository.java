@@ -53,14 +53,17 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
 
     long countByChallengeId(UUID challengeId);
 
-    @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM Submission s " +
-           "WHERE s.team.game.id = :gameId AND (s.fileUrl IN (:urls) OR (s.fileUrls IS NOT NULL AND s.fileUrls LIKE :urlPattern))")
+    @Query(value = "SELECT COUNT(*) > 0 FROM submissions s " +
+           "JOIN teams t ON s.team_id = t.id " +
+           "WHERE t.game_id = :gameId AND (s.file_url IN (:urls) OR (s.file_urls IS NOT NULL AND s.file_urls LIKE :urlPattern))",
+           nativeQuery = true)
     boolean existsByGameIdAndFileUrlOrFileUrls(@Param("gameId") UUID gameId,
                                                @Param("urls") List<String> urls,
                                                @Param("urlPattern") String urlPattern);
 
-    @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM Submission s " +
-           "WHERE s.team.id = :teamId AND (s.fileUrl IN (:urls) OR (s.fileUrls IS NOT NULL AND s.fileUrls LIKE :urlPattern))")
+    @Query(value = "SELECT COUNT(*) > 0 FROM submissions s " +
+           "WHERE s.team_id = :teamId AND (s.file_url IN (:urls) OR (s.file_urls IS NOT NULL AND s.file_urls LIKE :urlPattern))",
+           nativeQuery = true)
     boolean existsByTeamIdAndFileUrlOrFileUrls(@Param("teamId") UUID teamId,
                                                @Param("urls") List<String> urls,
                                                @Param("urlPattern") String urlPattern);
