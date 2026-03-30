@@ -8,8 +8,6 @@ struct PlayerJoinView: View {
     @State private var showNameScreen = false
     @State private var cameraPermission: AVAuthorizationStatus = AVCaptureDevice.authorizationStatus(for: .video)
     @FocusState private var isCodeFocused: Bool
-    @State private var scannedCode: String?  // Temporary storage for QR scan pending confirmation
-    @State private var showQRConfirmation = false
 
     var body: some View {
         VStack(spacing: 24) {
@@ -17,8 +15,8 @@ struct PlayerJoinView: View {
             ZStack {
                 if cameraPermission == .authorized {
                     QRScannerView { code in
-                        scannedCode = code
-                        showQRConfirmation = true
+                        joinCode = code
+                        showNameScreen = true
                     }
                 } else if cameraPermission == .notDetermined {
                     ProgressView()
@@ -110,23 +108,6 @@ struct PlayerJoinView: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $showNameScreen) {
             PlayerNameView(joinCode: joinCode.trimmingCharacters(in: .whitespacesAndNewlines))
-        }
-        .alert(locale.t("join.qrCodeScanned"), isPresented: $showQRConfirmation) {
-            Button(locale.t("common.cancel")) {
-                scannedCode = nil
-                showQRConfirmation = false
-            }
-            Button(locale.t("common.ok")) {
-                if let code = scannedCode {
-                    joinCode = code
-                    showNameScreen = true
-                }
-                scannedCode = nil
-            }
-        } message: {
-            if let code = scannedCode {
-                Text(locale.t("join.qrCodeConfirm", code))
-            }
         }
         .onAppear {
             if cameraPermission == .notDetermined {
