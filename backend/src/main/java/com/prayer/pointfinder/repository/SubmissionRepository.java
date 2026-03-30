@@ -54,13 +54,13 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
     long countByChallengeId(UUID challengeId);
 
     @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM Submission s " +
-           "WHERE s.team.game.id = :gameId AND (s.fileUrl IN :urls OR s.fileUrls LIKE :urlPattern)")
+           "WHERE s.team.game.id = :gameId AND (s.fileUrl IN (:urls) OR (s.fileUrls IS NOT NULL AND s.fileUrls LIKE :urlPattern))")
     boolean existsByGameIdAndFileUrlOrFileUrls(@Param("gameId") UUID gameId,
                                                @Param("urls") List<String> urls,
                                                @Param("urlPattern") String urlPattern);
 
     @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM Submission s " +
-           "WHERE s.team.id = :teamId AND (s.fileUrl IN :urls OR s.fileUrls LIKE :urlPattern)")
+           "WHERE s.team.id = :teamId AND (s.fileUrl IN (:urls) OR (s.fileUrls IS NOT NULL AND s.fileUrls LIKE :urlPattern))")
     boolean existsByTeamIdAndFileUrlOrFileUrls(@Param("teamId") UUID teamId,
                                                @Param("urls") List<String> urls,
                                                @Param("urlPattern") String urlPattern);
