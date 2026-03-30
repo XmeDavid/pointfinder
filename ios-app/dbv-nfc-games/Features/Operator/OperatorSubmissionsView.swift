@@ -458,15 +458,18 @@ private struct SubmissionMediaGallery: View {
     let token: String
 
     @State private var currentIndex = 0
+    @State private var fullscreenIndex: Int?
 
     var body: some View {
         VStack(spacing: 8) {
             if mediaUrls.count == 1 {
                 AuthenticatedSubmissionMediaView(fileUrl: mediaUrls[0], token: token)
+                    .onTapGesture { fullscreenIndex = 0 }
             } else {
                 TabView(selection: $currentIndex) {
                     ForEach(Array(mediaUrls.enumerated()), id: \.offset) { index, url in
                         AuthenticatedSubmissionMediaView(fileUrl: url, token: token)
+                            .onTapGesture { fullscreenIndex = index }
                             .tag(index)
                     }
                 }
@@ -484,6 +487,66 @@ private struct SubmissionMediaGallery: View {
                 Text("\(currentIndex + 1) / \(mediaUrls.count)")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
+            }
+        }
+        .fullScreenCover(item: Binding(
+            get: { fullscreenIndex.map { FullscreenItem(index: $0) } },
+            set: { fullscreenIndex = $0?.index }
+        )) { item in
+            FullscreenMediaViewer(mediaUrls: mediaUrls, startIndex: item.index, token: token)
+        }
+    }
+}
+
+private struct FullscreenItem: Identifiable {
+    let index: Int
+    var id: Int { index }
+}
+
+private struct FullscreenMediaViewer: View {
+    let mediaUrls: [String]
+    let startIndex: Int
+    let token: String
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var currentIndex: Int
+
+    init(mediaUrls: [String], startIndex: Int, token: String) {
+        self.mediaUrls = mediaUrls
+        self.startIndex = startIndex
+        self.token = token
+        self._currentIndex = State(initialValue: startIndex)
+    }
+
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+
+            TabView(selection: $currentIndex) {
+                ForEach(Array(mediaUrls.enumerated()), id: \.offset) { index, url in
+                    AuthenticatedSubmissionMediaView(fileUrl: url, token: token)
+                        .tag(index)
+                }
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+
+            VStack {
+                HStack {
+                    Spacer()
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title)
+                            .foregroundStyle(.white.opacity(0.8))
+                    }
+                    .padding()
+                }
+                Spacer()
+                if mediaUrls.count > 1 {
+                    Text("\(currentIndex + 1) / \(mediaUrls.count)")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.7))
+                        .padding(.bottom, 40)
+                }
             }
         }
     }
