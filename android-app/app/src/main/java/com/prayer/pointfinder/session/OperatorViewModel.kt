@@ -108,6 +108,7 @@ class OperatorViewModel @Inject constructor(
     private val realtimeClient: MobileRealtimeClient,
     private val nfcService: NfcService,
     private val nfcEventBus: NfcEventBus,
+    val okHttpClient: okhttp3.OkHttpClient,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
     private val _state = MutableStateFlow(OperatorState())

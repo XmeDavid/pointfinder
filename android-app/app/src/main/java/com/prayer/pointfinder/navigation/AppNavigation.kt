@@ -1506,6 +1506,7 @@ private fun OperatorGameRoot(
                     onReviewSubmission = viewModel::reviewSubmission,
                     operatorAccessToken = operatorAccessToken,
                     apiBaseUrl = apiBaseUrl,
+                    okHttpClient = viewModel.okHttpClient,
                 )
             }
 

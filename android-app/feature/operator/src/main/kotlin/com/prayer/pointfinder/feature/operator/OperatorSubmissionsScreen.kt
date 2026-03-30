@@ -38,7 +38,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -77,6 +79,8 @@ private fun getMediaUrls(sub: SubmissionResponse): List<String> {
     return if (single != null) listOf(single) else emptyList()
 }
 
+val LocalOkHttpClient = compositionLocalOf<okhttp3.OkHttpClient?> { null }
+
 private fun isVideoUrl(url: String): Boolean {
     val path = url.substringBefore("?").lowercase()
     return path.endsWith(".mp4") || path.endsWith(".mov") || path.endsWith(".webm")
@@ -93,8 +97,10 @@ fun OperatorSubmissionsScreen(
     onReviewSubmission: (submissionId: String, status: SubmissionStatus, feedback: String?, points: Int?) -> Unit,
     operatorAccessToken: String?,
     apiBaseUrl: String,
+    okHttpClient: okhttp3.OkHttpClient? = null,
     modifier: Modifier = Modifier,
 ) {
+    CompositionLocalProvider(LocalOkHttpClient provides okHttpClient) {
     var showPendingOnly by rememberSaveable { mutableStateOf(true) }
     var selectedSubmission by remember { mutableStateOf<SubmissionResponse?>(null) }
     var feedback by rememberSaveable { mutableStateOf("") }
@@ -332,6 +338,7 @@ fun OperatorSubmissionsScreen(
             },
         )
     }
+    } // CompositionLocalProvider
 }
 
 @Composable
@@ -609,8 +616,12 @@ private fun SubmissionPhotoPreview(
 @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 private fun SubmissionVideoPreview(resolvedUrl: String, operatorAccessToken: String? = null) {
     val context = LocalContext.current
-    val exoPlayer = remember(resolvedUrl, operatorAccessToken) {
-        val dataSourceFactory = if (!operatorAccessToken.isNullOrBlank()) {
+    val appOkHttpClient = LocalOkHttpClient.current
+    val exoPlayer = remember(resolvedUrl) {
+        val dataSourceFactory = if (appOkHttpClient != null) {
+            // Use the app's OkHttpClient which has auth interceptor + token refresh
+            androidx.media3.datasource.okhttp.OkHttpDataSource.Factory(appOkHttpClient)
+        } else if (!operatorAccessToken.isNullOrBlank()) {
             androidx.media3.datasource.okhttp.OkHttpDataSource.Factory(
                 okhttp3.OkHttpClient.Builder()
                     .addInterceptor { chain ->
