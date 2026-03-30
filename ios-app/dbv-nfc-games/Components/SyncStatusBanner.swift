@@ -9,6 +9,8 @@ struct SyncStatusBanner: View {
     @Environment(LocaleManager.self) private var locale
     @Binding var showSheet: Bool
 
+    @State private var uploadPercent: Int? = nil
+
     private var pendingCount: Int { appState.pendingActionsCount }
     private var isOnline: Bool { appState.isOnline }
 
@@ -28,12 +30,19 @@ struct SyncStatusBanner: View {
                             .font(.caption2)
                             .foregroundStyle(.white)
                     }
-                    Text(isOnline
-                         ? locale.t("sync.syncing", pendingCount)
-                         : locale.t("sync.offline", pendingCount))
-                        .font(.caption2)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.white)
+                    if isOnline, let pct = uploadPercent {
+                        Text(String(format: locale.t("sync.uploadingPercent"), pct))
+                            .font(.caption2)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.white)
+                    } else {
+                        Text(isOnline
+                             ? locale.t("sync.syncing", pendingCount)
+                             : locale.t("sync.offline", pendingCount))
+                            .font(.caption2)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.white)
+                    }
                 }
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
@@ -43,6 +52,27 @@ struct SyncStatusBanner: View {
             .transition(.opacity)
             .animation(.easeInOut, value: pendingCount)
             .animation(.easeInOut, value: isOnline)
+            .task {
+                while !Task.isCancelled {
+                    await refreshUploadPercent()
+                    try? await Task.sleep(for: .milliseconds(500))
+                }
+            }
+        }
+    }
+
+    private func refreshUploadPercent() async {
+        guard appState.syncEngine.isSyncing && isOnline else {
+            uploadPercent = nil
+            return
+        }
+        let actions = await OfflineQueue.shared.allPending()
+        if let uploading = actions.first(where: { $0.type == .mediaSubmission }),
+           let total = uploading.uploadTotalChunks, total > 0,
+           let index = uploading.uploadChunkIndex {
+            uploadPercent = Int(Double(index) / Double(total) * 100)
+        } else {
+            uploadPercent = nil
         }
     }
 }

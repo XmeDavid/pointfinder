@@ -491,6 +491,7 @@ enum Translations {
         "sync.offline": "Offline (%d)",
         "sync.pendingActions": "Pending Actions",
         "sync.uploading": "UPLOADING",
+        "sync.uploadingPercent": "UPLOADING %d%%",
         "sync.queued": "QUEUED",
         "sync.noConnection": "NO CONNECTION",
     ]
@@ -964,6 +965,7 @@ enum Translations {
         "sync.offline": "Sem ligação (%d)",
         "sync.pendingActions": "Ações Pendentes",
         "sync.uploading": "A ENVIAR",
+        "sync.uploadingPercent": "A ENVIAR %d%%",
         "sync.queued": "EM FILA",
         "sync.noConnection": "SEM LIGAÇÃO",
     ]
@@ -1437,6 +1439,7 @@ enum Translations {
         "sync.offline": "Offline (%d)",
         "sync.pendingActions": "Ausstehende Aktionen",
         "sync.uploading": "WIRD HOCHGELADEN",
+        "sync.uploadingPercent": "HOCHLADEN %d%%",
         "sync.queued": "WARTEND",
         "sync.noConnection": "KEINE VERBINDUNG",
     ]

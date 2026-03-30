@@ -36,6 +36,15 @@ struct SyncQueueSheet: View {
         .task {
             await loadActions()
         }
+        .task {
+            // Poll for progress updates while syncing so chunk progress is reflected in the UI.
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(500))
+                if appState.syncEngine.isSyncing {
+                    await loadActions()
+                }
+            }
+        }
         .onChange(of: appState.pendingActionsCount) {
             Task { await loadActions() }
             if appState.pendingActionsCount == 0 {
@@ -127,7 +136,7 @@ private struct SyncQueueRow: View {
                 .padding(.vertical, 3)
                 .background(Color.red, in: Capsule())
         } else if isUploading {
-            Text(locale.t("sync.uploading"))
+            Text(uploadFraction.map { String(format: locale.t("sync.uploadingPercent"), Int($0 * 100)) } ?? locale.t("sync.uploading"))
                 .font(.caption2)
                 .fontWeight(.bold)
                 .foregroundStyle(.white)
