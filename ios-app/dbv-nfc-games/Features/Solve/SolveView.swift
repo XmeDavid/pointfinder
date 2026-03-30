@@ -332,7 +332,7 @@ struct SolveView: View {
             if let movieTransferable = try? await item.loadTransferable(type: VideoTransferable.self) {
                 let videoURL = movieTransferable.url
                 if let thumbnail = generateVideoThumbnail(url: videoURL) {
-                    let contentType = videoURL.pathExtension.lowercased() == "mov" ? "video/quicktime" : "video/mp4"
+                    let contentType = "video/mp4"
                     newMedia.append(SelectedMediaItem(
                         thumbnail: thumbnail,
                         isVideo: true,
@@ -534,7 +534,7 @@ struct VideoTransferable: Transferable {
     let url: URL
 
     static var transferRepresentation: some TransferRepresentation {
-        FileRepresentation(contentType: .movie) { video in
+        FileRepresentation(contentType: .mpeg4Movie) { video in
             SentTransferredFile(video.url)
         } importing: { received in
             let tempDir = FileManager.default.temporaryDirectory
