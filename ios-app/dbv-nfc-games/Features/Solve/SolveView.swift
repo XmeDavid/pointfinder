@@ -41,6 +41,7 @@ struct SolveView: View {
     @State private var selectedMedia: [SelectedMediaItem] = []
     @State private var showCamera = false
     @State private var cameraImage: UIImage?
+    @State private var isProcessingMedia = false
 
     private var isPhotoType: Bool {
         answerType == "file"
@@ -199,6 +200,17 @@ struct SolveView: View {
         }
         .navigationTitle(locale.t("solve.navTitle", baseName))
         .navigationBarTitleDisplayMode(.inline)
+        .overlay {
+            if isProcessingMedia {
+                ZStack {
+                    Color.black.opacity(0.3).ignoresSafeArea()
+                    ProgressView(locale.t("solve.processingMedia"))
+                        .padding(20)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                }
+            }
+        }
+        .allowsHitTesting(!isProcessingMedia)
         .navigationDestination(isPresented: $showResult) {
             if let result = submissionResult {
                 SubmissionResultView(submission: result, baseName: baseName, dismissToMap: dismissToMap)
@@ -210,7 +222,9 @@ struct SolveView: View {
         }
         .onChange(of: selectedItems) { _, newItems in
             Task {
+                isProcessingMedia = true
                 await loadSelectedItems(newItems)
+                isProcessingMedia = false
             }
         }
         .onChange(of: cameraImage) { _, newImage in
@@ -401,7 +415,9 @@ struct SolveView: View {
         let asset = AVAsset(url: source)
         // Skip transcoding if already MP4
         if source.pathExtension.lowercased() == "mp4" { return source }
-        guard let session = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetPassthrough) else { return nil }
+        // Use HighestQuality preset which guarantees a proper MP4 container (isom/mp41 brand)
+        // Passthrough may preserve the QuickTime brand which browsers can't play
+        guard let session = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHighestQuality) else { return nil }
         let outputURL = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString + ".mp4")
         session.outputURL = outputURL
