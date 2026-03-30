@@ -330,13 +330,15 @@ struct SolveView: View {
         for item in items {
             // Try loading as video first
             if let movieTransferable = try? await item.loadTransferable(type: VideoTransferable.self) {
-                let videoURL = movieTransferable.url
-                if let thumbnail = generateVideoThumbnail(url: videoURL) {
+                let sourceURL = movieTransferable.url
+                // Transcode to MP4 for browser compatibility
+                let mp4URL = await transcodeToMP4(source: sourceURL) ?? sourceURL
+                if let thumbnail = generateVideoThumbnail(url: mp4URL) {
                     let contentType = "video/mp4"
                     newMedia.append(SelectedMediaItem(
                         thumbnail: thumbnail,
                         isVideo: true,
-                        url: videoURL,  // Store URL for chunked reading, not full data
+                        url: mp4URL,
                         contentType: contentType
                     ))
                 }
@@ -393,6 +395,19 @@ struct SolveView: View {
         } catch {
             return nil
         }
+    }
+
+    private func transcodeToMP4(source: URL) async -> URL? {
+        let asset = AVAsset(url: source)
+        // Skip transcoding if already MP4
+        if source.pathExtension.lowercased() == "mp4" { return source }
+        guard let session = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetPassthrough) else { return nil }
+        let outputURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".mp4")
+        session.outputURL = outputURL
+        session.outputFileType = .mp4
+        await session.export()
+        return session.status == .completed ? outputURL : nil
     }
 
     private func addCameraImageToMedia(_ image: UIImage) {
@@ -534,7 +549,7 @@ struct VideoTransferable: Transferable {
     let url: URL
 
     static var transferRepresentation: some TransferRepresentation {
-        FileRepresentation(contentType: .mpeg4Movie) { video in
+        FileRepresentation(contentType: .movie) { video in
             SentTransferredFile(video.url)
         } importing: { received in
             let tempDir = FileManager.default.temporaryDirectory
