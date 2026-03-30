@@ -1,4 +1,5 @@
 import SwiftUI
+import AVKit
 
 private enum OperatorSubmissionFilter: String, CaseIterable {
     case pending
@@ -144,6 +145,20 @@ struct OperatorSubmissionsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
+            }
+
+            let mediaUrls = getMediaUrls(submission)
+            if !mediaUrls.isEmpty {
+                HStack(spacing: 4) {
+                    Image(systemName: mediaUrls.count == 1 ? "photo" : "photo.on.rectangle")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    if mediaUrls.count > 1 {
+                        Text("\(mediaUrls.count)")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
 
             Text(formatDate(submission.submittedAt))
@@ -296,6 +311,10 @@ private struct OperatorSubmissionReviewSheet: View {
         self._pointsText = State(initialValue: "\(submission.points ?? defaultPoints)")
     }
 
+    private var submissionMediaUrls: [String] {
+        getMediaUrls(submission)
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -313,13 +332,9 @@ private struct OperatorSubmissionReviewSheet: View {
                         Text(submission.answer)
                     }
                 }
-                if let fileUrl = submission.fileUrl,
-                   !fileUrl.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                if !submissionMediaUrls.isEmpty {
                     Section(locale.t("solve.photo")) {
-                        AuthenticatedSubmissionPhotoView(
-                            fileUrl: fileUrl,
-                            token: token
-                        )
+                        SubmissionMediaGallery(mediaUrls: submissionMediaUrls, token: token)
                     }
                 }
                 Section(locale.t("submissions.pointsLabelWithExpected", defaultPoints)) {
@@ -428,7 +443,77 @@ private struct OperatorSubmissionReviewSheet: View {
     }
 }
 
-private struct AuthenticatedSubmissionPhotoView: View {
+// MARK: - Media URL helper
+
+private func getMediaUrls(_ sub: SubmissionResponse) -> [String] {
+    if let urls = sub.fileUrls, !urls.isEmpty { return urls }
+    if let url = sub.fileUrl, !url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return [url] }
+    return []
+}
+
+// MARK: - Gallery
+
+private struct SubmissionMediaGallery: View {
+    let mediaUrls: [String]
+    let token: String
+
+    @State private var currentIndex = 0
+
+    var body: some View {
+        VStack(spacing: 8) {
+            if mediaUrls.count == 1 {
+                AuthenticatedSubmissionMediaView(fileUrl: mediaUrls[0], token: token)
+            } else {
+                TabView(selection: $currentIndex) {
+                    ForEach(Array(mediaUrls.enumerated()), id: \.offset) { index, url in
+                        AuthenticatedSubmissionMediaView(fileUrl: url, token: token)
+                            .tag(index)
+                    }
+                }
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                .frame(minHeight: 200)
+
+                HStack(spacing: 6) {
+                    ForEach(0..<mediaUrls.count, id: \.self) { index in
+                        Circle()
+                            .fill(index == currentIndex ? Color.primary : Color.secondary.opacity(0.4))
+                            .frame(width: 6, height: 6)
+                    }
+                }
+
+                Text("\(currentIndex + 1) / \(mediaUrls.count)")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
+// MARK: - Media viewer (image or video)
+
+private struct AuthenticatedSubmissionMediaView: View {
+    let fileUrl: String
+    let token: String
+
+    private var isVideo: Bool {
+        let lower = fileUrl.lowercased()
+        return lower.contains(".mp4") || lower.contains(".mov")
+    }
+
+    var body: some View {
+        Group {
+            if isVideo {
+                AuthenticatedVideoView(fileUrl: fileUrl, token: token)
+            } else {
+                AuthenticatedImageView(fileUrl: fileUrl, token: token)
+            }
+        }
+    }
+}
+
+// MARK: - Image viewer
+
+private struct AuthenticatedImageView: View {
     let fileUrl: String
     let token: String
 
@@ -463,25 +548,16 @@ private struct AuthenticatedSubmissionPhotoView: View {
     private func resolvedURL() -> URL? {
         let trimmed = fileUrl.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
-
-        if let absolute = URL(string: trimmed), absolute.scheme != nil {
-            return absolute
-        }
-
+        if let absolute = URL(string: trimmed), absolute.scheme != nil { return absolute }
         let normalizedPath = trimmed.hasPrefix("/") ? trimmed : "/\(trimmed)"
         return URL(string: AppConfiguration.apiBaseURL + normalizedPath)
     }
 
     private func loadImage() async {
-        guard let url = resolvedURL() else {
-            isLoading = false
-            return
-        }
-
+        guard let url = resolvedURL() else { isLoading = false; return }
         var request = URLRequest(url: url)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 30
-
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse,
@@ -490,12 +566,84 @@ private struct AuthenticatedSubmissionPhotoView: View {
                 isLoading = false
                 return
             }
-
             image = loadedImage
         } catch {
             // Keep the view in an error state.
         }
+        isLoading = false
+    }
+}
 
+// MARK: - Video viewer
+
+private struct AuthenticatedVideoView: View {
+    let fileUrl: String
+    let token: String
+
+    @State private var player: AVPlayer?
+    @State private var isLoading = true
+    @State private var tempFileURL: URL?
+
+    var body: some View {
+        Group {
+            if let player {
+                VideoPlayer(player: player)
+                    .frame(minHeight: 200)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+            } else if isLoading {
+                HStack {
+                    Spacer()
+                    ProgressView()
+                    Spacer()
+                }
+                .padding(.vertical, 20)
+            } else {
+                Text(Translations.string("common.error"))
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+        }
+        .task(id: fileUrl) {
+            await loadVideo()
+        }
+        .onDisappear {
+            player?.pause()
+            if let url = tempFileURL {
+                try? FileManager.default.removeItem(at: url)
+            }
+        }
+    }
+
+    private func resolvedURL() -> URL? {
+        let trimmed = fileUrl.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        if let absolute = URL(string: trimmed), absolute.scheme != nil { return absolute }
+        let normalizedPath = trimmed.hasPrefix("/") ? trimmed : "/\(trimmed)"
+        return URL(string: AppConfiguration.apiBaseURL + normalizedPath)
+    }
+
+    private func loadVideo() async {
+        guard let url = resolvedURL() else { isLoading = false; return }
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 60
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200...299).contains(httpResponse.statusCode) else {
+                isLoading = false
+                return
+            }
+            let ext = url.pathExtension.isEmpty ? "mp4" : url.pathExtension
+            let tmpURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .appendingPathExtension(ext)
+            try data.write(to: tmpURL)
+            tempFileURL = tmpURL
+            player = AVPlayer(url: tmpURL)
+        } catch {
+            // Keep the view in an error state.
+        }
         isLoading = false
     }
 }
