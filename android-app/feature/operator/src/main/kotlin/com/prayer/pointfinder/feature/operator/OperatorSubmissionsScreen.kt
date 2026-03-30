@@ -19,9 +19,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Badge
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -33,11 +35,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -327,12 +332,16 @@ private fun SubmissionMediaGallery(
     apiBaseUrl: String,
     operatorAccessToken: String?,
 ) {
+    var fullscreenIndex by remember { mutableIntStateOf(-1) }
+
     if (mediaUrls.size == 1) {
-        SubmissionMediaItem(
-            fileUrl = mediaUrls[0],
-            apiBaseUrl = apiBaseUrl,
-            operatorAccessToken = operatorAccessToken,
-        )
+        Box(modifier = Modifier.clickable { fullscreenIndex = 0 }) {
+            SubmissionMediaItem(
+                fileUrl = mediaUrls[0],
+                apiBaseUrl = apiBaseUrl,
+                operatorAccessToken = operatorAccessToken,
+            )
+        }
     } else {
         val pagerState = rememberPagerState(pageCount = { mediaUrls.size })
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -340,11 +349,13 @@ private fun SubmissionMediaGallery(
                 state = pagerState,
                 modifier = Modifier.fillMaxWidth(),
             ) { page ->
-                SubmissionMediaItem(
-                    fileUrl = mediaUrls[page],
-                    apiBaseUrl = apiBaseUrl,
-                    operatorAccessToken = operatorAccessToken,
-                )
+                Box(modifier = Modifier.clickable { fullscreenIndex = page }) {
+                    SubmissionMediaItem(
+                        fileUrl = mediaUrls[page],
+                        apiBaseUrl = apiBaseUrl,
+                        operatorAccessToken = operatorAccessToken,
+                    )
+                }
             }
             Text(
                 text = "${pagerState.currentPage + 1} / ${mediaUrls.size}",
@@ -352,6 +363,81 @@ private fun SubmissionMediaGallery(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.align(Alignment.CenterHorizontally),
             )
+        }
+    }
+
+    if (fullscreenIndex >= 0) {
+        FullscreenMediaViewer(
+            mediaUrls = mediaUrls,
+            startIndex = fullscreenIndex,
+            apiBaseUrl = apiBaseUrl,
+            operatorAccessToken = operatorAccessToken,
+            onDismiss = { fullscreenIndex = -1 },
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FullscreenMediaViewer(
+    mediaUrls: List<String>,
+    startIndex: Int,
+    apiBaseUrl: String,
+    operatorAccessToken: String?,
+    onDismiss: () -> Unit,
+) {
+    val pagerState = rememberPagerState(initialPage = startIndex, pageCount = { mediaUrls.size })
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black),
+        ) {
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+            ) { page ->
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    SubmissionMediaItem(
+                        fileUrl = mediaUrls[page],
+                        apiBaseUrl = apiBaseUrl,
+                        operatorAccessToken = operatorAccessToken,
+                    )
+                }
+            }
+
+            // Close button
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp),
+            ) {
+                Icon(
+                    Icons.Default.Close,
+                    contentDescription = stringResource(R.string.action_cancel),
+                    tint = Color.White,
+                )
+            }
+
+            // Counter
+            if (mediaUrls.size > 1) {
+                Text(
+                    text = "${pagerState.currentPage + 1} / ${mediaUrls.size}",
+                    color = Color.White.copy(alpha = 0.7f),
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 40.dp),
+                )
+            }
         }
     }
 }
