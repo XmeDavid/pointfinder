@@ -4,6 +4,8 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,6 +49,8 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -400,14 +405,21 @@ private fun FullscreenMediaViewer(
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize(),
+                beyondViewportPageCount = 1,
             ) { page ->
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    SubmissionMediaItem(
-                        fileUrl = mediaUrls[page],
-                        apiBaseUrl = apiBaseUrl,
+                val resolvedUrl = remember(mediaUrls[page], apiBaseUrl) {
+                    resolveSubmissionFileUrl(mediaUrls[page], apiBaseUrl)
+                }
+                if (resolvedUrl != null && isVideoUrl(resolvedUrl)) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        SubmissionVideoPreview(resolvedUrl = resolvedUrl)
+                    }
+                } else if (resolvedUrl != null) {
+                    ZoomableImage(
+                        resolvedUrl = resolvedUrl,
                         operatorAccessToken = operatorAccessToken,
                     )
                 }
@@ -439,6 +451,74 @@ private fun FullscreenMediaViewer(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun ZoomableImage(
+    resolvedUrl: String,
+    operatorAccessToken: String?,
+) {
+    val context = LocalContext.current
+    var scale by remember { mutableFloatStateOf(1f) }
+    var offsetX by remember { mutableFloatStateOf(0f) }
+    var offsetY by remember { mutableFloatStateOf(0f) }
+
+    val model = remember(resolvedUrl, operatorAccessToken, context) {
+        ImageRequest.Builder(context)
+            .data(resolvedUrl)
+            .crossfade(true)
+            .apply {
+                if (!operatorAccessToken.isNullOrBlank()) {
+                    addHeader("Authorization", "Bearer $operatorAccessToken")
+                }
+            }
+            .build()
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectTransformGestures { _, pan, zoom, _ ->
+                    scale = (scale * zoom).coerceIn(1f, 5f)
+                    if (scale > 1f) {
+                        offsetX += pan.x
+                        offsetY += pan.y
+                    } else {
+                        offsetX = 0f
+                        offsetY = 0f
+                    }
+                }
+            }
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onDoubleTap = {
+                        if (scale > 1f) {
+                            scale = 1f
+                            offsetX = 0f
+                            offsetY = 0f
+                        } else {
+                            scale = 2.5f
+                        }
+                    }
+                )
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        AsyncImage(
+            model = model,
+            contentDescription = null,
+            modifier = Modifier
+                .fillMaxWidth()
+                .graphicsLayer(
+                    scaleX = scale,
+                    scaleY = scale,
+                    translationX = offsetX,
+                    translationY = offsetY,
+                ),
+            contentScale = ContentScale.Fit,
+        )
     }
 }
 
