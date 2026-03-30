@@ -28,6 +28,7 @@ function FullScreenMediaViewer({ urls, index, onPrev, onNext }: { urls: string[]
   return (
     <div className="relative">
       <AuthMedia
+        key={currentUrl}
         src={currentUrl}
         alt={currentUrl.includes("video") ? t("submissions.altVideo") : t("submissions.altImage")}
         className="w-full h-auto max-h-[85vh] object-contain rounded"
