@@ -3,6 +3,7 @@ package com.prayer.pointfinder.exception;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
@@ -27,20 +28,17 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(error(HttpStatus.NOT_FOUND, ex.getMessage()));
+        return jsonError(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ErrorResponse> handleBadRequest(BadRequestException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(error(HttpStatus.BAD_REQUEST, ex.getMessage()));
+        return jsonError(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ErrorResponse> handleConflict(ConflictException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(error(HttpStatus.CONFLICT, ex.getMessage()));
+        return jsonError(HttpStatus.CONFLICT, ex.getMessage());
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
@@ -49,27 +47,23 @@ public class GlobalExceptionHandler {
         if ("Data integrity violation".equals(message)) {
             log.warn("Unmapped data integrity violation", ex);
         }
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(error(HttpStatus.CONFLICT, message));
+        return jsonError(HttpStatus.CONFLICT, message);
     }
 
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<ErrorResponse> handleForbidden(ForbiddenException ex) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(error(HttpStatus.FORBIDDEN, ex.getMessage()));
+        return jsonError(HttpStatus.FORBIDDEN, ex.getMessage());
     }
 
     @ExceptionHandler(FileStorageException.class)
     public ResponseEntity<ErrorResponse> handleFileStorage(FileStorageException ex) {
         log.error("File storage error", ex);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(error(HttpStatus.INTERNAL_SERVER_ERROR, "File storage error"));
+        return jsonError(HttpStatus.INTERNAL_SERVER_ERROR, "File storage error");
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(error(HttpStatus.UNAUTHORIZED, "Invalid email or password"));
+        return jsonError(HttpStatus.UNAUTHORIZED, "Invalid email or password");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -82,38 +76,40 @@ public class GlobalExceptionHandler {
                 errors.put(error.getObjectName(), error.getDefaultMessage());
             }
         });
-        return ResponseEntity.badRequest().body(error(HttpStatus.BAD_REQUEST, "Validation failed", errors));
+        return jsonError(HttpStatus.BAD_REQUEST, "Validation failed", errors);
     }
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ErrorResponse> handleIllegalState(IllegalStateException ex) {
         String msg = ex.getMessage();
         if (msg != null && AUTH_MESSAGE_PATTERN.matcher(msg).find()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(error(HttpStatus.UNAUTHORIZED, "Authentication required"));
+            return jsonError(HttpStatus.UNAUTHORIZED, "Authentication required");
         }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(error(HttpStatus.BAD_REQUEST, ex.getMessage()));
+        return jsonError(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneral(Exception ex) {
         String traceId = UUID.randomUUID().toString();
         log.error("Unhandled exception [traceId={}]", traceId, ex);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(error(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error", null, traceId));
+        return jsonError(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error", null, traceId);
     }
 
-    private ErrorResponse error(HttpStatus status, String message) {
-        return error(status, message, null, null);
+    /** Build a JSON error response that always sets Content-Type: application/json,
+     *  preventing Spring from trying to serialize ErrorResponse as video/mp4 etc.
+     *  when the original request targeted a file endpoint. */
+    private ResponseEntity<ErrorResponse> jsonError(HttpStatus status, String message) {
+        return jsonError(status, message, null, null);
     }
 
-    private ErrorResponse error(HttpStatus status, String message, Map<String, String> errors) {
-        return error(status, message, errors, null);
+    private ResponseEntity<ErrorResponse> jsonError(HttpStatus status, String message, Map<String, String> errors) {
+        return jsonError(status, message, errors, null);
     }
 
-    private ErrorResponse error(HttpStatus status, String message, Map<String, String> errors, String traceId) {
-        return new ErrorResponse(status.value(), message, errors, Instant.now(), traceId);
+    private ResponseEntity<ErrorResponse> jsonError(HttpStatus status, String message, Map<String, String> errors, String traceId) {
+        return ResponseEntity.status(status)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ErrorResponse(status.value(), message, errors, Instant.now(), traceId));
     }
 
     private String mapDataIntegrityMessage(DataIntegrityViolationException ex) {
