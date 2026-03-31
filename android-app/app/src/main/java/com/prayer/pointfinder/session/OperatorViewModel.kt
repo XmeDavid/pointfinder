@@ -539,6 +539,7 @@ class OperatorViewModel @Inject constructor(
         viewModelScope.launch {
             runCatching { baseManagementUseCase.createBase(gameId, request) }
                 .onSuccess { base ->
+                    _state.value = _state.value.copy(bases = _state.value.bases + base)
                     refreshSelectedGameData()
                     loadGameMeta(gameId)
                     onSuccess(base)
@@ -555,6 +556,7 @@ class OperatorViewModel @Inject constructor(
         viewModelScope.launch {
             runCatching { baseManagementUseCase.updateBase(gameId, baseId, request) }
                 .onSuccess { base ->
+                    _state.value = _state.value.copy(bases = _state.value.bases.map { if (it.id == base.id) base else it })
                     refreshSelectedGameData()
                     loadGameMeta(gameId)
                     onSuccess(base)
@@ -669,6 +671,7 @@ class OperatorViewModel @Inject constructor(
         viewModelScope.launch {
             runCatching { challengeManagementUseCase.createChallenge(gameId, request) }
                 .onSuccess { challenge ->
+                    _state.value = _state.value.copy(challenges = _state.value.challenges + challenge)
                     refreshSelectedGameData()
                     loadGameMeta(gameId)
                     onSuccess(challenge)
@@ -687,6 +690,7 @@ class OperatorViewModel @Inject constructor(
         viewModelScope.launch {
             runCatching { challengeManagementUseCase.updateChallenge(gameId, challengeId, request) }
                 .onSuccess { challenge ->
+                    _state.value = _state.value.copy(challenges = _state.value.challenges.map { if (it.id == challenge.id) challenge else it })
                     refreshSelectedGameData()
                     loadGameMeta(gameId)
                     onSuccess(challenge)
