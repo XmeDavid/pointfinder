@@ -471,12 +471,12 @@ private fun PlayerRootScreen(
         )
     }
 
-    // Camera temp file URI
-    val cameraPhotoUri = remember {
+    // Camera temp file URI — regenerated before each launch so captures don't overwrite each other
+    var cameraPhotoUri by remember {
         val photoDir = File(context.cacheDir, "photos").apply { mkdirs() }
         val timestamp = System.currentTimeMillis()
         val photoFile = File(photoDir, "capture_$timestamp.jpg")
-        FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", photoFile)
+        mutableStateOf(FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", photoFile))
     }
 
     // Gallery picker (multi-select, up to 5)
@@ -576,6 +576,8 @@ private fun PlayerRootScreen(
         ActivityResultContracts.RequestPermission(),
     ) { granted ->
         if (granted) {
+            val photoDir = File(context.cacheDir, "photos").apply { mkdirs() }
+            cameraPhotoUri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", File(photoDir, "capture_${System.currentTimeMillis()}.jpg"))
             cameraLauncher.launch(cameraPhotoUri)
         }
     }
@@ -740,6 +742,8 @@ private fun PlayerRootScreen(
                     },
                     onCapturePhoto = {
                         if (context.checkSelfPermission(Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                            val photoDir = File(context.cacheDir, "photos").apply { mkdirs() }
+                            cameraPhotoUri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", File(photoDir, "capture_${System.currentTimeMillis()}.jpg"))
                             cameraLauncher.launch(cameraPhotoUri)
                         } else {
                             cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
@@ -1049,6 +1053,14 @@ private fun OperatorGameRoot(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+
+    LaunchedEffect(state.errorMessage) {
+        val msg = state.errorMessage
+        if (!msg.isNullOrBlank()) {
+            snackbarHostState.showSnackbar(msg)
+            viewModel.clearError()
+        }
+    }
 
     // Reset sub-screen when switching tabs
     LaunchedEffect(state.selectedTab) {

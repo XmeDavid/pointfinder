@@ -357,13 +357,9 @@ final class SyncEngine {
                 chunkIndex: chunkIndex
             )
 
-            // Skip already-uploaded chunks by seeking directly to the next position
-            if uploadedSet.contains(chunkIndex) {
-                let skipOffset = UInt64(chunkIndex) * UInt64(session.chunkSizeBytes)
-                try fileHandle.seek(toOffset: skipOffset)
-                continue
-            }
-
+            if uploadedSet.contains(chunkIndex) { continue }
+            // Seek to the correct position for this chunk before reading
+            try fileHandle.seek(toOffset: UInt64(chunkIndex) * UInt64(session.chunkSizeBytes))
             let chunkData = try fileHandle.read(upToCount: expectedSize) ?? Data()
             guard chunkData.count == expectedSize else {
                 throw SyncError.invalidAction
@@ -433,13 +429,9 @@ final class SyncEngine {
                 chunkIndex: chunkIndex
             )
 
-            // Skip already-uploaded chunks by seeking directly to the next position
-            if uploadedSet.contains(chunkIndex) {
-                let skipOffset = UInt64(chunkIndex) * UInt64(session.chunkSizeBytes)
-                try fileHandle.seek(toOffset: skipOffset)
-                continue
-            }
-
+            if uploadedSet.contains(chunkIndex) { continue }
+            // Seek to the correct position for this chunk before reading
+            try fileHandle.seek(toOffset: UInt64(chunkIndex) * UInt64(session.chunkSizeBytes))
             let chunkData = try fileHandle.read(upToCount: expectedSize) ?? Data()
             guard chunkData.count == expectedSize else {
                 throw SyncError.invalidAction

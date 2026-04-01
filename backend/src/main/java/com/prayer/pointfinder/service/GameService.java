@@ -48,6 +48,7 @@ public class GameService {
     private final SubmissionRepository submissionRepository;
     private final TeamLocationRepository teamLocationRepository;
     private final ActivityEventRepository activityEventRepository;
+    private final UploadSessionRepository uploadSessionRepository;
     private final GameAccessService gameAccessService;
     private final FileStorageService fileStorageService;
     private final GameEventBroadcaster eventBroadcaster;
@@ -190,6 +191,7 @@ public class GameService {
                 checkInRepository.deleteByGameId(id);
                 teamLocationRepository.deleteByGameId(id);
                 activityEventRepository.deleteByGameId(id);
+                uploadSessionRepository.deleteByGameId(id);
             }
             assignmentRepository.deleteByGameId(id);
         }

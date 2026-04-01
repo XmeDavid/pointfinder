@@ -109,6 +109,19 @@ final class AppState {
             guard let self else { return }
             self.handleRealtimeEvent(payload)
         }
+        // Provide a fresh token on each reconnect so operator access tokens
+        // (15-min TTL) don't silently break reconnections after expiry.
+        realtimeClient.tokenProvider = { [weak self] in
+            guard let self else { return nil }
+            switch self.authType {
+            case .player(let token, _, _, _):
+                return token
+            case .userOperator(let accessToken, _, _):
+                return accessToken
+            case .none:
+                return nil
+            }
+        }
     }
 
     private func handleRealtimeEvent(_ payload: [String: Any]) {

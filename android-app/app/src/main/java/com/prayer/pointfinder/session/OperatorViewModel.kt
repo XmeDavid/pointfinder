@@ -191,7 +191,7 @@ class OperatorViewModel @Inject constructor(
             runCatching {
                 gameCrudUseCase.createGame(name, description)
             }.onSuccess { game ->
-                _state.value = _state.value.copy(isLoading = false)
+                _state.value = _state.value.copy(isLoading = false, games = _state.value.games + game)
                 loadGames()
                 onSuccess(game)
             }.onFailure { e ->
@@ -206,7 +206,7 @@ class OperatorViewModel @Inject constructor(
             runCatching {
                 gameCrudUseCase.importGame(name, exportData)
             }.onSuccess { game ->
-                _state.value = _state.value.copy(isLoading = false)
+                _state.value = _state.value.copy(isLoading = false, games = _state.value.games + game)
                 loadGames()
                 onSuccess(game)
             }.onFailure { e ->
@@ -401,15 +401,21 @@ class OperatorViewModel @Inject constructor(
 
     private fun loadGameMeta(gameId: String) {
         viewModelScope.launch {
-            val meta = liveDataUseCase.loadGameMeta(gameId)
-            _state.value = _state.value.copy(
-                teams = meta.teams,
-                challenges = meta.challenges,
-                assignments = meta.assignments,
-                variables = meta.variables,
-                teamVariablesIncomplete = meta.teamVariablesIncomplete,
-                authExpired = false,
-            )
+            runCatching { liveDataUseCase.loadGameMeta(gameId) }
+                .onSuccess { meta ->
+                    _state.value = _state.value.copy(
+                        teams = meta.teams,
+                        challenges = meta.challenges,
+                        assignments = meta.assignments,
+                        variables = meta.variables,
+                        teamVariablesIncomplete = meta.teamVariablesIncomplete,
+                        authExpired = false,
+                    )
+                }
+                .onFailure { e ->
+                    if (markAuthExpiredIfNeeded(e)) return@onFailure
+                    _state.value = _state.value.copy(errorMessage = friendlyError(e))
+                }
         }
     }
 
@@ -730,6 +736,7 @@ class OperatorViewModel @Inject constructor(
             runCatching {
                 teamManagementUseCase.createTeam(gameId, name, color)
             }.onSuccess { team ->
+                _state.value = _state.value.copy(teams = _state.value.teams + team)
                 loadGameMeta(gameId)
                 onSuccess(team)
             }.onFailure { e ->

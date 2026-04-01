@@ -117,7 +117,7 @@ public class FcmPushService {
     }
 
     @Transactional
-    private void cleanupInvalidToken(String token) {
+    void cleanupInvalidToken(String token) {
         try {
             playerRepository.setInvalidPushTokenToNull(token);
             log.info("Cleaned up invalid push token from database");

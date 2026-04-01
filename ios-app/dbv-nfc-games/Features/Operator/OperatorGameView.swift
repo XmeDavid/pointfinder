@@ -106,6 +106,11 @@ struct OperatorGameView: View {
                   type == "game_config" else { return }
             Task { await loadBases() }
         }
+        .alert("Error", isPresented: Bindable(appState).showError) {
+            Button("OK") { appState.showError = false }
+        } message: {
+            Text(appState.errorMessage ?? "")
+        }
     }
 
     private func loadBases() async {

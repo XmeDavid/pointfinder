@@ -14,6 +14,8 @@ final class MobileRealtimeClient {
     var onConnectionStateChange: ((ConnectionState) -> Void)?
     /// Called when connection is re-established after a disconnection
     var onReconnect: (() async -> Void)?
+    /// Returns a fresh token on reconnect. If nil, falls back to the token passed to connect().
+    var tokenProvider: (() -> String?)?
 
     private let urlSession = URLSession(configuration: .default)
     private var socketTask: URLSessionWebSocketTask?
@@ -95,7 +97,11 @@ final class MobileRealtimeClient {
         receiveTask?.cancel()
         socketTask?.cancel(with: .goingAway, reason: nil)
 
-        guard let request = buildRequest(session: desiredSession) else {
+        // On reconnection, fetch a fresh token so expired operator tokens don't
+        // silently prevent reconnection. Falls back to the stored token if no
+        // tokenProvider is configured (e.g. players with long-lived tokens).
+        let effectiveToken = tokenProvider?() ?? desiredSession.token
+        guard let request = buildRequest(session: desiredSession, token: effectiveToken) else {
             connectionState = .disconnected
             return
         }
@@ -207,7 +213,7 @@ final class MobileRealtimeClient {
         }
     }
 
-    private func buildRequest(session: DesiredSession) -> URLRequest? {
+    private func buildRequest(session: DesiredSession, token: String) -> URLRequest? {
         guard let base = URL(string: AppConfiguration.apiBaseURL),
               var components = URLComponents(url: base, resolvingAgainstBaseURL: false) else {
             return nil
@@ -222,7 +228,7 @@ final class MobileRealtimeClient {
         guard let url = components.url else { return nil }
         var request = URLRequest(url: url)
         request.timeoutInterval = 30
-        request.setValue("Bearer \(session.token)", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         return request
     }
 
