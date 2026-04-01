@@ -16,6 +16,7 @@ import java.util.List;
 @AllArgsConstructor
 public class GameDataResponse {
     private String gameStatus;
+    private String unlockTrigger;
     private List<BaseResponse> bases;
     private List<ChallengeResponse> challenges;
     private List<AssignmentResponse> assignments;

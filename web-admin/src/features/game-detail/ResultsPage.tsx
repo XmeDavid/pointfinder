@@ -1,17 +1,19 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Trophy, Download } from "lucide-react";
+import { Trophy, Download, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { monitoringApi } from "@/lib/api/monitoring";
 import { gamesApi } from "@/lib/api/games";
 import { useTranslation } from "react-i18next";
+import * as XLSX from "xlsx";
 
 export function ResultsPage() {
   const { t } = useTranslation();
   const { gameId } = useParams<{ gameId: string }>();
   const [exporting, setExporting] = useState(false);
+  const [exportingExcel, setExportingExcel] = useState(false);
   const { data: game } = useQuery({ queryKey: ["game", gameId], queryFn: () => gamesApi.getById(gameId!) });
   const { data: leaderboard = [] } = useQuery({ queryKey: ["leaderboard", gameId], queryFn: () => monitoringApi.getLeaderboard(gameId!) });
   const { data: stats } = useQuery({ queryKey: ["dashboard-stats", gameId], queryFn: () => monitoringApi.getDashboardStats(gameId!) });
@@ -33,13 +35,49 @@ export function ResultsPage() {
     }
   };
 
+  const handleExportExcel = async () => {
+    try {
+      setExportingExcel(true);
+      const data = await monitoringApi.getResultsExport(gameId!);
+
+      const header = [t("common.team"), ...data.challenges.map(c => c.title), t("results.totalPoints")];
+      const rows = data.teams.map(team => [
+        team.teamName,
+        ...data.challenges.map(c => team.challengePoints[c.id] ?? 0),
+        team.totalPoints,
+      ]);
+
+      const maxPointsRow = [
+        t("results.maxPoints"),
+        ...data.challenges.map(c => c.maxPoints),
+        data.challenges.reduce((sum, c) => sum + c.maxPoints, 0),
+      ];
+
+      const ws = XLSX.utils.aoa_to_sheet([header, ...rows, [], maxPointsRow]);
+
+      // Auto-size columns
+      ws["!cols"] = header.map((h, i) => ({
+        wch: Math.max(String(h).length, ...rows.map(r => String(r[i]).length)) + 2,
+      }));
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, t("results.title"));
+      XLSX.writeFile(wb, `${data.gameName.replace(/[^a-z0-9]/gi, "-")}-results.xlsx`);
+    } finally {
+      setExportingExcel(false);
+    }
+  };
+
   if (!game || !stats) return null;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div><h1 className="text-2xl font-bold">{t("results.title")}</h1><p className="text-muted-foreground">{game.name}</p></div>
-        <Button className="self-end sm:self-auto" variant="outline" onClick={handleExport} disabled={exporting}><Download className="mr-2 h-4 w-4" />{exporting ? t("game.exporting") : t("results.exportResults")}</Button>
+        <div className="flex gap-2 self-end sm:self-auto">
+          <Button variant="outline" onClick={handleExportExcel} disabled={exportingExcel}><FileSpreadsheet className="mr-2 h-4 w-4" />{exportingExcel ? t("game.exporting") : t("results.exportExcel")}</Button>
+          <Button variant="outline" onClick={handleExport} disabled={exporting}><Download className="mr-2 h-4 w-4" />{exporting ? t("game.exporting") : t("results.exportResults")}</Button>
+        </div>
       </div>
       {leaderboard.length > 0 && (
         <Card className="border-yellow-500/50 bg-gradient-to-r from-yellow-500/5 to-transparent">

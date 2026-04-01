@@ -97,6 +97,7 @@ data class Game(
     val uniformAssignment: Boolean = false,
     val broadcastEnabled: Boolean = false,
     val broadcastCode: String? = null,
+    val unlockTrigger: String = "CHECK_IN",
 )
 
 @Serializable
@@ -132,6 +133,7 @@ data class Challenge(
     val autoValidate: Boolean = false,
     val correctAnswer: List<String>? = null,
     val locationBound: Boolean = false,
+    val fixedBaseId: EntityId? = null,
     val requirePresenceToSubmit: Boolean = false,
 )
 
@@ -349,6 +351,7 @@ data class UnseenCountResponse(
 @Serializable
 data class GameDataResponse(
     val gameStatus: GameStatus? = null,
+    val unlockTrigger: String? = null,
     val bases: List<Base>,
     val challenges: List<Challenge>,
     val assignments: List<Assignment>,

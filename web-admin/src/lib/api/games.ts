@@ -9,6 +9,7 @@ export interface CreateGameDto {
   uniformAssignment?: boolean;
   broadcastEnabled?: boolean;
   tileSource?: string;
+  unlockTrigger?: string;
 }
 
 export interface GameImportData {

@@ -24,4 +24,5 @@ public class GameResponse {
     private Boolean broadcastEnabled;
     private String broadcastCode;
     private String tileSource;
+    private String unlockTrigger;
 }

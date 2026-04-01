@@ -25,6 +25,9 @@ actor GameDataCache {
         cacheValue(data.challenges, key: "challenges_\(gameId)")
         cacheValue(data.assignments, key: "assignments_\(gameId)")
         cacheValue(data.progress, key: "progress_\(gameId)")
+        if let unlockTrigger = data.unlockTrigger {
+            cacheValue(unlockTrigger, key: "unlockTrigger_\(gameId)")
+        }
     }
 
     /// Get cached bases for a game
@@ -45,6 +48,11 @@ actor GameDataCache {
     /// Get cached progress for a game
     func getCachedProgress(gameId: UUID) -> [BaseProgress]? {
         getValue(key: "progress_\(gameId)")
+    }
+
+    /// Get cached unlock trigger for a game
+    func getCachedUnlockTrigger(gameId: UUID) -> String? {
+        getValue(key: "unlockTrigger_\(gameId)")
     }
 
     /// Update cached progress (for optimistic updates)
@@ -151,7 +159,7 @@ actor GameDataCache {
     }
 
     func clearGame(_ gameId: UUID) {
-        let keys = ["bases_\(gameId)", "challenges_\(gameId)", "assignments_\(gameId)", "progress_\(gameId)"]
+        let keys = ["bases_\(gameId)", "challenges_\(gameId)", "assignments_\(gameId)", "progress_\(gameId)", "unlockTrigger_\(gameId)"]
         for key in keys {
             memoryCache.removeValue(forKey: key)
             let fileURL = cacheDirectory.appendingPathComponent(key)

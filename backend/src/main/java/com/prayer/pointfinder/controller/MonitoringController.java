@@ -40,4 +40,9 @@ public class MonitoringController {
     public ResponseEntity<List<TeamBaseProgressResponse>> getProgress(@PathVariable UUID gameId) {
         return ResponseEntity.ok(monitoringService.getProgress(gameId));
     }
+
+    @GetMapping("/results-export")
+    public ResponseEntity<GameResultsExportResponse> getResultsExport(@PathVariable UUID gameId) {
+        return ResponseEntity.ok(monitoringService.getResultsExport(gameId));
+    }
 }

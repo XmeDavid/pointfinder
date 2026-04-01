@@ -39,4 +39,15 @@ export const monitoringApi = {
     const { data } = await apiClient.get(`/games/${gameId}/monitoring/dashboard`);
     return data;
   },
+
+  getResultsExport: async (
+    gameId: string
+  ): Promise<{
+    gameName: string;
+    challenges: { id: string; title: string; maxPoints: number }[];
+    teams: { teamId: string; teamName: string; color: string; totalPoints: number; challengePoints: Record<string, number> }[];
+  }> => {
+    const { data } = await apiClient.get(`/games/${gameId}/monitoring/results-export`);
+    return data;
+  },
 };

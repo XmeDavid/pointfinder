@@ -13,6 +13,7 @@ struct Game: Codable, Identifiable {
     let uniformAssignment: Bool
     let broadcastEnabled: Bool
     let broadcastCode: String?
+    let unlockTrigger: String
 
     var isActive: Bool {
         status == "live"
@@ -30,7 +31,8 @@ struct Game: Codable, Identifiable {
         operatorIds: [UUID]? = nil,
         uniformAssignment: Bool = false,
         broadcastEnabled: Bool = false,
-        broadcastCode: String? = nil
+        broadcastCode: String? = nil,
+        unlockTrigger: String = "CHECK_IN"
     ) {
         self.id = id
         self.name = name
@@ -44,6 +46,7 @@ struct Game: Codable, Identifiable {
         self.uniformAssignment = uniformAssignment
         self.broadcastEnabled = broadcastEnabled
         self.broadcastCode = broadcastCode
+        self.unlockTrigger = unlockTrigger
     }
 
     init(from decoder: Decoder) throws {
@@ -60,6 +63,7 @@ struct Game: Codable, Identifiable {
         uniformAssignment = try container.decodeIfPresent(Bool.self, forKey: .uniformAssignment) ?? false
         broadcastEnabled = try container.decodeIfPresent(Bool.self, forKey: .broadcastEnabled) ?? false
         broadcastCode = try container.decodeIfPresent(String.self, forKey: .broadcastCode)
+        unlockTrigger = try container.decodeIfPresent(String.self, forKey: .unlockTrigger) ?? "CHECK_IN"
     }
 }
 
@@ -200,6 +204,7 @@ struct Assignment: Codable, Identifiable {
 /// Complete game data response for offline caching
 struct GameDataResponse: Codable {
     let gameStatus: String?
+    let unlockTrigger: String?
     let bases: [Base]
     let challenges: [Challenge]
     let assignments: [Assignment]

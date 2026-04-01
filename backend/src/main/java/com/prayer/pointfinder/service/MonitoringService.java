@@ -190,6 +190,67 @@ public class MonitoringService {
         return computeLocations(gameId);
     }
 
+    @Transactional(readOnly = true)
+    public GameResultsExportResponse getResultsExport(UUID gameId) {
+        gameAccessService.ensureCurrentUserCanAccessGame(gameId);
+        Game game = gameRepository.findById(gameId)
+                .orElseThrow(() -> new ResourceNotFoundException("Game", gameId));
+
+        List<Challenge> challenges = challengeRepository.findByGameId(gameId);
+        List<Team> teams = teamRepository.findByGameId(gameId);
+        List<Object[]> scoredRows = submissionRepository.findScoredSubmissionsByGameId(gameId);
+
+        record ScoredSub(UUID teamId, UUID challengeId, long points, java.time.Instant submittedAt) {}
+        Map<UUID, Map<UUID, ScoredSub>> byTeamChallenge = new HashMap<>();
+
+        for (Object[] row : scoredRows) {
+            UUID teamId = (UUID) row[0];
+            UUID challengeId = (UUID) row[1];
+            long pts = row[2] != null ? ((Number) row[2]).longValue() : 0L;
+            java.time.Instant submittedAt = (java.time.Instant) row[3];
+            ScoredSub sub = new ScoredSub(teamId, challengeId, pts, submittedAt);
+
+            byTeamChallenge
+                    .computeIfAbsent(teamId, k -> new HashMap<>())
+                    .merge(challengeId, sub, (existing, incoming) ->
+                            incoming.submittedAt().isAfter(existing.submittedAt()) ? incoming : existing);
+        }
+
+        List<GameResultsExportResponse.ChallengeInfo> challengeInfos = challenges.stream()
+                .map(c -> GameResultsExportResponse.ChallengeInfo.builder()
+                        .id(c.getId())
+                        .title(c.getTitle())
+                        .maxPoints(c.getPoints())
+                        .build())
+                .toList();
+
+        List<GameResultsExportResponse.TeamResult> teamResults = teams.stream()
+                .map(team -> {
+                    Map<UUID, ScoredSub> challengeMap = byTeamChallenge.getOrDefault(team.getId(), Map.of());
+                    Map<UUID, Long> challengePoints = new HashMap<>();
+                    for (var entry : challengeMap.entrySet()) {
+                        challengePoints.put(entry.getKey(), entry.getValue().points());
+                    }
+                    long totalPoints = challengeMap.values().stream().mapToLong(ScoredSub::points).sum();
+
+                    return GameResultsExportResponse.TeamResult.builder()
+                            .teamId(team.getId())
+                            .teamName(team.getName())
+                            .color(team.getColor())
+                            .totalPoints(totalPoints)
+                            .challengePoints(challengePoints)
+                            .build();
+                })
+                .sorted(Comparator.comparingLong(GameResultsExportResponse.TeamResult::getTotalPoints).reversed())
+                .toList();
+
+        return GameResultsExportResponse.builder()
+                .gameName(game.getName())
+                .challenges(challengeInfos)
+                .teams(teamResults)
+                .build();
+    }
+
     List<TeamLocationResponse> computeLocations(UUID gameId) {
         return playerLocationRepository.findByGameId(gameId).stream()
                 .map(pl -> TeamLocationResponse.builder()

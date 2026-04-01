@@ -36,6 +36,7 @@ public final class GameResponseMapper {
                 .broadcastEnabled(game.getBroadcastEnabled())
                 .broadcastCode(game.getBroadcastCode())
                 .tileSource(game.getTileSource())
+                .unlockTrigger(game.getUnlockTrigger().name())
                 .build();
     }
 }

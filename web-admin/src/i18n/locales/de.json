@@ -422,7 +422,10 @@
     "challengesCompleted": "{{count}} Challenges abgeschlossen",
     "finalStandings": "Endstand",
     "finalStandingsDesc": "Alle Teams nach Gesamtpunkten sortiert",
-    "challengesOfTotal": "{{completed}} von {{total}} Challenges"
+    "challengesOfTotal": "{{completed}} von {{total}} Challenges",
+    "exportExcel": "Excel exportieren",
+    "totalPoints": "Gesamtpunkte",
+    "maxPoints": "Maximale Punkte"
   },
   "settings": {
     "title": "Einstellungen",
@@ -469,6 +472,14 @@
     "tileSourcePositron": "CartoDB Positron",
     "tileSourceSwisstopo": "SwissTopo",
     "tileSourceSwisstopoSat": "SwissTopo Satellit",
+    "unlockTrigger": "Auslöser für Freischaltung",
+    "unlockTriggerDescription": "Bestimmt, wann versteckte Stationen für Teams sichtbar werden, nachdem sie eine Freischaltungs-Challenge abgeschlossen haben",
+    "unlockTriggerCheckIn": "Beim Check-in",
+    "unlockTriggerCheckInDesc": "Stationen werden freigeschaltet, wenn das Team an der Station mit der Freischaltungs-Challenge eincheckt. Funktioniert offline.",
+    "unlockTriggerSubmission": "Bei Abgabe",
+    "unlockTriggerSubmissionDesc": "Stationen werden freigeschaltet, wenn das Team eine Antwort abgibt, vor der Überprüfung durch den Operator.",
+    "unlockTriggerCompleted": "Bei Abschluss",
+    "unlockTriggerCompletedDesc": "Stationen werden erst freigeschaltet, nachdem die Abgabe von einem Operator genehmigt wurde.",
     "deleteAccount": "Konto löschen",
     "deleteAccountConfirm": "Bist du sicher, dass du dein Konto löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden. Du musst zuerst alle deine Spiele löschen."
   },

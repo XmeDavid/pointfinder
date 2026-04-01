@@ -23,4 +23,6 @@ public class UpdateGameRequest {
     private Boolean broadcastEnabled;
 
     private String tileSource;
+
+    private String unlockTrigger;
 }

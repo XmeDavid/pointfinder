@@ -209,6 +209,8 @@ class PlayerViewModel @Inject constructor(
                 // Optimistic update: mark base as checked-in locally before
                 // refresh() replaces progress with (potentially stale) API data.
                 updateLocalBaseStatus(baseId, BaseStatus.CHECKED_IN)
+                // Reveal any hidden bases unlocked by challenges at this base
+                revealUnlockedBases(baseId)
                 // If the action was queued offline, trigger sync immediately
                 // so it retries as soon as connectivity allows.
                 if (result.queued) {
@@ -566,6 +568,18 @@ class PlayerViewModel @Inject constructor(
         if (original.endsWith(".mp4")) return "mp4"
         if (original.endsWith(".mov")) return "mov"
         return "jpg"
+    }
+
+    /**
+     * Reveal hidden bases that are unlocked by challenges at [checkedInBaseId].
+     * Uses cached game data to avoid a server round-trip.
+     */
+    private fun revealUnlockedBases(checkedInBaseId: String) {
+        val current = _state.value.progress
+        val newBases = playerRepository.computeUnlockedBases(checkedInBaseId, current)
+        if (newBases.isNotEmpty()) {
+            _state.value = _state.value.copy(progress = current + newBases)
+        }
     }
 
     /**

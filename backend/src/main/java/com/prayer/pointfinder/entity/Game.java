@@ -74,6 +74,11 @@ public class Game {
     @Builder.Default
     private String tileSource = "osm-classic";
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "unlock_trigger", nullable = false, length = 20)
+    @Builder.Default
+    private UnlockTrigger unlockTrigger = UnlockTrigger.CHECK_IN;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

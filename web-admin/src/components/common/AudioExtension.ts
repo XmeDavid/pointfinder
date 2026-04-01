@@ -8,7 +8,10 @@ export const AudioExtension = Node.create({
     return { src: { default: null } };
   },
   parseHTML() {
-    return [{ tag: "audio" }];
+    return [{
+      tag: "audio",
+      getAttrs: (el) => ({ src: (el as HTMLAudioElement).getAttribute("src") }),
+    }];
   },
   renderHTML({ HTMLAttributes }) {
     return ["audio", mergeAttributes(HTMLAttributes, {

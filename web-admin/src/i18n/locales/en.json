@@ -422,7 +422,10 @@
     "challengesCompleted": "{{count}} challenges completed",
     "finalStandings": "Final Standings",
     "finalStandingsDesc": "All teams ranked by total points",
-    "challengesOfTotal": "{{completed}} of {{total}} challenges"
+    "challengesOfTotal": "{{completed}} of {{total}} challenges",
+    "exportExcel": "Export Excel",
+    "totalPoints": "Total Points",
+    "maxPoints": "Max Points"
   },
   "settings": {
     "title": "Settings",
@@ -469,6 +472,14 @@
     "tileSourcePositron": "CartoDB Positron",
     "tileSourceSwisstopo": "SwissTopo",
     "tileSourceSwisstopoSat": "SwissTopo Satellite",
+    "unlockTrigger": "Base unlock trigger",
+    "unlockTriggerDescription": "Controls when hidden bases become visible to teams after completing an unlocking challenge",
+    "unlockTriggerCheckIn": "On check-in",
+    "unlockTriggerCheckInDesc": "Bases unlock when the team checks in at the base with the unlocking challenge. Works offline.",
+    "unlockTriggerSubmission": "On submission",
+    "unlockTriggerSubmissionDesc": "Bases unlock when the team submits an answer, before operator review.",
+    "unlockTriggerCompleted": "On completion",
+    "unlockTriggerCompletedDesc": "Bases unlock only after the submission is approved by an operator.",
     "deleteAccount": "Delete Account",
     "deleteAccountConfirm": "Are you sure you want to delete your account? This action cannot be undone. You must delete all your games first."
   },

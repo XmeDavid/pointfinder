@@ -10,8 +10,9 @@ import com.prayer.pointfinder.core.data.local.toBaseProgress
 import com.prayer.pointfinder.core.data.local.toCached
 import com.prayer.pointfinder.core.data.local.toChallengeInfo
 import com.prayer.pointfinder.core.model.AuthType
-import com.prayer.pointfinder.core.model.CheckInRequest
 import com.prayer.pointfinder.core.model.BaseProgress
+import com.prayer.pointfinder.core.model.BaseStatus
+import com.prayer.pointfinder.core.model.CheckInRequest
 import com.prayer.pointfinder.core.model.CheckInResponse
 import com.prayer.pointfinder.core.model.GameDataResponse
 import com.prayer.pointfinder.core.model.GameStatus
@@ -71,6 +72,10 @@ class PlayerRepository @Inject constructor(
 ) {
     private val syncMutex = Mutex()
 
+    /** In-memory cache of the last fetched game data for offline unlock logic. */
+    @Volatile
+    private var lastGameData: GameDataResponse? = null
+
     suspend fun pendingCount(): Int = db.pendingActionDao().pendingCount()
 
     fun pendingCountFlow(): Flow<Int> = db.pendingActionDao().pendingCountFlow()
@@ -79,6 +84,7 @@ class PlayerRepository @Inject constructor(
         if (online) {
             try {
                 val gameData = api.getGameData(auth.gameId)
+                lastGameData = gameData
                 db.progressDao().deleteForGame(auth.gameId)
                 db.progressDao().upsertAll(gameData.progress.map { it.toCached(auth.gameId) })
                 cacheGameChallenges(auth, gameData)
@@ -757,6 +763,54 @@ class PlayerRepository @Inject constructor(
 
     suspend fun cachedChallenge(auth: AuthType.Player, baseId: String): CheckInResponse.ChallengeInfo? {
         return db.challengeDao().challengeForBase(auth.gameId, auth.teamId, baseId)?.toChallengeInfo()
+    }
+
+    /**
+     * Compute bases that should be revealed after checking in at [checkedInBaseId].
+     * Uses the in-memory cached game data. Returns newly visible [BaseProgress] entries
+     * that are not already in [currentProgress].
+     */
+    fun computeUnlockedBases(
+        checkedInBaseId: String,
+        currentProgress: List<BaseProgress>,
+    ): List<BaseProgress> {
+        val gameData = lastGameData ?: return emptyList()
+        val unlockTrigger = gameData.unlockTrigger ?: "CHECK_IN"
+        if (unlockTrigger != "CHECK_IN") return emptyList()
+
+        val challenges = gameData.challenges
+        val allBases = gameData.bases
+
+        // Find challenges that live at the checked-in base
+        val challengesAtBase = challenges.filter { it.fixedBaseId == checkedInBaseId }
+
+        val visibleBaseIds = currentProgress.map { it.baseId }.toSet()
+        val newEntries = mutableListOf<BaseProgress>()
+        val addedIds = mutableSetOf<String>()
+
+        for (challenge in challengesAtBase) {
+            val unlocksBaseIds = challenge.unlocksBaseIds ?: continue
+            for (unlockedBaseId in unlocksBaseIds) {
+                if (unlockedBaseId in visibleBaseIds) continue
+                if (unlockedBaseId in addedIds) continue
+                val hiddenBase = allBases.find { it.id == unlockedBaseId } ?: continue
+                addedIds.add(unlockedBaseId)
+                newEntries.add(
+                    BaseProgress(
+                        baseId = hiddenBase.id,
+                        baseName = hiddenBase.name,
+                        lat = hiddenBase.lat,
+                        lng = hiddenBase.lng,
+                        nfcLinked = hiddenBase.nfcLinked,
+                        status = BaseStatus.NOT_VISITED,
+                        checkedInAt = null,
+                        challengeId = null,
+                        submissionStatus = null,
+                    ),
+                )
+            }
+        }
+        return newEntries
     }
 
     suspend fun pendingActions(): List<PendingActionEntity> =

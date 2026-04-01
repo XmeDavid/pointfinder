@@ -422,7 +422,10 @@
     "challengesCompleted": "{{count}} desafios completados",
     "finalStandings": "Classificação Final",
     "finalStandingsDesc": "Todas as equipas ordenadas por pontos totais",
-    "challengesOfTotal": "{{completed}} de {{total}} desafios"
+    "challengesOfTotal": "{{completed}} de {{total}} desafios",
+    "exportExcel": "Exportar Excel",
+    "totalPoints": "Pontos Totais",
+    "maxPoints": "Pontos Máximos"
   },
   "settings": {
     "title": "Definições",
@@ -469,6 +472,14 @@
     "tileSourcePositron": "CartoDB Positron",
     "tileSourceSwisstopo": "SwissTopo",
     "tileSourceSwisstopoSat": "SwissTopo Satélite",
+    "unlockTrigger": "Gatilho de desbloqueio de bases",
+    "unlockTriggerDescription": "Controla quando as bases ocultas ficam visíveis para as equipas após completar um desafio de desbloqueio",
+    "unlockTriggerCheckIn": "No check-in",
+    "unlockTriggerCheckInDesc": "As bases desbloqueiam quando a equipa faz check-in na base com o desafio de desbloqueio. Funciona offline.",
+    "unlockTriggerSubmission": "Na submissão",
+    "unlockTriggerSubmissionDesc": "As bases desbloqueiam quando a equipa submete uma resposta, antes da revisão do operador.",
+    "unlockTriggerCompleted": "Na conclusão",
+    "unlockTriggerCompletedDesc": "As bases desbloqueiam apenas após a submissão ser aprovada por um operador.",
     "deleteAccount": "Eliminar Conta",
     "deleteAccountConfirm": "Tens a certeza que queres eliminar a tua conta? Esta ação não pode ser desfeita. Deves eliminar todos os teus jogos primeiro."
   },

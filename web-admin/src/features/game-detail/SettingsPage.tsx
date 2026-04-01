@@ -46,6 +46,7 @@ function SettingsPageContent({ game, gameId }: { game: Game; gameId: string }) {
     endDate: formatDateTimeInputValue(game.endDate),
     uniformAssignment: game.uniformAssignment ?? false,
     tileSource: game.tileSource ?? "osm-classic",
+    unlockTrigger: game.unlockTrigger ?? "CHECK_IN",
   });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -252,6 +253,25 @@ function SettingsPageContent({ game, gameId }: { game: Game; gameId: string }) {
                 <option value="swisstopo">{t("settings.tileSourceSwisstopo")}</option>
                 <option value="swisstopo-sat">{t("settings.tileSourceSwisstopoSat")}</option>
               </select>
+            </div>
+            <div className="space-y-2">
+              <FormLabel htmlFor="unlockTrigger">{t("settings.unlockTrigger")}</FormLabel>
+              <p className="text-xs text-muted-foreground">{t("settings.unlockTriggerDescription")}</p>
+              <select
+                id="unlockTrigger"
+                value={form.unlockTrigger}
+                onChange={(e) => setForm((f) => ({ ...f, unlockTrigger: e.target.value }))}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="CHECK_IN">{t("settings.unlockTriggerCheckIn")}</option>
+                <option value="SUBMISSION">{t("settings.unlockTriggerSubmission")}</option>
+                <option value="COMPLETED">{t("settings.unlockTriggerCompleted")}</option>
+              </select>
+              <p className="text-xs text-muted-foreground mt-1">
+                {form.unlockTrigger === "CHECK_IN" && t("settings.unlockTriggerCheckInDesc")}
+                {form.unlockTrigger === "SUBMISSION" && t("settings.unlockTriggerSubmissionDesc")}
+                {form.unlockTrigger === "COMPLETED" && t("settings.unlockTriggerCompletedDesc")}
+              </p>
             </div>
             <div className="flex items-center justify-end gap-2 pt-4">
               <Button type="submit" disabled={updateGame.isPending || !form.name}>

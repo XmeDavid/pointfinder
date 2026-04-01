@@ -20,7 +20,7 @@ export function CreateGamePage() {
   const toast = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({ name: "", description: "", startDate: "", endDate: "", uniformAssignment: true, tileSource: "osm-classic" });
+  const [form, setForm] = useState({ name: "", description: "", startDate: "", endDate: "", uniformAssignment: true, tileSource: "osm-classic", unlockTrigger: "CHECK_IN" });
   const [actionError, setActionError] = useState("");
 
   const createGame = useMutation({
@@ -117,6 +117,25 @@ export function CreateGamePage() {
                 <option value="swisstopo">{t("settings.tileSourceSwisstopo")}</option>
                 <option value="swisstopo-sat">{t("settings.tileSourceSwisstopoSat")}</option>
               </select>
+            </div>
+            <div className="space-y-2">
+              <FormLabel htmlFor="unlockTrigger">{t("settings.unlockTrigger")}</FormLabel>
+              <p className="text-xs text-muted-foreground">{t("settings.unlockTriggerDescription")}</p>
+              <select
+                id="unlockTrigger"
+                value={form.unlockTrigger}
+                onChange={(e) => setForm((f) => ({ ...f, unlockTrigger: e.target.value }))}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="CHECK_IN">{t("settings.unlockTriggerCheckIn")}</option>
+                <option value="SUBMISSION">{t("settings.unlockTriggerSubmission")}</option>
+                <option value="COMPLETED">{t("settings.unlockTriggerCompleted")}</option>
+              </select>
+              <p className="text-xs text-muted-foreground mt-1">
+                {form.unlockTrigger === "CHECK_IN" && t("settings.unlockTriggerCheckInDesc")}
+                {form.unlockTrigger === "SUBMISSION" && t("settings.unlockTriggerSubmissionDesc")}
+                {form.unlockTrigger === "COMPLETED" && t("settings.unlockTriggerCompletedDesc")}
+              </p>
             </div>
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div className="space-y-0.5">

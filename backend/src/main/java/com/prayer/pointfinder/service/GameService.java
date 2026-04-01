@@ -7,6 +7,7 @@ import com.prayer.pointfinder.dto.request.UpdateGameRequest;
 import com.prayer.pointfinder.dto.response.GameResponse;
 import com.prayer.pointfinder.dto.response.UserResponse;
 import com.prayer.pointfinder.entity.*;
+import com.prayer.pointfinder.entity.UnlockTrigger;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ForbiddenException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
@@ -58,6 +59,7 @@ public class GameService {
 
     private static final int BROADCAST_CODE_LENGTH = 6;
     private static final java.util.Set<String> VALID_TILE_SOURCES = java.util.Set.of("osm", "osm-classic", "voyager", "positron", "swisstopo", "swisstopo-sat");
+    private static final java.util.Set<String> VALID_UNLOCK_TRIGGERS = java.util.Set.of("CHECK_IN", "SUBMISSION", "COMPLETED");
 
     // ── Read ─────────────────────────────────────────────────────────
 
@@ -113,6 +115,7 @@ public class GameService {
                 .endDate(request.getEndDate())
                 .uniformAssignment(request.getUniformAssignment() != null ? request.getUniformAssignment() : false)
                 .tileSource(validateTileSource(request.getTileSource()))
+                .unlockTrigger(validateUnlockTrigger(request.getUnlockTrigger()))
                 .status(GameStatus.setup)
                 .createdBy(currentUser)
                 .build();
@@ -135,6 +138,9 @@ public class GameService {
         }
         if (request.getTileSource() != null) {
             game.setTileSource(validateTileSource(request.getTileSource()));
+        }
+        if (request.getUnlockTrigger() != null) {
+            game.setUnlockTrigger(validateUnlockTrigger(request.getUnlockTrigger()));
         }
         if (request.getBroadcastEnabled() != null) {
             boolean wasEnabled = Boolean.TRUE.equals(game.getBroadcastEnabled());
@@ -338,6 +344,15 @@ public class GameService {
             throw new BadRequestException("Invalid tile source: " + tileSource + ". Valid values: " + VALID_TILE_SOURCES);
         }
         return tileSource;
+    }
+
+    private UnlockTrigger validateUnlockTrigger(String unlockTrigger) {
+        if (unlockTrigger == null) return UnlockTrigger.CHECK_IN;
+        String upper = unlockTrigger.toUpperCase();
+        if (!VALID_UNLOCK_TRIGGERS.contains(upper)) {
+            throw new BadRequestException("Invalid unlock trigger: " + unlockTrigger + ". Must be one of: CHECK_IN, SUBMISSION, COMPLETED");
+        }
+        return UnlockTrigger.valueOf(upper);
     }
 
     private String generateBroadcastCode() {

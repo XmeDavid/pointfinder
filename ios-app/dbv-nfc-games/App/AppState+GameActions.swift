@@ -70,6 +70,9 @@ extension AppState {
                 // Optimistic update so UI reflects check-in immediately
                 updateLocalBaseStatus(baseId: baseId, status: .checkedIn)
 
+                // Reveal any hidden bases unlocked by challenges at this base
+                await revealUnlockedBases(checkedInBaseId: baseId, gameId: gameId)
+
                 // Send location immediately so operators see the team near the base
                 await locationService.sendLocationNow()
 
@@ -100,6 +103,9 @@ extension AppState {
 
         // Update local progress state
         updateLocalBaseStatus(baseId: baseId, status: .checkedIn)
+
+        // Reveal any hidden bases unlocked by challenges at this base
+        await revealUnlockedBases(checkedInBaseId: baseId, gameId: gameId)
 
         // Get cached challenge info
         let challenge = await GameDataCache.shared.getCachedChallenge(forBaseId: baseId, teamId: teamId, gameId: gameId)
@@ -475,6 +481,50 @@ extension AppState {
 
     func progressForBase(_ baseId: UUID) -> BaseProgress? {
         baseProgress.first(where: { $0.baseId == baseId })
+    }
+
+    /// Optimistically reveal hidden bases that are unlocked by challenges at the checked-in base.
+    /// This avoids waiting for a server round-trip when `unlockTrigger` is `CHECK_IN`.
+    private func revealUnlockedBases(checkedInBaseId: UUID, gameId: UUID) async {
+        // Only apply for CHECK_IN trigger (the default)
+        let unlockTrigger = await GameDataCache.shared.getCachedUnlockTrigger(gameId: gameId) ?? "CHECK_IN"
+        guard unlockTrigger == "CHECK_IN" else { return }
+
+        guard let challenges = await GameDataCache.shared.getCachedChallenges(gameId: gameId),
+              let allBases = await GameDataCache.shared.getCachedBases(gameId: gameId) else { return }
+
+        // Find challenges that live at this base (fixedBaseId matches)
+        let challengesAtBase = challenges.filter { $0.fixedBaseId == checkedInBaseId }
+
+        var newEntries: [BaseProgress] = []
+        for challenge in challengesAtBase {
+            guard let unlocksBaseIds = challenge.unlocksBaseIds else { continue }
+            for unlockedBaseId in unlocksBaseIds {
+                // Skip if already visible in progress
+                if baseProgress.contains(where: { $0.baseId == unlockedBaseId }) { continue }
+                // Skip if already queued to be added
+                if newEntries.contains(where: { $0.baseId == unlockedBaseId }) { continue }
+                // Find the hidden base metadata from cached game data
+                guard let hiddenBase = allBases.first(where: { $0.id == unlockedBaseId }) else { continue }
+                newEntries.append(BaseProgress(
+                    baseId: hiddenBase.id,
+                    baseName: hiddenBase.name,
+                    lat: hiddenBase.lat,
+                    lng: hiddenBase.lng,
+                    nfcLinked: hiddenBase.nfcLinked,
+                    status: BaseStatus.notVisited.rawValue,
+                    checkedInAt: nil,
+                    challengeId: nil,
+                    submissionStatus: nil
+                ))
+            }
+        }
+
+        if !newEntries.isEmpty {
+            baseProgress.append(contentsOf: newEntries)
+            // Also update the cache so the revealed bases persist across app restarts
+            await GameDataCache.shared.updateCachedProgress(baseProgress, gameId: gameId)
+        }
     }
 
     private func updateLocalBaseStatus(baseId: UUID, status: BaseStatus) {

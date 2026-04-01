@@ -29,6 +29,7 @@ public class PlayerService {
 
     private final PlayerRepository playerRepository;
     private final TeamRepository teamRepository;
+    private final GameRepository gameRepository;
     private final BaseRepository baseRepository;
     private final ChallengeRepository challengeRepository;
     private final AssignmentRepository assignmentRepository;
@@ -185,6 +186,10 @@ public class PlayerService {
         team.getId();
         gameAccessService.ensurePlayerBelongsToGame(player, gameId);
 
+        Game game = gameRepository.findById(gameId)
+                .orElseThrow(() -> new ResourceNotFoundException("Game", gameId));
+        UnlockTrigger unlockTrigger = game.getUnlockTrigger();
+
         List<Base> bases = baseRepository.findByGameId(gameId);
         List<CheckIn> checkIns = checkInRepository.findByGameIdAndTeamId(gameId, team.getId());
         List<Submission> submissions = submissionRepository.findByTeamId(team.getId());
@@ -196,6 +201,14 @@ public class PlayerService {
         for (Challenge uc : unlockChallenges) {
             for (Base unlockedBase : uc.getUnlocksBases()) {
                 unlockChallengeByTargetBase.put(unlockedBase.getId(), uc.getId());
+            }
+        }
+
+        // For CHECK_IN mode: map unlocking challengeId -> the baseId where that challenge lives
+        Map<UUID, UUID> fixedBaseByChallenge = new HashMap<>();
+        for (Base b : bases) {
+            if (b.getFixedChallenge() != null) {
+                fixedBaseByChallenge.put(b.getFixedChallenge().getId(), b.getId());
             }
         }
 
@@ -230,18 +243,32 @@ public class PlayerService {
             String submissionStatus = sub != null ? sub.getStatus().name() : null;
 
             // Hide bases marked as hidden that the team hasn't visited yet,
-            // unless the team has completed the challenge that unlocks this base
+            // unless the unlock condition for this base is met
             if (Boolean.TRUE.equals(base.getHidden()) && status == BaseStatus.not_visited) {
                 UUID unlockingChallengeId = unlockChallengeByTargetBase.get(bId);
-                if (unlockingChallengeId != null) {
-                    Submission unlockSub = submissionByChallenge.get(unlockingChallengeId);
-                    boolean unlocked = unlockSub != null
-                            && (unlockSub.getStatus() == SubmissionStatus.approved
-                                || unlockSub.getStatus() == SubmissionStatus.correct);
-                    if (!unlocked) {
-                        return null;
+                if (unlockingChallengeId == null) {
+                    return null;
+                }
+
+                boolean unlocked = switch (unlockTrigger) {
+                    case CHECK_IN -> {
+                        // Check if team checked in at the base where the unlocking challenge lives
+                        UUID challengeFixedBase = fixedBaseByChallenge.get(unlockingChallengeId);
+                        yield challengeFixedBase != null && checkInByBase.containsKey(challengeFixedBase);
                     }
-                } else {
+                    case SUBMISSION -> {
+                        Submission unlockSub = submissionByChallenge.get(unlockingChallengeId);
+                        yield unlockSub != null;
+                    }
+                    case COMPLETED -> {
+                        Submission unlockSub = submissionByChallenge.get(unlockingChallengeId);
+                        yield unlockSub != null
+                                && (unlockSub.getStatus() == SubmissionStatus.approved
+                                    || unlockSub.getStatus() == SubmissionStatus.correct);
+                    }
+                };
+
+                if (!unlocked) {
                     return null;
                 }
             }
@@ -294,6 +321,9 @@ public class PlayerService {
         team.getId(); // Force initialization
         gameAccessService.ensurePlayerBelongsToGame(player, gameId);
 
+        Game game = gameRepository.findById(gameId)
+                .orElseThrow(() -> new ResourceNotFoundException("Game", gameId));
+
         // Get current progress (already filters hidden+not_visited bases)
         List<BaseProgressResponse> progress = getProgress(gameId, player);
 
@@ -302,8 +332,11 @@ public class PlayerService {
                 .map(BaseProgressResponse::getBaseId)
                 .collect(Collectors.toSet());
 
-        // Get all bases, then filter to only visible ones
-        List<BaseResponse> bases = getBases(gameId, player).stream()
+        // Get all bases for the game
+        List<BaseResponse> allGameBases = getBases(gameId, player);
+
+        // Visible bases: those in progress
+        List<BaseResponse> bases = allGameBases.stream()
                 .filter(b -> visibleBaseIds.contains(b.getId()))
                 .toList();
 
@@ -332,9 +365,44 @@ public class PlayerService {
             }
         }
 
+        // Build fixedBaseId lookup: challengeId -> baseId where the challenge lives
+        Map<UUID, UUID> fixedBaseByChallenge = new HashMap<>();
+        for (BaseResponse b : allGameBases) {
+            if (b.getFixedChallengeId() != null) {
+                fixedBaseByChallenge.put(b.getFixedChallengeId(), b.getId());
+            }
+        }
+
+        // Collect hidden base IDs that are unlock targets of visible challenges,
+        // so clients can reveal them locally on check-in without a server round-trip.
+        Set<UUID> hiddenUnlockTargetIds = new HashSet<>();
+        List<Challenge> allChallenges = challengeRepository.findByGameId(gameId);
+        Map<UUID, Challenge> challengeById = allChallenges.stream()
+                .collect(Collectors.toMap(Challenge::getId, c -> c));
+        for (UUID cId : challengeIds) {
+            Challenge c = challengeById.get(cId);
+            if (c != null && !c.getUnlocksBases().isEmpty()) {
+                for (Base targetBase : c.getUnlocksBases()) {
+                    if (!visibleBaseIds.contains(targetBase.getId())) {
+                        hiddenUnlockTargetIds.add(targetBase.getId());
+                    }
+                }
+            }
+        }
+
+        // Add hidden unlock-target bases to the bases list so clients have their metadata
+        if (!hiddenUnlockTargetIds.isEmpty()) {
+            List<BaseResponse> hiddenBases = allGameBases.stream()
+                    .filter(b -> hiddenUnlockTargetIds.contains(b.getId()))
+                    .toList();
+            List<BaseResponse> combinedBases = new ArrayList<>(bases);
+            combinedBases.addAll(hiddenBases);
+            bases = combinedBases;
+        }
+
         // Load all relevant challenges, resolving {{variables}} for this team
         UUID teamId = team.getId();
-        List<ChallengeResponse> challenges = challengeRepository.findByGameId(gameId).stream()
+        List<ChallengeResponse> challenges = allChallenges.stream()
                 .filter(c -> challengeIds.contains(c.getId()))
                 .map(c -> ChallengeResponse.builder()
                         .id(c.getId())
@@ -351,11 +419,15 @@ public class PlayerService {
                         .points(c.getPoints())
                         .locationBound(c.getLocationBound())
                         .requirePresenceToSubmit(c.getRequirePresenceToSubmit())
+                        .unlocksBaseIds(c.getUnlocksBases().isEmpty() ? null :
+                                c.getUnlocksBases().stream().map(Base::getId).toList())
+                        .fixedBaseId(fixedBaseByChallenge.get(c.getId()))
                         .build())
                 .toList();
 
         return GameDataResponse.builder()
                 .gameStatus(team.getGame().getStatus().name())
+                .unlockTrigger(game.getUnlockTrigger().name())
                 .bases(bases)
                 .challenges(challenges)
                 .assignments(assignments)

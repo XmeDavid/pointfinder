@@ -23,6 +23,7 @@ export interface Game {
   broadcastEnabled: boolean;
   broadcastCode: string | null;
   tileSource: string;
+  unlockTrigger: string;
 }
 
 export interface Base {

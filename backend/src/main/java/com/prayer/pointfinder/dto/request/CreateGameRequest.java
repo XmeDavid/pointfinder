@@ -23,4 +23,6 @@ public class CreateGameRequest {
     private Boolean uniformAssignment = false;
 
     private String tileSource;
+
+    private String unlockTrigger;
 }
