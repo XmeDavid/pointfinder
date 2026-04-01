@@ -518,5 +518,8 @@ function resolveVariablesClient(
   for (const v of challengeVariables) {
     if (v.teamValues[teamId] !== undefined) vars[v.key] = v.teamValues[teamId];
   }
-  return template.replace(/\{\{(\w+)\}\}/g, (match, key) => vars[key] ?? match);
+  return template.replace(/\{\{(\w+)\}\}|&#123;&#123;(\w+)&#125;&#125;/g, (match, g1, g2) => {
+    const key = g1 ?? g2;
+    return vars[key] ?? match;
+  });
 }
