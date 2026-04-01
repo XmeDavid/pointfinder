@@ -549,8 +549,8 @@ actor APIClient {
             isRefreshing = false
 
             return newToken
-        } catch {
-            // Refresh failed — session is unrecoverable
+        } catch APIError.authExpired {
+            // Auth truly expired (refresh endpoint returned 401) — session is unrecoverable
             storedRefreshToken = nil
             await onAuthFailure?()
 
@@ -561,6 +561,16 @@ actor APIClient {
             isRefreshing = false
 
             throw APIError.authExpired
+        } catch {
+            // Transient error (network timeout, connectivity issue) — don't nuke the session.
+            // The refresh token is still valid; let the next request retry.
+            for waiter in refreshWaiters {
+                waiter.resume(throwing: error)
+            }
+            refreshWaiters.removeAll()
+            isRefreshing = false
+
+            throw error
         }
     }
 
