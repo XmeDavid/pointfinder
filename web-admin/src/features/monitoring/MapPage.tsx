@@ -17,7 +17,7 @@ import { Alert } from "@/components/ui/alert";
 import { useTranslation } from "react-i18next";
 import { useGameWebSocket } from "@/hooks/useGameWebSocket";
 import { formatDateTime } from "@/lib/utils";
-import { STATUS_COLORS, getAggregateStatus as getAggregateStatusUtil, parseTimestamp, computeBounds } from "@/lib/map-utils";
+import { STATUS_COLORS, getAggregateStatus as getAggregateStatusUtil, parseTimestamp, computeBounds, computeBearing } from "@/lib/map-utils";
 import { PinMarkerSvg, CircleDot } from "@/components/common/MapMarkers";
 import { getResolvedStyleUrl, getDefaultCenter } from "@/lib/tile-sources";
 import { useThemeStore } from "@/hooks/useTheme";
@@ -205,6 +205,26 @@ export function MapPage() {
     return features.length > 0
       ? { type: "FeatureCollection" as const, features }
       : null;
+  }, [challenges, bases]);
+
+  const connectionArrows = useMemo(() => {
+    if (!challenges || !bases) return [];
+    return challenges
+      .filter((c) => c.unlocksBaseIds && c.unlocksBaseIds.length > 0)
+      .flatMap((challenge) => {
+        const from = bases.find((b) => b.fixedChallengeId === challenge.id);
+        if (!from) return [];
+        return challenge.unlocksBaseIds!.map((toBaseId) => {
+          const to = bases.find((b) => b.id === toBaseId);
+          if (!to) return null;
+          return {
+            key: `${from.id}-${toBaseId}`,
+            lat: (from.lat + to.lat) / 2,
+            lng: (from.lng + to.lng) / 2,
+            bearing: computeBearing(from, to),
+          };
+        }).filter(Boolean);
+      }) as { key: string; lat: number; lng: number; bearing: number }[];
   }, [challenges, bases]);
 
   const selectedTeam = viewMode !== "all" ? teams.find((t) => t.id === viewMode) : null;
@@ -405,6 +425,13 @@ export function MapPage() {
                 />
               </Source>
             )}
+            {connectionArrows.map((a) => (
+              <Marker key={a.key} longitude={a.lng} latitude={a.lat} anchor="center">
+                <svg width="16" height="16" viewBox="0 0 16 16" style={{ transform: `rotate(${a.bearing}deg)` }}>
+                  <polygon points="8,2 13,14 8,10 3,14" fill="#6b7280" opacity="0.7" />
+                </svg>
+              </Marker>
+            ))}
 
             {/* Team location markers in all-view; player markers in team-view */}
             {showTeams && markerLocations.map((loc) => {

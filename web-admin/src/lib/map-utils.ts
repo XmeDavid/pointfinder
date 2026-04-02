@@ -43,6 +43,18 @@ export function parseTimestamp(value: string): number {
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
+/** Compute bearing (degrees, 0=north, clockwise) between two lat/lng points */
+export function computeBearing(from: { lat: number; lng: number }, to: { lat: number; lng: number }): number {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const toDeg = (r: number) => (r * 180) / Math.PI;
+  const dLng = toRad(to.lng - from.lng);
+  const lat1 = toRad(from.lat);
+  const lat2 = toRad(to.lat);
+  const y = Math.sin(dLng) * Math.cos(lat2);
+  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+  return (toDeg(Math.atan2(y, x)) + 360) % 360;
+}
+
 /** Compute LngLatBounds from a list of coordinates */
 export function computeBounds(points: { lat: number; lng: number }[]): [[number, number], [number, number]] | null {
   if (points.length === 0) return null;

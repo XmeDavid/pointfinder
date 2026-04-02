@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import { Map as MapGL, Marker, Source, Layer } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Lock, Unlock, Pencil, EyeOff, Wifi, WifiOff } from "lucide-react";
-import { computeBounds } from "@/lib/map-utils";
+import { computeBounds, computeBearing } from "@/lib/map-utils";
 import { PinMarkerSvg } from "@/components/common/MapMarkers";
 import { getResolvedStyleUrl, getDefaultCenter } from "@/lib/tile-sources";
 import { useThemeStore } from "@/hooks/useTheme";
@@ -190,6 +190,18 @@ export function BaseMapView({ bases, connections, className, onEdit, tileSource 
       }
     : null;
 
+  const connectionArrows = connections?.map((conn) => {
+    const from = bases.find((b) => b.id === conn.fromBaseId);
+    const to = bases.find((b) => b.id === conn.toBaseId);
+    if (!from || !to) return null;
+    return {
+      key: `${conn.fromBaseId}-${conn.toBaseId}`,
+      lat: (from.lat + to.lat) / 2,
+      lng: (from.lng + to.lng) / 2,
+      bearing: computeBearing(from, to),
+    };
+  }).filter(Boolean) as { key: string; lat: number; lng: number; bearing: number }[] | undefined;
+
   return (
     <div className={className}>
       <MapGL
@@ -219,6 +231,13 @@ export function BaseMapView({ bases, connections, className, onEdit, tileSource 
             />
           </Source>
         )}
+        {connectionArrows?.map((a) => (
+          <Marker key={a.key} longitude={a.lng} latitude={a.lat} anchor="center">
+            <svg width="16" height="16" viewBox="0 0 16 16" style={{ transform: `rotate(${a.bearing}deg)` }}>
+              <polygon points="8,2 13,14 8,10 3,14" fill="#6b7280" opacity="0.7" />
+            </svg>
+          </Marker>
+        ))}
 
         {popup && (
           <Marker longitude={popup.lng} latitude={popup.lat} anchor="bottom">

@@ -15,7 +15,23 @@ export const AudioExtension = Node.create({
   },
   renderHTML({ HTMLAttributes }) {
     return ["audio", mergeAttributes(HTMLAttributes, {
-      controls: "", style: "width:100%;margin:0.5em 0"
+      controls: "true", preload: "metadata", style: "width:100%;margin:0.5em 0",
     })];
+  },
+  addNodeView() {
+    return ({ node }) => {
+      const dom = document.createElement("div");
+      dom.style.margin = "0.5em 0";
+      dom.contentEditable = "false";
+
+      const audio = document.createElement("audio");
+      audio.controls = true;
+      audio.preload = "metadata";
+      audio.style.width = "100%";
+      audio.src = node.attrs.src ?? "";
+      dom.appendChild(audio);
+
+      return { dom };
+    };
   },
 });
