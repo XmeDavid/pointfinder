@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle, XCircle, Clock, FileText, Filter, Maximize2, MoreHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
@@ -70,6 +71,8 @@ export function SubmissionsPage() {
   const websocketError = useGameWebSocket(gameId);
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<"all" | "pending">("all");
+  const [teamFilter, setTeamFilter] = useState<string>("all");
+  const [challengeFilter, setChallengeFilter] = useState<string>("all");
   const [reviewingSub, setReviewingSub] = useState<Submission | null>(null);
   const [feedback, setFeedback] = useState("");
   const [reviewPoints, setReviewPoints] = useState<number>(0);
@@ -140,18 +143,28 @@ export function SubmissionsPage() {
 
   const pendingCount = useMemo(() => submissions.filter((s) => s.status === "pending").length, [submissions]);
   const sorted = useMemo(() => {
-    const filtered = filter === "pending" ? submissions.filter((s) => s.status === "pending") : submissions;
+    let filtered = filter === "pending" ? submissions.filter((s) => s.status === "pending") : submissions;
+    if (teamFilter !== "all") filtered = filtered.filter((s) => s.teamId === teamFilter);
+    if (challengeFilter !== "all") filtered = filtered.filter((s) => s.challengeId === challengeFilter);
     return [...filtered].sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
-  }, [submissions, filter]);
+  }, [submissions, filter, teamFilter, challengeFilter]);
   const expectedReviewPoints = reviewingSub ? challengeMap.get(reviewingSub.challengeId)?.points : undefined;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold">{t("nav.submissions")}</h1><p className="text-muted-foreground">{t("submissions.pendingReview", { count: pendingCount })}</p></div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button variant={filter === "all" ? "secondary" : "ghost"} size="sm" onClick={() => setFilter("all")}>{t("common.all")} ({submissions.length})</Button>
           <Button variant={filter === "pending" ? "secondary" : "ghost"} size="sm" onClick={() => setFilter("pending")}><Filter className="mr-1 h-3 w-3" />{t("common.pending")} ({pendingCount})</Button>
+          <Select className="h-8 w-auto text-sm" value={teamFilter} onChange={(e) => setTeamFilter(e.target.value)}>
+            <option value="all">{t("common.allTeams")}</option>
+            {teams.map((team) => (<option key={team.id} value={team.id}>{team.name}</option>))}
+          </Select>
+          <Select className="h-8 w-auto text-sm" value={challengeFilter} onChange={(e) => setChallengeFilter(e.target.value)}>
+            <option value="all">{t("common.allChallenges")}</option>
+            {challenges.map((ch) => (<option key={ch.id} value={ch.id}>{ch.title}</option>))}
+          </Select>
         </div>
       </div>
       {websocketError && <Alert>{websocketError}</Alert>}
