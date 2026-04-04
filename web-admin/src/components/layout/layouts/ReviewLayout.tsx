@@ -349,7 +349,7 @@ export function ReviewLayout({ gameId, gameStatus }: ReviewLayoutProps) {
               <p className="text-sm font-medium mb-1">
                 {expectedPoints != null ? t("submissions.pointsLabelWithExpected", { points: expectedPoints }) : t("common.points_label")}
               </p>
-              <Input type="number" min={0} value={reviewPoints} onChange={(e) => setSelection((s) => ({ ...s, points: parseInt(e.target.value) || 0 }))} />
+              <Input type="number" value={reviewPoints} onChange={(e) => setSelection((s) => ({ ...s, points: parseInt(e.target.value) || 0 }))} />
             </div>
 
             {/* Feedback */}

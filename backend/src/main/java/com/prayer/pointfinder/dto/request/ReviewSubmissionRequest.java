@@ -12,6 +12,6 @@ public class ReviewSubmissionRequest {
 
     private String feedback;
 
-    @Min(0) @Max(100000)
+    @Min(-100000) @Max(100000)
     private Integer points;
 }
