@@ -93,7 +93,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_URL: /api
-        VITE_WS_URL: /ws
+        VITE_WS_URL: /ws-native
     container_name: pointfinder-web
     restart: unless-stopped
     volumes:
