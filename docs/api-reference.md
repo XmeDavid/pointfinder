@@ -403,6 +403,10 @@ A future slice will add `GET /api/games/:gameId/snapshot?lastSeenVersion=N`. Whe
 | GET | `/games/:gameId/teams/:teamId/players` | Operator | List team members |
 | DELETE | `/games/:gameId/teams/:teamId/players/:playerId` | Operator | Remove player from team |
 | POST | `/games/:gameId/teams/:teamId/check-in/:baseId` | Operator | Manual operator check-in (audited rescue) |
+| POST | `/games/:gameId/teams/:teamId/bases/:baseId/mark-completed` | Operator | Mark a challenge complete for the team (audited rescue) |
+| POST | `/games/:gameId/teams/:teamId/bases/:baseId/unlock-override` | Operator | Force-unlock a hidden base for the team (audited rescue, reversible) |
+| DELETE | `/games/:gameId/teams/:teamId/bases/:baseId/unlock-override` | Operator | Soft-delete the active unlock override for the pair |
+| GET | `/games/:gameId/teams/:teamId/unlock-overrides` | Operator | List active unlock overrides for the team |
 
 ### Key Payloads
 
@@ -419,6 +423,107 @@ Response includes `joinCode` — a unique 20-character alphanumeric code players
 ```
 
 The operator manual check-in endpoint creates a check-in for the given team at the given base on behalf of an operator. The request body is OPTIONAL — legacy clients that POST without a body still work and the audit row records `operator_reason = NULL`. The endpoint is idempotent on the active `(team_id, base_id)` pair: a second call returns the existing check-in without mutating its audit fields. The synthesized check-in row carries the V36 audit fields (`actor_operator_user_id`, `actor_display_name_snapshot`, `source_surface = 'operator_rescue'`, `operator_reason`) and the corresponding `ActivityEvent` records the same actor metadata. See `docs/business-logic.md` § "Audit Trail Foundation" for the full audit contract.
+
+### Operator Rescue Overrides (P1 Phase 2)
+
+The three endpoints below are the Phase 2 rescue surface on top of the V36 audit foundation. All of them require `ROLE_ADMIN` or `ROLE_OPERATOR` with access to the game. Full behavior and audit contract: `docs/business-logic.md` § "Operator Rescue Actions".
+
+**POST /games/:gameId/teams/:teamId/bases/:baseId/mark-completed** (MarkCompletedRequest)
+```json
+{
+  "challengeId": "UUID (required)",
+  "reason": "string (optional, max 500 chars)",
+  "pointsOverride": 50
+}
+```
+
+Synthesizes an APPROVED `Submission` attributed to the operator. Used when a team physically completed a task but the app got stuck. The `pointsOverride` field is optional; when absent the submission is awarded the challenge's configured `points`. Negative values are allowed for symmetry with the normal review path.
+
+Preconditions:
+- Team, base, and challenge must all belong to the target game.
+- Team must have an ACTIVE check-in at the base. Otherwise the endpoint returns 400 with `MARK_COMPLETED_REQUIRES_CHECKIN` in the message — call the manual check-in endpoint first if needed.
+
+Response: `201 Created` with the `SubmissionResponse` on first call. A re-call for the same `(operator, team, base, challenge)` tuple is idempotent and returns the same submission (via a deterministic `idempotency_key` derived from the tuple).
+
+Example success response:
+```json
+{
+  "id": "b1a4c9e2-0000-0000-0000-000000000001",
+  "teamId": "UUID",
+  "challengeId": "UUID",
+  "baseId": "UUID",
+  "answer": "[Operator marked complete]",
+  "fileUrl": null,
+  "fileUrls": null,
+  "status": "approved",
+  "submittedAt": "2026-04-08T17:45:00Z",
+  "reviewedBy": "operator-UUID",
+  "feedback": null,
+  "points": 10,
+  "completionContent": "Well done!"
+}
+```
+
+Error cases:
+| Status | Meaning |
+|---|---|
+| 400 | Missing `challengeId` or team has no active check-in at the base (`MARK_COMPLETED_REQUIRES_CHECKIN`). |
+| 403 | Caller does not have access to the game. |
+| 404 | Team, base, or challenge does not exist. |
+
+**POST /games/:gameId/teams/:teamId/bases/:baseId/unlock-override** (UnlockOverrideRequest, optional body)
+```json
+{ "reason": "string (optional, max 500 chars)" }
+```
+
+Creates (or returns the existing active) base unlock override for the `(team, base)` pair. Once an active override exists, `PlayerService.getProgress` treats the base as visible to that team regardless of the normal `unlockTrigger`. The override is scoped to the specific team — other teams in the same game do NOT see the base.
+
+Idempotency: a duplicate POST for an already-active pair returns the existing row without mutating its audit fields. Re-clicking the "unlock" button is safe.
+
+Response: `201 Created` with the `BaseUnlockOverrideResponse`:
+```json
+{
+  "id": "UUID",
+  "gameId": "UUID",
+  "teamId": "UUID",
+  "baseId": "UUID",
+  "createdByOperatorId": "operator-UUID",
+  "createdByDisplayName": "Jane Operator",
+  "reason": "GPS rain-out; letting them attempt the hidden base",
+  "createdAt": "2026-04-08T17:45:00Z"
+}
+```
+
+Error cases:
+| Status | Meaning |
+|---|---|
+| 403 | Caller does not have access to the game. |
+| 404 | Team or base does not exist. |
+
+**DELETE /games/:gameId/teams/:teamId/bases/:baseId/unlock-override** (UnlockOverrideRequest, optional body)
+```json
+{ "reason": "string (optional, max 500 chars)" }
+```
+
+Soft-deletes the active unlock override for the `(team, base)` pair by setting `deleted_at`, `deleted_by_operator_id`, and `deleted_by_display_name_snapshot`. The history row is preserved — a subsequent `POST` for the same pair creates a NEW row. The optional `reason` is narrated on the emitted `operator_override` activity event.
+
+Response: `204 No Content` on success.
+
+Error cases:
+| Status | Meaning |
+|---|---|
+| 403 | Caller does not have access to the game. |
+| 404 | Team, base, or active override does not exist. |
+
+**GET /games/:gameId/teams/:teamId/unlock-overrides**
+
+Lists all active unlock overrides for the team in the game. Used by the operator UI to surface "this team has overrides active" and to allow removal.
+
+Response: `200 OK` with an array of `BaseUnlockOverrideResponse` objects (same shape as POST response).
+
+Error cases: `403` (no game access) or `404` (team not found).
+
+All three endpoints emit an `operator_override` activity event via the standard `GameEventBroadcaster` path, which auto-bumps `games.state_version`. Player clients reconcile via the snapshot endpoint on next foreground/reconnect — no push notification is sent.
 
 ---
 

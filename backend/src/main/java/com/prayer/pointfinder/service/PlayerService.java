@@ -46,6 +46,7 @@ public class PlayerService {
     private final TemplateVariableService templateVariableService;
     private final GameNotificationRepository gameNotificationRepository;
     private final UploadSessionRepository uploadSessionRepository;
+    private final BaseUnlockOverrideRepository baseUnlockOverrideRepository;
 
     @Transactional(timeout = 10)
     public PlayerAuthResponse joinTeam(PlayerJoinRequest request) {
@@ -208,6 +209,17 @@ public class PlayerService {
         List<Submission> submissions = submissionRepository.findByTeamId(team.getId());
         List<Assignment> assignments = assignmentRepository.findByGameIdAndTeamId(gameId, team.getId());
 
+        // P1 Phase 2: active operator unlock overrides make a hidden base
+        // visible to this team regardless of the normal unlock trigger.
+        // The query is scoped to (gameId, teamId) and filters archived/
+        // deleted overrides so a reversed override no longer affects
+        // visibility. Keeping it as a Set<UUID> of base ids means the
+        // downstream per-base visibility decision is an O(1) check.
+        Set<UUID> overriddenBaseIds = baseUnlockOverrideRepository
+                .findActiveByGameIdAndTeamId(gameId, team.getId()).stream()
+                .map(o -> o.getBase().getId())
+                .collect(Collectors.toSet());
+
         // Build unlock maps: targetBaseId -> challengeId that unlocks it
         List<Challenge> unlockChallenges = challengeRepository.findByGameIdAndUnlocksBasesNotEmpty(gameId);
         Map<UUID, UUID> unlockChallengeByTargetBase = new HashMap<>();
@@ -256,33 +268,42 @@ public class PlayerService {
             String submissionStatus = sub != null ? sub.getStatus().name() : null;
 
             // Hide bases marked as hidden that the team hasn't visited yet,
-            // unless the unlock condition for this base is met
+            // unless the unlock condition for this base is met OR an
+            // operator has created an active unlock override for this
+            // (team, base) pair via the P1 Phase 2 rescue endpoint.
             if (Boolean.TRUE.equals(base.getHidden()) && status == BaseStatus.not_visited) {
-                UUID unlockingChallengeId = unlockChallengeByTargetBase.get(bId);
-                if (unlockingChallengeId == null) {
-                    return null;
-                }
+                // Operator override short-circuits the normal unlock
+                // trigger: if an active override exists, the base is
+                // visible regardless of what the unlock rules say.
+                if (overriddenBaseIds.contains(bId)) {
+                    // fall through to the normal progress projection below
+                } else {
+                    UUID unlockingChallengeId = unlockChallengeByTargetBase.get(bId);
+                    if (unlockingChallengeId == null) {
+                        return null;
+                    }
 
-                boolean unlocked = switch (unlockTrigger) {
-                    case CHECK_IN -> {
-                        // Check if team checked in at the base where the unlocking challenge lives
-                        UUID challengeFixedBase = fixedBaseByChallenge.get(unlockingChallengeId);
-                        yield challengeFixedBase != null && checkInByBase.containsKey(challengeFixedBase);
-                    }
-                    case SUBMISSION -> {
-                        Submission unlockSub = submissionByChallenge.get(unlockingChallengeId);
-                        yield unlockSub != null;
-                    }
-                    case COMPLETED -> {
-                        Submission unlockSub = submissionByChallenge.get(unlockingChallengeId);
-                        yield unlockSub != null
-                                && (unlockSub.getStatus() == SubmissionStatus.approved
-                                    || unlockSub.getStatus() == SubmissionStatus.correct);
-                    }
-                };
+                    boolean unlocked = switch (unlockTrigger) {
+                        case CHECK_IN -> {
+                            // Check if team checked in at the base where the unlocking challenge lives
+                            UUID challengeFixedBase = fixedBaseByChallenge.get(unlockingChallengeId);
+                            yield challengeFixedBase != null && checkInByBase.containsKey(challengeFixedBase);
+                        }
+                        case SUBMISSION -> {
+                            Submission unlockSub = submissionByChallenge.get(unlockingChallengeId);
+                            yield unlockSub != null;
+                        }
+                        case COMPLETED -> {
+                            Submission unlockSub = submissionByChallenge.get(unlockingChallengeId);
+                            yield unlockSub != null
+                                    && (unlockSub.getStatus() == SubmissionStatus.approved
+                                        || unlockSub.getStatus() == SubmissionStatus.correct);
+                        }
+                    };
 
-                if (!unlocked) {
-                    return null;
+                    if (!unlocked) {
+                        return null;
+                    }
                 }
             }
 

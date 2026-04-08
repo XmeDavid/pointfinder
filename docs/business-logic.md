@@ -445,6 +445,74 @@ Legacy clients that POST without a body still work and the audit row records `op
 
 ---
 
+## 4b. Operator Rescue Actions
+
+Source spec: `docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md` (P1 Operator Rescue and Overrides). Migration: `V37__base_unlock_overrides.sql`. Wave: P1 Phase 2.
+
+### Why this exists
+
+During a live event, teams can be blocked by device issues, network problems, NFC problems, or app-state bugs. Operators need controlled ways to resolve those cases without corrupting the game. Phase 2 builds three rescue actions on top of the V36 audit substrate. Every rescue captures WHO, WHEN, WHY, and WHAT changed so a later incident review can reconstruct the event honestly.
+
+### Rescue action catalog
+
+| Action | Endpoint | Reversible | Emits activity event | Audit fields set |
+|---|---|---|---|---|
+| Manual check-in | `POST /api/games/{gameId}/teams/{teamId}/check-in/{baseId}` | No (but idempotent: re-calling returns the existing check-in) | `check_in` (with operator actor) | `check_ins.actor_operator_user_id`, `check_ins.actor_display_name_snapshot`, `check_ins.source_surface = 'operator_rescue'`, `check_ins.operator_reason` |
+| Mark completed | `POST /api/games/{gameId}/teams/{teamId}/bases/{baseId}/mark-completed` | No (but idempotent on `(operator, team, base, challenge)`) | `operator_override` | `submissions.created_by_operator_id`, `submissions.created_by_display_name_snapshot`, `submissions.operator_reason`, `submissions.source_surface = 'operator_rescue'` |
+| Unlock override | `POST /api/games/{gameId}/teams/{teamId}/bases/{baseId}/unlock-override` | Yes (soft-delete via `DELETE`) | `operator_override` (on both create and remove) | `base_unlock_overrides.created_by_operator_id`, `base_unlock_overrides.created_by_display_name_snapshot`, `base_unlock_overrides.operator_reason`, plus `deleted_*` fields on remove |
+
+Manual check-in is the gameplay anchor: before marking a base complete for a team you must have a check-in at that base, even if the operator had to create it manually. This keeps the progress model honest — `mark-completed` is a rescue on top of a recorded presence, not a pure state edit. The service enforces this with a `400 MARK_COMPLETED_REQUIRES_CHECKIN` error.
+
+### Mark completed
+
+Synthesizes an APPROVED `Submission` on the operator's behalf for the `(team, base, challenge)` triple. Used when a team physically completed a task but the app got stuck (bad NFC read, uploader crash, lost connectivity at review time).
+
+- **Points**: defaults to `challenge.points`. The request body may supply `pointsOverride` (integer, nullable) to award a different value. Negative values are allowed for symmetry with the existing review path.
+- **Answer**: stored as the literal `"[Operator marked complete]"` so the activity feed and audit export can distinguish a rescue submission from a player-typed answer at a glance.
+- **Reviewed-by**: set to the acting operator so the single-row audit of the submission is self-contained without joining the activity feed.
+- **Idempotency**: the `submissions.idempotency_key` is derived deterministically from `(operatorId, teamId, baseId, challengeId)` via `UUID.nameUUIDFromBytes`. Re-clicking the rescue button returns the same row instead of creating a duplicate or awarding extra points. The partial unique index on `submissions.idempotency_key` enforces race safety.
+- **Preconditions**: team, base, and challenge must all belong to the target game; the team must have an active (non-archived) check-in at the base; the caller must be an operator with access to the game.
+
+An `operator_override` activity event is emitted with the operator actor snapshot and the source surface `operator_rescue`. The broadcaster fans out `submission_status`, `activity`, and `leaderboard` events via `GameEventBroadcaster`, which auto-bumps `games.state_version`. Player clients pick up the corrected state on next foreground/reconnect via the snapshot endpoint.
+
+### Unlock override
+
+Forces a hidden base to become visible to a specific team, regardless of the game's normal unlock trigger. Used when field reality (bad weather, GPS errors, broken NFC tag, etc.) requires skipping the unlock chain.
+
+- **Storage**: new table `base_unlock_overrides` (V37) with `(game_id, team_id, base_id)` tuple and V36-style actor snapshots. A partial unique index on `(team_id, base_id) WHERE deleted_at IS NULL` enforces at most one ACTIVE override per pair.
+- **Visibility**: `PlayerService.getProgress` reads `findActiveByGameIdAndTeamId` once per snapshot and adds the matching base ids to a `Set<UUID>`. A hidden base with `status == not_visited` passes the visibility gate if its id is in that set, regardless of the normal `unlockTrigger` (`CHECK_IN`, `SUBMISSION`, or `COMPLETED`). The override is scoped to the specific `(team, base)` pair, so other teams in the same game do NOT see the base.
+- **Reversibility**: the `DELETE` verb soft-deletes the override by populating `deleted_at`, `deleted_by_operator_id`, and `deleted_by_display_name_snapshot` instead of removing the row. The history row stays in place for audit reconstruction. A later `POST` for the same pair creates a NEW row; it does not revive the deleted one.
+- **Idempotency on create**: a second `POST` for an already-active pair returns the existing row without mutating its audit fields. Re-clicking the "unlock" button in the operator UI must not rewrite history.
+- **Idempotency on remove**: a `DELETE` with no active override returns `404` (same convention as any other not-found case in this codebase).
+- **Reason**: optional on both verbs. On `POST` the reason is persisted on `base_unlock_overrides.operator_reason`. On `DELETE` the reason is narrated on the emitted activity event message (the override row itself is not mutated further).
+
+Both create and remove emit an `operator_override` activity event with the operator actor snapshot. Both verbs also broadcast a `game_config` event via `GameEventBroadcaster`, which auto-bumps `state_version`.
+
+### Player notification model: silent state correction
+
+Rescue actions do NOT send push notifications or in-app banners to the affected team today. The contract is:
+
+1. The rescue action writes the authoritative state to the database (new submission, new/removed override row).
+2. The broadcast path bumps `games.state_version` and emits the normal `activity`/`submission_status`/`leaderboard`/`game_config` events.
+3. Player clients that are online pick up the realtime event and either update locally or re-fetch the snapshot.
+4. Player clients that are offline reconcile on next app foreground / reconnect / network return via `GET /api/games/{id}/snapshot`, which reads canonical server state and is the rule for every P0 Track 2 recovery case.
+
+Operators who want an explicit heads-up message to the team can send one out of band — the Notifications feature handles that surface. The rescue endpoints themselves stay quiet so they are safe to call without worrying about a user-facing banner racing the state correction.
+
+### Audit trail summary per rescue action
+
+| Field captured | Manual check-in | Mark completed | Unlock override (create) | Unlock override (remove) |
+|---|---|---|---|---|
+| Acting operator FK | `check_ins.actor_operator_user_id` | `submissions.created_by_operator_id` (+ `reviewed_by`) | `base_unlock_overrides.created_by_operator_id` | `base_unlock_overrides.deleted_by_operator_id` |
+| Operator display name snapshot | `check_ins.actor_display_name_snapshot` | `submissions.created_by_display_name_snapshot` | `base_unlock_overrides.created_by_display_name_snapshot` | `base_unlock_overrides.deleted_by_display_name_snapshot` |
+| Source surface | `check_ins.source_surface = 'operator_rescue'` | `submissions.source_surface = 'operator_rescue'` | n/a (`base_unlock_overrides` rows are always operator-created) | n/a |
+| Operator reason | `check_ins.operator_reason` | `submissions.operator_reason` | `base_unlock_overrides.operator_reason` | on the activity event message only |
+| Activity event actor | `check_ins` → `activity_events.actor_operator_user_id` (+ snapshot) | `activity_events.actor_operator_user_id` (+ snapshot), type `operator_override` | same, type `operator_override` | same, type `operator_override` |
+
+Every rescue action is distinguishable from an organic player action in the activity feed and in structured data. The Phase 3 audit export will surface this metadata as the chronological incident log.
+
+---
+
 ## 5. Team Variables
 
 ### Purpose

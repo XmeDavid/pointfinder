@@ -1,6 +1,7 @@
 package com.prayer.pointfinder.service;
 
 import com.prayer.pointfinder.dto.request.CreateSubmissionRequest;
+import com.prayer.pointfinder.dto.request.MarkCompletedRequest;
 import com.prayer.pointfinder.dto.request.ReviewSubmissionRequest;
 import com.prayer.pointfinder.dto.response.SubmissionResponse;
 import com.prayer.pointfinder.entity.*;
@@ -22,8 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.data.domain.PageRequest;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -38,6 +41,7 @@ public class SubmissionService {
     private final BaseRepository baseRepository;
     private final UserRepository userRepository;
     private final ActivityEventRepository activityEventRepository;
+    private final CheckInRepository checkInRepository;
     private final GameEventBroadcaster eventBroadcaster;
     private final GameAccessService gameAccessService;
     private final FileStorageService fileStorageService;
@@ -318,6 +322,200 @@ public class SubmissionService {
         eventBroadcaster.broadcastLeaderboardUpdate(gameId, monitoringService.computeLeaderboard(gameId));
 
         return toResponse(submission);
+    }
+
+    // ── P1 Phase 2: Operator "mark completed" rescue ───────────────────
+
+    /**
+     * Synthesizes an APPROVED submission on the operator's behalf, used
+     * when a team physically completed a task but the app got stuck
+     * (broken NFC read, uploader crashed, connectivity gap at review time,
+     * etc.). The resulting row carries the V36 audit foundation fields so
+     * the operator action is distinguishable from an organic submission
+     * in the activity export.
+     *
+     * <p><strong>Preconditions:</strong>
+     * <ul>
+     *   <li>Caller is an operator with access to the game.</li>
+     *   <li>Team belongs to the game, base belongs to the game, challenge
+     *       belongs to the game.</li>
+     *   <li>Team has an ACTIVE check-in at the base. The check-in is the
+     *       gameplay anchor; if missing, the operator should call the
+     *       manual check-in endpoint first. Surfaced as a 400 with
+     *       {@code MARK_COMPLETED_REQUIRES_CHECKIN}.</li>
+     * </ul>
+     *
+     * <p><strong>Idempotency:</strong> A deterministic
+     * {@code UUID.nameUUIDFromBytes} key derived from
+     * {@code (operatorId, teamId, baseId, challengeId)} is written to
+     * {@code submissions.idempotency_key}. Re-calling the endpoint for the
+     * same operator+team+base+challenge returns the existing row without
+     * creating a duplicate or awarding extra points.
+     *
+     * <p><strong>Audit capture:</strong> the new submission sets
+     * {@code created_by_operator_id}, {@code created_by_display_name_snapshot},
+     * {@code operator_reason}, and {@code source_surface = "operator_rescue"}.
+     * A companion {@link ActivityEventType#operator_override} event is
+     * emitted with the same actor snapshot.
+     *
+     * <p><strong>Broadcasts:</strong> the normal {@code submission_status}
+     * + {@code leaderboard} + {@code activity} events are emitted via
+     * {@link GameEventBroadcaster}, which bumps {@code state_version}, so
+     * player clients will reconcile on next snapshot fetch.
+     */
+    @Transactional(timeout = 10)
+    public SubmissionResponse markCompletedByOperator(
+            UUID gameId, UUID teamId, UUID baseId, MarkCompletedRequest request) {
+
+        // Access check: only operators with access to the game can call
+        // this path. Players cannot mark anything completed.
+        gameAccessService.ensureCurrentUserCanAccessGame(gameId);
+
+        Game game = gameRepository.findById(gameId)
+                .orElseThrow(() -> new ResourceNotFoundException("Game", gameId));
+
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new ResourceNotFoundException("Team", teamId));
+        ensureBelongsToGame(team.getGame().getId(), gameId, "Team");
+
+        Base base = baseRepository.findById(baseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Base", baseId));
+        ensureBelongsToGame(base.getGame().getId(), gameId, "Base");
+
+        UUID challengeId = request.getChallengeId();
+        if (challengeId == null) {
+            throw new BadRequestException("challengeId is required");
+        }
+        Challenge challenge = challengeRepository.findById(challengeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Challenge", challengeId));
+        ensureBelongsToGame(challenge.getGame().getId(), gameId, "Challenge");
+
+        // Force initialization of lazy proxies so the broadcast helpers do
+        // not hit a LazyInitializationException after the transaction.
+        team.getName();
+        challenge.getTitle();
+        base.getName();
+        game.getId();
+
+        // Gameplay anchor: the team must be checked in at the base. This
+        // keeps the progress model honest — "mark completed" is a rescue
+        // on top of a recorded presence, not a pure state edit.
+        if (!checkInRepository.existsByTeamIdAndBaseId(teamId, baseId)) {
+            throw new BadRequestException(
+                    "MARK_COMPLETED_REQUIRES_CHECKIN: Team is not checked in at this base. "
+                            + "Call the manual check-in endpoint first if needed.");
+        }
+
+        // Resolve the operator inside the transaction so the persisted
+        // entity is attached to the current session. Re-fetching from the
+        // repo (rather than trusting the security principal directly)
+        // protects against a stale copy in the security context polluting
+        // the audit snapshot.
+        User currentOperator = SecurityUtils.getCurrentUser();
+        UUID operatorId = currentOperator.getId();
+        User operator = userRepository.findById(operatorId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", operatorId));
+        String operatorDisplayName = operator.getName() != null && !operator.getName().isBlank()
+                ? operator.getName()
+                : operator.getEmail();
+
+        // Deterministic idempotency key derived from the natural tuple.
+        // This makes re-clicking the rescue button return the existing row
+        // instead of creating a duplicate or awarding extra points.
+        UUID idempotencyKey = deriveMarkCompletedIdempotencyKey(
+                operatorId, teamId, baseId, challengeId);
+
+        Optional<Submission> existing = submissionRepository.findByIdempotencyKey(idempotencyKey);
+        if (existing.isPresent()) {
+            Submission sub = existing.get();
+            // Touch lazy proxies before returning.
+            sub.getTeam().getId();
+            sub.getChallenge().getId();
+            sub.getBase().getId();
+            return toResponse(sub);
+        }
+
+        Integer points = request.getPointsOverride() != null
+                ? request.getPointsOverride()
+                : challenge.getPoints();
+
+        Submission submission = Submission.builder()
+                .team(team)
+                .challenge(challenge)
+                .base(base)
+                .answer("[Operator marked complete]")
+                .status(SubmissionStatus.approved)
+                .submittedAt(Instant.now())
+                .reviewedBy(operator)
+                .points(points)
+                .idempotencyKey(idempotencyKey)
+                // ── V36 audit foundation: operator-created ─────────────
+                .createdByOperator(operator)
+                .createdByDisplayNameSnapshot(operatorDisplayName)
+                .operatorReason(request.getReason())
+                .sourceSurface("operator_rescue")
+                .build();
+
+        try {
+            submission = submissionRepository.save(submission);
+        } catch (DataIntegrityViolationException ex) {
+            // Race-safe idempotency: if another operator raced us on the
+            // same tuple, return the winning row.
+            Optional<Submission> winner = submissionRepository.findByIdempotencyKey(idempotencyKey);
+            if (winner.isPresent()) {
+                Submission sub = winner.get();
+                sub.getTeam().getId();
+                sub.getChallenge().getId();
+                sub.getBase().getId();
+                return toResponse(sub);
+            }
+            throw ex;
+        }
+
+        // ── Activity event: operator_override (V36 enum value) ──────────
+        String reasonSuffix = request.getReason() != null && !request.getReason().isBlank()
+                ? ": " + request.getReason()
+                : "";
+        ActivityEvent event = ActivityEvent.builder()
+                .game(game)
+                .type(ActivityEventType.operator_override)
+                .team(team)
+                .base(base)
+                .challenge(challenge)
+                .message(operatorDisplayName + " marked " + challenge.getTitle()
+                        + " complete for " + team.getName() + " at " + base.getName() + reasonSuffix)
+                .timestamp(Instant.now())
+                .actorOperatorUser(operator)
+                .actorDisplayNameSnapshot(operatorDisplayName)
+                .sourceSurface("operator_rescue")
+                .build();
+        activityEventRepository.save(event);
+
+        LazyInitHelper.initializeForBroadcast(event);
+
+        // Broadcasts auto-bump state_version so player snapshots see the
+        // corrected state on next foreground/reconnect without any push.
+        eventBroadcaster.broadcastActivityEvent(gameId, event);
+        eventBroadcaster.broadcastSubmissionStatus(gameId, submission);
+        eventBroadcaster.broadcastLeaderboardUpdate(gameId, monitoringService.computeLeaderboard(gameId));
+
+        return toResponse(submission);
+    }
+
+    /**
+     * Derives the deterministic idempotency key for a mark-completed
+     * action from the {@code (operatorId, teamId, baseId, challengeId)}
+     * tuple. Using {@link UUID#nameUUIDFromBytes(byte[])} avoids a
+     * round-trip to the database to pre-check existence: the caller can
+     * compute the key and do a single INSERT, with the partial unique
+     * index on {@code submissions.idempotency_key} enforcing race safety.
+     *
+     * <p>Package-private for direct unit-test coverage.
+     */
+    static UUID deriveMarkCompletedIdempotencyKey(
+            UUID operatorId, UUID teamId, UUID baseId, UUID challengeId) {
+        String seed = "mark-completed|" + operatorId + "|" + teamId + "|" + baseId + "|" + challengeId;
+        return UUID.nameUUIDFromBytes(seed.getBytes(StandardCharsets.UTF_8));
     }
 
     /**

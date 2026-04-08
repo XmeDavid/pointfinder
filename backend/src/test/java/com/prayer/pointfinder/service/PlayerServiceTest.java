@@ -23,6 +23,7 @@ import com.prayer.pointfinder.entity.UploadSessionStatus;
 import com.prayer.pointfinder.repository.ActivityEventRepository;
 import com.prayer.pointfinder.repository.AssignmentRepository;
 import com.prayer.pointfinder.repository.BaseRepository;
+import com.prayer.pointfinder.repository.BaseUnlockOverrideRepository;
 import com.prayer.pointfinder.repository.GameRepository;
 import com.prayer.pointfinder.repository.ChallengeRepository;
 import com.prayer.pointfinder.repository.CheckInRepository;
@@ -104,6 +105,8 @@ class PlayerServiceTest {
     private GameNotificationRepository gameNotificationRepository;
     @Mock
     private UploadSessionRepository uploadSessionRepository;
+    @Mock
+    private BaseUnlockOverrideRepository baseUnlockOverrideRepository;
 
     @InjectMocks
     private PlayerService playerService;
@@ -453,6 +456,11 @@ class PlayerServiceTest {
         when(submissionRepository.findByTeamId(teamId)).thenReturn(List.of(unlockSubmission));
         when(assignmentRepository.findByGameIdAndTeamId(gameId, teamId)).thenReturn(List.of());
         when(challengeRepository.findByGameIdAndUnlocksBasesNotEmpty(gameId)).thenReturn(List.of(unlockChallenge));
+        // P1 Phase 2: getProgress now also consults the unlock override
+        // repository. The default Mockito return is null, which would NPE
+        // on the subsequent .stream() call; return an empty list instead.
+        when(baseUnlockOverrideRepository.findActiveByGameIdAndTeamId(gameId, teamId))
+                .thenReturn(List.of());
 
         List<BaseProgressResponse> progress = playerService.getProgress(gameId, player);
 
