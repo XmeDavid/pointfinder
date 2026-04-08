@@ -253,7 +253,9 @@
     "filterByTag": "Filtrar por etiqueta",
     "filterByTagPlaceholder": "Procurar por etiqueta...",
     "filterClear": "Limpar",
-    "noResults": "Nenhuma base corresponde aos filtros atuais — tente limpar um filtro."
+    "noResults": "Nenhuma base corresponde aos filtros atuais — tente limpar um filtro.",
+    "linkedChallenge": "Desafio: {{name}}",
+    "linkedChallengesN": "{{count}} desafios ligados"
   },
   "basesAndChallenges": {
     "title": "Bases & Desafios",
@@ -343,7 +345,9 @@
     "noResults": "Nenhum desafio corresponde aos filtros atuais — tente limpar um filtro.",
     "deleteConfirmTitle": "Eliminar este desafio?",
     "deleteConfirmDescription": "Este desafio e todas as suas atribuições serão permanentemente eliminados.",
-    "hasReviewerHints": "Tem dicas para o revisor"
+    "hasReviewerHints": "Tem dicas para o revisor",
+    "linkedBase": "Base: {{name}}",
+    "linkedBasesN": "{{count}} bases ligadas"
   },
   "assignments": {
     "title": "Atribuir Desafios",

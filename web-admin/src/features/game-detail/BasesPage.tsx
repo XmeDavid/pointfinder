@@ -1,8 +1,8 @@
 import { useMemo, useState, useEffect } from "react";
 import { filterAvailableFixedChallenges } from "./dropdown-filters";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, MapPin, Wifi, WifiOff, Trash2, Pencil, List, Map as MapIcon, EyeOff, Tag } from "lucide-react";
+import { Plus, MapPin, Wifi, WifiOff, Trash2, Pencil, List, Map as MapIcon, EyeOff, Tag, Link2 } from "lucide-react";
 import { useTagColorFilter } from "./useTagColorFilter";
 import { FilterBar } from "./FilterBar";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ import { useToast } from "@/hooks/useToast";
 import { ColorPicker } from "@/components/ColorPicker";
 import { TagInput } from "@/components/TagInput";
 import type { Base } from "@/types";
+import { buildLinkedChallengesMap } from "./useLinkedCounterpart";
 
 type ViewMode = "list" | "map";
 
@@ -66,10 +67,17 @@ export function BasesPage() {
   }, []);
 
   const defaultLocation = geoLocation ?? tileSourceCenter;
+  const navigate = useNavigate();
   const { data: bases = [], isLoading } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!), enabled: !!gameId });
   const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!), enabled: !!gameId });
   // Sub-wave A: pre-fetch assignments into React Query cache; Sub-wave B wires into card UI via useLinkedCounterpart
-  useQuery({ queryKey: ["assignments", gameId], queryFn: () => assignmentsApi.listByGame(gameId!), enabled: !!gameId });
+  const { data: assignments = [] } = useQuery({ queryKey: ["assignments", gameId], queryFn: () => assignmentsApi.listByGame(gameId!), enabled: !!gameId });
+
+  // Sub-wave B: build linked-challenges map once at page level (O(1) per-card lookup)
+  const linkedChallengesMap = useMemo(
+    () => buildLinkedChallengesMap(bases, challenges, assignments),
+    [bases, challenges, assignments],
+  );
   const challengeById = useMemo(() => new Map(challenges.map((challenge) => [challenge.id, challenge])), [challenges]);
   const availableFixedChallenges = useMemo(
     () => filterAvailableFixedChallenges(challenges, bases, editing?.id, form.fixedChallengeId),
@@ -146,6 +154,10 @@ export function BasesPage() {
 
   function closeDialog() { setDialogOpen(false); setEditing(null); setForm({}); }
 
+  function navigateToChallenge(challengeId: string) {
+    navigate(`/games/${gameId}/challenges?edit=${challengeId}`);
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmedName = (form.name ?? "").trim();
@@ -213,11 +225,19 @@ export function BasesPage() {
                       {base.fixedChallengeId && (() => {
                         const fixedChallenge = challengeById.get(base.fixedChallengeId);
                         return fixedChallenge ? (
-                          <Badge variant="secondary" className="text-xs max-w-[260px]">
-                            <span className="truncate">
-                              {t("bases.fixedChallengeNamed", { challenge: fixedChallenge.title })}
-                            </span>
-                          </Badge>
+                          <button
+                            type="button"
+                            onClick={() => navigateToChallenge(fixedChallenge.id)}
+                            className="inline-flex items-center hover:ring-1 hover:ring-primary/50 rounded-full"
+                            aria-label={t("bases.fixedChallengeNamed", { challenge: fixedChallenge.title })}
+                            data-testid={`base-fixed-challenge-btn-${base.id}`}
+                          >
+                            <Badge variant="secondary" className="text-xs max-w-[260px] cursor-pointer">
+                              <span className="truncate">
+                                {t("bases.fixedChallengeNamed", { challenge: fixedChallenge.title })}
+                              </span>
+                            </Badge>
+                          </button>
                         ) : (
                           <Badge variant="outline" className="text-xs">{t("bases.fixedChallengeTag")}</Badge>
                         );
@@ -226,6 +246,34 @@ export function BasesPage() {
                     </div>
                     <p className="text-sm text-muted-foreground truncate" title={base.description}>{base.description}</p>
                     <p className="text-xs text-muted-foreground mt-1">{base.lat.toFixed(4)}, {base.lng.toFixed(4)}</p>
+                    {/* Linked challenges — assignment-based links (fixed links already surfaced via badge above) */}
+                    {(() => {
+                      const allLinked = linkedChallengesMap.get(base.id) ?? [];
+                      const assignmentLinked = allLinked.filter((lc) => lc.source === "assignment");
+                      if (assignmentLinked.length === 0) return null;
+                      if (assignmentLinked.length === 1) {
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => navigateToChallenge(assignmentLinked[0].id)}
+                            className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                            data-testid={`base-linked-challenge-${base.id}`}
+                          >
+                            <Link2 className="h-3 w-3" />
+                            {t("bases.linkedChallenge", { name: assignmentLinked[0].title })}
+                          </button>
+                        );
+                      }
+                      return (
+                        <LinkedChallengesPill
+                          baseId={base.id}
+                          linkedChallenges={assignmentLinked}
+                          onNavigate={navigateToChallenge}
+                          label={t("bases.linkedChallengesN", { count: assignmentLinked.length })}
+                          t={t}
+                        />
+                      );
+                    })()}
                     {/* Tag chips — show up to 5 before "+N more" */}
                     {base.tags && base.tags.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1">
@@ -386,6 +434,56 @@ export function BasesPage() {
         title={t("bases.deleteConfirmTitle")}
         description={t("bases.deleteConfirmDescription")}
       />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// LinkedChallengesPill — inline expand for N>1 linked challenges
+// ---------------------------------------------------------------------------
+
+import type { LinkedChallenge } from "./useLinkedCounterpart";
+import type { TFunction } from "i18next";
+
+interface LinkedChallengesPillProps {
+  baseId: string;
+  linkedChallenges: LinkedChallenge[];
+  onNavigate: (challengeId: string) => void;
+  label: string;
+  t: TFunction;
+}
+
+function LinkedChallengesPill({ baseId, linkedChallenges, onNavigate, label }: LinkedChallengesPillProps) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="mt-1 inline-flex flex-col items-start">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+        data-testid={`base-linked-challenges-${baseId}`}
+        aria-expanded={open}
+      >
+        <Link2 className="h-3 w-3" />
+        {label}
+      </button>
+      {open && (
+        <ul className="mt-1 ml-4 space-y-0.5" data-testid={`base-linked-challenges-list-${baseId}`}>
+          {linkedChallenges.map((lc) => (
+            <li key={lc.id}>
+              <button
+                type="button"
+                onClick={() => { setOpen(false); onNavigate(lc.id); }}
+                className="text-xs text-primary hover:underline"
+                data-testid={`base-linked-challenge-item-${lc.id}`}
+              >
+                {lc.title}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

@@ -1,9 +1,9 @@
 import { useMemo, useState, lazy, Suspense } from "react";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { filterAvailableBases, filterAvailableUnlockBases } from "./dropdown-filters";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Minus, Puzzle, Trash2, Pencil, FileText, Image, CheckCircle, Eye, MapPin, Unlock, Variable, CircleCheck, Tag, StickyNote } from "lucide-react";
+import { Plus, Minus, Puzzle, Trash2, Pencil, FileText, Image, CheckCircle, Eye, MapPin, Unlock, Variable, CircleCheck, Tag, StickyNote, Link2 } from "lucide-react";
 import { useTagColorFilter } from "./useTagColorFilter";
 import { FilterBar } from "./FilterBar";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ import { ColorPicker } from "@/components/ColorPicker";
 import { TagInput } from "@/components/TagInput";
 import DOMPurify from "dompurify";
 import type { Challenge } from "@/types";
+import { buildLinkedBasesMap } from "./useLinkedCounterpart";
 
 const RichTextEditor = lazy(() =>
   import("@/components/common/RichTextEditor").then((m) => ({ default: m.RichTextEditor }))
@@ -55,7 +56,15 @@ export function ChallengesPage() {
   const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!), enabled: !!gameId });
   const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!), enabled: !!gameId });
   // Sub-wave A: pre-fetch assignments into React Query cache; Sub-wave B wires into card UI via useLinkedCounterpart
-  useQuery({ queryKey: ["assignments", gameId], queryFn: () => assignmentsApi.listByGame(gameId!), enabled: !!gameId });
+  const { data: assignments = [] } = useQuery({ queryKey: ["assignments", gameId], queryFn: () => assignmentsApi.listByGame(gameId!), enabled: !!gameId });
+
+  const navigate = useNavigate();
+
+  // Sub-wave B: build linked-bases map once at page level (O(1) per-card lookup)
+  const linkedBasesMap = useMemo(
+    () => buildLinkedBasesMap(bases, challenges, assignments),
+    [bases, challenges, assignments],
+  );
   const [varsSaving, setVarsSaving] = useState(false);
   const [previewTeamId, setPreviewTeamId] = useState<string>("");
   const fixedBaseByChallengeId = useMemo(() => {
@@ -170,6 +179,10 @@ export function ChallengesPage() {
     setDialogOpen(true);
   }
   function closeDialog() { setDialogOpen(false); setEditing(null); }
+
+  function navigateToBase(baseId: string) {
+    navigate(`/games/${gameId}/bases?edit=${baseId}`);
+  }
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmedTitle = (form.title ?? "").trim();
@@ -272,20 +285,64 @@ export function ChallengesPage() {
                         {ch.answerType !== "none" && (ch.autoValidate ? <Badge variant="success"><CheckCircle className="mr-1 h-3 w-3" /> {t("challenges.autoValidate")}</Badge> : <Badge variant="warning"><Eye className="mr-1 h-3 w-3" /> {t("challenges.manualReview")}</Badge>)}
                         {ch.locationBound && <Badge variant="outline" className={fixedBase ? "opacity-60" : undefined}><MapPin className="mr-1 h-3 w-3" /> {t("challenges.locationBound")}</Badge>}
                         {fixedBase && (
-                          <Badge variant="secondary" className="max-w-full">
-                            <MapPin className="mr-1 h-3 w-3 shrink-0" />
-                            <span className="truncate">{t("challenges.fixedToBase", { base: fixedBase.name })}</span>
-                          </Badge>
+                          <button
+                            type="button"
+                            onClick={() => navigateToBase(fixedBase.id)}
+                            className="inline-flex items-center hover:ring-1 hover:ring-primary/50 rounded-full"
+                            aria-label={t("challenges.fixedToBase", { base: fixedBase.name })}
+                            data-testid={`challenge-fixed-base-btn-${ch.id}`}
+                          >
+                            <Badge variant="secondary" className="max-w-full cursor-pointer">
+                              <MapPin className="mr-1 h-3 w-3 shrink-0" />
+                              <span className="truncate">{t("challenges.fixedToBase", { base: fixedBase.name })}</span>
+                            </Badge>
+                          </button>
                         )}
                         {ch.unlocksBaseIds && ch.unlocksBaseIds.length > 0 && ch.unlocksBaseIds.map((ubId) => {
                           const unlockTarget = baseById.get(ubId);
                           return unlockTarget ? (
-                            <Badge key={ubId} variant="outline" className="max-w-full">
-                              <Unlock className="mr-1 h-3 w-3 shrink-0" />
-                              <span className="truncate">{t("challenges.unlocksBaseLabel", { base: unlockTarget.name })}</span>
-                            </Badge>
+                            <button
+                              key={ubId}
+                              type="button"
+                              onClick={() => navigateToBase(unlockTarget.id)}
+                              className="inline-flex items-center hover:ring-1 hover:ring-primary/50 rounded-full"
+                              aria-label={t("challenges.unlocksBaseLabel", { base: unlockTarget.name })}
+                              data-testid={`challenge-unlocks-base-btn-${ubId}`}
+                            >
+                              <Badge variant="outline" className="max-w-full cursor-pointer">
+                                <Unlock className="mr-1 h-3 w-3 shrink-0" />
+                                <span className="truncate">{t("challenges.unlocksBaseLabel", { base: unlockTarget.name })}</span>
+                              </Badge>
+                            </button>
                           ) : null;
                         })}
+                        {/* Assignment-based linked bases — de-duped: skip fixed/unlock sources (already shown above) */}
+                        {(() => {
+                          const allLinked = linkedBasesMap.get(ch.id) ?? [];
+                          const assignmentLinked = allLinked.filter((lb) => lb.source === "assignment");
+                          if (assignmentLinked.length === 0) return null;
+                          if (assignmentLinked.length === 1) {
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => navigateToBase(assignmentLinked[0].id)}
+                                className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                                data-testid={`challenge-linked-base-${ch.id}`}
+                              >
+                                <Link2 className="h-3 w-3" />
+                                {t("challenges.linkedBase", { name: assignmentLinked[0].name })}
+                              </button>
+                            );
+                          }
+                          return (
+                            <LinkedBasesPill
+                              challengeId={ch.id}
+                              linkedBases={assignmentLinked}
+                              onNavigate={navigateToBase}
+                              label={t("challenges.linkedBasesN", { count: assignmentLinked.length })}
+                            />
+                          );
+                        })()}
                       </div>
                       {/* Tag chips — show up to 5 before "+N more" */}
                       {ch.tags && ch.tags.length > 0 && (
@@ -627,6 +684,54 @@ export function ChallengesPage() {
         title={t("challenges.deleteConfirmTitle")}
         description={t("challenges.deleteConfirmDescription")}
       />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// LinkedBasesPill — inline expand for N>1 linked bases
+// ---------------------------------------------------------------------------
+
+import type { LinkedBase } from "./useLinkedCounterpart";
+
+interface LinkedBasesPillProps {
+  challengeId: string;
+  linkedBases: LinkedBase[];
+  onNavigate: (baseId: string) => void;
+  label: string;
+}
+
+function LinkedBasesPill({ challengeId, linkedBases, onNavigate, label }: LinkedBasesPillProps) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="inline-flex flex-col items-start">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+        data-testid={`challenge-linked-bases-${challengeId}`}
+        aria-expanded={open}
+      >
+        <Link2 className="h-3 w-3" />
+        {label}
+      </button>
+      {open && (
+        <ul className="mt-1 ml-4 space-y-0.5" data-testid={`challenge-linked-bases-list-${challengeId}`}>
+          {linkedBases.map((lb) => (
+            <li key={lb.id}>
+              <button
+                type="button"
+                onClick={() => { setOpen(false); onNavigate(lb.id); }}
+                className="text-xs text-primary hover:underline"
+                data-testid={`challenge-linked-base-item-${lb.id}`}
+              >
+                {lb.name}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

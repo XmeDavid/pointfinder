@@ -253,7 +253,9 @@
     "filterByTag": "Nach Tag filtern",
     "filterByTagPlaceholder": "Nach Tag suchen...",
     "filterClear": "Zurücksetzen",
-    "noResults": "Keine Stationen entsprechen den aktuellen Filtern — Filter zurücksetzen versuchen."
+    "noResults": "Keine Stationen entsprechen den aktuellen Filtern — Filter zurücksetzen versuchen.",
+    "linkedChallenge": "Challenge: {{name}}",
+    "linkedChallengesN": "{{count}} verknüpfte Challenges"
   },
   "basesAndChallenges": {
     "title": "Stationen & Challenges",
@@ -343,7 +345,9 @@
     "noResults": "Keine Challenges entsprechen den aktuellen Filtern — Filter zurücksetzen versuchen.",
     "deleteConfirmTitle": "Diese Challenge löschen?",
     "deleteConfirmDescription": "Diese Challenge und alle ihre Zuweisungen werden dauerhaft gelöscht.",
-    "hasReviewerHints": "Hat Hinweise für Prüfer"
+    "hasReviewerHints": "Hat Hinweise für Prüfer",
+    "linkedBase": "Station: {{name}}",
+    "linkedBasesN": "{{count}} verknüpfte Stationen"
   },
   "assignments": {
     "title": "Zuweisungen",

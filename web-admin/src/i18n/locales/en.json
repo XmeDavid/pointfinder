@@ -253,7 +253,9 @@
     "filterByTag": "Filter by tag",
     "filterByTagPlaceholder": "Search by tag...",
     "filterClear": "Clear",
-    "noResults": "No bases match the current filters — try clearing a filter."
+    "noResults": "No bases match the current filters — try clearing a filter.",
+    "linkedChallenge": "Challenge: {{name}}",
+    "linkedChallengesN": "{{count}} linked challenges"
   },
   "basesAndChallenges": {
     "title": "Bases & Challenges",
@@ -343,7 +345,9 @@
     "noResults": "No challenges match the current filters — try clearing a filter.",
     "deleteConfirmTitle": "Delete this challenge?",
     "deleteConfirmDescription": "This challenge and all its assignments will be permanently deleted.",
-    "hasReviewerHints": "Has reviewer hints"
+    "hasReviewerHints": "Has reviewer hints",
+    "linkedBase": "Base: {{name}}",
+    "linkedBasesN": "{{count}} linked bases"
   },
   "assignments": {
     "title": "Assign Challenges",
