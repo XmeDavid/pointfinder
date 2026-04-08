@@ -635,6 +635,68 @@ describe("BasesAndChallengesView", () => {
     expect(challengeCall[1].content).toBe("<p><strong>New rich content</strong></p>");
   });
 
+  // correctAnswer multi-input — mirrors ChallengesPage pattern
+  it("shows multi-answer input when answerType=text and autoValidate is on", async () => {
+    vi.mocked(basesApi.listByGame).mockResolvedValue([
+      makeBase("b1", { fixedChallengeId: "c1" }),
+    ]);
+    vi.mocked(challengesApi.listByGame).mockResolvedValue([
+      makeChallenge("c1", { answerType: "text", autoValidate: false }),
+    ]);
+
+    renderView();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("pair-edit-btn-b1")).toBeTruthy();
+    });
+    fireEvent.click(screen.getByTestId("pair-edit-btn-b1"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("unified-edit-dialog")).toBeTruthy();
+    });
+
+    // autoValidate is off — multi-answer input must NOT be visible yet
+    expect(screen.queryByTestId("unified-correct-answer-input-0")).toBeNull();
+
+    // Toggle autoValidate on via the switch (label text "Auto-validate")
+    const autoValidateSwitch = screen.getByRole("switch", { name: /auto.?validate/i });
+    fireEvent.click(autoValidateSwitch);
+
+    // Now the first answer input should appear
+    await waitFor(() => {
+      expect(screen.getByTestId("unified-correct-answer-input-0")).toBeTruthy();
+    });
+
+    // Type first answer
+    fireEvent.change(screen.getByTestId("unified-correct-answer-input-0"), {
+      target: { value: "Lisbon" },
+    });
+
+    // Add a second answer
+    fireEvent.click(screen.getByTestId("unified-correct-answer-add-btn"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("unified-correct-answer-input-1")).toBeTruthy();
+    });
+
+    fireEvent.change(screen.getByTestId("unified-correct-answer-input-1"), {
+      target: { value: "Lisboa" },
+    });
+
+    // Save
+    vi.mocked(basesApi.update).mockResolvedValue(makeBase("b1", { fixedChallengeId: "c1" }));
+    vi.mocked(challengesApi.update).mockResolvedValue(makeChallenge("c1"));
+
+    fireEvent.click(screen.getByTestId("unified-save-btn"));
+
+    await waitFor(() => {
+      expect(challengesApi.update).toHaveBeenCalledTimes(1);
+    });
+
+    const challengeCall = vi.mocked(challengesApi.update).mock.calls[0];
+    expect(challengeCall[1].correctAnswer).toEqual(["Lisbon", "Lisboa"]);
+  });
+
   it("does NOT call challenge update when the base update fails", async () => {
     vi.mocked(basesApi.listByGame).mockResolvedValue([
       makeBase("b1", { fixedChallengeId: "c1" }),

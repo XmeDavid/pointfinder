@@ -20,6 +20,8 @@ import {
   Info,
   Tag,
   StickyNote,
+  Plus,
+  Minus,
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,7 +87,7 @@ interface UnifiedForm {
   challengeLocationBound: boolean;
   challengeRequirePresence: boolean;
   challengeAutoValidate: boolean;
-  challengeCorrectAnswer: string;
+  challengeCorrectAnswer: string[];
   // P1 Phase 4 W2 — operator-only notes. Never surfaced to players.
   challengeOperatorNotes: string;
   // P1 Phase 4 W3 — operator-only tags and color on the challenge.
@@ -112,7 +114,7 @@ function formFromPair(pair: BaseChallengePair): UnifiedForm {
     challengeLocationBound: pair.challenge.locationBound,
     challengeRequirePresence: pair.challenge.requirePresenceToSubmit,
     challengeAutoValidate: pair.challenge.autoValidate,
-    challengeCorrectAnswer: pair.challenge.correctAnswer?.[0] ?? "",
+    challengeCorrectAnswer: pair.challenge.correctAnswer ?? [],
     challengeOperatorNotes: pair.challenge.operatorNotes ?? "",
     challengeTags: pair.challenge.tags,
     challengeColor: pair.challenge.color,
@@ -150,8 +152,11 @@ function challengeDtoFromForm(form: UnifiedForm): Partial<CreateChallengeDto> {
     autoValidate: answerType === "text" ? form.challengeAutoValidate : false,
     requirePresenceToSubmit: answerType === "none" ? false : form.challengeRequirePresence,
   };
-  if (payload.autoValidate && answerType === "text" && form.challengeCorrectAnswer.trim()) {
-    payload.correctAnswer = [form.challengeCorrectAnswer.trim()];
+  if (payload.autoValidate && answerType === "text") {
+    const answers = form.challengeCorrectAnswer.map((a) => a.trim()).filter(Boolean);
+    if (answers.length > 0) {
+      payload.correctAnswer = answers;
+    }
   }
   // Operator-only notes: send trimmed value, or explicit empty string to
   // clear previous notes. Backend normalizes blank → null.
@@ -909,17 +914,53 @@ export function BasesAndChallengesView() {
                 </div>
                 {form.challengeAutoValidate && form.challengeAnswerType === "text" && (
                   <div className="space-y-2">
-                    <FormLabel htmlFor="unifiedCorrectAnswer" required>
+                    <FormLabel required>
                       {t("challenges.correctAnswer")}
                     </FormLabel>
-                    <Input
-                      id="unifiedCorrectAnswer"
-                      value={form.challengeCorrectAnswer}
-                      onChange={(e) =>
-                        setForm((f) => (f ? { ...f, challengeCorrectAnswer: e.target.value } : f))
+                    {(form.challengeCorrectAnswer.length > 0 ? form.challengeCorrectAnswer : [""]).map((ans, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <Input
+                          value={ans}
+                          onChange={(e) => {
+                            const updated = [...(form.challengeCorrectAnswer.length > 0 ? form.challengeCorrectAnswer : [""])];
+                            updated[idx] = e.target.value;
+                            setForm((f) => (f ? { ...f, challengeCorrectAnswer: updated } : f));
+                          }}
+                          placeholder={t("challenges.correctAnswerPlaceholder")}
+                          required
+                          data-testid={`unified-correct-answer-input-${idx}`}
+                        />
+                        {(form.challengeCorrectAnswer.length > 0 ? form.challengeCorrectAnswer : [""]).length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              const updated = (form.challengeCorrectAnswer.length > 0 ? form.challengeCorrectAnswer : [""]).filter((_, i) => i !== idx);
+                              setForm((f) => (f ? { ...f, challengeCorrectAnswer: updated } : f));
+                            }}
+                            data-testid={`unified-correct-answer-remove-${idx}`}
+                          >
+                            <Minus className="h-4 w-4 text-destructive" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setForm((f) =>
+                          f
+                            ? { ...f, challengeCorrectAnswer: [...(f.challengeCorrectAnswer.length > 0 ? f.challengeCorrectAnswer : [""]), ""] }
+                            : f,
+                        )
                       }
-                      placeholder={t("challenges.correctAnswerPlaceholder")}
-                    />
+                      data-testid="unified-correct-answer-add-btn"
+                    >
+                      <Plus className="mr-1 h-4 w-4" /> {t("challenges.addAnswer")}
+                    </Button>
                   </div>
                 )}
                 {/*
