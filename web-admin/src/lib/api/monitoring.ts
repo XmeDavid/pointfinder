@@ -50,4 +50,25 @@ export const monitoringApi = {
     const { data } = await apiClient.get(`/games/${gameId}/monitoring/results-export`);
     return data;
   },
+
+  /**
+   * Realtime health stats for the operator dashboard widget.
+   * P0 Track 2 Slice 5 — `GET /api/games/:gameId/realtime-stats`.
+   */
+  getRealtimeStats: async (gameId: string): Promise<RealtimeStats> => {
+    const { data } = await apiClient.get(`/games/${gameId}/realtime-stats`);
+    return data;
+  },
 };
+
+export interface RealtimeStats {
+  stompActiveSessions: number;
+  mobileActiveSessions: number;
+  totalActiveSessions: number;
+  stompConnectsLastHour: number;
+  mobileConnectsLastHour: number;
+  stompDisconnectsLastHour: number;
+  mobileDisconnectsLastHour: number;
+  estimatedReconnectsLastHour: number;
+  lastUpdated: string;
+}

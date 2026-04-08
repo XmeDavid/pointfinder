@@ -630,6 +630,16 @@
     "tryAgain": "Tentar novamente",
     "liveUpdatesRetrying": "Atualizações ao vivo temporariamente indisponíveis. A tentar novamente…"
   },
+  "realtimeHealth": {
+    "title": "Saúde em Tempo Real",
+    "loadError": "Falha ao carregar estatísticas",
+    "statusHealthy": "Saudável",
+    "statusDegraded": "Instável",
+    "statusNoClients": "Sem clientes conectados",
+    "statusIdle": "Inativo",
+    "activeClients": "clientes ativos ({{mobile}} móvel + {{web}} web)",
+    "reconnectsLastHour": "{{count}} reconexões na última hora"
+  },
   "editor": {
     "bold": "Negrito",
     "italic": "Itálico",

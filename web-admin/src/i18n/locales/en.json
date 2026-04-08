@@ -630,6 +630,16 @@
     "tryAgain": "Try again",
     "liveUpdatesRetrying": "Live updates temporarily unavailable. Retrying…"
   },
+  "realtimeHealth": {
+    "title": "Realtime Health",
+    "loadError": "Failed to load realtime stats",
+    "statusHealthy": "Healthy",
+    "statusDegraded": "Unstable",
+    "statusNoClients": "No connected clients",
+    "statusIdle": "Idle",
+    "activeClients": "active clients ({{mobile}} mobile + {{web}} web)",
+    "reconnectsLastHour": "{{count}} reconnects in the last hour"
+  },
   "editor": {
     "bold": "Bold",
     "italic": "Italic",

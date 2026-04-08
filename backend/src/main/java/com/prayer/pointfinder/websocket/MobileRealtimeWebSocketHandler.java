@@ -40,13 +40,16 @@ public class MobileRealtimeWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
-        mobileRealtimeHub.unregister(session);
+        String reason = status == null || status.getCode() == CloseStatus.NORMAL.getCode()
+                ? "client_close"
+                : "status_" + status.getCode();
+        mobileRealtimeHub.unregister(session, reason);
     }
 
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) {
         log.debug("Mobile websocket transport error: {}", exception.getMessage());
-        mobileRealtimeHub.unregister(session);
+        mobileRealtimeHub.unregister(session, "transport_error");
         closeQuietly(session, CloseStatus.SERVER_ERROR);
     }
 

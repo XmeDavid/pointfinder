@@ -630,6 +630,16 @@
     "tryAgain": "Erneut versuchen",
     "liveUpdatesRetrying": "Live-Updates vorübergehend nicht verfügbar. Erneuter Versuch…"
   },
+  "realtimeHealth": {
+    "title": "Echtzeit-Status",
+    "loadError": "Statistiken konnten nicht geladen werden",
+    "statusHealthy": "Stabil",
+    "statusDegraded": "Instabil",
+    "statusNoClients": "Keine Clients verbunden",
+    "statusIdle": "Im Leerlauf",
+    "activeClients": "aktive Clients ({{mobile}} mobil + {{web}} web)",
+    "reconnectsLastHour": "{{count}} Wiederverbindungen in der letzten Stunde"
+  },
   "editor": {
     "bold": "Fett",
     "italic": "Kursiv",

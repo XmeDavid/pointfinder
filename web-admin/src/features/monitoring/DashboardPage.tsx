@@ -8,6 +8,7 @@ import { monitoringApi } from "@/lib/api/monitoring";
 import { gamesApi } from "@/lib/api/games";
 import { useTranslation } from "react-i18next";
 import { useGameWebSocket } from "@/hooks/useGameWebSocket";
+import { RealtimeHealthWidget } from "@/components/RealtimeHealthWidget";
 
 export function DashboardPage() {
   const { t } = useTranslation();
@@ -58,6 +59,9 @@ export function DashboardPage() {
         <Card><CardContent className="flex items-center gap-3 p-4"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-chart-2/10"><ClipboardCheck className="h-5 w-5 text-chart-2" /></div><div><p className="text-2xl font-bold">{stats.pendingSubmissions}</p><p className="text-sm text-muted-foreground">{t("monitor.pendingReview")}</p></div></CardContent></Card>
         <Card><CardContent className="flex items-center gap-3 p-4"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-chart-3/10"><CheckCircle2 className="h-5 w-5 text-chart-3" /></div><div><p className="text-2xl font-bold">{stats.completedSubmissions}/{stats.totalSubmissions}</p><p className="text-sm text-muted-foreground">{t("monitor.completed")}</p></div></CardContent></Card>
         <Card><CardContent className="flex items-center gap-3 p-4"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-chart-4/10"><Clock className="h-5 w-5 text-chart-4" /></div><div><p className="text-2xl font-bold">{hasEndDate ? `${hoursLeft}h ${minsLeft}m` : "—"}</p><p className="text-sm text-muted-foreground">{t("monitor.timeRemaining")}</p></div></CardContent></Card>
+      </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        <RealtimeHealthWidget gameId={gameId} gameStatus={game.status} />
       </div>
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
