@@ -16,7 +16,23 @@ export function connectWebSocket(
   gameId: string,
   onMessage: (payload: { type: string; data: unknown }) => void,
   onError?: (message: string) => void,
-  onReconnect?: () => void
+  onReconnect?: () => void,
+  /**
+   * Optional refresh hook invoked before every reconnect attempt (i.e. every
+   * `beforeConnect` call after the first successful `onConnect`). Should
+   * return a freshly minted operator access token, or `null` if the refresh
+   * token is also expired / unavailable. On `null`, the STOMP client falls
+   * back to the standard `getValidAccessToken()` path, which in turn
+   * surfaces auth failure via `onStompError` → `handleAuthFailure`.
+   *
+   * This covers the P0 Track 2 Slice 4 gap: operator access tokens are
+   * 15 minutes; without refresh-on-reconnect, an idle operator whose tab
+   * is backgrounded past expiry would reconnect with a stale JWT, hit an
+   * auth failure on every STOMP frame, and see no live updates until they
+   * manually reloaded. Mirrors the iOS `tokenProvider` pattern in
+   * `MobileRealtimeClient.swift`.
+   */
+  tokenProvider?: () => Promise<string | null>
 ): Client {
   // Disconnect existing client if any
   if (stompClient) {
@@ -35,9 +51,30 @@ export function connectWebSocket(
     // connectHeaders are set dynamically in beforeConnect
     connectHeaders: {},
     beforeConnect: async () => {
-      const token = await getValidAccessToken();
+      // On reconnect (second-and-subsequent beforeConnect), force a token
+      // refresh so the new socket carries a fresh JWT. On the first connect
+      // we defer to `getValidAccessToken()` which happily returns whatever's
+      // already in memory (React Query has just fetched with that token, so
+      // it's guaranteed to be live).
+      let token: string | null = null;
+      if (hasConnectedOnce && tokenProvider) {
+        try {
+          token = await tokenProvider();
+        } catch (err) {
+          console.warn("WebSocket tokenProvider threw; falling back to cached token", err);
+          token = null;
+        }
+      }
+      if (!token) {
+        token = await getValidAccessToken();
+      }
       if (token) {
         client.connectHeaders = { Authorization: `Bearer ${token}` };
+      } else {
+        // Strip any stale header so the STOMP frame is sent without auth —
+        // the backend will reject with a STOMP ERROR frame and our
+        // onStompError handler will clear auth / trigger logout.
+        client.connectHeaders = {};
       }
     },
     reconnectDelay: 5000,

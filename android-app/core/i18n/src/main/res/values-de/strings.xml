@@ -197,6 +197,7 @@
     <string name="error_nfc_write_failed">NFC-Schreiben fehlgeschlagen.</string>
     <string name="error_nfc_link_failed">NFC geschrieben, aber Verknüpfung fehlgeschlagen: %1$s</string>
     <string name="error_network_unavailable">Netzwerk nicht verfügbar. Überprüfe deine Verbindung.</string>
+    <string name="error_session_expired">Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.</string>
     <!-- Setup Hub -->
     <string name="label_needs_attention">Handlungsbedarf</string>
     <string name="label_manage">Verwalten</string>

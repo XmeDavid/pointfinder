@@ -41,6 +41,41 @@ internal fun buildMobileRealtimeUrl(apiBaseUrl: String, gameId: String, token: S
         .build()
 }
 
+/**
+ * Pure resolver used by [MobileRealtimeClient] on every (re)connect to pick
+ * the token that goes into the `Authorization: Bearer …` header.
+ *
+ * Extracted as a top-level function (instead of inlined inside `openSocket`)
+ * so unit tests can exercise the refresh-on-reconnect contract without
+ * spinning up a real WebSocket, a mock HTTP server, or `Dispatchers.IO`:
+ * the entire token-refresh decision tree is deterministic input → output.
+ *
+ * Contract — mirrors iOS `MobileRealtimeClient.swift` `openConnection`:
+ *  - If [tokenProvider] is null, return [fallbackToken] (the token passed to
+ *    the most recent `connect()` call).
+ *  - Else invoke [tokenProvider]; on success return its value.
+ *  - On a thrown [tokenProvider], return [fallbackToken] so the reconnect
+ *    attempt still proceeds with the stale token (the backend will reject
+ *    it via `onFailure`, triggering another backoff — same behaviour as if
+ *    there were no provider at all).
+ *  - If [tokenProvider] returns null, return [fallbackToken]. Callers that
+ *    want to force a logout on null should do so inside the callback itself
+ *    (mirrors `AppSessionViewModel.configureRealtimeTokenProvider`).
+ */
+internal fun resolveRealtimeToken(
+    tokenProvider: (() -> String?)?,
+    fallbackToken: String,
+    onProviderError: (Throwable) -> Unit = {},
+): String {
+    if (tokenProvider == null) return fallbackToken
+    return try {
+        tokenProvider.invoke() ?: fallbackToken
+    } catch (err: Throwable) {
+        onProviderError(err)
+        fallbackToken
+    }
+}
+
 sealed interface RealtimeConnectionState {
     data object Disconnected : RealtimeConnectionState
     data object Connecting : RealtimeConnectionState
@@ -82,6 +117,26 @@ class MobileRealtimeClient(
 
     private val _connectionState = MutableStateFlow<RealtimeConnectionState>(RealtimeConnectionState.Disconnected)
     val connectionState: StateFlow<RealtimeConnectionState> = _connectionState.asStateFlow()
+
+    /**
+     * Returns a fresh access token on every (re)connect. If null is returned,
+     * the client falls back to the token supplied to [connect].
+     *
+     * This exists to cover the 15-minute operator access-token TTL: without
+     * refresh-on-reconnect, an operator that stays idle past expiry would
+     * silently lose realtime updates because every reconnect attempt would
+     * carry the stale token. Mirrors the iOS `tokenProvider` pattern in
+     * `MobileRealtimeClient.swift`.
+     *
+     * Wired from `AppSessionViewModel` / `OperatorViewModel`; callers are
+     * expected to perform the actual refresh (and clear the session on
+     * failure) inside the callback.
+     *
+     * The callback runs on [singleThread] (the reconnect/open path), so any
+     * blocking work it does will serialise with socket state mutations —
+     * keep it fast (the token refresher already uses its own dispatcher).
+     */
+    var tokenProvider: (() -> String?)? = null
 
     // Guarded by singleThread – all access must happen within withContext(singleThread)
     private var webSocket: WebSocket? = null
@@ -131,10 +186,29 @@ class MobileRealtimeClient(
             RealtimeConnectionState.Reconnecting(reconnectAttempt)
         })
 
+        // On (re)connect, ask the session layer for a fresh token so expired
+        // operator access tokens (15-min TTL) don't silently prevent
+        // reconnection. Falls back to the stored session token if no
+        // tokenProvider is configured or refresh returned null. Mirrors the
+        // iOS `effectiveToken` pattern in MobileRealtimeClient.swift.
+        val effectiveToken = resolveRealtimeToken(
+            tokenProvider = tokenProvider,
+            fallbackToken = target.token,
+            onProviderError = { err ->
+                Log.w(TAG, "tokenProvider threw on reconnect: ${err.message}")
+            },
+        )
+        if (effectiveToken != target.token) {
+            // Cache the refreshed token so subsequent reconnect attempts
+            // within the same session keep using the fresh value until the
+            // session layer rotates it again.
+            desiredSession = target.copy(token = effectiveToken)
+        }
+
         webSocket?.cancel()
         val request = Request.Builder()
-            .url(buildRealtimeUrl(target))
-            .header("Authorization", "Bearer ${target.token}")
+            .url(buildRealtimeUrl(desiredSession ?: target))
+            .header("Authorization", "Bearer $effectiveToken")
             .build()
 
         webSocket = okHttpClient.newWebSocket(request, object : WebSocketListener() {

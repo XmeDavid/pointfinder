@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createElement } from "react";
 import { useGameWebSocket } from "./useGameWebSocket";
 import { useOperatorPresenceStore } from "./useOperatorPresence";
+import { useAuthStore } from "./useAuth";
 
 // Mock the websocket module
 const mockConnectWebSocket = vi.fn();
@@ -11,6 +12,13 @@ const mockDisconnectWebSocket = vi.fn();
 vi.mock("@/lib/api/websocket", () => ({
   connectWebSocket: (...args: unknown[]) => mockConnectWebSocket(...args),
   disconnectWebSocket: (...args: unknown[]) => mockDisconnectWebSocket(...args),
+}));
+
+// Mock the API client so `getValidAccessToken` is deterministic and we can
+// assert the reconnect-time tokenProvider actually forces a refresh.
+const mockGetValidAccessToken = vi.fn();
+vi.mock("@/lib/api/client", () => ({
+  getValidAccessToken: (...args: unknown[]) => mockGetValidAccessToken(...args),
 }));
 
 // Mock requestAnimationFrame to fire synchronously in tests
@@ -55,6 +63,7 @@ describe("useGameWebSocket", () => {
     renderHook(() => useGameWebSocket("game-1"), { wrapper });
     expect(mockConnectWebSocket).toHaveBeenCalledWith(
       "game-1",
+      expect.any(Function),
       expect.any(Function),
       expect.any(Function),
       expect.any(Function)
@@ -286,10 +295,77 @@ describe("useGameWebSocket", () => {
       "game-1",
       expect.any(Function),
       expect.any(Function),
+      expect.any(Function),
       expect.any(Function)
     );
 
     unmount2();
     expect(mockDisconnectWebSocket).toHaveBeenCalledTimes(1);
+  });
+
+  describe("reconnect tokenProvider (P0 Track 2 Slice 4)", () => {
+    beforeEach(() => {
+      mockGetValidAccessToken.mockReset();
+      useAuthStore.setState({
+        user: { id: "u1", email: "op@test", name: "Op", role: "operator", createdAt: "" },
+        accessToken: "stale-access-token",
+        refreshToken: "refresh-token",
+        isAuthenticated: true,
+        hasHydrated: true,
+      });
+    });
+
+    it("clears the cached access token and fetches a fresh one before reconnect", async () => {
+      mockGetValidAccessToken.mockResolvedValue("fresh-access-token");
+      renderHook(() => useGameWebSocket("game-1"), { wrapper });
+
+      // The 5th arg is the reconnect-time tokenProvider
+      const tokenProvider = mockConnectWebSocket.mock.calls[0][4] as () => Promise<string | null>;
+      expect(typeof tokenProvider).toBe("function");
+
+      // Pre-condition: store still holds the stale token from beforeEach
+      expect(useAuthStore.getState().accessToken).toBe("stale-access-token");
+
+      const token = await tokenProvider();
+
+      // Must have asked the API client for a valid access token, which
+      // under the hood issues POST /auth/refresh and rotates the store.
+      expect(mockGetValidAccessToken).toHaveBeenCalledTimes(1);
+      // Must have cleared the in-memory access token before refreshing so
+      // getValidAccessToken() doesn't short-circuit to the cached stale value.
+      // (The mocked getValidAccessToken doesn't actually write back to the
+      // store — in production the refresh flow calls setTokens() — so we
+      // verify the clear-before-refresh contract by asserting the store
+      // no longer holds the stale token.)
+      expect(useAuthStore.getState().accessToken).not.toBe("stale-access-token");
+      expect(token).toBe("fresh-access-token");
+    });
+
+    it("returns null and swallows errors when refresh throws", async () => {
+      mockGetValidAccessToken.mockRejectedValue(new Error("refresh endpoint down"));
+      renderHook(() => useGameWebSocket("game-1"), { wrapper });
+
+      const tokenProvider = mockConnectWebSocket.mock.calls[0][4] as () => Promise<string | null>;
+
+      const token = await tokenProvider();
+
+      expect(token).toBeNull();
+      expect(mockGetValidAccessToken).toHaveBeenCalledTimes(1);
+      // Cleared-then-refresh failed → stays null; onStompError path will
+      // then trigger handleAuthFailure on the next STOMP frame.
+      expect(useAuthStore.getState().accessToken).toBeNull();
+    });
+
+    it("returns null cleanly when refresh resolves to null", async () => {
+      mockGetValidAccessToken.mockResolvedValue(null);
+      renderHook(() => useGameWebSocket("game-1"), { wrapper });
+
+      const tokenProvider = mockConnectWebSocket.mock.calls[0][4] as () => Promise<string | null>;
+
+      const token = await tokenProvider();
+
+      expect(token).toBeNull();
+      expect(mockGetValidAccessToken).toHaveBeenCalledTimes(1);
+    });
   });
 });

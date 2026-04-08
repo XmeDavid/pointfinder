@@ -192,6 +192,7 @@
     <string name="error_nfc_write_failed">Falha ao gravar NFC.</string>
     <string name="error_nfc_link_failed">NFC gravado mas associação falhou: %1$s</string>
     <string name="error_network_unavailable">Rede indisponível. Verifique sua conexão.</string>
+    <string name="error_session_expired">A sua sessão expirou. Por favor, inicie sessão novamente.</string>
     <!-- Setup Hub -->
     <string name="label_needs_attention">Atenção necessária</string>
     <string name="label_manage">Gerir</string>

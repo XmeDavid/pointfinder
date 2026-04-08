@@ -1,6 +1,7 @@
 package com.prayer.pointfinder.session
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.prayer.pointfinder.core.data.repo.AuthRepository
@@ -21,11 +22,14 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import java.util.Locale
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class AppSessionState(
     val authType: AuthType = AuthType.None,
@@ -57,10 +61,94 @@ class AppSessionViewModel @Inject constructor(
     private val _state = MutableStateFlow(AppSessionState())
     val state: StateFlow<AppSessionState> = _state.asStateFlow()
 
+    // Guards against concurrent logout cascades when the reconnect-time
+    // tokenProvider discovers the refresh token is also expired. Without
+    // this flag, a flapping socket would enqueue one logout() per reconnect
+    // attempt.
+    private val forcedLogoutInFlight = AtomicBoolean(false)
+
     init {
+        configureRealtimeTokenProvider()
         restoreSession()
         observeNetwork()
         observePendingCount()
+    }
+
+    /**
+     * Wires the realtime client to fetch a fresh access token on every
+     * (re)connect. This covers the P0 Track 2 Slice 4 gap: operator access
+     * tokens are 15 minutes; without refresh-on-reconnect an operator that
+     * stays idle past expiry loses realtime updates silently.
+     *
+     * Mirrors the iOS `tokenProvider` wiring in `AppState.configureRealtimeClient`.
+     *
+     * Runs on the realtime client's single-threaded dispatcher, so the work
+     * it does must not block for long. For operators we delegate to
+     * [OperatorTokenRefresher] which already manages its own dispatcher and
+     * has a mutex that deduplicates concurrent refreshes.
+     *
+     * Failure handling:
+     *  - null return → caller falls back to the existing session token.
+     *  - For operators, a null return means the refresh attempt was made
+     *    and failed (refresh token also expired, network error). We fire
+     *    a one-shot forced logout so the UI re-authenticates instead of
+     *    looping forever on a dead session.
+     */
+    private fun configureRealtimeTokenProvider() {
+        realtimeClient.tokenProvider = fun(): String? {
+            return when (sessionStore.authType()) {
+                is AuthType.Operator -> {
+                    val refreshed = authRepository.refreshOperatorAccessTokenBlocking()
+                    if (refreshed == null) {
+                        Log.w(
+                            TAG,
+                            "Operator token refresh failed on realtime reconnect — forcing logout",
+                        )
+                        triggerForcedLogout()
+                    }
+                    refreshed
+                }
+                is AuthType.Player -> authRepository.currentSessionTokenBlocking()
+                AuthType.None -> null
+            }
+        }
+    }
+
+    /**
+     * Clears the session and returns the app to the auth screen. Invoked
+     * from the realtime tokenProvider when operator refresh fails, so the
+     * user is not stuck watching a dead dashboard.
+     */
+    private fun triggerForcedLogout() {
+        if (!forcedLogoutInFlight.compareAndSet(false, true)) return
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    // `logout()` relaunches on the viewModelScope; call the
+                    // underlying repository + realtime disconnect directly
+                    // to keep this path self-contained and avoid re-entering
+                    // tokenProvider while it's still running.
+                    authRepository.clearSession()
+                }
+                playerRepository.clearAll()
+                operatorRepository.clearCache()
+                locationService.stop()
+                realtimeClient.disconnect()
+                val currentLanguage = _state.value.currentLanguage
+                val currentTheme = _state.value.themeMode
+                val isOnline = _state.value.isOnline
+                _state.value = AppSessionState(
+                    isOnline = isOnline,
+                    currentLanguage = currentLanguage,
+                    themeMode = currentTheme,
+                    errorMessage = context.getString(
+                        com.prayer.pointfinder.core.i18n.R.string.error_session_expired,
+                    ),
+                )
+            } finally {
+                forcedLogoutInFlight.set(false)
+            }
+        }
     }
 
     private fun observeNetwork() {
@@ -307,5 +395,9 @@ class AppSessionViewModel @Inject constructor(
             val token = pushTokenProvider.tokenOrNull() ?: return@launch
             runCatching { authRepository.registerPushToken(token) }
         }
+    }
+
+    companion object {
+        private const val TAG = "AppSessionViewModel"
     }
 }

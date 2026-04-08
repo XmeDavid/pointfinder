@@ -197,6 +197,7 @@
     <string name="error_nfc_write_failed">NFC write failed.</string>
     <string name="error_nfc_link_failed">NFC written but link failed: %1$s</string>
     <string name="error_network_unavailable">Network unavailable. Please check your connection.</string>
+    <string name="error_session_expired">Your session expired. Please sign in again.</string>
     <!-- Setup Hub -->
     <string name="label_needs_attention">Needs Attention</string>
     <string name="label_manage">Manage</string>

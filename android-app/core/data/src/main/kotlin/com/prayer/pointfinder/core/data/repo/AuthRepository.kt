@@ -17,8 +17,33 @@ import kotlinx.coroutines.sync.withLock
 class AuthRepository @Inject constructor(
     private val api: CompanionApi,
     private val sessionStore: SessionStore,
+    private val operatorTokenRefresher: OperatorTokenRefresher,
 ) {
     suspend fun restoreAuth(): AuthType = sessionStore.currentAuthType()
+
+    /**
+     * Synchronously refreshes the operator access token via `/api/auth/refresh`
+     * and returns the new value, or null if the session layer cannot refresh
+     * (no operator session, refresh token expired, server error). Used by
+     * `MobileRealtimeClient.tokenProvider` to rotate the access token before
+     * each WebSocket reconnect so the 15-minute TTL does not silently break
+     * long-running operator dashboards.
+     *
+     * This is a thin passthrough to [OperatorTokenRefresher.refreshTokenBlocking]
+     * so callers can depend on `AuthRepository` only and not reach into the
+     * network layer directly.
+     */
+    fun refreshOperatorAccessTokenBlocking(): String? =
+        operatorTokenRefresher.refreshTokenBlocking()
+
+    /**
+     * Returns the current access/session token from the session store without
+     * issuing a network call. Used by [MobileRealtimeClient.tokenProvider] on
+     * the initial connect so the first socket carries the latest on-disk
+     * token (covers the case where the access token was rotated by another
+     * code path since [AppSessionViewModel] captured it).
+     */
+    fun currentSessionTokenBlocking(): String? = sessionStore.currentToken()
 
     suspend fun playerJoin(joinCode: String, displayName: String, deviceId: String): AuthType.Player {
         val response = api.playerJoin(

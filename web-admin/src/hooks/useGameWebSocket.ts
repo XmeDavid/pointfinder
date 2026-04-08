@@ -1,6 +1,8 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { connectWebSocket, disconnectWebSocket } from "@/lib/api/websocket";
+import { getValidAccessToken } from "@/lib/api/client";
+import { useAuthStore } from "@/hooks/useAuth";
 import { useOperatorPresenceStore, type OperatorPresence } from "./useOperatorPresence";
 import { invalidateSnapshotSupersededQueries } from "./useGameSnapshot";
 
@@ -115,6 +117,24 @@ export function useGameWebSocket(gameId: string | undefined): string | null {
         `[snapshot] WebSocket reconnected — refreshing operator dashboard for game ${currentGameId}`,
       );
       invalidateSnapshotSupersededQueries(queryClient, currentGameId);
+    }, async () => {
+      // P0 Track 2 Slice 4 — refresh the operator access token before every
+      // reconnect attempt. Mirrors the iOS `tokenProvider` pattern: the
+      // 15-min operator access TTL means an idle tab would otherwise come
+      // back online with a stale JWT and fail every STOMP frame.
+      //
+      // Forcing a refresh is cheap: `getValidAccessToken()` already
+      // deduplicates concurrent calls via a shared in-flight promise, and
+      // the refresh endpoint itself is idempotent. We clear the in-memory
+      // access token first so `getValidAccessToken()` doesn't short-circuit
+      // to the cached (and possibly expired) value.
+      try {
+        useAuthStore.getState().clearAccessToken();
+        return await getValidAccessToken();
+      } catch (err) {
+        console.warn("[snapshot] WebSocket reconnect token refresh failed", err);
+        return null;
+      }
     });
 
     return () => {

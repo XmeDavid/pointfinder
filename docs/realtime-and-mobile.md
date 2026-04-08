@@ -398,16 +398,64 @@ The pattern every realtime client should implement:
 
 See `docs/api-reference.md` for full field-by-field examples.
 
-### Wiring status per platform (as of Slice 3)
+### Wiring status per platform (as of Slice 4)
 
-| Platform | Snapshot wired? | Notes |
-|---|---|---|
-| Backend | Yes | Endpoint, DTOs, service, state version bump all landed |
-| Web admin | **Slice 3: complete** | `web-admin/src/lib/api/games.ts:138` — `gamesApi.getSnapshot()`; `web-admin/src/hooks/useGameSnapshot.ts` — `useGameSnapshot()`, `useVisibilityRefresh()`, and `invalidateSnapshotSupersededQueries()`; `web-admin/src/features/game-detail/GameShell.tsx:20` — `useVisibilityRefresh(gameId)` mounted at the game-detail root so every layout (classic, setup, monitor, review) inherits it; `web-admin/src/lib/api/websocket.ts:19` — `connectWebSocket` accepts an `onReconnect` callback that only fires on second-and-subsequent connects (distinguished via an internal `hasConnectedOnce` flag); `web-admin/src/hooks/useGameWebSocket.ts:117` — passes the reconnect callback that invalidates the same query keys as `useVisibilityRefresh`. |
-| iOS | **Slice 2: complete** | `AppState+Snapshot.swift` — `refreshFromSnapshot()` method; `MainTabView.swift` — `scenePhase == .active` wiring; `AppState.swift` — realtime reconnect trigger |
-| Android | **Slice 2: complete** | `PlayerRepository.kt:132` — `refreshFromSnapshot()`; `PlayerViewModel.kt:217` — ViewModel wrapper; `AppNavigation.kt:605` — `ON_RESUME` wiring (replaces `refresh()`); `CompanionApi.kt` — snapshot endpoint |
+| Platform | Snapshot wired? | JWT refresh on WS reconnect? | Notes |
+|---|---|---|---|
+| Backend | Yes | N/A (serves `/api/auth/refresh`) | Endpoint, DTOs, service, state version bump all landed |
+| Web admin | **Slice 3: complete** | **Slice 4: complete** | `web-admin/src/lib/api/games.ts:138` — `gamesApi.getSnapshot()`; `web-admin/src/hooks/useGameSnapshot.ts` — `useGameSnapshot()`, `useVisibilityRefresh()`, and `invalidateSnapshotSupersededQueries()`; `web-admin/src/features/game-detail/GameShell.tsx:20` — `useVisibilityRefresh(gameId)` mounted at the game-detail root so every layout (classic, setup, monitor, review) inherits it; `web-admin/src/lib/api/websocket.ts:35` — `connectWebSocket` accepts an `onReconnect` callback that only fires on second-and-subsequent connects AND an optional `tokenProvider` that `beforeConnect` calls on every reconnect attempt to mint a fresh JWT; `web-admin/src/hooks/useGameWebSocket.ts:120` — passes both the reconnect callback (invalidates the same query keys as `useVisibilityRefresh`) and a `tokenProvider` that clears the in-memory access token and re-fetches via `getValidAccessToken()`. |
+| iOS | **Slice 2: complete** | **Shipped in earlier waves** | `AppState+Snapshot.swift` — `refreshFromSnapshot()` method; `MainTabView.swift` — `scenePhase == .active` wiring; `AppState.swift:118` — realtime reconnect trigger and `tokenProvider` wiring; `Services/MobileRealtimeClient.swift:18` — `tokenProvider` field consumed in `openConnection` via `effectiveToken` |
+| Android | **Slice 2: complete** | **Slice 4: complete** | `PlayerRepository.kt:132` — `refreshFromSnapshot()`; `PlayerViewModel.kt:217` — ViewModel wrapper; `AppNavigation.kt:605` — `ON_RESUME` wiring (replaces `refresh()`); `CompanionApi.kt` — snapshot endpoint; `core/network/src/main/kotlin/com/prayer/pointfinder/core/network/MobileRealtimeClient.kt:139` — `tokenProvider: (() -> String?)?` field consumed via `resolveRealtimeToken()` inside `openSocket()`; `app/src/main/java/com/prayer/pointfinder/session/AppSessionViewModel.kt:97` — `configureRealtimeTokenProvider()` delegates operator refreshes to `OperatorTokenRefresher` and forces a one-shot logout (via `error_session_expired`) when refresh returns null. |
 
-Slice 1 is strictly backend. Slices 2 and 3 wire the clients.
+Slice 1 is strictly backend. Slices 2 and 3 wire the snapshot clients. Slice 4 closes the remaining reliability gap by rotating operator JWTs on WebSocket reconnect across all three clients.
+
+### JWT refresh on WebSocket reconnect (Slice 4 detail)
+
+Operator access JWTs are 15 minutes; refresh tokens are 7 days. Before
+Slice 4, the realtime client on web-admin and Android would happily
+reconnect forever with whatever token it was given at login time — and
+because the backend rejects expired tokens during the STOMP/WebSocket
+handshake, every reconnect attempt past minute 15 would fail silently.
+The dashboard would still *look* alive (React Query caches held),
+but nothing new would arrive.
+
+iOS shipped the fix in earlier waves via a `tokenProvider: (() -> String?)?`
+callback on `MobileRealtimeClient`; on every `openConnection` call the
+client asks the session layer for a fresh token and falls back to the
+connect-time token if the provider is absent. Slice 4 mirrors that
+contract on the other two clients:
+
+- **Android** (`core/network/src/main/kotlin/.../MobileRealtimeClient.kt`):
+  a new `tokenProvider: (() -> String?)?` field is consumed inside
+  `openSocket()` via the pure helper `resolveRealtimeToken()`. The helper
+  is extracted as a top-level function so it can be unit-tested without
+  spinning up a real WebSocket (see `MobileRealtimeTokenProviderTest.kt`).
+  Wiring lives in `AppSessionViewModel.configureRealtimeTokenProvider()`:
+  for operators it calls `AuthRepository.refreshOperatorAccessTokenBlocking()`
+  (thin passthrough to the existing `OperatorTokenRefresher` mutex + cache);
+  for players it returns the current session token; on operator refresh
+  failure it fires a one-shot `triggerForcedLogout()` so the dashboard
+  does not loop forever on a dead session.
+
+- **Web admin** (`web-admin/src/lib/api/websocket.ts`): `connectWebSocket`
+  gains an optional fifth parameter `tokenProvider?: () => Promise<string | null>`.
+  The existing `hasConnectedOnce` flag (introduced in Slice 3) doubles as
+  the "is this a reconnect?" gate: on the first connect we keep using
+  `getValidAccessToken()` directly (React Query has already fetched with
+  whatever token is in memory, so there is no point issuing an extra
+  refresh); on every subsequent `beforeConnect` we call `tokenProvider`
+  first, and only fall back to `getValidAccessToken()` if it returns
+  null or throws. A null-null case (both refresh paths fail) strips the
+  `Authorization` header so the STOMP CONNECT fails fast and the existing
+  `onStompError` handler clears auth and triggers logout. Wired from
+  `useGameWebSocket.ts` with a closure that clears the in-memory access
+  token (so `getValidAccessToken()` does not short-circuit to the stale
+  cached value) and awaits a fresh refresh.
+
+Both clients now match the iOS invariant: a long-running operator
+session survives past the 15-minute access-token TTL without manual
+reload, and a permanently dead refresh token surfaces as an explicit
+logout instead of a silently frozen dashboard.
 
 ### Web admin foreground & reconnect refresh (Slice 3 detail)
 
