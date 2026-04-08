@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeEach, vi } from "vitest";
+import { getApiErrorMessage } from "./errors";
 
 vi.mock("./client", () => ({
   default: {
@@ -99,5 +100,21 @@ describe("monitoringApi.exportAuditLog", () => {
     await expect(monitoringApi.exportAuditLog("g1", {})).rejects.toMatchObject({
       response: { status: 403 },
     });
+  });
+
+  it("re-hydrates Blob error bodies so getApiErrorMessage sees the real message", async () => {
+    const errorBody = { message: "Internal server error", traceId: "abc123" };
+    const errorBlob = new Blob([JSON.stringify(errorBody)], { type: "application/json" });
+    const axiosError = { response: { data: errorBlob, status: 500 } };
+    (apiClient.get as ReturnType<typeof vi.fn>).mockRejectedValueOnce(axiosError);
+
+    let caught: unknown;
+    try {
+      await monitoringApi.exportAuditLog("game-1", {});
+    } catch (e) {
+      caught = e;
+    }
+
+    expect(getApiErrorMessage(caught)).toBe("Internal server error");
   });
 });

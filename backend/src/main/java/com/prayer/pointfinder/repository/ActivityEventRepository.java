@@ -127,7 +127,7 @@ public interface ActivityEventRepository extends JpaRepository<ActivityEvent, UU
             "AND (:teamId IS NULL OR ae.team.id = :teamId) " +
             "AND (:playerId IS NULL OR ae.actorPlayer.id = :playerId) " +
             "AND (:operatorId IS NULL OR ae.actorOperatorUser.id = :operatorId) " +
-            "AND (:types IS NULL OR ae.type IN :types) " +
+            "AND ae.type IN :types " +
             "AND (:sourceSurface IS NULL OR ae.sourceSurface = :sourceSurface) " +
             "ORDER BY ae.timestamp ASC")
     List<ActivityEvent> findForAuditExport(

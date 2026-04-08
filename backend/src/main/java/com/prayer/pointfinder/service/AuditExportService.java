@@ -134,7 +134,10 @@ public class AuditExportService {
             throw new BadRequestException(
                     "AUDIT_EXPORT_INVALID_RANGE: 'to' must be strictly after 'from'");
         }
-        Collection<ActivityEventType> types = parseActionTypes(query.actionTypeRaw());
+        Set<ActivityEventType> types = parseActionTypes(query.actionTypeRaw());
+        if (types == null || types.isEmpty()) {
+            types = EnumSet.allOf(ActivityEventType.class);
+        }
         boolean includeArchived = Boolean.TRUE.equals(query.includeArchived());
 
         // SQL pushdown — everything filterable on the activity_events row
@@ -450,7 +453,7 @@ public class AuditExportService {
      * value or a comma-separated list. Returns {@code null} when the caller
      * did not pass the filter, which the repository interprets as "no filter".
      */
-    private Collection<ActivityEventType> parseActionTypes(String raw) {
+    private Set<ActivityEventType> parseActionTypes(String raw) {
         if (raw == null || raw.isBlank()) return null;
         String[] tokens = raw.split(",");
         Set<ActivityEventType> result = EnumSet.noneOf(ActivityEventType.class);

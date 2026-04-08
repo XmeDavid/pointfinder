@@ -163,6 +163,39 @@ class AuditExportServiceTest extends IntegrationTestBase {
     }
 
     // ==================================================================
+    //  Filter: no actionType (default UI path — the regression case)
+    // ==================================================================
+
+    @Test
+    void exportWithNoActionTypeFilterReturnsAllEventTypes() throws Exception {
+        TestContext ctx = createLiveGameWithPlayer("no-type-filter");
+
+        // Generate events of at least two distinct types (check_in + submission).
+        authenticateAsPlayer(ctx.player);
+        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, new CheckInRequest());
+
+        CreateSubmissionRequest req = new CreateSubmissionRequest();
+        req.setTeamId(ctx.team.getId());
+        req.setChallengeId(ctx.challenge.getId());
+        req.setBaseId(ctx.base.getId());
+        req.setAnswer("any answer");
+        req.setIdempotencyKey(UUID.randomUUID());
+        submissionService.createSubmission(ctx.game.getId(), req);
+
+        // Export with actionType = null — this is the default filter state the
+        // UI sends when no action type is selected. Prior to the fix, this path
+        // caused Hibernate to bind null to a Collection IN-clause and threw a
+        // 500. Verify: no exception and at least two distinct event types present.
+        authenticateAsOperator(ctx.operator);
+        List<AuditEntryDto> entries = exportJson(query(ctx.game.getId()).build());
+
+        boolean hasCheckIn = entries.stream().anyMatch(e -> "check_in".equals(e.getType()));
+        boolean hasSubmission = entries.stream().anyMatch(e -> "submission".equals(e.getType()));
+        assertTrue(hasCheckIn, "default-filter export must include check_in events");
+        assertTrue(hasSubmission, "default-filter export must include submission events");
+    }
+
+    // ==================================================================
     //  Filter: playerId
     // ==================================================================
 

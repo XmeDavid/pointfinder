@@ -112,8 +112,24 @@ export const monitoringApi = {
     );
     const query = params.toString();
     const url = `/games/${gameId}/audit-export${query ? `?${query}` : ""}`;
-    const { data } = await apiClient.get(url, { responseType: "blob" });
-    return data;
+    try {
+      const { data } = await apiClient.get(url, { responseType: "blob" });
+      return data;
+    } catch (error) {
+      // Axios keeps error bodies as Blob when responseType: "blob".
+      // Re-hydrate into the shape getApiErrorMessage expects so callers
+      // see the real server message instead of the generic fallback.
+      const anyErr = error as { response?: { data?: unknown } };
+      if (anyErr.response?.data instanceof Blob) {
+        try {
+          const text = await anyErr.response.data.text();
+          anyErr.response.data = JSON.parse(text);
+        } catch {
+          // If the blob isn't JSON, leave it — caller falls back to generic message
+        }
+      }
+      throw error;
+    }
   },
 };
 
