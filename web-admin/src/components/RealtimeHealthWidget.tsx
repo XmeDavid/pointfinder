@@ -93,7 +93,8 @@ export function RealtimeHealthWidget({ gameId, gameStatus }: Props) {
           <span
             className={`inline-block h-2.5 w-2.5 rounded-full ${dotColor}`}
             data-testid="realtime-health-dot"
-            aria-hidden
+            aria-label={statusLabel}
+            role="img"
           />
           <span className="text-sm font-medium" data-testid="realtime-health-status">
             {statusLabel}

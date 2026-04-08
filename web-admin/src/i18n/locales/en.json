@@ -525,7 +525,9 @@
     "markCompletedPointsOverrideLabel": "Points override (optional)",
     "markCompletedConfirm": "Mark as completed",
     "markCompletedSuccess": "Challenge marked as completed.",
-    "reviewerHintLabel": "Reviewer hint"
+    "reviewerHintLabel": "Reviewer hint",
+    "viewFullscreen": "View fullscreen",
+    "openReview": "Review submission: {{team}} — {{challenge}}"
   },
   "teamDetail": {
     "backToLeaderboard": "Back to Leaderboard",
@@ -796,6 +798,7 @@
   "color": {
     "pickerLabel": "Color",
     "none": "No color",
+    "selected": "Selected: {{color}}",
     "red": "Red",
     "orange": "Orange",
     "amber": "Amber",

@@ -36,6 +36,14 @@ export function ColorPicker({
   const { t } = useTranslation();
   const normalized = value ? value.toLowerCase() : null;
 
+  // Compute a human-readable label for the current selection so the live
+  // region can announce it to screen readers when the value changes.
+  const selectedLabel = normalized === null
+    ? t("color.none")
+    : (COLOR_PALETTE.find((s) => s.value.toLowerCase() === normalized)
+        ? t(COLOR_PALETTE.find((s) => s.value.toLowerCase() === normalized)!.nameKey)
+        : normalized);
+
   return (
     <div
       className={cn("flex flex-wrap items-center gap-2", className)}
@@ -43,6 +51,10 @@ export function ColorPicker({
       role="radiogroup"
       aria-label={t("color.pickerLabel")}
     >
+      {/* Live region: announces selection changes to screen readers */}
+      <span className="sr-only" aria-live="polite" aria-atomic="true">
+        {t("color.selected", { color: selectedLabel })}
+      </span>
       <button
         type="button"
         role="radio"

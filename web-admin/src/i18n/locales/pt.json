@@ -525,7 +525,9 @@
     "markCompletedPointsOverrideLabel": "Pontos (opcional)",
     "markCompletedConfirm": "Marcar como concluído",
     "markCompletedSuccess": "Desafio marcado como concluído.",
-    "reviewerHintLabel": "Dica para o revisor"
+    "reviewerHintLabel": "Dica para o revisor",
+    "viewFullscreen": "Ver em ecrã inteiro",
+    "openReview": "Rever submissão: {{team}} — {{challenge}}"
   },
   "teamDetail": {
     "backToLeaderboard": "Voltar à Classificação",
@@ -796,6 +798,7 @@
   "color": {
     "pickerLabel": "Cor",
     "none": "Sem cor",
+    "selected": "Selecionado: {{color}}",
     "red": "Vermelho",
     "orange": "Laranja",
     "amber": "Âmbar",

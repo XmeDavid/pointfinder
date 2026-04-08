@@ -232,6 +232,7 @@ export function SubmissionsPage() {
               onClick={isPending ? () => openReview(sub) : undefined}
               role={isPending ? "button" : undefined}
               tabIndex={isPending ? 0 : undefined}
+              aria-label={isPending ? t("submissions.openReview", { team: team?.name ?? "", challenge: challenge?.title ?? "" }) : undefined}
               onKeyDown={isPending ? (e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
@@ -338,7 +339,7 @@ export function SubmissionsPage() {
                         {mediaUrls.map((url, idx) => (
                           <div key={url} className="relative group">
                             <AuthMedia src={url} alt={url.includes("video") ? t("submissions.altVideo") : t("submissions.altImage")} className="rounded-md max-h-64 w-full object-contain bg-muted cursor-pointer" onClick={() => openFullScreen(mediaUrls, idx)} onBlobReady={(blob) => cacheBlobUrl(url, blob)} />
-                            <button className="absolute top-2 right-2 p-1 rounded bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => openFullScreen(mediaUrls, idx)}><Maximize2 className="h-4 w-4" /></button>
+                            <button className="absolute top-2 right-2 p-1 rounded bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100" aria-label={t("submissions.viewFullscreen")} onClick={() => openFullScreen(mediaUrls, idx)}><Maximize2 className="h-4 w-4" aria-hidden="true" /></button>
                           </div>
                         ))}
                       </div>

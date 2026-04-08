@@ -525,7 +525,9 @@
     "markCompletedPointsOverrideLabel": "Punkte (optional)",
     "markCompletedConfirm": "Als abgeschlossen markieren",
     "markCompletedSuccess": "Aufgabe als abgeschlossen markiert.",
-    "reviewerHintLabel": "Hinweis für Prüfer"
+    "reviewerHintLabel": "Hinweis für Prüfer",
+    "viewFullscreen": "Vollbild anzeigen",
+    "openReview": "Einreichung prüfen: {{team}} — {{challenge}}"
   },
   "teamDetail": {
     "backToLeaderboard": "Zurück zur Rangliste",
@@ -796,6 +798,7 @@
   "color": {
     "pickerLabel": "Farbe",
     "none": "Keine Farbe",
+    "selected": "Ausgewählt: {{color}}",
     "red": "Rot",
     "orange": "Orange",
     "amber": "Bernstein",

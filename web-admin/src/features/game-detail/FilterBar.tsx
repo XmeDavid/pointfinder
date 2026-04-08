@@ -19,6 +19,7 @@
 import { SlidersHorizontal, Tag, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Tag as TagType } from "@/types";
+import { getReadableTextColor } from "@/lib/colorContrast";
 
 export interface FilterBarState {
   allTagIds: string[];
@@ -69,6 +70,7 @@ export function FilterBar({
         const label = resolved?.label ?? tagId;
         const tagColor = resolved?.color;
         const active = selectedTagIds.includes(tagId);
+        const activeTextColor = active && tagColor ? getReadableTextColor(tagColor) : undefined;
 
         return (
           <button
@@ -79,10 +81,14 @@ export function FilterBar({
             className={[
               "inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
               active
-                ? "text-white border-transparent"
+                ? "border-transparent"
                 : "bg-background text-foreground border-border hover:bg-muted",
             ].join(" ")}
-            style={active && tagColor ? { backgroundColor: tagColor, borderColor: tagColor } : undefined}
+            style={
+              active && tagColor
+                ? { backgroundColor: tagColor, borderColor: tagColor, color: activeTextColor }
+                : undefined
+            }
             data-testid={`filter-tag-${tagId}`}
           >
             {tagColor && !active && (
