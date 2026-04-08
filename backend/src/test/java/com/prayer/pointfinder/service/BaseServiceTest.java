@@ -1,5 +1,6 @@
 package com.prayer.pointfinder.service;
 
+import com.prayer.pointfinder.dto.request.CreateBaseRequest;
 import com.prayer.pointfinder.dto.request.UpdateBaseRequest;
 import com.prayer.pointfinder.dto.response.BaseResponse;
 import com.prayer.pointfinder.entity.Base;
@@ -22,6 +23,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -227,5 +230,88 @@ class BaseServiceTest {
         request.setNfcLinked(false);
         request.setFixedChallengeId(fixedChallengeId);
         return request;
+    }
+
+    // ── P1 Phase 4 W3: operator-only base tags and color ─────────────
+
+    @Test
+    void createBasePersistsTagsAndColor() {
+        CreateBaseRequest request = new CreateBaseRequest();
+        request.setName("Trailhead");
+        request.setDescription("At the fork in the path");
+        request.setLat(47.3769);
+        request.setLng(8.5417);
+        request.setHidden(false);
+        request.setTags(List.of("trail", "morning", "scenic"));
+        request.setColor("#3b82f6");
+
+        when(gameAccessService.getAccessibleGame(gameId)).thenReturn(game);
+        when(baseRepository.save(any(Base.class))).thenAnswer(invocation -> {
+            Base saved = invocation.getArgument(0);
+            saved.setId(UUID.randomUUID());
+            return saved;
+        });
+
+        BaseResponse response = baseService.createBase(gameId, request);
+
+        assertNotNull(response);
+        assertNotNull(response.getTags());
+        assertEquals(List.of("trail", "morning", "scenic"), response.getTags());
+        assertEquals("#3b82f6", response.getColor());
+    }
+
+    @Test
+    void updateBaseUpdatesTagsAndColor() {
+        UUID baseId = UUID.randomUUID();
+        Base base = Base.builder()
+                .id(baseId)
+                .game(game)
+                .name("Base")
+                .description("Desc")
+                .lat(1.0)
+                .lng(2.0)
+                .hidden(false)
+                .nfcLinked(false)
+                .tags(List.of("old-tag"))
+                .color("#ef4444")
+                .build();
+
+        UpdateBaseRequest request = baseUpdateRequest("Base", false, null);
+        request.setTags(List.of("fresh", "new-pair"));
+        request.setColor("#22c55e");
+
+        when(baseRepository.findById(baseId)).thenReturn(Optional.of(base));
+        when(baseRepository.save(any(Base.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        BaseResponse response = baseService.updateBase(gameId, baseId, request);
+
+        assertEquals(List.of("fresh", "new-pair"), response.getTags());
+        assertEquals("#22c55e", response.getColor());
+        assertEquals(List.of("fresh", "new-pair"), base.getTags());
+        assertEquals("#22c55e", base.getColor());
+    }
+
+    @Test
+    void createBaseNormalizesEmptyTagsToNull() {
+        CreateBaseRequest request = new CreateBaseRequest();
+        request.setName("Tagless");
+        request.setDescription("");
+        request.setLat(47.3769);
+        request.setLng(8.5417);
+        request.setHidden(false);
+        request.setTags(List.of()); // empty list collapses to null
+        request.setColor("   "); // blank color collapses to null
+
+        when(gameAccessService.getAccessibleGame(gameId)).thenReturn(game);
+        when(baseRepository.save(any(Base.class))).thenAnswer(invocation -> {
+            Base saved = invocation.getArgument(0);
+            saved.setId(UUID.randomUUID());
+            return saved;
+        });
+
+        BaseResponse response = baseService.createBase(gameId, request);
+
+        assertNull(response.getTags());
+        assertNull(response.getColor());
     }
 }

@@ -36,6 +36,21 @@ export interface Base {
   nfcLinked: boolean;
   hidden: boolean;
   fixedChallengeId?: string;
+  /**
+   * Operator-only free-text tags (P1 Phase 4 W3). Only present on the
+   * operator-facing `BaseResponse` DTO from `GET /api/games/{gameId}/bases`.
+   * The player-facing `PlayerBaseResponse` served via
+   * `GET /api/player/games/{gameId}/bases` and
+   * `GET /api/player/games/{gameId}/data` intentionally omits this field,
+   * and a backend test enforces the absence.
+   */
+  tags?: string[];
+  /**
+   * Operator-only fixed-palette color (7-char hex, e.g. `#3b82f6`).
+   * Same privacy contract as `tags` — never returned on player-facing
+   * endpoints.
+   */
+  color?: string;
 }
 
 export type AnswerType = "text" | "file" | "none";
@@ -62,6 +77,17 @@ export interface Challenge {
    * field, and a backend test enforces the absence.
    */
   operatorNotes?: string;
+  /**
+   * Operator-only free-text tags (P1 Phase 4 W3). Same privacy contract
+   * as `operatorNotes` — never returned on player-facing endpoints.
+   */
+  tags?: string[];
+  /**
+   * Operator-only fixed-palette color (7-char hex). Same privacy
+   * contract as `operatorNotes` — never returned on player-facing
+   * endpoints.
+   */
+  color?: string;
 }
 
 export interface Team {

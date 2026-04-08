@@ -77,6 +77,34 @@ public class Challenge {
     @Column(name = "operator_notes", columnDefinition = "TEXT")
     private String operatorNotes;
 
+    /**
+     * Operator-only free-text tags for setup organization (grouping, filtering,
+     * operational planning). MUST NEVER be exposed to players.
+     *
+     * <p>Only operator-facing DTOs ({@link com.prayer.pointfinder.dto.response.ChallengeResponse})
+     * carry this field. Player-facing DTOs ({@code PlayerChallengeResponse},
+     * {@code CheckInResponse.ChallengeInfo}, {@code PlayerSnapshotResponse})
+     * deliberately omit it, and {@code PlayerControllerTest} asserts the
+     * absence via JSON path plus a full-body substring check.
+     *
+     * <p>Length is capped at 20 entries at the DTO layer; storage is JSON
+     * via {@link StringListJsonConverter}, matching the existing
+     * {@link #correctAnswer} convention.
+     */
+    @Convert(converter = StringListJsonConverter.class)
+    @Column(name = "tags", columnDefinition = "TEXT")
+    private List<String> tags;
+
+    /**
+     * Operator-only fixed-palette color (7-char hex, e.g. {@code #3b82f6}).
+     * MUST NEVER be exposed to players. Matches the existing
+     * {@code Team.color} storage convention ({@code VARCHAR(7)}). The
+     * client uses a fixed 12-swatch palette; the server accepts any valid
+     * hex via {@code @Pattern} on the request DTO.
+     */
+    @Column(name = "color", length = 7)
+    private String color;
+
     @ManyToMany
     @JoinTable(
             name = "challenge_unlocks_bases",

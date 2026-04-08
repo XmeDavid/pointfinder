@@ -473,4 +473,84 @@ class ChallengeServiceTest {
         request.setLocationBound(true);
         return request;
     }
+
+    // ── P1 Phase 4 W3: operator-only challenge tags and color ────────
+
+    @Test
+    void createChallengePersistsTagsAndColor() {
+        CreateChallengeRequest request = new CreateChallengeRequest();
+        request.setTitle("Tagged challenge");
+        request.setDescription("Short");
+        request.setContent("");
+        request.setCompletionContent("");
+        request.setAnswerType("text");
+        request.setAutoValidate(false);
+        request.setPoints(75);
+        request.setLocationBound(false);
+        request.setTags(List.of("easy", "scout", "evening"));
+        request.setColor("#8b5cf6");
+
+        when(gameAccessService.getAccessibleGame(gameId)).thenReturn(game);
+        when(challengeRepository.save(any(Challenge.class))).thenAnswer(invocation -> {
+            Challenge saved = invocation.getArgument(0);
+            saved.setId(UUID.randomUUID());
+            return saved;
+        });
+        when(baseRepository.findByFixedChallengeId(any(UUID.class))).thenReturn(List.of());
+
+        ChallengeResponse response = challengeService.createChallenge(gameId, request);
+
+        assertNotNull(response);
+        assertEquals(List.of("easy", "scout", "evening"), response.getTags());
+        assertEquals("#8b5cf6", response.getColor());
+    }
+
+    @Test
+    void updateChallengeUpdatesTagsAndColor() {
+        challenge.setTags(List.of("stale"));
+        challenge.setColor("#ef4444");
+
+        UUID fixedBaseId = UUID.randomUUID();
+        Base fixedBase = Base.builder().id(fixedBaseId).game(game).hidden(false).build();
+
+        UpdateChallengeRequest request = baseRequest();
+        request.setLocationBound(false);
+        request.setTags(List.of("refreshed", "priority"));
+        request.setColor("#14b8a6");
+
+        when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
+        when(challengeRepository.save(any(Challenge.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(baseRepository.findByFixedChallengeId(challengeId)).thenReturn(List.of(fixedBase));
+
+        ChallengeResponse response = challengeService.updateChallenge(gameId, challengeId, request);
+
+        assertEquals(List.of("refreshed", "priority"), response.getTags());
+        assertEquals("#14b8a6", response.getColor());
+        assertEquals(List.of("refreshed", "priority"), challenge.getTags());
+        assertEquals("#14b8a6", challenge.getColor());
+    }
+
+    @Test
+    void createChallengeNormalizesEmptyTagsToNull() {
+        CreateChallengeRequest request = new CreateChallengeRequest();
+        request.setTitle("Untagged");
+        request.setAnswerType("text");
+        request.setPoints(50);
+        request.setLocationBound(false);
+        request.setTags(List.of()); // empty list collapses to null
+        request.setColor("   "); // blank color collapses to null
+
+        when(gameAccessService.getAccessibleGame(gameId)).thenReturn(game);
+        when(challengeRepository.save(any(Challenge.class))).thenAnswer(invocation -> {
+            Challenge saved = invocation.getArgument(0);
+            saved.setId(UUID.randomUUID());
+            return saved;
+        });
+        when(baseRepository.findByFixedChallengeId(any(UUID.class))).thenReturn(List.of());
+
+        ChallengeResponse response = challengeService.createChallenge(gameId, request);
+
+        assertNull(response.getTags());
+        assertNull(response.getColor());
+    }
 }

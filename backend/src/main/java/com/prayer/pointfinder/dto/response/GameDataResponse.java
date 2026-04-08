@@ -11,13 +11,15 @@ import java.util.List;
  * Contains all bases, challenges assigned to the player's team,
  * assignments, and current progress.
  *
- * <p>Privacy note: the {@code challenges} list uses
- * {@link PlayerChallengeResponse}, not the operator-facing
- * {@link ChallengeResponse}, so operator-only fields such as
- * {@code correctAnswer} and {@code operatorNotes} are omitted by
- * construction. See {@code PlayerChallengeResponse} for the full
- * rationale and {@code PlayerControllerTest.getGameDataNeverLeaksOperatorNotes}
- * for the enforcing assertion.
+ * <p>Privacy note: both the {@code bases} and {@code challenges} lists
+ * use player-safe DTOs — {@link PlayerBaseResponse} and
+ * {@link PlayerChallengeResponse} — not the operator-facing
+ * {@link BaseResponse} / {@link ChallengeResponse}, so operator-only
+ * fields such as {@code correctAnswer}, {@code operatorNotes},
+ * {@code tags}, and {@code color} are omitted by construction. See
+ * {@link PlayerBaseResponse} and {@link PlayerChallengeResponse} for
+ * the full rationale, and {@code PlayerControllerTest} for the enforcing
+ * assertions on the serialized response body.
  */
 @Data
 @Builder
@@ -25,7 +27,7 @@ import java.util.List;
 public class GameDataResponse {
     private String gameStatus;
     private String unlockTrigger;
-    private List<BaseResponse> bases;
+    private List<PlayerBaseResponse> bases;
     private List<PlayerChallengeResponse> challenges;
     private List<AssignmentResponse> assignments;
     private List<BaseProgressResponse> progress;

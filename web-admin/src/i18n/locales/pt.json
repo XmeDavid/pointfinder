@@ -242,7 +242,15 @@
     "hiddenTag": "Oculta",
     "noFixedChallengesAvailable": "Não há desafios fixos disponíveis de momento.",
     "deleteConfirmTitle": "Eliminar esta base?",
-    "deleteConfirmDescription": "Esta base e as suas atribuições serão permanentemente eliminadas."
+    "deleteConfirmDescription": "Esta base e as suas atribuições serão permanentemente eliminadas.",
+    "tagsLabel": "Etiquetas",
+    "tagsPlaceholder": "Adicione uma etiqueta e pressione Enter",
+    "colorLabel": "Cor",
+    "filterByTag": "Filtrar por etiqueta",
+    "filterByTagPlaceholder": "Procurar por etiqueta...",
+    "filterByColor": "Filtrar por cor",
+    "filterClear": "Limpar filtros",
+    "noResults": "Nenhuma base corresponde aos filtros atuais."
   },
   "basesAndChallenges": {
     "title": "Bases & Desafios",
@@ -321,6 +329,14 @@
     "requirePresence": "Requer presença para submeter",
     "operatorNotesLabel": "Notas do Operador",
     "operatorNotesPlaceholder": "Notas visíveis apenas para operadores (máx 5000 caracteres)",
+    "tagsLabel": "Etiquetas",
+    "tagsPlaceholder": "Adicione uma etiqueta e pressione Enter",
+    "colorLabel": "Cor",
+    "filterByTag": "Filtrar por etiqueta",
+    "filterByTagPlaceholder": "Procurar por etiqueta...",
+    "filterByColor": "Filtrar por cor",
+    "filterClear": "Limpar filtros",
+    "noResults": "Nenhum desafio corresponde aos filtros atuais.",
     "deleteConfirmTitle": "Eliminar este desafio?",
     "deleteConfirmDescription": "Este desafio e todas as suas atribuições serão permanentemente eliminados."
   },
@@ -699,5 +715,28 @@
     "insertVariable": "Inserir Variável",
     "undo": "Desfazer",
     "redo": "Refazer"
+  },
+  "color": {
+    "pickerLabel": "Cor",
+    "none": "Sem cor",
+    "red": "Vermelho",
+    "orange": "Laranja",
+    "amber": "Âmbar",
+    "yellow": "Amarelo",
+    "lime": "Lima",
+    "green": "Verde",
+    "teal": "Verde-azulado",
+    "cyan": "Ciano",
+    "blue": "Azul",
+    "violet": "Violeta",
+    "pink": "Rosa",
+    "slate": "Ardósia"
+  },
+  "tags": {
+    "inputLabel": "Adicionar uma etiqueta",
+    "placeholder": "Adicione uma etiqueta e pressione Enter",
+    "remove": "Remover etiqueta {{tag}}",
+    "limitReached": "Máximo de {{max}} etiquetas atingido",
+    "hint": "{{count}}/{{max}} etiquetas"
   }
 }

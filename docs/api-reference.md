@@ -311,12 +311,20 @@ A future slice will add `GET /api/games/:gameId/snapshot?lastSeenVersion=N`. Whe
   "lat": 0.0,
   "lng": 0.0,
   "fixedChallengeId": "UUID (optional)",
-  "hidden": false
+  "hidden": false,
+  "tags": ["string (optional, operator-only, max 20 entries, max 40 chars each)"],
+  "color": "#3b82f6 (optional, operator-only, 7-char hex)"
 }
 ```
 
 > `hidden: true` hides the base from players' map view.
 > `PATCH /nfc-link` is called by the iOS app after writing an NFC tag to a physical marker.
+
+**Operator-only fields**: `BaseResponse` (returned by all endpoints under `/api/games/:gameId/bases`) carries `tags` (up to 20 free-text strings for setup organization) and `color` (a 7-char hex string for visual grouping). Both fields are NEVER returned on any player-facing endpoint: `GET /api/player/games/:gameId/bases`, `GET /api/player/games/:gameId/data`, and `GET /api/player/games/:gameId/progress` all serialize bases through dedicated player DTOs (`PlayerBaseResponse`, `BaseProgressResponse`, `BroadcastBaseResponse`) that have no `tags` or `color` fields. The `PlayerControllerTest` in the backend asserts the absence via JSON path plus a case-insensitive full-body substring check, so any regression that reintroduces `BaseResponse` on the player path fails the standard `make test-backend-docker` run. See `docs/business-logic.md` § "Tags and Colors on Bases and Challenges" for the full privacy contract and DTO table.
+
+**Validation**:
+- `tags`: `@Size(max = 20)` on the list; each entry `@Size(max = 40)`. Empty list collapses to `null`.
+- `color`: `@Pattern(regexp = "^#[0-9a-fA-F]{6}$")`. Blank strings collapse to `null`.
 
 ---
 
@@ -349,7 +357,9 @@ A future slice will add `GET /api/games/:gameId/snapshot?lastSeenVersion=N`. Whe
   "requirePresenceToSubmit": false,
   "fixedBaseId": "UUID (optional)",
   "unlocksBaseId": "UUID (optional)",
-  "operatorNotes": "string (optional, operator-only, max 5000 chars)"
+  "operatorNotes": "string (optional, operator-only, max 5000 chars)",
+  "tags": ["string (optional, operator-only, max 20 entries, max 40 chars each)"],
+  "color": "#3b82f6 (optional, operator-only, 7-char hex)"
 }
 ```
 
@@ -360,7 +370,18 @@ A future slice will add `GET /api/games/:gameId/snapshot?lastSeenVersion=N`. Whe
 
 > `correctAnswer` supports `{{variableName}}` template syntax resolved per-team from team variables.
 
-**Operator-only fields**: `ChallengeResponse` (returned by all endpoints under `/api/games/:gameId/challenges`) carries `operatorNotes`, a free-text field with a 5000-character cap that operators can use for setup reminders, equipment lists, or private tips. This field is NEVER returned on any player-facing endpoint: `GET /api/player/games/:gameId/data` serializes challenges through a dedicated `PlayerChallengeResponse` DTO that has no `operatorNotes` field, and `POST /api/player/games/:gameId/bases/:baseId/check-in` returns a narrower `CheckInResponse.ChallengeInfo` shape that also omits it. The `PlayerControllerTest` in the backend asserts the absence via JSON path plus a case-insensitive full-body substring check, so any regression that reintroduces `ChallengeResponse` on the player path fails the standard `make test-backend-docker` run. See `docs/business-logic.md` § "Operator-Only Challenge Notes" for the full privacy contract and DTO table.
+**Operator-only fields**: `ChallengeResponse` (returned by all endpoints under `/api/games/:gameId/challenges`) carries three operator-only fields that are NEVER returned on any player-facing endpoint:
+
+- `operatorNotes` — free-text string with a 5000-character cap (setup reminders, equipment lists, private tips).
+- `tags` — list of up to 20 free-text strings (max 40 chars each) for setup organization.
+- `color` — 7-char hex string (e.g. `#3b82f6`) for visual grouping; the web admin uses a fixed 12-swatch palette while the server accepts any valid hex.
+
+`GET /api/player/games/:gameId/data` serializes challenges through a dedicated `PlayerChallengeResponse` DTO that has none of these fields, and `POST /api/player/games/:gameId/bases/:baseId/check-in` returns a narrower `CheckInResponse.ChallengeInfo` shape that also omits them. The `PlayerControllerTest` in the backend asserts the absence via JSON path plus a case-insensitive full-body substring check (for both `operatorNotes` and `tags` / `color`), so any regression that reintroduces `ChallengeResponse` on the player path fails the standard `make test-backend-docker` run. See `docs/business-logic.md` § "Operator-Only Challenge Notes" and § "Tags and Colors on Bases and Challenges" for the full privacy contracts and DTO tables.
+
+**Validation**:
+- `operatorNotes`: `@Size(max = 5000)`. Blank collapses to `null`.
+- `tags`: `@Size(max = 20)` on the list; each entry `@Size(max = 40)`. Empty list collapses to `null`.
+- `color`: `@Pattern(regexp = "^#[0-9a-fA-F]{6}$")`. Blank strings collapse to `null`.
 
 ---
 

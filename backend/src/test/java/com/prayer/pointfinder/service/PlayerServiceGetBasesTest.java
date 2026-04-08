@@ -1,6 +1,6 @@
 package com.prayer.pointfinder.service;
 
-import com.prayer.pointfinder.dto.response.BaseResponse;
+import com.prayer.pointfinder.dto.response.PlayerBaseResponse;
 import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.repository.*;
 import com.prayer.pointfinder.security.JwtTokenProvider;
@@ -108,7 +108,7 @@ class PlayerServiceGetBasesTest {
 
         when(baseRepository.findByGameId(gameId)).thenReturn(bases);
 
-        List<BaseResponse> result = playerService.getBases(gameId, player);
+        List<PlayerBaseResponse> result = playerService.getBases(gameId, player);
 
         // The visible base must appear in results
         assertTrue(result.stream().anyMatch(b -> b.getId().equals(visibleBase.getId())),
@@ -140,7 +140,7 @@ class PlayerServiceGetBasesTest {
 
         when(baseRepository.findByGameId(gameId)).thenReturn(bases);
 
-        List<BaseResponse> result = playerService.getBases(gameId, player);
+        List<PlayerBaseResponse> result = playerService.getBases(gameId, player);
 
         // Should be capped at 500
         assertTrue(result.size() <= 500,

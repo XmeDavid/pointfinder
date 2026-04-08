@@ -242,7 +242,15 @@
     "hiddenTag": "Hidden",
     "noFixedChallengesAvailable": "No fixed challenges are currently available.",
     "deleteConfirmTitle": "Delete this base?",
-    "deleteConfirmDescription": "This base and its assignments will be permanently deleted."
+    "deleteConfirmDescription": "This base and its assignments will be permanently deleted.",
+    "tagsLabel": "Tags",
+    "tagsPlaceholder": "Add a tag and press Enter",
+    "colorLabel": "Color",
+    "filterByTag": "Filter by tag",
+    "filterByTagPlaceholder": "Search by tag...",
+    "filterByColor": "Filter by color",
+    "filterClear": "Clear filters",
+    "noResults": "No bases match the current filters."
   },
   "basesAndChallenges": {
     "title": "Bases & Challenges",
@@ -321,6 +329,14 @@
     "requirePresence": "Require presence to submit",
     "operatorNotesLabel": "Operator Notes",
     "operatorNotesPlaceholder": "Notes only operators see (max 5000 characters)",
+    "tagsLabel": "Tags",
+    "tagsPlaceholder": "Add a tag and press Enter",
+    "colorLabel": "Color",
+    "filterByTag": "Filter by tag",
+    "filterByTagPlaceholder": "Search by tag...",
+    "filterByColor": "Filter by color",
+    "filterClear": "Clear filters",
+    "noResults": "No challenges match the current filters.",
     "deleteConfirmTitle": "Delete this challenge?",
     "deleteConfirmDescription": "This challenge and all its assignments will be permanently deleted."
   },
@@ -699,5 +715,28 @@
     "insertVariable": "Insert Variable",
     "undo": "Undo",
     "redo": "Redo"
+  },
+  "color": {
+    "pickerLabel": "Color",
+    "none": "No color",
+    "red": "Red",
+    "orange": "Orange",
+    "amber": "Amber",
+    "yellow": "Yellow",
+    "lime": "Lime",
+    "green": "Green",
+    "teal": "Teal",
+    "cyan": "Cyan",
+    "blue": "Blue",
+    "violet": "Violet",
+    "pink": "Pink",
+    "slate": "Slate"
+  },
+  "tags": {
+    "inputLabel": "Add a tag",
+    "placeholder": "Add a tag and press Enter",
+    "remove": "Remove tag {{tag}}",
+    "limitReached": "Maximum {{max}} tags reached",
+    "hint": "{{count}}/{{max}} tags"
   }
 }

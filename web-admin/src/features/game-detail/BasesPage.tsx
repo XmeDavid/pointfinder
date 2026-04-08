@@ -22,6 +22,8 @@ import { MapPicker, BaseMapView, type UnlockConnection } from "@/components/comm
 import { getDefaultCenter } from "@/lib/tile-sources";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/useToast";
+import { ColorPicker } from "@/components/ColorPicker";
+import { TagInput } from "@/components/TagInput";
 import type { Base } from "@/types";
 
 type ViewMode = "list" | "map";
@@ -99,13 +101,22 @@ export function BasesPage() {
     const lastBase = bases.length > 0 ? bases[bases.length - 1] : null;
     const lat = lastBase ? lastBase.lat : defaultLocation.lat;
     const lng = lastBase ? lastBase.lng : defaultLocation.lng;
-    setForm({ name: "", description: "", lat, lng, hidden: false });
+    setForm({ name: "", description: "", lat, lng, hidden: false, tags: undefined, color: undefined });
     setDialogOpen(true);
   }
 
   function openEdit(base: Base) {
     setEditing(base);
-    setForm({ name: base.name, description: base.description, lat: base.lat, lng: base.lng, fixedChallengeId: base.fixedChallengeId, hidden: base.hidden });
+    setForm({
+      name: base.name,
+      description: base.description,
+      lat: base.lat,
+      lng: base.lng,
+      fixedChallengeId: base.fixedChallengeId,
+      hidden: base.hidden,
+      tags: base.tags,
+      color: base.color,
+    });
     setDialogOpen(true);
   }
 
@@ -268,6 +279,33 @@ export function BasesPage() {
                 id="hidden"
                 checked={form.hidden ?? false}
                 onCheckedChange={(checked) => setForm((f) => ({ ...f, hidden: checked }))}
+              />
+            </div>
+            {/*
+              P1 Phase 4 W3 — operator-only tags and color. These fields are
+              never surfaced to players. See PlayerBaseResponse for the
+              player-safe DTO and PlayerControllerTest for the enforcing
+              JSON-path / full-body substring assertions.
+            */}
+            <div className="space-y-2">
+              <FormLabel htmlFor="baseColor" optional>
+                {t("bases.colorLabel")}
+              </FormLabel>
+              <ColorPicker
+                value={form.color ?? null}
+                onChange={(next) => setForm((f) => ({ ...f, color: next ?? undefined }))}
+                data-testid="base-color-picker"
+              />
+            </div>
+            <div className="space-y-2">
+              <FormLabel htmlFor="baseTags" optional>
+                {t("bases.tagsLabel")}
+              </FormLabel>
+              <TagInput
+                value={form.tags}
+                onChange={(next) => setForm((f) => ({ ...f, tags: next }))}
+                placeholder={t("bases.tagsPlaceholder")}
+                data-testid="base-tags-input"
               />
             </div>
             <DialogFooter>

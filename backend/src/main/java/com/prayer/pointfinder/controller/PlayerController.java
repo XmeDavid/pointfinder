@@ -55,7 +55,7 @@ public class PlayerController {
     }
 
     @GetMapping("/games/{gameId}/bases")
-    public ResponseEntity<List<BaseResponse>> getBases(@PathVariable UUID gameId) {
+    public ResponseEntity<List<PlayerBaseResponse>> getBases(@PathVariable UUID gameId) {
         Player player = SecurityUtils.getCurrentPlayer();
         return ResponseEntity.ok(playerService.getBases(gameId, player));
     }

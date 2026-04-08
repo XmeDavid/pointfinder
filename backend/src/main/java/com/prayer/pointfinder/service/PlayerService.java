@@ -322,14 +322,19 @@ public class PlayerService {
     }
 
     @Transactional(readOnly = true)
-    public List<BaseResponse> getBases(UUID gameId, Player authPlayer) {
+    public List<PlayerBaseResponse> getBases(UUID gameId, Player authPlayer) {
         Player player = loadPlayer(authPlayer);
         gameAccessService.ensurePlayerBelongsToGame(player, gameId);
 
+        // Uses PlayerBaseResponse (not the operator-facing BaseResponse)
+        // so operator-only fields — nfcToken, tags, color — cannot leak
+        // to players by construction. This invariant is enforced by
+        // PlayerControllerTest via JSON path assertions on the response
+        // body. See PlayerBaseResponse javadoc for the full rationale.
         return baseRepository.findByGameId(gameId).stream()
                 .filter(b -> !Boolean.TRUE.equals(b.getHidden()))
                 .limit(500)
-                .map(base -> BaseResponse.builder()
+                .map(base -> PlayerBaseResponse.builder()
                         .id(base.getId())
                         .gameId(gameId)
                         .name(base.getName())
@@ -367,10 +372,10 @@ public class PlayerService {
                 .collect(Collectors.toSet());
 
         // Get all bases for the game
-        List<BaseResponse> allGameBases = getBases(gameId, player);
+        List<PlayerBaseResponse> allGameBases = getBases(gameId, player);
 
         // Visible bases: those in progress
-        List<BaseResponse> bases = allGameBases.stream()
+        List<PlayerBaseResponse> bases = allGameBases.stream()
                 .filter(b -> visibleBaseIds.contains(b.getId()))
                 .toList();
 
@@ -393,7 +398,7 @@ public class PlayerService {
         for (AssignmentResponse a : assignments) {
             challengeIds.add(a.getChallengeId());
         }
-        for (BaseResponse b : bases) {
+        for (PlayerBaseResponse b : bases) {
             if (b.getFixedChallengeId() != null) {
                 challengeIds.add(b.getFixedChallengeId());
             }
@@ -401,7 +406,7 @@ public class PlayerService {
 
         // Build fixedBaseId lookup: challengeId -> baseId where the challenge lives
         Map<UUID, UUID> fixedBaseByChallenge = new HashMap<>();
-        for (BaseResponse b : allGameBases) {
+        for (PlayerBaseResponse b : allGameBases) {
             if (b.getFixedChallengeId() != null) {
                 fixedBaseByChallenge.put(b.getFixedChallengeId(), b.getId());
             }
@@ -426,10 +431,10 @@ public class PlayerService {
 
         // Add hidden unlock-target bases to the bases list so clients have their metadata
         if (!hiddenUnlockTargetIds.isEmpty()) {
-            List<BaseResponse> hiddenBases = allGameBases.stream()
+            List<PlayerBaseResponse> hiddenBases = allGameBases.stream()
                     .filter(b -> hiddenUnlockTargetIds.contains(b.getId()))
                     .toList();
-            List<BaseResponse> combinedBases = new ArrayList<>(bases);
+            List<PlayerBaseResponse> combinedBases = new ArrayList<>(bases);
             combinedBases.addAll(hiddenBases);
             bases = combinedBases;
         }

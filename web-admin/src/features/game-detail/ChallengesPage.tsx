@@ -24,6 +24,8 @@ import { teamVariablesApi, type TeamVariableEntry } from "@/lib/api/team-variabl
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/useToast";
+import { ColorPicker } from "@/components/ColorPicker";
+import { TagInput } from "@/components/TagInput";
 import DOMPurify from "dompurify";
 import type { Challenge } from "@/types";
 
@@ -129,6 +131,8 @@ export function ChallengesPage() {
       points: 100,
       locationBound: false,
       requirePresenceToSubmit: false,
+      tags: undefined,
+      color: undefined,
     });
     setActionError("");
     setDialogOpen(true);
@@ -404,6 +408,33 @@ export function ChallengesPage() {
                 rows={3}
                 maxLength={5000}
                 data-testid="challenge-operator-notes-input"
+              />
+            </div>
+            {/*
+              P1 Phase 4 W3 — operator-only tags and color. Same privacy
+              contract as operatorNotes. See PlayerChallengeResponse for the
+              player-safe DTO and PlayerControllerTest for the enforcing
+              assertions.
+            */}
+            <div className="space-y-2">
+              <FormLabel htmlFor="challengeColor" optional>
+                {t("challenges.colorLabel")}
+              </FormLabel>
+              <ColorPicker
+                value={form.color ?? null}
+                onChange={(next) => setForm((f) => ({ ...f, color: next ?? undefined }))}
+                data-testid="challenge-color-picker"
+              />
+            </div>
+            <div className="space-y-2">
+              <FormLabel htmlFor="challengeTags" optional>
+                {t("challenges.tagsLabel")}
+              </FormLabel>
+              <TagInput
+                value={form.tags}
+                onChange={(next) => setForm((f) => ({ ...f, tags: next }))}
+                placeholder={t("challenges.tagsPlaceholder")}
+                data-testid="challenge-tags-input"
               />
             </div>
             {form.autoValidate && form.answerType === "text" && (

@@ -433,4 +433,142 @@ class PlayerControllerTest {
         // DTO restructuring that might add new nested fields.
         assertThat(body.toLowerCase()).doesNotContain("operatornotes");
     }
+
+    // ── P1 Phase 4 W3: operator-only base/challenge tags & color ─────
+    //
+    // These tests are the non-negotiable part of the operator-only
+    // base/challenge tags and color feature. If any of them fail, the
+    // feature has leaked operator-only setup metadata into a
+    // player-facing response and the regression MUST be fixed before
+    // merging. Mirrors the W2 operatorNotes pattern.
+
+    @Test
+    void getGameDataResponseDoesNotLeakBaseTagsOrColor() throws Exception {
+        UUID gameId = UUID.randomUUID();
+        UUID baseId = UUID.randomUUID();
+        UUID challengeId = UUID.randomUUID();
+
+        // PlayerBaseResponse is structurally incapable of carrying the
+        // operator-only `tags` and `color` fields — they do not exist on
+        // the DTO. This guarantees at the type level that PlayerService
+        // cannot leak setup-organization metadata into this endpoint's
+        // response. The test below additionally asserts at the JSON layer
+        // that the fields never appear in the serialized body, so a
+        // future regression that reintroduces BaseResponse into
+        // GameDataResponse would fail loudly.
+        PlayerBaseResponse safeBase = PlayerBaseResponse.builder()
+                .id(baseId)
+                .gameId(gameId)
+                .name("Forest Clearing")
+                .description("Near the old oak")
+                .lat(47.3769)
+                .lng(8.5417)
+                .nfcLinked(true)
+                .hidden(false)
+                .fixedChallengeId(challengeId)
+                .build();
+
+        PlayerChallengeResponse safeChallenge = PlayerChallengeResponse.builder()
+                .id(challengeId)
+                .gameId(gameId)
+                .title("Find the tree")
+                .description("Locate the oldest tree")
+                .content("Full instructions")
+                .completionContent("Well done!")
+                .answerType("text")
+                .autoValidate(false)
+                .points(100)
+                .locationBound(false)
+                .requirePresenceToSubmit(false)
+                .build();
+
+        GameDataResponse response = GameDataResponse.builder()
+                .gameStatus("live")
+                .unlockTrigger("CHECK_IN")
+                .bases(List.of(safeBase))
+                .challenges(List.of(safeChallenge))
+                .assignments(List.of())
+                .progress(List.of())
+                .build();
+
+        when(playerService.getGameData(eq(gameId), any(Player.class))).thenReturn(response);
+
+        mockMvc.perform(get("/api/player/games/" + gameId + "/data"))
+                .andExpect(status().isOk())
+                // Field-level guardrails: no `tags` or `color` anywhere in
+                // the bases or challenges arrays. A regression that
+                // reintroduces the operator-facing BaseResponse /
+                // ChallengeResponse here would surface as Jackson-serialized
+                // keys and fail these assertions.
+                .andExpect(jsonPath("$.bases[0].name").value("Forest Clearing"))
+                .andExpect(jsonPath("$.bases[0].tags").doesNotExist())
+                .andExpect(jsonPath("$.bases[0].color").doesNotExist())
+                .andExpect(jsonPath("$.challenges[0].title").value("Find the tree"))
+                .andExpect(jsonPath("$.challenges[0].tags").doesNotExist())
+                .andExpect(jsonPath("$.challenges[0].color").doesNotExist());
+    }
+
+    @Test
+    void getGameDataResponseStringDoesNotContainTagsOrColorAtAnyDepth() throws Exception {
+        UUID gameId = UUID.randomUUID();
+        UUID baseId = UUID.randomUUID();
+        UUID challengeId = UUID.randomUUID();
+
+        PlayerBaseResponse safeBase = PlayerBaseResponse.builder()
+                .id(baseId)
+                .gameId(gameId)
+                .name("Trailhead")
+                .description("")
+                .lat(47.3769)
+                .lng(8.5417)
+                .nfcLinked(false)
+                .hidden(false)
+                .fixedChallengeId(null)
+                .build();
+
+        PlayerChallengeResponse safeChallenge = PlayerChallengeResponse.builder()
+                .id(challengeId)
+                .gameId(gameId)
+                .title("Find the tree")
+                .description("desc")
+                .content("content")
+                .completionContent("done")
+                .answerType("text")
+                .autoValidate(false)
+                .points(50)
+                .locationBound(false)
+                .requirePresenceToSubmit(false)
+                .build();
+
+        GameDataResponse response = GameDataResponse.builder()
+                .gameStatus("live")
+                .unlockTrigger("CHECK_IN")
+                .bases(List.of(safeBase))
+                .challenges(List.of(safeChallenge))
+                .assignments(List.of())
+                .progress(List.of())
+                .build();
+
+        when(playerService.getGameData(eq(gameId), any(Player.class))).thenReturn(response);
+
+        String body = mockMvc.perform(get("/api/player/games/" + gameId + "/data"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        // Absolute, case-insensitive substring check on the entire body:
+        // no variant of "tags" or "color" is allowed anywhere in the
+        // player-facing JSON, at any nesting depth. This survives future
+        // DTO restructuring that might add new nested fields.
+        //
+        // Note: this is safe because none of the player-facing DTOs in
+        // GameDataResponse (PlayerBaseResponse, PlayerChallengeResponse,
+        // AssignmentResponse, BaseProgressResponse) carry any field named
+        // `tags` or `color`. A regression that reintroduces either would
+        // fail here.
+        String lowered = body.toLowerCase();
+        assertThat(lowered).doesNotContain("\"tags\"");
+        assertThat(lowered).doesNotContain("\"color\"");
+    }
 }

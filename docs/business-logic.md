@@ -266,6 +266,49 @@ Because `PlayerChallengeResponse` is structurally incapable of carrying the fiel
 
 The field has no visibility rules beyond operator authentication: any user who can access the `/api/games/{gameId}/challenges` endpoint (i.e., any authenticated operator with access to the game) can read and edit it. This is intentional — notes exist to help operators coordinate, not to encode finer-grained access control.
 
+### Tags and Colors on Bases and Challenges
+
+Source spec: `docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md` § "P1: Operator Workflow and Content Model" — "Add tags and colors to bases and challenges for setup organization".
+
+Operators can attach free-text tags and a fixed-palette color to any base or challenge to help organize large games during setup (grouping, filtering, visual scanning). Both fields are pure setup metadata — they have no gameplay effect and are NEVER shown to players. They exist exclusively to make the operator experience faster when a single game has 30+ bases and 50+ challenges.
+
+**Storage and validation**
+
+| Entity | Column | Storage | Limits |
+|--------|--------|---------|--------|
+| `bases.tags` | `TEXT` via `StringListJsonConverter` | JSON array | Max 20 entries, each trimmed, blank entries dropped |
+| `bases.color` | `VARCHAR(7)` | Hex string | 7-char hex regex (e.g. `#3b82f6`); blank collapses to `NULL` |
+| `challenges.tags` | `TEXT` via `StringListJsonConverter` | JSON array | Max 20 entries, each trimmed, blank entries dropped |
+| `challenges.color` | `VARCHAR(7)` | Hex string | Same 7-char hex regex; blank collapses to `NULL` |
+
+Migration: `V39__bases_challenges_tags_colors.sql` adds both columns plus a partial index on `color` (indexed only where `color IS NOT NULL`) so future "filter by color" operator views can page efficiently.
+
+Validation lives on the request DTOs (`CreateBaseRequest`, `UpdateBaseRequest`, `CreateChallengeRequest`, `UpdateChallengeRequest`):
+
+- `@Size(max = 20)` on the `tags` list (bad payload → `400 {"errors":{"tags": ...}}`).
+- `@Size(max = 40)` on each individual tag string.
+- `@Pattern(regexp = "^#[0-9a-fA-F]{6}$")` on `color` (bad payload → `400 {"errors":{"color": ...}}`).
+
+The service normalizers (`BaseService.normalizeTags` / `normalizeColor`, `ChallengeService.normalizeTags` / `normalizeColor`) collapse empty lists and blank strings to `NULL`, so there is exactly one canonical "no tags / no color" representation in the database.
+
+The web admin enforces a 12-swatch palette (red, orange, amber, yellow, lime, green, teal, cyan, blue, violet, pink, slate — see `web-admin/src/lib/colorPalette.ts`) for visual consistency. The server deliberately accepts any valid hex so a future migration to a different palette does not require any DTO change.
+
+**Privacy contract (non-negotiable)**: `tags` and `color` MUST NEVER be returned on a player-facing endpoint, for either bases or challenges. The backend enforces this by splitting the DTOs at the type level:
+
+| DTO | Audience | Carries `tags` / `color` |
+|-----|----------|--------------------------|
+| `BaseResponse` | Operator endpoints under `/api/games/{gameId}/bases` | Yes |
+| `PlayerBaseResponse` | `GET /api/player/games/{gameId}/bases` and `GET /api/player/games/{gameId}/data` (inside `GameDataResponse`) | No (fields do not exist) |
+| `BaseProgressResponse` | `GET /api/player/games/{gameId}/progress` | No (fields do not exist) |
+| `BroadcastBaseResponse` | Realtime broadcast payloads | No (fields do not exist) |
+| `ChallengeResponse` | Operator endpoints under `/api/games/{gameId}/challenges` | Yes |
+| `PlayerChallengeResponse` | `GET /api/player/games/{gameId}/data` (inside `GameDataResponse`) | No (fields do not exist) |
+| `CheckInResponse.ChallengeInfo` | `POST /api/player/games/{gameId}/bases/{baseId}/check-in` | No (fields do not exist) |
+
+Because `PlayerBaseResponse` and `PlayerChallengeResponse` are structurally incapable of carrying the fields, a future regression that accidentally reuses `BaseResponse` or `ChallengeResponse` on a player path would fail Java compilation. On top of that, `PlayerControllerTest.getGameDataResponseDoesNotLeakBaseTagsOrColor` asserts via JSON paths (`$.bases[0].tags`, `$.bases[0].color`, `$.challenges[0].tags`, `$.challenges[0].color` must not exist), and `PlayerControllerTest.getGameDataResponseStringDoesNotContainTagsOrColorAtAnyDepth` performs a case-insensitive full-body substring check that the serialized JSON response body never contains `"tags"` or `"color"` at any nesting depth. Both assertions run as part of the standard `make test-backend-docker` suite, so the privacy contract is enforced on every backend build.
+
+Like operator notes, these fields have no visibility rules beyond operator authentication — any authenticated operator with access to the game can read and edit them. The web admin surfaces both fields on the `BasesPage`, `ChallengesPage`, and the unified `BasesAndChallengesView` edit dialogs, next to the existing name/description/operator-notes inputs.
+
 ### Upload Session ↔ Submission Contract
 
 This section describes how chunked media uploads relate to the submission record they belong to. Source spec: `docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md` (P0 Media Reliability).

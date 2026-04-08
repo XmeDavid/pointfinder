@@ -242,7 +242,15 @@
     "hiddenTag": "Ausgeblendet",
     "noFixedChallengesAvailable": "Derzeit sind keine festen Challenges verfügbar.",
     "deleteConfirmTitle": "Diese Station löschen?",
-    "deleteConfirmDescription": "Diese Station und ihre Zuweisungen werden dauerhaft gelöscht."
+    "deleteConfirmDescription": "Diese Station und ihre Zuweisungen werden dauerhaft gelöscht.",
+    "tagsLabel": "Tags",
+    "tagsPlaceholder": "Tag hinzufügen und Enter drücken",
+    "colorLabel": "Farbe",
+    "filterByTag": "Nach Tag filtern",
+    "filterByTagPlaceholder": "Nach Tag suchen...",
+    "filterByColor": "Nach Farbe filtern",
+    "filterClear": "Filter zurücksetzen",
+    "noResults": "Keine Stationen entsprechen den aktuellen Filtern."
   },
   "basesAndChallenges": {
     "title": "Stationen & Challenges",
@@ -321,6 +329,14 @@
     "requirePresence": "Anwesenheit zum Einreichen erforderlich",
     "operatorNotesLabel": "Operator-Notizen",
     "operatorNotesPlaceholder": "Nur für Operatoren sichtbare Notizen (max. 5000 Zeichen)",
+    "tagsLabel": "Tags",
+    "tagsPlaceholder": "Tag hinzufügen und Enter drücken",
+    "colorLabel": "Farbe",
+    "filterByTag": "Nach Tag filtern",
+    "filterByTagPlaceholder": "Nach Tag suchen...",
+    "filterByColor": "Nach Farbe filtern",
+    "filterClear": "Filter zurücksetzen",
+    "noResults": "Keine Challenges entsprechen den aktuellen Filtern.",
     "deleteConfirmTitle": "Diese Challenge löschen?",
     "deleteConfirmDescription": "Diese Challenge und alle ihre Zuweisungen werden dauerhaft gelöscht."
   },
@@ -699,5 +715,28 @@
     "insertVariable": "Variable einfügen",
     "undo": "Rückgängig",
     "redo": "Wiederholen"
+  },
+  "color": {
+    "pickerLabel": "Farbe",
+    "none": "Keine Farbe",
+    "red": "Rot",
+    "orange": "Orange",
+    "amber": "Bernstein",
+    "yellow": "Gelb",
+    "lime": "Limette",
+    "green": "Grün",
+    "teal": "Blaugrün",
+    "cyan": "Cyan",
+    "blue": "Blau",
+    "violet": "Violett",
+    "pink": "Pink",
+    "slate": "Schiefer"
+  },
+  "tags": {
+    "inputLabel": "Tag hinzufügen",
+    "placeholder": "Tag hinzufügen und Enter drücken",
+    "remove": "Tag {{tag}} entfernen",
+    "limitReached": "Maximal {{max}} Tags erreicht",
+    "hint": "{{count}}/{{max}} Tags"
   }
 }

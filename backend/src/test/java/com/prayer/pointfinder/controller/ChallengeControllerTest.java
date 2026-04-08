@@ -323,4 +323,65 @@ class ChallengeControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.operatorNotes").exists());
     }
+
+    // ── P1 Phase 4 W3: operator-only challenge tags and color ────────
+
+    @Test
+    void getChallengeExposesTagsAndColor() throws Exception {
+        ChallengeResponse challenge = ChallengeResponse.builder()
+                .id(CHALLENGE_ID)
+                .gameId(GAME_ID)
+                .title("Find the flag")
+                .description("Locate the hidden flag")
+                .answerType("text")
+                .points(100)
+                .locationBound(false)
+                .autoValidate(false)
+                .requirePresenceToSubmit(false)
+                .tags(List.of("flag", "outdoor"))
+                .color("#22c55e")
+                .build();
+
+        when(challengeService.getChallengesByGame(GAME_ID)).thenReturn(List.of(challenge));
+
+        mockMvc.perform(get("/api/games/" + GAME_ID + "/challenges"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].tags[0]").value("flag"))
+                .andExpect(jsonPath("$[0].tags[1]").value("outdoor"))
+                .andExpect(jsonPath("$[0].color").value("#22c55e"));
+    }
+
+    @Test
+    void createChallengeRejectsInvalidColorFormat() throws Exception {
+        CreateChallengeRequest request = new CreateChallengeRequest();
+        request.setTitle("Bad color");
+        request.setAnswerType("text");
+        request.setPoints(100);
+        request.setColor("not-a-hex"); // @Pattern should reject
+
+        mockMvc.perform(post("/api/games/" + GAME_ID + "/challenges")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.color").exists());
+    }
+
+    @Test
+    void createChallengeRejectsMoreThan20Tags() throws Exception {
+        CreateChallengeRequest request = new CreateChallengeRequest();
+        request.setTitle("Too many tags");
+        request.setAnswerType("text");
+        request.setPoints(100);
+        List<String> tooMany = new java.util.ArrayList<>();
+        for (int i = 0; i < 21; i++) {
+            tooMany.add("tag-" + i);
+        }
+        request.setTags(tooMany);
+
+        mockMvc.perform(post("/api/games/" + GAME_ID + "/challenges")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.tags").exists());
+    }
 }

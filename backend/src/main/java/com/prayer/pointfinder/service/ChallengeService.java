@@ -62,6 +62,8 @@ public class ChallengeService {
                 .locationBound(request.getLocationBound() != null ? request.getLocationBound() : false)
                 .requirePresenceToSubmit(request.getRequirePresenceToSubmit() != null ? request.getRequirePresenceToSubmit() : false)
                 .operatorNotes(normalizeOperatorNotes(request.getOperatorNotes()))
+                .tags(normalizeTags(request.getTags()))
+                .color(normalizeColor(request.getColor()))
                 .build();
 
         // Enforce: answerType=none → requirePresenceToSubmit must be false
@@ -111,6 +113,10 @@ public class ChallengeService {
         challenge.setLocationBound(request.getLocationBound() != null ? request.getLocationBound() : false);
         challenge.setRequirePresenceToSubmit(request.getRequirePresenceToSubmit() != null ? request.getRequirePresenceToSubmit() : false);
         challenge.setOperatorNotes(normalizeOperatorNotes(request.getOperatorNotes()));
+        // P1 Phase 4 W3: operator-only tags and color. Always write
+        // through so a request that omits the fields (null) clears them.
+        challenge.setTags(normalizeTags(request.getTags()));
+        challenge.setColor(normalizeColor(request.getColor()));
 
         // Enforce: answerType=none → requirePresenceToSubmit must be false
         if (challenge.getAnswerType() == AnswerType.none) {
@@ -260,6 +266,8 @@ public class ChallengeService {
                 .unlocksBaseIds(unlocksBaseIds)
                 .fixedBaseId(fixedBaseId)
                 .operatorNotes(c.getOperatorNotes())
+                .tags(c.getTags())
+                .color(c.getColor())
                 .build();
     }
 
@@ -270,6 +278,37 @@ public class ChallengeService {
      * the request DTO enforces the length limit before we get here.
      */
     private String normalizeOperatorNotes(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String trimmed = raw.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    /**
+     * Normalizes tags from a request: null or empty list collapses to
+     * {@code null} so the database stores a single canonical "no tags"
+     * representation. Trims individual entries and drops blanks. The
+     * {@code @Size(max = 20)} bound on the request DTO enforces the
+     * upper limit before we get here.
+     */
+    private List<String> normalizeTags(List<String> raw) {
+        if (raw == null || raw.isEmpty()) {
+            return null;
+        }
+        List<String> cleaned = raw.stream()
+                .filter(t -> t != null && !t.trim().isEmpty())
+                .map(String::trim)
+                .toList();
+        return cleaned.isEmpty() ? null : cleaned;
+    }
+
+    /**
+     * Normalizes a hex color from a request: null and blank strings
+     * collapse to {@code null}. The {@code @Pattern} on the request DTO
+     * enforces the 7-char hex format before we get here.
+     */
+    private String normalizeColor(String raw) {
         if (raw == null) {
             return null;
         }

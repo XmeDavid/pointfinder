@@ -31,6 +31,8 @@ import { challengesApi, type CreateChallengeDto } from "@/lib/api/challenges";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/useToast";
+import { ColorPicker } from "@/components/ColorPicker";
+import { TagInput } from "@/components/TagInput";
 import type { Base } from "@/types";
 import {
   aggregateBasesAndChallenges,
@@ -48,6 +50,11 @@ interface UnifiedForm {
   baseLat: number;
   baseLng: number;
   baseHidden: boolean;
+  // P1 Phase 4 W3 — operator-only tags and color on the base.
+  // Never surfaced to players; see PlayerBaseResponse and
+  // PlayerControllerTest for the enforcing privacy assertions.
+  baseTags: string[] | undefined;
+  baseColor: string | undefined;
   // challenge fields
   challengeTitle: string;
   challengeDescription: string;
@@ -61,6 +68,10 @@ interface UnifiedForm {
   challengeCorrectAnswer: string;
   // P1 Phase 4 W2 — operator-only notes. Never surfaced to players.
   challengeOperatorNotes: string;
+  // P1 Phase 4 W3 — operator-only tags and color on the challenge.
+  // Same privacy contract as challengeOperatorNotes.
+  challengeTags: string[] | undefined;
+  challengeColor: string | undefined;
 }
 
 function formFromPair(pair: BaseChallengePair): UnifiedForm {
@@ -70,6 +81,8 @@ function formFromPair(pair: BaseChallengePair): UnifiedForm {
     baseLat: pair.base.lat,
     baseLng: pair.base.lng,
     baseHidden: pair.base.hidden,
+    baseTags: pair.base.tags,
+    baseColor: pair.base.color,
     challengeTitle: pair.challenge.title,
     challengeDescription: pair.challenge.description,
     challengeContent: pair.challenge.content,
@@ -81,6 +94,8 @@ function formFromPair(pair: BaseChallengePair): UnifiedForm {
     challengeAutoValidate: pair.challenge.autoValidate,
     challengeCorrectAnswer: pair.challenge.correctAnswer?.[0] ?? "",
     challengeOperatorNotes: pair.challenge.operatorNotes ?? "",
+    challengeTags: pair.challenge.tags,
+    challengeColor: pair.challenge.color,
   };
 }
 
@@ -94,6 +109,11 @@ function baseDtoFromForm(form: UnifiedForm, pair: BaseChallengePair): Partial<Cr
     // Keep the existing fixed-challenge pairing intact; this dialog doesn't
     // change the link between base and challenge, only their contents.
     fixedChallengeId: pair.base.fixedChallengeId,
+    // P1 Phase 4 W3 — operator-only tags and color. Send undefined when
+    // the operator clears the field so the backend normalizer collapses
+    // the column back to NULL.
+    tags: form.baseTags,
+    color: form.baseColor,
   };
 }
 
@@ -116,6 +136,11 @@ function challengeDtoFromForm(form: UnifiedForm): Partial<CreateChallengeDto> {
   // Operator-only notes: send trimmed value, or explicit empty string to
   // clear previous notes. Backend normalizes blank → null.
   payload.operatorNotes = form.challengeOperatorNotes.trim();
+  // P1 Phase 4 W3 — operator-only tags and color. Send undefined when
+  // the operator clears the field; backend normalizer collapses empty
+  // values to NULL.
+  payload.tags = form.challengeTags;
+  payload.color = form.challengeColor;
   return payload;
 }
 
@@ -540,6 +565,36 @@ export function BasesAndChallengesView() {
                     onCheckedChange={(v) => setForm((f) => (f ? { ...f, baseHidden: v } : f))}
                   />
                 </div>
+                {/*
+                  P1 Phase 4 W3 — operator-only tags and color on the base.
+                  Never surfaced to players. See PlayerBaseResponse and
+                  PlayerControllerTest for the enforcing privacy assertions.
+                */}
+                <div className="space-y-2">
+                  <FormLabel htmlFor="unifiedBaseColor" optional>
+                    {t("bases.colorLabel")}
+                  </FormLabel>
+                  <ColorPicker
+                    value={form.baseColor ?? null}
+                    onChange={(next) =>
+                      setForm((f) => (f ? { ...f, baseColor: next ?? undefined } : f))
+                    }
+                    data-testid="unified-base-color-picker"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <FormLabel htmlFor="unifiedBaseTags" optional>
+                    {t("bases.tagsLabel")}
+                  </FormLabel>
+                  <TagInput
+                    value={form.baseTags}
+                    onChange={(next) =>
+                      setForm((f) => (f ? { ...f, baseTags: next } : f))
+                    }
+                    placeholder={t("bases.tagsPlaceholder")}
+                    data-testid="unified-base-tags-input"
+                  />
+                </div>
               </fieldset>
 
               {/* Challenge section */}
@@ -745,6 +800,36 @@ export function BasesAndChallengesView() {
                     rows={3}
                     maxLength={5000}
                     data-testid="unified-challenge-operator-notes-input"
+                  />
+                </div>
+                {/*
+                  P1 Phase 4 W3 — operator-only tags and color on the
+                  challenge. Same privacy contract as operatorNotes. See
+                  PlayerChallengeResponse and PlayerControllerTest.
+                */}
+                <div className="space-y-2">
+                  <FormLabel htmlFor="unifiedChallengeColor" optional>
+                    {t("challenges.colorLabel")}
+                  </FormLabel>
+                  <ColorPicker
+                    value={form.challengeColor ?? null}
+                    onChange={(next) =>
+                      setForm((f) => (f ? { ...f, challengeColor: next ?? undefined } : f))
+                    }
+                    data-testid="unified-challenge-color-picker"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <FormLabel htmlFor="unifiedChallengeTags" optional>
+                    {t("challenges.tagsLabel")}
+                  </FormLabel>
+                  <TagInput
+                    value={form.challengeTags}
+                    onChange={(next) =>
+                      setForm((f) => (f ? { ...f, challengeTags: next } : f))
+                    }
+                    placeholder={t("challenges.tagsPlaceholder")}
+                    data-testid="unified-challenge-tags-input"
                   />
                 </div>
               </fieldset>

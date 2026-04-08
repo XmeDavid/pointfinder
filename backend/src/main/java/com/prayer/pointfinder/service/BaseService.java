@@ -73,6 +73,8 @@ public class BaseService {
                 .nfcToken(generateNfcToken())
                 .hidden(request.getHidden() != null ? request.getHidden() : false)
                 .fixedChallenge(fixedChallenge)
+                .tags(normalizeTags(request.getTags()))
+                .color(normalizeColor(request.getColor()))
                 .build();
 
         base = baseRepository.save(base);
@@ -118,6 +120,13 @@ public class BaseService {
         } else {
             base.setFixedChallenge(null);
         }
+
+        // P1 Phase 4 W3: operator-only tags and color. Always write through
+        // so a request that omits the fields (null) clears them, matching
+        // the W2 operator-notes convention. Empty list collapses to null so
+        // the column stores a single canonical "no tags" representation.
+        base.setTags(normalizeTags(request.getTags()));
+        base.setColor(normalizeColor(request.getColor()));
 
         base = baseRepository.save(base);
         if (wasHidden && !Boolean.TRUE.equals(base.getHidden())) {
@@ -250,6 +259,39 @@ public class BaseService {
                 .nfcToken(base.getNfcToken())
                 .hidden(base.getHidden())
                 .fixedChallengeId(base.getFixedChallenge() != null ? base.getFixedChallenge().getId() : null)
+                .tags(base.getTags())
+                .color(base.getColor())
                 .build();
+    }
+
+    /**
+     * Normalizes tags from a request: null or empty list collapses to
+     * {@code null} so the database stores a single canonical "no tags"
+     * representation. Trims individual entries and drops blanks. The
+     * {@code @Size(max = 20)} bound on the request DTO enforces the upper
+     * limit before we get here.
+     */
+    private List<String> normalizeTags(List<String> raw) {
+        if (raw == null || raw.isEmpty()) {
+            return null;
+        }
+        List<String> cleaned = raw.stream()
+                .filter(t -> t != null && !t.trim().isEmpty())
+                .map(String::trim)
+                .toList();
+        return cleaned.isEmpty() ? null : cleaned;
+    }
+
+    /**
+     * Normalizes a hex color from a request: null and blank strings
+     * collapse to {@code null}. The {@code @Pattern} on the request DTO
+     * enforces the 7-char hex format before we get here.
+     */
+    private String normalizeColor(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String trimmed = raw.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }
