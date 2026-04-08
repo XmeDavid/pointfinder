@@ -18,6 +18,7 @@ import { ConfirmDeleteDialog } from "@/components/ui/confirm-dialog";
 import { Alert } from "@/components/ui/alert";
 import { basesApi, type CreateBaseDto } from "@/lib/api/bases";
 import { challengesApi } from "@/lib/api/challenges";
+import { assignmentsApi } from "@/lib/api/assignments";
 import { gamesApi } from "@/lib/api/games";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { MapPicker, BaseMapView, type UnlockConnection } from "@/components/common/MapPicker";
@@ -67,6 +68,8 @@ export function BasesPage() {
   const defaultLocation = geoLocation ?? tileSourceCenter;
   const { data: bases = [], isLoading } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!), enabled: !!gameId });
   const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!), enabled: !!gameId });
+  // Sub-wave A: pre-fetch assignments into React Query cache; Sub-wave B wires into card UI via useLinkedCounterpart
+  useQuery({ queryKey: ["assignments", gameId], queryFn: () => assignmentsApi.listByGame(gameId!), enabled: !!gameId });
   const challengeById = useMemo(() => new Map(challenges.map((challenge) => [challenge.id, challenge])), [challenges]);
   const availableFixedChallenges = useMemo(
     () => filterAvailableFixedChallenges(challenges, bases, editing?.id, form.fixedChallengeId),

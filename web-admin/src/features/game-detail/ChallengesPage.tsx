@@ -21,6 +21,7 @@ import { TeamVariablesEditor } from "@/components/common/TeamVariablesEditor";
 import { Alert } from "@/components/ui/alert";
 import { challengesApi, type CreateChallengeDto } from "@/lib/api/challenges";
 import { basesApi } from "@/lib/api/bases";
+import { assignmentsApi } from "@/lib/api/assignments";
 import { teamsApi } from "@/lib/api/teams";
 import { teamVariablesApi, type TeamVariableEntry } from "@/lib/api/team-variables";
 import { getApiErrorMessage } from "@/lib/api/errors";
@@ -53,6 +54,8 @@ export function ChallengesPage() {
   const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!), enabled: !!gameId });
   const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!), enabled: !!gameId });
   const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!), enabled: !!gameId });
+  // Sub-wave A: pre-fetch assignments into React Query cache; Sub-wave B wires into card UI via useLinkedCounterpart
+  useQuery({ queryKey: ["assignments", gameId], queryFn: () => assignmentsApi.listByGame(gameId!), enabled: !!gameId });
   const [varsSaving, setVarsSaving] = useState(false);
   const [previewTeamId, setPreviewTeamId] = useState<string>("");
   const fixedBaseByChallengeId = useMemo(() => {
