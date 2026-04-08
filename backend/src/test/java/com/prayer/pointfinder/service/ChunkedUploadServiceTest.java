@@ -6,6 +6,7 @@ import com.prayer.pointfinder.dto.response.UploadSessionResponse;
 import com.prayer.pointfinder.entity.Game;
 import com.prayer.pointfinder.entity.GameStatus;
 import com.prayer.pointfinder.entity.Player;
+import com.prayer.pointfinder.entity.PushPlatform;
 import com.prayer.pointfinder.entity.Team;
 import com.prayer.pointfinder.entity.UploadSession;
 import com.prayer.pointfinder.entity.UploadSessionChunk;
@@ -34,18 +35,25 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -67,6 +75,10 @@ class ChunkedUploadServiceTest {
     private FileStorageService fileStorageService;
     @Mock
     private MeterRegistry meterRegistry;
+    @Mock
+    private ApnsPushService apnsPushService;
+    @Mock
+    private FcmPushService fcmPushService;
 
     private ChunkedUploadService chunkedUploadService;
 
@@ -81,7 +93,9 @@ class ChunkedUploadServiceTest {
                 playerRepository,
                 gameAccessService,
                 fileStorageService,
-                meterRegistry
+                meterRegistry,
+                apnsPushService,
+                fcmPushService
         );
         ReflectionTestUtils.setField(chunkedUploadService, "uploadsPath", tempDir.toString());
         ReflectionTestUtils.setField(chunkedUploadService, "defaultChunkSizeBytes", 4);
@@ -429,7 +443,6 @@ class ChunkedUploadServiceTest {
         assertEquals("/api/games/" + gameId + "/files/no-link.mp4", stored.getFileUrl());
     }
 
-
     @Test
     void uploadSessionEnforcesPlayerOwnership() {
         UUID gameId = UUID.randomUUID();
@@ -457,6 +470,115 @@ class ChunkedUploadServiceTest {
         );
     }
 
+    @Test
+    void expireStaleSessionsSendsGiveUpPushToPlayerWithApnsToken() {
+        UUID gameId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        Player authPlayer = Player.builder().id(playerId).build();
+        Player managedPlayer = buildPlayer(playerId, gameId);
+        managedPlayer.setPushToken("apns-token-abcdef");
+        managedPlayer.setPushPlatform(PushPlatform.ios);
+        when(playerRepository.findAuthPlayerById(playerId)).thenReturn(Optional.of(managedPlayer));
+        doNothing().when(gameAccessService).ensurePlayerBelongsToGame(any(Player.class), eq(gameId));
+
+        UploadSessionInitRequest request = uploadRequest("stuck-video");
+        request.setOriginalFileName("epic-base-video.mp4");
+        UploadSessionResponse created = chunkedUploadService.createSession(gameId, authPlayer, request);
+
+        UploadSession stored = sessions.get(created.getSessionId());
+        stored.setExpiresAt(Instant.now().minusSeconds(60));
+
+        int expired = chunkedUploadService.expireStaleSessions();
+
+        assertEquals(1, expired);
+        assertEquals(UploadSessionStatus.expired, stored.getStatus());
+        verify(apnsPushService, times(1)).sendPush(
+                eq(List.of("apns-token-abcdef")),
+                eq("Game"),
+                eq("Your submission for \"epic-base-video.mp4\" couldn't be uploaded. Please reopen the app and try again."),
+                anyMap()
+        );
+        verifyNoInteractions(fcmPushService);
+    }
+
+    @Test
+    void expireStaleSessionsRoutesAndroidPlayersThroughFcm() {
+        UUID gameId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        Player authPlayer = Player.builder().id(playerId).build();
+        Player managedPlayer = buildPlayer(playerId, gameId);
+        managedPlayer.setPushToken("fcm-token-12345");
+        managedPlayer.setPushPlatform(PushPlatform.android);
+        when(playerRepository.findAuthPlayerById(playerId)).thenReturn(Optional.of(managedPlayer));
+        doNothing().when(gameAccessService).ensurePlayerBelongsToGame(any(Player.class), eq(gameId));
+
+        UploadSessionResponse created = chunkedUploadService.createSession(gameId, authPlayer, uploadRequest("stuck"));
+        sessions.get(created.getSessionId()).setExpiresAt(Instant.now().minusSeconds(60));
+
+        chunkedUploadService.expireStaleSessions();
+
+        assertEquals(UploadSessionStatus.expired, sessions.get(created.getSessionId()).getStatus());
+        verify(fcmPushService, times(1)).sendPush(
+                eq(List.of("fcm-token-12345")),
+                eq("Game"),
+                anyString(),
+                anyMap()
+        );
+        verifyNoInteractions(apnsPushService);
+    }
+
+    @Test
+    void expireStaleSessionsCompletesEvenWhenPushDeliveryThrows() {
+        UUID gameId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        Player authPlayer = Player.builder().id(playerId).build();
+        Player managedPlayer = buildPlayer(playerId, gameId);
+        managedPlayer.setPushToken("apns-token-broken");
+        managedPlayer.setPushPlatform(PushPlatform.ios);
+        when(playerRepository.findAuthPlayerById(playerId)).thenReturn(Optional.of(managedPlayer));
+        doNothing().when(gameAccessService).ensurePlayerBelongsToGame(any(Player.class), eq(gameId));
+
+        UploadSessionResponse created = chunkedUploadService.createSession(gameId, authPlayer, uploadRequest("doomed"));
+        UploadSession stored = sessions.get(created.getSessionId());
+        stored.setExpiresAt(Instant.now().minusSeconds(60));
+
+        doThrow(new RuntimeException("APNs unreachable"))
+                .when(apnsPushService).sendPush(any(), any(), any(), any());
+
+        // Push throwing must NOT propagate. Expiration must still complete cleanly.
+        int expired = chunkedUploadService.expireStaleSessions();
+
+        assertEquals(1, expired);
+        assertEquals(UploadSessionStatus.expired, stored.getStatus());
+        assertFalse(uploadedChunks.containsKey(stored.getId()),
+                "chunks must be cleaned up even when give-up push throws");
+        verify(apnsPushService, times(1)).sendPush(any(), any(), any(), any());
+    }
+
+    @Test
+    void expireStaleSessionsSkipsPushWhenPlayerHasNoPushToken() {
+        UUID gameId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        Player authPlayer = Player.builder().id(playerId).build();
+        Player managedPlayer = buildPlayer(playerId, gameId);
+        // No pushToken set; pushPlatform null. This is a player who never
+        // registered for push. Expiration must still complete and no push
+        // call must be made.
+        when(playerRepository.findAuthPlayerById(playerId)).thenReturn(Optional.of(managedPlayer));
+        doNothing().when(gameAccessService).ensurePlayerBelongsToGame(any(Player.class), eq(gameId));
+
+        UploadSessionResponse created = chunkedUploadService.createSession(gameId, authPlayer, uploadRequest("silent"));
+        UploadSession stored = sessions.get(created.getSessionId());
+        stored.setExpiresAt(Instant.now().minusSeconds(60));
+
+        int expired = chunkedUploadService.expireStaleSessions();
+
+        assertEquals(1, expired);
+        assertEquals(UploadSessionStatus.expired, stored.getStatus());
+        assertNotNull(stored.getStatus());
+        verifyNoInteractions(apnsPushService);
+        verifyNoInteractions(fcmPushService);
+    }
 
     private UploadSessionInitRequest uploadRequest(String mediaItemKey) {
         UploadSessionInitRequest request = new UploadSessionInitRequest();

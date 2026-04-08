@@ -3,8 +3,10 @@ package com.prayer.pointfinder.service;
 import com.prayer.pointfinder.dto.request.UploadSessionInitRequest;
 import com.prayer.pointfinder.dto.response.UploadSessionClearResponse;
 import com.prayer.pointfinder.dto.response.UploadSessionResponse;
+import com.prayer.pointfinder.entity.Game;
 import com.prayer.pointfinder.entity.GameStatus;
 import com.prayer.pointfinder.entity.Player;
+import com.prayer.pointfinder.entity.PushPlatform;
 import com.prayer.pointfinder.entity.UploadSession;
 import com.prayer.pointfinder.entity.UploadSessionChunk;
 import com.prayer.pointfinder.entity.UploadSessionStatus;
@@ -32,7 +34,9 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -55,6 +59,8 @@ public class ChunkedUploadService {
     private final GameAccessService gameAccessService;
     private final FileStorageService fileStorageService;
     private final MeterRegistry meterRegistry;
+    private final ApnsPushService apnsPushService;
+    private final FcmPushService fcmPushService;
 
     @Value("${app.uploads.path:/uploads}")
     private String uploadsPath;
@@ -68,7 +74,7 @@ public class ChunkedUploadService {
     @Value("${app.uploads.chunk.max-size-bytes:16777216}")
     private int maxChunkSizeBytes;
 
-    @Value("${app.uploads.chunk.session-ttl-seconds:172800}")
+    @Value("${app.uploads.chunk.session-ttl-seconds:86400}")
     private long uploadSessionTtlSeconds;
 
     @Value("${app.uploads.limits.max-active-sessions-per-player:3}")
@@ -469,6 +475,91 @@ public class ChunkedUploadService {
         session.setStatus(UploadSessionStatus.expired);
         uploadSessionChunkRepository.deleteBySessionId(session.getId());
         cleanupSessionStorage(session.getId());
+        // Push notification is best-effort. The session has already been
+        // transitioned to expired and chunks have been GC'd; the give-up
+        // push is the player-facing closing of the trust loop. If anything
+        // about resolving tokens or dispatching the push fails, the
+        // expiration must still complete cleanly. See Wave B' / spec
+        // P0 Media Reliability ("truthful upload state").
+        try {
+            notifyPlayerOfExpiredSession(session);
+        } catch (Exception ex) {
+            log.warn(
+                    "Failed to send give-up push for expired upload session {}: {}",
+                    session.getId(),
+                    ex.getMessage()
+            );
+        }
+    }
+
+    /**
+     * Sends a best-effort give-up push notification to the player whose
+     * upload session was just expired by the reaper. Honest UX requires that
+     * a player whose work was abandoned learns about it instead of believing
+     * the upload is still queued.
+     *
+     * <p>This method is intentionally tolerant of every failure mode it can
+     * encounter. If the player has no push token, push platform unset, push
+     * provider disabled, or the call throws, it logs and returns. Callers
+     * (currently {@link #expireSession(UploadSession)}) wrap it in an
+     * additional try/catch so the session expiration path is never blocked
+     * by notification logic.
+     */
+    private void notifyPlayerOfExpiredSession(UploadSession session) {
+        Player player = session.getPlayer();
+        if (player == null) {
+            return;
+        }
+        String pushToken = player.getPushToken();
+        if (pushToken == null || pushToken.isBlank()) {
+            log.info(
+                    "Skipping give-up push for expired upload session {}: player {} has no push token",
+                    session.getId(),
+                    player.getId()
+            );
+            return;
+        }
+
+        Game game = session.getGame();
+        String title = game != null && game.getName() != null ? game.getName() : "PointFinder";
+        // Backend has no MessageSource / i18n catalog yet, so the message is
+        // English-only. Wave B' flagged this for a follow-up wave that adds a
+        // backend i18n facility (EN/PT/DE) for system-generated player pushes.
+        String body = buildGiveUpMessage(session);
+
+        Map<String, String> customData = new HashMap<>();
+        if (game != null && game.getId() != null) {
+            customData.put("gameId", game.getId().toString());
+        }
+        customData.put("eventType", "upload_session_expired");
+        customData.put("sessionId", session.getId().toString());
+        if (session.getMediaItemKey() != null) {
+            customData.put("mediaItemKey", session.getMediaItemKey());
+        }
+        if (session.getOriginalFileName() != null) {
+            customData.put("originalFileName", session.getOriginalFileName());
+        }
+
+        PushPlatform platform = player.getPushPlatform();
+        List<String> tokens = List.of(pushToken);
+        if (platform == PushPlatform.android) {
+            fcmPushService.sendPush(tokens, title, body, customData);
+        } else {
+            // Default to APNs when push_platform is null (legacy iOS players)
+            apnsPushService.sendPush(tokens, title, body, customData);
+        }
+        meterRegistry.counter("uploads.sessions.expired_push_sent").increment();
+    }
+
+    private String buildGiveUpMessage(UploadSession session) {
+        String fileLabel = session.getOriginalFileName();
+        if (fileLabel != null && !fileLabel.isBlank()) {
+            return "Your submission for \"" + fileLabel
+                    + "\" couldn't be uploaded. Please reopen the app and try again.";
+        }
+        return "Your media submission couldn't be uploaded. Please reopen the app and try again.";
+    }
+
     private UploadSessionException sessionNotActive(UploadSession session) {
         if (session.getStatus() == UploadSessionStatus.expired) {
             return retryable(HttpStatus.BAD_REQUEST, "UPLOAD_SESSION_EXPIRED", "Upload session has expired");

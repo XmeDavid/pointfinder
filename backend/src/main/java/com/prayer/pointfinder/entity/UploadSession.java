@@ -63,7 +63,7 @@ public class UploadSession {
      * expired, cancelled, or abandoned-completed sessions.
      *
      * <p>An old {@code completed} session with a {@code null} submission is NOT a
-     * deletion candidate — it is a “needs attention” signal: the player finished
+     * deletion candidate — it is a "needs attention" signal: the player finished
      * the upload but the final submission POST never tied the bytes together.
      * The scheduler in {@code GameSchedulerService.detectNeedsAttentionUploads}
      * surfaces these rows to operators without modifying anything, so the player
