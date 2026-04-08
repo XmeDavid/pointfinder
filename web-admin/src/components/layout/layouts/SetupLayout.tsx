@@ -1,6 +1,6 @@
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { useState } from "react";
-import { MapPin, Puzzle, Users, Link2, Bell, UserCog, Settings, LayoutDashboard, Compass, Check } from "lucide-react";
+import { MapPin, Puzzle, Users, Link2, Bell, UserCog, Settings, LayoutDashboard, Compass, Check, Layers } from "lucide-react";
 import { Header } from "../Header";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,12 @@ interface SetupLayoutProps {
 }
 
 const SETUP_STEPS = [
+  {
+    key: "bases-and-challenges",
+    icon: Layers,
+    labelKey: "nav.basesAndChallenges",
+    path: "bases-and-challenges",
+  },
   { key: "bases", icon: MapPin, labelKey: "nav.bases", path: "bases" },
   { key: "challenges", icon: Puzzle, labelKey: "nav.challenges", path: "challenges" },
   { key: "teams", icon: Users, labelKey: "nav.teams", path: "teams" },

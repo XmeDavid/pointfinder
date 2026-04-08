@@ -28,6 +28,7 @@ const CreateGamePage = lazy(() => import("@/features/games/CreateGamePage").then
 // Game Detail (lazy)
 const OverviewPage = lazy(() => import("@/features/game-detail/OverviewPage").then(m => ({ default: m.OverviewPage })));
 const GameOperatorsPage = lazy(() => import("@/features/game-detail/GameOperatorsPage").then(m => ({ default: m.GameOperatorsPage })));
+const BasesAndChallengesView = lazy(() => import("@/features/game-detail/BasesAndChallengesView").then(m => ({ default: m.BasesAndChallengesView })));
 const BasesPage = lazy(() => import("@/features/game-detail/BasesPage").then(m => ({ default: m.BasesPage })));
 const ChallengesPage = lazy(() => import("@/features/game-detail/ChallengesPage").then(m => ({ default: m.ChallengesPage })));
 const AssignmentsPage = lazy(() => import("@/features/game-detail/AssignmentsPage").then(m => ({ default: m.AssignmentsPage })));
@@ -146,6 +147,7 @@ export const router = createBrowserRouter([
       },
       { path: "overview", element: <LazyPage component={OverviewPage} /> },
       { path: "operators", element: <LazyPage component={GameOperatorsPage} /> },
+      { path: "bases-and-challenges", element: <LazyPage component={BasesAndChallengesView} /> },
       { path: "bases", element: <LazyPage component={BasesPage} /> },
       { path: "challenges", element: <LazyPage component={ChallengesPage} /> },
       { path: "assignments", element: <LazyPage component={AssignmentsPage} /> },

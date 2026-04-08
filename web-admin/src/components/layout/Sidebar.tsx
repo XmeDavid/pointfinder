@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import {
   Compass,
   LayoutDashboard,
+  Layers,
   MapPin,
   Puzzle,
   Users,
@@ -107,6 +108,7 @@ export function Sidebar({ gameStatus, open, onClose }: SidebarProps) {
   const gameNav: NavItem[] = gameId
     ? [
         { label: t("nav.overview"), to: `/games/${gameId}/overview`, icon: <LayoutDashboard className="h-4 w-4" /> },
+        { label: t("nav.basesAndChallenges"), to: `/games/${gameId}/bases-and-challenges`, icon: <Layers className="h-4 w-4" />, testId: "nav-bases-and-challenges" },
         { label: t("nav.bases"), to: `/games/${gameId}/bases`, icon: <MapPin className="h-4 w-4" /> },
         { label: t("nav.challenges"), to: `/games/${gameId}/challenges`, icon: <Puzzle className="h-4 w-4" /> },
         { label: t("nav.teams"), to: `/games/${gameId}/teams`, icon: <Users className="h-4 w-4" />, testId: "nav-teams" },

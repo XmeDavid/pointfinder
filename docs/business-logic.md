@@ -87,6 +87,22 @@ If any condition fails, `PATCH /api/games/{id}/status` returns 400. The frontend
 
 **iOS-specific**: `CheckInTabView` and `GameMapView` explicitly block gameplay when `gameStatus == "setup"` or `"ended"`, showing a message rather than enabling NFC scan.
 
+### Operator Setup Workflow: Unified Bases & Challenges View
+
+Most games use a **fixed base + challenge pair** as their primary building block, so the web admin surfaces a unified "Bases & Challenges" view at `/games/:gameId/bases-and-challenges`. It sits at the top of the setup sidebar and is the recommended starting point for new operators.
+
+**The unified view is a presentation-layer aggregate and does NOT change the underlying data model.** Bases, challenges, and assignments remain three separate tables and three separate REST resources — the view simply joins `base.fixedChallengeId` against the challenges list to render:
+
+- **Paired cards**: bases with a `fixedChallengeId` pointing at an existing challenge, rendered as a single card per pair.
+- **Unpaired bases**: bases without a fixed challenge, flagged for configuration via the existing `AssignmentsPage`.
+- **Orphaned challenges**: challenges not currently fixed to any base; the view offers an inline "link to base" action that calls `PUT /games/:gameId/bases/:baseId` with `fixedChallengeId` set — again, no new endpoint.
+
+Editing a pair opens a single dialog that writes the base and challenge via **two sequential mutations** (`basesApi.update` first, then `challengesApi.update`). If the base update fails, the challenge is NOT touched. If the base succeeds and the challenge fails, the base is left saved and the operator is prompted to retry the challenge half — there is no rollback path because the model is intentionally decoupled on the backend.
+
+The legacy `BasesPage`, `ChallengesPage`, and `AssignmentsPage` remain available for advanced workflows (random assignments, team-specific overrides, unlocks configuration, rich-text content, team variables, etc.) and are linked from the header of the unified view as "Manage bases", "Manage challenges", and "Advanced assignments".
+
+Source spec: `docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md` § "P1: Operator Workflow and Content Model" (Principle 5 — "Build a unified operator view as an aggregate over the existing model first. Do not collapse the underlying base/challenge/assignment model until the product behavior is proven").
+
 ---
 
 ## 2. NFC & Check-In Flow
