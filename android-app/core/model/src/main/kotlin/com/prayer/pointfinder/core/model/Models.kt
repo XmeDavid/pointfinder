@@ -135,6 +135,7 @@ data class Challenge(
     val locationBound: Boolean = false,
     val fixedBaseId: EntityId? = null,
     val requirePresenceToSubmit: Boolean = false,
+    val operatorNotes: String? = null,
 )
 
 @Serializable

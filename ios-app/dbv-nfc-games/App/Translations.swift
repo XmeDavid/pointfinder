@@ -359,6 +359,7 @@ enum Translations {
         "operator.noLeaderboardDesc": "Scores will appear once teams start completing challenges",
         "operator.noActivity": "No activity yet",
         "operator.noActivityDesc": "Events will appear as teams interact with the game",
+        "operator.lastSynced": "Last synced: %@",
         "operator.completedCount": "%d completed",
         "operator.longPressHint": "Long press on map to add a base",
         "operator.noChallenges": "No challenges yet",
@@ -396,6 +397,7 @@ enum Translations {
         // Operator submissions
         "submissions.reviewTitle": "Review Submission",
         "submissions.pointsLabelWithExpected": "Points (%d)",
+        "submissions.reviewerHintLabel": "Reviewer hint",
         "submissions.feedbackLabel": "Feedback (optional)",
         "submissions.reject": "Reject",
         "submissions.approve": "Approve",
@@ -911,6 +913,7 @@ enum Translations {
         "operator.noLeaderboardDesc": "As pontua\u{00E7}\u{00F5}es aparecer\u{00E3}o quando as equipas come\u{00E7}arem a completar desafios",
         "operator.noActivity": "Sem atividade ainda",
         "operator.noActivityDesc": "Os eventos aparecer\u{00E3}o \u{00E0} medida que as equipas interagem com o jogo",
+        "operator.lastSynced": "Última sincronização: %@",
         "operator.completedCount": "%d conclu\u{00ED}dos",
         "operator.longPressHint": "Manter premido no mapa para adicionar uma base",
         "common.create": "Criar",
@@ -918,6 +921,7 @@ enum Translations {
         // Operator submissions
         "submissions.reviewTitle": "Rever Submissão",
         "submissions.pointsLabelWithExpected": "Pontos (%d)",
+        "submissions.reviewerHintLabel": "Dica para o revisor",
         "submissions.feedbackLabel": "Feedback (opcional)",
         "submissions.reject": "Rejeitar",
         "submissions.approve": "Aprovar",
@@ -1433,6 +1437,7 @@ enum Translations {
         "operator.noLeaderboardDesc": "Punkte erscheinen, sobald Teams Challenges abschliessen",
         "operator.noActivity": "Noch keine Aktivit\u{00E4}t",
         "operator.noActivityDesc": "Ereignisse erscheinen, wenn Teams mit dem Spiel interagieren",
+        "operator.lastSynced": "Zuletzt synchronisiert: %@",
         "operator.completedCount": "%d abgeschlossen",
         "operator.longPressHint": "Lange auf die Karte dr\u{00FC}cken, um eine Station hinzuzuf\u{00FC}gen",
         "common.create": "Erstellen",
@@ -1440,6 +1445,7 @@ enum Translations {
         // Operator submissions
         "submissions.reviewTitle": "Einreichung prüfen",
         "submissions.pointsLabelWithExpected": "Punkte (%d)",
+        "submissions.reviewerHintLabel": "Hinweis für Prüfer",
         "submissions.feedbackLabel": "Feedback (optional)",
         "submissions.reject": "Ablehnen",
         "submissions.approve": "Freigeben",

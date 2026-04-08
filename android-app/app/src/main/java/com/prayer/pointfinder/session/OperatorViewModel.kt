@@ -80,6 +80,7 @@ data class OperatorState(
     val leaderboard: List<LeaderboardEntry> = emptyList(),
     val activity: List<ActivityEvent> = emptyList(),
     val isLiveRefreshing: Boolean = false,
+    val lastSyncedAt: String? = null,
     val notificationSettings: OperatorNotificationSettingsResponse? = null,
     val isLoadingNotificationSettings: Boolean = false,
     val isSavingNotificationSettings: Boolean = false,
@@ -389,10 +390,13 @@ class OperatorViewModel @Inject constructor(
                 val activity = liveDataUseCase.loadActivity(gameId)
                 leaderboard to activity
             }.onSuccess { (leaderboard, activity) ->
+                val syncTime = java.time.LocalTime.now()
+                    .let { String.format("%02d:%02d", it.hour, it.minute) }
                 _state.value = _state.value.copy(
                     leaderboard = leaderboard,
                     activity = activity,
                     isLiveRefreshing = false,
+                    lastSyncedAt = syncTime,
                     authExpired = false,
                 )
             }.onFailure { err ->

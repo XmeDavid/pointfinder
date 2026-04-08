@@ -123,7 +123,9 @@
     <string name="submissions_challenge_label">Challenge</string>
     <string name="submissions_base_label">Station</string>
     <string name="submissions_points_label_with_expected">Punkte (%1$d)</string>
+    <string name="submissions_reviewer_hint_label">Hinweis für Prüfer</string>
     <string name="submissions_feedback_label">Feedback (optional)</string>
+    <string name="label_last_synced">Zuletzt synchronisiert: %1$s</string>
     <string name="label_notification_settings">Benachrichtigungseinstellungen</string>
     <string name="label_notify_pending_submissions">Ausstehende Einreichungen benachrichtigen</string>
     <string name="label_notify_all_submissions">Alle Einreichungen benachrichtigen</string>

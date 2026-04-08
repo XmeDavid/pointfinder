@@ -84,12 +84,17 @@ struct OperatorSubmissionsView: View {
             }
         }
         .sheet(item: $reviewingSubmission) { submission in
+            let challenge = challenges.first(where: { $0.id == submission.challengeId })
             OperatorSubmissionReviewSheet(
                 submission: submission,
                 teamName: teamName(for: submission.teamId),
                 challengeTitle: challengeTitle(for: submission.challengeId),
                 baseName: baseName(for: submission.baseId),
-                defaultPoints: challenges.first(where: { $0.id == submission.challengeId })?.points ?? 0,
+                defaultPoints: challenge?.points ?? 0,
+                reviewerHint: {
+                    let h = challenge?.operatorNotes?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                    return h.isEmpty ? nil : h
+                }(),
                 token: token,
                 gameId: gameId,
                 onSaved: {
@@ -279,6 +284,7 @@ private struct OperatorSubmissionReviewSheet: View {
     let challengeTitle: String
     let baseName: String
     let defaultPoints: Int
+    let reviewerHint: String?
     let token: String
     let gameId: UUID
     let onSaved: () -> Void
@@ -295,6 +301,7 @@ private struct OperatorSubmissionReviewSheet: View {
         challengeTitle: String,
         baseName: String,
         defaultPoints: Int,
+        reviewerHint: String? = nil,
         token: String,
         gameId: UUID,
         onSaved: @escaping () -> Void
@@ -304,6 +311,7 @@ private struct OperatorSubmissionReviewSheet: View {
         self.challengeTitle = challengeTitle
         self.baseName = baseName
         self.defaultPoints = defaultPoints
+        self.reviewerHint = reviewerHint
         self.token = token
         self.gameId = gameId
         self.onSaved = onSaved
@@ -331,6 +339,14 @@ private struct OperatorSubmissionReviewSheet: View {
                     Section(locale.t("common.answer")) {
                         Text(submission.answer)
                     }
+                }
+                if let hint = reviewerHint {
+                    Section(locale.t("submissions.reviewerHintLabel")) {
+                        Text(hint)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .accessibilityIdentifier("reviewer-hint-section")
                 }
                 if !submissionMediaUrls.isEmpty {
                     Section(locale.t("solve.photo")) {

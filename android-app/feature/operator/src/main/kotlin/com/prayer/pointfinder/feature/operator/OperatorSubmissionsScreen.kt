@@ -236,6 +236,29 @@ fun OperatorSubmissionsScreen(
                     if (reviewingSubmission.answer.isNotBlank()) {
                         Text("${stringResource(R.string.label_answer)}: ${reviewingSubmission.answer}")
                     }
+                    val reviewerHint = challenges.firstOrNull { it.id == reviewingSubmission.challengeId }
+                        ?.operatorNotes?.trim()?.takeIf { it.isNotEmpty() }
+                    if (reviewerHint != null) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(MaterialTheme.shapes.small)
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .padding(8.dp),
+                        ) {
+                            Text(
+                                text = stringResource(R.string.submissions_reviewer_hint_label),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Spacer(Modifier.height(2.dp))
+                            Text(
+                                text = reviewerHint,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
                     if (mediaUrls.isNotEmpty()) {
                         SubmissionMediaGallery(
                             mediaUrls = mediaUrls,

@@ -56,6 +56,8 @@ fun LiveScreen(
     teams: List<Team>,
     onRefresh: () -> Unit,
     isRefreshing: Boolean = false,
+    isConnected: Boolean = true,
+    lastSyncedAt: String? = null,
     modifier: Modifier = Modifier,
 ) {
     var selectedSegment by rememberSaveable { mutableIntStateOf(0) }
@@ -85,6 +87,18 @@ fun LiveScreen(
         }
 
         Spacer(Modifier.height(12.dp))
+
+        if (lastSyncedAt != null) {
+            Text(
+                text = stringResource(R.string.label_last_synced, lastSyncedAt),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp)
+                    .testTag("offline-sync-badge"),
+            )
+        }
 
         PullToRefreshBox(
             isRefreshing = isRefreshing,

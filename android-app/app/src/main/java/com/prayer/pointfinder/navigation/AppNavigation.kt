@@ -1596,6 +1596,7 @@ private fun OperatorGameRoot(
                     teams = state.teams,
                     isRefreshing = state.isLiveRefreshing,
                     onRefresh = viewModel::refreshLiveData,
+                    lastSyncedAt = state.lastSyncedAt,
                 )
             }
 

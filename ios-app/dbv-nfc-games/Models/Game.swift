@@ -133,6 +133,7 @@ struct Challenge: Codable, Identifiable {
     let locationBound: Bool
     let fixedBaseId: UUID?
     let requirePresenceToSubmit: Bool
+    let operatorNotes: String?
 
     init(
         id: UUID,
@@ -148,7 +149,8 @@ struct Challenge: Codable, Identifiable {
         correctAnswer: [String]? = nil,
         locationBound: Bool = false,
         fixedBaseId: UUID? = nil,
-        requirePresenceToSubmit: Bool = false
+        requirePresenceToSubmit: Bool = false,
+        operatorNotes: String? = nil
     ) {
         self.id = id
         self.gameId = gameId
@@ -164,6 +166,7 @@ struct Challenge: Codable, Identifiable {
         self.locationBound = locationBound
         self.fixedBaseId = fixedBaseId
         self.requirePresenceToSubmit = requirePresenceToSubmit
+        self.operatorNotes = operatorNotes
     }
 
     init(from decoder: Decoder) throws {
@@ -182,6 +185,7 @@ struct Challenge: Codable, Identifiable {
         locationBound = try container.decodeIfPresent(Bool.self, forKey: .locationBound) ?? false
         fixedBaseId = try container.decodeIfPresent(UUID.self, forKey: .fixedBaseId)
         requirePresenceToSubmit = try container.decodeIfPresent(Bool.self, forKey: .requirePresenceToSubmit) ?? false
+        operatorNotes = try container.decodeIfPresent(String.self, forKey: .operatorNotes)
     }
 }
 

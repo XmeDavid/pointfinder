@@ -11,6 +11,7 @@ struct OperatorLiveView: View {
     @State private var activity: [ActivityEvent] = []
     @State private var teams: [Team] = []
     @State private var isLoading = true
+    @State private var lastSyncedAt: Date? = nil
 
     private var token: String? {
         if case .userOperator(let token, _, _) = appState.authType {
@@ -30,6 +31,20 @@ struct OperatorLiveView: View {
                 .pickerStyle(.segmented)
                 .padding(.horizontal)
                 .padding(.vertical, 8)
+
+                // Offline sync badge
+                if !appState.realtimeConnected, let syncedAt = lastSyncedAt {
+                    HStack(spacing: 6) {
+                        Image(systemName: "wifi.slash")
+                            .font(.caption2)
+                        Text(locale.t("operator.lastSynced", formatSyncTime(syncedAt)))
+                            .font(.caption2)
+                    }
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal)
+                    .padding(.bottom, 4)
+                    .accessibilityIdentifier("offline-sync-badge")
+                }
 
                 // Content
                 if isLoading {
@@ -205,11 +220,18 @@ struct OperatorLiveView: View {
             leaderboard = l
             activity = a
             teams = t
+            lastSyncedAt = Date()
         } catch is CancellationError {
             // Task cancelled during navigation
         } catch {
             appState.setError(error.localizedDescription)
         }
         isLoading = false
+    }
+
+    private func formatSyncTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: date)
     }
 }
