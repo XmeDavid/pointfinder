@@ -40,7 +40,13 @@
     "unknown": "Unknown",
     "base": "Base",
     "lockMapTooltip": "Lock map",
-    "unlockMapTooltip": "Unlock map"
+    "unlockMapTooltip": "Unlock map",
+    "jumpToLinkedChallenge": "Jump to linked challenge",
+    "jumpToLinkedBase": "Jump to linked base",
+    "pickLinkedChallenge": "Pick a linked challenge",
+    "pickLinkedBase": "Pick a linked base",
+    "discardChangesWarning": "Discard unsaved changes and jump?",
+    "discard": "Discard"
   },
   "auth": {
     "signIn": "Sign In",

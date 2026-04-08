@@ -1,7 +1,7 @@
-import { useMemo, useState, lazy, Suspense } from "react";
+import { useMemo, useState, useEffect, useRef, lazy, Suspense } from "react";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { filterAvailableBases, filterAvailableUnlockBases } from "./dropdown-filters";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Minus, Puzzle, Trash2, Pencil, FileText, Image, CheckCircle, Eye, MapPin, Unlock, Variable, CircleCheck, Tag, StickyNote, Link2 } from "lucide-react";
 import { useTagColorFilter } from "./useTagColorFilter";
@@ -51,6 +51,11 @@ export function ChallengesPage() {
   const [form, setForm] = useState<Partial<CreateChallengeDto>>({});
   const [actionError, setActionError] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
+  const [pendingJumpBaseId, setPendingJumpBaseId] = useState<string | null>(null);
+  // Dirty-state: snapshot of form at dialog open time (Sub-wave C)
+  const formSnapshotRef = useRef<Partial<CreateChallengeDto> | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!), enabled: !!gameId });
   const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!), enabled: !!gameId });
@@ -59,6 +64,17 @@ export function ChallengesPage() {
   const { data: assignments = [] } = useQuery({ queryKey: ["assignments", gameId], queryFn: () => assignmentsApi.listByGame(gameId!), enabled: !!gameId });
 
   const navigate = useNavigate();
+
+  // Sub-wave C: auto-open edit dialog for ?edit={id} URL param
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (!editId || challenges.length === 0) return;
+    const target = challenges.find((c) => c.id === editId);
+    // Scrub param regardless (clean URL on orphan too)
+    setSearchParams({}, { replace: true });
+    if (target) openEdit(target);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [challenges, searchParams]);
 
   // Sub-wave B: build linked-bases map once at page level (O(1) per-card lookup)
   const linkedBasesMap = useMemo(
@@ -174,14 +190,51 @@ export function ChallengesPage() {
   function openEdit(ch: Challenge) {
     setEditing(ch);
     const fixedBase = fixedBaseByChallengeId.get(ch.id);
-    setForm({ ...ch, fixedBaseId: fixedBase?.id, unlocksBaseIds: ch.unlocksBaseIds });
+    const formState: Partial<CreateChallengeDto> = { ...ch, fixedBaseId: fixedBase?.id, unlocksBaseIds: ch.unlocksBaseIds };
+    setForm(formState);
+    // Sub-wave C: snapshot form at open time for dirty-state detection
+    formSnapshotRef.current = formState;
     setActionError("");
     setDialogOpen(true);
   }
-  function closeDialog() { setDialogOpen(false); setEditing(null); }
+
+  function closeDialog() {
+    setDialogOpen(false);
+    setEditing(null);
+    formSnapshotRef.current = null;
+  }
 
   function navigateToBase(baseId: string) {
     navigate(`/games/${gameId}/bases?edit=${baseId}`);
+  }
+
+  function isFormDirty(): boolean {
+    const snap = formSnapshotRef.current;
+    if (!snap) return false;
+    return JSON.stringify(form) !== JSON.stringify(snap);
+  }
+
+  function handleJumpToLinkedBase(baseId: string) {
+    if (isFormDirty()) {
+      setPendingJumpBaseId(baseId);
+      setDiscardConfirmOpen(true);
+    } else {
+      closeDialog();
+      navigate(`/games/${gameId}/bases?edit=${baseId}`);
+    }
+  }
+
+  function confirmDiscardAndJump() {
+    setDiscardConfirmOpen(false);
+    const targetId = pendingJumpBaseId;
+    setPendingJumpBaseId(null);
+    closeDialog();
+    if (targetId) navigate(`/games/${gameId}/bases?edit=${targetId}`);
+  }
+
+  function cancelDiscardJump() {
+    setDiscardConfirmOpen(false);
+    setPendingJumpBaseId(null);
   }
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -670,6 +723,36 @@ export function ChallengesPage() {
               </Collapsible>
             )}
             <DialogFooter>
+              {/* Sub-wave C: Jump to linked base button — only in edit mode with linked bases */}
+              {editing && (() => {
+                const linked = linkedBasesMap.get(editing.id) ?? [];
+                if (linked.length === 0) return null;
+                if (linked.length === 1) {
+                  return (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="mr-auto"
+                      onClick={() => handleJumpToLinkedBase(linked[0].id)}
+                      data-testid="challenge-dialog-jump-to-base"
+                    >
+                      <Link2 className="mr-1 h-4 w-4" />
+                      {t("common.jumpToLinkedBase")}
+                    </Button>
+                  );
+                }
+                // Multiple linked bases — inline picker
+                return (
+                  <DialogJumpPicker
+                    linked={linked.map((lb) => ({ id: lb.id, label: lb.name }))}
+                    buttonLabel={t("common.jumpToLinkedBase")}
+                    pickerTitle={t("common.pickLinkedBase")}
+                    onSelect={handleJumpToLinkedBase}
+                    testId="challenge-dialog-jump-to-base"
+                  />
+                );
+              })()}
               <Button type="button" variant="outline" onClick={closeDialog}>{t("common.cancel")}</Button>
               <Button type="submit" loading={createChallenge.isPending || updateChallenge.isPending} data-testid="challenge-save-btn">{editing ? t("challenges.editChallenge") : t("challenges.createChallenge")}</Button>
             </DialogFooter>
@@ -684,6 +767,77 @@ export function ChallengesPage() {
         title={t("challenges.deleteConfirmTitle")}
         description={t("challenges.deleteConfirmDescription")}
       />
+
+      {/* Sub-wave C: Discard-and-jump confirmation dialog */}
+      <ConfirmDeleteDialog
+        open={discardConfirmOpen}
+        onConfirm={confirmDiscardAndJump}
+        onCancel={cancelDiscardJump}
+        title={t("common.discardChangesWarning")}
+        description=""
+        confirmLabel={t("common.discard")}
+        variant="default"
+      />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// DialogJumpPicker — inline select for multi-link jump from dialog footer
+// ---------------------------------------------------------------------------
+
+interface DialogJumpPickerProps {
+  linked: { id: string; label: string }[];
+  buttonLabel: string;
+  pickerTitle: string;
+  onSelect: (id: string) => void;
+  testId: string;
+}
+
+function DialogJumpPicker({ linked, buttonLabel, pickerTitle, onSelect, testId }: DialogJumpPickerProps) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="mr-auto relative inline-flex flex-col items-start">
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => setOpen((o) => !o)}
+        data-testid={testId}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+      >
+        <Link2 className="mr-1 h-4 w-4" />
+        {buttonLabel}
+      </Button>
+      {open && (
+        <div
+          className="absolute bottom-full mb-1 left-0 z-50 min-w-[180px] rounded-md border border-border bg-popover shadow-md"
+          role="listbox"
+          aria-label={pickerTitle}
+          data-testid={`${testId}-picker`}
+        >
+          <p className="px-3 py-1.5 text-xs font-medium text-muted-foreground border-b border-border">
+            {pickerTitle}
+          </p>
+          <ul className="py-1">
+            {linked.map((item) => (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  role="option"
+                  className="w-full text-left px-3 py-1.5 text-sm hover:bg-muted"
+                  onClick={() => { setOpen(false); onSelect(item.id); }}
+                  data-testid={`${testId}-picker-item-${item.id}`}
+                >
+                  {item.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

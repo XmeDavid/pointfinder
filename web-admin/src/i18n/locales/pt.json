@@ -40,7 +40,13 @@
     "unknown": "Desconhecido",
     "base": "Base",
     "lockMapTooltip": "Bloquear mapa",
-    "unlockMapTooltip": "Desbloquear mapa"
+    "unlockMapTooltip": "Desbloquear mapa",
+    "jumpToLinkedChallenge": "Ir para desafio ligado",
+    "jumpToLinkedBase": "Ir para base ligada",
+    "pickLinkedChallenge": "Escolher desafio ligado",
+    "pickLinkedBase": "Escolher base ligada",
+    "discardChangesWarning": "Descartar alterações e ir?",
+    "discard": "Descartar"
   },
   "auth": {
     "signIn": "Entrar",

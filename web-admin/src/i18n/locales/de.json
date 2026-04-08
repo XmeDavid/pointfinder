@@ -40,7 +40,13 @@
     "unknown": "Unbekannt",
     "base": "Station",
     "lockMapTooltip": "Karte sperren",
-    "unlockMapTooltip": "Karte entsperren"
+    "unlockMapTooltip": "Karte entsperren",
+    "jumpToLinkedChallenge": "Zur verknüpften Challenge springen",
+    "jumpToLinkedBase": "Zur verknüpften Station springen",
+    "pickLinkedChallenge": "Verknüpfte Challenge wählen",
+    "pickLinkedBase": "Verknüpfte Station wählen",
+    "discardChangesWarning": "Änderungen verwerfen und springen?",
+    "discard": "Verwerfen"
   },
   "auth": {
     "signIn": "Anmelden",

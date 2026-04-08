@@ -1,6 +1,6 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { filterAvailableFixedChallenges } from "./dropdown-filters";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, MapPin, Wifi, WifiOff, Trash2, Pencil, List, Map as MapIcon, EyeOff, Tag, Link2 } from "lucide-react";
 import { useTagColorFilter } from "./useTagColorFilter";
@@ -47,6 +47,11 @@ export function BasesPage() {
   const [form, setForm] = useState<Partial<CreateBaseDto>>({});
   const [actionError, setActionError] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
+  const [pendingJumpChallengeId, setPendingJumpChallengeId] = useState<string | null>(null);
+  // Dirty-state: snapshot of form at dialog open time (Sub-wave C)
+  const formSnapshotRef = useRef<Partial<CreateBaseDto> | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const { data: game } = useQuery({ queryKey: ["game", gameId], queryFn: () => gamesApi.getById(gameId!), enabled: !!gameId });
 
@@ -68,10 +73,22 @@ export function BasesPage() {
 
   const defaultLocation = geoLocation ?? tileSourceCenter;
   const navigate = useNavigate();
+
   const { data: bases = [], isLoading } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!), enabled: !!gameId });
   const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!), enabled: !!gameId });
   // Sub-wave A: pre-fetch assignments into React Query cache; Sub-wave B wires into card UI via useLinkedCounterpart
   const { data: assignments = [] } = useQuery({ queryKey: ["assignments", gameId], queryFn: () => assignmentsApi.listByGame(gameId!), enabled: !!gameId });
+
+  // Sub-wave C: auto-open edit dialog for ?edit={id} URL param
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (!editId || bases.length === 0) return;
+    const target = bases.find((b) => b.id === editId);
+    // Scrub param regardless (clean URL on orphan too)
+    setSearchParams({}, { replace: true });
+    if (target) openEdit(target);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bases, searchParams]);
 
   // Sub-wave B: build linked-challenges map once at page level (O(1) per-card lookup)
   const linkedChallengesMap = useMemo(
@@ -139,7 +156,7 @@ export function BasesPage() {
 
   function openEdit(base: Base) {
     setEditing(base);
-    setForm({
+    const formState: Partial<CreateBaseDto> = {
       name: base.name,
       description: base.description,
       lat: base.lat,
@@ -148,11 +165,48 @@ export function BasesPage() {
       hidden: base.hidden,
       tags: base.tags,
       color: base.color,
-    });
+    };
+    setForm(formState);
+    // Sub-wave C: snapshot form at open time for dirty-state detection
+    formSnapshotRef.current = formState;
     setDialogOpen(true);
   }
 
-  function closeDialog() { setDialogOpen(false); setEditing(null); setForm({}); }
+  function closeDialog() {
+    setDialogOpen(false);
+    setEditing(null);
+    setForm({});
+    formSnapshotRef.current = null;
+  }
+
+  function isFormDirty(): boolean {
+    const snap = formSnapshotRef.current;
+    if (!snap) return false;
+    return JSON.stringify(form) !== JSON.stringify(snap);
+  }
+
+  function handleJumpToLinkedChallenge(challengeId: string) {
+    if (isFormDirty()) {
+      setPendingJumpChallengeId(challengeId);
+      setDiscardConfirmOpen(true);
+    } else {
+      closeDialog();
+      navigate(`/games/${gameId}/challenges?edit=${challengeId}`);
+    }
+  }
+
+  function confirmDiscardAndJump() {
+    setDiscardConfirmOpen(false);
+    const targetId = pendingJumpChallengeId;
+    setPendingJumpChallengeId(null);
+    closeDialog();
+    if (targetId) navigate(`/games/${gameId}/challenges?edit=${targetId}`);
+  }
+
+  function cancelDiscardJump() {
+    setDiscardConfirmOpen(false);
+    setPendingJumpChallengeId(null);
+  }
 
   function navigateToChallenge(challengeId: string) {
     navigate(`/games/${gameId}/challenges?edit=${challengeId}`);
@@ -420,6 +474,36 @@ export function BasesPage() {
               />
             </div>
             <DialogFooter>
+              {/* Sub-wave C: Jump to linked challenge button — only in edit mode with linked challenges */}
+              {editing && (() => {
+                const linked = linkedChallengesMap.get(editing.id) ?? [];
+                if (linked.length === 0) return null;
+                if (linked.length === 1) {
+                  return (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="mr-auto"
+                      onClick={() => handleJumpToLinkedChallenge(linked[0].id)}
+                      data-testid="base-dialog-jump-to-challenge"
+                    >
+                      <Link2 className="mr-1 h-4 w-4" />
+                      {t("common.jumpToLinkedChallenge")}
+                    </Button>
+                  );
+                }
+                // Multiple linked challenges — inline picker
+                return (
+                  <DialogJumpPicker
+                    linked={linked.map((lc) => ({ id: lc.id, label: lc.title }))}
+                    buttonLabel={t("common.jumpToLinkedChallenge")}
+                    pickerTitle={t("common.pickLinkedChallenge")}
+                    onSelect={handleJumpToLinkedChallenge}
+                    testId="base-dialog-jump-to-challenge"
+                  />
+                );
+              })()}
               <Button type="button" variant="outline" onClick={closeDialog}>{t("common.cancel")}</Button>
               <Button type="submit" loading={createBase.isPending || updateBase.isPending} data-testid="base-save-btn">{editing ? t("bases.editBase") : t("bases.createBase")}</Button>
             </DialogFooter>
@@ -433,6 +517,17 @@ export function BasesPage() {
         onCancel={() => setDeleteTarget(null)}
         title={t("bases.deleteConfirmTitle")}
         description={t("bases.deleteConfirmDescription")}
+      />
+
+      {/* Sub-wave C: Discard-and-jump confirmation dialog */}
+      <ConfirmDeleteDialog
+        open={discardConfirmOpen}
+        onConfirm={confirmDiscardAndJump}
+        onCancel={cancelDiscardJump}
+        title={t("common.discardChangesWarning")}
+        description=""
+        confirmLabel={t("common.discard")}
+        variant="default"
       />
     </div>
   );
@@ -451,6 +546,66 @@ interface LinkedChallengesPillProps {
   onNavigate: (challengeId: string) => void;
   label: string;
   t: TFunction;
+}
+
+// ---------------------------------------------------------------------------
+// DialogJumpPicker — inline select for multi-link jump from dialog footer
+// ---------------------------------------------------------------------------
+
+interface DialogJumpPickerProps {
+  linked: { id: string; label: string }[];
+  buttonLabel: string;
+  pickerTitle: string;
+  onSelect: (id: string) => void;
+  testId: string;
+}
+
+function DialogJumpPicker({ linked, buttonLabel, pickerTitle, onSelect, testId }: DialogJumpPickerProps) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="mr-auto relative inline-flex flex-col items-start">
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => setOpen((o) => !o)}
+        data-testid={testId}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+      >
+        <Link2 className="mr-1 h-4 w-4" />
+        {buttonLabel}
+      </Button>
+      {open && (
+        <div
+          className="absolute bottom-full mb-1 left-0 z-50 min-w-[180px] rounded-md border border-border bg-popover shadow-md"
+          role="listbox"
+          aria-label={pickerTitle}
+          data-testid={`${testId}-picker`}
+        >
+          <p className="px-3 py-1.5 text-xs font-medium text-muted-foreground border-b border-border">
+            {pickerTitle}
+          </p>
+          <ul className="py-1">
+            {linked.map((item) => (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  role="option"
+                  className="w-full text-left px-3 py-1.5 text-sm hover:bg-muted"
+                  onClick={() => { setOpen(false); onSelect(item.id); }}
+                  data-testid={`${testId}-picker-item-${item.id}`}
+                >
+                  {item.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function LinkedChallengesPill({ baseId, linkedChallenges, onNavigate, label }: LinkedChallengesPillProps) {
