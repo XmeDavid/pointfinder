@@ -427,6 +427,62 @@ class AuditExportServiceTest extends IntegrationTestBase {
                 "archived column must be the last column and equal false");
     }
 
+    // ==================================================================
+    //  M7: CSV formula-injection neutralisation (unit tests on csvCell)
+    // ==================================================================
+
+    @Test
+    void csvCell_neutralisesEqualsPrefix() {
+        // =HYPERLINK(...) must be prefixed with ' so Excel treats it as literal.
+        String raw = "=HYPERLINK(\"https://evil.com\",\"click\")";
+        String cell = AuditExportService.csvCell(raw);
+        // After neutralisation the first char is ' and the whole thing is RFC-4180 quoted
+        // because the value contains double-quotes and a comma.
+        assertTrue(cell.startsWith("\"'="),
+                "formula-starting cell must begin with quoted single-quote prefix; got: " + cell);
+    }
+
+    @Test
+    void csvCell_neutralisesPlusPrefix() {
+        String cell = AuditExportService.csvCell("+1234567");
+        assertEquals("'+1234567", cell,
+                "'+'-prefixed numeric string must be neutralised with leading single-quote");
+    }
+
+    @Test
+    void csvCell_neutralisesMinusPrefix() {
+        String cell = AuditExportService.csvCell("-SUM(A1)");
+        assertEquals("'-SUM(A1)", cell);
+    }
+
+    @Test
+    void csvCell_neutralisesAtPrefix() {
+        String cell = AuditExportService.csvCell("@SUM(A1)");
+        assertEquals("'@SUM(A1)", cell);
+    }
+
+    @Test
+    void csvCell_normalCellUnchanged() {
+        assertEquals("Lisbon", AuditExportService.csvCell("Lisbon"));
+    }
+
+    @Test
+    void csvCell_emptyCellIsEmpty() {
+        assertEquals("", AuditExportService.csvCell(""));
+    }
+
+    @Test
+    void csvCell_nullCellIsEmpty() {
+        assertEquals("", AuditExportService.csvCell(null));
+    }
+
+    @Test
+    void csvCell_equalsWithCommaIsQuotedAndNeutralised() {
+        // "=A1,B1" contains both a formula trigger and a comma → quoted + neutralised.
+        String cell = AuditExportService.csvCell("=A1,B1");
+        assertEquals("\"'=A1,B1\"", cell);
+    }
+
     @Test
     void csvFormatEscapesEmbeddedCommasAndQuotesInDisplayName() {
         TestContext ctx = createLiveGameWithOperator("csv-escape");

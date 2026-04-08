@@ -592,9 +592,21 @@ public class AuditExportService {
      * RFC-4180-style CSV cell rendering: null becomes an empty cell; fields
      * containing comma, double-quote, carriage return, or line feed are
      * quoted and embedded double-quotes are escaped by doubling.
+     *
+     * <p>CSV formula injection defence (OWASP): if the cell value begins with
+     * a character that spreadsheet applications interpret as a formula trigger
+     * ({@code =}, {@code +}, {@code -}, {@code @}, tab, or carriage return)
+     * it is prefixed with a single-quote ({@code '}) so the content is treated
+     * as a literal string rather than evaluated as a formula.
      */
     static String csvCell(String value) {
-        if (value == null) return "";
+        if (value == null || value.isEmpty()) return "";
+        // Neutralise formula-injection triggers before any quoting decision.
+        char first = value.charAt(0);
+        if (first == '=' || first == '+' || first == '-' || first == '@'
+                || first == '\t' || first == '\r') {
+            value = "'" + value;
+        }
         boolean needsQuoting = value.indexOf(',') >= 0
                 || value.indexOf('"') >= 0
                 || value.indexOf('\n') >= 0
