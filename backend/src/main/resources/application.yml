@@ -75,6 +75,13 @@ app:
   uploads:
     path: ${APP_UPLOADS_PATH:/uploads}
     max-file-size-bytes: ${APP_UPLOADS_MAX_FILE_SIZE_BYTES:2147483648}
+    # How old a completed-but-unlinked upload session must be before the
+    # needs-attention detector alerts on it (ALERT-ONLY, never deletes data).
+    needs-attention-threshold-minutes: ${APP_UPLOADS_NEEDS_ATTENTION_THRESHOLD_MINUTES:15}
+    # Wave D stalled-active threshold: minutes without chunk progress before an
+    # active session is considered stalled. Registered here so Wave D has the
+    # property to read; no scheduler consumes it yet.
+    stalled-threshold-minutes: ${APP_UPLOADS_STALLED_THRESHOLD_MINUTES:2}
     chunk:
       enabled: ${APP_UPLOADS_CHUNK_ENABLED:true}
       default-size-bytes: ${APP_UPLOADS_CHUNK_DEFAULT_SIZE_BYTES:8388608}

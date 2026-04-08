@@ -45,6 +45,7 @@ public class PlayerService {
     private final OperatorPushNotificationService operatorPushNotificationService;
     private final TemplateVariableService templateVariableService;
     private final GameNotificationRepository gameNotificationRepository;
+    private final UploadSessionRepository uploadSessionRepository;
 
     @Transactional(timeout = 10)
     public PlayerAuthResponse joinTeam(PlayerJoinRequest request) {
@@ -477,10 +478,77 @@ public class PlayerService {
         submissionRequest.setIdempotencyKey(request.getIdempotencyKey());
 
         SubmissionResponse response = submissionService.createSubmission(gameId, submissionRequest);
+
+        // Durable upload linkage: any completed upload session for this (player, game)
+        // whose file_url ended up inside this submission gets its FK populated so that
+        // operator visibility, needs-attention detection, and future audit trails can
+        // distinguish "media arrived but no submission" from "media arrived and was
+        // consumed". Idempotent on retry: sessions that already have the right
+        // submission_id (including from a previous idempotent submitAnswer) are
+        // skipped without error. This runs inside the same @Transactional boundary as
+        // createSubmission, so either both succeed or both roll back.
+        linkUploadSessionsToSubmission(response, gameId, player.getId());
+
         // Resolve {{variables}} in completionContent for this team
         response.setCompletionContent(templateVariableService.resolveTemplate(
                 response.getCompletionContent(), gameId, request.getChallengeId(), team.getId()));
         return response;
+    }
+
+    /**
+     * Populates {@code upload_sessions.submission_id} for every completed upload
+     * whose {@code file_url} appears in the submission's file URL list and that
+     * belongs to the same (player, game).
+     *
+     * <p>This is an ALERT-FRIENDLY operation: it only links, it never modifies
+     * user-visible fields, it never deletes, and it never fails the submission.
+     * If a session is already linked to a different submission (because another
+     * player or another submission consumed the same URL), we leave it alone —
+     * the first linkage wins, and the later caller will just be a no-op.
+     *
+     * <p>Idempotency: when PlayerService.submitAnswer is retried with the same
+     * idempotency_key, SubmissionService returns the existing submission row, so
+     * {@code response.getId()} is stable across retries. The sessions touched on
+     * the first successful call already carry that submission id, so subsequent
+     * calls skip them via the {@code submission == null} predicate.
+     */
+    private void linkUploadSessionsToSubmission(SubmissionResponse response, UUID gameId, UUID playerId) {
+        if (response == null || response.getId() == null) {
+            return;
+        }
+        List<String> fileUrls = response.getFileUrls();
+        if ((fileUrls == null || fileUrls.isEmpty()) && response.getFileUrl() != null) {
+            fileUrls = List.of(response.getFileUrl());
+        }
+        if (fileUrls == null || fileUrls.isEmpty()) {
+            return;
+        }
+        Set<String> fileUrlSet = fileUrls.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (fileUrlSet.isEmpty()) {
+            return;
+        }
+        List<UploadSession> candidates = uploadSessionRepository
+                .findCompletedUnlinkedByPlayerAndGame(playerId, gameId);
+        if (candidates.isEmpty()) {
+            return;
+        }
+        Submission submissionRef = submissionRepository.getReferenceById(response.getId());
+        List<UploadSession> toLink = new ArrayList<>();
+        for (UploadSession session : candidates) {
+            if (session.getSubmission() != null) {
+                continue; // idempotent: already linked by a previous call
+            }
+            if (session.getFileUrl() == null || !fileUrlSet.contains(session.getFileUrl())) {
+                continue;
+            }
+            session.setSubmission(submissionRef);
+            toLink.add(session);
+        }
+        if (!toLink.isEmpty()) {
+            uploadSessionRepository.saveAll(toLink);
+        }
     }
 
     @Transactional(timeout = 10)

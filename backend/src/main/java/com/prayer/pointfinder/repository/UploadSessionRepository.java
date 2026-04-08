@@ -113,4 +113,83 @@ public interface UploadSessionRepository extends JpaRepository<UploadSession, UU
     @Modifying
     @Query("DELETE FROM UploadSession s WHERE s.game.id = :gameId")
     void deleteByGameId(@Param("gameId") UUID gameId);
+
+    /**
+     * Returns completed upload sessions that have no linked submission and whose
+     * completion is older than the given cutoff. Used by the needs-attention
+     * detector to surface uploads whose final submission POST never arrived. This
+     * query is read-only; the detector must never mutate the returned rows.
+     *
+     * <p>Ordered ascending by {@code completedAt} so the oldest stuck uploads
+     * appear first. Capped at 500 rows to bound a single scheduler tick.
+     */
+    @Query("""
+            SELECT s
+            FROM UploadSession s
+            WHERE s.status = com.prayer.pointfinder.entity.UploadSessionStatus.completed
+              AND s.submission IS NULL
+              AND s.completedAt IS NOT NULL
+              AND s.completedAt < :olderThan
+            ORDER BY s.completedAt ASC
+            """)
+    List<UploadSession> findCompletedNeedsAttention(
+            @Param("olderThan") Instant olderThan,
+            Pageable pageable
+    );
+
+    default List<UploadSession> findCompletedNeedsAttention(Instant olderThan) {
+        return findCompletedNeedsAttention(
+                olderThan,
+                PageRequest.of(0, 500)
+        );
+    }
+
+    /**
+     * Returns active upload sessions whose {@code updatedAt} has not moved in
+     * longer than the given cutoff. These are candidates for the Wave D
+     * stalled-active scheduler. Written now while the schema is fresh in memory;
+     * currently not wired into a scheduler — Wave D will register the caller.
+     *
+     * <p>Ordered ascending by {@code updatedAt} so the longest-stalled uploads
+     * surface first. Capped at 500 rows to bound a single scheduler tick.
+     */
+    @Query("""
+            SELECT s
+            FROM UploadSession s
+            WHERE s.status = com.prayer.pointfinder.entity.UploadSessionStatus.active
+              AND s.updatedAt < :olderThan
+            ORDER BY s.updatedAt ASC
+            """)
+    List<UploadSession> findStalledActiveSessions(
+            @Param("olderThan") Instant olderThan,
+            Pageable pageable
+    );
+
+    default List<UploadSession> findStalledActiveSessions(Instant olderThan) {
+        return findStalledActiveSessions(
+                olderThan,
+                PageRequest.of(0, 500)
+        );
+    }
+
+    /**
+     * Returns completed upload sessions for a (player, game) whose
+     * {@code submission_id} is still NULL. Used by {@code PlayerService} after a
+     * new submission is created to populate the FK for every matching media item.
+     *
+     * <p>The result set is small in practice (at most the number of upload
+     * sessions a single player can accumulate in one game) so no paging here.
+     */
+    @Query("""
+            SELECT s
+            FROM UploadSession s
+            WHERE s.player.id = :playerId
+              AND s.game.id = :gameId
+              AND s.status = com.prayer.pointfinder.entity.UploadSessionStatus.completed
+              AND s.submission IS NULL
+            """)
+    List<UploadSession> findCompletedUnlinkedByPlayerAndGame(
+            @Param("playerId") UUID playerId,
+            @Param("gameId") UUID gameId
+    );
 }

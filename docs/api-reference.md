@@ -303,10 +303,15 @@ Response includes `joinCode` — a unique 20-character alphanumeric code players
   "baseId": "UUID",
   "challengeId": "UUID",
   "answer": "string (optional for file/none types)",
-  "fileUrl": "string (optional, for completed chunked uploads)",
-  "idempotencyKey": "string (optional, for offline dedup)"
+  "fileUrl": "string (optional, legacy single-file path)",
+  "fileUrls": ["string (optional, multi-file path for chunked uploads)"],
+  "idempotencyKey": "UUID (optional, for offline dedup)"
 }
 ```
+
+`fileUrls` is the canonical multi-file path used by current iOS/Android clients and accepts up to 5 file URLs per submission. `fileUrl` is preserved for legacy single-file callers; if both are present, `fileUrls` wins. Each URL must be a backend-issued path returned by a completed chunked upload session — submission creation validates ownership and game scope before persisting.
+
+**Upload session ↔ submission linkage**: When this endpoint succeeds, the backend automatically populates `upload_sessions.submission_id` for every completed upload session belonging to the same `(playerId, gameId)` whose `file_url` appears in the submitted list. This linkage runs in the same transaction as submission creation, is idempotent across retries with the same `idempotencyKey`, and never fails the submission. See `docs/business-logic.md` § "Upload Session ↔ Submission Contract" for the full contract and the needs-attention detector.
 
 **POST /player/games/:gameId/submissions/upload** (multipart/form-data)
 ```
@@ -359,6 +364,8 @@ idempotencyKey: string (optional)
   "points": 10
 }
 ```
+
+`points` is an optional integer in the inclusive range `[-100000, 100000]`. **Negative values are allowed** so an operator can apply a penalty during review (e.g., for a partially correct or out-of-bounds submission). This was changed from the previous non-negative-only constraint by commit `3b721c8`.
 
 **Submission Status Lifecycle**:
 

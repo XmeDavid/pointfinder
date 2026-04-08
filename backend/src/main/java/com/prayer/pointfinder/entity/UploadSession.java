@@ -54,6 +54,25 @@ public class UploadSession {
     @Column(name = "file_url", columnDefinition = "TEXT")
     private String fileUrl;
 
+    /**
+     * Optional FK back to the submission that consumed this completed upload.
+     *
+     * <p>Populated by {@code PlayerService.submitAnswer} immediately after the
+     * submission row is persisted, for every matching completed upload session
+     * belonging to the same (player, game). Stays {@code null} for active,
+     * expired, cancelled, or abandoned-completed sessions.
+     *
+     * <p>An old {@code completed} session with a {@code null} submission is NOT a
+     * deletion candidate — it is a “needs attention” signal: the player finished
+     * the upload but the final submission POST never tied the bytes together.
+     * The scheduler in {@code GameSchedulerService.detectNeedsAttentionUploads}
+     * surfaces these rows to operators without modifying anything, so the player
+     * can always recover their work days or weeks later.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "submission_id")
+    private Submission submission;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

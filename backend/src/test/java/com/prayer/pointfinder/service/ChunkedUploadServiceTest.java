@@ -34,6 +34,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -392,6 +393,42 @@ class ChunkedUploadServiceTest {
         assertEquals(UploadSessionStatus.cancelled, sessions.get(active.getSessionId()).getStatus());
         assertEquals(UploadSessionStatus.completed, sessions.get(completed.getSessionId()).getStatus());
     }
+
+    @Test
+    void completeSessionDoesNotTouchSubmissionId() throws Exception {
+        // Chunked upload is a pure media workflow. Linking an upload to a submission
+        // is PlayerService.submitAnswer's job, not ChunkedUploadService's. If
+        // completeSession ever starts touching submission_id, the needs-attention
+        // detector would miss real incidents because the bytes would look "consumed"
+        // the instant they land on disk, even before the player ever confirms the
+        // submission. This test pins that boundary in place.
+        UUID gameId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        Player authPlayer = Player.builder().id(playerId).build();
+        Player managedPlayer = buildPlayer(playerId, gameId);
+        when(playerRepository.findAuthPlayerById(playerId)).thenReturn(Optional.of(managedPlayer));
+        doNothing().when(gameAccessService).ensurePlayerBelongsToGame(any(Player.class), eq(gameId));
+
+        UploadSessionResponse created = chunkedUploadService.createSession(
+                gameId, authPlayer, uploadRequest("no-link-media-item")
+        );
+        UUID sessionId = created.getSessionId();
+
+        when(fileStorageService.storeAssembledUpload(any(Path.class), eq(gameId), eq("video/mp4"), eq(8L)))
+                .thenReturn("/api/games/" + gameId + "/files/no-link.mp4");
+
+        chunkedUploadService.uploadChunk(gameId, sessionId, 0, "AAAA".getBytes(), authPlayer);
+        chunkedUploadService.uploadChunk(gameId, sessionId, 1, "BBBB".getBytes(), authPlayer);
+        UploadSessionResponse completed = chunkedUploadService.completeSession(gameId, sessionId, authPlayer);
+
+        assertEquals("completed", completed.getStatus());
+        UploadSession stored = sessions.get(sessionId);
+        assertEquals(UploadSessionStatus.completed, stored.getStatus());
+        assertNull(stored.getSubmission(),
+                "completeSession must never populate submission_id — that is PlayerService.submitAnswer's responsibility");
+        assertEquals("/api/games/" + gameId + "/files/no-link.mp4", stored.getFileUrl());
+    }
+
 
     @Test
     void uploadSessionEnforcesPlayerOwnership() {

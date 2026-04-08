@@ -229,6 +229,54 @@ When `challenge.requirePresenceToSubmit = true`, a player must scan the NFC tag 
 
 **Backend constraint**: If `answerType = "none"` (check-in only), the backend silently forces `requirePresenceToSubmit = false` during challenge create/update. A check-in-only challenge cannot require presence re-verification.
 
+### Upload Session ↔ Submission Contract
+
+This section describes how chunked media uploads relate to the submission record they belong to. Source spec: `docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md` (P0 Media Reliability).
+
+**Why this exists**
+
+In the field pilot, players sometimes finished uploading a video but their final submission POST never landed (network drop, app kill, dead battery). The completed bytes were on disk and the player still expected to "see their submission go through", but operators had no way to tell the difference between "team has not submitted" and "team submitted but the media never tied to a submission". This contract closes that gap.
+
+**The FK linkage**
+
+`upload_sessions.submission_id` is a nullable FK to `submissions(id)` with `ON DELETE SET NULL` (migration V34).
+
+- When `PlayerService.submitAnswer` persists a new submission, it queries every completed upload session for the same `(playerId, gameId)` whose `file_url` is contained in the new submission's `file_url` / `file_urls` and sets `submission_id = newSubmission.id` for each one. The link runs inside the same `@Transactional` boundary as `createSubmission`, so either both rows commit together or both roll back.
+- The link is **idempotent** on retry. When a client retries `submitAnswer` with the same `idempotency_key`, `SubmissionService.createSubmission` returns the existing submission row, so `submission.id` is stable; the linker re-runs against the same candidates and skips every session that already carries the right FK.
+- A session whose `submission_id` is null is **not corrupt**. It is one of:
+  - active / cancelled / expired (no submission ever expected),
+  - completed-but-not-yet-linked (the submission POST has not run yet, or it has not been retried since this upload finished),
+  - completed-and-orphaned (the submission POST will probably never come — see needs-attention below).
+
+**Create-or-resume semantics for active uploads (mediaItemKey)**
+
+Players send a stable client-side `mediaItemKey` per local media item when calling `POST /player/games/:gameId/uploads/sessions`. The backend uses that key to:
+
+- Resume an existing active upload instead of creating a duplicate when the same physical media item is re-tried after a network drop, app foreground, or process restart.
+- Return the existing completed session (with its `fileUrl`) when assembly already succeeded but the final submission POST is being retried.
+- Refuse with a permanent `UPLOAD_MEDIA_ITEM_KEY_CONFLICT` if a different upload is already in flight for the same key with incompatible metadata (size / chunk size / content type).
+
+This means a player can interrupt an upload, kill the app, return hours later, and the chunked upload state is still recoverable without manual operator cleanup. See migration V33 for the partial unique index that enforces "one recoverable session per `(game_id, player_id, media_item_key)`".
+
+**The needs-attention detector**
+
+`GameSchedulerService.detectNeedsAttentionUploads` runs every 15 minutes. It selects completed upload sessions whose `submission_id IS NULL` and whose `completed_at` is older than `app.uploads.needs-attention-threshold-minutes` (default `15`). For each row it:
+
+1. Increments the Micrometer counter `uploads.sessions.needs_attention` with tags `gameId` and `reason=completed_no_submission`.
+2. Logs a `WARN` line with `sessionId`, `playerId`, `gameId`, `fileUrl`, `completedAt`, and `ageMinutes`.
+
+> **The detector is ALERT-ONLY.** It never modifies, never deletes, never fails any session, and never touches the submission. Its only job is to make stuck uploads **visible** to operators so they can nudge the team if needed. **A player can always recover their work, days or weeks later** — the underlying chunked upload session and its file URL stay durable until either the player retries the submission (which links it via `PlayerService.submitAnswer`) or an operator manually intervenes.
+
+This is a non-negotiable product principle. No future change to this scheduler may turn it into a garbage collector.
+
+**Wave D placeholder**
+
+A second property `app.uploads.stalled-threshold-minutes` (default `2`) is registered now so that the Wave D stalled-active scheduler has a config knob in place without requiring another deploy. No scheduler currently consumes it.
+
+**Operator visibility (Wave D)**
+
+The operator-facing endpoints, WebSocket broadcast topics, and web-admin UI for needs-attention uploads are scoped to Wave D and not part of this wave. The schema, FK linkage, and detector are landing first so that Wave D has clean data to surface.
+
 ---
 
 ## 4. Team Variables

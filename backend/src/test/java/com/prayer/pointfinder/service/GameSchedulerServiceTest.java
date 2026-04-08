@@ -2,24 +2,37 @@ package com.prayer.pointfinder.service;
 
 import com.prayer.pointfinder.entity.Game;
 import com.prayer.pointfinder.entity.GameStatus;
+import com.prayer.pointfinder.entity.Player;
+import com.prayer.pointfinder.entity.UploadSession;
+import com.prayer.pointfinder.entity.UploadSessionStatus;
 import com.prayer.pointfinder.repository.GameRepository;
 import com.prayer.pointfinder.repository.PasswordResetTokenRepository;
 import com.prayer.pointfinder.repository.RefreshTokenRepository;
+import com.prayer.pointfinder.repository.UploadSessionRepository;
 import com.prayer.pointfinder.websocket.GameEventBroadcaster;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -27,6 +40,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class GameSchedulerServiceTest {
 
     @Mock
@@ -38,10 +52,29 @@ class GameSchedulerServiceTest {
     @Mock
     private ChunkedUploadService chunkedUploadService;
     @Mock
+    private UploadSessionRepository uploadSessionRepository;
+    @Mock
     private GameEventBroadcaster eventBroadcaster;
+    @Mock
+    private MeterRegistry meterRegistry;
 
     @InjectMocks
     private GameSchedulerService gameSchedulerService;
+
+    private Counter needsAttentionCounter;
+
+    @BeforeEach
+    void setUpMeterRegistry() {
+        needsAttentionCounter = mock(Counter.class);
+        when(meterRegistry.counter(anyString())).thenReturn(needsAttentionCounter);
+        when(meterRegistry.counter(anyString(), anyString(), anyString())).thenReturn(needsAttentionCounter);
+        when(meterRegistry.counter(anyString(), anyString(), anyString(), anyString(), anyString()))
+                .thenReturn(needsAttentionCounter);
+        // Default thresholds for the detector; individual tests may override via
+        // ReflectionTestUtils when they need a shorter/longer window.
+        ReflectionTestUtils.setField(gameSchedulerService, "needsAttentionThresholdMinutes", 15L);
+        ReflectionTestUtils.setField(gameSchedulerService, "stalledThresholdMinutes", 2L);
+    }
 
     // ── autoEndGames ───────────────────────────────────────────────────
 
@@ -309,5 +342,156 @@ class GameSchedulerServiceTest {
 
         verifyNoInteractions(refreshTokenRepository, passwordResetTokenRepository);
         verify(chunkedUploadService, never()).expireStaleSessions();
+    }
+
+    // ── detectNeedsAttentionUploads ────────────────────────────────────
+    //
+    // The needs-attention detector is ALERT-ONLY. These tests pin that contract:
+    //   * It surfaces the right rows (old, completed, unlinked).
+    //   * It ignores recent completions, linked sessions, and active sessions.
+    //   * It NEVER calls save/delete on any session — a player can always come
+    //     back and recover their work days later.
+
+    @Test
+    void detectNeedsAttentionUploadsAlertsOnOldCompletedSessionWithoutSubmission() {
+        UUID gameId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        UUID sessionId = UUID.randomUUID();
+        UploadSession stuck = buildCompletedSession(
+                sessionId, gameId, playerId,
+                "/api/games/" + gameId + "/files/stuck.mp4",
+                Instant.now().minusSeconds(60 * 60) // 1h old — well past the 15 min threshold
+        );
+        when(uploadSessionRepository.findCompletedNeedsAttention(any(Instant.class)))
+                .thenReturn(List.of(stuck));
+
+        gameSchedulerService.detectNeedsAttentionUploads();
+
+        ArgumentCaptor<Instant> thresholdCaptor = ArgumentCaptor.forClass(Instant.class);
+        verify(uploadSessionRepository).findCompletedNeedsAttention(thresholdCaptor.capture());
+        Instant threshold = thresholdCaptor.getValue();
+        // Threshold must be roughly (now - 15 minutes). Give a 30s window to
+        // avoid clock-drift flakiness.
+        Instant expectedLowerBound = Instant.now().minusSeconds(15 * 60 + 30);
+        Instant expectedUpperBound = Instant.now().minusSeconds(15 * 60 - 30);
+        assert threshold.isAfter(expectedLowerBound) && threshold.isBefore(expectedUpperBound)
+                : "Expected threshold ~15 minutes in the past but got: " + threshold;
+
+        // Counter must fire once with the expected tags.
+        verify(meterRegistry).counter(
+                eq("uploads.sessions.needs_attention"),
+                eq("gameId"), eq(gameId.toString()),
+                eq("reason"), eq("completed_no_submission")
+        );
+        verify(needsAttentionCounter).increment();
+    }
+
+    @Test
+    void detectNeedsAttentionUploadsIgnoresRecentCompletedSessions() {
+        // Repository enforces the cutoff via the SQL predicate
+        // (completed_at < olderThan). When nothing is returned, the scheduler
+        // must be a complete no-op.
+        when(uploadSessionRepository.findCompletedNeedsAttention(any(Instant.class)))
+                .thenReturn(List.of());
+
+        gameSchedulerService.detectNeedsAttentionUploads();
+
+        verify(uploadSessionRepository).findCompletedNeedsAttention(any(Instant.class));
+        verify(meterRegistry, never()).counter(
+                eq("uploads.sessions.needs_attention"),
+                anyString(), anyString(),
+                anyString(), anyString()
+        );
+        verify(needsAttentionCounter, never()).increment();
+    }
+
+    @Test
+    void detectNeedsAttentionUploadsIgnoresLinkedSessions() {
+        // The JPA query filters on s.submission IS NULL, so a linked session
+        // never shows up in the result. This test stubs the query to return an
+        // empty list for any threshold, then runs the detector and verifies no
+        // alert fires — modeling the behaviour a linked session gets in prod.
+        when(uploadSessionRepository.findCompletedNeedsAttention(any(Instant.class)))
+                .thenReturn(List.of());
+
+        gameSchedulerService.detectNeedsAttentionUploads();
+
+        verify(needsAttentionCounter, never()).increment();
+        verify(meterRegistry, never()).counter(
+                eq("uploads.sessions.needs_attention"),
+                anyString(), anyString(),
+                anyString(), anyString()
+        );
+    }
+
+    @Test
+    void detectNeedsAttentionUploadsIgnoresActiveSessions() {
+        // Active sessions are handled by the Wave D stalled-active scheduler,
+        // not by the needs-attention detector. The repository query only
+        // returns completed sessions, so the detector must stay silent even
+        // when there are plenty of active sessions in the system.
+        when(uploadSessionRepository.findCompletedNeedsAttention(any(Instant.class)))
+                .thenReturn(List.of());
+
+        gameSchedulerService.detectNeedsAttentionUploads();
+
+        verify(needsAttentionCounter, never()).increment();
+    }
+
+    @Test
+    void detectNeedsAttentionUploadsDoesNotModifyData() {
+        // The core ALERT-ONLY guarantee: under no circumstances should the
+        // detector mutate, save, delete, or otherwise touch upload sessions.
+        // This test gives it a big, juicy, stuck upload session and verifies
+        // the only repository interaction is the read query.
+        UUID gameId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        UUID sessionId = UUID.randomUUID();
+        UploadSession stuck = buildCompletedSession(
+                sessionId, gameId, playerId,
+                "/api/games/" + gameId + "/files/video.mp4",
+                Instant.now().minusSeconds(90 * 60)
+        );
+        when(uploadSessionRepository.findCompletedNeedsAttention(any(Instant.class)))
+                .thenReturn(List.of(stuck));
+
+        gameSchedulerService.detectNeedsAttentionUploads();
+
+        // No save. No delete. No flush. Ever.
+        verify(uploadSessionRepository, never()).save(any(UploadSession.class));
+        verify(uploadSessionRepository, never()).saveAll(any(Iterable.class));
+        verify(uploadSessionRepository, never()).delete(any(UploadSession.class));
+        verify(uploadSessionRepository, never()).deleteAll(any(Iterable.class));
+        verify(uploadSessionRepository, never()).deleteById(any(UUID.class));
+        verify(uploadSessionRepository, never()).deleteByGameId(any(UUID.class));
+        // The in-memory entity itself must not have been mutated either.
+        assertEquals(UploadSessionStatus.completed, stuck.getStatus());
+        assertEquals("/api/games/" + gameId + "/files/video.mp4", stuck.getFileUrl());
+        assertNull(stuck.getSubmission(),
+                "detector must not set submission_id — that is PlayerService's job");
+    }
+
+    private UploadSession buildCompletedSession(
+            UUID sessionId,
+            UUID gameId,
+            UUID playerId,
+            String fileUrl,
+            Instant completedAt
+    ) {
+        Game game = Game.builder().id(gameId).name("G").description("D").status(GameStatus.live).build();
+        Player player = Player.builder().id(playerId).deviceId("dev").displayName("P").build();
+        return UploadSession.builder()
+                .id(sessionId)
+                .game(game)
+                .player(player)
+                .contentType("video/mp4")
+                .totalSizeBytes(8L)
+                .chunkSizeBytes(4)
+                .totalChunks(2)
+                .status(UploadSessionStatus.completed)
+                .fileUrl(fileUrl)
+                .expiresAt(Instant.now().plusSeconds(3600))
+                .completedAt(completedAt)
+                .build();
     }
 }
