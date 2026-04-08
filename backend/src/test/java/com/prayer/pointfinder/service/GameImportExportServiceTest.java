@@ -26,6 +26,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -49,6 +50,8 @@ class GameImportExportServiceTest {
     private ChallengeTeamVariableRepository challengeTeamVariableRepository;
     @Mock
     private GameAccessService gameAccessService;
+    @Mock
+    private GameTagRepository gameTagRepository;
 
     private GameImportExportService service;
 
@@ -76,8 +79,13 @@ class GameImportExportServiceTest {
                 assignmentRepository,
                 teamVariableRepository,
                 challengeTeamVariableRepository,
-                gameAccessService
+                gameAccessService,
+                gameTagRepository
         );
+        // Default stub: no existing tags for any game (exportGame calls this)
+        org.mockito.Mockito.lenient()
+                .when(gameTagRepository.findByGameIdOrderByCreatedAtAsc(any()))
+                .thenReturn(java.util.List.of());
     }
 
     @AfterEach
@@ -1745,6 +1753,111 @@ class GameImportExportServiceTest {
         // Saving null challenge means challengeEntityMap stores null, causing NPE or IllegalStateException
         // The service throws IllegalStateException("Challenge not found") when lookup returns null
         assertThrows(Exception.class, () -> service.importGame(request));
+    }
+
+    // ── Tag round-trip tests ──────────────────────────────────────────
+
+    @Test
+    void exportGame_includesTagVocabularyWhenTagsExist() {
+        UUID gameId = UUID.randomUUID();
+        Game game = buildGame(gameId, "Game");
+
+        UUID tagId = UUID.randomUUID();
+        GameTag tag = GameTag.builder()
+                .id(tagId).game(game).label("trail").color("#3b82f6")
+                .createdAt(java.time.Instant.now()).updatedAt(java.time.Instant.now()).build();
+
+        when(gameAccessService.getAccessibleGame(gameId)).thenReturn(game);
+        when(baseRepository.findByGameId(gameId)).thenReturn(List.of());
+        when(challengeRepository.findByGameId(gameId)).thenReturn(List.of());
+        when(teamRepository.findByGameId(gameId)).thenReturn(List.of());
+        when(assignmentRepository.findByGameId(gameId)).thenReturn(List.of());
+        when(gameTagRepository.findByGameIdOrderByCreatedAtAsc(gameId)).thenReturn(List.of(tag));
+
+        GameExportDto result = service.exportGame(gameId);
+
+        assertNotNull(result.getTags());
+        assertEquals(1, result.getTags().size());
+        assertEquals("trail", result.getTags().get(0).getLabel());
+        assertEquals("#3b82f6", result.getTags().get(0).getColor());
+    }
+
+    @Test
+    void exportGame_tagsIsNullWhenGameHasNoTags() {
+        UUID gameId = UUID.randomUUID();
+        Game game = buildGame(gameId, "Game");
+
+        when(gameAccessService.getAccessibleGame(gameId)).thenReturn(game);
+        when(baseRepository.findByGameId(gameId)).thenReturn(List.of());
+        when(challengeRepository.findByGameId(gameId)).thenReturn(List.of());
+        when(teamRepository.findByGameId(gameId)).thenReturn(List.of());
+        when(assignmentRepository.findByGameId(gameId)).thenReturn(List.of());
+        // lenient stub in setUp returns empty list → tags field is null
+
+        GameExportDto result = service.exportGame(gameId);
+
+        assertNull(result.getTags());
+    }
+
+    @Test
+    void importGame_importsTagVocabularyAndLinksToBase() {
+        UUID savedGameId = UUID.randomUUID();
+        stubImportSaves(savedGameId);
+
+        when(gameTagRepository.findByGameIdAndLabelIgnoreCase(eq(savedGameId), eq("trail")))
+                .thenReturn(Optional.empty());
+        when(gameTagRepository.save(any(GameTag.class))).thenAnswer(inv -> {
+            GameTag t = inv.getArgument(0);
+            t.setId(UUID.randomUUID());
+            return t;
+        });
+        when(baseRepository.save(any(Base.class))).thenAnswer(inv -> {
+            Base b = inv.getArgument(0);
+            b.setId(UUID.randomUUID());
+            return b;
+        });
+
+        GameImportRequest request = buildMinimalRequest();
+        request.getGameData().setTags(List.of(
+                TagExportDto.builder().label("trail").color("#3b82f6").build()
+        ));
+        request.getGameData().getBases().add(
+                BaseExportDto.builder()
+                        .tempId("base_1").name("Trailhead")
+                        .lat(1.0).lng(2.0).hidden(false)
+                        .tagLabels(List.of("trail"))
+                        .build()
+        );
+
+        service.importGame(request);
+
+        // tag was saved once (created), then base was saved twice (initial + tag link)
+        verify(gameTagRepository).save(any(GameTag.class));
+        verify(baseRepository, atLeast(2)).save(any(Base.class));
+    }
+
+    @Test
+    void importGame_skipsTagsWhenTagsSectionIsNull() {
+        UUID savedGameId = UUID.randomUUID();
+        stubImportSaves(savedGameId);
+        when(baseRepository.save(any(Base.class))).thenAnswer(inv -> {
+            Base b = inv.getArgument(0);
+            b.setId(UUID.randomUUID());
+            return b;
+        });
+
+        GameImportRequest request = buildMinimalRequest();
+        // tags not set — null
+        request.getGameData().getBases().add(
+                BaseExportDto.builder()
+                        .tempId("base_1").name("Plain Base")
+                        .lat(1.0).lng(2.0).hidden(false)
+                        .build()
+        );
+
+        service.importGame(request);
+
+        verify(gameTagRepository, never()).save(any(GameTag.class));
     }
 
     // ── Helper builders ───────────────────────────────────────────────

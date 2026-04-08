@@ -7,10 +7,12 @@ import com.prayer.pointfinder.entity.AnswerType;
 import com.prayer.pointfinder.entity.Base;
 import com.prayer.pointfinder.entity.Challenge;
 import com.prayer.pointfinder.entity.Game;
+import com.prayer.pointfinder.entity.GameTag;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.BaseRepository;
 import com.prayer.pointfinder.repository.ChallengeRepository;
+import com.prayer.pointfinder.repository.GameTagRepository;
 import com.prayer.pointfinder.repository.SubmissionRepository;
 import com.prayer.pointfinder.util.HtmlSanitizer;
 import com.prayer.pointfinder.websocket.GameEventBroadcaster;
@@ -30,6 +32,7 @@ public class ChallengeService {
     private final SubmissionRepository submissionRepository;
     private final GameAccessService gameAccessService;
     private final GameEventBroadcaster eventBroadcaster;
+    private final GameTagRepository gameTagRepository;
 
     @Transactional(readOnly = true)
     public List<ChallengeResponse> getChallengesByGame(UUID gameId) {
@@ -62,8 +65,6 @@ public class ChallengeService {
                 .locationBound(request.getLocationBound() != null ? request.getLocationBound() : false)
                 .requirePresenceToSubmit(request.getRequirePresenceToSubmit() != null ? request.getRequirePresenceToSubmit() : false)
                 .operatorNotes(normalizeOperatorNotes(request.getOperatorNotes()))
-                .tags(normalizeTags(request.getTags()))
-                .color(normalizeColor(request.getColor()))
                 .build();
 
         // Enforce: answerType=none → requirePresenceToSubmit must be false
@@ -71,6 +72,11 @@ public class ChallengeService {
             challenge.setRequirePresenceToSubmit(false);
         }
 
+        challenge = challengeRepository.save(challenge);
+
+        // Resolve and link tags
+        Set<GameTag> resolvedTags = resolveTagIds(request.getTagIds(), gameId);
+        challenge.setTags(resolvedTags);
         challenge = challengeRepository.save(challenge);
 
         if (request.getFixedBaseId() != null) {
@@ -113,10 +119,10 @@ public class ChallengeService {
         challenge.setLocationBound(request.getLocationBound() != null ? request.getLocationBound() : false);
         challenge.setRequirePresenceToSubmit(request.getRequirePresenceToSubmit() != null ? request.getRequirePresenceToSubmit() : false);
         challenge.setOperatorNotes(normalizeOperatorNotes(request.getOperatorNotes()));
-        // P1 Phase 4 W3: operator-only tags and color. Always write
-        // through so a request that omits the fields (null) clears them.
-        challenge.setTags(normalizeTags(request.getTags()));
-        challenge.setColor(normalizeColor(request.getColor()));
+
+        // Always write through tags — null clears all tags
+        Set<GameTag> resolvedTags = resolveTagIds(request.getTagIds(), gameId);
+        challenge.setTags(resolvedTags);
 
         // Enforce: answerType=none → requirePresenceToSubmit must be false
         if (challenge.getAnswerType() == AnswerType.none) {
@@ -250,6 +256,9 @@ public class ChallengeService {
                 .collect(Collectors.toList());
         List<Base> fixedBases = baseRepository.findByFixedChallengeId(c.getId());
         UUID fixedBaseId = fixedBases.isEmpty() ? null : fixedBases.get(0).getId();
+        List<UUID> tagIds = c.getTags().stream()
+                .map(GameTag::getId)
+                .collect(Collectors.toList());
         return ChallengeResponse.builder()
                 .id(c.getId())
                 .gameId(c.getGame().getId())
@@ -266,16 +275,14 @@ public class ChallengeService {
                 .unlocksBaseIds(unlocksBaseIds)
                 .fixedBaseId(fixedBaseId)
                 .operatorNotes(c.getOperatorNotes())
-                .tags(c.getTags())
-                .color(c.getColor())
+                .tagIds(tagIds.isEmpty() ? null : tagIds)
                 .build();
     }
 
     /**
      * Normalizes operator notes from a request: null and blank strings
      * collapse to {@code null} so the database stores a single canonical
-     * "no notes" representation. The {@code @Size(max = 5000)} bound on
-     * the request DTO enforces the length limit before we get here.
+     * "no notes" representation.
      */
     private String normalizeOperatorNotes(String raw) {
         if (raw == null) {
@@ -286,33 +293,28 @@ public class ChallengeService {
     }
 
     /**
-     * Normalizes tags from a request: null or empty list collapses to
-     * {@code null} so the database stores a single canonical "no tags"
-     * representation. Trims individual entries and drops blanks. The
-     * {@code @Size(max = 20)} bound on the request DTO enforces the
-     * upper limit before we get here.
+     * Resolves a list of tag IDs to GameTag entities, validating they belong
+     * to the game. Returns an empty set when the list is null or empty
+     * (write-through semantics: null = clear all tags).
+     *
+     * @throws BadRequestException with code {@code tag.not_in_game} if any
+     *   UUID refers to a tag from a different game.
      */
-    private List<String> normalizeTags(List<String> raw) {
-        if (raw == null || raw.isEmpty()) {
-            return null;
+    private Set<GameTag> resolveTagIds(List<UUID> tagIds, UUID gameId) {
+        if (tagIds == null || tagIds.isEmpty()) {
+            return new HashSet<>();
         }
-        List<String> cleaned = raw.stream()
-                .filter(t -> t != null && !t.trim().isEmpty())
-                .map(String::trim)
-                .toList();
-        return cleaned.isEmpty() ? null : cleaned;
-    }
-
-    /**
-     * Normalizes a hex color from a request: null and blank strings
-     * collapse to {@code null}. The {@code @Pattern} on the request DTO
-     * enforces the 7-char hex format before we get here.
-     */
-    private String normalizeColor(String raw) {
-        if (raw == null) {
-            return null;
+        Set<GameTag> result = new HashSet<>();
+        for (UUID tagId : tagIds) {
+            GameTag tag = gameTagRepository.findById(tagId)
+                    .orElseThrow(() -> new BadRequestException(
+                            "tag.not_in_game: Tag " + tagId + " does not belong to game " + gameId));
+            if (!tag.getGame().getId().equals(gameId)) {
+                throw new BadRequestException(
+                        "tag.not_in_game: Tag " + tagId + " does not belong to game " + gameId);
+            }
+            result.add(tag);
         }
-        String trimmed = raw.trim();
-        return trimmed.isEmpty() ? null : trimmed;
+        return result;
     }
 }

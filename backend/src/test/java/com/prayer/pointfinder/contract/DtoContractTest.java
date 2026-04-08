@@ -99,6 +99,7 @@ class DtoContractTest {
                 .broadcastEnabled(true)
                 .broadcastCode("FOREST2025")
                 .tileSource("osm-classic")
+                .unlockTrigger("CHECK_IN")
                 .build();
 
         assertMatchesSnapshot("GameResponse", dto);

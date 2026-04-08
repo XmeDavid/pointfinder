@@ -6,10 +6,12 @@ import com.prayer.pointfinder.dto.response.BaseResponse;
 import com.prayer.pointfinder.entity.Base;
 import com.prayer.pointfinder.entity.Challenge;
 import com.prayer.pointfinder.entity.Game;
+import com.prayer.pointfinder.entity.GameTag;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.BaseRepository;
 import com.prayer.pointfinder.repository.ChallengeRepository;
+import com.prayer.pointfinder.repository.GameTagRepository;
 import com.prayer.pointfinder.repository.SubmissionRepository;
 import com.prayer.pointfinder.websocket.GameEventBroadcaster;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -43,6 +46,7 @@ public class BaseService {
     private final SubmissionRepository submissionRepository;
     private final GameAccessService gameAccessService;
     private final GameEventBroadcaster eventBroadcaster;
+    private final GameTagRepository gameTagRepository;
 
     @Transactional(readOnly = true)
     public List<BaseResponse> getBasesByGame(UUID gameId) {
@@ -73,11 +77,15 @@ public class BaseService {
                 .nfcToken(generateNfcToken())
                 .hidden(request.getHidden() != null ? request.getHidden() : false)
                 .fixedChallenge(fixedChallenge)
-                .tags(normalizeTags(request.getTags()))
-                .color(normalizeColor(request.getColor()))
                 .build();
 
         base = baseRepository.save(base);
+
+        // Resolve and link tags
+        Set<GameTag> resolvedTags = resolveTagIds(request.getTagIds(), gameId);
+        base.setTags(resolvedTags);
+        base = baseRepository.save(base);
+
         if (base.getFixedChallenge() != null) {
             Challenge fc = base.getFixedChallenge();
             if (!Boolean.TRUE.equals(fc.getLocationBound())) {
@@ -121,12 +129,9 @@ public class BaseService {
             base.setFixedChallenge(null);
         }
 
-        // P1 Phase 4 W3: operator-only tags and color. Always write through
-        // so a request that omits the fields (null) clears them, matching
-        // the W2 operator-notes convention. Empty list collapses to null so
-        // the column stores a single canonical "no tags" representation.
-        base.setTags(normalizeTags(request.getTags()));
-        base.setColor(normalizeColor(request.getColor()));
+        // Always write through tags — null clears all tags
+        Set<GameTag> resolvedTags = resolveTagIds(request.getTagIds(), gameId);
+        base.setTags(resolvedTags);
 
         base = baseRepository.save(base);
         if (wasHidden && !Boolean.TRUE.equals(base.getHidden())) {
@@ -248,6 +253,9 @@ public class BaseService {
     }
 
     private BaseResponse toResponse(Base base) {
+        List<UUID> tagIds = base.getTags().stream()
+                .map(GameTag::getId)
+                .collect(Collectors.toList());
         return BaseResponse.builder()
                 .id(base.getId())
                 .gameId(base.getGame().getId())
@@ -259,39 +267,33 @@ public class BaseService {
                 .nfcToken(base.getNfcToken())
                 .hidden(base.getHidden())
                 .fixedChallengeId(base.getFixedChallenge() != null ? base.getFixedChallenge().getId() : null)
-                .tags(base.getTags())
-                .color(base.getColor())
+                .tagIds(tagIds.isEmpty() ? null : tagIds)
                 .build();
     }
 
     /**
-     * Normalizes tags from a request: null or empty list collapses to
-     * {@code null} so the database stores a single canonical "no tags"
-     * representation. Trims individual entries and drops blanks. The
-     * {@code @Size(max = 20)} bound on the request DTO enforces the upper
-     * limit before we get here.
+     * Resolves a list of tag IDs to GameTag entities, validating they belong
+     * to the game. Returns an empty set when the list is null or empty
+     * (write-through semantics: null = clear all tags).
+     *
+     * @throws BadRequestException with code {@code tag.not_in_game} if any
+     *   UUID refers to a tag from a different game.
      */
-    private List<String> normalizeTags(List<String> raw) {
-        if (raw == null || raw.isEmpty()) {
-            return null;
+    private Set<GameTag> resolveTagIds(List<UUID> tagIds, UUID gameId) {
+        if (tagIds == null || tagIds.isEmpty()) {
+            return new HashSet<>();
         }
-        List<String> cleaned = raw.stream()
-                .filter(t -> t != null && !t.trim().isEmpty())
-                .map(String::trim)
-                .toList();
-        return cleaned.isEmpty() ? null : cleaned;
-    }
-
-    /**
-     * Normalizes a hex color from a request: null and blank strings
-     * collapse to {@code null}. The {@code @Pattern} on the request DTO
-     * enforces the 7-char hex format before we get here.
-     */
-    private String normalizeColor(String raw) {
-        if (raw == null) {
-            return null;
+        Set<GameTag> result = new HashSet<>();
+        for (UUID tagId : tagIds) {
+            GameTag tag = gameTagRepository.findById(tagId)
+                    .orElseThrow(() -> new BadRequestException(
+                            "tag.not_in_game: Tag " + tagId + " does not belong to game " + gameId));
+            if (!tag.getGame().getId().equals(gameId)) {
+                throw new BadRequestException(
+                        "tag.not_in_game: Tag " + tagId + " does not belong to game " + gameId);
+            }
+            result.add(tag);
         }
-        String trimmed = raw.trim();
-        return trimmed.isEmpty() ? null : trimmed;
+        return result;
     }
 }

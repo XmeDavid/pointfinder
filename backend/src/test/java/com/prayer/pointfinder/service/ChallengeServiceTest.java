@@ -48,6 +48,8 @@ class ChallengeServiceTest {
     private GameAccessService gameAccessService;
     @Mock
     private GameEventBroadcaster eventBroadcaster;
+    @Mock
+    private com.prayer.pointfinder.repository.GameTagRepository gameTagRepository;
 
     @InjectMocks
     private ChallengeService challengeService;
@@ -474,10 +476,17 @@ class ChallengeServiceTest {
         return request;
     }
 
-    // ── P1 Phase 4 W3: operator-only challenge tags and color ────────
+    // ── Tags (game-scoped tag IDs) ─────────────────────────────────
 
     @Test
-    void createChallengePersistsTagsAndColor() {
+    void createChallengeWithTagIdsLinksTagsToChallenge() {
+        UUID tagId1 = UUID.randomUUID();
+        UUID tagId2 = UUID.randomUUID();
+        com.prayer.pointfinder.entity.GameTag tag1 = com.prayer.pointfinder.entity.GameTag.builder()
+                .id(tagId1).game(game).label("easy").color("#8b5cf6").build();
+        com.prayer.pointfinder.entity.GameTag tag2 = com.prayer.pointfinder.entity.GameTag.builder()
+                .id(tagId2).game(game).label("scout").color("#3b82f6").build();
+
         CreateChallengeRequest request = new CreateChallengeRequest();
         request.setTitle("Tagged challenge");
         request.setDescription("Short");
@@ -487,10 +496,11 @@ class ChallengeServiceTest {
         request.setAutoValidate(false);
         request.setPoints(75);
         request.setLocationBound(false);
-        request.setTags(List.of("easy", "scout", "evening"));
-        request.setColor("#8b5cf6");
+        request.setTagIds(List.of(tagId1, tagId2));
 
         when(gameAccessService.getAccessibleGame(gameId)).thenReturn(game);
+        when(gameTagRepository.findById(tagId1)).thenReturn(Optional.of(tag1));
+        when(gameTagRepository.findById(tagId2)).thenReturn(Optional.of(tag2));
         when(challengeRepository.save(any(Challenge.class))).thenAnswer(invocation -> {
             Challenge saved = invocation.getArgument(0);
             saved.setId(UUID.randomUUID());
@@ -501,44 +511,43 @@ class ChallengeServiceTest {
         ChallengeResponse response = challengeService.createChallenge(gameId, request);
 
         assertNotNull(response);
-        assertEquals(List.of("easy", "scout", "evening"), response.getTags());
-        assertEquals("#8b5cf6", response.getColor());
+        assertNotNull(response.getTagIds());
+        assertEquals(2, response.getTagIds().size());
+        assertTrue(response.getTagIds().containsAll(List.of(tagId1, tagId2)));
     }
 
     @Test
-    void updateChallengeUpdatesTagsAndColor() {
-        challenge.setTags(List.of("stale"));
-        challenge.setColor("#ef4444");
+    void updateChallengeUpdatesTagIds() {
+        UUID tagId = UUID.randomUUID();
+        com.prayer.pointfinder.entity.GameTag tag = com.prayer.pointfinder.entity.GameTag.builder()
+                .id(tagId).game(game).label("refreshed").color("#14b8a6").build();
 
         UUID fixedBaseId = UUID.randomUUID();
         Base fixedBase = Base.builder().id(fixedBaseId).game(game).hidden(false).build();
 
         UpdateChallengeRequest request = baseRequest();
         request.setLocationBound(false);
-        request.setTags(List.of("refreshed", "priority"));
-        request.setColor("#14b8a6");
+        request.setTagIds(List.of(tagId));
 
         when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
+        when(gameTagRepository.findById(tagId)).thenReturn(Optional.of(tag));
         when(challengeRepository.save(any(Challenge.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(baseRepository.findByFixedChallengeId(challengeId)).thenReturn(List.of(fixedBase));
 
         ChallengeResponse response = challengeService.updateChallenge(gameId, challengeId, request);
 
-        assertEquals(List.of("refreshed", "priority"), response.getTags());
-        assertEquals("#14b8a6", response.getColor());
-        assertEquals(List.of("refreshed", "priority"), challenge.getTags());
-        assertEquals("#14b8a6", challenge.getColor());
+        assertNotNull(response.getTagIds());
+        assertTrue(response.getTagIds().contains(tagId));
     }
 
     @Test
-    void createChallengeNormalizesEmptyTagsToNull() {
+    void createChallengeWithNoTagIdsReturnsNullTagIds() {
         CreateChallengeRequest request = new CreateChallengeRequest();
         request.setTitle("Untagged");
         request.setAnswerType("text");
         request.setPoints(50);
         request.setLocationBound(false);
-        request.setTags(List.of()); // empty list collapses to null
-        request.setColor("   "); // blank color collapses to null
+        // tagIds not set — null clears all tags
 
         when(gameAccessService.getAccessibleGame(gameId)).thenReturn(game);
         when(challengeRepository.save(any(Challenge.class))).thenAnswer(invocation -> {
@@ -550,7 +559,6 @@ class ChallengeServiceTest {
 
         ChallengeResponse response = challengeService.createChallenge(gameId, request);
 
-        assertNull(response.getTags());
-        assertNull(response.getColor());
+        assertNull(response.getTagIds());
     }
 }

@@ -45,6 +45,8 @@ class BaseServiceTest {
     private GameAccessService gameAccessService;
     @Mock
     private GameEventBroadcaster eventBroadcaster;
+    @Mock
+    private com.prayer.pointfinder.repository.GameTagRepository gameTagRepository;
 
     @InjectMocks
     private BaseService baseService;
@@ -232,20 +234,28 @@ class BaseServiceTest {
         return request;
     }
 
-    // ── P1 Phase 4 W3: operator-only base tags and color ─────────────
+    // ── Tags (game-scoped tag IDs) ─────────────────────────────────
 
     @Test
-    void createBasePersistsTagsAndColor() {
+    void createBaseWithTagIdsLinksTagsToBase() {
+        UUID tagId1 = UUID.randomUUID();
+        UUID tagId2 = UUID.randomUUID();
+        com.prayer.pointfinder.entity.GameTag tag1 = com.prayer.pointfinder.entity.GameTag.builder()
+                .id(tagId1).game(game).label("trail").color("#3b82f6").build();
+        com.prayer.pointfinder.entity.GameTag tag2 = com.prayer.pointfinder.entity.GameTag.builder()
+                .id(tagId2).game(game).label("morning").color("#ef4444").build();
+
         CreateBaseRequest request = new CreateBaseRequest();
         request.setName("Trailhead");
         request.setDescription("At the fork in the path");
         request.setLat(47.3769);
         request.setLng(8.5417);
         request.setHidden(false);
-        request.setTags(List.of("trail", "morning", "scenic"));
-        request.setColor("#3b82f6");
+        request.setTagIds(List.of(tagId1, tagId2));
 
         when(gameAccessService.getAccessibleGame(gameId)).thenReturn(game);
+        when(gameTagRepository.findById(tagId1)).thenReturn(Optional.of(tag1));
+        when(gameTagRepository.findById(tagId2)).thenReturn(Optional.of(tag2));
         when(baseRepository.save(any(Base.class))).thenAnswer(invocation -> {
             Base saved = invocation.getArgument(0);
             saved.setId(UUID.randomUUID());
@@ -255,13 +265,17 @@ class BaseServiceTest {
         BaseResponse response = baseService.createBase(gameId, request);
 
         assertNotNull(response);
-        assertNotNull(response.getTags());
-        assertEquals(List.of("trail", "morning", "scenic"), response.getTags());
-        assertEquals("#3b82f6", response.getColor());
+        assertNotNull(response.getTagIds());
+        assertEquals(2, response.getTagIds().size());
+        assertTrue(response.getTagIds().containsAll(List.of(tagId1, tagId2)));
     }
 
     @Test
-    void updateBaseUpdatesTagsAndColor() {
+    void updateBaseUpdatesTagIds() {
+        UUID tagId = UUID.randomUUID();
+        com.prayer.pointfinder.entity.GameTag tag = com.prayer.pointfinder.entity.GameTag.builder()
+                .id(tagId).game(game).label("fresh").color("#22c55e").build();
+
         UUID baseId = UUID.randomUUID();
         Base base = Base.builder()
                 .id(baseId)
@@ -272,35 +286,30 @@ class BaseServiceTest {
                 .lng(2.0)
                 .hidden(false)
                 .nfcLinked(false)
-                .tags(List.of("old-tag"))
-                .color("#ef4444")
                 .build();
 
         UpdateBaseRequest request = baseUpdateRequest("Base", false, null);
-        request.setTags(List.of("fresh", "new-pair"));
-        request.setColor("#22c55e");
+        request.setTagIds(List.of(tagId));
 
         when(baseRepository.findById(baseId)).thenReturn(Optional.of(base));
+        when(gameTagRepository.findById(tagId)).thenReturn(Optional.of(tag));
         when(baseRepository.save(any(Base.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         BaseResponse response = baseService.updateBase(gameId, baseId, request);
 
-        assertEquals(List.of("fresh", "new-pair"), response.getTags());
-        assertEquals("#22c55e", response.getColor());
-        assertEquals(List.of("fresh", "new-pair"), base.getTags());
-        assertEquals("#22c55e", base.getColor());
+        assertNotNull(response.getTagIds());
+        assertTrue(response.getTagIds().contains(tagId));
     }
 
     @Test
-    void createBaseNormalizesEmptyTagsToNull() {
+    void createBaseWithNoTagIdsReturnsNullTagIds() {
         CreateBaseRequest request = new CreateBaseRequest();
         request.setName("Tagless");
         request.setDescription("");
         request.setLat(47.3769);
         request.setLng(8.5417);
         request.setHidden(false);
-        request.setTags(List.of()); // empty list collapses to null
-        request.setColor("   "); // blank color collapses to null
+        // tagIds not set — null clears all tags
 
         when(gameAccessService.getAccessibleGame(gameId)).thenReturn(game);
         when(baseRepository.save(any(Base.class))).thenAnswer(invocation -> {
@@ -311,7 +320,6 @@ class BaseServiceTest {
 
         BaseResponse response = baseService.createBase(gameId, request);
 
-        assertNull(response.getTags());
-        assertNull(response.getColor());
+        assertNull(response.getTagIds());
     }
 }

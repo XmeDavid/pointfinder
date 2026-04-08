@@ -11,10 +11,10 @@ import java.util.UUID;
  * Operator-facing base DTO.
  *
  * <p>This DTO exposes fields that players MUST NOT see, specifically
- * {@code tags} and {@code color} (P1 Phase 4 W3 — operator-only setup
- * organization metadata) and {@code nfcToken} (operator-only write
- * token). It is therefore used exclusively by operator-only endpoints
- * under {@code /api/games/{gameId}/bases}.
+ * {@code tagIds} (operator-only setup organization metadata) and
+ * {@code nfcToken} (operator-only write token). It is therefore used
+ * exclusively by operator-only endpoints under
+ * {@code /api/games/{gameId}/bases}.
  *
  * <p>Player-facing paths intentionally use a different DTO
  * ({@code PlayerBaseResponse}) that omits these fields by construction.
@@ -36,14 +36,9 @@ public class BaseResponse {
     private Boolean hidden;
     private UUID fixedChallengeId;
     /**
-     * Operator-only free-text tags. Never exposed to players — see
-     * {@code PlayerBaseResponse} for the player-safe DTO variant.
+     * Operator-only game-scoped tag IDs. Resolved against the game's tag
+     * vocabulary ({@code GET /api/games/{gameId}/tags}). Never exposed to
+     * players — see {@code PlayerBaseResponse} for the player-safe DTO.
      */
-    private List<String> tags;
-    /**
-     * Operator-only fixed-palette color (7-char hex). Never exposed to
-     * players — see {@code PlayerBaseResponse} for the player-safe DTO
-     * variant.
-     */
-    private String color;
+    private List<UUID> tagIds;
 }

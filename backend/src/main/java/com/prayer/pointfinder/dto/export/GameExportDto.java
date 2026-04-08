@@ -22,4 +22,6 @@ public class GameExportDto {
     private List<TeamExportDto> teams;
     private List<TeamVariableExportDto> teamVariables;
     private List<ChallengeTeamVariableExportDto> challengeTeamVariables;
+    /** Full tag vocabulary for this game. Null when no tags exist. */
+    private List<TagExportDto> tags;
 }

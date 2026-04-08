@@ -72,6 +72,8 @@ class GameServiceTest {
     private TeamVariableRepository teamVariableRepository;
     @Mock
     private ChallengeTeamVariableRepository challengeTeamVariableRepository;
+    @Mock
+    private GameTagRepository gameTagRepository;
 
     private GameService gameService;
     private GameImportExportService gameImportExportService;
@@ -100,7 +102,8 @@ class GameServiceTest {
                 assignmentRepository,
                 teamVariableRepository,
                 challengeTeamVariableRepository,
-                gameAccessService
+                gameAccessService,
+                gameTagRepository
         );
 
         gameService = new GameService(
@@ -122,6 +125,11 @@ class GameServiceTest {
                 gameImportExportService,
                 teamVariableService
         );
+
+        // Default stub: exportGame calls this to build the tags section
+        org.mockito.Mockito.lenient()
+                .when(gameTagRepository.findByGameIdOrderByCreatedAtAsc(any()))
+                .thenReturn(java.util.List.of());
     }
 
     @AfterEach

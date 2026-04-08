@@ -11,9 +11,9 @@ import java.util.UUID;
  * Operator-facing challenge DTO.
  *
  * <p>This DTO exposes fields that players MUST NOT see, specifically
- * {@code correctAnswer}, {@code operatorNotes}, {@code tags}, and
- * {@code color}. It is therefore used exclusively by operator-only
- * endpoints under {@code /api/games/{gameId}/challenges}.
+ * {@code correctAnswer}, {@code operatorNotes}, and {@code tagIds}. It is
+ * therefore used exclusively by operator-only endpoints under
+ * {@code /api/games/{gameId}/challenges}.
  *
  * <p>Player-facing paths intentionally use a different DTO
  * ({@code PlayerChallengeResponse}) that omits these fields by
@@ -44,15 +44,9 @@ public class ChallengeResponse {
      */
     private String operatorNotes;
     /**
-     * Operator-only free-text tags for setup organization. Never exposed
-     * to players — see {@code PlayerChallengeResponse} for the
-     * player-safe DTO variant.
+     * Operator-only game-scoped tag IDs. Resolved against the game's tag
+     * vocabulary ({@code GET /api/games/{gameId}/tags}). Never exposed to
+     * players — see {@code PlayerChallengeResponse} for the player-safe DTO.
      */
-    private List<String> tags;
-    /**
-     * Operator-only fixed-palette color (7-char hex). Never exposed to
-     * players — see {@code PlayerChallengeResponse} for the player-safe
-     * DTO variant.
-     */
-    private String color;
+    private List<UUID> tagIds;
 }

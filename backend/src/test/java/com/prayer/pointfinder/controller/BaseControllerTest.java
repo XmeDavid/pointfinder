@@ -269,10 +269,12 @@ class BaseControllerTest {
                 .andExpect(status().isNotFound());
     }
 
-    // ── P1 Phase 4 W3: operator-only base tags and color ─────────────
+    // ── P1 Phase 4 W3: operator-only base tag IDs ─────────────────────
 
     @Test
-    void getBaseExposesTagsAndColor() throws Exception {
+    void getBaseExposesTagIds() throws Exception {
+        UUID tagId1 = UUID.randomUUID();
+        UUID tagId2 = UUID.randomUUID();
         BaseResponse base = BaseResponse.builder()
                 .id(BASE_ID)
                 .gameId(GAME_ID)
@@ -282,50 +284,35 @@ class BaseControllerTest {
                 .lng(8.5417)
                 .nfcLinked(false)
                 .hidden(false)
-                .tags(List.of("trail", "morning"))
-                .color("#3b82f6")
+                .tagIds(List.of(tagId1, tagId2))
                 .build();
 
         when(baseService.getBasesByGame(GAME_ID)).thenReturn(List.of(base));
 
         mockMvc.perform(get("/api/games/" + GAME_ID + "/bases"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].tags[0]").value("trail"))
-                .andExpect(jsonPath("$[0].tags[1]").value("morning"))
-                .andExpect(jsonPath("$[0].color").value("#3b82f6"));
+                .andExpect(jsonPath("$[0].tagIds[0]").value(tagId1.toString()))
+                .andExpect(jsonPath("$[0].tagIds[1]").value(tagId2.toString()))
+                .andExpect(jsonPath("$[0].tags").doesNotExist())
+                .andExpect(jsonPath("$[0].color").doesNotExist());
     }
 
     @Test
-    void createBaseRejectsInvalidColorFormat() throws Exception {
+    void createBaseRejectsMoreThan20TagIds() throws Exception {
         CreateBaseRequest request = new CreateBaseRequest();
         request.setName("Base Alpha");
         request.setLat(47.3769);
         request.setLng(8.5417);
-        request.setColor("blue"); // not a 7-char hex; @Pattern should reject
-
-        mockMvc.perform(post("/api/games/" + GAME_ID + "/bases")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.color").exists());
-    }
-
-    @Test
-    void createBaseRejectsMoreThan20Tags() throws Exception {
-        CreateBaseRequest request = new CreateBaseRequest();
-        request.setName("Base Alpha");
-        request.setLat(47.3769);
-        request.setLng(8.5417);
-        List<String> tooMany = new java.util.ArrayList<>();
+        List<UUID> tooMany = new java.util.ArrayList<>();
         for (int i = 0; i < 21; i++) {
-            tooMany.add("tag-" + i);
+            tooMany.add(UUID.randomUUID());
         }
-        request.setTags(tooMany);
+        request.setTagIds(tooMany);
 
         mockMvc.perform(post("/api/games/" + GAME_ID + "/bases")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.tags").exists());
+                .andExpect(jsonPath("$.errors.tagIds").exists());
     }
 }

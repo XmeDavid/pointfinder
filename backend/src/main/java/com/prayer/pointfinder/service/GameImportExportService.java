@@ -12,6 +12,7 @@ import com.prayer.pointfinder.repository.*;
 import com.prayer.pointfinder.security.SecurityUtils;
 import com.prayer.pointfinder.util.CodeGenerator;
 import com.prayer.pointfinder.util.HtmlSanitizer;
+import com.prayer.pointfinder.util.TagPalette;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +38,7 @@ public class GameImportExportService {
     private final TeamVariableRepository teamVariableRepository;
     private final ChallengeTeamVariableRepository challengeTeamVariableRepository;
     private final GameAccessService gameAccessService;
+    private final GameTagRepository gameTagRepository;
 
     @Transactional(readOnly = true)
     public GameExportDto exportGame(UUID gameId) {
@@ -48,6 +50,7 @@ public class GameImportExportService {
         List<Assignment> assignments = assignmentRepository.findByGameId(gameId);
         List<TeamVariable> teamVariables = teamVariableRepository.findByGameId(gameId);
         List<ChallengeTeamVariable> challengeTeamVariables = challengeTeamVariableRepository.findByGameId(gameId);
+        List<GameTag> gameTags = gameTagRepository.findByGameIdOrderByCreatedAtAsc(gameId);
 
         Map<UUID, String> baseIdMap = new HashMap<>();
         Map<UUID, String> challengeIdMap = new HashMap<>();
@@ -70,23 +73,37 @@ public class GameImportExportService {
                 .tileSource(game.getTileSource())
                 .build();
 
-        List<BaseExportDto> baseExportDtos = bases.stream()
-                .map(base -> BaseExportDto.builder()
-                        .tempId(baseIdMap.get(base.getId()))
-                        .name(base.getName())
-                        .description(base.getDescription())
-                        .lat(base.getLat())
-                        .lng(base.getLng())
-                        .hidden(base.getHidden())
-                        .fixedChallengeTempId(base.getFixedChallenge() != null ?
-                                challengeIdMap.get(base.getFixedChallenge().getId()) : null)
-                        // P1 Phase 4 W3: operator-only metadata round-trips
-                        // through export/import. Copy the stored value
-                        // directly; the entity already holds the normalized
-                        // form (empty → null) so nothing else to do here.
-                        .tags(base.getTags())
-                        .color(base.getColor())
+        // Export tag vocabulary
+        List<TagExportDto> tagExportDtos = gameTags.stream()
+                .map(t -> TagExportDto.builder()
+                        .label(t.getLabel())
+                        .color(t.getColor())
                         .build())
+                .toList();
+
+        // Build label→tag map for resolving base/challenge tagLabels
+        Map<UUID, String> tagIdToLabel = gameTags.stream()
+                .collect(Collectors.toMap(GameTag::getId, GameTag::getLabel));
+
+        List<BaseExportDto> baseExportDtos = bases.stream()
+                .map(base -> {
+                    List<String> tagLabels = base.getTags().stream()
+                            .map(t -> tagIdToLabel.get(t.getId()))
+                            .filter(Objects::nonNull)
+                            .sorted()
+                            .toList();
+                    return BaseExportDto.builder()
+                            .tempId(baseIdMap.get(base.getId()))
+                            .name(base.getName())
+                            .description(base.getDescription())
+                            .lat(base.getLat())
+                            .lng(base.getLng())
+                            .hidden(base.getHidden())
+                            .fixedChallengeTempId(base.getFixedChallenge() != null ?
+                                    challengeIdMap.get(base.getFixedChallenge().getId()) : null)
+                            .tagLabels(tagLabels.isEmpty() ? null : tagLabels)
+                            .build();
+                })
                 .toList();
 
         List<ChallengeExportDto> challengeExportDtos = challenges.stream()
@@ -94,6 +111,11 @@ public class GameImportExportService {
                     List<String> unlocksTempIds = challenge.getUnlocksBases().stream()
                             .map(b -> baseIdMap.get(b.getId()))
                             .filter(Objects::nonNull)
+                            .toList();
+                    List<String> tagLabels = challenge.getTags().stream()
+                            .map(t -> tagIdToLabel.get(t.getId()))
+                            .filter(Objects::nonNull)
+                            .sorted()
                             .toList();
                     return ChallengeExportDto.builder()
                             .tempId(challengeIdMap.get(challenge.getId()))
@@ -108,12 +130,8 @@ public class GameImportExportService {
                             .locationBound(challenge.getLocationBound())
                             .requirePresenceToSubmit(challenge.getRequirePresenceToSubmit())
                             .unlocksBaseTempIds(unlocksTempIds.isEmpty() ? null : unlocksTempIds)
-                            // P1 Phase 4 W2 + W3: operator-only metadata
-                            // round-trips. All three fields already hold
-                            // the normalized form on the entity.
                             .operatorNotes(challenge.getOperatorNotes())
-                            .tags(challenge.getTags())
-                            .color(challenge.getColor())
+                            .tagLabels(tagLabels.isEmpty() ? null : tagLabels)
                             .build();
                 })
                 .toList();
@@ -164,6 +182,7 @@ public class GameImportExportService {
                 .teams(teamExportDtos)
                 .teamVariables(teamVariableExportDtos.isEmpty() ? null : teamVariableExportDtos)
                 .challengeTeamVariables(challengeTeamVariableExportDtos.isEmpty() ? null : challengeTeamVariableExportDtos)
+                .tags(tagExportDtos.isEmpty() ? null : tagExportDtos)
                 .build();
     }
 
@@ -196,6 +215,33 @@ public class GameImportExportService {
         newGame.getOperators().add(currentUser);
         newGame = gameRepository.save(newGame);
 
+        // Import tag vocabulary — upsert by label so round-trips are stable
+        Map<String, GameTag> importedTagsByLabel = new HashMap<>();
+        if (data.getTags() != null) {
+            Set<String> usedColors = new HashSet<>();
+            for (TagExportDto tagDto : data.getTags()) {
+                String label = tagDto.getLabel().trim();
+                String color = tagDto.getColor();
+                if (color == null || color.isBlank()) {
+                    color = TagPalette.nextUnused(usedColors);
+                }
+                usedColors.add(color);
+
+                GameTag existing = gameTagRepository
+                        .findByGameIdAndLabelIgnoreCase(newGame.getId(), label)
+                        .orElse(null);
+                if (existing == null) {
+                    existing = GameTag.builder()
+                            .game(newGame)
+                            .label(label)
+                            .color(color)
+                            .build();
+                    existing = gameTagRepository.save(existing);
+                }
+                importedTagsByLabel.put(label.toLowerCase(), existing);
+            }
+        }
+
         for (ChallengeExportDto chDto : data.getChallenges()) {
             Challenge challenge = Challenge.builder()
                     .game(newGame)
@@ -209,15 +255,17 @@ public class GameImportExportService {
                     .points(chDto.getPoints())
                     .locationBound(chDto.getLocationBound() != null ? chDto.getLocationBound() : false)
                     .requirePresenceToSubmit(chDto.getRequirePresenceToSubmit() != null ? chDto.getRequirePresenceToSubmit() : false)
-                    // P1 Phase 4 W2 + W3: operator-only metadata round-trip.
-                    // Normalize blank/empty inputs to null so the imported
-                    // challenge matches the canonical form that
-                    // ChallengeService.normalize* would produce.
                     .operatorNotes(normalizeOperatorNotes(chDto.getOperatorNotes()))
-                    .tags(normalizeTags(chDto.getTags()))
-                    .color(normalizeColor(chDto.getColor()))
                     .build();
             challenge = challengeRepository.save(challenge);
+
+            // Link tags by label
+            if (chDto.getTagLabels() != null) {
+                Set<GameTag> tags = resolveTagsByLabels(chDto.getTagLabels(), importedTagsByLabel, newGame, newGame.getId());
+                challenge.setTags(tags);
+                challenge = challengeRepository.save(challenge);
+            }
+
             challengeEntityMap.put(chDto.getTempId(), challenge);
         }
 
@@ -239,11 +287,16 @@ public class GameImportExportService {
                     .nfcLinked(false)
                     .hidden(baseDto.getHidden() != null ? baseDto.getHidden() : false)
                     .fixedChallenge(fixedChallenge)
-                    // P1 Phase 4 W3: operator-only metadata round-trip.
-                    .tags(normalizeTags(baseDto.getTags()))
-                    .color(normalizeColor(baseDto.getColor()))
                     .build();
             base = baseRepository.save(base);
+
+            // Link tags by label
+            if (baseDto.getTagLabels() != null) {
+                Set<GameTag> tags = resolveTagsByLabels(baseDto.getTagLabels(), importedTagsByLabel, newGame, newGame.getId());
+                base.setTags(tags);
+                base = baseRepository.save(base);
+            }
+
             baseEntityMap.put(baseDto.getTempId(), base);
         }
 
@@ -619,16 +672,8 @@ public class GameImportExportService {
         }
     }
 
-    // ── Operator metadata normalizers ────────────────────────────────
-    // These mirror the canonical form written by BaseService and
-    // ChallengeService on the direct create/update paths so an imported
-    // game is byte-identical at the column level to one built through
-    // the REST API. Keeping them private to this service avoids a
-    // premature extraction — three call sites, one usage shape.
-
     /**
-     * Collapses null/blank operator notes to {@code null}. Mirrors
-     * {@code ChallengeService.normalizeOperatorNotes}.
+     * Collapses null/blank operator notes to {@code null}.
      */
     private String normalizeOperatorNotes(String raw) {
         if (raw == null) {
@@ -639,30 +684,37 @@ public class GameImportExportService {
     }
 
     /**
-     * Collapses null or all-blank tag lists to {@code null}; trims
-     * individual entries and drops blanks. Mirrors
-     * {@code BaseService.normalizeTags} / {@code ChallengeService.normalizeTags}.
+     * Resolves tag labels to GameTag entities from the imported tag map,
+     * creating missing tags on the fly with a palette color.
      */
-    private List<String> normalizeTags(List<String> raw) {
-        if (raw == null || raw.isEmpty()) {
-            return null;
+    private Set<GameTag> resolveTagsByLabels(
+            List<String> tagLabels,
+            Map<String, GameTag> importedTagsByLabel,
+            Game game,
+            UUID gameId) {
+        if (tagLabels == null || tagLabels.isEmpty()) {
+            return new HashSet<>();
         }
-        List<String> cleaned = raw.stream()
-                .filter(t -> t != null && !t.trim().isEmpty())
-                .map(String::trim)
-                .toList();
-        return cleaned.isEmpty() ? null : cleaned;
-    }
-
-    /**
-     * Collapses null/blank hex color to {@code null}. Mirrors
-     * {@code BaseService.normalizeColor} / {@code ChallengeService.normalizeColor}.
-     */
-    private String normalizeColor(String raw) {
-        if (raw == null) {
-            return null;
+        Set<GameTag> result = new HashSet<>();
+        for (String label : tagLabels) {
+            String normalizedLabel = label.trim().toLowerCase();
+            GameTag tag = importedTagsByLabel.get(normalizedLabel);
+            if (tag == null) {
+                // Tag referenced by base/challenge but not in exported vocabulary —
+                // create it with a palette color (defensive import handling)
+                Set<String> usedColors = importedTagsByLabel.values().stream()
+                        .map(GameTag::getColor)
+                        .collect(Collectors.toSet());
+                tag = GameTag.builder()
+                        .game(game)
+                        .label(label.trim())
+                        .color(TagPalette.nextUnused(usedColors))
+                        .build();
+                tag = gameTagRepository.save(tag);
+                importedTagsByLabel.put(normalizedLabel, tag);
+            }
+            result.add(tag);
         }
-        String trimmed = raw.trim();
-        return trimmed.isEmpty() ? null : trimmed;
+        return result;
     }
 }

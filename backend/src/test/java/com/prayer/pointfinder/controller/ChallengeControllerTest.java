@@ -324,10 +324,12 @@ class ChallengeControllerTest {
                 .andExpect(jsonPath("$.errors.operatorNotes").exists());
     }
 
-    // ── P1 Phase 4 W3: operator-only challenge tags and color ────────
+    // ── P1 Phase 4 W3: operator-only challenge tag IDs ───────────────
 
     @Test
-    void getChallengeExposesTagsAndColor() throws Exception {
+    void getChallengeExposesTagIds() throws Exception {
+        UUID tagId1 = UUID.randomUUID();
+        UUID tagId2 = UUID.randomUUID();
         ChallengeResponse challenge = ChallengeResponse.builder()
                 .id(CHALLENGE_ID)
                 .gameId(GAME_ID)
@@ -338,50 +340,35 @@ class ChallengeControllerTest {
                 .locationBound(false)
                 .autoValidate(false)
                 .requirePresenceToSubmit(false)
-                .tags(List.of("flag", "outdoor"))
-                .color("#22c55e")
+                .tagIds(List.of(tagId1, tagId2))
                 .build();
 
         when(challengeService.getChallengesByGame(GAME_ID)).thenReturn(List.of(challenge));
 
         mockMvc.perform(get("/api/games/" + GAME_ID + "/challenges"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].tags[0]").value("flag"))
-                .andExpect(jsonPath("$[0].tags[1]").value("outdoor"))
-                .andExpect(jsonPath("$[0].color").value("#22c55e"));
+                .andExpect(jsonPath("$[0].tagIds[0]").value(tagId1.toString()))
+                .andExpect(jsonPath("$[0].tagIds[1]").value(tagId2.toString()))
+                .andExpect(jsonPath("$[0].tags").doesNotExist())
+                .andExpect(jsonPath("$[0].color").doesNotExist());
     }
 
     @Test
-    void createChallengeRejectsInvalidColorFormat() throws Exception {
-        CreateChallengeRequest request = new CreateChallengeRequest();
-        request.setTitle("Bad color");
-        request.setAnswerType("text");
-        request.setPoints(100);
-        request.setColor("not-a-hex"); // @Pattern should reject
-
-        mockMvc.perform(post("/api/games/" + GAME_ID + "/challenges")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.color").exists());
-    }
-
-    @Test
-    void createChallengeRejectsMoreThan20Tags() throws Exception {
+    void createChallengeRejectsMoreThan20TagIds() throws Exception {
         CreateChallengeRequest request = new CreateChallengeRequest();
         request.setTitle("Too many tags");
         request.setAnswerType("text");
         request.setPoints(100);
-        List<String> tooMany = new java.util.ArrayList<>();
+        List<UUID> tooMany = new java.util.ArrayList<>();
         for (int i = 0; i < 21; i++) {
-            tooMany.add("tag-" + i);
+            tooMany.add(UUID.randomUUID());
         }
-        request.setTags(tooMany);
+        request.setTagIds(tooMany);
 
         mockMvc.perform(post("/api/games/" + GAME_ID + "/challenges")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.tags").exists());
+                .andExpect(jsonPath("$.errors.tagIds").exists());
     }
 }

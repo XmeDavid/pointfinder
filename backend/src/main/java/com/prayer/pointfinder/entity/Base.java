@@ -1,13 +1,13 @@
 package com.prayer.pointfinder.entity;
 
-import com.prayer.pointfinder.converter.StringListJsonConverter;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.security.SecureRandom;
 import java.time.Instant;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -52,8 +52,8 @@ public class Base {
     private Challenge fixedChallenge;
 
     /**
-     * Operator-only free-text tags for setup organization (grouping, filtering,
-     * operational planning). MUST NEVER be exposed to players.
+     * Operator-only game-scoped tags for setup organization (grouping,
+     * filtering, operational planning). MUST NEVER be exposed to players.
      *
      * <p>Only operator-facing DTOs ({@link com.prayer.pointfinder.dto.response.BaseResponse})
      * carry this field. Player-facing DTOs
@@ -62,24 +62,15 @@ public class Base {
      * {@code PlayerControllerTest} asserts the absence via JSON path plus a
      * full-body substring check on the {@code GET /api/player/games/{gameId}/data}
      * and {@code GET /api/player/games/{gameId}/bases} endpoints.
-     *
-     * <p>Length is capped at 20 entries at the DTO layer; storage is JSON
-     * via {@link StringListJsonConverter}, matching the existing
-     * {@code Challenge.correctAnswer} convention.
      */
-    @Convert(converter = StringListJsonConverter.class)
-    @Column(name = "tags", columnDefinition = "TEXT")
-    private List<String> tags;
-
-    /**
-     * Operator-only fixed-palette color (7-char hex, e.g. {@code #3b82f6}).
-     * MUST NEVER be exposed to players. Matches the existing
-     * {@code Team.color} storage convention ({@code VARCHAR(7)}). The
-     * client uses a fixed 12-swatch palette; the server accepts any valid
-     * hex via {@code @Pattern} on the request DTO.
-     */
-    @Column(name = "color", length = 7)
-    private String color;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "base_tags",
+        joinColumns = @JoinColumn(name = "base_id"),
+        inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    @Builder.Default
+    private Set<GameTag> tags = new HashSet<>();
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
