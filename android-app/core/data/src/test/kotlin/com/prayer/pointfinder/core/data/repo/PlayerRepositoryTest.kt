@@ -80,7 +80,7 @@ class PlayerRepositoryTest {
             progress = listOf(
                 BaseProgress(
                     baseId = "base-1",
-                    baseName = "Start",
+                    challengeTitle = "Find the flag",
                     lat = 47.0,
                     lng = 8.0,
                     nfcLinked = true,
@@ -108,7 +108,7 @@ class PlayerRepositoryTest {
             progress = listOf(
                 BaseProgress(
                     baseId = "base-1",
-                    baseName = "Start",
+                    challengeTitle = "Find the flag",
                     lat = 47.0,
                     lng = 8.0,
                     nfcLinked = true,
@@ -130,7 +130,7 @@ class PlayerRepositoryTest {
             CachedProgressEntity(
                 gameId = "game-1",
                 baseId = "base-1",
-                baseName = "Cached Base",
+                challengeTitle = "Cached Challenge",
                 lat = 47.0,
                 lng = 8.0,
                 nfcLinked = true,
@@ -146,7 +146,7 @@ class PlayerRepositoryTest {
 
         coVerify(exactly = 0) { api.getGameData(any()) }
         assertEquals(1, result.progress.size)
-        assertEquals("Cached Base", result.progress[0].baseName)
+        assertEquals("Cached Challenge", result.progress[0].challengeTitle)
     }
 
     @Test
@@ -156,7 +156,7 @@ class PlayerRepositoryTest {
             CachedProgressEntity(
                 gameId = "game-1",
                 baseId = "base-1",
-                baseName = "Offline Base",
+                challengeTitle = "Offline Challenge",
                 lat = 47.0,
                 lng = 8.0,
                 nfcLinked = true,
@@ -171,7 +171,7 @@ class PlayerRepositoryTest {
         val result = repo.loadProgress(playerAuth, online = true)
 
         assertEquals(1, result.progress.size)
-        assertEquals("Offline Base", result.progress[0].baseName)
+        assertEquals("Offline Challenge", result.progress[0].challengeTitle)
         // Uses auth gameStatus as fallback when API fails
         assertEquals(playerAuth.gameStatus, result.gameStatus)
     }
@@ -183,7 +183,6 @@ class PlayerRepositoryTest {
         val checkInResponse = CheckInResponse(
             checkInId = "ci-1",
             baseId = "base-1",
-            baseName = "HQ",
             checkedInAt = "2026-03-20T10:00:00Z",
             challenge = null,
         )
@@ -201,7 +200,6 @@ class PlayerRepositoryTest {
         val checkInResponse = CheckInResponse(
             checkInId = "ci-1",
             baseId = "base-1",
-            baseName = "HQ",
             checkedInAt = "2026-03-20T10:00:00Z",
             challenge = null,
         )
@@ -219,7 +217,7 @@ class PlayerRepositoryTest {
             CachedProgressEntity(
                 gameId = "game-1",
                 baseId = "base-1",
-                baseName = "Offline Base",
+                challengeTitle = "Offline Challenge",
                 lat = 47.0,
                 lng = 8.0,
                 nfcLinked = true,
@@ -376,7 +374,6 @@ class PlayerRepositoryTest {
         val checkInResponse = CheckInResponse(
             checkInId = "ci-1",
             baseId = "base-1",
-            baseName = "HQ",
             checkedInAt = "2026-03-20T10:00:00Z",
             challenge = challenge,
         )

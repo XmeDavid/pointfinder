@@ -186,7 +186,7 @@ Canonical state snapshot for a game. Single call that returns everything the cal
   "progress": [
     {
       "baseId": "a7b8c9d0-e1f2-3456-abcd-567890123456",
-      "baseName": "Forest Clearing",
+      "challengeTitle": "Find the tree",
       "lat": 47.3769,
       "lng": 8.5417,
       "nfcLinked": true,
@@ -615,6 +615,70 @@ idempotencyKey: string (optional)
 ```
 
 > Check-ins are idempotent per team-base pair. The device ID in the join request identifies a player — same device rejoining a different team creates a new player record on that team.
+
+### Player-facing response shapes
+
+P1 Phase 4 W4 — **player-facing naming contract**: players see challenge titles, not base names. Base names are operator-oriented setup metadata and are NEVER returned on any player endpoint. The backend enforces this structurally (the DTOs do not carry the field at all) and via JSON path assertions in `PlayerControllerTest.getGameDataResponseDoesNotLeakBaseName` and `getGameDataResponseStringDoesNotContainBaseNameKey`. See `docs/business-logic.md` § "Player-Facing Naming Contract" for the rationale and complete DTO table.
+
+**`GET /player/games/:gameId/bases` — `PlayerBaseResponse[]`**
+
+```json
+[
+  {
+    "id": "a7b8c9d0-e1f2-3456-abcd-567890123456",
+    "gameId": "d4e5f6a7-b8c9-0123-defa-234567890123",
+    "lat": 47.3769,
+    "lng": 8.5417,
+    "nfcLinked": true,
+    "hidden": false,
+    "fixedChallengeId": "f6a7b8c9-d0e1-2345-fabc-456789012345"
+  }
+]
+```
+
+No `name`, `description`, `tags`, `color`, or `nfcToken` — those are operator-only fields served by `GET /api/games/:gameId/bases` (the operator endpoint) under the `BaseResponse` shape.
+
+**`GET /player/games/:gameId/progress` — `BaseProgressResponse[]`**
+
+```json
+[
+  {
+    "baseId": "a7b8c9d0-e1f2-3456-abcd-567890123456",
+    "challengeTitle": "Find the tree",
+    "lat": 47.3769,
+    "lng": 8.5417,
+    "nfcLinked": true,
+    "status": "completed",
+    "checkedInAt": "2026-04-08T09:15:00Z",
+    "challengeId": "f6a7b8c9-d0e1-2345-fabc-456789012345",
+    "submissionStatus": "approved"
+  }
+]
+```
+
+`challengeTitle` is **nullable**: `null` when no challenge is assigned for this `(team, base)` pair (e.g. a revealed hidden base that is purely a check-in-only unlock target, or a base whose assignment was cleared after the team joined). Player UIs fall back to a localized placeholder when the title is null.
+
+**`POST /player/games/:gameId/bases/:baseId/check-in` — `CheckInResponse`**
+
+```json
+{
+  "checkInId": "11111111-2222-3333-4444-555555555555",
+  "baseId": "a7b8c9d0-e1f2-3456-abcd-567890123456",
+  "checkedInAt": "2026-04-08T09:15:00Z",
+  "challenge": {
+    "id": "f6a7b8c9-d0e1-2345-fabc-456789012345",
+    "title": "Find the tree",
+    "description": "Locate the oldest tree in the grove",
+    "content": "<p>Full instructions ...</p>",
+    "completionContent": "<p>Well done!</p>",
+    "answerType": "text",
+    "points": 100,
+    "requirePresenceToSubmit": false
+  }
+}
+```
+
+No `baseName` at the top level. The player app renders `challenge.title` as the post-check-in banner and the navigation title. The same shape is also returned by the operator rescue endpoint `POST /api/games/:gameId/teams/:teamId/check-in/:baseId` — operators rescue from screens that already know the target base via `baseId`, so the response does not need to echo a human-readable base label.
 
 ---
 

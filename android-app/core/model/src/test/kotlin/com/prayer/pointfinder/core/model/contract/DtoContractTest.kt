@@ -112,11 +112,15 @@ class DtoContractTest {
 
     @Test
     fun `BaseProgressResponse deserializes from contract snapshot`() {
+        // P1 Phase 4 W4: the player-facing DTO carries the challenge
+        // title instead of the base name. The shared contract snapshot
+        // was regenerated when the field was renamed; this test
+        // validates Android decodes it correctly.
         val snapshot = readSnapshot("BaseProgressResponse")
         val dto = json.decodeFromString<BaseProgress>(snapshot)
 
         assertEquals("a7b8c9d0-e1f2-3456-abcd-567890123456", dto.baseId)
-        assertEquals("Forest Clearing", dto.baseName)
+        assertEquals("Find the tree", dto.challengeTitle)
         assertEquals(47.3769, dto.lat, 0.0001)
         assertEquals(8.5417, dto.lng, 0.0001)
         assertEquals(true, dto.nfcLinked)

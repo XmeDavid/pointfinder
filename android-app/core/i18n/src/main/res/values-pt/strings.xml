@@ -93,6 +93,8 @@
     <string name="label_checked_in_at_base">Check-in feito em %1$s</string>
     <string name="label_no_challenge_details">Sem detalhes do desafio ainda.</string>
     <string name="label_no_challenge_assigned">Nenhum desafio atribuído.</string>
+    <!-- P1 Phase 4 W4: placeholder for bases with no assigned challenge. -->
+    <string name="base_default_name">Base</string>
     <string name="label_download_video">Toque para descarregar vídeo</string>
     <string name="label_presence_warning_title">Leitura NFC necessária para submeter</string>
     <string name="label_presence_warning_body">Precisas de ler a tag NFC desta base para submeter a tua resposta. Fica por perto ou lembra-te de voltar!</string>

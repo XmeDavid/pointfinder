@@ -11,6 +11,7 @@ import com.prayer.pointfinder.core.data.local.MIGRATION_3_4
 import com.prayer.pointfinder.core.data.local.MIGRATION_4_5
 import com.prayer.pointfinder.core.data.local.MIGRATION_5_6
 import com.prayer.pointfinder.core.data.local.MIGRATION_6_7
+import com.prayer.pointfinder.core.data.local.MIGRATION_7_8
 import com.prayer.pointfinder.core.data.repo.OperatorTokenRefresher
 import com.prayer.pointfinder.core.data.repo.SessionStore
 import com.prayer.pointfinder.core.network.ApiFactory
@@ -124,7 +125,7 @@ object AppModule {
             DB_NAME,
         )
             .openHelperFactory(factory)
-            .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+            .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
             .fallbackToDestructiveMigration()
             .build()
     }

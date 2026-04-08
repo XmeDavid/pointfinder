@@ -97,7 +97,9 @@ class SubmissionFlowIntegrationTest extends IntegrationTestBase {
         assertEquals(HttpStatus.OK, checkInResp.getStatusCode());
         assertNotNull(checkInResp.getBody());
         assertEquals(base.getId(), checkInResp.getBody().getBaseId());
-        assertEquals("Base Alpha", checkInResp.getBody().getBaseName());
+        // P1 Phase 4 W4: CheckInResponse no longer carries baseName —
+        // players see the challenge title (on ChallengeInfo below), not
+        // the operator-oriented base name.
         // Challenge should be assigned
         assertNotNull(checkInResp.getBody().getChallenge());
 

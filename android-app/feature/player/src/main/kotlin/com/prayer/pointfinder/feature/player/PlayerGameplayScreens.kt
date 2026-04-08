@@ -162,7 +162,13 @@ fun BaseCheckInDetailScreen(
     ) {
         TextButton(onClick = onBack) { Text(stringResource(R.string.action_back_to_map)) }
         Spacer(Modifier.height(4.dp))
-        Text(stringResource(R.string.label_checked_in_at_base, response.baseName), style = MaterialTheme.typography.titleLarge)
+        // P1 Phase 4 W4: player-facing naming contract — the check-in
+        // banner names the challenge title (from the nested challenge),
+        // not the operator-oriented base name. Falls back to a
+        // localized placeholder if no challenge is assigned.
+        val bannerTitle = response.challenge?.title?.takeIf { it.isNotBlank() }
+            ?: stringResource(R.string.base_default_name)
+        Text(stringResource(R.string.label_checked_in_at_base, bannerTitle), style = MaterialTheme.typography.titleLarge)
         if (isOffline) {
             Spacer(Modifier.height(8.dp))
             Text(stringResource(R.string.hint_offline_sync), color = OfflineOrange)

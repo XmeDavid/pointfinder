@@ -95,7 +95,6 @@ class PlayerControllerTest {
         CheckInResponse response = CheckInResponse.builder()
                 .checkInId(checkInId)
                 .baseId(baseId)
-                .baseName("Forest Clearing")
                 .checkedInAt(Instant.parse("2025-03-01T09:15:00Z"))
                 .challenge(CheckInResponse.ChallengeInfo.builder()
                         .id(UUID.randomUUID())
@@ -109,13 +108,17 @@ class PlayerControllerTest {
 
         when(playerService.checkIn(eq(gameId), eq(baseId), any(Player.class), any())).thenReturn(response);
 
+        // P1 Phase 4 W4: the check-in response carries the challenge
+        // title (shown prominently to the player) but never the base
+        // name. The last two assertions are the W4 privacy guardrail.
         mockMvc.perform(post("/api/player/games/" + gameId + "/bases/" + baseId + "/check-in"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.checkInId").value(checkInId.toString()))
-                .andExpect(jsonPath("$.baseName").value("Forest Clearing"))
                 .andExpect(jsonPath("$.challenge.title").value("Find the tree"))
                 .andExpect(jsonPath("$.challenge.answerType").value("text"))
-                .andExpect(jsonPath("$.challenge.points").value(50));
+                .andExpect(jsonPath("$.challenge.points").value(50))
+                .andExpect(jsonPath("$.baseName").doesNotExist())
+                .andExpect(jsonPath("$.name").doesNotExist());
     }
 
     @Test
@@ -124,7 +127,7 @@ class PlayerControllerTest {
         UUID baseId = UUID.randomUUID();
 
         CheckInResponse response = CheckInResponse.builder()
-                .checkInId(UUID.randomUUID()).baseId(baseId).baseName("B")
+                .checkInId(UUID.randomUUID()).baseId(baseId)
                 .checkedInAt(Instant.now())
                 .challenge(CheckInResponse.ChallengeInfo.builder()
                         .id(UUID.randomUUID()).title("T").description("d").content("c")
@@ -282,9 +285,13 @@ class PlayerControllerTest {
         UUID gameId = UUID.randomUUID();
         UUID baseId = UUID.randomUUID();
 
+        // P1 Phase 4 W4: the progress row carries challengeTitle (shown
+        // to the player on the map and base list) instead of baseName
+        // (operator-only setup metadata). The last two assertions are
+        // the W4 privacy guardrail.
         BaseProgressResponse progress = BaseProgressResponse.builder()
                 .baseId(baseId)
-                .baseName("Forest Clearing")
+                .challengeTitle("Find the tree")
                 .lat(47.3769)
                 .lng(8.5417)
                 .nfcLinked(true)
@@ -300,12 +307,45 @@ class PlayerControllerTest {
         mockMvc.perform(get("/api/player/games/" + gameId + "/progress"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].baseId").value(baseId.toString()))
-                .andExpect(jsonPath("$[0].baseName").value("Forest Clearing"))
+                .andExpect(jsonPath("$[0].challengeTitle").value("Find the tree"))
                 .andExpect(jsonPath("$[0].status").value("completed"))
                 .andExpect(jsonPath("$[0].submissionStatus").value("approved"))
                 .andExpect(jsonPath("$[0].nfcLinked").value(true))
                 .andExpect(jsonPath("$[0].lat").value(47.3769))
-                .andExpect(jsonPath("$[0].lng").value(8.5417));
+                .andExpect(jsonPath("$[0].lng").value(8.5417))
+                .andExpect(jsonPath("$[0].baseName").doesNotExist())
+                .andExpect(jsonPath("$[0].name").doesNotExist());
+    }
+
+    @Test
+    void getProgressReturnsNullChallengeTitleWhenNoChallengeAssigned() throws Exception {
+        UUID gameId = UUID.randomUUID();
+        UUID baseId = UUID.randomUUID();
+
+        // P1 Phase 4 W4: challengeTitle is nullable — it is null when
+        // no challenge is assigned for this (team, base) pair (e.g. a
+        // hidden base that is a check-in-only unlock target, or a base
+        // whose assignment was cleared by the operator). The player UI
+        // must tolerate a missing title.
+        BaseProgressResponse progress = BaseProgressResponse.builder()
+                .baseId(baseId)
+                .challengeTitle(null)
+                .lat(47.3769)
+                .lng(8.5417)
+                .nfcLinked(true)
+                .status("not_visited")
+                .challengeId(null)
+                .submissionStatus(null)
+                .build();
+
+        when(playerService.getProgress(eq(gameId), any(Player.class)))
+                .thenReturn(List.of(progress));
+
+        mockMvc.perform(get("/api/player/games/" + gameId + "/progress"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].baseId").value(baseId.toString()))
+                .andExpect(jsonPath("$[0].challengeTitle").value(org.hamcrest.Matchers.nullValue()))
+                .andExpect(jsonPath("$[0].baseName").doesNotExist());
     }
 
     @Test
@@ -459,8 +499,6 @@ class PlayerControllerTest {
         PlayerBaseResponse safeBase = PlayerBaseResponse.builder()
                 .id(baseId)
                 .gameId(gameId)
-                .name("Forest Clearing")
-                .description("Near the old oak")
                 .lat(47.3769)
                 .lng(8.5417)
                 .nfcLinked(true)
@@ -500,7 +538,7 @@ class PlayerControllerTest {
                 // reintroduces the operator-facing BaseResponse /
                 // ChallengeResponse here would surface as Jackson-serialized
                 // keys and fail these assertions.
-                .andExpect(jsonPath("$.bases[0].name").value("Forest Clearing"))
+                .andExpect(jsonPath("$.bases[0].id").value(baseId.toString()))
                 .andExpect(jsonPath("$.bases[0].tags").doesNotExist())
                 .andExpect(jsonPath("$.bases[0].color").doesNotExist())
                 .andExpect(jsonPath("$.challenges[0].title").value("Find the tree"))
@@ -517,8 +555,6 @@ class PlayerControllerTest {
         PlayerBaseResponse safeBase = PlayerBaseResponse.builder()
                 .id(baseId)
                 .gameId(gameId)
-                .name("Trailhead")
-                .description("")
                 .lat(47.3769)
                 .lng(8.5417)
                 .nfcLinked(false)
@@ -570,5 +606,175 @@ class PlayerControllerTest {
         String lowered = body.toLowerCase();
         assertThat(lowered).doesNotContain("\"tags\"");
         assertThat(lowered).doesNotContain("\"color\"");
+    }
+
+    // ── P1 Phase 4 W4: player-facing naming contract ────────────────
+    //
+    // These tests are the non-negotiable part of the W4 naming contract.
+    // Players in PointFinder see challenge titles, not base names —
+    // base names are operator-oriented setup metadata and MUST NOT
+    // appear on any player-facing endpoint. If any of these tests fail,
+    // the feature has leaked operator setup labels into a player
+    // response and the regression MUST be fixed before merging. Mirrors
+    // the W2 operatorNotes and W3 tags/color patterns.
+
+    @Test
+    void getGameDataResponseDoesNotLeakBaseName() throws Exception {
+        UUID gameId = UUID.randomUUID();
+        UUID baseId = UUID.randomUUID();
+        UUID challengeId = UUID.randomUUID();
+
+        // PlayerBaseResponse is structurally incapable of carrying the
+        // operator-only `name` field — it does not exist on the DTO.
+        // This guarantees at the type level that PlayerService cannot
+        // leak base names into this endpoint's response. The test
+        // below additionally asserts at the JSON layer that the field
+        // never appears in the serialized body, so a future regression
+        // that reintroduces BaseResponse into GameDataResponse would
+        // fail loudly.
+        PlayerBaseResponse safeBase = PlayerBaseResponse.builder()
+                .id(baseId)
+                .gameId(gameId)
+                .lat(47.3769)
+                .lng(8.5417)
+                .nfcLinked(true)
+                .hidden(false)
+                .fixedChallengeId(challengeId)
+                .build();
+
+        // Player-facing progress rows carry challengeTitle, not
+        // baseName. The progress list below is what the player sees on
+        // the map and base list.
+        BaseProgressResponse safeProgress = BaseProgressResponse.builder()
+                .baseId(baseId)
+                .challengeTitle("Find the tree")
+                .lat(47.3769)
+                .lng(8.5417)
+                .nfcLinked(true)
+                .status("not_visited")
+                .challengeId(challengeId)
+                .build();
+
+        PlayerChallengeResponse safeChallenge = PlayerChallengeResponse.builder()
+                .id(challengeId)
+                .gameId(gameId)
+                .title("Find the tree")
+                .description("Locate the oldest tree")
+                .content("Full instructions")
+                .completionContent("Well done!")
+                .answerType("text")
+                .autoValidate(false)
+                .points(100)
+                .locationBound(false)
+                .requirePresenceToSubmit(false)
+                .build();
+
+        GameDataResponse response = GameDataResponse.builder()
+                .gameStatus("live")
+                .unlockTrigger("CHECK_IN")
+                .bases(List.of(safeBase))
+                .challenges(List.of(safeChallenge))
+                .assignments(List.of())
+                .progress(List.of(safeProgress))
+                .build();
+
+        when(playerService.getGameData(eq(gameId), any(Player.class))).thenReturn(response);
+
+        mockMvc.perform(get("/api/player/games/" + gameId + "/data"))
+                .andExpect(status().isOk())
+                // Field-level guardrails: no `name` or `baseName`
+                // anywhere in the bases or progress arrays. A regression
+                // that reintroduces the operator-facing BaseResponse
+                // here, or that adds `baseName` back to
+                // BaseProgressResponse, would surface as a
+                // Jackson-serialized key and fail these assertions.
+                .andExpect(jsonPath("$.bases[0].id").value(baseId.toString()))
+                .andExpect(jsonPath("$.bases[0].name").doesNotExist())
+                .andExpect(jsonPath("$.bases[0].baseName").doesNotExist())
+                .andExpect(jsonPath("$.bases[0].description").doesNotExist())
+                .andExpect(jsonPath("$.progress[0].baseName").doesNotExist())
+                .andExpect(jsonPath("$.progress[0].name").doesNotExist())
+                .andExpect(jsonPath("$.progress[0].challengeTitle").value("Find the tree"));
+    }
+
+    @Test
+    void getGameDataResponseStringDoesNotContainBaseNameKey() throws Exception {
+        UUID gameId = UUID.randomUUID();
+        UUID baseId = UUID.randomUUID();
+        UUID challengeId = UUID.randomUUID();
+
+        PlayerBaseResponse safeBase = PlayerBaseResponse.builder()
+                .id(baseId)
+                .gameId(gameId)
+                .lat(47.3769)
+                .lng(8.5417)
+                .nfcLinked(true)
+                .hidden(false)
+                .fixedChallengeId(challengeId)
+                .build();
+
+        BaseProgressResponse safeProgress = BaseProgressResponse.builder()
+                .baseId(baseId)
+                .challengeTitle("Find the tree")
+                .lat(47.3769)
+                .lng(8.5417)
+                .nfcLinked(true)
+                .status("not_visited")
+                .challengeId(challengeId)
+                .build();
+
+        PlayerChallengeResponse safeChallenge = PlayerChallengeResponse.builder()
+                .id(challengeId)
+                .gameId(gameId)
+                .title("Find the tree")
+                .description("desc")
+                .content("content")
+                .completionContent("done")
+                .answerType("text")
+                .autoValidate(false)
+                .points(50)
+                .locationBound(false)
+                .requirePresenceToSubmit(false)
+                .build();
+
+        GameDataResponse response = GameDataResponse.builder()
+                .gameStatus("live")
+                .unlockTrigger("CHECK_IN")
+                .bases(List.of(safeBase))
+                .challenges(List.of(safeChallenge))
+                .assignments(List.of())
+                .progress(List.of(safeProgress))
+                .build();
+
+        when(playerService.getGameData(eq(gameId), any(Player.class))).thenReturn(response);
+
+        String body = mockMvc.perform(get("/api/player/games/" + gameId + "/data"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        // Absolute, case-insensitive substring check on the entire body:
+        // no variant of `"baseName"` is allowed anywhere in the
+        // player-facing JSON, at any nesting depth. This survives future
+        // DTO restructuring that might add new nested fields.
+        //
+        // Note: none of the player-facing DTOs in GameDataResponse
+        // (PlayerBaseResponse, PlayerChallengeResponse, AssignmentResponse,
+        // BaseProgressResponse) carry any field named `baseName` or a
+        // top-level `name` on a base. A regression that reintroduces
+        // either would fail here. The challenge title still contains
+        // the word "name"-less content so the assertion is scoped to the
+        // exact JSON key `"basename"` (case-insensitive), not to the
+        // substring "name" which appears legitimately in things like
+        // player displayName or team name elsewhere in the system.
+        String lowered = body.toLowerCase();
+        assertThat(lowered).doesNotContain("\"basename\"");
+        // A stricter form: the top-level `name` key must not appear on
+        // a player base object. We assert it by checking the bases array
+        // does not serialize a `"name":` field anywhere. Because the
+        // player-facing DTO has no `name` field at all (see
+        // PlayerBaseResponse), we can assert its absence at the JSON
+        // path level too (done in the sibling test above).
     }
 }

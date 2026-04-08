@@ -38,7 +38,9 @@ class ManualCheckInTest extends IntegrationTestBase {
 
         assertNotNull(response);
         assertEquals(base.getId(), response.getBaseId());
-        assertEquals(base.getName(), response.getBaseName());
+        // P1 Phase 4 W4: CheckInResponse no longer carries baseName.
+        // Operators identify the rescued base by baseId (they triggered
+        // the rescue from a screen that already knew the base).
         assertNotNull(response.getCheckedInAt());
 
         // Verify persisted

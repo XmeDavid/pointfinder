@@ -191,7 +191,7 @@ struct BaseDetailSheet: View {
                 }
                 .padding()
             }
-            .navigationTitle(base?.baseName ?? locale.t("base.defaultName"))
+            .navigationTitle((base?.displayTitle ?? locale.t("base.defaultName")))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -203,7 +203,7 @@ struct BaseDetailSheet: View {
                     SolveView(
                         baseId: baseId,
                         challengeId: challengeId,
-                        baseName: base?.baseName ?? locale.t("base.defaultName"),
+                        displayTitle: (base?.displayTitle ?? locale.t("base.defaultName")),
                         requirePresenceToSubmit: challenge?.requirePresenceToSubmit ?? false,
                         answerType: challenge?.answerType ?? "text",
                         challengeTitle: challenge?.title ?? "",
@@ -217,7 +217,7 @@ struct BaseDetailSheet: View {
                 if let result = autoSubmitResult {
                     SubmissionResultView(
                         submission: result,
-                        baseName: base?.baseName ?? locale.t("base.defaultName"),
+                        displayTitle: (base?.displayTitle ?? locale.t("base.defaultName")),
                         dismissToMap: { dismiss() }
                     )
                 }

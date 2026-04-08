@@ -248,10 +248,12 @@ public class TeamService {
                     .build();
         }
 
+        // P1 Phase 4 W4: CheckInResponse is shared between player and
+        // operator rescue paths and no longer carries baseName. See
+        // CheckInResponse javadoc for the full rationale.
         return CheckInResponse.builder()
                 .checkInId(checkIn.getId())
                 .baseId(base.getId())
-                .baseName(base.getName())
                 .checkedInAt(checkIn.getCheckedInAt())
                 .challenge(challengeInfo)
                 .build();

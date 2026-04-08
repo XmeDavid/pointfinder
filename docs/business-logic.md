@@ -309,6 +309,50 @@ Because `PlayerBaseResponse` and `PlayerChallengeResponse` are structurally inca
 
 Like operator notes, these fields have no visibility rules beyond operator authentication — any authenticated operator with access to the game can read and edit them. The web admin surfaces both fields on the `BasesPage`, `ChallengesPage`, and the unified `BasesAndChallengesView` edit dialogs, next to the existing name/description/operator-notes inputs.
 
+### Player-Facing Naming Contract
+
+Source spec: `docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md` § "P1: Operator Workflow and Content Model" — "Player-facing naming is intentional: players should primarily see challenge titles, while base names can remain operator-oriented".
+
+PointFinder deliberately splits human-readable labels across two audiences:
+
+- **Operators** see **base names** (e.g. "Spot 3 — Big Oak", "Base 12 — behind the scout hut"). These are setup-time labels operators use to plan, brief, and scan long lists of bases. They are setup metadata, not gameplay content.
+- **Players** see **challenge titles** (e.g. "Find the tree", "Decode the cipher", "Take a team photo with the flag"). The player's mental model is "I'm here to do this challenge", not "I'm at this place doing this challenge". Base names are intentionally invisible to players.
+
+**What this means in the wire format**
+
+The backend splits DTOs at the type level so the player endpoints cannot leak the operator-oriented base name, even by accident:
+
+| DTO | Audience | Carries base `name` / `baseName` |
+|-----|----------|----------------------------------|
+| `BaseResponse` | Operator endpoints under `/api/games/{gameId}/bases` | Yes (`name`, `description`) |
+| `PlayerBaseResponse` | `GET /api/player/games/{gameId}/bases` and `GET /api/player/games/{gameId}/data` (inside `GameDataResponse`) | No (fields do not exist) |
+| `BaseProgressResponse` | `GET /api/player/games/{gameId}/progress` and `GET /api/games/{gameId}/snapshot` (player shape) | No — carries `challengeTitle` instead |
+| `CheckInResponse` | `POST /api/player/games/{gameId}/bases/{baseId}/check-in` and `POST /api/games/{gameId}/teams/{teamId}/check-in/{baseId}` | No (the nested `ChallengeInfo.title` is the player label) |
+| `BroadcastBaseResponse` | Realtime broadcast payloads | No |
+
+`BaseProgressResponse.challengeTitle` is **nullable**: a base may not have a challenge assigned for the player's team (e.g. a hidden base that is purely a check-in-only unlock target, or a base whose assignment was cleared by the operator after the team joined). Player UIs fall back to a localized placeholder (`"???"` in English, German, and Portuguese on iOS and Android) when the title is null.
+
+**Where the title surfaces on the player app**
+
+- Map markers: label = challenge title
+- Post-check-in screen: headline = challenge title, no base name shown
+- Base detail sheet: title = challenge title
+- Solve screen: navigation title = challenge title, "wrong tag scanned" error message references the challenge title
+- Submission result screen: navigation title = challenge title
+- Sync queue sheet: each pending action uses the challenge title as its label (falling back to a generic type-based label when the title is unknown)
+- Snapshot and progress API responses: only `challengeTitle` is returned for player rows, never `baseName`
+
+**Enforcement**
+
+Because `PlayerBaseResponse` is structurally incapable of carrying a `name` field and `BaseProgressResponse` is structurally incapable of carrying a `baseName` field, a future regression that accidentally reuses `BaseResponse` on a player path or that adds `baseName` back to `BaseProgressResponse` would fail Java compilation. On top of that, two `PlayerControllerTest` cases enforce the contract at the JSON layer:
+
+- `getGameDataResponseDoesNotLeakBaseName` asserts via JSON paths that `$.bases[*].name`, `$.bases[*].baseName`, `$.bases[*].description`, `$.progress[*].baseName`, and `$.progress[*].name` do not exist in the player-facing `GameDataResponse`, and that `$.progress[*].challengeTitle` is populated.
+- `getGameDataResponseStringDoesNotContainBaseNameKey` performs a case-insensitive full-body substring check that the serialized JSON response body never contains the key `"baseName"` at any nesting depth.
+
+Both assertions run as part of the standard `make test-backend-docker` suite, so the privacy contract is enforced on every backend build. A third test, `getProgressReturnsNullChallengeTitleWhenNoChallengeAssigned`, validates that `challengeTitle` is nullable on the wire for the check-in-only / hidden base case.
+
+The `PlayerServiceTest` and `PlayerServiceGetBasesTest` suites cover the service-level population of `challengeTitle` from the standard assignment resolution path (team-specific assignments beat all-teams assignments beat fixed challenges), so the label the player sees matches the challenge the player is expected to solve for that (team, base) pair.
+
 ### Upload Session ↔ Submission Contract
 
 This section describes how chunked media uploads relate to the submission record they belong to. Source spec: `docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md` (P0 Media Reliability).

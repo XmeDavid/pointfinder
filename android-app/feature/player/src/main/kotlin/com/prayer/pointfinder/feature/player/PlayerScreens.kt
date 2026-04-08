@@ -56,10 +56,19 @@ import com.prayer.pointfinder.core.i18n.R
 import com.prayer.pointfinder.core.model.PRIVACY_POLICY_URL
 import com.prayer.pointfinder.core.model.BaseStatus
 
+/**
+ * Row model for the sync queue sheet.
+ *
+ * P1 Phase 4 W4: the row label (shown next to each pending action) is
+ * the challenge title for the action's base, falling back to a generic
+ * action label. The field is called [label] rather than `baseName`
+ * because players never see base names — this is the localized,
+ * player-facing label the sync sheet renders.
+ */
 data class PendingActionUiItem(
     val id: String,
     val type: String,
-    val baseName: String? = null,
+    val label: String? = null,
     val uploadSessionId: String? = null,
     val uploadChunkIndex: Int? = null,
     val uploadTotalChunks: Int? = null,
@@ -275,8 +284,8 @@ private fun SyncQueueItem(
         "media_submission" -> Icons.Default.CameraAlt
         else -> Icons.Default.TextFields
     }
-    val name = if (action.baseName != null) {
-        "${action.baseName} ${stringResource(R.string.label_submission).lowercase()}"
+    val name = if (action.label != null) {
+        "${action.label} ${stringResource(R.string.label_submission).lowercase()}"
     } else when (action.type) {
         "check_in" -> stringResource(R.string.label_check_in_action)
         "media_submission" -> stringResource(R.string.label_photo_mode)

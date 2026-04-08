@@ -19,7 +19,12 @@ struct SolveView: View {
 
     let baseId: UUID
     let challengeId: UUID
-    let baseName: String
+    /// P1 Phase 4 W4: the label the player sees on this screen is the
+    /// challenge title, not the operator-oriented base name. Navigation
+    /// title and the "wrong tag scanned" error message both use this.
+    /// Callers should pass `BaseProgress.displayTitle` (or the cached
+    /// challenge's title) as the value.
+    let displayTitle: String
     let requirePresenceToSubmit: Bool
     let answerType: String
     let challengeTitle: String
@@ -198,7 +203,7 @@ struct SolveView: View {
             }
             .padding()
         }
-        .navigationTitle(locale.t("solve.navTitle", baseName))
+        .navigationTitle(locale.t("solve.navTitle", displayTitle))
         .navigationBarTitleDisplayMode(.inline)
         .overlay {
             if isProcessingMedia {
@@ -213,7 +218,7 @@ struct SolveView: View {
         .allowsHitTesting(!isProcessingMedia)
         .navigationDestination(isPresented: $showResult) {
             if let result = submissionResult {
-                SubmissionResultView(submission: result, baseName: baseName, dismissToMap: dismissToMap)
+                SubmissionResultView(submission: result, displayTitle: displayTitle, dismissToMap: dismissToMap)
             }
         }
         .fullScreenCover(isPresented: $showCamera) {
@@ -481,7 +486,7 @@ struct SolveView: View {
 
             // Verify the scanned base matches
             guard scannedPayload.baseId == baseId else {
-                scanError = locale.t("solve.wrongBase", baseName)
+                scanError = locale.t("solve.wrongBase", displayTitle)
                 isSubmitting = false
                 return
             }

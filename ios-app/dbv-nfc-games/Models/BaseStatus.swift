@@ -45,9 +45,17 @@ enum BaseStatus: String, Codable {
     }
 }
 
+/// Player-facing per-base progress row.
+///
+/// P1 Phase 4 W4 — naming contract: players see challenge titles, not
+/// base names. The `challengeTitle` field is nullable because a base
+/// may not have a challenge assigned for the player's team (e.g. a
+/// hidden base that is purely a check-in-only unlock target). Views
+/// should fall back to a localized placeholder like "???" or
+/// `base.defaultName` when `challengeTitle` is `nil`.
 struct BaseProgress: Codable, Identifiable {
     var baseId: UUID
-    var baseName: String
+    var challengeTitle: String?
     var lat: Double
     var lng: Double
     var nfcLinked: Bool
@@ -61,12 +69,24 @@ struct BaseProgress: Codable, Identifiable {
     var baseStatus: BaseStatus {
         BaseStatus(rawValue: status) ?? .notVisited
     }
+
+    /// Localized display label for use on player-facing surfaces.
+    /// Falls back to `base.defaultName` when the challenge title is
+    /// missing (e.g. hidden base with no assignment for this team).
+    var displayTitle: String {
+        if let title = challengeTitle, !title.isEmpty { return title }
+        return Translations.string("base.defaultName")
+    }
 }
 
+/// Player-facing check-in response.
+///
+/// P1 Phase 4 W4 — naming contract: this DTO no longer carries the
+/// operator-oriented base name. Players see the challenge title via
+/// the nested `ChallengeInfo`.
 struct CheckInResponse: Codable {
     let checkInId: UUID
     let baseId: UUID
-    let baseName: String
     let checkedInAt: String
     let challenge: ChallengeInfo?
 

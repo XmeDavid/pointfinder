@@ -127,9 +127,13 @@ class DtoContractTest {
 
     @Test
     void baseProgressResponse_matchesSnapshot() throws IOException {
+        // P1 Phase 4 W4: the player-facing progress DTO carries the
+        // challenge title instead of the base name. The snapshot was
+        // regenerated when the field was renamed; mobile contract tests
+        // were updated in lock-step.
         BaseProgressResponse dto = BaseProgressResponse.builder()
                 .baseId(UUID.fromString("a7b8c9d0-e1f2-3456-abcd-567890123456"))
-                .baseName("Forest Clearing")
+                .challengeTitle("Find the tree")
                 .lat(47.3769)
                 .lng(8.5417)
                 .nfcLinked(true)

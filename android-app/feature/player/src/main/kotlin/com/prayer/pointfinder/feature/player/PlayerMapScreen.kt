@@ -114,6 +114,13 @@ fun PlayerMapScreen(
 
     val density = context.resources.displayMetrics.density
 
+    // P1 Phase 4 W4: map markers display the challenge title (what
+    // the player is looking to solve), not the operator-oriented base
+    // name. Bases with no assigned challenge fall back to a localized
+    // placeholder. We capture the placeholder once here so the
+    // LaunchedEffect lambda below stays compose-free.
+    val defaultMapLabel = stringResource(R.string.base_default_name)
+
     // Update markers whenever progress changes (incremental: remove only changed markers, add new ones)
     LaunchedEffect(map, progress) {
         val m = map ?: return@LaunchedEffect
@@ -129,16 +136,17 @@ fun PlayerMapScreen(
 
         // Update or add markers
         progress.forEach { item ->
+            val label = item.challengeTitle?.takeIf { it.isNotBlank() } ?: defaultMapLabel
             val existingMarker = currentMarkers.firstOrNull { it.snippet == item.baseId }
             if (existingMarker != null) {
                 // Update existing marker icon/position in case status changed
                 val icon = iconFactory.fromBitmap(createPinMarkerBitmap(statusColorInt(item.status), item.status, density))
                 existingMarker.icon = icon
                 existingMarker.position = LatLng(item.lat, item.lng)
-                existingMarker.title = item.baseName
+                existingMarker.title = label
             } else {
                 // New marker
-                addMarkerForProgress(m, item, iconFactory, density)
+                addMarkerForProgress(m, item, label, iconFactory, density)
             }
         }
 
@@ -231,6 +239,7 @@ fun PlayerMapScreen(
 private fun addMarkerForProgress(
     map: MapLibreMap,
     item: BaseProgress,
+    label: String,
     iconFactory: IconFactory,
     density: Float,
 ) {
@@ -239,7 +248,7 @@ private fun addMarkerForProgress(
     map.addMarker(
         MarkerOptions()
             .position(LatLng(item.lat, item.lng))
-            .title(item.baseName)
+            .title(label)
             .snippet(item.baseId)
             .icon(icon),
     )
@@ -278,9 +287,16 @@ fun BaseDetailBottomSheet(
         BaseStatus.REJECTED -> Icons.Default.LocationOn
     }
 
+    // P1 Phase 4 W4: the sheet title is the challenge the player is
+    // about to (or just did) solve, not the operator base name. Falls
+    // back to a localized placeholder when the base has no assigned
+    // challenge for the team (e.g. a hidden unlock-only base).
+    val sheetTitle = baseProgress.challengeTitle?.takeIf { it.isNotBlank() }
+        ?: stringResource(R.string.base_default_name)
+
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-            Text(baseProgress.baseName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(sheetTitle, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(12.dp))
 
             // Status banner

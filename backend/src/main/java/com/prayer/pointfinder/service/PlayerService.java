@@ -307,9 +307,15 @@ public class PlayerService {
                 }
             }
 
+            // P1 Phase 4 W4: player-facing naming contract — players see
+            // challenge titles, not base names. When an assignment exists,
+            // project its title into the response; otherwise leave the
+            // field null (e.g. a hidden base that is a check-in-only
+            // unlock target). The operator-facing base name is NEVER
+            // included in this player DTO.
             return BaseProgressResponse.builder()
                     .baseId(bId)
-                    .baseName(base.getName())
+                    .challengeTitle(assignment != null ? assignment.getTitle() : null)
                     .lat(base.getLat())
                     .lng(base.getLng())
                     .nfcLinked(base.getNfcLinked())
@@ -327,18 +333,19 @@ public class PlayerService {
         gameAccessService.ensurePlayerBelongsToGame(player, gameId);
 
         // Uses PlayerBaseResponse (not the operator-facing BaseResponse)
-        // so operator-only fields — nfcToken, tags, color — cannot leak
-        // to players by construction. This invariant is enforced by
-        // PlayerControllerTest via JSON path assertions on the response
-        // body. See PlayerBaseResponse javadoc for the full rationale.
+        // so operator-only fields — nfcToken, tags, color, name,
+        // description — cannot leak to players by construction. This
+        // invariant is enforced by PlayerControllerTest via JSON path
+        // assertions on the response body. See PlayerBaseResponse
+        // javadoc for the full rationale, including the W4 naming
+        // contract that removes base name/description from the player
+        // DTO.
         return baseRepository.findByGameId(gameId).stream()
                 .filter(b -> !Boolean.TRUE.equals(b.getHidden()))
                 .limit(500)
                 .map(base -> PlayerBaseResponse.builder()
                         .id(base.getId())
                         .gameId(gameId)
-                        .name(base.getName())
-                        .description(base.getDescription())
                         .lat(base.getLat())
                         .lng(base.getLng())
                         .nfcLinked(base.getNfcLinked())
@@ -720,10 +727,13 @@ public class PlayerService {
                     .build();
         }
 
+        // P1 Phase 4 W4: player-facing naming contract — CheckInResponse
+        // no longer carries baseName. The player already knows which
+        // base they scanned, and the relevant post-check-in label is
+        // the challenge title which lives on ChallengeInfo below.
         return CheckInResponse.builder()
                 .checkInId(checkIn.getId())
                 .baseId(base.getId())
-                .baseName(base.getName())
                 .checkedInAt(checkIn.getCheckedInAt())
                 .challenge(challengeInfo)
                 .build();

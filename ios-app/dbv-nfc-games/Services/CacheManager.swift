@@ -135,9 +135,13 @@ actor GameDataCache {
 
         if let index = progress.firstIndex(where: { $0.baseId == baseId }) {
             let old = progress[index]
+            // P1 Phase 4 W4: BaseProgress carries challengeTitle instead
+            // of baseName. The rest of the row is preserved verbatim so
+            // optimistic updates reflect the new status without losing
+            // the challenge label the player is looking at.
             progress[index] = BaseProgress(
                 baseId: old.baseId,
-                baseName: old.baseName,
+                challengeTitle: old.challengeTitle,
                 lat: old.lat,
                 lng: old.lng,
                 nfcLinked: old.nfcLinked,

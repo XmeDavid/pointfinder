@@ -54,7 +54,7 @@ final class SnapshotRefreshTests: XCTestCase {
           "progress": [
             {
               "baseId": "a7b8c9d0-e1f2-3456-abcd-567890123456",
-              "baseName": "Start Base",
+              "challengeTitle": "Find the tree",
               "lat": 47.3769,
               "lng": 8.5417,
               "nfcLinked": true,
@@ -90,7 +90,9 @@ final class SnapshotRefreshTests: XCTestCase {
         XCTAssertEqual(snapshot.team.name, "Eagles")
         XCTAssertEqual(snapshot.team.color, "#FF5733")
         XCTAssertEqual(snapshot.progress.count, 1)
-        XCTAssertEqual(snapshot.progress.first?.baseName, "Start Base")
+        // P1 Phase 4 W4: player-facing progress rows carry the challenge
+        // title, not the base name.
+        XCTAssertEqual(snapshot.progress.first?.challengeTitle, "Find the tree")
         XCTAssertEqual(snapshot.progress.first?.status, "completed")
         XCTAssertEqual(snapshot.submissions?.count, 1)
         XCTAssertEqual(snapshot.submissions?.first?.status, "approved")

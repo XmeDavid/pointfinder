@@ -5,7 +5,13 @@ struct SubmissionResultView: View {
     @Environment(\.dismiss) private var dismiss
 
     let submission: SubmissionResponse
-    let baseName: String
+    /// P1 Phase 4 W4: player-facing naming contract — the title shown
+    /// at the top of this view is the challenge title (what the player
+    /// was trying to solve), not the operator-oriented base name. The
+    /// caller (SolveView / BaseCheckInDetailView) passes the display
+    /// title derived from `BaseProgress.displayTitle` or the cached
+    /// challenge.
+    let displayTitle: String
     /// Optional closure to dismiss all the way back to the map (dismisses the sheet)
     var dismissToMap: (() -> Void)?
 
@@ -83,7 +89,7 @@ struct SubmissionResultView: View {
             .padding(.top, 8)
             .padding(.bottom, 24)
         }
-        .navigationTitle(baseName)
+        .navigationTitle(displayTitle)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
     }

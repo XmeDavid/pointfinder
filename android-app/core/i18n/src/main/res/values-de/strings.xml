@@ -96,6 +96,8 @@
     <string name="label_checked_in_at_base">Eingecheckt bei %1$s</string>
     <string name="label_no_challenge_details">Noch keine Challenge-Details.</string>
     <string name="label_no_challenge_assigned">Keine Challenge zugewiesen.</string>
+    <!-- P1 Phase 4 W4: placeholder for bases with no assigned challenge. -->
+    <string name="base_default_name">Station</string>
     <string name="label_download_video">Tippe, um Video herunterzuladen</string>
     <string name="label_presence_warning_title">NFC-Scan zum Einreichen erforderlich</string>
     <string name="label_presence_warning_body">Du musst den NFC-Tag dieser Station scannen, um deine Antwort einzureichen. Bleib in der Nähe oder denk daran, zurückzukommen!</string>

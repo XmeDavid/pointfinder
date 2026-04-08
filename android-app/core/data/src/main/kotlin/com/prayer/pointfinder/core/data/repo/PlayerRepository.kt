@@ -217,15 +217,13 @@ class PlayerRepository @Inject constructor(
 
         db.progressDao().updateStatus(auth.gameId, baseId, "checked_in")
         val challenge = db.challengeDao().challengeForBase(auth.gameId, auth.teamId, baseId)?.toChallengeInfo()
-        val baseName = db.progressDao().progressForGame(auth.gameId)
-            .firstOrNull { it.baseId == baseId }
-            ?.baseName
-            ?: "Base"
+        // P1 Phase 4 W4: CheckInResponse no longer carries baseName. The
+        // offline fallback returns the same shape the online path does;
+        // the UI shows the challenge title (from the nested challenge).
         return CheckInResult(
             response = CheckInResponse(
                 checkInId = UUID.randomUUID().toString(),
                 baseId = baseId,
-                baseName = baseName,
                 checkedInAt = java.time.Instant.now().toString(),
                 challenge = challenge,
             ),
@@ -816,6 +814,11 @@ class PlayerRepository @Inject constructor(
         // Find challenges that live at the checked-in base
         val challengesAtBase = challenges.filter { it.fixedBaseId == checkedInBaseId }
 
+        // P1 Phase 4 W4: revealed hidden bases get the assigned
+        // challenge title (looked up by fixedChallengeId in the cached
+        // game data), NOT the base name. View code falls back to a
+        // localized placeholder when the title is null.
+        val challengeById = challenges.associateBy { it.id }
         val visibleBaseIds = currentProgress.map { it.baseId }.toSet()
         val newEntries = mutableListOf<BaseProgress>()
         val addedIds = mutableSetOf<String>()
@@ -827,10 +830,11 @@ class PlayerRepository @Inject constructor(
                 if (unlockedBaseId in addedIds) continue
                 val hiddenBase = allBases.find { it.id == unlockedBaseId } ?: continue
                 addedIds.add(unlockedBaseId)
+                val title = hiddenBase.fixedChallengeId?.let { challengeById[it]?.title }
                 newEntries.add(
                     BaseProgress(
                         baseId = hiddenBase.id,
-                        baseName = hiddenBase.name,
+                        challengeTitle = title,
                         lat = hiddenBase.lat,
                         lng = hiddenBase.lng,
                         nfcLinked = hiddenBase.nfcLinked,

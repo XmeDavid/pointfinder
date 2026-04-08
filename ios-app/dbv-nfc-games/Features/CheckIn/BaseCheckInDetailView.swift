@@ -39,7 +39,7 @@ struct BaseCheckInDetailView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(locale.t("base.checkedInBanner"))
                             .font(.headline)
-                        Text(base?.baseName ?? locale.t("base.defaultName"))
+                        Text((base?.displayTitle ?? locale.t("base.defaultName")))
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -156,7 +156,7 @@ struct BaseCheckInDetailView: View {
                                 SolveView(
                                     baseId: baseId,
                                     challengeId: challenge.id,
-                                    baseName: base?.baseName ?? locale.t("base.defaultName"),
+                                    displayTitle: (base?.displayTitle ?? locale.t("base.defaultName")),
                                     requirePresenceToSubmit: challenge.requirePresenceToSubmit,
                                     answerType: challenge.answerType,
                                     challengeTitle: challenge.title,
@@ -203,13 +203,13 @@ struct BaseCheckInDetailView: View {
             }
             .padding()
         }
-        .navigationTitle(base?.baseName ?? locale.t("base.defaultName"))
+        .navigationTitle((base?.displayTitle ?? locale.t("base.defaultName")))
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $showAutoSubmitResult) {
             if let result = autoSubmitResult {
                 SubmissionResultView(
                     submission: result,
-                    baseName: base?.baseName ?? locale.t("base.defaultName"),
+                    displayTitle: (base?.displayTitle ?? locale.t("base.defaultName")),
                     dismissToMap: popToRoot
                 )
             }

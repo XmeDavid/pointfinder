@@ -106,7 +106,7 @@ final class DtoContractTests: XCTestCase {
     private let baseProgressResponseJSON = """
     {
       "baseId": "a7b8c9d0-e1f2-3456-abcd-567890123456",
-      "baseName": "Forest Clearing",
+      "challengeTitle": "Find the tree",
       "lat": 47.3769,
       "lng": 8.5417,
       "nfcLinked": true,
@@ -195,10 +195,13 @@ final class DtoContractTests: XCTestCase {
     }
 
     func testBaseProgressResponse_decodesFromContractSnapshot() throws {
+        // P1 Phase 4 W4: the player-facing DTO carries the challenge
+        // title instead of the base name. Mobile contract tests were
+        // updated in lock-step with the backend snapshot regeneration.
         let dto = try JSONDecoder().decode(BaseProgress.self, from: baseProgressResponseJSON)
 
         XCTAssertEqual(dto.baseId, UUID(uuidString: "a7b8c9d0-e1f2-3456-abcd-567890123456"))
-        XCTAssertEqual(dto.baseName, "Forest Clearing")
+        XCTAssertEqual(dto.challengeTitle, "Find the tree")
         XCTAssertEqual(dto.lat, 47.3769, accuracy: 0.0001)
         XCTAssertEqual(dto.lng, 8.5417, accuracy: 0.0001)
         XCTAssertTrue(dto.nfcLinked)
@@ -266,9 +269,14 @@ final class DtoContractTests: XCTestCase {
         ])
 
         // BaseProgressResponse: top-level keys
+        //
+        // P1 Phase 4 W4: the player-facing DTO carries `challengeTitle`
+        // instead of `baseName`. The W4 privacy contract is enforced
+        // backend-side by PlayerControllerTest; this assertion catches
+        // accidental iOS drift from the canonical snapshot.
         let baseProgressKeys = try topLevelKeys(baseProgressResponseJSON)
         XCTAssertEqual(baseProgressKeys, [
-            "baseId", "baseName", "challengeId", "checkedInAt", "lat",
+            "baseId", "challengeId", "challengeTitle", "checkedInAt", "lat",
             "lng", "nfcLinked", "status", "submissionStatus"
         ])
 

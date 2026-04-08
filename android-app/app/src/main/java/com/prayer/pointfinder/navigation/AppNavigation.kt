@@ -626,13 +626,17 @@ private fun PlayerRootScreen(
         isOffline = !isOnline,
         pendingActionsCount = pendingActionsCount,
         onLoadPendingActions = {
+            // P1 Phase 4 W4: the label shown next to each pending
+            // action is the challenge title, not the operator-oriented
+            // base name. Falls back to null so the sheet picks a
+            // generic type-based label (e.g. "Submission").
             val progressList = state.progress
             viewModel.loadPendingActions().map { e ->
-                val baseName = progressList.firstOrNull { it.baseId == e.baseId }?.baseName
+                val label = progressList.firstOrNull { it.baseId == e.baseId }?.challengeTitle
                 PendingActionUiItem(
                     id = e.id,
                     type = e.type,
-                    baseName = baseName,
+                    label = label,
                     uploadSessionId = e.uploadSessionId,
                     uploadChunkIndex = e.uploadChunkIndex,
                     uploadTotalChunks = e.uploadTotalChunks,

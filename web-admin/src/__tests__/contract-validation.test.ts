@@ -142,7 +142,7 @@ describe("Cross-platform DTO contract validation", () => {
       const snapshot = readSnapshot("BaseProgressResponse");
 
       assertFieldType(snapshot, "baseId", "string");
-      assertFieldType(snapshot, "baseName", "string");
+      assertOptionalFieldType(snapshot, "challengeTitle", "string");
       assertFieldType(snapshot, "lat", "number");
       assertFieldType(snapshot, "lng", "number");
       assertFieldType(snapshot, "nfcLinked", "boolean");

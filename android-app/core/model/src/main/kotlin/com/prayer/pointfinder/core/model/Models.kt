@@ -227,10 +227,19 @@ enum class BaseStatus {
     }
 }
 
+/**
+ * Player-facing per-base progress row.
+ *
+ * P1 Phase 4 W4 — naming contract: players see challenge titles, not
+ * base names. [challengeTitle] is nullable because a base may not have
+ * a challenge assigned for the player's team (e.g. a hidden base that
+ * is purely a check-in-only unlock target). Views should fall back to
+ * a localized placeholder when [challengeTitle] is null.
+ */
 @Serializable
 data class BaseProgress(
     val baseId: EntityId,
-    val baseName: String,
+    val challengeTitle: String? = null,
     val lat: Double,
     val lng: Double,
     val nfcLinked: Boolean,
@@ -240,11 +249,17 @@ data class BaseProgress(
     val submissionStatus: String? = null,
 )
 
+/**
+ * Player-facing check-in response.
+ *
+ * P1 Phase 4 W4 — naming contract: this DTO no longer carries the
+ * operator-oriented base name. Players see the challenge title via
+ * the nested [ChallengeInfo].
+ */
 @Serializable
 data class CheckInResponse(
     val checkInId: EntityId,
     val baseId: EntityId,
-    val baseName: String,
     val checkedInAt: String,
     val challenge: ChallengeInfo? = null,
 ) {

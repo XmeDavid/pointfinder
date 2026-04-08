@@ -112,12 +112,15 @@ extension AppState {
 
         pendingActionsCount = await OfflineQueue.shared.pendingCount
 
-        // Construct local response
-        let baseName = baseProgress.first { $0.baseId == baseId }?.baseName ?? Translations.string("base.defaultName")
+        // Construct local response.
+        //
+        // P1 Phase 4 W4: CheckInResponse no longer carries baseName. The
+        // player sees the challenge title (from `challenge.title`) not
+        // the base name. Offline check-ins therefore only need identity
+        // + timestamp + cached challenge.
         return CheckInResponse(
             checkInId: UUID(), // Temporary local ID
             baseId: baseId,
-            baseName: baseName,
             checkedInAt: DateFormatting.iso8601String(),
             challenge: challenge
         )
@@ -496,6 +499,16 @@ extension AppState {
         // Find challenges that live at this base (fixedBaseId matches)
         let challengesAtBase = challenges.filter { $0.fixedBaseId == checkedInBaseId }
 
+        // Build a lookup from challengeId -> challenge so we can project
+        // the challenge title onto revealed hidden bases (P1 Phase 4 W4:
+        // players see challenge titles, not base names). Falls back to
+        // nil when the revealed base has no assignment in the cached
+        // game data; the view layer then renders the localized
+        // placeholder via `BaseProgress.displayTitle`.
+        let challengeById: [UUID: Challenge] = Dictionary(
+            uniqueKeysWithValues: challenges.map { ($0.id, $0) }
+        )
+
         var newEntries: [BaseProgress] = []
         for challenge in challengesAtBase {
             guard let unlocksBaseIds = challenge.unlocksBaseIds else { continue }
@@ -506,9 +519,18 @@ extension AppState {
                 if newEntries.contains(where: { $0.baseId == unlockedBaseId }) { continue }
                 // Find the hidden base metadata from cached game data
                 guard let hiddenBase = allBases.first(where: { $0.id == unlockedBaseId }) else { continue }
+                // Resolve the assigned challenge title for this hidden
+                // base if the cache knows it (via fixedChallengeId).
+                let title: String? = {
+                    if let fixedId = hiddenBase.fixedChallengeId,
+                       let c = challengeById[fixedId] {
+                        return c.title
+                    }
+                    return nil
+                }()
                 newEntries.append(BaseProgress(
                     baseId: hiddenBase.id,
-                    baseName: hiddenBase.name,
+                    challengeTitle: title,
                     lat: hiddenBase.lat,
                     lng: hiddenBase.lng,
                     nfcLinked: hiddenBase.nfcLinked,

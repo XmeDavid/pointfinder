@@ -211,7 +211,6 @@ private final class MockSyncAPIClient: SyncAPIClient {
         return CheckInResponse(
             checkInId: UUID(),
             baseId: baseId,
-            baseName: "Test Base",
             checkedInAt: "2026-01-01T00:00:00Z",
             challenge: nil
         )

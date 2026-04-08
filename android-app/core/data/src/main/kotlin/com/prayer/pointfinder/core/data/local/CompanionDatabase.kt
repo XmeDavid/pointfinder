@@ -50,11 +50,21 @@ data class PendingActionEntity(
     val nfcToken: String? = null,
 )
 
+/**
+ * Cached per-base progress row.
+ *
+ * P1 Phase 4 W4 — naming contract: players see challenge titles, not
+ * base names. The column is nullable because a revealed hidden base
+ * may not yet have an assigned challenge; the view layer falls back
+ * to a localized placeholder when null. Bumped to database version 8
+ * via [MIGRATION_7_8] which drops the old `baseName` column and adds
+ * a nullable `challengeTitle` column.
+ */
 @Entity(tableName = "cached_progress", primaryKeys = ["gameId", "baseId"])
 data class CachedProgressEntity(
     val gameId: String,
     val baseId: String,
-    val baseName: String,
+    val challengeTitle: String?,
     val lat: Double,
     val lng: Double,
     val nfcLinked: Boolean,
@@ -188,7 +198,7 @@ interface ChallengeDao {
         CachedProgressEntity::class,
         CachedChallengeEntity::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = true,
 )
 abstract class CompanionDatabase : RoomDatabase() {
@@ -217,6 +227,52 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
     }
 }
 
+/**
+ * P1 Phase 4 W4 — player-facing naming contract migration.
+ *
+ * Rebuilds `cached_progress` to replace the non-nullable `baseName`
+ * column with a nullable `challengeTitle` column. Existing rows lose
+ * the base name (it was operator-oriented setup metadata players
+ * should never have seen) and start with `challengeTitle = NULL`;
+ * the next `loadProgress` refresh repopulates the column from the
+ * backend's updated DTO. Rebuild rather than ALTER because SQLite
+ * cannot drop a NOT NULL column in-place.
+ */
+val MIGRATION_7_8 = object : Migration(7, 8) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE cached_progress_new (
+                gameId TEXT NOT NULL,
+                baseId TEXT NOT NULL,
+                challengeTitle TEXT,
+                lat REAL NOT NULL,
+                lng REAL NOT NULL,
+                nfcLinked INTEGER NOT NULL,
+                status TEXT NOT NULL,
+                checkedInAt TEXT,
+                challengeId TEXT,
+                submissionStatus TEXT,
+                PRIMARY KEY(gameId, baseId)
+            )
+            """.trimIndent()
+        )
+        db.execSQL(
+            """
+            INSERT INTO cached_progress_new (
+                gameId, baseId, challengeTitle, lat, lng, nfcLinked,
+                status, checkedInAt, challengeId, submissionStatus
+            )
+            SELECT gameId, baseId, NULL, lat, lng, nfcLinked,
+                   status, checkedInAt, challengeId, submissionStatus
+            FROM cached_progress
+            """.trimIndent()
+        )
+        db.execSQL("DROP TABLE cached_progress")
+        db.execSQL("ALTER TABLE cached_progress_new RENAME TO cached_progress")
+    }
+}
+
 val MIGRATION_4_5 = object : Migration(4, 5) {
     override fun migrate(db: SupportSQLiteDatabase) {
         // Move requirePresenceToSubmit from cached_progress to cached_challenge
@@ -232,7 +288,7 @@ fun BaseProgress.toCached(gameId: String): CachedProgressEntity {
     return CachedProgressEntity(
         gameId = gameId,
         baseId = baseId,
-        baseName = baseName,
+        challengeTitle = challengeTitle,
         lat = lat,
         lng = lng,
         nfcLinked = nfcLinked,
@@ -246,7 +302,7 @@ fun BaseProgress.toCached(gameId: String): CachedProgressEntity {
 fun CachedProgressEntity.toBaseProgress(): BaseProgress {
     return BaseProgress(
         baseId = baseId,
-        baseName = baseName,
+        challengeTitle = challengeTitle,
         lat = lat,
         lng = lng,
         nfcLinked = nfcLinked,

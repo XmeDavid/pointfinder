@@ -15,16 +15,25 @@ struct GameMapView: View {
                 let status = appState.currentGame?.status
                 let shouldBlockGameplay = status == "setup" || status == "ended"
 
+                // P1 Phase 4 W4: marker labels show the challenge title
+                // (the thing a player is looking for on their phone),
+                // not the operator-oriented base name. Hidden bases with
+                // no assigned challenge fall back to the localized
+                // placeholder via `displayTitle`.
+                let mapLabelDefault = locale.t("base.defaultName")
                 let annotations = appState.baseProgress.map { base in
-                    MapAnnotationItem(
+                    let label = base.challengeTitle?.isEmpty == false
+                        ? (base.challengeTitle ?? mapLabelDefault)
+                        : mapLabelDefault
+                    return MapAnnotationItem(
                         id: base.baseId.uuidString,
                         coordinate: CLLocationCoordinate2D(latitude: base.lat, longitude: base.lng),
-                        title: base.baseName,
+                        title: label,
                         subtitle: base.baseStatus.rawValue,
                         view: AnyView(
                             BaseAnnotationView(
                                 status: base.baseStatus,
-                                name: base.baseName
+                                name: label
                             )
                         ),
                         onTap: { [base] in selectedBase = base }
