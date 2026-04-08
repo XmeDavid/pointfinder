@@ -1,6 +1,7 @@
 package com.prayer.pointfinder.controller;
 
 import com.prayer.pointfinder.dto.request.CreateTeamRequest;
+import com.prayer.pointfinder.dto.request.OperatorCheckInRequest;
 import com.prayer.pointfinder.dto.request.UpdateTeamRequest;
 import com.prayer.pointfinder.dto.response.CheckInResponse;
 import com.prayer.pointfinder.dto.response.PlayerResponse;
@@ -64,8 +65,14 @@ public class TeamController {
     public ResponseEntity<CheckInResponse> manualCheckIn(
             @PathVariable UUID gameId,
             @PathVariable UUID teamId,
-            @PathVariable UUID baseId) {
+            @PathVariable UUID baseId,
+            @Valid @RequestBody(required = false) OperatorCheckInRequest request) {
+        // The request body is optional so legacy clients (which POST without
+        // a body at all) keep working. When supplied, the optional `reason`
+        // field is captured on the audit trail (check_ins.operator_reason and
+        // the corresponding ActivityEvent).
+        String reason = request != null ? request.getReason() : null;
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(teamService.operatorCheckIn(gameId, teamId, baseId));
+                .body(teamService.operatorCheckIn(gameId, teamId, baseId, reason));
     }
 }

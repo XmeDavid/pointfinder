@@ -143,13 +143,21 @@ public class PlayerService {
             return buildCheckInResponse(existing.get(), base, team, gameId);
         }
 
-        // Create new check-in
+        // Create new check-in.
+        // V36 audit foundation: snapshot the player's device id (the player
+        // FK already records the live identity; the snapshot survives later
+        // player deletion). The display-name snapshot lives on the activity
+        // event below because the existing check_ins schema does not need
+        // it for the gameplay path — only the activity feed does.
         CheckIn checkIn = CheckIn.builder()
                 .game(base.getGame())
                 .team(team)
                 .base(base)
                 .player(player)
                 .checkedInAt(Instant.now())
+                .actorDeviceIdSnapshot(player.getDeviceId())
+                .actorDisplayNameSnapshot(player.getDisplayName())
+                .sourceSurface("player_app")
                 .build();
         try {
             checkIn = checkInRepository.save(checkIn);
@@ -160,7 +168,7 @@ public class PlayerService {
             return buildCheckInResponse(existing2, base, team, gameId);
         }
 
-        // Create activity event
+        // Create activity event with full player actor capture (V36).
         ActivityEvent event = ActivityEvent.builder()
                 .game(base.getGame())
                 .type(ActivityEventType.check_in)
@@ -168,6 +176,10 @@ public class PlayerService {
                 .base(base)
                 .message(team.getName() + " checked in at " + base.getName())
                 .timestamp(Instant.now())
+                .actorPlayer(player)
+                .actorDisplayNameSnapshot(player.getDisplayName())
+                .actorDeviceIdSnapshot(player.getDeviceId())
+                .sourceSurface("player_app")
                 .build();
         activityEventRepository.save(event);
 

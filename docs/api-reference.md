@@ -130,7 +130,7 @@ Header: `X-Forwarded-Host` (for email link generation)
 ```json
 { "status": "setup | live | ended", "resetProgress": false }
 ```
-> `resetProgress: true` clears all check-ins, submissions, and activity events.
+> `resetProgress: true` soft-archives all check-ins, submissions, and activity events (V36 audit foundation). Rows stay in the database with `archived = true`; gameplay queries hide them, the Phase 3 audit export reads the full history.
 
 **Game Status Transitions**: `setup` → `live` → `ended`. Any status can revert to `setup` with `resetProgress: true`.
 
@@ -402,6 +402,7 @@ A future slice will add `GET /api/games/:gameId/snapshot?lastSeenVersion=N`. Whe
 | DELETE | `/games/:gameId/teams/:teamId` | Operator | Delete team (cascades players, submissions) |
 | GET | `/games/:gameId/teams/:teamId/players` | Operator | List team members |
 | DELETE | `/games/:gameId/teams/:teamId/players/:playerId` | Operator | Remove player from team |
+| POST | `/games/:gameId/teams/:teamId/check-in/:baseId` | Operator | Manual operator check-in (audited rescue) |
 
 ### Key Payloads
 
@@ -411,6 +412,13 @@ A future slice will add `GET /api/games/:gameId/snapshot?lastSeenVersion=N`. Whe
 ```
 
 Response includes `joinCode` — a unique 20-character alphanumeric code players use to join.
+
+**POST /games/:gameId/teams/:teamId/check-in/:baseId** (OperatorCheckInRequest, optional body)
+```json
+{ "reason": "string (optional, max 500 chars)" }
+```
+
+The operator manual check-in endpoint creates a check-in for the given team at the given base on behalf of an operator. The request body is OPTIONAL — legacy clients that POST without a body still work and the audit row records `operator_reason = NULL`. The endpoint is idempotent on the active `(team_id, base_id)` pair: a second call returns the existing check-in without mutating its audit fields. The synthesized check-in row carries the V36 audit fields (`actor_operator_user_id`, `actor_display_name_snapshot`, `source_surface = 'operator_rescue'`, `operator_reason`) and the corresponding `ActivityEvent` records the same actor metadata. See `docs/business-logic.md` § "Audit Trail Foundation" for the full audit contract.
 
 ---
 

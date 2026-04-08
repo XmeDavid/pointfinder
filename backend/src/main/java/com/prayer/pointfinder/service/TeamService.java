@@ -9,6 +9,7 @@ import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.*;
+import com.prayer.pointfinder.security.SecurityUtils;
 import com.prayer.pointfinder.util.CodeGenerator;
 import com.prayer.pointfinder.util.LazyInitHelper;
 import com.prayer.pointfinder.websocket.GameEventBroadcaster;
@@ -38,6 +39,7 @@ public class TeamService {
     private final CheckInRepository checkInRepository;
     private final AssignmentRepository assignmentRepository;
     private final ActivityEventRepository activityEventRepository;
+    private final UserRepository userRepository;
     private final GameEventBroadcaster eventBroadcaster;
     private final GameAccessService gameAccessService;
 
@@ -130,8 +132,28 @@ public class TeamService {
         playerRepository.delete(player);
     }
 
+    /**
+     * Backward-compatible overload that delegates to the audit-aware variant
+     * with no operator reason. Retained so existing call sites that have not
+     * yet been updated keep compiling.
+     */
     @Transactional(timeout = 10)
     public CheckInResponse operatorCheckIn(UUID gameId, UUID teamId, UUID baseId) {
+        return operatorCheckIn(gameId, teamId, baseId, null);
+    }
+
+    /**
+     * Operator manual check-in with audit capture (V36).
+     *
+     * <p>Records the operator user, the operator's display-name snapshot,
+     * the {@code operator_rescue} source surface, and the optional reason on
+     * both the new {@link CheckIn} row and the synthesized
+     * {@link ActivityEvent}. Idempotent on the active {@code (team_id,
+     * base_id)} pair: an existing non-archived check-in is returned without
+     * mutating its audit fields.
+     */
+    @Transactional(timeout = 10)
+    public CheckInResponse operatorCheckIn(UUID gameId, UUID teamId, UUID baseId, String reason) {
         Game game = gameAccessService.getAccessibleGame(gameId);
         if (game.getStatus() != GameStatus.live) {
             throw new BadRequestException("Game is not active");
@@ -145,7 +167,22 @@ public class TeamService {
                 .orElseThrow(() -> new ResourceNotFoundException("Base", baseId));
         gameAccessService.ensureBelongsToGame("Base", base.getGame().getId(), gameId);
 
-        // Idempotent: return existing check-in if present
+        // Resolve the operator inside the transaction so the entity is
+        // attached to the current session. We pull the fresh row from the
+        // database (rather than trusting the principal directly) so that any
+        // out-of-date copy in the security context cannot pollute the audit
+        // snapshot.
+        User currentOperator = SecurityUtils.getCurrentUser();
+        UUID operatorId = currentOperator.getId();
+        User operator = userRepository.findById(operatorId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", operatorId));
+        String operatorDisplayName = operator.getName() != null && !operator.getName().isBlank()
+                ? operator.getName()
+                : operator.getEmail();
+
+        // Idempotent: return existing ACTIVE check-in if present. Archived
+        // check-ins are deliberately ignored here so that a fresh check-in
+        // after a resetProgress can replace them.
         Optional<CheckIn> existing = checkInRepository.findByTeamIdAndBaseId(teamId, baseId);
         if (existing.isPresent()) {
             return buildCheckInResponse(existing.get(), base, team);
@@ -157,6 +194,11 @@ public class TeamService {
                 .base(base)
                 .player(null)
                 .checkedInAt(Instant.now())
+                // ── audit foundation snapshot ─────────────────────────────
+                .actorOperatorUser(operator)
+                .actorDisplayNameSnapshot(operatorDisplayName)
+                .sourceSurface("operator_rescue")
+                .operatorReason(reason)
                 .build();
         try {
             checkIn = checkInRepository.save(checkIn);
@@ -173,6 +215,10 @@ public class TeamService {
                 .base(base)
                 .message(team.getName() + " manually checked in at " + base.getName() + " by operator")
                 .timestamp(Instant.now())
+                // ── audit foundation snapshot ─────────────────────────────
+                .actorOperatorUser(operator)
+                .actorDisplayNameSnapshot(operatorDisplayName)
+                .sourceSurface("operator_rescue")
                 .build();
         activityEventRepository.save(event);
 

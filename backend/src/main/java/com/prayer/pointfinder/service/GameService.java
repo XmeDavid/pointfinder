@@ -193,11 +193,25 @@ public class GameService {
 
         if (target == GameStatus.setup) {
             if (resetProgress) {
-                submissionRepository.deleteByGameId(id);
-                checkInRepository.deleteByGameId(id);
-                teamLocationRepository.deleteByGameId(id);
-                activityEventRepository.deleteByGameId(id);
+                // V36: soft-archive audit-relevant tables instead of
+                // hard-deleting them. Spec principle: "Avoid hard deletion
+                // paths that erase audit trails." Submissions, check-ins,
+                // and activity events stay in the database with
+                // {@code archived = true}; active queries filter them out
+                // by default while the Phase 3 audit export reads the full
+                // history.
+                submissionRepository.markArchivedByGameId(id);
+                checkInRepository.markArchivedByGameId(id);
+                activityEventRepository.markArchivedByGameId(id);
+                // upload_sessions are media artifacts, not audit. Hard
+                // delete is OK because completed uploads are tracked
+                // separately via the FK on submissions (which is now
+                // archived, not deleted, so the linkage stays
+                // discoverable).
                 uploadSessionRepository.deleteByGameId(id);
+                // team_locations are transient per-event positions, not
+                // audit data. Hard delete remains the right call.
+                teamLocationRepository.deleteByGameId(id);
             }
             assignmentRepository.deleteByGameId(id);
         }

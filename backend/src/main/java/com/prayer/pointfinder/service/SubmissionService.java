@@ -73,7 +73,11 @@ public class SubmissionService {
 
     @Transactional(timeout = 10)
     public SubmissionResponse createSubmission(UUID gameId, CreateSubmissionRequest request) {
-        ensureCallerCanCreateSubmission(gameId, request.getTeamId());
+        // The authorization helper returns the resolved Player when the
+        // caller is player-authenticated, or null when the caller is an
+        // operator. Capturing it here means V36 audit population does not
+        // need a second {@code playerRepository.findById} round-trip.
+        Player submittingPlayer = ensureCallerCanCreateSubmission(gameId, request.getTeamId());
 
         // Verify game is in live status before accepting submissions
         Game game = gameRepository.findById(gameId)
@@ -168,6 +172,17 @@ public class SubmissionService {
                 .points(points)
                 .submittedAt(Instant.now())
                 .idempotencyKey(idempotencyKey)
+                // ── V36 audit foundation snapshot ─────────────────────────
+                // Player-initiated submissions get the player FK plus
+                // immutable display-name and device-id snapshots so the
+                // audit survives later player removal. Operator-initiated
+                // submissions (Phase 2 mark-completed) leave these NULL —
+                // the synthetic-creator path will populate the
+                // created_by_operator_* fields directly.
+                .submittedByPlayer(submittingPlayer)
+                .submittedByDisplayNameSnapshot(submittingPlayer != null ? submittingPlayer.getDisplayName() : null)
+                .submittedByDeviceIdSnapshot(submittingPlayer != null ? submittingPlayer.getDeviceId() : null)
+                .sourceSurface(submittingPlayer != null ? "player_app" : "web_admin")
                 .build();
 
         try {
@@ -188,7 +203,7 @@ public class SubmissionService {
             throw ex;
         }
 
-        // Create activity event
+        // Create activity event with actor capture (V36).
         ActivityEvent event = ActivityEvent.builder()
                 .game(team.getGame())
                 .type(ActivityEventType.submission)
@@ -197,6 +212,10 @@ public class SubmissionService {
                 .challenge(challenge)
                 .message(team.getName() + " submitted answer for " + challenge.getTitle())
                 .timestamp(Instant.now())
+                .actorPlayer(submittingPlayer)
+                .actorDisplayNameSnapshot(submittingPlayer != null ? submittingPlayer.getDisplayName() : null)
+                .actorDeviceIdSnapshot(submittingPlayer != null ? submittingPlayer.getDeviceId() : null)
+                .sourceSurface(submittingPlayer != null ? "player_app" : "web_admin")
                 .build();
         activityEventRepository.save(event);
 
@@ -269,6 +288,14 @@ public class SubmissionService {
                 ? ActivityEventType.approval : ActivityEventType.rejection;
         String action = newStatus == SubmissionStatus.approved ? "approved" : "rejected";
 
+        // V36 audit foundation: capture which operator approved/rejected the
+        // submission. The reviewedBy column on Submission already records
+        // this on the row itself; we additionally surface it on the
+        // activity feed so the chronological audit log can answer
+        // "who reviewed this?" without joining back to submissions.
+        String operatorDisplayName = currentUser.getName() != null && !currentUser.getName().isBlank()
+                ? currentUser.getName()
+                : currentUser.getEmail();
         ActivityEvent event = ActivityEvent.builder()
                 .game(submission.getTeam().getGame())
                 .type(eventType)
@@ -278,6 +305,9 @@ public class SubmissionService {
                 .message(submission.getTeam().getName() + "'s submission for "
                         + submission.getChallenge().getTitle() + " was " + action)
                 .timestamp(Instant.now())
+                .actorOperatorUser(currentUser)
+                .actorDisplayNameSnapshot(operatorDisplayName)
+                .sourceSurface("web_admin")
                 .build();
         activityEventRepository.save(event);
 
@@ -290,7 +320,18 @@ public class SubmissionService {
         return toResponse(submission);
     }
 
-    private void ensureCallerCanCreateSubmission(UUID gameId, UUID teamId) {
+    /**
+     * Authorizes the current caller to create a submission for the given
+     * team and returns the resolved {@link Player} when the caller is
+     * player-authenticated, or {@code null} when the caller is an operator.
+     *
+     * <p>Returning the Player here is intentional: V36 audit capture
+     * populates the {@code submitted_by_*} snapshot fields from the same
+     * managed entity instead of doing a second
+     * {@code playerRepository.findById} round-trip in
+     * {@code createSubmission}.
+     */
+    private Player ensureCallerCanCreateSubmission(UUID gameId, UUID teamId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null) {
             throw new ForbiddenException("Authentication is required");
@@ -299,7 +340,7 @@ public class SubmissionService {
         Object principal = auth.getPrincipal();
         if (principal instanceof User) {
             gameAccessService.ensureCurrentUserCanAccessGame(gameId);
-            return;
+            return null;
         }
 
         if (principal instanceof Player player) {
@@ -309,7 +350,7 @@ public class SubmissionService {
             if (!managedPlayer.getTeam().getId().equals(teamId)) {
                 throw new ForbiddenException("Player cannot create submissions for another team");
             }
-            return;
+            return managedPlayer;
         }
 
         throw new ForbiddenException("Unauthorized principal for submission creation");

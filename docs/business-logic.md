@@ -11,6 +11,7 @@
 2. [NFC & Check-In Flow](#2-nfc--check-in-flow)
 3. [Challenge & Submission Flow](#3-challenge--submission-flow)
 4. [State Snapshot and Version Contract](#4-state-snapshot-and-version-contract)
+4a. [Audit Trail Foundation](#4a-audit-trail-foundation)
 5. [Team Variables](#5-team-variables)
 6. [Authentication & Authorization](#6-authentication--authorization)
 7. [Push Notifications](#7-push-notifications)
@@ -39,7 +40,7 @@
 | `live` | `ended` | Operator/Admin | `PATCH /api/games/{id}/status` with `{status: "ended"}` |
 | `live` or `ended` | `setup` | Operator/Admin | `PATCH /api/games/{id}/status` with `{status: "setup", resetProgress: true/false}` |
 
-The `resetProgress` flag on the → `setup` transition clears all check-ins, submissions, and activity events when `true`.
+The `resetProgress` flag on the → `setup` transition **soft-archives** all check-ins, submissions, and activity events when `true` (V36 audit foundation). Pre-V36 the rows were hard-deleted; from V36 onward they stay in the database with `archived = true`, the gameplay queries hide them by default, and the Phase 3 audit export reads the full history. See § "Audit Trail Foundation" below.
 
 **Platform coverage**:
 - Backend: enforces all transitions in `GameService.updateStatus()`
@@ -358,6 +359,89 @@ Hibernate's `@Version` annotation implements JPA optimistic locking: it changes 
 ### Future `?lastSeenVersion` optimization
 
 `GET /api/games/{gameId}/snapshot?lastSeenVersion=N` is reserved for a future slice. When implemented, the endpoint will return `204 No Content` if `N >= current state_version`, saving bandwidth on defensive polls that would otherwise re-download the same state. Clients already storing `lastSeenVersion` in Slice 1 can pass it through Slice 2 without code change.
+
+---
+
+## 4a. Audit Trail Foundation
+
+Source spec: `docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md` (P1 Activity Audit and Export + P1 Operator Rescue and Overrides). Migration: `V36__audit_foundation.sql`.
+
+### Why this exists
+
+The pilot exposed concrete audit gaps the platform could not answer:
+
+- A player joined the wrong team and operators could not reconstruct what they did there. Submissions were team-attributed only.
+- Manual operator check-ins looked identical to player check-ins in structured data — only the free-text message said "by operator".
+- `ActivityEvent` carried no actor reference at all, just a free-text message.
+- `GameService.updateStatus(resetProgress=true)` HARD-DELETED check-ins, submissions, and activity events, wiping any audit trail forever.
+
+V36 is the **substrate** the P1 Operator Rescue (mark-completed, unlock override, audit-aware manual check-in) and Activity Audit Export tracks build on. It is deliberately additive: no new endpoints, no behavior changes for existing endpoints beyond capturing audit metadata.
+
+### Actor capture: which fields live where
+
+| Entity | Player FK | Operator FK | Display name snapshot | Device id snapshot | Source surface | Operator reason | Archived flag |
+|---|---|---|---|---|---|---|---|
+| `check_ins` | `player_id` (existing) | `actor_operator_user_id` | `actor_display_name_snapshot` | `actor_device_id_snapshot` | `source_surface` | `operator_reason` | `archived` |
+| `submissions` | `submitted_by_player_id` | `created_by_operator_id` (Phase 2 mark-completed) and `reviewed_by` (existing) | `submitted_by_display_name_snapshot` + `created_by_display_name_snapshot` | `submitted_by_device_id_snapshot` | `source_surface` | `operator_reason` | `archived` |
+| `activity_events` | `actor_player_id` | `actor_operator_user_id` | `actor_display_name_snapshot` | `actor_device_id_snapshot` | `source_surface` | n/a | `archived` |
+
+All FKs are `ON DELETE SET NULL` so the audit row outlives later account removal.
+
+### Immutable snapshot principle
+
+Display names and device ids are **copied at action time** and never updated again. This is the rule that lets the audit answer "who did this?" even after a player is removed, an operator account is reassigned, or a player's display name is rewritten. A live join would lose the answer the moment the joined row changes; a snapshot does not.
+
+### Source surface values
+
+The `source_surface` column is plain `VARCHAR(32)` (not a Postgres enum) so future phases can extend the set without an enum migration. Allowed values today:
+
+| Value | Meaning |
+|---|---|
+| `player_app` | Action originated from the player app (iOS / Android player flows). |
+| `web_admin` | Action originated from the web admin (operator UI: review decisions, future operator submissions). |
+| `operator_rescue` | Action originated from a dedicated operator rescue endpoint (manual check-in today; mark-completed and unlock override in Phase 2). |
+
+### Archive contract: `resetProgress` no longer hard-deletes
+
+Before V36, `PATCH /api/games/{gameId}/status` with `{status: "setup", resetProgress: true}` issued raw `DELETE` statements against `submissions`, `check_ins`, `activity_events`, `team_locations`, and `upload_sessions`. After V36 the audit-relevant tables (`submissions`, `check_ins`, `activity_events`) are **soft-archived** instead — the rows stay in place with `archived = true`, the gameplay queries hide them by default, and the Phase 3 audit export reads the full history including archived rows.
+
+Implementation:
+
+- `SubmissionRepository.markArchivedByGameId(UUID)`, `CheckInRepository.markArchivedByGameId(UUID)`, and `ActivityEventRepository.markArchivedByGameId(UUID)` are JPQL `UPDATE ... SET archived = true` statements that replace the previous `deleteByGameId` calls inside `GameService.updateStatus`.
+- `team_locations` and `upload_sessions` are still hard-deleted on reset. Team locations are transient per-event positions, not audit data. Upload sessions are media artifacts; the FK from `upload_sessions.submission_id` to the now-archived submission stays discoverable for the needs-attention detector and any operator inspection.
+- The unique `(team_id, base_id)` index on `check_ins` is now a partial index `WHERE archived = false`, so an archived check-in does not block a fresh check-in by the same team at the same base after a reset.
+
+### Default-active read filtering
+
+Every game-scoped read query on the three audited repositories filters `archived = false` by default:
+
+- `SubmissionRepository`: `findByGameId`, `findByGameIdWithRelations`, `findByTeamId`, `findRecentByTeamId`, `findByGameIdAndStatus`, `findScoredSubmissionsByGameId`, `countByGameIdAndStatus`, `countByGameIdAndStatusIn`, `countByGameId`, `findByTeamIdAndChallengeIdAndBaseId`, `countByBaseId`, `countByChallengeId`, `existsByGameIdAndFileUrlOrFileUrls`, `existsByTeamIdAndFileUrlOrFileUrls`.
+- `CheckInRepository`: `findByTeamId`, `findByGameIdAndTeamId`, `findByTeamIdAndBaseId`, `existsByTeamIdAndBaseId`, `findByGameId`, `findByGameIdWithRelations`.
+- `ActivityEventRepository`: `findRecentByGameId`.
+
+The `*IncludingArchived` variants (`findByGameIdIncludingArchived` on all three) are reserved for the Phase 3 audit export and read the full history.
+
+### Reserved enum values
+
+V36 also extends the `activity_event_type` Postgres enum with three new values that are NOT emitted by the V36 phase itself:
+
+| Value | Reserved for |
+|---|---|
+| `operator_override` | Phase 2 mark-completed and unlock-override operator rescue actions. |
+| `team_join` | Phase 3 membership history — player joins a team for the first time. |
+| `team_switch` | Phase 3 membership history — player moves from one team to another inside the same game. |
+
+Adding the values now means Phases 2 and 3 do not need a second enum migration.
+
+### Operator manual check-in: optional reason
+
+The V36 wave also adds an OPTIONAL request body to `POST /api/games/{gameId}/teams/{teamId}/check-in/{baseId}`:
+
+```json
+{ "reason": "string (optional, max 500 chars)" }
+```
+
+Legacy clients that POST without a body still work and the audit row records `operator_reason = NULL`. The operator user identity is recovered from the security context — never from the request body — so the actor cannot be spoofed.
 
 ---
 
