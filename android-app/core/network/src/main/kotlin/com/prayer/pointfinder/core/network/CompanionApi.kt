@@ -50,6 +50,9 @@ import com.prayer.pointfinder.core.model.UpdateGameRequest
 import com.prayer.pointfinder.core.model.UpdateGameStatusRequest
 import com.prayer.pointfinder.core.model.UpdateOperatorNotificationSettingsRequest
 import com.prayer.pointfinder.core.model.UpdateTeamRequest
+import com.prayer.pointfinder.core.model.MarkCompletedRequest
+import com.prayer.pointfinder.core.model.UnlockOverrideRequest
+import com.prayer.pointfinder.core.model.BaseUnlockOverrideResponse
 import com.prayer.pointfinder.core.model.UploadSessionInitRequest
 import com.prayer.pointfinder.core.model.UploadSessionResponse
 import com.prayer.pointfinder.core.model.UserResponse
@@ -207,6 +210,35 @@ interface CompanionApi {
         @Path("baseId") baseId: String,
         @Body body: EmptyBody = EmptyBody,
     ): CheckInResponse
+
+    @POST("api/games/{gameId}/teams/{teamId}/bases/{baseId}/mark-completed")
+    suspend fun markCompleted(
+        @Path("gameId") gameId: String,
+        @Path("teamId") teamId: String,
+        @Path("baseId") baseId: String,
+        @Body request: MarkCompletedRequest,
+    ): SubmissionResponse
+
+    @POST("api/games/{gameId}/teams/{teamId}/bases/{baseId}/unlock-override")
+    suspend fun createUnlockOverride(
+        @Path("gameId") gameId: String,
+        @Path("teamId") teamId: String,
+        @Path("baseId") baseId: String,
+        @Body request: UnlockOverrideRequest,
+    ): BaseUnlockOverrideResponse
+
+    @HTTP(method = "DELETE", path = "api/games/{gameId}/teams/{teamId}/bases/{baseId}/unlock-override", hasBody = false)
+    suspend fun removeUnlockOverride(
+        @Path("gameId") gameId: String,
+        @Path("teamId") teamId: String,
+        @Path("baseId") baseId: String,
+    ): Response<Unit>
+
+    @GET("api/games/{gameId}/teams/{teamId}/unlock-overrides")
+    suspend fun listUnlockOverrides(
+        @Path("gameId") gameId: String,
+        @Path("teamId") teamId: String,
+    ): List<BaseUnlockOverrideResponse>
 
     @GET("api/games/{gameId}/monitoring/locations")
     suspend fun getTeamLocations(@Path("gameId") gameId: String): List<TeamLocationResponse>

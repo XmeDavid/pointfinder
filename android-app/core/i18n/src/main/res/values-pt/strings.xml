@@ -357,4 +357,46 @@
     <string name="label_invite_message">%1$s convidou-te para %2$s</string>
     <string name="action_accept">Aceitar</string>
     <string name="cd_notifications">Notificações</string>
+    <!-- Rescue Actions -->
+    <string name="label_base_progress">Progresso nas Bases</string>
+    <string name="label_no_bases_in_game">Sem bases neste jogo</string>
+    <string name="label_base_status_not_visited">Não visitado</string>
+    <string name="label_base_status_checked_in">Com check-in</string>
+    <string name="label_base_status_completed">Concluído</string>
+    <string name="label_base_status_submitted">Aguarda revisão</string>
+    <string name="label_base_status_rejected">Rejeitado</string>
+    <string name="label_hidden_base_icon">Oculta</string>
+    <string name="action_mark_completed">Marcar como Concluído</string>
+    <string name="label_mark_completed_dialog_title">Marcar Base como Concluída</string>
+    <string name="label_mark_completed_dialog_description">Marcar manualmente esta base como concluída para a equipa. Cria uma submissão aprovada em nome do operador.</string>
+    <string name="label_mark_completed_reason">Motivo (opcional)</string>
+    <string name="label_mark_completed_reason_placeholder">ex. NFC falhou, equipa confirmou às 14:30</string>
+    <string name="label_mark_completed_points">Substituição de pontos (opcional)</string>
+    <string name="label_mark_completed_points_placeholder">Deixar em branco para usar o padrão do desafio</string>
+    <string name="label_mark_completed_helper">Esta ação fica registada e atribuída à tua conta de operador.</string>
+    <string name="label_mark_completed_success">Base marcada como concluída</string>
+    <string name="label_no_challenge_for_base">Nenhum desafio atribuído a esta base ainda</string>
+    <string name="action_grant_override">Conceder Acesso</string>
+    <string name="label_unlock_override_dialog_title">Conceder Acesso à Base</string>
+    <string name="label_unlock_override_dialog_description">Permitir que esta equipa aceda à base oculta. O acesso pode ser removido mais tarde.</string>
+    <string name="label_unlock_override_reason">Motivo (opcional)</string>
+    <string name="label_unlock_override_reason_placeholder">ex. equipa bloqueada, precisa de ajuda</string>
+    <string name="label_unlock_override_success">Acesso concedido</string>
+    <string name="label_unlock_override_active">Acesso ativo</string>
+    <string name="action_remove_override">Remover Acesso</string>
+    <string name="label_remove_override_confirm_title">Remover Acesso?</string>
+    <string name="label_remove_override_confirm_message">Remover o acesso a %1$s? A base voltará a ficar oculta para esta equipa.</string>
+    <string name="label_remove_override_success">Acesso removido</string>
+    <!-- Manual Check-In -->
+    <string name="action_manual_check_in">Check-In Manual</string>
+    <string name="action_confirm">Confirmar</string>
+    <string name="label_manual_check_in_dialog_title">Check-In Manual</string>
+    <string name="label_manual_check_in_dialog_description">Faz o check-in desta equipa na base manualmente quando o NFC não está disponível.</string>
+    <string name="label_manual_check_in_reason">Motivo (opcional)</string>
+    <string name="label_manual_check_in_reason_placeholder">ex. tag NFC danificada, equipa confirmada no local</string>
+    <string name="label_manual_check_in_confirm_title">Confirmar Check-In</string>
+    <string name="label_manual_check_in_confirm_message">Fazer check-in de %1$s em %2$s?</string>
+    <string name="label_manual_check_in_success">Check-in realizado com sucesso</string>
+    <string name="label_pending_review_hint">Submissão aguarda revisão</string>
+    <string name="error_mark_completed_requires_checkin">A equipa deve fazer check-in primeiro. Use o Check-In Manual.</string>
 </resources>

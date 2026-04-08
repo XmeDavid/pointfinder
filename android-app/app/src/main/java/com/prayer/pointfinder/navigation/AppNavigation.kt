@@ -84,6 +84,8 @@ import com.prayer.pointfinder.core.model.UpdateChallengeRequest
 import com.prayer.pointfinder.core.model.TeamVariable
 import com.prayer.pointfinder.core.model.UpdateTeamRequest
 import com.prayer.pointfinder.core.model.PlayerResponse
+import com.prayer.pointfinder.core.model.BaseUnlockOverrideResponse
+import com.prayer.pointfinder.core.model.MarkCompletedRequest
 import com.prayer.pointfinder.feature.operator.BaseEditScreen
 import com.prayer.pointfinder.feature.operator.BasesListScreen
 import com.prayer.pointfinder.feature.operator.ChallengeEditScreen
@@ -1443,13 +1445,18 @@ private fun OperatorGameRoot(
                         val team = state.teams.firstOrNull { it.id == teamId }
                         if (team != null) {
                             var players by remember(teamId) { mutableStateOf<List<PlayerResponse>>(emptyList()) }
+                            var unlockOverrides by remember(teamId) { mutableStateOf<List<BaseUnlockOverrideResponse>>(emptyList()) }
                             LaunchedEffect(teamId) {
                                 viewModel.loadTeamPlayers(teamId) { players = it }
+                                viewModel.loadUnlockOverrides(teamId) { unlockOverrides = it }
                             }
                             TeamDetailScreen(
                                 team = team,
                                 players = players,
                                 variables = state.variables,
+                                bases = state.bases,
+                                teamProgress = state.baseProgress.filter { it.teamId == teamId },
+                                unlockOverrides = unlockOverrides,
                                 onSave = { request ->
                                     viewModel.updateTeam(team.id, request) {
                                         setupSubScreen = "teams_list"
@@ -1474,6 +1481,41 @@ private fun OperatorGameRoot(
                                 },
                                 onDeleteVariable = { variableKey ->
                                     viewModel.deleteVariable(variableKey)
+                                },
+                                onMarkCompleted = { baseId, challengeId, reason, pointsOverride ->
+                                    viewModel.markCompleted(
+                                        teamId = teamId,
+                                        baseId = baseId,
+                                        request = MarkCompletedRequest(
+                                            challengeId = challengeId,
+                                            reason = reason,
+                                            pointsOverride = pointsOverride,
+                                        ),
+                                    ) {
+                                        scope.launch { snackbarHostState.showSnackbar(context.getString(com.prayer.pointfinder.core.i18n.R.string.label_mark_completed_success)) }
+                                    }
+                                },
+                                onGrantOverride = { baseId, reason ->
+                                    viewModel.grantUnlockOverride(teamId, baseId, reason) { newOverride ->
+                                        unlockOverrides = unlockOverrides.filter { it.baseId != baseId } + newOverride
+                                        scope.launch { snackbarHostState.showSnackbar(context.getString(com.prayer.pointfinder.core.i18n.R.string.label_unlock_override_success)) }
+                                    }
+                                },
+                                onManualCheckIn = { baseId ->
+                                    viewModel.manualCheckIn(
+                                        teamId = teamId,
+                                        baseId = baseId,
+                                        onSuccess = {
+                                            scope.launch { snackbarHostState.showSnackbar(context.getString(com.prayer.pointfinder.core.i18n.R.string.label_manual_check_in_success)) }
+                                        },
+                                        onError = { /* error shown by ViewModel state */ },
+                                    )
+                                },
+                                onRemoveOverride = { baseId ->
+                                    viewModel.removeUnlockOverride(teamId, baseId) {
+                                        unlockOverrides = unlockOverrides.filter { it.baseId != baseId }
+                                        scope.launch { snackbarHostState.showSnackbar(context.getString(com.prayer.pointfinder.core.i18n.R.string.label_remove_override_success)) }
+                                    }
                                 },
                                 onBack = { setupSubScreen = "teams_list" },
                             )
@@ -1687,13 +1729,18 @@ private fun OperatorGameRoot(
                         val team = state.teams.firstOrNull { it.id == teamId }
                         if (team != null) {
                             var players by remember(teamId) { mutableStateOf<List<PlayerResponse>>(emptyList()) }
+                            var unlockOverrides by remember(teamId) { mutableStateOf<List<BaseUnlockOverrideResponse>>(emptyList()) }
                             LaunchedEffect(teamId) {
                                 viewModel.loadTeamPlayers(teamId) { players = it }
+                                viewModel.loadUnlockOverrides(teamId) { unlockOverrides = it }
                             }
                             TeamDetailScreen(
                                 team = team,
                                 players = players,
                                 variables = state.variables,
+                                bases = state.bases,
+                                teamProgress = state.baseProgress.filter { it.teamId == teamId },
+                                unlockOverrides = unlockOverrides,
                                 onSave = { request ->
                                     viewModel.updateTeam(team.id, request) {
                                         moreSubScreen = "teams_list"
@@ -1715,6 +1762,41 @@ private fun OperatorGameRoot(
                                 },
                                 onCreateVariable = { name -> viewModel.createVariable(name) },
                                 onDeleteVariable = { key -> viewModel.deleteVariable(key) },
+                                onMarkCompleted = { baseId, challengeId, reason, pointsOverride ->
+                                    viewModel.markCompleted(
+                                        teamId = teamId,
+                                        baseId = baseId,
+                                        request = MarkCompletedRequest(
+                                            challengeId = challengeId,
+                                            reason = reason,
+                                            pointsOverride = pointsOverride,
+                                        ),
+                                    ) {
+                                        scope.launch { snackbarHostState.showSnackbar(context.getString(com.prayer.pointfinder.core.i18n.R.string.label_mark_completed_success)) }
+                                    }
+                                },
+                                onGrantOverride = { baseId, reason ->
+                                    viewModel.grantUnlockOverride(teamId, baseId, reason) { newOverride ->
+                                        unlockOverrides = unlockOverrides.filter { it.baseId != baseId } + newOverride
+                                        scope.launch { snackbarHostState.showSnackbar(context.getString(com.prayer.pointfinder.core.i18n.R.string.label_unlock_override_success)) }
+                                    }
+                                },
+                                onManualCheckIn = { baseId ->
+                                    viewModel.manualCheckIn(
+                                        teamId = teamId,
+                                        baseId = baseId,
+                                        onSuccess = {
+                                            scope.launch { snackbarHostState.showSnackbar(context.getString(com.prayer.pointfinder.core.i18n.R.string.label_manual_check_in_success)) }
+                                        },
+                                        onError = { /* error shown by ViewModel state */ },
+                                    )
+                                },
+                                onRemoveOverride = { baseId ->
+                                    viewModel.removeUnlockOverride(teamId, baseId) {
+                                        unlockOverrides = unlockOverrides.filter { it.baseId != baseId }
+                                        scope.launch { snackbarHostState.showSnackbar(context.getString(com.prayer.pointfinder.core.i18n.R.string.label_remove_override_success)) }
+                                    }
+                                },
                                 onBack = { moreSubScreen = "teams_list" },
                             )
                         } else {

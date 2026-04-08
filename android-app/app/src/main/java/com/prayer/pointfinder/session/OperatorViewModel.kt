@@ -21,6 +21,9 @@ import com.prayer.pointfinder.core.model.UpdateBaseRequest
 import com.prayer.pointfinder.core.model.UpdateChallengeRequest
 import com.prayer.pointfinder.core.model.UpdateGameRequest
 import com.prayer.pointfinder.core.model.UpdateTeamRequest
+import com.prayer.pointfinder.core.model.BaseUnlockOverrideResponse
+import com.prayer.pointfinder.core.model.MarkCompletedRequest
+import com.prayer.pointfinder.core.model.UnlockOverrideRequest
 import com.prayer.pointfinder.core.model.OperatorNotificationSettingsResponse
 import com.prayer.pointfinder.core.model.AuthType
 import com.prayer.pointfinder.core.model.ActivityEvent
@@ -785,6 +788,72 @@ class OperatorViewModel @Inject constructor(
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
             runCatching { teamManagementUseCase.removePlayer(gameId, teamId, playerId) }
+                .onSuccess { onSuccess() }
+                .onFailure { e ->
+                    if (markAuthExpiredIfNeeded(e)) return@onFailure
+                    _state.value = _state.value.copy(errorMessage = friendlyError(e))
+                }
+        }
+    }
+
+    // ── Rescue actions ──────────────────────────────────────────────────
+
+    fun loadUnlockOverrides(teamId: String, onSuccess: (List<BaseUnlockOverrideResponse>) -> Unit) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching { teamManagementUseCase.listUnlockOverrides(gameId, teamId) }
+                .onSuccess(onSuccess)
+                .onFailure { e ->
+                    if (markAuthExpiredIfNeeded(e)) return@onFailure
+                    _state.value = _state.value.copy(errorMessage = friendlyError(e))
+                }
+        }
+    }
+
+    fun markCompleted(
+        teamId: String,
+        baseId: String,
+        request: MarkCompletedRequest,
+        onSuccess: () -> Unit,
+    ) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching { teamManagementUseCase.markCompleted(gameId, teamId, baseId, request) }
+                .onSuccess { onSuccess() }
+                .onFailure { e ->
+                    if (markAuthExpiredIfNeeded(e)) return@onFailure
+                    _state.value = _state.value.copy(errorMessage = friendlyError(e))
+                }
+        }
+    }
+
+    fun grantUnlockOverride(
+        teamId: String,
+        baseId: String,
+        reason: String?,
+        onSuccess: (BaseUnlockOverrideResponse) -> Unit,
+    ) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching {
+                teamManagementUseCase.createUnlockOverride(gameId, teamId, baseId, UnlockOverrideRequest(reason = reason))
+            }
+                .onSuccess(onSuccess)
+                .onFailure { e ->
+                    if (markAuthExpiredIfNeeded(e)) return@onFailure
+                    _state.value = _state.value.copy(errorMessage = friendlyError(e))
+                }
+        }
+    }
+
+    fun removeUnlockOverride(
+        teamId: String,
+        baseId: String,
+        onSuccess: () -> Unit,
+    ) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching { teamManagementUseCase.removeUnlockOverride(gameId, teamId, baseId) }
                 .onSuccess { onSuccess() }
                 .onFailure { e ->
                     if (markAuthExpiredIfNeeded(e)) return@onFailure

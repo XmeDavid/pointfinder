@@ -642,6 +642,32 @@ data class UpdateTeamRequest(
     val color: String? = null,
 )
 
+// === Rescue Actions ===
+
+@Serializable
+data class MarkCompletedRequest(
+    val challengeId: String,
+    val reason: String? = null,
+    val pointsOverride: Int? = null,
+)
+
+@Serializable
+data class UnlockOverrideRequest(
+    val reason: String? = null,
+)
+
+@Serializable
+data class BaseUnlockOverrideResponse(
+    val id: String,
+    val gameId: String,
+    val teamId: String,
+    val baseId: String,
+    val createdByOperatorId: String? = null,
+    val createdByDisplayName: String? = null,
+    val reason: String? = null,
+    val createdAt: String,
+)
+
 // === Team Variables ===
 
 @Serializable

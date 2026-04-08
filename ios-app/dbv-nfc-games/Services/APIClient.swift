@@ -242,6 +242,63 @@ actor APIClient {
         )
     }
 
+    /// Operator rescue — synthesize an APPROVED submission for the team at
+    /// the given base. Returns the resulting Submission.
+    func markCompleted(
+        gameId: UUID,
+        teamId: UUID,
+        baseId: UUID,
+        request: MarkCompletedRequest,
+        token: String
+    ) async throws -> SubmissionResponse {
+        try await post(
+            "/api/games/\(gameId)/teams/\(teamId)/bases/\(baseId)/mark-completed",
+            body: request,
+            token: token
+        )
+    }
+
+    /// Operator rescue — create (or return the existing active) unlock override
+    /// making the hidden base visible to the team.
+    func createUnlockOverride(
+        gameId: UUID,
+        teamId: UUID,
+        baseId: UUID,
+        request: UnlockOverrideRequest,
+        token: String
+    ) async throws -> BaseUnlockOverrideResponse {
+        try await post(
+            "/api/games/\(gameId)/teams/\(teamId)/bases/\(baseId)/unlock-override",
+            body: request,
+            token: token
+        )
+    }
+
+    /// Operator rescue — soft-delete the active unlock override for the (team, base) pair.
+    func removeUnlockOverride(
+        gameId: UUID,
+        teamId: UUID,
+        baseId: UUID,
+        token: String
+    ) async throws {
+        try await deleteVoid(
+            "/api/games/\(gameId)/teams/\(teamId)/bases/\(baseId)/unlock-override",
+            token: token
+        )
+    }
+
+    /// Operator rescue — list active unlock overrides for the team.
+    func listUnlockOverrides(
+        gameId: UUID,
+        teamId: UUID,
+        token: String
+    ) async throws -> [BaseUnlockOverrideResponse] {
+        try await get(
+            "/api/games/\(gameId)/teams/\(teamId)/unlock-overrides",
+            token: token
+        )
+    }
+
     func getTeamLocations(gameId: UUID, token: String) async throws -> [TeamLocationResponse] {
         try await get("/api/games/\(gameId)/monitoring/locations", token: token)
     }

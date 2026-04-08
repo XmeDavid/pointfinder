@@ -36,6 +36,9 @@ import com.prayer.pointfinder.core.model.UpdateGameRequest
 import com.prayer.pointfinder.core.model.UpdateGameStatusRequest
 import com.prayer.pointfinder.core.model.UpdateOperatorNotificationSettingsRequest
 import com.prayer.pointfinder.core.model.UpdateTeamRequest
+import com.prayer.pointfinder.core.model.MarkCompletedRequest
+import com.prayer.pointfinder.core.model.UnlockOverrideRequest
+import com.prayer.pointfinder.core.model.BaseUnlockOverrideResponse
 import com.prayer.pointfinder.core.network.CompanionApi
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
@@ -186,6 +189,35 @@ class OperatorRepository @Inject constructor(
 
     suspend fun manualCheckIn(gameId: String, teamId: String, baseId: String): CheckInResponse =
         apiCall { api.manualCheckIn(gameId, teamId, baseId) }
+
+    // === Rescue Actions ===
+
+    suspend fun markCompleted(
+        gameId: String,
+        teamId: String,
+        baseId: String,
+        request: MarkCompletedRequest,
+    ): SubmissionResponse = apiCall { api.markCompleted(gameId, teamId, baseId, request) }
+
+    suspend fun createUnlockOverride(
+        gameId: String,
+        teamId: String,
+        baseId: String,
+        request: UnlockOverrideRequest,
+    ): BaseUnlockOverrideResponse = apiCall { api.createUnlockOverride(gameId, teamId, baseId, request) }
+
+    suspend fun removeUnlockOverride(gameId: String, teamId: String, baseId: String) {
+        apiCall {
+            val response = api.removeUnlockOverride(gameId, teamId, baseId)
+            val errorBody = if (!response.isSuccessful) {
+                try { response.errorBody()?.string() } catch (_: Exception) { null }
+            } else null
+            checkSuccess(response.code(), errorBody)
+        }
+    }
+
+    suspend fun listUnlockOverrides(gameId: String, teamId: String): List<BaseUnlockOverrideResponse> =
+        apiCall { api.listUnlockOverrides(gameId, teamId) }
 
     // === Game CRUD ===
 

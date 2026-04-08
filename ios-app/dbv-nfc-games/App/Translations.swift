@@ -495,6 +495,51 @@ enum Translations {
         "sync.uploadingPercent": "UPLOADING %d%%",
         "sync.queued": "QUEUED",
         "sync.noConnection": "NO CONNECTION",
+
+        // Rescue actions — mark-completed
+        "teamDetail.markCompleted": "Mark Completed",
+        "teamDetail.markCompletedDialogTitle": "Mark Base Completed",
+        "teamDetail.markCompletedDialogDescription": "Manually mark this base as completed for the team. This synthesizes an approved submission on behalf of the operator.",
+        "teamDetail.markCompletedReasonLabel": "Reason (optional)",
+        "teamDetail.markCompletedReasonPlaceholder": "e.g. NFC scan failed, team confirmed at 14:30",
+        "teamDetail.markCompletedPointsLabel": "Points override (optional)",
+        "teamDetail.markCompletedPointsPlaceholder": "Leave blank to use challenge default",
+        "teamDetail.markCompletedAction": "Mark Completed",
+        "teamDetail.markCompletedSuccess": "Base marked as completed",
+        "teamDetail.noChallengeForBase": "No challenge assigned to this base yet",
+        "submissions.markCompletedHelper": "This action is logged and attributed to your operator account.",
+
+        // Rescue actions — unlock override
+        "teamDetail.baseProgress": "Base Progress",
+        "teamDetail.noBases": "No bases in this game",
+        "teamDetail.checkedIn": "Checked in",
+        "teamDetail.notVisited": "Not visited",
+        "teamDetail.completed": "Completed",
+        "teamDetail.hiddenBase": "Hidden",
+        "teamDetail.unlockOverrideAction": "Grant Override",
+        "teamDetail.unlockOverrideDialogTitle": "Grant Unlock Override",
+        "teamDetail.unlockOverrideDialogDescription": "Allow this team to access the hidden base. The override can be removed later.",
+        "teamDetail.unlockOverrideReasonLabel": "Reason (optional)",
+        "teamDetail.unlockOverrideReasonPlaceholder": "e.g. team is stuck, needs rescue",
+        "teamDetail.unlockOverrideSuccess": "Unlock override granted",
+        "teamDetail.unlockOverrideActiveBadge": "Override by %@ · %@",
+        "teamDetail.unlockOverrideRemove": "Remove Override",
+        "teamDetail.unlockOverrideRemoveConfirmTitle": "Remove Override?",
+        "teamDetail.unlockOverrideRemoveConfirmDescription": "Remove the unlock override for %@? The base will become hidden again for this team.",
+        "teamDetail.unlockOverrideRemoveSuccess": "Unlock override removed",
+
+        // Manual check-in (team detail)
+        "teamDetail.manualCheckIn": "Manual Check-In",
+        "teamDetail.manualCheckInDialogTitle": "Manual Check-In",
+        "teamDetail.manualCheckInDialogDescription": "Manually check in this team at the base when NFC is unavailable.",
+        "teamDetail.manualCheckInReasonLabel": "Reason (optional)",
+        "teamDetail.manualCheckInReasonPlaceholder": "e.g. NFC tag damaged, team confirmed on site",
+        "teamDetail.manualCheckInAction": "Check In",
+        "teamDetail.manualCheckInSuccess": "Check-in successful",
+
+        // Status hints
+        "teamDetail.pendingReviewHint": "Submission pending review",
+        "teamDetail.errorRequiresCheckIn": "Team must be checked in first. Use Manual Check-In.",
     ]
 
     // MARK: - Portuguese
@@ -970,6 +1015,51 @@ enum Translations {
         "sync.uploadingPercent": "A ENVIAR %d%%",
         "sync.queued": "EM FILA",
         "sync.noConnection": "SEM LIGAÇÃO",
+
+        // Rescue actions — mark-completed
+        "teamDetail.markCompleted": "Marcar como Concluído",
+        "teamDetail.markCompletedDialogTitle": "Marcar Base como Concluída",
+        "teamDetail.markCompletedDialogDescription": "Marcar manualmente esta base como concluída para a equipa. Cria uma submissão aprovada em nome do operador.",
+        "teamDetail.markCompletedReasonLabel": "Motivo (opcional)",
+        "teamDetail.markCompletedReasonPlaceholder": "ex. NFC falhou, equipa confirmou às 14:30",
+        "teamDetail.markCompletedPointsLabel": "Substituição de pontos (opcional)",
+        "teamDetail.markCompletedPointsPlaceholder": "Deixar em branco para usar o padrão do desafio",
+        "teamDetail.markCompletedAction": "Marcar como Concluído",
+        "teamDetail.markCompletedSuccess": "Base marcada como concluída",
+        "teamDetail.noChallengeForBase": "Nenhum desafio atribuído a esta base ainda",
+        "submissions.markCompletedHelper": "Esta ação fica registada e atribuída à tua conta de operador.",
+
+        // Rescue actions — unlock override
+        "teamDetail.baseProgress": "Progresso nas Bases",
+        "teamDetail.noBases": "Sem bases neste jogo",
+        "teamDetail.checkedIn": "Com check-in",
+        "teamDetail.notVisited": "Não visitado",
+        "teamDetail.completed": "Concluído",
+        "teamDetail.hiddenBase": "Oculta",
+        "teamDetail.unlockOverrideAction": "Conceder Acesso",
+        "teamDetail.unlockOverrideDialogTitle": "Conceder Acesso à Base",
+        "teamDetail.unlockOverrideDialogDescription": "Permitir que esta equipa aceda à base oculta. O acesso pode ser removido mais tarde.",
+        "teamDetail.unlockOverrideReasonLabel": "Motivo (opcional)",
+        "teamDetail.unlockOverrideReasonPlaceholder": "ex. equipa bloqueada, precisa de ajuda",
+        "teamDetail.unlockOverrideSuccess": "Acesso concedido",
+        "teamDetail.unlockOverrideActiveBadge": "Acesso por %@ · %@",
+        "teamDetail.unlockOverrideRemove": "Remover Acesso",
+        "teamDetail.unlockOverrideRemoveConfirmTitle": "Remover Acesso?",
+        "teamDetail.unlockOverrideRemoveConfirmDescription": "Remover o acesso à base %@? A base voltará a ficar oculta para esta equipa.",
+        "teamDetail.unlockOverrideRemoveSuccess": "Acesso removido",
+
+        // Manual check-in (team detail)
+        "teamDetail.manualCheckIn": "Check-In Manual",
+        "teamDetail.manualCheckInDialogTitle": "Check-In Manual",
+        "teamDetail.manualCheckInDialogDescription": "Faz o check-in desta equipa na base manualmente quando o NFC não está disponível.",
+        "teamDetail.manualCheckInReasonLabel": "Motivo (opcional)",
+        "teamDetail.manualCheckInReasonPlaceholder": "ex. tag NFC danificada, equipa confirmada no local",
+        "teamDetail.manualCheckInAction": "Fazer Check-In",
+        "teamDetail.manualCheckInSuccess": "Check-in realizado com sucesso",
+
+        // Status hints
+        "teamDetail.pendingReviewHint": "Submissão aguarda revisão",
+        "teamDetail.errorRequiresCheckIn": "A equipa deve fazer check-in primeiro. Use o Check-In Manual.",
     ]
 
     // MARK: - German
@@ -1445,6 +1535,51 @@ enum Translations {
         "sync.uploadingPercent": "HOCHLADEN %d%%",
         "sync.queued": "WARTEND",
         "sync.noConnection": "KEINE VERBINDUNG",
+
+        // Rescue actions — mark-completed
+        "teamDetail.markCompleted": "Als abgeschlossen markieren",
+        "teamDetail.markCompletedDialogTitle": "Station als abgeschlossen markieren",
+        "teamDetail.markCompletedDialogDescription": "Diese Station für das Team manuell als abgeschlossen markieren. Erstellt eine genehmigte Einreichung im Namen des Operators.",
+        "teamDetail.markCompletedReasonLabel": "Grund (optional)",
+        "teamDetail.markCompletedReasonPlaceholder": "z.B. NFC-Scan fehlgeschlagen, Team bestätigte um 14:30 Uhr",
+        "teamDetail.markCompletedPointsLabel": "Punkte überschreiben (optional)",
+        "teamDetail.markCompletedPointsPlaceholder": "Leer lassen für Challenge-Standard",
+        "teamDetail.markCompletedAction": "Als abgeschlossen markieren",
+        "teamDetail.markCompletedSuccess": "Station als abgeschlossen markiert",
+        "teamDetail.noChallengeForBase": "Dieser Station ist noch keine Challenge zugewiesen",
+        "submissions.markCompletedHelper": "Diese Aktion wird protokolliert und deinem Operator-Konto zugeschrieben.",
+
+        // Rescue actions — unlock override
+        "teamDetail.baseProgress": "Stationsfortschritt",
+        "teamDetail.noBases": "Keine Stationen in diesem Spiel",
+        "teamDetail.checkedIn": "Eingecheckt",
+        "teamDetail.notVisited": "Nicht besucht",
+        "teamDetail.completed": "Abgeschlossen",
+        "teamDetail.hiddenBase": "Versteckt",
+        "teamDetail.unlockOverrideAction": "Zugang gewähren",
+        "teamDetail.unlockOverrideDialogTitle": "Zugang zur Station gewähren",
+        "teamDetail.unlockOverrideDialogDescription": "Diesem Team Zugang zur versteckten Station gewähren. Der Zugang kann später entfernt werden.",
+        "teamDetail.unlockOverrideReasonLabel": "Grund (optional)",
+        "teamDetail.unlockOverrideReasonPlaceholder": "z.B. Team feststeckend, braucht Hilfe",
+        "teamDetail.unlockOverrideSuccess": "Zugang gewährt",
+        "teamDetail.unlockOverrideActiveBadge": "Zugang von %@ · %@",
+        "teamDetail.unlockOverrideRemove": "Zugang entfernen",
+        "teamDetail.unlockOverrideRemoveConfirmTitle": "Zugang entfernen?",
+        "teamDetail.unlockOverrideRemoveConfirmDescription": "Den Zugang zur Station %@ entfernen? Die Station wird für dieses Team wieder versteckt.",
+        "teamDetail.unlockOverrideRemoveSuccess": "Zugang entfernt",
+
+        // Manual check-in (team detail)
+        "teamDetail.manualCheckIn": "Manueller Check-In",
+        "teamDetail.manualCheckInDialogTitle": "Manueller Check-In",
+        "teamDetail.manualCheckInDialogDescription": "Checke dieses Team manuell an der Station ein, wenn NFC nicht verfügbar ist.",
+        "teamDetail.manualCheckInReasonLabel": "Grund (optional)",
+        "teamDetail.manualCheckInReasonPlaceholder": "z.B. NFC-Tag beschädigt, Team vor Ort bestätigt",
+        "teamDetail.manualCheckInAction": "Einchecken",
+        "teamDetail.manualCheckInSuccess": "Check-In erfolgreich",
+
+        // Status hints
+        "teamDetail.pendingReviewHint": "Einreichung wartet auf Prüfung",
+        "teamDetail.errorRequiresCheckIn": "Das Team muss zuerst eingecheckt sein. Verwende den manuellen Check-In.",
     ]
 }
 

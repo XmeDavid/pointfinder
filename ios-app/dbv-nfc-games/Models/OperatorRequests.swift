@@ -99,6 +99,45 @@ struct UpdateTeamRequest: Encodable {
     let color: String?
 }
 
+// MARK: - Rescue Actions
+
+/// Body for POST /games/:gameId/teams/:teamId/bases/:baseId/mark-completed
+/// `reason` is capped at 500 chars on the backend.
+/// `pointsOverride` defaults to the challenge's configured points when nil.
+struct MarkCompletedRequest: Encodable {
+    let challengeId: UUID
+    let reason: String?
+    let pointsOverride: Int?
+
+    init(challengeId: UUID, reason: String? = nil, pointsOverride: Int? = nil) {
+        self.challengeId = challengeId
+        self.reason = reason
+        self.pointsOverride = pointsOverride
+    }
+}
+
+/// Body for POST/DELETE /games/:gameId/teams/:teamId/bases/:baseId/unlock-override
+struct UnlockOverrideRequest: Encodable {
+    let reason: String?
+
+    init(reason: String? = nil) {
+        self.reason = reason
+    }
+}
+
+/// Response from the unlock-override endpoints.
+/// Mirrors backend DTO `BaseUnlockOverrideResponse`.
+struct BaseUnlockOverrideResponse: Codable, Identifiable {
+    let id: UUID
+    let gameId: UUID
+    let teamId: UUID
+    let baseId: UUID
+    let createdByOperatorId: UUID?
+    let createdByDisplayName: String?
+    let reason: String?
+    let createdAt: String
+}
+
 // MARK: - Team Variables
 struct TeamVariable: Codable, Equatable {
     let key: String
