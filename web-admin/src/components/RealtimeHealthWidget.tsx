@@ -37,8 +37,12 @@ export function RealtimeHealthWidget({ gameId, gameStatus }: Props) {
     queryKey: ["realtime-stats", gameId],
     queryFn: () => monitoringApi.getRealtimeStats(gameId!),
     enabled: !!gameId,
-    refetchInterval: 30_000,
-    staleTime: 15_000,
+    // No refetchInterval — fresh data arrives via WebSocket (activity /
+    // submission_status events trigger invalidation in useGameWebSocket).
+    // staleTime keeps the last-fetched value fresh for 30 s to avoid an
+    // unnecessary refetch when the component first mounts on a tab that
+    // already has data in cache.
+    staleTime: 30_000,
   });
 
   if (!gameId) return null;

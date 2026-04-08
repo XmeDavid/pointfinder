@@ -161,11 +161,47 @@ export function TeamDetailPage() {
     },
   });
 
-  if (!team) return null;
+  const challengeMap = useMemo(() => new Map(challenges.map((c) => [c.id, c])), [challenges]);
+  const baseMap = useMemo(() => new Map(bases.map((b) => [b.id, b])), [bases]);
 
-  const totalPoints = submissions.filter((s) => s.status === "correct" || s.status === "approved").reduce((acc, s) => { const ch = challenges.find((c) => c.id === s.challengeId); return acc + (s.points ?? ch?.points ?? 0); }, 0);
-  const statusIcon: Record<SubmissionStatus, React.ReactNode> = { pending: <Clock className="h-4 w-4 text-yellow-500" />, approved: <CheckCircle className="h-4 w-4 text-green-500" />, rejected: <XCircle className="h-4 w-4 text-red-500" />, correct: <CheckCircle className="h-4 w-4 text-green-500" /> };
-  const statusLabel: Record<SubmissionStatus, string> = { pending: t("common.pending"), approved: t("submissions.statusApproved"), rejected: t("common.rejected"), correct: t("submissions.statusCorrect") };
+  const totalPoints = useMemo(
+    () => submissions
+      .filter((s) => s.status === "correct" || s.status === "approved")
+      .reduce((acc, s) => acc + (s.points ?? challengeMap.get(s.challengeId)?.points ?? 0), 0),
+    [submissions, challengeMap],
+  );
+
+  const statusIcon = useMemo<Record<SubmissionStatus, React.ReactNode>>(
+    () => ({
+      pending: <Clock className="h-4 w-4 text-yellow-500" />,
+      approved: <CheckCircle className="h-4 w-4 text-green-500" />,
+      rejected: <XCircle className="h-4 w-4 text-red-500" />,
+      correct: <CheckCircle className="h-4 w-4 text-green-500" />,
+    }),
+    [],
+  );
+
+  const statusLabel = useMemo<Record<SubmissionStatus, string>>(
+    () => ({
+      pending: t("common.pending"),
+      approved: t("submissions.statusApproved"),
+      rejected: t("common.rejected"),
+      correct: t("submissions.statusCorrect"),
+    }),
+    [t],
+  );
+
+  const completedCount = useMemo(
+    () => submissions.filter((s) => s.status === "correct" || s.status === "approved").length,
+    [submissions],
+  );
+
+  const sortedSubmissions = useMemo(
+    () => [...submissions].sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()),
+    [submissions],
+  );
+
+  if (!team) return null;
 
   return (
     <div className="space-y-6">
@@ -177,7 +213,7 @@ export function TeamDetailPage() {
       </div>
       <div className="grid gap-6 md:grid-cols-3">
         <Card><CardContent className="p-4 text-center"><p className="text-3xl font-bold">{totalPoints}</p><p className="text-sm text-muted-foreground">{t("teamDetail.totalPoints")}</p></CardContent></Card>
-        <Card><CardContent className="p-4 text-center"><p className="text-3xl font-bold">{submissions.filter((s) => s.status === "correct" || s.status === "approved").length}</p><p className="text-sm text-muted-foreground">{t("teamDetail.completedChallenges")}</p></CardContent></Card>
+        <Card><CardContent className="p-4 text-center"><p className="text-3xl font-bold">{completedCount}</p><p className="text-sm text-muted-foreground">{t("teamDetail.completedChallenges")}</p></CardContent></Card>
         <Card><CardContent className="p-4 text-center"><p className="text-3xl font-bold">{submissions.length}</p><p className="text-sm text-muted-foreground">{t("common.totalSubmissions")}</p></CardContent></Card>
       </div>
       <div className="grid gap-6 md:grid-cols-2">
@@ -187,7 +223,7 @@ export function TeamDetailPage() {
         </Card>
         <Card>
           <CardHeader><CardTitle className="text-lg">{t("teamDetail.submissionHistory")}</CardTitle></CardHeader>
-          <CardContent>{submissions.length === 0 ? <p className="text-sm text-muted-foreground">{t("common.noSubmissions")}</p> : <div className="space-y-3">{[...submissions].sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()).map((sub) => { const ch = challenges.find((c) => c.id === sub.challengeId); const base = bases.find((b) => b.id === sub.baseId); return (<div key={sub.id} className="flex items-start gap-3">{statusIcon[sub.status]}<div className="flex-1 min-w-0"><p className="text-sm font-medium">{ch?.title}</p>{base && <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" /> {base.name}</p>}<p className="text-xs text-muted-foreground">{formatDateTime(sub.submittedAt)}</p></div><Badge variant="outline" className="text-xs">{statusLabel[sub.status]}</Badge></div>); })}</div>}</CardContent>
+          <CardContent>{submissions.length === 0 ? <p className="text-sm text-muted-foreground">{t("common.noSubmissions")}</p> : <div className="space-y-3">{sortedSubmissions.map((sub) => { const ch = challengeMap.get(sub.challengeId); const base = sub.baseId ? baseMap.get(sub.baseId) : undefined; return (<div key={sub.id} className="flex items-start gap-3">{statusIcon[sub.status]}<div className="flex-1 min-w-0"><p className="text-sm font-medium">{ch?.title}</p>{base && <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" /> {base.name}</p>}<p className="text-xs text-muted-foreground">{formatDateTime(sub.submittedAt)}</p></div><Badge variant="outline" className="text-xs">{statusLabel[sub.status]}</Badge></div>); })}</div>}</CardContent>
         </Card>
       </div>
       <Card>
@@ -307,7 +343,7 @@ export function TeamDetailPage() {
           <p className="text-sm text-muted-foreground">
             {t("teamDetail.manualCheckInConfirm", {
               team: team.name,
-              base: bases.find((b) => b.id === checkInBaseId)?.name ?? "",
+              base: baseMap.get(checkInBaseId ?? "")?.name ?? "",
             })}
           </p>
           <div className="mt-4 space-y-2">
@@ -353,7 +389,7 @@ export function TeamDetailPage() {
           <p className="text-sm text-muted-foreground">
             {t("teams.unlockOverrideDialogDescription", {
               team: team.name,
-              base: bases.find((b) => b.id === unlockDialogBaseId)?.name ?? "",
+              base: baseMap.get(unlockDialogBaseId ?? "")?.name ?? "",
             })}
           </p>
           <div className="mt-4 space-y-2">
@@ -398,7 +434,7 @@ export function TeamDetailPage() {
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
             {t("teams.unlockOverrideRemoveConfirmDescription", {
-              base: bases.find((b) => b.id === removeOverrideDialog?.baseId)?.name ?? "",
+              base: baseMap.get(removeOverrideDialog?.baseId ?? "")?.name ?? "",
             })}
           </p>
           <DialogFooter>

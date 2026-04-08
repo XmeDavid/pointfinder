@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Users, MapPin, Puzzle, ClipboardCheck, CheckCircle2, Clock } from "lucide-react";
@@ -17,6 +18,16 @@ export function DashboardPage() {
   const { data: game } = useQuery({ queryKey: ["game", gameId], queryFn: () => gamesApi.getById(gameId!), enabled: !!gameId });
   const { data: stats } = useQuery({ queryKey: ["dashboard-stats", gameId], queryFn: () => monitoringApi.getDashboardStats(gameId!), enabled: !!gameId });
   const { data: leaderboard = [] } = useQuery({ queryKey: ["leaderboard", gameId], queryFn: () => monitoringApi.getLeaderboard(gameId!), enabled: !!gameId });
+
+  const timeDisplay = useMemo(() => {
+    const now = new Date();
+    const endDate = game?.endDate ? new Date(game.endDate) : null;
+    const timeRemaining = game?.status === "live" && endDate ? Math.max(0, endDate.getTime() - now.getTime()) : 0;
+    const hoursLeft = Math.floor(timeRemaining / (1000 * 60 * 60));
+    const minsLeft = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+    const hasEndDate = game?.status === "live" && endDate;
+    return { hoursLeft, minsLeft, hasEndDate };
+  }, [game]);
 
   if (!stats || !game) {
     return (
@@ -43,12 +54,7 @@ export function DashboardPage() {
     );
   }
 
-  const now = new Date();
-  const endDate = game.endDate ? new Date(game.endDate) : null;
-  const timeRemaining = game.status === "live" && endDate ? Math.max(0, endDate.getTime() - now.getTime()) : 0;
-  const hoursLeft = Math.floor(timeRemaining / (1000 * 60 * 60));
-  const minsLeft = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
-  const hasEndDate = game.status === "live" && endDate;
+  const { hoursLeft, minsLeft, hasEndDate } = timeDisplay;
 
   return (
     <div className="space-y-6">

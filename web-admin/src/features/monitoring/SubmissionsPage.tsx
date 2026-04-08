@@ -25,6 +25,24 @@ import { useGameWebSocket } from "@/hooks/useGameWebSocket";
 import type { Submission, SubmissionStatus } from "@/types";
 
 const getMediaUrls = (sub: Submission): string[] => sub.fileUrls ?? (sub.fileUrl ? [sub.fileUrl] : []);
+
+// Module-level constants — these never change so they don't belong inside the
+// component body where they'd be recreated on every render.
+// statusLabels depends on `t()` so it lives in a useMemo inside the component.
+
+const STATUS_VARIANTS: Record<string, "warning" | "success" | "destructive"> = {
+  pending: "warning",
+  approved: "success",
+  rejected: "destructive",
+  correct: "success",
+};
+
+const STATUS_ICONS: Record<string, React.ReactNode> = {
+  pending: <Clock className="h-3 w-3" />,
+  approved: <CheckCircle className="h-3 w-3" />,
+  rejected: <XCircle className="h-3 w-3" />,
+  correct: <CheckCircle className="h-3 w-3" />,
+};
 function FullScreenMediaViewer({ urls, index, onPrev, onNext }: { urls: string[]; index: number; onPrev: () => void; onNext: () => void }) {
   const { t } = useTranslation();
   const currentUrl = urls[index];
@@ -172,9 +190,13 @@ export function SubmissionsPage() {
     },
   });
 
-  const statusLabels: Record<SubmissionStatus, string> = { pending: t("common.pending"), approved: t("submissions.statusApproved"), rejected: t("common.rejected"), correct: t("submissions.statusCorrect") };
-  const statusVariants: Record<SubmissionStatus, "warning" | "success" | "destructive"> = { pending: "warning", approved: "success", rejected: "destructive", correct: "success" };
-  const statusIcons: Record<SubmissionStatus, React.ReactNode> = { pending: <Clock className="h-3 w-3" />, approved: <CheckCircle className="h-3 w-3" />, rejected: <XCircle className="h-3 w-3" />, correct: <CheckCircle className="h-3 w-3" /> };
+  const statusLabels = useMemo<Record<SubmissionStatus, string>>(
+    () => ({ pending: t("common.pending"), approved: t("submissions.statusApproved"), rejected: t("common.rejected"), correct: t("submissions.statusCorrect") }),
+    [t],
+  );
+  // statusVariants and statusIcons are pure constants — module-level, no t() needed
+  const statusVariants = STATUS_VARIANTS as Record<SubmissionStatus, "warning" | "success" | "destructive">;
+  const statusIcons = STATUS_ICONS as Record<SubmissionStatus, React.ReactNode>;
 
   const pendingCount = useMemo(() => submissions.filter((s) => s.status === "pending").length, [submissions]);
   const sorted = useMemo(() => {

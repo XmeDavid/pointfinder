@@ -235,17 +235,17 @@ export function BasesAndChallengesView() {
     },
   });
 
-  function openEdit(pair: BaseChallengePair) {
+  const openEdit = useCallback((pair: BaseChallengePair) => {
     setActionError("");
     setEditingPair(pair);
     setForm(formFromPair(pair));
-  }
+  }, []);
 
-  function closeDialog() {
+  const closeDialog = useCallback(() => {
     setEditingPair(null);
     setForm(null);
     setActionError("");
-  }
+  }, []);
 
   async function handleSaveBoth(e: React.FormEvent) {
     e.preventDefault();

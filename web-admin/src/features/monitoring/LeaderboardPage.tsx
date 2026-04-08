@@ -8,6 +8,16 @@ import { monitoringApi } from "@/lib/api/monitoring";
 import { useTranslation } from "react-i18next";
 import { useGameWebSocket } from "@/hooks/useGameWebSocket";
 
+/**
+ * Returns the CSS grid class and the ordered indices used to render podium
+ * cards in the classic "2nd / 1st / 3rd" layout.
+ */
+function getPodiumLayout(count: number): { gridClass: string; indices: number[] } {
+  if (count === 1) return { gridClass: "grid gap-4 md:grid-cols-1 max-w-md mx-auto", indices: [0] };
+  if (count === 2) return { gridClass: "grid gap-4 md:grid-cols-2 max-w-2xl mx-auto", indices: [0, 1] };
+  return { gridClass: "grid gap-4 md:grid-cols-3", indices: [1, 0, 2] };
+}
+
 export function LeaderboardPage() {
   const { t } = useTranslation();
   const { gameId } = useParams<{ gameId: string }>();
@@ -28,14 +38,7 @@ export function LeaderboardPage() {
         <div className="space-y-4">
           {leaderboard.length >= 1 && (() => {
             const podiumCount = Math.min(leaderboard.length, 3);
-            const gridClass = podiumCount === 1
-              ? "grid gap-4 md:grid-cols-1 max-w-md mx-auto"
-              : podiumCount === 2
-              ? "grid gap-4 md:grid-cols-2 max-w-2xl mx-auto"
-              : "grid gap-4 md:grid-cols-3";
-            const podiumIndices = podiumCount === 1 ? [0]
-              : podiumCount === 2 ? [0, 1]
-              : [1, 0, 2];
+            const { gridClass, indices: podiumIndices } = getPodiumLayout(podiumCount);
             return (
               <div className={gridClass}>
                 {podiumIndices.map((idx) => {

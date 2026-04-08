@@ -16,6 +16,7 @@
  *   - role="search" + aria-label on the bar container.
  */
 
+import { useMemo } from "react";
 import { SlidersHorizontal, Tag, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Tag as TagType } from "@/types";
@@ -50,6 +51,12 @@ export function FilterBar({
 }: FilterBarProps) {
   const { t } = useTranslation();
 
+  // O(1) tag lookup — avoids O(N²) find() per chip when resolvedTags is large.
+  const resolvedTagsMap = useMemo(
+    () => new Map(resolvedTags.map((tag) => [tag.id, tag])),
+    [resolvedTags],
+  );
+
   if (!isVisible) return null;
 
   return (
@@ -66,7 +73,7 @@ export function FilterBar({
 
       {/* Tag chips — label from resolved Tag, background from tag color when active */}
       {allTagIds.map((tagId) => {
-        const resolved = resolvedTags.find((t) => t.id === tagId);
+        const resolved = resolvedTagsMap.get(tagId);
         const label = resolved?.label ?? tagId;
         const tagColor = resolved?.color;
         const active = selectedTagIds.includes(tagId);

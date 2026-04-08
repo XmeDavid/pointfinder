@@ -46,10 +46,10 @@ export function useGameWebSocket(gameId: string | undefined): string | null {
 
       switch (payload.type) {
         case "activity":
-          scheduleInvalidate("activity", "submissions", "dashboard-stats", "leaderboard", "progress");
+          scheduleInvalidate("activity", "submissions", "dashboard-stats", "leaderboard", "progress", "realtime-stats");
           break;
         case "submission_status":
-          scheduleInvalidate("submissions", "dashboard-stats", "leaderboard", "progress");
+          scheduleInvalidate("submissions", "dashboard-stats", "leaderboard", "progress", "realtime-stats");
           break;
         case "notification":
           scheduleInvalidate("notifications");
