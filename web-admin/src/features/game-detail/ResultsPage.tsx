@@ -7,8 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { monitoringApi } from "@/lib/api/monitoring";
 import { gamesApi } from "@/lib/api/games";
 import { useTranslation } from "react-i18next";
-import * as XLSX from "xlsx";
-
 export function ResultsPage() {
   const { t } = useTranslation();
   const { gameId } = useParams<{ gameId: string }>();
@@ -38,7 +36,10 @@ export function ResultsPage() {
   const handleExportExcel = async () => {
     try {
       setExportingExcel(true);
-      const data = await monitoringApi.getResultsExport(gameId!);
+      const [data, XLSX] = await Promise.all([
+        monitoringApi.getResultsExport(gameId!),
+        import("xlsx"),
+      ]);
 
       const header = [t("common.team"), ...data.challenges.map(c => c.title), t("results.totalPoints")];
       const rows = data.teams.map(team => [

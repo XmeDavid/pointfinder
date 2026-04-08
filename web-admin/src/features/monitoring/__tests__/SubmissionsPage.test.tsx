@@ -7,6 +7,23 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "@/i18n";
 
 // --- Module mocks -----------------------------------------------------------
+
+// react-window renders 0 items in jsdom (container height = 0). Mock it so
+// all items are rendered directly, keeping existing test assertions intact.
+vi.mock("react-window", () => ({
+  FixedSizeList: ({ children: Row, itemCount, itemData }: {
+    children: (props: { index: number; style: React.CSSProperties; data: unknown }) => React.ReactElement;
+    itemCount: number;
+    itemData: unknown;
+  }) => (
+    <>
+      {Array.from({ length: itemCount }, (_, i) => (
+        <Row key={i} index={i} style={{}} data={itemData} />
+      ))}
+    </>
+  ),
+}));
+
 vi.mock("@/lib/api/submissions", () => ({
   submissionsApi: {
     listByGame: vi.fn(),

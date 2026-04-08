@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { FixedSizeList, type ListChildComponentProps } from "react-window";
 import { Activity, MapPin, ClipboardCheck, CheckCircle, XCircle, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +20,7 @@ import { getApiErrorMessage } from "@/lib/api/errors";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/useToast";
 import { useGameWebSocket } from "@/hooks/useGameWebSocket";
+import type { ActivityEvent, Team } from "@/types";
 
 const EVENT_ICONS: Record<string, React.ReactNode> = {
   check_in: <MapPin className="h-4 w-4 text-chart-1" />,
@@ -44,6 +46,34 @@ const AUDIT_ACTION_TYPES = [
 ] as const;
 
 const AUDIT_SOURCE_SURFACES = ["player_app", "web_admin", "operator_rescue"] as const;
+
+// ── Virtual list row ─────────────────────────────────────────────────────────
+type ActivityRowData = {
+  filtered: ActivityEvent[];
+  teams: Team[];
+  t: (key: string, opts?: Record<string, unknown>) => string;
+};
+
+function ActivityRow({ index, style, data }: ListChildComponentProps<ActivityRowData>) {
+  const { filtered, teams, t } = data;
+  const event = filtered[index];
+  const team = teams.find((tm) => tm.id === event.teamId);
+  return (
+    <div style={style} className="pb-4">
+      <div className="flex gap-3">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">{EVENT_ICONS[event.type]}</div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            {team && <Badge variant="secondary" className="text-xs"><div className="h-2 w-2 rounded-full mr-1" style={{ backgroundColor: team.color }} />{team.name}</Badge>}
+            <Badge variant="outline" className="text-xs">{t(`activityFeed.eventType.${event.type}`, { defaultValue: event.type.replace("_", " ") })}</Badge>
+          </div>
+          <p className="text-sm mt-1">{event.message}</p>
+          <p className="text-xs text-muted-foreground mt-1">{formatDateTime(event.timestamp)}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function ActivityPage() {
   const { t } = useTranslation();
@@ -151,6 +181,13 @@ export function ActivityPage() {
     }
   };
 
+  const ACTIVITY_ITEM_SIZE = 80; // px
+  const activityListHeight = Math.min(filtered.length * ACTIVITY_ITEM_SIZE, 500);
+  const activityRowData: ActivityRowData = useMemo(
+    () => ({ filtered, teams, t }),
+    [filtered, teams, t],
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
@@ -193,19 +230,15 @@ export function ActivityPage() {
           ) : filtered.length === 0 ? (
             <div className="py-8 text-center"><Activity className="mx-auto h-8 w-8 text-muted-foreground mb-2" /><p className="text-muted-foreground">{t("activityFeed.noActivity")}</p></div>
           ) : (
-            <div className="space-y-4">{filtered.map((event) => { const team = teams.find((tm) => tm.id === event.teamId); return (
-              <div key={event.id} className="flex gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">{EVENT_ICONS[event.type]}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {team && <Badge variant="secondary" className="text-xs"><div className="h-2 w-2 rounded-full mr-1" style={{ backgroundColor: team.color }} />{team.name}</Badge>}
-                    <Badge variant="outline" className="text-xs">{t(`activityFeed.eventType.${event.type}`, { defaultValue: event.type.replace("_", " ") })}</Badge>
-                  </div>
-                  <p className="text-sm mt-1">{event.message}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{formatDateTime(event.timestamp)}</p>
-                </div>
-              </div>
-            ); })}</div>
+            <FixedSizeList
+              height={activityListHeight}
+              itemCount={filtered.length}
+              itemSize={ACTIVITY_ITEM_SIZE}
+              width="100%"
+              itemData={activityRowData}
+            >
+              {ActivityRow}
+            </FixedSizeList>
           )}
         </CardContent>
       </Card>

@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { FixedSizeList, type ListChildComponentProps } from "react-window";
 import { CheckCircle, XCircle, Clock, FileText, Filter, Maximize2, MoreHorizontal, ChevronLeft, ChevronRight, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +23,7 @@ import { formatDateTime } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/useToast";
 import { useGameWebSocket } from "@/hooks/useGameWebSocket";
-import type { Submission, SubmissionStatus } from "@/types";
+import type { Submission, SubmissionStatus, Team, Challenge, Base } from "@/types";
 
 const getMediaUrls = (sub: Submission): string[] => sub.fileUrls ?? (sub.fileUrl ? [sub.fileUrl] : []);
 
@@ -43,6 +44,103 @@ const STATUS_ICONS: Record<string, React.ReactNode> = {
   rejected: <XCircle className="h-3 w-3" />,
   correct: <CheckCircle className="h-3 w-3" />,
 };
+
+// ── Virtual list row data type ───────────────────────────────────────────────
+type RowData = {
+  sorted: Submission[];
+  teamMap: Map<string, Team>;
+  challengeMap: Map<string, Challenge>;
+  baseMap: Map<string, Base>;
+  statusVariants: Record<SubmissionStatus, "warning" | "success" | "destructive">;
+  statusIcons: Record<SubmissionStatus, React.ReactNode>;
+  statusLabels: Record<SubmissionStatus, string>;
+  openReview: (sub: Submission) => void;
+  openFullScreen: (urls: string[], index: number) => void;
+  cacheBlobUrl: (apiUrl: string, blobUrl: string) => void;
+  t: (key: string, opts?: Record<string, unknown>) => string;
+};
+
+// Module-level row renderer — stable reference, never recreated per render.
+function SubmissionRow({ index, style, data }: ListChildComponentProps<RowData>) {
+  const { sorted, teamMap, challengeMap, baseMap, statusVariants, statusIcons, statusLabels, openReview, openFullScreen, cacheBlobUrl, t } = data;
+  const sub = sorted[index];
+  const isPending = sub.status === "pending";
+  const team = teamMap.get(sub.teamId);
+  const challenge = challengeMap.get(sub.challengeId);
+  const base = sub.baseId ? baseMap.get(sub.baseId) : undefined;
+  return (
+    <div style={style} className="pb-3">
+      <Card
+        className={isPending ? "cursor-pointer transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" : undefined}
+        onClick={isPending ? () => openReview(sub) : undefined}
+        role={isPending ? "button" : undefined}
+        tabIndex={isPending ? 0 : undefined}
+        aria-label={isPending ? t("submissions.openReview", { team: team?.name ?? "", challenge: challenge?.title ?? "" }) : undefined}
+        onKeyDown={isPending ? (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openReview(sub);
+          }
+        } : undefined}
+      >
+        <CardContent className="flex items-center gap-4 p-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge variant="secondary" className="text-xs"><div className="h-2 w-2 rounded-full mr-1" style={{ backgroundColor: team?.color }} />{team?.name}</Badge>
+              <span className="text-sm font-medium">{challenge?.title}</span>
+              {base && <span className="text-xs text-muted-foreground">@ {base.name}</span>}
+            </div>
+            <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+              {(() => {
+                const mediaUrls = getMediaUrls(sub);
+                if (mediaUrls.length > 0) {
+                  return (
+                    <div className="flex gap-1">
+                      {mediaUrls.map((url, idx) => (
+                        <AuthMedia key={url} src={url} alt={url.includes("video") ? t("submissions.altVideo") : t("submissions.altImage")} className="h-10 w-10 rounded object-cover cursor-pointer" thumbnail onClick={(e) => { e.stopPropagation(); openFullScreen(mediaUrls, idx); }} onBlobReady={(blob) => cacheBlobUrl(url, blob)} />
+                      ))}
+                    </div>
+                  );
+                }
+                return (
+                  <>
+                    <FileText className="h-3.5 w-3.5 flex-shrink-0" />
+                    {sub.answer && <span className="truncate max-w-xs text-xs" title={sub.answer}>{sub.answer}</span>}
+                  </>
+                );
+              })()}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">{formatDateTime(sub.submittedAt)}</p>
+            {sub.feedback && sub.status !== "pending" && (
+              <p className="text-xs text-muted-foreground mt-1 truncate max-w-xl" title={sub.feedback ?? undefined}>
+                {t("submissions.feedbackSent", { feedback: sub.feedback })}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant={statusVariants[sub.status]}>{statusIcons[sub.status]}<span className="ml-1">{statusLabels[sub.status]}</span></Badge>
+            {!isPending && (
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                  aria-label={t("submissions.actions")}
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => openReview(sub)}>{t("submissions.override")}</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 function FullScreenMediaViewer({ urls, index, onPrev, onNext }: { urls: string[]; index: number; onPrev: () => void; onNext: () => void }) {
   const { t } = useTranslation();
   const currentUrl = urls[index];
@@ -207,6 +305,16 @@ export function SubmissionsPage() {
   }, [submissions, filter, teamFilter, challengeFilter]);
   const expectedReviewPoints = reviewingSub ? challengeMap.get(reviewingSub.challengeId)?.points : undefined;
 
+  // ── Virtualized row data ─────────────────────────────────────────────────
+  const rowData: RowData = useMemo(
+    () => ({ sorted, teamMap, challengeMap, baseMap, statusVariants, statusIcons, statusLabels, openReview, openFullScreen, cacheBlobUrl, t }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sorted, teamMap, challengeMap, baseMap, statusLabels, openReview, openFullScreen, cacheBlobUrl, t],
+  );
+
+  const ITEM_SIZE = 96; // px — approximate card height including spacing
+  const listHeight = Math.min(sorted.length * ITEM_SIZE, 600);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -242,82 +350,15 @@ export function SubmissionsPage() {
       ) : sorted.length === 0 ? (
         <Card className="py-12"><CardContent className="text-center"><FileText className="mx-auto h-8 w-8 text-muted-foreground mb-2" /><p className="text-muted-foreground">{filter === "pending" ? t("submissions.noPending") : t("common.noSubmissions")}</p></CardContent></Card>
       ) : (
-        <div className="space-y-3">{sorted.map((sub) => {
-          const isPending = sub.status === "pending";
-          const team = teamMap.get(sub.teamId);
-          const challenge = challengeMap.get(sub.challengeId);
-          const base = sub.baseId ? baseMap.get(sub.baseId) : undefined;
-          return (
-            <Card
-              key={sub.id}
-              className={isPending ? "cursor-pointer transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" : undefined}
-              onClick={isPending ? () => openReview(sub) : undefined}
-              role={isPending ? "button" : undefined}
-              tabIndex={isPending ? 0 : undefined}
-              aria-label={isPending ? t("submissions.openReview", { team: team?.name ?? "", challenge: challenge?.title ?? "" }) : undefined}
-              onKeyDown={isPending ? (e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  openReview(sub);
-                }
-              } : undefined}
-            >
-              <CardContent className="flex items-center gap-4 p-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant="secondary" className="text-xs"><div className="h-2 w-2 rounded-full mr-1" style={{ backgroundColor: team?.color }} />{team?.name}</Badge>
-                    <span className="text-sm font-medium">{challenge?.title}</span>
-                    {base && <span className="text-xs text-muted-foreground">@ {base.name}</span>}
-                  </div>
-                  <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                    {(() => {
-                      const mediaUrls = getMediaUrls(sub);
-                      if (mediaUrls.length > 0) {
-                        return (
-                          <div className="flex gap-1">
-                            {mediaUrls.map((url, idx) => (
-                              <AuthMedia key={url} src={url} alt={url.includes("video") ? t("submissions.altVideo") : t("submissions.altImage")} className="h-10 w-10 rounded object-cover cursor-pointer" thumbnail onClick={(e) => { e.stopPropagation(); openFullScreen(mediaUrls, idx); }} onBlobReady={(blob) => cacheBlobUrl(url, blob)} />
-                            ))}
-                          </div>
-                        );
-                      }
-                      return (
-                        <>
-                          <FileText className="h-3.5 w-3.5 flex-shrink-0" />
-                          {sub.answer && <span className="truncate max-w-xs text-xs" title={sub.answer}>{sub.answer}</span>}
-                        </>
-                      );
-                    })()}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">{formatDateTime(sub.submittedAt)}</p>
-                  {sub.feedback && sub.status !== "pending" && (
-                    <p className="text-xs text-muted-foreground mt-1 truncate max-w-xl" title={sub.feedback ?? undefined}>
-                      {t("submissions.feedbackSent", { feedback: sub.feedback })}
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant={statusVariants[sub.status]}>{statusIcons[sub.status]}<span className="ml-1">{statusLabels[sub.status]}</span></Badge>
-                  {!isPending && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        onClick={(e) => e.stopPropagation()}
-                        onKeyDown={(e) => e.stopPropagation()}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                        aria-label={t("submissions.actions")}
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => openReview(sub)}>{t("submissions.override")}</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}</div>
+        <FixedSizeList
+          height={listHeight}
+          itemCount={sorted.length}
+          itemSize={ITEM_SIZE}
+          width="100%"
+          itemData={rowData}
+        >
+          {SubmissionRow}
+        </FixedSizeList>
       )}
 
       <Dialog open={!!reviewingSub} onOpenChange={closeReview}>
