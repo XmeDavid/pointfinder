@@ -160,6 +160,12 @@
     <string name="dialog_delete_account_confirm">Delete</string>
     <!-- Hints -->
     <string name="hint_checkin_instructions">Hold your phone near the marker at a base to check in</string>
+    <!-- NFC capability check on check-in screen -->
+    <string name="label_nfc_disabled_title">NFC is turned off</string>
+    <string name="label_nfc_disabled_body">Enable NFC in your device settings to scan tags and check in.</string>
+    <string name="action_nfc_open_settings">Open NFC Settings</string>
+    <string name="label_nfc_unsupported_title">This device doesn\'t support NFC</string>
+    <string name="label_nfc_unsupported_body">NFC is required to scan bases and check in. This feature is not available on your device.</string>
     <string name="hint_offline_sync">Offline: data will sync when online.</string>
     <string name="hint_media_offline_queue">Media submissions queue offline and upload when network returns.</string>
     <string name="hint_media_reselect_required">The original media is no longer available. Please reselect it.</string>

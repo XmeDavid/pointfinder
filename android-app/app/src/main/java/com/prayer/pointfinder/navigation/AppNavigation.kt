@@ -1,8 +1,12 @@
 package com.prayer.pointfinder.navigation
 
 import android.Manifest
+import android.content.BroadcastReceiver
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Bitmap
+import android.nfc.NfcAdapter
+import android.provider.Settings
 import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.media.MediaMetadataRetriever
@@ -115,6 +119,7 @@ import com.prayer.pointfinder.feature.player.BaseCheckInDetailScreen
 import com.prayer.pointfinder.feature.player.BaseDetailBottomSheet
 import com.prayer.pointfinder.feature.player.CheckInScreen
 import com.prayer.pointfinder.feature.player.NfcScanDialog
+import com.prayer.pointfinder.feature.player.NfcState
 import com.prayer.pointfinder.feature.player.PendingActionUiItem
 import com.prayer.pointfinder.feature.player.PlayerHomeScaffold
 import com.prayer.pointfinder.feature.player.PlayerMapScreen
@@ -402,6 +407,43 @@ private fun PlayerRootScreen(
     var pendingPermissionRequest by remember { mutableStateOf(false) }
     val gameStatus = state.gameStatus ?: auth.gameStatus
     val shouldBlockGameplay = gameStatus == GameStatus.SETUP || gameStatus == GameStatus.ENDED
+
+    // NFC capability state: re-evaluated on resume and on adapter state change broadcasts.
+    fun resolveNfcState(): NfcState {
+        val adapter = NfcAdapter.getDefaultAdapter(context)
+        return when {
+            adapter == null -> NfcState.UNSUPPORTED
+            !adapter.isEnabled -> NfcState.DISABLED
+            else -> NfcState.ENABLED
+        }
+    }
+    var nfcState by remember { mutableStateOf(resolveNfcState()) }
+
+    // Re-check on every ON_RESUME (player may have come back from Settings).
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                nfcState = resolveNfcState()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    // Also listen for ACTION_ADAPTER_STATE_CHANGED so the screen auto-unblocks
+    // when the player enables NFC from Settings and returns to the app.
+    DisposableEffect(Unit) {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(ctx: android.content.Context, intent: Intent) {
+                if (intent.action == NfcAdapter.ACTION_ADAPTER_STATE_CHANGED) {
+                    nfcState = resolveNfcState()
+                }
+            }
+        }
+        val filter = IntentFilter(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED)
+        context.registerReceiver(receiver, filter)
+        onDispose { context.unregisterReceiver(receiver) }
+    }
 
     val backToMapFromSubmission = {
         // Fully clear transient solve/check-in UI state so result screen doesn't reopen.
@@ -845,6 +887,10 @@ private fun PlayerRootScreen(
                         scanError = state.scanError,
                         onScan = {
                             showNfcScanDialog = true
+                        },
+                        nfcState = nfcState,
+                        onOpenNfcSettings = {
+                            context.startActivity(Intent(Settings.ACTION_NFC_SETTINGS))
                         },
                     )
                     if (shouldBlockGameplay) {

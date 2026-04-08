@@ -29,14 +29,17 @@ import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.material.icons.filled.PlayCircleFilled
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -59,6 +62,16 @@ import com.prayer.pointfinder.core.model.CheckInResponse
 import com.prayer.pointfinder.core.model.SubmissionResponse
 import com.prayer.pointfinder.core.model.SubmissionStatus
 
+/** NFC hardware/adapter state for the check-in screen. */
+enum class NfcState {
+    /** Hardware present and NFC enabled — normal scan flow. */
+    ENABLED,
+    /** Hardware present but NFC toggled off by the user. */
+    DISABLED,
+    /** Device has no NFC hardware at all. */
+    UNSUPPORTED,
+}
+
 data class MediaItem(
     val uri: String,
     val thumbnail: Bitmap,
@@ -73,8 +86,20 @@ fun CheckInScreen(
     pendingActionsCount: Int,
     scanError: String?,
     onScan: () -> Unit,
+    nfcState: NfcState = NfcState.ENABLED,
+    onOpenNfcSettings: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    // Show full-screen NFC blocking state when hardware is absent or NFC is off
+    if (nfcState == NfcState.UNSUPPORTED || nfcState == NfcState.DISABLED) {
+        NfcUnavailableScreen(
+            nfcState = nfcState,
+            onOpenNfcSettings = onOpenNfcSettings,
+            modifier = modifier,
+        )
+        return
+    }
+
     val pulseTransition = rememberInfiniteTransition(label = "check-in-pulse")
     val pulseScale by pulseTransition.animateFloat(
         initialValue = 1f,
@@ -142,6 +167,80 @@ fun CheckInScreen(
             Icon(Icons.Default.LocationOn, contentDescription = null)
             Spacer(Modifier.size(8.dp))
             Text(stringResource(R.string.action_check_in_at_base))
+        }
+    }
+}
+
+@Composable
+private fun NfcUnavailableScreen(
+    nfcState: NfcState,
+    onOpenNfcSettings: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val title = stringResource(
+        if (nfcState == NfcState.UNSUPPORTED) R.string.label_nfc_unsupported_title
+        else R.string.label_nfc_disabled_title,
+    )
+    val body = stringResource(
+        if (nfcState == NfcState.UNSUPPORTED) R.string.label_nfc_unsupported_body
+        else R.string.label_nfc_disabled_body,
+    )
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .size(160.dp)
+                    .background(
+                        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.40f),
+                        shape = MaterialTheme.shapes.extraLarge,
+                    ),
+            )
+            Box(
+                modifier = Modifier
+                    .size(120.dp)
+                    .background(
+                        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.60f),
+                        shape = MaterialTheme.shapes.extraLarge,
+                    ),
+            )
+            Icon(
+                Icons.Default.Nfc,
+                contentDescription = null,
+                modifier = Modifier.size(52.dp),
+                tint = MaterialTheme.colorScheme.error,
+            )
+        }
+        Spacer(Modifier.height(24.dp))
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = body,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        if (nfcState == NfcState.DISABLED) {
+            Spacer(Modifier.height(24.dp))
+            OutlinedButton(
+                onClick = onOpenNfcSettings,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(Icons.Default.Settings, contentDescription = null)
+                Spacer(Modifier.size(8.dp))
+                Text(stringResource(R.string.action_nfc_open_settings))
+            }
         }
     }
 }

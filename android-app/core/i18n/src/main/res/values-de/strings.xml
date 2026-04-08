@@ -158,6 +158,12 @@
     <string name="dialog_delete_account_confirm">Löschen</string>
     <!-- Hints -->
     <string name="hint_checkin_instructions">Halte dein Telefon an den Marker an der Station, um einzuchecken</string>
+    <!-- NFC capability check on check-in screen -->
+    <string name="label_nfc_disabled_title">NFC ist deaktiviert</string>
+    <string name="label_nfc_disabled_body">Aktiviere NFC in deinen Geräteeinstellungen, um Tags zu scannen und einzuchecken.</string>
+    <string name="action_nfc_open_settings">NFC-Einstellungen öffnen</string>
+    <string name="label_nfc_unsupported_title">Dieses Gerät unterstützt kein NFC</string>
+    <string name="label_nfc_unsupported_body">NFC wird zum Scannen von Stationen und zum Einchecken benötigt. Diese Funktion ist auf deinem Gerät nicht verfügbar.</string>
     <string name="hint_offline_sync">Offline: Daten werden synchronisiert, sobald wieder Verbindung besteht.</string>
     <string name="hint_media_offline_queue">Medien-Einreichungen werden offline vorgemerkt und bei Verbindung hochgeladen.</string>
     <string name="hint_media_reselect_required">Die Originaldatei ist nicht mehr verfügbar. Bitte erneut auswählen.</string>

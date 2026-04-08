@@ -133,6 +133,8 @@ enum Translations {
         "checkIn.checkInAtBase": "Check-in at Base",
         "checkIn.pendingSyncOne": "%d pending action to sync",
         "checkIn.pendingSyncOther": "%d pending actions to sync",
+        "checkIn.nfcUnsupported.title": "This device doesn't support NFC",
+        "checkIn.nfcUnsupported.body": "NFC is required to scan bases and check in. This feature is not available on your device.",
 
         // Solve
         "solve.submitPhoto": "Submit Your Media",
@@ -653,6 +655,8 @@ enum Translations {
         "checkIn.checkInAtBase": "Check-in na Base",
         "checkIn.pendingSyncOne": "%d ação pendente para sincronizar",
         "checkIn.pendingSyncOther": "%d ações pendentes para sincronizar",
+        "checkIn.nfcUnsupported.title": "Este dispositivo não suporta NFC",
+        "checkIn.nfcUnsupported.body": "O NFC é necessário para ler bases e fazer check-in. Esta funcionalidade não está disponível no teu dispositivo.",
 
         // Solve
         "solve.submitPhoto": "Submeter a tua Média",
@@ -1173,6 +1177,8 @@ enum Translations {
         "checkIn.checkInAtBase": "An Station einchecken",
         "checkIn.pendingSyncOne": "%d ausstehende Aktion zur Synchronisierung",
         "checkIn.pendingSyncOther": "%d ausstehende Aktionen zur Synchronisierung",
+        "checkIn.nfcUnsupported.title": "Dieses Gerät unterstützt kein NFC",
+        "checkIn.nfcUnsupported.body": "NFC wird zum Scannen von Stationen und zum Einchecken benötigt. Diese Funktion ist auf deinem Gerät nicht verfügbar.",
 
         // Solve
         "solve.submitPhoto": "Medien einreichen",

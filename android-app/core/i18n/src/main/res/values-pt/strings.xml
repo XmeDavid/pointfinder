@@ -155,6 +155,12 @@
     <string name="dialog_delete_account_confirm">Eliminar</string>
     <!-- Hints -->
     <string name="hint_checkin_instructions">Aproxime seu telefone do marcador na base para fazer check-in</string>
+    <!-- NFC capability check on check-in screen -->
+    <string name="label_nfc_disabled_title">NFC está desligado</string>
+    <string name="label_nfc_disabled_body">Ativa o NFC nas definições do dispositivo para ler tags e fazer check-in.</string>
+    <string name="action_nfc_open_settings">Abrir definições NFC</string>
+    <string name="label_nfc_unsupported_title">Este dispositivo não suporta NFC</string>
+    <string name="label_nfc_unsupported_body">O NFC é necessário para ler bases e fazer check-in. Esta funcionalidade não está disponível no teu dispositivo.</string>
     <string name="hint_offline_sync">Offline: os dados serão sincronizados quando voltar conexão.</string>
     <string name="hint_media_offline_queue">Submissões de media ficam em fila offline e enviam quando houver internet.</string>
     <string name="hint_media_reselect_required">O ficheiro original já não está disponível. Seleciona-o novamente.</string>
