@@ -15,6 +15,7 @@ import com.prayer.pointfinder.security.SecurityUtils;
 import com.prayer.pointfinder.util.LazyInitHelper;
 import com.prayer.pointfinder.websocket.GameEventBroadcaster;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class SubmissionService {
 
@@ -420,6 +422,11 @@ public class SubmissionService {
         String operatorDisplayName = operator.getName() != null && !operator.getName().isBlank()
                 ? operator.getName()
                 : operator.getEmail();
+
+        log.info("[OP] operation=markCompleted gameId={} teamId={} baseId={} challengeId={} operatorId={} reasonLength={} pointsOverride={}",
+                gameId, teamId, baseId, challengeId, operatorId,
+                request.getReason() != null ? request.getReason().length() : 0,
+                request.getPointsOverride() != null);
 
         // Deterministic idempotency key derived from the natural tuple.
         // This makes re-clicking the rescue button return the existing row

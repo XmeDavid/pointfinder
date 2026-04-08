@@ -14,6 +14,7 @@ import com.prayer.pointfinder.util.CodeGenerator;
 import com.prayer.pointfinder.util.LazyInitHelper;
 import com.prayer.pointfinder.websocket.GameEventBroadcaster;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class TeamService {
 
@@ -179,6 +181,10 @@ public class TeamService {
         String operatorDisplayName = operator.getName() != null && !operator.getName().isBlank()
                 ? operator.getName()
                 : operator.getEmail();
+
+        log.info("[OP] operation=operatorCheckIn gameId={} teamId={} baseId={} operatorId={} reasonLength={}",
+                gameId, teamId, baseId, operatorId,
+                reason != null ? reason.length() : 0);
 
         // Idempotent: return existing ACTIVE check-in if present. Archived
         // check-ins are deliberately ignored here so that a fresh check-in

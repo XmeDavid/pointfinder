@@ -189,7 +189,12 @@ public class GameService {
             throw new BadRequestException("Invalid status: " + newStatus);
         }
 
-        validateStatusTransition(game.getStatus(), target);
+        GameStatus fromStatus = game.getStatus();
+        validateStatusTransition(fromStatus, target);
+
+        User currentOperator = SecurityUtils.getCurrentUser();
+        log.info("[OP] operation=advanceStatus gameId={} fromStatus={} toStatus={} operatorId={}",
+                id, fromStatus, target, currentOperator.getId());
 
         if (target == GameStatus.setup) {
             if (resetProgress) {

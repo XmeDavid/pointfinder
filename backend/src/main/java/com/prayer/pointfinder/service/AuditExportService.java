@@ -16,7 +16,9 @@ import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.repository.ActivityEventRepository;
 import com.prayer.pointfinder.repository.CheckInRepository;
 import com.prayer.pointfinder.repository.SubmissionRepository;
+import com.prayer.pointfinder.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -77,6 +79,7 @@ import java.util.UUID;
  * @see com.prayer.pointfinder.repository.ActivityEventRepository#findForAuditExport
  */
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class AuditExportService {
 
@@ -153,6 +156,18 @@ public class AuditExportService {
                 types,
                 query.sourceSurface(),
                 includeArchived);
+
+        UUID currentOperatorId = null;
+        try {
+            currentOperatorId = SecurityUtils.getCurrentUser().getId();
+        } catch (Exception ignored) {
+            // tolerate unauthenticated or system calls
+        }
+        log.info("[AUDIT] operation=export gameId={} operatorId={} format={} from={} to={} teamId={} playerId={} filterOperatorId={} sourceSurface={} includeArchived={} rowCount={}",
+                query.gameId(), currentOperatorId,
+                query.format(), query.fromRaw(), query.toRaw(),
+                query.teamId(), query.playerId(), query.operatorId(),
+                query.sourceSurface(), query.includeArchived(), rows.size());
 
         // Enrichment prefetches — one bulk read per companion table. Small
         // O(rows_in_game) cost; the alternative per-row lookup would turn

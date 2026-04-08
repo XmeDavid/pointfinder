@@ -3,6 +3,7 @@ package com.prayer.pointfinder.security;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
@@ -13,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.UUID;
 
+@Slf4j
 @Component
 public class JwtTokenProvider {
 
@@ -123,7 +125,14 @@ public class JwtTokenProvider {
                     .build()
                     .parseSignedClaims(token);
             return true;
-        } catch (JwtException | IllegalArgumentException e) {
+        } catch (ExpiredJwtException e) {
+            log.warn("[AUTH] operation=validateToken result=rejected reason=expired");
+            return false;
+        } catch (JwtException e) {
+            log.warn("[AUTH] operation=validateToken result=rejected reason={}", e.getClass().getSimpleName());
+            return false;
+        } catch (IllegalArgumentException e) {
+            log.warn("[AUTH] operation=validateToken result=rejected reason=malformed");
             return false;
         }
     }

@@ -43,7 +43,21 @@ public class StompAuthErrorHandler extends StompSubProtocolErrorHandler {
         Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
 
         if (cause instanceof AccessDeniedException accessDenied) {
-            log.debug("WebSocket AccessDeniedException: {}", accessDenied.getMessage());
+            String sessionId = null;
+            String destination = null;
+            String principalName = null;
+            if (clientMessage != null) {
+                StompHeaderAccessor clientAccessor =
+                        MessageHeaderAccessor.getAccessor(clientMessage, StompHeaderAccessor.class);
+                if (clientAccessor != null) {
+                    sessionId = clientAccessor.getSessionId();
+                    destination = clientAccessor.getDestination();
+                    java.security.Principal user = clientAccessor.getUser();
+                    principalName = user != null ? user.getName() : null;
+                }
+            }
+            log.warn("[AUTH] operation=wsAccessDenied sessionId={} destination={} principal={} errorCode=WS_ACCESS_DENIED reason={}",
+                    sessionId, destination, principalName, accessDenied.getMessage());
             return buildErrorFrame(clientMessage,
                     "You are not authorized to connect or subscribe",
                     "WS_ACCESS_DENIED");

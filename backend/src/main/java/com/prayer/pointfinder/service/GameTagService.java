@@ -10,8 +10,10 @@ import com.prayer.pointfinder.exception.ConflictException;
 import com.prayer.pointfinder.exception.ErrorCode;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.GameTagRepository;
+import com.prayer.pointfinder.security.SecurityUtils;
 import com.prayer.pointfinder.util.TagPalette;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class GameTagService {
 
@@ -73,6 +76,9 @@ public class GameTagService {
             color = TagPalette.nextUnused(usedColors);
         }
 
+        log.info("[OP] operation=createTag gameId={} label={} color={} operatorId={}",
+                gameId, label, color, currentOperatorId());
+
         GameTag tag = GameTag.builder()
                 .game(game)
                 .label(label)
@@ -109,6 +115,9 @@ public class GameTagService {
             tag.setColor(request.getColor());
         }
 
+        log.info("[OP] operation=updateTag gameId={} tagId={} label={} color={} operatorId={}",
+                gameId, tagId, tag.getLabel(), tag.getColor(), currentOperatorId());
+
         tag = gameTagRepository.save(tag);
         return toResponse(tag);
     }
@@ -120,6 +129,9 @@ public class GameTagService {
         GameTag tag = gameTagRepository.findById(tagId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tag", tagId));
         ensureTagBelongsToGame(tag, gameId);
+
+        log.info("[OP] operation=deleteTag gameId={} tagId={} label={} operatorId={}",
+                gameId, tagId, tag.getLabel(), currentOperatorId());
 
         // Cascade: DB foreign-key ON DELETE CASCADE removes base_tags / challenge_tags rows
         gameTagRepository.delete(tag);
@@ -141,6 +153,14 @@ public class GameTagService {
     private void ensureTagBelongsToGame(GameTag tag, UUID gameId) {
         if (!tag.getGame().getId().equals(gameId)) {
             throw new BadRequestException("Tag does not belong to game " + gameId);
+        }
+    }
+
+    private UUID currentOperatorId() {
+        try {
+            return SecurityUtils.getCurrentUser().getId();
+        } catch (Exception ex) {
+            return null;
         }
     }
 }

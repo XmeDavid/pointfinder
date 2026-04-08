@@ -21,6 +21,7 @@ import com.prayer.pointfinder.security.SecurityUtils;
 import com.prayer.pointfinder.util.LazyInitHelper;
 import com.prayer.pointfinder.websocket.GameEventBroadcaster;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,6 +54,7 @@ import java.util.UUID;
  * player clients pick up the visibility change on next snapshot.
  */
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class BaseUnlockOverrideService {
 
@@ -111,6 +113,10 @@ public class BaseUnlockOverrideService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", operatorId));
         String operatorDisplayName = resolveDisplayName(operator);
         String reason = request != null ? request.getReason() : null;
+
+        log.info("[OP] operation=createUnlockOverride gameId={} teamId={} baseId={} operatorId={} reasonLength={}",
+                gameId, teamId, baseId, operatorId,
+                reason != null ? reason.length() : 0);
 
         BaseUnlockOverride override = BaseUnlockOverride.builder()
                 .game(game)
@@ -193,6 +199,9 @@ public class BaseUnlockOverrideService {
         User operator = userRepository.findById(operatorId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", operatorId));
         String operatorDisplayName = resolveDisplayName(operator);
+
+        log.info("[OP] operation=removeUnlockOverride gameId={} teamId={} baseId={} overrideId={} operatorId={}",
+                gameId, teamId, baseId, override.getId(), operatorId);
 
         override.setDeletedAt(Instant.now());
         override.setDeletedByOperator(operator);

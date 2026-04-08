@@ -3,12 +3,15 @@ package com.prayer.pointfinder.exception;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.jsonwebtoken.JwtException;
 import lombok.extern.slf4j.Slf4j;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -38,9 +41,13 @@ public class GlobalExceptionHandler {
     ) {}
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
         // Thrown by WebSocketAuthChannelInterceptor and Spring Security.
         // Return 403 with a clean message; do not leak internal auth state.
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String principalName = auth != null ? auth.getName() : null;
+        log.warn("[AUTH] operation=accessDenied method={} uri={} principal={}",
+                request.getMethod(), request.getRequestURI(), principalName);
         return jsonError(HttpStatus.FORBIDDEN, "You are not authorized to perform this action");
     }
 
