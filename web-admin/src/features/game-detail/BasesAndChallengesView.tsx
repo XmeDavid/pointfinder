@@ -432,7 +432,7 @@ export function BasesAndChallengesView() {
       ) : bases.length === 0 && challenges.length === 0 ? (
         <Card className="py-12" data-testid="bases-and-challenges-empty">
           <CardContent className="text-center">
-            <MapPin className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+            <MapPin className="mx-auto h-8 w-8 text-muted-foreground mb-2" aria-hidden="true" />
             <p className="font-medium">{t("basesAndChallenges.emptyTitle")}</p>
             <p className="text-sm text-muted-foreground">{t("basesAndChallenges.emptyDescription")}</p>
           </CardContent>
@@ -446,7 +446,7 @@ export function BasesAndChallengesView() {
                 {t("basesAndChallenges.sectionPairs")}
               </h2>
               {filteredPairs.length === 0 && pairFilterHasActive ? (
-                <div className="py-12 text-center">
+                <div role="status" aria-live="polite" className="py-12 text-center">
                   <p className="text-muted-foreground text-sm">{t("basesAndChallenges.noResults")}</p>
                   <button
                     type="button"
@@ -649,7 +649,7 @@ export function BasesAndChallengesView() {
                 <div className="space-y-2">
                   <p className="text-sm font-medium leading-none">{t("bases.clickMapToSelect")}</p>
                   <ErrorBoundary>
-                    <Suspense fallback={<div className="h-[250px] animate-pulse rounded-md border border-input bg-muted/30" data-testid="map-picker-fallback" />}>
+                    <Suspense fallback={<div className="h-[250px] animate-pulse rounded-md border border-input bg-muted/30" data-testid="map-picker-fallback" aria-busy="true"><span className="sr-only">{t("common.loading")}</span></div>}>
                       <MapPicker
                         value={{ lat: Number.isFinite(form.baseLat) ? form.baseLat : getDefaultCenter(game?.tileSource).lat, lng: Number.isFinite(form.baseLng) ? form.baseLng : getDefaultCenter(game?.tileSource).lng }}
                         onChange={(lat, lng) => setForm((f) => (f ? { ...f, baseLat: lat, baseLng: lng } : f))}
@@ -795,7 +795,7 @@ export function BasesAndChallengesView() {
                     {t("challenges.content")}
                   </FormLabel>
                   <ErrorBoundary>
-                    <Suspense fallback={<div className="h-[200px] animate-pulse rounded-md border border-input bg-muted/30" data-testid="rich-text-editor-fallback" />}>
+                    <Suspense fallback={<div className="h-[200px] animate-pulse rounded-md border border-input bg-muted/30" data-testid="rich-text-editor-fallback" aria-busy="true"><span className="sr-only">{t("common.loading")}</span></div>}>
                       <RichTextEditor
                         value={form.challengeContent}
                         onChange={(html) => setForm((f) => (f ? { ...f, challengeContent: html } : f))}
@@ -810,7 +810,7 @@ export function BasesAndChallengesView() {
                   </FormLabel>
                   <p className="text-xs text-muted-foreground">{t("challenges.completionContentHelper")}</p>
                   <ErrorBoundary>
-                    <Suspense fallback={<div className="h-[150px] animate-pulse rounded-md border border-input bg-muted/30" data-testid="rich-text-editor-completion-fallback" />}>
+                    <Suspense fallback={<div className="h-[150px] animate-pulse rounded-md border border-input bg-muted/30" data-testid="rich-text-editor-completion-fallback" aria-busy="true"><span className="sr-only">{t("common.loading")}</span></div>}>
                       <RichTextEditor
                         value={form.challengeCompletionContent}
                         onChange={(html) => setForm((f) => (f ? { ...f, challengeCompletionContent: html } : f))}

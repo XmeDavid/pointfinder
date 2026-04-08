@@ -49,14 +49,14 @@ export function RealtimeHealthWidget({ gameId, gameStatus }: Props) {
 
   if (isLoading || isError || !stats) {
     return (
-      <Card data-testid="realtime-health-widget">
+      <Card data-testid="realtime-health-widget" aria-busy={isLoading ? "true" : undefined}>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2">
             <Activity className="h-4 w-4" /> {t("realtimeHealth.title")}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground" aria-live="polite">
             {isError ? t("realtimeHealth.loadError") : t("common.loading")}
           </p>
         </CardContent>

@@ -89,7 +89,7 @@ export function ColorPicker({
               "flex h-7 w-7 items-center justify-center rounded-full border-2 transition",
               isSelected
                 ? "border-foreground ring-2 ring-foreground ring-offset-2 ring-offset-background"
-                : "border-transparent hover:border-foreground/40",
+                : "border-foreground/60 hover:border-foreground",
             )}
             data-testid={testId ? `${testId}-${swatch.value.slice(1)}` : undefined}
           >

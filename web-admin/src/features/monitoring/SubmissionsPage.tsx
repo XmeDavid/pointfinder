@@ -39,10 +39,10 @@ const STATUS_VARIANTS: Record<string, "warning" | "success" | "destructive"> = {
 };
 
 const STATUS_ICONS: Record<string, React.ReactNode> = {
-  pending: <Clock className="h-3 w-3" />,
-  approved: <CheckCircle className="h-3 w-3" />,
-  rejected: <XCircle className="h-3 w-3" />,
-  correct: <CheckCircle className="h-3 w-3" />,
+  pending: <Clock className="h-3 w-3" aria-hidden="true" />,
+  approved: <CheckCircle className="h-3 w-3" aria-hidden="true" />,
+  rejected: <XCircle className="h-3 w-3" aria-hidden="true" />,
+  correct: <CheckCircle className="h-3 w-3" aria-hidden="true" />,
 };
 
 // ── Virtual list row data type ───────────────────────────────────────────────
@@ -171,7 +171,7 @@ function FullScreenMediaViewer({ urls, index, onPrev, onNext }: { urls: string[]
           >
             <ChevronRight className="h-5 w-5" aria-hidden="true" />
           </button>
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+          <div aria-live="polite" aria-atomic="true" className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 text-white text-xs px-2 py-1 rounded">
             {index + 1} / {urls.length}
           </div>
         </>
