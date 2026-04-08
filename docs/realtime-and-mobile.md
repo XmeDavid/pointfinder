@@ -65,7 +65,9 @@ connect(gameId, token)
 | `activity` | Triggers progress reload |
 | `notification` | Increments `unseenNotificationCount` |
 
-**Foreground resumption**: `ensureConnected()` pings to verify connection when app returns to foreground.
+**Foreground resumption**: `ensureConnected()` pings to verify connection when app returns to foreground. Wired in `OperatorGameView` and `CheckInTabView` via the `UIApplication.willEnterForegroundNotification` publisher. The method is a no-op when `desiredSession == nil` (no player/operator is logged into this view), and otherwise either sends a ping that reconnects on failure (if the socket is still considered connected) or re-opens the socket directly (if the socket is in `disconnected` state).
+
+> Note: foreground reconnection is necessary but not sufficient. Realtime connections can drop silently, miss broadcasts, or race state transitions — which is why the backend exposes `GET /api/games/{id}/snapshot` as the canonical recovery call. See §7 below.
 
 ### Mobile WebSocket Session Limits
 
@@ -345,6 +347,69 @@ GET /api/games/{gameId}/monitoring/locations
 
 ---
 
+## 7. State Snapshot Contract
+
+**Realtime is invalidation. Snapshot is canonical.**
+
+Full product contract: `docs/business-logic.md` §4 "State Snapshot and Version Contract". API reference: `docs/api-reference.md` `GET /games/:id/snapshot`. Source spec: `docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md` (P0 Track 2 Slice 1).
+
+### Why realtime alone is not enough
+
+The field pilot exposed a "game is not active" symptom: players joined during `setup`, cached `gameStatus = setup` at join time, and never learned when the operator pressed Go Live because the realtime event was missed (dropped WebSocket, app backgrounded, network blip). Recovery required killing and relaunching the app.
+
+The fix is structural: no client should ever depend on catching every realtime event to stay correct. Realtime is the fast invalidation channel; when in doubt, any client can call `GET /api/games/{gameId}/snapshot` and receive the full authoritative state for its role.
+
+### Backend: `games.state_version`
+
+Every state-mutating, snapshot-relevant broadcast (`game_status`, `game_config`, `activity`, `submission_status`, `leaderboard`, `notification`) bumps `games.state_version` atomically via a single `UPDATE ... RETURNING` statement before dispatching the WebSocket/mobile payload. Transient events (`location`, `presence`) deliberately do NOT bump — location updates arrive every 30 seconds per player, and thrashing the counter would force pointless snapshot refetches.
+
+The new version is included in the broadcast envelope alongside `type` and `data`:
+
+```json
+{
+  "version": 1,
+  "type": "game_status",
+  "gameId": "d4e5f6a7-b8c9-0123-defa-234567890123",
+  "emittedAt": "2026-04-08T14:23:05.817Z",
+  "stateVersion": 42,
+  "data": { "status": "live" }
+}
+```
+
+A failed bump never blocks the broadcast — the exception is caught, logged, and the realtime event still fires. Honest realtime beats version-correct silence.
+
+### Client recovery pattern
+
+The pattern every realtime client should implement:
+
+1. Subscribe to the realtime channel as today.
+2. On every envelope, capture `envelope.stateVersion` as `lastSeenVersion` (if present).
+3. On app foreground, reconnect, screen focus, network return, or any suspected missed event, call `GET /api/games/{gameId}/snapshot`.
+4. Compare `snapshot.stateVersion` to `lastSeenVersion`:
+   - `snapshot.stateVersion > lastSeenVersion` → replace local game/team/progress caches from the snapshot.
+   - Equal → no-op, already fresh.
+5. Update `lastSeenVersion = snapshot.stateVersion`.
+
+### Response shapes
+
+- **Player JWT** → `PlayerSnapshotResponse`: game lifecycle metadata, team info (no score), per-base progress, recent submissions (status only, no points), player upload sessions. **Player snapshots carry no scoring information at any nesting depth** — no `score`, `points`, `leaderboard`, or `rank` keys.
+- **Operator JWT** → `OperatorSnapshotResponse`: full game config, all teams with scores, full leaderboard, pending review count, active upload count, needs-attention count.
+
+See `docs/api-reference.md` for full field-by-field examples.
+
+### Wiring status per platform (as of Slice 1)
+
+| Platform | Snapshot wired? | Notes |
+|---|---|---|
+| Backend | Yes | Endpoint, DTOs, service, state version bump all landed |
+| Web admin | **Not yet** | Slice 3 — hook into React Query cache invalidation on reconnect |
+| iOS | **Not yet** | Slice 2 — call snapshot from `AppState` on `scenePhase == .active` and after `MobileRealtimeClient.ensureConnected` flags a recovered connection |
+| Android | **Not yet** | Slice 2 — call snapshot from `AppSessionViewModel` on app lifecycle resume and after `NetworkMonitor` reports restored connectivity |
+
+Slice 1 is strictly backend. Slices 2 and 3 wire the clients.
+
+---
+
 ## Platform Feature Matrix
 
 | Feature | Backend | iOS | Android |
@@ -357,3 +422,4 @@ GET /api/games/{gameId}/monitoring/locations
 | Location tracking | Store + serve | CLLocationManager | FusedLocationProvider |
 | Deep linking | nginx fallback | AppState.handleDeepLink | NfcEventBus StateFlow |
 | Chunked media upload | Full | SyncEngine | OfflineSyncWorker |
+| State snapshot | Full (P0 Track 2 Slice 1) | Not yet (Slice 2) | Not yet (Slice 2) |

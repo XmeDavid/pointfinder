@@ -79,6 +79,33 @@ public class Game {
     @Builder.Default
     private UnlockTrigger unlockTrigger = UnlockTrigger.CHECK_IN;
 
+    /**
+     * Monotonically-increasing state version for the snapshot / realtime
+     * recovery contract (P0 Track 2 Slice 1).
+     *
+     * <p>Bumped by {@code GameEventBroadcaster} via
+     * {@code GameRepository.incrementStateVersion} whenever a state-mutating,
+     * snapshot-relevant event is broadcast for the game: {@code game_status},
+     * {@code game_config}, {@code activity}, {@code submission_status},
+     * {@code leaderboard}, {@code notification}. Transient high-frequency
+     * events ({@code location}, {@code presence}) deliberately do NOT bump.
+     *
+     * <p>This is a plain field — NOT a Hibernate {@code @Version} column.
+     * JPA optimistic locking would change save semantics at every mutation
+     * site, which we explicitly do not want. The increment is performed by a
+     * dedicated native UPDATE ... RETURNING statement so it stays atomic under
+     * concurrency.
+     *
+     * <p>Clients store the last version they observed via realtime, then on
+     * reconnect / foreground / missed event, call
+     * {@code GET /api/games/{id}/snapshot} and compare the snapshot's
+     * {@code stateVersion} with their cached value to decide whether to
+     * replace cached state wholesale.
+     */
+    @Column(name = "state_version", nullable = false)
+    @Builder.Default
+    private Long stateVersion = 0L;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

@@ -192,4 +192,42 @@ public interface UploadSessionRepository extends JpaRepository<UploadSession, UU
             @Param("playerId") UUID playerId,
             @Param("gameId") UUID gameId
     );
+
+    /**
+     * Counts upload sessions for a game that are currently active (status =
+     * {@code active}) and have not yet expired. Used by the operator snapshot
+     * endpoint to surface "how many uploads are in flight right now" without
+     * pulling the entire row set.
+     */
+    @Query("""
+            SELECT COUNT(s)
+            FROM UploadSession s
+            WHERE s.game.id = :gameId
+              AND s.status = com.prayer.pointfinder.entity.UploadSessionStatus.active
+              AND s.expiresAt > :now
+            """)
+    long countActiveSessionsByGameId(
+            @Param("gameId") UUID gameId,
+            @Param("now") Instant now
+    );
+
+    /**
+     * Counts completed-but-unlinked upload sessions for a game whose
+     * completion is older than the given cutoff. Mirrors the selection
+     * predicate of {@code findCompletedNeedsAttention} but scoped to a single
+     * game and returning a scalar. Used by the operator snapshot endpoint.
+     */
+    @Query("""
+            SELECT COUNT(s)
+            FROM UploadSession s
+            WHERE s.game.id = :gameId
+              AND s.status = com.prayer.pointfinder.entity.UploadSessionStatus.completed
+              AND s.submission IS NULL
+              AND s.completedAt IS NOT NULL
+              AND s.completedAt < :olderThan
+            """)
+    long countNeedsAttentionByGameId(
+            @Param("gameId") UUID gameId,
+            @Param("olderThan") Instant olderThan
+    );
 }

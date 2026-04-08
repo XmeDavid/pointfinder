@@ -24,6 +24,15 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
     @Query("SELECT s FROM Submission s LEFT JOIN FETCH s.team LEFT JOIN FETCH s.challenge LEFT JOIN FETCH s.base WHERE s.team.id = :teamId")
     List<Submission> findByTeamId(@Param("teamId") UUID teamId);
 
+    /**
+     * Recent submissions for a team, newest first, bounded by the provided
+     * {@link Pageable}. Used by the player snapshot endpoint to hydrate the
+     * "submissions" list without pulling unbounded history into memory.
+     */
+    @Query("SELECT s FROM Submission s LEFT JOIN FETCH s.team LEFT JOIN FETCH s.challenge LEFT JOIN FETCH s.base " +
+           "WHERE s.team.id = :teamId ORDER BY s.submittedAt DESC")
+    List<Submission> findRecentByTeamId(@Param("teamId") UUID teamId, Pageable pageable);
+
     @Query("SELECT s FROM Submission s LEFT JOIN FETCH s.team LEFT JOIN FETCH s.challenge LEFT JOIN FETCH s.base WHERE s.team.game.id = :gameId AND s.status = :status")
     List<Submission> findByGameIdAndStatus(@Param("gameId") UUID gameId, @Param("status") SubmissionStatus status);
 

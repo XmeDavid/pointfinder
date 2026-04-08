@@ -14,6 +14,8 @@ public interface PlayerRepository extends JpaRepository<Player, UUID> {
 
     List<Player> findByTeamId(UUID teamId);
 
+    long countByTeamId(UUID teamId);
+
     Optional<Player> findByDeviceIdAndTeamId(String deviceId, UUID teamId);
 
     Optional<Player> findFirstByDeviceIdAndTeamGameIdOrderByCreatedAtDesc(String deviceId, UUID gameId);

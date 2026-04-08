@@ -64,6 +64,15 @@ public class SecurityConfig {
                 .requestMatchers("/api/broadcast/**").permitAll()
                 .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/api/player/**").hasRole("PLAYER")
+                // Snapshot endpoint is reachable by players AND operators —
+                // the controller branches on the JWT principal type and
+                // delegates to GameAccessService for the per-role access
+                // check. This carve-out must come BEFORE the blanket
+                // /api/games/** matcher below, otherwise Spring Security
+                // would reject player JWTs at the filter chain.
+                // See docs/business-logic.md "State Snapshot and Version Contract".
+                .requestMatchers(HttpMethod.GET, "/api/games/*/snapshot")
+                .hasAnyRole("ADMIN", "OPERATOR", "PLAYER")
                 .requestMatchers("/api/games/**", "/api/invites/**", "/api/users/**")
                 .hasAnyRole("ADMIN", "OPERATOR")
                 .anyRequest().authenticated()

@@ -110,6 +110,7 @@ Header: `X-Forwarded-Host` (for email link generation)
 | DELETE | `/games/:id/operators/:userId` | Operator | Remove operator from game |
 | GET | `/games/:id/export` | Operator | Export game definition as JSON |
 | POST | `/games/import` | Operator | Import game from export JSON |
+| GET | `/games/:id/snapshot` | Player or Operator | Canonical state snapshot (see below) |
 
 ### Key Payloads
 
@@ -145,6 +146,145 @@ Header: `X-Forwarded-Host` (for email link generation)
   "teams": [{ "tempId", "name", "color" }]
 }
 ```
+
+### State Snapshot — `GET /games/:gameId/snapshot`
+
+Canonical state snapshot for a game. Single call that returns everything the caller needs to reconcile its state — the safety net clients reach for after reconnect, foreground, network return, or any missed realtime event. Source spec: `docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md` (P0 Track 2 Slice 1). Product contract: `docs/business-logic.md` §4 "State Snapshot and Version Contract".
+
+**Auth**: Accepts both player JWT (`ROLE_PLAYER`, scoped to a team in this game) and operator JWT (`ROLE_ADMIN` or `ROLE_OPERATOR` with access to this game). This is the only endpoint under `/api/games/**` that is reachable by player JWTs; `SecurityConfig` has an explicit carve-out for `GET /api/games/*/snapshot`.
+
+**Response shape**: depends on the caller's role.
+
+- `401 Unauthorized` — no JWT
+- `403 Forbidden` — JWT does not grant access to this game (player from another team/game, operator not on this game's roster)
+- `200 OK` — the snapshot
+
+#### Player shape (player JWT) — `PlayerSnapshotResponse`
+
+**Product rule: no scores in the player snapshot.** No `score`, `points`, `leaderboard`, or `rank` keys appear at any nesting depth. Scoring is operator-side only in PointFinder.
+
+```json
+{
+  "stateVersion": 17,
+  "serverTime": "2026-04-08T14:23:05.817Z",
+  "game": {
+    "id": "d4e5f6a7-b8c9-0123-defa-234567890123",
+    "name": "Forest Adventure",
+    "description": "A scouting game in the forest",
+    "status": "live",
+    "unlockTrigger": "CHECK_IN",
+    "tileSource": "osm-classic",
+    "startDate": "2026-04-08T08:00:00Z",
+    "endDate": "2026-04-08T18:00:00Z"
+  },
+  "team": {
+    "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+    "name": "Eagles",
+    "color": "#FF5733",
+    "memberCount": 4
+  },
+  "progress": [
+    {
+      "baseId": "a7b8c9d0-e1f2-3456-abcd-567890123456",
+      "baseName": "Forest Clearing",
+      "lat": 47.3769,
+      "lng": 8.5417,
+      "nfcLinked": true,
+      "status": "completed",
+      "checkedInAt": "2026-04-08T09:15:00Z",
+      "challengeId": "f6a7b8c9-d0e1-2345-fabc-456789012345",
+      "submissionStatus": "approved"
+    }
+  ],
+  "submissions": [
+    {
+      "id": "e5f6a7b8-c9d0-1234-efab-345678901234",
+      "baseId": "a7b8c9d0-e1f2-3456-abcd-567890123456",
+      "challengeId": "f6a7b8c9-d0e1-2345-fabc-456789012345",
+      "status": "approved",
+      "submittedAt": "2026-04-08T09:30:00Z",
+      "fileUrl": "/api/player/files/d4e5f6a7-b8c9-0123-defa-234567890123/photo.jpg",
+      "fileUrls": ["/api/player/files/d4e5f6a7-b8c9-0123-defa-234567890123/photo.jpg"]
+    }
+  ],
+  "uploadSessions": [
+    {
+      "sessionId": "11111111-2222-3333-4444-555555555555",
+      "gameId": "d4e5f6a7-b8c9-0123-defa-234567890123",
+      "mediaItemKey": "local-photo-4711",
+      "originalFileName": "IMG_4711.HEIC",
+      "contentType": "image/heic",
+      "totalSizeBytes": 2473625,
+      "chunkSizeBytes": 8388608,
+      "totalChunks": 1,
+      "uploadedChunks": [0],
+      "status": "completed",
+      "fileUrl": "/uploads/d4e5f6a7-b8c9-0123-defa-234567890123/photo.heic",
+      "expiresAt": "2026-04-09T09:30:00Z",
+      "createdAt": "2026-04-08T09:29:50Z",
+      "updatedAt": "2026-04-08T09:30:00Z",
+      "completedAt": "2026-04-08T09:30:00Z"
+    }
+  ]
+}
+```
+
+The `progress` list uses the same shape as `GET /api/player/games/:gameId/progress` (`BaseProgressResponse`). The `uploadSessions` list uses the same shape as `GET /api/player/games/:gameId/uploads/sessions` (`UploadSessionResponse`). Both are capped at 100 entries per snapshot.
+
+#### Operator shape (operator/admin JWT) — `OperatorSnapshotResponse`
+
+```json
+{
+  "stateVersion": 17,
+  "serverTime": "2026-04-08T14:23:05.817Z",
+  "game": {
+    "id": "d4e5f6a7-b8c9-0123-defa-234567890123",
+    "name": "Forest Adventure",
+    "description": "A scouting game in the forest",
+    "status": "live",
+    "unlockTrigger": "CHECK_IN",
+    "tileSource": "osm-classic",
+    "startDate": "2026-04-08T08:00:00Z",
+    "endDate": "2026-04-08T18:00:00Z",
+    "uniformAssignment": false,
+    "broadcastEnabled": true,
+    "broadcastCode": "FOREST2026"
+  },
+  "teams": [
+    {
+      "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+      "name": "Eagles",
+      "color": "#FF5733",
+      "score": 350,
+      "memberCount": 4
+    }
+  ],
+  "leaderboard": [
+    {
+      "teamId": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+      "teamName": "Eagles",
+      "color": "#FF5733",
+      "points": 350,
+      "completedChallenges": 5
+    }
+  ],
+  "pendingReviews": 2,
+  "activeUploads": 1,
+  "needsAttention": 0
+}
+```
+
+`leaderboard` uses the existing `LeaderboardEntry` shape. `pendingReviews` is the count of submissions currently in `pending` status. `activeUploads` counts upload sessions in `active` state that have not yet expired. `needsAttention` counts completed-but-unlinked upload sessions older than `app.uploads.needs-attention-threshold-minutes` (default 15) — the same row set the needs-attention detector surfaces.
+
+#### State version
+
+Every snapshot carries a `stateVersion` long. This is the monotonically-increasing counter bumped by `GameEventBroadcaster` on every state-mutating, snapshot-relevant event (`game_status`, `game_config`, `activity`, `submission_status`, `leaderboard`, `notification`). Transient events (`location`, `presence`) deliberately do NOT bump. See `docs/business-logic.md` §4 for the full contract.
+
+Clients should store the version they observe via realtime broadcasts and, on reconnect, compare it to `snapshot.stateVersion` to decide whether to replace cached state wholesale.
+
+#### Future `?lastSeenVersion` optimization (not yet implemented)
+
+A future slice will add `GET /api/games/:gameId/snapshot?lastSeenVersion=N`. When `N >= current state_version`, the endpoint will return `204 No Content` to save bandwidth on defensive polls. Clients can pass `lastSeenVersion` through today; it is currently ignored.
 
 ---
 

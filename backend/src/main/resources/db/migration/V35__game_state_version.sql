@@ -1,0 +1,32 @@
+-- Wave: post-pilot reliability — game state version for snapshot/realtime recovery.
+--
+-- P0 Track 2 (Game State and Realtime Recovery) — Slice 1.
+-- Source spec: docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md
+--
+-- `state_version` is a monotonically-increasing counter bumped by the backend
+-- every time a state-mutating, snapshot-relevant event is broadcast for a game
+-- (game_status, game_config, activity, submission_status, leaderboard,
+-- notification). Realtime consumers include the version in the broadcast
+-- payload so they can detect missed events and reach for the canonical
+-- `GET /api/games/{gameId}/snapshot` endpoint to catch up.
+--
+-- Design notes:
+--   * Not indexed — always read by primary key (`games.id`).
+--   * Backfilled to 0 for every existing row. Consumers treat 0 as "never
+--     bumped"; any stored client-side `lastSeenVersion < current` triggers a
+--     refetch on reconnect. A fresh DB at version 0 and a long-lived DB at
+--     version 9_999_999 behave identically from the client's perspective.
+--   * BIGINT NOT NULL avoids "is the column missing vs is this 0" ambiguity.
+--     Overflow is not a concern: at 1_000 bumps/second — far above any real
+--     game's rate — it would take 292 million years to exhaust BIGINT.
+--   * No Hibernate @Version on the entity field; this is an application-level
+--     counter, not a JPA optimistic-lock column. Optimistic locking would
+--     change save semantics for every Game update site, which we explicitly
+--     do not want.
+--   * The increment itself is a single `UPDATE games SET state_version =
+--     state_version + 1 ... RETURNING state_version` issued by
+--     `GameRepository.incrementStateVersion`, which is atomic at the database
+--     level — concurrent broadcasters cannot lose increments.
+
+ALTER TABLE games
+    ADD COLUMN state_version BIGINT NOT NULL DEFAULT 0;

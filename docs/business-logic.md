@@ -10,10 +10,11 @@
 1. [Game Lifecycle](#1-game-lifecycle)
 2. [NFC & Check-In Flow](#2-nfc--check-in-flow)
 3. [Challenge & Submission Flow](#3-challenge--submission-flow)
-4. [Team Variables](#4-team-variables)
-5. [Authentication & Authorization](#5-authentication--authorization)
-6. [Push Notifications](#6-push-notifications)
-7. [Broadcast Mode](#7-broadcast-mode)
+4. [State Snapshot and Version Contract](#4-state-snapshot-and-version-contract)
+5. [Team Variables](#5-team-variables)
+6. [Authentication & Authorization](#6-authentication--authorization)
+7. [Push Notifications](#7-push-notifications)
+8. [Broadcast Mode](#8-broadcast-mode)
 
 ---
 
@@ -279,7 +280,88 @@ The operator-facing endpoints, WebSocket broadcast topics, and web-admin UI for 
 
 ---
 
-## 4. Team Variables
+## 4. State Snapshot and Version Contract
+
+Source spec: `docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md` (P0 Track 2 Slice 1).
+
+### Why this exists
+
+In the field pilot, a player who joined during game `setup` saw the operator go `live` but the player app never learned about it — the client had cached `gameStatus = setup` at join time and had no way to reconcile. Recovery required killing and relaunching the app. That is the symptom this contract fixes.
+
+The product rule: **realtime is invalidation, snapshot is canonical.** Clients should be able to trust server state at any moment by calling a single endpoint that returns the current authoritative view, regardless of what the client's local cache might have missed. Realtime events remain the fast path, but they are no longer the only correctness mechanism.
+
+### The snapshot endpoint
+
+`GET /api/games/{gameId}/snapshot`
+
+A single REST call that returns everything the caller needs to reconcile its state for this game. The response shape depends on the caller's role:
+
+- **Player JWT** → `PlayerSnapshotResponse`. Contains the game lifecycle metadata the player's app needs, the player's team (no score), the per-base progress list, recent team submissions (status only, no points), and the player's in-flight upload sessions.
+- **Operator JWT** → `OperatorSnapshotResponse`. Contains the full game config, all teams with scores, the full leaderboard, pending review counts, active uploads count, and needs-attention uploads count.
+
+Authorization:
+- `401` if no JWT is present.
+- `403` if the JWT does not grant access to this game (player from another team/game, operator without membership, admin is always allowed).
+
+See the full API reference in `docs/api-reference.md` for field-by-field request/response examples.
+
+### NO scores in the player response
+
+Players in PointFinder never see scores anywhere in the player app: no team score on their own team, no leaderboard, no points on submissions (only status: pending / approved / rejected). Scoring is operator-side only. This is a hard product rule.
+
+The player snapshot response MUST NOT include any of the following at any nesting depth:
+
+- `score`
+- `points`
+- `leaderboard`
+- `rank`
+- `totalPoints`
+
+The DTO design enforces this structurally — `PlayerSnapshotResponse` does not expose any of those fields — and the integration test `GameSnapshotEndpointTest.playerSnapshotReturnsPlayerShapeWithNoScoreFields` walks the serialized JSON to assert that none of those keys appear. A future change that tries to slip scoring into the player response will break that test.
+
+### The state version mechanism
+
+`games.state_version` is a monotonically-increasing `BIGINT` bumped by `GameEventBroadcaster` via `GameRepository.incrementStateVersion` every time a state-mutating, snapshot-relevant event is broadcast for a game. The bump is a native `UPDATE games SET state_version = state_version + 1 WHERE id = :gameId RETURNING state_version` statement — atomic at the database level, so concurrent broadcasters cannot lose increments.
+
+The new version is included in the WebSocket/mobile broadcast payload alongside the existing `type` and `data` keys, so realtime listeners can compare the version against their last-seen value and decide whether to trigger a snapshot fetch to catch up.
+
+### Which events bump the version
+
+| Event | Bumps `state_version`? | Why |
+|---|---|---|
+| `game_status` | Yes | The core "game not active" recovery case |
+| `game_config` | Yes | Base/challenge/team/assignment edits |
+| `activity` | Yes | Check-ins, submissions |
+| `submission_status` | Yes | Operator review decisions |
+| `leaderboard` | Yes | Score changes |
+| `notification` | Yes | Operator-to-player messages |
+| `location` | **No** | Very high frequency; would thrash the counter |
+| `presence` | **No** | Operator online/offline; not state a snapshot restores |
+
+A failed bump (e.g. transient DB hiccup) must never prevent the broadcast from landing. The broadcaster catches the exception, logs a warning, and dispatches the realtime event anyway — honest realtime beats version-correct silence.
+
+### Client usage pattern
+
+1. Client stores the last `stateVersion` it observed via realtime.
+2. On reconnect / app foreground / screen focus / missed event, call `GET /api/games/{gameId}/snapshot`.
+3. Compare `response.stateVersion` to the stored value.
+   - `snapshot.stateVersion > stored` → replace cached game state wholesale from the snapshot.
+   - `snapshot.stateVersion == stored` → cache is fresh; the call was defensive and nothing changed.
+4. Update the stored `lastSeenVersion` to `snapshot.stateVersion`.
+
+A fresh DB starts at `state_version = 0` and any client-stored `lastSeenVersion = 0` triggers a full refetch on the first reconnect, which is the desired "bootstrap from server truth" behaviour.
+
+### Why `stateVersion` is NOT Hibernate `@Version`
+
+Hibernate's `@Version` annotation implements JPA optimistic locking: it changes save semantics for every `Game` update site and throws `OptimisticLockingFailureException` on stale writes. That is the wrong shape for this counter — we are not protecting against concurrent writes to the game row, we are notifying clients that something inside the game changed. Plain `Long stateVersion` + a dedicated atomic native UPDATE keeps the semantics at the application level and out of Hibernate's save path.
+
+### Future `?lastSeenVersion` optimization
+
+`GET /api/games/{gameId}/snapshot?lastSeenVersion=N` is reserved for a future slice. When implemented, the endpoint will return `204 No Content` if `N >= current state_version`, saving bandwidth on defensive polls that would otherwise re-download the same state. Clients already storing `lastSeenVersion` in Slice 1 can pass it through Slice 2 without code change.
+
+---
+
+## 5. Team Variables
 
 ### Purpose
 
@@ -329,7 +411,7 @@ Before go-live, all team variables must have values for all teams. This is check
 
 ---
 
-## 5. Authentication & Authorization
+## 6. Authentication & Authorization
 
 ### Login Brute-Force Protection
 
@@ -416,7 +498,7 @@ If a token refresh fails with 401/403:
 
 ---
 
-## 6. Push Notifications
+## 7. Push Notifications
 
 ### Operator Notifications (APNs / FCM)
 
@@ -473,7 +555,7 @@ When the game status changes (`setup → live`, `live → ended`), a `game_statu
 
 ---
 
-## 7. Broadcast Mode
+## 8. Broadcast Mode
 
 ### Overview
 
