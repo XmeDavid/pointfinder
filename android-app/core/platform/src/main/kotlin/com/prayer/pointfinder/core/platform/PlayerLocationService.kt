@@ -57,13 +57,19 @@ class PlayerLocationService @Inject constructor(
 
     private val callback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
-            val value = result.lastLocation ?: return
-            _lastLocation.value = DeviceLocation(value.latitude, value.longitude)
+            val location = result.lastLocation ?: return
 
-            // Send first location immediately (matches iOS behavior)
-            if (!sentFirstLocation) {
-                sentFirstLocation = true
-                scope?.launch { sendCurrentLocation() }
+            // Filter by accuracy: drop readings worse than 50m horizontal error
+            if (location.accuracy > 0 && location.accuracy <= 50f) {
+                _lastLocation.value = DeviceLocation(location.latitude, location.longitude)
+
+                // Send first location immediately (matches iOS behavior)
+                if (!sentFirstLocation) {
+                    sentFirstLocation = true
+                    scope?.launch { sendCurrentLocation() }
+                }
+            } else {
+                Log.d(TAG, "Dropped inaccurate location: accuracy=${location.accuracy}m")
             }
         }
     }
@@ -91,9 +97,11 @@ class PlayerLocationService @Inject constructor(
             }
         }
 
-        val request = LocationRequest.Builder(Priority.PRIORITY_BALANCED_POWER_ACCURACY, 30_000L)
-            .setMinUpdateDistanceMeters(10f)
-            .setWaitForAccurateLocation(false)
+        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5_000L)
+            .setMinUpdateDistanceMeters(5f)
+            .setMinUpdateIntervalMillis(2_000L)
+            .setMaxUpdateDelayMillis(10_000L)
+            .setWaitForAccurateLocation(true)
             .build()
         client.requestLocationUpdates(request, callback, context.mainLooper)
 
@@ -112,9 +120,11 @@ class PlayerLocationService @Inject constructor(
         val lm = context.getSystemService(android.location.LocationManager::class.java) ?: return
         if (!lm.isLocationEnabled) return
 
-        val request = LocationRequest.Builder(Priority.PRIORITY_BALANCED_POWER_ACCURACY, 30_000L)
-            .setMinUpdateDistanceMeters(10f)
-            .setWaitForAccurateLocation(false)
+        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5_000L)
+            .setMinUpdateDistanceMeters(5f)
+            .setMinUpdateIntervalMillis(2_000L)
+            .setMaxUpdateDelayMillis(10_000L)
+            .setWaitForAccurateLocation(true)
             .build()
         client.requestLocationUpdates(request, callback, context.mainLooper)
 
@@ -186,10 +196,12 @@ class PlayerLocationService @Inject constructor(
             context,
             Manifest.permission.ACCESS_FINE_LOCATION,
         ) == PackageManager.PERMISSION_GRANTED
-        val coarse = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-        ) == PackageManager.PERMISSION_GRANTED
-        return fine || coarse
+
+        // Android 12+ allows granting COARSE-only via "approximate location".
+        // We require FINE because player tracking is useless at 100-500m resolution.
+        if (!fine) {
+            Log.w(TAG, "ACCESS_FINE_LOCATION not granted; location tracking disabled")
+        }
+        return fine
     }
 }

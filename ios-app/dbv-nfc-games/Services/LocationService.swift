@@ -22,8 +22,10 @@ final class LocationService: NSObject, ObservableObject {
     override init() {
         super.init()
         locationManager.delegate = self
-        locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
-        locationManager.distanceFilter = 10 // meters
+        locationManager.desiredAccuracy = kCLLocationAccuracyBestForNavigation
+        locationManager.distanceFilter = 5 // meters
+        locationManager.pausesLocationUpdatesAutomatically = false
+        locationManager.activityType = .otherNavigation
     }
 
     // MARK: - Public API
@@ -88,6 +90,7 @@ final class LocationService: NSObject, ObservableObject {
     private func sendCurrentLocation() async {
         guard NetworkMonitor.shared.isOnline else { return }
         guard let location = lastLocation,
+              location.horizontalAccuracy > 0 && location.horizontalAccuracy <= 50,
               let apiClient, let gameId, let token else { return }
 
         do {
