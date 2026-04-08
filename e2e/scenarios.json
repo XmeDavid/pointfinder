@@ -39,6 +39,8 @@
     { "id": "N13", "name": "Duplicate submission (idempotency key)",    "api": true,  "web": false, "mobile": false },
     { "id": "N14", "name": "answerType=none forces presence false",      "api": true,  "web": false, "mobile": false },
     { "id": "P25", "name": "requirePresenceToSubmit enforcement",        "api": true,  "web": false, "mobile": false },
-    { "id": "P26", "name": "WebSocket real-time broadcasts",             "api": true,  "web": false, "mobile": false }
+    { "id": "P26", "name": "WebSocket real-time broadcasts",             "api": true,  "web": false, "mobile": false },
+    { "id": "P27", "name": "Mark-completed rescue flow",                 "api": true,  "web": true,  "mobile": false },
+    { "id": "P28", "name": "Unlock override grant and remove",           "api": true,  "web": true,  "mobile": false }
   ]
 }
