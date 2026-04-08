@@ -1,4 +1,10 @@
-import type { AnswerType, Game, GameStatus, User } from "@/types";
+import type {
+  AnswerType,
+  Game,
+  GameStatus,
+  OperatorSnapshotResponse,
+  User,
+} from "@/types";
 import apiClient from "./client";
 
 export interface CreateGameDto {
@@ -115,6 +121,22 @@ export const gamesApi = {
 
   getById: async (id: string): Promise<Game> => {
     const { data } = await apiClient.get(`/games/${id}`);
+    return data;
+  },
+
+  /**
+   * Canonical "give me the current state of this game" call.
+   *
+   * Operators reach for this on tab re-focus, WebSocket reconnect, or any
+   * time cached dashboard state may have drifted. The backend endpoint
+   * branches on caller role; operator JWTs get `OperatorSnapshotResponse`,
+   * player JWTs get `PlayerSnapshotResponse`. The web admin only ever calls
+   * this as an operator, so the return type is narrowed accordingly.
+   *
+   * See docs/realtime-and-mobile.md §7 "State Snapshot Contract".
+   */
+  getSnapshot: async (id: string): Promise<OperatorSnapshotResponse> => {
+    const { data } = await apiClient.get(`/games/${id}/snapshot`);
     return data;
   },
 

@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { connectWebSocket, disconnectWebSocket } from "@/lib/api/websocket";
 import { useOperatorPresenceStore, type OperatorPresence } from "./useOperatorPresence";
+import { invalidateSnapshotSupersededQueries } from "./useGameSnapshot";
 
 /**
  * Hook that connects to the game's WebSocket topic and invalidates
@@ -102,6 +103,18 @@ export function useGameWebSocket(gameId: string | undefined): string | null {
       }
     }, (errorMessage) => {
       setConnectionError(errorMessage);
+    }, () => {
+      // STOMP client re-established a connection after dropping. Per the
+      // snapshot contract (docs/realtime-and-mobile.md §7), we cannot trust
+      // that we saw every broadcast between the drop and the reconnect, so
+      // we fall back to the canonical recovery path: invalidate every
+      // operator-dashboard query key the snapshot supersedes.
+      const currentGameId = gameIdRef.current;
+      if (!currentGameId) return;
+      console.info(
+        `[snapshot] WebSocket reconnected — refreshing operator dashboard for game ${currentGameId}`,
+      );
+      invalidateSnapshotSupersededQueries(queryClient, currentGameId);
     });
 
     return () => {

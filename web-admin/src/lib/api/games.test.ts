@@ -214,6 +214,53 @@ describe("gamesApi.update", () => {
   });
 });
 
+// ─── gamesApi.getSnapshot ────────────────────────────────────────────────────
+
+describe("gamesApi.getSnapshot", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("calls the snapshot endpoint and returns the operator snapshot", async () => {
+    const snapshot = {
+      stateVersion: 42,
+      serverTime: "2026-04-08T14:23:05.817Z",
+      game: {
+        id: "g1",
+        name: "Snap Game",
+        description: "",
+        status: "live",
+        unlockTrigger: "CHECK_IN",
+        tileSource: "osm",
+        startDate: null,
+        endDate: null,
+        uniformAssignment: false,
+        broadcastEnabled: false,
+        broadcastCode: null,
+      },
+      teams: [],
+      leaderboard: [],
+      pendingReviews: 3,
+      activeUploads: 1,
+      needsAttention: 0,
+    };
+    (apiClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({ data: snapshot });
+
+    const result = await gamesApi.getSnapshot("g1");
+
+    expect(apiClient.get).toHaveBeenCalledWith("/games/g1/snapshot");
+    expect(result).toEqual(snapshot);
+    expect(result.stateVersion).toBe(42);
+    expect(result.pendingReviews).toBe(3);
+  });
+
+  it("propagates network errors from the api client", async () => {
+    (apiClient.get as ReturnType<typeof vi.fn>).mockRejectedValue(new Error("Network down"));
+
+    await expect(gamesApi.getSnapshot("g2")).rejects.toThrow("Network down");
+  });
+});
+
 // ─── gamesApi.updateStatus ───────────────────────────────────────────────────
 
 describe("gamesApi.updateStatus", () => {

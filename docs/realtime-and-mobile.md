@@ -30,8 +30,9 @@ The backend exposes a STOMP WebSocket endpoint with SockJS fallback.
 
 Two hooks manage WebSocket subscriptions:
 
-- **`useGameWebSocket`**: Subscribes to game topics with JWT auth. On message receipt, triggers React Query cache invalidation so UI data refreshes automatically.
+- **`useGameWebSocket`**: Subscribes to game topics with JWT auth. On message receipt, triggers React Query cache invalidation so UI data refreshes automatically. Also passes an `onReconnect` callback to `connectWebSocket` that fires the snapshot-supersede invalidation on every reconnect after the first (Slice 3 — see §7).
 - **`useBroadcastWebSocket`**: Public broadcast for spectator/broadcast games. Uses `X-Broadcast-Code` header instead of JWT (no authentication required).
+- **`useGameSnapshot` / `useVisibilityRefresh`**: Canonical recovery hooks for the operator dashboard. `useVisibilityRefresh(gameId)` is mounted at the game-detail root (`GameShell`) and invalidates the snapshot-supersede query key set whenever `document.visibilityState` flips to `visible` — the web-admin equivalent of iOS `scenePhase == .active` and Android `ON_RESUME` wiring. See §7.
 
 ### iOS (Native WebSocket)
 
@@ -397,16 +398,43 @@ The pattern every realtime client should implement:
 
 See `docs/api-reference.md` for full field-by-field examples.
 
-### Wiring status per platform (as of Slice 2)
+### Wiring status per platform (as of Slice 3)
 
 | Platform | Snapshot wired? | Notes |
 |---|---|---|
 | Backend | Yes | Endpoint, DTOs, service, state version bump all landed |
-| Web admin | **Not yet** | Slice 3 — hook into React Query cache invalidation on reconnect |
+| Web admin | **Slice 3: complete** | `web-admin/src/lib/api/games.ts:138` — `gamesApi.getSnapshot()`; `web-admin/src/hooks/useGameSnapshot.ts` — `useGameSnapshot()`, `useVisibilityRefresh()`, and `invalidateSnapshotSupersededQueries()`; `web-admin/src/features/game-detail/GameShell.tsx:20` — `useVisibilityRefresh(gameId)` mounted at the game-detail root so every layout (classic, setup, monitor, review) inherits it; `web-admin/src/lib/api/websocket.ts:19` — `connectWebSocket` accepts an `onReconnect` callback that only fires on second-and-subsequent connects (distinguished via an internal `hasConnectedOnce` flag); `web-admin/src/hooks/useGameWebSocket.ts:117` — passes the reconnect callback that invalidates the same query keys as `useVisibilityRefresh`. |
 | iOS | **Slice 2: complete** | `AppState+Snapshot.swift` — `refreshFromSnapshot()` method; `MainTabView.swift` — `scenePhase == .active` wiring; `AppState.swift` — realtime reconnect trigger |
 | Android | **Slice 2: complete** | `PlayerRepository.kt:132` — `refreshFromSnapshot()`; `PlayerViewModel.kt:217` — ViewModel wrapper; `AppNavigation.kt:605` — `ON_RESUME` wiring (replaces `refresh()`); `CompanionApi.kt` — snapshot endpoint |
 
 Slice 1 is strictly backend. Slices 2 and 3 wire the clients.
+
+### Web admin foreground & reconnect refresh (Slice 3 detail)
+
+The operator dashboard has two refresh entry points that both converge on
+the same "invalidate the snapshot-supersede query key set" behaviour:
+
+1. **Tab re-focus** — `useVisibilityRefresh(gameId)` listens for
+   `document.visibilitychange` and, when the tab transitions to
+   `visible`, invalidates the snapshot-supersede set. React Query then
+   refetches each key lazily as widgets read it. This matters because
+   `staleTime: 30s` (the web-admin default) only marks data as stale for
+   the *next* access — it never auto-refetches a backgrounded tab. A tab
+   that sits behind another window for 30 minutes previously drifted
+   silently until the next inbound broadcast, which may never arrive if
+   the WebSocket dropped while backgrounded.
+2. **WebSocket reconnect** — `connectWebSocket` tracks a per-instance
+   `hasConnectedOnce` flag and only fires `onReconnect` on the second
+   and subsequent successful `onConnect`s. The first connection at mount
+   time is skipped because React Query has already fetched fresh data.
+   `useGameWebSocket` passes a reconnect callback that runs the same
+   invalidation as `useVisibilityRefresh`.
+
+Both entry points log a single `console.info` line of the form
+`[snapshot] … refreshing operator dashboard for game {gameId}` for
+observability. The supersede set lives in a single `const` inside
+`useGameSnapshot.ts` and intentionally omits `team-locations` (those
+arrive on their own 30s channel and do not bump `games.state_version`).
 
 ---
 

@@ -15,12 +15,20 @@ let stompClient: Client | null = null;
 export function connectWebSocket(
   gameId: string,
   onMessage: (payload: { type: string; data: unknown }) => void,
-  onError?: (message: string) => void
+  onError?: (message: string) => void,
+  onReconnect?: () => void
 ): Client {
   // Disconnect existing client if any
   if (stompClient) {
     stompClient.deactivate();
   }
+
+  // Track whether we've already seen a successful onConnect for this client.
+  // STOMP.js calls onConnect both on the first connection and on every
+  // subsequent reconnect, so we need to distinguish the two ourselves.
+  // Only a *re*-connect should trigger snapshot refresh — the first connect
+  // happens at mount time, when React Query has already fetched fresh data.
+  let hasConnectedOnce = false;
 
   const client = new Client({
     brokerURL: getBrokerURL(),
@@ -44,6 +52,20 @@ export function connectWebSocket(
           console.error("Failed to parse WebSocket message:", e);
         }
       });
+
+      // Fire the reconnect hook on every connect *after* the first. This is
+      // the web-admin equivalent of iOS `MobileRealtimeClient.onReconnect`
+      // and Android's `ON_RESUME` wiring — the canonical recovery pattern
+      // from docs/realtime-and-mobile.md §7 "State Snapshot Contract".
+      if (hasConnectedOnce) {
+        try {
+          onReconnect?.();
+        } catch (e) {
+          console.error("onReconnect callback failed:", e);
+        }
+      } else {
+        hasConnectedOnce = true;
+      }
     },
     onStompError: (frame) => {
       const raw = frame.headers["message"] || "WebSocket connection error";

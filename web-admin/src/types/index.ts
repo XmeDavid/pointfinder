@@ -153,3 +153,106 @@ export interface ActivityEvent {
   message: string;
   timestamp: string;
 }
+
+// ─── State Snapshot Contract (P0 Track 2 Slices 1-3) ─────────────────────────
+// Mirrors backend DTOs at:
+//   backend/src/main/java/com/prayer/pointfinder/dto/response/OperatorSnapshotResponse.java
+//   backend/src/main/java/com/prayer/pointfinder/dto/response/PlayerSnapshotResponse.java
+// Any structural drift between these types and the backend DTOs is a bug.
+// See docs/realtime-and-mobile.md §7 "State Snapshot Contract".
+
+export interface SnapshotLeaderboardEntry {
+  teamId: string;
+  teamName: string;
+  color: string;
+  points: number;
+  completedChallenges: number;
+}
+
+export interface OperatorSnapshotGameInfo {
+  id: string;
+  name: string;
+  description: string;
+  /** Canonical game status: "setup", "live", or "ended". */
+  status: GameStatus;
+  /** "CHECK_IN", "SUBMISSION", or "COMPLETED". */
+  unlockTrigger: string;
+  tileSource: string;
+  startDate: string | null;
+  endDate: string | null;
+  uniformAssignment: boolean | null;
+  broadcastEnabled: boolean | null;
+  broadcastCode: string | null;
+}
+
+export interface OperatorSnapshotTeamInfo {
+  id: string;
+  name: string;
+  color: string;
+  score: number;
+  memberCount: number;
+}
+
+export interface OperatorSnapshotResponse {
+  /**
+   * Monotonically-increasing state version. Bumped by the backend on every
+   * state-mutating, snapshot-relevant broadcast. Compare against the
+   * `stateVersion` carried on realtime envelopes to decide whether to replace
+   * cached state wholesale.
+   */
+  stateVersion: number;
+  /** Server-side wall clock at the moment the snapshot was built. */
+  serverTime: string;
+  game: OperatorSnapshotGameInfo;
+  teams: OperatorSnapshotTeamInfo[];
+  leaderboard: SnapshotLeaderboardEntry[];
+  /** Count of submissions currently in `pending` status. */
+  pendingReviews: number;
+  /** Count of upload sessions currently active and not yet expired. */
+  activeUploads: number;
+  /** Count of completed-but-unlinked upload sessions past the needs-attention threshold. */
+  needsAttention: number;
+}
+
+// Player snapshot — deliberately carries NO scoring information at any
+// nesting depth. See PlayerSnapshotResponse.java for the product rule.
+
+export interface PlayerSnapshotGameInfo {
+  id: string;
+  name: string;
+  description: string;
+  status: GameStatus;
+  unlockTrigger: string;
+  tileSource: string;
+  startDate: string | null;
+  endDate: string | null;
+}
+
+export interface PlayerSnapshotTeamInfo {
+  id: string;
+  name: string;
+  color: string;
+  memberCount: number;
+  // NO score field. Players do not see scores.
+}
+
+export interface PlayerSnapshotSubmissionSummary {
+  id: string;
+  baseId: string;
+  challengeId: string;
+  /** "pending", "approved", "rejected", "correct", "incorrect". NO points. */
+  status: string;
+  submittedAt: string;
+  fileUrl?: string;
+  fileUrls?: string[];
+}
+
+export interface PlayerSnapshotResponse {
+  stateVersion: number;
+  serverTime: string;
+  game: PlayerSnapshotGameInfo;
+  team: PlayerSnapshotTeamInfo;
+  progress: unknown[];
+  submissions: PlayerSnapshotSubmissionSummary[];
+  uploadSessions: unknown[];
+}

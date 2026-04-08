@@ -56,6 +56,7 @@ describe("useGameWebSocket", () => {
     expect(mockConnectWebSocket).toHaveBeenCalledWith(
       "game-1",
       expect.any(Function),
+      expect.any(Function),
       expect.any(Function)
     );
   });
@@ -237,6 +238,34 @@ describe("useGameWebSocket", () => {
     expect(useOperatorPresenceStore.getState().operators).toEqual(operators);
   });
 
+  it("invalidates snapshot-supersede keys when WebSocket reconnects", () => {
+    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+    renderHook(() => useGameWebSocket("game-1"), { wrapper });
+
+    // The 4th arg passed to connectWebSocket is the onReconnect callback.
+    const onReconnect = mockConnectWebSocket.mock.calls[0][3];
+    expect(typeof onReconnect).toBe("function");
+
+    act(() => {
+      onReconnect();
+    });
+
+    // Reconnect should invalidate the full operator-dashboard supersede set
+    // (same keys as `useVisibilityRefresh`).
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["game-snapshot", "game-1"] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["game", "game-1"] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["leaderboard", "game-1"] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["dashboard-stats", "game-1"] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["submissions", "game-1"] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["activity", "game-1"] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["progress", "game-1"] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["teams", "game-1"] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["bases", "game-1"] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["challenges", "game-1"] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["assignments", "game-1"] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["notifications", "game-1"] });
+  });
+
   it("re-subscribes after disconnect and reconnect", () => {
     const { unmount } = renderHook(() => useGameWebSocket("game-1"), { wrapper });
 
@@ -255,6 +284,7 @@ describe("useGameWebSocket", () => {
     expect(mockConnectWebSocket).toHaveBeenCalledTimes(1);
     expect(mockConnectWebSocket).toHaveBeenCalledWith(
       "game-1",
+      expect.any(Function),
       expect.any(Function),
       expect.any(Function)
     );
