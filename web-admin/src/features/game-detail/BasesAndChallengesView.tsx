@@ -1,5 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { Link as RouterLink, useParams } from "react-router-dom";
+import { useTagColorFilter } from "./useTagColorFilter";
+import { FilterBar } from "./FilterBar";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   MapPin,
@@ -15,6 +17,8 @@ import {
   CheckCircle,
   Eye,
   Info,
+  Tag,
+  StickyNote,
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -265,6 +269,72 @@ export function BasesAndChallengesView() {
 
   const isLoading = basesLoading || challengesLoading;
 
+  // For the filter bar, the "items" are pairs. A pair matches if EITHER its
+  // base OR its challenge satisfies the tag/color predicates.
+  // We build a synthetic flat representation so the hook can aggregate tags
+  // and colors from both sides, then use a custom matchFn for pair-level logic.
+  const pairFilterItems = useMemo(
+    () =>
+      aggregate.pairs.map((pair) => ({
+        // Merge tags from both base and challenge for aggregation
+        tags: [
+          ...(pair.base.tags ?? []),
+          ...(pair.challenge.tags ?? []),
+        ],
+        // Use base color as primary; challenge color as fallback for aggregation
+        color: pair.base.color ?? pair.challenge.color,
+        _pair: pair,
+      })),
+    [aggregate.pairs],
+  );
+
+  const pairMatchFn = useCallback(
+    (
+      item: (typeof pairFilterItems)[number],
+      selectedTags: string[],
+      selectedColors: string[],
+    ) => {
+      const { base, challenge } = item._pair;
+
+      // Tags AND: base matches if it has ALL selected tags, challenge same —
+      // pair matches if base OR challenge passes
+      const baseTags = (base.tags ?? []).map((t) => t.trim());
+      const challengeTags = (challenge.tags ?? []).map((t) => t.trim());
+      const tagPass =
+        selectedTags.length === 0 ||
+        selectedTags.every((st) => baseTags.includes(st)) ||
+        selectedTags.every((st) => challengeTags.includes(st));
+
+      // Colors OR: pair matches if base color OR challenge color is selected
+      const colorPass =
+        selectedColors.length === 0 ||
+        (base.color !== undefined && selectedColors.includes(base.color)) ||
+        (challenge.color !== undefined && selectedColors.includes(challenge.color));
+
+      return tagPass && colorPass;
+    },
+    [],
+  );
+
+  const {
+    filtered: filteredPairItems,
+    allTags: pairAllTags,
+    allColors: pairAllColors,
+    tagCounts: pairTagCounts,
+    selectedTags: pairSelectedTags,
+    selectedColors: pairSelectedColors,
+    toggleTag: pairToggleTag,
+    toggleColor: pairToggleColor,
+    clearFilters: pairClearFilters,
+    hasActive: pairFilterHasActive,
+    isVisible: pairFilterIsVisible,
+  } = useTagColorFilter(pairFilterItems, "pairs", pairMatchFn);
+
+  const filteredPairs = useMemo(
+    () => filteredPairItems.map((item) => item._pair),
+    [filteredPairItems],
+  );
+
   // Bases that don't yet have a fixed challenge — used as the "target pool"
   // when linking an orphaned challenge to a base from this view.
   const availableBasesForOrphans = useMemo(
@@ -324,6 +394,20 @@ export function BasesAndChallengesView() {
         <span className="text-xs">{t("basesAndChallenges.aggregateNote")}</span>
       </Alert>
 
+      {/* Sticky filter bar — only shown when pairs have tags/colors */}
+      <FilterBar
+        allTags={pairAllTags}
+        allColors={pairAllColors}
+        tagCounts={pairTagCounts}
+        selectedTags={pairSelectedTags}
+        selectedColors={pairSelectedColors}
+        toggleTag={pairToggleTag}
+        toggleColor={pairToggleColor}
+        clearFilters={pairClearFilters}
+        hasActive={pairFilterHasActive}
+        isVisible={pairFilterIsVisible}
+      />
+
       {isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -346,15 +430,29 @@ export function BasesAndChallengesView() {
               <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
                 {t("basesAndChallenges.sectionPairs")}
               </h2>
-              <div className="grid gap-3 md:grid-cols-2">
-                {aggregate.pairs.map((pair) => (
-                  <PairCard
-                    key={pair.base.id}
-                    pair={pair}
-                    onEdit={() => openEdit(pair)}
-                  />
-                ))}
-              </div>
+              {filteredPairs.length === 0 && pairFilterHasActive ? (
+                <div className="py-12 text-center">
+                  <p className="text-muted-foreground text-sm">{t("basesAndChallenges.noResults")}</p>
+                  <button
+                    type="button"
+                    onClick={pairClearFilters}
+                    className="mt-3 text-xs text-primary hover:underline"
+                    data-testid="pairs-no-results-clear"
+                  >
+                    {t("filterBar.clear")}
+                  </button>
+                </div>
+              ) : (
+                <div className="grid gap-3 md:grid-cols-2">
+                  {filteredPairs.map((pair) => (
+                    <PairCard
+                      key={pair.base.id}
+                      pair={pair}
+                      onEdit={() => openEdit(pair)}
+                    />
+                  ))}
+                </div>
+              )}
             </section>
           )}
 
@@ -863,7 +961,15 @@ function PairCard({ pair, onEdit }: { pair: BaseChallengePair; onEdit: () => voi
   const { base, challenge } = pair;
 
   return (
-    <Card data-testid={`pair-card-${base.id}`} aria-label={t("basesAndChallenges.pairCardAriaLabel")}>
+    <Card data-testid={`pair-card-${base.id}`} aria-label={t("basesAndChallenges.pairCardAriaLabel")} className="overflow-hidden">
+      {/* Color stripe — uses base color (base is the primary identity) */}
+      {base.color && (
+        <div
+          className="h-2 w-full"
+          style={{ backgroundColor: base.color }}
+          data-testid="pair-color-stripe"
+        />
+      )}
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
@@ -882,6 +988,25 @@ function PairCard({ pair, onEdit }: { pair: BaseChallengePair; onEdit: () => voi
                 {base.description}
               </CardDescription>
             )}
+            {/* Base tag chips — show up to 5 before "+N more" */}
+            {base.tags && base.tags.length > 0 && (
+              <div className="mt-1.5 flex flex-wrap gap-1">
+                {base.tags.slice(0, 5).map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                  >
+                    <Tag className="h-2.5 w-2.5" />
+                    {tag}
+                  </span>
+                ))}
+                {base.tags.length > 5 && (
+                  <span className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                    +{base.tags.length - 5}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
           <Button
             variant="ghost"
@@ -895,12 +1020,27 @@ function PairCard({ pair, onEdit }: { pair: BaseChallengePair; onEdit: () => voi
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="rounded-md border border-border bg-muted/30 p-3">
+        <div
+          className="rounded-md border bg-muted/30 p-3"
+          style={challenge.color ? { borderColor: challenge.color } : undefined}
+        >
           <div className="flex items-center gap-2">
             <Puzzle className="h-4 w-4 text-chart-2 shrink-0" />
             <p className="font-medium truncate" title={challenge.title}>
               {challenge.title}
             </p>
+            {/* Has reviewer hints indicator */}
+            {challenge.operatorNotes?.trim() && (
+              <span
+                role="img"
+                aria-label={t("challenges.hasReviewerHints")}
+                title={t("challenges.hasReviewerHints")}
+                className="inline-flex items-center text-muted-foreground shrink-0"
+                data-testid={`pair-challenge-has-notes-${base.id}`}
+              >
+                <StickyNote className="h-3.5 w-3.5" />
+              </span>
+            )}
           </div>
           {challenge.description && (
             <p className="mt-1 text-xs text-muted-foreground line-clamp-1" title={challenge.description}>
@@ -942,6 +1082,25 @@ function PairCard({ pair, onEdit }: { pair: BaseChallengePair; onEdit: () => voi
               </Badge>
             )}
           </div>
+          {/* Challenge tag chips — show up to 5 before "+N more" */}
+          {challenge.tags && challenge.tags.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {challenge.tags.slice(0, 5).map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-xs text-muted-foreground"
+                >
+                  <Tag className="h-2.5 w-2.5" />
+                  {tag}
+                </span>
+              ))}
+              {challenge.tags.length > 5 && (
+                <span className="inline-flex items-center rounded-full border border-border bg-background px-2 py-0.5 text-xs text-muted-foreground">
+                  +{challenge.tags.length - 5}
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2 text-xs">

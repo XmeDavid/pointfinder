@@ -2,7 +2,9 @@ import { useMemo, useState, useEffect } from "react";
 import { filterAvailableFixedChallenges } from "./dropdown-filters";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, MapPin, Wifi, WifiOff, Trash2, Pencil, List, Map as MapIcon, EyeOff } from "lucide-react";
+import { Plus, MapPin, Wifi, WifiOff, Trash2, Pencil, List, Map as MapIcon, EyeOff, Tag } from "lucide-react";
+import { useTagColorFilter } from "./useTagColorFilter";
+import { FilterBar } from "./FilterBar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormLabel } from "@/components/ui/form-label";
@@ -27,6 +29,10 @@ import { TagInput } from "@/components/TagInput";
 import type { Base } from "@/types";
 
 type ViewMode = "list" | "map";
+
+// ---------------------------------------------------------------------------
+// Main component
+// ---------------------------------------------------------------------------
 
 export function BasesPage() {
   const { t } = useTranslation();
@@ -76,6 +82,21 @@ export function BasesPage() {
         return ch.unlocksBaseIds!.map((toBaseId) => ({ fromBaseId: sourceBase.id, toBaseId }));
       });
   }, [challenges, bases]);
+
+  // useTagColorFilter: AND-within-tags, OR-within-colors, AND across dimensions
+  const {
+    filtered: filteredBases,
+    allTags,
+    allColors,
+    tagCounts,
+    selectedTags,
+    selectedColors,
+    toggleTag,
+    toggleColor,
+    clearFilters,
+    hasActive: filterHasActive,
+    isVisible: filterIsVisible,
+  } = useTagColorFilter(bases, "bases");
 
   const createBase = useMutation({
     mutationFn: (data: CreateBaseDto) => basesApi.create({ ...data, gameId: gameId! }),
@@ -148,6 +169,20 @@ export function BasesPage() {
       </div>
       {actionError && <Alert onDismiss={() => setActionError("")}>{actionError}</Alert>}
 
+      {/* Sticky filter bar — only shown when tags/colors exist */}
+      <FilterBar
+        allTags={allTags}
+        allColors={allColors}
+        tagCounts={tagCounts}
+        selectedTags={selectedTags}
+        selectedColors={selectedColors}
+        toggleTag={toggleTag}
+        toggleColor={toggleColor}
+        clearFilters={clearFilters}
+        hasActive={filterHasActive}
+        isVisible={filterIsVisible}
+      />
+
       {isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -156,11 +191,17 @@ export function BasesPage() {
         </div>
       ) : view === "list" ? (
         <div className="space-y-3">
-          {bases.length === 0 ? (
+          {filteredBases.length === 0 && bases.length > 0 ? (
+            <Card className="py-12"><CardContent className="text-center"><p className="text-muted-foreground">{t("bases.noResults")}</p><button type="button" onClick={clearFilters} className="mt-3 text-xs text-primary hover:underline" data-testid="bases-no-results-clear">{t("filterBar.clear")}</button></CardContent></Card>
+          ) : bases.length === 0 ? (
             <Card className="py-12"><CardContent className="text-center"><MapPin className="mx-auto h-8 w-8 text-muted-foreground mb-2" /><p className="text-muted-foreground">{t("bases.noBasesDescription")}</p></CardContent></Card>
           ) : (
-            bases.map((base) => (
-              <Card key={base.id}>
+            filteredBases.map((base) => (
+              <Card key={base.id} className="overflow-hidden">
+                {/* Color stripe on card top */}
+                {base.color && (
+                  <div className="h-2 w-full" style={{ backgroundColor: base.color }} />
+                )}
                 <CardContent className="flex flex-wrap items-center gap-4 p-4">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-chart-1/10"><MapPin className="h-5 w-5 text-chart-1" /></div>
                   <div className="flex-1 min-w-0">
@@ -182,6 +223,25 @@ export function BasesPage() {
                     </div>
                     <p className="text-sm text-muted-foreground truncate" title={base.description}>{base.description}</p>
                     <p className="text-xs text-muted-foreground mt-1">{base.lat.toFixed(4)}, {base.lng.toFixed(4)}</p>
+                    {/* Tag chips — show up to 5 before "+N more" */}
+                    {base.tags && base.tags.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {base.tags.slice(0, 5).map((tag) => (
+                          <span
+                            key={tag}
+                            className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                          >
+                            <Tag className="h-2.5 w-2.5" />
+                            {tag}
+                          </span>
+                        ))}
+                        {base.tags.length > 5 && (
+                          <span className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                            +{base.tags.length - 5}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 ml-auto">
                     {/* NFC status is read-only -- set by mobile app when tag is written */}
@@ -201,7 +261,7 @@ export function BasesPage() {
         <Card className="overflow-hidden">
           <CardContent className="p-0">
             <BaseMapView
-              bases={bases.map((base) => ({
+              bases={filteredBases.map((base) => ({
                 ...base,
                 fixedChallengeName: base.fixedChallengeId
                   ? challengeById.get(base.fixedChallengeId)?.title

@@ -250,9 +250,8 @@
     "colorLabel": "Cor",
     "filterByTag": "Filtrar por etiqueta",
     "filterByTagPlaceholder": "Procurar por etiqueta...",
-    "filterByColor": "Filtrar por cor",
-    "filterClear": "Limpar filtros",
-    "noResults": "Nenhuma base corresponde aos filtros atuais."
+    "filterClear": "Limpar",
+    "noResults": "Nenhuma base corresponde aos filtros atuais — tente limpar um filtro."
   },
   "basesAndChallenges": {
     "title": "Bases & Desafios",
@@ -291,7 +290,8 @@
     "linkedChallengeMissing": "O desafio ligado já não existe.",
     "pointsLabel": "Pontos",
     "nfcLinkedTag": "NFC ligado",
-    "nfcNotLinkedTag": "NFC não ligado"
+    "nfcNotLinkedTag": "NFC não ligado",
+    "noResults": "Nenhum par corresponde aos filtros atuais — tente limpar um filtro."
   },
   "challenges": {
     "addChallenge": "Adicionar Desafio",
@@ -336,11 +336,11 @@
     "colorLabel": "Cor",
     "filterByTag": "Filtrar por etiqueta",
     "filterByTagPlaceholder": "Procurar por etiqueta...",
-    "filterByColor": "Filtrar por cor",
-    "filterClear": "Limpar filtros",
-    "noResults": "Nenhum desafio corresponde aos filtros atuais.",
+    "filterClear": "Limpar",
+    "noResults": "Nenhum desafio corresponde aos filtros atuais — tente limpar um filtro.",
     "deleteConfirmTitle": "Eliminar este desafio?",
-    "deleteConfirmDescription": "Este desafio e todas as suas atribuições serão permanentemente eliminados."
+    "deleteConfirmDescription": "Este desafio e todas as suas atribuições serão permanentemente eliminados.",
+    "hasReviewerHints": "Tem dicas para o revisor"
   },
   "assignments": {
     "title": "Atribuir Desafios",
@@ -510,7 +510,8 @@
     "markCompletedReasonPlaceholder": "Porque é preciso resgate? ex. a equipa fez a tarefa mas o sistema bloqueou a submissão",
     "markCompletedPointsOverrideLabel": "Pontos (opcional)",
     "markCompletedConfirm": "Marcar como concluído",
-    "markCompletedSuccess": "Desafio marcado como concluído."
+    "markCompletedSuccess": "Desafio marcado como concluído.",
+    "reviewerHintLabel": "Dica para o revisor"
   },
   "teamDetail": {
     "backToLeaderboard": "Voltar à Classificação",
@@ -789,5 +790,11 @@
     "remove": "Remover etiqueta {{tag}}",
     "limitReached": "Máximo de {{max}} etiquetas atingido",
     "hint": "{{count}}/{{max}} etiquetas"
+  },
+  "filterBar": {
+    "ariaLabel": "Filtrar itens",
+    "label": "Filtrar:",
+    "filterByColor": "Filtrar por cor",
+    "clear": "Limpar"
   }
 }

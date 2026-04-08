@@ -335,6 +335,145 @@ describe("BasesAndChallengesView", () => {
     expect(challengeCall[1].operatorNotes).toBe("New private note");
   });
 
+  // W3 — color stripe and tag chips on PairCard
+  it("renders the color stripe when the base has a color", async () => {
+    vi.mocked(basesApi.listByGame).mockResolvedValue([
+      makeBase("b1", { fixedChallengeId: "c1", color: "#3b82f6" }),
+    ]);
+    vi.mocked(challengesApi.listByGame).mockResolvedValue([makeChallenge("c1")]);
+
+    renderView();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("pair-card-b1")).toBeTruthy();
+    });
+
+    // Fix 15: query by testid instead of fragile [style*="background-color"] selector.
+    const stripe = screen.getByTestId("pair-color-stripe");
+    expect(stripe).toBeTruthy();
+    expect((stripe as HTMLElement).style.backgroundColor).toBe("rgb(59, 130, 246)");
+  });
+
+  // Filter bar — Fix 3: BasesAndChallengesView must have a filter bar.
+  it("renders the filter bar when pairs have tags", async () => {
+    vi.mocked(basesApi.listByGame).mockResolvedValue([
+      makeBase("b1", { fixedChallengeId: "c1", tags: ["morning", "staffed"] }),
+    ]);
+    vi.mocked(challengesApi.listByGame).mockResolvedValue([makeChallenge("c1")]);
+
+    renderView();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("filter-tag-morning")).toBeTruthy();
+    });
+    expect(screen.getByTestId("filter-tag-staffed")).toBeTruthy();
+  });
+
+  it("filter bar: clicking a tag chip filters pairs to those matching ALL selected tags (AND semantics)", async () => {
+    vi.mocked(basesApi.listByGame).mockResolvedValue([
+      makeBase("b1", { fixedChallengeId: "c1", tags: ["morning", "staffed"] }),
+      makeBase("b2", { fixedChallengeId: "c2", tags: ["morning"] }),
+    ]);
+    vi.mocked(challengesApi.listByGame).mockResolvedValue([
+      makeChallenge("c1", { title: "Both tags" }),
+      makeChallenge("c2", { title: "Morning only" }),
+    ]);
+
+    renderView();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("filter-tag-morning")).toBeTruthy();
+    });
+
+    // Select "morning" — both pairs visible
+    fireEvent.click(screen.getByTestId("filter-tag-morning"));
+    await waitFor(() => {
+      expect(screen.getByTestId("pair-card-b1")).toBeTruthy();
+      expect(screen.getByTestId("pair-card-b2")).toBeTruthy();
+    });
+
+    // Also select "staffed" — AND semantics: only b1 should remain
+    fireEvent.click(screen.getByTestId("filter-tag-staffed"));
+    await waitFor(() => {
+      expect(screen.getByTestId("pair-card-b1")).toBeTruthy();
+    });
+    expect(screen.queryByTestId("pair-card-b2")).toBeNull();
+  });
+
+  it("filter bar: pair matches if EITHER base OR challenge tags satisfy the filter", async () => {
+    vi.mocked(basesApi.listByGame).mockResolvedValue([
+      // base has no tags, challenge has "outdoor"
+      makeBase("b1", { fixedChallengeId: "c1" }),
+    ]);
+    vi.mocked(challengesApi.listByGame).mockResolvedValue([
+      makeChallenge("c1", { title: "Outdoor challenge", tags: ["outdoor"] }),
+    ]);
+
+    renderView();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("filter-tag-outdoor")).toBeTruthy();
+    });
+
+    // Clicking "outdoor" should still show pair-card-b1 because the challenge matches
+    fireEvent.click(screen.getByTestId("filter-tag-outdoor"));
+    await waitFor(() => {
+      expect(screen.getByTestId("pair-card-b1")).toBeTruthy();
+    });
+  });
+
+  it("renders tag chips for both base tags and challenge tags on a PairCard", async () => {
+    vi.mocked(basesApi.listByGame).mockResolvedValue([
+      makeBase("b1", { fixedChallengeId: "c1", tags: ["autonomous", "morning"] }),
+    ]);
+    vi.mocked(challengesApi.listByGame).mockResolvedValue([
+      makeChallenge("c1", { tags: ["outdoor"] }),
+    ]);
+
+    renderView();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("pair-card-b1")).toBeTruthy();
+    });
+
+    const card = screen.getByTestId("pair-card-b1");
+    expect(card.textContent).toContain("autonomous");
+    expect(card.textContent).toContain("morning");
+    expect(card.textContent).toContain("outdoor");
+  });
+
+  it("renders the has-notes indicator when challenge has operator notes", async () => {
+    vi.mocked(basesApi.listByGame).mockResolvedValue([
+      makeBase("b1", { fixedChallengeId: "c1" }),
+    ]);
+    vi.mocked(challengesApi.listByGame).mockResolvedValue([
+      makeChallenge("c1", { operatorNotes: "Accept any city name" }),
+    ]);
+
+    renderView();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("pair-challenge-has-notes-b1")).toBeTruthy();
+    });
+  });
+
+  it("does NOT render the has-notes indicator when challenge has no operator notes", async () => {
+    vi.mocked(basesApi.listByGame).mockResolvedValue([
+      makeBase("b1", { fixedChallengeId: "c1" }),
+    ]);
+    vi.mocked(challengesApi.listByGame).mockResolvedValue([
+      makeChallenge("c1", { operatorNotes: undefined }),
+    ]);
+
+    renderView();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("pair-card-b1")).toBeTruthy();
+    });
+
+    expect(screen.queryByTestId("pair-challenge-has-notes-b1")).toBeNull();
+  });
+
   it("does NOT call challenge update when the base update fails", async () => {
     vi.mocked(basesApi.listByGame).mockResolvedValue([
       makeBase("b1", { fixedChallengeId: "c1" }),

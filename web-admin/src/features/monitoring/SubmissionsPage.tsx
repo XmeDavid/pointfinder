@@ -304,6 +304,30 @@ export function SubmissionsPage() {
             <div className="space-y-4">
               <div><p className="text-sm font-medium mb-1">{t("common.team")}</p><p className="text-sm text-muted-foreground">{teamMap.get(reviewingSub.teamId)?.name}</p></div>
               <div><p className="text-sm font-medium mb-1">{t("common.challenge")}</p><p className="text-sm text-muted-foreground">{challengeMap.get(reviewingSub.challengeId)?.title}</p></div>
+              {/* Reviewer hint — shown BEFORE submission content so the reviewer
+                  knows what to look for before judging (Fix 1: moved from below). */}
+              {(() => {
+                const ch = challengeMap.get(reviewingSub.challengeId);
+                const reviewerHint = ch?.operatorNotes?.trim();
+                const shouldShowCorrectAnswer = ch?.correctAnswer && ch.correctAnswer.length > 0 && ch.answerType === "text" && ch.autoValidate;
+                return (
+                  <>
+                    {reviewerHint && (
+                      <div data-testid="review-operator-notes">
+                        <p className="text-sm font-medium mb-1">{t("submissions.reviewerHintLabel")}</p>
+                        {/* Fix 8: max-h-32 + overflow-y-auto so long notes don't push buttons off-screen */}
+                        <div className="rounded-md border border-border bg-muted/50 p-3 text-sm whitespace-pre-wrap max-h-32 overflow-y-auto">{reviewerHint}</div>
+                      </div>
+                    )}
+                    {shouldShowCorrectAnswer ? (
+                      <div>
+                        <p className="text-sm font-medium mb-1">{t("submissions.correctAnswer")}</p>
+                        <div className="rounded-md bg-muted p-3 text-sm">{ch.correctAnswer?.join(", ")}</div>
+                      </div>
+                    ) : null}
+                  </>
+                );
+              })()}
               {(() => {
                 const mediaUrls = getMediaUrls(reviewingSub);
                 if (mediaUrls.length > 0) {
@@ -326,16 +350,6 @@ export function SubmissionsPage() {
               {(getMediaUrls(reviewingSub).length === 0 || reviewingSub.answer) && (
                 <div><p className="text-sm font-medium mb-1">{getMediaUrls(reviewingSub).length > 0 ? t("submissions.notes") : t("submissions.answer")}</p><div className="rounded-md bg-muted p-3 text-sm">{reviewingSub.answer || <span className="text-muted-foreground italic">{t("submissions.noNotes")}</span>}</div></div>
               )}
-              {(() => {
-                const ch = challengeMap.get(reviewingSub.challengeId);
-                const shouldShowCorrectAnswer = ch?.correctAnswer && ch.correctAnswer.length > 0 && ch.answerType === "text" && ch.autoValidate;
-                return shouldShowCorrectAnswer ? (
-                  <div>
-                    <p className="text-sm font-medium mb-1">{t("submissions.correctAnswer")}</p>
-                    <div className="rounded-md bg-muted p-3 text-sm">{ch.correctAnswer?.join(", ")}</div>
-                  </div>
-                ) : null;
-              })()}
               <div className="space-y-2"><p className="text-sm font-medium">{expectedReviewPoints != null ? t("submissions.pointsLabelWithExpected", { points: expectedReviewPoints }) : t("common.points_label")}</p><Input type="number" value={reviewPoints} onChange={(e) => setReviewPoints(parseInt(e.target.value) || 0)} /></div>
               <div className="space-y-2"><p className="text-sm font-medium">{t("submissions.feedbackLabel")}</p><Textarea value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder={t("submissions.feedbackPlaceholder")} rows={2} /></div>
             </div>

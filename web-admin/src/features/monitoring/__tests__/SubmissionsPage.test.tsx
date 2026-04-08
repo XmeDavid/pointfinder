@@ -264,3 +264,103 @@ describe("SubmissionsPage — mark-completed rescue", () => {
     });
   });
 });
+
+describe("SubmissionsPage — reviewer hint in review dialog (shown BEFORE submission content)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(teamsApi.listByGame).mockResolvedValue([makeTeam()]);
+    vi.mocked(basesApi.listByGame).mockResolvedValue([makeBase()]);
+  });
+
+  it("shows reviewer hint block when the challenge has notes", async () => {
+    vi.mocked(submissionsApi.listByGame).mockResolvedValue([makeSubmission()]);
+    vi.mocked(challengesApi.listByGame).mockResolvedValue([
+      makeChallenge({ operatorNotes: "Answer is Lisbon 1755" }),
+    ]);
+
+    renderPage();
+
+    // Open review dialog by clicking the pending submission card.
+    await waitFor(() => {
+      const cards = screen.getAllByRole("button").filter((el) =>
+        el.textContent?.includes("Find the marker"),
+      );
+      expect(cards.length).toBe(1);
+    });
+    const card = screen
+      .getAllByRole("button")
+      .filter((el) => el.textContent?.includes("Find the marker"))[0];
+    fireEvent.click(card);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("review-operator-notes")).toBeTruthy();
+    });
+
+    expect(screen.getByTestId("review-operator-notes").textContent).toContain(
+      "Answer is Lisbon 1755",
+    );
+
+    // Fix 1: verify the hint block appears BEFORE the answer content in DOM order.
+    // The hint must be rendered before any media/answer sections so reviewers
+    // see the hint first when judging the submission.
+    const dialog = screen.getByTestId("review-operator-notes").closest("[role='dialog']");
+    if (dialog) {
+      const children = Array.from(dialog.querySelectorAll("[data-testid]"));
+      const hintIdx = children.findIndex((el) => el.getAttribute("data-testid") === "review-operator-notes");
+      const approveIdx = children.findIndex((el) => el.getAttribute("data-testid") === "submission-approve-btn");
+      expect(hintIdx).toBeGreaterThanOrEqual(0);
+      expect(approveIdx).toBeGreaterThan(hintIdx);
+    }
+  });
+
+  it("does NOT show operator notes block when the challenge has no notes", async () => {
+    vi.mocked(submissionsApi.listByGame).mockResolvedValue([makeSubmission()]);
+    vi.mocked(challengesApi.listByGame).mockResolvedValue([
+      makeChallenge({ operatorNotes: undefined }),
+    ]);
+
+    renderPage();
+
+    await waitFor(() => {
+      const cards = screen.getAllByRole("button").filter((el) =>
+        el.textContent?.includes("Find the marker"),
+      );
+      expect(cards.length).toBe(1);
+    });
+    const card = screen
+      .getAllByRole("button")
+      .filter((el) => el.textContent?.includes("Find the marker"))[0];
+    fireEvent.click(card);
+
+    // Review dialog opens but no operator notes block.
+    await waitFor(() => {
+      expect(screen.getByTestId("submission-mark-completed-btn")).toBeTruthy();
+    });
+    expect(screen.queryByTestId("review-operator-notes")).toBeNull();
+  });
+
+  it("does NOT show operator notes block when the challenge has empty/whitespace notes", async () => {
+    vi.mocked(submissionsApi.listByGame).mockResolvedValue([makeSubmission()]);
+    vi.mocked(challengesApi.listByGame).mockResolvedValue([
+      makeChallenge({ operatorNotes: "   " }),
+    ]);
+
+    renderPage();
+
+    await waitFor(() => {
+      const cards = screen.getAllByRole("button").filter((el) =>
+        el.textContent?.includes("Find the marker"),
+      );
+      expect(cards.length).toBe(1);
+    });
+    const card = screen
+      .getAllByRole("button")
+      .filter((el) => el.textContent?.includes("Find the marker"))[0];
+    fireEvent.click(card);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submission-mark-completed-btn")).toBeTruthy();
+    });
+    expect(screen.queryByTestId("review-operator-notes")).toBeNull();
+  });
+});

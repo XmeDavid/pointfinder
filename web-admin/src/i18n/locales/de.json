@@ -250,9 +250,8 @@
     "colorLabel": "Farbe",
     "filterByTag": "Nach Tag filtern",
     "filterByTagPlaceholder": "Nach Tag suchen...",
-    "filterByColor": "Nach Farbe filtern",
-    "filterClear": "Filter zurücksetzen",
-    "noResults": "Keine Stationen entsprechen den aktuellen Filtern."
+    "filterClear": "Zurücksetzen",
+    "noResults": "Keine Stationen entsprechen den aktuellen Filtern — Filter zurücksetzen versuchen."
   },
   "basesAndChallenges": {
     "title": "Stationen & Challenges",
@@ -291,7 +290,8 @@
     "linkedChallengeMissing": "Die verknüpfte Challenge existiert nicht mehr.",
     "pointsLabel": "Punkte",
     "nfcLinkedTag": "NFC verknüpft",
-    "nfcNotLinkedTag": "NFC nicht verknüpft"
+    "nfcNotLinkedTag": "NFC nicht verknüpft",
+    "noResults": "Keine Paare entsprechen den aktuellen Filtern — Filter zurücksetzen versuchen."
   },
   "challenges": {
     "addChallenge": "Challenge hinzufügen",
@@ -336,11 +336,11 @@
     "colorLabel": "Farbe",
     "filterByTag": "Nach Tag filtern",
     "filterByTagPlaceholder": "Nach Tag suchen...",
-    "filterByColor": "Nach Farbe filtern",
-    "filterClear": "Filter zurücksetzen",
-    "noResults": "Keine Challenges entsprechen den aktuellen Filtern.",
+    "filterClear": "Zurücksetzen",
+    "noResults": "Keine Challenges entsprechen den aktuellen Filtern — Filter zurücksetzen versuchen.",
     "deleteConfirmTitle": "Diese Challenge löschen?",
-    "deleteConfirmDescription": "Diese Challenge und alle ihre Zuweisungen werden dauerhaft gelöscht."
+    "deleteConfirmDescription": "Diese Challenge und alle ihre Zuweisungen werden dauerhaft gelöscht.",
+    "hasReviewerHints": "Hat Hinweise für Prüfer"
   },
   "assignments": {
     "title": "Zuweisungen",
@@ -510,7 +510,8 @@
     "markCompletedReasonPlaceholder": "Warum ist dies eine Rettung? z. B. Team hat die Aufgabe erledigt, aber das System hat die Einreichung blockiert",
     "markCompletedPointsOverrideLabel": "Punkte (optional)",
     "markCompletedConfirm": "Als abgeschlossen markieren",
-    "markCompletedSuccess": "Aufgabe als abgeschlossen markiert."
+    "markCompletedSuccess": "Aufgabe als abgeschlossen markiert.",
+    "reviewerHintLabel": "Hinweis für Prüfer"
   },
   "teamDetail": {
     "backToLeaderboard": "Zurück zur Rangliste",
@@ -789,5 +790,11 @@
     "remove": "Tag {{tag}} entfernen",
     "limitReached": "Maximal {{max}} Tags erreicht",
     "hint": "{{count}}/{{max}} Tags"
+  },
+  "filterBar": {
+    "ariaLabel": "Elemente filtern",
+    "label": "Filter:",
+    "filterByColor": "Nach Farbe filtern",
+    "clear": "Zurücksetzen"
   }
 }

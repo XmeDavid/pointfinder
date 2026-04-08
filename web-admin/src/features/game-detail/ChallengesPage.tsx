@@ -3,7 +3,9 @@ import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { filterAvailableBases, filterAvailableUnlockBases } from "./dropdown-filters";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Minus, Puzzle, Trash2, Pencil, FileText, Image, CheckCircle, Eye, MapPin, Unlock, Variable, CircleCheck } from "lucide-react";
+import { Plus, Minus, Puzzle, Trash2, Pencil, FileText, Image, CheckCircle, Eye, MapPin, Unlock, Variable, CircleCheck, Tag, StickyNote } from "lucide-react";
+import { useTagColorFilter } from "./useTagColorFilter";
+import { FilterBar } from "./FilterBar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,6 +34,10 @@ import type { Challenge } from "@/types";
 const RichTextEditor = lazy(() =>
   import("@/components/common/RichTextEditor").then((m) => ({ default: m.RichTextEditor }))
 );
+
+// ---------------------------------------------------------------------------
+// Main component
+// ---------------------------------------------------------------------------
 
 export function ChallengesPage() {
   const { t } = useTranslation();
@@ -95,6 +101,21 @@ export function ChallengesPage() {
     challengeVarsData?.variables?.forEach((v) => keys.add(v.key));
     return Array.from(keys);
   }, [gameVarsData, challengeVarsData]);
+
+  // useTagColorFilter: AND-within-tags, OR-within-colors, AND across dimensions
+  const {
+    filtered: filteredChallenges,
+    allTags,
+    allColors,
+    tagCounts,
+    selectedTags,
+    selectedColors,
+    toggleTag,
+    toggleColor,
+    clearFilters,
+    hasActive: filterHasActive,
+    isVisible: filterIsVisible,
+  } = useTagColorFilter(challenges, "challenges");
 
   const invalidateChallengesAndBases = () => {
     queryClient.invalidateQueries({ queryKey: ["challenges", gameId] });
@@ -185,19 +206,56 @@ export function ChallengesPage() {
       </div>
       {actionError && <Alert onDismiss={() => setActionError("")}>{actionError}</Alert>}
 
-      {challenges.length === 0 ? (
+      {/* Sticky filter bar — only shown when tags/colors exist */}
+      <FilterBar
+        allTags={allTags}
+        allColors={allColors}
+        tagCounts={tagCounts}
+        selectedTags={selectedTags}
+        selectedColors={selectedColors}
+        toggleTag={toggleTag}
+        toggleColor={toggleColor}
+        clearFilters={clearFilters}
+        hasActive={filterHasActive}
+        isVisible={filterIsVisible}
+      />
+
+      {filteredChallenges.length === 0 && challenges.length > 0 ? (
+        <Card className="py-12"><CardContent className="text-center"><p className="text-muted-foreground">{t("challenges.noResults")}</p><button type="button" onClick={clearFilters} className="mt-3 text-xs text-primary hover:underline" data-testid="challenges-no-results-clear">{t("filterBar.clear")}</button></CardContent></Card>
+      ) : challenges.length === 0 ? (
         <Card className="py-12"><CardContent className="text-center"><Puzzle className="mx-auto h-8 w-8 text-muted-foreground mb-2" /><p className="text-muted-foreground">{t("challenges.noChallengesDescription")}</p></CardContent></Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
-          {challenges.map((ch) => (
-            <Card key={ch.id}>
+          {filteredChallenges.map((ch) => (
+            <Card key={ch.id} className="overflow-hidden">
+              {/* Color stripe on card top */}
+              {ch.color && (
+                <div className="h-2 w-full" style={{ backgroundColor: ch.color }} />
+              )}
               {(() => {
                 const fixedBase = fixedBaseByChallengeId.get(ch.id);
                 return (
                   <>
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0"><CardTitle className="text-base">{ch.title}</CardTitle><CardDescription className="line-clamp-1" title={ch.description}>{ch.description}</CardDescription></div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <CardTitle className="text-base">{ch.title}</CardTitle>
+                            {/* Has reviewer hints indicator */}
+                            {ch.operatorNotes?.trim() && (
+                              <span
+                                role="img"
+                                aria-label={t("challenges.hasReviewerHints")}
+                                title={t("challenges.hasReviewerHints")}
+                                className="inline-flex items-center text-muted-foreground"
+                                data-testid={`challenge-has-notes-${ch.id}`}
+                              >
+                                <StickyNote className="h-3.5 w-3.5" />
+                              </span>
+                            )}
+                          </div>
+                          <CardDescription className="line-clamp-1" title={ch.description}>{ch.description}</CardDescription>
+                        </div>
                         <div className="flex gap-1 ml-2">
                           <Button variant="ghost" size="icon" onClick={() => openEdit(ch)} aria-label={t("common.edit")}><Pencil className="h-4 w-4" /></Button>
                           <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(ch.id)} aria-label={t("common.delete")}><Trash2 className="h-4 w-4 text-destructive" /></Button>
@@ -226,6 +284,25 @@ export function ChallengesPage() {
                           ) : null;
                         })}
                       </div>
+                      {/* Tag chips — show up to 5 before "+N more" */}
+                      {ch.tags && ch.tags.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {ch.tags.slice(0, 5).map((tag) => (
+                            <span
+                              key={tag}
+                              className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                            >
+                              <Tag className="h-2.5 w-2.5" />
+                              {tag}
+                            </span>
+                          ))}
+                          {ch.tags.length > 5 && (
+                            <span className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                              +{ch.tags.length - 5}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </CardContent>
                   </>
                 );

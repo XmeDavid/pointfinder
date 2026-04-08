@@ -250,9 +250,8 @@
     "colorLabel": "Color",
     "filterByTag": "Filter by tag",
     "filterByTagPlaceholder": "Search by tag...",
-    "filterByColor": "Filter by color",
-    "filterClear": "Clear filters",
-    "noResults": "No bases match the current filters."
+    "filterClear": "Clear",
+    "noResults": "No bases match the current filters — try clearing a filter."
   },
   "basesAndChallenges": {
     "title": "Bases & Challenges",
@@ -291,7 +290,8 @@
     "linkedChallengeMissing": "The linked challenge no longer exists.",
     "pointsLabel": "Points",
     "nfcLinkedTag": "NFC linked",
-    "nfcNotLinkedTag": "NFC not linked"
+    "nfcNotLinkedTag": "NFC not linked",
+    "noResults": "No pairs match the current filters — try clearing a filter."
   },
   "challenges": {
     "addChallenge": "Add Challenge",
@@ -336,11 +336,11 @@
     "colorLabel": "Color",
     "filterByTag": "Filter by tag",
     "filterByTagPlaceholder": "Search by tag...",
-    "filterByColor": "Filter by color",
-    "filterClear": "Clear filters",
-    "noResults": "No challenges match the current filters.",
+    "filterClear": "Clear",
+    "noResults": "No challenges match the current filters — try clearing a filter.",
     "deleteConfirmTitle": "Delete this challenge?",
-    "deleteConfirmDescription": "This challenge and all its assignments will be permanently deleted."
+    "deleteConfirmDescription": "This challenge and all its assignments will be permanently deleted.",
+    "hasReviewerHints": "Has reviewer hints"
   },
   "assignments": {
     "title": "Assign Challenges",
@@ -510,7 +510,8 @@
     "markCompletedReasonPlaceholder": "Why does this need rescue? e.g. team did the task but the system blocked the submission",
     "markCompletedPointsOverrideLabel": "Points override (optional)",
     "markCompletedConfirm": "Mark as completed",
-    "markCompletedSuccess": "Challenge marked as completed."
+    "markCompletedSuccess": "Challenge marked as completed.",
+    "reviewerHintLabel": "Reviewer hint"
   },
   "teamDetail": {
     "backToLeaderboard": "Back to Leaderboard",
@@ -789,5 +790,11 @@
     "remove": "Remove tag {{tag}}",
     "limitReached": "Maximum {{max}} tags reached",
     "hint": "{{count}}/{{max}} tags"
+  },
+  "filterBar": {
+    "ariaLabel": "Filter items",
+    "label": "Filter:",
+    "filterByColor": "Filter by color",
+    "clear": "Clear"
   }
 }
