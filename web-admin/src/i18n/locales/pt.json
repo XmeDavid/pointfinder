@@ -394,7 +394,7 @@
     "unlockOverrideDialogDescription": "Tornar esta base visível para {{team}} na base {{base}}. A substituição é reversível e fica registada na auditoria.",
     "unlockOverrideReasonLabel": "Motivo do operador (opcional)",
     "unlockOverrideReasonPlaceholder": "ex. Chuva impediu o GPS; equipa está perto",
-    "unlockOverrideActiveBadge": "Substituição por {{operator}}",
+    "unlockOverrideActiveBadge": "Substituição por {{operator}} · {{time}}",
     "unlockOverrideSuccess": "Substituição de desbloqueio aplicada.",
     "unlockOverrideRemoveSuccess": "Substituição de desbloqueio removida.",
     "unlockOverrideRemoveConfirmTitle": "Remover substituição?",
@@ -527,7 +527,17 @@
     "manualCheckInTitle": "Check-in Manual",
     "manualCheckInConfirm": "Fazer check-in de {{team}} na base {{base}}?",
     "checkInSuccess": "Check-in da equipa realizado com sucesso.",
-    "checkInAlreadyDone": "Esta equipa já fez check-in nesta base."
+    "checkInAlreadyDone": "Esta equipa já fez check-in nesta base.",
+    "markCompleted": "Marcar como concluída",
+    "markCompletedDialogTitle": "Marcar base como concluída",
+    "markCompletedDialogDescription": "Criar uma submissão aprovada para {{team}} na base {{base}}. Usar quando a equipa completou o desafio no terreno mas o sistema bloqueou a submissão.",
+    "markCompletedReasonLabel": "Motivo do operador (opcional)",
+    "markCompletedReasonPlaceholder": "Por que é necessário resgatar? ex: a equipa completou a tarefa mas o sistema bloqueou a submissão",
+    "markCompletedPointsLabel": "Substituição de pontos (opcional)",
+    "markCompletedPointsPlaceholder": "Deixar em branco para usar os pontos padrão do desafio",
+    "markCompletedAction": "Marcar como concluída",
+    "markCompletedSuccess": "Base marcada como concluída.",
+    "noChallengeForBase": "Sem desafio atribuído a esta base — não é possível marcar como concluída."
   },
   "results": {
     "title": "Resultados Finais",

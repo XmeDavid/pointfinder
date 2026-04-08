@@ -17,6 +17,7 @@ vi.mock("@/lib/api/teams", () => ({
     removeUnlockOverride: vi.fn(),
     listUnlockOverrides: vi.fn(),
     removePlayer: vi.fn(),
+    markCompleted: vi.fn(),
   },
 }));
 
@@ -40,19 +41,16 @@ vi.mock("@/lib/api/bases", () => ({
 
 vi.mock("@/lib/api/monitoring", () => ({
   monitoringApi: {
-    getProgress: vi.fn().mockResolvedValue([]),
+    getProgress: vi.fn(),
   },
 }));
 
-// Stub the websocket hook — we don't need live updates in tests.
-vi.mock("@/hooks/useGameWebSocket", () => ({
-  useGameWebSocket: () => null,
-}));
 
 import { teamsApi, type BaseUnlockOverrideResponse } from "@/lib/api/teams";
 import { basesApi } from "@/lib/api/bases";
+import { monitoringApi } from "@/lib/api/monitoring";
 import { TeamDetailPage } from "../TeamDetailPage";
-import type { Team, Base } from "@/types";
+import type { Team, Base, TeamBaseProgress } from "@/types";
 
 function makeTeam(overrides: Partial<Team> = {}): Team {
   return {
@@ -126,6 +124,7 @@ describe("TeamDetailPage — manual check-in reason field", () => {
     vi.mocked(teamsApi.getPlayers).mockResolvedValue([]);
     vi.mocked(teamsApi.listUnlockOverrides).mockResolvedValue([]);
     vi.mocked(teamsApi.manualCheckIn).mockResolvedValue();
+    vi.mocked(monitoringApi.getProgress).mockResolvedValue([]);
     vi.mocked(basesApi.listByGame).mockResolvedValue([makeBase("b1")]);
   });
 
@@ -190,6 +189,7 @@ describe("TeamDetailPage — unlock override UI", () => {
     vi.clearAllMocks();
     vi.mocked(teamsApi.listByGame).mockResolvedValue([makeTeam()]);
     vi.mocked(teamsApi.getPlayers).mockResolvedValue([]);
+    vi.mocked(monitoringApi.getProgress).mockResolvedValue([]);
     vi.mocked(teamsApi.createUnlockOverride).mockResolvedValue(
       makeOverride("b1", { reason: "Manual review" }),
     );
@@ -274,5 +274,93 @@ describe("TeamDetailPage — unlock override UI", () => {
     });
 
     expect(screen.queryByTestId("unlock-override-btn-b1")).toBeNull();
+  });
+});
+
+function makeProgress(
+  baseId: string,
+  overrides: Partial<TeamBaseProgress> = {},
+): TeamBaseProgress {
+  return {
+    baseId,
+    teamId: "t1",
+    status: "checked_in",
+    challengeId: `ch-${baseId}`,
+    ...overrides,
+  };
+}
+
+describe("TeamDetailPage — mark completed UI", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(teamsApi.listByGame).mockResolvedValue([makeTeam()]);
+    vi.mocked(teamsApi.getPlayers).mockResolvedValue([]);
+    vi.mocked(teamsApi.listUnlockOverrides).mockResolvedValue([]);
+    vi.mocked(teamsApi.markCompleted).mockResolvedValue({} as never);
+    vi.mocked(basesApi.listByGame).mockResolvedValue([makeBase("b1")]);
+    vi.mocked(monitoringApi.getProgress).mockResolvedValue([
+      makeProgress("b1"),
+    ]);
+  });
+
+  it("shows the mark-completed button when a base has a progress entry with a challengeId and is not completed", async () => {
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("mark-completed-btn-b1")).toBeTruthy();
+    });
+  });
+
+  it("does NOT show mark-completed button when base status is already completed", async () => {
+    vi.mocked(monitoringApi.getProgress).mockResolvedValue([
+      makeProgress("b1", { status: "completed" }),
+    ]);
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("team-base-row-b1")).toBeTruthy();
+    });
+
+    expect(screen.queryByTestId("mark-completed-btn-b1")).toBeNull();
+  });
+
+  it("clicking mark-completed opens the confirmation dialog", async () => {
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("mark-completed-btn-b1")).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByTestId("mark-completed-btn-b1"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("mark-completed-submit")).toBeTruthy();
+    });
+  });
+
+  it("confirming the dialog calls teamsApi.markCompleted with correct args", async () => {
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("mark-completed-btn-b1")).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByTestId("mark-completed-btn-b1"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("mark-completed-submit")).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByTestId("mark-completed-submit"));
+
+    await waitFor(() => {
+      expect(teamsApi.markCompleted).toHaveBeenCalledWith(
+        "g1",
+        "t1",
+        "b1",
+        expect.objectContaining({ challengeId: "ch-b1" }),
+      );
+    });
   });
 });

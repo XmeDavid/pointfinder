@@ -394,7 +394,7 @@
     "unlockOverrideDialogDescription": "Make this base visible to {{team}} at {{base}}. The override is reversible and recorded on the audit trail.",
     "unlockOverrideReasonLabel": "Operator reason (optional)",
     "unlockOverrideReasonPlaceholder": "e.g. GPS rain-out; team is nearby",
-    "unlockOverrideActiveBadge": "Override by {{operator}}",
+    "unlockOverrideActiveBadge": "Override by {{operator}} · {{time}}",
     "unlockOverrideSuccess": "Unlock override applied.",
     "unlockOverrideRemoveSuccess": "Unlock override removed.",
     "unlockOverrideRemoveConfirmTitle": "Remove unlock override?",
@@ -527,7 +527,17 @@
     "manualCheckInTitle": "Manual Check-in",
     "manualCheckInConfirm": "Check in {{team}} at {{base}}?",
     "checkInSuccess": "Team checked in successfully.",
-    "checkInAlreadyDone": "This team has already checked in at this base."
+    "checkInAlreadyDone": "This team has already checked in at this base.",
+    "markCompleted": "Mark completed",
+    "markCompletedDialogTitle": "Mark base as completed",
+    "markCompletedDialogDescription": "Synthesise an approved submission for {{team}} at {{base}}. Use this when the team completed the challenge in the field but the system blocked their submission.",
+    "markCompletedReasonLabel": "Operator reason (optional)",
+    "markCompletedReasonPlaceholder": "Why does this need rescue? e.g. team completed the task but the system blocked their submission",
+    "markCompletedPointsLabel": "Points override (optional)",
+    "markCompletedPointsPlaceholder": "Leave blank to use the challenge's default points",
+    "markCompletedAction": "Mark as completed",
+    "markCompletedSuccess": "Base marked as completed.",
+    "noChallengeForBase": "No challenge assigned to this base — cannot mark completed."
   },
   "results": {
     "title": "Final Results",

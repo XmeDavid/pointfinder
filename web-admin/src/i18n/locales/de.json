@@ -394,7 +394,7 @@
     "unlockOverrideDialogDescription": "Diese Station für {{team}} an {{base}} sichtbar machen. Die Entsperrung ist umkehrbar und wird im Audit-Log festgehalten.",
     "unlockOverrideReasonLabel": "Grund (optional)",
     "unlockOverrideReasonPlaceholder": "z. B. GPS-Ausfall, Team ist vor Ort",
-    "unlockOverrideActiveBadge": "Entsperrt durch {{operator}}",
+    "unlockOverrideActiveBadge": "Entsperrt durch {{operator}} · {{time}}",
     "unlockOverrideSuccess": "Entsperrung wurde angewendet.",
     "unlockOverrideRemoveSuccess": "Entsperrung wurde aufgehoben.",
     "unlockOverrideRemoveConfirmTitle": "Entsperrung aufheben?",
@@ -527,7 +527,17 @@
     "manualCheckInTitle": "Manuelles Einchecken",
     "manualCheckInConfirm": "{{team}} an Station {{base}} einchecken?",
     "checkInSuccess": "Team erfolgreich eingecheckt.",
-    "checkInAlreadyDone": "Dieses Team hat sich bereits an dieser Station eingecheckt."
+    "checkInAlreadyDone": "Dieses Team hat sich bereits an dieser Station eingecheckt.",
+    "markCompleted": "Als abgeschlossen markieren",
+    "markCompletedDialogTitle": "Station als abgeschlossen markieren",
+    "markCompletedDialogDescription": "Eine genehmigte Einreichung für {{team}} an Station {{base}} erstellen. Verwenden Sie dies, wenn das Team die Aufgabe im Feld abgeschlossen hat, das System die Einreichung jedoch blockiert hat.",
+    "markCompletedReasonLabel": "Grund des Operators (optional)",
+    "markCompletedReasonPlaceholder": "Warum ist eine Rettungsaktion nötig? z.B. Team hat die Aufgabe erledigt, aber das System hat die Einreichung blockiert",
+    "markCompletedPointsLabel": "Punkteüberschreibung (optional)",
+    "markCompletedPointsPlaceholder": "Leer lassen, um die Standardpunkte der Aufgabe zu verwenden",
+    "markCompletedAction": "Als abgeschlossen markieren",
+    "markCompletedSuccess": "Station als abgeschlossen markiert.",
+    "noChallengeForBase": "Dieser Station ist keine Aufgabe zugewiesen — kann nicht als abgeschlossen markiert werden."
   },
   "results": {
     "title": "Endergebnisse",

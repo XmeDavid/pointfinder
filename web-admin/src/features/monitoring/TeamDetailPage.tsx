@@ -12,12 +12,14 @@ import {
   Unlock,
   Lock,
   ShieldCheck,
+  Wrench,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { teamsApi, type BaseUnlockOverrideResponse } from "@/lib/api/teams";
 import { submissionsApi } from "@/lib/api/submissions";
@@ -44,6 +46,9 @@ export function TeamDetailPage() {
   const [unlockDialogBaseId, setUnlockDialogBaseId] = useState<string | null>(null);
   const [unlockReason, setUnlockReason] = useState("");
   const [removeOverrideDialog, setRemoveOverrideDialog] = useState<BaseUnlockOverrideResponse | null>(null);
+  const [markCompletedBaseId, setMarkCompletedBaseId] = useState<string | null>(null);
+  const [markCompletedReason, setMarkCompletedReason] = useState("");
+  const [markCompletedPointsOverride, setMarkCompletedPointsOverride] = useState<string>("");
 
   const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!) });
   const team = teams.find((t) => t.id === teamId);
@@ -126,6 +131,36 @@ export function TeamDetailPage() {
     },
   });
 
+  const closeMarkCompleted = () => {
+    setMarkCompletedBaseId(null);
+    setMarkCompletedReason("");
+    setMarkCompletedPointsOverride("");
+  };
+
+  const markCompleted = useMutation({
+    mutationFn: ({ baseId, challengeId }: { baseId: string; challengeId: string }) => {
+      const parsedOverride =
+        markCompletedPointsOverride.trim() === ""
+          ? undefined
+          : parseInt(markCompletedPointsOverride, 10);
+      return teamsApi.markCompleted(gameId!, teamId!, baseId, {
+        challengeId,
+        reason: markCompletedReason.trim() || undefined,
+        pointsOverride: parsedOverride,
+      });
+    },
+    onSuccess: () => {
+      closeMarkCompleted();
+      queryClient.invalidateQueries({ queryKey: ["team-progress", gameId, teamId] });
+      queryClient.invalidateQueries({ queryKey: ["team-submissions", teamId] });
+      toast.success(t("teamDetail.markCompletedSuccess"));
+    },
+    onError: (error: unknown) => {
+      closeMarkCompleted();
+      toast.error(getApiErrorMessage(error));
+    },
+  });
+
   if (!team) return null;
 
   const totalPoints = submissions.filter((s) => s.status === "correct" || s.status === "approved").reduce((acc, s) => { const ch = challenges.find((c) => c.id === s.challengeId); return acc + (s.points ?? ch?.points ?? 0); }, 0);
@@ -193,6 +228,25 @@ export function TeamDetailPage() {
                           </Button>
                         </>
                       )}
+                      {bp?.status !== "completed" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs gap-1 text-amber-600 border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950"
+                          disabled={!bp?.challengeId}
+                          onClick={() => {
+                            if (!bp?.challengeId) {
+                              toast.error(t("teamDetail.noChallengeForBase"));
+                              return;
+                            }
+                            setMarkCompletedBaseId(base.id);
+                          }}
+                          data-testid={`mark-completed-btn-${base.id}`}
+                        >
+                          <Wrench className="h-3.5 w-3.5" />
+                          {t("teamDetail.markCompleted")}
+                        </Button>
+                      )}
                       {activeOverride ? (
                         <div className="flex items-center gap-1">
                           <Badge
@@ -204,6 +258,11 @@ export function TeamDetailPage() {
                             <ShieldCheck className="h-3 w-3" />
                             {t("teams.unlockOverrideActiveBadge", {
                               operator: activeOverride.createdByDisplayName ?? t("common.unknown"),
+                              time: new Date(activeOverride.createdAt).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: false,
+                              }),
                             })}
                           </Badge>
                           <Button
@@ -356,6 +415,71 @@ export function TeamDetailPage() {
             </Button>
           </DialogFooter>
         </DialogContent>
+      </Dialog>
+
+      {/* Mark-completed dialog — operator manually marks a base as done */}
+      <Dialog open={!!markCompletedBaseId} onOpenChange={(open) => { if (!open) closeMarkCompleted(); }}>
+        {markCompletedBaseId && (() => {
+          const bp = progress.find((p) => p.baseId === markCompletedBaseId);
+          const base = bases.find((b) => b.id === markCompletedBaseId);
+          return (
+            <DialogContent onClose={closeMarkCompleted}>
+              <DialogHeader>
+                <DialogTitle>{t("teamDetail.markCompletedDialogTitle")}</DialogTitle>
+              </DialogHeader>
+              <p className="text-sm text-muted-foreground">
+                {t("teamDetail.markCompletedDialogDescription", { base: base?.name ?? "" })}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {t("submissions.markCompletedHelper")}
+              </p>
+              <div className="mt-4 space-y-3">
+                <div className="space-y-1">
+                  <label className="text-sm font-medium" htmlFor="mark-completed-reason">
+                    {t("teamDetail.markCompletedReasonLabel")}
+                  </label>
+                  <Textarea
+                    id="mark-completed-reason"
+                    data-testid="mark-completed-reason-input"
+                    value={markCompletedReason}
+                    onChange={(e) => setMarkCompletedReason(e.target.value.slice(0, REASON_MAX_LENGTH))}
+                    placeholder={t("teamDetail.markCompletedReasonPlaceholder")}
+                    maxLength={REASON_MAX_LENGTH}
+                    rows={2}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium" htmlFor="mark-completed-points">
+                    {t("teamDetail.markCompletedPointsLabel")}
+                  </label>
+                  <Input
+                    id="mark-completed-points"
+                    data-testid="mark-completed-points-input"
+                    type="number"
+                    value={markCompletedPointsOverride}
+                    onChange={(e) => setMarkCompletedPointsOverride(e.target.value)}
+                    placeholder={t("teamDetail.markCompletedPointsPlaceholder")}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={closeMarkCompleted}>{t("common.cancel")}</Button>
+                <Button
+                  disabled={markCompleted.isPending}
+                  loading={markCompleted.isPending}
+                  data-testid="mark-completed-submit"
+                  onClick={() => {
+                    if (markCompletedBaseId && bp?.challengeId) {
+                      markCompleted.mutate({ baseId: markCompletedBaseId, challengeId: bp.challengeId });
+                    }
+                  }}
+                >
+                  {markCompleted.isPending ? t("common.sending") : t("teamDetail.markCompletedAction")}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          );
+        })()}
       </Dialog>
     </div>
   );
