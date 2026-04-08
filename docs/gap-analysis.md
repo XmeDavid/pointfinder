@@ -1,8 +1,9 @@
 # PointFinder Gap Analysis Report
 
-**Date**: 2026-03-14 (updated 2026-03-21)
+**Date**: 2026-03-14 (original audit), 2026-03-21 (last updated), 2026-04-08 (Wave 2 documentation refresh)
 **Scope**: Cross-platform analysis of backend, web-admin, Android, and iOS
 **Method**: Exhaustive codebase audit followed by cross-referencing actual source code
+**Status**: Post-pilot Wave 2 — Game Tags feature documented, ErrorCode reference added, TTL clarified, rescue actions already documented
 
 ---
 

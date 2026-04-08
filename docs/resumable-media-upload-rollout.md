@@ -8,9 +8,9 @@
 
 ## Server Safeguards
 
-- Per-player active upload session limit: `APP_UPLOADS_MAX_ACTIVE_SESSIONS_PER_PLAYER`
-- Per-game active upload byte budget: `APP_UPLOADS_MAX_ACTIVE_BYTES_PER_GAME`
-- Session TTL cleanup: `APP_UPLOADS_CHUNK_SESSION_TTL_SECONDS`
+- Per-player active upload session limit: `APP_UPLOADS_MAX_ACTIVE_SESSIONS_PER_PLAYER` (default 3)
+- Per-game active upload byte budget: `APP_UPLOADS_MAX_ACTIVE_BYTES_PER_GAME` (default 16GB)
+- Session TTL cleanup: `APP_UPLOADS_CHUNK_SESSION_TTL_SECONDS` (default 86400 = 24 hours; tightened from 48h in commit f8f4e17)
 
 ## QA Matrix
 

@@ -339,6 +339,53 @@ Because `PlayerBaseResponse` and `PlayerChallengeResponse` are structurally inca
 
 Like operator notes, these fields have no visibility rules beyond operator authentication — any authenticated operator with access to the game can read and edit them. The web admin surfaces both fields on the `BasesPage`, `ChallengesPage`, and the unified `BasesAndChallengesView` edit dialogs, next to the existing name/description/operator-notes inputs.
 
+### Game Tags (P1 Phase 1)
+
+Source spec: `docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md` § "P1: Operator Workflow and Content Model" — "Game-scoped tagging system for organizing bases and challenges".
+
+Game Tags are a distinct tagging system from the per-base/per-challenge `tags` field above. Game Tags are **global to a single game** and can be reused across multiple bases and challenges, making them ideal for cross-cutting organization (e.g., "Indoor", "Water Activity", "GPS-Optional", "Nighttime-Ready").
+
+**Properties and limits**
+
+- **Scope**: Game-scoped. Each tag belongs to exactly one game and cannot be shared across games.
+- **Cap**: Maximum 50 tags per game (`MAX_TAGS_PER_GAME` in `GameTagService`).
+- **Label**: Up to 40 characters, required, non-blank. Duplicate labels are rejected at the case-insensitive level (e.g., "Water" and "WATER" cannot both exist in the same game).
+- **Color**: A 7-character hex string (e.g., `#3b82f6`), randomized from a 16-hue palette on creation if not explicitly provided. Palette drawn from `TagPalette.nextUnused()`.
+- **Visibility**: Operator-only; never exposed to players on any endpoint.
+
+**Relationship to bases and challenges**
+
+Bases and challenges reference game tags via many-to-many join tables (`base_game_tags`, `challenge_game_tags`). An operator can attach 0–N game tags to any base or challenge. The **color stripe** displayed on base and challenge cards in the operator UI comes from the **first tag by creation time** (deterministic ordering via `ORDER BY created_at ASC`); if a base has no game tags, no color stripe is shown.
+
+**Tag filtering**
+
+List pages (`BasesPage`, `ChallengesPage`) offer filtering by game tags using an `AND` semantic within the tag dimension (a base must match all selected tags to appear). The filter is passed via URL query parameter: `?tags=tagId1,tagId2` (comma-separated tag IDs).
+
+**Deletion and cascading**
+
+When an operator deletes a game tag:
+
+1. The backend deletes the tag from the `game_tags` table.
+2. The `ON DELETE CASCADE` foreign keys in `base_game_tags` and `challenge_game_tags` automatically remove the tag from all bases and challenges using it.
+3. The `ManageTagsDialog` component in the web admin displays the count of affected bases + challenges before the operator confirms deletion, so operators understand the impact.
+
+This is safe because game tags are pure metadata — removing a tag does not affect gameplay, check-ins, submissions, or any player-facing logic.
+
+**Error codes**
+
+- `TAG_LABEL_DUPLICATE` (409 Conflict): A tag with this label already exists in the game (case-insensitive match).
+- `TAG_CAP_EXCEEDED` (400 Bad Request): The game has already reached 50 tags; cannot create more until some are deleted.
+- `TAG_IN_USE` (409 Conflict): Cannot delete a tag that is currently assigned to at least one base or challenge. Delete must be called after removing the tag from all items using it.
+
+**API endpoints** (documented in `docs/api-reference.md` § "Game Tags")
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/games/:gameId/tags` | List all game tags for this game, ordered by creation time |
+| POST | `/api/games/:gameId/tags` | Create a new game tag (enforces cap of 50, checks label uniqueness) |
+| PUT | `/api/games/:gameId/tags/:tagId` | Update label and/or color |
+| DELETE | `/api/games/:gameId/tags/:tagId` | Delete tag (soft-delete via cascade on join tables) |
+
 ### Player-Facing Naming Contract
 
 Source spec: `docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md` § "P1: Operator Workflow and Content Model" — "Player-facing naming is intentional: players should primarily see challenge titles, while base names can remain operator-oriented".

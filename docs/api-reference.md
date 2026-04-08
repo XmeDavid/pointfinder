@@ -1254,6 +1254,54 @@ Per-game, per-operator push notification preferences.
 
 ---
 
+## Error Codes (Machine-Readable)
+
+All error responses include a machine-readable `code` field in addition to the human-readable `message`. Clients and mobile apps use the `code` to localize error messages and implement context-specific recovery paths. Codes are defined in the backend's `ErrorCode` enum (`backend/src/main/java/com/prayer/pointfinder/exception/ErrorCode.java`).
+
+### Rescue Action Error Codes
+
+| Code | HTTP Status | Meaning | Typical cause | Recovery |
+|---|---|---|---|---|
+| `MARK_COMPLETED_REQUIRES_CHECKIN` | 400 Bad Request | Team is not checked in at the base | Operator clicked "Mark completed" without the team being checked in | Call manual check-in endpoint first, then retry mark-completed |
+| `MARK_COMPLETED_ALREADY_COMPLETED` | 400 Bad Request | The (operator, team, base, challenge) tuple already has an approved submission | Operator clicked the rescue button twice or the previous call succeeded but returned 500 to the client | Safe to retry; endpoint is idempotent on the tuple |
+| `MANUAL_CHECKIN_ALREADY_CHECKED_IN` | 409 Conflict | Team is already checked in at this base | Operator called manual check-in after the team already checked in naturally | Safe to retry; endpoint returns the existing check-in without error |
+| `UNLOCK_OVERRIDE_ALREADY_EXISTS` | 409 Conflict | An active unlock override already exists for this (team, base) pair | Operator clicked "Unlock" twice | Safe to retry; endpoint is idempotent on the pair |
+| `UNLOCK_OVERRIDE_NOT_FOUND` | 404 Not Found | No active unlock override exists for this (team, base) pair | Operator tried to remove an override that has already been removed or never existed | Verify the team and base IDs; no action needed if the override is already gone |
+
+### Tag Error Codes
+
+| Code | HTTP Status | Meaning | Typical cause | Recovery |
+|---|---|---|---|---|
+| `TAG_LABEL_DUPLICATE` | 409 Conflict | A tag with this label already exists in the game (case-insensitive) | Operator tried to create a tag named "Water" when "WATER" already exists | Use a different label or delete the existing tag and recreate it |
+| `TAG_CAP_EXCEEDED` | 400 Bad Request | The game has already reached the maximum of 50 tags | Operator created 50 tags and tried to add a 51st | Delete some unused tags before creating new ones |
+| `TAG_IN_USE` | 409 Conflict | The tag is assigned to at least one base or challenge and cannot be deleted | Operator tried to delete a tag still in use | Remove the tag from all bases and challenges first, then delete |
+
+### WebSocket Error Codes
+
+WebSocket errors are transmitted via STOMP ERROR frames and do not use HTTP status codes. The error `code` appears in the STOMP ERROR header.
+
+| Code | Meaning | Recovery |
+|---|---|---|
+| `WS_ACCESS_DENIED` | The JWT is invalid, expired, or the operator does not have access to the requested game | Client should re-authenticate; prompt user to log in again. Operator clients auto-refresh tokens on 401, but WebSocket errors bypass that path. |
+
+See `docs/realtime-and-mobile.md` § "WebSocket Error Codes" for detailed WebSocket error handling and reconnection strategies.
+
+### Standard HTTP Status Codes (Non-Code-Based)
+
+Validation errors and generic failures that do not emit a specific `ErrorCode`:
+
+| Status | Meaning |
+|---|---|
+| 400 | Validation failure (missing/invalid field, constraint violation without a specific code) |
+| 401 | Missing or expired JWT token |
+| 403 | Operator does not have access to the game (distinct from 400 `MARK_COMPLETED_REQUIRES_CHECKIN` etc.) |
+| 404 | Resource not found (team, base, game, etc. does not exist) |
+| 409 | Conflict that does not fit the error code taxonomy (rare; usually a code is emitted instead) |
+| 429 | Rate limited (e.g., password reset requests) |
+| 500 | Internal server error |
+
+---
+
 ## Error Responses
 
 All errors follow:
