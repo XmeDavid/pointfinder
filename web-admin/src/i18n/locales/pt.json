@@ -306,6 +306,7 @@
     "content": "Instruções do Desafio",
     "contentPlaceholder": "Instruções completas mostradas antes de resolver...",
     "completionContent": "Informação desbloqueada",
+    "completionContentHelper": "Mostrado aos jogadores após concluírem este desafio.",
     "completionContentPlaceholder": "Informação desbloqueada após o desafio ser completado com sucesso...",
     "answerType": "Tipo de Resposta",
     "text": "Texto",

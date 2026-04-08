@@ -30,6 +30,42 @@ vi.mock("@/lib/api/challenges", () => ({
   },
 }));
 
+vi.mock("@/lib/api/games", () => ({
+  gamesApi: {
+    getById: vi.fn().mockResolvedValue({ id: "g1", tileSource: undefined }),
+  },
+}));
+
+// Stub the lazy-loaded heavy components so tests don't need a real MapLibre/Tiptap
+// environment. The stubs render immediately (no async chunk boundary) so tests can
+// verify that the components are rendered once the dialog is open, and that the
+// Suspense fallback is shown before they resolve (tested via the mock delay path).
+vi.mock("@/components/common/MapPicker", () => ({
+  MapPicker: ({ value, onChange }: { value: { lat: number; lng: number }; onChange: (lat: number, lng: number) => void }) => (
+    <div data-testid="map-picker-stub">
+      <span data-testid="map-picker-lat">{value.lat}</span>
+      <span data-testid="map-picker-lng">{value.lng}</span>
+      <button
+        data-testid="map-picker-move"
+        onClick={() => onChange(51.5, -0.1)}
+      >
+        Move pin
+      </button>
+    </div>
+  ),
+}));
+
+vi.mock("@/components/common/RichTextEditor", () => ({
+  RichTextEditor: ({ value, onChange, placeholder }: { value: string; onChange: (html: string) => void; placeholder?: string }) => (
+    <textarea
+      data-testid="rich-text-editor-stub"
+      value={value}
+      placeholder={placeholder}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  ),
+}));
+
 import { basesApi } from "@/lib/api/bases";
 import { challengesApi } from "@/lib/api/challenges";
 
@@ -472,6 +508,131 @@ describe("BasesAndChallengesView", () => {
     });
 
     expect(screen.queryByTestId("pair-challenge-has-notes-b1")).toBeNull();
+  });
+
+  // Wave 3b — lazy-loaded MapPicker and RichTextEditor in the edit dialog.
+  it("renders MapPicker stub in the edit dialog when editing a base with coordinates", async () => {
+    vi.mocked(basesApi.listByGame).mockResolvedValue([
+      makeBase("b1", { fixedChallengeId: "c1", lat: 48.8, lng: 2.35 }),
+    ]);
+    vi.mocked(challengesApi.listByGame).mockResolvedValue([makeChallenge("c1")]);
+
+    renderView();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("pair-edit-btn-b1")).toBeTruthy();
+    });
+    fireEvent.click(screen.getByTestId("pair-edit-btn-b1"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("unified-edit-dialog")).toBeTruthy();
+    });
+
+    // MapPicker stub should be rendered (lazy chunk resolved synchronously in test)
+    await waitFor(() => {
+      expect(screen.getByTestId("map-picker-stub")).toBeTruthy();
+    });
+    expect(screen.getByTestId("map-picker-lat").textContent).toBe("48.8");
+    expect(screen.getByTestId("map-picker-lng").textContent).toBe("2.35");
+  });
+
+  it("updates lat/lng state when MapPicker fires onChange", async () => {
+    vi.mocked(basesApi.listByGame).mockResolvedValue([
+      makeBase("b1", { fixedChallengeId: "c1", lat: 48.8, lng: 2.35 }),
+    ]);
+    vi.mocked(challengesApi.listByGame).mockResolvedValue([makeChallenge("c1")]);
+    vi.mocked(basesApi.update).mockResolvedValue(makeBase("b1", { fixedChallengeId: "c1" }));
+    vi.mocked(challengesApi.update).mockResolvedValue(makeChallenge("c1"));
+
+    renderView();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("pair-edit-btn-b1")).toBeTruthy();
+    });
+    fireEvent.click(screen.getByTestId("pair-edit-btn-b1"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("map-picker-stub")).toBeTruthy();
+    });
+
+    // Simulate the operator clicking the map to move the pin
+    fireEvent.click(screen.getByTestId("map-picker-move"));
+
+    // The number inputs should reflect the new values
+    await waitFor(() => {
+      const latInput = screen.getByTestId("unified-base-lat-input") as HTMLInputElement;
+      expect(latInput.value).toBe("51.5");
+      const lngInput = screen.getByTestId("unified-base-lng-input") as HTMLInputElement;
+      expect(lngInput.value).toBe("-0.1");
+    });
+  });
+
+  it("renders RichTextEditor stub in the edit dialog for challenge content", async () => {
+    vi.mocked(basesApi.listByGame).mockResolvedValue([
+      makeBase("b1", { fixedChallengeId: "c1" }),
+    ]);
+    vi.mocked(challengesApi.listByGame).mockResolvedValue([
+      makeChallenge("c1", { content: "<p>Solve this puzzle</p>" }),
+    ]);
+
+    renderView();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("pair-edit-btn-b1")).toBeTruthy();
+    });
+    fireEvent.click(screen.getByTestId("pair-edit-btn-b1"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("unified-edit-dialog")).toBeTruthy();
+    });
+
+    // RichTextEditor stubs should be rendered (content + completionContent = 2)
+    await waitFor(() => {
+      const editors = screen.getAllByTestId("rich-text-editor-stub");
+      expect(editors.length).toBeGreaterThanOrEqual(1);
+    });
+
+    const editors = screen.getAllByTestId("rich-text-editor-stub");
+    // First editor is the content field
+    expect((editors[0] as HTMLTextAreaElement).value).toBe("<p>Solve this puzzle</p>");
+
+    // Helper text for completion content is rendered unconditionally below the label
+    expect(screen.getByText("Shown to players after they finish this challenge.")).toBeTruthy();
+  });
+
+  it("persists rich-text content changes through the challenge update call", async () => {
+    vi.mocked(basesApi.listByGame).mockResolvedValue([
+      makeBase("b1", { fixedChallengeId: "c1" }),
+    ]);
+    vi.mocked(challengesApi.listByGame).mockResolvedValue([
+      makeChallenge("c1", { content: "<p>Old content</p>" }),
+    ]);
+    vi.mocked(basesApi.update).mockResolvedValue(makeBase("b1", { fixedChallengeId: "c1" }));
+    vi.mocked(challengesApi.update).mockResolvedValue(makeChallenge("c1"));
+
+    renderView();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("pair-edit-btn-b1")).toBeTruthy();
+    });
+    fireEvent.click(screen.getByTestId("pair-edit-btn-b1"));
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId("rich-text-editor-stub").length).toBeGreaterThanOrEqual(1);
+    });
+
+    const editors = screen.getAllByTestId("rich-text-editor-stub");
+    // Edit the content field (first editor)
+    fireEvent.change(editors[0], { target: { value: "<p><strong>New rich content</strong></p>" } });
+
+    fireEvent.click(screen.getByTestId("unified-save-btn"));
+
+    await waitFor(() => {
+      expect(challengesApi.update).toHaveBeenCalledTimes(1);
+    });
+
+    const challengeCall = vi.mocked(challengesApi.update).mock.calls[0];
+    expect(challengeCall[1].content).toBe("<p><strong>New rich content</strong></p>");
   });
 
   it("does NOT call challenge update when the base update fails", async () => {

@@ -1,8 +1,9 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, lazy, Suspense } from "react";
 import { Link as RouterLink, useParams } from "react-router-dom";
 import { useTagColorFilter } from "./useTagColorFilter";
 import { FilterBar } from "./FilterBar";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import {
   MapPin,
   Puzzle,
@@ -32,6 +33,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Alert } from "@/components/ui/alert";
 import { basesApi, type CreateBaseDto } from "@/lib/api/bases";
 import { challengesApi, type CreateChallengeDto } from "@/lib/api/challenges";
+import { gamesApi } from "@/lib/api/games";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/useToast";
@@ -42,6 +44,20 @@ import {
   aggregateBasesAndChallenges,
   type BaseChallengePair,
 } from "./aggregate-bases-challenges";
+import { getDefaultCenter } from "@/lib/tile-sources";
+
+// ---------------------------------------------------------------------------
+// Lazy-loaded heavy components (MapPicker pulls in MapLibre GL; RichTextEditor
+// pulls in Tiptap). Both are only needed when the edit dialog is open.
+// ---------------------------------------------------------------------------
+
+const MapPicker = lazy(() =>
+  import("@/components/common/MapPicker").then((m) => ({ default: m.MapPicker })),
+);
+
+const RichTextEditor = lazy(() =>
+  import("@/components/common/RichTextEditor").then((m) => ({ default: m.RichTextEditor })),
+);
 
 // ---------------------------------------------------------------------------
 // Edit-dialog form state (local to the view).
@@ -157,6 +173,12 @@ export function BasesAndChallengesView() {
   const toast = useToast();
   const { gameId } = useParams<{ gameId: string }>();
   const queryClient = useQueryClient();
+
+  const { data: game } = useQuery({
+    queryKey: ["game", gameId],
+    queryFn: () => gamesApi.getById(gameId!),
+    enabled: !!gameId,
+  });
 
   const { data: bases = [], isLoading: basesLoading } = useQuery({
     queryKey: ["bases", gameId],
@@ -618,6 +640,23 @@ export function BasesAndChallengesView() {
                     rows={2}
                   />
                 </div>
+                {/* Map picker for coordinates — lazy-loaded so MapLibre GL
+                    only enters the bundle when the dialog is opened. The
+                    plain number inputs below remain as a keyboard fallback,
+                    matching the pattern in BasesPage.tsx. */}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium leading-none">{t("bases.clickMapToSelect")}</p>
+                  <ErrorBoundary>
+                    <Suspense fallback={<div className="h-[250px] animate-pulse rounded-md border border-input bg-muted/30" data-testid="map-picker-fallback" />}>
+                      <MapPicker
+                        value={{ lat: Number.isFinite(form.baseLat) ? form.baseLat : getDefaultCenter(game?.tileSource).lat, lng: Number.isFinite(form.baseLng) ? form.baseLng : getDefaultCenter(game?.tileSource).lng }}
+                        onChange={(lat, lng) => setForm((f) => (f ? { ...f, baseLat: lat, baseLng: lng } : f))}
+                        className="h-[250px] rounded-md overflow-hidden border border-input"
+                        tileSource={game?.tileSource}
+                      />
+                    </Suspense>
+                  </ErrorBoundary>
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <FormLabel htmlFor="unifiedBaseLat" className="text-xs text-muted-foreground" required>
@@ -633,6 +672,7 @@ export function BasesAndChallengesView() {
                         setForm((f) => (f ? { ...f, baseLat: Number.isNaN(val) ? 0 : val } : f));
                       }}
                       required
+                      data-testid="unified-base-lat-input"
                     />
                   </div>
                   <div className="space-y-1">
@@ -649,6 +689,7 @@ export function BasesAndChallengesView() {
                         setForm((f) => (f ? { ...f, baseLng: Number.isNaN(val) ? 0 : val } : f));
                       }}
                       required
+                      data-testid="unified-base-lng-input"
                     />
                   </div>
                 </div>
@@ -751,33 +792,36 @@ export function BasesAndChallengesView() {
                     }
                   />
                 </div>
+                {/* Challenge content — lazy-loaded RichTextEditor (Tiptap)
+                    matching the pattern in ChallengesPage.tsx. */}
                 <div className="space-y-2">
                   <FormLabel htmlFor="unifiedChallengeContent" optional>
                     {t("challenges.content")}
                   </FormLabel>
-                  <Textarea
-                    id="unifiedChallengeContent"
-                    value={form.challengeContent}
-                    onChange={(e) =>
-                      setForm((f) => (f ? { ...f, challengeContent: e.target.value } : f))
-                    }
-                    rows={3}
-                    placeholder={t("challenges.contentPlaceholder")}
-                  />
+                  <ErrorBoundary>
+                    <Suspense fallback={<div className="h-[200px] animate-pulse rounded-md border border-input bg-muted/30" data-testid="rich-text-editor-fallback" />}>
+                      <RichTextEditor
+                        value={form.challengeContent}
+                        onChange={(html) => setForm((f) => (f ? { ...f, challengeContent: html } : f))}
+                        placeholder={t("challenges.contentPlaceholder")}
+                      />
+                    </Suspense>
+                  </ErrorBoundary>
                 </div>
                 <div className="space-y-2">
                   <FormLabel htmlFor="unifiedChallengeCompletion" optional>
                     {t("challenges.completionContent")}
                   </FormLabel>
-                  <Textarea
-                    id="unifiedChallengeCompletion"
-                    value={form.challengeCompletionContent}
-                    onChange={(e) =>
-                      setForm((f) => (f ? { ...f, challengeCompletionContent: e.target.value } : f))
-                    }
-                    rows={2}
-                    placeholder={t("challenges.completionContentPlaceholder")}
-                  />
+                  <p className="text-xs text-muted-foreground">{t("challenges.completionContentHelper")}</p>
+                  <ErrorBoundary>
+                    <Suspense fallback={<div className="h-[150px] animate-pulse rounded-md border border-input bg-muted/30" data-testid="rich-text-editor-completion-fallback" />}>
+                      <RichTextEditor
+                        value={form.challengeCompletionContent}
+                        onChange={(html) => setForm((f) => (f ? { ...f, challengeCompletionContent: html } : f))}
+                        placeholder={t("challenges.completionContentPlaceholder")}
+                      />
+                    </Suspense>
+                  </ErrorBoundary>
                 </div>
                 <div className="space-y-2">
                   <p className="text-sm font-medium leading-none">{t("challenges.answerType")}</p>

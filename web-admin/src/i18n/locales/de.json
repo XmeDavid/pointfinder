@@ -306,6 +306,7 @@
     "content": "Challenge-Anweisungen",
     "contentPlaceholder": "Vollständige Challenge-Anweisungen, die vor dem Lösen angezeigt werden...",
     "completionContent": "Freigeschaltete Information",
+    "completionContentHelper": "Wird den Spielern nach Abschluss dieser Aufgabe angezeigt.",
     "completionContentPlaceholder": "Inhalt, der nach Abschluss der Challenge angezeigt wird...",
     "answerType": "Antworttyp",
     "text": "Text",

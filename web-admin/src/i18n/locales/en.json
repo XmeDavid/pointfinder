@@ -306,6 +306,7 @@
     "content": "Challenge Instructions",
     "contentPlaceholder": "Full challenge instructions shown before solving...",
     "completionContent": "Unlocked Information",
+    "completionContentHelper": "Shown to players after they finish this challenge.",
     "completionContentPlaceholder": "Rich content shown when the challenge is unlocked...",
     "answerType": "Answer Type",
     "text": "Text",
