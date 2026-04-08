@@ -1,13 +1,25 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, CheckCircle, XCircle, Clock, MapPin, UserMinus, LogIn } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle,
+  XCircle,
+  Clock,
+  MapPin,
+  UserMinus,
+  LogIn,
+  Unlock,
+  Lock,
+  ShieldCheck,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
+import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { teamsApi } from "@/lib/api/teams";
+import { teamsApi, type BaseUnlockOverrideResponse } from "@/lib/api/teams";
 import { submissionsApi } from "@/lib/api/submissions";
 import { challengesApi } from "@/lib/api/challenges";
 import { basesApi } from "@/lib/api/bases";
@@ -18,6 +30,8 @@ import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/useToast";
 import type { SubmissionStatus } from "@/types";
 
+const REASON_MAX_LENGTH = 500;
+
 export function TeamDetailPage() {
   const { t } = useTranslation();
   const toast = useToast();
@@ -26,6 +40,10 @@ export function TeamDetailPage() {
   const queryClient = useQueryClient();
   const [actionError, setActionError] = useState("");
   const [checkInBaseId, setCheckInBaseId] = useState<string | null>(null);
+  const [checkInReason, setCheckInReason] = useState("");
+  const [unlockDialogBaseId, setUnlockDialogBaseId] = useState<string | null>(null);
+  const [unlockReason, setUnlockReason] = useState("");
+  const [removeOverrideDialog, setRemoveOverrideDialog] = useState<BaseUnlockOverrideResponse | null>(null);
 
   const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!) });
   const team = teams.find((t) => t.id === teamId);
@@ -34,6 +52,17 @@ export function TeamDetailPage() {
   const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!) });
   const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!) });
   const { data: progress = [] } = useQuery({ queryKey: ["team-progress", gameId, teamId], queryFn: async () => { const all = await monitoringApi.getProgress(gameId!); return all.filter((p) => p.teamId === teamId); }, enabled: !!gameId && !!teamId });
+  const { data: unlockOverrides = [] } = useQuery({
+    queryKey: ["team-unlock-overrides", gameId, teamId],
+    queryFn: () => teamsApi.listUnlockOverrides(gameId!, teamId!),
+    enabled: !!gameId && !!teamId,
+  });
+
+  const overridesByBaseId = useMemo(() => {
+    const map = new Map<string, BaseUnlockOverrideResponse>();
+    unlockOverrides.forEach((o) => map.set(o.baseId, o));
+    return map;
+  }, [unlockOverrides]);
 
   const removePlayer = useMutation({
     mutationFn: (playerId: string) => teamsApi.removePlayer(teamId!, playerId, gameId),
@@ -46,20 +75,54 @@ export function TeamDetailPage() {
   });
 
   const manualCheckIn = useMutation({
-    mutationFn: (baseId: string) => teamsApi.manualCheckIn(gameId!, teamId!, baseId),
+    mutationFn: ({ baseId, reason }: { baseId: string; reason?: string }) =>
+      teamsApi.manualCheckIn(gameId!, teamId!, baseId, reason ? { reason } : undefined),
     onSuccess: () => {
       setCheckInBaseId(null);
+      setCheckInReason("");
       queryClient.invalidateQueries({ queryKey: ["team-progress", gameId, teamId] });
       toast.success(t("teamDetail.checkInSuccess"));
     },
     onError: (error: unknown) => {
       const msg = getApiErrorMessage(error);
       setCheckInBaseId(null);
+      setCheckInReason("");
       if (msg.toLowerCase().includes("already")) {
         toast.info(t("teamDetail.checkInAlreadyDone"));
       } else {
         toast.error(msg);
       }
+    },
+  });
+
+  const createUnlock = useMutation({
+    mutationFn: ({ baseId, reason }: { baseId: string; reason?: string }) =>
+      teamsApi.createUnlockOverride(gameId!, teamId!, baseId, reason ? { reason } : undefined),
+    onSuccess: () => {
+      setUnlockDialogBaseId(null);
+      setUnlockReason("");
+      queryClient.invalidateQueries({ queryKey: ["team-unlock-overrides", gameId, teamId] });
+      queryClient.invalidateQueries({ queryKey: ["team-progress", gameId, teamId] });
+      toast.success(t("teams.unlockOverrideSuccess"));
+    },
+    onError: (error: unknown) => {
+      setUnlockDialogBaseId(null);
+      setUnlockReason("");
+      toast.error(getApiErrorMessage(error));
+    },
+  });
+
+  const removeUnlock = useMutation({
+    mutationFn: (baseId: string) => teamsApi.removeUnlockOverride(gameId!, teamId!, baseId),
+    onSuccess: () => {
+      setRemoveOverrideDialog(null);
+      queryClient.invalidateQueries({ queryKey: ["team-unlock-overrides", gameId, teamId] });
+      queryClient.invalidateQueries({ queryKey: ["team-progress", gameId, teamId] });
+      toast.success(t("teams.unlockOverrideRemoveSuccess"));
+    },
+    onError: (error: unknown) => {
+      setRemoveOverrideDialog(null);
+      toast.error(getApiErrorMessage(error));
     },
   });
 
@@ -102,13 +165,24 @@ export function TeamDetailPage() {
               {bases.map((base) => {
                 const bp = progress.find((p) => p.baseId === base.id);
                 const visited = bp && bp.status !== "not_visited";
+                const activeOverride = overridesByBaseId.get(base.id);
                 return (
-                  <div key={base.id} className="flex items-center justify-between gap-3 text-sm">
+                  <div
+                    key={base.id}
+                    className="flex flex-wrap items-center justify-between gap-3 text-sm"
+                    data-testid={`team-base-row-${base.id}`}
+                  >
                     <div className="flex items-center gap-2 min-w-0">
                       <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
                       <span className="truncate font-medium">{base.name}</span>
+                      {base.hidden && (
+                        <Badge variant="outline" className="text-xs gap-1">
+                          <Lock className="h-3 w-3" />
+                          {t("teams.hiddenBaseBadge")}
+                        </Badge>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
                       {visited ? (
                         <Badge variant="outline" className="text-xs text-green-600 border-green-600">{t("teamDetail.checkedIn")}</Badge>
                       ) : (
@@ -119,6 +193,44 @@ export function TeamDetailPage() {
                           </Button>
                         </>
                       )}
+                      {activeOverride ? (
+                        <div className="flex items-center gap-1">
+                          <Badge
+                            variant="outline"
+                            className="text-xs gap-1 border-blue-500 text-blue-600"
+                            data-testid={`unlock-override-active-${base.id}`}
+                            title={activeOverride.reason ?? undefined}
+                          >
+                            <ShieldCheck className="h-3 w-3" />
+                            {t("teams.unlockOverrideActiveBadge", {
+                              operator: activeOverride.createdByDisplayName ?? t("common.unknown"),
+                            })}
+                          </Badge>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs gap-1"
+                            onClick={() => setRemoveOverrideDialog(activeOverride)}
+                            data-testid={`unlock-override-remove-btn-${base.id}`}
+                          >
+                            <XCircle className="h-3.5 w-3.5" />
+                            {t("teams.unlockOverrideRemove")}
+                          </Button>
+                        </div>
+                      ) : (
+                        base.hidden && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs gap-1"
+                            onClick={() => setUnlockDialogBaseId(base.id)}
+                            data-testid={`unlock-override-btn-${base.id}`}
+                          >
+                            <Unlock className="h-3.5 w-3.5" />
+                            {t("teams.unlockOverrideAction")}
+                          </Button>
+                        )
+                      )}
                     </div>
                   </div>
                 );
@@ -128,8 +240,8 @@ export function TeamDetailPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={!!checkInBaseId} onOpenChange={(open) => { if (!open) setCheckInBaseId(null); }}>
-        <DialogContent onClose={() => setCheckInBaseId(null)}>
+      <Dialog open={!!checkInBaseId} onOpenChange={(open) => { if (!open) { setCheckInBaseId(null); setCheckInReason(""); } }}>
+        <DialogContent onClose={() => { setCheckInBaseId(null); setCheckInReason(""); }}>
           <DialogHeader>
             <DialogTitle>{t("teamDetail.manualCheckInTitle")}</DialogTitle>
           </DialogHeader>
@@ -139,10 +251,108 @@ export function TeamDetailPage() {
               base: bases.find((b) => b.id === checkInBaseId)?.name ?? "",
             })}
           </p>
+          <div className="mt-4 space-y-2">
+            <label
+              className="text-sm font-medium"
+              htmlFor="manual-check-in-reason"
+            >
+              {t("teams.manualCheckInReasonLabel")}
+            </label>
+            <Textarea
+              id="manual-check-in-reason"
+              data-testid="manual-check-in-reason"
+              value={checkInReason}
+              onChange={(e) => setCheckInReason(e.target.value.slice(0, REASON_MAX_LENGTH))}
+              placeholder={t("teams.manualCheckInReasonPlaceholder")}
+              maxLength={REASON_MAX_LENGTH}
+              rows={2}
+            />
+          </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCheckInBaseId(null)}>{t("common.cancel")}</Button>
-            <Button disabled={manualCheckIn.isPending} onClick={() => { if (checkInBaseId) manualCheckIn.mutate(checkInBaseId); }}>
+            <Button variant="outline" onClick={() => { setCheckInBaseId(null); setCheckInReason(""); }}>{t("common.cancel")}</Button>
+            <Button
+              disabled={manualCheckIn.isPending}
+              data-testid="manual-check-in-submit"
+              onClick={() => {
+                if (checkInBaseId) {
+                  const trimmed = checkInReason.trim();
+                  manualCheckIn.mutate({ baseId: checkInBaseId, reason: trimmed || undefined });
+                }
+              }}
+            >
               {manualCheckIn.isPending ? t("common.sending") : t("teamDetail.manualCheckIn")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!unlockDialogBaseId} onOpenChange={(open) => { if (!open) { setUnlockDialogBaseId(null); setUnlockReason(""); } }}>
+        <DialogContent onClose={() => { setUnlockDialogBaseId(null); setUnlockReason(""); }}>
+          <DialogHeader>
+            <DialogTitle>{t("teams.unlockOverrideDialogTitle")}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            {t("teams.unlockOverrideDialogDescription", {
+              team: team.name,
+              base: bases.find((b) => b.id === unlockDialogBaseId)?.name ?? "",
+            })}
+          </p>
+          <div className="mt-4 space-y-2">
+            <label
+              className="text-sm font-medium"
+              htmlFor="unlock-override-reason"
+            >
+              {t("teams.unlockOverrideReasonLabel")}
+            </label>
+            <Textarea
+              id="unlock-override-reason"
+              data-testid="unlock-override-reason"
+              value={unlockReason}
+              onChange={(e) => setUnlockReason(e.target.value.slice(0, REASON_MAX_LENGTH))}
+              placeholder={t("teams.unlockOverrideReasonPlaceholder")}
+              maxLength={REASON_MAX_LENGTH}
+              rows={2}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setUnlockDialogBaseId(null); setUnlockReason(""); }}>{t("common.cancel")}</Button>
+            <Button
+              disabled={createUnlock.isPending}
+              data-testid="unlock-override-submit"
+              onClick={() => {
+                if (unlockDialogBaseId) {
+                  const trimmed = unlockReason.trim();
+                  createUnlock.mutate({ baseId: unlockDialogBaseId, reason: trimmed || undefined });
+                }
+              }}
+            >
+              {createUnlock.isPending ? t("common.sending") : t("teams.unlockOverrideAction")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!removeOverrideDialog} onOpenChange={(open) => { if (!open) setRemoveOverrideDialog(null); }}>
+        <DialogContent onClose={() => setRemoveOverrideDialog(null)}>
+          <DialogHeader>
+            <DialogTitle>{t("teams.unlockOverrideRemoveConfirmTitle")}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            {t("teams.unlockOverrideRemoveConfirmDescription", {
+              base: bases.find((b) => b.id === removeOverrideDialog?.baseId)?.name ?? "",
+            })}
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRemoveOverrideDialog(null)}>{t("common.cancel")}</Button>
+            <Button
+              variant="destructive"
+              disabled={removeUnlock.isPending}
+              data-testid="unlock-override-remove-submit"
+              onClick={() => {
+                if (removeOverrideDialog) removeUnlock.mutate(removeOverrideDialog.baseId);
+              }}
+            >
+              {removeUnlock.isPending ? t("common.sending") : t("teams.unlockOverrideRemove")}
             </Button>
           </DialogFooter>
         </DialogContent>

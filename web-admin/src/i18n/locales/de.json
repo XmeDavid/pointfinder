@@ -36,7 +36,9 @@
     "noSubmissions": "Noch keine Einreichungen",
     "totalSubmissions": "Einreichungen gesamt",
     "pendingInvitations": "Ausstehende Einladungen",
-    "inviteOperator": "Operator einladen"
+    "inviteOperator": "Operator einladen",
+    "unknown": "Unbekannt",
+    "base": "Station"
   },
   "auth": {
     "signIn": "Anmelden",
@@ -383,7 +385,21 @@
     "removeMember": "Spieler entfernen",
     "removeMemberConfirm": "{{name}} aus diesem Spiel entfernen?",
     "deleteConfirmTitle": "Dieses Team löschen?",
-    "deleteConfirmDescription": "Dieses Team und alle seine Mitglieder werden dauerhaft entfernt."
+    "deleteConfirmDescription": "Dieses Team und alle seine Mitglieder werden dauerhaft entfernt.",
+    "hiddenBaseBadge": "Versteckt",
+    "unlockOverrideAction": "Entsperren erzwingen",
+    "unlockOverrideRemove": "Entsperrung aufheben",
+    "unlockOverrideDialogTitle": "Versteckte Station entsperren",
+    "unlockOverrideDialogDescription": "Diese Station für {{team}} an {{base}} sichtbar machen. Die Entsperrung ist umkehrbar und wird im Audit-Log festgehalten.",
+    "unlockOverrideReasonLabel": "Grund (optional)",
+    "unlockOverrideReasonPlaceholder": "z. B. GPS-Ausfall, Team ist vor Ort",
+    "unlockOverrideActiveBadge": "Entsperrt durch {{operator}}",
+    "unlockOverrideSuccess": "Entsperrung wurde angewendet.",
+    "unlockOverrideRemoveSuccess": "Entsperrung wurde aufgehoben.",
+    "unlockOverrideRemoveConfirmTitle": "Entsperrung aufheben?",
+    "unlockOverrideRemoveConfirmDescription": "Die Station {{base}} wird für dieses Team wieder versteckt. Der Verlauf bleibt im Audit-Log erhalten.",
+    "manualCheckInReasonLabel": "Grund (optional)",
+    "manualCheckInReasonPlaceholder": "z. B. NFC-Fehler, GPS-Problem, Geräteproblem"
   },
   "notifications": {
     "description": "Nachrichten an Teams im Feld senden",
@@ -436,7 +452,34 @@
       "submission": "Einreichung",
       "approval": "Freigabe",
       "rejection": "Ablehnung"
-    }
+    },
+    "exportAuditAction": "Aktivität exportieren",
+    "exportAuditDialogTitle": "Aktivitäts-Audit exportieren",
+    "exportAuditFormatLabel": "Format",
+    "exportAuditFormatJson": "JSON",
+    "exportAuditFormatCsv": "CSV",
+    "exportAuditFromLabel": "Von",
+    "exportAuditToLabel": "Bis",
+    "exportAuditTeamFilter": "Team",
+    "exportAuditActionTypeFilter": "Aktionstypen",
+    "exportAuditActionType": {
+      "check_in": "Check-in",
+      "submission": "Einreichung",
+      "approval": "Freigabe",
+      "rejection": "Ablehnung",
+      "operator_override": "Operator-Eingriff",
+      "team_join": "Team-Beitritt",
+      "team_switch": "Team-Wechsel"
+    },
+    "exportAuditSourceSurfaceFilter": "Quelle",
+    "exportAuditSourceSurface": {
+      "player_app": "Spieler-App",
+      "web_admin": "Web-Admin",
+      "operator_rescue": "Operator-Rettung"
+    },
+    "exportAuditIncludeArchived": "Archivierte Einträge einschließen",
+    "exportAuditSubmit": "Export herunterladen",
+    "exportAuditSuccess": "Audit-Export heruntergeladen."
   },
   "submissions": {
     "pendingReview_one": "{{count}} ausstehende Prüfung",
@@ -459,7 +502,15 @@
     "override": "Überschreiben",
     "correctAnswer": "Richtige Antwort",
     "feedbackSent": "Feedback: {{feedback}}",
-    "pointsLabelWithExpected": "Punkte ({{points}})"
+    "pointsLabelWithExpected": "Punkte ({{points}})",
+    "markCompletedAction": "Als abgeschlossen markieren (Rettung)",
+    "markCompletedHelper": "Verwenden, wenn das Team die Aufgabe im Feld erledigt hat, aber die Einreichung blockiert wurde.",
+    "markCompletedDialogTitle": "Aufgabe als abgeschlossen markieren",
+    "markCompletedReasonLabel": "Grund (optional)",
+    "markCompletedReasonPlaceholder": "Warum ist dies eine Rettung? z. B. Team hat die Aufgabe erledigt, aber das System hat die Einreichung blockiert",
+    "markCompletedPointsOverrideLabel": "Punkte (optional)",
+    "markCompletedConfirm": "Als abgeschlossen markieren",
+    "markCompletedSuccess": "Aufgabe als abgeschlossen markiert."
   },
   "teamDetail": {
     "backToLeaderboard": "Zurück zur Rangliste",

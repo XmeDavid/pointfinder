@@ -36,7 +36,9 @@
     "noSubmissions": "Sem submissões ainda",
     "totalSubmissions": "Total de Submissões",
     "pendingInvitations": "Convites Pendentes",
-    "inviteOperator": "Convidar Operador"
+    "inviteOperator": "Convidar Operador",
+    "unknown": "Desconhecido",
+    "base": "Base"
   },
   "auth": {
     "signIn": "Entrar",
@@ -383,7 +385,21 @@
     "removeMember": "Remover jogador",
     "removeMemberConfirm": "Remover {{name}} deste jogo?",
     "deleteConfirmTitle": "Eliminar esta equipa?",
-    "deleteConfirmDescription": "Esta equipa e todos os seus membros serão permanentemente removidos."
+    "deleteConfirmDescription": "Esta equipa e todos os seus membros serão permanentemente removidos.",
+    "hiddenBaseBadge": "Oculta",
+    "unlockOverrideAction": "Forçar desbloqueio",
+    "unlockOverrideRemove": "Remover substituição",
+    "unlockOverrideDialogTitle": "Forçar desbloqueio de base oculta",
+    "unlockOverrideDialogDescription": "Tornar esta base visível para {{team}} na base {{base}}. A substituição é reversível e fica registada na auditoria.",
+    "unlockOverrideReasonLabel": "Motivo do operador (opcional)",
+    "unlockOverrideReasonPlaceholder": "ex. Chuva impediu o GPS; equipa está perto",
+    "unlockOverrideActiveBadge": "Substituição por {{operator}}",
+    "unlockOverrideSuccess": "Substituição de desbloqueio aplicada.",
+    "unlockOverrideRemoveSuccess": "Substituição de desbloqueio removida.",
+    "unlockOverrideRemoveConfirmTitle": "Remover substituição?",
+    "unlockOverrideRemoveConfirmDescription": "A base {{base}} voltará a ficar oculta para esta equipa. O histórico é preservado na auditoria.",
+    "manualCheckInReasonLabel": "Motivo do operador (opcional)",
+    "manualCheckInReasonPlaceholder": "ex. Falha de NFC, problema de GPS, avaria no dispositivo"
   },
   "notifications": {
     "description": "Enviar mensagens para as equipas no terreno",
@@ -436,7 +452,34 @@
       "submission": "Submissão",
       "approval": "Aprovação",
       "rejection": "Rejeição"
-    }
+    },
+    "exportAuditAction": "Exportar Atividade",
+    "exportAuditDialogTitle": "Exportar auditoria de atividade",
+    "exportAuditFormatLabel": "Formato",
+    "exportAuditFormatJson": "JSON",
+    "exportAuditFormatCsv": "CSV",
+    "exportAuditFromLabel": "De",
+    "exportAuditToLabel": "Até",
+    "exportAuditTeamFilter": "Equipa",
+    "exportAuditActionTypeFilter": "Tipos de ação",
+    "exportAuditActionType": {
+      "check_in": "Check-in",
+      "submission": "Submissão",
+      "approval": "Aprovação",
+      "rejection": "Rejeição",
+      "operator_override": "Substituição do operador",
+      "team_join": "Entrada na equipa",
+      "team_switch": "Troca de equipa"
+    },
+    "exportAuditSourceSurfaceFilter": "Origem",
+    "exportAuditSourceSurface": {
+      "player_app": "App do jogador",
+      "web_admin": "Painel web",
+      "operator_rescue": "Resgate do operador"
+    },
+    "exportAuditIncludeArchived": "Incluir linhas arquivadas",
+    "exportAuditSubmit": "Transferir exportação",
+    "exportAuditSuccess": "Exportação da auditoria transferida."
   },
   "submissions": {
     "pendingReview_one": "{{count}} pendente de revisão",
@@ -459,7 +502,15 @@
     "override": "Substituir",
     "correctAnswer": "Resposta Correta",
     "feedbackSent": "Feedback: {{feedback}}",
-    "pointsLabelWithExpected": "Pontos ({{points}})"
+    "pointsLabelWithExpected": "Pontos ({{points}})",
+    "markCompletedAction": "Marcar como concluído (resgate)",
+    "markCompletedHelper": "Usar quando a equipa concluiu a tarefa no terreno mas o sistema bloqueou a submissão.",
+    "markCompletedDialogTitle": "Marcar desafio como concluído",
+    "markCompletedReasonLabel": "Motivo do operador (opcional)",
+    "markCompletedReasonPlaceholder": "Porque é preciso resgate? ex. a equipa fez a tarefa mas o sistema bloqueou a submissão",
+    "markCompletedPointsOverrideLabel": "Pontos (opcional)",
+    "markCompletedConfirm": "Marcar como concluído",
+    "markCompletedSuccess": "Desafio marcado como concluído."
   },
   "teamDetail": {
     "backToLeaderboard": "Voltar à Classificação",

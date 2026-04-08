@@ -36,7 +36,9 @@
     "noSubmissions": "No submissions yet",
     "totalSubmissions": "Total Submissions",
     "pendingInvitations": "Pending Invitations",
-    "inviteOperator": "Invite Operator"
+    "inviteOperator": "Invite Operator",
+    "unknown": "Unknown",
+    "base": "Base"
   },
   "auth": {
     "signIn": "Sign In",
@@ -383,7 +385,21 @@
     "removeMember": "Remove player",
     "removeMemberConfirm": "Remove {{name}} from this game?",
     "deleteConfirmTitle": "Delete this team?",
-    "deleteConfirmDescription": "This team and all its members will be permanently removed."
+    "deleteConfirmDescription": "This team and all its members will be permanently removed.",
+    "hiddenBaseBadge": "Hidden",
+    "unlockOverrideAction": "Override unlock",
+    "unlockOverrideRemove": "Remove override",
+    "unlockOverrideDialogTitle": "Force-unlock hidden base",
+    "unlockOverrideDialogDescription": "Make this base visible to {{team}} at {{base}}. The override is reversible and recorded on the audit trail.",
+    "unlockOverrideReasonLabel": "Operator reason (optional)",
+    "unlockOverrideReasonPlaceholder": "e.g. GPS rain-out; team is nearby",
+    "unlockOverrideActiveBadge": "Override by {{operator}}",
+    "unlockOverrideSuccess": "Unlock override applied.",
+    "unlockOverrideRemoveSuccess": "Unlock override removed.",
+    "unlockOverrideRemoveConfirmTitle": "Remove unlock override?",
+    "unlockOverrideRemoveConfirmDescription": "This will re-hide the base {{base}} for this team. The history row is preserved on the audit trail.",
+    "manualCheckInReasonLabel": "Operator reason (optional)",
+    "manualCheckInReasonPlaceholder": "e.g. NFC failure, GPS issue, device problem"
   },
   "notifications": {
     "description": "Send messages to teams in the field",
@@ -436,7 +452,34 @@
       "submission": "Submission",
       "approval": "Approval",
       "rejection": "Rejection"
-    }
+    },
+    "exportAuditAction": "Export Activity",
+    "exportAuditDialogTitle": "Export activity audit",
+    "exportAuditFormatLabel": "Format",
+    "exportAuditFormatJson": "JSON",
+    "exportAuditFormatCsv": "CSV",
+    "exportAuditFromLabel": "From",
+    "exportAuditToLabel": "To",
+    "exportAuditTeamFilter": "Team",
+    "exportAuditActionTypeFilter": "Action types",
+    "exportAuditActionType": {
+      "check_in": "Check-in",
+      "submission": "Submission",
+      "approval": "Approval",
+      "rejection": "Rejection",
+      "operator_override": "Operator override",
+      "team_join": "Team join",
+      "team_switch": "Team switch"
+    },
+    "exportAuditSourceSurfaceFilter": "Source surface",
+    "exportAuditSourceSurface": {
+      "player_app": "Player app",
+      "web_admin": "Web admin",
+      "operator_rescue": "Operator rescue"
+    },
+    "exportAuditIncludeArchived": "Include archived rows",
+    "exportAuditSubmit": "Download export",
+    "exportAuditSuccess": "Audit export downloaded."
   },
   "submissions": {
     "pendingReview_one": "{{count}} pending review",
@@ -459,7 +502,15 @@
     "override": "Override",
     "correctAnswer": "Correct Answer",
     "feedbackSent": "Feedback: {{feedback}}",
-    "pointsLabelWithExpected": "Points ({{points}})"
+    "pointsLabelWithExpected": "Points ({{points}})",
+    "markCompletedAction": "Mark as completed (rescue)",
+    "markCompletedHelper": "Use this if the team did the task in the field but the system blocked their submission.",
+    "markCompletedDialogTitle": "Mark challenge as completed",
+    "markCompletedReasonLabel": "Operator reason (optional)",
+    "markCompletedReasonPlaceholder": "Why does this need rescue? e.g. team did the task but the system blocked the submission",
+    "markCompletedPointsOverrideLabel": "Points override (optional)",
+    "markCompletedConfirm": "Mark as completed",
+    "markCompletedSuccess": "Challenge marked as completed."
   },
   "teamDetail": {
     "backToLeaderboard": "Back to Leaderboard",

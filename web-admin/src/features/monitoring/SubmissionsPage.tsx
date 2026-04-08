@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle, XCircle, Clock, FileText, Filter, Maximize2, MoreHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
+import { CheckCircle, XCircle, Clock, FileText, Filter, Maximize2, MoreHorizontal, ChevronLeft, ChevronRight, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
@@ -77,6 +77,10 @@ export function SubmissionsPage() {
   const [feedback, setFeedback] = useState("");
   const [reviewPoints, setReviewPoints] = useState<number>(0);
   const [fullScreenMedia, setFullScreenMedia] = useState<{ urls: string[]; index: number } | null>(null);
+  const [markCompletedSub, setMarkCompletedSub] = useState<Submission | null>(null);
+  const [markCompletedReason, setMarkCompletedReason] = useState("");
+  const [markCompletedPointsOverride, setMarkCompletedPointsOverride] = useState<string>("");
+  const REASON_MAX_LENGTH = 500;
   // Cache blob URLs by API path so the fullscreen dialog can reuse them.
   // Limited to MAX_BLOB_CACHE entries to prevent unbounded memory growth.
   const MAX_BLOB_CACHE = 100;
@@ -135,6 +139,37 @@ export function SubmissionsPage() {
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["submissions", gameId] }); setReviewingSub(null); setFeedback(""); setReviewPoints(0); toast.success(t("common.saved")); },
     onError: (error: unknown) => { toast.error(getApiErrorMessage(error)); },
+  });
+
+  const closeMarkCompleted = useCallback(() => {
+    setMarkCompletedSub(null);
+    setMarkCompletedReason("");
+    setMarkCompletedPointsOverride("");
+  }, []);
+
+  const markCompletedMutation = useMutation({
+    mutationFn: ({ sub, reason, pointsOverride }: { sub: Submission; reason?: string; pointsOverride?: number }) => {
+      if (!sub.baseId) {
+        return Promise.reject(new Error("Submission has no base id"));
+      }
+      return teamsApi.markCompleted(gameId!, sub.teamId, sub.baseId, {
+        challengeId: sub.challengeId,
+        reason,
+        pointsOverride,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["submissions", gameId] });
+      queryClient.invalidateQueries({ queryKey: ["activity", gameId] });
+      closeMarkCompleted();
+      setReviewingSub(null);
+      setFeedback("");
+      setReviewPoints(0);
+      toast.success(t("submissions.markCompletedSuccess"));
+    },
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error));
+    },
   });
 
   const statusLabels: Record<SubmissionStatus, string> = { pending: t("common.pending"), approved: t("submissions.statusApproved"), rejected: t("common.rejected"), correct: t("submissions.statusCorrect") };
@@ -308,8 +343,95 @@ export function SubmissionsPage() {
               <Button variant="destructive" onClick={() => reviewMutation.mutate({ id: reviewingSub.id, status: "rejected", feedback: feedback || undefined })} loading={reviewMutation.isPending} data-testid="submission-reject-btn"><XCircle className="mr-1 h-4 w-4" /> {t("submissions.reject")}</Button>
               <Button onClick={() => reviewMutation.mutate({ id: reviewingSub.id, status: "approved", points: reviewPoints, feedback: feedback || undefined })} loading={reviewMutation.isPending} data-testid="submission-approve-btn"><CheckCircle className="mr-1 h-4 w-4" /> {t("submissions.approve")}</Button>
             </DialogFooter>
+            {reviewingSub.baseId && (
+              <div className="mt-4 border-t border-border pt-3">
+                <p className="text-xs text-muted-foreground mb-2">{t("submissions.markCompletedHelper")}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 text-xs"
+                  onClick={() => {
+                    const ch = challengeMap.get(reviewingSub.challengeId);
+                    setMarkCompletedSub(reviewingSub);
+                    setMarkCompletedReason("");
+                    setMarkCompletedPointsOverride(ch?.points != null ? String(ch.points) : "");
+                  }}
+                  data-testid="submission-mark-completed-btn"
+                >
+                  <Wrench className="h-3.5 w-3.5" /> {t("submissions.markCompletedAction")}
+                </Button>
+              </div>
+            )}
           </DialogContent>
         )}
+      </Dialog>
+
+      <Dialog open={!!markCompletedSub} onOpenChange={(open) => { if (!open) closeMarkCompleted(); }}>
+        {markCompletedSub && (() => {
+          const ch = challengeMap.get(markCompletedSub.challengeId);
+          const mcTeam = teamMap.get(markCompletedSub.teamId);
+          const mcBase = markCompletedSub.baseId ? baseMap.get(markCompletedSub.baseId) : undefined;
+          const parsedOverride = markCompletedPointsOverride.trim() === "" ? undefined : parseInt(markCompletedPointsOverride, 10);
+          const pointsOverrideValid = parsedOverride === undefined || !Number.isNaN(parsedOverride);
+          return (
+            <DialogContent onClose={closeMarkCompleted} data-testid="mark-completed-dialog">
+              <DialogHeader>
+                <DialogTitle>{t("submissions.markCompletedDialogTitle")}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-1 text-sm">
+                  <p><span className="font-medium">{t("common.team")}:</span> {mcTeam?.name ?? "—"}</p>
+                  <p><span className="font-medium">{t("common.challenge")}:</span> {ch?.title ?? "—"}</p>
+                  {mcBase && <p><span className="font-medium">{t("common.base")}:</span> {mcBase.name}</p>}
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium" htmlFor="mark-completed-reason">{t("submissions.markCompletedReasonLabel")}</label>
+                  <Textarea
+                    id="mark-completed-reason"
+                    data-testid="mark-completed-reason"
+                    value={markCompletedReason}
+                    onChange={(e) => setMarkCompletedReason(e.target.value.slice(0, REASON_MAX_LENGTH))}
+                    placeholder={t("submissions.markCompletedReasonPlaceholder")}
+                    maxLength={REASON_MAX_LENGTH}
+                    rows={3}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium" htmlFor="mark-completed-points">
+                    {t("submissions.markCompletedPointsOverrideLabel")}
+                  </label>
+                  <Input
+                    id="mark-completed-points"
+                    data-testid="mark-completed-points"
+                    type="number"
+                    value={markCompletedPointsOverride}
+                    onChange={(e) => setMarkCompletedPointsOverride(e.target.value)}
+                    placeholder={ch?.points != null ? String(ch.points) : ""}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={closeMarkCompleted}>{t("common.cancel")}</Button>
+                <Button
+                  variant="default"
+                  loading={markCompletedMutation.isPending}
+                  disabled={!pointsOverrideValid || !markCompletedSub.baseId}
+                  onClick={() => {
+                    const trimmed = markCompletedReason.trim();
+                    markCompletedMutation.mutate({
+                      sub: markCompletedSub,
+                      reason: trimmed || undefined,
+                      pointsOverride: parsedOverride,
+                    });
+                  }}
+                  data-testid="mark-completed-confirm-btn"
+                >
+                  <Wrench className="mr-1 h-4 w-4" /> {t("submissions.markCompletedConfirm")}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          );
+        })()}
       </Dialog>
 
       {/* Full-screen media viewer */}
