@@ -765,7 +765,15 @@
     "reload": "Neu laden",
     "boundaryInline": "Etwas ist schiefgelaufen. Bitte aktualisiere die Seite.",
     "tryAgain": "Erneut versuchen",
-    "liveUpdatesRetrying": "Live-Updates vorübergehend nicht verfügbar. Erneuter Versuch…"
+    "liveUpdatesRetrying": "Live-Updates vorübergehend nicht verfügbar. Erneuter Versuch…",
+    "MARK_COMPLETED_REQUIRES_CHECKIN": "Das Team muss zuerst einchecken. Tippe auf Manuelles Einchecken, bevor du abschließt.",
+    "MARK_COMPLETED_ALREADY_COMPLETED": "Die Basis ist für dieses Team bereits abgeschlossen.",
+    "MANUAL_CHECKIN_ALREADY_CHECKED_IN": "Das Team ist an dieser Basis bereits eingecheckt.",
+    "UNLOCK_OVERRIDE_ALREADY_EXISTS": "Dieses Team hat bereits eine Überschreibung für die Basis.",
+    "UNLOCK_OVERRIDE_NOT_FOUND": "Keine Überschreibung zum Entfernen vorhanden.",
+    "TAG_LABEL_DUPLICATE": "Ein Tag mit diesem Namen existiert bereits in diesem Spiel.",
+    "TAG_CAP_EXCEEDED": "Maximale Anzahl von 50 Tags pro Spiel erreicht.",
+    "TAG_IN_USE": "Löschen nicht möglich: Der Tag wird von einem oder mehreren Elementen verwendet."
   },
   "realtimeHealth": {
     "title": "Echtzeit-Status",

@@ -1,5 +1,6 @@
 import type { ActivityEvent, TeamLocation, TeamBaseProgress } from "@/types";
 import apiClient from "./client";
+import { getApiErrorMessage } from "./errors";
 
 /**
  * Filter set for the Phase 3 activity audit export endpoint
@@ -47,14 +48,22 @@ export const monitoringApi = {
   },
 
   getLeaderboard: async (
-    gameId: string
-  ): Promise<{ teamId: string; teamName: string; color: string; points: number; completedChallenges: number }[]> => {
+    gameId: string,
+  ): Promise<
+    {
+      teamId: string;
+      teamName: string;
+      color: string;
+      points: number;
+      completedChallenges: number;
+    }[]
+  > => {
     const { data } = await apiClient.get(`/games/${gameId}/monitoring/leaderboard`);
     return data;
   },
 
   getDashboardStats: async (
-    gameId: string
+    gameId: string,
   ): Promise<{
     totalTeams: number;
     totalBases: number;
@@ -70,11 +79,17 @@ export const monitoringApi = {
   },
 
   getResultsExport: async (
-    gameId: string
+    gameId: string,
   ): Promise<{
     gameName: string;
     challenges: { id: string; title: string; maxPoints: number }[];
-    teams: { teamId: string; teamName: string; color: string; totalPoints: number; challengePoints: Record<string, number> }[];
+    teams: {
+      teamId: string;
+      teamName: string;
+      color: string;
+      totalPoints: number;
+      challengePoints: Record<string, number>;
+    }[];
   }> => {
     const { data } = await apiClient.get(`/games/${gameId}/monitoring/results-export`);
     return data;
@@ -99,17 +114,12 @@ export const monitoringApi = {
    * string stays minimal and the backend receives exactly what the
    * operator asked for.
    */
-  exportAuditLog: async (
-    gameId: string,
-    filters: AuditExportFilters = {},
-  ): Promise<Blob> => {
+  exportAuditLog: async (gameId: string, filters: AuditExportFilters = {}): Promise<Blob> => {
     const params = new URLSearchParams();
-    (Object.entries(filters) as [keyof AuditExportFilters, unknown][]).forEach(
-      ([key, value]) => {
-        if (value === undefined || value === null || value === "") return;
-        params.append(key, String(value));
-      },
-    );
+    (Object.entries(filters) as [keyof AuditExportFilters, unknown][]).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === "") return;
+      params.append(key, String(value));
+    });
     const query = params.toString();
     const url = `/games/${gameId}/audit-export${query ? `?${query}` : ""}`;
     try {
@@ -128,6 +138,9 @@ export const monitoringApi = {
           // If the blob isn't JSON, leave it — caller falls back to generic message
         }
       }
+      // Attach the friendly message so any caller that inspects the error directly
+      // (rather than calling getApiErrorMessage) still surfaces the correct string.
+      (error as Record<string, unknown>)._friendlyMessage = getApiErrorMessage(error);
       throw error;
     }
   },

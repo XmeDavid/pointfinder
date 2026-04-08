@@ -765,7 +765,15 @@
     "reload": "Reload",
     "boundaryInline": "Something went wrong. Please refresh the page.",
     "tryAgain": "Try again",
-    "liveUpdatesRetrying": "Live updates temporarily unavailable. Retrying…"
+    "liveUpdatesRetrying": "Live updates temporarily unavailable. Retrying…",
+    "MARK_COMPLETED_REQUIRES_CHECKIN": "Team must be checked in first. Tap Manual Check-In before completing.",
+    "MARK_COMPLETED_ALREADY_COMPLETED": "Base is already completed for this team.",
+    "MANUAL_CHECKIN_ALREADY_CHECKED_IN": "Team is already checked in at this base.",
+    "UNLOCK_OVERRIDE_ALREADY_EXISTS": "This team already has an override for the base.",
+    "UNLOCK_OVERRIDE_NOT_FOUND": "No override to remove.",
+    "TAG_LABEL_DUPLICATE": "A tag with this name already exists in this game.",
+    "TAG_CAP_EXCEEDED": "Maximum 50 tags per game reached.",
+    "TAG_IN_USE": "Can't delete: tag is in use by one or more items."
   },
   "realtimeHealth": {
     "title": "Realtime Health",

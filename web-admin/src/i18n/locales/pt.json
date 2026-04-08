@@ -765,7 +765,15 @@
     "reload": "Recarregar",
     "boundaryInline": "Algo correu mal. Por favor atualize a página.",
     "tryAgain": "Tentar novamente",
-    "liveUpdatesRetrying": "Atualizações ao vivo temporariamente indisponíveis. A tentar novamente…"
+    "liveUpdatesRetrying": "Atualizações ao vivo temporariamente indisponíveis. A tentar novamente…",
+    "MARK_COMPLETED_REQUIRES_CHECKIN": "A equipa deve fazer check-in primeiro. Toque em Check-In Manual antes de concluir.",
+    "MARK_COMPLETED_ALREADY_COMPLETED": "A base já foi concluída para esta equipa.",
+    "MANUAL_CHECKIN_ALREADY_CHECKED_IN": "A equipa já fez check-in nesta base.",
+    "UNLOCK_OVERRIDE_ALREADY_EXISTS": "Esta equipa já tem uma substituição para a base.",
+    "UNLOCK_OVERRIDE_NOT_FOUND": "Não há substituição para remover.",
+    "TAG_LABEL_DUPLICATE": "Já existe uma etiqueta com este nome neste jogo.",
+    "TAG_CAP_EXCEEDED": "Limite máximo de 50 etiquetas por jogo atingido.",
+    "TAG_IN_USE": "Não é possível eliminar: a etiqueta está a ser utilizada por um ou mais itens."
   },
   "realtimeHealth": {
     "title": "Saúde em Tempo Real",
