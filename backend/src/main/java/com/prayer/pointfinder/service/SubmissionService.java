@@ -7,6 +7,7 @@ import com.prayer.pointfinder.dto.response.SubmissionResponse;
 import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ConflictException;
+import com.prayer.pointfinder.exception.ErrorCode;
 import com.prayer.pointfinder.exception.ForbiddenException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.*;
@@ -402,8 +403,9 @@ public class SubmissionService {
         // on top of a recorded presence, not a pure state edit.
         if (!checkInRepository.existsByTeamIdAndBaseId(teamId, baseId)) {
             throw new BadRequestException(
-                    "MARK_COMPLETED_REQUIRES_CHECKIN: Team is not checked in at this base. "
-                            + "Call the manual check-in endpoint first if needed.");
+                    "Team is not checked in at this base. "
+                            + "Call the manual check-in endpoint first if needed.",
+                    ErrorCode.MARK_COMPLETED_REQUIRES_CHECKIN);
         }
 
         // Resolve the operator inside the transaction so the persisted

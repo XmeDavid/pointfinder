@@ -7,14 +7,13 @@ import com.prayer.pointfinder.entity.Game;
 import com.prayer.pointfinder.entity.GameTag;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ConflictException;
+import com.prayer.pointfinder.exception.ErrorCode;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.GameTagRepository;
 import com.prayer.pointfinder.util.TagPalette;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Set;
@@ -46,9 +45,9 @@ public class GameTagService {
         // Cap check
         long count = gameTagRepository.countByGameId(gameId);
         if (count >= MAX_TAGS_PER_GAME) {
-            throw new ResponseStatusException(
-                    HttpStatus.UNPROCESSABLE_ENTITY,
-                    "tag.max_per_game_exceeded: Maximum " + MAX_TAGS_PER_GAME + " tags per game"
+            throw new BadRequestException(
+                    "Maximum " + MAX_TAGS_PER_GAME + " tags per game",
+                    ErrorCode.TAG_CAP_EXCEEDED
             );
         }
 
@@ -56,7 +55,10 @@ public class GameTagService {
 
         // Duplicate label check (case-insensitive)
         if (gameTagRepository.findByGameIdAndLabelIgnoreCase(gameId, label).isPresent()) {
-            throw new ConflictException("tag.duplicate_label: A tag with this name already exists in this game");
+            throw new ConflictException(
+                    "A tag with this name already exists in this game",
+                    ErrorCode.TAG_LABEL_DUPLICATE
+            );
         }
 
         // Resolve color — use provided or pick next unused palette swatch
@@ -94,7 +96,10 @@ public class GameTagService {
             // Check duplicate only if label is actually changing
             if (!newLabel.equalsIgnoreCase(tag.getLabel())) {
                 if (gameTagRepository.findByGameIdAndLabelIgnoreCase(gameId, newLabel).isPresent()) {
-                    throw new ConflictException("tag.duplicate_label: A tag with this name already exists in this game");
+                    throw new ConflictException(
+                            "A tag with this name already exists in this game",
+                            ErrorCode.TAG_LABEL_DUPLICATE
+                    );
                 }
             }
             tag.setLabel(newLabel);

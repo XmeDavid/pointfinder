@@ -1,11 +1,13 @@
 package com.prayer.pointfinder.exception;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.jsonwebtoken.JwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -35,6 +37,19 @@ public class GlobalExceptionHandler {
             @JsonInclude(JsonInclude.Include.NON_NULL) Boolean retryable
     ) {}
 
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
+        // Thrown by WebSocketAuthChannelInterceptor and Spring Security.
+        // Return 403 with a clean message; do not leak internal auth state.
+        return jsonError(HttpStatus.FORBIDDEN, "You are not authorized to perform this action");
+    }
+
+    @ExceptionHandler(JwtException.class)
+    public ResponseEntity<ErrorResponse> handleJwtException(JwtException ex) {
+        // Thrown when a JWT is malformed, expired, or missing a required claim.
+        return jsonError(HttpStatus.UNAUTHORIZED, "Session expired. Please log in again.");
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex) {
         return jsonError(HttpStatus.NOT_FOUND, ex.getMessage());
@@ -42,12 +57,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ErrorResponse> handleBadRequest(BadRequestException ex) {
-        return jsonError(HttpStatus.BAD_REQUEST, ex.getMessage());
+        return jsonError(HttpStatus.BAD_REQUEST, ex.getMessage(), null, null,
+                ex.getErrorCode() != null ? ex.getErrorCode().name() : null, null);
     }
 
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ErrorResponse> handleConflict(ConflictException ex) {
-        return jsonError(HttpStatus.CONFLICT, ex.getMessage());
+        return jsonError(HttpStatus.CONFLICT, ex.getMessage(), null, null,
+                ex.getErrorCode() != null ? ex.getErrorCode().name() : null, null);
     }
 
     @ExceptionHandler(UploadSessionException.class)

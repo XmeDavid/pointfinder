@@ -9,6 +9,7 @@ import com.prayer.pointfinder.entity.UserRole;
 import com.prayer.pointfinder.entity.User;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ConflictException;
+import com.prayer.pointfinder.exception.ErrorCode;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.GameTagRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,7 +18,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -28,6 +28,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+
 
 @ExtendWith(MockitoExtension.class)
 class GameTagServiceTest {
@@ -128,7 +129,8 @@ class GameTagServiceTest {
         CreateTagRequest request = new CreateTagRequest();
         request.setLabel("trail");
 
-        assertThrows(ConflictException.class, () -> gameTagService.createTag(gameId, request));
+        ConflictException ex = assertThrows(ConflictException.class, () -> gameTagService.createTag(gameId, request));
+        assertEquals(ErrorCode.TAG_LABEL_DUPLICATE, ex.getErrorCode());
         verify(gameTagRepository, never()).save(any());
     }
 
@@ -140,7 +142,8 @@ class GameTagServiceTest {
         CreateTagRequest request = new CreateTagRequest();
         request.setLabel("overflow");
 
-        assertThrows(ResponseStatusException.class, () -> gameTagService.createTag(gameId, request));
+        BadRequestException ex = assertThrows(BadRequestException.class, () -> gameTagService.createTag(gameId, request));
+        assertEquals(ErrorCode.TAG_CAP_EXCEEDED, ex.getErrorCode());
         verify(gameTagRepository, never()).save(any());
     }
 
@@ -200,7 +203,8 @@ class GameTagServiceTest {
         UpdateTagRequest request = new UpdateTagRequest();
         request.setLabel("existing");
 
-        assertThrows(ConflictException.class, () -> gameTagService.updateTag(gameId, tagId, request));
+        ConflictException ex = assertThrows(ConflictException.class, () -> gameTagService.updateTag(gameId, tagId, request));
+        assertEquals(ErrorCode.TAG_LABEL_DUPLICATE, ex.getErrorCode());
         verify(gameTagRepository, never()).save(any());
     }
 

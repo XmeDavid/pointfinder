@@ -1,5 +1,6 @@
 package com.prayer.pointfinder.config;
 
+import com.prayer.pointfinder.websocket.StompAuthErrorHandler;
 import com.prayer.pointfinder.websocket.WebSocketAuthChannelInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +19,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Value("${app.cors.allowed-origins}")
     private String allowedOrigins;
     private final WebSocketAuthChannelInterceptor webSocketAuthChannelInterceptor;
+    private final StompAuthErrorHandler stompAuthErrorHandler;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
@@ -27,6 +29,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.setErrorHandler(stompAuthErrorHandler);
         registry.addEndpoint("/ws")
                 .setAllowedOrigins(allowedOrigins.split(","))
                 .withSockJS();

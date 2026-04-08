@@ -22,6 +22,7 @@ import com.prayer.pointfinder.entity.Team;
 import com.prayer.pointfinder.entity.User;
 import com.prayer.pointfinder.entity.UserRole;
 import com.prayer.pointfinder.exception.BadRequestException;
+import com.prayer.pointfinder.exception.ErrorCode;
 import com.prayer.pointfinder.exception.ForbiddenException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.ActivityEventRepository;
@@ -194,8 +195,8 @@ class OperatorRescueEndpointsTest extends IntegrationTestBase {
         BadRequestException ex = assertThrows(BadRequestException.class,
                 () -> submissionService.markCompletedByOperator(
                         ctx.game.getId(), ctx.team.getId(), ctx.base.getId(), request));
-        assertTrue(ex.getMessage().contains("MARK_COMPLETED_REQUIRES_CHECKIN"),
-                "error must carry the MARK_COMPLETED_REQUIRES_CHECKIN code");
+        assertEquals(ErrorCode.MARK_COMPLETED_REQUIRES_CHECKIN, ex.getErrorCode(),
+                "error must carry the MARK_COMPLETED_REQUIRES_CHECKIN error code");
     }
 
     @Test
