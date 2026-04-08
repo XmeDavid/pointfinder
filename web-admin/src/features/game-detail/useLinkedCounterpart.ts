@@ -61,6 +61,33 @@ function higherPriority(a: LinkSource, b: LinkSource): LinkSource {
 // Callers look up by base id for O(1) per-card access.
 // ---------------------------------------------------------------------------
 
+/**
+ * Build a map of base ID → linked challenges for efficient card-level rendering.
+ *
+ * Constructs a Map<baseId, LinkedChallenge[]> by unioning three linkage sources:
+ * 1. Base.fixedChallengeId (source: 'fixed') — highest priority
+ * 2. Challenge.unlocksBaseIds[] (source: 'unlock') — medium priority
+ * 3. Assignment.baseId/challengeId pairs (source: 'assignment') — lowest priority
+ *
+ * De-duplicates by challenge ID using source priority: if the same challenge
+ * appears via multiple sources, only the highest-priority source is retained.
+ *
+ * @param bases - array of Base entities with optional fixedChallengeId
+ * @param challenges - array of Challenge entities with optional unlocksBaseIds
+ * @param assignments - array of Assignment linking bases to challenges
+ * @returns Map<baseId, LinkedChallenge[]> for O(1) lookups. Empty arrays are
+ *          omitted (only bases with 1+ linked challenges appear as keys).
+ *          Orphaned challenge IDs (challenges deleted but still referenced) are
+ *          silently filtered out.
+ *
+ * @example
+ * const linkedMap = buildLinkedChallengesMap(bases, challenges, assignments);
+ * const base = bases[0];
+ * const linkedChallenges = linkedMap.get(base.id) ?? [];  // O(1) lookup
+ * linkedChallenges.forEach(lc => console.log(lc.id, lc.title, lc.source));
+ *
+ * @see useLinkedChallengesForBase
+ */
 export function buildLinkedChallengesMap(
   bases: Base[],
   challenges: Challenge[],
@@ -138,6 +165,32 @@ export function buildLinkedChallengesMap(
 // Reverse direction of buildLinkedChallengesMap.
 // ---------------------------------------------------------------------------
 
+/**
+ * Build a map of challenge ID → linked bases for efficient card-level rendering.
+ *
+ * The reverse of buildLinkedChallengesMap: constructs Map<challengeId, LinkedBase[]>
+ * by unioning the same three sources:
+ * 1. Base.fixedChallengeId (source: 'fixed') — highest priority
+ * 2. Challenge.unlocksBaseIds[] (source: 'unlock') — medium priority
+ * 3. Assignment.baseId/challengeId pairs (source: 'assignment') — lowest priority
+ *
+ * De-duplicates by base ID using the same source priority.
+ *
+ * @param bases - array of Base entities
+ * @param challenges - array of Challenge entities
+ * @param assignments - array of Assignment linking bases to challenges
+ * @returns Map<challengeId, LinkedBase[]> for O(1) lookups. Empty arrays are
+ *          omitted. Orphaned base IDs (bases deleted but still referenced) are
+ *          silently filtered out.
+ *
+ * @example
+ * const linkedMap = buildLinkedBasesMap(bases, challenges, assignments);
+ * const challenge = challenges[0];
+ * const linkedBases = linkedMap.get(challenge.id) ?? [];  // O(1) lookup
+ * linkedBases.forEach(lb => console.log(lb.id, lb.name, lb.source));
+ *
+ * @see useLinkedBasesForChallenge
+ */
 export function buildLinkedBasesMap(
   bases: Base[],
   challenges: Challenge[],
@@ -210,6 +263,24 @@ export function buildLinkedBasesMap(
 // Sub-wave B wires these into card renders via the map computed at page level.
 // ---------------------------------------------------------------------------
 
+/**
+ * Look up the linked challenges for a given base ID.
+ *
+ * Performs an O(1) map lookup against a prebuilt linkage map. Intended to
+ * be called for each base card during render so that linked challenges can
+ * be displayed (e.g., as "Related challenges" on the base card).
+ *
+ * @param baseId - the base ID to look up
+ * @param linkedChallengesMap - prebuilt map from buildLinkedChallengesMap
+ * @returns array of LinkedChallenge objects, empty if no linkages exist
+ *
+ * @example
+ * // In a BaseCard component:
+ * const linkedChallenges = useLinkedChallengesForBase(base.id, linkedChallengesMap);
+ * if (linkedChallenges.length > 0) {
+ *   return <RelatedChallenges challenges={linkedChallenges} />;
+ * }
+ */
 export function useLinkedChallengesForBase(
   baseId: string,
   linkedChallengesMap: Map<string, LinkedChallenge[]>,
@@ -217,6 +288,24 @@ export function useLinkedChallengesForBase(
   return linkedChallengesMap.get(baseId) ?? [];
 }
 
+/**
+ * Look up the linked bases for a given challenge ID.
+ *
+ * Performs an O(1) map lookup against a prebuilt linkage map. Intended to
+ * be called for each challenge card during render so that linked bases can
+ * be displayed (e.g., as "Related bases" on the challenge card).
+ *
+ * @param challengeId - the challenge ID to look up
+ * @param linkedBasesMap - prebuilt map from buildLinkedBasesMap
+ * @returns array of LinkedBase objects, empty if no linkages exist
+ *
+ * @example
+ * // In a ChallengeCard component:
+ * const linkedBases = useLinkedBasesForChallenge(challenge.id, linkedBasesMap);
+ * if (linkedBases.length > 0) {
+ *   return <RelatedBases bases={linkedBases} />;
+ * }
+ */
 export function useLinkedBasesForChallenge(
   challengeId: string,
   linkedBasesMap: Map<string, LinkedBase[]>,

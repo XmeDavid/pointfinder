@@ -80,6 +80,17 @@ public class BaseUnlockOverrideService {
      * a NEW row is created (the deleted row is preserved for audit). The
      * partial unique index on {@code deleted_at IS NULL} enforces this at
      * the schema level.
+     *
+     * @param gameId the game to which the override applies (must contain the team and base)
+     * @param teamId the team for which the base becomes visible
+     * @param baseId the base to unlock
+     * @param request optional {@link UnlockOverrideRequest} containing operator reason
+     * @return the created or existing active override (never null)
+     * @throws ResourceNotFoundException if game, team, or base not found or do not belong to the game
+     * @throws BadRequestException if concurrent creation races cause initialization failure
+     * @side-effect emits {@link ActivityEventType#operator_override} activity event
+     * @side-effect broadcasts {@code game_config} event, bumping {@code state_version}
+     *             so player clients reconcile visibility on next snapshot fetch
      */
     @Transactional(timeout = 10)
     public BaseUnlockOverrideResponse createOverride(
@@ -173,6 +184,16 @@ public class BaseUnlockOverrideService {
      * {@code deletedByOperator}, and
      * {@code deletedByDisplayNameSnapshot} are populated so the audit
      * export can reconstruct the create/remove window.
+     *
+     * @param gameId the game to which the override applies
+     * @param teamId the team whose override is being removed
+     * @param baseId the base whose unlock override is being revoked
+     * @param request optional {@link UnlockOverrideRequest} containing operator reason
+     * @throws ResourceNotFoundException if game, team, base not found, or no active override exists
+     * @side-effect marks the active override row as deleted (soft-delete via {@code deletedAt})
+     * @side-effect emits {@link ActivityEventType#operator_override} activity event
+     * @side-effect broadcasts {@code game_config} event, bumping {@code state_version}
+     *             so player clients reconcile visibility on next snapshot fetch
      */
     @Transactional(timeout = 10)
     public void removeOverride(UUID gameId, UUID teamId, UUID baseId, UnlockOverrideRequest request) {
@@ -232,6 +253,12 @@ public class BaseUnlockOverrideService {
     /**
      * Lists all active overrides for the team in the given game. Used by
      * the operator UI listing endpoint. Read-only by design.
+     *
+     * @param gameId the game to which the team belongs
+     * @param teamId the team whose active overrides are to be listed
+     * @return an unmodifiable list of active overrides (empty if none exist)
+     * @throws ResourceNotFoundException if game or team not found, or team does not belong to game
+     * @throws ForbiddenException if the current user cannot access the game
      */
     @Transactional(readOnly = true)
     public List<BaseUnlockOverrideResponse> listActiveForTeam(UUID gameId, UUID teamId) {

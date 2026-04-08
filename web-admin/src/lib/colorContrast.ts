@@ -1,8 +1,21 @@
 /**
  * WCAG 2.1 colour-contrast helpers.
  *
- * Used to ensure readable text on operator-chosen tag colours.
+ * Used to ensure readable text on operator-chosen tag colours. This module
+ * implements the standard WCAG 2.1 AA contrast ratio formula to guarantee
+ * that text is readable over any background colour.
+ *
  * The luminance formula follows WCAG 2.x Section 1.4.3 (Contrast Minimum, AA).
+ * See https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum.html
+ *
+ * Usage example (e.g., in a tag chip component):
+ * ```
+ * const tagBgColor = "#ff6b6b";  // operator-chosen colour
+ * const textColor = getReadableTextColor(tagBgColor);  // "#ffffff" or "#000000"
+ * ```
+ *
+ * This ensures WCAG 2.1 AA compliance (≥4.5:1 contrast ratio) for all
+ * operator tag palette choices without requiring manual colour coordination.
  */
 
 /**
@@ -43,7 +56,21 @@ function relativeLuminance(r: number, g: number, b: number): number {
 
 /**
  * Return the WCAG contrast ratio between two hex colours.
- * Ratio is in the range [1, 21].
+ *
+ * The contrast ratio is computed per WCAG 2.1 standard: the ratio of the
+ * relative luminance of the lighter colour to the darker colour, in the
+ * range [1, 21]. A ratio of 1 means no contrast (same colour); 21 is the
+ * maximum (black on white or vice versa).
+ *
+ * @param fgHex - foreground (text) colour in hex format
+ * @param bgHex - background colour in hex format
+ * @returns contrast ratio in the range [1, 21]
+ *
+ * @example
+ * getContrastRatio("#000000", "#ffffff") // → 21 (maximum contrast)
+ * getContrastRatio("#cccccc", "#ffffff") // → 1.1 (very low contrast, fails AA)
+ *
+ * See https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum.html
  */
 export function getContrastRatio(fgHex: string, bgHex: string): number {
   const fg = hexToRgb(fgHex);
@@ -62,6 +89,23 @@ export function getContrastRatio(fgHex: string, bgHex: string): number {
  *
  * WCAG 2.1 AA requires ≥ 4.5:1 for normal text. This helper always picks
  * the higher-contrast option, guaranteeing compliance on any palette colour.
+ *
+ * @param bgHex - a hex colour string in "#rgb", "#rrggbb", "rgb", or "rrggbb" format
+ * @returns "#ffffff" if white has higher contrast; "#000000" otherwise
+ *
+ * @example
+ * // For a light tag background:
+ * getReadableTextColor("#ffeb3b") // → "#000000" (black text)
+ *
+ * // For a dark tag background:
+ * getReadableTextColor("#1a237e") // → "#ffffff" (white text)
+ *
+ * Typical usage in tag chip components:
+ * ```
+ * <span style={{ backgroundColor: tagColor, color: getReadableTextColor(tagColor) }}>
+ *   {tag.label}
+ * </span>
+ * ```
  */
 export function getReadableTextColor(bgHex: string): "#000000" | "#ffffff" {
   const contrastWhite = getContrastRatio("#ffffff", bgHex);

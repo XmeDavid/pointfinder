@@ -18,7 +18,24 @@ import io.jsonwebtoken.JwtException;
  * through Spring Boot's component scan slice.
  *
  * <p>Each endpoint throws exactly one exception so the handler's response
- * can be asserted in isolation.
+ * can be asserted in isolation. This controller is registered only in test
+ * configuration; it is never deployed in production.
+ *
+ * <p><strong>Usage:</strong> Test classes wire this controller via
+ * {@code @WebMvcTest(ExceptionHandlerStubController.class)} and then invoke
+ * its endpoints to verify that {@link GlobalExceptionHandler} produces the
+ * correct HTTP status, error code, and response structure for each exception type.
+ * Each endpoint in this class maps to a single exception scenario (e.g.,
+ * {@code /not-found} throws {@link ResourceNotFoundException},
+ * {@code /bad-request-with-code} throws {@link BadRequestException} with
+ * an {@link ErrorCode}). The test framework then asserts on the
+ * {@code GlobalExceptionHandler} response (status, body shape, error code).
+ *
+ * <p><strong>Coverage:</strong> All exceptions handled by
+ * {@link GlobalExceptionHandler} are covered: resource not found, bad request,
+ * conflict, forbidden, JWT errors, upload session errors, data integrity
+ * violations, file storage errors, bad credentials, illegal state, and
+ * unhandled/generic exceptions.
  */
 @RestController
 @RequestMapping("/test-exceptions")
