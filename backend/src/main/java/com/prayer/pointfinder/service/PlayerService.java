@@ -434,11 +434,17 @@ public class PlayerService {
             bases = combinedBases;
         }
 
-        // Load all relevant challenges, resolving {{variables}} for this team
+        // Load all relevant challenges, resolving {{variables}} for this team.
+        //
+        // Uses PlayerChallengeResponse (not the operator-facing
+        // ChallengeResponse) so operator-only fields — correctAnswer and
+        // operatorNotes — cannot leak to players by construction. This
+        // invariant is enforced by PlayerControllerTest via JSON path
+        // assertions on the response body.
         UUID teamId = team.getId();
-        List<ChallengeResponse> challenges = allChallenges.stream()
+        List<PlayerChallengeResponse> challenges = allChallenges.stream()
                 .filter(c -> challengeIds.contains(c.getId()))
-                .map(c -> ChallengeResponse.builder()
+                .map(c -> PlayerChallengeResponse.builder()
                         .id(c.getId())
                         .gameId(gameId)
                         .title(c.getTitle())
@@ -449,7 +455,6 @@ public class PlayerService {
                                 c.getCompletionContent(), gameId, c.getId(), teamId))
                         .answerType(c.getAnswerType().name())
                         .autoValidate(c.getAutoValidate())
-                        .correctAnswer(null) // Don't expose correct answer to players
                         .points(c.getPoints())
                         .locationBound(c.getLocationBound())
                         .requirePresenceToSubmit(c.getRequirePresenceToSubmit())

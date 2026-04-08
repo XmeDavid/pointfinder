@@ -247,6 +247,25 @@ When `challenge.requirePresenceToSubmit = true`, a player must scan the NFC tag 
 
 **Backend constraint**: If `answerType = "none"` (check-in only), the backend silently forces `requirePresenceToSubmit = false` during challenge create/update. A check-in-only challenge cannot require presence re-verification.
 
+### Operator-Only Challenge Notes
+
+Source spec: `docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md` § "P1: Operator Workflow and Content Model" — "Add plain operator-only challenge notes before richer collaboration features".
+
+Operators can attach free-text notes to any challenge (setup reminders, equipment lists, spoiler tips, radio call-out instructions, etc.) via the `operatorNotes` field on the `challenges` table (migration V38, column `operator_notes TEXT NULL`). The web admin surfaces an "Operator Notes" textarea on both the legacy `ChallengesPage` edit dialog and the unified `BasesAndChallengesView` edit dialog. Length is validated at the DTO layer (`@Size(max = 5000)` on `CreateChallengeRequest`/`UpdateChallengeRequest`); the column itself is unbounded TEXT so the limit can be raised without a schema migration.
+
+**Privacy contract (non-negotiable)**: `operatorNotes` MUST NEVER be returned on a player-facing endpoint. The backend enforces this by splitting challenge DTOs at the type level:
+
+| DTO | Audience | Carries `operatorNotes` |
+|-----|----------|-------------------------|
+| `ChallengeResponse` | Operator endpoints under `/api/games/{gameId}/challenges` | Yes |
+| `PlayerChallengeResponse` | `GET /api/player/games/{gameId}/data` (inside `GameDataResponse`) | No (field does not exist) |
+| `CheckInResponse.ChallengeInfo` | `POST /api/player/games/{gameId}/bases/{baseId}/check-in` | No (field does not exist) |
+| `PlayerSnapshotResponse` | Player state snapshot | No (only carries `challengeId` UUID) |
+
+Because `PlayerChallengeResponse` is structurally incapable of carrying the field, a future regression that accidentally reuses `ChallengeResponse` on the player path would fail Java compilation. On top of that, `PlayerControllerTest.getGameDataReturnsPlayerChallengeResponseWithoutOperatorNotesField` asserts via a JSON path (`$.challenges[0].operatorNotes` must not exist) and a full-body substring check (no case-insensitive match for `operatornotes`) that the serialized JSON response body never contains the field at any nesting depth. Both assertions are part of the standard `make test-backend-docker` run, so the privacy contract is enforced on every backend build.
+
+The field has no visibility rules beyond operator authentication: any user who can access the `/api/games/{gameId}/challenges` endpoint (i.e., any authenticated operator with access to the game) can read and edit it. This is intentional — notes exist to help operators coordinate, not to encode finer-grained access control.
+
 ### Upload Session ↔ Submission Contract
 
 This section describes how chunked media uploads relate to the submission record they belong to. Source spec: `docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md` (P0 Media Reliability).

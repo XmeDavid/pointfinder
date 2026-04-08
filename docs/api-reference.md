@@ -348,7 +348,8 @@ A future slice will add `GET /api/games/:gameId/snapshot?lastSeenVersion=N`. Whe
   "locationBound": false,
   "requirePresenceToSubmit": false,
   "fixedBaseId": "UUID (optional)",
-  "unlocksBaseId": "UUID (optional)"
+  "unlocksBaseId": "UUID (optional)",
+  "operatorNotes": "string (optional, operator-only, max 5000 chars)"
 }
 ```
 
@@ -358,6 +359,8 @@ A future slice will add `GET /api/games/:gameId/snapshot?lastSeenVersion=N`. Whe
 - `none` — Check-in only; auto-approves on submission
 
 > `correctAnswer` supports `{{variableName}}` template syntax resolved per-team from team variables.
+
+**Operator-only fields**: `ChallengeResponse` (returned by all endpoints under `/api/games/:gameId/challenges`) carries `operatorNotes`, a free-text field with a 5000-character cap that operators can use for setup reminders, equipment lists, or private tips. This field is NEVER returned on any player-facing endpoint: `GET /api/player/games/:gameId/data` serializes challenges through a dedicated `PlayerChallengeResponse` DTO that has no `operatorNotes` field, and `POST /api/player/games/:gameId/bases/:baseId/check-in` returns a narrower `CheckInResponse.ChallengeInfo` shape that also omits it. The `PlayerControllerTest` in the backend asserts the absence via JSON path plus a case-insensitive full-body substring check, so any regression that reintroduces `ChallengeResponse` on the player path fails the standard `make test-backend-docker` run. See `docs/business-logic.md` § "Operator-Only Challenge Notes" for the full privacy contract and DTO table.
 
 ---
 

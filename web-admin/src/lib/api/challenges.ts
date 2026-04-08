@@ -14,6 +14,13 @@ export interface CreateChallengeDto {
   fixedBaseId?: string;
   unlocksBaseIds?: string[];
   requirePresenceToSubmit?: boolean;
+  /**
+   * Operator-only free-text notes, max 5000 characters. Never exposed
+   * to players — see the backend `PlayerChallengeResponse` for the
+   * player-safe DTO and `PlayerControllerTest` for the enforcing
+   * assertion.
+   */
+  operatorNotes?: string;
 }
 
 export const challengesApi = {

@@ -319,6 +319,8 @@
     "unlocksBaseLabel": "Schaltet frei: {{base}}",
     "noHiddenBasesAvailable": "Keine versteckten Stationen zum Freischalten verfügbar",
     "requirePresence": "Anwesenheit zum Einreichen erforderlich",
+    "operatorNotesLabel": "Operator-Notizen",
+    "operatorNotesPlaceholder": "Nur für Operatoren sichtbare Notizen (max. 5000 Zeichen)",
     "deleteConfirmTitle": "Diese Challenge löschen?",
     "deleteConfirmDescription": "Diese Challenge und alle ihre Zuweisungen werden dauerhaft gelöscht."
   },

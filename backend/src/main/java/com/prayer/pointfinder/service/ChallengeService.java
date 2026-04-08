@@ -61,6 +61,7 @@ public class ChallengeService {
                 .points(request.getPoints())
                 .locationBound(request.getLocationBound() != null ? request.getLocationBound() : false)
                 .requirePresenceToSubmit(request.getRequirePresenceToSubmit() != null ? request.getRequirePresenceToSubmit() : false)
+                .operatorNotes(normalizeOperatorNotes(request.getOperatorNotes()))
                 .build();
 
         // Enforce: answerType=none → requirePresenceToSubmit must be false
@@ -109,6 +110,7 @@ public class ChallengeService {
         challenge.setPoints(request.getPoints());
         challenge.setLocationBound(request.getLocationBound() != null ? request.getLocationBound() : false);
         challenge.setRequirePresenceToSubmit(request.getRequirePresenceToSubmit() != null ? request.getRequirePresenceToSubmit() : false);
+        challenge.setOperatorNotes(normalizeOperatorNotes(request.getOperatorNotes()));
 
         // Enforce: answerType=none → requirePresenceToSubmit must be false
         if (challenge.getAnswerType() == AnswerType.none) {
@@ -257,6 +259,21 @@ public class ChallengeService {
                 .requirePresenceToSubmit(c.getRequirePresenceToSubmit())
                 .unlocksBaseIds(unlocksBaseIds)
                 .fixedBaseId(fixedBaseId)
+                .operatorNotes(c.getOperatorNotes())
                 .build();
+    }
+
+    /**
+     * Normalizes operator notes from a request: null and blank strings
+     * collapse to {@code null} so the database stores a single canonical
+     * "no notes" representation. The {@code @Size(max = 5000)} bound on
+     * the request DTO enforces the length limit before we get here.
+     */
+    private String normalizeOperatorNotes(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String trimmed = raw.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

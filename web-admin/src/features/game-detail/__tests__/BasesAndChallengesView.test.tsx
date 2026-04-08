@@ -269,6 +269,72 @@ describe("BasesAndChallengesView", () => {
     expect(challengeCall[1].title).toBe("Renamed challenge");
   });
 
+  // P1 Phase 4 W2 — operator-only challenge notes.
+  it("renders the operator notes textarea populated from the challenge data", async () => {
+    vi.mocked(basesApi.listByGame).mockResolvedValue([
+      makeBase("b1", { fixedChallengeId: "c1" }),
+    ]);
+    vi.mocked(challengesApi.listByGame).mockResolvedValue([
+      makeChallenge("c1", { operatorNotes: "Radio the trail lead before starting" }),
+    ]);
+
+    renderView();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("pair-edit-btn-b1")).toBeTruthy();
+    });
+    fireEvent.click(screen.getByTestId("pair-edit-btn-b1"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("unified-edit-dialog")).toBeTruthy();
+    });
+
+    const operatorNotes = screen.getByTestId(
+      "unified-challenge-operator-notes-input",
+    ) as HTMLTextAreaElement;
+    expect(operatorNotes).toBeTruthy();
+    expect(operatorNotes.value).toBe("Radio the trail lead before starting");
+  });
+
+  it("persists edits to operator notes through the challenge update call", async () => {
+    vi.mocked(basesApi.listByGame).mockResolvedValue([
+      makeBase("b1", { fixedChallengeId: "c1" }),
+    ]);
+    vi.mocked(challengesApi.listByGame).mockResolvedValue([
+      makeChallenge("c1", { operatorNotes: "" }),
+    ]);
+
+    vi.mocked(basesApi.update).mockResolvedValue(
+      makeBase("b1", { fixedChallengeId: "c1" }),
+    );
+    vi.mocked(challengesApi.update).mockResolvedValue(
+      makeChallenge("c1", { operatorNotes: "New private note" }),
+    );
+
+    renderView();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("pair-edit-btn-b1")).toBeTruthy();
+    });
+    fireEvent.click(screen.getByTestId("pair-edit-btn-b1"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("unified-edit-dialog")).toBeTruthy();
+    });
+
+    fireEvent.change(screen.getByTestId("unified-challenge-operator-notes-input"), {
+      target: { value: "New private note" },
+    });
+    fireEvent.click(screen.getByTestId("unified-save-btn"));
+
+    await waitFor(() => {
+      expect(challengesApi.update).toHaveBeenCalledTimes(1);
+    });
+
+    const challengeCall = vi.mocked(challengesApi.update).mock.calls[0];
+    expect(challengeCall[1].operatorNotes).toBe("New private note");
+  });
+
   it("does NOT call challenge update when the base update fails", async () => {
     vi.mocked(basesApi.listByGame).mockResolvedValue([
       makeBase("b1", { fixedChallengeId: "c1" }),

@@ -1,5 +1,6 @@
 package com.prayer.pointfinder.service;
 
+import com.prayer.pointfinder.dto.request.CreateChallengeRequest;
 import com.prayer.pointfinder.dto.request.UpdateChallengeRequest;
 import com.prayer.pointfinder.dto.response.ChallengeResponse;
 import com.prayer.pointfinder.entity.Base;
@@ -24,6 +25,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -334,6 +336,128 @@ class ChallengeServiceTest {
 
         assertThrows(BadRequestException.class, () -> challengeService.deleteChallenge(gameId, challengeId));
         verify(challengeRepository, never()).delete(any(Challenge.class));
+    }
+
+    // ── P1 Phase 4 W2: operator-only challenge notes ──────────────────
+
+    @Test
+    void createChallengePersistsOperatorNotes() {
+        CreateChallengeRequest request = new CreateChallengeRequest();
+        request.setTitle("Hidden treasure");
+        request.setDescription("Short");
+        request.setContent("");
+        request.setCompletionContent("");
+        request.setAnswerType("text");
+        request.setAutoValidate(false);
+        request.setPoints(100);
+        request.setLocationBound(false);
+        request.setOperatorNotes("Key is under the third rock. Tell the scouts only in person.");
+
+        when(gameAccessService.getAccessibleGame(gameId)).thenReturn(game);
+        when(challengeRepository.save(any(Challenge.class))).thenAnswer(invocation -> {
+            Challenge saved = invocation.getArgument(0);
+            saved.setId(UUID.randomUUID());
+            return saved;
+        });
+        when(baseRepository.findByFixedChallengeId(any(UUID.class))).thenReturn(List.of());
+
+        ChallengeResponse response = challengeService.createChallenge(gameId, request);
+
+        assertNotNull(response);
+        assertEquals(
+                "Key is under the third rock. Tell the scouts only in person.",
+                response.getOperatorNotes()
+        );
+    }
+
+    @Test
+    void createChallengeTrimsAndCollapsesBlankOperatorNotesToNull() {
+        CreateChallengeRequest request = new CreateChallengeRequest();
+        request.setTitle("Blank notes");
+        request.setAnswerType("text");
+        request.setPoints(50);
+        request.setOperatorNotes("   \n\t  ");
+
+        when(gameAccessService.getAccessibleGame(gameId)).thenReturn(game);
+        when(challengeRepository.save(any(Challenge.class))).thenAnswer(invocation -> {
+            Challenge saved = invocation.getArgument(0);
+            saved.setId(UUID.randomUUID());
+            return saved;
+        });
+        when(baseRepository.findByFixedChallengeId(any(UUID.class))).thenReturn(List.of());
+
+        ChallengeResponse response = challengeService.createChallenge(gameId, request);
+
+        assertNull(response.getOperatorNotes());
+    }
+
+    @Test
+    void updateChallengeOverwritesOperatorNotes() {
+        // Start with existing notes on the entity.
+        challenge.setOperatorNotes("Old notes that need to be replaced");
+
+        UUID fixedBaseId = UUID.randomUUID();
+        Base fixedBase = Base.builder().id(fixedBaseId).game(game).hidden(false).build();
+
+        UpdateChallengeRequest request = baseRequest();
+        request.setLocationBound(false);
+        request.setOperatorNotes("Fresh replacement notes for the operator team");
+
+        when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
+        when(challengeRepository.save(any(Challenge.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(baseRepository.findByFixedChallengeId(challengeId)).thenReturn(List.of(fixedBase));
+
+        ChallengeResponse response = challengeService.updateChallenge(gameId, challengeId, request);
+
+        assertEquals("Fresh replacement notes for the operator team", response.getOperatorNotes());
+        assertEquals("Fresh replacement notes for the operator team", challenge.getOperatorNotes());
+    }
+
+    @Test
+    void updateChallengeClearsOperatorNotesWhenRequestNotesAreNull() {
+        // Entity had notes; incoming request omits them (null).
+        challenge.setOperatorNotes("Notes to clear");
+
+        UUID fixedBaseId = UUID.randomUUID();
+        Base fixedBase = Base.builder().id(fixedBaseId).game(game).hidden(false).build();
+
+        UpdateChallengeRequest request = baseRequest();
+        request.setLocationBound(false);
+        request.setOperatorNotes(null);
+
+        when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
+        when(challengeRepository.save(any(Challenge.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(baseRepository.findByFixedChallengeId(challengeId)).thenReturn(List.of(fixedBase));
+
+        ChallengeResponse response = challengeService.updateChallenge(gameId, challengeId, request);
+
+        assertNull(response.getOperatorNotes());
+        assertNull(challenge.getOperatorNotes());
+    }
+
+    @Test
+    void toResponseExposesOperatorNotesOnOperatorDto() {
+        // Sanity check: the operator-facing DTO MUST carry operatorNotes so
+        // the web admin edit dialog can round-trip the field. Player DTOs
+        // omit it by construction (see PlayerChallengeResponse) — that
+        // invariant is asserted in PlayerControllerTest.
+        challenge.setOperatorNotes("Operator-only hint");
+
+        UUID fixedBaseId = UUID.randomUUID();
+        Base fixedBase = Base.builder().id(fixedBaseId).game(game).hidden(false).build();
+
+        UpdateChallengeRequest request = baseRequest();
+        request.setLocationBound(false);
+        request.setOperatorNotes("Operator-only hint");
+
+        when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
+        when(challengeRepository.save(any(Challenge.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(baseRepository.findByFixedChallengeId(challengeId)).thenReturn(List.of(fixedBase));
+
+        ChallengeResponse response = challengeService.updateChallenge(gameId, challengeId, request);
+
+        assertNotNull(response.getOperatorNotes());
+        assertFalse(response.getOperatorNotes().isBlank());
     }
 
     private UpdateChallengeRequest baseRequest() {

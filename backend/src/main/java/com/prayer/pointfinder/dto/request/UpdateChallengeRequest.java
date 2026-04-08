@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.util.List;
@@ -37,4 +38,14 @@ public class UpdateChallengeRequest {
     private UUID fixedBaseId;
 
     private List<UUID> unlocksBaseIds;
+
+    /**
+     * Operator-only free-text notes. Never exposed to players (see
+     * {@code Challenge.operatorNotes} javadoc). Length is capped at 5000
+     * characters to prevent arbitrarily large payloads; the underlying
+     * column is an unbounded TEXT so the limit can be raised without a
+     * schema migration.
+     */
+    @Size(max = 5000)
+    private String operatorNotes;
 }

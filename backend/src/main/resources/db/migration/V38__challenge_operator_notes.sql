@@ -1,0 +1,34 @@
+-- Wave: post-pilot reliability — P1 Operator Workflow and Content Model —
+-- Phase 4 W2: plain operator-only challenge notes.
+--
+-- Adds a free-text `operator_notes` column to `challenges` so operators can
+-- attach private notes to a challenge (setup reminders, equipment lists,
+-- spoiler tips, staff-only answer keys, etc.) that are NEVER exposed to
+-- players. This is deliberately a single flat column rather than a new
+-- table or a collaboration model — the spec explicitly says to add "plain
+-- operator-only challenge notes before richer collaboration features".
+--
+-- Privacy contract (enforced in code, not in the schema):
+--
+--   * Only operator-facing DTOs (ChallengeResponse) expose this column.
+--   * Player-facing responses (GameDataResponse → PlayerChallengeResponse,
+--     CheckInResponse.ChallengeInfo, PlayerSnapshotResponse) MUST NOT
+--     include this field. PlayerControllerTest asserts the absence via
+--     JSON path on the getGameData endpoint.
+--
+-- Design notes:
+--
+--   * TEXT NULL so existing rows stay valid without a backfill.
+--   * No index: operator notes are read only when loading a challenge and
+--     are never used as a filter/sort key.
+--   * No check constraint: length is validated at the DTO layer via
+--     @Size(max = 5000) on CreateChallengeRequest/UpdateChallengeRequest
+--     to stay forward-compatible (the limit can be raised without a
+--     follow-up migration).
+--
+-- Source spec: docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md
+-- (P1 Operator Workflow and Content Model — "Add plain operator-only
+-- challenge notes before richer collaboration features").
+
+ALTER TABLE challenges
+    ADD COLUMN operator_notes TEXT NULL;

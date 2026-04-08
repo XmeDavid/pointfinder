@@ -331,4 +331,106 @@ class PlayerControllerTest {
 
         verify(playerService).getProgress(eq(gameId), eq(testPlayer));
     }
+
+    // ── P1 Phase 4 W2: operator notes privacy contract ────────────────
+    //
+    // These tests are the non-negotiable part of the operator-only
+    // challenge notes feature. If any of them fail, the feature has
+    // leaked operator-only data into a player-facing response and the
+    // regression MUST be fixed before merging.
+
+    @Test
+    void getGameDataReturnsPlayerChallengeResponseWithoutOperatorNotesField() throws Exception {
+        UUID gameId = UUID.randomUUID();
+        UUID challengeId = UUID.randomUUID();
+
+        // PlayerChallengeResponse is structurally incapable of carrying
+        // operatorNotes — the field does not exist on the DTO. This
+        // guarantees at the type level that PlayerService cannot leak
+        // the operator notes into this endpoint's response. The test
+        // below additionally asserts at the JSON layer that the field
+        // never appears in the serialized body, so a future regression
+        // that reintroduces ChallengeResponse into GameDataResponse
+        // would fail loudly.
+        PlayerChallengeResponse safeChallenge = PlayerChallengeResponse.builder()
+                .id(challengeId)
+                .gameId(gameId)
+                .title("Find the tree")
+                .description("Locate the oldest tree in the grove")
+                .content("Full instructions here")
+                .completionContent("Well done!")
+                .answerType("text")
+                .autoValidate(false)
+                .points(100)
+                .locationBound(false)
+                .requirePresenceToSubmit(false)
+                .build();
+
+        GameDataResponse response = GameDataResponse.builder()
+                .gameStatus("live")
+                .unlockTrigger("CHECK_IN")
+                .bases(List.of())
+                .challenges(List.of(safeChallenge))
+                .assignments(List.of())
+                .progress(List.of())
+                .build();
+
+        when(playerService.getGameData(eq(gameId), any(Player.class))).thenReturn(response);
+
+        mockMvc.perform(get("/api/player/games/" + gameId + "/data"))
+                .andExpect(status().isOk())
+                // Field-level guardrail: no `operatorNotes` anywhere in the
+                // challenges array. A regression that reintroduces the
+                // operator-facing ChallengeResponse here would surface as
+                // a Jackson-serialized `operatorNotes` key and fail this
+                // assertion.
+                .andExpect(jsonPath("$.challenges[0].title").value("Find the tree"))
+                .andExpect(jsonPath("$.challenges[0].operatorNotes").doesNotExist())
+                // Belt-and-braces: correctAnswer must also be absent from
+                // the player view.
+                .andExpect(jsonPath("$.challenges[0].correctAnswer").doesNotExist());
+    }
+
+    @Test
+    void getGameDataResponseStringDoesNotContainOperatorNotesKeyAnywhere() throws Exception {
+        UUID gameId = UUID.randomUUID();
+        UUID challengeId = UUID.randomUUID();
+
+        PlayerChallengeResponse safeChallenge = PlayerChallengeResponse.builder()
+                .id(challengeId)
+                .gameId(gameId)
+                .title("Find the tree")
+                .description("desc")
+                .content("content")
+                .completionContent("done")
+                .answerType("text")
+                .autoValidate(false)
+                .points(50)
+                .locationBound(false)
+                .requirePresenceToSubmit(false)
+                .build();
+
+        GameDataResponse response = GameDataResponse.builder()
+                .gameStatus("live")
+                .unlockTrigger("CHECK_IN")
+                .bases(List.of())
+                .challenges(List.of(safeChallenge))
+                .assignments(List.of())
+                .progress(List.of())
+                .build();
+
+        when(playerService.getGameData(eq(gameId), any(Player.class))).thenReturn(response);
+
+        String body = mockMvc.perform(get("/api/player/games/" + gameId + "/data"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        // Absolute, case-insensitive substring check on the entire body:
+        // no variant of "operatorNotes" is allowed anywhere in the
+        // player-facing JSON, at any nesting depth. This survives future
+        // DTO restructuring that might add new nested fields.
+        assertThat(body.toLowerCase()).doesNotContain("operatornotes");
+    }
 }

@@ -59,6 +59,8 @@ interface UnifiedForm {
   challengeRequirePresence: boolean;
   challengeAutoValidate: boolean;
   challengeCorrectAnswer: string;
+  // P1 Phase 4 W2 — operator-only notes. Never surfaced to players.
+  challengeOperatorNotes: string;
 }
 
 function formFromPair(pair: BaseChallengePair): UnifiedForm {
@@ -78,6 +80,7 @@ function formFromPair(pair: BaseChallengePair): UnifiedForm {
     challengeRequirePresence: pair.challenge.requirePresenceToSubmit,
     challengeAutoValidate: pair.challenge.autoValidate,
     challengeCorrectAnswer: pair.challenge.correctAnswer?.[0] ?? "",
+    challengeOperatorNotes: pair.challenge.operatorNotes ?? "",
   };
 }
 
@@ -110,6 +113,9 @@ function challengeDtoFromForm(form: UnifiedForm): Partial<CreateChallengeDto> {
   if (payload.autoValidate && answerType === "text" && form.challengeCorrectAnswer.trim()) {
     payload.correctAnswer = [form.challengeCorrectAnswer.trim()];
   }
+  // Operator-only notes: send trimmed value, or explicit empty string to
+  // clear previous notes. Backend normalizes blank → null.
+  payload.operatorNotes = form.challengeOperatorNotes.trim();
   return payload;
 }
 
@@ -719,6 +725,28 @@ export function BasesAndChallengesView() {
                     />
                   </div>
                 )}
+                {/*
+                  P1 Phase 4 W2 — operator-only notes. This textarea mirrors
+                  the one on ChallengesPage and uses the same i18n keys. The
+                  backend never returns this field on player-facing endpoints
+                  (enforced by PlayerControllerTest).
+                */}
+                <div className="space-y-2">
+                  <FormLabel htmlFor="unifiedChallengeOperatorNotes" optional>
+                    {t("challenges.operatorNotesLabel")}
+                  </FormLabel>
+                  <Textarea
+                    id="unifiedChallengeOperatorNotes"
+                    value={form.challengeOperatorNotes}
+                    onChange={(e) =>
+                      setForm((f) => (f ? { ...f, challengeOperatorNotes: e.target.value } : f))
+                    }
+                    placeholder={t("challenges.operatorNotesPlaceholder")}
+                    rows={3}
+                    maxLength={5000}
+                    data-testid="unified-challenge-operator-notes-input"
+                  />
+                </div>
               </fieldset>
 
               <DialogFooter>

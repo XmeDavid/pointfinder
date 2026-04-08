@@ -59,6 +59,24 @@ public class Challenge {
     @Builder.Default
     private Boolean requirePresenceToSubmit = false;
 
+    /**
+     * Operator-only free-text notes. MUST NEVER be exposed to players.
+     *
+     * <p>Only operator-facing DTOs ({@link com.prayer.pointfinder.dto.response.ChallengeResponse})
+     * carry this field. Player-facing DTOs
+     * ({@code PlayerChallengeResponse}, {@code CheckInResponse.ChallengeInfo},
+     * {@code PlayerSnapshotResponse}) deliberately omit it, and
+     * {@code PlayerControllerTest} asserts the absence via JSON path
+     * assertions on the {@code GET /api/player/games/{gameId}/data} endpoint.
+     *
+     * <p>Length is validated at the DTO layer
+     * ({@code @Size(max = 5000)} on create/update requests) to avoid
+     * arbitrarily large payloads; the column itself is an unbounded TEXT to
+     * stay forward-compatible.
+     */
+    @Column(name = "operator_notes", columnDefinition = "TEXT")
+    private String operatorNotes;
+
     @ManyToMany
     @JoinTable(
             name = "challenge_unlocks_bases",

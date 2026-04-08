@@ -255,4 +255,72 @@ class ChallengeControllerTest {
         mockMvc.perform(delete("/api/games/" + GAME_ID + "/challenges/" + CHALLENGE_ID))
                 .andExpect(status().isNotFound());
     }
+
+    // ── P1 Phase 4 W2: operator-only challenge notes ──────────────────
+
+    @Test
+    void getChallengesExposesOperatorNotesInOperatorFacingResponse() throws Exception {
+        ChallengeResponse challenge = ChallengeResponse.builder()
+                .id(CHALLENGE_ID)
+                .gameId(GAME_ID)
+                .title("Find the flag")
+                .description("Locate the hidden flag")
+                .answerType("text")
+                .points(100)
+                .locationBound(false)
+                .autoValidate(false)
+                .requirePresenceToSubmit(false)
+                .operatorNotes("Radio the trail lead before starting")
+                .build();
+
+        when(challengeService.getChallengesByGame(GAME_ID)).thenReturn(List.of(challenge));
+
+        mockMvc.perform(get("/api/games/" + GAME_ID + "/challenges"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].operatorNotes").value("Radio the trail lead before starting"));
+    }
+
+    @Test
+    void createChallengeAcceptsOperatorNotesAndEchoesThemInResponse() throws Exception {
+        CreateChallengeRequest request = new CreateChallengeRequest();
+        request.setTitle("Find the flag");
+        request.setAnswerType("text");
+        request.setPoints(100);
+        request.setOperatorNotes("Equipment: blue flag, 30m rope");
+
+        ChallengeResponse response = ChallengeResponse.builder()
+                .id(CHALLENGE_ID)
+                .gameId(GAME_ID)
+                .title("Find the flag")
+                .answerType("text")
+                .points(100)
+                .locationBound(false)
+                .autoValidate(false)
+                .requirePresenceToSubmit(false)
+                .operatorNotes("Equipment: blue flag, 30m rope")
+                .build();
+
+        when(challengeService.createChallenge(eq(GAME_ID), any(CreateChallengeRequest.class))).thenReturn(response);
+
+        mockMvc.perform(post("/api/games/" + GAME_ID + "/challenges")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.operatorNotes").value("Equipment: blue flag, 30m rope"));
+    }
+
+    @Test
+    void createChallengeRejectsOperatorNotesExceedingFiveThousandChars() throws Exception {
+        CreateChallengeRequest request = new CreateChallengeRequest();
+        request.setTitle("Too chatty");
+        request.setAnswerType("text");
+        request.setPoints(100);
+        request.setOperatorNotes("x".repeat(5001)); // @Size(max = 5000) should reject
+
+        mockMvc.perform(post("/api/games/" + GAME_ID + "/challenges")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.operatorNotes").exists());
+    }
 }

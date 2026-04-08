@@ -319,6 +319,8 @@
     "unlocksBaseLabel": "Unlocks: {{base}}",
     "noHiddenBasesAvailable": "No hidden bases available to unlock",
     "requirePresence": "Require presence to submit",
+    "operatorNotesLabel": "Operator Notes",
+    "operatorNotesPlaceholder": "Notes only operators see (max 5000 characters)",
     "deleteConfirmTitle": "Delete this challenge?",
     "deleteConfirmDescription": "This challenge and all its assignments will be permanently deleted."
   },

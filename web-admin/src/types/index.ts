@@ -54,6 +54,14 @@ export interface Challenge {
   locationBound: boolean;
   unlocksBaseIds?: string[];
   requirePresenceToSubmit: boolean;
+  /**
+   * Operator-only free-text notes. Only present on the operator-facing
+   * `ChallengeResponse` DTO from `GET /api/games/{gameId}/challenges`.
+   * The player-facing `PlayerChallengeResponse` served via
+   * `GET /api/player/games/{gameId}/data` intentionally omits this
+   * field, and a backend test enforces the absence.
+   */
+  operatorNotes?: string;
 }
 
 export interface Team {

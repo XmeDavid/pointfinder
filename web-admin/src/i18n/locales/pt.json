@@ -319,6 +319,8 @@
     "unlocksBaseLabel": "Desbloqueia: {{base}}",
     "noHiddenBasesAvailable": "Nenhuma base oculta disponível para desbloquear",
     "requirePresence": "Requer presença para submeter",
+    "operatorNotesLabel": "Notas do Operador",
+    "operatorNotesPlaceholder": "Notas visíveis apenas para operadores (máx 5000 caracteres)",
     "deleteConfirmTitle": "Eliminar este desafio?",
     "deleteConfirmDescription": "Este desafio e todas as suas atribuições serão permanentemente eliminados."
   },

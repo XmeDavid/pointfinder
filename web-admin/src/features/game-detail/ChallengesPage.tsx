@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Minus, Puzzle, Trash2, Pencil, FileText, Image, CheckCircle, Eye, MapPin, Unlock, Variable, CircleCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { FormLabel } from "@/components/ui/form-label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -390,6 +391,20 @@ export function ChallengesPage() {
                   </div>
                 )}
               </div>
+            </div>
+            <div className="space-y-2">
+              <FormLabel htmlFor="challengeOperatorNotes" optional>
+                {t("challenges.operatorNotesLabel")}
+              </FormLabel>
+              <Textarea
+                id="challengeOperatorNotes"
+                value={form.operatorNotes ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, operatorNotes: e.target.value }))}
+                placeholder={t("challenges.operatorNotesPlaceholder")}
+                rows={3}
+                maxLength={5000}
+                data-testid="challenge-operator-notes-input"
+              />
             </div>
             {form.autoValidate && form.answerType === "text" && (
               <div className="space-y-2">
