@@ -3,6 +3,7 @@ import SwiftUI
 struct OperatorGameView: View {
     @Environment(AppState.self) private var appState
     @Environment(LocaleManager.self) private var locale
+    @Environment(\.scenePhase) private var scenePhase
 
     let game: Game
     let onBack: () -> Void
@@ -89,6 +90,24 @@ struct OperatorGameView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
             appState.realtimeClient.ensureConnected()
+        }
+        // Operator-side snapshot refresh on foreground. Pulls the operator
+        // snapshot for THIS game (the operator's "current" game lives in
+        // the view, not on `AppState`, so we drive the fetch from here).
+        // Mirrors the player-side foreground hook in `MainTabView`.
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                Task { await appState.refreshOperatorSnapshot(gameId: game.id) }
+            }
+        }
+        // When the snapshot comes back, reconcile local game status so the
+        // setup-vs-live-vs-ended tab layout flips correctly. Also fires on
+        // realtime reconnect via `AppState.configureRealtimeClient.onReconnect`.
+        .onReceive(NotificationCenter.default.publisher(for: .snapshotRefreshed)) { notification in
+            guard let gameIdString = notification.userInfo?["gameId"] as? String,
+                  UUID(uuidString: gameIdString) == game.id,
+                  let newStatus = notification.userInfo?["status"] as? String else { return }
+            gameStatus = newStatus
         }
         .onReceive(NotificationCenter.default.publisher(for: .mobileRealtimeEvent)) { notification in
             guard let rawGameId = notification.userInfo?["gameId"] as? String,

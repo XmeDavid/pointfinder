@@ -180,6 +180,24 @@ actor APIClient {
         try await get("/api/player/notifications", token: token)
     }
 
+    // MARK: - Snapshot (P0 Track 2)
+    //
+    // Single backend endpoint at `GET /api/games/{gameId}/snapshot` serves
+    // both player and operator JWTs. The backend branches on the caller's
+    // role and returns a role-scoped shape — the two iOS methods below
+    // hit the same URL but decode into different DTOs. Callers must pick
+    // the right method for the current auth type; calling the operator
+    // variant with a player JWT (or vice versa) will fail decoding even
+    // though the HTTP call succeeds.
+
+    func getPlayerSnapshot(gameId: UUID, token: String) async throws -> PlayerSnapshotResponse {
+        try await get("/api/games/\(gameId)/snapshot", token: token)
+    }
+
+    func getOperatorSnapshot(gameId: UUID, token: String) async throws -> OperatorSnapshotResponse {
+        try await get("/api/games/\(gameId)/snapshot", token: token)
+    }
+
     func getUnseenNotificationCount(token: String) async throws -> UnseenCountResponse {
         try await get("/api/player/notifications/unseen-count", token: token)
     }

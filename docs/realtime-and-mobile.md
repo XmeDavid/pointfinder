@@ -397,14 +397,14 @@ The pattern every realtime client should implement:
 
 See `docs/api-reference.md` for full field-by-field examples.
 
-### Wiring status per platform (as of Slice 1)
+### Wiring status per platform (as of Slice 2)
 
 | Platform | Snapshot wired? | Notes |
 |---|---|---|
 | Backend | Yes | Endpoint, DTOs, service, state version bump all landed |
 | Web admin | **Not yet** | Slice 3 — hook into React Query cache invalidation on reconnect |
-| iOS | **Not yet** | Slice 2 — call snapshot from `AppState` on `scenePhase == .active` and after `MobileRealtimeClient.ensureConnected` flags a recovered connection |
-| Android | **Not yet** | Slice 2 — call snapshot from `AppSessionViewModel` on app lifecycle resume and after `NetworkMonitor` reports restored connectivity |
+| iOS | **Slice 2: complete** | `AppState+Snapshot.swift` — `refreshFromSnapshot()` method; `MainTabView.swift` — `scenePhase == .active` wiring; `AppState.swift` — realtime reconnect trigger |
+| Android | **Slice 2: complete** | `PlayerRepository.kt:132` — `refreshFromSnapshot()`; `PlayerViewModel.kt:217` — ViewModel wrapper; `AppNavigation.kt:605` — `ON_RESUME` wiring (replaces `refresh()`); `CompanionApi.kt` — snapshot endpoint |
 
 Slice 1 is strictly backend. Slices 2 and 3 wire the clients.
 
@@ -422,4 +422,4 @@ Slice 1 is strictly backend. Slices 2 and 3 wire the clients.
 | Location tracking | Store + serve | CLLocationManager | FusedLocationProvider |
 | Deep linking | nginx fallback | AppState.handleDeepLink | NfcEventBus StateFlow |
 | Chunked media upload | Full | SyncEngine | OfflineSyncWorker |
-| State snapshot | Full (P0 Track 2 Slice 1) | Not yet (Slice 2) | Not yet (Slice 2) |
+| State snapshot | Full (P0 Track 2 Slice 1) | Wired (Slice 2) | Wired (Slice 2) |

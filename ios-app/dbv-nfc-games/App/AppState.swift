@@ -80,10 +80,26 @@ final class AppState {
 
     init() {
         configureRealtimeClient()
+        configureNetworkMonitor()
         restoreSession()
         configureSyncEngine()
         // Defer auth failure handler setup to avoid capturing self before init completes
         setupAuthFailureHandler()
+    }
+
+    private func configureNetworkMonitor() {
+        // When connectivity is restored (e.g. the device moved from a dead
+        // zone back to coverage), fetch the canonical snapshot so the app
+        // is not stuck on a stale cached game status. This fires in
+        // addition to the existing offline-queue drain wired in
+        // `SyncEngine`/`NetworkMonitor` — the two are independent: the
+        // queue drains pending client actions, the snapshot reconciles
+        // server state.
+        networkMonitor.onReconnect = { [weak self] in
+            Task { @MainActor [weak self] in
+                await self?.refreshFromSnapshot()
+            }
+        }
     }
 
     private func setupAuthFailureHandler() {
@@ -108,6 +124,14 @@ final class AppState {
         realtimeClient.onEvent = { [weak self] payload in
             guard let self else { return }
             self.handleRealtimeEvent(payload)
+        }
+        // Fires after a dropped realtime connection is re-established (i.e.
+        // the first message arrives on a reconnecting socket). Any broadcast
+        // emitted while the socket was down is already lost, so treat every
+        // reconnect as "we might have missed a state transition" and pull
+        // the canonical snapshot to reconcile.
+        realtimeClient.onReconnect = { [weak self] in
+            await self?.refreshFromSnapshot()
         }
         // Provide a fresh token on each reconnect so operator access tokens
         // (15-min TTL) don't silently break reconnections after expiry.

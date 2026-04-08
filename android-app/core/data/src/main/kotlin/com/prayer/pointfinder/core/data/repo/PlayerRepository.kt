@@ -17,6 +17,7 @@ import com.prayer.pointfinder.core.model.CheckInResponse
 import com.prayer.pointfinder.core.model.GameDataResponse
 import com.prayer.pointfinder.core.model.GameStatus
 import com.prayer.pointfinder.core.model.PendingMediaItem
+import com.prayer.pointfinder.core.model.PlayerSnapshotResponse
 import com.prayer.pointfinder.core.model.PlayerSubmissionRequest
 import com.prayer.pointfinder.core.model.SubmissionResponse
 import com.prayer.pointfinder.core.model.SubmissionStatus
@@ -106,6 +107,37 @@ class PlayerRepository @Inject constructor(
             progress = db.progressDao().progressForGame(auth.gameId).map { it.toBaseProgress() },
             gameStatus = auth.gameStatus,
         )
+    }
+
+    /**
+     * Fetches the canonical state snapshot from the backend and replaces
+     * the cached progress with the server's authoritative answer.
+     *
+     * This is the recovery call wired to app foreground, realtime reconnect,
+     * and network restoration. It deliberately does NOT update the cached
+     * challenges/assignments (`GameDataResponse`) — those are a heavier
+     * initial load via [loadProgress]. The snapshot only carries the
+     * dynamic state the pilot showed was going stale: game status, team
+     * info, progress, and recent submissions.
+     *
+     * Failure-tolerant: IOException and HttpException are rethrown so
+     * callers can decide whether to surface errors or swallow them (the
+     * ViewModel layer swallows them for this path — snapshot refresh is a
+     * background recovery mechanism, not a user-visible operation).
+     *
+     * Returns null only if the call was made with stale auth and the
+     * backend returned an unrecoverable auth error that the caller should
+     * treat as "session expired".
+     */
+    suspend fun refreshFromSnapshot(auth: AuthType.Player): PlayerSnapshotResponse {
+        val snapshot = api.getPlayerSnapshot(auth.gameId)
+        // Replace the cached progress with the server's snapshot. This is
+        // the authoritative view — if the server says base X is completed,
+        // it is. Local optimistic updates (offline check-ins that have not
+        // yet synced) live in the pending action queue and are separate.
+        db.progressDao().deleteForGame(auth.gameId)
+        db.progressDao().upsertAll(snapshot.progress.map { it.toCached(auth.gameId) })
+        return snapshot
     }
 
     private suspend fun cacheGameChallenges(auth: AuthType.Player, gameData: GameDataResponse) {

@@ -602,7 +602,7 @@ private fun PlayerRootScreen(
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 sessionViewModel.resumeLocationIfNeeded()
-                if (isOnline) viewModel.refresh(auth, true)
+                if (isOnline) viewModel.refreshFromSnapshot(auth)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)

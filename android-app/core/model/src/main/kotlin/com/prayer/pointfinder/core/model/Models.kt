@@ -358,6 +358,101 @@ data class GameDataResponse(
     val progress: List<BaseProgress>,
 )
 
+// === Snapshot DTOs (P0 Track 2) ===
+//
+// Mirror of backend `PlayerSnapshotResponse` / `OperatorSnapshotResponse`
+// served at `GET /api/games/{gameId}/snapshot`. The canonical recovery call
+// when a client suspects its cached state is stale — foreground, reconnect,
+// network return, or any time a realtime event might have been missed.
+//
+// See backend/src/main/java/com/prayer/pointfinder/dto/response/
+// {Player,Operator}SnapshotResponse.java for the source contract and
+// docs/realtime-and-mobile.md §7 for the product contract.
+//
+// IMPORTANT: `PlayerSnapshotResponse` is structurally score-free. It has NO
+// score, points, leaderboard, or rank fields at any nesting depth. Players
+// in PointFinder do not see scores anywhere in the player app. Do not add
+// any scoring field here.
+
+@Serializable
+data class PlayerSnapshotResponse(
+    val stateVersion: Long,
+    val serverTime: String,
+    val game: PlayerSnapshotGameInfo,
+    val team: PlayerSnapshotTeamInfo,
+    val progress: List<BaseProgress> = emptyList(),
+    val submissions: List<PlayerSnapshotSubmissionSummary> = emptyList(),
+    val uploadSessions: List<UploadSessionResponse> = emptyList(),
+)
+
+@Serializable
+data class PlayerSnapshotGameInfo(
+    val id: EntityId,
+    val name: String,
+    val description: String? = null,
+    val status: GameStatus,
+    val unlockTrigger: String? = null,
+    val tileSource: String? = null,
+    val startDate: String? = null,
+    val endDate: String? = null,
+)
+
+@Serializable
+data class PlayerSnapshotTeamInfo(
+    val id: EntityId,
+    val name: String,
+    val color: String? = null,
+    val memberCount: Int = 0,
+    // NO score field. Players do not see scores.
+)
+
+@Serializable
+data class PlayerSnapshotSubmissionSummary(
+    val id: EntityId,
+    val baseId: EntityId? = null,
+    val challengeId: EntityId? = null,
+    val status: String? = null,
+    val submittedAt: String? = null,
+    val fileUrl: String? = null,
+    val fileUrls: List<String>? = null,
+)
+
+@Serializable
+data class OperatorSnapshotResponse(
+    val stateVersion: Long,
+    val serverTime: String,
+    val game: OperatorSnapshotGameInfo,
+    val teams: List<OperatorSnapshotTeamInfo> = emptyList(),
+    val leaderboard: List<LeaderboardEntry> = emptyList(),
+    val pendingReviews: Int = 0,
+    val activeUploads: Int = 0,
+    val needsAttention: Int = 0,
+)
+
+@Serializable
+data class OperatorSnapshotGameInfo(
+    val id: EntityId,
+    val name: String,
+    val description: String? = null,
+    val status: GameStatus,
+    val unlockTrigger: String? = null,
+    val tileSource: String? = null,
+    val startDate: String? = null,
+    val endDate: String? = null,
+    val uniformAssignment: Boolean? = null,
+    val broadcastEnabled: Boolean? = null,
+    val broadcastCode: String? = null,
+)
+
+@Serializable
+data class OperatorSnapshotTeamInfo(
+    val id: EntityId,
+    val name: String,
+    val color: String? = null,
+    val score: Long = 0,
+    val memberCount: Int = 0,
+)
+
 @Serializable
 data class TeamLocationResponse(
     val teamId: EntityId,

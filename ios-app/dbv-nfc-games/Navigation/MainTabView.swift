@@ -3,6 +3,7 @@ import SwiftUI
 struct MainTabView: View {
     @Environment(AppState.self) private var appState
     @Environment(LocaleManager.self) private var locale
+    @Environment(\.scenePhase) private var scenePhase
     @AppStorage("com.prayer.pointfinder.permissionDisclosureSeen") private var disclosureSeen = false
     @State private var showDisclosure = false
     @State private var selectedTab = 0
@@ -43,6 +44,17 @@ struct MainTabView: View {
         .onChange(of: appState.pendingDeepLinkBaseId) {
             if appState.pendingDeepLinkBaseId != nil {
                 selectedTab = 1
+            }
+        }
+        // Top-level snapshot refresh on foreground. Catches every tab
+        // (Map / CheckIn / Settings) so no player screen is left behind.
+        // Runs alongside `MobileRealtimeClient.ensureConnected()` (wired on
+        // individual screens) — the socket ping verifies connectivity, the
+        // snapshot reconciles state. Both are called on foreground because
+        // a healthy socket is not a guarantee of fresh state.
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                Task { await appState.refreshFromSnapshot() }
             }
         }
         .onAppear {

@@ -24,7 +24,9 @@ import com.prayer.pointfinder.core.model.NotificationResponse
 import com.prayer.pointfinder.core.model.OperatorAuthResponse
 import com.prayer.pointfinder.core.model.OperatorLoginRequest
 import com.prayer.pointfinder.core.model.OperatorNotificationSettingsResponse
+import com.prayer.pointfinder.core.model.OperatorSnapshotResponse
 import com.prayer.pointfinder.core.model.OperatorUserResponse
+import com.prayer.pointfinder.core.model.PlayerSnapshotResponse
 import com.prayer.pointfinder.core.model.PlayerAuthResponse
 import com.prayer.pointfinder.core.model.PlayerJoinRequest
 import com.prayer.pointfinder.core.model.PlayerNotificationResponse
@@ -97,6 +99,19 @@ interface CompanionApi {
 
     @GET("api/player/games/{gameId}/data")
     suspend fun getGameData(@Path("gameId") gameId: String): GameDataResponse
+
+    // P0 Track 2 snapshot contract. Same endpoint (`GET /api/games/{id}/snapshot`)
+    // serves both player and operator JWTs; the backend role-branches on the
+    // caller's token and returns a role-scoped shape. Two Retrofit methods
+    // hit the same URL but decode into different DTOs so callers can pick
+    // the right shape for the current auth type. Calling the operator
+    // variant with a player JWT (or vice versa) will fail to decode even
+    // though the HTTP call succeeds.
+    @GET("api/games/{gameId}/snapshot")
+    suspend fun getPlayerSnapshot(@Path("gameId") gameId: String): PlayerSnapshotResponse
+
+    @GET("api/games/{gameId}/snapshot")
+    suspend fun getOperatorSnapshot(@Path("gameId") gameId: String): OperatorSnapshotResponse
 
     @POST("api/player/games/{gameId}/submissions")
     suspend fun submitAnswer(

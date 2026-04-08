@@ -94,6 +94,7 @@ class PlayerViewModel @Inject constructor(
     private var lastAuth: AuthType.Player? = null
     private var lastOnline: Boolean = true
     private var checkInJob: Job? = null
+    private var wasRealtimeConnected: Boolean = false
 
     init {
         viewModelScope.launch {
@@ -109,9 +110,15 @@ class PlayerViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     realtimeConnected = isNowConnected,
                 )
-                // Trigger data refresh when WebSocket reconnects
-                if (isNowConnected && lastAuth != null) {
-                    refresh(lastAuth!!, lastOnline)
+                // Trigger canonical state reconciliation when the WebSocket
+                // has just become connected after being disconnected — any
+                // broadcasts emitted while the socket was down are lost, so
+                // the snapshot is the safety net. Pure "already connected"
+                // state transitions do not trigger a refresh.
+                val justReconnected = isNowConnected && !wasRealtimeConnected
+                wasRealtimeConnected = isNowConnected
+                if (justReconnected && lastAuth != null) {
+                    refreshFromSnapshot(lastAuth!!)
                 }
             }
         }
@@ -179,6 +186,61 @@ class PlayerViewModel @Inject constructor(
                     solveError = if (authExpired) null else friendlyError(err),
                     authExpired = _state.value.authExpired || authExpired,
                 )
+            }
+        }
+    }
+
+    /**
+     * Fetches the canonical state snapshot from the backend and reconciles
+     * local state (game status, team, progress) with the server's
+     * authoritative answer. This is the P0 Track 2 Slice 2 recovery path
+     * wired to:
+     *
+     *  - App lifecycle `ON_RESUME` (see `AppNavigation.kt` `DisposableEffect`
+     *    around the `PlayerHomeScaffold` — this replaces the older
+     *    `viewModel.refresh(auth, true)` call on resume).
+     *  - Realtime WebSocket reconnect (see the `realtimeClient.connectionState`
+     *    observer in `init` — fires when transitioning from disconnected to
+     *    connected).
+     *  - Network restoration (see [AppSessionViewModel.observeNetwork] — fires
+     *    on offline → online transition for authenticated players).
+     *
+     * Failure-tolerant: auth errors update the `authExpired` flag so the UI
+     * can route to login; other errors are logged but do not surface. The
+     * snapshot call is a silent background recovery, not a user-visible
+     * operation. The heavier `refresh()` / `loadProgress()` path remains the
+     * initial-load and polling fallback since it ALSO refreshes cached
+     * bases, challenges, and assignments (the snapshot only carries the
+     * dynamic state that goes stale — game status, progress, team info,
+     * submissions, upload sessions).
+     */
+    fun refreshFromSnapshot(auth: AuthType.Player) {
+        lastAuth = auth
+        viewModelScope.launch {
+            runCatching {
+                playerRepository.refreshFromSnapshot(auth)
+            }.onSuccess { snapshot ->
+                _state.value = _state.value.copy(
+                    progress = snapshot.progress,
+                    gameStatus = snapshot.game.status,
+                    authExpired = false,
+                )
+                launch { sessionStore.updateGameStatus(snapshot.game.status) }
+                android.util.Log.i(
+                    "PlayerViewModel",
+                    "Snapshot refresh applied: status=${snapshot.game.status} stateVersion=${snapshot.stateVersion}",
+                )
+            }.onFailure { err ->
+                val authExpired = ApiErrorParser.isAuthExpired(err)
+                if (authExpired) {
+                    _state.value = _state.value.copy(authExpired = true)
+                } else {
+                    // Recovery call — log and carry on, never block UI.
+                    android.util.Log.w(
+                        "PlayerViewModel",
+                        "Snapshot refresh failed: ${err.message}",
+                    )
+                }
             }
         }
     }
