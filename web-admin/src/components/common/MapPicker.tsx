@@ -18,6 +18,7 @@ interface MapPickerProps {
 }
 
 export function MapPicker({ value, onChange, className, tileSource }: MapPickerProps) {
+  const { t } = useTranslation();
   const { dark } = useThemeStore();
   const mapRef = useRef<MapRef>(null);
   const [locked, setLocked] = useState(true);
@@ -87,7 +88,7 @@ export function MapPicker({ value, onChange, className, tileSource }: MapPickerP
               className="flex items-center gap-2 px-4 py-2 rounded-md bg-white text-gray-800 text-sm font-medium shadow-lg hover:bg-gray-50 transition-colors cursor-pointer"
             >
               <Unlock className="h-4 w-4" />
-              Unlock map
+              {t("common.unlockMapTooltip")}
             </button>
           </div>
         )}
@@ -97,7 +98,7 @@ export function MapPicker({ value, onChange, className, tileSource }: MapPickerP
             type="button"
             onClick={() => setLocked(true)}
             className="absolute top-2 right-2 z-20 p-2 rounded-md border border-input bg-background/90 backdrop-blur-sm hover:bg-accent text-muted-foreground transition-colors shadow-sm cursor-pointer"
-            title="Lock map"
+            title={t("common.lockMapTooltip")}
           >
             <Lock className="h-4 w-4" />
           </button>

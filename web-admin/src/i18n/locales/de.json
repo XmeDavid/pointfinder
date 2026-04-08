@@ -38,7 +38,9 @@
     "pendingInvitations": "Ausstehende Einladungen",
     "inviteOperator": "Operator einladen",
     "unknown": "Unbekannt",
-    "base": "Station"
+    "base": "Station",
+    "lockMapTooltip": "Karte sperren",
+    "unlockMapTooltip": "Karte entsperren"
   },
   "auth": {
     "signIn": "Anmelden",
@@ -679,7 +681,8 @@
     "viewGame": "Spiel ansehen",
     "notFound": "Übertragung nicht gefunden",
     "notFoundDescription": "Dieser Übertragungscode ist ungültig oder die Übertragung wurde deaktiviert.",
-    "backToEntry": "Zurück zur Codeeingabe"
+    "backToEntry": "Zurück zur Codeeingabe",
+    "codeInputPlaceholder": "ABC123"
   },
   "faq": {
     "label": "FAQ",

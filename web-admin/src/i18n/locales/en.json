@@ -38,7 +38,9 @@
     "pendingInvitations": "Pending Invitations",
     "inviteOperator": "Invite Operator",
     "unknown": "Unknown",
-    "base": "Base"
+    "base": "Base",
+    "lockMapTooltip": "Lock map",
+    "unlockMapTooltip": "Unlock map"
   },
   "auth": {
     "signIn": "Sign In",
@@ -528,7 +530,7 @@
     "manualCheckInConfirm": "Check in {{team}} at {{base}}?",
     "checkInSuccess": "Team checked in successfully.",
     "checkInAlreadyDone": "This team has already checked in at this base.",
-    "markCompleted": "Mark completed",
+    "markCompleted": "Mark as completed",
     "markCompletedDialogTitle": "Mark base as completed",
     "markCompletedDialogDescription": "Synthesise an approved submission for {{team}} at {{base}}. Use this when the team completed the challenge in the field but the system blocked their submission.",
     "markCompletedReasonLabel": "Operator reason (optional)",
@@ -679,7 +681,8 @@
     "viewGame": "Watch Game",
     "notFound": "Broadcast not found",
     "notFoundDescription": "This broadcast code is invalid or the broadcast has been disabled.",
-    "backToEntry": "Back to code entry"
+    "backToEntry": "Back to code entry",
+    "codeInputPlaceholder": "ABC123"
   },
   "faq": {
     "label": "FAQ",

@@ -32,7 +32,7 @@ export function LiveEntryPage() {
             type="text"
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 6))}
-            placeholder="ABC123"
+            placeholder={t("live.codeInputPlaceholder")}
             maxLength={6}
             className="w-full rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-center font-mono text-2xl tracking-[0.3em] text-white placeholder-white/30 focus:border-green-400 focus:outline-none focus:ring-1 focus:ring-green-400"
             autoFocus

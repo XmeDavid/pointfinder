@@ -38,7 +38,9 @@
     "pendingInvitations": "Convites Pendentes",
     "inviteOperator": "Convidar Operador",
     "unknown": "Desconhecido",
-    "base": "Base"
+    "base": "Base",
+    "lockMapTooltip": "Bloquear mapa",
+    "unlockMapTooltip": "Desbloquear mapa"
   },
   "auth": {
     "signIn": "Entrar",
@@ -679,7 +681,8 @@
     "viewGame": "Ver Jogo",
     "notFound": "Transmissão não encontrada",
     "notFoundDescription": "Este código de transmissão é inválido ou a transmissão foi desativada.",
-    "backToEntry": "Voltar à introdução do código"
+    "backToEntry": "Voltar à introdução do código",
+    "codeInputPlaceholder": "ABC123"
   },
   "faq": {
     "label": "FAQ",
