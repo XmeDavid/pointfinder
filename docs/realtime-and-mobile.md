@@ -398,16 +398,16 @@ The pattern every realtime client should implement:
 
 See `docs/api-reference.md` for full field-by-field examples.
 
-### Wiring status per platform (as of Slice 4)
+### Wiring status per platform (as of Slice 5)
 
-| Platform | Snapshot wired? | JWT refresh on WS reconnect? | Notes |
+| Platform | Snapshot wired? | JWT refresh on WS reconnect? | Realtime Health Observability (Slice 5)? |
 |---|---|---|---|
-| Backend | Yes | N/A (serves `/api/auth/refresh`) | Endpoint, DTOs, service, state version bump all landed |
-| Web admin | **Slice 3: complete** | **Slice 4: complete** | `web-admin/src/lib/api/games.ts:138` — `gamesApi.getSnapshot()`; `web-admin/src/hooks/useGameSnapshot.ts` — `useGameSnapshot()`, `useVisibilityRefresh()`, and `invalidateSnapshotSupersededQueries()`; `web-admin/src/features/game-detail/GameShell.tsx:20` — `useVisibilityRefresh(gameId)` mounted at the game-detail root so every layout (classic, setup, monitor, review) inherits it; `web-admin/src/lib/api/websocket.ts:35` — `connectWebSocket` accepts an `onReconnect` callback that only fires on second-and-subsequent connects AND an optional `tokenProvider` that `beforeConnect` calls on every reconnect attempt to mint a fresh JWT; `web-admin/src/hooks/useGameWebSocket.ts:120` — passes both the reconnect callback (invalidates the same query keys as `useVisibilityRefresh`) and a `tokenProvider` that clears the in-memory access token and re-fetches via `getValidAccessToken()`. |
-| iOS | **Slice 2: complete** | **Shipped in earlier waves** | `AppState+Snapshot.swift` — `refreshFromSnapshot()` method; `MainTabView.swift` — `scenePhase == .active` wiring; `AppState.swift:118` — realtime reconnect trigger and `tokenProvider` wiring; `Services/MobileRealtimeClient.swift:18` — `tokenProvider` field consumed in `openConnection` via `effectiveToken` |
-| Android | **Slice 2: complete** | **Slice 4: complete** | `PlayerRepository.kt:132` — `refreshFromSnapshot()`; `PlayerViewModel.kt:217` — ViewModel wrapper; `AppNavigation.kt:605` — `ON_RESUME` wiring (replaces `refresh()`); `CompanionApi.kt` — snapshot endpoint; `core/network/src/main/kotlin/com/prayer/pointfinder/core/network/MobileRealtimeClient.kt:139` — `tokenProvider: (() -> String?)?` field consumed via `resolveRealtimeToken()` inside `openSocket()`; `app/src/main/java/com/prayer/pointfinder/session/AppSessionViewModel.kt:97` — `configureRealtimeTokenProvider()` delegates operator refreshes to `OperatorTokenRefresher` and forces a one-shot logout (via `error_session_expired`) when refresh returns null. |
+| Backend | Yes | N/A (serves `/api/auth/refresh`) | **Slice 5: complete** — `backend/src/main/java/com/prayer/pointfinder/websocket/StompSessionMetricsListener.java` — STOMP connect/disconnect/reconnect counters; `backend/src/main/java/com/prayer/pointfinder/websocket/MobileRealtimeHub.java:102` — mobile session gauge; `backend/src/main/java/com/prayer/pointfinder/service/RealtimeMetricsService.java` — rolling-hour aggregation; `backend/src/main/java/com/prayer/pointfinder/controller/RealtimeStatsController.java` — `GET /api/games/{gameId}/realtime-stats` endpoint |
+| Web admin | **Slice 3: complete** | **Slice 4: complete** | **Slice 5: complete** — `web-admin/src/components/RealtimeHealthWidget.tsx` — mounts on DashboardPage, polls `/realtime-stats` every 30s, renders health indicator; `web-admin/src/lib/api/monitoring.ts:16` — `getRealtimeStats(gameId)` function; `web-admin/src/lib/realtimeHealth.ts` — `classifyHealth()` health status classifier |
+| iOS | **Slice 2: complete** | **Shipped in earlier waves** | N/A (player app only; observability is operator feature) |
+| Android | **Slice 2: complete** | **Slice 4: complete** | N/A (player app only; observability is operator feature) |
 
-Slice 1 is strictly backend. Slices 2 and 3 wire the snapshot clients. Slice 4 closes the remaining reliability gap by rotating operator JWTs on WebSocket reconnect across all three clients.
+Slice 1 is strictly backend. Slices 2 and 3 wire the snapshot clients. Slice 4 closes the remaining reliability gap by rotating operator JWTs on WebSocket reconnect across all three clients. Slice 5 completes P0 Track 2 by adding operator observability: the realtime health stats endpoint, counters on both hubs, and the dashboard widget that surfaces reconnect churn and zero-client alerts.
 
 ### JWT refresh on WebSocket reconnect (Slice 4 detail)
 

@@ -741,6 +741,51 @@ Supported content types: `video/mp4`, `video/quicktime`, `image/jpeg`, `image/pn
 | GET | `/games/:gameId/monitoring/locations` | Operator | Real-time team positions |
 | GET | `/games/:gameId/monitoring/progress` | Operator | Per-team, per-base submission status |
 
+### 10.1 Realtime Health Stats (P0 Track 2 Slice 5)
+
+**Endpoint**: `GET /api/games/:gameId/realtime-stats`
+**Auth**: `ROLE_ADMIN` or `ROLE_OPERATOR` (operator must have access to the game; 403 if not)
+**Purpose**: Returns current realtime connection counts and rolling-hour reconnect rate for the operator dashboard Realtime Health widget. Operators use this to verify that the live event's WebSocket infrastructure is healthy and clients are actually connected.
+
+**Response**:
+```json
+{
+  "stompActiveSessions": 3,
+  "mobileActiveSessions": 7,
+  "totalActiveSessions": 10,
+  "stompConnectsLastHour": 42,
+  "mobileConnectsLastHour": 128,
+  "stompDisconnectsLastHour": 38,
+  "mobileDisconnectsLastHour": 121,
+  "estimatedReconnectsLastHour": 95,
+  "lastUpdated": "2026-04-08T12:34:56Z"
+}
+```
+
+**Field definitions**:
+- `stompActiveSessions`: Web-admin STOMP sessions subscribed to this game right now
+- `mobileActiveSessions`: Mobile (iOS + Android) native WebSocket sessions for this game right now
+- `totalActiveSessions`: Sum of `stompActiveSessions` and `mobileActiveSessions`
+- `stompConnectsLastHour`: Cumulative STOMP connection attempts in the rolling hour
+- `mobileConnectsLastHour`: Cumulative mobile WebSocket connection attempts in the rolling hour
+- `stompDisconnectsLastHour`: Cumulative STOMP disconnections in the rolling hour
+- `mobileDisconnectsLastHour`: Cumulative mobile WebSocket disconnections in the rolling hour
+- `estimatedReconnectsLastHour`: Heuristic reconnect total across both hubs. A connect from the same client identifier within 30 seconds of a prior disconnect counts as a reconnect. See implementation notes below.
+- `lastUpdated`: Server wall clock (UTC) when this snapshot was produced
+
+**Example curl**:
+```bash
+curl -H "Authorization: Bearer $OPERATOR_JWT" \
+  https://pointfinder.pt/api/games/550e8400-e29b-41d4-a716-446655440000/realtime-stats
+```
+
+**Polling**: Web-admin polls this endpoint every 30 seconds via React Query (`staleTime: 30s`) to feed the Realtime Health widget.
+
+**Error responses**:
+- `401 Unauthorized`: No JWT provided or JWT is invalid
+- `403 Forbidden`: Operator does not have access to the game
+- `404 Not Found`: Game does not exist
+
 ### Response Shapes
 
 **Dashboard**:
