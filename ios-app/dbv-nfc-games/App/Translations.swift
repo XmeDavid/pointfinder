@@ -544,6 +544,17 @@ enum Translations {
         // Status hints
         "teamDetail.pendingReviewHint": "Submission pending review",
         "teamDetail.errorRequiresCheckIn": "Team must be checked in first. Use Manual Check-In.",
+
+        // Backend error codes — must stay in sync with ErrorCode.java
+        "errors.MARK_COMPLETED_REQUIRES_CHECKIN": "Team must be checked in first. Use Manual Check-In.",
+        "errors.MARK_COMPLETED_ALREADY_COMPLETED": "This base is already marked as completed for the team.",
+        "errors.MANUAL_CHECKIN_ALREADY_CHECKED_IN": "Team is already checked in at this base.",
+        "errors.UNLOCK_OVERRIDE_ALREADY_EXISTS": "An unlock override already exists for this team and base.",
+        "errors.UNLOCK_OVERRIDE_NOT_FOUND": "No active unlock override found for this team and base.",
+        "errors.TAG_LABEL_DUPLICATE": "A tag with this label already exists in the game.",
+        "errors.TAG_CAP_EXCEEDED": "The game has reached the maximum number of tags.",
+        "errors.TAG_IN_USE": "This tag is assigned to a base or challenge and cannot be deleted.",
+        "errors.WS_ACCESS_DENIED": "Session expired. Please sign in again.",
     ]
 
     // MARK: - Portuguese
@@ -1068,6 +1079,17 @@ enum Translations {
         // Status hints
         "teamDetail.pendingReviewHint": "Submissão aguarda revisão",
         "teamDetail.errorRequiresCheckIn": "A equipa deve fazer check-in primeiro. Use o Check-In Manual.",
+
+        // Backend error codes — must stay in sync with ErrorCode.java
+        "errors.MARK_COMPLETED_REQUIRES_CHECKIN": "A equipa deve fazer check-in primeiro. Use o Check-In Manual.",
+        "errors.MARK_COMPLETED_ALREADY_COMPLETED": "Esta base já está marcada como concluída para a equipa.",
+        "errors.MANUAL_CHECKIN_ALREADY_CHECKED_IN": "A equipa já fez check-in nesta base.",
+        "errors.UNLOCK_OVERRIDE_ALREADY_EXISTS": "Já existe um acesso especial para esta equipa e base.",
+        "errors.UNLOCK_OVERRIDE_NOT_FOUND": "Não existe nenhum acesso especial ativo para esta equipa e base.",
+        "errors.TAG_LABEL_DUPLICATE": "Já existe uma tag com este nome no jogo.",
+        "errors.TAG_CAP_EXCEEDED": "O jogo atingiu o número máximo de tags.",
+        "errors.TAG_IN_USE": "Esta tag está atribuída a uma base ou desafio e não pode ser eliminada.",
+        "errors.WS_ACCESS_DENIED": "Sessão expirada. Por favor, inicia sessão novamente.",
     ]
 
     // MARK: - German
@@ -1592,6 +1614,17 @@ enum Translations {
         // Status hints
         "teamDetail.pendingReviewHint": "Einreichung wartet auf Prüfung",
         "teamDetail.errorRequiresCheckIn": "Das Team muss zuerst eingecheckt sein. Verwende den manuellen Check-In.",
+
+        // Backend error codes — must stay in sync with ErrorCode.java
+        "errors.MARK_COMPLETED_REQUIRES_CHECKIN": "Das Team muss zuerst eingecheckt sein. Verwende den manuellen Check-In.",
+        "errors.MARK_COMPLETED_ALREADY_COMPLETED": "Diese Station ist für das Team bereits als abgeschlossen markiert.",
+        "errors.MANUAL_CHECKIN_ALREADY_CHECKED_IN": "Das Team ist an dieser Station bereits eingecheckt.",
+        "errors.UNLOCK_OVERRIDE_ALREADY_EXISTS": "Für dieses Team und diese Station gibt es bereits einen Sonderzugang.",
+        "errors.UNLOCK_OVERRIDE_NOT_FOUND": "Kein aktiver Sonderzugang für dieses Team und diese Station gefunden.",
+        "errors.TAG_LABEL_DUPLICATE": "Ein Tag mit diesem Namen existiert bereits im Spiel.",
+        "errors.TAG_CAP_EXCEEDED": "Das Spiel hat die maximale Anzahl an Tags erreicht.",
+        "errors.TAG_IN_USE": "Dieses Tag ist einer Station oder Challenge zugewiesen und kann nicht gelöscht werden.",
+        "errors.WS_ACCESS_DENIED": "Sitzung abgelaufen. Bitte melde dich erneut an.",
     ]
 }
 

@@ -405,6 +405,14 @@
     <string name="label_manual_check_in_success">Check-in successful</string>
     <string name="label_pending_review_hint">Submission pending review</string>
     <string name="error_mark_completed_requires_checkin">Team must be checked in first. Use Manual Check-In.</string>
+    <string name="error_mark_completed_already_completed">This base is already marked as completed for the team.</string>
+    <string name="error_manual_checkin_already_checked_in">Team is already checked in at this base.</string>
+    <string name="error_unlock_override_already_exists">An unlock override already exists for this team and base.</string>
+    <string name="error_unlock_override_not_found">No active unlock override found for this team and base.</string>
+    <string name="error_tag_label_duplicate">A tag with this label already exists in the game.</string>
+    <string name="error_tag_cap_exceeded">The game has reached the maximum number of tags.</string>
+    <string name="error_tag_in_use">This tag is assigned to a base or challenge and cannot be deleted.</string>
+    <string name="error_ws_access_denied">Session expired. Please sign in again.</string>
     <!-- Toast / Snackbar -->
     <string name="toast_base_created">Base created</string>
     <string name="toast_base_saved">Base saved</string>

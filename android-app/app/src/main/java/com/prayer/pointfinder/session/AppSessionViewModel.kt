@@ -112,6 +112,13 @@ class AppSessionViewModel @Inject constructor(
                 AuthType.None -> null
             }
         }
+        // STOMP WS_ACCESS_DENIED: server explicitly rejected the token.
+        // Force-logout so the user sees the login screen instead of being
+        // silently stuck in a reconnect loop.
+        realtimeClient.onAuthDenied = {
+            Log.w(TAG, "STOMP WS_ACCESS_DENIED received — forcing logout")
+            triggerForcedLogout()
+        }
     }
 
     /**

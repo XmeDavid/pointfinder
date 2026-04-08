@@ -533,7 +533,7 @@ struct TeamDetailView: View {
             showRescueToast(locale.t("teamDetail.markCompletedSuccess"))
         } catch {
             showMarkCompletedSheet = false
-            appState.setError(friendlyRescueError(error.localizedDescription))
+            appState.setError(friendlyRescueError(error))
         }
         isMarkingCompleted = false
     }
@@ -556,7 +556,7 @@ struct TeamDetailView: View {
             showRescueToast(locale.t("teamDetail.manualCheckInSuccess"))
         } catch {
             showManualCheckInSheet = false
-            appState.setError(error.localizedDescription)
+            appState.setError(friendlyRescueError(error))
         }
         isCheckingIn = false
     }
@@ -580,7 +580,7 @@ struct TeamDetailView: View {
             showRescueToast(locale.t("teamDetail.unlockOverrideSuccess"))
         } catch {
             showUnlockOverrideSheet = false
-            appState.setError(error.localizedDescription)
+            appState.setError(friendlyRescueError(error))
         }
         isGrantingOverride = false
     }
@@ -599,7 +599,7 @@ struct TeamDetailView: View {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             showRescueToast(locale.t("teamDetail.unlockOverrideRemoveSuccess"))
         } catch {
-            appState.setError(error.localizedDescription)
+            appState.setError(friendlyRescueError(error))
         }
     }
 
@@ -616,12 +616,22 @@ struct TeamDetailView: View {
         }
     }
 
-    /// Map known backend error codes to friendly messages.
-    private func friendlyRescueError(_ raw: String) -> String {
-        if raw.contains("MARK_COMPLETED_REQUIRES_CHECKIN") {
-            return locale.t("teamDetail.errorRequiresCheckIn")
+    /// Map a thrown Error to a friendly localized message.
+    /// Prefers the backend `code` field; falls back to the raw message.
+    private func friendlyRescueError(_ error: Error) -> String {
+        if case APIError.httpError(_, let body) = error {
+            if let data = body.data(using: .utf8),
+               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let code = json["code"] as? String {
+                let key = "errors.\(code)"
+                let localized = locale.t(key)
+                // locale.t returns the key itself when not found; treat that as a miss
+                if localized != key {
+                    return localized
+                }
+            }
         }
-        return raw
+        return error.localizedDescription
     }
 }
 

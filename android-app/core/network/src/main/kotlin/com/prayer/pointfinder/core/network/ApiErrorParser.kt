@@ -24,6 +24,7 @@ object ApiErrorParser {
     private data class ErrorResponse(
         val message: String,
         val status: Int = 0,
+        val code: String? = null,
         val errors: Map<String, String>? = null,
     )
 
@@ -54,6 +55,17 @@ object ApiErrorParser {
             return throwable.message() ?: throwable.message ?: "Unknown error"
         }
         return throwable.message ?: "Unknown error"
+    }
+
+    /**
+     * Extracts the machine-readable error code from a [Throwable], if present.
+     * Returns null for non-HTTP errors or when the backend did not include a code.
+     */
+    fun extractCode(throwable: Throwable): String? {
+        if (throwable !is HttpException) return null
+        val body = runCatching { throwable.response()?.errorBody()?.string() }.getOrNull()
+            ?: return null
+        return runCatching { json.decodeFromString<ErrorResponse>(body).code }.getOrNull()
     }
 
     private fun extractFieldMessage(errors: Map<String, String>?): String? {

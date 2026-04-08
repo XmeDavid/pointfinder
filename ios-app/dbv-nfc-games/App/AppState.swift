@@ -146,6 +146,14 @@ final class AppState {
                 return nil
             }
         }
+        // STOMP WS_ACCESS_DENIED: token was rejected server-side.
+        // Force-logout so the user sees the login screen instead of
+        // being silently stuck in a reconnect loop.
+        realtimeClient.onAuthDenied = { [weak self] in
+            Task { @MainActor [weak self] in
+                self?.forceLogout()
+            }
+        }
     }
 
     private func handleRealtimeEvent(_ payload: [String: Any]) {

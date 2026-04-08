@@ -407,4 +407,12 @@
     <string name="label_manual_check_in_success">Check-in realizado com sucesso</string>
     <string name="label_pending_review_hint">Submissão aguarda revisão</string>
     <string name="error_mark_completed_requires_checkin">A equipa deve fazer check-in primeiro. Use o Check-In Manual.</string>
+    <string name="error_mark_completed_already_completed">Esta base já está marcada como concluída para a equipa.</string>
+    <string name="error_manual_checkin_already_checked_in">A equipa já fez check-in nesta base.</string>
+    <string name="error_unlock_override_already_exists">Já existe um acesso especial para esta equipa e base.</string>
+    <string name="error_unlock_override_not_found">Não existe nenhum acesso especial ativo para esta equipa e base.</string>
+    <string name="error_tag_label_duplicate">Já existe uma tag com este nome no jogo.</string>
+    <string name="error_tag_cap_exceeded">O jogo atingiu o número máximo de tags.</string>
+    <string name="error_tag_in_use">Esta tag está atribuída a uma base ou desafio e não pode ser eliminada.</string>
+    <string name="error_ws_access_denied">Sessão expirada. Por favor, inicia sessão novamente.</string>
 </resources>

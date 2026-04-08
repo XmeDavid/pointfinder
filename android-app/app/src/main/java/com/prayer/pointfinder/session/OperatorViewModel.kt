@@ -1065,10 +1065,24 @@ class OperatorViewModel @Inject constructor(
         _state.value = _state.value.copy(authExpired = false)
     }
 
-    private fun friendlyError(err: Throwable): String =
+    private fun friendlyError(err: Throwable): String {
         if (ApiErrorParser.isNetworkError(err))
-            context.getString(StringR.string.error_network_unavailable)
+            return context.getString(StringR.string.error_network_unavailable)
+        val code = ApiErrorParser.extractCode(err)
+        val codeStringRes = when (code) {
+            "MARK_COMPLETED_REQUIRES_CHECKIN" -> StringR.string.error_mark_completed_requires_checkin
+            "MARK_COMPLETED_ALREADY_COMPLETED" -> StringR.string.error_mark_completed_already_completed
+            "MANUAL_CHECKIN_ALREADY_CHECKED_IN" -> StringR.string.error_manual_checkin_already_checked_in
+            "UNLOCK_OVERRIDE_ALREADY_EXISTS" -> StringR.string.error_unlock_override_already_exists
+            "UNLOCK_OVERRIDE_NOT_FOUND" -> StringR.string.error_unlock_override_not_found
+            "TAG_LABEL_DUPLICATE" -> StringR.string.error_tag_label_duplicate
+            "TAG_CAP_EXCEEDED" -> StringR.string.error_tag_cap_exceeded
+            "TAG_IN_USE" -> StringR.string.error_tag_in_use
+            else -> null
+        }
+        return if (codeStringRes != null) context.getString(codeStringRes)
         else ApiErrorParser.extractMessage(err)
+    }
 
     private fun startPolling() {
         pollingJob?.cancel()

@@ -119,6 +119,13 @@ class MobileRealtimeClient(
     val connectionState: StateFlow<RealtimeConnectionState> = _connectionState.asStateFlow()
 
     /**
+     * Called when the server sends a STOMP ERROR frame with `error-code: WS_ACCESS_DENIED`.
+     * The caller should prompt the user to re-login instead of allowing silent reconnect.
+     * Invoked on the internal single-thread dispatcher; callers must dispatch to main if needed.
+     */
+    var onAuthDenied: (() -> Unit)? = null
+
+    /**
      * Returns a fresh access token on every (re)connect. If null is returned,
      * the client falls back to the token supplied to [connect].
      *
@@ -220,6 +227,20 @@ class MobileRealtimeClient(
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
+                // Detect STOMP ERROR frames before attempting JSON parsing.
+                // A WS_ACCESS_DENIED error-code means the token was rejected;
+                // stop reconnecting and notify the caller to prompt re-login.
+                if (text.startsWith("ERROR") && text.contains("error-code:WS_ACCESS_DENIED")) {
+                    Log.w(TAG, "STOMP WS_ACCESS_DENIED received — stopping reconnect")
+                    scope.launch {
+                        desiredSession = null
+                        webSocket.close(1000, "ws_access_denied")
+                        this@MobileRealtimeClient.webSocket = null
+                        updateState(RealtimeConnectionState.Disconnected)
+                        onAuthDenied?.invoke()
+                    }
+                    return
+                }
                 runCatching { json.decodeFromString<RealtimeEnvelope>(text) }
                     .onSuccess { envelope ->
                         _events.tryEmit(envelope)

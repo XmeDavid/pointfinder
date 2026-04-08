@@ -403,6 +403,14 @@
     <string name="label_manual_check_in_success">Check-In erfolgreich</string>
     <string name="label_pending_review_hint">Einreichung wartet auf Prüfung</string>
     <string name="error_mark_completed_requires_checkin">Das Team muss zuerst eingecheckt sein. Verwende den manuellen Check-In.</string>
+    <string name="error_mark_completed_already_completed">Diese Station ist für das Team bereits als abgeschlossen markiert.</string>
+    <string name="error_manual_checkin_already_checked_in">Das Team ist an dieser Station bereits eingecheckt.</string>
+    <string name="error_unlock_override_already_exists">Für dieses Team und diese Station gibt es bereits einen Sonderzugang.</string>
+    <string name="error_unlock_override_not_found">Kein aktiver Sonderzugang für dieses Team und diese Station gefunden.</string>
+    <string name="error_tag_label_duplicate">Ein Tag mit diesem Namen existiert bereits im Spiel.</string>
+    <string name="error_tag_cap_exceeded">Das Spiel hat die maximale Anzahl an Tags erreicht.</string>
+    <string name="error_tag_in_use">Dieses Tag ist einer Station oder Challenge zugewiesen und kann nicht gelöscht werden.</string>
+    <string name="error_ws_access_denied">Sitzung abgelaufen. Bitte melde dich erneut an.</string>
     <!-- Toast / Snackbar -->
     <string name="toast_base_created">Station erstellt</string>
     <string name="toast_base_saved">Station gespeichert</string>

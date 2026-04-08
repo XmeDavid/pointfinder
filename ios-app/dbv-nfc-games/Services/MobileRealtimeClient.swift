@@ -16,6 +16,9 @@ final class MobileRealtimeClient {
     var onReconnect: (() async -> Void)?
     /// Returns a fresh token on reconnect. If nil, falls back to the token passed to connect().
     var tokenProvider: (() -> String?)?
+    /// Called when the server sends a STOMP ERROR frame with error-code: WS_ACCESS_DENIED.
+    /// The caller should prompt the user to re-login instead of retrying silently.
+    var onAuthDenied: (() -> Void)?
 
     private let urlSession = URLSession(configuration: .default)
     private var socketTask: URLSessionWebSocketTask?
@@ -166,13 +169,28 @@ final class MobileRealtimeClient {
 
     private func handleMessage(_ message: URLSessionWebSocketTask.Message) {
         let data: Data?
+        let rawText: String?
         switch message {
         case .string(let text):
+            rawText = text
             data = text.data(using: .utf8)
         case .data(let binary):
+            rawText = String(data: binary, encoding: .utf8)
             data = binary
         @unknown default:
+            rawText = nil
             data = nil
+        }
+
+        // Detect STOMP ERROR frames — they are plain-text, not JSON.
+        // A WS_ACCESS_DENIED error-code header means the token was rejected;
+        // stop reconnecting and signal the caller to prompt re-login.
+        if let text = rawText,
+           text.hasPrefix("ERROR") && text.contains("error-code:WS_ACCESS_DENIED") {
+            logger.warning("STOMP WS_ACCESS_DENIED received — stopping reconnect, notifying caller")
+            disconnect()
+            onAuthDenied?()
+            return
         }
 
         guard let data,
