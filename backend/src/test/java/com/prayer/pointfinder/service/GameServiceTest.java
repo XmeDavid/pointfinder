@@ -57,6 +57,8 @@ class GameServiceTest {
     @Mock
     private ActivityEventRepository activityEventRepository;
     @Mock
+    private UploadSessionRepository uploadSessionRepository;
+    @Mock
     private GameAccessService gameAccessService;
     @Mock
     private FileStorageService fileStorageService;
@@ -112,6 +114,7 @@ class GameServiceTest {
                 submissionRepository,
                 teamLocationRepository,
                 activityEventRepository,
+                uploadSessionRepository,
                 gameAccessService,
                 fileStorageService,
                 eventBroadcaster,

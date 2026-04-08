@@ -323,19 +323,25 @@ class SubmissionControllerTest {
     }
 
     @Test
-    void reviewSubmissionWithNegativePointsReturns400() throws Exception {
+    void reviewSubmissionWithNegativePointsSucceeds() throws Exception {
         UUID gameId = UUID.randomUUID();
         UUID submissionId = UUID.randomUUID();
 
         ReviewSubmissionRequest request = new ReviewSubmissionRequest();
         request.setStatus(ReviewStatus.approved);
-        request.setPoints(-1); // violates @Min(0)
+        request.setPoints(-1); // negative points are now allowed (commit 3b721c8)
+
+        when(submissionService.reviewSubmission(eq(gameId), eq(submissionId), any(ReviewSubmissionRequest.class)))
+                .thenReturn(SubmissionResponse.builder()
+                        .id(submissionId).teamId(UUID.randomUUID()).challengeId(UUID.randomUUID())
+                        .baseId(UUID.randomUUID()).answer("a").status("approved")
+                        .submittedAt(Instant.now()).points(-1).build());
 
         mockMvc.perform(patch("/api/games/" + gameId + "/submissions/" + submissionId + "/review")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.points").exists());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.points").value(-1));
     }
 
     @Test

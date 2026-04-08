@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -43,14 +44,14 @@ class FileAccessServiceTest {
         UUID gameId = UUID.randomUUID();
         String filename = UUID.randomUUID() + ".jpg";
 
-        when(submissionRepository.existsByTeamGameIdAndFileUrlIn(eq(gameId), anyList()))
+        when(submissionRepository.existsByGameIdAndFileUrlOrFileUrls(eq(gameId), anyList(), anyString()))
                 .thenReturn(true);
 
         assertDoesNotThrow(() -> fileAccessService.ensureOperatorCanReadFile(gameId, filename));
 
         verify(gameAccessService).ensureCurrentUserCanAccessGame(gameId);
         ArgumentCaptor<List<String>> urlsCaptor = ArgumentCaptor.forClass(List.class);
-        verify(submissionRepository).existsByTeamGameIdAndFileUrlIn(eq(gameId), urlsCaptor.capture());
+        verify(submissionRepository).existsByGameIdAndFileUrlOrFileUrls(eq(gameId), urlsCaptor.capture(), anyString());
         List<String> urls = urlsCaptor.getValue();
         assertTrue(urls.contains("/api/games/" + gameId + "/files/" + filename));
         assertTrue(urls.contains("/uploads/" + gameId + "/" + filename));
@@ -61,7 +62,7 @@ class FileAccessServiceTest {
         UUID gameId = UUID.randomUUID();
         String filename = UUID.randomUUID() + ".jpg";
 
-        when(submissionRepository.existsByTeamGameIdAndFileUrlIn(eq(gameId), anyList()))
+        when(submissionRepository.existsByGameIdAndFileUrlOrFileUrls(eq(gameId), anyList(), anyString()))
                 .thenReturn(false);
 
         assertThrows(ResourceNotFoundException.class,
@@ -78,12 +79,12 @@ class FileAccessServiceTest {
                 .build();
 
         doNothing().when(gameAccessService).ensurePlayerBelongsToGame(player, gameId);
-        when(submissionRepository.existsByTeamIdAndFileUrlIn(eq(teamId), anyList()))
+        when(submissionRepository.existsByTeamIdAndFileUrlOrFileUrls(eq(teamId), anyList(), anyString()))
                 .thenReturn(true);
 
         assertDoesNotThrow(() -> fileAccessService.ensurePlayerCanReadFile(gameId, filename, player));
         verify(gameAccessService).ensurePlayerBelongsToGame(player, gameId);
-        verify(submissionRepository).existsByTeamIdAndFileUrlIn(eq(teamId), anyList());
+        verify(submissionRepository).existsByTeamIdAndFileUrlOrFileUrls(eq(teamId), anyList(), anyString());
     }
 
     @Test
@@ -96,7 +97,7 @@ class FileAccessServiceTest {
                 .build();
 
         doNothing().when(gameAccessService).ensurePlayerBelongsToGame(player, gameId);
-        when(submissionRepository.existsByTeamIdAndFileUrlIn(eq(teamId), anyList()))
+        when(submissionRepository.existsByTeamIdAndFileUrlOrFileUrls(eq(teamId), anyList(), anyString()))
                 .thenReturn(false);
 
         assertThrows(ResourceNotFoundException.class,
@@ -117,7 +118,7 @@ class FileAccessServiceTest {
 
         assertThrows(ForbiddenException.class,
                 () -> fileAccessService.ensurePlayerCanReadFile(gameId, "file.jpg", player));
-        verify(submissionRepository, never()).existsByTeamIdAndFileUrlIn(eq(teamId), anyList());
+        verify(submissionRepository, never()).existsByTeamIdAndFileUrlOrFileUrls(eq(teamId), anyList(), anyString());
     }
 }
 

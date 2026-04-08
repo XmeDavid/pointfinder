@@ -9,6 +9,7 @@ import com.prayer.pointfinder.entity.CheckIn;
 import com.prayer.pointfinder.entity.Game;
 import com.prayer.pointfinder.entity.GameStatus;
 import com.prayer.pointfinder.entity.Player;
+import com.prayer.pointfinder.entity.UnlockTrigger;
 import com.prayer.pointfinder.entity.Submission;
 import com.prayer.pointfinder.entity.SubmissionStatus;
 import com.prayer.pointfinder.entity.Team;
@@ -16,6 +17,7 @@ import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.repository.ActivityEventRepository;
 import com.prayer.pointfinder.repository.AssignmentRepository;
 import com.prayer.pointfinder.repository.BaseRepository;
+import com.prayer.pointfinder.repository.GameRepository;
 import com.prayer.pointfinder.repository.ChallengeRepository;
 import com.prayer.pointfinder.repository.CheckInRepository;
 import com.prayer.pointfinder.repository.PlayerLocationRepository;
@@ -30,6 +32,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.time.Instant;
 import java.util.List;
@@ -47,6 +51,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class PlayerServiceTest {
 
     @Mock
@@ -75,6 +80,8 @@ class PlayerServiceTest {
     private TeamLocationRepository teamLocationRepository;
     @Mock
     private PlayerLocationRepository playerLocationRepository;
+    @Mock
+    private GameRepository gameRepository;
     @Mock
     private GameAccessService gameAccessService;
     @Mock
@@ -369,6 +376,7 @@ class PlayerServiceTest {
                 .name("Live Game")
                 .description("Desc")
                 .status(GameStatus.live)
+                .unlockTrigger(UnlockTrigger.COMPLETED)
                 .build();
         Team team = Team.builder()
                 .id(teamId)
@@ -421,6 +429,7 @@ class PlayerServiceTest {
                 .build();
 
         when(playerRepository.findById(playerId)).thenReturn(Optional.of(player));
+        when(gameRepository.findById(gameId)).thenReturn(Optional.of(game));
         when(baseRepository.findByGameId(gameId)).thenReturn(List.of(sourceBase, hiddenBase));
         when(checkInRepository.findByGameIdAndTeamId(gameId, teamId)).thenReturn(List.of());
         when(submissionRepository.findByTeamId(teamId)).thenReturn(List.of(unlockSubmission));
