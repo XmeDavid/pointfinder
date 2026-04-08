@@ -525,9 +525,16 @@ export function BasesAndChallengesView() {
                           {ch.points} {t("common.pts")}
                         </Badge>
                         {availableBasesForOrphans.length > 0 ? (
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-col gap-1">
+                            <label
+                              htmlFor={`orphan-assign-select-${ch.id}`}
+                              className="text-xs font-medium text-muted-foreground"
+                            >
+                              {t("basesAndChallenges.assignToBase")}
+                            </label>
+                            <div className="flex items-center gap-2">
                             <Select
-                              aria-label={t("basesAndChallenges.assignToBase")}
+                              id={`orphan-assign-select-${ch.id}`}
                               value={draftBaseId}
                               onChange={(e) =>
                                 setAssignTargetByChallenge((prev) => ({
@@ -558,6 +565,7 @@ export function BasesAndChallengesView() {
                             >
                               {t("basesAndChallenges.assignButton")}
                             </Button>
+                            </div>
                           </div>
                         ) : (
                           <p className="text-xs text-muted-foreground">

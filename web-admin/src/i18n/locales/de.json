@@ -47,7 +47,8 @@
     "pickLinkedBase": "Verknüpfte Station wählen",
     "discardChangesWarning": "Änderungen verwerfen und springen?",
     "discard": "Verwerfen",
-    "manageTags": "Tags verwalten"
+    "manageTags": "Tags verwalten",
+    "useArrowKeys": "Pfeiltasten verwenden oder Wert eintippen"
   },
   "auth": {
     "signIn": "Anmelden",

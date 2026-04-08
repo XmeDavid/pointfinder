@@ -250,7 +250,7 @@ export function SubmissionsPage() {
           return (
             <Card
               key={sub.id}
-              className={isPending ? "cursor-pointer transition-colors hover:border-primary/50" : undefined}
+              className={isPending ? "cursor-pointer transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" : undefined}
               onClick={isPending ? () => openReview(sub) : undefined}
               role={isPending ? "button" : undefined}
               tabIndex={isPending ? 0 : undefined}
@@ -373,8 +373,25 @@ export function SubmissionsPage() {
               {(getMediaUrls(reviewingSub).length === 0 || reviewingSub.answer) && (
                 <div><p className="text-sm font-medium mb-1">{getMediaUrls(reviewingSub).length > 0 ? t("submissions.notes") : t("submissions.answer")}</p><div className="rounded-md bg-muted p-3 text-sm">{reviewingSub.answer || <span className="text-muted-foreground italic">{t("submissions.noNotes")}</span>}</div></div>
               )}
-              <div className="space-y-2"><p className="text-sm font-medium">{expectedReviewPoints != null ? t("submissions.pointsLabelWithExpected", { points: expectedReviewPoints }) : t("common.points_label")}</p><Input type="number" value={reviewPoints} onChange={(e) => setReviewPoints(parseInt(e.target.value) || 0)} /></div>
-              <div className="space-y-2"><p className="text-sm font-medium">{t("submissions.feedbackLabel")}</p><Textarea value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder={t("submissions.feedbackPlaceholder")} rows={2} /></div>
+              {(() => {
+                const ch = challengeMap.get(reviewingSub.challengeId);
+                const shouldShowCorrectAnswer = ch?.correctAnswer && ch.correctAnswer.length > 0 && ch.answerType === "text" && ch.autoValidate;
+                return shouldShowCorrectAnswer ? (
+                  <div>
+                    <p className="text-sm font-medium mb-1">{t("submissions.correctAnswer")}</p>
+                    <div className="rounded-md bg-muted p-3 text-sm">{ch.correctAnswer?.join(", ")}</div>
+                  </div>
+                ) : null;
+              })()}
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="review-points">{expectedReviewPoints != null ? t("submissions.pointsLabelWithExpected", { points: expectedReviewPoints }) : t("common.points_label")}</label>
+                <Input id="review-points" type="number" value={reviewPoints} onChange={(e) => setReviewPoints(parseInt(e.target.value) || 0)} aria-describedby="review-points-hint" />
+                <span id="review-points-hint" className="sr-only">{t("common.useArrowKeys")}</span>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="review-feedback">{t("submissions.feedbackLabel")}</label>
+                <Textarea id="review-feedback" value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder={t("submissions.feedbackPlaceholder")} rows={2} />
+              </div>
             </div>
             <DialogFooter>
               <Button variant="destructive" onClick={() => reviewMutation.mutate({ id: reviewingSub.id, status: "rejected", feedback: feedback || undefined })} loading={reviewMutation.isPending} data-testid="submission-reject-btn"><XCircle className="mr-1 h-4 w-4" /> {t("submissions.reject")}</Button>

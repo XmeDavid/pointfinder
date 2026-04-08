@@ -94,11 +94,20 @@ export function RealtimeHealthWidget({ gameId, gameStatus }: Props) {
       </CardHeader>
       <CardContent className="space-y-2">
         <div className="flex items-center gap-2">
+          {/* Shape + color so the indicator is distinguishable without color alone
+              (WCAG 1.4.1). Green = circle, Yellow = diamond, Red = square, Idle = circle.
+              The adjacent statusLabel text is the primary accessible label; the shape
+              is a redundant visual cue for sighted users with color-vision deficiency. */}
           <span
-            className={`inline-block h-2.5 w-2.5 rounded-full ${dotColor}`}
+            className={`inline-block shrink-0 ${
+              status === "yellow"
+                ? `h-2.5 w-2.5 rotate-45 ${dotColor}`
+                : status === "red"
+                  ? `h-2.5 w-2.5 rounded-sm ${dotColor}`
+                  : `h-2.5 w-2.5 rounded-full ${dotColor}`
+            }`}
             data-testid="realtime-health-dot"
-            aria-label={statusLabel}
-            role="img"
+            aria-hidden="true"
           />
           <span className="text-sm font-medium" data-testid="realtime-health-status">
             {statusLabel}

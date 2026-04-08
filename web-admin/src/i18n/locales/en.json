@@ -47,7 +47,8 @@
     "pickLinkedBase": "Pick a linked base",
     "discardChangesWarning": "Discard unsaved changes and jump?",
     "discard": "Discard",
-    "manageTags": "Manage Tags"
+    "manageTags": "Manage Tags",
+    "useArrowKeys": "Use arrow keys or type to change the value"
   },
   "auth": {
     "signIn": "Sign In",

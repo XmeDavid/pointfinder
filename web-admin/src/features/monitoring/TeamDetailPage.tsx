@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -49,6 +49,17 @@ export function TeamDetailPage() {
   const [markCompletedBaseId, setMarkCompletedBaseId] = useState<string | null>(null);
   const [markCompletedReason, setMarkCompletedReason] = useState("");
   const [markCompletedPointsOverride, setMarkCompletedPointsOverride] = useState<string>("");
+
+  // Focus restoration refs — WCAG 2.4.3: return focus to the triggering button
+  // when each dialog closes so keyboard users don't lose their position.
+  const checkInTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const unlockTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const removeOverrideTriggerRef = useRef<HTMLButtonElement | null>(null);
+
+  // rAF gives the DOM time to unmount the dialog before shifting focus.
+  const restoreFocus = useCallback((ref: React.MutableRefObject<HTMLButtonElement | null>) => {
+    requestAnimationFrame(() => ref.current?.focus());
+  }, []);
 
   const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!) });
   const team = teams.find((t) => t.id === teamId);
@@ -196,11 +207,6 @@ export function TeamDetailPage() {
     [submissions],
   );
 
-  const sortedSubmissions = useMemo(
-    () => [...submissions].sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()),
-    [submissions],
-  );
-
   if (!team) return null;
 
   return (
@@ -208,7 +214,7 @@ export function TeamDetailPage() {
       <Button variant="ghost" onClick={() => navigate(`/games/${gameId}/monitor/leaderboard`)}><ArrowLeft className="mr-2 h-4 w-4" /> {t("teamDetail.backToLeaderboard")}</Button>
       {actionError && <Alert onDismiss={() => setActionError("")}>{actionError}</Alert>}
       <div className="flex items-center gap-4">
-        <div className="h-6 w-6 rounded-full" style={{ backgroundColor: team.color }} />
+        <div className="h-6 w-6 rounded-full" aria-hidden="true" style={{ backgroundColor: team.color }} />
         <div><h1 className="text-2xl font-bold">{team.name}</h1><p className="text-muted-foreground">{t("teams.member", { count: players.length })} &middot; {totalPoints} {t("common.points")}</p></div>
       </div>
       <div className="grid gap-6 md:grid-cols-3">
@@ -219,11 +225,11 @@ export function TeamDetailPage() {
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader><CardTitle className="text-lg">{t("teams.members")}</CardTitle></CardHeader>
-          <CardContent>{players.length === 0 ? <p className="text-sm text-muted-foreground">{t("teams.noMembers")}</p> : <div className="space-y-2">{players.map((p) => (<div key={p.id} className="flex items-center justify-between gap-2 text-sm"><span className="min-w-0 flex-1 truncate font-medium">{p.displayName}</span><span className="max-w-44 truncate text-xs text-muted-foreground font-mono text-right" title={p.deviceId}>{p.deviceId}</span><Button variant="ghost" size="icon" className="h-7 w-7" disabled={removePlayer.isPending} onClick={() => { if (window.confirm(t("teams.removeMemberConfirm", { name: p.displayName }))) { removePlayer.mutate(p.id); } }} title={t("teams.removeMember")} aria-label={t("teams.removeMember")}><UserMinus className="h-3.5 w-3.5 text-muted-foreground" /></Button></div>))}</div>}</CardContent>
+          <CardContent>{players.length === 0 ? <p className="text-sm text-muted-foreground">{t("teams.noMembers")}</p> : <div className="space-y-2">{players.map((p) => (<div key={p.id} className="flex items-center justify-between gap-2 text-sm"><span className="min-w-0 flex-1 truncate font-medium">{p.displayName}</span><span className="max-w-44 truncate text-xs text-muted-foreground font-mono text-right" title={p.deviceId}>{p.deviceId}</span><Button variant="ghost" size="icon" className="h-7 w-7" disabled={removePlayer.isPending} onClick={() => { if (window.confirm(t("teams.removeMemberConfirm", { name: p.displayName }))) { removePlayer.mutate(p.id); } }} aria-label={t("teams.removeMember")}><UserMinus className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" /></Button></div>))}</div>}</CardContent>
         </Card>
         <Card>
           <CardHeader><CardTitle className="text-lg">{t("teamDetail.submissionHistory")}</CardTitle></CardHeader>
-          <CardContent>{submissions.length === 0 ? <p className="text-sm text-muted-foreground">{t("common.noSubmissions")}</p> : <div className="space-y-3">{sortedSubmissions.map((sub) => { const ch = challengeMap.get(sub.challengeId); const base = sub.baseId ? baseMap.get(sub.baseId) : undefined; return (<div key={sub.id} className="flex items-start gap-3">{statusIcon[sub.status]}<div className="flex-1 min-w-0"><p className="text-sm font-medium">{ch?.title}</p>{base && <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" /> {base.name}</p>}<p className="text-xs text-muted-foreground">{formatDateTime(sub.submittedAt)}</p></div><Badge variant="outline" className="text-xs">{statusLabel[sub.status]}</Badge></div>); })}</div>}</CardContent>
+          <CardContent>{submissions.length === 0 ? <p className="text-sm text-muted-foreground">{t("common.noSubmissions")}</p> : <div className="space-y-3">{[...submissions].sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()).map((sub) => { const ch = challenges.find((c) => c.id === sub.challengeId); const base = bases.find((b) => b.id === sub.baseId); return (<div key={sub.id} className="flex items-start gap-3">{statusIcon[sub.status]}<div className="flex-1 min-w-0"><p className="text-sm font-medium">{ch?.title}</p>{base && <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" aria-hidden="true" /> {base.name}</p>}<p className="text-xs text-muted-foreground">{formatDateTime(sub.submittedAt)}</p></div><Badge variant="outline" className="text-xs">{statusLabel[sub.status]}</Badge></div>); })}</div>}</CardContent>
         </Card>
       </div>
       <Card>
@@ -244,11 +250,11 @@ export function TeamDetailPage() {
                     data-testid={`team-base-row-${base.id}`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                       <span className="truncate font-medium">{base.name}</span>
                       {base.hidden && (
                         <Badge variant="outline" className="text-xs gap-1">
-                          <Lock className="h-3 w-3" />
+                          <Lock className="h-3 w-3" aria-hidden="true" />
                           {t("teams.hiddenBaseBadge")}
                         </Badge>
                       )}
@@ -259,8 +265,18 @@ export function TeamDetailPage() {
                       ) : (
                         <>
                           <Badge variant="outline" className="text-xs text-muted-foreground">{t("teamDetail.notVisited")}</Badge>
-                          <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => setCheckInBaseId(base.id)}>
-                            <LogIn className="h-3.5 w-3.5" />{t("teamDetail.manualCheckIn")}
+                          <Button
+                            ref={(el) => {
+                              // Store the check-in trigger for this base so we can
+                              // restore focus after the dialog closes.
+                              if (el && checkInBaseId === null) checkInTriggerRef.current = el;
+                            }}
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs gap-1"
+                            onClick={() => { checkInTriggerRef.current = document.activeElement as HTMLButtonElement; setCheckInBaseId(base.id); }}
+                          >
+                            <LogIn className="h-3.5 w-3.5" aria-hidden="true" />{t("teamDetail.manualCheckIn")}
                           </Button>
                         </>
                       )}
@@ -291,7 +307,7 @@ export function TeamDetailPage() {
                             data-testid={`unlock-override-active-${base.id}`}
                             title={activeOverride.reason ?? undefined}
                           >
-                            <ShieldCheck className="h-3 w-3" />
+                            <ShieldCheck className="h-3 w-3" aria-hidden="true" />
                             {t("teams.unlockOverrideActiveBadge", {
                               operator: activeOverride.createdByDisplayName ?? t("common.unknown"),
                               time: new Date(activeOverride.createdAt).toLocaleTimeString([], {
@@ -303,12 +319,12 @@ export function TeamDetailPage() {
                           </Badge>
                           <Button
                             variant="ghost"
-                            size="sm"
-                            className="h-7 text-xs gap-1"
-                            onClick={() => setRemoveOverrideDialog(activeOverride)}
+                            size="default"
+                            className="h-10 text-xs gap-1 px-3"
+                            onClick={() => { removeOverrideTriggerRef.current = document.activeElement as HTMLButtonElement; setRemoveOverrideDialog(activeOverride); }}
                             data-testid={`unlock-override-remove-btn-${base.id}`}
                           >
-                            <XCircle className="h-3.5 w-3.5" />
+                            <XCircle className="h-3.5 w-3.5" aria-hidden="true" />
                             {t("teams.unlockOverrideRemove")}
                           </Button>
                         </div>
@@ -318,10 +334,10 @@ export function TeamDetailPage() {
                             variant="outline"
                             size="sm"
                             className="h-7 text-xs gap-1"
-                            onClick={() => setUnlockDialogBaseId(base.id)}
+                            onClick={() => { unlockTriggerRef.current = document.activeElement as HTMLButtonElement; setUnlockDialogBaseId(base.id); }}
                             data-testid={`unlock-override-btn-${base.id}`}
                           >
-                            <Unlock className="h-3.5 w-3.5" />
+                            <Unlock className="h-3.5 w-3.5" aria-hidden="true" />
                             {t("teams.unlockOverrideAction")}
                           </Button>
                         )
@@ -335,8 +351,23 @@ export function TeamDetailPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={!!checkInBaseId} onOpenChange={(open) => { if (!open) { setCheckInBaseId(null); setCheckInReason(""); } }}>
-        <DialogContent onClose={() => { setCheckInBaseId(null); setCheckInReason(""); }}>
+      <Dialog
+        open={!!checkInBaseId}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCheckInBaseId(null);
+            setCheckInReason("");
+            restoreFocus(checkInTriggerRef);
+          }
+        }}
+      >
+        <DialogContent
+          onClose={() => {
+            setCheckInBaseId(null);
+            setCheckInReason("");
+            restoreFocus(checkInTriggerRef);
+          }}
+        >
           <DialogHeader>
             <DialogTitle>{t("teamDetail.manualCheckInTitle")}</DialogTitle>
           </DialogHeader>
@@ -364,7 +395,7 @@ export function TeamDetailPage() {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setCheckInBaseId(null); setCheckInReason(""); }}>{t("common.cancel")}</Button>
+            <Button variant="outline" onClick={() => { setCheckInBaseId(null); setCheckInReason(""); restoreFocus(checkInTriggerRef); }}>{t("common.cancel")}</Button>
             <Button
               disabled={manualCheckIn.isPending}
               data-testid="manual-check-in-submit"
@@ -381,8 +412,23 @@ export function TeamDetailPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!unlockDialogBaseId} onOpenChange={(open) => { if (!open) { setUnlockDialogBaseId(null); setUnlockReason(""); } }}>
-        <DialogContent onClose={() => { setUnlockDialogBaseId(null); setUnlockReason(""); }}>
+      <Dialog
+        open={!!unlockDialogBaseId}
+        onOpenChange={(open) => {
+          if (!open) {
+            setUnlockDialogBaseId(null);
+            setUnlockReason("");
+            restoreFocus(unlockTriggerRef);
+          }
+        }}
+      >
+        <DialogContent
+          onClose={() => {
+            setUnlockDialogBaseId(null);
+            setUnlockReason("");
+            restoreFocus(unlockTriggerRef);
+          }}
+        >
           <DialogHeader>
             <DialogTitle>{t("teams.unlockOverrideDialogTitle")}</DialogTitle>
           </DialogHeader>
@@ -410,7 +456,7 @@ export function TeamDetailPage() {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setUnlockDialogBaseId(null); setUnlockReason(""); }}>{t("common.cancel")}</Button>
+            <Button variant="outline" onClick={() => { setUnlockDialogBaseId(null); setUnlockReason(""); restoreFocus(unlockTriggerRef); }}>{t("common.cancel")}</Button>
             <Button
               disabled={createUnlock.isPending}
               data-testid="unlock-override-submit"
@@ -427,8 +473,21 @@ export function TeamDetailPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!removeOverrideDialog} onOpenChange={(open) => { if (!open) setRemoveOverrideDialog(null); }}>
-        <DialogContent onClose={() => setRemoveOverrideDialog(null)}>
+      <Dialog
+        open={!!removeOverrideDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            setRemoveOverrideDialog(null);
+            restoreFocus(removeOverrideTriggerRef);
+          }
+        }}
+      >
+        <DialogContent
+          onClose={() => {
+            setRemoveOverrideDialog(null);
+            restoreFocus(removeOverrideTriggerRef);
+          }}
+        >
           <DialogHeader>
             <DialogTitle>{t("teams.unlockOverrideRemoveConfirmTitle")}</DialogTitle>
           </DialogHeader>
@@ -438,7 +497,7 @@ export function TeamDetailPage() {
             })}
           </p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRemoveOverrideDialog(null)}>{t("common.cancel")}</Button>
+            <Button variant="outline" onClick={() => { setRemoveOverrideDialog(null); restoreFocus(removeOverrideTriggerRef); }}>{t("common.cancel")}</Button>
             <Button
               variant="destructive"
               disabled={removeUnlock.isPending}

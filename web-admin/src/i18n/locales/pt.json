@@ -47,7 +47,8 @@
     "pickLinkedBase": "Escolher base ligada",
     "discardChangesWarning": "Descartar alterações e ir?",
     "discard": "Descartar",
-    "manageTags": "Gerir Etiquetas"
+    "manageTags": "Gerir Etiquetas",
+    "useArrowKeys": "Use as teclas de seta ou escreva para alterar o valor"
   },
   "auth": {
     "signIn": "Entrar",
