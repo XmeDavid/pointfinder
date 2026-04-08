@@ -80,6 +80,12 @@ public class GameImportExportService {
                         .hidden(base.getHidden())
                         .fixedChallengeTempId(base.getFixedChallenge() != null ?
                                 challengeIdMap.get(base.getFixedChallenge().getId()) : null)
+                        // P1 Phase 4 W3: operator-only metadata round-trips
+                        // through export/import. Copy the stored value
+                        // directly; the entity already holds the normalized
+                        // form (empty → null) so nothing else to do here.
+                        .tags(base.getTags())
+                        .color(base.getColor())
                         .build())
                 .toList();
 
@@ -102,6 +108,12 @@ public class GameImportExportService {
                             .locationBound(challenge.getLocationBound())
                             .requirePresenceToSubmit(challenge.getRequirePresenceToSubmit())
                             .unlocksBaseTempIds(unlocksTempIds.isEmpty() ? null : unlocksTempIds)
+                            // P1 Phase 4 W2 + W3: operator-only metadata
+                            // round-trips. All three fields already hold
+                            // the normalized form on the entity.
+                            .operatorNotes(challenge.getOperatorNotes())
+                            .tags(challenge.getTags())
+                            .color(challenge.getColor())
                             .build();
                 })
                 .toList();
@@ -197,6 +209,13 @@ public class GameImportExportService {
                     .points(chDto.getPoints())
                     .locationBound(chDto.getLocationBound() != null ? chDto.getLocationBound() : false)
                     .requirePresenceToSubmit(chDto.getRequirePresenceToSubmit() != null ? chDto.getRequirePresenceToSubmit() : false)
+                    // P1 Phase 4 W2 + W3: operator-only metadata round-trip.
+                    // Normalize blank/empty inputs to null so the imported
+                    // challenge matches the canonical form that
+                    // ChallengeService.normalize* would produce.
+                    .operatorNotes(normalizeOperatorNotes(chDto.getOperatorNotes()))
+                    .tags(normalizeTags(chDto.getTags()))
+                    .color(normalizeColor(chDto.getColor()))
                     .build();
             challenge = challengeRepository.save(challenge);
             challengeEntityMap.put(chDto.getTempId(), challenge);
@@ -220,6 +239,9 @@ public class GameImportExportService {
                     .nfcLinked(false)
                     .hidden(baseDto.getHidden() != null ? baseDto.getHidden() : false)
                     .fixedChallenge(fixedChallenge)
+                    // P1 Phase 4 W3: operator-only metadata round-trip.
+                    .tags(normalizeTags(baseDto.getTags()))
+                    .color(normalizeColor(baseDto.getColor()))
                     .build();
             base = baseRepository.save(base);
             baseEntityMap.put(baseDto.getTempId(), base);
@@ -595,5 +617,52 @@ public class GameImportExportService {
         if (value == null) {
             throw new BadRequestException(fieldName + " is required");
         }
+    }
+
+    // ── Operator metadata normalizers ────────────────────────────────
+    // These mirror the canonical form written by BaseService and
+    // ChallengeService on the direct create/update paths so an imported
+    // game is byte-identical at the column level to one built through
+    // the REST API. Keeping them private to this service avoids a
+    // premature extraction — three call sites, one usage shape.
+
+    /**
+     * Collapses null/blank operator notes to {@code null}. Mirrors
+     * {@code ChallengeService.normalizeOperatorNotes}.
+     */
+    private String normalizeOperatorNotes(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String trimmed = raw.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    /**
+     * Collapses null or all-blank tag lists to {@code null}; trims
+     * individual entries and drops blanks. Mirrors
+     * {@code BaseService.normalizeTags} / {@code ChallengeService.normalizeTags}.
+     */
+    private List<String> normalizeTags(List<String> raw) {
+        if (raw == null || raw.isEmpty()) {
+            return null;
+        }
+        List<String> cleaned = raw.stream()
+                .filter(t -> t != null && !t.trim().isEmpty())
+                .map(String::trim)
+                .toList();
+        return cleaned.isEmpty() ? null : cleaned;
+    }
+
+    /**
+     * Collapses null/blank hex color to {@code null}. Mirrors
+     * {@code BaseService.normalizeColor} / {@code ChallengeService.normalizeColor}.
+     */
+    private String normalizeColor(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String trimmed = raw.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

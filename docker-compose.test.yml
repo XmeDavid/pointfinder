@@ -5,6 +5,8 @@ services:
     command: ./gradlew test --no-daemon
     volumes:
       - ./backend:/workspace/backend
+      - ./contract-snapshots:/workspace/contract-snapshots
+      - /var/run/docker.sock:/var/run/docker.sock
       - gradle-cache:/root/.gradle
 
   frontend-test:
