@@ -82,10 +82,12 @@ import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.expressions.Expression
+import org.maplibre.android.style.layers.CircleLayer
 import org.maplibre.android.style.layers.LineLayer
 import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.layers.SymbolLayer
+import org.maplibre.android.style.sources.GeoJsonOptions
 import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.geojson.Feature
 import org.maplibre.geojson.FeatureCollection
@@ -227,11 +229,11 @@ fun OperatorMapScreen(
         val m = map ?: return@LaunchedEffect
         val currentMarkers = m.annotations.filterIsInstance<org.maplibre.android.annotations.Marker>()
 
-        // Build set of all marker IDs we expect: bases, team locations, and my location
+        // Build set of all marker IDs we expect: bases and my location.
+        // Team locations are rendered via GeoJSON cluster layers, not markers.
         val expectedBaseIds = bases.map { "base:${it.id}" }.toSet()
-        val expectedTeamLocationIds = teamLocations.map { "team:${it.teamId}" }.toSet()
         val myLocationId = if (myLocation != null) setOf("me") else emptySet()
-        val expectedMarkerIds = expectedBaseIds + expectedTeamLocationIds + myLocationId
+        val expectedMarkerIds = expectedBaseIds + myLocationId
 
         // Remove markers for bases/locations no longer in data
         currentMarkers.forEach { marker ->
@@ -265,31 +267,8 @@ fun OperatorMapScreen(
             }
         }
 
-        // Update or add team location markers
-        teamLocations.forEach { location ->
-            val markerId = "team:${location.teamId}"
-            val existingMarker = currentMarkers.firstOrNull { it.snippet == markerId }
-
-            val team = teams.firstOrNull { it.id == location.teamId }
-            val playerName = location.displayName ?: team?.name ?: location.teamId.take(6)
-            val teamName = team?.name ?: location.teamId.take(6)
-            val teamColorInt = team?.color?.let { c ->
-                runCatching { android.graphics.Color.parseColor(c) }.getOrDefault(android.graphics.Color.GRAY)
-            } ?: android.graphics.Color.GRAY
-            val icon = iconFactory.fromBitmap(createCircleMarkerBitmap(teamColorInt))
-
-            if (existingMarker == null) {
-                m.addMarker(
-                    MarkerOptions()
-                        .position(LatLng(location.lat, location.lng))
-                        .title("$playerName ($teamName)")
-                        .snippet(markerId)
-                        .icon(icon),
-                )
-            }
-            // Note: For now, existing markers are kept as-is. Full updates would require
-            // removing and re-adding if position/title changed.
-        }
+        // Team locations are rendered via GeoJSON cluster layers (see LaunchedEffect below).
+        // No individual markers added here.
 
         // My-location blue dot
         myLocation?.let { loc ->
@@ -373,6 +352,130 @@ fun OperatorMapScreen(
             }
         }
 
+    }
+
+    // Cluster GeoJSON source + style layers for player locations.
+    // Layers are created once when the style is ready; the source is updated on every teamLocations change.
+    val playerSourceId = "player-locations"
+    val clusterCircleLayerId = "player-cluster-circle"
+    val clusterCountLayerId = "player-cluster-count"
+    val individualPinLayerId = "player-individual-pin"
+
+    LaunchedEffect(map, mapStyle, teamLocations, teams) {
+        val style = mapStyle ?: return@LaunchedEffect
+
+        // Build GeoJSON FeatureCollection from current team locations
+        val features = teamLocations.mapNotNull { location ->
+            val team = teams.firstOrNull { it.id == location.teamId }
+            val label = location.displayName ?: team?.name ?: location.teamId.take(6)
+            Feature.fromGeometry(Point.fromLngLat(location.lng, location.lat)).apply {
+                addStringProperty("player_id", location.teamId)
+                addStringProperty("label", label)
+            }
+        }
+        val featureCollection = FeatureCollection.fromFeatures(features)
+
+        val existingSource = style.getSource(playerSourceId) as? GeoJsonSource
+        if (existingSource != null) {
+            // Update source data in place — layers stay intact
+            existingSource.setGeoJson(featureCollection)
+            return@LaunchedEffect
+        }
+
+        // First time: create clustered source + layers
+        val source = GeoJsonSource(
+            playerSourceId,
+            featureCollection,
+            GeoJsonOptions()
+                .withCluster(true)
+                .withClusterMaxZoom(14)
+                .withClusterRadius(50),
+        )
+        style.addSource(source)
+
+        // Cluster circle — sized and colored by cluster size
+        style.addLayer(
+            CircleLayer(clusterCircleLayerId, playerSourceId).withProperties(
+                PropertyFactory.circleColor(
+                    Expression.step(
+                        Expression.get("point_count"),
+                        Expression.color(android.graphics.Color.parseColor("#149CFF")), // brand blue: 1-4
+                        Expression.stop(5, Expression.color(android.graphics.Color.parseColor("#0A65BF"))),  // darker: 5-9
+                        Expression.stop(10, Expression.color(android.graphics.Color.parseColor("#CC7800"))), // amber: 10+
+                    ),
+                ),
+                PropertyFactory.circleRadius(
+                    Expression.step(
+                        Expression.get("point_count"),
+                        Expression.literal(14f), // 1-4
+                        Expression.stop(5, Expression.literal(20f)),  // 5-9
+                        Expression.stop(10, Expression.literal(26f)), // 10+
+                    ),
+                ),
+                PropertyFactory.circleStrokeWidth(2f),
+                PropertyFactory.circleStrokeColor("#FFFFFF"),
+                PropertyFactory.circleOpacity(1f),
+            ).withFilter(Expression.has("point_count")),
+        )
+
+        // Cluster count text
+        style.addLayer(
+            SymbolLayer(clusterCountLayerId, playerSourceId).withProperties(
+                PropertyFactory.textField(Expression.toString(Expression.get("point_count"))),
+                PropertyFactory.textColor("#FFFFFF"),
+                PropertyFactory.textSize(
+                    Expression.step(
+                        Expression.get("point_count"),
+                        Expression.literal(10f),
+                        Expression.stop(5, Expression.literal(11f)),
+                        Expression.stop(10, Expression.literal(13f)),
+                    ),
+                ),
+                PropertyFactory.textFont(arrayOf("DIN Offc Pro Medium", "Arial Unicode MS Bold")),
+                PropertyFactory.textAllowOverlap(true),
+                PropertyFactory.textIgnorePlacement(true),
+            ).withFilter(Expression.has("point_count")),
+        )
+
+        // Individual pin (unclustered)
+        style.addLayer(
+            CircleLayer(individualPinLayerId, playerSourceId).withProperties(
+                PropertyFactory.circleColor("#149CFF"),
+                PropertyFactory.circleRadius(8f),
+                PropertyFactory.circleStrokeWidth(2f),
+                PropertyFactory.circleStrokeColor("#FFFFFF"),
+            ).withFilter(Expression.not(Expression.has("point_count"))),
+        )
+    }
+
+    // Cluster tap: zoom to expansion zoom when operator taps a cluster circle
+    LaunchedEffect(map, mapStyle) {
+        val m = map ?: return@LaunchedEffect
+        m.addOnMapClickListener { point ->
+            val style = mapStyle ?: return@addOnMapClickListener false
+            val screenPoint = m.projection.toScreenLocation(point)
+            val clusterFeatures = m.queryRenderedFeatures(
+                screenPoint,
+                clusterCircleLayerId,
+            )
+            val clusterFeature = clusterFeatures.firstOrNull()
+                ?.takeIf { it.hasProperty("point_count") }
+            if (clusterFeature != null) {
+                val source = style.getSource(playerSourceId) as? GeoJsonSource
+                val clusterPoint = clusterFeature.geometry() as? Point
+                if (source != null && clusterPoint != null) {
+                    val expansionZoom = source.getClusterExpansionZoom(clusterFeature)
+                    m.animateCamera(
+                        CameraUpdateFactory.newLatLngZoom(
+                            LatLng(clusterPoint.latitude(), clusterPoint.longitude()),
+                            expansionZoom.toDouble(),
+                        ),
+                    )
+                }
+                return@addOnMapClickListener true
+            }
+            false
+        }
     }
 
     // Initial camera fit — only once when bases first arrive

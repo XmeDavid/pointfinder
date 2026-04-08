@@ -318,6 +318,9 @@
     <string name="label_edit_off">Edit: OFF</string>
     <string name="label_add_base_here">Add Base Here</string>
     <string name="label_center_on_me">Center on Me</string>
+    <!-- Map Clustering -->
+    <string name="cd_map_cluster">%1$d players nearby — tap to zoom in</string>
+    <string name="cd_map_player_pin">Player location</string>
     <!-- Live Tab -->
     <string name="label_leaderboard">Leaderboard</string>
     <string name="label_activity">Activity</string>

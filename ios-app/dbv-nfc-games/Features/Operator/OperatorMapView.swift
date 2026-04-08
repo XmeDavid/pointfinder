@@ -64,16 +64,17 @@ struct OperatorMapView: View {
                 )
             }
 
-            let locationAnnotations: [MapAnnotationItem] = teamLocations.compactMap { location in
+            // Build clustered player location points (rendered via GeoJSON style layers)
+            let clusteredLocations: [PlayerLocationPoint] = teamLocations.compactMap { location in
                 guard let team = teams.first(where: { $0.id == location.teamId }) else { return nil }
                 let label = location.displayName ?? team.name
-                return MapAnnotationItem(
+                let teamColor: UIColor = UIColor(hex: team.color)
+                    ?? UIColor(red: 0.08, green: 0.55, blue: 1.00, alpha: 1.0)
+                return PlayerLocationPoint(
                     id: "loc-\(location.id)",
                     coordinate: CLLocationCoordinate2D(latitude: location.lat, longitude: location.lng),
-                    title: label,
-                    subtitle: nil,
-                    view: AnyView(TeamLocationAnnotationView(team: team, location: location)),
-                    onTap: nil
+                    color: teamColor,
+                    label: label
                 )
             }
 
@@ -92,7 +93,7 @@ struct OperatorMapView: View {
 
             MapLibreMapView(
                 styleURL: TileSources.resolvedStyleURL(for: tileSource, isDark: colorScheme == .dark),
-                annotations: baseAnnotations + locationAnnotations,
+                annotations: baseAnnotations,
                 fitCoordinates: bases.map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng) },
                 connections: unlockConnections,
                 showsUserLocation: true,
@@ -104,7 +105,8 @@ struct OperatorMapView: View {
                 fitAllBasesId: fitAllBasesId,
                 onUserInteraction: {
                     mapFocusState = .centerOnMe
-                }
+                },
+                clusteredPlayerLocations: clusteredLocations
             )
             .ignoresSafeArea()
 

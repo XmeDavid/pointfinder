@@ -362,6 +362,8 @@ enum Translations {
         "operator.lastSynced": "Last synced: %@",
         "operator.completedCount": "%d completed",
         "operator.longPressHint": "Long press on map to add a base",
+        "operator.map.clusterAccessibilityLabel": "%d players nearby — tap to zoom in",
+        "operator.map.playerPinAccessibilityLabel": "Player location",
         "operator.noChallenges": "No challenges yet",
         "operator.noChallengesDesc": "Create your first challenge to get started",
         "operator.challengeTitle": "Title",
@@ -927,6 +929,8 @@ enum Translations {
         "operator.lastSynced": "Última sincronização: %@",
         "operator.completedCount": "%d conclu\u{00ED}dos",
         "operator.longPressHint": "Manter premido no mapa para adicionar uma base",
+        "operator.map.clusterAccessibilityLabel": "%d jogadores próximos — toque para aproximar",
+        "operator.map.playerPinAccessibilityLabel": "Localização do jogador",
         "common.create": "Criar",
 
         // Operator submissions
@@ -1462,6 +1466,8 @@ enum Translations {
         "operator.lastSynced": "Zuletzt synchronisiert: %@",
         "operator.completedCount": "%d abgeschlossen",
         "operator.longPressHint": "Lange auf die Karte dr\u{00FC}cken, um eine Station hinzuzuf\u{00FC}gen",
+        "operator.map.clusterAccessibilityLabel": "%d Spieler in der N\u{00E4}he – antippen zum Einzoomen",
+        "operator.map.playerPinAccessibilityLabel": "Spielerstandort",
         "common.create": "Erstellen",
 
         // Operator submissions

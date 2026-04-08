@@ -309,6 +309,9 @@
     <string name="label_edit_off">Editar: INATIVO</string>
     <string name="label_add_base_here">Criar Base Aqui</string>
     <string name="label_center_on_me">Centrar em Mim</string>
+    <!-- Map Clustering -->
+    <string name="cd_map_cluster">%1$d jogadores próximos — toque para aproximar</string>
+    <string name="cd_map_player_pin">Localização do jogador</string>
     <!-- Live Tab -->
     <string name="label_leaderboard">Classificação</string>
     <string name="label_activity">Atividade</string>

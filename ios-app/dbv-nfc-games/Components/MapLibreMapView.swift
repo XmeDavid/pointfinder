@@ -17,6 +17,31 @@ class IdentifiablePointAnnotation: MLNPointAnnotation {
     var annotationId: String?
 }
 
+// MARK: - UIColor Hex Initializer
+
+extension UIColor {
+    /// Initialise from a hex string like "#RRGGBB" or "RRGGBB".
+    convenience init?(hex: String) {
+        var hex = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+        if hex.hasPrefix("#") { hex = String(hex.dropFirst()) }
+        guard hex.count == 6, let value = UInt64(hex, radix: 16) else { return nil }
+        let r = CGFloat((value >> 16) & 0xFF) / 255
+        let g = CGFloat((value >> 8) & 0xFF) / 255
+        let b = CGFloat(value & 0xFF) / 255
+        self.init(red: r, green: g, blue: b, alpha: 1)
+    }
+}
+
+// MARK: - Player Cluster Point
+
+/// A player location point passed into MapLibreMapView for cluster rendering.
+struct PlayerLocationPoint {
+    let id: String
+    let coordinate: CLLocationCoordinate2D
+    let color: UIColor
+    let label: String
+}
+
 // MARK: - MapLibre SwiftUI Wrapper
 
 struct MapLibreMapView: UIViewRepresentable {
@@ -33,6 +58,8 @@ struct MapLibreMapView: UIViewRepresentable {
     /// When true, installs a gesture recognizer that prevents a parent UIScrollView
     /// from stealing touch events while the user is panning or zooming the map.
     var disablesParentScrolling: Bool = false
+    /// Clustered player locations rendered via GeoJSON style layers instead of annotation views.
+    var clusteredPlayerLocations: [PlayerLocationPoint] = []
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -117,6 +144,9 @@ struct MapLibreMapView: UIViewRepresentable {
         // Unlock connection lines
         updateConnectionLines(on: mapView)
 
+        // Clustered player locations
+        updateClusteredPlayerLayers(on: mapView)
+
         // Center on coordinate if requested
         if let center = centerOnCoordinate {
             if coordinator.lastCenterTarget == nil ||
@@ -159,6 +189,93 @@ struct MapLibreMapView: UIViewRepresentable {
                 coordinator.lastFitId = fitId
             }
         }
+    }
+
+    // MARK: - Clustered Player Layers
+
+    private static let playerSourceId = "player-locations"
+    private static let clusterCircleLayerId = "player-cluster-circle"
+    private static let clusterCountLayerId = "player-cluster-count"
+    private static let individualPinLayerId = "player-individual-pin"
+
+    private func updateClusteredPlayerLayers(on mapView: MLNMapView) {
+        guard let style = mapView.style else { return }
+
+        // Build GeoJSON FeatureCollection from player locations
+        var features: [MLNShape & MLNFeature] = []
+        for loc in clusteredPlayerLocations {
+            let point = MLNPointFeature()
+            point.coordinate = loc.coordinate
+            point.attributes = [
+                "player_id": loc.id,
+                "label": loc.label,
+                "color": colorToHex(loc.color),
+            ]
+            features.append(point)
+        }
+        let collection = MLNShapeCollectionFeature(shapes: features)
+
+        if let existingSource = style.source(withIdentifier: Self.playerSourceId) as? MLNShapeSource {
+            // Update in place — no layer rebuild needed
+            existingSource.shape = collection
+            return
+        }
+
+        // First time: create source + layers
+        let options: [MLNShapeSourceOption: Any] = [
+            .clustered: true,
+            .clusterRadius: 50,
+            .maximumZoomLevelForClustering: 14,
+        ]
+        let source = MLNShapeSource(identifier: Self.playerSourceId, shape: collection, options: options)
+        style.addSource(source)
+
+        // Cluster circle layer (sized + colored by cluster size)
+        let clusterCircle = MLNCircleStyleLayer(identifier: Self.clusterCircleLayerId, source: source)
+        clusterCircle.predicate = NSPredicate(format: "point_count != NULL")
+        // Size: small ≤4, medium ≤9, large 10+
+        clusterCircle.circleRadius = NSExpression(
+            format: "TERNARY(point_count >= 10, 26, TERNARY(point_count >= 5, 20, 14))"
+        )
+        // Color: primary for small, darker for medium, warning-amber for large
+        clusterCircle.circleColor = NSExpression(
+            format: "TERNARY(point_count >= 10, %@, TERNARY(point_count >= 5, %@, %@))",
+            UIColor(red: 0.80, green: 0.47, blue: 0.00, alpha: 1.0),  // amber for 10+
+            UIColor(red: 0.04, green: 0.40, blue: 0.75, alpha: 1.0),  // darker blue for 5-9
+            UIColor(red: 0.08, green: 0.55, blue: 1.00, alpha: 1.0)   // brand blue for 1-4
+        )
+        clusterCircle.circleStrokeWidth = NSExpression(forConstantValue: 2)
+        clusterCircle.circleStrokeColor = NSExpression(forConstantValue: UIColor.white)
+        style.addLayer(clusterCircle)
+
+        // Cluster count text layer
+        let clusterCount = MLNSymbolStyleLayer(identifier: Self.clusterCountLayerId, source: source)
+        clusterCount.predicate = NSPredicate(format: "point_count != NULL")
+        clusterCount.text = NSExpression(forKeyPath: "point_count")
+        clusterCount.textColor = NSExpression(forConstantValue: UIColor.white)
+        clusterCount.textFontSize = NSExpression(
+            format: "TERNARY(point_count >= 10, 13, TERNARY(point_count >= 5, 11, 10))"
+        )
+        clusterCount.textFontNames = NSExpression(forConstantValue: ["DIN Offc Pro Medium", "Arial Unicode MS Bold"])
+        clusterCount.textOffset = NSExpression(forConstantValue: NSValue(cgVector: CGVector(dx: 0, dy: 0)))
+        clusterCount.textIgnoresPlacement = NSExpression(forConstantValue: true)
+        clusterCount.textAllowsOverlap = NSExpression(forConstantValue: true)
+        style.addLayer(clusterCount)
+
+        // Individual pin layer (unclustered points)
+        let individualPin = MLNCircleStyleLayer(identifier: Self.individualPinLayerId, source: source)
+        individualPin.predicate = NSPredicate(format: "point_count = NULL")
+        individualPin.circleRadius = NSExpression(forConstantValue: 8)
+        individualPin.circleColor = NSExpression(forConstantValue: UIColor(red: 0.08, green: 0.55, blue: 1.00, alpha: 1.0))
+        individualPin.circleStrokeWidth = NSExpression(forConstantValue: 2)
+        individualPin.circleStrokeColor = NSExpression(forConstantValue: UIColor.white)
+        style.addLayer(individualPin)
+    }
+
+    private func colorToHex(_ color: UIColor) -> String {
+        var r: CGFloat = 0; var g: CGFloat = 0; var b: CGFloat = 0; var a: CGFloat = 0
+        color.getRed(&r, green: &g, blue: &b, alpha: &a)
+        return String(format: "#%02X%02X%02X", Int(r * 255), Int(g * 255), Int(b * 255))
     }
 
     // MARK: - Connection Lines
@@ -216,10 +333,35 @@ struct MapLibreMapView: UIViewRepresentable {
             self.onUserInteraction = parent.onUserInteraction
         }
 
+        /// Handles cluster and individual player pin taps from GeoJSON style layers.
+        func handleClusterTap(at point: CGPoint, in mapView: MLNMapView) -> Bool {
+            guard let style = mapView.style else { return false }
+            let clusterLayerIds = [MapLibreMapView.clusterCircleLayerId, MapLibreMapView.individualPinLayerId]
+            let features = mapView.visibleFeatures(
+                at: point,
+                styleLayerIdentifiers: Set(clusterLayerIds)
+            )
+            guard let feature = features.first else { return false }
+
+            if let clusterFeature = feature as? MLNPointFeatureCluster,
+               let source = style.source(withIdentifier: MapLibreMapView.playerSourceId) as? MLNShapeSource {
+                // Cluster tap: zoom to the expansion zoom level
+                let expansionZoom = source.zoomLevel(forExpanding: clusterFeature)
+                let coord = clusterFeature.coordinate
+                mapView.setCenter(coord, zoomLevel: max(expansionZoom, mapView.zoomLevel + 1), animated: true)
+                return true
+            }
+            // Individual pin tap — consumed (no additional action needed)
+            return true
+        }
+
         @objc func handleTap(_ gesture: UITapGestureRecognizer) {
             guard gesture.state == .ended else { return }
             guard let mapView = gesture.view as? MLNMapView else { return }
             let point = gesture.location(in: mapView)
+
+            // Check cluster/individual player pin layers first (GeoJSON style layers)
+            if handleClusterTap(at: point, in: mapView) { return }
 
             // Check if tap hit an annotation first
             let hitRect = CGRect(
