@@ -3,7 +3,7 @@ import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { filterAvailableBases, filterAvailableUnlockBases } from "./dropdown-filters";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Minus, Puzzle, Trash2, Pencil, FileText, Image, CheckCircle, Eye, MapPin, Unlock, Variable, CircleCheck, Tag as TagIcon, StickyNote, Link2, Tags } from "lucide-react";
+import { Plus, Minus, Puzzle, Trash2, Pencil, FileText, Image, CheckCircle, Eye, MapPin, Unlock, Variable, CircleCheck, Tag as TagIcon, StickyNote, Link2, Tags, LayoutGrid, List } from "lucide-react";
 import { useTagColorFilter, resolveTagsForFilter } from "./useTagColorFilter";
 import { FilterBar } from "./FilterBar";
 import { Button } from "@/components/ui/button";
@@ -57,6 +57,28 @@ export function ChallengesPage() {
   // Dirty-state: snapshot of form at dialog open time (Sub-wave C)
   const formSnapshotRef = useRef<Partial<CreateChallengeDto> | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // View toggle: card | list — persists to URL (?view=list) and localStorage
+  const VIEW_STORAGE_KEY = "challenges-view-preference";
+  type ChallengeView = "card" | "list";
+  const getInitialView = (): ChallengeView => {
+    const urlView = searchParams.get("view");
+    if (urlView === "card" || urlView === "list") return urlView;
+    const stored = localStorage.getItem(VIEW_STORAGE_KEY);
+    if (stored === "card" || stored === "list") return stored;
+    return "card";
+  };
+  const [view, setView] = useState<ChallengeView>(getInitialView);
+
+  function handleSetView(v: ChallengeView) {
+    setView(v);
+    localStorage.setItem(VIEW_STORAGE_KEY, v);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("view", v);
+      return next;
+    }, { replace: true });
+  }
 
   const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!), enabled: !!gameId });
   const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!), enabled: !!gameId });
@@ -271,6 +293,39 @@ export function ChallengesPage() {
           <p className="text-muted-foreground">{t("challenges.summary", { count: challenges.length })} &middot; {t("challenges.totalPoints", { total: totalPoints })}</p>
         </div>
         <div className="flex items-center gap-2 self-end sm:self-auto">
+          {/* View toggle */}
+          <div className="flex gap-0.5 rounded-md border border-border p-0.5" role="group" aria-label={t("common.toggleView")}>
+            <button
+              type="button"
+              onClick={() => handleSetView("card")}
+              aria-pressed={view === "card"}
+              className={[
+                "inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                view === "card"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              ].join(" ")}
+              data-testid="challenges-view-card"
+            >
+              <LayoutGrid className="h-3.5 w-3.5" aria-hidden="true" />
+              {t("challenges.viewCard")}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSetView("list")}
+              aria-pressed={view === "list"}
+              className={[
+                "inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                view === "list"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              ].join(" ")}
+              data-testid="challenges-view-list"
+            >
+              <List className="h-3.5 w-3.5" aria-hidden="true" />
+              {t("challenges.viewList")}
+            </button>
+          </div>
           <Button variant="outline" onClick={() => setManageTagsOpen(true)} data-testid="manage-tags-btn">
             <Tags className="mr-2 h-4 w-4" />{t("common.manageTags")}
           </Button>
@@ -295,8 +350,219 @@ export function ChallengesPage() {
         <Card className="py-12"><CardContent className="text-center"><p className="text-muted-foreground">{t("challenges.noResults")}</p><button type="button" onClick={clearFilters} className="mt-3 text-xs text-primary hover:underline" data-testid="challenges-no-results-clear">{t("filterBar.clear")}</button></CardContent></Card>
       ) : challenges.length === 0 ? (
         <Card className="py-12"><CardContent className="text-center"><Puzzle className="mx-auto h-8 w-8 text-muted-foreground mb-2" /><p className="text-muted-foreground">{t("challenges.noChallengesDescription")}</p></CardContent></Card>
+      ) : view === "list" ? (
+        /* ------------------------------------------------------------------ */
+        /* LIST VIEW — dense table-style rows                                  */
+        /* ------------------------------------------------------------------ */
+        <div className="rounded-md border border-border overflow-hidden" data-testid="challenges-list-view">
+          {/* Header row — hidden on small screens */}
+          <div className="hidden sm:grid grid-cols-[auto_1fr_auto_auto_auto_auto_auto_auto] items-center gap-x-3 border-b border-border bg-muted/50 px-4 py-2 text-xs font-medium text-muted-foreground">
+            <span className="w-1.5" aria-hidden="true" />
+            <span>{t("challenges.listView.colTitle")}</span>
+            <span className="w-16 text-right">{t("challenges.listView.colPoints")}</span>
+            <span className="hidden md:block w-28">{t("challenges.listView.colTags")}</span>
+            <span className="hidden lg:block w-20">{t("challenges.listView.colType")}</span>
+            <span className="hidden lg:block w-24">{t("challenges.listView.colValidation")}</span>
+            <span className="w-6 text-center">{t("challenges.listView.colNotes")}</span>
+            <span className="w-6 text-center">{t("challenges.listView.colActions")}</span>
+          </div>
+          <ul className="divide-y divide-border">
+            {filteredChallenges.map((ch) => {
+              const fixedBase = fixedBaseByChallengeId.get(ch.id);
+              const firstTag = (ch.tagIds ?? []).map((id) => tagsMap.get(id)).filter(Boolean)[0];
+              const allLinked = linkedBasesMap.get(ch.id) ?? [];
+              const assignmentLinked = allLinked.filter((lb) => lb.source === "assignment");
+              return (
+                <li key={ch.id} className="group relative">
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openEdit(ch)}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openEdit(ch); } }}
+                    className="grid grid-cols-[auto_1fr_auto] sm:grid-cols-[auto_1fr_auto_auto_auto_auto_auto_auto] items-center gap-x-3 px-4 py-3 cursor-pointer hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                    data-testid={`challenge-list-row-${ch.id}`}
+                    aria-label={t("common.edit") + ": " + ch.title}
+                  >
+                    {/* Color accent stripe (left 6px) */}
+                    <span
+                      className="w-1.5 self-stretch rounded-full shrink-0"
+                      style={firstTag ? { backgroundColor: firstTag.color } : { backgroundColor: "transparent" }}
+                      aria-hidden="true"
+                    />
+
+                    {/* Title + description */}
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-semibold text-sm truncate">{ch.title}</span>
+                        {ch.operatorNotes?.trim() && (
+                          <span
+                            role="img"
+                            aria-label={t("challenges.hasReviewerHints")}
+                            title={t("challenges.hasReviewerHints")}
+                            className="shrink-0 text-muted-foreground"
+                            data-testid={`challenge-has-notes-${ch.id}`}
+                          >
+                            <StickyNote className="h-3 w-3" />
+                          </span>
+                        )}
+                      </div>
+                      {ch.description && (
+                        <p className="text-xs text-muted-foreground truncate">{ch.description}</p>
+                      )}
+                      {/* Tags — visible on all screen sizes in list view, compact */}
+                      {ch.tagIds && ch.tagIds.length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1 md:hidden">
+                          {ch.tagIds.slice(0, 3).map((tagId) => {
+                            const resolved = tagsMap.get(tagId);
+                            return (
+                              <span
+                                key={tagId}
+                                className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium text-white"
+                                style={{ backgroundColor: resolved?.color ?? "#64748b" }}
+                              >
+                                {resolved?.label ?? tagId}
+                              </span>
+                            );
+                          })}
+                          {ch.tagIds.length > 3 && (
+                            <span className="inline-flex items-center rounded-full border border-border bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                              +{ch.tagIds.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Points — always visible */}
+                    <span className="w-16 text-right shrink-0">
+                      <Badge variant="outline" className="text-xs">{ch.points} {t("common.pts")}</Badge>
+                    </span>
+
+                    {/* Tags — md+ only */}
+                    <div className="hidden md:flex w-28 flex-wrap gap-1 shrink-0">
+                      {(ch.tagIds ?? []).slice(0, 3).map((tagId) => {
+                        const resolved = tagsMap.get(tagId);
+                        return (
+                          <span
+                            key={tagId}
+                            className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium text-white"
+                            style={{ backgroundColor: resolved?.color ?? "#64748b" }}
+                          >
+                            {resolved?.label ?? tagId}
+                          </span>
+                        );
+                      })}
+                      {(ch.tagIds ?? []).length > 3 && (
+                        <span className="inline-flex items-center rounded-full border border-border bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                          +{(ch.tagIds ?? []).length - 3}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Answer type — lg+ only */}
+                    <div className="hidden lg:flex w-20 shrink-0">
+                      <Badge variant="secondary" className="text-xs whitespace-nowrap">
+                        {ch.answerType === "none" ? <><CircleCheck className="mr-1 h-3 w-3" />{t("challenges.checkIn")}</> : ch.answerType === "text" ? <><FileText className="mr-1 h-3 w-3" />{t("challenges.text")}</> : <><Image className="mr-1 h-3 w-3" />{t("challenges.fileUpload")}</>}
+                      </Badge>
+                    </div>
+
+                    {/* Validation — lg+ only */}
+                    <div className="hidden lg:flex w-24 shrink-0">
+                      {ch.answerType !== "none" && (
+                        ch.autoValidate
+                          ? <Badge variant="success" className="text-xs whitespace-nowrap"><CheckCircle className="mr-1 h-3 w-3" />{t("challenges.autoValidate")}</Badge>
+                          : <Badge variant="warning" className="text-xs whitespace-nowrap"><Eye className="mr-1 h-3 w-3" />{t("challenges.manualReview")}</Badge>
+                      )}
+                    </div>
+
+                    {/* Notes indicator */}
+                    <span className="w-6 text-center shrink-0" />
+
+                    {/* Actions — stop propagation so row click doesn't also fire */}
+                    <div
+                      className="w-6 flex justify-center shrink-0"
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    >
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => setDeleteTarget(ch.id)}
+                        aria-label={t("common.delete")}
+                        data-testid={`challenge-list-delete-${ch.id}`}
+                      >
+                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Linked bases row — below the main row, indented */}
+                  {(fixedBase || (ch.unlocksBaseIds && ch.unlocksBaseIds.length > 0) || assignmentLinked.length > 0) && (
+                    <div className="px-4 pb-2 flex flex-wrap gap-1.5 ml-4 -mt-1">
+                      {fixedBase && (
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); navigateToBase(fixedBase.id); }}
+                          className="inline-flex items-center hover:ring-1 hover:ring-primary/50 rounded-full"
+                          aria-label={t("challenges.fixedToBase", { base: fixedBase.name })}
+                          data-testid={`challenge-fixed-base-btn-${ch.id}`}
+                        >
+                          <Badge variant="secondary" className="max-w-full cursor-pointer text-xs">
+                            <MapPin className="mr-1 h-3 w-3 shrink-0" />
+                            <span className="truncate">{t("challenges.fixedToBase", { base: fixedBase.name })}</span>
+                          </Badge>
+                        </button>
+                      )}
+                      {(ch.unlocksBaseIds ?? []).map((ubId) => {
+                        const unlockTarget = baseById.get(ubId);
+                        return unlockTarget ? (
+                          <button
+                            key={ubId}
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); navigateToBase(unlockTarget.id); }}
+                            className="inline-flex items-center hover:ring-1 hover:ring-primary/50 rounded-full"
+                            aria-label={t("challenges.unlocksBaseLabel", { base: unlockTarget.name })}
+                            data-testid={`challenge-unlocks-base-btn-${ubId}`}
+                          >
+                            <Badge variant="outline" className="max-w-full cursor-pointer text-xs">
+                              <Unlock className="mr-1 h-3 w-3 shrink-0" />
+                              <span className="truncate">{t("challenges.unlocksBaseLabel", { base: unlockTarget.name })}</span>
+                            </Badge>
+                          </button>
+                        ) : null;
+                      })}
+                      {assignmentLinked.length === 1 && (
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); navigateToBase(assignmentLinked[0].id); }}
+                          className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                          data-testid={`challenge-linked-base-${ch.id}`}
+                        >
+                          <Link2 className="h-3 w-3" />
+                          {t("challenges.linkedBase", { name: assignmentLinked[0].name })}
+                        </button>
+                      )}
+                      {assignmentLinked.length > 1 && (
+                        <LinkedBasesPill
+                          challengeId={ch.id}
+                          linkedBases={assignmentLinked}
+                          onNavigate={navigateToBase}
+                          label={t("challenges.linkedBasesN", { count: assignmentLinked.length })}
+                        />
+                      )}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        /* ------------------------------------------------------------------ */
+        /* CARD VIEW (default)                                                 */
+        /* ------------------------------------------------------------------ */
+        <div className="grid gap-4 md:grid-cols-2" data-testid="challenges-card-view">
           {filteredChallenges.map((ch) => (
             <Card key={ch.id} className="overflow-hidden">
               {/* Color stripe on card top — first tag's color */}

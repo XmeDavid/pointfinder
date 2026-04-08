@@ -48,6 +48,7 @@
     "discardChangesWarning": "Änderungen verwerfen und springen?",
     "discard": "Verwerfen",
     "manageTags": "Tags verwalten",
+    "toggleView": "Ansicht wechseln",
     "useArrowKeys": "Pfeiltasten verwenden oder Wert eintippen"
   },
   "auth": {
@@ -355,7 +356,19 @@
     "deleteConfirmDescription": "Diese Challenge und alle ihre Zuweisungen werden dauerhaft gelöscht.",
     "hasReviewerHints": "Hat Hinweise für Prüfer",
     "linkedBase": "Station: {{name}}",
-    "linkedBasesN": "{{count}} verknüpfte Stationen"
+    "linkedBasesN": "{{count}} verknüpfte Stationen",
+    "viewCard": "Karten",
+    "viewList": "Liste",
+    "listView": {
+      "colTitle": "Titel",
+      "colPoints": "Punkte",
+      "colTags": "Tags",
+      "colType": "Typ",
+      "colValidation": "Validierung",
+      "colNotes": "Notizen",
+      "colLinks": "Verknüpfungen",
+      "colActions": "Aktionen"
+    }
   },
   "assignments": {
     "title": "Zuweisungen",

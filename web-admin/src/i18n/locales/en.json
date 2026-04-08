@@ -48,6 +48,7 @@
     "discardChangesWarning": "Discard unsaved changes and jump?",
     "discard": "Discard",
     "manageTags": "Manage Tags",
+    "toggleView": "Toggle view",
     "useArrowKeys": "Use arrow keys or type to change the value"
   },
   "auth": {
@@ -355,7 +356,19 @@
     "deleteConfirmDescription": "This challenge and all its assignments will be permanently deleted.",
     "hasReviewerHints": "Has reviewer hints",
     "linkedBase": "Base: {{name}}",
-    "linkedBasesN": "{{count}} linked bases"
+    "linkedBasesN": "{{count}} linked bases",
+    "viewCard": "Cards",
+    "viewList": "List",
+    "listView": {
+      "colTitle": "Title",
+      "colPoints": "Points",
+      "colTags": "Tags",
+      "colType": "Type",
+      "colValidation": "Validation",
+      "colNotes": "Notes",
+      "colLinks": "Links",
+      "colActions": "Actions"
+    }
   },
   "assignments": {
     "title": "Assign Challenges",

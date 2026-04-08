@@ -48,6 +48,7 @@
     "discardChangesWarning": "Descartar alterações e ir?",
     "discard": "Descartar",
     "manageTags": "Gerir Etiquetas",
+    "toggleView": "Alternar vista",
     "useArrowKeys": "Use as teclas de seta ou escreva para alterar o valor"
   },
   "auth": {
@@ -355,7 +356,19 @@
     "deleteConfirmDescription": "Este desafio e todas as suas atribuições serão permanentemente eliminados.",
     "hasReviewerHints": "Tem dicas para o revisor",
     "linkedBase": "Base: {{name}}",
-    "linkedBasesN": "{{count}} bases ligadas"
+    "linkedBasesN": "{{count}} bases ligadas",
+    "viewCard": "Cartões",
+    "viewList": "Lista",
+    "listView": {
+      "colTitle": "Título",
+      "colPoints": "Pontos",
+      "colTags": "Etiquetas",
+      "colType": "Tipo",
+      "colValidation": "Validação",
+      "colNotes": "Notas",
+      "colLinks": "Ligações",
+      "colActions": "Ações"
+    }
   },
   "assignments": {
     "title": "Atribuir Desafios",
