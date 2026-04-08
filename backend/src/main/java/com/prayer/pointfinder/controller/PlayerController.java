@@ -118,6 +118,21 @@ public class PlayerController {
                 .body(chunkedUploadService.createSession(gameId, player, request));
     }
 
+    @GetMapping("/games/{gameId}/uploads/sessions")
+    public ResponseEntity<List<UploadSessionResponse>> listUploadSessions(@PathVariable UUID gameId) {
+        Player player = SecurityUtils.getCurrentPlayer();
+        return ResponseEntity.ok(chunkedUploadService.listRecoverableSessions(gameId, player));
+    }
+
+    @DeleteMapping("/games/{gameId}/uploads/sessions")
+    public ResponseEntity<UploadSessionClearResponse> clearAbandonedUploadSessions(
+            @PathVariable UUID gameId,
+            @RequestParam(value = "mediaItemKey", required = false) String mediaItemKey
+    ) {
+        Player player = SecurityUtils.getCurrentPlayer();
+        return ResponseEntity.ok(chunkedUploadService.clearAbandonedSessions(gameId, player, mediaItemKey));
+    }
+
     @PutMapping(value = "/games/{gameId}/uploads/sessions/{sessionId}/chunks/{chunkIndex}",
             consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<UploadSessionResponse> uploadSessionChunk(

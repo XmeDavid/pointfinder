@@ -17,5 +17,7 @@ public interface UploadSessionChunkRepository extends JpaRepository<UploadSessio
 
     boolean existsBySessionIdAndChunkIndex(UUID sessionId, int chunkIndex);
 
+    void deleteBySessionIdAndChunkIndex(UUID sessionId, int chunkIndex);
+
     void deleteBySessionId(UUID sessionId);
 }

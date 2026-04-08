@@ -382,7 +382,9 @@ Chunked upload flow for large files (videos, etc.). Use for files that may excee
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| POST | `/player/games/:gameId/uploads/sessions` | Player | Create upload session |
+| POST | `/player/games/:gameId/uploads/sessions` | Player | Create or resume upload session |
+| GET | `/player/games/:gameId/uploads/sessions` | Player | List active and completed recoverable sessions |
+| DELETE | `/player/games/:gameId/uploads/sessions` | Player | Clear abandoned non-completed sessions; optional `mediaItemKey` query |
 | PUT | `/player/games/:gameId/uploads/sessions/:sessionId/chunks/:chunkIndex` | Player | Upload a chunk (body: raw bytes) |
 | GET | `/player/games/:gameId/uploads/sessions/:sessionId` | Player | Get session status and progress |
 | POST | `/player/games/:gameId/uploads/sessions/:sessionId/complete` | Player | Assemble chunks into final file |
@@ -392,26 +394,67 @@ Chunked upload flow for large files (videos, etc.). Use for files that may excee
 
 **POST /player/games/:gameId/uploads/sessions** (UploadSessionInitRequest)
 ```json
-{ "fileName": "string", "fileSize": 12345678 }
+{
+  "originalFileName": "video.mp4",
+  "mediaItemKey": "client-local-media-id-123",
+  "contentType": "video/mp4",
+  "totalSizeBytes": 12345678,
+  "chunkSizeBytes": 8388608
+}
 ```
 
 Response (`UploadSessionResponse`):
 ```json
 {
   "sessionId": "UUID",
-  "status": "pending | uploading | complete | failed",
-  "chunkSize": 8388608,
+  "gameId": "UUID",
+  "mediaItemKey": "client-local-media-id-123",
+  "originalFileName": "video.mp4",
+  "contentType": "video/mp4",
+  "totalSizeBytes": 12345678,
+  "chunkSizeBytes": 8388608,
   "totalChunks": 3,
-  "uploadedChunks": 0,
-  "fileUrl": "string (present when status=complete)"
+  "uploadedChunks": [0, 1],
+  "status": "active | completed | cancelled | expired",
+  "fileUrl": "string (present when status=completed)",
+  "expiresAt": "2026-04-08T12:00:00Z",
+  "createdAt": "2026-04-08T10:00:00Z",
+  "updatedAt": "2026-04-08T10:15:00Z",
+  "completedAt": "2026-04-08T10:20:00Z"
+}
+```
+
+`mediaItemKey` is optional for legacy clients. When present, it must be stable for one local media item. Repeating session creation with the same key and matching metadata returns the existing active session, or the completed session with `fileUrl` if assembly already succeeded. Reusing the same key with different upload metadata returns a permanent conflict.
+
+**GET /player/games/:gameId/uploads/sessions**
+
+Returns the player's recoverable sessions for the game: non-expired active uploads plus completed uploads whose `fileUrl` can still be used to retry final submission creation.
+
+**DELETE /player/games/:gameId/uploads/sessions?mediaItemKey=client-local-media-id-123**
+```json
+{ "cancelledSessions": 1, "clearedSessions": 1 }
+```
+
+Without `mediaItemKey`, this clears all current player's non-completed upload sessions for the game. Completed uploads are preserved so final submission retries do not lose media.
+
+Upload-specific errors include optional classification fields in the standard error response:
+```json
+{
+  "status": 400,
+  "message": "Too many active upload sessions for player",
+  "errors": null,
+  "timestamp": "2026-04-08T10:00:00Z",
+  "traceId": null,
+  "code": "UPLOAD_SESSION_LIMIT",
+  "retryable": true
 }
 ```
 
 **Upload limits**:
 - Max chunk size: 16 MB
 - Default chunk size: 8 MB
-- Max active sessions per player: 3
-- Max total active bytes per game: 2 GB
+- Max non-expired active sessions per player: 3
+- Max total non-expired active bytes per game: 16 GB
 - Session TTL: 48 hours
 
 **File download**:

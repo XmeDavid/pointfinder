@@ -1,6 +1,7 @@
 package com.prayer.pointfinder.service;
 
 import com.prayer.pointfinder.dto.request.UploadSessionInitRequest;
+import com.prayer.pointfinder.dto.response.UploadSessionClearResponse;
 import com.prayer.pointfinder.dto.response.UploadSessionResponse;
 import com.prayer.pointfinder.entity.Game;
 import com.prayer.pointfinder.entity.GameStatus;
@@ -10,6 +11,7 @@ import com.prayer.pointfinder.entity.UploadSession;
 import com.prayer.pointfinder.entity.UploadSessionChunk;
 import com.prayer.pointfinder.entity.UploadSessionStatus;
 import com.prayer.pointfinder.exception.BadRequestException;
+import com.prayer.pointfinder.exception.UploadSessionException;
 import com.prayer.pointfinder.repository.PlayerRepository;
 import com.prayer.pointfinder.repository.UploadSessionChunkRepository;
 import com.prayer.pointfinder.repository.UploadSessionRepository;
@@ -35,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -95,12 +98,54 @@ class ChunkedUploadServiceTest {
             if (session.getId() == null) {
                 session.setId(UUID.randomUUID());
             }
+            Instant now = Instant.now();
+            if (session.getCreatedAt() == null) {
+                session.setCreatedAt(now);
+            }
+            session.setUpdatedAt(now);
             sessions.put(session.getId(), session);
             return session;
         });
         when(uploadSessionRepository.findById(any(UUID.class))).thenAnswer(invocation ->
                 Optional.ofNullable(sessions.get(invocation.getArgument(0)))
         );
+        when(uploadSessionRepository.countActiveSessionsByPlayerId(any(UUID.class), eq(UploadSessionStatus.active), any(Instant.class)))
+                .thenAnswer(invocation -> {
+                    UUID playerId = invocation.getArgument(0);
+                    Instant now = invocation.getArgument(2);
+                    return sessions.values().stream()
+                            .filter(session -> session.getPlayer().getId().equals(playerId))
+                            .filter(session -> session.getStatus() == UploadSessionStatus.active)
+                            .filter(session -> session.getExpiresAt().isAfter(now))
+                            .count();
+                });
+        when(uploadSessionRepository.sumActiveBytesByGame(any(UUID.class), eq(UploadSessionStatus.active), any(Instant.class)))
+                .thenAnswer(invocation -> {
+                    UUID gameId = invocation.getArgument(0);
+                    Instant now = invocation.getArgument(2);
+                    return sessions.values().stream()
+                            .filter(session -> session.getGame().getId().equals(gameId))
+                            .filter(session -> session.getStatus() == UploadSessionStatus.active)
+                            .filter(session -> session.getExpiresAt().isAfter(now))
+                            .mapToLong(UploadSession::getTotalSizeBytes)
+                            .sum();
+                });
+        when(uploadSessionRepository.findRecoverableSessionsByMediaItemKey(
+                any(UUID.class), any(UUID.class), anyString(), any(), any()
+        )).thenAnswer(invocation -> {
+            UUID gameId = invocation.getArgument(0);
+            UUID playerId = invocation.getArgument(1);
+            String mediaItemKey = invocation.getArgument(2);
+            Collection<UploadSessionStatus> statuses = invocation.getArgument(3);
+            return sessions.values().stream()
+                    .filter(session -> session.getGame().getId().equals(gameId))
+                    .filter(session -> session.getPlayer().getId().equals(playerId))
+                    .filter(session -> Objects.equals(session.getMediaItemKey(), mediaItemKey))
+                    .filter(session -> statuses.contains(session.getStatus()))
+                    .max(Comparator.comparing(UploadSession::getCreatedAt))
+                    .map(List::of)
+                    .orElseGet(List::of);
+        });
         when(uploadSessionRepository.findByStatusAndExpiresAtBefore(eq(UploadSessionStatus.active), any(Instant.class)))
                 .thenAnswer(invocation -> {
                     Instant now = invocation.getArgument(1);
@@ -112,6 +157,49 @@ class ChunkedUploadServiceTest {
                     }
                     return list;
                 });
+        when(uploadSessionRepository.findExpiredActiveSessionsForPlayerInGame(
+                any(UUID.class), any(UUID.class), eq(UploadSessionStatus.active), any(Instant.class)
+        )).thenAnswer(invocation -> {
+            UUID gameId = invocation.getArgument(0);
+            UUID playerId = invocation.getArgument(1);
+            Instant now = invocation.getArgument(3);
+            return sessions.values().stream()
+                    .filter(session -> session.getGame().getId().equals(gameId))
+                    .filter(session -> session.getPlayer().getId().equals(playerId))
+                    .filter(session -> session.getStatus() == UploadSessionStatus.active)
+                    .filter(session -> !session.getExpiresAt().isAfter(now))
+                    .toList();
+        });
+        when(uploadSessionRepository.findRecoverableSessionsForPlayerInGame(
+                any(UUID.class), any(UUID.class), eq(UploadSessionStatus.active), eq(UploadSessionStatus.completed),
+                any(Instant.class), any()
+        )).thenAnswer(invocation -> {
+            UUID gameId = invocation.getArgument(0);
+            UUID playerId = invocation.getArgument(1);
+            Instant now = invocation.getArgument(4);
+            return sessions.values().stream()
+                    .filter(session -> session.getGame().getId().equals(gameId))
+                    .filter(session -> session.getPlayer().getId().equals(playerId))
+                    .filter(session -> session.getStatus() == UploadSessionStatus.completed
+                            || (session.getStatus() == UploadSessionStatus.active && session.getExpiresAt().isAfter(now)))
+                    .sorted(Comparator.comparing(UploadSession::getUpdatedAt).reversed())
+                    .limit(100)
+                    .toList();
+        });
+        when(uploadSessionRepository.findClearableSessionsForPlayerInGame(
+                any(UUID.class), any(UUID.class), any(), any()
+        )).thenAnswer(invocation -> {
+            UUID gameId = invocation.getArgument(0);
+            UUID playerId = invocation.getArgument(1);
+            String mediaItemKey = invocation.getArgument(2);
+            Collection<UploadSessionStatus> statuses = invocation.getArgument(3);
+            return sessions.values().stream()
+                    .filter(session -> session.getGame().getId().equals(gameId))
+                    .filter(session -> session.getPlayer().getId().equals(playerId))
+                    .filter(session -> mediaItemKey == null || Objects.equals(session.getMediaItemKey(), mediaItemKey))
+                    .filter(session -> statuses.contains(session.getStatus()))
+                    .toList();
+        });
         when(uploadSessionRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         when(uploadSessionChunkRepository.findUploadedChunkIndexes(any(UUID.class))).thenAnswer(invocation -> {
@@ -132,6 +220,15 @@ class ChunkedUploadServiceTest {
             uploadedChunks.remove(sessionId);
             return null;
         }).when(uploadSessionChunkRepository).deleteBySessionId(any(UUID.class));
+        doAnswer(invocation -> {
+            UUID sessionId = invocation.getArgument(0);
+            int chunkIndex = invocation.getArgument(1);
+            uploadedChunks.computeIfPresent(sessionId, (ignored, chunks) -> {
+                chunks.remove(chunkIndex);
+                return chunks;
+            });
+            return null;
+        }).when(uploadSessionChunkRepository).deleteBySessionIdAndChunkIndex(any(UUID.class), anyInt());
 
         doNothing().when(fileStorageService).validateChunkedUploadMetadata(anyString(), anyLong());
         when(fileStorageService.maxFileSizeBytes()).thenReturn(1024L * 1024L * 1024L);
@@ -150,6 +247,7 @@ class ChunkedUploadServiceTest {
         request.setContentType("video/mp4");
         request.setTotalSizeBytes(8L);
         request.setChunkSizeBytes(4);
+        request.setMediaItemKey("local-video-1");
 
         AtomicInteger storeCalls = new AtomicInteger(0);
         when(fileStorageService.storeAssembledUpload(any(Path.class), eq(gameId), eq("video/mp4"), eq(8L)))
@@ -167,13 +265,132 @@ class ChunkedUploadServiceTest {
         chunkedUploadService.uploadChunk(gameId, sessionId, 0, "AAAA".getBytes(), authPlayer);
         UploadSessionResponse completed = chunkedUploadService.completeSession(gameId, sessionId, authPlayer);
         UploadSessionResponse completedAgain = chunkedUploadService.completeSession(gameId, sessionId, authPlayer);
+        UploadSessionResponse recoveredCompleted = chunkedUploadService.createSession(gameId, authPlayer, request);
 
         assertEquals("completed", completed.getStatus());
         assertEquals("/api/games/" + gameId + "/files/final.mp4", completed.getFileUrl());
         assertEquals(List.of(0, 1), completed.getUploadedChunks());
         assertEquals("completed", completedAgain.getStatus());
+        assertEquals(sessionId, recoveredCompleted.getSessionId());
+        assertEquals("/api/games/" + gameId + "/files/final.mp4", recoveredCompleted.getFileUrl());
         assertEquals(1, storeCalls.get());
         verify(uploadSessionChunkRepository).deleteBySessionId(sessionId);
+    }
+
+    @Test
+    void createSessionWithMediaItemKeyResumesActiveSession() {
+        UUID gameId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        Player authPlayer = Player.builder().id(playerId).build();
+        Player managedPlayer = buildPlayer(playerId, gameId);
+        when(playerRepository.findAuthPlayerById(playerId)).thenReturn(Optional.of(managedPlayer));
+        doNothing().when(gameAccessService).ensurePlayerBelongsToGame(any(Player.class), eq(gameId));
+
+        UploadSessionInitRequest request = uploadRequest("field-video-1");
+
+        UploadSessionResponse created = chunkedUploadService.createSession(gameId, authPlayer, request);
+        UploadSessionResponse resumed = chunkedUploadService.createSession(gameId, authPlayer, request);
+
+        assertEquals(created.getSessionId(), resumed.getSessionId());
+        assertEquals("active", resumed.getStatus());
+        assertEquals("field-video-1", resumed.getMediaItemKey());
+        assertEquals(1, sessions.size());
+    }
+
+    @Test
+    void expiredActiveSessionsDoNotBlockSessionCap() {
+        ReflectionTestUtils.setField(chunkedUploadService, "maxActiveSessionsPerPlayer", 1);
+        UUID gameId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        Player authPlayer = Player.builder().id(playerId).build();
+        Player managedPlayer = buildPlayer(playerId, gameId);
+        when(playerRepository.findAuthPlayerById(playerId)).thenReturn(Optional.of(managedPlayer));
+        doNothing().when(gameAccessService).ensurePlayerBelongsToGame(any(Player.class), eq(gameId));
+
+        UploadSessionResponse stale = chunkedUploadService.createSession(gameId, authPlayer, uploadRequest("stale"));
+        sessions.get(stale.getSessionId()).setExpiresAt(Instant.now().minusSeconds(5));
+
+        UploadSessionResponse replacement = chunkedUploadService.createSession(gameId, authPlayer, uploadRequest("replacement"));
+
+        assertEquals(UploadSessionStatus.expired, sessions.get(stale.getSessionId()).getStatus());
+        assertEquals("active", replacement.getStatus());
+    }
+
+    @Test
+    void mismatchedMediaItemKeyMetadataIsPermanentConflict() {
+        UUID gameId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        Player authPlayer = Player.builder().id(playerId).build();
+        Player managedPlayer = buildPlayer(playerId, gameId);
+        when(playerRepository.findAuthPlayerById(playerId)).thenReturn(Optional.of(managedPlayer));
+        doNothing().when(gameAccessService).ensurePlayerBelongsToGame(any(Player.class), eq(gameId));
+
+        chunkedUploadService.createSession(gameId, authPlayer, uploadRequest("same-key"));
+        UploadSessionInitRequest changed = uploadRequest("same-key");
+        changed.setTotalSizeBytes(12L);
+
+        UploadSessionException exception = assertThrows(
+                UploadSessionException.class,
+                () -> chunkedUploadService.createSession(gameId, authPlayer, changed)
+        );
+
+        assertEquals("UPLOAD_MEDIA_ITEM_KEY_CONFLICT", exception.getCode());
+        assertEquals(false, exception.isRetryable());
+    }
+
+    @Test
+    void listRecoverableSessionsKeepsCompletedItemsAndDropsExpiredActiveSessions() throws Exception {
+        UUID gameId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        Player authPlayer = Player.builder().id(playerId).build();
+        Player managedPlayer = buildPlayer(playerId, gameId);
+        when(playerRepository.findAuthPlayerById(playerId)).thenReturn(Optional.of(managedPlayer));
+        doNothing().when(gameAccessService).ensurePlayerBelongsToGame(any(Player.class), eq(gameId));
+
+        UploadSessionResponse active = chunkedUploadService.createSession(gameId, authPlayer, uploadRequest("active"));
+        UploadSessionResponse expired = chunkedUploadService.createSession(gameId, authPlayer, uploadRequest("expired"));
+        sessions.get(expired.getSessionId()).setExpiresAt(Instant.now().minusSeconds(5));
+
+        UploadSessionInitRequest completedRequest = uploadRequest("completed");
+        UploadSessionResponse completed = chunkedUploadService.createSession(gameId, authPlayer, completedRequest);
+        when(fileStorageService.storeAssembledUpload(any(Path.class), eq(gameId), eq("video/mp4"), eq(8L)))
+                .thenReturn("/api/games/" + gameId + "/files/completed.mp4");
+        chunkedUploadService.uploadChunk(gameId, completed.getSessionId(), 0, "AAAA".getBytes(), authPlayer);
+        chunkedUploadService.uploadChunk(gameId, completed.getSessionId(), 1, "BBBB".getBytes(), authPlayer);
+        chunkedUploadService.completeSession(gameId, completed.getSessionId(), authPlayer);
+
+        List<UploadSessionResponse> recoverable = chunkedUploadService.listRecoverableSessions(gameId, authPlayer);
+
+        assertTrue(recoverable.stream().anyMatch(session -> session.getSessionId().equals(active.getSessionId())));
+        assertTrue(recoverable.stream().anyMatch(session -> session.getSessionId().equals(completed.getSessionId())
+                && ("/api/games/" + gameId + "/files/completed.mp4").equals(session.getFileUrl())));
+        assertTrue(recoverable.stream().noneMatch(session -> session.getSessionId().equals(expired.getSessionId())));
+        assertEquals(UploadSessionStatus.expired, sessions.get(expired.getSessionId()).getStatus());
+    }
+
+    @Test
+    void clearAbandonedSessionsCancelsOnlyNonCompletedSessions() throws Exception {
+        UUID gameId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        Player authPlayer = Player.builder().id(playerId).build();
+        Player managedPlayer = buildPlayer(playerId, gameId);
+        when(playerRepository.findAuthPlayerById(playerId)).thenReturn(Optional.of(managedPlayer));
+        doNothing().when(gameAccessService).ensurePlayerBelongsToGame(any(Player.class), eq(gameId));
+
+        UploadSessionResponse active = chunkedUploadService.createSession(gameId, authPlayer, uploadRequest("active"));
+        UploadSessionResponse completed = chunkedUploadService.createSession(gameId, authPlayer, uploadRequest("completed"));
+        when(fileStorageService.storeAssembledUpload(any(Path.class), eq(gameId), eq("video/mp4"), eq(8L)))
+                .thenReturn("/api/games/" + gameId + "/files/completed.mp4");
+        chunkedUploadService.uploadChunk(gameId, completed.getSessionId(), 0, "AAAA".getBytes(), authPlayer);
+        chunkedUploadService.uploadChunk(gameId, completed.getSessionId(), 1, "BBBB".getBytes(), authPlayer);
+        chunkedUploadService.completeSession(gameId, completed.getSessionId(), authPlayer);
+
+        UploadSessionClearResponse clear = chunkedUploadService.clearAbandonedSessions(gameId, authPlayer, null);
+
+        assertEquals(1, clear.getCancelledSessions());
+        assertEquals(1, clear.getClearedSessions());
+        assertEquals(UploadSessionStatus.cancelled, sessions.get(active.getSessionId()).getStatus());
+        assertEquals(UploadSessionStatus.completed, sessions.get(completed.getSessionId()).getStatus());
     }
 
     @Test
@@ -201,6 +418,16 @@ class ChunkedUploadServiceTest {
                 BadRequestException.class,
                 () -> chunkedUploadService.getSession(gameId, created.getSessionId(), otherAuth)
         );
+    }
+
+
+    private UploadSessionInitRequest uploadRequest(String mediaItemKey) {
+        UploadSessionInitRequest request = new UploadSessionInitRequest();
+        request.setContentType("video/mp4");
+        request.setTotalSizeBytes(8L);
+        request.setChunkSizeBytes(4);
+        request.setMediaItemKey(mediaItemKey);
+        return request;
     }
 
     private Player buildPlayer(UUID playerId, UUID gameId) {

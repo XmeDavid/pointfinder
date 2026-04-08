@@ -32,6 +32,9 @@ public class UploadSession {
     @Column(name = "original_file_name")
     private String originalFileName;
 
+    @Column(name = "media_item_key", length = 128)
+    private String mediaItemKey;
+
     @Column(name = "content_type", nullable = false)
     private String contentType;
 

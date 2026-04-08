@@ -1,6 +1,7 @@
 package com.prayer.pointfinder.service;
 
 import com.prayer.pointfinder.dto.request.UploadSessionInitRequest;
+import com.prayer.pointfinder.dto.response.UploadSessionClearResponse;
 import com.prayer.pointfinder.dto.response.UploadSessionResponse;
 import com.prayer.pointfinder.entity.GameStatus;
 import com.prayer.pointfinder.entity.Player;
@@ -10,6 +11,7 @@ import com.prayer.pointfinder.entity.UploadSessionStatus;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.FileStorageException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
+import com.prayer.pointfinder.exception.UploadSessionException;
 import com.prayer.pointfinder.repository.PlayerRepository;
 import com.prayer.pointfinder.repository.UploadSessionChunkRepository;
 import com.prayer.pointfinder.repository.UploadSessionRepository;
@@ -17,6 +19,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +33,8 @@ import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
@@ -36,6 +42,12 @@ import java.util.stream.IntStream;
 @RequiredArgsConstructor
 @Slf4j
 public class ChunkedUploadService {
+
+    private static final int RECOVERABLE_SESSION_LIMIT = 100;
+    private static final List<UploadSessionStatus> RECOVERABLE_MEDIA_ITEM_STATUSES =
+            List.of(UploadSessionStatus.active, UploadSessionStatus.completed);
+    private static final List<UploadSessionStatus> CLEARABLE_SESSION_STATUSES =
+            List.of(UploadSessionStatus.active, UploadSessionStatus.expired, UploadSessionStatus.cancelled);
 
     private final UploadSessionRepository uploadSessionRepository;
     private final UploadSessionChunkRepository uploadSessionChunkRepository;
@@ -68,62 +80,92 @@ public class ChunkedUploadService {
     @Transactional(timeout = 10)
     public UploadSessionResponse createSession(UUID gameId, Player authPlayer, UploadSessionInitRequest request) {
         if (!chunkedUploadEnabled) {
-            throw new BadRequestException("Chunked uploads are temporarily disabled");
+            throw retryable(HttpStatus.BAD_REQUEST, "UPLOADS_DISABLED",
+                    "Chunked uploads are temporarily disabled");
         }
         Player player = loadPlayer(authPlayer);
         gameAccessService.ensurePlayerBelongsToGame(player, gameId);
         ensureGameIsLive(player);
 
-        long totalSizeBytes = request.getTotalSizeBytes();
-        if (totalSizeBytes <= 0) {
-            throw new BadRequestException("totalSizeBytes must be positive");
+        Instant now = Instant.now();
+        expireStaleSessionsForPlayerInGame(gameId, player.getId(), now);
+        SessionMetadata metadata = validateSessionMetadata(request);
+
+        if (metadata.mediaItemKey() != null) {
+            var existing = findRecoverableSessionByMediaItemKey(gameId, player.getId(), metadata.mediaItemKey());
+            if (existing.isPresent()) {
+                UploadSession session = existing.get();
+                if (!expireSessionIfStale(session, now)) {
+                    assertCompatibleMediaItem(session, metadata);
+                    return buildResponse(session);
+                }
+            }
         }
-        if (totalSizeBytes > fileStorageService.maxFileSizeBytes()) {
-            throw new BadRequestException("File size exceeds allowed limit");
-        }
-        long playerActiveSessions = uploadSessionRepository.countByPlayerIdAndStatus(player.getId(), UploadSessionStatus.active);
+
+        long playerActiveSessions = uploadSessionRepository.countActiveSessionsByPlayerId(
+                player.getId(),
+                UploadSessionStatus.active,
+                now
+        );
         if (playerActiveSessions >= maxActiveSessionsPerPlayer) {
-            throw new BadRequestException("Too many active upload sessions for player");
+            throw retryable(HttpStatus.BAD_REQUEST, "UPLOAD_SESSION_LIMIT",
+                    "Too many active upload sessions for player");
         }
-        long activeBytesForGame = uploadSessionRepository.sumTotalSizeByGameAndStatus(gameId, UploadSessionStatus.active);
-        if (activeBytesForGame + totalSizeBytes > maxActiveBytesPerGame) {
-            throw new BadRequestException("Game upload capacity exceeded, retry later");
-        }
-
-        String contentType = normalizeContentType(request.getContentType());
-        fileStorageService.validateChunkedUploadMetadata(contentType, totalSizeBytes);
-
-        int chunkSizeBytes = request.getChunkSizeBytes() != null ? request.getChunkSizeBytes() : defaultChunkSizeBytes;
-        if (chunkSizeBytes <= 0 || chunkSizeBytes > maxChunkSizeBytes) {
-            throw new BadRequestException("chunkSizeBytes must be between 1 and " + maxChunkSizeBytes);
-        }
-
-        long calculatedTotalChunks = (totalSizeBytes + chunkSizeBytes - 1L) / chunkSizeBytes;
-        if (calculatedTotalChunks > Integer.MAX_VALUE) {
-            throw new BadRequestException("total chunk count is too large");
+        long activeBytesForGame = uploadSessionRepository.sumActiveBytesByGame(
+                gameId,
+                UploadSessionStatus.active,
+                now
+        );
+        if (activeBytesForGame + metadata.totalSizeBytes() > maxActiveBytesPerGame) {
+            throw retryable(HttpStatus.BAD_REQUEST, "UPLOAD_GAME_CAPACITY",
+                    "Game upload capacity exceeded, retry later");
         }
 
         UploadSession session = UploadSession.builder()
                 .game(player.getTeam().getGame())
                 .player(player)
-                .originalFileName(request.getOriginalFileName())
-                .contentType(contentType)
-                .totalSizeBytes(totalSizeBytes)
-                .chunkSizeBytes(chunkSizeBytes)
-                .totalChunks((int) calculatedTotalChunks)
+                .originalFileName(metadata.originalFileName())
+                .mediaItemKey(metadata.mediaItemKey())
+                .contentType(metadata.contentType())
+                .totalSizeBytes(metadata.totalSizeBytes())
+                .chunkSizeBytes(metadata.chunkSizeBytes())
+                .totalChunks(metadata.totalChunks())
                 .status(UploadSessionStatus.active)
-                .expiresAt(Instant.now().plusSeconds(uploadSessionTtlSeconds))
+                .expiresAt(now.plusSeconds(uploadSessionTtlSeconds))
                 .build();
         session = uploadSessionRepository.save(session);
+        if (metadata.mediaItemKey() != null) {
+            uploadSessionRepository.flush();
+        }
         ensureSessionDirectory(session.getId());
         meterRegistry.counter("uploads.sessions.created").increment();
         return buildResponse(session);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(timeout = 10)
     public UploadSessionResponse getSession(UUID gameId, UUID sessionId, Player authPlayer) {
         UploadSession session = getAuthorizedSession(gameId, sessionId, authPlayer);
+        expireSessionIfStale(session, Instant.now());
         return buildResponse(session);
+    }
+
+    @Transactional(timeout = 10)
+    public List<UploadSessionResponse> listRecoverableSessions(UUID gameId, Player authPlayer) {
+        Player player = loadPlayer(authPlayer);
+        gameAccessService.ensurePlayerBelongsToGame(player, gameId);
+        Instant now = Instant.now();
+        expireStaleSessionsForPlayerInGame(gameId, player.getId(), now);
+        return uploadSessionRepository.findRecoverableSessionsForPlayerInGame(
+                        gameId,
+                        player.getId(),
+                        UploadSessionStatus.active,
+                        UploadSessionStatus.completed,
+                        now,
+                        PageRequest.of(0, RECOVERABLE_SESSION_LIMIT)
+                )
+                .stream()
+                .map(this::buildResponse)
+                .toList();
     }
 
     @Transactional(timeout = 10)
@@ -137,38 +179,41 @@ public class ChunkedUploadService {
         UploadSession session = getAuthorizedSession(gameId, sessionId, authPlayer);
         if (session.getStatus() != UploadSessionStatus.active) {
             meterRegistry.counter("uploads.chunks.failed", "reason", "inactive_session").increment();
-            throw new BadRequestException("Upload session is not active");
+            throw sessionNotActive(session);
         }
-        if (session.getExpiresAt().isBefore(Instant.now())) {
-            session.setStatus(UploadSessionStatus.expired);
-            uploadSessionRepository.save(session);
-            cleanupSessionStorage(session.getId());
+        Instant now = Instant.now();
+        if (expireSessionIfStale(session, now)) {
             meterRegistry.counter("uploads.chunks.failed", "reason", "session_expired").increment();
-            throw new BadRequestException("Upload session has expired");
+            throw retryable(HttpStatus.BAD_REQUEST, "UPLOAD_SESSION_EXPIRED",
+                    "Upload session has expired");
         }
         if (chunkIndex < 0 || chunkIndex >= session.getTotalChunks()) {
             meterRegistry.counter("uploads.chunks.failed", "reason", "invalid_chunk_index").increment();
-            throw new BadRequestException("Invalid chunk index");
+            throw permanent(HttpStatus.BAD_REQUEST, "UPLOAD_INVALID_CHUNK_INDEX", "Invalid chunk index");
         }
         if (chunkBytes == null || chunkBytes.length == 0) {
             meterRegistry.counter("uploads.chunks.failed", "reason", "empty_chunk").increment();
-            throw new BadRequestException("Chunk payload is empty");
+            throw permanent(HttpStatus.BAD_REQUEST, "UPLOAD_EMPTY_CHUNK", "Chunk payload is empty");
         }
 
         int expectedChunkSize = expectedChunkSize(session, chunkIndex);
         if (chunkBytes.length != expectedChunkSize) {
             meterRegistry.counter("uploads.chunks.failed", "reason", "size_mismatch").increment();
-            throw new BadRequestException("Chunk size mismatch for index " + chunkIndex);
+            throw permanent(HttpStatus.BAD_REQUEST, "UPLOAD_CHUNK_SIZE_MISMATCH",
+                    "Chunk size mismatch for index " + chunkIndex);
         }
 
-        // Check if chunk already exists to prevent duplicates
         boolean chunkExists = uploadSessionChunkRepository.existsBySessionIdAndChunkIndex(
                 session.getId(), chunkIndex
         );
-        if (chunkExists) {
+        Path chunkPath = chunkPathFor(session.getId(), chunkIndex);
+        if (chunkExists && Files.exists(chunkPath)) {
             log.debug("Chunk {} already uploaded for session {}, skipping", chunkIndex, sessionId);
         } else {
-            Path chunkPath = chunkPathFor(session.getId(), chunkIndex);
+            if (chunkExists) {
+                uploadSessionChunkRepository.deleteBySessionIdAndChunkIndex(session.getId(), chunkIndex);
+                meterRegistry.counter("uploads.chunks.recovered_missing_file").increment();
+            }
             writeChunk(chunkPath, chunkBytes);
             uploadSessionChunkRepository.save(
                     UploadSessionChunk.builder()
@@ -179,7 +224,7 @@ public class ChunkedUploadService {
             );
             meterRegistry.counter("uploads.chunks.uploaded").increment();
         }
-        session.setExpiresAt(Instant.now().plusSeconds(uploadSessionTtlSeconds));
+        session.setExpiresAt(now.plusSeconds(uploadSessionTtlSeconds));
         uploadSessionRepository.save(session);
         return buildResponse(session);
     }
@@ -193,12 +238,26 @@ public class ChunkedUploadService {
             return buildResponse(session);
         }
         if (session.getStatus() != UploadSessionStatus.active) {
-            throw new BadRequestException("Upload session is not active");
+            throw sessionNotActive(session);
+        }
+        if (expireSessionIfStale(session, Instant.now())) {
+            throw retryable(HttpStatus.BAD_REQUEST, "UPLOAD_SESSION_EXPIRED",
+                    "Upload session has expired");
         }
 
         long uploadedCount = uploadSessionChunkRepository.countBySessionId(sessionId);
         if (uploadedCount != session.getTotalChunks()) {
-            throw new BadRequestException("Not all chunks have been uploaded");
+            throw retryable(HttpStatus.BAD_REQUEST, "UPLOAD_INCOMPLETE",
+                    "Not all chunks have been uploaded");
+        }
+        List<Integer> missingChunkFiles = findUploadedChunksWithMissingFiles(session);
+        if (!missingChunkFiles.isEmpty()) {
+            missingChunkFiles.forEach(chunkIndex ->
+                    uploadSessionChunkRepository.deleteBySessionIdAndChunkIndex(sessionId, chunkIndex)
+            );
+            meterRegistry.counter("uploads.chunks.recovered_missing_file").increment(missingChunkFiles.size());
+            throw retryable(HttpStatus.BAD_REQUEST, "UPLOAD_INCOMPLETE",
+                    "Uploaded chunk data is incomplete; retry missing chunks");
         }
 
         Path assembled = assembleChunks(session);
@@ -223,12 +282,43 @@ public class ChunkedUploadService {
     public void cancelSession(UUID gameId, UUID sessionId, Player authPlayer) {
         UploadSession session = getAuthorizedSession(gameId, sessionId, authPlayer);
         if (session.getStatus() == UploadSessionStatus.completed) {
-            throw new BadRequestException("Completed uploads cannot be cancelled");
+            throw permanent(HttpStatus.BAD_REQUEST, "UPLOAD_COMPLETED_CANNOT_CANCEL",
+                    "Completed uploads cannot be cancelled");
         }
         session.setStatus(UploadSessionStatus.cancelled);
         uploadSessionChunkRepository.deleteBySessionId(sessionId);
         uploadSessionRepository.save(session);
         cleanupSessionStorage(sessionId);
+    }
+
+    @Transactional(timeout = 10)
+    public UploadSessionClearResponse clearAbandonedSessions(UUID gameId, Player authPlayer, String mediaItemKey) {
+        Player player = loadPlayer(authPlayer);
+        gameAccessService.ensurePlayerBelongsToGame(player, gameId);
+
+        int cancelledSessions = 0;
+        List<UploadSession> sessions = uploadSessionRepository.findClearableSessionsForPlayerInGame(
+                gameId,
+                player.getId(),
+                normalizeMediaItemKey(mediaItemKey),
+                CLEARABLE_SESSION_STATUSES
+        );
+        for (UploadSession session : sessions) {
+            if (session.getStatus() == UploadSessionStatus.active) {
+                session.setStatus(UploadSessionStatus.cancelled);
+                cancelledSessions++;
+            }
+            uploadSessionChunkRepository.deleteBySessionId(session.getId());
+            cleanupSessionStorage(session.getId());
+        }
+        uploadSessionRepository.saveAll(sessions);
+        if (!sessions.isEmpty()) {
+            meterRegistry.counter("uploads.sessions.cleared").increment(sessions.size());
+        }
+        return UploadSessionClearResponse.builder()
+                .cancelledSessions(cancelledSessions)
+                .clearedSessions(sessions.size())
+                .build();
     }
 
     @Transactional(timeout = 10)
@@ -238,9 +328,7 @@ public class ChunkedUploadService {
                 Instant.now()
         );
         for (UploadSession session : stale) {
-            session.setStatus(UploadSessionStatus.expired);
-            uploadSessionChunkRepository.deleteBySessionId(session.getId());
-            cleanupSessionStorage(session.getId());
+            expireSession(session);
         }
         uploadSessionRepository.saveAll(stale);
         if (!stale.isEmpty()) {
@@ -279,6 +367,129 @@ public class ChunkedUploadService {
         }
     }
 
+    private SessionMetadata validateSessionMetadata(UploadSessionInitRequest request) {
+        long totalSizeBytes = request.getTotalSizeBytes() != null ? request.getTotalSizeBytes() : 0L;
+        if (totalSizeBytes <= 0) {
+            throw permanent(HttpStatus.BAD_REQUEST, "UPLOAD_INVALID_METADATA", "totalSizeBytes must be positive");
+        }
+        if (totalSizeBytes > fileStorageService.maxFileSizeBytes()) {
+            throw permanent(HttpStatus.BAD_REQUEST, "UPLOAD_FILE_TOO_LARGE", "File size exceeds allowed limit");
+        }
+
+        String contentType = normalizeContentType(request.getContentType());
+        if (contentType.isBlank()) {
+            throw permanent(HttpStatus.BAD_REQUEST, "UPLOAD_INVALID_METADATA", "contentType is required");
+        }
+        try {
+            fileStorageService.validateChunkedUploadMetadata(contentType, totalSizeBytes);
+        } catch (BadRequestException ex) {
+            throw permanent(HttpStatus.BAD_REQUEST, "UPLOAD_INVALID_METADATA", ex.getMessage());
+        }
+
+        int chunkSizeBytes = request.getChunkSizeBytes() != null ? request.getChunkSizeBytes() : defaultChunkSizeBytes;
+        if (chunkSizeBytes <= 0 || chunkSizeBytes > maxChunkSizeBytes) {
+            throw permanent(HttpStatus.BAD_REQUEST, "UPLOAD_INVALID_METADATA",
+                    "chunkSizeBytes must be between 1 and " + maxChunkSizeBytes);
+        }
+
+        long calculatedTotalChunks = (totalSizeBytes + chunkSizeBytes - 1L) / chunkSizeBytes;
+        if (calculatedTotalChunks > Integer.MAX_VALUE) {
+            throw permanent(HttpStatus.BAD_REQUEST, "UPLOAD_INVALID_METADATA", "total chunk count is too large");
+        }
+
+        return new SessionMetadata(
+                request.getOriginalFileName(),
+                normalizeMediaItemKey(request.getMediaItemKey()),
+                contentType,
+                totalSizeBytes,
+                chunkSizeBytes,
+                (int) calculatedTotalChunks
+        );
+    }
+
+    private Optional<UploadSession> findRecoverableSessionByMediaItemKey(
+            UUID gameId,
+            UUID playerId,
+            String mediaItemKey
+    ) {
+        return uploadSessionRepository.findRecoverableSessionsByMediaItemKey(
+                        gameId,
+                        playerId,
+                        mediaItemKey,
+                        RECOVERABLE_MEDIA_ITEM_STATUSES,
+                        PageRequest.of(0, 1)
+                )
+                .stream()
+                .findFirst();
+    }
+
+    private void assertCompatibleMediaItem(UploadSession session, SessionMetadata metadata) {
+        boolean sameFile = Objects.equals(session.getContentType(), metadata.contentType())
+                && session.getTotalSizeBytes() == metadata.totalSizeBytes();
+        boolean compatible = sameFile
+                && (session.getStatus() == UploadSessionStatus.completed
+                    || (session.getChunkSizeBytes() == metadata.chunkSizeBytes()
+                        && session.getTotalChunks() == metadata.totalChunks()));
+        if (!compatible) {
+            throw permanent(HttpStatus.CONFLICT, "UPLOAD_MEDIA_ITEM_KEY_CONFLICT",
+                    "mediaItemKey already belongs to different upload metadata");
+        }
+    }
+
+    private int expireStaleSessionsForPlayerInGame(UUID gameId, UUID playerId, Instant now) {
+        List<UploadSession> stale = uploadSessionRepository.findExpiredActiveSessionsForPlayerInGame(
+                gameId,
+                playerId,
+                UploadSessionStatus.active,
+                now
+        );
+        for (UploadSession session : stale) {
+            expireSession(session);
+        }
+        uploadSessionRepository.saveAll(stale);
+        if (!stale.isEmpty()) {
+            uploadSessionRepository.flush();
+            meterRegistry.counter("uploads.sessions.expired").increment(stale.size());
+        }
+        return stale.size();
+    }
+
+    private boolean expireSessionIfStale(UploadSession session, Instant now) {
+        if (session.getStatus() != UploadSessionStatus.active || session.getExpiresAt().isAfter(now)) {
+            return false;
+        }
+        expireSession(session);
+        uploadSessionRepository.save(session);
+        uploadSessionRepository.flush();
+        meterRegistry.counter("uploads.sessions.expired").increment();
+        return true;
+    }
+
+    private void expireSession(UploadSession session) {
+        session.setStatus(UploadSessionStatus.expired);
+        uploadSessionChunkRepository.deleteBySessionId(session.getId());
+        cleanupSessionStorage(session.getId());
+    private UploadSessionException sessionNotActive(UploadSession session) {
+        if (session.getStatus() == UploadSessionStatus.expired) {
+            return retryable(HttpStatus.BAD_REQUEST, "UPLOAD_SESSION_EXPIRED", "Upload session has expired");
+        }
+        return permanent(HttpStatus.BAD_REQUEST, "UPLOAD_SESSION_NOT_ACTIVE", "Upload session is not active");
+    }
+
+    private List<Integer> findUploadedChunksWithMissingFiles(UploadSession session) {
+        return uploadSessionChunkRepository.findUploadedChunkIndexes(session.getId()).stream()
+                .filter(chunkIndex -> !Files.exists(chunkPathFor(session.getId(), chunkIndex)))
+                .toList();
+    }
+
+    private UploadSessionException permanent(HttpStatus status, String code, String message) {
+        return UploadSessionException.permanent(status, code, message);
+    }
+
+    private UploadSessionException retryable(HttpStatus status, String code, String message) {
+        return UploadSessionException.retryable(status, code, message);
+    }
+
     private UploadSessionResponse buildResponse(UploadSession session) {
         List<Integer> uploadedChunks = session.getStatus() == UploadSessionStatus.completed
                 ? IntStream.range(0, session.getTotalChunks()).boxed().toList()
@@ -289,6 +500,8 @@ public class ChunkedUploadService {
         return UploadSessionResponse.builder()
                 .sessionId(session.getId())
                 .gameId(session.getGame().getId())
+                .mediaItemKey(session.getMediaItemKey())
+                .originalFileName(session.getOriginalFileName())
                 .contentType(session.getContentType())
                 .totalSizeBytes(session.getTotalSizeBytes())
                 .chunkSizeBytes(session.getChunkSizeBytes())
@@ -297,6 +510,9 @@ public class ChunkedUploadService {
                 .status(session.getStatus().name())
                 .fileUrl(session.getFileUrl())
                 .expiresAt(session.getExpiresAt())
+                .createdAt(session.getCreatedAt())
+                .updatedAt(session.getUpdatedAt())
+                .completedAt(session.getCompletedAt())
                 .build();
     }
 
@@ -348,7 +564,9 @@ public class ChunkedUploadService {
             for (int i = 0; i < session.getTotalChunks(); i++) {
                 Path chunkPath = chunkPathFor(session.getId(), i);
                 if (!Files.exists(chunkPath)) {
-                    throw new BadRequestException("Missing chunk " + i + " for completion");
+                    uploadSessionChunkRepository.deleteBySessionIdAndChunkIndex(session.getId(), i);
+                    throw retryable(HttpStatus.BAD_REQUEST, "UPLOAD_INCOMPLETE",
+                            "Uploaded chunk data is incomplete; retry missing chunks");
                 }
                 Files.copy(chunkPath, outputStream);
             }
@@ -378,4 +596,21 @@ public class ChunkedUploadService {
     private String normalizeContentType(String contentType) {
         return contentType == null ? "" : contentType.trim().toLowerCase();
     }
+
+    private String normalizeMediaItemKey(String mediaItemKey) {
+        if (mediaItemKey == null) {
+            return null;
+        }
+        String normalized = mediaItemKey.trim();
+        return normalized.isEmpty() ? null : normalized;
+    }
+
+    private record SessionMetadata(
+            String originalFileName,
+            String mediaItemKey,
+            String contentType,
+            long totalSizeBytes,
+            int chunkSizeBytes,
+            int totalChunks
+    ) {}
 }

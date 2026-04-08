@@ -1,5 +1,6 @@
 package com.prayer.pointfinder.exception;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -24,7 +25,15 @@ public class GlobalExceptionHandler {
     private static final Pattern AUTH_MESSAGE_PATTERN = Pattern.compile(
             "No authenticated (user|player|operator) found", Pattern.CASE_INSENSITIVE);
 
-    public record ErrorResponse(int status, String message, Map<String, String> errors, Instant timestamp, String traceId) {}
+    public record ErrorResponse(
+            int status,
+            String message,
+            Map<String, String> errors,
+            Instant timestamp,
+            String traceId,
+            @JsonInclude(JsonInclude.Include.NON_NULL) String code,
+            @JsonInclude(JsonInclude.Include.NON_NULL) Boolean retryable
+    ) {}
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex) {
@@ -41,8 +50,23 @@ public class GlobalExceptionHandler {
         return jsonError(HttpStatus.CONFLICT, ex.getMessage());
     }
 
+    @ExceptionHandler(UploadSessionException.class)
+    public ResponseEntity<ErrorResponse> handleUploadSession(UploadSessionException ex) {
+        return jsonError(ex.getStatus(), ex.getMessage(), null, null, ex.getCode(), ex.isRetryable());
+    }
+
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        if (containsConstraint(ex, "uq_upload_sessions_game_player_media_item_recoverable")) {
+            return jsonError(
+                    HttpStatus.CONFLICT,
+                    "Upload session already exists for this media item; retry create to resume it",
+                    null,
+                    null,
+                    "UPLOAD_MEDIA_ITEM_RACE",
+                    true
+            );
+        }
         String message = mapDataIntegrityMessage(ex);
         if ("Data integrity violation".equals(message)) {
             log.warn("Unmapped data integrity violation", ex);
@@ -107,15 +131,24 @@ public class GlobalExceptionHandler {
     }
 
     private ResponseEntity<ErrorResponse> jsonError(HttpStatus status, String message, Map<String, String> errors, String traceId) {
+        return jsonError(status, message, errors, traceId, null, null);
+    }
+
+    private ResponseEntity<ErrorResponse> jsonError(
+            HttpStatus status,
+            String message,
+            Map<String, String> errors,
+            String traceId,
+            String code,
+            Boolean retryable
+    ) {
         return ResponseEntity.status(status)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(new ErrorResponse(status.value(), message, errors, Instant.now(), traceId));
+                .body(new ErrorResponse(status.value(), message, errors, Instant.now(), traceId, code, retryable));
     }
 
     private String mapDataIntegrityMessage(DataIntegrityViolationException ex) {
-        String source = ex.getMostSpecificCause() != null
-                ? ex.getMostSpecificCause().getMessage()
-                : ex.getMessage();
+        String source = dataIntegritySource(ex);
         if (source == null) {
             return "Data integrity violation";
         }
@@ -142,5 +175,17 @@ public class GlobalExceptionHandler {
         }
 
         return "Data integrity violation";
+    }
+
+    private boolean containsConstraint(DataIntegrityViolationException ex, String constraintName) {
+        String source = dataIntegritySource(ex);
+        return source != null && source.toLowerCase().contains(constraintName);
+    }
+
+    private String dataIntegritySource(DataIntegrityViolationException ex) {
+        String source = ex.getMostSpecificCause() != null
+                ? ex.getMostSpecificCause().getMessage()
+                : ex.getMessage();
+        return source;
     }
 }

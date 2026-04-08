@@ -14,6 +14,8 @@ import java.util.UUID;
 public class UploadSessionResponse {
     private UUID sessionId;
     private UUID gameId;
+    private String mediaItemKey;
+    private String originalFileName;
     private String contentType;
     private long totalSizeBytes;
     private int chunkSizeBytes;
@@ -22,4 +24,7 @@ public class UploadSessionResponse {
     private String status;
     private String fileUrl;
     private Instant expiresAt;
+    private Instant createdAt;
+    private Instant updatedAt;
+    private Instant completedAt;
 }
