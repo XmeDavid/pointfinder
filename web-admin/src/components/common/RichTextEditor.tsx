@@ -26,6 +26,7 @@ import { useTranslation } from "react-i18next";
 
 const MAX_DIMENSION = 1200;
 const JPEG_QUALITY = 0.85;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB — warn before canvas toDataURL hangs the UI thread
 
 function resizeImage(file: File): Promise<string> {
   return new Promise((resolve) => {
@@ -216,6 +217,12 @@ export function RichTextEditor({ value, onChange, placeholder, availableVariable
       const file = e.target.files?.[0];
       if (!file || !editor) return;
 
+      if (file.size > MAX_IMAGE_BYTES) {
+        toast.error(t("common.fileTooLarge"));
+        e.target.value = "";
+        return;
+      }
+
       resizeImage(file).then((dataUrl) => {
         editor.chain().focus().setImage({ src: dataUrl }).run();
       });
@@ -223,7 +230,7 @@ export function RichTextEditor({ value, onChange, placeholder, availableVariable
       // Reset so the same file can be picked again
       e.target.value = "";
     },
-    [editor]
+    [editor, toast, t]
   );
 
   const addAudio = () => {

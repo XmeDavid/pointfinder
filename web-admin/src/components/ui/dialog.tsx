@@ -133,7 +133,7 @@ const DialogContent = React.forwardRef<
       aria-labelledby={titleId}
       tabIndex={-1}
       className={cn(
-        "relative z-50 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-lg border border-border bg-background p-6 shadow-lg",
+        "relative z-50 w-full max-w-lg max-h-[90vh] overflow-y-scroll rounded-lg border border-border bg-background p-6 shadow-lg",
         className,
       )}
       onClick={(e) => e.stopPropagation()}
