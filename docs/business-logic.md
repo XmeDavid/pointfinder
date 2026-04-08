@@ -147,6 +147,36 @@ After writing, the operator calls `PATCH /api/games/{gameId}/bases/{baseId}/nfc-
 
 > **Note**: Check-in does NOT validate that an assignment exists for the team-base pair. A player can check in at any base belonging to the game. Assignment validation occurs later during submission creation.
 
+### NFC Hardware Failures and Disabled State
+
+**Android: NFC Disabled**
+
+When NFC is disabled on an Android device, the player check-in screen displays a blocking UI state:
+
+- **Message title**: "NFC is disabled"
+- **Message body**: "Enable NFC in settings to scan bases and check in."
+- **Action button**: "Open NFC settings"
+
+When the player taps the button, the app launches Android's system NFC settings. Upon returning to the app, the device broadcasts `ACTION_ADAPTER_STATE_CHANGED` which the `PlayerGameplayScreens` observes via a broadcast receiver. The check-in screen automatically unblocks once NFC is re-enabled.
+
+**Implementation**: Android `PlayerGameplayScreens.kt` checks `NfcAdapter.isEnabled()` on every composition; if false, the blocking state is shown. Recovery is automatic once the system broadcast signals NFC state change.
+
+**iOS: NFC Unsupported (Hardware Limitation)**
+
+iOS devices iPhone 6s and earlier, and all iPad models, lack NFC hardware. When the player uses such a device:
+
+- **Message title**: "This device doesn't support NFC"
+- **Message body**: "NFC is required to scan bases and check in. This feature is not available on your device."
+- **Action**: Full-screen message with no action button (no settings to open)
+
+**Supported devices**: iPhone 7 or newer. iPad models do not support NFC and cannot scan tags.
+
+**Recovery**: The player must use a compatible iOS device (iPhone 7+) or use the Android app on an Android device to participate.
+
+**Implementation**: iOS `CheckInTabView` checks `NFCReaderSession.readingAvailable` at composition time. If false, the unsupported message is displayed as a full-screen overlay. No recovery path is available on unsupported devices.
+
+**Operator Workaround**: When a player encounters NFC issues in production, operators have manual check-in as a fallback (iOS: `CheckInTabView` shows a "Manual Check-In" button when NFC is unavailable; Android operators can trigger manual check-in via the backend). Operators should monitor client logs or crash reports for NFC-related errors to identify affected teams.
+
 ### Location-Bound Assignments
 
 When a challenge has `location_bound = true` and is assigned to a base:

@@ -97,6 +97,22 @@ Enable by setting `FCM_ENABLED=true` and placing `firebase-service-account.json`
 | `APP_UPLOADS_MAX_ACTIVE_SESSIONS_PER_PLAYER` | `3` | Concurrent upload sessions per player |
 | `APP_UPLOADS_MAX_ACTIVE_BYTES_PER_GAME` | `17179869184` (16 GB) | Total in-flight upload bytes per game |
 
+### Frontend Build (Vite)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `VITE_WS_URL` | `/ws-native` | Raw STOMP WebSocket endpoint for web-admin real-time updates. Build-time argument passed to Vite during Docker image compilation. Change requires rebuilding both `web-admin` and `nginx` containers. See §3 "WebSocket proxy" and `docs/realtime-and-mobile.md` for endpoint routing details. |
+
+**Deployment after changing VITE_WS_URL:**
+
+```bash
+docker compose build nginx
+docker compose build web-admin
+docker compose up -d nginx web-admin
+```
+
+The nginx config bakes the routing rules into the image at build time (location blocks for `/ws` and `/ws-native` proxied to the backend). If you update `VITE_WS_URL`, you must rebuild both the web-admin image (to embed the new URL in the Vite bundle) and the nginx image (to ensure routing is in sync).
+
 ### Other
 
 | Variable | Default | Description |
@@ -129,7 +145,7 @@ Four limit zones are defined in `http {}`:
 | `^~ /api/auth/` | Auth endpoints | `auth_limit burst=5`; takes precedence over `/api/` |
 | `^~ /api/broadcast/` | Broadcast endpoints | `broadcast_limit burst=5`; public spectator rate limit |
 | `^~ /api/` | All other API routes | `api_limit burst=20`; proxied to `backend:8080` |
-| `/ws/` | WebSocket upgrades | No rate limit; 24-hour read/send timeouts |
+| `~ ^/(ws-native\|ws(/\|$))` | WebSocket (STOMP) | No rate limit; proxied to backend; both `/ws` (SockJS fallback) and `/ws-native` (raw STOMP) routed via regex match; 24-hour timeouts |
 | `/.well-known/apple-app-site-association` | iOS Universal Links | Served as static JSON |
 | `/.well-known/assetlinks.json` | Android App Links | Served as static JSON |
 | `/tag/` | NFC tag landing page | Static HTML |
@@ -152,16 +168,30 @@ The CSP includes SHA256 hashes for inline scripts, map tile sources (OpenStreetM
 
 ### WebSocket proxy
 
+Two endpoints are exposed for WebSocket connections:
+
+| Endpoint | Protocol | Client | Purpose |
+|----------|----------|--------|---------|
+| `/ws` | SockJS + STOMP | Browser (web-admin) | Legacy fallback; SockJS allows connections in restricted networks via HTTP polling. |
+| `/ws-native` | Raw STOMP over WebSocket | Browser (web-admin with `VITE_WS_URL=/ws-native`) | Direct WebSocket STOMP; lower latency than SockJS. Set via `VITE_WS_URL` at build time. |
+
+Both routes are proxied to the backend via a single location block:
+
 ```nginx
-location /ws/ {
+location ~ ^/(ws-native|ws(/|$)) {
     proxy_pass http://backend:8080;
     proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_read_timeout 86400s;   # 24 hours
     proxy_send_timeout 86400s;
 }
 ```
+
+The iOS and Android mobile clients use dedicated endpoints (`/ws/mobile?gameId={uuid}`) that are not rate-limited.
 
 ### Static asset caching
 

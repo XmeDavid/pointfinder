@@ -84,6 +84,22 @@ The backend (`MobileRealtimeHub`) enforces:
 - **Feature flag**: Configurable via `BuildConfig.ENABLE_MOBILE_REALTIME`
 - **Tests**: `MobileRealtimeClientUrlTest` covers URL construction only
 
+### WebSocket Error Codes
+
+The backend emits STOMP ERROR frames with error codes in the `error-code` header. Clients must parse and handle these codes.
+
+| Code | Meaning | Operator action | Client action |
+|------|---------|-----------------|----------------|
+| `WS_ACCESS_DENIED` | Operator JWT expired or revoked mid-session | Check operator login session in `JwtTokenProvider` (15-min access token TTL); verify user account is not revoked | **iOS**: call `forceLogout()` to bounce to login screen. **Android**: call `triggerForcedLogout()` to cancel operator session and return to auth screen. **Web**: treat as a manual reconnect cue; display message prompting user to re-authenticate. |
+
+**Troubleshooting WS_ACCESS_DENIED incidents**:
+1. Check `JwtTokenProvider.OPERATOR_ACCESS_TOKEN_VALIDITY_MINUTES` (default 15) — if the operator has an idle session, access token may have expired. The operator must re-login to get a fresh token.
+2. Verify the user's operator account is active and not suspended in the database (`users` table, `active` column).
+3. Check for clock skew between backend and clients — mismatched system clocks can cause premature token expiry. Use `timedatectl` or `ntpstat` on the backend host.
+4. If the incident affects multiple operators simultaneously, check backend JWT key rotation or recent changes to `JWT_SECRET` env var. All connected clients will be rejected with `WS_ACCESS_DENIED` if the secret is reloaded.
+
+**Implementation note**: The `StompAuthErrorHandler` class (backend) intercepts `AccessDeniedException` during STOMP frame validation and emits a STOMP ERROR frame with `error-code: WS_ACCESS_DENIED` instead of dropping the connection silently. This allows clients to distinguish between auth failures and network disconnects.
+
 ---
 
 ## 2. Push Notifications

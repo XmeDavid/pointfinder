@@ -1070,9 +1070,15 @@ These endpoints expose live game data using a 6-character broadcast code. The co
 ## 12. WebSocket
 
 **Endpoint**: `/ws` (STOMP over SockJS)
+**Alternative endpoint**: `/ws-native` (raw STOMP, lower latency; set via `VITE_WS_URL` environment variable at build time)
 **Auth**: Bearer token in STOMP `Authorization` connect header
 **Heartbeat**: 10s / 10s
 **Reconnect delay**: 5s (web), exponential backoff up to 30s (mobile)
+
+**See also**:
+- Infrastructure routing and `VITE_WS_URL` configuration: `docs/infrastructure.md` § "Frontend Build (Vite)" and § "WebSocket proxy"
+- WebSocket error codes (e.g., `WS_ACCESS_DENIED`): `docs/realtime-and-mobile.md` § "WebSocket Error Codes"
+- State snapshot contract and recovery: `docs/realtime-and-mobile.md` § "State Snapshot Contract"
 
 ### Operator/Web Client
 
