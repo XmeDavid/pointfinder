@@ -513,6 +513,86 @@ Every rescue action is distinguishable from an organic player action in the acti
 
 ---
 
+## 4c. Activity Audit Export
+
+Source spec: `docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md` (P1 Activity Audit and Export). Wave: P1 Phase 3. Endpoint: `GET /api/games/{gameId}/audit-export` (see `docs/api-reference.md` §10a for the wire contract).
+
+### Why this exists
+
+Phase 1 (V36 actor snapshots) made audit data RECORDABLE. Phase 2 (operator rescue endpoints) made it ACTIONABLE. Phase 3 closes the loop by making it READABLE: operators can export the full chronological log of a game to answer the pilot's unanswerable question — "what did this player do before we moved them to the right team?" — and the exports are useful during an event, at review time, and for incident post-mortems after the fact.
+
+The export is deliberately BACKGROUND-only from a product perspective. PointFinder is still a team-focused game: team progress, team scoring, team completion, team rescue. Player-level metadata exists for auditability and incident review, not to turn the game into individual progress tracking. The audit export is the only surface where an operator intentionally opens the player-attribution view.
+
+### Design: pure ActivityEvent stream
+
+The export reads the `activity_events` table as the chronological ground truth. Phase 1 guarantees every recordable action emits exactly one `ActivityEvent` row with full V36 actor snapshot fields populated, and Phase 2 extended that to include the two rescue endpoints (both emit `operator_override`-type events). That means the activity_events stream alone — one table, ordered by `timestamp ASC` — is the canonical spine. There is no multi-source merge of `check_ins`, `submissions`, and `activity_events`; each action has exactly one audit row attributed to exactly one actor from exactly one source surface.
+
+The only cross-table read is a narrow enrichment step: when an activity event's companion `submission` or `check_in` row carries a Phase 2 `operator_reason` (the free-text justification supplied on a mark-completed, unlock-override, or manual check-in rescue), the service surfaces it in the exported `details.operatorReason` field. The activity event message alone does not preserve that field, so the enrichment is required to make the export self-contained for incident review. The enrichment uses two bulk prefetches keyed by game id (one for submissions, one for check-ins), not per-row lookups, so the whole export is still O(1) SQL round trips.
+
+### Actor model
+
+Every export row carries a uniform `actor` envelope with `type ∈ {player, operator, system}`:
+
+| Actor type | When used | Fields populated |
+|---|---|---|
+| `player` | Player-initiated events (check-in, submission, future team_join/team_switch) | `id`, `displayName` (V36 snapshot, with live fallback), `deviceId` (V36 snapshot, with live fallback) |
+| `operator` | Operator-initiated events (review decisions, manual check-in, mark-completed, unlock-override, future operator-created content) | `id`, `displayName`; `deviceId` is always null |
+| `system` | Pre-V36 legacy rows with no recoverable actor FK; reserved for future system-emitted events | `id = null`, `displayName` = `"Unknown"` or the orphaned snapshot if one exists |
+
+The `actor.id` FK is always the V36 actor column (`actor_player_id` or `actor_operator_user_id`). The service does NOT look at `submissions.submitted_by_player_id` or `check_ins.player_id` directly — the activity event is the canonical spine and already carries the matching actor FK from Phase 1.
+
+### Legacy null snapshot handling
+
+Pre-V36 activity events pre-date the actor snapshot columns. For those rows the service walks the following fallback ladder:
+
+1. Immutable V36 snapshot column (`actor_display_name_snapshot`, `actor_device_id_snapshot`) — the preferred source; survives account deletion.
+2. Live join on the actor FK (`actorPlayer.displayName` / `actorOperatorUser.name`) — only consulted when the snapshot column is null. Honest about what the system can still know; the audit export is read-only so this is not a write-vs-snapshot contract violation.
+3. Literal string `"Unknown"` — last-resort when neither the snapshot nor the live join yields a name. Keeps the CSV column count stable and the JSON schema honest rather than emitting nulls that downstream parsers have to branch on.
+
+### Filters
+
+All filters are optional and applied at the SQL level via the pushdown query `ActivityEventRepository.findForAuditExport`. The query uses `:param IS NULL OR <condition>` wrappers so passing `null` for any filter means "do not apply it" without forcing the caller to build dynamic SQL.
+
+| Filter | Pushdown clause | Use case |
+|---|---|---|
+| `from` / `to` | `ae.timestamp >= :from AND ae.timestamp < :to` | Restrict to a specific incident window (the two hours around a reported problem). |
+| `teamId` | `ae.team.id = :teamId` | "What happened to Team Red?" post-mortem. |
+| `playerId` | `ae.actorPlayer.id = :playerId` | The pilot's wrong-team question: "Which actions did this player produce, on which team?" |
+| `operatorId` | `ae.actorOperatorUser.id = :operatorId` | "Show me everything Operator Sam did today" — reviewer accountability. |
+| `actionType` | `ae.type IN :types` (EnumSet) | "Only show me operator rescues" — filter to `operator_override`, or combine with `approval,rejection` for the full operator-decision view. |
+| `sourceSurface` | `ae.sourceSurface = :sourceSurface` | "Which of these came through the rescue endpoint vs the organic player app?" |
+
+### Archive inclusion
+
+The default export hides archived rows (the ones preserved by `GameService.updateStatus(resetProgress=true)` in Phase 1). This matches the live state operators expect. Passing `includeArchived=true` surfaces the archived rows with the `archived: true` flag set on each row. Use this when reviewing an incident that straddled a game reset — the data is still there, but you have to ask for it.
+
+### Format adapters
+
+- **JSON** (default): single top-level array of uniform `AuditEntryDto` envelopes. `Content-Type: application/json`. `Content-Disposition: attachment; filename="audit-{gameId}-{timestamp}.json"`.
+- **CSV**: stable column order (`timestamp,type,source_surface,actor_type,actor_id,actor_display_name,actor_device_id,team_id,team_name,base_id,base_name,challenge_id,challenge_title,message,operator_reason,archived`). RFC-4180-style escape — fields containing comma, double-quote, carriage return, or line feed are quoted, embedded quotes are doubled. Row terminator is `\r\n`. `Content-Type: text/csv; charset=utf-8`. `Content-Disposition: attachment; filename="audit-{gameId}-{timestamp}.csv"`.
+
+Both formats return the same rows in the same chronological order (`timestamp ASC`). CSV parsers should read the header row to tolerate future column additions at the tail.
+
+### Use cases
+
+1. **Wrong-team incident review** — filter by `playerId=<player>` + `includeArchived=true` to see every action that player produced, on any team, in any window of the game's lifetime. This is the pilot's original unanswerable question.
+2. **Operator accountability** — filter by `operatorId=<user>` to review every operator rescue, review decision, and override the operator made during the event.
+3. **Temporal incident window** — filter by `from`/`to` around the reported problem to avoid dumping the entire game log into the reviewer's lap.
+4. **Rescue audit** — filter by `actionType=operator_override` or `sourceSurface=operator_rescue` to see only the operator-driven state changes.
+5. **Post-event data handoff** — export in CSV for analysis in spreadsheets or data pipelines; the stable column order makes the file scriptable.
+
+### Cross-references
+
+- Phase 1 audit substrate and archive contract: §4a.
+- Phase 2 rescue actions and operator_override event emission: §4b.
+- V36 migration: `backend/src/main/resources/db/migration/V36__audit_foundation.sql`.
+- V37 migration (base_unlock_overrides): `backend/src/main/resources/db/migration/V37__base_unlock_overrides.sql`.
+- Service: `backend/src/main/java/com/prayer/pointfinder/service/AuditExportService.java`.
+- Repository pushdown query: `ActivityEventRepository.findForAuditExport`.
+- API reference: §10a (wire contract, query parameters, example JSON and CSV).
+
+---
+
 ## 5. Team Variables
 
 ### Purpose

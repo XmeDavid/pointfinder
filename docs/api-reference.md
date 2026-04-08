@@ -765,6 +765,157 @@ Supported content types: `video/mp4`, `video/quicktime`, `image/jpeg`, `image/pn
 
 ---
 
+## 10a. Activity Audit Export
+
+**Base path**: `/api/games/:gameId`
+**Auth**: `ROLE_ADMIN` or `ROLE_OPERATOR` (operator must have access to the game)
+**Spec**: `docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md` — P1 Phase 3
+
+Reviewer-facing chronological export of every audited action on a game. Reads the activity-events stream as the canonical spine and enriches each row with its Phase 2 operator-reason field (for mark-completed, unlock-override, and manual check-in rescues). Built on the Phase 1 actor snapshots so the export survives player/operator account removal.
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/games/:gameId/audit-export` | Operator | Chronological audit export (JSON or CSV) |
+
+### Query parameters (all optional)
+
+| Parameter | Type | Default | Semantics |
+|---|---|---|---|
+| `format` | `json` \| `csv` | `json` | Output format. Both emit `Content-Disposition: attachment; filename="audit-{gameId}-{timestamp}.{ext}"`. |
+| `from` | ISO-8601 instant | unset | Inclusive lower bound on the event timestamp. |
+| `to` | ISO-8601 instant | unset | Exclusive upper bound on the event timestamp. |
+| `teamId` | UUID | unset | Only return events whose target team matches. |
+| `playerId` | UUID | unset | Only return events whose player actor FK matches. |
+| `operatorId` | UUID | unset | Only return events whose operator actor FK matches. |
+| `actionType` | string | unset | Single value or comma-separated list. Allowed: `check_in`, `submission`, `approval`, `rejection`, `operator_override`, `team_join`, `team_switch`. |
+| `sourceSurface` | string | unset | Exact match on the V36 `source_surface` column. Allowed values: `player_app`, `web_admin`, `operator_rescue`. |
+| `includeArchived` | boolean | `false` | When `true`, include rows preserved by a `resetProgress=true` reset. Default hides them so the default export matches the live state. |
+
+Validation errors:
+
+- `400 AUDIT_EXPORT_INVALID_FORMAT` — `format` is not `json` or `csv`.
+- `400 AUDIT_EXPORT_INVALID_TIMESTAMP` — `from` or `to` is not a valid ISO-8601 instant.
+- `400 AUDIT_EXPORT_INVALID_RANGE` — `to` is not strictly after `from`.
+- `400 AUDIT_EXPORT_INVALID_ACTION_TYPE` — `actionType` list contains an unknown action.
+- `401 Unauthorized` — no JWT.
+- `403 Forbidden` — operator does not have access to the game.
+- `404 Not Found` — game does not exist.
+
+### JSON response shape
+
+The JSON form is a single top-level array. Each element has the uniform `AuditEntryDto` envelope:
+
+```json
+[
+  {
+    "id": "11111111-1111-1111-1111-111111111111",
+    "timestamp": "2026-03-15T14:30:00Z",
+    "type": "check_in",
+    "sourceSurface": "player_app",
+    "actor": {
+      "type": "player",
+      "id": "22222222-2222-2222-2222-222222222222",
+      "displayName": "Scout Alpha",
+      "deviceId": "device-abc-123"
+    },
+    "target": {
+      "team": { "id": "33333333-3333-3333-3333-333333333333", "name": "Red Falcons" },
+      "base": { "id": "44444444-4444-4444-4444-444444444444", "name": "Clock Tower" },
+      "challenge": null
+    },
+    "details": {
+      "message": "Team Red Falcons checked in at Clock Tower",
+      "operatorReason": null
+    },
+    "archived": false
+  },
+  {
+    "id": "55555555-5555-5555-5555-555555555555",
+    "timestamp": "2026-03-15T14:45:10Z",
+    "type": "operator_override",
+    "sourceSurface": "operator_rescue",
+    "actor": {
+      "type": "operator",
+      "id": "66666666-6666-6666-6666-666666666666",
+      "displayName": "Operator Sam",
+      "deviceId": null
+    },
+    "target": {
+      "team": { "id": "33333333-3333-3333-3333-333333333333", "name": "Red Falcons" },
+      "base": { "id": "44444444-4444-4444-4444-444444444444", "name": "Clock Tower" },
+      "challenge": { "id": "77777777-7777-7777-7777-777777777777", "title": "Bell-ringing riddle" }
+    },
+    "details": {
+      "message": "Operator Sam marked Clock Tower completed",
+      "operatorReason": "Phone died mid-submission"
+    },
+    "archived": false
+  }
+]
+```
+
+- `actor.type` is always `player`, `operator`, or `system`. The `system` fallback is used only for pre-V36 legacy rows where no actor FK was ever captured.
+- `actor.displayName` is the immutable V36 snapshot when available; for pre-V36 legacy rows the service falls back to the live join on `players.display_name` / `users.name`, and finally to the literal string `"Unknown"`.
+- `actor.deviceId` is populated for player actors only; always `null` for operators and `system`.
+- `details.operatorReason` is the Phase 2 rescue explanation copied from `submissions.operator_reason` or `check_ins.operator_reason`; `null` for organic player actions.
+- `archived` is `true` only when `includeArchived=true` was requested AND the row was preserved by a `resetProgress=true` reset.
+
+Response headers:
+
+```
+Content-Type: application/json
+Content-Disposition: attachment; filename="audit-<gameId>-<isoTimestamp>.json"
+```
+
+### CSV response shape
+
+The CSV form uses a stable column order documented below. Parsers should read the header row to tolerate future additions appended to the tail. Row terminator is `\r\n` (RFC-4180). Fields containing comma, double-quote, carriage return, or line feed are double-quoted and embedded quotes are escaped by doubling.
+
+Column order:
+
+```
+timestamp,type,source_surface,actor_type,actor_id,actor_display_name,actor_device_id,team_id,team_name,base_id,base_name,challenge_id,challenge_title,message,operator_reason,archived
+```
+
+Example rows (header + two entries):
+
+```csv
+timestamp,type,source_surface,actor_type,actor_id,actor_display_name,actor_device_id,team_id,team_name,base_id,base_name,challenge_id,challenge_title,message,operator_reason,archived
+2026-03-15T14:30:00Z,check_in,player_app,player,22222222-2222-2222-2222-222222222222,Scout Alpha,device-abc-123,33333333-3333-3333-3333-333333333333,Red Falcons,44444444-4444-4444-4444-444444444444,Clock Tower,,"Team Red Falcons checked in at Clock Tower",,false
+2026-03-15T14:45:10Z,operator_override,operator_rescue,operator,66666666-6666-6666-6666-666666666666,Operator Sam,,33333333-3333-3333-3333-333333333333,Red Falcons,44444444-4444-4444-4444-444444444444,Clock Tower,77777777-7777-7777-7777-777777777777,Bell-ringing riddle,"Operator Sam marked Clock Tower completed",Phone died mid-submission,false
+```
+
+A player display name like `Scout "Nickname", Jr.` is quoted and escaped as `"Scout ""Nickname"", Jr."`.
+
+Response headers:
+
+```
+Content-Type: text/csv; charset=utf-8
+Content-Disposition: attachment; filename="audit-<gameId>-<isoTimestamp>.csv"
+```
+
+### Example requests
+
+```bash
+# Full export (default JSON, hides archived rows)
+curl -H "Authorization: Bearer $TOKEN" \
+  https://pointfinder.pt/api/games/$GAME_ID/audit-export
+
+# CSV for the last two hours of one team
+curl -H "Authorization: Bearer $TOKEN" \
+  "https://pointfinder.pt/api/games/$GAME_ID/audit-export?format=csv&from=2026-03-15T12:00:00Z&to=2026-03-15T14:00:00Z&teamId=$TEAM_ID"
+
+# Every operator action for incident review (includes archived rows)
+curl -H "Authorization: Bearer $TOKEN" \
+  "https://pointfinder.pt/api/games/$GAME_ID/audit-export?operatorId=$OPERATOR_ID&actionType=operator_override,approval,rejection&includeArchived=true"
+
+# "What did this player do before they got moved to the right team?"
+curl -H "Authorization: Bearer $TOKEN" \
+  "https://pointfinder.pt/api/games/$GAME_ID/audit-export?playerId=$PLAYER_ID&includeArchived=true"
+```
+
+---
+
 ## 11. Broadcast (Public)
 
 **Base path**: `/api/broadcast`

@@ -1,11 +1,14 @@
 package com.prayer.pointfinder.repository;
 
 import com.prayer.pointfinder.entity.ActivityEvent;
+import com.prayer.pointfinder.entity.ActivityEventType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -70,4 +73,71 @@ public interface ActivityEventRepository extends JpaRepository<ActivityEvent, UU
             "WHERE ae.game.id = :gameId " +
             "ORDER BY ae.timestamp ASC")
     List<ActivityEvent> findByGameIdIncludingArchived(@Param("gameId") UUID gameId);
+
+    /**
+     * SQL-pushdown audit export read used by {@code AuditExportService}.
+     *
+     * <p>Every filter is optional; the caller passes {@code null} for any
+     * parameter it does not want to apply. Each {@code WHERE} clause is
+     * wrapped with a {@code :param IS NULL} guard so JPQL short-circuits the
+     * check when the caller is not filtering on that criterion. This keeps
+     * the service one round-trip without forcing in-memory post-filtering.
+     *
+     * <p>The {@code includeArchived} flag controls whether archived rows are
+     * returned. When {@code false} (the default for the operator-facing
+     * export), archived rows are filtered out at the SQL level. When {@code
+     * true} the query reads the full history including rows preserved by a
+     * {@code resetProgress=true} reset. Either way, rows are ordered
+     * chronologically ascending so the export reads like a linear timeline.
+     *
+     * <p>Filter semantics:
+     *
+     * <ul>
+     *   <li>{@code gameId} — always required, scopes the read to one game.</li>
+     *   <li>{@code from} — inclusive lower bound on {@code timestamp}.</li>
+     *   <li>{@code to} — exclusive upper bound on {@code timestamp}.</li>
+     *   <li>{@code teamId} — match events whose target team is this team.</li>
+     *   <li>{@code playerId} — match events whose player actor FK is this
+     *       player. Does NOT search submission {@code submittedByPlayer} joins;
+     *       the activity event stream is the canonical audit spine and every
+     *       player-initiated action already emits an event with
+     *       {@code actor_player_id} set by Phase 1.</li>
+     *   <li>{@code operatorId} — match events whose operator actor FK is this
+     *       operator. Covers operator review decisions and the Phase 2 rescue
+     *       endpoints.</li>
+     *   <li>{@code types} — match events whose type is in this set. Null means
+     *       no type filter; pass the full set for the same effect.</li>
+     *   <li>{@code sourceSurface} — exact string match against the V36
+     *       {@code source_surface} column. Null means no filter.</li>
+     * </ul>
+     *
+     * <p>Reserved for Phase 3.
+     */
+    @Query("SELECT ae FROM ActivityEvent ae " +
+            "JOIN FETCH ae.game " +
+            "JOIN FETCH ae.team " +
+            "LEFT JOIN FETCH ae.base " +
+            "LEFT JOIN FETCH ae.challenge " +
+            "LEFT JOIN FETCH ae.actorPlayer " +
+            "LEFT JOIN FETCH ae.actorOperatorUser " +
+            "WHERE ae.game.id = :gameId " +
+            "AND (:includeArchived = true OR ae.archived = false) " +
+            "AND (:from IS NULL OR ae.timestamp >= :from) " +
+            "AND (:to IS NULL OR ae.timestamp < :to) " +
+            "AND (:teamId IS NULL OR ae.team.id = :teamId) " +
+            "AND (:playerId IS NULL OR ae.actorPlayer.id = :playerId) " +
+            "AND (:operatorId IS NULL OR ae.actorOperatorUser.id = :operatorId) " +
+            "AND (:types IS NULL OR ae.type IN :types) " +
+            "AND (:sourceSurface IS NULL OR ae.sourceSurface = :sourceSurface) " +
+            "ORDER BY ae.timestamp ASC")
+    List<ActivityEvent> findForAuditExport(
+            @Param("gameId") UUID gameId,
+            @Param("from") Instant from,
+            @Param("to") Instant to,
+            @Param("teamId") UUID teamId,
+            @Param("playerId") UUID playerId,
+            @Param("operatorId") UUID operatorId,
+            @Param("types") Collection<ActivityEventType> types,
+            @Param("sourceSurface") String sourceSurface,
+            @Param("includeArchived") boolean includeArchived);
 }
