@@ -9,17 +9,12 @@ export interface CreateBaseDto {
   fixedChallengeId?: string;
   hidden?: boolean;
   /**
-   * Operator-only free-text tags, max 20 entries (P1 Phase 4 W3).
+   * Operator-only game-scoped tag IDs (Wave B unification).
    * Never exposed to players — see backend `PlayerBaseResponse` for
    * the player-safe DTO and `PlayerControllerTest` for the enforcing
    * assertion.
    */
-  tags?: string[];
-  /**
-   * Operator-only fixed-palette color, 7-char hex. Same privacy
-   * contract as `tags`.
-   */
-  color?: string;
+  tagIds?: string[];
 }
 
 export const basesApi = {

@@ -46,7 +46,8 @@
     "pickLinkedChallenge": "Pick a linked challenge",
     "pickLinkedBase": "Pick a linked base",
     "discardChangesWarning": "Discard unsaved changes and jump?",
-    "discard": "Discard"
+    "discard": "Discard",
+    "manageTags": "Manage Tags"
   },
   "auth": {
     "signIn": "Sign In",
@@ -814,6 +815,16 @@
     "remove": "Remove tag {{tag}}",
     "limitReached": "Maximum {{max}} tags reached",
     "hint": "{{count}}/{{max}} tags"
+  },
+  "manageTagsDialog": {
+    "title": "Manage Tags",
+    "noTags": "No tags yet. Create your first tag below.",
+    "labelPlaceholder": "Tag label",
+    "addNew": "+ Add tag",
+    "deleteConfirm": "Are you sure you want to delete this tag? It will be removed from all bases and challenges.",
+    "duplicateLabelError": "A tag with that label already exists.",
+    "capExceeded": "Maximum number of tags reached.",
+    "deleteInUseError": "This tag is still in use and cannot be deleted."
   },
   "filterBar": {
     "ariaLabel": "Filter items",

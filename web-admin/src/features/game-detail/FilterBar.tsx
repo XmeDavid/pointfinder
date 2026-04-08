@@ -2,33 +2,34 @@
  * Shared FilterBar component used by BasesPage, ChallengesPage, and
  * BasesAndChallengesView.
  *
- * Receives the return value of useTagColorFilter (or a compatible shape)
- * and renders the sticky filter bar.
+ * Wave B update: filter chips now show tag label + tag color (background).
+ * The color swatch dimension has been removed — color is a property of the
+ * tag entity, so filtering by color is redundant with filtering by tag.
+ *
+ * Receives the return value of useTagColorFilter plus a resolvedTags array
+ * (Tag objects corresponding to allTagIds) for chip rendering.
  *
  * UX notes:
  *   - bg-muted/40 background with SlidersHorizontal icon for discoverability.
  *   - aria-pressed on every chip for a11y.
- *   - Color swatches use ring-2 ring-primary ring-offset-1 for active state
- *     (no layout shift from scale-110).
+ *   - Active chips use the tag's own color as background (with readable text).
  *   - role="search" + aria-label on the bar container.
- *   - Visual separator (divider) between tag chips and color swatches.
- *   - Clear button at end of row, labelled "Clear" (concise).
  */
 
 import { SlidersHorizontal, Tag, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import type { Tag as TagType } from "@/types";
 
 export interface FilterBarState {
-  allTags: string[];
-  allColors: string[];
+  allTagIds: string[];
   tagCounts: Map<string, number>;
-  selectedTags: string[];
-  selectedColors: string[];
-  toggleTag: (tag: string) => void;
-  toggleColor: (color: string) => void;
+  selectedTagIds: string[];
+  toggleTag: (tagId: string) => void;
   clearFilters: () => void;
   hasActive: boolean;
   isVisible: boolean;
+  /** Resolved Tag objects for allTagIds — used for chip label + color. */
+  resolvedTags: TagType[];
 }
 
 interface FilterBarProps extends FilterBarState {
@@ -37,16 +38,14 @@ interface FilterBarProps extends FilterBarState {
 }
 
 export function FilterBar({
-  allTags,
-  allColors,
+  allTagIds,
   tagCounts,
-  selectedTags,
-  selectedColors,
+  selectedTagIds,
   toggleTag,
-  toggleColor,
   clearFilters,
   hasActive,
   isVisible,
+  resolvedTags,
 }: FilterBarProps) {
   const { t } = useTranslation();
 
@@ -64,59 +63,43 @@ export function FilterBar({
         {t("filterBar.label")}
       </span>
 
-      {/* Tag chips */}
-      {allTags.map((tag) => {
-        const active = selectedTags.includes(tag);
+      {/* Tag chips — label from resolved Tag, background from tag color when active */}
+      {allTagIds.map((tagId) => {
+        const resolved = resolvedTags.find((t) => t.id === tagId);
+        const label = resolved?.label ?? tagId;
+        const tagColor = resolved?.color;
+        const active = selectedTagIds.includes(tagId);
+
         return (
           <button
-            key={tag}
+            key={tagId}
             type="button"
             aria-pressed={active}
-            onClick={() => toggleTag(tag)}
+            onClick={() => toggleTag(tagId)}
             className={[
               "inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
               active
-                ? "bg-primary text-primary-foreground border-primary"
+                ? "text-white border-transparent"
                 : "bg-background text-foreground border-border hover:bg-muted",
             ].join(" ")}
-            data-testid={`filter-tag-${tag}`}
+            style={active && tagColor ? { backgroundColor: tagColor, borderColor: tagColor } : undefined}
+            data-testid={`filter-tag-${tagId}`}
           >
+            {tagColor && !active && (
+              <span
+                className="h-2 w-2 rounded-full shrink-0"
+                style={{ backgroundColor: tagColor }}
+                aria-hidden="true"
+              />
+            )}
             <Tag className="h-3 w-3" aria-hidden="true" />
-            {tag}
-            {tagCounts.has(tag) && (
+            {label}
+            {tagCounts.has(tagId) && (
               <span className={active ? "opacity-70" : "text-muted-foreground"}>
-                ({tagCounts.get(tag)})
+                ({tagCounts.get(tagId)})
               </span>
             )}
           </button>
-        );
-      })}
-
-      {/* Separator between tags and colors (only when both exist) */}
-      {allTags.length > 0 && allColors.length > 0 && (
-        <span className="h-4 w-px bg-border shrink-0" aria-hidden="true" />
-      )}
-
-      {/* Color swatches */}
-      {allColors.map((color) => {
-        const active = selectedColors.includes(color);
-        return (
-          <button
-            key={color}
-            type="button"
-            aria-pressed={active}
-            aria-label={`${t("filterBar.filterByColor")}: ${color}`}
-            title={color}
-            onClick={() => toggleColor(color)}
-            className={[
-              "h-6 w-6 rounded-full border-2 transition-all",
-              active
-                ? "border-primary ring-2 ring-primary ring-offset-1"
-                : "border-border hover:border-foreground",
-            ].join(" ")}
-            style={{ backgroundColor: color }}
-            data-testid={`filter-color-${color}`}
-          />
         );
       })}
 

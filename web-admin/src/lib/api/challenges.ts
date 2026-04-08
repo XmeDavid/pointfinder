@@ -22,15 +22,10 @@ export interface CreateChallengeDto {
    */
   operatorNotes?: string;
   /**
-   * Operator-only free-text tags, max 20 entries (P1 Phase 4 W3).
+   * Operator-only game-scoped tag IDs (Wave B unification).
    * Same privacy contract as `operatorNotes`.
    */
-  tags?: string[];
-  /**
-   * Operator-only fixed-palette color, 7-char hex. Same privacy
-   * contract as `operatorNotes`.
-   */
-  color?: string;
+  tagIds?: string[];
 }
 
 export const challengesApi = {

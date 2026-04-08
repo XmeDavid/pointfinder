@@ -10,6 +10,21 @@ export interface User {
 
 export type GameStatus = "setup" | "live" | "ended";
 
+/**
+ * Game-scoped tag with a baked-in color.
+ * Operator-only — never exposed to players.
+ * Mirrors backend TagResponse DTO.
+ */
+export interface Tag {
+  id: string;
+  gameId: string;
+  label: string;
+  /** 7-char hex, e.g. "#3b82f6" */
+  color: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Game {
   id: string;
   name: string;
@@ -24,6 +39,12 @@ export interface Game {
   broadcastCode: string | null;
   tileSource: string;
   unlockTrigger: string;
+  /**
+   * Game-scoped tag vocabulary. Operator-only.
+   * Populated by GET /api/games/{gameId}/tags — NOT embedded in GameResponse
+   * today, so this is filled by a separate query in useGameTagsMap.
+   */
+  tags?: Tag[];
 }
 
 export interface Base {
@@ -37,20 +58,13 @@ export interface Base {
   hidden: boolean;
   fixedChallengeId?: string;
   /**
-   * Operator-only free-text tags (P1 Phase 4 W3). Only present on the
-   * operator-facing `BaseResponse` DTO from `GET /api/games/{gameId}/bases`.
-   * The player-facing `PlayerBaseResponse` served via
-   * `GET /api/player/games/{gameId}/bases` and
-   * `GET /api/player/games/{gameId}/data` intentionally omits this field,
-   * and a backend test enforces the absence.
+   * Operator-only game-scoped tag IDs (Wave B unification). Resolved against
+   * the game's tag vocabulary via `useGameTagsMap`. Only present on the
+   * operator-facing `BaseResponse` DTO — the player-facing
+   * `PlayerBaseResponse` intentionally omits this field, and a backend test
+   * enforces the absence.
    */
-  tags?: string[];
-  /**
-   * Operator-only fixed-palette color (7-char hex, e.g. `#3b82f6`).
-   * Same privacy contract as `tags` — never returned on player-facing
-   * endpoints.
-   */
-  color?: string;
+  tagIds?: string[];
 }
 
 export type AnswerType = "text" | "file" | "none";
@@ -78,16 +92,11 @@ export interface Challenge {
    */
   operatorNotes?: string;
   /**
-   * Operator-only free-text tags (P1 Phase 4 W3). Same privacy contract
-   * as `operatorNotes` — never returned on player-facing endpoints.
+   * Operator-only game-scoped tag IDs (Wave B unification). Resolved against
+   * the game's tag vocabulary via `useGameTagsMap`. Same privacy contract as
+   * `operatorNotes` — never returned on player-facing endpoints.
    */
-  tags?: string[];
-  /**
-   * Operator-only fixed-palette color (7-char hex). Same privacy
-   * contract as `operatorNotes` — never returned on player-facing
-   * endpoints.
-   */
-  color?: string;
+  tagIds?: string[];
 }
 
 export interface Team {

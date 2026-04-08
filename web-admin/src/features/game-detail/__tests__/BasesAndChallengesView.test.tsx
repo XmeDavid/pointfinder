@@ -36,6 +36,15 @@ vi.mock("@/lib/api/games", () => ({
   },
 }));
 
+vi.mock("@/lib/api/tags", () => ({
+  tagsApi: {
+    listByGame: vi.fn().mockResolvedValue([]),
+    createTag: vi.fn(),
+    updateTag: vi.fn(),
+    deleteTag: vi.fn(),
+  },
+}));
+
 // Stub the lazy-loaded heavy components so tests don't need a real MapLibre/Tiptap
 // environment. The stubs render immediately (no async chunk boundary) so tests can
 // verify that the components are rendered once the dialog is open, and that the
@@ -68,6 +77,16 @@ vi.mock("@/components/common/RichTextEditor", () => ({
 
 import { basesApi } from "@/lib/api/bases";
 import { challengesApi } from "@/lib/api/challenges";
+import { tagsApi } from "@/lib/api/tags";
+
+// ---------------------------------------------------------------------------
+// Stable tag UUIDs used across tests
+// ---------------------------------------------------------------------------
+const TAG_MORNING = "tag-uuid-morning";
+const TAG_STAFFED = "tag-uuid-staffed";
+const TAG_AUTONOMOUS = "tag-uuid-autonomous";
+const TAG_OUTDOOR = "tag-uuid-outdoor";
+const TAG_BLUE = "tag-uuid-blue";
 
 // --------------------------------------------------------------------------
 // Fixtures
@@ -372,9 +391,12 @@ describe("BasesAndChallengesView", () => {
   });
 
   // W3 — color stripe and tag chips on PairCard
-  it("renders the color stripe when the base has a color", async () => {
+  it("renders the color stripe when the base has a tagId whose tag has a color", async () => {
+    vi.mocked(tagsApi.listByGame).mockResolvedValue([
+      { id: TAG_BLUE, gameId: "g1", label: "blue-tag", color: "#3b82f6", createdAt: "", updatedAt: "" },
+    ]);
     vi.mocked(basesApi.listByGame).mockResolvedValue([
-      makeBase("b1", { fixedChallengeId: "c1", color: "#3b82f6" }),
+      makeBase("b1", { fixedChallengeId: "c1", tagIds: [TAG_BLUE] }),
     ]);
     vi.mocked(challengesApi.listByGame).mockResolvedValue([makeChallenge("c1")]);
 
@@ -391,24 +413,32 @@ describe("BasesAndChallengesView", () => {
   });
 
   // Filter bar — Fix 3: BasesAndChallengesView must have a filter bar.
-  it("renders the filter bar when pairs have tags", async () => {
+  it("renders the filter bar when pairs have tagIds", async () => {
+    vi.mocked(tagsApi.listByGame).mockResolvedValue([
+      { id: TAG_MORNING, gameId: "g1", label: "morning", color: "#f59e0b", createdAt: "", updatedAt: "" },
+      { id: TAG_STAFFED, gameId: "g1", label: "staffed", color: "#10b981", createdAt: "", updatedAt: "" },
+    ]);
     vi.mocked(basesApi.listByGame).mockResolvedValue([
-      makeBase("b1", { fixedChallengeId: "c1", tags: ["morning", "staffed"] }),
+      makeBase("b1", { fixedChallengeId: "c1", tagIds: [TAG_MORNING, TAG_STAFFED] }),
     ]);
     vi.mocked(challengesApi.listByGame).mockResolvedValue([makeChallenge("c1")]);
 
     renderView();
 
     await waitFor(() => {
-      expect(screen.getByTestId("filter-tag-morning")).toBeTruthy();
+      expect(screen.getByTestId(`filter-tag-${TAG_MORNING}`)).toBeTruthy();
     });
-    expect(screen.getByTestId("filter-tag-staffed")).toBeTruthy();
+    expect(screen.getByTestId(`filter-tag-${TAG_STAFFED}`)).toBeTruthy();
   });
 
-  it("filter bar: clicking a tag chip filters pairs to those matching ALL selected tags (AND semantics)", async () => {
+  it("filter bar: clicking a tag chip filters pairs to those matching ALL selected tagIds (AND semantics)", async () => {
+    vi.mocked(tagsApi.listByGame).mockResolvedValue([
+      { id: TAG_MORNING, gameId: "g1", label: "morning", color: "#f59e0b", createdAt: "", updatedAt: "" },
+      { id: TAG_STAFFED, gameId: "g1", label: "staffed", color: "#10b981", createdAt: "", updatedAt: "" },
+    ]);
     vi.mocked(basesApi.listByGame).mockResolvedValue([
-      makeBase("b1", { fixedChallengeId: "c1", tags: ["morning", "staffed"] }),
-      makeBase("b2", { fixedChallengeId: "c2", tags: ["morning"] }),
+      makeBase("b1", { fixedChallengeId: "c1", tagIds: [TAG_MORNING, TAG_STAFFED] }),
+      makeBase("b2", { fixedChallengeId: "c2", tagIds: [TAG_MORNING] }),
     ]);
     vi.mocked(challengesApi.listByGame).mockResolvedValue([
       makeChallenge("c1", { title: "Both tags" }),
@@ -418,52 +448,60 @@ describe("BasesAndChallengesView", () => {
     renderView();
 
     await waitFor(() => {
-      expect(screen.getByTestId("filter-tag-morning")).toBeTruthy();
+      expect(screen.getByTestId(`filter-tag-${TAG_MORNING}`)).toBeTruthy();
     });
 
     // Select "morning" — both pairs visible
-    fireEvent.click(screen.getByTestId("filter-tag-morning"));
+    fireEvent.click(screen.getByTestId(`filter-tag-${TAG_MORNING}`));
     await waitFor(() => {
       expect(screen.getByTestId("pair-card-b1")).toBeTruthy();
       expect(screen.getByTestId("pair-card-b2")).toBeTruthy();
     });
 
     // Also select "staffed" — AND semantics: only b1 should remain
-    fireEvent.click(screen.getByTestId("filter-tag-staffed"));
+    fireEvent.click(screen.getByTestId(`filter-tag-${TAG_STAFFED}`));
     await waitFor(() => {
       expect(screen.getByTestId("pair-card-b1")).toBeTruthy();
     });
     expect(screen.queryByTestId("pair-card-b2")).toBeNull();
   });
 
-  it("filter bar: pair matches if EITHER base OR challenge tags satisfy the filter", async () => {
+  it("filter bar: pair matches if EITHER base OR challenge tagIds satisfy the filter", async () => {
+    vi.mocked(tagsApi.listByGame).mockResolvedValue([
+      { id: TAG_OUTDOOR, gameId: "g1", label: "outdoor", color: "#6366f1", createdAt: "", updatedAt: "" },
+    ]);
     vi.mocked(basesApi.listByGame).mockResolvedValue([
-      // base has no tags, challenge has "outdoor"
+      // base has no tagIds, challenge has TAG_OUTDOOR
       makeBase("b1", { fixedChallengeId: "c1" }),
     ]);
     vi.mocked(challengesApi.listByGame).mockResolvedValue([
-      makeChallenge("c1", { title: "Outdoor challenge", tags: ["outdoor"] }),
+      makeChallenge("c1", { title: "Outdoor challenge", tagIds: [TAG_OUTDOOR] }),
     ]);
 
     renderView();
 
     await waitFor(() => {
-      expect(screen.getByTestId("filter-tag-outdoor")).toBeTruthy();
+      expect(screen.getByTestId(`filter-tag-${TAG_OUTDOOR}`)).toBeTruthy();
     });
 
     // Clicking "outdoor" should still show pair-card-b1 because the challenge matches
-    fireEvent.click(screen.getByTestId("filter-tag-outdoor"));
+    fireEvent.click(screen.getByTestId(`filter-tag-${TAG_OUTDOOR}`));
     await waitFor(() => {
       expect(screen.getByTestId("pair-card-b1")).toBeTruthy();
     });
   });
 
-  it("renders tag chips for both base tags and challenge tags on a PairCard", async () => {
+  it("renders tag chips for both base tagIds and challenge tagIds on a PairCard", async () => {
+    vi.mocked(tagsApi.listByGame).mockResolvedValue([
+      { id: TAG_AUTONOMOUS, gameId: "g1", label: "autonomous", color: "#3b82f6", createdAt: "", updatedAt: "" },
+      { id: TAG_MORNING, gameId: "g1", label: "morning", color: "#f59e0b", createdAt: "", updatedAt: "" },
+      { id: TAG_OUTDOOR, gameId: "g1", label: "outdoor", color: "#6366f1", createdAt: "", updatedAt: "" },
+    ]);
     vi.mocked(basesApi.listByGame).mockResolvedValue([
-      makeBase("b1", { fixedChallengeId: "c1", tags: ["autonomous", "morning"] }),
+      makeBase("b1", { fixedChallengeId: "c1", tagIds: [TAG_AUTONOMOUS, TAG_MORNING] }),
     ]);
     vi.mocked(challengesApi.listByGame).mockResolvedValue([
-      makeChallenge("c1", { tags: ["outdoor"] }),
+      makeChallenge("c1", { tagIds: [TAG_OUTDOOR] }),
     ]);
 
     renderView();

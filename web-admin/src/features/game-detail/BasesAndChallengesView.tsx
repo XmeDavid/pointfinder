@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback, lazy, Suspense } from "react";
 import { Link as RouterLink, useParams } from "react-router-dom";
-import { useTagColorFilter } from "./useTagColorFilter";
+import { useTagColorFilter, resolveTagsForFilter } from "./useTagColorFilter";
 import { FilterBar } from "./FilterBar";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
@@ -18,7 +18,8 @@ import {
   CheckCircle,
   Eye,
   Info,
-  Tag,
+  Tag as TagIcon,
+  Tags,
   StickyNote,
   Plus,
   Minus,
@@ -39,9 +40,9 @@ import { gamesApi } from "@/lib/api/games";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/useToast";
-import { ColorPicker } from "@/components/ColorPicker";
-import { TagInput } from "@/components/TagInput";
-import type { Base } from "@/types";
+import { ManageTagsDialog } from "@/components/ManageTagsDialog";
+import { useGameTagsMap } from "./useGameTagsMap";
+import type { Base, Tag } from "@/types";
 import {
   aggregateBasesAndChallenges,
   type BaseChallengePair,
@@ -72,11 +73,9 @@ interface UnifiedForm {
   baseLat: number;
   baseLng: number;
   baseHidden: boolean;
-  // P1 Phase 4 W3 — operator-only tags and color on the base.
-  // Never surfaced to players; see PlayerBaseResponse and
-  // PlayerControllerTest for the enforcing privacy assertions.
-  baseTags: string[] | undefined;
-  baseColor: string | undefined;
+  // Wave B — operator-only tag IDs on the base.
+  // Never surfaced to players; see PlayerBaseResponse.
+  baseTagIds: string[] | undefined;
   // challenge fields
   challengeTitle: string;
   challengeDescription: string;
@@ -90,10 +89,9 @@ interface UnifiedForm {
   challengeCorrectAnswer: string[];
   // P1 Phase 4 W2 — operator-only notes. Never surfaced to players.
   challengeOperatorNotes: string;
-  // P1 Phase 4 W3 — operator-only tags and color on the challenge.
+  // Wave B — operator-only tag IDs on the challenge.
   // Same privacy contract as challengeOperatorNotes.
-  challengeTags: string[] | undefined;
-  challengeColor: string | undefined;
+  challengeTagIds: string[] | undefined;
 }
 
 function formFromPair(pair: BaseChallengePair): UnifiedForm {
@@ -103,8 +101,7 @@ function formFromPair(pair: BaseChallengePair): UnifiedForm {
     baseLat: pair.base.lat,
     baseLng: pair.base.lng,
     baseHidden: pair.base.hidden,
-    baseTags: pair.base.tags,
-    baseColor: pair.base.color,
+    baseTagIds: pair.base.tagIds,
     challengeTitle: pair.challenge.title,
     challengeDescription: pair.challenge.description,
     challengeContent: pair.challenge.content,
@@ -116,8 +113,7 @@ function formFromPair(pair: BaseChallengePair): UnifiedForm {
     challengeAutoValidate: pair.challenge.autoValidate,
     challengeCorrectAnswer: pair.challenge.correctAnswer ?? [],
     challengeOperatorNotes: pair.challenge.operatorNotes ?? "",
-    challengeTags: pair.challenge.tags,
-    challengeColor: pair.challenge.color,
+    challengeTagIds: pair.challenge.tagIds,
   };
 }
 
@@ -131,11 +127,8 @@ function baseDtoFromForm(form: UnifiedForm, pair: BaseChallengePair): Partial<Cr
     // Keep the existing fixed-challenge pairing intact; this dialog doesn't
     // change the link between base and challenge, only their contents.
     fixedChallengeId: pair.base.fixedChallengeId,
-    // P1 Phase 4 W3 — operator-only tags and color. Send undefined when
-    // the operator clears the field so the backend normalizer collapses
-    // the column back to NULL.
-    tags: form.baseTags,
-    color: form.baseColor,
+    // Wave B — operator-only tag IDs.
+    tagIds: form.baseTagIds,
   };
 }
 
@@ -161,11 +154,8 @@ function challengeDtoFromForm(form: UnifiedForm): Partial<CreateChallengeDto> {
   // Operator-only notes: send trimmed value, or explicit empty string to
   // clear previous notes. Backend normalizes blank → null.
   payload.operatorNotes = form.challengeOperatorNotes.trim();
-  // P1 Phase 4 W3 — operator-only tags and color. Send undefined when
-  // the operator clears the field; backend normalizer collapses empty
-  // values to NULL.
-  payload.tags = form.challengeTags;
-  payload.color = form.challengeColor;
+  // Wave B — operator-only tag IDs.
+  payload.tagIds = form.challengeTagIds;
   return payload;
 }
 
@@ -179,11 +169,14 @@ export function BasesAndChallengesView() {
   const { gameId } = useParams<{ gameId: string }>();
   const queryClient = useQueryClient();
 
+  const [manageTagsOpen, setManageTagsOpen] = useState(false);
+
   const { data: game } = useQuery({
     queryKey: ["game", gameId],
     queryFn: () => gamesApi.getById(gameId!),
     enabled: !!gameId,
   });
+  const { tagsMap, tags: gameTags } = useGameTagsMap(gameId);
 
   const { data: bases = [], isLoading: basesLoading } = useQuery({
     queryKey: ["bases", gameId],
@@ -297,19 +290,17 @@ export function BasesAndChallengesView() {
   const isLoading = basesLoading || challengesLoading;
 
   // For the filter bar, the "items" are pairs. A pair matches if EITHER its
-  // base OR its challenge satisfies the tag/color predicates.
-  // We build a synthetic flat representation so the hook can aggregate tags
-  // and colors from both sides, then use a custom matchFn for pair-level logic.
+  // base OR its challenge satisfies the tag predicates.
+  // We build a synthetic flat representation so the hook can aggregate tagIds
+  // from both sides, then use a custom matchFn for pair-level logic.
   const pairFilterItems = useMemo(
     () =>
       aggregate.pairs.map((pair) => ({
-        // Merge tags from both base and challenge for aggregation
-        tags: [
-          ...(pair.base.tags ?? []),
-          ...(pair.challenge.tags ?? []),
+        // Merge tagIds from both base and challenge for aggregation
+        tagIds: [
+          ...(pair.base.tagIds ?? []),
+          ...(pair.challenge.tagIds ?? []),
         ],
-        // Use base color as primary; challenge color as fallback for aggregation
-        color: pair.base.color ?? pair.challenge.color,
         _pair: pair,
       })),
     [aggregate.pairs],
@@ -318,44 +309,35 @@ export function BasesAndChallengesView() {
   const pairMatchFn = useCallback(
     (
       item: (typeof pairFilterItems)[number],
-      selectedTags: string[],
-      selectedColors: string[],
+      selectedTagIds: string[],
     ) => {
       const { base, challenge } = item._pair;
 
-      // Tags AND: base matches if it has ALL selected tags, challenge same —
+      // Tags AND: base matches if it has ALL selected tagIds, challenge same —
       // pair matches if base OR challenge passes
-      const baseTags = (base.tags ?? []).map((t) => t.trim());
-      const challengeTags = (challenge.tags ?? []).map((t) => t.trim());
+      const baseTagIds = base.tagIds ?? [];
+      const challengeTagIds = challenge.tagIds ?? [];
       const tagPass =
-        selectedTags.length === 0 ||
-        selectedTags.every((st) => baseTags.includes(st)) ||
-        selectedTags.every((st) => challengeTags.includes(st));
+        selectedTagIds.length === 0 ||
+        selectedTagIds.every((id) => baseTagIds.includes(id)) ||
+        selectedTagIds.every((id) => challengeTagIds.includes(id));
 
-      // Colors OR: pair matches if base color OR challenge color is selected
-      const colorPass =
-        selectedColors.length === 0 ||
-        (base.color !== undefined && selectedColors.includes(base.color)) ||
-        (challenge.color !== undefined && selectedColors.includes(challenge.color));
-
-      return tagPass && colorPass;
+      return tagPass;
     },
     [],
   );
 
   const {
     filtered: filteredPairItems,
-    allTags: pairAllTags,
-    allColors: pairAllColors,
+    allTagIds: pairAllTagIds,
     tagCounts: pairTagCounts,
-    selectedTags: pairSelectedTags,
-    selectedColors: pairSelectedColors,
+    selectedTagIds: pairSelectedTagIds,
     toggleTag: pairToggleTag,
-    toggleColor: pairToggleColor,
     clearFilters: pairClearFilters,
     hasActive: pairFilterHasActive,
     isVisible: pairFilterIsVisible,
   } = useTagColorFilter(pairFilterItems, "pairs", pairMatchFn);
+  const pairResolvedFilterTags = resolveTagsForFilter(pairAllTagIds, tagsMap);
 
   const filteredPairs = useMemo(
     () => filteredPairItems.map((item) => item._pair),
@@ -413,6 +395,14 @@ export function BasesAndChallengesView() {
             >
               <Link2 className="mr-1 h-4 w-4" /> {t("basesAndChallenges.openInAssignmentsPage")}
             </RouterLink>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setManageTagsOpen(true)}
+              data-testid="manage-tags-btn"
+            >
+              <Tags className="mr-1 h-4 w-4" /> {t("common.manageTags")}
+            </Button>
           </div>
         )}
       </div>
@@ -421,18 +411,16 @@ export function BasesAndChallengesView() {
         <span className="text-xs">{t("basesAndChallenges.aggregateNote")}</span>
       </Alert>
 
-      {/* Sticky filter bar — only shown when pairs have tags/colors */}
+      {/* Sticky filter bar — only shown when pairs have tags */}
       <FilterBar
-        allTags={pairAllTags}
-        allColors={pairAllColors}
+        allTagIds={pairAllTagIds}
         tagCounts={pairTagCounts}
-        selectedTags={pairSelectedTags}
-        selectedColors={pairSelectedColors}
+        selectedTagIds={pairSelectedTagIds}
         toggleTag={pairToggleTag}
-        toggleColor={pairToggleColor}
         clearFilters={pairClearFilters}
         hasActive={pairFilterHasActive}
         isVisible={pairFilterIsVisible}
+        resolvedTags={pairResolvedFilterTags}
       />
 
       {isLoading ? (
@@ -476,6 +464,7 @@ export function BasesAndChallengesView() {
                       key={pair.base.id}
                       pair={pair}
                       onEdit={() => openEdit(pair)}
+                      tagsMap={tagsMap}
                     />
                   ))}
                 </div>
@@ -710,33 +699,27 @@ export function BasesAndChallengesView() {
                   />
                 </div>
                 {/*
-                  P1 Phase 4 W3 — operator-only tags and color on the base.
-                  Never surfaced to players. See PlayerBaseResponse and
-                  PlayerControllerTest for the enforcing privacy assertions.
+                  Wave B — operator-only tag IDs on the base.
+                  Never surfaced to players. See PlayerBaseResponse.
                 */}
                 <div className="space-y-2">
-                  <FormLabel htmlFor="unifiedBaseColor" optional>
-                    {t("bases.colorLabel")}
-                  </FormLabel>
-                  <ColorPicker
-                    value={form.baseColor ?? null}
-                    onChange={(next) =>
-                      setForm((f) => (f ? { ...f, baseColor: next ?? undefined } : f))
+                  <div className="flex items-center justify-between">
+                    <FormLabel optional>{t("bases.tagsLabel")}</FormLabel>
+                    <button
+                      type="button"
+                      onClick={() => setManageTagsOpen(true)}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      {t("common.manageTags")}
+                    </button>
+                  </div>
+                  <PairTagMultiSelect
+                    gameTagIds={form.baseTagIds ?? []}
+                    onChange={(ids) =>
+                      setForm((f) => (f ? { ...f, baseTagIds: ids } : f))
                     }
-                    data-testid="unified-base-color-picker"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <FormLabel htmlFor="unifiedBaseTags" optional>
-                    {t("bases.tagsLabel")}
-                  </FormLabel>
-                  <TagInput
-                    value={form.baseTags}
-                    onChange={(next) =>
-                      setForm((f) => (f ? { ...f, baseTags: next } : f))
-                    }
-                    placeholder={t("bases.tagsPlaceholder")}
-                    data-testid="unified-base-tags-input"
+                    gameTags={gameTags}
+                    testIdPrefix="unified-base"
                   />
                 </div>
               </fieldset>
@@ -986,33 +969,28 @@ export function BasesAndChallengesView() {
                   />
                 </div>
                 {/*
-                  P1 Phase 4 W3 — operator-only tags and color on the
-                  challenge. Same privacy contract as operatorNotes. See
-                  PlayerChallengeResponse and PlayerControllerTest.
+                  Wave B — operator-only tag IDs on the challenge.
+                  Same privacy contract as operatorNotes. See
+                  PlayerChallengeResponse.
                 */}
                 <div className="space-y-2">
-                  <FormLabel htmlFor="unifiedChallengeColor" optional>
-                    {t("challenges.colorLabel")}
-                  </FormLabel>
-                  <ColorPicker
-                    value={form.challengeColor ?? null}
-                    onChange={(next) =>
-                      setForm((f) => (f ? { ...f, challengeColor: next ?? undefined } : f))
+                  <div className="flex items-center justify-between">
+                    <FormLabel optional>{t("challenges.tagsLabel")}</FormLabel>
+                    <button
+                      type="button"
+                      onClick={() => setManageTagsOpen(true)}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      {t("common.manageTags")}
+                    </button>
+                  </div>
+                  <PairTagMultiSelect
+                    gameTagIds={form.challengeTagIds ?? []}
+                    onChange={(ids) =>
+                      setForm((f) => (f ? { ...f, challengeTagIds: ids } : f))
                     }
-                    data-testid="unified-challenge-color-picker"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <FormLabel htmlFor="unifiedChallengeTags" optional>
-                    {t("challenges.tagsLabel")}
-                  </FormLabel>
-                  <TagInput
-                    value={form.challengeTags}
-                    onChange={(next) =>
-                      setForm((f) => (f ? { ...f, challengeTags: next } : f))
-                    }
-                    placeholder={t("challenges.tagsPlaceholder")}
-                    data-testid="unified-challenge-tags-input"
+                    gameTags={gameTags}
+                    testIdPrefix="unified-challenge"
                   />
                 </div>
               </fieldset>
@@ -1033,6 +1011,69 @@ export function BasesAndChallengesView() {
           </DialogContent>
         )}
       </Dialog>
+
+      {/* Manage Tags dialog */}
+      {gameId && (
+        <ManageTagsDialog
+          open={manageTagsOpen}
+          onOpenChange={setManageTagsOpen}
+          gameId={gameId}
+        />
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// PairTagMultiSelect — inline multi-select for game-scoped tags
+// ---------------------------------------------------------------------------
+
+interface PairTagMultiSelectProps {
+  gameTagIds: string[];
+  onChange: (ids: string[]) => void;
+  gameTags: Tag[];
+  testIdPrefix?: string;
+}
+
+function PairTagMultiSelect({ gameTagIds, onChange, gameTags, testIdPrefix }: PairTagMultiSelectProps) {
+  const { t } = useTranslation();
+
+  if (gameTags.length === 0) {
+    return (
+      <p className="text-xs text-muted-foreground">
+        {t("manageTagsDialog.noTags")}
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {gameTags.map((tag) => {
+        const selected = gameTagIds.includes(tag.id);
+        return (
+          <button
+            key={tag.id}
+            type="button"
+            aria-pressed={selected}
+            onClick={() => {
+              const next = selected
+                ? gameTagIds.filter((id) => id !== tag.id)
+                : [...gameTagIds, tag.id];
+              onChange(next);
+            }}
+            className={[
+              "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium border transition-all",
+              selected
+                ? "text-white border-transparent"
+                : "bg-background text-foreground border-border hover:bg-muted",
+            ].join(" ")}
+            style={selected ? { backgroundColor: tag.color, borderColor: tag.color } : undefined}
+            data-testid={testIdPrefix ? `${testIdPrefix}-tag-toggle-${tag.id}` : undefined}
+          >
+            {tag.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -1041,20 +1082,25 @@ export function BasesAndChallengesView() {
 // Small internal card components kept in-file for locality.
 // ---------------------------------------------------------------------------
 
-function PairCard({ pair, onEdit }: { pair: BaseChallengePair; onEdit: () => void }) {
+function PairCard({ pair, onEdit, tagsMap }: { pair: BaseChallengePair; onEdit: () => void; tagsMap: Map<string, Tag> }) {
   const { t } = useTranslation();
   const { base, challenge } = pair;
 
   return (
     <Card data-testid={`pair-card-${base.id}`} aria-label={t("basesAndChallenges.pairCardAriaLabel")} className="overflow-hidden">
-      {/* Color stripe — uses base color (base is the primary identity) */}
-      {base.color && (
-        <div
-          className="h-2 w-full"
-          style={{ backgroundColor: base.color }}
-          data-testid="pair-color-stripe"
-        />
-      )}
+      {/* Color stripe — first tag's color on base; fall back to challenge's first tag */}
+      {(() => {
+        const baseFirstTag = (base.tagIds ?? []).map((id) => tagsMap.get(id)).filter(Boolean)[0];
+        const challengeFirstTag = (challenge.tagIds ?? []).map((id) => tagsMap.get(id)).filter(Boolean)[0];
+        const stripeColor = baseFirstTag?.color ?? challengeFirstTag?.color;
+        return stripeColor ? (
+          <div
+            className="h-2 w-full"
+            style={{ backgroundColor: stripeColor }}
+            data-testid="pair-color-stripe"
+          />
+        ) : null;
+      })()}
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
@@ -1074,20 +1120,24 @@ function PairCard({ pair, onEdit }: { pair: BaseChallengePair; onEdit: () => voi
               </CardDescription>
             )}
             {/* Base tag chips — show up to 5 before "+N more" */}
-            {base.tags && base.tags.length > 0 && (
+            {base.tagIds && base.tagIds.length > 0 && (
               <div className="mt-1.5 flex flex-wrap gap-1">
-                {base.tags.slice(0, 5).map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-xs text-muted-foreground"
-                  >
-                    <Tag className="h-2.5 w-2.5" />
-                    {tag}
-                  </span>
-                ))}
-                {base.tags.length > 5 && (
+                {base.tagIds.slice(0, 5).map((tagId) => {
+                  const resolved = tagsMap.get(tagId);
+                  return (
+                    <span
+                      key={tagId}
+                      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium text-white"
+                      style={{ backgroundColor: resolved?.color ?? "#64748b" }}
+                    >
+                      <TagIcon className="h-2.5 w-2.5" />
+                      {resolved?.label ?? tagId}
+                    </span>
+                  );
+                })}
+                {base.tagIds.length > 5 && (
                   <span className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                    +{base.tags.length - 5}
+                    +{base.tagIds.length - 5}
                   </span>
                 )}
               </div>
@@ -1107,7 +1157,10 @@ function PairCard({ pair, onEdit }: { pair: BaseChallengePair; onEdit: () => voi
       <CardContent className="space-y-3">
         <div
           className="rounded-md border bg-muted/30 p-3"
-          style={challenge.color ? { borderColor: challenge.color } : undefined}
+          style={(() => {
+            const firstTag = (challenge.tagIds ?? []).map((id) => tagsMap.get(id)).filter(Boolean)[0];
+            return firstTag ? { borderColor: firstTag.color } : undefined;
+          })()}
         >
           <div className="flex items-center gap-2">
             <Puzzle className="h-4 w-4 text-chart-2 shrink-0" />
@@ -1168,20 +1221,24 @@ function PairCard({ pair, onEdit }: { pair: BaseChallengePair; onEdit: () => voi
             )}
           </div>
           {/* Challenge tag chips — show up to 5 before "+N more" */}
-          {challenge.tags && challenge.tags.length > 0 && (
+          {challenge.tagIds && challenge.tagIds.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1">
-              {challenge.tags.slice(0, 5).map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-xs text-muted-foreground"
-                >
-                  <Tag className="h-2.5 w-2.5" />
-                  {tag}
-                </span>
-              ))}
-              {challenge.tags.length > 5 && (
+              {challenge.tagIds.slice(0, 5).map((tagId) => {
+                const resolved = tagsMap.get(tagId);
+                return (
+                  <span
+                    key={tagId}
+                    className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium text-white"
+                    style={{ backgroundColor: resolved?.color ?? "#64748b" }}
+                  >
+                    <TagIcon className="h-2.5 w-2.5" />
+                    {resolved?.label ?? tagId}
+                  </span>
+                );
+              })}
+              {challenge.tagIds.length > 5 && (
                 <span className="inline-flex items-center rounded-full border border-border bg-background px-2 py-0.5 text-xs text-muted-foreground">
-                  +{challenge.tags.length - 5}
+                  +{challenge.tagIds.length - 5}
                 </span>
               )}
             </div>

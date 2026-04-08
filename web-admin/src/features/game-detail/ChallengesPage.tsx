@@ -3,8 +3,8 @@ import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { filterAvailableBases, filterAvailableUnlockBases } from "./dropdown-filters";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Minus, Puzzle, Trash2, Pencil, FileText, Image, CheckCircle, Eye, MapPin, Unlock, Variable, CircleCheck, Tag, StickyNote, Link2 } from "lucide-react";
-import { useTagColorFilter } from "./useTagColorFilter";
+import { Plus, Minus, Puzzle, Trash2, Pencil, FileText, Image, CheckCircle, Eye, MapPin, Unlock, Variable, CircleCheck, Tag as TagIcon, StickyNote, Link2, Tags } from "lucide-react";
+import { useTagColorFilter, resolveTagsForFilter } from "./useTagColorFilter";
 import { FilterBar } from "./FilterBar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,10 +27,10 @@ import { teamVariablesApi, type TeamVariableEntry } from "@/lib/api/team-variabl
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/useToast";
-import { ColorPicker } from "@/components/ColorPicker";
-import { TagInput } from "@/components/TagInput";
+import { ManageTagsDialog } from "@/components/ManageTagsDialog";
+import { useGameTagsMap } from "./useGameTagsMap";
 import DOMPurify from "dompurify";
-import type { Challenge } from "@/types";
+import type { Challenge, Tag } from "@/types";
 import { buildLinkedBasesMap } from "./useLinkedCounterpart";
 
 const RichTextEditor = lazy(() =>
@@ -53,12 +53,14 @@ export function ChallengesPage() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
   const [pendingJumpBaseId, setPendingJumpBaseId] = useState<string | null>(null);
+  const [manageTagsOpen, setManageTagsOpen] = useState(false);
   // Dirty-state: snapshot of form at dialog open time (Sub-wave C)
   const formSnapshotRef = useRef<Partial<CreateChallengeDto> | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
   const { data: challenges = [] } = useQuery({ queryKey: ["challenges", gameId], queryFn: () => challengesApi.listByGame(gameId!), enabled: !!gameId });
   const { data: bases = [] } = useQuery({ queryKey: ["bases", gameId], queryFn: () => basesApi.listByGame(gameId!), enabled: !!gameId });
+  const { tagsMap, tags: gameTags } = useGameTagsMap(gameId);
   const { data: teams = [] } = useQuery({ queryKey: ["teams", gameId], queryFn: () => teamsApi.listByGame(gameId!), enabled: !!gameId });
   // Sub-wave A: pre-fetch assignments into React Query cache; Sub-wave B wires into card UI via useLinkedCounterpart
   const { data: assignments = [] } = useQuery({ queryKey: ["assignments", gameId], queryFn: () => assignmentsApi.listByGame(gameId!), enabled: !!gameId });
@@ -130,20 +132,18 @@ export function ChallengesPage() {
     return Array.from(keys);
   }, [gameVarsData, challengeVarsData]);
 
-  // useTagColorFilter: AND-within-tags, OR-within-colors, AND across dimensions
+  // useTagColorFilter: AND semantics within tagIds
   const {
     filtered: filteredChallenges,
-    allTags,
-    allColors,
+    allTagIds,
     tagCounts,
-    selectedTags,
-    selectedColors,
+    selectedTagIds,
     toggleTag,
-    toggleColor,
     clearFilters,
     hasActive: filterHasActive,
     isVisible: filterIsVisible,
   } = useTagColorFilter(challenges, "challenges");
+  const resolvedFilterTags = resolveTagsForFilter(allTagIds, tagsMap);
 
   const invalidateChallengesAndBases = () => {
     queryClient.invalidateQueries({ queryKey: ["challenges", gameId] });
@@ -180,8 +180,7 @@ export function ChallengesPage() {
       points: 100,
       locationBound: false,
       requirePresenceToSubmit: false,
-      tags: undefined,
-      color: undefined,
+      tagIds: undefined,
     });
     setActionError("");
     setDialogOpen(true);
@@ -271,22 +270,25 @@ export function ChallengesPage() {
           <h1 className="text-2xl font-bold">{t("nav.challenges")}</h1>
           <p className="text-muted-foreground">{t("challenges.summary", { count: challenges.length })} &middot; {t("challenges.totalPoints", { total: totalPoints })}</p>
         </div>
-        <Button className="self-end sm:self-auto" onClick={openCreate}><Plus className="mr-2 h-4 w-4" />{t("challenges.addChallenge")}</Button>
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          <Button variant="outline" onClick={() => setManageTagsOpen(true)} data-testid="manage-tags-btn">
+            <Tags className="mr-2 h-4 w-4" />{t("common.manageTags")}
+          </Button>
+          <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />{t("challenges.addChallenge")}</Button>
+        </div>
       </div>
       {actionError && <Alert onDismiss={() => setActionError("")}>{actionError}</Alert>}
 
-      {/* Sticky filter bar — only shown when tags/colors exist */}
+      {/* Sticky filter bar — only shown when tags exist */}
       <FilterBar
-        allTags={allTags}
-        allColors={allColors}
+        allTagIds={allTagIds}
         tagCounts={tagCounts}
-        selectedTags={selectedTags}
-        selectedColors={selectedColors}
+        selectedTagIds={selectedTagIds}
         toggleTag={toggleTag}
-        toggleColor={toggleColor}
         clearFilters={clearFilters}
         hasActive={filterHasActive}
         isVisible={filterIsVisible}
+        resolvedTags={resolvedFilterTags}
       />
 
       {filteredChallenges.length === 0 && challenges.length > 0 ? (
@@ -297,10 +299,15 @@ export function ChallengesPage() {
         <div className="grid gap-4 md:grid-cols-2">
           {filteredChallenges.map((ch) => (
             <Card key={ch.id} className="overflow-hidden">
-              {/* Color stripe on card top */}
-              {ch.color && (
-                <div className="h-2 w-full" style={{ backgroundColor: ch.color }} />
-              )}
+              {/* Color stripe on card top — first tag's color */}
+              {(() => {
+                const firstTag = (ch.tagIds ?? [])
+                  .map((id) => tagsMap.get(id))
+                  .filter(Boolean)[0];
+                return firstTag ? (
+                  <div className="h-2 w-full" style={{ backgroundColor: firstTag.color }} />
+                ) : null;
+              })()}
               {(() => {
                 const fixedBase = fixedBaseByChallengeId.get(ch.id);
                 return (
@@ -398,20 +405,24 @@ export function ChallengesPage() {
                         })()}
                       </div>
                       {/* Tag chips — show up to 5 before "+N more" */}
-                      {ch.tags && ch.tags.length > 0 && (
+                      {ch.tagIds && ch.tagIds.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1">
-                          {ch.tags.slice(0, 5).map((tag) => (
-                            <span
-                              key={tag}
-                              className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-xs text-muted-foreground"
-                            >
-                              <Tag className="h-2.5 w-2.5" />
-                              {tag}
-                            </span>
-                          ))}
-                          {ch.tags.length > 5 && (
+                          {ch.tagIds.slice(0, 5).map((tagId) => {
+                            const resolved = tagsMap.get(tagId);
+                            return (
+                              <span
+                                key={tagId}
+                                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium text-white"
+                                style={{ backgroundColor: resolved?.color ?? "#64748b" }}
+                              >
+                                <TagIcon className="h-2.5 w-2.5" />
+                                {resolved?.label ?? tagId}
+                              </span>
+                            );
+                          })}
+                          {ch.tagIds.length > 5 && (
                             <span className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                              +{ch.tags.length - 5}
+                              +{ch.tagIds.length - 5}
                             </span>
                           )}
                         </div>
@@ -601,30 +612,24 @@ export function ChallengesPage() {
               />
             </div>
             {/*
-              P1 Phase 4 W3 — operator-only tags and color. Same privacy
-              contract as operatorNotes. See PlayerChallengeResponse for the
-              player-safe DTO and PlayerControllerTest for the enforcing
-              assertions.
+              Wave B — operator-only tag IDs. Tags are game-scoped entities
+              with baked-in colors. Same privacy contract as operatorNotes.
             */}
             <div className="space-y-2">
-              <FormLabel htmlFor="challengeColor" optional>
-                {t("challenges.colorLabel")}
-              </FormLabel>
-              <ColorPicker
-                value={form.color ?? null}
-                onChange={(next) => setForm((f) => ({ ...f, color: next ?? undefined }))}
-                data-testid="challenge-color-picker"
-              />
-            </div>
-            <div className="space-y-2">
-              <FormLabel htmlFor="challengeTags" optional>
-                {t("challenges.tagsLabel")}
-              </FormLabel>
-              <TagInput
-                value={form.tags}
-                onChange={(next) => setForm((f) => ({ ...f, tags: next }))}
-                placeholder={t("challenges.tagsPlaceholder")}
-                data-testid="challenge-tags-input"
+              <div className="flex items-center justify-between">
+                <FormLabel optional>{t("challenges.tagsLabel")}</FormLabel>
+                <button
+                  type="button"
+                  onClick={() => setManageTagsOpen(true)}
+                  className="text-xs text-primary hover:underline"
+                >
+                  {t("common.manageTags")}
+                </button>
+              </div>
+              <ChallengTagMultiSelect
+                gameTagIds={form.tagIds ?? []}
+                onChange={(ids) => setForm((f) => ({ ...f, tagIds: ids }))}
+                gameTags={gameTags}
               />
             </div>
             {form.autoValidate && form.answerType === "text" && (
@@ -778,6 +783,68 @@ export function ChallengesPage() {
         confirmLabel={t("common.discard")}
         variant="default"
       />
+
+      {/* Manage Tags dialog */}
+      {gameId && (
+        <ManageTagsDialog
+          open={manageTagsOpen}
+          onOpenChange={setManageTagsOpen}
+          gameId={gameId}
+        />
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ChallengTagMultiSelect — inline multi-select for game-scoped tags
+// ---------------------------------------------------------------------------
+
+interface ChallengTagMultiSelectProps {
+  gameTagIds: string[];
+  onChange: (ids: string[]) => void;
+  gameTags: Tag[];
+}
+
+function ChallengTagMultiSelect({ gameTagIds, onChange, gameTags }: ChallengTagMultiSelectProps) {
+  const { t } = useTranslation();
+
+  if (gameTags.length === 0) {
+    return (
+      <p className="text-xs text-muted-foreground">
+        {t("manageTagsDialog.noTags")}
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {gameTags.map((tag) => {
+        const selected = gameTagIds.includes(tag.id);
+        return (
+          <button
+            key={tag.id}
+            type="button"
+            aria-pressed={selected}
+            onClick={() => {
+              const next = selected
+                ? gameTagIds.filter((id) => id !== tag.id)
+                : [...gameTagIds, tag.id];
+              onChange(next);
+            }}
+            className={[
+              "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium border transition-all",
+              selected
+                ? "text-white border-transparent"
+                : "bg-background text-foreground border-border hover:bg-muted",
+            ].join(" ")}
+            style={selected ? { backgroundColor: tag.color, borderColor: tag.color } : undefined}
+            data-testid={`challenge-tag-toggle-${tag.id}`}
+          >
+            {tag.label}
+          </button>
+        );
+      })}
     </div>
   );
 }

@@ -46,7 +46,8 @@
     "pickLinkedChallenge": "Escolher desafio ligado",
     "pickLinkedBase": "Escolher base ligada",
     "discardChangesWarning": "Descartar alterações e ir?",
-    "discard": "Descartar"
+    "discard": "Descartar",
+    "manageTags": "Gerir Etiquetas"
   },
   "auth": {
     "signIn": "Entrar",
@@ -814,6 +815,16 @@
     "remove": "Remover etiqueta {{tag}}",
     "limitReached": "Máximo de {{max}} etiquetas atingido",
     "hint": "{{count}}/{{max}} etiquetas"
+  },
+  "manageTagsDialog": {
+    "title": "Gerir Etiquetas",
+    "noTags": "Sem etiquetas. Crie a sua primeira etiqueta abaixo.",
+    "labelPlaceholder": "Nome da etiqueta",
+    "addNew": "+ Adicionar etiqueta",
+    "deleteConfirm": "Tem a certeza que deseja eliminar esta etiqueta? Será removida de todas as bases e desafios.",
+    "duplicateLabelError": "Já existe uma etiqueta com esse nome.",
+    "capExceeded": "Número máximo de etiquetas atingido.",
+    "deleteInUseError": "Esta etiqueta ainda está em uso e não pode ser eliminada."
   },
   "filterBar": {
     "ariaLabel": "Filtrar itens",

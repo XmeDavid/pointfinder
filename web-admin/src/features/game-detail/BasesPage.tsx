@@ -2,8 +2,8 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import { filterAvailableFixedChallenges } from "./dropdown-filters";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, MapPin, Wifi, WifiOff, Trash2, Pencil, List, Map as MapIcon, EyeOff, Tag, Link2 } from "lucide-react";
-import { useTagColorFilter } from "./useTagColorFilter";
+import { Plus, MapPin, Wifi, WifiOff, Trash2, Pencil, List, Map as MapIcon, EyeOff, Tag as TagIcon, Link2, Tags } from "lucide-react";
+import { useTagColorFilter, resolveTagsForFilter } from "./useTagColorFilter";
 import { FilterBar } from "./FilterBar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,9 +25,9 @@ import { MapPicker, BaseMapView, type UnlockConnection } from "@/components/comm
 import { getDefaultCenter } from "@/lib/tile-sources";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/useToast";
-import { ColorPicker } from "@/components/ColorPicker";
-import { TagInput } from "@/components/TagInput";
-import type { Base } from "@/types";
+import { ManageTagsDialog } from "@/components/ManageTagsDialog";
+import { useGameTagsMap } from "./useGameTagsMap";
+import type { Base, Tag } from "@/types";
 import { buildLinkedChallengesMap } from "./useLinkedCounterpart";
 
 type ViewMode = "list" | "map";
@@ -49,11 +49,13 @@ export function BasesPage() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
   const [pendingJumpChallengeId, setPendingJumpChallengeId] = useState<string | null>(null);
+  const [manageTagsOpen, setManageTagsOpen] = useState(false);
   // Dirty-state: snapshot of form at dialog open time (Sub-wave C)
   const formSnapshotRef = useRef<Partial<CreateBaseDto> | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
   const { data: game } = useQuery({ queryKey: ["game", gameId], queryFn: () => gamesApi.getById(gameId!), enabled: !!gameId });
+  const { tagsMap, tags: gameTags } = useGameTagsMap(gameId);
 
   const tileSourceCenter = getDefaultCenter(game?.tileSource);
   const [geoLocation, setGeoLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -111,20 +113,18 @@ export function BasesPage() {
       });
   }, [challenges, bases]);
 
-  // useTagColorFilter: AND-within-tags, OR-within-colors, AND across dimensions
+  // useTagColorFilter: AND semantics within tagIds
   const {
     filtered: filteredBases,
-    allTags,
-    allColors,
+    allTagIds,
     tagCounts,
-    selectedTags,
-    selectedColors,
+    selectedTagIds,
     toggleTag,
-    toggleColor,
     clearFilters,
     hasActive: filterHasActive,
     isVisible: filterIsVisible,
   } = useTagColorFilter(bases, "bases");
+  const resolvedFilterTags = resolveTagsForFilter(allTagIds, tagsMap);
 
   const createBase = useMutation({
     mutationFn: (data: CreateBaseDto) => basesApi.create({ ...data, gameId: gameId! }),
@@ -150,7 +150,7 @@ export function BasesPage() {
     const lastBase = bases.length > 0 ? bases[bases.length - 1] : null;
     const lat = lastBase ? lastBase.lat : defaultLocation.lat;
     const lng = lastBase ? lastBase.lng : defaultLocation.lng;
-    setForm({ name: "", description: "", lat, lng, hidden: false, tags: undefined, color: undefined });
+    setForm({ name: "", description: "", lat, lng, hidden: false, tagIds: undefined });
     setDialogOpen(true);
   }
 
@@ -163,8 +163,7 @@ export function BasesPage() {
       lng: base.lng,
       fixedChallengeId: base.fixedChallengeId,
       hidden: base.hidden,
-      tags: base.tags,
-      color: base.color,
+      tagIds: base.tagIds,
     };
     setForm(formState);
     // Sub-wave C: snapshot form at open time for dirty-state detection
@@ -233,23 +232,24 @@ export function BasesPage() {
             <Button variant={view === "list" ? "secondary" : "ghost"} size="sm" onClick={() => setView("list")}><List className="h-4 w-4" /></Button>
             <Button variant={view === "map" ? "secondary" : "ghost"} size="sm" onClick={() => setView("map")}><MapIcon className="h-4 w-4" /></Button>
           </div>
+          <Button variant="outline" onClick={() => setManageTagsOpen(true)} data-testid="manage-tags-btn">
+            <Tags className="mr-2 h-4 w-4" />{t("common.manageTags")}
+          </Button>
           <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />{t("bases.addBase")}</Button>
         </div>
       </div>
       {actionError && <Alert onDismiss={() => setActionError("")}>{actionError}</Alert>}
 
-      {/* Sticky filter bar — only shown when tags/colors exist */}
+      {/* Sticky filter bar — only shown when tags exist */}
       <FilterBar
-        allTags={allTags}
-        allColors={allColors}
+        allTagIds={allTagIds}
         tagCounts={tagCounts}
-        selectedTags={selectedTags}
-        selectedColors={selectedColors}
+        selectedTagIds={selectedTagIds}
         toggleTag={toggleTag}
-        toggleColor={toggleColor}
         clearFilters={clearFilters}
         hasActive={filterHasActive}
         isVisible={filterIsVisible}
+        resolvedTags={resolvedFilterTags}
       />
 
       {isLoading ? (
@@ -267,10 +267,15 @@ export function BasesPage() {
           ) : (
             filteredBases.map((base) => (
               <Card key={base.id} className="overflow-hidden">
-                {/* Color stripe on card top */}
-                {base.color && (
-                  <div className="h-2 w-full" style={{ backgroundColor: base.color }} />
-                )}
+                {/* Color stripe on card top — first tag's color (earliest createdAt) */}
+                {(() => {
+                  const firstTag = (base.tagIds ?? [])
+                    .map((id) => tagsMap.get(id))
+                    .filter(Boolean)[0];
+                  return firstTag ? (
+                    <div className="h-2 w-full" style={{ backgroundColor: firstTag.color }} />
+                  ) : null;
+                })()}
                 <CardContent className="flex flex-wrap items-center gap-4 p-4">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-chart-1/10"><MapPin className="h-5 w-5 text-chart-1" /></div>
                   <div className="flex-1 min-w-0">
@@ -329,20 +334,24 @@ export function BasesPage() {
                       );
                     })()}
                     {/* Tag chips — show up to 5 before "+N more" */}
-                    {base.tags && base.tags.length > 0 && (
+                    {base.tagIds && base.tagIds.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1">
-                        {base.tags.slice(0, 5).map((tag) => (
-                          <span
-                            key={tag}
-                            className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-xs text-muted-foreground"
-                          >
-                            <Tag className="h-2.5 w-2.5" />
-                            {tag}
-                          </span>
-                        ))}
-                        {base.tags.length > 5 && (
+                        {base.tagIds.slice(0, 5).map((tagId) => {
+                          const resolved = tagsMap.get(tagId);
+                          return (
+                            <span
+                              key={tagId}
+                              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium text-white"
+                              style={{ backgroundColor: resolved?.color ?? "#64748b" }}
+                            >
+                              <TagIcon className="h-2.5 w-2.5" />
+                              {resolved?.label ?? tagId}
+                            </span>
+                          );
+                        })}
+                        {base.tagIds.length > 5 && (
                           <span className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                            +{base.tags.length - 5}
+                            +{base.tagIds.length - 5}
                           </span>
                         )}
                       </div>
@@ -447,30 +456,26 @@ export function BasesPage() {
               />
             </div>
             {/*
-              P1 Phase 4 W3 — operator-only tags and color. These fields are
-              never surfaced to players. See PlayerBaseResponse for the
-              player-safe DTO and PlayerControllerTest for the enforcing
-              JSON-path / full-body substring assertions.
+              Wave B — operator-only tag IDs. Tags are game-scoped entities
+              with baked-in colors. Never surfaced to players. See
+              PlayerBaseResponse for the player-safe DTO.
             */}
             <div className="space-y-2">
-              <FormLabel htmlFor="baseColor" optional>
-                {t("bases.colorLabel")}
-              </FormLabel>
-              <ColorPicker
-                value={form.color ?? null}
-                onChange={(next) => setForm((f) => ({ ...f, color: next ?? undefined }))}
-                data-testid="base-color-picker"
-              />
-            </div>
-            <div className="space-y-2">
-              <FormLabel htmlFor="baseTags" optional>
-                {t("bases.tagsLabel")}
-              </FormLabel>
-              <TagInput
-                value={form.tags}
-                onChange={(next) => setForm((f) => ({ ...f, tags: next }))}
-                placeholder={t("bases.tagsPlaceholder")}
-                data-testid="base-tags-input"
+              <div className="flex items-center justify-between">
+                <FormLabel optional>{t("bases.tagsLabel")}</FormLabel>
+                <button
+                  type="button"
+                  onClick={() => setManageTagsOpen(true)}
+                  className="text-xs text-primary hover:underline"
+                >
+                  {t("common.manageTags")}
+                </button>
+              </div>
+              <TagMultiSelect
+                gameTagIds={form.tagIds ?? []}
+                onChange={(ids) => setForm((f) => ({ ...f, tagIds: ids }))}
+                gameTags={gameTags}
+                testIdPrefix="base"
               />
             </div>
             <DialogFooter>
@@ -529,6 +534,69 @@ export function BasesPage() {
         confirmLabel={t("common.discard")}
         variant="default"
       />
+
+      {/* Manage Tags dialog */}
+      {gameId && (
+        <ManageTagsDialog
+          open={manageTagsOpen}
+          onOpenChange={setManageTagsOpen}
+          gameId={gameId}
+        />
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// TagMultiSelect — minimal inline multi-select for game-scoped tags
+// ---------------------------------------------------------------------------
+
+interface TagMultiSelectProps {
+  gameTagIds: string[];
+  onChange: (ids: string[]) => void;
+  gameTags: Tag[];
+  testIdPrefix?: string;
+}
+
+function TagMultiSelect({ gameTagIds, onChange, gameTags, testIdPrefix }: TagMultiSelectProps) {
+  const { t } = useTranslation();
+
+  if (gameTags.length === 0) {
+    return (
+      <p className="text-xs text-muted-foreground">
+        {t("manageTagsDialog.noTags")}
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {gameTags.map((tag) => {
+        const selected = gameTagIds.includes(tag.id);
+        return (
+          <button
+            key={tag.id}
+            type="button"
+            aria-pressed={selected}
+            onClick={() => {
+              const next = selected
+                ? gameTagIds.filter((id) => id !== tag.id)
+                : [...gameTagIds, tag.id];
+              onChange(next);
+            }}
+            className={[
+              "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium border transition-all",
+              selected
+                ? "text-white border-transparent"
+                : "bg-background text-foreground border-border hover:bg-muted",
+            ].join(" ")}
+            style={selected ? { backgroundColor: tag.color, borderColor: tag.color } : undefined}
+            data-testid={`${testIdPrefix}-tag-toggle-${tag.id}`}
+          >
+            {tag.label}
+          </button>
+        );
+      })}
     </div>
   );
 }

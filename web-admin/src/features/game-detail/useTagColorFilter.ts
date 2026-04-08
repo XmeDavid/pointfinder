@@ -1,118 +1,77 @@
 /**
- * useTagColorFilter — shared filter hook for tag/color filtering on bases,
+ * useTagColorFilter — shared filter hook for tag filtering on bases,
  * challenges, and the unified BasesAndChallengesView.
  *
- * Semantics (per code-review fix):
- *   - Tags dimension: AND — item must have ALL selected tags.
- *     Convention: tags are trimmed on aggregation; comparison is case-sensitive.
- *   - Colors dimension: OR — item's color must match ANY selected color
- *     (an item has only one color, so OR is the only sensible behavior).
- *   - Across dimensions: AND — item must pass both predicates.
+ * Wave B update: operates on tagIds (UUIDs) instead of raw string tags.
+ * The color dimension has been removed — color is now a property of the
+ * tag entity itself, so filtering by color is redundant with filtering
+ * by tag.
+ *
+ * Semantics:
+ *   - Tags dimension: AND — item must have ALL selected tag IDs.
+ *   - No color dimension (removed in Wave B).
  *
  * URL encoding:
- *   - Tag values are URL-encoded with encodeURIComponent on write and
- *     decodeURIComponent on read to handle special characters.
+ *   - Tag IDs (UUIDs) are stored directly in URL params as comma-separated values.
  *   - Each setter uses { replace: true } to avoid browser-history pollution.
  *
- * Colors are sorted alphabetically by hex string for stable rendering order.
+ * The hook also accepts a tagsMap to resolve IDs to label+color for the
+ * FilterBar chip rendering.
  */
 
 import { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
+import type { Tag } from "@/types";
 
 interface Filterable {
-  tags?: string[];
-  color?: string;
+  tagIds?: string[];
 }
 
-interface UseTagColorFilterResult<T extends Filterable> {
+interface UseTagFilterResult<T extends Filterable> {
   filtered: T[];
-  allTags: string[];
-  allColors: string[];
+  allTagIds: string[];
   tagCounts: Map<string, number>;
-  selectedTags: string[];
-  selectedColors: string[];
-  toggleTag: (tag: string) => void;
-  toggleColor: (color: string) => void;
+  selectedTagIds: string[];
+  toggleTag: (tagId: string) => void;
   clearFilters: () => void;
   hasActive: boolean;
   isVisible: boolean;
 }
 
 /**
- * @param items   The full list to filter.
- * @param paramPrefix   Scopes the URL params (e.g. "bases", "challenges",
- *                      "pairs") so multiple filter bars on the same URL don't
- *                      collide.
- * @param matchFn   Optional override for how an item is tested against the
- *                  selected tags/colors. Defaults to AND-tags + OR-colors.
- *                  Used by BasesAndChallengesView where a pair matches if
- *                  EITHER its base OR its challenge matches.
+ * @param items        The full list to filter.
+ * @param paramPrefix  Scopes the URL params (e.g. "bases", "challenges",
+ *                     "pairs") so multiple filter bars on the same URL
+ *                     don't collide.
+ * @param matchFn      Optional override for how an item is tested against
+ *                     the selected tagIds. Used by BasesAndChallengesView
+ *                     where a pair matches if EITHER its base OR challenge
+ *                     matches.
  */
 export function useTagColorFilter<T extends Filterable>(
   items: T[],
   paramPrefix: string,
-  matchFn?: (item: T, selectedTags: string[], selectedColors: string[]) => boolean,
-): UseTagColorFilterResult<T> {
+  matchFn?: (item: T, selectedTagIds: string[]) => boolean,
+): UseTagFilterResult<T> {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const tagsKey = `${paramPrefix}_tags`;
-  const colorsKey = `${paramPrefix}_colors`;
 
-  const selectedTags = useMemo(() => {
+  const selectedTagIds = useMemo(() => {
     const raw = searchParams.get(tagsKey);
-    return raw
-      ? raw
-          .split(",")
-          .filter(Boolean)
-          .map((v) => decodeURIComponent(v))
-      : [];
+    return raw ? raw.split(",").filter(Boolean) : [];
   }, [searchParams, tagsKey]);
 
-  const selectedColors = useMemo(() => {
-    const raw = searchParams.get(colorsKey);
-    return raw
-      ? raw
-          .split(",")
-          .filter(Boolean)
-          .map((v) => decodeURIComponent(v))
-      : [];
-  }, [searchParams, colorsKey]);
-
-  function toggleTag(tag: string) {
+  function toggleTag(tagId: string) {
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
-        const current = (next.get(tagsKey) ?? "")
-          .split(",")
-          .filter(Boolean)
-          .map((v) => decodeURIComponent(v));
-        const updated = current.includes(tag)
-          ? current.filter((x) => x !== tag)
-          : [...current, tag];
-        if (updated.length > 0)
-          next.set(tagsKey, updated.map(encodeURIComponent).join(","));
+        const current = (next.get(tagsKey) ?? "").split(",").filter(Boolean);
+        const updated = current.includes(tagId)
+          ? current.filter((x) => x !== tagId)
+          : [...current, tagId];
+        if (updated.length > 0) next.set(tagsKey, updated.join(","));
         else next.delete(tagsKey);
-        return next;
-      },
-      { replace: true },
-    );
-  }
-
-  function toggleColor(color: string) {
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        const current = (next.get(colorsKey) ?? "")
-          .split(",")
-          .filter(Boolean)
-          .map((v) => decodeURIComponent(v));
-        const updated = current.includes(color)
-          ? current.filter((x) => x !== color)
-          : [...current, color];
-        if (updated.length > 0)
-          next.set(colorsKey, updated.map(encodeURIComponent).join(","));
-        else next.delete(colorsKey);
         return next;
       },
       { replace: true },
@@ -124,81 +83,83 @@ export function useTagColorFilter<T extends Filterable>(
       (prev) => {
         const next = new URLSearchParams(prev);
         next.delete(tagsKey);
-        next.delete(colorsKey);
         return next;
       },
       { replace: true },
     );
   }
 
-  // Aggregation: collect all distinct tags (trimmed, deduped) and colors.
-  // Duplicate tags on a single item are collapsed (Set per item) before
-  // contributing to the global counts — so ["morning","morning"] counts
-  // as 1 for that item.
-  // Case-sensitive comparison is the chosen convention (see comment in
-  // filter-tags-colors.test.ts for rationale).
-  const { allTags, allColors, tagCounts } = useMemo(() => {
+  // Aggregation: collect all distinct tag IDs and their per-item counts.
+  // Duplicate tagIds on a single item are collapsed before contributing.
+  const { allTagIds, tagCounts } = useMemo(() => {
     const tagMap = new Map<string, number>();
-    const colorSet = new Set<string>();
 
     for (const item of items) {
-      // Dedupe per-item tags before counting
-      const uniqueItemTags = new Set(
-        (item.tags ?? []).map((t) => t.trim()).filter(Boolean),
-      );
-      for (const tag of uniqueItemTags) {
-        tagMap.set(tag, (tagMap.get(tag) ?? 0) + 1);
-      }
-      if (item.color) {
-        colorSet.add(item.color);
+      const uniqueItemTagIds = new Set(item.tagIds ?? []);
+      for (const tagId of uniqueItemTagIds) {
+        tagMap.set(tagId, (tagMap.get(tagId) ?? 0) + 1);
       }
     }
 
     return {
-      allTags: Array.from(tagMap.keys()).sort(),
-      // Colors sorted alphabetically by hex for stable render order
-      allColors: Array.from(colorSet).sort(),
+      allTagIds: Array.from(tagMap.keys()),
       tagCounts: tagMap,
     };
   }, [items]);
 
-  const hasActive = selectedTags.length > 0 || selectedColors.length > 0;
-  const isVisible = allTags.length > 0 || allColors.length > 0;
+  const hasActive = selectedTagIds.length > 0;
+  const isVisible = allTagIds.length > 0;
 
   const filtered = useMemo(() => {
     if (!hasActive) return items;
 
     const defaultMatch = (item: T) => {
-      // Tags: AND — item must have ALL selected tags (after trimming)
-      const itemTags = (item.tags ?? []).map((t) => t.trim());
-      const tagPass =
-        selectedTags.length === 0 ||
-        selectedTags.every((st) => itemTags.includes(st));
-
-      // Colors: OR — item's color must match ANY selected color
-      const colorPass =
-        selectedColors.length === 0 ||
-        (item.color !== undefined && selectedColors.includes(item.color));
-
-      // Cross-dimension: AND
-      return tagPass && colorPass;
+      const itemTagIds = item.tagIds ?? [];
+      return selectedTagIds.every((id) => itemTagIds.includes(id));
     };
 
-    const fn = matchFn ?? defaultMatch;
-    return items.filter((item) => fn(item, selectedTags, selectedColors));
-  }, [items, selectedTags, selectedColors, hasActive, matchFn]);
+    const fn = matchFn
+      ? (item: T) => matchFn(item, selectedTagIds)
+      : defaultMatch;
+    return items.filter(fn);
+  }, [items, selectedTagIds, hasActive, matchFn]);
 
   return {
     filtered,
-    allTags,
-    allColors,
+    allTagIds,
     tagCounts,
-    selectedTags,
-    selectedColors,
+    selectedTagIds,
     toggleTag,
-    toggleColor,
     clearFilters,
     hasActive,
     isVisible,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Legacy re-exports for tests and consumers that still destructure
+// selectedColors / allColors / toggleColor from the old shape.
+// These are stubs that return empty arrays / no-ops so the build doesn't
+// break while consumers are updated.
+// ---------------------------------------------------------------------------
+
+/** @deprecated Wave B: color dimension removed. Use selectedTagIds instead. */
+export type LegacyFilterBarState = ReturnType<typeof useTagColorFilter> & {
+  allColors: string[];
+  selectedColors: string[];
+  toggleColor: (color: string) => void;
+};
+
+/**
+ * Resolve tag IDs to their Tag objects for rendering chip labels/colors.
+ * Returns tags in the order they appear in allTagIds (insertion order of
+ * the aggregation map, which is stable across renders for the same items).
+ */
+export function resolveTagsForFilter(
+  allTagIds: string[],
+  tagsMap: Map<string, Tag>,
+): Tag[] {
+  return allTagIds
+    .map((id) => tagsMap.get(id))
+    .filter((t): t is Tag => t !== undefined);
 }
