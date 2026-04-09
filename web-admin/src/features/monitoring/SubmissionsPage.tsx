@@ -253,8 +253,23 @@ export function SubmissionsPage() {
     mutationFn: ({ id, status, points, feedback: fb }: { id: string; status: SubmissionStatus; points?: number; feedback?: string }) => {
       return submissionsApi.review(id, status, gameId!, fb, points);
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["submissions", gameId] }); setReviewingSub(null); setFeedback(""); setReviewPoints(0); toast.success(t("common.saved")); },
-    onError: (error: unknown) => { toast.error(getApiErrorMessage(error)); },
+    onMutate: async ({ id, status, points }) => {
+      const queryKey = ["submissions", gameId];
+      await queryClient.cancelQueries({ queryKey });
+      const previousData = queryClient.getQueryData<Submission[]>(queryKey);
+      queryClient.setQueryData<Submission[]>(queryKey, (old) =>
+        old?.map((s) => s.id === id ? { ...s, status, points: points ?? s.points } : s) ?? old,
+      );
+      return { previousData };
+    },
+    onSuccess: () => { setReviewingSub(null); setFeedback(""); setReviewPoints(0); toast.success(t("common.saved")); },
+    onError: (error: unknown, _vars, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(["submissions", gameId], context.previousData);
+      }
+      toast.error(getApiErrorMessage(error));
+    },
+    onSettled: () => { queryClient.invalidateQueries({ queryKey: ["submissions", gameId] }); },
   });
 
   const closeMarkCompleted = useCallback(() => {
@@ -275,8 +290,6 @@ export function SubmissionsPage() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["submissions", gameId] });
-      queryClient.invalidateQueries({ queryKey: ["activity", gameId] });
       closeMarkCompleted();
       setReviewingSub(null);
       setFeedback("");
@@ -285,6 +298,10 @@ export function SubmissionsPage() {
     },
     onError: (error: unknown) => {
       toast.error(getApiErrorMessage(error));
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["submissions", gameId] });
+      queryClient.invalidateQueries({ queryKey: ["activity", gameId] });
     },
   });
 

@@ -264,12 +264,21 @@ export function ManageTagsDialog({ open, onOpenChange, gameId }: ManageTagsDialo
 
   const deleteTag = useMutation({
     mutationFn: (tagId: string) => tagsApi.deleteTag(gameId, tagId),
+    onMutate: async (tagId: string) => {
+      const queryKey = ["tags", gameId];
+      await queryClient.cancelQueries({ queryKey });
+      const previousData = queryClient.getQueryData<Tag[]>(queryKey);
+      queryClient.setQueryData<Tag[]>(queryKey, (old) => old?.filter((tag) => tag.id !== tagId) ?? old);
+      return { previousData };
+    },
     onSuccess: () => {
       setDeleteTarget(null);
-      invalidate();
       toast.success(t("common.deleted"));
     },
-    onError: (error: unknown) => {
+    onError: (error: unknown, _tagId, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(["tags", gameId], context.previousData);
+      }
       setDeleteTarget(null);
       const msg = getApiErrorMessage(error);
       // 409 = tag is in use; surface a helpful toast
@@ -278,6 +287,9 @@ export function ManageTagsDialog({ open, onOpenChange, gameId }: ManageTagsDialo
       } else {
         toast.error(msg);
       }
+    },
+    onSettled: () => {
+      invalidate();
     },
   });
 

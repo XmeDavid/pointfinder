@@ -96,7 +96,6 @@ export function TeamDetailPage() {
     onSuccess: () => {
       setCheckInBaseId(null);
       setCheckInReason("");
-      queryClient.invalidateQueries({ queryKey: ["team-progress", gameId, teamId] });
       toast.success(t("teamDetail.checkInSuccess"));
     },
     onError: (error: unknown) => {
@@ -109,6 +108,9 @@ export function TeamDetailPage() {
         toast.error(msg);
       }
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["team-progress", gameId, teamId] });
+    },
   });
 
   const createUnlock = useMutation({
@@ -117,8 +119,6 @@ export function TeamDetailPage() {
     onSuccess: () => {
       setUnlockDialogBaseId(null);
       setUnlockReason("");
-      queryClient.invalidateQueries({ queryKey: ["team-unlock-overrides", gameId, teamId] });
-      queryClient.invalidateQueries({ queryKey: ["team-progress", gameId, teamId] });
       toast.success(t("teams.unlockOverrideSuccess"));
     },
     onError: (error: unknown) => {
@@ -126,19 +126,25 @@ export function TeamDetailPage() {
       setUnlockReason("");
       toast.error(getApiErrorMessage(error));
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["team-unlock-overrides", gameId, teamId] });
+      queryClient.invalidateQueries({ queryKey: ["team-progress", gameId, teamId] });
+    },
   });
 
   const removeUnlock = useMutation({
     mutationFn: (baseId: string) => teamsApi.removeUnlockOverride(gameId!, teamId!, baseId),
     onSuccess: () => {
       setRemoveOverrideDialog(null);
-      queryClient.invalidateQueries({ queryKey: ["team-unlock-overrides", gameId, teamId] });
-      queryClient.invalidateQueries({ queryKey: ["team-progress", gameId, teamId] });
       toast.success(t("teams.unlockOverrideRemoveSuccess"));
     },
     onError: (error: unknown) => {
       setRemoveOverrideDialog(null);
       toast.error(getApiErrorMessage(error));
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["team-unlock-overrides", gameId, teamId] });
+      queryClient.invalidateQueries({ queryKey: ["team-progress", gameId, teamId] });
     },
   });
 
@@ -162,13 +168,15 @@ export function TeamDetailPage() {
     },
     onSuccess: () => {
       closeMarkCompleted();
-      queryClient.invalidateQueries({ queryKey: ["team-progress", gameId, teamId] });
-      queryClient.invalidateQueries({ queryKey: ["team-submissions", teamId] });
       toast.success(t("teamDetail.markCompletedSuccess"));
     },
     onError: (error: unknown) => {
       closeMarkCompleted();
       toast.error(getApiErrorMessage(error));
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["team-progress", gameId, teamId] });
+      queryClient.invalidateQueries({ queryKey: ["team-submissions", teamId] });
     },
   });
 
