@@ -557,6 +557,21 @@ enum Translations {
         "errors.TAG_CAP_EXCEEDED": "The game has reached the maximum number of tags.",
         "errors.TAG_IN_USE": "This tag is assigned to a base or challenge and cannot be deleted.",
         "errors.WS_ACCESS_DENIED": "Session expired. Please sign in again.",
+
+        // Tag management (Wave F)
+        "tags.manage": "Manage Tags",
+        "tags.manageTitle": "Manage Tags",
+        "tags.newTagPlaceholder": "New tag name...",
+        "tags.newTagSection": "Add Tag",
+        "tags.labelPlaceholder": "Tag label",
+        "tags.usageCount": "%d / %d tags",
+        "tags.noTagsYet": "No tags yet. Create one to group bases and challenges.",
+        "tags.deleteConfirmTitle": "Delete Tag?",
+        "tags.deleteConfirmMessage": "Remove tag \"%@\"? It will be detached from all bases and challenges.",
+        "tags.duplicateLabelError": "A tag with this name already exists",
+        "tags.atCapError": "Maximum %d tags per game",
+        "tags.inUseError": "This tag is in use and cannot be deleted",
+        "common.delete": "Delete",
     ]
 
     // MARK: - Portuguese
@@ -1094,6 +1109,21 @@ enum Translations {
         "errors.TAG_CAP_EXCEEDED": "O jogo atingiu o número máximo de tags.",
         "errors.TAG_IN_USE": "Esta tag está atribuída a uma base ou desafio e não pode ser eliminada.",
         "errors.WS_ACCESS_DENIED": "Sessão expirada. Por favor, inicia sessão novamente.",
+
+        // Tag management (Wave F)
+        "tags.manage": "Gerir Etiquetas",
+        "tags.manageTitle": "Gerir Etiquetas",
+        "tags.newTagPlaceholder": "Nome da nova etiqueta...",
+        "tags.newTagSection": "Adicionar Etiqueta",
+        "tags.labelPlaceholder": "Nome da etiqueta",
+        "tags.usageCount": "%d / %d etiquetas",
+        "tags.noTagsYet": "Sem etiquetas. Cria uma para agrupar bases e desafios.",
+        "tags.deleteConfirmTitle": "Eliminar Etiqueta?",
+        "tags.deleteConfirmMessage": "Remover a etiqueta \"%@\"? Será removida de todas as bases e desafios.",
+        "tags.duplicateLabelError": "Já existe uma etiqueta com este nome",
+        "tags.atCapError": "Máximo de %d etiquetas por jogo",
+        "tags.inUseError": "Esta etiqueta está em uso e não pode ser eliminada",
+        "common.delete": "Eliminar",
     ]
 
     // MARK: - German
@@ -1631,6 +1661,21 @@ enum Translations {
         "errors.TAG_CAP_EXCEEDED": "Das Spiel hat die maximale Anzahl an Tags erreicht.",
         "errors.TAG_IN_USE": "Dieses Tag ist einer Station oder Challenge zugewiesen und kann nicht gelöscht werden.",
         "errors.WS_ACCESS_DENIED": "Sitzung abgelaufen. Bitte melde dich erneut an.",
+
+        // Tag management (Wave F)
+        "tags.manage": "Tags verwalten",
+        "tags.manageTitle": "Tags verwalten",
+        "tags.newTagPlaceholder": "Neuer Tag-Name...",
+        "tags.newTagSection": "Tag hinzufügen",
+        "tags.labelPlaceholder": "Tag-Bezeichnung",
+        "tags.usageCount": "%d / %d Tags",
+        "tags.noTagsYet": "Noch keine Tags. Erstelle einen, um Stationen und Challenges zu gruppieren.",
+        "tags.deleteConfirmTitle": "Tag löschen?",
+        "tags.deleteConfirmMessage": "Tag \"%@\" entfernen? Er wird von allen Stationen und Challenges getrennt.",
+        "tags.duplicateLabelError": "Ein Tag mit diesem Namen existiert bereits",
+        "tags.atCapError": "Maximal %d Tags pro Spiel",
+        "tags.inUseError": "Dieser Tag wird verwendet und kann nicht gelöscht werden",
+        "common.delete": "Löschen",
     ]
 }
 

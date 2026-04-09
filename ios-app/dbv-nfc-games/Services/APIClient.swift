@@ -496,6 +496,24 @@ actor APIClient {
         try await post("/api/games/import", body: request, token: token)
     }
 
+    // MARK: - Tag Management (Wave F — operator-only)
+
+    func listTags(gameId: UUID, token: String) async throws -> [GameTag] {
+        try await get("/api/games/\(gameId)/tags", token: token)
+    }
+
+    func createTag(gameId: UUID, request: CreateTagRequest, token: String) async throws -> GameTag {
+        try await post("/api/games/\(gameId)/tags", body: request, token: token)
+    }
+
+    func updateTag(gameId: UUID, tagId: UUID, request: UpdateTagRequest, token: String) async throws -> GameTag {
+        try await patch("/api/games/\(gameId)/tags/\(tagId)", body: request, token: token)
+    }
+
+    func deleteTag(gameId: UUID, tagId: UUID, token: String) async throws {
+        try await deleteVoid("/api/games/\(gameId)/tags/\(tagId)", token: token)
+    }
+
     // MARK: - HTTP Methods
 
     private func get<T: Decodable>(_ path: String, token: String? = nil) async throws -> T {

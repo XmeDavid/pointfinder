@@ -446,4 +446,19 @@
     <string name="cd_join_team">Team beitreten</string>
     <string name="cd_operator_login">Operator-Anmeldung</string>
     <string name="cd_scan_qr">QR-Code scannen</string>
+    <!-- Tag Management (Wave F — tags+colors unification) -->
+    <string name="tags_manage">Tags verwalten</string>
+    <string name="tags_manage_title">Tags verwalten</string>
+    <string name="tags_add_tag">Tag hinzufügen</string>
+    <string name="tags_new_tag_placeholder">Neuer Tag-Name…</string>
+    <string name="tags_label_placeholder">Tag-Bezeichnung</string>
+    <string name="tags_usage_count">%1$d / %2$d Tags</string>
+    <string name="tags_no_tags_yet">Noch keine Tags. Erstelle einen, um Stationen und Challenges zu gruppieren.</string>
+    <string name="tags_delete_confirm_title">Tag löschen?</string>
+    <string name="tags_delete_confirm_message">Tag \"%1$s\" entfernen? Er wird von allen Stationen und Challenges getrennt.</string>
+    <string name="tags_duplicate_label_error">Ein Tag mit diesem Namen existiert bereits</string>
+    <string name="tags_at_cap_error">Maximal 50 Tags pro Spiel</string>
+    <string name="tags_in_use_error">Dieser Tag wird verwendet und kann nicht gelöscht werden</string>
+    <string name="action_delete">Löschen</string>
+    <string name="operator_save">Speichern</string>
 </resources>

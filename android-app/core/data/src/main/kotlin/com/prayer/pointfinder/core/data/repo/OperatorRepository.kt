@@ -30,8 +30,11 @@ import com.prayer.pointfinder.core.model.TeamLocationResponse
 import com.prayer.pointfinder.core.model.TeamVariablesCompletenessResponse
 import com.prayer.pointfinder.core.model.TeamVariablesRequest
 import com.prayer.pointfinder.core.model.TeamVariablesResponse
+import com.prayer.pointfinder.core.model.CreateTagRequest
+import com.prayer.pointfinder.core.model.GameTag
 import com.prayer.pointfinder.core.model.UpdateBaseRequest
 import com.prayer.pointfinder.core.model.UpdateChallengeRequest
+import com.prayer.pointfinder.core.model.UpdateTagRequest
 import com.prayer.pointfinder.core.model.UpdateGameRequest
 import com.prayer.pointfinder.core.model.UpdateGameStatusRequest
 import com.prayer.pointfinder.core.model.UpdateOperatorNotificationSettingsRequest
@@ -428,4 +431,25 @@ class OperatorRepository @Inject constructor(
 
     suspend fun importGame(request: ImportGameRequest): Game =
         apiCall { api.importGame(request) }
+
+    // === Tag Management (Wave F — operator-only) ===
+
+    suspend fun listTags(gameId: String): List<GameTag> =
+        apiCall { api.listTags(gameId) }
+
+    suspend fun createTag(gameId: String, request: CreateTagRequest): GameTag =
+        apiCall { api.createTag(gameId, request) }
+
+    suspend fun updateTag(gameId: String, tagId: String, request: UpdateTagRequest): GameTag =
+        apiCall { api.updateTag(gameId, tagId, request) }
+
+    suspend fun deleteTag(gameId: String, tagId: String) {
+        apiCall {
+            val response = api.deleteTag(gameId, tagId)
+            val errorBody = if (!response.isSuccessful) {
+                try { response.errorBody()?.string() } catch (_: Exception) { null }
+            } else null
+            checkSuccess(response.code(), errorBody)
+        }
+    }
 }

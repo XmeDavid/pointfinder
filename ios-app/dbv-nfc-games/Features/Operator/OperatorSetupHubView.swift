@@ -16,6 +16,7 @@ struct OperatorSetupHubView: View {
     @State private var showBases = false
     @State private var showChallenges = false
     @State private var showTeams = false
+    @State private var showManageTags = false
 
     private var token: String? {
         if case .userOperator(let token, _, _) = appState.authType {
@@ -109,6 +110,17 @@ struct OperatorSetupHubView: View {
 
                         // Manage section
                         Section(locale.t("operator.manage")) {
+                            Button { showManageTags = true } label: {
+                                HStack {
+                                    Label(locale.t("tags.manage"), systemImage: "tag")
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption)
+                                        .foregroundStyle(.tertiary)
+                                }
+                            }
+                            .foregroundStyle(.primary)
+
                             Button { showBases = true } label: {
                                 HStack {
                                     Label(locale.t("operator.bases"), systemImage: "mappin.and.ellipse")
@@ -189,6 +201,9 @@ struct OperatorSetupHubView: View {
             }
             .fullScreenCover(isPresented: $showTeams) {
                 TeamsManagementView(game: game, onDismiss: { showTeams = false })
+            }
+            .fullScreenCover(isPresented: $showManageTags) {
+                ManageTagsView(game: game, onDismiss: { showManageTags = false })
             }
         }
     }

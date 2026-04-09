@@ -27,6 +27,9 @@ import com.prayer.pointfinder.core.model.UnlockOverrideRequest
 import com.prayer.pointfinder.core.model.OperatorNotificationSettingsResponse
 import com.prayer.pointfinder.core.model.AuthType
 import com.prayer.pointfinder.core.model.ActivityEvent
+import com.prayer.pointfinder.core.model.CreateTagRequest
+import com.prayer.pointfinder.core.model.GameTag
+import com.prayer.pointfinder.core.model.UpdateTagRequest
 import com.prayer.pointfinder.core.model.LeaderboardEntry
 import com.prayer.pointfinder.core.model.SubmissionResponse
 import com.prayer.pointfinder.core.model.SubmissionStatus
@@ -47,6 +50,7 @@ import com.prayer.pointfinder.session.usecase.NotificationUseCase
 import com.prayer.pointfinder.session.usecase.OperatorManagementUseCase
 import com.prayer.pointfinder.session.usecase.SubmissionUseCase
 import com.prayer.pointfinder.session.usecase.TeamManagementUseCase
+import com.prayer.pointfinder.session.usecase.TagManagementUseCase
 import com.prayer.pointfinder.session.usecase.VariableManagementUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -107,6 +111,7 @@ class OperatorViewModel @Inject constructor(
     private val submissionUseCase: SubmissionUseCase,
     private val notificationUseCase: NotificationUseCase,
     private val operatorManagementUseCase: OperatorManagementUseCase,
+    private val tagManagementUseCase: TagManagementUseCase,
     private val liveDataUseCase: LiveDataUseCase,
     private val sessionStore: SessionStore,
     private val realtimeClient: MobileRealtimeClient,
@@ -1050,6 +1055,20 @@ class OperatorViewModel @Inject constructor(
             }
         }
     }
+
+    // ── Tag management ──────────────────────────────────────────────────
+
+    suspend fun listTags(gameId: String): List<GameTag> =
+        tagManagementUseCase.listTags(gameId)
+
+    suspend fun createTag(gameId: String, request: CreateTagRequest): GameTag =
+        tagManagementUseCase.createTag(gameId, request)
+
+    suspend fun updateTag(gameId: String, tagId: String, request: UpdateTagRequest): GameTag =
+        tagManagementUseCase.updateTag(gameId, tagId, request)
+
+    suspend fun deleteTag(gameId: String, tagId: String) =
+        tagManagementUseCase.deleteTag(gameId, tagId)
 
     // ── Utilities ───────────────────────────────────────────────────────
 

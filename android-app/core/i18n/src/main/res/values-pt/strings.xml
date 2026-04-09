@@ -418,4 +418,19 @@
     <string name="error_tag_cap_exceeded">O jogo atingiu o número máximo de tags.</string>
     <string name="error_tag_in_use">Esta tag está atribuída a uma base ou desafio e não pode ser eliminada.</string>
     <string name="error_ws_access_denied">Sessão expirada. Por favor, inicia sessão novamente.</string>
+    <!-- Tag Management (Wave F — tags+colors unification) -->
+    <string name="tags_manage">Gerir Etiquetas</string>
+    <string name="tags_manage_title">Gerir Etiquetas</string>
+    <string name="tags_add_tag">Adicionar Etiqueta</string>
+    <string name="tags_new_tag_placeholder">Nome da nova etiqueta…</string>
+    <string name="tags_label_placeholder">Nome da etiqueta</string>
+    <string name="tags_usage_count">%1$d / %2$d etiquetas</string>
+    <string name="tags_no_tags_yet">Sem etiquetas. Cria uma para agrupar bases e desafios.</string>
+    <string name="tags_delete_confirm_title">Eliminar Etiqueta?</string>
+    <string name="tags_delete_confirm_message">Remover a etiqueta \"%1$s\"? Será removida de todas as bases e desafios.</string>
+    <string name="tags_duplicate_label_error">Já existe uma etiqueta com este nome</string>
+    <string name="tags_at_cap_error">Máximo de 50 etiquetas por jogo</string>
+    <string name="tags_in_use_error">Esta etiqueta está em uso e não pode ser eliminada</string>
+    <string name="action_delete">Eliminar</string>
+    <string name="operator_save">Guardar</string>
 </resources>

@@ -67,6 +67,18 @@ struct Game: Codable, Identifiable {
     }
 }
 
+// MARK: - GameTag (Wave F tags+colors unification)
+
+/// Operator-only game-scoped tag DTO. Never exposed to players.
+struct GameTag: Codable, Identifiable {
+    let id: UUID
+    let gameId: UUID
+    let label: String
+    let color: String   // 7-char hex, e.g. "#3b82f6"
+    let createdAt: String
+    let updatedAt: String
+}
+
 struct Base: Codable, Identifiable {
     let id: UUID
     let gameId: UUID?
@@ -78,6 +90,8 @@ struct Base: Codable, Identifiable {
     let hidden: Bool
     let fixedChallengeId: UUID?
     let nfcToken: String?
+    /// Operator-only game-scoped tag IDs. Resolved against game tag vocabulary.
+    let tagIds: [UUID]?
 
     init(
         id: UUID,
@@ -89,7 +103,8 @@ struct Base: Codable, Identifiable {
         nfcLinked: Bool,
         hidden: Bool = false,
         fixedChallengeId: UUID? = nil,
-        nfcToken: String? = nil
+        nfcToken: String? = nil,
+        tagIds: [UUID]? = nil
     ) {
         self.id = id
         self.gameId = gameId
@@ -101,6 +116,7 @@ struct Base: Codable, Identifiable {
         self.hidden = hidden
         self.fixedChallengeId = fixedChallengeId
         self.nfcToken = nfcToken
+        self.tagIds = tagIds
     }
 
     init(from decoder: Decoder) throws {
@@ -115,6 +131,7 @@ struct Base: Codable, Identifiable {
         hidden = try container.decodeIfPresent(Bool.self, forKey: .hidden) ?? false
         fixedChallengeId = try container.decodeIfPresent(UUID.self, forKey: .fixedChallengeId)
         nfcToken = try container.decodeIfPresent(String.self, forKey: .nfcToken)
+        tagIds = try container.decodeIfPresent([UUID].self, forKey: .tagIds)
     }
 }
 
@@ -134,6 +151,8 @@ struct Challenge: Codable, Identifiable {
     let fixedBaseId: UUID?
     let requirePresenceToSubmit: Bool
     let operatorNotes: String?
+    /// Operator-only game-scoped tag IDs. Resolved against game tag vocabulary.
+    let tagIds: [UUID]?
 
     init(
         id: UUID,
@@ -150,7 +169,8 @@ struct Challenge: Codable, Identifiable {
         locationBound: Bool = false,
         fixedBaseId: UUID? = nil,
         requirePresenceToSubmit: Bool = false,
-        operatorNotes: String? = nil
+        operatorNotes: String? = nil,
+        tagIds: [UUID]? = nil
     ) {
         self.id = id
         self.gameId = gameId
@@ -167,6 +187,7 @@ struct Challenge: Codable, Identifiable {
         self.fixedBaseId = fixedBaseId
         self.requirePresenceToSubmit = requirePresenceToSubmit
         self.operatorNotes = operatorNotes
+        self.tagIds = tagIds
     }
 
     init(from decoder: Decoder) throws {
@@ -186,6 +207,7 @@ struct Challenge: Codable, Identifiable {
         fixedBaseId = try container.decodeIfPresent(UUID.self, forKey: .fixedBaseId)
         requirePresenceToSubmit = try container.decodeIfPresent(Bool.self, forKey: .requirePresenceToSubmit) ?? false
         operatorNotes = try container.decodeIfPresent(String.self, forKey: .operatorNotes)
+        tagIds = try container.decodeIfPresent([UUID].self, forKey: .tagIds)
     }
 }
 

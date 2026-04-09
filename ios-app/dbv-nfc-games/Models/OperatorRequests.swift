@@ -144,6 +144,29 @@ struct TeamVariable: Codable, Equatable {
     let teamValues: [String: String]
 }
 
+// MARK: - Tag Requests (Wave F tags+colors unification — operator-only)
+
+struct CreateTagRequest: Encodable {
+    let label: String
+    /// Optional — if nil the backend assigns the next palette swatch.
+    let color: String?
+
+    init(label: String, color: String? = nil) {
+        self.label = label
+        self.color = color
+    }
+}
+
+struct UpdateTagRequest: Encodable {
+    let label: String?
+    let color: String?
+
+    init(label: String? = nil, color: String? = nil) {
+        self.label = label
+        self.color = color
+    }
+}
+
 struct TeamVariablesRequest: Codable {
     let variables: [TeamVariable]
 }

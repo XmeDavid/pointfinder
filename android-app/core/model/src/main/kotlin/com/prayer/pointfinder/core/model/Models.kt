@@ -105,6 +105,32 @@ data class CheckInRequest(
     val nfcToken: String? = null,
 )
 
+/**
+ * Operator-only game-scoped tag DTO. Never exposed to players.
+ * Wave F — tags+colors unification.
+ */
+@Serializable
+data class GameTag(
+    val id: EntityId,
+    val gameId: EntityId,
+    val label: String,
+    val color: String,       // 7-char hex, e.g. "#3b82f6"
+    val createdAt: String,
+    val updatedAt: String,
+)
+
+@Serializable
+data class CreateTagRequest(
+    val label: String,
+    val color: String? = null,  // optional — backend assigns next palette swatch when null
+)
+
+@Serializable
+data class UpdateTagRequest(
+    val label: String? = null,
+    val color: String? = null,
+)
+
 @Serializable
 data class Base(
     val id: EntityId,
@@ -117,6 +143,8 @@ data class Base(
     val hidden: Boolean = false,
     val fixedChallengeId: EntityId? = null,
     val nfcToken: String? = null,
+    /** Operator-only game-scoped tag IDs. Resolved against game tag vocabulary. */
+    val tagIds: List<EntityId>? = null,
 )
 
 @Serializable
@@ -136,6 +164,8 @@ data class Challenge(
     val fixedBaseId: EntityId? = null,
     val requirePresenceToSubmit: Boolean = false,
     val operatorNotes: String? = null,
+    /** Operator-only game-scoped tag IDs. Resolved against game tag vocabulary. */
+    val tagIds: List<EntityId>? = null,
 )
 
 @Serializable

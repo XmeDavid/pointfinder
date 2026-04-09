@@ -10,6 +10,9 @@ import com.prayer.pointfinder.core.model.CheckInRequest
 import com.prayer.pointfinder.core.model.CheckInResponse
 import com.prayer.pointfinder.core.model.CreateBaseRequest
 import com.prayer.pointfinder.core.model.CreateChallengeRequest
+import com.prayer.pointfinder.core.model.CreateTagRequest
+import com.prayer.pointfinder.core.model.GameTag
+import com.prayer.pointfinder.core.model.UpdateTagRequest
 import com.prayer.pointfinder.core.model.CreateGameRequest
 import com.prayer.pointfinder.core.model.CreateTeamRequest
 import com.prayer.pointfinder.core.model.Game
@@ -438,6 +441,30 @@ interface CompanionApi {
 
     @POST("api/games/import")
     suspend fun importGame(@Body request: ImportGameRequest): Game
+
+    // === Tag Management (Wave F — operator-only) ===
+
+    @GET("api/games/{gameId}/tags")
+    suspend fun listTags(@Path("gameId") gameId: String): List<GameTag>
+
+    @POST("api/games/{gameId}/tags")
+    suspend fun createTag(
+        @Path("gameId") gameId: String,
+        @Body request: CreateTagRequest,
+    ): GameTag
+
+    @PATCH("api/games/{gameId}/tags/{tagId}")
+    suspend fun updateTag(
+        @Path("gameId") gameId: String,
+        @Path("tagId") tagId: String,
+        @Body request: UpdateTagRequest,
+    ): GameTag
+
+    @HTTP(method = "DELETE", path = "api/games/{gameId}/tags/{tagId}", hasBody = false)
+    suspend fun deleteTag(
+        @Path("gameId") gameId: String,
+        @Path("tagId") tagId: String,
+    ): Response<Unit>
 }
 
 @kotlinx.serialization.Serializable

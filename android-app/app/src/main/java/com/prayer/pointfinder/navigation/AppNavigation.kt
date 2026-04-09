@@ -87,6 +87,8 @@ import com.prayer.pointfinder.core.model.UpdateBaseRequest
 import com.prayer.pointfinder.core.model.UpdateChallengeRequest
 import com.prayer.pointfinder.core.model.TeamVariable
 import com.prayer.pointfinder.core.model.UpdateTeamRequest
+import com.prayer.pointfinder.core.model.CreateTagRequest
+import com.prayer.pointfinder.core.model.UpdateTagRequest
 import com.prayer.pointfinder.core.model.PlayerResponse
 import com.prayer.pointfinder.core.model.BaseUnlockOverrideResponse
 import com.prayer.pointfinder.core.model.MarkCompletedRequest
@@ -107,6 +109,7 @@ import com.prayer.pointfinder.feature.operator.SetupHubScreen
 import com.prayer.pointfinder.feature.operator.OperatorSettingsScreen
 import com.prayer.pointfinder.feature.operator.OperatorSubmissionsScreen
 import com.prayer.pointfinder.feature.operator.OperatorTab
+import com.prayer.pointfinder.feature.operator.ManageTagsScreen
 import com.prayer.pointfinder.feature.operator.MoreScreen
 import com.prayer.pointfinder.feature.operator.GameSettingsScreen
 import com.prayer.pointfinder.feature.operator.NotificationsScreen
@@ -1698,6 +1701,16 @@ private fun OperatorGameRoot(
                             onBack = { moreSubScreen = null },
                         )
                     }
+                    "tags" -> {
+                        ManageTagsScreen(
+                            gameId = selectedGame.id,
+                            onBack = { moreSubScreen = null },
+                            loadTags = { viewModel.listTags(selectedGame.id) },
+                            createTag = { req -> viewModel.createTag(selectedGame.id, req) },
+                            updateTag = { tagId, req -> viewModel.updateTag(selectedGame.id, tagId, req) },
+                            deleteTag = { tagId -> viewModel.deleteTag(selectedGame.id, tagId) },
+                        )
+                    }
                     else -> if (moreSubScreen?.startsWith("base_edit:") == true) {
                         val baseId = moreSubScreen!!.removePrefix("base_edit:")
                         val base = state.bases.firstOrNull { it.id == baseId }
@@ -1865,6 +1878,7 @@ private fun OperatorGameRoot(
                             onNavigateToChallenges = { moreSubScreen = "challenges_list" },
                             onNavigateToTeams = { moreSubScreen = "teams_list" },
                             onNavigateToOperators = { moreSubScreen = "operators" },
+                            onNavigateToTags = { moreSubScreen = "tags" },
                             onExportGame = {
                                 viewModel.exportGame { exportDto ->
                                     val jsonString = Json { prettyPrint = true }.encodeToString(
