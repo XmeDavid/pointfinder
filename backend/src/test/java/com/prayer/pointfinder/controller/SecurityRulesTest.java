@@ -192,4 +192,13 @@ class SecurityRulesTest {
         mockMvc.perform(get("/api/player/games/" + UUID.randomUUID() + "/progress"))
                 .andExpect(status().isUnauthorized());
     }
+
+    @Test
+    void unauthenticatedWebSocketNativeHandshakeIsNotBlockedByHttpSecurity() throws Exception {
+        MvcResult result = mockMvc.perform(get("/ws-native"))
+                .andReturn();
+        int statusCode = result.getResponse().getStatus();
+        assertNotEquals(401, statusCode, "WebSocket handshake should reach the STOMP handler");
+        assertNotEquals(403, statusCode, "WebSocket handshake should not be forbidden by HTTP security");
+    }
 }

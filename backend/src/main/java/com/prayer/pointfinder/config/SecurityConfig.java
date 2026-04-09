@@ -62,7 +62,9 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/**").hasRole("ADMIN")
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/broadcast/**").permitAll()
-                .requestMatchers("/ws/**").permitAll()
+                // WebSocket handshakes must be allowed through HTTP security so
+                // STOMP/native handlers can perform auth after the socket opens.
+                .requestMatchers("/ws/**", "/ws-native").permitAll()
                 .requestMatchers("/api/player/**").hasRole("PLAYER")
                 // Snapshot endpoint is reachable by players AND operators —
                 // the controller branches on the JWT principal type and
@@ -94,6 +96,7 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", config);
         source.registerCorsConfiguration("/ws/**", config);
+        source.registerCorsConfiguration("/ws-native", config);
         return source;
     }
 
