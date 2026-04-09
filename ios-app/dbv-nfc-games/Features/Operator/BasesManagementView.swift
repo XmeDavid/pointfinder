@@ -16,8 +16,17 @@ struct BasesManagementView: View {
     @State private var bases: [Base] = []
     @State private var challenges: [Challenge] = []
     @State private var assignments: [Assignment] = []
+    @State private var gameTags: [GameTag] = []
+    @State private var selectedTagIds: Set<UUID> = []
     @State private var isLoading = true
     @State private var path = NavigationPath()
+
+    private var filteredBases: [Base] {
+        guard !selectedTagIds.isEmpty else { return bases }
+        return bases.filter { base in
+            selectedTagIds.allSatisfy { tagId in base.tagIds?.contains(tagId) == true }
+        }
+    }
 
     private var token: String? {
         if case .userOperator(let token, _, _) = appState.authType {
@@ -44,40 +53,58 @@ struct BasesManagementView: View {
                         description: Text(locale.t("operator.noBasesDesc"))
                     )
                 } else {
-                    List(bases) { base in
-                        NavigationLink(value: BaseNavDestination.edit(base.id)) {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(base.name)
-                                        .font(.headline)
-                                    if !base.description.isEmpty {
-                                        Text(base.description)
+                    VStack(spacing: 0) {
+                    if !gameTags.isEmpty {
+                        TagFilterBar(
+                            tags: gameTags,
+                            selectedTagIds: $selectedTagIds,
+                            clearLabel: locale.t("tags.clearFilters")
+                        )
+                        .accessibilityIdentifier("bases-tag-filter-bar")
+                    }
+                    if filteredBases.isEmpty {
+                        ContentUnavailableView(
+                            locale.t("tags.noBasesFiltered"),
+                            systemImage: "line.3.horizontal.decrease.circle"
+                        )
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
+                        List(filteredBases) { base in
+                            NavigationLink(value: BaseNavDestination.edit(base.id)) {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(base.name)
+                                            .font(.headline)
+                                        if !base.description.isEmpty {
+                                            Text(base.description)
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                                .lineLimit(1)
+                                        }
+                                        Text(challengeInfoForBase(base))
                                             .font(.caption)
                                             .foregroundStyle(.secondary)
-                                            .lineLimit(1)
                                     }
-                                    Text(challengeInfoForBase(base))
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                                Spacer()
-                                Text(base.nfcLinked ? locale.t("operator.linked") : locale.t("operator.notLinked"))
-                                    .font(.caption2)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(base.nfcLinked ? Color.green.opacity(0.2) : Color.orange.opacity(0.2))
-                                    .foregroundStyle(base.nfcLinked ? .green : .orange)
-                                    .clipShape(Capsule())
-                                if base.hidden {
-                                    Image(systemName: "eye.slash")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+                                    Spacer()
+                                    Text(base.nfcLinked ? locale.t("operator.linked") : locale.t("operator.notLinked"))
+                                        .font(.caption2)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(base.nfcLinked ? Color.green.opacity(0.2) : Color.orange.opacity(0.2))
+                                        .foregroundStyle(base.nfcLinked ? .green : .orange)
+                                        .clipShape(Capsule())
+                                    if base.hidden {
+                                        Image(systemName: "eye.slash")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
                                 }
                             }
+                            .accessibilityIdentifier("base-edit-btn")
                         }
-                        .accessibilityIdentifier("base-edit-btn")
+                        .listStyle(.plain)
                     }
-                    .listStyle(.plain)
+                    } // end VStack
                 }
             }
             .navigationTitle(locale.t("operator.bases"))
@@ -185,10 +212,12 @@ struct BasesManagementView: View {
             async let basesResult = appState.apiClient.getGameBases(gameId: game.id, token: token)
             async let challengesResult = appState.apiClient.getChallenges(gameId: game.id, token: token)
             async let assignmentsResult = appState.apiClient.getAssignments(gameId: game.id, token: token)
-            let (b, c, a) = try await (basesResult, challengesResult, assignmentsResult)
+            async let tagsResult = appState.apiClient.listTags(gameId: game.id, token: token)
+            let (b, c, a, t) = try await (basesResult, challengesResult, assignmentsResult, tagsResult)
             bases = b
             challenges = c
             assignments = a
+            gameTags = t
         } catch is CancellationError {
             // Task cancelled during navigation — not an error
         } catch {

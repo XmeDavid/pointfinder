@@ -25,6 +25,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -35,6 +39,7 @@ import com.prayer.pointfinder.core.i18n.R
 import com.prayer.pointfinder.core.model.Assignment
 import com.prayer.pointfinder.core.model.Base
 import com.prayer.pointfinder.core.model.Challenge
+import com.prayer.pointfinder.core.model.GameTag
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,11 +47,20 @@ fun BasesListScreen(
     bases: List<Base>,
     challenges: List<Challenge>,
     assignments: List<Assignment>,
+    gameTags: List<GameTag> = emptyList(),
     onSelectBase: (Base) -> Unit,
     onCreateBase: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var selectedTagIds by remember { mutableStateOf(emptySet<String>()) }
+    val filteredBases = remember(bases, selectedTagIds) {
+        if (selectedTagIds.isEmpty()) bases
+        else bases.filter { base ->
+            selectedTagIds.all { tagId -> base.tagIds?.contains(tagId) == true }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -78,62 +92,95 @@ fun BasesListScreen(
                 )
             }
         } else {
-            LazyColumn(
+            Column(
                 modifier = modifier
                     .fillMaxSize()
-                    .padding(padding)
-                    .padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                    .padding(padding),
             ) {
-                items(bases, key = { it.id }) { base ->
-                    val baseAssignments = assignments.filter { it.baseId == base.id }
-                    val perTeamCount = baseAssignments.count { it.teamId != null }
-                    val globalAssignment = baseAssignments.firstOrNull { it.teamId == null }
-                    val challengeSubtitle = when {
-                        perTeamCount >= 2 -> stringResource(R.string.label_custom_assignment)
-                        perTeamCount == 1 && globalAssignment == null -> stringResource(R.string.label_custom_assignment)
-                        globalAssignment != null -> {
-                            challenges.firstOrNull { it.id == globalAssignment.challengeId }?.title
-                                ?: stringResource(R.string.label_no_challenge)
-                        }
-                        base.fixedChallengeId != null -> {
-                            challenges.firstOrNull { it.id == base.fixedChallengeId }?.title
-                                ?: stringResource(R.string.label_no_challenge)
-                        }
-                        else -> stringResource(R.string.label_no_challenge)
-                    }
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("base-edit-btn")
-                            .clickable { onSelectBase(base) },
-                        tonalElevation = 2.dp,
-                        shape = MaterialTheme.shapes.medium,
+                if (gameTags.isNotEmpty()) {
+                    TagFilterRow(
+                        tags = gameTags,
+                        selectedTagIds = selectedTagIds,
+                        onToggleTag = { tagId ->
+                            selectedTagIds = if (selectedTagIds.contains(tagId)) {
+                                selectedTagIds - tagId
+                            } else {
+                                selectedTagIds + tagId
+                            }
+                        },
+                        onClearFilters = { selectedTagIds = emptySet() },
+                        clearLabel = stringResource(R.string.label_clear_filters),
+                    )
+                }
+                if (filteredBases.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
-                            Text(base.name, fontWeight = FontWeight.SemiBold)
-                            Spacer(Modifier.height(4.dp))
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(
-                                    text = challengeSubtitle,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                                val nfcColor = if (base.nfcLinked) StatusCompleted else StatusSubmitted
-                                val nfcLabel = if (base.nfcLinked) {
-                                    stringResource(R.string.label_nfc_linked)
-                                } else {
-                                    stringResource(R.string.label_nfc_not_linked)
+                        Text(
+                            text = stringResource(R.string.label_no_bases_filtered),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        items(filteredBases, key = { it.id }) { base ->
+                            val baseAssignments = assignments.filter { it.baseId == base.id }
+                            val perTeamCount = baseAssignments.count { it.teamId != null }
+                            val globalAssignment = baseAssignments.firstOrNull { it.teamId == null }
+                            val challengeSubtitle = when {
+                                perTeamCount >= 2 -> stringResource(R.string.label_custom_assignment)
+                                perTeamCount == 1 && globalAssignment == null -> stringResource(R.string.label_custom_assignment)
+                                globalAssignment != null -> {
+                                    challenges.firstOrNull { it.id == globalAssignment.challengeId }?.title
+                                        ?: stringResource(R.string.label_no_challenge)
                                 }
-                                CapsuleBadge(label = nfcLabel, color = nfcColor)
-                                if (base.hidden) {
-                                    CapsuleBadge(
-                                        label = stringResource(R.string.label_hidden_base),
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
+                                base.fixedChallengeId != null -> {
+                                    challenges.firstOrNull { it.id == base.fixedChallengeId }?.title
+                                        ?: stringResource(R.string.label_no_challenge)
+                                }
+                                else -> stringResource(R.string.label_no_challenge)
+                            }
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag("base-edit-btn")
+                                    .clickable { onSelectBase(base) },
+                                tonalElevation = 2.dp,
+                                shape = MaterialTheme.shapes.medium,
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Text(base.name, fontWeight = FontWeight.SemiBold)
+                                    Spacer(Modifier.height(4.dp))
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        Text(
+                                            text = challengeSubtitle,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                        val nfcColor = if (base.nfcLinked) StatusCompleted else StatusSubmitted
+                                        val nfcLabel = if (base.nfcLinked) {
+                                            stringResource(R.string.label_nfc_linked)
+                                        } else {
+                                            stringResource(R.string.label_nfc_not_linked)
+                                        }
+                                        CapsuleBadge(label = nfcLabel, color = nfcColor)
+                                        if (base.hidden) {
+                                            CapsuleBadge(
+                                                label = stringResource(R.string.label_hidden_base),
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }

@@ -25,6 +25,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -35,6 +39,7 @@ import com.prayer.pointfinder.core.i18n.R
 import com.prayer.pointfinder.core.model.Assignment
 import com.prayer.pointfinder.core.model.Base
 import com.prayer.pointfinder.core.model.Challenge
+import com.prayer.pointfinder.core.model.GameTag
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,11 +47,20 @@ fun ChallengesListScreen(
     challenges: List<Challenge>,
     bases: List<Base>,
     assignments: List<Assignment>,
+    gameTags: List<GameTag> = emptyList(),
     onSelectChallenge: (Challenge) -> Unit,
     onCreateChallenge: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var selectedTagIds by remember { mutableStateOf(emptySet<String>()) }
+    val filteredChallenges = remember(challenges, selectedTagIds) {
+        if (selectedTagIds.isEmpty()) challenges
+        else challenges.filter { ch ->
+            selectedTagIds.all { tagId -> ch.tagIds?.contains(tagId) == true }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -78,66 +92,99 @@ fun ChallengesListScreen(
                 )
             }
         } else {
-            LazyColumn(
+            Column(
                 modifier = modifier
                     .fillMaxSize()
-                    .padding(padding)
-                    .padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                    .padding(padding),
             ) {
-                items(challenges, key = { it.id }) { challenge ->
-                    val fixedBaseAssignment = assignments.firstOrNull {
-                        it.challengeId == challenge.id && it.teamId == null
-                    }
-                    val linkedBaseName = fixedBaseAssignment?.let { assignment ->
-                        bases.firstOrNull { it.id == assignment.baseId }?.name
-                    } ?: bases.firstOrNull { it.fixedChallengeId == challenge.id }?.name
-                    val answerTypeBadge = when (challenge.answerType) {
-                        "file" -> stringResource(R.string.label_file_upload)
-                        "none" -> stringResource(R.string.label_check_in_only)
-                        else -> stringResource(R.string.label_text_input)
-                    }
-
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("challenge-edit-btn")
-                            .clickable { onSelectChallenge(challenge) },
-                        tonalElevation = 2.dp,
-                        shape = MaterialTheme.shapes.medium,
-                    ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(
-                                    text = challenge.title,
-                                    fontWeight = FontWeight.SemiBold,
-                                    modifier = Modifier.weight(1f),
-                                )
-                                Text(
-                                    text = stringResource(R.string.label_pts, challenge.points),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = StarGold,
-                                    fontWeight = FontWeight.SemiBold,
-                                )
+                if (gameTags.isNotEmpty()) {
+                    TagFilterRow(
+                        tags = gameTags,
+                        selectedTagIds = selectedTagIds,
+                        onToggleTag = { tagId ->
+                            selectedTagIds = if (selectedTagIds.contains(tagId)) {
+                                selectedTagIds - tagId
+                            } else {
+                                selectedTagIds + tagId
                             }
-                            Spacer(Modifier.height(4.dp))
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
+                        },
+                        onClearFilters = { selectedTagIds = emptySet() },
+                        clearLabel = stringResource(R.string.label_clear_filters),
+                    )
+                }
+                if (filteredChallenges.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.label_no_challenges_filtered),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        items(filteredChallenges, key = { it.id }) { challenge ->
+                            val fixedBaseAssignment = assignments.firstOrNull {
+                                it.challengeId == challenge.id && it.teamId == null
+                            }
+                            val linkedBaseName = fixedBaseAssignment?.let { assignment ->
+                                bases.firstOrNull { it.id == assignment.baseId }?.name
+                            } ?: bases.firstOrNull { it.fixedChallengeId == challenge.id }?.name
+                            val answerTypeBadge = when (challenge.answerType) {
+                                "file" -> stringResource(R.string.label_file_upload)
+                                "none" -> stringResource(R.string.label_check_in_only)
+                                else -> stringResource(R.string.label_text_input)
+                            }
+
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag("challenge-edit-btn")
+                                    .clickable { onSelectChallenge(challenge) },
+                                tonalElevation = 2.dp,
+                                shape = MaterialTheme.shapes.medium,
                             ) {
-                                Text(
-                                    text = linkedBaseName ?: stringResource(R.string.label_no_base),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                                CapsuleBadge(
-                                    label = answerTypeBadge,
-                                    color = BadgeIndigo,
-                                )
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        Text(
+                                            text = challenge.title,
+                                            fontWeight = FontWeight.SemiBold,
+                                            modifier = Modifier.weight(1f),
+                                        )
+                                        Text(
+                                            text = stringResource(R.string.label_pts, challenge.points),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = StarGold,
+                                            fontWeight = FontWeight.SemiBold,
+                                        )
+                                    }
+                                    Spacer(Modifier.height(4.dp))
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        Text(
+                                            text = linkedBaseName ?: stringResource(R.string.label_no_base),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                        CapsuleBadge(
+                                            label = answerTypeBadge,
+                                            color = BadgeIndigo,
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

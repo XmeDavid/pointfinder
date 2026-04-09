@@ -15,8 +15,17 @@ struct ChallengesManagementView: View {
     @State private var challenges: [Challenge] = []
     @State private var bases: [Base] = []
     @State private var assignments: [Assignment] = []
+    @State private var gameTags: [GameTag] = []
+    @State private var selectedTagIds: Set<UUID> = []
     @State private var isLoading = true
     @State private var path = NavigationPath()
+
+    private var filteredChallenges: [Challenge] {
+        guard !selectedTagIds.isEmpty else { return challenges }
+        return challenges.filter { ch in
+            selectedTagIds.allSatisfy { tagId in ch.tagIds?.contains(tagId) == true }
+        }
+    }
 
     private var token: String? {
         if case .userOperator(let token, _, _) = appState.authType {
@@ -43,36 +52,54 @@ struct ChallengesManagementView: View {
                     description: Text(locale.t("operator.noChallengesDesc"))
                 )
             } else {
-                List(challenges) { challenge in
-                    NavigationLink(value: ChallengeNavDestination.edit(challenge.id)) {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(challenge.title)
-                                    .font(.headline)
-                                HStack(spacing: 6) {
-                                    Text(challenge.answerType == "none" ? locale.t("common.checkIn") : challenge.answerType == "file" ? locale.t("operator.fileUpload") : locale.t("operator.textInput"))
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                    if challenge.locationBound {
-                                        Image(systemName: "location.fill")
-                                            .font(.caption2)
-                                            .foregroundStyle(.blue)
-                                    }
-                                }
-                                Text(baseNameForChallenge(challenge))
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            Text(locale.t("operator.pts", challenge.points))
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                                .foregroundStyle(.orange)
-                        }
+                VStack(spacing: 0) {
+                    if !gameTags.isEmpty {
+                        TagFilterBar(
+                            tags: gameTags,
+                            selectedTagIds: $selectedTagIds,
+                            clearLabel: locale.t("tags.clearFilters")
+                        )
+                        .accessibilityIdentifier("challenges-tag-filter-bar")
                     }
-                    .accessibilityIdentifier("challenge-edit-btn")
-                }
-                .listStyle(.plain)
+                    if filteredChallenges.isEmpty {
+                        ContentUnavailableView(
+                            locale.t("tags.noChallengesFiltered"),
+                            systemImage: "line.3.horizontal.decrease.circle"
+                        )
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
+                        List(filteredChallenges) { challenge in
+                            NavigationLink(value: ChallengeNavDestination.edit(challenge.id)) {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(challenge.title)
+                                            .font(.headline)
+                                        HStack(spacing: 6) {
+                                            Text(challenge.answerType == "none" ? locale.t("common.checkIn") : challenge.answerType == "file" ? locale.t("operator.fileUpload") : locale.t("operator.textInput"))
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                            if challenge.locationBound {
+                                                Image(systemName: "location.fill")
+                                                    .font(.caption2)
+                                                    .foregroundStyle(.blue)
+                                            }
+                                        }
+                                        Text(baseNameForChallenge(challenge))
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    Spacer()
+                                    Text(locale.t("operator.pts", challenge.points))
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .foregroundStyle(.orange)
+                                }
+                            }
+                            .accessibilityIdentifier("challenge-edit-btn")
+                        }
+                        .listStyle(.plain)
+                    }
+                } // end VStack
             }
         }
         .navigationTitle(locale.t("operator.challenges"))
@@ -169,10 +196,12 @@ struct ChallengesManagementView: View {
             async let challengesResult = appState.apiClient.getChallenges(gameId: game.id, token: token)
             async let basesResult = appState.apiClient.getGameBases(gameId: game.id, token: token)
             async let assignmentsResult = appState.apiClient.getAssignments(gameId: game.id, token: token)
-            let (c, b, a) = try await (challengesResult, basesResult, assignmentsResult)
+            async let tagsResult = appState.apiClient.listTags(gameId: game.id, token: token)
+            let (c, b, a, t) = try await (challengesResult, basesResult, assignmentsResult, tagsResult)
             challenges = c
             bases = b
             assignments = a
+            gameTags = t
         } catch is CancellationError {
             // Task cancelled during navigation
         } catch {

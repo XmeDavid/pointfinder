@@ -335,6 +335,8 @@
     <string name="label_activity_load_error">Aktivität konnte nicht geladen werden. Zum Aktualisieren ziehen.</string>
     <string name="label_all_types">Alle Typen</string>
     <string name="label_clear_filters">Filter löschen</string>
+    <string name="label_no_bases_filtered">Keine Stationen entsprechen den ausgewählten Filtern.</string>
+    <string name="label_no_challenges_filtered">Keine Challenges entsprechen den ausgewählten Filtern.</string>
     <string name="label_load_more">Mehr laden</string>
     <string name="label_no_matching_events">Keine passenden Ereignisse</string>
     <string name="activity_type_check_in">Check-in</string>

@@ -84,6 +84,7 @@ data class OperatorState(
     val teamVariablesIncomplete: Boolean = false,
     val leaderboard: List<LeaderboardEntry> = emptyList(),
     val activity: List<ActivityEvent> = emptyList(),
+    val gameTags: List<GameTag> = emptyList(),
     val isLiveRefreshing: Boolean = false,
     val lastSyncedAt: String? = null,
     val notificationSettings: OperatorNotificationSettingsResponse? = null,
@@ -163,6 +164,7 @@ class OperatorViewModel @Inject constructor(
                         gameCrudUseCase.invalidateConfigCache(entity ?: "", gameId)
                         loadGameMeta(gameId)
                         refreshSelectedGameData()
+                        if (entity == "tags") loadGameTags(gameId)
                     }
                 }
             }
@@ -296,6 +298,7 @@ class OperatorViewModel @Inject constructor(
         }
         refreshSelectedGameData()
         loadGameMeta(game.id)
+        loadGameTags(game.id)
         loadNotificationSettings()
         startPolling()
     }
@@ -311,6 +314,7 @@ class OperatorViewModel @Inject constructor(
             submissions = emptyList(),
             leaderboard = emptyList(),
             activity = emptyList(),
+            gameTags = emptyList(),
             notificationSettings = null,
             notifications = emptyList(),
             operators = emptyList(),
@@ -428,6 +432,19 @@ class OperatorViewModel @Inject constructor(
                 .onFailure { e ->
                     if (markAuthExpiredIfNeeded(e)) return@onFailure
                     _state.value = _state.value.copy(errorMessage = friendlyError(e))
+                }
+        }
+    }
+
+    private fun loadGameTags(gameId: String) {
+        viewModelScope.launch {
+            runCatching { tagManagementUseCase.listTags(gameId) }
+                .onSuccess { tags ->
+                    _state.value = _state.value.copy(gameTags = tags, authExpired = false)
+                }
+                .onFailure { e ->
+                    if (markAuthExpiredIfNeeded(e)) return@onFailure
+                    // Non-fatal — filter bar simply stays hidden when tags can't be loaded
                 }
         }
     }

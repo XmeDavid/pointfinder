@@ -328,6 +328,8 @@
     <string name="label_activity_load_error">Não foi possível carregar a atividade. Puxa para atualizar.</string>
     <string name="label_all_types">Todos os tipos</string>
     <string name="label_clear_filters">Limpar filtros</string>
+    <string name="label_no_bases_filtered">Nenhuma base corresponde aos filtros selecionados.</string>
+    <string name="label_no_challenges_filtered">Nenhum desafio corresponde aos filtros selecionados.</string>
     <string name="label_load_more">Carregar mais</string>
     <string name="label_no_matching_events">Sem eventos correspondentes</string>
     <string name="activity_type_check_in">Check-in</string>

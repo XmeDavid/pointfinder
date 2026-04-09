@@ -337,6 +337,8 @@
     <string name="label_activity_load_error">Couldn\'t load activity. Pull to refresh.</string>
     <string name="label_all_types">All types</string>
     <string name="label_clear_filters">Clear filters</string>
+    <string name="label_no_bases_filtered">No bases match the selected filters.</string>
+    <string name="label_no_challenges_filtered">No challenges match the selected filters.</string>
     <string name="label_load_more">Load more</string>
     <string name="label_no_matching_events">No matching events</string>
     <string name="activity_type_check_in">Check-in</string>

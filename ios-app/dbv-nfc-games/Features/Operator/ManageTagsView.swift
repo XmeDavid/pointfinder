@@ -32,17 +32,9 @@ private func nextPaletteColor(usedColors: [String]) -> String {
 }
 
 /// Compute a foreground color (black or white) for a hex background using relative luminance.
+// contrastingTextColor is provided by TagFilterBar.swift as tagContrastingTextColor(_:)
 private func contrastingTextColor(hex: String) -> Color {
-    var cleaned = hex.trimmingCharacters(in: .whitespacesAndNewlines)
-    if cleaned.hasPrefix("#") { cleaned = String(cleaned.dropFirst()) }
-    guard cleaned.count == 6, let value = UInt64(cleaned, radix: 16) else { return .white }
-    let r = Double((value >> 16) & 0xFF) / 255.0
-    let g = Double((value >> 8) & 0xFF) / 255.0
-    let b = Double(value & 0xFF) / 255.0
-    // sRGB linearize
-    func lin(_ c: Double) -> Double { c <= 0.04045 ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4) }
-    let luminance = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
-    return luminance > 0.179 ? .black : .white
+    tagContrastingTextColor(hex: hex)
 }
 
 // MARK: - ManageTagsView
