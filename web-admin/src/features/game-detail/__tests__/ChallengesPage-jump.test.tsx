@@ -75,6 +75,16 @@ vi.mock("@/components/common/RichTextEditor", () => ({
   ),
 }));
 
+vi.mock("@hello-pangea/dnd", () => ({
+  DragDropContext: ({ children }: { children: unknown }) => children,
+  Droppable: ({ children }: { children: (p: { droppableProps: object; innerRef: () => void; placeholder: null }, s: { isDraggingOver: boolean }) => unknown }) =>
+    children({ droppableProps: {}, innerRef: () => {}, placeholder: null }, { isDraggingOver: false }),
+  Draggable: ({ children }: { children: (p: { draggableProps: object; dragHandleProps: null; innerRef: () => void }, s: { isDragging: boolean }) => unknown }) =>
+    children({ draggableProps: {}, dragHandleProps: null, innerRef: () => {} }, { isDragging: false }),
+}));
+
+vi.mock("dompurify", () => ({ default: { sanitize: (s: string) => s } }));
+
 import { challengesApi } from "@/lib/api/challenges";
 import { basesApi } from "@/lib/api/bases";
 import { assignmentsApi } from "@/lib/api/assignments";
