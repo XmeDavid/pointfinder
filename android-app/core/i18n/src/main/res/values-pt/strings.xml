@@ -433,4 +433,17 @@
     <string name="tags_in_use_error">Esta etiqueta está em uso e não pode ser eliminada</string>
     <string name="action_delete">Eliminar</string>
     <string name="operator_save">Guardar</string>
+    <!-- Assignments CRUD (Wave 2) -->
+    <string name="label_assignments">Atribuições</string>
+    <string name="label_new_assignment">Nova Atribuição</string>
+    <string name="label_assign">Atribuir</string>
+    <string name="label_no_assignments">Sem Atribuições</string>
+    <string name="label_no_assignments_desc">Sem atribuições. Toca em + para criar uma.</string>
+    <string name="label_delete_assignment_title">Eliminar Atribuição?</string>
+    <string name="label_delete_assignment_message">Remover atribuição de &#8220;%1$s&#8221;? Esta ação não pode ser desfeita.</string>
+    <string name="label_assignment_count">%1$d atribuição(ões)</string>
+    <string name="label_bases_without_assignments">Bases Sem Atribuições</string>
+    <string name="label_assignment_locked_all_teams">Já existe uma atribuição para todas as equipas nesta base.</string>
+    <string name="label_select_base">Selecionar Base</string>
+    <string name="label_select_challenge">Selecionar Desafio</string>
 </resources>

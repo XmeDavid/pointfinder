@@ -8,6 +8,7 @@ import com.prayer.pointfinder.core.model.BaseProgress
 import com.prayer.pointfinder.core.model.Challenge
 import com.prayer.pointfinder.core.model.CheckInRequest
 import com.prayer.pointfinder.core.model.CheckInResponse
+import com.prayer.pointfinder.core.model.CreateAssignmentRequest
 import com.prayer.pointfinder.core.model.CreateBaseRequest
 import com.prayer.pointfinder.core.model.CreateChallengeRequest
 import com.prayer.pointfinder.core.model.CreateTagRequest
@@ -198,6 +199,18 @@ interface CompanionApi {
 
     @GET("api/games/{gameId}/assignments")
     suspend fun getAssignments(@Path("gameId") gameId: String): List<Assignment>
+
+    @POST("api/games/{gameId}/assignments")
+    suspend fun createAssignment(
+        @Path("gameId") gameId: String,
+        @Body request: CreateAssignmentRequest,
+    ): Assignment
+
+    @DELETE("api/games/{gameId}/assignments/{assignmentId}")
+    suspend fun deleteAssignment(
+        @Path("gameId") gameId: String,
+        @Path("assignmentId") assignmentId: String,
+    ): retrofit2.Response<Unit>
 
     @GET("api/games/{gameId}/teams")
     suspend fun getTeams(@Path("gameId") gameId: String): List<Team>

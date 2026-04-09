@@ -228,6 +228,14 @@ actor APIClient {
         try await get("/api/games/\(gameId)/assignments", token: token)
     }
 
+    func createAssignment(gameId: UUID, request: CreateAssignmentRequest, token: String) async throws -> Assignment {
+        try await post("/api/games/\(gameId)/assignments", body: request, token: token)
+    }
+
+    func deleteAssignment(gameId: UUID, assignmentId: UUID, token: String) async throws {
+        try await deleteVoid("/api/games/\(gameId)/assignments/\(assignmentId)", token: token)
+    }
+
     // MARK: - Operator Monitoring Endpoints
 
     func getTeams(gameId: UUID, token: String) async throws -> [Team] {

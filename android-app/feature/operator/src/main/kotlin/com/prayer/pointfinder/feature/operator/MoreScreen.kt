@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tag
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -61,6 +62,7 @@ fun MoreScreen(
     onNavigateToTeams: () -> Unit,
     onNavigateToOperators: () -> Unit,
     onNavigateToTags: () -> Unit = {},
+    onNavigateToAssignments: () -> Unit = {},
     onExportGame: () -> Unit,
     onSwitchGame: () -> Unit,
     onLogout: () -> Unit,
@@ -112,6 +114,12 @@ fun MoreScreen(
                     icon = Icons.Default.Group,
                     label = stringResource(R.string.label_teams),
                     onClick = onNavigateToTeams,
+                )
+                NavigationRow(
+                    icon = Icons.Default.Link,
+                    label = stringResource(R.string.label_assignments),
+                    onClick = onNavigateToAssignments,
+                    modifier = Modifier.testTag("nav-assignments-btn"),
                 )
                 NavigationRow(
                     icon = Icons.Default.Tag,

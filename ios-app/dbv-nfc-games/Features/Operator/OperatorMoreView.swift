@@ -16,6 +16,7 @@ struct OperatorMoreView: View {
     @State private var showBases = false
     @State private var showChallenges = false
     @State private var showTeams = false
+    @State private var showAssignments = false
     @State private var showManageTags = false
 
     @State private var showDeleteAccountAlert = false
@@ -72,6 +73,13 @@ struct OperatorMoreView: View {
                     } label: {
                         Label(locale.t("operator.teams"), systemImage: "person.3")
                     }
+
+                    Button {
+                        showAssignments = true
+                    } label: {
+                        Label(locale.t("operator.assignments"), systemImage: "link")
+                    }
+                    .accessibilityIdentifier("nav-assignments-btn")
 
                     Button {
                         showManageTags = true
@@ -234,6 +242,9 @@ struct OperatorMoreView: View {
             }
             .fullScreenCover(isPresented: $showTeams) {
                 TeamsManagementView(game: game, onDismiss: { showTeams = false })
+            }
+            .fullScreenCover(isPresented: $showAssignments) {
+                AssignmentsView(game: game, onDismiss: { showAssignments = false })
             }
             .fullScreenCover(isPresented: $showManageTags) {
                 ManageTagsView(game: game, onDismiss: { showManageTags = false })

@@ -8,6 +8,7 @@ import com.prayer.pointfinder.core.data.repo.SessionStore
 import com.prayer.pointfinder.core.model.Assignment
 import com.prayer.pointfinder.core.model.Base
 import com.prayer.pointfinder.core.model.Challenge
+import com.prayer.pointfinder.core.model.CreateAssignmentRequest
 import com.prayer.pointfinder.core.model.CreateBaseRequest
 import com.prayer.pointfinder.core.model.CreateChallengeRequest
 import com.prayer.pointfinder.core.model.Game
@@ -775,6 +776,42 @@ class OperatorViewModel @Inject constructor(
         viewModelScope.launch {
             runCatching { teamManagementUseCase.deleteTeam(gameId, teamId) }
                 .onSuccess { loadGameMeta(gameId); onSuccess() }
+                .onFailure { e ->
+                    if (markAuthExpiredIfNeeded(e)) return@onFailure
+                    _state.value = _state.value.copy(errorMessage = friendlyError(e))
+                }
+        }
+    }
+
+    // ── Assignment management ────────────────────────────────────────────
+
+    fun createAssignment(request: CreateAssignmentRequest, onSuccess: (Assignment) -> Unit, onError: (String) -> Unit = {}) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching { teamManagementUseCase.createAssignment(gameId, request) }
+                .onSuccess { assignment ->
+                    _state.value = _state.value.copy(assignments = _state.value.assignments + assignment)
+                    onSuccess(assignment)
+                }
+                .onFailure { e ->
+                    if (markAuthExpiredIfNeeded(e)) return@onFailure
+                    val msg = friendlyError(e)
+                    _state.value = _state.value.copy(errorMessage = msg)
+                    onError(msg)
+                }
+        }
+    }
+
+    fun deleteAssignment(assignmentId: String, onSuccess: () -> Unit) {
+        val gameId = _state.value.selectedGame?.id ?: return
+        viewModelScope.launch {
+            runCatching { teamManagementUseCase.deleteAssignment(gameId, assignmentId) }
+                .onSuccess {
+                    _state.value = _state.value.copy(
+                        assignments = _state.value.assignments.filter { it.id != assignmentId }
+                    )
+                    onSuccess()
+                }
                 .onFailure { e ->
                     if (markAuthExpiredIfNeeded(e)) return@onFailure
                     _state.value = _state.value.copy(errorMessage = friendlyError(e))

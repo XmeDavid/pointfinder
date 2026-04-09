@@ -5,6 +5,7 @@ import com.prayer.pointfinder.core.model.Assignment
 import com.prayer.pointfinder.core.model.Base
 import com.prayer.pointfinder.core.model.CheckInResponse
 import com.prayer.pointfinder.core.model.Challenge
+import com.prayer.pointfinder.core.model.CreateAssignmentRequest
 import com.prayer.pointfinder.core.model.CreateBaseRequest
 import com.prayer.pointfinder.core.model.CreateChallengeRequest
 import com.prayer.pointfinder.core.model.CreateGameRequest
@@ -323,6 +324,22 @@ class OperatorRepository @Inject constructor(
             } else null
             checkSuccess(response.code(), errorBody)
         }
+    }
+
+    // === Assignment CRUD ===
+
+    suspend fun createAssignment(gameId: String, request: CreateAssignmentRequest): Assignment =
+        apiCall { api.createAssignment(gameId, request) }.also { assignmentsCache.remove(gameId) }
+
+    suspend fun deleteAssignment(gameId: String, assignmentId: String) {
+        apiCall {
+            val response = api.deleteAssignment(gameId, assignmentId)
+            val errorBody = if (!response.isSuccessful) {
+                try { response.errorBody()?.string() } catch (_: Exception) { null }
+            } else null
+            checkSuccess(response.code(), errorBody)
+        }
+        assignmentsCache.remove(gameId)
     }
 
     // === Notifications ===

@@ -461,4 +461,17 @@
     <string name="tags_in_use_error">Dieser Tag wird verwendet und kann nicht gelöscht werden</string>
     <string name="action_delete">Löschen</string>
     <string name="operator_save">Speichern</string>
+    <!-- Assignments CRUD (Wave 2) -->
+    <string name="label_assignments">Zuweisungen</string>
+    <string name="label_new_assignment">Neue Zuweisung</string>
+    <string name="label_assign">Zuweisen</string>
+    <string name="label_no_assignments">Keine Zuweisungen</string>
+    <string name="label_no_assignments_desc">Noch keine Zuweisungen. Tippe auf + um eine zu erstellen.</string>
+    <string name="label_delete_assignment_title">Zuweisung löschen?</string>
+    <string name="label_delete_assignment_message">Zuweisung für &#8220;%1$s&#8221; entfernen? Dies kann nicht rückgängig gemacht werden.</string>
+    <string name="label_assignment_count">%1$d Zuweisung(en)</string>
+    <string name="label_bases_without_assignments">Stationen ohne Zuweisungen</string>
+    <string name="label_assignment_locked_all_teams">Für diese Station existiert bereits eine Alle-Teams-Zuweisung.</string>
+    <string name="label_select_base">Station auswählen</string>
+    <string name="label_select_challenge">Challenge auswählen</string>
 </resources>

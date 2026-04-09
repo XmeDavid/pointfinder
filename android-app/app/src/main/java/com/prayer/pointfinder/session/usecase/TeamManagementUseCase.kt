@@ -1,7 +1,9 @@
 package com.prayer.pointfinder.session.usecase
 
 import com.prayer.pointfinder.core.data.repo.OperatorRepository
+import com.prayer.pointfinder.core.model.Assignment
 import com.prayer.pointfinder.core.model.BaseUnlockOverrideResponse
+import com.prayer.pointfinder.core.model.CreateAssignmentRequest
 import com.prayer.pointfinder.core.model.CreateTeamRequest
 import com.prayer.pointfinder.core.model.MarkCompletedRequest
 import com.prayer.pointfinder.core.model.PlayerResponse
@@ -50,4 +52,12 @@ class TeamManagementUseCase @Inject constructor(
 
     suspend fun listUnlockOverrides(gameId: String, teamId: String): List<BaseUnlockOverrideResponse> =
         operatorRepository.listUnlockOverrides(gameId, teamId)
+
+    // ── Assignment CRUD ─────────────────────────────────────────────────
+
+    suspend fun createAssignment(gameId: String, request: CreateAssignmentRequest): Assignment =
+        operatorRepository.createAssignment(gameId, request)
+
+    suspend fun deleteAssignment(gameId: String, assignmentId: String) =
+        operatorRepository.deleteAssignment(gameId, assignmentId)
 }

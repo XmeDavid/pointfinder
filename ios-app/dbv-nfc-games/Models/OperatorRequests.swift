@@ -99,6 +99,14 @@ struct UpdateTeamRequest: Encodable {
     let color: String?
 }
 
+// MARK: - Assignment Requests
+
+struct CreateAssignmentRequest: Encodable {
+    let baseId: UUID
+    let challengeId: UUID
+    let teamId: UUID? // nil = all teams
+}
+
 // MARK: - Rescue Actions
 
 /// Body for POST /games/:gameId/teams/:teamId/bases/:baseId/mark-completed

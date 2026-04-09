@@ -463,4 +463,17 @@
     <string name="tags_in_use_error">This tag is in use and cannot be deleted</string>
     <string name="action_delete">Delete</string>
     <string name="operator_save">Save</string>
+    <!-- Assignments CRUD (Wave 2) -->
+    <string name="label_assignments">Assignments</string>
+    <string name="label_new_assignment">New Assignment</string>
+    <string name="label_assign">Assign</string>
+    <string name="label_no_assignments">No Assignments</string>
+    <string name="label_no_assignments_desc">No assignments yet. Tap + to create one.</string>
+    <string name="label_delete_assignment_title">Delete Assignment?</string>
+    <string name="label_delete_assignment_message">Remove assignment for &#8220;%1$s&#8221;? This cannot be undone.</string>
+    <string name="label_assignment_count">%1$d assignment(s)</string>
+    <string name="label_bases_without_assignments">Bases Without Assignments</string>
+    <string name="label_assignment_locked_all_teams">An all-teams assignment already exists for this base.</string>
+    <string name="label_select_base">Select Base</string>
+    <string name="label_select_challenge">Select Challenge</string>
 </resources>

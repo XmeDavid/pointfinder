@@ -110,6 +110,7 @@ import com.prayer.pointfinder.feature.operator.OperatorSettingsScreen
 import com.prayer.pointfinder.feature.operator.OperatorSubmissionsScreen
 import com.prayer.pointfinder.feature.operator.OperatorTab
 import com.prayer.pointfinder.feature.operator.ManageTagsScreen
+import com.prayer.pointfinder.feature.operator.AssignmentsScreen
 import com.prayer.pointfinder.feature.operator.MoreScreen
 import com.prayer.pointfinder.feature.operator.GameSettingsScreen
 import com.prayer.pointfinder.feature.operator.NotificationsScreen
@@ -1711,6 +1712,21 @@ private fun OperatorGameRoot(
                             deleteTag = { tagId -> viewModel.deleteTag(selectedGame.id, tagId) },
                         )
                     }
+                    "assignments" -> {
+                        AssignmentsScreen(
+                            assignments = state.assignments,
+                            bases = state.bases,
+                            challenges = state.challenges,
+                            teams = state.teams,
+                            onCreateAssignment = { request ->
+                                viewModel.createAssignment(request, onSuccess = {}, onError = {})
+                            },
+                            onDeleteAssignment = { assignmentId ->
+                                viewModel.deleteAssignment(assignmentId, onSuccess = {})
+                            },
+                            onBack = { moreSubScreen = null },
+                        )
+                    }
                     else -> if (moreSubScreen?.startsWith("base_edit:") == true) {
                         val baseId = moreSubScreen!!.removePrefix("base_edit:")
                         val base = state.bases.firstOrNull { it.id == baseId }
@@ -1879,6 +1895,7 @@ private fun OperatorGameRoot(
                             onNavigateToTeams = { moreSubScreen = "teams_list" },
                             onNavigateToOperators = { moreSubScreen = "operators" },
                             onNavigateToTags = { moreSubScreen = "tags" },
+                            onNavigateToAssignments = { moreSubScreen = "assignments" },
                             onExportGame = {
                                 viewModel.exportGame { exportDto ->
                                     val jsonString = Json { prettyPrint = true }.encodeToString(

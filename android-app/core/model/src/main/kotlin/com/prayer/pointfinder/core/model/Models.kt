@@ -673,6 +673,15 @@ data class UpdateTeamRequest(
     val color: String? = null,
 )
 
+// === Assignment CRUD Requests ===
+
+@Serializable
+data class CreateAssignmentRequest(
+    val baseId: String,
+    val challengeId: String,
+    val teamId: String? = null, // null = all teams
+)
+
 // === Rescue Actions ===
 
 @Serializable
