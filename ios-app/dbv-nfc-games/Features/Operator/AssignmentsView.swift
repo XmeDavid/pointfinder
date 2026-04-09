@@ -91,6 +91,7 @@ struct AssignmentsView: View {
             )) {
                 Button(locale.t("common.delete"), role: .destructive) {
                     if let id = deleteTarget {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         Task { await performDelete(assignmentId: id) }
                     }
                 }
@@ -381,6 +382,7 @@ private struct AssignmentCreateSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(isSaving ? locale.t("common.saving") : locale.t("operator.assign")) {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         Task { await save() }
                     }
                     .disabled(!canSave)

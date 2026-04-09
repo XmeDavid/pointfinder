@@ -95,6 +95,7 @@ struct ManageTagsView: View {
             )) {
                 Button(locale.t("common.delete"), role: .destructive) {
                     if let tag = tagToDelete {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         Task { await deleteTag(tag) }
                     }
                 }
@@ -186,6 +187,7 @@ struct ManageTagsView: View {
                     Spacer()
 
                     Button(locale.t("operator.save")) {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         Task { await saveTag(tag) }
                     }
                     .disabled(editLabel.trimmingCharacters(in: .whitespaces).isEmpty || isSaving)
@@ -240,9 +242,13 @@ struct ManageTagsView: View {
                 TextField(locale.t("tags.newTagPlaceholder"), text: $newLabel)
                     .textFieldStyle(.roundedBorder)
                     .submitLabel(.done)
-                    .onSubmit { Task { await createTag() } }
+                    .onSubmit {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        Task { await createTag() }
+                    }
 
                 Button {
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                     Task { await createTag() }
                 } label: {
                     if isCreating {

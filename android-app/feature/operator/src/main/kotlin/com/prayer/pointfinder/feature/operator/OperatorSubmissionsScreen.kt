@@ -57,7 +57,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -101,6 +103,7 @@ fun OperatorSubmissionsScreen(
     modifier: Modifier = Modifier,
 ) {
     CompositionLocalProvider(LocalOkHttpClient provides okHttpClient) {
+    val haptic = LocalHapticFeedback.current
     var showPendingOnly by rememberSaveable { mutableStateOf(true) }
     var selectedSubmission by remember { mutableStateOf<SubmissionResponse?>(null) }
     var feedback by rememberSaveable { mutableStateOf("") }
@@ -295,6 +298,7 @@ fun OperatorSubmissionsScreen(
                         if (reviewingSubmission.status != SubmissionStatus.PENDING) {
                             pendingOverride = Pair(reviewingSubmission.id, SubmissionStatus.APPROVED)
                         } else {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onReviewSubmission(reviewingSubmission.id, SubmissionStatus.APPROVED, feedback.takeIf { it.isNotBlank() }, pointsText.toIntOrNull())
                             selectedSubmission = null
                         }
@@ -314,6 +318,7 @@ fun OperatorSubmissionsScreen(
                             if (reviewingSubmission.status != SubmissionStatus.PENDING) {
                                 pendingOverride = Pair(reviewingSubmission.id, SubmissionStatus.REJECTED)
                             } else {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 onReviewSubmission(reviewingSubmission.id, SubmissionStatus.REJECTED, feedback.takeIf { it.isNotBlank() }, null)
                                 selectedSubmission = null
                             }
@@ -346,6 +351,7 @@ fun OperatorSubmissionsScreen(
                 TextButton(
                     onClick = {
                         val pts = if (override.second == SubmissionStatus.APPROVED) pointsText.toIntOrNull() else null
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         onReviewSubmission(override.first, override.second, feedback.takeIf { it.isNotBlank() }, pts)
                         pendingOverride = null
                         selectedSubmission = null

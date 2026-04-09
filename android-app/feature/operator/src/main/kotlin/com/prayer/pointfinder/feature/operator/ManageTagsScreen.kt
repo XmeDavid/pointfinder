@@ -51,6 +51,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import com.prayer.pointfinder.core.i18n.R
 import com.prayer.pointfinder.core.model.CreateTagRequest
@@ -150,6 +152,7 @@ fun ManageTagsScreen(
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
+    val haptic = LocalHapticFeedback.current
     val tags = remember { mutableStateListOf<GameTag>() }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -197,6 +200,7 @@ fun ManageTagsScreen(
                 TextButton(onClick = {
                     val t = tagToDelete ?: return@TextButton
                     tagToDelete = null
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     scope.launch {
                         try {
                             deleteTag(t.id)
@@ -355,6 +359,7 @@ fun ManageTagsScreen(
                                 Button(
                                     onClick = {
                                         val t = editingTag ?: return@Button
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         scope.launch {
                                             isSaving = true
                                             saveError = null
@@ -461,6 +466,7 @@ fun ManageTagsScreen(
                                 onClick = {
                                     val label = newLabel.trim()
                                     if (label.isEmpty() || isCreating) return@IconButton
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                     scope.launch {
                                         isCreating = true
                                         createError = null

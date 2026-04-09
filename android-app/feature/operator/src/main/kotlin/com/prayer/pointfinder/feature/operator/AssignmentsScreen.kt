@@ -46,6 +46,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -69,6 +71,7 @@ fun AssignmentsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = LocalHapticFeedback.current
     var showCreateDialog by remember { mutableStateOf(false) }
     var deleteTarget by remember { mutableStateOf<Assignment?>(null) }
 
@@ -237,6 +240,7 @@ fun AssignmentsScreen(
             confirmButton = {
                 Button(
                     onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         onDeleteAssignment(assignment.id)
                         deleteTarget = null
                     },
@@ -338,6 +342,7 @@ private fun AssignmentCreateDialog(
     onConfirm: (CreateAssignmentRequest) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val haptic = LocalHapticFeedback.current
     var selectedBase by remember { mutableStateOf<Base?>(null) }
     var selectedChallenge by remember { mutableStateOf<Challenge?>(null) }
     var selectedTeam by remember { mutableStateOf<Team?>(null) }  // null = all teams
@@ -506,6 +511,7 @@ private fun AssignmentCreateDialog(
                 onClick = {
                     val base = selectedBase ?: return@Button
                     val challenge = selectedChallenge ?: return@Button
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     onConfirm(
                         CreateAssignmentRequest(
                             baseId = base.id,

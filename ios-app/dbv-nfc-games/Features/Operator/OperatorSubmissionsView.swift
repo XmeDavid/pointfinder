@@ -406,6 +406,7 @@ private struct OperatorSubmissionReviewSheet: View {
                 Button(locale.t("common.ok")) {
                     if let status = pendingOverrideStatus {
                         pendingOverrideStatus = nil
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         Task { await submit(status: status) }
                     }
                 }
@@ -421,6 +422,7 @@ private struct OperatorSubmissionReviewSheet: View {
 
     private func handleReview(status: String) {
         if submission.status == "pending" {
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             Task { await submit(status: status) }
         } else {
             pendingOverrideStatus = status
