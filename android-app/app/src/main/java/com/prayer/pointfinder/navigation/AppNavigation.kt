@@ -109,6 +109,7 @@ import com.prayer.pointfinder.feature.operator.SetupHubScreen
 import com.prayer.pointfinder.feature.operator.OperatorSettingsScreen
 import com.prayer.pointfinder.feature.operator.OperatorSubmissionsScreen
 import com.prayer.pointfinder.feature.operator.OperatorTab
+import com.prayer.pointfinder.feature.operator.ActivityLogScreen
 import com.prayer.pointfinder.feature.operator.ManageTagsScreen
 import com.prayer.pointfinder.feature.operator.AssignmentsScreen
 import com.prayer.pointfinder.feature.operator.MoreScreen
@@ -1727,6 +1728,19 @@ private fun OperatorGameRoot(
                             onBack = { moreSubScreen = null },
                         )
                     }
+                    "activity" -> {
+                        ActivityLogScreen(
+                            events = state.activity,
+                            teams = state.teams,
+                            isLoading = state.isLoading,
+                            isLoadingMore = false,
+                            hasMore = false,
+                            errorMessage = null,
+                            onBack = { moreSubScreen = null },
+                            onRefresh = viewModel::refreshLiveData,
+                            onLoadMore = {},
+                        )
+                    }
                     else -> if (moreSubScreen?.startsWith("base_edit:") == true) {
                         val baseId = moreSubScreen!!.removePrefix("base_edit:")
                         val base = state.bases.firstOrNull { it.id == baseId }
@@ -1896,6 +1910,7 @@ private fun OperatorGameRoot(
                             onNavigateToOperators = { moreSubScreen = "operators" },
                             onNavigateToTags = { moreSubScreen = "tags" },
                             onNavigateToAssignments = { moreSubScreen = "assignments" },
+                            onNavigateToActivity = { moreSubScreen = "activity" },
                             onExportGame = {
                                 viewModel.exportGame { exportDto ->
                                     val jsonString = Json { prettyPrint = true }.encodeToString(

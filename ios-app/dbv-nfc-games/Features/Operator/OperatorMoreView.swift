@@ -18,6 +18,7 @@ struct OperatorMoreView: View {
     @State private var showTeams = false
     @State private var showAssignments = false
     @State private var showManageTags = false
+    @State private var showActivity = false
 
     @State private var showDeleteAccountAlert = false
     @State private var isDeletingAccount = false
@@ -80,6 +81,12 @@ struct OperatorMoreView: View {
                         Label(locale.t("operator.assignments"), systemImage: "link")
                     }
                     .accessibilityIdentifier("nav-assignments-btn")
+
+                    Button {
+                        showActivity = true
+                    } label: {
+                        Label(locale.t("operator.activity.title"), systemImage: "clock.arrow.circlepath")
+                    }
 
                     Button {
                         showManageTags = true
@@ -245,6 +252,9 @@ struct OperatorMoreView: View {
             }
             .fullScreenCover(isPresented: $showAssignments) {
                 AssignmentsView(game: game, onDismiss: { showAssignments = false })
+            }
+            .fullScreenCover(isPresented: $showActivity) {
+                ActivityLogView(game: game, onDismiss: { showActivity = false })
             }
             .fullScreenCover(isPresented: $showManageTags) {
                 ManageTagsView(game: game, onDismiss: { showManageTags = false })

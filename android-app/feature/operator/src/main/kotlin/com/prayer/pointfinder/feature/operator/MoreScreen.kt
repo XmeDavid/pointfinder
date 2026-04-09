@@ -63,6 +63,7 @@ fun MoreScreen(
     onNavigateToOperators: () -> Unit,
     onNavigateToTags: () -> Unit = {},
     onNavigateToAssignments: () -> Unit = {},
+    onNavigateToActivity: () -> Unit = {},
     onExportGame: () -> Unit,
     onSwitchGame: () -> Unit,
     onLogout: () -> Unit,
@@ -125,6 +126,11 @@ fun MoreScreen(
                     icon = Icons.Default.Tag,
                     label = stringResource(R.string.tags_manage),
                     onClick = onNavigateToTags,
+                )
+                NavigationRow(
+                    icon = Icons.Default.Star,
+                    label = stringResource(R.string.label_activity_title),
+                    onClick = onNavigateToActivity,
                 )
                 NavigationRow(
                     icon = Icons.Default.People,
