@@ -142,7 +142,19 @@ public class BaseUnlockOverrideService {
         try {
             override = overrideRepository.save(override);
         } catch (DataIntegrityViolationException ex) {
-            // A concurrent create raced us; fall back to the winner.
+            // HIGH-5 fix: only treat the race as a unique-constraint conflict.
+            // If the violation is caused by a different constraint (e.g. an FK
+            // violation for an orphaned team_id or game_id) the fallback query
+            // will return empty and we must propagate a clear error rather than
+            // swallowing it silently.
+            String causeMsg = ex.getMostSpecificCause().getMessage();
+            boolean isUniqueConflict = causeMsg != null
+                    && (causeMsg.contains("unique") || causeMsg.contains("duplicate")
+                        || causeMsg.contains("uq_base_unlock_overrides"));
+            if (!isUniqueConflict) {
+                throw ex;
+            }
+            // A concurrent create raced us on the unique index; fall back to the winner.
             BaseUnlockOverride winner = overrideRepository
                     .findActiveByTeamIdAndBaseId(teamId, baseId)
                     .orElseThrow(() -> new BadRequestException("Unlock override create failed"));

@@ -245,6 +245,7 @@ class GameTagServiceTest {
                 .createdAt(Instant.now()).updatedAt(Instant.now()).build();
 
         when(gameTagRepository.findById(tagId)).thenReturn(Optional.of(tag));
+        when(gameTagRepository.existsByTagIdInUse(tagId)).thenReturn(false);
 
         gameTagService.deleteTag(gameId, tagId);
 
@@ -258,5 +259,41 @@ class GameTagServiceTest {
 
         assertThrows(ResourceNotFoundException.class, () -> gameTagService.deleteTag(gameId, tagId));
         verify(gameTagRepository, never()).delete(any());
+    }
+
+    // ── CRITICAL-1 race guard ────────────────────────────────────────
+
+    @Test
+    void deleteTagRejectsWhenTagIsInUse() {
+        // Simulates: a base or challenge was assigned this tag (e.g. by a concurrent
+        // operator) before the delete transaction completes. The existsByTagIdInUse
+        // native query detects this inside the same transaction and blocks the delete.
+        UUID tagId = UUID.randomUUID();
+        GameTag tag = GameTag.builder()
+                .id(tagId).game(game).label("trail").color("#3b82f6")
+                .createdAt(Instant.now()).updatedAt(Instant.now()).build();
+
+        when(gameTagRepository.findById(tagId)).thenReturn(Optional.of(tag));
+        when(gameTagRepository.existsByTagIdInUse(tagId)).thenReturn(true);
+
+        BadRequestException ex = assertThrows(BadRequestException.class,
+                () -> gameTagService.deleteTag(gameId, tagId));
+        assertEquals(ErrorCode.TAG_IN_USE, ex.getErrorCode());
+        verify(gameTagRepository, never()).delete(any());
+    }
+
+    @Test
+    void deleteTagSucceedsWhenTagIsNotInUse() {
+        // Tag exists but is not assigned to any base or challenge — delete proceeds.
+        UUID tagId = UUID.randomUUID();
+        GameTag tag = GameTag.builder()
+                .id(tagId).game(game).label("unused").color("#aabbcc")
+                .createdAt(Instant.now()).updatedAt(Instant.now()).build();
+
+        when(gameTagRepository.findById(tagId)).thenReturn(Optional.of(tag));
+        when(gameTagRepository.existsByTagIdInUse(tagId)).thenReturn(false);
+
+        assertDoesNotThrow(() -> gameTagService.deleteTag(gameId, tagId));
+        verify(gameTagRepository).delete(tag);
     }
 }

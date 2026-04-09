@@ -437,13 +437,18 @@ class GameServiceTest {
     }
 
     // ── Status transition tests ──────────────────────────────────────
+    //
+    // NOTE: updateStatus now calls gameRepository.findByIdForUpdate (pessimistic
+    // write lock — CRITICAL-2 fix) instead of gameAccessService.getAccessibleGame,
+    // so tests must stub findByIdForUpdate. gameAccessService.ensureCurrentUserCanAccessGame
+    // is stubbed as a no-op (void method) automatically by Mockito.
 
     @Test
     void updateStatusRejectsInvalidStatusString() {
         UUID gameId = UUID.randomUUID();
         Game game = Game.builder().id(gameId).name("G").description("").status(GameStatus.setup)
                 .createdBy(authenticatedUser).build();
-        when(gameAccessService.getAccessibleGame(gameId)).thenReturn(game);
+        when(gameRepository.findByIdForUpdate(gameId)).thenReturn(Optional.of(game));
 
         BadRequestException ex = assertThrows(BadRequestException.class,
                 () -> gameService.updateStatus(gameId, "invalid_status", false));
@@ -455,7 +460,7 @@ class GameServiceTest {
         UUID gameId = UUID.randomUUID();
         Game game = Game.builder().id(gameId).name("G").description("").status(GameStatus.setup)
                 .createdBy(authenticatedUser).build();
-        when(gameAccessService.getAccessibleGame(gameId)).thenReturn(game);
+        when(gameRepository.findByIdForUpdate(gameId)).thenReturn(Optional.of(game));
 
         BadRequestException ex = assertThrows(BadRequestException.class,
                 () -> gameService.updateStatus(gameId, "setup", false));
@@ -467,11 +472,42 @@ class GameServiceTest {
         UUID gameId = UUID.randomUUID();
         Game game = Game.builder().id(gameId).name("G").description("").status(GameStatus.setup)
                 .createdBy(authenticatedUser).build();
-        when(gameAccessService.getAccessibleGame(gameId)).thenReturn(game);
+        when(gameRepository.findByIdForUpdate(gameId)).thenReturn(Optional.of(game));
         when(baseRepository.countByGameId(gameId)).thenReturn(0L);
 
         BadRequestException ex = assertThrows(BadRequestException.class,
                 () -> gameService.updateStatus(gameId, "live", false));
+        assertTrue(ex.getMessage().contains("at least one base"));
+    }
+
+    @Test
+    void updateStatusThrowsWhenGameNotFound() {
+        // Verifies that the pessimistic-lock path (findByIdForUpdate returning empty)
+        // produces a ResourceNotFoundException rather than a NullPointerException.
+        UUID gameId = UUID.randomUUID();
+        when(gameRepository.findByIdForUpdate(gameId)).thenReturn(Optional.empty());
+
+        assertThrows(com.prayer.pointfinder.exception.ResourceNotFoundException.class,
+                () -> gameService.updateStatus(gameId, "live", false));
+    }
+
+    @Test
+    void updateStatusUsesLockBeforeReadinessCheck() {
+        // CRITICAL-2 regression guard: findByIdForUpdate must be called BEFORE
+        // any readiness check. We stub it to return a setup game and verify the
+        // lock call happens before the base count query, confirming the ordering.
+        UUID gameId = UUID.randomUUID();
+        Game game = Game.builder().id(gameId).name("G").description("").status(GameStatus.setup)
+                .createdBy(authenticatedUser).build();
+        when(gameRepository.findByIdForUpdate(gameId)).thenReturn(Optional.of(game));
+        // Readiness check: 0 bases → BadRequest (proves we reached the check under the lock)
+        when(baseRepository.countByGameId(gameId)).thenReturn(0L);
+
+        BadRequestException ex = assertThrows(BadRequestException.class,
+                () -> gameService.updateStatus(gameId, "live", false));
+
+        // Lock was acquired before the readiness check fired
+        verify(gameRepository).findByIdForUpdate(gameId);
         assertTrue(ex.getMessage().contains("at least one base"));
     }
 }

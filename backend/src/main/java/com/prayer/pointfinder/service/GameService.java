@@ -180,7 +180,15 @@ public class GameService {
 
     @Transactional(timeout = 10)
     public GameResponse updateStatus(UUID id, String newStatus, boolean resetProgress) {
-        Game game = gameAccessService.getAccessibleGame(id);
+        // CRITICAL-2 fix: take a pessimistic write lock on the Game row before
+        // running the readiness check. This prevents the race where Operator B
+        // resets progress (deleteByGameId) between Operator A's readiness check
+        // and Operator A's setStatus call, which would leave the game "live" with
+        // 0 teams / 0 assignments. The lock is held for the duration of this
+        // @Transactional method; any concurrent status transition waits at the DB.
+        Game game = gameRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Game", id));
+        gameAccessService.ensureCurrentUserCanAccessGame(id);
 
         GameStatus target;
         try {

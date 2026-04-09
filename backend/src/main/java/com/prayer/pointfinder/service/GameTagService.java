@@ -130,10 +130,21 @@ public class GameTagService {
                 .orElseThrow(() -> new ResourceNotFoundException("Tag", tagId));
         ensureTagBelongsToGame(tag, gameId);
 
+        // CRITICAL-1 guard: reject the delete if any base or challenge still
+        // references this tag. Checked inside the same @Transactional so that
+        // a concurrent assignment cannot slip in between this check and the
+        // DELETE. The native query reads directly from the join tables
+        // (base_tags / challenge_tags) rather than relying on the JPA cache.
+        if (gameTagRepository.existsByTagIdInUse(tagId)) {
+            throw new BadRequestException(
+                    "Tag is assigned to at least one base or challenge and cannot be deleted",
+                    ErrorCode.TAG_IN_USE
+            );
+        }
+
         log.info("[OP] operation=deleteTag gameId={} tagId={} label={} operatorId={}",
                 gameId, tagId, tag.getLabel(), currentOperatorId());
 
-        // Cascade: DB foreign-key ON DELETE CASCADE removes base_tags / challenge_tags rows
         gameTagRepository.delete(tag);
     }
 

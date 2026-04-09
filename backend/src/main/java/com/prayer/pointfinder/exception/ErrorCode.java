@@ -37,4 +37,11 @@ public enum ErrorCode {
     TAG_CAP_EXCEEDED,
     /** The tag is assigned to at least one base or challenge and cannot be deleted. */
     TAG_IN_USE,
+    /**
+     * The tag (or game) was modified concurrently by another operator between
+     * the client's read and the attempted write. The client should reload the
+     * resource and retry. Emitted when Hibernate detects an optimistic-locking
+     * conflict ({@code ObjectOptimisticLockingFailureException}).
+     */
+    TAG_MODIFIED_CONCURRENTLY,
 }

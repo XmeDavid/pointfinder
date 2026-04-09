@@ -8,6 +8,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
@@ -77,6 +78,19 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UploadSessionException.class)
     public ResponseEntity<ErrorResponse> handleUploadSession(UploadSessionException ex) {
         return jsonError(ex.getStatus(), ex.getMessage(), null, null, ex.getCode(), ex.isRetryable());
+    }
+
+    /**
+     * Hibernate optimistic-locking conflict: two operators modified the same
+     * entity concurrently. The second writer loses and gets a 409 with code
+     * {@code TAG_MODIFIED_CONCURRENTLY} so the client knows to reload and retry.
+     */
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleOptimisticLocking(ObjectOptimisticLockingFailureException ex) {
+        log.warn("Optimistic lock conflict on entity={} id={}", ex.getPersistentClassName(), ex.getIdentifier());
+        return jsonError(HttpStatus.CONFLICT,
+                "This resource was modified concurrently. Please reload and try again.",
+                null, null, ErrorCode.TAG_MODIFIED_CONCURRENTLY.name(), null);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)

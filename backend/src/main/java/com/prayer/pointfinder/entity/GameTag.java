@@ -15,6 +15,13 @@ import java.util.UUID;
  * <p>Operator-only concept — never exposed to players. See
  * {@code PlayerBaseResponse} / {@code PlayerChallengeResponse} for the
  * player-safe DTOs.
+ *
+ * <p>{@code version} is a Hibernate optimistic-lock column (JPA {@code @Version}).
+ * Concurrent updates (e.g. two operators editing the same tag label at the same
+ * instant) will cause Hibernate to throw
+ * {@code ObjectOptimisticLockingFailureException} on the second writer, which
+ * {@code GlobalExceptionHandler} maps to HTTP 409 with error code
+ * {@code TAG_MODIFIED_CONCURRENTLY}.
  */
 @Entity
 @Table(name = "game_tags")
@@ -28,6 +35,16 @@ public class GameTag {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    /**
+     * Hibernate optimistic-lock version. Populated from {@code game_tags.version}
+     * (added by V43 migration). Must be 0 for new rows; Flyway backfill sets
+     * existing rows to 0 so the column is never null.
+     */
+    @Version
+    @Column(nullable = false)
+    @Builder.Default
+    private Long version = 0L;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "game_id", nullable = false)
