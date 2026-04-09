@@ -460,13 +460,14 @@ function SettingsPageContent({ game, gameId }: { game: Game; gameId: string }) {
             </div>
 
             <DialogFooter>
-              <Button variant="outline" onClick={() => { setStateTarget(null); setProgressChoice(null); }}>
+              <Button variant="outline" onClick={() => { setStateTarget(null); setProgressChoice(null); }} data-testid="cancel-action-btn">
                 {t("common.cancel")}
               </Button>
               <Button
                 onClick={confirmStateChange}
                 disabled={!canConfirm || changeStatus.isPending}
                 variant={progressChoice === "erase" ? "destructive" : "default"}
+                data-testid="confirm-action-btn"
               >
                 {changeStatus.isPending
                   ? t("common.loading")

@@ -352,6 +352,49 @@ describe("SettingsPage", () => {
     });
   });
 
+  it("calls gamesApi.updateStatus with resetProgress=false when keep-progress is selected", async () => {
+    vi.mocked(gamesApi.updateStatus).mockResolvedValue(makeGame({ status: "setup" }));
+    renderPage(makeGame({ status: "live" }));
+
+    // Wait for the revert-to-setup button and click it
+    await waitFor(() => {
+      expect(
+        screen.getAllByRole("button").some((b) =>
+          b.textContent?.toLowerCase().includes("setup"),
+        ),
+      ).toBe(true);
+    });
+
+    const revertBtn = screen.getAllByRole("button").find(
+      (b) => b.textContent?.toLowerCase().includes("setup"),
+    )!;
+    fireEvent.click(revertBtn);
+
+    // Dialog opens — select keep-progress option
+    await waitFor(() => {
+      expect(screen.getByTestId("confirm-action-btn")).toBeTruthy();
+    });
+
+    // Click the keep-progress option (first choice card)
+    const keepBtn = screen.getAllByRole("button").find(
+      (b) => b.textContent?.toLowerCase().includes("keep"),
+    );
+    if (keepBtn) {
+      fireEvent.click(keepBtn);
+    } else {
+      // The keep option is rendered as a <button> element in the dialog
+      const keepOption = screen.getByText(/keep progress/i).closest("button");
+      fireEvent.click(keepOption!);
+    }
+
+    // Click the dialog confirm button via stable testid
+    fireEvent.click(screen.getByTestId("confirm-action-btn"));
+
+    await waitFor(() => {
+      expect(gamesApi.updateStatus).toHaveBeenCalledWith("g1", "setup", false);
+    });
+  });
+
   // ── Delete game ───────────────────────────────────────────────────────────
 
   it("shows the delete confirmation inline when delete button is clicked", async () => {

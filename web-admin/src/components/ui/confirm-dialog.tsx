@@ -23,8 +23,8 @@ export function ConfirmDeleteDialog({ open, onConfirm, onCancel, title, descript
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onCancel}>{t("common.cancel")}</Button>
-          <Button type="button" variant={variant} onClick={onConfirm}>{confirmLabel ?? t("common.delete")}</Button>
+          <Button type="button" variant="outline" onClick={onCancel} data-testid="cancel-action-btn">{t("common.cancel")}</Button>
+          <Button type="button" variant={variant} onClick={onConfirm} data-testid="confirm-action-btn">{confirmLabel ?? t("common.delete")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
