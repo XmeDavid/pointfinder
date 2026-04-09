@@ -2,6 +2,7 @@ package com.prayer.pointfinder.util;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Field;
 import java.time.Instant;
@@ -9,6 +10,7 @@ import java.time.Instant;
 /**
  * Validator that checks if endDate is after startDate.
  */
+@Slf4j
 public class DateRangeValidator implements ConstraintValidator<ValidDateRange, Object> {
 
     private String startDateField;
@@ -53,7 +55,11 @@ public class DateRangeValidator implements ConstraintValidator<ValidDateRange, O
             // Both are non-null: endDate must be after startDate
             return endDate.isAfter(startDate);
         } catch (Exception e) {
-            // If reflection fails, it's likely a framework error, not a validation error
+            // If reflection fails, it's likely a framework error, not a validation error.
+            // Log at WARN so operators can diagnose misconfigured date-range filter requests.
+            log.warn("DateRangeValidator reflection failed for fields '{}/{}' on {}: {}",
+                    startDateField, endDateField,
+                    value.getClass().getSimpleName(), e.getMessage());
             return true;
         }
     }
