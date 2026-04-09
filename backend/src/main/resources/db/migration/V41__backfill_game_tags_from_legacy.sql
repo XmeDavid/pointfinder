@@ -105,16 +105,18 @@ SELECT
 FROM _canonical_labels cl
 LEFT JOIN _canonical_colors cc
     ON cc.game_id = cl.game_id AND cc.norm_label = cl.norm_label
-ON CONFLICT ON CONSTRAINT ux_game_tags_game_lower_label DO NOTHING;
+ON CONFLICT (game_id, (LOWER(label))) DO NOTHING;
 
 -- ── Step 5: Insert base_tags links ──
+-- CROSS JOIN LATERAL (not comma) because the later explicit JOIN on game_tags
+-- would otherwise bind tighter than the comma and hide `b` from the ON clause.
 
 INSERT INTO base_tags (base_id, tag_id)
 SELECT DISTINCT
     b.id AS base_id,
     gt.id AS tag_id
-FROM bases b,
-     jsonb_array_elements_text(b.tags::jsonb) AS tag_label
+FROM bases b
+CROSS JOIN LATERAL jsonb_array_elements_text(b.tags::jsonb) AS tag_label
 JOIN game_tags gt
     ON gt.game_id = b.game_id
     AND LOWER(gt.label) = LOWER(TRIM(tag_label))
@@ -129,8 +131,8 @@ INSERT INTO challenge_tags (challenge_id, tag_id)
 SELECT DISTINCT
     c.id AS challenge_id,
     gt.id AS tag_id
-FROM challenges c,
-     jsonb_array_elements_text(c.tags::jsonb) AS tag_label
+FROM challenges c
+CROSS JOIN LATERAL jsonb_array_elements_text(c.tags::jsonb) AS tag_label
 JOIN game_tags gt
     ON gt.game_id = c.game_id
     AND LOWER(gt.label) = LOWER(TRIM(tag_label))
@@ -153,7 +155,7 @@ SELECT DISTINCT
 FROM bases b
 WHERE b.color IS NOT NULL
   AND (b.tags IS NULL OR b.tags = 'null' OR b.tags = '[]')
-ON CONFLICT ON CONSTRAINT ux_game_tags_game_lower_label DO NOTHING;
+ON CONFLICT (game_id, (LOWER(label))) DO NOTHING;
 
 INSERT INTO base_tags (base_id, tag_id)
 SELECT DISTINCT
@@ -178,7 +180,7 @@ SELECT DISTINCT
 FROM challenges c
 WHERE c.color IS NOT NULL
   AND (c.tags IS NULL OR c.tags = 'null' OR c.tags = '[]')
-ON CONFLICT ON CONSTRAINT ux_game_tags_game_lower_label DO NOTHING;
+ON CONFLICT (game_id, (LOWER(label))) DO NOTHING;
 
 INSERT INTO challenge_tags (challenge_id, tag_id)
 SELECT DISTINCT
