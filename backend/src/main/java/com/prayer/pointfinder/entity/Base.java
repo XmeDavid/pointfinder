@@ -72,6 +72,10 @@ public class Base {
     @Builder.Default
     private Set<GameTag> tags = new HashSet<>();
 
+    @Column(name = "order_index", nullable = false)
+    @Builder.Default
+    private Integer orderIndex = 0;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

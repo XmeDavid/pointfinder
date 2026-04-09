@@ -1,6 +1,7 @@
 package com.prayer.pointfinder.service;
 
 import com.prayer.pointfinder.dto.request.CreateBaseRequest;
+import com.prayer.pointfinder.dto.request.ReorderRequest;
 import com.prayer.pointfinder.dto.request.UpdateBaseRequest;
 import com.prayer.pointfinder.dto.response.BaseResponse;
 import com.prayer.pointfinder.entity.Base;
@@ -51,9 +52,19 @@ public class BaseService {
     @Transactional(readOnly = true)
     public List<BaseResponse> getBasesByGame(UUID gameId) {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
-        return baseRepository.findByGameIdOrderByCreatedAtAsc(gameId).stream()
+        return baseRepository.findByGameIdOrderByOrderIndexAscCreatedAtAsc(gameId).stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    @Transactional(timeout = 10)
+    public void reorderBases(UUID gameId, ReorderRequest request) {
+        gameAccessService.ensureCurrentUserCanAccessGame(gameId);
+        List<UUID> ids = request.getIds();
+        for (int i = 0; i < ids.size(); i++) {
+            baseRepository.updateOrderIndex(ids.get(i), gameId, i);
+        }
+        eventBroadcaster.broadcastGameConfig(gameId, "bases", "reordered");
     }
 
     @Transactional(timeout = 10)

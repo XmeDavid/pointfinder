@@ -300,6 +300,7 @@ A future slice will add `GET /api/games/:gameId/snapshot?lastSeenVersion=N`. Whe
 | PUT | `/games/:gameId/bases/:baseId` | Operator | Update base |
 | DELETE | `/games/:gameId/bases/:baseId` | Operator | Delete base (cascades assignments, check-ins) |
 | PATCH | `/games/:gameId/bases/:baseId/nfc-link` | Operator | Mark base as NFC-linked |
+| PATCH | `/games/:gameId/bases/reorder` | Operator | Reorder bases by sending the full ordered ID list |
 
 ### Key Payloads
 
@@ -320,6 +321,18 @@ A future slice will add `GET /api/games/:gameId/snapshot?lastSeenVersion=N`. Whe
 > `hidden: true` hides the base from players' map view.
 > `PATCH /nfc-link` is called by the iOS app after writing an NFC tag to a physical marker.
 
+**PATCH /games/:gameId/bases/reorder** (ReorderRequest)
+```json
+{ "ids": ["uuid-1", "uuid-2", "uuid-3"] }
+```
+
+- Sends the **complete ordered list** of base UUIDs for the game. The server sets `order_index = position` for each entry.
+- IDs that belong to a different game are silently ignored (idempotent).
+- Returns `204 No Content` on success.
+- The list endpoint (`GET /games/:gameId/bases`) returns bases sorted by `order_index ASC, created_at ASC`.
+- Validated: `ids` must be non-null and contain at most 500 entries.
+- After a successful reorder the server broadcasts a `game_config` WebSocket event (`type=bases, action=reordered`) to all operator subscribers so other open tabs update without a page reload.
+
 **Operator-only fields**: `BaseResponse` (returned by all endpoints under `/api/games/:gameId/bases`) carries `tags` (up to 20 free-text strings for setup organization) and `color` (a 7-char hex string for visual grouping). Both fields are NEVER returned on any player-facing endpoint: `GET /api/player/games/:gameId/bases`, `GET /api/player/games/:gameId/data`, and `GET /api/player/games/:gameId/progress` all serialize bases through dedicated player DTOs (`PlayerBaseResponse`, `BaseProgressResponse`, `BroadcastBaseResponse`) that have no `tags` or `color` fields. The `PlayerControllerTest` in the backend asserts the absence via JSON path plus a case-insensitive full-body substring check, so any regression that reintroduces `BaseResponse` on the player path fails the standard `make test-backend-docker` run. See `docs/business-logic.md` § "Tags and Colors on Bases and Challenges" for the full privacy contract and DTO table.
 
 **Validation**:
@@ -339,6 +352,7 @@ A future slice will add `GET /api/games/:gameId/snapshot?lastSeenVersion=N`. Whe
 | POST | `/games/:gameId/challenges` | Operator | Create challenge |
 | PUT | `/games/:gameId/challenges/:challengeId` | Operator | Update challenge |
 | DELETE | `/games/:gameId/challenges/:challengeId` | Operator | Delete challenge (cascades assignments, submissions) |
+| PATCH | `/games/:gameId/challenges/reorder` | Operator | Reorder challenges by sending the full ordered ID list |
 
 ### Key Payloads
 
@@ -369,6 +383,18 @@ A future slice will add `GET /api/games/:gameId/snapshot?lastSeenVersion=N`. Whe
 - `none` — Check-in only; auto-approves on submission
 
 > `correctAnswer` supports `{{variableName}}` template syntax resolved per-team from team variables.
+
+**PATCH /games/:gameId/challenges/reorder** (ReorderRequest)
+```json
+{ "ids": ["uuid-1", "uuid-2", "uuid-3"] }
+```
+
+- Sends the **complete ordered list** of challenge UUIDs for the game. The server sets `order_index = position` for each entry.
+- IDs that belong to a different game are silently ignored (idempotent).
+- Returns `204 No Content` on success.
+- The list endpoint (`GET /games/:gameId/challenges`) returns challenges sorted by `order_index ASC, created_at ASC`.
+- Validated: `ids` must be non-null and contain at most 500 entries.
+- After a successful reorder the server broadcasts a `game_config` WebSocket event (`type=challenges, action=reordered`) to all operator subscribers so other open tabs update without a page reload.
 
 **Operator-only fields**: `ChallengeResponse` (returned by all endpoints under `/api/games/:gameId/challenges`) carries three operator-only fields that are NEVER returned on any player-facing endpoint:
 

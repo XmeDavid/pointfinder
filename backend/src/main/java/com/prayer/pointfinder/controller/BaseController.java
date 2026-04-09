@@ -1,6 +1,7 @@
 package com.prayer.pointfinder.controller;
 
 import com.prayer.pointfinder.dto.request.CreateBaseRequest;
+import com.prayer.pointfinder.dto.request.ReorderRequest;
 import com.prayer.pointfinder.dto.request.UpdateBaseRequest;
 import com.prayer.pointfinder.dto.response.BaseResponse;
 import com.prayer.pointfinder.service.BaseService;
@@ -42,6 +43,13 @@ public class BaseController {
     public ResponseEntity<BaseResponse> linkNfc(@PathVariable UUID gameId,
                                                  @PathVariable UUID baseId) {
         return ResponseEntity.ok(baseService.setNfcLinked(gameId, baseId, true));
+    }
+
+    @PatchMapping("/reorder")
+    public ResponseEntity<Void> reorderBases(@PathVariable UUID gameId,
+                                              @Valid @RequestBody ReorderRequest request) {
+        baseService.reorderBases(gameId, request);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{baseId}")

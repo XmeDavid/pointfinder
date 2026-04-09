@@ -1,6 +1,7 @@
 package com.prayer.pointfinder.controller;
 
 import com.prayer.pointfinder.dto.request.CreateChallengeRequest;
+import com.prayer.pointfinder.dto.request.ReorderRequest;
 import com.prayer.pointfinder.dto.request.UpdateChallengeRequest;
 import com.prayer.pointfinder.dto.response.ChallengeResponse;
 import com.prayer.pointfinder.service.ChallengeService;
@@ -36,6 +37,13 @@ public class ChallengeController {
                                                               @PathVariable UUID challengeId,
                                                               @Valid @RequestBody UpdateChallengeRequest request) {
         return ResponseEntity.ok(challengeService.updateChallenge(gameId, challengeId, request));
+    }
+
+    @PatchMapping("/reorder")
+    public ResponseEntity<Void> reorderChallenges(@PathVariable UUID gameId,
+                                                    @Valid @RequestBody ReorderRequest request) {
+        challengeService.reorderChallenges(gameId, request);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{challengeId}")

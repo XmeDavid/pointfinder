@@ -49,4 +49,8 @@ export const challengesApi = {
   delete: async (id: string, gameId: string): Promise<void> => {
     await apiClient.delete(`/games/${gameId}/challenges/${id}`);
   },
+
+  reorder: async (gameId: string, ids: string[]): Promise<void> => {
+    await apiClient.patch(`/games/${gameId}/challenges/reorder`, { ids });
+  },
 };

@@ -38,4 +38,8 @@ export const basesApi = {
   delete: async (id: string, gameId: string): Promise<void> => {
     await apiClient.delete(`/games/${gameId}/bases/${id}`);
   },
+
+  reorder: async (gameId: string, ids: string[]): Promise<void> => {
+    await apiClient.patch(`/games/${gameId}/bases/reorder`, { ids });
+  },
 };

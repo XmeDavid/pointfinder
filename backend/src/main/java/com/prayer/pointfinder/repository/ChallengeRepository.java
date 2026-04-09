@@ -2,6 +2,7 @@ package com.prayer.pointfinder.repository;
 
 import com.prayer.pointfinder.entity.Challenge;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -15,6 +16,8 @@ public interface ChallengeRepository extends JpaRepository<Challenge, UUID> {
 
     List<Challenge> findByGameIdOrderByCreatedAtAsc(UUID gameId);
 
+    List<Challenge> findByGameIdOrderByOrderIndexAscCreatedAtAsc(UUID gameId);
+
     long countByGameId(UUID gameId);
 
     @Query("SELECT c FROM Challenge c WHERE c.game.id = :gameId AND c.unlocksBases IS NOT EMPTY")
@@ -22,4 +25,8 @@ public interface ChallengeRepository extends JpaRepository<Challenge, UUID> {
 
     @Query("SELECT c FROM Challenge c JOIN c.unlocksBases b WHERE b.id = :baseId")
     Optional<Challenge> findByUnlocksBasesContaining(@Param("baseId") UUID baseId);
+
+    @Modifying
+    @Query("UPDATE Challenge c SET c.orderIndex = :orderIndex WHERE c.id = :id AND c.game.id = :gameId")
+    void updateOrderIndex(@Param("id") UUID id, @Param("gameId") UUID gameId, @Param("orderIndex") int orderIndex);
 }

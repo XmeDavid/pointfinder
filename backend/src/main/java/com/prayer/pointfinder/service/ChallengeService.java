@@ -1,6 +1,7 @@
 package com.prayer.pointfinder.service;
 
 import com.prayer.pointfinder.dto.request.CreateChallengeRequest;
+import com.prayer.pointfinder.dto.request.ReorderRequest;
 import com.prayer.pointfinder.dto.request.UpdateChallengeRequest;
 import com.prayer.pointfinder.dto.response.ChallengeResponse;
 import com.prayer.pointfinder.entity.AnswerType;
@@ -37,9 +38,19 @@ public class ChallengeService {
     @Transactional(readOnly = true)
     public List<ChallengeResponse> getChallengesByGame(UUID gameId) {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
-        return challengeRepository.findByGameIdOrderByCreatedAtAsc(gameId).stream()
+        return challengeRepository.findByGameIdOrderByOrderIndexAscCreatedAtAsc(gameId).stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    @Transactional(timeout = 10)
+    public void reorderChallenges(UUID gameId, ReorderRequest request) {
+        gameAccessService.ensureCurrentUserCanAccessGame(gameId);
+        List<UUID> ids = request.getIds();
+        for (int i = 0; i < ids.size(); i++) {
+            challengeRepository.updateOrderIndex(ids.get(i), gameId, i);
+        }
+        eventBroadcaster.broadcastGameConfig(gameId, "challenges", "reordered");
     }
 
     @Transactional(timeout = 10)
