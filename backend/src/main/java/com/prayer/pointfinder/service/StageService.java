@@ -64,6 +64,8 @@ public class StageService {
                 .build();
 
         stage = stageRepository.save(stage);
+        // Force the INSERT to hit the DB before any @Modifying queries reference the new stage ID.
+        entityManager.flush();
 
         // First stage: auto-assign all existing bases to it
         if (isFirstStage) {
