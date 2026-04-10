@@ -27,16 +27,55 @@ const GameWorkspace = lazy(() =>
   })),
 );
 
-// ---------------------------------------------------------------------------
-// Placeholder for routes whose feature pages don't exist yet (Phase 2+)
-// ---------------------------------------------------------------------------
-function Placeholder({ label }: { label: string }) {
-  return (
-    <div className="flex h-screen items-center justify-center text-muted-foreground text-sm">
-      {label} — coming soon
-    </div>
-  );
-}
+const LoginPage = lazy(() =>
+  import("@/features/auth/LoginPage").then((m) => ({ default: m.LoginPage })),
+);
+
+const RegisterPage = lazy(() =>
+  import("@/features/auth/RegisterPage").then((m) => ({
+    default: m.RegisterPage,
+  })),
+);
+
+const ForgotPasswordPage = lazy(() =>
+  import("@/features/auth/ForgotPasswordPage").then((m) => ({
+    default: m.ForgotPasswordPage,
+  })),
+);
+
+const ResetPasswordPage = lazy(() =>
+  import("@/features/auth/ResetPasswordPage").then((m) => ({
+    default: m.ResetPasswordPage,
+  })),
+);
+
+const LandingPage = lazy(() =>
+  import("@/features/public/LandingPage").then((m) => ({
+    default: m.LandingPage,
+  })),
+);
+
+const FaqPage = lazy(() =>
+  import("@/features/public/FaqPage").then((m) => ({ default: m.FaqPage })),
+);
+
+const PrivacyPage = lazy(() =>
+  import("@/features/public/PrivacyPage").then((m) => ({
+    default: m.PrivacyPage,
+  })),
+);
+
+const LiveBroadcastPage = lazy(() =>
+  import("@/features/broadcast/LiveBroadcastPage").then((m) => ({
+    default: m.LiveBroadcastPage,
+  })),
+);
+
+const LiveEntryPage = lazy(() =>
+  import("@/features/broadcast/LiveEntryPage").then((m) => ({
+    default: m.LiveEntryPage,
+  })),
+);
 
 // ---------------------------------------------------------------------------
 // Spinner shown while lazy chunks load
@@ -96,13 +135,19 @@ const router = createBrowserRouter([
   // ── Public routes ──────────────────────────────────────────────────────
   {
     path: "/",
-    element: <Placeholder label="Landing page" />,
+    element: (
+      <Suspense fallback={<PageSpinner />}>
+        <LandingPage />
+      </Suspense>
+    ),
   },
   {
     path: "/login",
     element: (
       <GuestGuard>
-        <Placeholder label="Login" />
+        <Suspense fallback={<PageSpinner />}>
+          <LoginPage />
+        </Suspense>
       </GuestGuard>
     ),
   },
@@ -110,7 +155,9 @@ const router = createBrowserRouter([
     path: "/register/:token?",
     element: (
       <GuestGuard>
-        <Placeholder label="Register" />
+        <Suspense fallback={<PageSpinner />}>
+          <RegisterPage />
+        </Suspense>
       </GuestGuard>
     ),
   },
@@ -118,7 +165,9 @@ const router = createBrowserRouter([
     path: "/forgot-password",
     element: (
       <GuestGuard>
-        <Placeholder label="Forgot password" />
+        <Suspense fallback={<PageSpinner />}>
+          <ForgotPasswordPage />
+        </Suspense>
       </GuestGuard>
     ),
   },
@@ -126,29 +175,51 @@ const router = createBrowserRouter([
     path: "/reset-password/:token",
     element: (
       <GuestGuard>
-        <Placeholder label="Reset password" />
+        <Suspense fallback={<PageSpinner />}>
+          <ResetPasswordPage />
+        </Suspense>
       </GuestGuard>
     ),
   },
   {
     path: "/faq",
-    element: <Placeholder label="FAQ" />,
+    element: (
+      <Suspense fallback={<PageSpinner />}>
+        <FaqPage />
+      </Suspense>
+    ),
   },
   {
     path: "/privacy",
-    element: <Placeholder label="Privacy policy" />,
+    element: (
+      <Suspense fallback={<PageSpinner />}>
+        <PrivacyPage />
+      </Suspense>
+    ),
   },
   {
     path: "/broadcast/:code",
-    element: <Placeholder label="Broadcast" />,
+    element: (
+      <Suspense fallback={<PageSpinner />}>
+        <LiveBroadcastPage />
+      </Suspense>
+    ),
   },
   {
     path: "/live",
-    element: <Placeholder label="Live" />,
+    element: (
+      <Suspense fallback={<PageSpinner />}>
+        <LiveEntryPage />
+      </Suspense>
+    ),
   },
   {
     path: "/live/:code",
-    element: <Placeholder label="Live" />,
+    element: (
+      <Suspense fallback={<PageSpinner />}>
+        <LiveEntryPage />
+      </Suspense>
+    ),
   },
 
   // ── Authenticated routes ───────────────────────────────────────────────
