@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { SlideDrawer } from '@/components/layout/SlideDrawer'
 import { useGame } from '@/hooks/queries/useGames'
 import { useUpdateGame, useUpdateGameStatus } from '@/hooks/mutations/useGameMutations'
@@ -84,6 +84,13 @@ export default function GameSettingsPanel({
     () => (game?.unlockTrigger as UnlockTrigger) ?? 'CHECK_IN',
     [game?.unlockTrigger],
   )
+
+  // Optimistic local state for toggles
+  const [localUniform, setLocalUniform] = useState<boolean | null>(null)
+  const [localBroadcast, setLocalBroadcast] = useState<boolean | null>(null)
+
+  const uniformValue = localUniform ?? game?.uniformAssignment ?? false
+  const broadcastValue = localBroadcast ?? game?.broadcastEnabled ?? false
 
   if (!game) return null
 
@@ -180,12 +187,15 @@ export default function GameSettingsPanel({
                 Uniform Assignment
               </span>
               <Toggle
-                checked={game.uniformAssignment}
-                onToggle={() =>
-                  updateGame.mutate({
-                    uniformAssignment: !game.uniformAssignment,
-                  })
-                }
+                checked={uniformValue}
+                onToggle={() => {
+                  const newVal = !uniformValue
+                  setLocalUniform(newVal)
+                  updateGame.mutate(
+                    { uniformAssignment: newVal },
+                    { onSettled: () => setLocalUniform(null) },
+                  )
+                }}
                 testId="toggle-uniform-assignment"
               />
             </div>
@@ -206,16 +216,19 @@ export default function GameSettingsPanel({
                 Broadcast Enabled
               </span>
               <Toggle
-                checked={game.broadcastEnabled}
-                onToggle={() =>
-                  updateGame.mutate({
-                    broadcastEnabled: !game.broadcastEnabled,
-                  })
-                }
+                checked={broadcastValue}
+                onToggle={() => {
+                  const newVal = !broadcastValue
+                  setLocalBroadcast(newVal)
+                  updateGame.mutate(
+                    { broadcastEnabled: newVal },
+                    { onSettled: () => setLocalBroadcast(null) },
+                  )
+                }}
                 testId="toggle-broadcast"
               />
             </div>
-            {game.broadcastEnabled && (
+            {broadcastValue && (
               <div className="space-y-1.5">
                 <label className="text-sm text-muted-foreground">
                   Broadcast Code

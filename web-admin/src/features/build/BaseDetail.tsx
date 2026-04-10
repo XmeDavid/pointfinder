@@ -8,6 +8,7 @@ import { useTags } from '@/hooks/queries/useTags'
 import { useUpdateBase } from '@/hooks/mutations/useBaseMutations'
 import { useCreateAssignment, useDeleteAssignment } from '@/hooks/mutations/useAssignmentMutations'
 import { useTeams } from '@/hooks/queries/useTeams'
+import { LocationPicker } from '@/components/map/LocationPicker'
 import type { Assignment, Challenge, Tag, Team } from '@/types'
 
 interface BaseDetailProps {
@@ -151,29 +152,18 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
               className="w-full h-8 px-3 text-sm rounded-md bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <label className="block text-xs text-muted-foreground mb-1">Latitude</label>
-              <input
-                type="number"
-                step="0.0001"
-                value={localLat}
-                onChange={(e) => setLocalLat(e.target.value)}
-                data-testid="base-lat-input"
-                className="w-full h-8 px-3 text-sm rounded-md bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
-            </div>
-            <div className="flex-1">
-              <label className="block text-xs text-muted-foreground mb-1">Longitude</label>
-              <input
-                type="number"
-                step="0.0001"
-                value={localLng}
-                onChange={(e) => setLocalLng(e.target.value)}
-                data-testid="base-lng-input"
-                className="w-full h-8 px-3 text-sm rounded-md bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
-            </div>
+          <LocationPicker
+            lat={parseFloat(localLat) || 0}
+            lng={parseFloat(localLng) || 0}
+            onChange={(newLat, newLng) => {
+              setLocalLat(newLat.toString())
+              setLocalLng(newLng.toString())
+            }}
+          />
+          <div className="flex gap-2 mt-1">
+            <span className="text-xs text-muted-foreground font-mono">
+              {(parseFloat(localLat) || 0).toFixed(4)}, {(parseFloat(localLng) || 0).toFixed(4)}
+            </span>
           </div>
           <div>
             <label className="block text-xs text-muted-foreground mb-1">NFC</label>

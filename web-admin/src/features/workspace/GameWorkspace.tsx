@@ -84,7 +84,7 @@ export function GameWorkspace() {
 
   return (
     <div className="h-screen w-full relative overflow-hidden">
-      <GameMap mapStyle={mode === 'build' ? getStyleUrl(game.tileSource) : undefined}>
+      <GameMap mapStyle={getStyleUrl(game.tileSource)}>
         <BaseMarkers
           bases={bases}
           mode={mode}
