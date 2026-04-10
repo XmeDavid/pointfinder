@@ -13,6 +13,7 @@ import com.prayer.pointfinder.exception.ErrorCode;
 import com.prayer.pointfinder.repository.BaseRepository;
 import com.prayer.pointfinder.repository.StageRepository;
 import com.prayer.pointfinder.websocket.GameEventBroadcaster;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,6 +37,7 @@ class StageServiceTest {
     @Mock private BaseRepository baseRepository;
     @Mock private GameAccessService gameAccessService;
     @Mock private GameEventBroadcaster broadcaster;
+    @Mock private EntityManager entityManager;
 
     @InjectMocks private StageService stageService;
 
@@ -93,6 +95,12 @@ class StageServiceTest {
             saved.setId(UUID.randomUUID());
             return saved;
         });
+        when(stageRepository.findById(any(UUID.class))).thenAnswer(inv -> {
+            UUID id = inv.getArgument(0);
+            Stage s = Stage.builder().id(id).game(game).name("Stage 1").description("")
+                    .orderIndex(0).transitionType(TransitionType.manual).isActive(true).build();
+            return Optional.of(s);
+        });
         when(baseRepository.findByStageId(any())).thenReturn(List.of());
 
         CreateStageRequest request = new CreateStageRequest();
@@ -114,6 +122,12 @@ class StageServiceTest {
             saved.setId(UUID.randomUUID());
             return saved;
         });
+        when(stageRepository.findById(any(UUID.class))).thenAnswer(inv -> {
+            UUID id = inv.getArgument(0);
+            Stage s = Stage.builder().id(id).game(game).name("Stage 1").description("")
+                    .orderIndex(0).transitionType(TransitionType.manual).isActive(true).build();
+            return Optional.of(s);
+        });
         when(baseRepository.findByStageId(any())).thenReturn(List.of());
 
         CreateStageRequest request = new CreateStageRequest();
@@ -133,6 +147,12 @@ class StageServiceTest {
             Stage saved = inv.getArgument(0);
             saved.setId(UUID.randomUUID());
             return saved;
+        });
+        when(stageRepository.findById(any(UUID.class))).thenAnswer(inv -> {
+            UUID id = inv.getArgument(0);
+            Stage s = Stage.builder().id(id).game(game).name("Stage 3").description("")
+                    .orderIndex(2).transitionType(TransitionType.manual).isActive(false).build();
+            return Optional.of(s);
         });
         when(baseRepository.findByStageId(any())).thenReturn(List.of());
 
