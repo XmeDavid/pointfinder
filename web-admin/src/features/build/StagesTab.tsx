@@ -113,10 +113,18 @@ export default function StagesTab({ gameId }: { gameId: string }) {
   const assignments = assignmentsData ?? []
 
   const handleCreateStage = () => {
-    createStage.mutate({
-      name: `Stage ${stages.length + 1}`,
-      transitionType: 'manual',
-    })
+    createStage.mutate(
+      {
+        name: `Stage ${stages.length + 1}`,
+        transitionType: 'manual',
+      },
+      {
+        onError: (err) => {
+          console.error('Failed to create stage:', err)
+          alert(`Failed to create stage: ${(err as Error).message ?? 'Unknown error'}`)
+        },
+      },
+    )
   }
 
   return (
