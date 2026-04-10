@@ -1,6 +1,7 @@
 import { FloatingBar } from '@/components/layout/FloatingBar'
 import { useElapsedTimer } from '@/hooks/ui/useElapsedTimer'
 import { useWorkspaceStore, type GameMode } from '@/stores/workspace'
+import { useCreateStage } from '@/hooks/mutations/useStageMutations'
 import type { Game, Stage } from '@/types/v2'
 import { StageStrip } from './StageStrip'
 
@@ -53,8 +54,17 @@ export function TopBar({ game, stages }: TopBarProps) {
   const selectStage = useWorkspaceStore((s) => s.selectStage)
   const mode = useWorkspaceStore((s) => s.mode)
   const setMode = useWorkspaceStore((s) => s.setMode)
+  const createStage = useCreateStage(game.id)
 
   const hasStages = stages.length >= 2
+
+  const handleCreateStage = () => {
+    const nextIndex = stages.length
+    createStage.mutate({
+      name: `Stage ${nextIndex + 1}`,
+      transitionType: 'manual',
+    })
+  }
 
   return (
     <FloatingBar>
@@ -73,6 +83,7 @@ export function TopBar({ game, stages }: TopBarProps) {
         selectedStageId={selectedStageId}
         onSelectStage={selectStage}
         gameStatus={game.status}
+        onCreateStage={handleCreateStage}
       />
 
       {/* Spacer */}

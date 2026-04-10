@@ -28,9 +28,10 @@ export interface StageStripProps {
   selectedStageId: string | null
   onSelectStage: (id: string | null) => void
   gameStatus: GameStatus
+  onCreateStage?: () => void
 }
 
-export function StageStrip({ stages, selectedStageId, onSelectStage, gameStatus }: StageStripProps) {
+export function StageStrip({ stages, selectedStageId, onSelectStage, gameStatus, onCreateStage }: StageStripProps) {
   if (stages.length < 2) return null
 
   const sorted = [...stages].sort((a, b) => a.orderIndex - b.orderIndex)
@@ -93,8 +94,9 @@ export function StageStrip({ stages, selectedStageId, onSelectStage, gameStatus 
         )
       })}
 
-      {/* "+ Stage" placeholder */}
+      {/* Create stage button */}
       <button
+        onClick={onCreateStage}
         className="inline-flex items-center px-2 py-1 text-xs rounded-md border border-dashed border-muted-foreground/40 text-muted-foreground hover:text-foreground hover:border-muted-foreground/60 transition-colors cursor-pointer whitespace-nowrap shrink-0"
       >
         + Stage
