@@ -1,10 +1,11 @@
 import { useState, useMemo, useCallback } from 'react'
-import { CheckCircle, XCircle, Download } from 'lucide-react'
+import { CheckCircle, XCircle, Download, ChevronDown, Activity } from 'lucide-react'
 import { GlassPanel } from '@/components/layout/GlassPanel'
 import { useActivityFeed } from '@/hooks/queries/useMonitoring'
 import { useSubmissions } from '@/hooks/queries/useSubmissions'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { useReviewSubmission } from '@/hooks/mutations/useSubmissionMutations'
+import { useIsMobile } from '@/hooks/ui/useMediaQuery'
 import { relativeTime } from '@/lib/utils/dates'
 import type { ActivityEvent } from '@/types'
 
@@ -114,6 +115,8 @@ function EventCard({
 export function ActivityFeed({ gameId }: { gameId: string }) {
   const { data: events = [] } = useActivityFeed(gameId)
   const { data: teams = [] } = useTeams(gameId)
+  const isMobile = useIsMobile()
+  const [mobileExpanded, setMobileExpanded] = useState(false)
   const [typeFilter, setTypeFilter] = useState<Set<EventType>>(new Set())
   const [teamFilter, setTeamFilter] = useState<string | null>(null)
   const [timeFilter, setTimeFilter] = useState<number>(0)
@@ -129,6 +132,10 @@ export function ActivityFeed({ gameId }: { gameId: string }) {
       return true
     })
   }, [events, typeFilter, teamFilter, timeFilter])
+
+  const pendingCount = useMemo(() => {
+    return events.filter((e) => e.type === 'submission').length
+  }, [events])
 
   const toggleType = useCallback((type: EventType) => {
     setTypeFilter((prev) => {
@@ -159,13 +166,46 @@ export function ActivityFeed({ gameId }: { gameId: string }) {
     URL.revokeObjectURL(url)
   }, [filteredEvents, teams])
 
+  // Mobile: collapsed badge to toggle bottom sheet
+  if (isMobile && !mobileExpanded) {
+    return (
+      <button
+        data-testid="activity-feed-toggle"
+        onClick={() => setMobileExpanded(true)}
+        className="absolute bottom-20 right-3 z-20 flex items-center gap-1.5 px-3 py-2 bg-card/95 backdrop-blur-xl border border-border rounded-full shadow-lg cursor-pointer"
+      >
+        <Activity size={16} className="text-primary" />
+        <span className="text-xs font-semibold">Activity</span>
+        {pendingCount > 0 && (
+          <span className="ml-1 px-1.5 py-0.5 bg-primary/20 text-primary text-[10px] font-bold rounded-full">
+            {pendingCount}
+          </span>
+        )}
+      </button>
+    )
+  }
+
   return (
     <GlassPanel
       data-testid="activity-feed"
-      className="absolute top-14 right-3 bottom-3 w-[250px] z-20 flex flex-col overflow-hidden"
+      className={
+        isMobile
+          ? 'absolute left-0 right-0 bottom-16 max-h-[50vh] z-20 flex flex-col overflow-hidden rounded-t-xl rounded-b-none'
+          : 'absolute top-14 right-3 bottom-3 w-[250px] z-20 flex flex-col overflow-hidden'
+      }
     >
       {/* Header */}
       <div className="px-3 py-2 border-b border-border/30 flex items-center gap-2 shrink-0">
+        {/* Mobile drag handle */}
+        {isMobile && (
+          <button
+            data-testid="activity-feed-collapse"
+            onClick={() => setMobileExpanded(false)}
+            className="p-0.5 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          >
+            <ChevronDown size={16} />
+          </button>
+        )}
         <span className="text-sm font-semibold flex-1">Live Activity</span>
         <button
           data-testid="export-csv"

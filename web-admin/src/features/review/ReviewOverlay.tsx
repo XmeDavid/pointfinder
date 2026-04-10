@@ -1,8 +1,10 @@
 import { useEffect, useCallback, useMemo, useRef } from 'react'
+import { ArrowLeft } from 'lucide-react'
 import { useSubmissions } from '@/hooks/queries/useSubmissions'
 import { useChallenges } from '@/hooks/queries/useChallenges'
 import { useReviewSubmission } from '@/hooks/mutations/useSubmissionMutations'
 import { useWorkspaceStore } from '@/stores/workspace'
+import { useIsMobile } from '@/hooks/ui/useMediaQuery'
 import SubmissionList from './SubmissionList'
 import SubmissionDetail from './SubmissionDetail'
 
@@ -16,6 +18,7 @@ export default function ReviewOverlay({ gameId }: ReviewOverlayProps) {
   const reviewMutation = useReviewSubmission(gameId)
   const selectedSubmissionId = useWorkspaceStore((s) => s.selectedSubmissionId)
   const selectSubmission = useWorkspaceStore((s) => s.selectSubmission)
+  const isMobile = useIsMobile()
 
   // Pending submissions sorted newest-first (same order as SubmissionList default)
   const pendingSubmissions = useMemo(() => {
@@ -159,25 +162,47 @@ export default function ReviewOverlay({ gameId }: ReviewOverlayProps) {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleApprove, handleReject, handleNavigate, handleSkip])
 
+  // On mobile: show list or detail (not both). Back button returns to list.
+  const mobileShowDetail = isMobile && !!selectedSubmissionId
+
+  const handleMobileBack = useCallback(() => {
+    selectSubmission(null)
+  }, [selectSubmission])
+
   return (
     <div
-      className="absolute top-14 left-3 right-3 bottom-3 z-20 bg-card/95 backdrop-blur-xl border border-border rounded-xl flex overflow-hidden"
+      className="absolute left-0 right-0 top-12 bottom-0 md:left-3 md:right-3 md:top-14 md:bottom-3 z-20 bg-card/95 backdrop-blur-xl border border-border rounded-none md:rounded-xl flex flex-col md:flex-row overflow-hidden"
       data-testid="review-overlay"
     >
-      {/* Left: submission list */}
-      <SubmissionList gameId={gameId} />
-
-      {/* Right: detail or empty state */}
-      {selectedSubmissionId ? (
-        <SubmissionDetail submissionId={selectedSubmissionId} gameId={gameId} />
-      ) : (
-        <div className="flex-1 flex items-center justify-center text-text-muted text-sm">
-          Select a submission to review
-        </div>
+      {/* Mobile: back button when viewing detail */}
+      {mobileShowDetail && (
+        <button
+          onClick={handleMobileBack}
+          className="md:hidden flex items-center gap-1.5 px-3 py-2 border-b border-border text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0"
+        >
+          <ArrowLeft size={16} />
+          Back to submissions
+        </button>
       )}
 
-      {/* Footer -- keyboard shortcut hints */}
-      <div className="absolute bottom-0 left-0 right-0 px-4 py-2 border-t border-border bg-surface/80 text-text-muted text-xs flex gap-6 justify-center">
+      {/* Left: submission list — hidden on mobile when detail is shown */}
+      <div className={mobileShowDetail ? 'hidden' : 'flex flex-col flex-1 md:flex-none'}>
+        <SubmissionList gameId={gameId} />
+      </div>
+
+      {/* Right: detail or empty state — hidden on mobile when list is shown */}
+      <div className={!mobileShowDetail && isMobile ? 'hidden' : 'flex-1 flex flex-col min-w-0'}>
+        {selectedSubmissionId ? (
+          <SubmissionDetail submissionId={selectedSubmissionId} gameId={gameId} />
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-text-muted text-sm">
+            Select a submission to review
+          </div>
+        )}
+      </div>
+
+      {/* Footer -- keyboard shortcut hints (hidden on mobile) */}
+      <div className="hidden md:flex absolute bottom-0 left-0 right-0 px-4 py-2 border-t border-border bg-surface/80 text-text-muted text-xs gap-6 justify-center">
         <span>
           <kbd className="px-1.5 py-0.5 bg-elevated rounded text-text-secondary text-[10px] font-mono">
             A

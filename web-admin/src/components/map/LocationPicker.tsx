@@ -10,6 +10,7 @@ interface LocationPickerProps {
   lng: number
   onChange: (lat: number, lng: number) => void
   className?: string
+  mapStyle?: string
 }
 
 export function LocationPicker({
@@ -17,6 +18,7 @@ export function LocationPicker({
   lng,
   onChange,
   className = '',
+  mapStyle,
 }: LocationPickerProps) {
   const [viewState, setViewState] = useState({
     longitude: lng || -9.17,
@@ -52,7 +54,7 @@ export function LocationPicker({
         {...viewState}
         onMove={handleMove}
         onClick={handleClick}
-        mapStyle={DARK_STYLE_URL}
+        mapStyle={mapStyle ?? DARK_STYLE_URL}
         style={{ width: '100%', height: '100%' }}
         attributionControl={false}
         cursor="crosshair"

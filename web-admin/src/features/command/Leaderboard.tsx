@@ -2,6 +2,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react'
 import { GlassPanel } from '@/components/layout/GlassPanel'
 import { useLeaderboard } from '@/hooks/queries/useMonitoring'
 import { useWorkspaceStore } from '@/stores/workspace'
+import { useIsMobile } from '@/hooks/ui/useMediaQuery'
 
 const podiumColors: Record<number, string> = {
   1: '#eab308', // gold
@@ -13,13 +14,18 @@ export function Leaderboard({ gameId }: { gameId: string }) {
   const { data: entries = [] } = useLeaderboard(gameId)
   const leaderboardOpen = useWorkspaceStore((s) => s.leaderboardOpen)
   const toggleLeaderboard = useWorkspaceStore((s) => s.toggleLeaderboard)
+  const isMobile = useIsMobile()
 
   const sorted = [...entries].sort((a, b) => b.points - a.points)
 
   return (
     <GlassPanel
       data-testid="leaderboard"
-      className="absolute bottom-3 right-[266px] z-20 overflow-hidden"
+      className={
+        isMobile
+          ? 'absolute bottom-16 left-0 right-0 z-20 overflow-hidden rounded-t-xl rounded-b-none'
+          : 'absolute bottom-3 right-[266px] z-20 overflow-hidden'
+      }
     >
       {/* Header toggle */}
       <button

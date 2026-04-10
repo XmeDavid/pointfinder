@@ -9,6 +9,8 @@ import { useUpdateBase } from '@/hooks/mutations/useBaseMutations'
 import { useCreateAssignment, useDeleteAssignment } from '@/hooks/mutations/useAssignmentMutations'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { LocationPicker } from '@/components/map/LocationPicker'
+import { useGame } from '@/hooks/queries/useGames'
+import { getStyleUrl } from '@/lib/tile-sources'
 import type { Assignment, Challenge, Tag, Team } from '@/types'
 
 interface BaseDetailProps {
@@ -25,6 +27,7 @@ const ANSWER_TYPE_BADGE: Record<string, { bg: string; text: string; label: strin
 export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
   const selectChallenge = useWorkspaceStore((s) => s.selectChallenge)
 
+  const { data: game } = useGame(gameId)
   const { data: bases = [] } = useBases(gameId)
   const { data: assignments = [] } = useAssignments(gameId)
   const { data: challenges = [] } = useChallenges(gameId)
@@ -155,6 +158,7 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
           <LocationPicker
             lat={parseFloat(localLat) || 0}
             lng={parseFloat(localLng) || 0}
+            mapStyle={game?.tileSource ? getStyleUrl(game.tileSource) : undefined}
             onChange={(newLat, newLng) => {
               setLocalLat(newLat.toString())
               setLocalLng(newLng.toString())

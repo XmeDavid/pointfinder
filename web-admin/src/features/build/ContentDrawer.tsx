@@ -96,7 +96,7 @@ export function ContentDrawer({ gameId }: ContentDrawerProps) {
     <SlideDrawer
       open={drawerOpen}
       onClose={closeDrawer}
-      width="w-[70vw]"
+      width="md:w-[70vw]"
     >
       {/* Header with tabs */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border shrink-0">

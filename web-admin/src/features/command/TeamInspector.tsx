@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { X, MapPin, Unlock, CheckCircle } from 'lucide-react'
 import { GlassPanel } from '@/components/layout/GlassPanel'
 import { useWorkspaceStore } from '@/stores/workspace'
+import { useIsMobile } from '@/hooks/ui/useMediaQuery'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { useBases } from '@/hooks/queries/useBases'
 import { useChallenges } from '@/hooks/queries/useChallenges'
@@ -21,6 +22,8 @@ export function TeamInspector({ gameId }: { gameId: string }) {
   const { data: bases = [] } = useBases(gameId)
   const { data: challenges = [] } = useChallenges(gameId)
   const { data: leaderboard = [] } = useLeaderboard(gameId)
+
+  const isMobile = useIsMobile()
 
   const manualCheckIn = useManualCheckIn(gameId)
   const markCompleted = useMarkCompleted(gameId)
@@ -72,7 +75,11 @@ export function TeamInspector({ gameId }: { gameId: string }) {
 
       <GlassPanel
         data-testid="team-inspector"
-        className="absolute top-1/3 left-1/2 -translate-x-1/2 z-30 p-4 w-[320px]"
+        className={
+          isMobile
+            ? 'absolute bottom-16 left-0 right-0 z-30 p-4 rounded-t-xl rounded-b-none max-h-[70vh] overflow-y-auto'
+            : 'absolute top-1/3 left-1/2 -translate-x-1/2 z-30 p-4 w-[320px]'
+        }
       >
         {/* Header */}
         <div className="flex items-center gap-2 mb-3">

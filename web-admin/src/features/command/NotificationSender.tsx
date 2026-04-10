@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { X, Send } from 'lucide-react'
 import { GlassPanel } from '@/components/layout/GlassPanel'
 import { useWorkspaceStore } from '@/stores/workspace'
+import { useIsMobile } from '@/hooks/ui/useMediaQuery'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { useNotifications } from '@/hooks/queries/useNotifications'
 import { useSendNotification } from '@/hooks/mutations/useNotificationMutations'
@@ -11,6 +12,7 @@ export function NotificationSender({ gameId }: { gameId: string }) {
   const toggleNotificationSender = useWorkspaceStore(
     (s) => s.toggleNotificationSender,
   )
+  const isMobile = useIsMobile()
 
   const { data: teams = [] } = useTeams(gameId)
   const { data: notifications = [] } = useNotifications(gameId)
@@ -46,7 +48,11 @@ export function NotificationSender({ gameId }: { gameId: string }) {
   return (
     <GlassPanel
       data-testid="notification-sender"
-      className="absolute bottom-16 left-3 z-30 p-4 w-[340px]"
+      className={
+        isMobile
+          ? 'absolute bottom-16 left-0 right-0 z-30 p-4 rounded-t-xl rounded-b-none max-h-[70vh] overflow-y-auto'
+          : 'absolute bottom-16 left-3 z-30 p-4 w-[340px]'
+      }
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-3">

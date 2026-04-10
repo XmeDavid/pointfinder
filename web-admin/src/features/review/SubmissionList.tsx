@@ -71,7 +71,7 @@ export default function SubmissionList({ gameId }: SubmissionListProps) {
   }, [submissions, filter, teamFilter])
 
   return (
-    <div className="w-[280px] border-r border-border flex flex-col">
+    <div className="w-full md:w-[280px] border-r border-border flex flex-col">
       {/* Header */}
       <div className="px-3 py-3 border-b border-border">
         <div className="flex items-center justify-between mb-2">

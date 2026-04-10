@@ -122,7 +122,7 @@ export function GameWorkspace() {
               <button
                 onClick={() => openDrawer()}
                 data-testid="open-content-panel"
-                className="absolute bottom-4 right-4 z-20 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-lg hover:bg-primary/90 transition-colors cursor-pointer"
+                className="absolute bottom-20 md:bottom-4 right-4 z-20 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-lg hover:bg-primary/90 transition-colors cursor-pointer"
               >
                 Open Content Panel
               </button>

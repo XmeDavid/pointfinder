@@ -11,11 +11,11 @@ export function FloatingBar({
   return (
     <div
       className={cn(
-        "absolute top-3 left-3 right-3 z-30 pointer-events-none",
+        "absolute top-2 left-2 right-2 md:top-3 md:left-3 md:right-3 z-30 pointer-events-none",
         className,
       )}
     >
-      <GlassPanel className="pointer-events-auto px-2 py-1.5 flex items-center gap-2 rounded-xl">
+      <GlassPanel className="pointer-events-auto px-2 py-1.5 flex items-center gap-2 rounded-xl overflow-x-auto scrollbar-none">
         {children}
       </GlassPanel>
     </div>

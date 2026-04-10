@@ -6,7 +6,8 @@ interface SlideDrawerProps {
   open: boolean;
   onClose: () => void;
   children: React.ReactNode;
-  /** Desktop width class, e.g. "w-96" or "w-[480px]". Defaults to "w-96". */
+  /** Desktop width class, e.g. "w-96" or "w-[480px]". Defaults to "w-96".
+   *  On mobile (<md), the drawer is always full-width. */
   width?: string;
   className?: string;
   title?: string;
@@ -30,7 +31,7 @@ export function SlideDrawer({
   open,
   onClose,
   children,
-  width = "w-96",
+  width = "md:w-96",
   className,
   title,
 }: SlideDrawerProps) {
@@ -49,8 +50,8 @@ export function SlideDrawer({
           <motion.div
             className={cn(
               "absolute right-0 top-0 bottom-0 flex flex-col bg-card border-l border-border shadow-xl",
-              "w-full md:max-w-full",
-              `md:${width}`,
+              "w-full",
+              width,
               className,
             )}
             {...panel}

@@ -69,8 +69,8 @@ export function TopBar({ game, stages }: TopBarProps) {
   return (
     <FloatingBar>
       {/* Left: Game name + status badge */}
-      <div className="flex items-center gap-3 shrink-0">
-        <span className="font-bold text-foreground text-sm">{game.name}</span>
+      <div className="flex items-center gap-2 md:gap-3 shrink-0 min-w-0">
+        <span className="font-bold text-foreground text-sm truncate max-w-[120px] md:max-w-none">{game.name}</span>
         <StatusBadge game={game} />
       </div>
 
