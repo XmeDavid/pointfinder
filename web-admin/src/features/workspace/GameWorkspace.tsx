@@ -84,7 +84,10 @@ export function GameWorkspace() {
 
   return (
     <div className="h-screen w-full relative overflow-hidden">
-      <GameMap mapStyle={getStyleUrl(game.tileSource)}>
+      <GameMap
+        mapStyle={getStyleUrl(game.tileSource)}
+        fitPoints={bases.length > 0 ? bases.map(b => [b.lng, b.lat] as [number, number]) : undefined}
+      >
         <BaseMarkers
           bases={bases}
           mode={mode}
