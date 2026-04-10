@@ -14,6 +14,7 @@ import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.BaseRepository;
 import com.prayer.pointfinder.repository.StageRepository;
 import com.prayer.pointfinder.websocket.GameEventBroadcaster;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ public class StageService {
     private final BaseRepository baseRepository;
     private final GameAccessService gameAccessService;
     private final GameEventBroadcaster broadcaster;
+    private final EntityManager entityManager;
 
     @Transactional(readOnly = true)
     public List<StageResponse> getStages(UUID gameId) {
@@ -71,15 +73,22 @@ public class StageService {
         log.info("[OP] operation=createStage gameId={} stageId={} name={} isFirst={}",
                 gameId, stage.getId(), stage.getName(), isFirstStage);
 
+        // Flush all pending SQL and clear the persistence context before broadcasting.
+        // broadcastGameConfig calls incrementStateVersion (native UPDATE on games.state_version).
+        // Without flush+clear, Hibernate's dirty-check at commit detects the stale
+        // stateVersion on the managed Game entity → conflicting UPDATE → DataIntegrityViolationException → 409.
+        entityManager.flush();
+        entityManager.clear();
+
         broadcaster.broadcastGameConfig(gameId, "stages", "created");
 
-        // First stage is auto-active: broadcast stage_unlock so players
-        // receive the bases that just moved into this stage.
         if (isFirstStage) {
             broadcaster.broadcastStageUnlock(gameId, stage.getId());
         }
 
-        return toResponse(stage);
+        // Re-fetch stage after clear for the response
+        Stage saved = findStageOrThrow(stage.getId());
+        return toResponse(saved);
     }
 
     @Transactional(timeout = 10)
@@ -112,8 +121,12 @@ public class StageService {
         log.info("[OP] operation=updateStage gameId={} stageId={} name={}",
                 gameId, stageId, stage.getName());
 
+        entityManager.flush();
+        entityManager.clear();
+
         broadcaster.broadcastGameConfig(gameId, "stages", "updated");
-        return toResponse(stage);
+        Stage updated = findStageOrThrow(stageId);
+        return toResponse(updated);
     }
 
     @Transactional(timeout = 10)
@@ -131,6 +144,9 @@ public class StageService {
 
         stageRepository.delete(stage);
 
+        entityManager.flush();
+        entityManager.clear();
+
         broadcaster.broadcastGameConfig(gameId, "stages", "deleted");
     }
 
@@ -143,6 +159,9 @@ public class StageService {
         }
 
         log.info("[OP] operation=reorderStages gameId={} count={}", gameId, ids.size());
+
+        entityManager.flush();
+        entityManager.clear();
 
         broadcaster.broadcastGameConfig(gameId, "stages", "reordered");
     }
@@ -165,6 +184,9 @@ public class StageService {
 
         log.info("[OP] operation=activateStage gameId={} stageId={} name={}",
                 gameId, stageId, stage.getName());
+
+        entityManager.flush();
+        entityManager.clear();
 
         broadcaster.broadcastStageUnlock(gameId, stageId);
         broadcaster.broadcastGameConfig(gameId, "stages", "activated");
