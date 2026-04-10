@@ -72,6 +72,9 @@ public class Base {
     @Builder.Default
     private Set<GameTag> tags = new HashSet<>();
 
+    @Column(name = "stage_id")
+    private UUID stageId;
+
     @Column(name = "order_index", nullable = false)
     @Builder.Default
     private Integer orderIndex = 0;

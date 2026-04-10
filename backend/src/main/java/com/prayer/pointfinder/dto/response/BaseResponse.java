@@ -41,4 +41,5 @@ public class BaseResponse {
      * players — see {@code PlayerBaseResponse} for the player-safe DTO.
      */
     private List<UUID> tagIds;
+    private UUID stageId;
 }

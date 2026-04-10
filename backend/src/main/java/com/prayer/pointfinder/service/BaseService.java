@@ -279,6 +279,7 @@ public class BaseService {
                 .hidden(base.getHidden())
                 .fixedChallengeId(base.getFixedChallenge() != null ? base.getFixedChallenge().getId() : null)
                 .tagIds(tagIds.isEmpty() ? null : tagIds)
+                .stageId(base.getStageId())
                 .build();
     }
 

@@ -47,6 +47,7 @@ public class PlayerService {
     private final GameNotificationRepository gameNotificationRepository;
     private final UploadSessionRepository uploadSessionRepository;
     private final BaseUnlockOverrideRepository baseUnlockOverrideRepository;
+    private final StageRepository stageRepository;
 
     @Transactional(timeout = 10)
     public PlayerAuthResponse joinTeam(PlayerJoinRequest request) {
@@ -220,6 +221,14 @@ public class PlayerService {
                 .map(o -> o.getBase().getId())
                 .collect(Collectors.toSet());
 
+        // Stage-aware visibility: build set of active stage IDs so bases
+        // assigned to an inactive stage are filtered out. Bases with no
+        // stage (stageId == null) are always visible (flat game / unassigned).
+        Set<UUID> activeStageIds = stageRepository.findByGameIdOrderByOrderIndexAsc(gameId).stream()
+                .filter(s -> Boolean.TRUE.equals(s.getIsActive()))
+                .map(Stage::getId)
+                .collect(Collectors.toSet());
+
         // Build unlock maps: targetBaseId -> challengeId that unlocks it
         List<Challenge> unlockChallenges = challengeRepository.findByGameIdAndUnlocksBasesNotEmpty(gameId);
         Map<UUID, UUID> unlockChallengeByTargetBase = new HashMap<>();
@@ -260,6 +269,16 @@ public class PlayerService {
         final UUID teamId = team.getId();
         return bases.stream().map(base -> {
             UUID bId = base.getId();
+
+            // Stage gate: if a base belongs to an inactive stage, hide it
+            // from the player unless an operator unlock override exists.
+            // Bases with no stage (stageId == null) pass through unchanged.
+            if (base.getStageId() != null
+                    && !activeStageIds.contains(base.getStageId())
+                    && !overriddenBaseIds.contains(bId)) {
+                return null;
+            }
+
             CheckIn ci = checkInByBase.get(bId);
             Submission sub = submissionByBase.get(bId);
             Challenge assignment = AssignmentResolver.resolve(base, teamId, sortedAssignments);
@@ -340,8 +359,16 @@ public class PlayerService {
         // javadoc for the full rationale, including the W4 naming
         // contract that removes base name/description from the player
         // DTO.
+
+        // Stage-aware visibility: bases in inactive stages are hidden.
+        Set<UUID> activeStageIds = stageRepository.findByGameIdOrderByOrderIndexAsc(gameId).stream()
+                .filter(s -> Boolean.TRUE.equals(s.getIsActive()))
+                .map(Stage::getId)
+                .collect(Collectors.toSet());
+
         return baseRepository.findByGameId(gameId).stream()
                 .filter(b -> !Boolean.TRUE.equals(b.getHidden()))
+                .filter(b -> b.getStageId() == null || activeStageIds.contains(b.getStageId()))
                 .limit(500)
                 .map(base -> PlayerBaseResponse.builder()
                         .id(base.getId())

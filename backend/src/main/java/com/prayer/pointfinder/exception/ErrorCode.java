@@ -44,4 +44,16 @@ public enum ErrorCode {
      * conflict ({@code ObjectOptimisticLockingFailureException}).
      */
     TAG_MODIFIED_CONCURRENTLY,
+
+    // ── Stages ──────────────────────────────────────────────────────────
+    /** No stage found with this ID. */
+    STAGE_NOT_FOUND,
+    /** The stage does not belong to the specified game. */
+    STAGE_GAME_MISMATCH,
+    /** The stage still has bases assigned; unassign them first. */
+    STAGE_HAS_BASES,
+    /** The trigger base referenced by this stage does not exist. */
+    STAGE_TRIGGER_BASE_NOT_FOUND,
+    /** The stage is already the active stage for its game. */
+    STAGE_ALREADY_ACTIVE,
 }

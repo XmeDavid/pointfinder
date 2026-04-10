@@ -26,4 +26,7 @@ public class BaseExportDto {
      * Max 20 entries.
      */
     private List<String> tagLabels;
+
+    /** References a stage tempId. Null when the base has no stage (flat game). */
+    private String stageTempId;
 }

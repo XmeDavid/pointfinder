@@ -39,6 +39,7 @@ public class GameImportExportService {
     private final ChallengeTeamVariableRepository challengeTeamVariableRepository;
     private final GameAccessService gameAccessService;
     private final GameTagRepository gameTagRepository;
+    private final StageRepository stageRepository;
 
     @Transactional(readOnly = true)
     public GameExportDto exportGame(UUID gameId) {
@@ -51,10 +52,12 @@ public class GameImportExportService {
         List<TeamVariable> teamVariables = teamVariableRepository.findByGameId(gameId);
         List<ChallengeTeamVariable> challengeTeamVariables = challengeTeamVariableRepository.findByGameId(gameId);
         List<GameTag> gameTags = gameTagRepository.findByGameIdOrderByCreatedAtAsc(gameId);
+        List<Stage> stages = stageRepository.findByGameIdOrderByOrderIndexAsc(gameId);
 
         Map<UUID, String> baseIdMap = new HashMap<>();
         Map<UUID, String> challengeIdMap = new HashMap<>();
         Map<UUID, String> teamIdMap = new HashMap<>();
+        Map<UUID, String> stageIdMap = new HashMap<>();
 
         for (int i = 0; i < bases.size(); i++) {
             baseIdMap.put(bases.get(i).getId(), "base_" + (i + 1));
@@ -64,6 +67,9 @@ public class GameImportExportService {
         }
         for (int i = 0; i < teams.size(); i++) {
             teamIdMap.put(teams.get(i).getId(), "team_" + (i + 1));
+        }
+        for (int i = 0; i < stages.size(); i++) {
+            stageIdMap.put(stages.get(i).getId(), "stage_" + (i + 1));
         }
 
         GameMetadataDto gameMetadata = GameMetadataDto.builder()
@@ -102,6 +108,8 @@ public class GameImportExportService {
                             .fixedChallengeTempId(base.getFixedChallenge() != null ?
                                     challengeIdMap.get(base.getFixedChallenge().getId()) : null)
                             .tagLabels(tagLabels.isEmpty() ? null : tagLabels)
+                            .stageTempId(base.getStageId() != null ?
+                                    stageIdMap.get(base.getStageId()) : null)
                             .build();
                 })
                 .toList();
@@ -172,6 +180,19 @@ public class GameImportExportService {
                 .filter(ctv -> ctv.getChallengeTempId() != null && ctv.getTeamTempId() != null)
                 .toList();
 
+        List<StageExportDto> stageExportDtos = stages.stream()
+                .map(stage -> StageExportDto.builder()
+                        .tempId(stageIdMap.get(stage.getId()))
+                        .name(stage.getName())
+                        .description(stage.getDescription())
+                        .orderIndex(stage.getOrderIndex())
+                        .transitionType(stage.getTransitionType().name())
+                        .scheduledAt(stage.getScheduledAt() != null ? stage.getScheduledAt().toString() : null)
+                        .triggerBaseTempId(stage.getTriggerBaseId() != null ?
+                                baseIdMap.get(stage.getTriggerBaseId()) : null)
+                        .build())
+                .toList();
+
         return GameExportDto.builder()
                 .exportVersion("1.0")
                 .exportedAt(Instant.now())
@@ -183,6 +204,7 @@ public class GameImportExportService {
                 .teamVariables(teamVariableExportDtos.isEmpty() ? null : teamVariableExportDtos)
                 .challengeTeamVariables(challengeTeamVariableExportDtos.isEmpty() ? null : challengeTeamVariableExportDtos)
                 .tags(tagExportDtos.isEmpty() ? null : tagExportDtos)
+                .stages(stageExportDtos.isEmpty() ? null : stageExportDtos)
                 .build();
     }
 
@@ -311,6 +333,63 @@ public class GameImportExportService {
                         .build();
                 team = teamRepository.save(team);
                 teamEntityMap.put(teamDto.getTempId(), team);
+            }
+        }
+
+        // Import stages (after bases exist so triggerBaseTempId can be resolved)
+        Map<String, Stage> stageEntityMap = new HashMap<>();
+        if (data.getStages() != null && !data.getStages().isEmpty()) {
+            boolean isFirst = true;
+            for (StageExportDto stageDto : data.getStages()) {
+                UUID triggerBaseId = null;
+                if (stageDto.getTriggerBaseTempId() != null) {
+                    Base triggerBase = baseEntityMap.get(stageDto.getTriggerBaseTempId());
+                    if (triggerBase != null) {
+                        triggerBaseId = triggerBase.getId();
+                    }
+                }
+
+                TransitionType transitionType;
+                try {
+                    transitionType = TransitionType.valueOf(stageDto.getTransitionType());
+                } catch (IllegalArgumentException e) {
+                    transitionType = TransitionType.manual;
+                }
+
+                java.time.OffsetDateTime scheduledAt = null;
+                if (stageDto.getScheduledAt() != null && !stageDto.getScheduledAt().isBlank()) {
+                    try {
+                        scheduledAt = java.time.OffsetDateTime.parse(stageDto.getScheduledAt());
+                    } catch (Exception ignored) {
+                        // Invalid date format — leave null
+                    }
+                }
+
+                Stage stage = Stage.builder()
+                        .game(newGame)
+                        .name(stageDto.getName())
+                        .description(stageDto.getDescription() != null ? stageDto.getDescription() : "")
+                        .orderIndex(stageDto.getOrderIndex())
+                        .transitionType(transitionType)
+                        .scheduledAt(scheduledAt)
+                        .triggerBaseId(triggerBaseId)
+                        .isActive(isFirst) // first stage is active by default
+                        .build();
+                stage = stageRepository.save(stage);
+                stageEntityMap.put(stageDto.getTempId(), stage);
+                isFirst = false;
+            }
+
+            // Assign bases to their stages using the stageTempId mapping
+            for (BaseExportDto baseDto : data.getBases()) {
+                if (baseDto.getStageTempId() != null) {
+                    Stage stage = stageEntityMap.get(baseDto.getStageTempId());
+                    Base base = baseEntityMap.get(baseDto.getTempId());
+                    if (stage != null && base != null) {
+                        base.setStageId(stage.getId());
+                        baseRepository.save(base);
+                    }
+                }
             }
         }
 

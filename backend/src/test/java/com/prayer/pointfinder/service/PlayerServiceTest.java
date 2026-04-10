@@ -34,6 +34,7 @@ import com.prayer.pointfinder.repository.TeamLocationRepository;
 import com.prayer.pointfinder.repository.TeamRepository;
 import com.prayer.pointfinder.repository.UploadSessionRepository;
 import com.prayer.pointfinder.repository.GameNotificationRepository;
+import com.prayer.pointfinder.repository.StageRepository;
 import com.prayer.pointfinder.security.JwtTokenProvider;
 import com.prayer.pointfinder.websocket.GameEventBroadcaster;
 import org.junit.jupiter.api.Test;
@@ -107,6 +108,8 @@ class PlayerServiceTest {
     private UploadSessionRepository uploadSessionRepository;
     @Mock
     private BaseUnlockOverrideRepository baseUnlockOverrideRepository;
+    @Mock
+    private StageRepository stageRepository;
 
     @InjectMocks
     private PlayerService playerService;

@@ -1,11 +1,10 @@
 package com.prayer.pointfinder.service;
 
-import com.prayer.pointfinder.entity.Game;
-import com.prayer.pointfinder.entity.GameStatus;
-import com.prayer.pointfinder.entity.UploadSession;
+import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.repository.GameRepository;
 import com.prayer.pointfinder.repository.PasswordResetTokenRepository;
 import com.prayer.pointfinder.repository.RefreshTokenRepository;
+import com.prayer.pointfinder.repository.StageRepository;
 import com.prayer.pointfinder.repository.UploadSessionRepository;
 import com.prayer.pointfinder.websocket.GameEventBroadcaster;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -18,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +31,7 @@ public class GameSchedulerService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final ChunkedUploadService chunkedUploadService;
     private final UploadSessionRepository uploadSessionRepository;
+    private final StageRepository stageRepository;
     private final GameEventBroadcaster eventBroadcaster;
     private final MeterRegistry meterRegistry;
 
@@ -160,5 +162,29 @@ public class GameSchedulerService {
                 stuck.size(),
                 needsAttentionThresholdMinutes
         );
+    }
+
+    /**
+     * Runs every 30 seconds to activate stages whose scheduled transition time has arrived.
+     * Finds stages with transitionType='scheduled', isActive=false, scheduledAt <= now,
+     * sets them active, and broadcasts stage_unlock so players receive newly visible bases.
+     */
+    @Scheduled(fixedRate = 30000)
+    @Transactional(timeout = 10)
+    public void activateScheduledStages() {
+        List<Stage> dueStages = stageRepository.findByTransitionTypeAndIsActiveAndScheduledAtBefore(
+                TransitionType.scheduled, false, OffsetDateTime.now());
+
+        for (Stage stage : dueStages) {
+            stage.setIsActive(true);
+            stageRepository.save(stage);
+
+            UUID gameId = stage.getGame().getId();
+            log.info("[SCHEDULER] operation=activateScheduledStage gameId={} stageId={} name={} scheduledAt={}",
+                    gameId, stage.getId(), stage.getName(), stage.getScheduledAt());
+
+            eventBroadcaster.broadcastStageUnlock(gameId, stage.getId());
+            eventBroadcaster.broadcastGameConfig(gameId, "stages", "activated");
+        }
     }
 }

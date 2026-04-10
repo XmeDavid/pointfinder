@@ -24,4 +24,6 @@ public class GameExportDto {
     private List<ChallengeTeamVariableExportDto> challengeTeamVariables;
     /** Full tag vocabulary for this game. Null when no tags exist. */
     private List<TagExportDto> tags;
+    /** Stage progression configuration. Null when no stages exist (flat game). */
+    private List<StageExportDto> stages;
 }

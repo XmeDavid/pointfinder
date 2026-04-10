@@ -106,6 +106,12 @@ public class GameEventBroadcaster {
         broadcast(gameId, "game_config", payload, true);
     }
 
+    public void broadcastStageUnlock(UUID gameId, UUID stageId) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("stageId", stageId.toString());
+        broadcast(gameId, "stage_unlock", data, true);
+    }
+
     public void broadcastPresence(UUID gameId, Object presenceData) {
         // presence is transient — operator online/offline tracking. Do not
         // bump stateVersion; a client reconnecting via snapshot does not need

@@ -54,6 +54,8 @@ class GameSchedulerServiceTest {
     @Mock
     private UploadSessionRepository uploadSessionRepository;
     @Mock
+    private com.prayer.pointfinder.repository.StageRepository stageRepository;
+    @Mock
     private GameEventBroadcaster eventBroadcaster;
     @Mock
     private MeterRegistry meterRegistry;

@@ -52,6 +52,8 @@ class GameImportExportServiceTest {
     private GameAccessService gameAccessService;
     @Mock
     private GameTagRepository gameTagRepository;
+    @Mock
+    private StageRepository stageRepository;
 
     private GameImportExportService service;
 
@@ -80,11 +82,16 @@ class GameImportExportServiceTest {
                 teamVariableRepository,
                 challengeTeamVariableRepository,
                 gameAccessService,
-                gameTagRepository
+                gameTagRepository,
+                stageRepository
         );
         // Default stub: no existing tags for any game (exportGame calls this)
         org.mockito.Mockito.lenient()
                 .when(gameTagRepository.findByGameIdOrderByCreatedAtAsc(any()))
+                .thenReturn(java.util.List.of());
+        // Default stub: no stages (exportGame calls this)
+        org.mockito.Mockito.lenient()
+                .when(stageRepository.findByGameIdOrderByOrderIndexAsc(any()))
                 .thenReturn(java.util.List.of());
     }
 

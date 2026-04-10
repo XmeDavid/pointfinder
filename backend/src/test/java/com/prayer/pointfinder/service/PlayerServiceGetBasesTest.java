@@ -40,6 +40,9 @@ class PlayerServiceGetBasesTest {
     @Mock private OperatorPushNotificationService operatorPushNotificationService;
     @Mock private TemplateVariableService templateVariableService;
     @Mock private GameNotificationRepository gameNotificationRepository;
+    @Mock private UploadSessionRepository uploadSessionRepository;
+    @Mock private BaseUnlockOverrideRepository baseUnlockOverrideRepository;
+    @Mock private StageRepository stageRepository;
 
     @InjectMocks
     private PlayerService playerService;

@@ -23,6 +23,16 @@ public interface BaseRepository extends JpaRepository<Base, UUID> {
 
     List<Base> findByFixedChallengeId(UUID challengeId);
 
+    List<Base> findByStageId(UUID stageId);
+
+    @Modifying
+    @Query("UPDATE Base b SET b.stageId = null WHERE b.stageId = :stageId")
+    void clearStageId(@Param("stageId") UUID stageId);
+
+    @Modifying
+    @Query("UPDATE Base b SET b.stageId = :stageId WHERE b.game.id = :gameId")
+    void setStageIdForAllInGame(@Param("stageId") UUID stageId, @Param("gameId") UUID gameId);
+
     @Modifying
     @Query("UPDATE Base b SET b.orderIndex = :orderIndex WHERE b.id = :id AND b.game.id = :gameId")
     void updateOrderIndex(@Param("id") UUID id, @Param("gameId") UUID gameId, @Param("orderIndex") int orderIndex);
