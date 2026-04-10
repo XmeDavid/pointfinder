@@ -103,18 +103,48 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
-      onRehydrateStorage: () => (state) => {
-        if (state) {
-          // Validate: if isAuthenticated but refresh token is missing, reset
-          if (state.isAuthenticated && !state.refreshToken) {
-            state.isAuthenticated = false;
-            state.user = null;
-            state.accessToken = null;
-            state.refreshToken = null;
+      onRehydrateStorage: () => {
+        return (state, error) => {
+          // Always mark hydration complete, even on error
+          useAuthStore.setState({ hasHydrated: true });
+
+          if (state && !error) {
+            if (state.isAuthenticated && !state.refreshToken) {
+              useAuthStore.setState({
+                isAuthenticated: false,
+                user: null,
+                accessToken: null,
+                refreshToken: null,
+              });
+            }
+          } else {
+            // Corrupt localStorage or parse error -- reset to clean state
+            useAuthStore.setState({
+              isAuthenticated: false,
+              user: null,
+              accessToken: null,
+              refreshToken: null,
+              hasHydrated: true,
+            });
           }
-          state.hasHydrated = true;
-        }
+        };
       },
     }
   )
 );
+
+// Cross-tab auth sync: detect when another tab updates the refresh token
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'pointfinder-auth' && e.newValue) {
+      try {
+        const { state } = JSON.parse(e.newValue);
+        if (state?.refreshToken) {
+          useAuthStore.setState({ refreshToken: state.refreshToken, user: state.user });
+        } else if (!state?.isAuthenticated) {
+          useAuthStore.getState().handleAuthFailure();
+        }
+      } catch { /* ignore parse errors */ }
+    }
+  });
+}

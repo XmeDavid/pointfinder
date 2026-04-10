@@ -91,6 +91,10 @@ apiClient.interceptors.request.use(async (config) => {
   const token = await getValidAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  } else if (useAuthStore.getState().isAuthenticated) {
+    // We think we're authenticated but couldn't get a token.
+    // Fail early instead of sending unauthenticated → 401 → double refresh.
+    return Promise.reject(new Error('Token refresh failed'));
   }
   return config;
 });
