@@ -103,31 +103,17 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
-      onRehydrateStorage: () => {
-        return (state, error) => {
-          // Always mark hydration complete, even on error
-          useAuthStore.setState({ hasHydrated: true });
-
-          if (state && !error) {
-            if (state.isAuthenticated && !state.refreshToken) {
-              useAuthStore.setState({
-                isAuthenticated: false,
-                user: null,
-                accessToken: null,
-                refreshToken: null,
-              });
-            }
-          } else {
-            // Corrupt localStorage or parse error -- reset to clean state
-            useAuthStore.setState({
-              isAuthenticated: false,
-              user: null,
-              accessToken: null,
-              refreshToken: null,
-              hasHydrated: true,
-            });
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          // Validate: if isAuthenticated but refresh token is missing, reset
+          if (state.isAuthenticated && !state.refreshToken) {
+            state.isAuthenticated = false;
+            state.user = null;
+            state.accessToken = null;
+            state.refreshToken = null;
           }
-        };
+          state.hasHydrated = true;
+        }
       },
     }
   )
