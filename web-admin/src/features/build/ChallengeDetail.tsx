@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import { Save, ChevronDown, X } from 'lucide-react'
+import { Save, ChevronDown, X, Plus, Users } from 'lucide-react'
 import { TagPicker } from '@/components/data/TagPicker'
 import { TeamVariablesEditor } from '@/components/data/TeamVariablesEditor'
 import { useChallenges } from '@/hooks/queries/useChallenges'
@@ -99,6 +99,35 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
   const assignedTeamIds = new Set(
     challengeAssignments.filter((a) => a.teamId).map((a) => a.teamId),
   )
+
+  const [showTeamPicker, setShowTeamPicker] = useState(false)
+
+  const handleSwitchToSpecific = useCallback(() => {
+    if (!assignedBase || teams.length === 0) return
+    const globalAssignments = challengeAssignments.filter((a) => !a.teamId)
+    globalAssignments.forEach((a) => deleteAssignmentMut.mutate(a.id))
+    teams.forEach((team) => {
+      createAssignment.mutate({ baseId: assignedBase.id, challengeId, teamId: team.id })
+    })
+  }, [challengeAssignments, teams, assignedBase, challengeId, createAssignment, deleteAssignmentMut])
+
+  const handleSwitchToAll = useCallback(() => {
+    if (!assignedBase) return
+    const teamAssignments = challengeAssignments.filter((a) => a.teamId)
+    teamAssignments.forEach((a) => deleteAssignmentMut.mutate(a.id))
+    createAssignment.mutate({ baseId: assignedBase.id, challengeId })
+    setShowTeamPicker(false)
+  }, [challengeAssignments, assignedBase, challengeId, createAssignment, deleteAssignmentMut])
+
+  const handleToggleTeam = useCallback((teamId: string) => {
+    if (!assignedBase) return
+    if (assignedTeamIds.has(teamId)) {
+      const toRemove = challengeAssignments.find((a) => a.teamId === teamId)
+      if (toRemove) deleteAssignmentMut.mutate(toRemove.id)
+    } else {
+      createAssignment.mutate({ baseId: assignedBase.id, challengeId, teamId })
+    }
+  }, [assignedTeamIds, challengeAssignments, assignedBase, challengeId, createAssignment, deleteAssignmentMut])
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -408,29 +437,85 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
               <span className="text-sm text-muted-foreground">
                 No assignments
               </span>
-            ) : isGlobal ? (
-              <span className="text-sm text-muted-foreground">All teams</span>
             ) : (
-              <div className="flex flex-wrap gap-1.5">
-                {teams
-                  .filter((t) => assignedTeamIds.has(t.id))
-                  .map((team) => (
-                    <span
-                      key={team.id}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
-                      style={{
-                        backgroundColor: `${team.color}15`,
-                        color: team.color,
-                        border: `1px solid ${team.color}40`,
-                      }}
+              <div className="space-y-1.5">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {isGlobal ? (
+                    <button
+                      onClick={teams.length > 0 && assignedBase ? handleSwitchToSpecific : undefined}
+                      disabled={teams.length === 0 || !assignedBase}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-primary/20 text-primary cursor-pointer hover:bg-primary/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={teams.length > 0 ? 'Click to assign to specific teams' : 'Create teams first'}
                     >
-                      <span
-                        className="inline-block h-2 w-2 rounded-full"
-                        style={{ backgroundColor: team.color }}
-                      />
-                      {team.name}
-                    </span>
-                  ))}
+                      <Users className="h-3 w-3" />
+                      All teams
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={handleSwitchToAll}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground cursor-pointer hover:bg-muted/80 transition-colors"
+                        title="Switch to all teams"
+                      >
+                        <Users className="h-3 w-3" />
+                        All
+                      </button>
+                      {teams
+                        .filter((t) => assignedTeamIds.has(t.id))
+                        .map((team) => (
+                          <button
+                            key={team.id}
+                            onClick={() => handleToggleTeam(team.id)}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium cursor-pointer hover:opacity-70 transition-opacity"
+                            style={{
+                              backgroundColor: `${team.color}15`,
+                              color: team.color,
+                              border: `1px solid ${team.color}40`,
+                            }}
+                            title={`Remove ${team.name}`}
+                          >
+                            <span
+                              className="inline-block h-2 w-2 rounded-full"
+                              style={{ backgroundColor: team.color }}
+                            />
+                            {team.name}
+                            <X className="h-2.5 w-2.5 ml-0.5" />
+                          </button>
+                        ))}
+                      <button
+                        onClick={() => setShowTeamPicker((v) => !v)}
+                        className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+                        title="Add team"
+                      >
+                        <Plus className="h-3 w-3" />
+                      </button>
+                    </>
+                  )}
+                </div>
+                {showTeamPicker && !isGlobal && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {teams
+                      .filter((t) => !assignedTeamIds.has(t.id))
+                      .map((team) => (
+                        <button
+                          key={team.id}
+                          onClick={() => handleToggleTeam(team.id)}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium cursor-pointer border border-dashed transition-colors hover:opacity-80"
+                          style={{
+                            borderColor: `${team.color}60`,
+                            color: team.color,
+                          }}
+                          title={`Add ${team.name}`}
+                        >
+                          <Plus className="h-2.5 w-2.5" />
+                          {team.name}
+                        </button>
+                      ))}
+                    {teams.filter((t) => !assignedTeamIds.has(t.id)).length === 0 && (
+                      <span className="text-xs text-muted-foreground italic">All teams assigned</span>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>

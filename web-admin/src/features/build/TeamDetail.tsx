@@ -9,6 +9,7 @@ import { useChallenges } from '@/hooks/queries/useChallenges'
 import { useStages } from '@/hooks/queries/useStages'
 import { useUpdateTeam, useDeleteTeam, useRemovePlayer } from '@/hooks/mutations/useTeamMutations'
 import { useWorkspaceStore } from '@/stores/workspace'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import type { Assignment } from '@/types/v2'
@@ -38,6 +39,7 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
   const [localColor, setLocalColor] = useState(team?.color ?? '#888888')
   const [copied, setCopied] = useState(false)
   const [qrUrl, setQrUrl] = useState<string | null>(null)
+  const [qrDialogOpen, setQrDialogOpen] = useState(false)
 
   // Sync local state when team data loads or teamId changes
   const syncedRef = useRef<string | null>(null)
@@ -66,13 +68,14 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
 
   const handleShowQr = useCallback(async () => {
     if (!team) return
-    const url = await QRCode.toDataURL(team.joinCode, { width: 256, margin: 1 })
+    const url = await QRCode.toDataURL(team.joinCode, { width: 300, margin: 1 })
     setQrUrl(url)
+    setQrDialogOpen(true)
   }, [team])
 
   const handleDownloadQr = useCallback(async () => {
     if (!team) return
-    const url = qrUrl ?? await QRCode.toDataURL(team.joinCode, { width: 256, margin: 1 })
+    const url = qrUrl ?? await QRCode.toDataURL(team.joinCode, { width: 300, margin: 1 })
     const a = document.createElement('a')
     a.href = url
     a.download = `${team.name}-qr.png`
@@ -255,28 +258,51 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
               >
                 <QrCode className="h-4 w-4" />
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleDownloadQr}
-                data-testid="download-qr-btn"
-                className="h-8 w-8"
-                title="Download QR code"
-              >
-                <Download className="h-4 w-4" />
-              </Button>
             </div>
-            {qrUrl && (
-              <div className="mt-2 inline-flex flex-col items-center gap-1 rounded-md border border-border bg-white p-2">
-                <img
-                  src={qrUrl}
-                  alt={`QR code for ${team.joinCode}`}
-                  className="h-32 w-32"
-                  data-testid="qr-code-img"
-                />
-                <span className="text-[10px] text-muted-foreground font-mono">{team.joinCode}</span>
-              </div>
-            )}
+            <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
+              <DialogContent className="max-w-sm" onClose={() => setQrDialogOpen(false)}>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <span
+                      style={{ background: team.color }}
+                      className="w-4 h-4 rounded-full inline-block"
+                    />
+                    {team.name}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="flex flex-col items-center gap-4 py-4">
+                  {qrUrl && (
+                    <img
+                      src={qrUrl}
+                      alt={`QR code for ${team.joinCode}`}
+                      className="w-64 h-64"
+                      data-testid="qr-code-img"
+                    />
+                  )}
+                  <code className="text-lg font-mono tracking-widest">
+                    {team.joinCode}
+                  </code>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDownloadQr}
+                      data-testid="download-qr-btn"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download QR
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setQrDialogOpen(false)}
+                    >
+                      Close
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </section>
