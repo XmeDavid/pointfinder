@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Hammer,
   Zap,
@@ -8,14 +9,67 @@ import {
   Settings,
   Sun,
   Moon,
+  Globe,
+  Check,
 } from "lucide-react";
 import {
   useWorkspaceStore,
   type GameMode,
 } from "@/stores/workspace";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 
 const THEME_KEY = "pointfinder-theme";
+
+const LANGUAGES = [
+  { code: "en", label: "English" },
+  { code: "pt", label: "Português" },
+  { code: "de", label: "Deutsch" },
+] as const;
+
+function LanguagePicker() {
+  const { i18n } = useTranslation();
+  const currentLang = (i18n.resolvedLanguage ?? i18n.language ?? "en").slice(
+    0,
+    2,
+  );
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        className="w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer text-muted-foreground hover:text-foreground hover:bg-accent"
+        aria-label="Change language"
+        data-testid="language-picker-btn"
+      >
+        <div className="relative">
+          <Globe size={18} />
+          <span className="absolute -bottom-1 -right-1.5 text-[8px] font-bold leading-none">
+            {currentLang.toUpperCase()}
+          </span>
+        </div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        {LANGUAGES.map((lang) => (
+          <DropdownMenuItem
+            key={lang.code}
+            onClick={() => i18n.changeLanguage(lang.code)}
+            className="flex items-center justify-between gap-4"
+          >
+            {lang.label}
+            {currentLang === lang.code && (
+              <Check size={14} className="text-primary" />
+            )}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 function useThemeToggle() {
   const [isDark, setIsDark] = useState(() => {
@@ -133,6 +187,9 @@ export function IconRail({ showModes }: IconRailProps) {
         {/* Spacer when modes are hidden */}
         {!showModes && <div className="flex-1" />}
 
+        {/* Language picker */}
+        <LanguagePicker />
+
         {/* Dark/light mode toggle */}
         <button
           onClick={toggleTheme}
@@ -198,6 +255,12 @@ export function IconRail({ showModes }: IconRailProps) {
             ))}
           </>
         )}
+
+        {/* Push remaining icons to the right */}
+        <div className="flex-1" />
+
+        {/* Language picker */}
+        <LanguagePicker />
       </div>
     </>
   );

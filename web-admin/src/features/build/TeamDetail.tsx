@@ -1,11 +1,14 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import { Copy, Check, Trash2, Save } from 'lucide-react'
+import { Copy, Check, Trash2, Save, QrCode, Download } from 'lucide-react'
+import QRCode from 'qrcode'
+import { TeamVariablesEditor } from '@/components/data/TeamVariablesEditor'
 import { useTeams, useTeamPlayers } from '@/hooks/queries/useTeams'
 import { useAssignments } from '@/hooks/queries/useAssignments'
 import { useBases } from '@/hooks/queries/useBases'
 import { useChallenges } from '@/hooks/queries/useChallenges'
 import { useStages } from '@/hooks/queries/useStages'
-import { useUpdateTeam, useRemovePlayer } from '@/hooks/mutations/useTeamMutations'
+import { useUpdateTeam, useDeleteTeam, useRemovePlayer } from '@/hooks/mutations/useTeamMutations'
+import { useWorkspaceStore } from '@/stores/workspace'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import type { Assignment } from '@/types/v2'
@@ -24,13 +27,17 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
   const { data: challenges = [] } = useChallenges(gameId)
   const { data: stages = [] } = useStages(gameId)
   const updateTeam = useUpdateTeam(gameId)
+  const deleteTeam = useDeleteTeam(gameId)
   const removePlayer = useRemovePlayer(gameId, teamId)
+  const selectTeam = useWorkspaceStore((s) => s.selectTeam)
 
   const team = teams.find((t) => t.id === teamId)
 
   // Local form state
   const [localName, setLocalName] = useState('')
+  const [localColor, setLocalColor] = useState(team?.color ?? '#888888')
   const [copied, setCopied] = useState(false)
+  const [qrUrl, setQrUrl] = useState<string | null>(null)
 
   // Sync local state when team data loads or teamId changes
   const syncedRef = useRef<string | null>(null)
@@ -38,7 +45,9 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
     if (team && syncedRef.current !== teamId) {
       syncedRef.current = teamId
       setLocalName(team.name)
+      setLocalColor(team.color)
       setCopied(false)
+      setQrUrl(null)
     }
   }, [team, teamId])
 
@@ -55,12 +64,27 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
     })
   }, [team])
 
+  const handleShowQr = useCallback(async () => {
+    if (!team) return
+    const url = await QRCode.toDataURL(team.joinCode, { width: 256, margin: 1 })
+    setQrUrl(url)
+  }, [team])
+
+  const handleDownloadQr = useCallback(async () => {
+    if (!team) return
+    const url = qrUrl ?? await QRCode.toDataURL(team.joinCode, { width: 256, margin: 1 })
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${team.name}-qr.png`
+    a.click()
+  }, [team, qrUrl])
+
   const handleSave = useCallback(() => {
     updateTeam.mutate({
       teamId,
-      dto: { name: localName },
+      dto: { name: localName, color: localColor },
     })
-  }, [teamId, localName, updateTeam])
+  }, [teamId, localName, localColor, updateTeam])
 
   const handleRemovePlayer = useCallback(
     (playerId: string) => {
@@ -185,13 +209,15 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
               Color
             </label>
             <div className="flex items-center gap-2">
-              <span
-                className="inline-block h-6 w-6 rounded-full shrink-0 border border-border"
-                style={{ backgroundColor: team.color }}
+              <input
+                type="color"
+                value={localColor}
+                onChange={(e) => setLocalColor(e.target.value)}
+                className="w-8 h-8 rounded-md border border-border cursor-pointer"
                 data-testid="team-color"
               />
               <span className="text-sm text-muted-foreground">
-                {team.color}
+                {localColor}
               </span>
             </div>
           </div>
@@ -219,7 +245,38 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
                   <Copy className="h-4 w-4" />
                 )}
               </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleShowQr}
+                data-testid="show-qr-btn"
+                className="h-8 w-8"
+                title="Show QR code"
+              >
+                <QrCode className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleDownloadQr}
+                data-testid="download-qr-btn"
+                className="h-8 w-8"
+                title="Download QR code"
+              >
+                <Download className="h-4 w-4" />
+              </Button>
             </div>
+            {qrUrl && (
+              <div className="mt-2 inline-flex flex-col items-center gap-1 rounded-md border border-border bg-white p-2">
+                <img
+                  src={qrUrl}
+                  alt={`QR code for ${team.joinCode}`}
+                  className="h-32 w-32"
+                  data-testid="qr-code-img"
+                />
+                <span className="text-[10px] text-muted-foreground font-mono">{team.joinCode}</span>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -307,14 +364,12 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
         )}
       </section>
 
-      {/* Team Variables placeholder */}
+      {/* Team Variables */}
       <section className="border-t border-border pt-4 mt-4">
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
           Team Variables
         </h3>
-        <p className="text-xs text-muted-foreground" data-testid="team-variables-placeholder">
-          Team variables editor coming soon
-        </p>
+        <TeamVariablesEditor gameId={gameId} teams={teams} />
       </section>
 
       {/* Save button */}
@@ -328,6 +383,21 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
           <Save className="h-4 w-4" />
           Save Changes
         </Button>
+      </div>
+
+      {/* Delete */}
+      <div className="border-t border-border pt-4 mt-4">
+        <button
+          onClick={() => {
+            if (confirm('Delete this team?')) {
+              deleteTeam.mutate(teamId, { onSuccess: () => selectTeam(null) })
+            }
+          }}
+          data-testid="delete-team-btn"
+          className="text-xs text-destructive hover:underline cursor-pointer"
+        >
+          Delete team
+        </button>
       </div>
     </div>
   )

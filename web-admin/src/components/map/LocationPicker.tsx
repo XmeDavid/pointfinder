@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import Map, { Marker } from 'react-map-gl/maplibre'
 import type { MapLayerMouseEvent } from 'react-map-gl/maplibre'
 import 'maplibre-gl/dist/maplibre-gl.css'
@@ -25,6 +25,13 @@ export function LocationPicker({
     latitude: lat || 38.7075,
     zoom: 15,
   })
+
+  // Recenter when base changes
+  useEffect(() => {
+    if (lat !== 0 || lng !== 0) {
+      setViewState(prev => ({ ...prev, latitude: lat, longitude: lng }))
+    }
+  }, [lat, lng])
 
   const handleMove = useCallback(
     (evt: { viewState: typeof viewState }) => {

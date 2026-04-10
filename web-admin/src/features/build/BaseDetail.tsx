@@ -1,17 +1,17 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { Pin, Plus, Pencil, Save, X, ChevronDown } from 'lucide-react'
+import { TagPicker } from '@/components/data/TagPicker'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useBases } from '@/hooks/queries/useBases'
 import { useAssignments } from '@/hooks/queries/useAssignments'
 import { useChallenges } from '@/hooks/queries/useChallenges'
-import { useTags } from '@/hooks/queries/useTags'
-import { useUpdateBase } from '@/hooks/mutations/useBaseMutations'
+import { useUpdateBase, useDeleteBase } from '@/hooks/mutations/useBaseMutations'
 import { useCreateAssignment, useDeleteAssignment } from '@/hooks/mutations/useAssignmentMutations'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { LocationPicker } from '@/components/map/LocationPicker'
 import { useGame } from '@/hooks/queries/useGames'
 import { getStyleUrl } from '@/lib/tile-sources'
-import type { Assignment, Challenge, Tag, Team } from '@/types'
+import type { Assignment, Challenge, Team } from '@/types'
 
 interface BaseDetailProps {
   baseId: string
@@ -26,14 +26,15 @@ const ANSWER_TYPE_BADGE: Record<string, { bg: string; text: string; label: strin
 
 export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
   const selectChallenge = useWorkspaceStore((s) => s.selectChallenge)
+  const selectBase = useWorkspaceStore((s) => s.selectBase)
 
   const { data: game } = useGame(gameId)
   const { data: bases = [] } = useBases(gameId)
   const { data: assignments = [] } = useAssignments(gameId)
   const { data: challenges = [] } = useChallenges(gameId)
-  const { data: tags = [] } = useTags(gameId)
   const { data: teams = [] } = useTeams(gameId)
   const updateBase = useUpdateBase(gameId)
+  const deleteBase = useDeleteBase(gameId)
   const createAssignment = useCreateAssignment(gameId)
   const deleteAssignment = useDeleteAssignment(gameId)
 
@@ -44,6 +45,7 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
 
   // Local form state
   const [localName, setLocalName] = useState(base?.name ?? '')
+  const [localDescription, setLocalDescription] = useState(base?.description ?? '')
   const [localLat, setLocalLat] = useState(base?.lat?.toString() ?? '')
   const [localLng, setLocalLng] = useState(base?.lng?.toString() ?? '')
   const [localHidden, setLocalHidden] = useState(base?.hidden ?? false)
@@ -51,10 +53,11 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
   // Reset local state when base changes
   useEffect(() => {
     setLocalName(base?.name ?? '')
+    setLocalDescription(base?.description ?? '')
     setLocalLat(base?.lat?.toString() ?? '')
     setLocalLng(base?.lng?.toString() ?? '')
     setLocalHidden(base?.hidden ?? false)
-  }, [baseId, base?.name, base?.lat, base?.lng, base?.hidden])
+  }, [baseId, base?.name, base?.description, base?.lat, base?.lng, base?.hidden])
 
   // Derived data
   const baseAssignments = useMemo(
@@ -66,11 +69,6 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
     const challengeIds = new Set(baseAssignments.map((a) => a.challengeId))
     return challenges.filter((c) => challengeIds.has(c.id))
   }, [baseAssignments, challenges])
-
-  const baseTags = useMemo(() => {
-    if (!base?.tagIds?.length) return []
-    return tags.filter((t) => base.tagIds!.includes(t.id))
-  }, [base?.tagIds, tags])
 
   // Challenges not yet assigned to this base
   const unlinkedChallenges = useMemo(() => {
@@ -109,6 +107,7 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
 
   const isDirty =
     localName !== (base?.name ?? '') ||
+    localDescription !== (base?.description ?? '') ||
     localLat !== (base?.lat?.toString() ?? '') ||
     localLng !== (base?.lng?.toString() ?? '') ||
     localHidden !== (base?.hidden ?? false)
@@ -119,7 +118,7 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
       baseId: base.id,
       dto: {
         name: localName,
-        description: base.description,
+        description: localDescription,
         lat: parseFloat(localLat) || 0,
         lng: parseFloat(localLng) || 0,
         hidden: localHidden,
@@ -153,6 +152,17 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
               onChange={(e) => setLocalName(e.target.value)}
               data-testid="base-name-input"
               className="w-full h-8 px-3 text-sm rounded-md bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Description</label>
+            <textarea
+              value={localDescription}
+              onChange={(e) => setLocalDescription(e.target.value)}
+              placeholder="Base description..."
+              rows={2}
+              data-testid="base-description-input"
+              className="w-full px-3 py-2 text-sm rounded-md bg-background border border-border text-foreground resize-none"
             />
           </div>
           <LocationPicker
@@ -220,15 +230,24 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
           Tags
         </h3>
-        <div className="flex flex-wrap gap-1.5">
-          {baseTags.map((tag) => (
-            <TagPill key={tag.id} tag={tag} />
-          ))}
-          <button className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium text-muted-foreground border border-dashed border-border hover:border-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-            <Plus className="h-3 w-3" />
-            Add tag
-          </button>
-        </div>
+        <TagPicker
+          gameId={gameId}
+          selectedTagIds={base.tagIds ?? []}
+          onChange={(tagIds) => {
+            updateBase.mutate({
+              baseId: base.id,
+              dto: {
+                name: base.name,
+                description: base.description,
+                lat: base.lat,
+                lng: base.lng,
+                hidden: base.hidden,
+                tagIds,
+                fixedChallengeId: base.fixedChallengeId,
+              },
+            })
+          }}
+        />
       </section>
 
       {/* Fixed Challenge */}
@@ -329,21 +348,22 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
           </button>
         </div>
       )}
-    </div>
-  )
-}
 
-function TagPill({ tag }: { tag: Tag }) {
-  return (
-    <span
-      className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
-      style={{
-        backgroundColor: `${tag.color}20`,
-        color: tag.color,
-      }}
-    >
-      {tag.label}
-    </span>
+      {/* Delete */}
+      <div className="border-t border-border pt-4 mt-4">
+        <button
+          onClick={() => {
+            if (confirm('Delete this base?')) {
+              deleteBase.mutate(baseId, { onSuccess: () => selectBase(null) })
+            }
+          }}
+          data-testid="delete-base-btn"
+          className="text-xs text-destructive hover:underline cursor-pointer"
+        >
+          Delete base
+        </button>
+      </div>
+    </div>
   )
 }
 

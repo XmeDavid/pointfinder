@@ -242,13 +242,10 @@ export default function GameSettingsPanel({
                       .toUpperCase()
                       .replace(/[^A-Z0-9]/g, '')
                       .slice(0, 6)
-                    updateGame.mutate({
-                      broadcastEnabled: true,
-                    })
-                    // Broadcast code update -- debounced in real usage
                     if (val !== (game.broadcastCode ?? '')) {
                       updateGame.mutate({
                         broadcastEnabled: true,
+                        broadcastCode: val,
                       })
                     }
                   }}

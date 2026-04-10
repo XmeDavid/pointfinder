@@ -222,30 +222,32 @@ const router = createBrowserRouter([
     ),
   },
 
-  // ── Authenticated routes ───────────────────────────────────────────────
+  // ── Authenticated routes (shared AuthGuard) ────────────────────────────
   {
-    path: "/app/dashboard",
-    element: (
-      <AuthGuard>
-        <AppLayout>
-          <Suspense fallback={<PageSpinner />}>
-            <DashboardPage />
-          </Suspense>
-        </AppLayout>
-      </AuthGuard>
-    ),
-  },
-  {
-    path: "/app/game/:id",
-    element: (
-      <AuthGuard>
-        <GameLayout>
-          <Suspense fallback={<PageSpinner />}>
-            <GameWorkspace />
-          </Suspense>
-        </GameLayout>
-      </AuthGuard>
-    ),
+    path: "/app",
+    element: <AuthGuard />,
+    children: [
+      {
+        path: "dashboard",
+        element: (
+          <AppLayout>
+            <Suspense fallback={<PageSpinner />}>
+              <DashboardPage />
+            </Suspense>
+          </AppLayout>
+        ),
+      },
+      {
+        path: "game/:id",
+        element: (
+          <GameLayout>
+            <Suspense fallback={<PageSpinner />}>
+              <GameWorkspace />
+            </Suspense>
+          </GameLayout>
+        ),
+      },
+    ],
   },
 
   // ── Catch-all ──────────────────────────────────────────────────────────

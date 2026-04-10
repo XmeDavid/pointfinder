@@ -15,6 +15,7 @@ export interface CreateGameDto {
   endDate?: string;
   uniformAssignment?: boolean;
   broadcastEnabled?: boolean;
+  broadcastCode?: string;
   tileSource?: string;
   unlockTrigger?: string;
 }

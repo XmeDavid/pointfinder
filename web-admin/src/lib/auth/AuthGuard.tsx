@@ -1,19 +1,19 @@
 import { useEffect } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/lib/auth/store";
 import apiClient from "@/lib/api/client";
 
-export function AuthGuard({ children }: { children: React.ReactNode }) {
+export function AuthGuard({ children }: { children?: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const hasHydrated = useAuthStore((s) => s.hasHydrated);
   const handleAuthFailure = useAuthStore((s) => s.handleAuthFailure);
   const { isPending: isVerifyingSession, isError: sessionInvalid } = useQuery({
     queryKey: ["auth-session-verify"],
     enabled: hasHydrated && isAuthenticated,
-    retry: false,
-    staleTime: 0,
-    gcTime: 0,
+    retry: 1,
+    staleTime: 30_000,
+    gcTime: 60_000,
     queryFn: async () => {
       await apiClient.get("/games");
       return true;
@@ -40,5 +40,5 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" replace />;
   }
 
-  return <>{children}</>;
+  return <>{children ?? <Outlet />}</>;
 }

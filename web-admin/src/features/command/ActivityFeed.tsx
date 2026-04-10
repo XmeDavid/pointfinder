@@ -190,7 +190,7 @@ export function ActivityFeed({ gameId }: { gameId: string }) {
       data-testid="activity-feed"
       className={
         isMobile
-          ? 'absolute left-0 right-0 bottom-16 max-h-[50vh] z-20 flex flex-col overflow-hidden rounded-t-xl rounded-b-none'
+          ? 'absolute left-0 right-0 bottom-14 max-h-[50vh] z-20 flex flex-col overflow-hidden rounded-t-xl rounded-b-none'
           : 'absolute top-14 right-3 bottom-3 w-[250px] z-20 flex flex-col overflow-hidden'
       }
     >

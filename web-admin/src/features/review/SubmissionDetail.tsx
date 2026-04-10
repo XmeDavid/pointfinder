@@ -144,24 +144,31 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
             </div>
           )}
 
-          {(submission.fileUrl || (submission.fileUrls && submission.fileUrls.length > 0)) && (
-            <div className="relative rounded-lg overflow-hidden border border-border">
-              <div className="h-56 relative">
-                <img
-                  src={`https://picsum.photos/seed/${submission.id}/600/400`}
-                  alt="Submitted photo"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none'
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
-                <div className="absolute bottom-3 left-3 text-xs text-text-secondary">
-                  Photo submission
-                </div>
+          {(submission.fileUrl || (submission.fileUrls && submission.fileUrls.length > 0)) && (() => {
+            const urls = submission.fileUrls?.length ? submission.fileUrls : submission.fileUrl ? [submission.fileUrl] : []
+            return (
+              <div className="space-y-2">
+                {urls.map((url, idx) => (
+                  <div key={idx} className="relative rounded-lg overflow-hidden border border-border">
+                    <div className="h-56 relative">
+                      <img
+                        src={url}
+                        alt={`Submission file ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none'
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
+                      <div className="absolute bottom-3 left-3 text-xs text-text-secondary">
+                        Photo submission{urls.length > 1 ? ` (${idx + 1}/${urls.length})` : ''}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-          )}
+            )
+          })()}
         </div>
 
         {/* Points section */}

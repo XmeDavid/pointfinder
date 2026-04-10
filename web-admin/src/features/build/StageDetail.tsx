@@ -1,8 +1,9 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Plus } from 'lucide-react'
 import { useStages } from '@/hooks/queries/useStages'
-import { useUpdateStage } from '@/hooks/mutations/useStageMutations'
+import { useUpdateStage, useDeleteStage } from '@/hooks/mutations/useStageMutations'
 import { useBases } from '@/hooks/queries/useBases'
+import { useUpdateBase } from '@/hooks/mutations/useBaseMutations'
 import { useAssignments } from '@/hooks/queries/useAssignments'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { TransitionType } from '@/types/stage'
@@ -44,7 +45,12 @@ export default function StageDetail({
   const { data: basesData } = useBases(gameId)
   const { data: assignmentsData } = useAssignments(gameId)
   const updateStage = useUpdateStage(gameId)
+  const deleteStage = useDeleteStage(gameId)
+  const updateBase = useUpdateBase(gameId)
   const selectBase = useWorkspaceStore((s) => s.selectBase)
+  const selectStage = useWorkspaceStore((s) => s.selectStage)
+
+  const [showAddBaseDropdown, setShowAddBaseDropdown] = useState(false)
 
   const stage = useMemo(
     () => (stagesData ?? []).find((s) => s.id === stageId),
@@ -85,6 +91,11 @@ export default function StageDetail({
     () => allBases.filter((b) => stage?.baseIds.includes(b.id)),
     [allBases, stage?.baseIds],
   )
+
+  // Bases not assigned to any stage (or assigned to a different stage)
+  const unassignedBases = useMemo(() => {
+    return allBases.filter((b) => !b.stageId || b.stageId === null)
+  }, [allBases])
 
   // Bases available for trigger selection (from previous stages)
   const previousStageBases = useMemo(() => {
@@ -298,10 +309,34 @@ export default function StageDetail({
           </div>
         )}
 
-        <button className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground border border-dashed border-border hover:border-muted-foreground hover:text-foreground rounded-md transition-colors cursor-pointer">
-          <Plus className="h-3 w-3" />
-          Add existing base
-        </button>
+        <div className="relative mt-3">
+          <button
+            onClick={() => setShowAddBaseDropdown((v) => !v)}
+            disabled={unassignedBases.length === 0}
+            data-testid="add-existing-base-btn"
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground border border-dashed border-border hover:border-muted-foreground hover:text-foreground rounded-md transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Plus className="h-3 w-3" />
+            Add existing base
+          </button>
+          {showAddBaseDropdown && unassignedBases.length > 0 && (
+            <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-60 overflow-y-auto rounded-md border border-border bg-popover shadow-lg">
+              {unassignedBases.map((b) => (
+                <button
+                  key={b.id}
+                  onClick={() => {
+                    updateBase.mutate({ baseId: b.id, dto: { stageId: stageId } })
+                    setShowAddBaseDropdown(false)
+                  }}
+                  data-testid={`add-base-option-${b.id}`}
+                  className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors cursor-pointer"
+                >
+                  {b.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </section>
 
       {/* Save button */}
@@ -315,6 +350,21 @@ export default function StageDetail({
           {updateStage.isPending ? 'Saving...' : 'Save Changes'}
         </button>
       </section>
+
+      {/* Delete */}
+      <div className="border-t border-border pt-4 mt-4">
+        <button
+          onClick={() => {
+            if (confirm('Delete this stage?')) {
+              deleteStage.mutate(stageId, { onSuccess: () => selectStage(null) })
+            }
+          }}
+          data-testid="delete-stage-btn"
+          className="text-xs text-destructive hover:underline cursor-pointer"
+        >
+          Delete stage
+        </button>
+      </div>
     </div>
   )
 }

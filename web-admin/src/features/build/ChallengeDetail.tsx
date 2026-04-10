@@ -1,10 +1,12 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { Save, ChevronDown, X } from 'lucide-react'
+import { TagPicker } from '@/components/data/TagPicker'
+import { TeamVariablesEditor } from '@/components/data/TeamVariablesEditor'
 import { useChallenges } from '@/hooks/queries/useChallenges'
 import { useAssignments } from '@/hooks/queries/useAssignments'
 import { useBases } from '@/hooks/queries/useBases'
 import { useTeams } from '@/hooks/queries/useTeams'
-import { useUpdateChallenge } from '@/hooks/mutations/useChallengeMutations'
+import { useUpdateChallenge, useDeleteChallenge } from '@/hooks/mutations/useChallengeMutations'
 import { useCreateAssignment, useDeleteAssignment } from '@/hooks/mutations/useAssignmentMutations'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { Input } from '@/components/ui/input'
@@ -31,9 +33,11 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
   const { data: bases = [] } = useBases(gameId)
   const { data: teams = [] } = useTeams(gameId)
   const updateChallenge = useUpdateChallenge(gameId)
+  const deleteChallenge = useDeleteChallenge(gameId)
   const createAssignment = useCreateAssignment(gameId)
   const deleteAssignmentMut = useDeleteAssignment(gameId)
   const selectBase = useWorkspaceStore((s) => s.selectBase)
+  const selectChallenge = useWorkspaceStore((s) => s.selectChallenge)
 
   const [showBaseDropdown, setShowBaseDropdown] = useState(false)
   const baseDropdownRef = useRef<HTMLDivElement>(null)
@@ -468,6 +472,43 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
         </button>
       </section>
 
+      {/* Tags section */}
+      <section className="border-t border-border pt-4 mt-4">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          Tags
+        </h3>
+        <TagPicker
+          gameId={gameId}
+          selectedTagIds={challenge.tagIds ?? []}
+          onChange={(tagIds) => {
+            updateChallenge.mutate({
+              challengeId: challenge.id,
+              dto: {
+                title: challenge.title,
+                description: challenge.description,
+                content: challenge.content,
+                completionContent: challenge.completionContent,
+                answerType: challenge.answerType,
+                autoValidate: challenge.autoValidate,
+                correctAnswer: challenge.correctAnswer,
+                points: challenge.points,
+                locationBound: challenge.locationBound,
+                operatorNotes: challenge.operatorNotes,
+                tagIds,
+              },
+            })
+          }}
+        />
+      </section>
+
+      {/* Challenge Variables */}
+      <section className="border-t border-border pt-4 mt-4">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          Challenge Variables
+        </h3>
+        <TeamVariablesEditor gameId={gameId} challengeId={challengeId} teams={teams} />
+      </section>
+
       {/* Post-completion content */}
       <section className="border-t border-border pt-4 mt-4">
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
@@ -493,6 +534,21 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
           <Save className="h-4 w-4" />
           Save Changes
         </Button>
+      </div>
+
+      {/* Delete */}
+      <div className="border-t border-border pt-4 mt-4">
+        <button
+          onClick={() => {
+            if (confirm('Delete this challenge?')) {
+              deleteChallenge.mutate(challengeId, { onSuccess: () => selectChallenge(null) })
+            }
+          }}
+          data-testid="delete-challenge-btn"
+          className="text-xs text-destructive hover:underline cursor-pointer"
+        >
+          Delete challenge
+        </button>
       </div>
     </div>
   )

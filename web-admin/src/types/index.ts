@@ -65,6 +65,8 @@ export interface Base {
    * enforces the absence.
    */
   tagIds?: string[];
+  /** Stage this base belongs to (v2 stages feature) */
+  stageId?: string | null;
 }
 
 export type AnswerType = "text" | "file" | "none";

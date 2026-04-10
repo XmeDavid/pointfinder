@@ -15,6 +15,8 @@ export interface CreateBaseDto {
    * assertion.
    */
   tagIds?: string[];
+  /** Stage this base belongs to (v2 stages feature) */
+  stageId?: string | null;
 }
 
 export const basesApi = {

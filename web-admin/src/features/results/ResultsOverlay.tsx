@@ -87,7 +87,7 @@ export default function ResultsOverlay({ gameId }: Props) {
 
   return (
     <div
-      className="absolute left-0 right-0 top-12 bottom-0 md:left-3 md:right-3 md:top-14 md:bottom-3 z-20 bg-card/95 backdrop-blur-xl border border-border rounded-none md:rounded-xl flex flex-col overflow-hidden"
+      className="absolute left-0 right-0 top-12 bottom-14 md:left-3 md:right-3 md:top-14 md:bottom-3 z-20 bg-card/95 backdrop-blur-xl border border-border rounded-none md:rounded-xl flex flex-col overflow-hidden"
       data-testid="results-overlay"
     >
       {/* Tab bar */}
