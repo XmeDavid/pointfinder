@@ -1,16 +1,44 @@
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
 import {
   Hammer,
   Zap,
   ClipboardList,
   Trophy,
   Settings,
+  Sun,
+  Moon,
 } from "lucide-react";
 import {
   useWorkspaceStore,
   type GameMode,
 } from "@/stores/workspace";
 import { cn } from "@/lib/utils";
+
+const THEME_KEY = "pointfinder-theme";
+
+function useThemeToggle() {
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const stored = localStorage.getItem(THEME_KEY);
+    if (stored) return stored === "dark";
+    return true; // default to dark
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isDark) {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+    localStorage.setItem(THEME_KEY, isDark ? "dark" : "light");
+  }, [isDark]);
+
+  const toggle = useCallback(() => setIsDark((prev) => !prev), []);
+
+  return { isDark, toggle };
+}
 
 const modeIcons: Array<{
   mode: GameMode;
@@ -62,6 +90,7 @@ interface IconRailProps {
 export function IconRail({ showModes }: IconRailProps) {
   const navigate = useNavigate();
   const store = useWorkspaceStore();
+  const { isDark, toggle: toggleTheme } = useThemeToggle();
 
   const isSettingsActive = store.settingsPanelOpen;
 
@@ -104,24 +133,37 @@ export function IconRail({ showModes }: IconRailProps) {
         {/* Spacer when modes are hidden */}
         {!showModes && <div className="flex-1" />}
 
-        {/* Settings icon at bottom */}
+        {/* Dark/light mode toggle */}
         <button
-          onClick={() => store.toggleSettingsPanel()}
-          title="Settings"
-          aria-label="Settings"
-          data-testid="settings-btn"
-          className={cn(
-            "w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer",
-            isSettingsActive
-              ? "bg-primary/10 border border-primary/30"
-              : "text-muted-foreground hover:text-foreground hover:bg-accent",
-          )}
+          onClick={toggleTheme}
+          title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+          aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+          data-testid="theme-toggle-btn"
+          className="w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer text-muted-foreground hover:text-foreground hover:bg-accent"
         >
-          <Settings
-            size={18}
-            className={isSettingsActive ? "text-primary" : ""}
-          />
+          {isDark ? <Sun size={18} /> : <Moon size={18} />}
         </button>
+
+        {/* Settings icon at bottom -- only in game workspace */}
+        {showModes && (
+          <button
+            onClick={() => store.toggleSettingsPanel()}
+            title="Settings"
+            aria-label="Settings"
+            data-testid="settings-btn"
+            className={cn(
+              "w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer",
+              isSettingsActive
+                ? "bg-primary/10 border border-primary/30"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent",
+            )}
+          >
+            <Settings
+              size={18}
+              className={isSettingsActive ? "text-primary" : ""}
+            />
+          </button>
+        )}
       </div>
 
       {/* Mobile: bottom tab bar */}

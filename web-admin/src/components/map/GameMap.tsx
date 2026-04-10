@@ -1,14 +1,14 @@
 import { useState, useCallback } from 'react'
 import Map, { NavigationControl } from 'react-map-gl/maplibre'
 import 'maplibre-gl/dist/maplibre-gl.css'
-
-const DARK_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
+import { DARK_STYLE_URL } from '@/lib/tile-sources'
 
 interface GameMapProps {
   className?: string
   initialCenter?: [number, number]  // [lng, lat]
   initialZoom?: number
   children?: React.ReactNode
+  mapStyle?: string  // override the default dark style
 }
 
 export function GameMap({
@@ -16,6 +16,7 @@ export function GameMap({
   initialCenter = [-9.17, 38.7075],  // Lisbon
   initialZoom = 13,
   children,
+  mapStyle,
 }: GameMapProps) {
   const [viewState, setViewState] = useState({
     longitude: initialCenter[0],
@@ -32,7 +33,7 @@ export function GameMap({
       <Map
         {...viewState}
         onMove={handleMove}
-        mapStyle={DARK_STYLE}
+        mapStyle={mapStyle ?? DARK_STYLE_URL}
         style={{ width: '100%', height: '100%' }}
         attributionControl={false}
       >

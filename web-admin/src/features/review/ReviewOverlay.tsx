@@ -161,7 +161,7 @@ export default function ReviewOverlay({ gameId }: ReviewOverlayProps) {
 
   return (
     <div
-      className="absolute top-14 left-3 right-3 bottom-3 z-20 glass-panel rounded-xl flex overflow-hidden"
+      className="absolute top-14 left-3 right-3 bottom-3 z-20 bg-card/95 backdrop-blur-xl border border-border rounded-xl flex overflow-hidden"
       data-testid="review-overlay"
     >
       {/* Left: submission list */}

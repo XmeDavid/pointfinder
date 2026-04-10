@@ -40,8 +40,13 @@ describe("IconRail", () => {
     expect(screen.queryByLabelText("Results")).toBeNull();
   });
 
-  it("renders settings button", () => {
+  it("renders settings button when showModes is true", () => {
+    renderWithRouter(<IconRail showModes={true} />);
+    expect(screen.getAllByTestId("settings-btn").length).toBeGreaterThan(0);
+  });
+
+  it("hides settings button when showModes is false", () => {
     renderWithRouter(<IconRail showModes={false} />);
-    expect(screen.getByTestId("settings-btn")).toBeDefined();
+    expect(screen.queryByTestId("settings-btn")).toBeNull();
   });
 });

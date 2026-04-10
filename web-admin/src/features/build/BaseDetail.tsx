@@ -1,11 +1,12 @@
-import { useState, useMemo, useEffect } from 'react'
-import { Pin, Plus, Pencil, Save } from 'lucide-react'
+import { useState, useMemo, useEffect, useRef } from 'react'
+import { Pin, Plus, Pencil, Save, X, ChevronDown } from 'lucide-react'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useBases } from '@/hooks/queries/useBases'
 import { useAssignments } from '@/hooks/queries/useAssignments'
 import { useChallenges } from '@/hooks/queries/useChallenges'
 import { useTags } from '@/hooks/queries/useTags'
 import { useUpdateBase } from '@/hooks/mutations/useBaseMutations'
+import { useCreateAssignment, useDeleteAssignment } from '@/hooks/mutations/useAssignmentMutations'
 import { useTeams } from '@/hooks/queries/useTeams'
 import type { Assignment, Challenge, Tag, Team } from '@/types'
 
@@ -29,6 +30,11 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
   const { data: tags = [] } = useTags(gameId)
   const { data: teams = [] } = useTeams(gameId)
   const updateBase = useUpdateBase(gameId)
+  const createAssignment = useCreateAssignment(gameId)
+  const deleteAssignment = useDeleteAssignment(gameId)
+
+  const [showLinkDropdown, setShowLinkDropdown] = useState(false)
+  const linkDropdownRef = useRef<HTMLDivElement>(null)
 
   const base = bases.find((b) => b.id === baseId)
 
@@ -61,6 +67,36 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
     if (!base?.tagIds?.length) return []
     return tags.filter((t) => base.tagIds!.includes(t.id))
   }, [base?.tagIds, tags])
+
+  // Challenges not yet assigned to this base
+  const unlinkedChallenges = useMemo(() => {
+    const linkedIds = new Set(baseChallenges.map((c) => c.id))
+    return challenges.filter((c) => !linkedIds.has(c.id))
+  }, [challenges, baseChallenges])
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!showLinkDropdown) return
+    const handler = (e: MouseEvent) => {
+      if (linkDropdownRef.current && !linkDropdownRef.current.contains(e.target as Node)) {
+        setShowLinkDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showLinkDropdown])
+
+  const handleLinkChallenge = (challengeId: string) => {
+    createAssignment.mutate({ baseId: baseId, challengeId })
+    setShowLinkDropdown(false)
+  }
+
+  const handleUnlinkChallenge = (challengeId: string) => {
+    // Find the assignment(s) for this base+challenge that are global (teamId=null)
+    // and delete them. If there are team-specific ones, delete all for this base+challenge.
+    const toDelete = baseAssignments.filter((a) => a.challengeId === challengeId)
+    toDelete.forEach((a) => deleteAssignment.mutate(a.id))
+  }
 
   const fixedChallenge = useMemo(
     () => (base?.fixedChallengeId ? challenges.find((c) => c.id === base.fixedChallengeId) : null),
@@ -234,6 +270,35 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
             Challenges at this base{' '}
             <span className="font-normal">({baseChallenges.length})</span>
           </h3>
+          <div className="relative" ref={linkDropdownRef}>
+            <button
+              onClick={() => setShowLinkDropdown((v) => !v)}
+              disabled={unlinkedChallenges.length === 0}
+              data-testid="link-challenge-btn"
+              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md text-primary hover:bg-primary/10 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Plus className="h-3 w-3" />
+              Link Challenge
+              <ChevronDown className="h-3 w-3" />
+            </button>
+            {showLinkDropdown && unlinkedChallenges.length > 0 && (
+              <div className="absolute right-0 top-full mt-1 z-50 w-64 max-h-60 overflow-y-auto rounded-md border border-border bg-popover shadow-lg">
+                {unlinkedChallenges.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => handleLinkChallenge(c.id)}
+                    data-testid={`link-challenge-option-${c.id}`}
+                    className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors cursor-pointer flex items-center justify-between"
+                  >
+                    <span className="truncate">{c.title}</span>
+                    <span className="shrink-0 ml-2 text-xs text-muted-foreground">
+                      {c.points}pts
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {baseChallenges.length === 0 ? (
@@ -249,6 +314,7 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
                 assignments={baseAssignments}
                 teams={teams}
                 onSelect={() => selectChallenge(challenge.id)}
+                onUnlink={() => handleUnlinkChallenge(challenge.id)}
               />
             ))}
           </div>
@@ -292,9 +358,10 @@ interface ChallengeCardProps {
   assignments: Assignment[]
   teams: Team[]
   onSelect: () => void
+  onUnlink: () => void
 }
 
-function ChallengeCard({ challenge, assignments, teams, onSelect }: ChallengeCardProps) {
+function ChallengeCard({ challenge, assignments, teams, onSelect, onUnlink }: ChallengeCardProps) {
   const typeBadge = ANSWER_TYPE_BADGE[challenge.answerType] ?? ANSWER_TYPE_BADGE.text
 
   const challengeAssignments = assignments.filter((a) => a.challengeId === challenge.id)
@@ -328,6 +395,14 @@ function ChallengeCard({ challenge, assignments, teams, onSelect }: ChallengeCar
           className="shrink-0 p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
         >
           <Pencil className="h-3 w-3" />
+        </button>
+        <button
+          onClick={onUnlink}
+          data-testid={`unlink-challenge-${challenge.id}`}
+          className="shrink-0 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+          title="Remove challenge from this base"
+        >
+          <X className="h-3 w-3" />
         </button>
       </div>
 

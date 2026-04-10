@@ -7,6 +7,7 @@ import { useBases } from '@/hooks/queries/useBases'
 import { useTeamLocations } from '@/hooks/queries/useTeamLocations'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { GameMap } from '@/components/map/GameMap'
+import { getStyleUrl } from '@/lib/tile-sources'
 import { BaseMarkers } from '@/components/map/BaseMarkers'
 import { TeamMarkers } from '@/components/map/TeamMarkers'
 import { TopBar } from './TopBar'
@@ -83,7 +84,7 @@ export function GameWorkspace() {
 
   return (
     <div className="h-screen w-full relative overflow-hidden">
-      <GameMap>
+      <GameMap mapStyle={mode === 'build' ? getStyleUrl(game.tileSource) : undefined}>
         <BaseMarkers
           bases={bases}
           mode={mode}
@@ -113,7 +114,7 @@ export function GameWorkspace() {
             exit={{ opacity: 0 }}
           >
             <ContentDrawer gameId={gameId!} />
-            <ReadinessIndicator gameId={gameId!} />
+            <ReadinessIndicator gameId={gameId!} gameStatus={game.status} />
             {!drawerOpen && (
               <button
                 onClick={() => openDrawer()}

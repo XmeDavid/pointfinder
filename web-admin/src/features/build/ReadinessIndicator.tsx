@@ -70,9 +70,14 @@ function useReadinessChecks(gameId: string): ReadinessCheck[] {
 
 export default function ReadinessIndicator({
   gameId,
+  gameStatus,
 }: {
   gameId: string
+  gameStatus?: string
 }) {
+  // Only show in setup mode -- hide when game is live or ended
+  if (gameStatus && gameStatus !== 'setup') return null
+
   const [expanded, setExpanded] = useState(false)
   const checks = useReadinessChecks(gameId)
   const updateStatus = useUpdateGameStatus(gameId)

@@ -60,24 +60,22 @@ export function SlideDrawer({
               <div className="h-1 w-8 rounded-full bg-muted-foreground/30" />
             </div>
 
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-              {title ? (
+            {/* Header -- only rendered when a title is provided */}
+            {title && (
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                 <h2 className="text-sm font-semibold text-foreground truncate">
                   {title}
                 </h2>
-              ) : (
-                <div />
-              )}
-              <button
-                onClick={onClose}
-                className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer"
-                aria-label="Close"
-                data-testid="slide-drawer-close"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
+                <button
+                  onClick={onClose}
+                  className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer"
+                  aria-label="Close"
+                  data-testid="slide-drawer-close"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto">{children}</div>

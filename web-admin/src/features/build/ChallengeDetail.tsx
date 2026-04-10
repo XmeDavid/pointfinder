@@ -1,14 +1,16 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import { Save } from 'lucide-react'
+import { Save, ChevronDown, X } from 'lucide-react'
 import { useChallenges } from '@/hooks/queries/useChallenges'
 import { useAssignments } from '@/hooks/queries/useAssignments'
 import { useBases } from '@/hooks/queries/useBases'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { useUpdateChallenge } from '@/hooks/mutations/useChallengeMutations'
+import { useCreateAssignment, useDeleteAssignment } from '@/hooks/mutations/useAssignmentMutations'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
+import { RichTextEditor } from '@/components/editor/RichTextEditor'
 import { cn } from '@/lib/utils'
 import type { AnswerType } from '@/types/v2'
 
@@ -29,7 +31,12 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
   const { data: bases = [] } = useBases(gameId)
   const { data: teams = [] } = useTeams(gameId)
   const updateChallenge = useUpdateChallenge(gameId)
+  const createAssignment = useCreateAssignment(gameId)
+  const deleteAssignmentMut = useDeleteAssignment(gameId)
   const selectBase = useWorkspaceStore((s) => s.selectBase)
+
+  const [showBaseDropdown, setShowBaseDropdown] = useState(false)
+  const baseDropdownRef = useRef<HTMLDivElement>(null)
 
   const challenge = challenges.find((c) => c.id === challengeId)
 
@@ -88,6 +95,29 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
   const assignedTeamIds = new Set(
     challengeAssignments.filter((a) => a.teamId).map((a) => a.teamId),
   )
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!showBaseDropdown) return
+    const handler = (e: MouseEvent) => {
+      if (baseDropdownRef.current && !baseDropdownRef.current.contains(e.target as Node)) {
+        setShowBaseDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showBaseDropdown])
+
+  const handleAssignToBase = (baseId: string) => {
+    // Remove existing assignments for this challenge first, then create new one
+    challengeAssignments.forEach((a) => deleteAssignmentMut.mutate(a.id))
+    createAssignment.mutate({ baseId, challengeId })
+    setShowBaseDropdown(false)
+  }
+
+  const handleRemoveBaseAssignment = () => {
+    challengeAssignments.forEach((a) => deleteAssignmentMut.mutate(a.id))
+  }
 
   const showAnswerConfig = localAnswerType === 'text'
 
@@ -216,17 +246,14 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
               className="text-sm resize-none"
             />
           </div>
-          <div>
+          <div data-testid="challenge-content">
             <label className="block text-xs text-muted-foreground mb-1">
               Content
             </label>
-            <Textarea
-              rows={4}
-              value={localContent}
-              onChange={(e) => setLocalContent(e.target.value)}
-              placeholder="Rich content placeholder (Tiptap editor coming soon)"
-              data-testid="challenge-content"
-              className="text-sm resize-none"
+            <RichTextEditor
+              content={localContent}
+              onChange={setLocalContent}
+              placeholder="Challenge content..."
             />
           </div>
         </div>
@@ -290,18 +317,81 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
               Assigned at:
             </label>
             {assignedBase ? (
-              <button
-                type="button"
-                onClick={() => selectBase(assignedBase.id)}
-                className="text-sm text-primary hover:underline cursor-pointer"
-                data-testid="assigned-base-link"
-              >
-                {assignedBase.name}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => selectBase(assignedBase.id)}
+                  className="text-sm text-primary hover:underline cursor-pointer"
+                  data-testid="assigned-base-link"
+                >
+                  {assignedBase.name}
+                </button>
+                <div className="relative" ref={baseDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setShowBaseDropdown((v) => !v)}
+                    data-testid="change-base-btn"
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  >
+                    Change
+                  </button>
+                  {showBaseDropdown && (
+                    <div className="absolute left-0 top-full mt-1 z-50 w-56 max-h-60 overflow-y-auto rounded-md border border-border bg-popover shadow-lg">
+                      {bases.map((b) => (
+                        <button
+                          key={b.id}
+                          onClick={() => handleAssignToBase(b.id)}
+                          data-testid={`assign-base-option-${b.id}`}
+                          className={cn(
+                            'w-full text-left px-3 py-2 text-sm transition-colors cursor-pointer',
+                            b.id === assignedBase.id
+                              ? 'bg-primary/10 text-primary'
+                              : 'text-foreground hover:bg-muted',
+                          )}
+                        >
+                          {b.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRemoveBaseAssignment}
+                  data-testid="remove-base-assignment-btn"
+                  className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+                  title="Remove assignment"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
             ) : (
-              <span className="text-sm text-warning font-medium">
-                Not assigned to any base
-              </span>
+              <div className="relative" ref={!assignedBase ? baseDropdownRef : undefined}>
+                <button
+                  type="button"
+                  onClick={() => setShowBaseDropdown((v) => !v)}
+                  disabled={bases.length === 0}
+                  data-testid="assign-to-base-btn"
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Assign to base
+                  <ChevronDown className="h-3 w-3" />
+                </button>
+                {showBaseDropdown && bases.length > 0 && (
+                  <div className="absolute left-0 top-full mt-1 z-50 w-56 max-h-60 overflow-y-auto rounded-md border border-border bg-popover shadow-lg">
+                    {bases.map((b) => (
+                      <button
+                        key={b.id}
+                        onClick={() => handleAssignToBase(b.id)}
+                        data-testid={`assign-base-option-${b.id}`}
+                        className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors cursor-pointer"
+                      >
+                        {b.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
@@ -383,14 +473,13 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
           Post-completion
         </h3>
-        <Textarea
-          rows={2}
-          value={localCompletionContent}
-          onChange={(e) => setLocalCompletionContent(e.target.value)}
-          placeholder="What teams see after completing this challenge..."
-          data-testid="completion-content"
-          className="text-sm resize-none"
-        />
+        <div data-testid="completion-content">
+          <RichTextEditor
+            content={localCompletionContent}
+            onChange={setLocalCompletionContent}
+            placeholder="What teams see after completing this challenge..."
+          />
+        </div>
       </section>
 
       {/* Save button */}

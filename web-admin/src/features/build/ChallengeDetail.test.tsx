@@ -200,7 +200,7 @@ describe('ChallengeDetail', () => {
     expect(useWorkspaceStore.getState().selectedBaseId).toBe('base-1')
   })
 
-  it('shows "Not assigned to any base" when unassigned', async () => {
+  it('shows "Assign to base" button when unassigned', async () => {
     server.use(
       http.get('/api/games/:gameId/assignments', () => {
         return HttpResponse.json([])
@@ -214,7 +214,7 @@ describe('ChallengeDetail', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText('Not assigned to any base'),
+        screen.getByText('Assign to base'),
       ).toBeInTheDocument()
     })
   })
