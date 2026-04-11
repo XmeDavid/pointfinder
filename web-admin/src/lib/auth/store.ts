@@ -84,6 +84,12 @@ export const useAuthStore = create<AuthState>()(
       handleAuthFailure: () => {
         // Only trigger if we think we're authenticated (avoid loops)
         if (get().isAuthenticated) {
+          // Disconnect WebSocket before clearing state to prevent the STOMP
+          // client from entering a reconnect loop with no valid token.
+          // Lazy import to avoid circular dependency (store → websocket → client → store).
+          import("@/lib/api/websocket").then(({ disconnectWebSocket }) => {
+            disconnectWebSocket();
+          });
           set({
             user: null,
             accessToken: null,
@@ -126,7 +132,11 @@ if (typeof window !== 'undefined') {
       try {
         const { state } = JSON.parse(e.newValue);
         if (state?.refreshToken) {
-          useAuthStore.setState({ refreshToken: state.refreshToken, user: state.user });
+          useAuthStore.setState({
+            refreshToken: state.refreshToken,
+            user: state.user,
+            isAuthenticated: true,
+          });
         } else if (!state?.isAuthenticated) {
           useAuthStore.getState().handleAuthFailure();
         }

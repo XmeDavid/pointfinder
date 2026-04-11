@@ -106,9 +106,25 @@ export function connectWebSocket(
     },
     onStompError: (frame) => {
       const raw = frame.headers["message"] || "WebSocket connection error";
-      console.error("STOMP error:", raw);
-      // Clear potentially expired token so next reconnect triggers a refresh
-      useAuthStore.getState().clearAccessToken();
+      const errorCode = frame.headers["error-code"];
+      console.error("STOMP error:", raw, errorCode ? `(${errorCode})` : "");
+
+      if (errorCode === "WS_ACCESS_DENIED") {
+        // Auth failure — attempt one refresh. If that also fails, the session
+        // is fully expired: trigger logout and stop reconnecting.
+        getValidAccessToken().then((token) => {
+          if (!token) {
+            useAuthStore.getState().handleAuthFailure();
+            client.deactivate();
+          }
+          // If token obtained, STOMP.js auto-reconnect will pick it up via
+          // beforeConnect → tokenProvider / getValidAccessToken.
+        });
+      } else {
+        // Non-auth error (e.g. broker restart) — clear token so next
+        // reconnect triggers a proactive refresh, but don't logout.
+        useAuthStore.getState().clearAccessToken();
+      }
       onError?.(i18n.t("errors.liveUpdatesRetrying"));
     },
     onWebSocketError: () => {

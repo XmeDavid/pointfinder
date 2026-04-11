@@ -2,7 +2,6 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { connectWebSocket, disconnectWebSocket } from '@/lib/api/websocket'
 import { getValidAccessToken } from '@/lib/api/client'
-import { useAuthStore } from '@/hooks/useAuth'
 
 /**
  * Main game WebSocket subscription hook.
@@ -134,9 +133,10 @@ export function useGameStream(gameId: string | undefined): string | null {
   }, [queryClient])
 
   const tokenProvider = useCallback(async (): Promise<string | null> => {
-    // Force-clear the in-memory access token so getValidAccessToken() triggers
-    // a refresh via the refresh token (mirrors iOS tokenProvider pattern).
-    useAuthStore.getState().clearAccessToken()
+    // getValidAccessToken() already checks JWT expiry and refreshes
+    // proactively when the token is within 60s of expiry. No need to
+    // force-clear — that was causing unnecessary token rotations and
+    // race conditions with concurrent HTTP refreshes.
     return getValidAccessToken()
   }, [])
 

@@ -43,12 +43,44 @@ function refreshAccessToken(): Promise<string> {
       }
       useAuthStore.getState().setTokens(newAccessToken, newRefreshToken, user);
       return newAccessToken as string;
+    } catch (err) {
+      // Distinguish permanent auth failures from transient errors.
+      // 401/403 = refresh token is invalid/expired → unrecoverable.
+      // Network errors / 5xx = transient → let callers decide whether to retry.
+      const status = axios.isAxiosError(err) ? err.response?.status : undefined;
+      if (status === 401 || status === 403) {
+        throw new PermanentAuthError("Refresh token rejected");
+      }
+      throw err;
     } finally {
       refreshPromise = null;
     }
   })();
 
   return refreshPromise;
+}
+
+/** Sentinel error for unrecoverable auth failures (expired/revoked refresh token). */
+class PermanentAuthError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PermanentAuthError";
+  }
+}
+
+/**
+ * Check whether a JWT is expired or within a safety margin of expiry.
+ * Decodes the payload (no signature verification needed — the server
+ * validates on receipt) and compares `exp` against the current time.
+ */
+function isTokenExpiringSoon(token: string, marginSeconds = 60): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    if (typeof payload.exp !== "number") return true; // no exp → treat as expired
+    return payload.exp - marginSeconds <= Date.now() / 1000;
+  } catch {
+    return true; // malformed → treat as expired
+  }
 }
 
 /**
@@ -62,8 +94,8 @@ function refreshAccessToken(): Promise<string> {
 export async function getValidAccessToken(): Promise<string | null> {
   const { accessToken, refreshToken, isAuthenticated } = useAuthStore.getState();
 
-  // Happy path: token already available in memory
-  if (accessToken) return accessToken;
+  // Happy path: token available in memory and not near expiry
+  if (accessToken && !isTokenExpiringSoon(accessToken)) return accessToken;
 
   // Nothing to refresh with
   if (!isAuthenticated || !refreshToken) return null;
@@ -76,11 +108,10 @@ export async function getValidAccessToken(): Promise<string | null> {
 }
 
 function forceLogout() {
+  // handleAuthFailure() sets isAuthenticated=false, which AuthGuard observes
+  // via Zustand subscription and declaratively renders <Navigate to="/login" />.
+  // No hard window.location.href needed — SPA transition preserves app state.
   useAuthStore.getState().handleAuthFailure();
-  // Small delay to let state propagate before redirect
-  setTimeout(() => {
-    window.location.href = "/login";
-  }, 50);
 }
 
 // ---------------------------------------------------------------------------
@@ -122,8 +153,12 @@ apiClient.interceptors.response.use(
         const newToken = await refreshAccessToken();
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return apiClient(originalRequest);
-      } catch {
-        forceLogout();
+      } catch (refreshErr) {
+        // Only force logout on permanent auth failure (expired/revoked refresh token).
+        // Transient errors (network, 5xx) propagate to let the caller handle/retry.
+        if (refreshErr instanceof PermanentAuthError) {
+          forceLogout();
+        }
         return Promise.reject(error);
       }
     }

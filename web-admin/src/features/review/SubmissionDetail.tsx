@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSubmissions } from '@/hooks/queries/useSubmissions'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { useChallenges } from '@/hooks/queries/useChallenges'
@@ -13,6 +14,7 @@ interface SubmissionDetailProps {
 }
 
 export default function SubmissionDetail({ submissionId, gameId }: SubmissionDetailProps) {
+  const { t } = useTranslation()
   const { data: submissions = [] } = useSubmissions(gameId)
   const { data: teams = [] } = useTeams(gameId)
   const { data: challenges = [] } = useChallenges(gameId)
@@ -153,7 +155,7 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
                     <div className="h-56 relative">
                       <img
                         src={url}
-                        alt={`Submission file ${idx + 1}`}
+                        alt={t('submissions.altFile', { index: idx + 1 })}
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = 'none'
@@ -161,7 +163,7 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
                       <div className="absolute bottom-3 left-3 text-xs text-text-secondary">
-                        Photo submission{urls.length > 1 ? ` (${idx + 1}/${urls.length})` : ''}
+                        {urls.length > 1 ? t('submissions.photoSubmissionCount', { current: idx + 1, total: urls.length }) : t('submissions.photoSubmission')}
                       </div>
                     </div>
                   </div>

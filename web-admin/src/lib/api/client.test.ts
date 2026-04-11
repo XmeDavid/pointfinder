@@ -49,13 +49,64 @@ describe("getValidAccessToken", () => {
     });
   });
 
-  it("returns access token when already present in store", async () => {
-    useAuthStore.getState().setTokens("existing-token", "refresh-tok", mockUser);
+  /** Helper: build a minimal JWT with a given exp timestamp */
+  function makeJwt(exp: number): string {
+    const header = btoa(JSON.stringify({ alg: "HS256" }));
+    const payload = btoa(JSON.stringify({ sub: "1", exp }));
+    return `${header}.${payload}.sig`;
+  }
+
+  it("returns access token when present and not near expiry", async () => {
+    const futureToken = makeJwt(Date.now() / 1000 + 600); // 10 min left
+    useAuthStore.getState().setTokens(futureToken, "refresh-tok", mockUser);
 
     const token = await getValidAccessToken();
-    expect(token).toBe("existing-token");
+    expect(token).toBe(futureToken);
     // Should not call refresh endpoint
     expect(axios.post).not.toHaveBeenCalled();
+  });
+
+  it("proactively refreshes when token is within 60s of expiry", async () => {
+    const soonToken = makeJwt(Date.now() / 1000 + 30); // 30s left — within margin
+    useAuthStore.setState({
+      accessToken: soonToken,
+      refreshToken: "valid-refresh",
+      isAuthenticated: true,
+      user: mockUser,
+    });
+
+    (axios.post as Mock).mockResolvedValueOnce({
+      data: {
+        accessToken: "fresh-token",
+        refreshToken: "fresh-refresh",
+        user: mockUser,
+      },
+    });
+
+    const token = await getValidAccessToken();
+    expect(token).toBe("fresh-token");
+    expect(axios.post).toHaveBeenCalledTimes(1);
+  });
+
+  it("treats malformed tokens as expired and refreshes", async () => {
+    useAuthStore.setState({
+      accessToken: "not-a-jwt",
+      refreshToken: "valid-refresh",
+      isAuthenticated: true,
+      user: mockUser,
+    });
+
+    (axios.post as Mock).mockResolvedValueOnce({
+      data: {
+        accessToken: "new-token",
+        refreshToken: "new-refresh",
+        user: mockUser,
+      },
+    });
+
+    const token = await getValidAccessToken();
+    expect(token).toBe("new-token");
+    expect(axios.post).toHaveBeenCalledTimes(1);
   });
 
   it("returns null when not authenticated and no refresh token", async () => {
