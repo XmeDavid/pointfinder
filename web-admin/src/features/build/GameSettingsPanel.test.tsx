@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement, type ReactNode } from 'react'
+import { MemoryRouter } from 'react-router-dom'
 import { http, HttpResponse } from 'msw'
 import { server } from '@/test/msw/server'
 import { createMockGame } from '@/test/factories/game'
@@ -16,7 +17,11 @@ function createWrapper() {
     },
   })
   return function Wrapper({ children }: { children: ReactNode }) {
-    return createElement(QueryClientProvider, { client: queryClient }, children)
+    return createElement(
+      MemoryRouter,
+      null,
+      createElement(QueryClientProvider, { client: queryClient }, children),
+    )
   }
 }
 
@@ -206,7 +211,7 @@ describe('GameSettingsPanel', () => {
     expect(screen.getByText('Operators panel coming soon')).toBeInTheDocument()
   })
 
-  it('renders danger zone with reset and delete buttons', async () => {
+  it('renders danger zone with delete button', async () => {
     useWorkspaceStore.getState().toggleSettingsPanel()
 
     server.use(
@@ -220,25 +225,43 @@ describe('GameSettingsPanel', () => {
     })
 
     await waitFor(() => {
-      expect(screen.getByTestId('reset-progress-btn')).toBeInTheDocument()
+      expect(screen.getByTestId('delete-game-btn')).toBeInTheDocument()
     })
 
-    expect(screen.getByTestId('delete-game-btn')).toBeInTheDocument()
-    expect(screen.getByTestId('delete-game-btn')).toBeDisabled()
+    expect(screen.getByTestId('delete-game-btn')).not.toBeDisabled()
   })
 
-  it('calls updateGameStatus with reset on Reset Progress click', async () => {
+  it('shows game state section with revert options for live game', async () => {
+    useWorkspaceStore.getState().toggleSettingsPanel()
+
+    server.use(
+      http.get('/api/games/:id', () =>
+        HttpResponse.json(createMockGame({ id: 'game-1', status: 'live' })),
+      ),
+    )
+
+    render(createElement(GameSettingsPanel, { gameId: 'game-1' }), {
+      wrapper: createWrapper(),
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText('Game State')).toBeInTheDocument()
+    })
+
+    expect(screen.getByTestId('revert-to-setup-btn')).toBeInTheDocument()
+    expect(screen.queryByTestId('revert-to-live-btn')).not.toBeInTheDocument()
+  })
+
+  it('reverts to setup with erase progress', async () => {
     const user = userEvent.setup()
     useWorkspaceStore.getState().toggleSettingsPanel()
-    let statusCalled = false
     let statusBody: Record<string, unknown> = {}
 
     server.use(
       http.get('/api/games/:id', () =>
-        HttpResponse.json(createMockGame({ id: 'game-1' })),
+        HttpResponse.json(createMockGame({ id: 'game-1', status: 'live' })),
       ),
       http.patch('/api/games/:id/status', async ({ request }) => {
-        statusCalled = true
         statusBody = (await request.json()) as Record<string, unknown>
         return HttpResponse.json(
           createMockGame({ id: 'game-1', status: 'setup' }),
@@ -251,16 +274,22 @@ describe('GameSettingsPanel', () => {
     })
 
     await waitFor(() => {
-      expect(screen.getByTestId('reset-progress-btn')).toBeInTheDocument()
+      expect(screen.getByTestId('revert-to-setup-btn')).toBeInTheDocument()
     })
 
-    await user.click(screen.getByTestId('reset-progress-btn'))
+    await user.click(screen.getByTestId('revert-to-setup-btn'))
 
     await waitFor(() => {
-      expect(statusCalled).toBe(true)
+      expect(screen.getByTestId('progress-erase-btn')).toBeInTheDocument()
     })
 
-    expect(statusBody.status).toBe('setup')
+    await user.click(screen.getByTestId('progress-erase-btn'))
+    await user.click(screen.getByTestId('confirm-state-change-btn'))
+
+    await waitFor(() => {
+      expect(statusBody.status).toBe('setup')
+    })
+
     expect(statusBody.resetProgress).toBe(true)
   })
 
