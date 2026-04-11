@@ -240,14 +240,14 @@ export async function loginAsOperator(page: Page) {
 
   // Attempt form login
   await page.goto('/login');
-  await page.getByRole('textbox', { name: /email/i }).fill(config.operatorEmail);
-  await page.getByRole('textbox', { name: /password/i }).fill(config.operatorPassword);
+  await page.getByTestId('login-email').fill(config.operatorEmail);
+  await page.getByTestId('login-password').fill(config.operatorPassword);
 
   const loginResponsePromise = page.waitForResponse(
     (resp) => resp.url().includes('/auth/login'),
   );
 
-  await page.getByRole('button', { name: /sign in/i }).click();
+  await page.getByTestId('login-submit').click();
 
   let loggedIn = false;
 
