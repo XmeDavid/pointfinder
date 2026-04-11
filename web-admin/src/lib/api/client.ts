@@ -89,7 +89,9 @@ function isTokenExpiringSoon(token: string, marginSeconds = 60): boolean {
  * request will be in-flight at a time.
  *
  * @returns The current (or freshly obtained) access token, or `null` if
- *          the user is not authenticated / refresh failed.
+ *          the user is not authenticated.
+ * @throws  On transient refresh failures (network, 5xx) so callers can retry.
+ *          Permanent auth failures (401/403) return `null` after clearing state.
  */
 export async function getValidAccessToken(): Promise<string | null> {
   const { accessToken, refreshToken, isAuthenticated } = useAuthStore.getState();
@@ -102,8 +104,11 @@ export async function getValidAccessToken(): Promise<string | null> {
 
   try {
     return await refreshAccessToken();
-  } catch {
-    return null;
+  } catch (err) {
+    // Permanent auth failure (expired/revoked refresh token) → not recoverable
+    if (err instanceof PermanentAuthError) return null;
+    // Transient failure (network, timeout, 5xx) → propagate so callers can retry
+    throw err;
   }
 }
 
@@ -119,13 +124,18 @@ function forceLogout() {
 // ---------------------------------------------------------------------------
 
 apiClient.interceptors.request.use(async (config) => {
-  const token = await getValidAccessToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  } else if (useAuthStore.getState().isAuthenticated) {
-    // We think we're authenticated but couldn't get a token.
-    // Fail early instead of sending unauthenticated → 401 → double refresh.
-    return Promise.reject(new Error('Token refresh failed'));
+  try {
+    const token = await getValidAccessToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    // If token is null and we're authenticated, the refresh token is
+    // permanently invalid → let the request go through unauthenticated.
+    // The 401 response interceptor will handle cleanup.
+  } catch {
+    // Transient refresh failure (network, timeout). Let the request go
+    // through — it will likely 401, and the response interceptor will
+    // retry with a fresh refresh attempt.
   }
   return config;
 });

@@ -113,13 +113,18 @@ export const useAuthStore = create<AuthState>()(
         if (state) {
           // Validate: if isAuthenticated but refresh token is missing, reset
           if (state.isAuthenticated && !state.refreshToken) {
-            state.isAuthenticated = false;
-            state.user = null;
-            state.accessToken = null;
-            state.refreshToken = null;
+            useAuthStore.setState({
+              isAuthenticated: false,
+              user: null,
+              accessToken: null,
+              refreshToken: null,
+              hasHydrated: true,
+            });
+            return;
           }
-          state.hasHydrated = true;
         }
+        // Use setState() instead of direct mutation to properly notify subscribers
+        useAuthStore.setState({ hasHydrated: true });
       },
     }
   )

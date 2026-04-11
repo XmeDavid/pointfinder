@@ -157,7 +157,7 @@ describe("getValidAccessToken", () => {
     expect(state.refreshToken).toBe("new-refresh-token");
   });
 
-  it("returns null when refresh fails", async () => {
+  it("returns null when refresh token is permanently rejected (401)", async () => {
     useAuthStore.setState({
       accessToken: null,
       refreshToken: "expired-refresh",
@@ -165,10 +165,28 @@ describe("getValidAccessToken", () => {
       user: mockUser,
     });
 
-    (axios.post as Mock).mockRejectedValueOnce(new Error("Refresh failed"));
+    // Simulate an Axios 401 error — axios.isAxiosError checks this flag
+    const axiosError = Object.assign(new Error("Request failed"), {
+      isAxiosError: true,
+      response: { status: 401 },
+    });
+    (axios.post as Mock).mockRejectedValueOnce(axiosError);
 
     const token = await getValidAccessToken();
     expect(token).toBeNull();
+  });
+
+  it("throws on transient refresh failure so callers can retry", async () => {
+    useAuthStore.setState({
+      accessToken: null,
+      refreshToken: "valid-refresh",
+      isAuthenticated: true,
+      user: mockUser,
+    });
+
+    (axios.post as Mock).mockRejectedValueOnce(new Error("Network error"));
+
+    await expect(getValidAccessToken()).rejects.toThrow("Network error");
   });
 
   it("deduplicates concurrent refresh calls", async () => {
@@ -257,11 +275,10 @@ describe("getValidAccessToken", () => {
       user: mockUser,
     });
 
-    // First refresh fails
+    // First refresh fails (transient — throws)
     (axios.post as Mock).mockRejectedValueOnce(new Error("Network error"));
 
-    const token1 = await getValidAccessToken();
-    expect(token1).toBeNull();
+    await expect(getValidAccessToken()).rejects.toThrow("Network error");
 
     // Second attempt should try again (not reuse the failed promise)
     (axios.post as Mock).mockResolvedValueOnce({
