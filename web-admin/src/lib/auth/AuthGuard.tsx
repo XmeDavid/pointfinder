@@ -66,12 +66,20 @@ export function AuthGuard({ children }: { children?: React.ReactNode }) {
         <p className="text-sm text-muted-foreground">
           Connection error. Check your network and try again.
         </p>
-        <button
-          onClick={() => refetch()}
-          className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium cursor-pointer hover:bg-primary/90 transition-colors"
-        >
-          Retry
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => refetch()}
+            className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium cursor-pointer hover:bg-primary/90 transition-colors"
+          >
+            Retry
+          </button>
+          <button
+            onClick={() => handleAuthFailure()}
+            className="px-4 py-2 rounded-lg border border-border text-sm text-muted-foreground font-medium cursor-pointer hover:bg-muted transition-colors"
+          >
+            Log out
+          </button>
+        </div>
       </div>
     );
   }
