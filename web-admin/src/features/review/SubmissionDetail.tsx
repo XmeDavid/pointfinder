@@ -123,11 +123,13 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
     submission?.points ?? challenge?.points ?? 0,
   )
   const [feedback, setFeedback] = useState(submission?.feedback ?? '')
+  const [overriding, setOverriding] = useState(false)
 
   // Reset local state when submission changes
   useEffect(() => {
     setPoints(submission?.points ?? challenge?.points ?? 0)
     setFeedback(submission?.feedback ?? '')
+    setOverriding(false)
   }, [submissionId, submission?.points, challenge?.points, submission?.feedback])
 
   if (!submission) {
@@ -139,6 +141,7 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
   }
 
   const isPending = submission.status === 'pending'
+  const showActions = isPending || overriding
 
   const advanceToNext = () => {
     const pendingSubs = submissions
@@ -153,14 +156,30 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
   const handleApprove = () => {
     reviewMutation.mutate(
       { submissionId, status: 'approved', feedback: feedback || undefined, points },
-      { onSuccess: advanceToNext },
+      {
+        onSuccess: () => {
+          if (overriding) {
+            setOverriding(false)
+          } else {
+            advanceToNext()
+          }
+        },
+      },
     )
   }
 
   const handleReject = () => {
     reviewMutation.mutate(
       { submissionId, status: 'rejected', feedback: feedback || undefined },
-      { onSuccess: advanceToNext },
+      {
+        onSuccess: () => {
+          if (overriding) {
+            setOverriding(false)
+          } else {
+            advanceToNext()
+          }
+        },
+      },
     )
   }
 
@@ -267,39 +286,6 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
           )}
         </div>
 
-        {/* Points section */}
-        {isPending && (
-          <div>
-            <label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">
-              Points
-            </label>
-            <input
-              type="number"
-              value={points}
-              onChange={(e) => setPoints(Number(e.target.value))}
-              data-testid="points-input"
-              className="w-24 px-2 py-1.5 bg-muted border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-ring"
-            />
-          </div>
-        )}
-
-        {/* Feedback section */}
-        {isPending && (
-          <div>
-            <label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">
-              Feedback
-            </label>
-            <textarea
-              value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
-              placeholder="Optional feedback for the team..."
-              rows={2}
-              data-testid="feedback-input"
-              className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-ring resize-none"
-            />
-          </div>
-        )}
-
         {/* Reviewed state info */}
         {!isPending && (
           <div className="space-y-2" data-testid="reviewed-state">
@@ -319,18 +305,60 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
                 submission.points != null && (
                   <span className="text-muted-foreground">{submission.points} pts</span>
                 )}
+              {!overriding && (
+                <button
+                  onClick={() => setOverriding(true)}
+                  data-testid="override-btn"
+                  className="ml-auto px-2 py-0.5 text-[10px] font-medium rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                >
+                  Override
+                </button>
+              )}
             </div>
-            {submission.feedback && (
+            {submission.feedback && !overriding && (
               <div className="px-3 py-2 bg-muted/30 border border-border rounded-lg text-xs text-muted-foreground italic">
                 {submission.feedback}
               </div>
             )}
           </div>
         )}
+
+        {/* Points section */}
+        {showActions && (
+          <div>
+            <label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">
+              Points
+            </label>
+            <input
+              type="number"
+              value={points}
+              onChange={(e) => setPoints(Number(e.target.value))}
+              data-testid="points-input"
+              className="w-24 px-2 py-1.5 bg-muted border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-ring"
+            />
+          </div>
+        )}
+
+        {/* Feedback section */}
+        {showActions && (
+          <div>
+            <label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">
+              Feedback
+            </label>
+            <textarea
+              value={feedback}
+              onChange={(e) => setFeedback(e.target.value)}
+              placeholder="Optional feedback for the team..."
+              rows={2}
+              data-testid="feedback-input"
+              className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-ring resize-none"
+            />
+          </div>
+        )}
       </div>
 
-      {/* Action bar -- only for pending */}
-      {isPending && (
+      {/* Action bar */}
+      {showActions && (
         <div className="sticky bottom-0 px-4 py-3 border-t border-border bg-card/80 backdrop-blur-sm flex items-center gap-3">
           <button
             onClick={handleReject}
