@@ -29,8 +29,11 @@ function AuthMedia({ url, alt }: { url: string; alt: string }) {
     setBlobUrl(null)
     setError(false)
 
+    // Backend stores URLs like "/api/games/{id}/files/name.jpg" but
+    // apiClient already has baseURL="/api", so strip the prefix.
+    const apiPath = url.startsWith('/api') ? url.slice(4) : url
     apiClient
-      .get(url, { responseType: 'blob' })
+      .get(apiPath, { responseType: 'blob' })
       .then(({ data }) => {
         if (cancelled) return
         const objUrl = URL.createObjectURL(data)

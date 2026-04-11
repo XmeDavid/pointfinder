@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react'
+import { FileText, Image, Video } from 'lucide-react'
 import { useSubmissions } from '@/hooks/queries/useSubmissions'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { useChallenges } from '@/hooks/queries/useChallenges'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { relativeTime } from '@/lib/utils/dates'
-import type { SubmissionStatus } from '@/types'
+import type { Submission, SubmissionStatus } from '@/types'
 
 type FilterOption = 'pending' | 'all' | 'approved' | 'rejected'
 
@@ -41,6 +42,25 @@ function statusBorderClass(status: SubmissionStatus): string {
   }
 }
 
+function SubmissionTypeIcon({ submission }: { submission: Submission }) {
+  const urls = submission.fileUrls?.length
+    ? submission.fileUrls
+    : submission.fileUrl
+      ? [submission.fileUrl]
+      : []
+  const hasVideo = urls.some((u) => /\.(mp4|mov)$/i.test(u))
+  const hasImage = urls.some((u) => /\.(jpg|jpeg|png|webp|heic|heif)$/i.test(u))
+  const hasText = !!submission.answer
+
+  return (
+    <span className="inline-flex items-center gap-1 text-muted-foreground">
+      {hasText && <FileText className="h-3 w-3" />}
+      {hasImage && <Image className="h-3 w-3" />}
+      {hasVideo && <Video className="h-3 w-3" />}
+    </span>
+  )
+}
+
 interface SubmissionListProps {
   gameId: string
 }
@@ -71,7 +91,7 @@ export default function SubmissionList({ gameId }: SubmissionListProps) {
   }, [submissions, filter, teamFilter])
 
   return (
-    <div className="w-full md:w-[280px] border-r border-border flex flex-col">
+    <div className="w-full md:w-[280px] h-full min-h-0 border-r border-border flex flex-col">
       {/* Header */}
       <div className="px-3 py-3 border-b border-border">
         <div className="flex items-center justify-between mb-2">
@@ -155,10 +175,13 @@ export default function SubmissionList({ gameId }: SubmissionListProps) {
                 </span>
               </div>
 
-              {/* Timestamp */}
-              <span className="text-[10px] text-muted-foreground">
-                {relativeTime(sub.submittedAt)}
-              </span>
+              {/* Type + Timestamp */}
+              <div className="flex items-center gap-1.5">
+                <SubmissionTypeIcon submission={sub} />
+                <span className="text-[10px] text-muted-foreground">
+                  {relativeTime(sub.submittedAt)}
+                </span>
+              </div>
             </button>
           )
         })}
