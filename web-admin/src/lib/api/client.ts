@@ -45,10 +45,11 @@ function refreshAccessToken(): Promise<string> {
       return newAccessToken as string;
     } catch (err) {
       // Distinguish permanent auth failures from transient errors.
-      // 401/403 = refresh token is invalid/expired → unrecoverable.
+      // 400/401/403 = refresh token is invalid/expired/rejected → unrecoverable.
+      //   (The backend returns 400 for expired or unknown refresh tokens.)
       // Network errors / 5xx = transient → let callers decide whether to retry.
       const status = axios.isAxiosError(err) ? err.response?.status : undefined;
-      if (status === 401 || status === 403) {
+      if (status === 400 || status === 401 || status === 403) {
         throw new PermanentAuthError("Refresh token rejected");
       }
       throw err;
