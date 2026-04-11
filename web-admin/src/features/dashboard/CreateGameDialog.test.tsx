@@ -65,7 +65,7 @@ describe('CreateGameDialog', () => {
     })
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith(
-        expect.stringMatching(/^\/app\/game\/game-new-/),
+        expect.stringMatching(/^\/game\/game-new-/),
       )
     })
   })
