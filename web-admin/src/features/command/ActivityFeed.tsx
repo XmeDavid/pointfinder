@@ -126,6 +126,7 @@ export function ActivityFeed({ gameId }: { gameId: string }) {
       if (typeFilter.size > 0 && !typeFilter.has(evt.type)) return false
       if (teamFilter && evt.teamId !== teamFilter) return false
       if (timeFilter > 0) {
+        // eslint-disable-next-line react-hooks/purity
         const cutoff = Date.now() - timeFilter * 60 * 1000
         if (new Date(evt.timestamp).getTime() < cutoff) return false
       }

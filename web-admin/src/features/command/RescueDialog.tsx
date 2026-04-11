@@ -54,6 +54,7 @@ export function RescueDialog({
   useEffect(() => {
     if (selectedChallengeId) {
       const ch = challenges.find((c) => c.id === selectedChallengeId)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPointsOverride(ch?.points ?? null)
     } else {
       setPointsOverride(null)

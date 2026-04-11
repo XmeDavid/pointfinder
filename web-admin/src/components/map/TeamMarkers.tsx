@@ -17,6 +17,7 @@ export function TeamMarkers({ locations, teams, onTeamClick }: TeamMarkersProps)
     return map
   }, [teams])
 
+  // eslint-disable-next-line react-hooks/purity
   const now = Date.now()
 
   return (

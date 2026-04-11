@@ -19,7 +19,9 @@ export function useGameStream(gameId: string | undefined): string | null {
   const [connectionError, setConnectionError] = useState<string | null>(null)
   // Guard against stale closure references during reconnect
   const gameIdRef = useRef(gameId)
-  gameIdRef.current = gameId
+  useEffect(() => {
+    gameIdRef.current = gameId
+  })
 
   const handleMessage = useCallback(
     (payload: { type: string; data: unknown }) => {

@@ -1,7 +1,6 @@
 package com.prayer.pointfinder.repository;
 
 import com.prayer.pointfinder.entity.ActivityEvent;
-import com.prayer.pointfinder.entity.ActivityEventType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -127,7 +126,7 @@ public interface ActivityEventRepository extends JpaRepository<ActivityEvent, UU
             "AND (:teamId IS NULL OR ae.team.id = :teamId) " +
             "AND (:playerId IS NULL OR ae.actorPlayer.id = :playerId) " +
             "AND (:operatorId IS NULL OR ae.actorOperatorUser.id = :operatorId) " +
-            "AND ae.type IN :types " +
+            "AND CAST(ae.type AS string) IN :typeNames " +
             "AND (:sourceSurface IS NULL OR ae.sourceSurface = :sourceSurface) " +
             "ORDER BY ae.timestamp ASC")
     List<ActivityEvent> findForAuditExport(
@@ -137,7 +136,7 @@ public interface ActivityEventRepository extends JpaRepository<ActivityEvent, UU
             @Param("teamId") UUID teamId,
             @Param("playerId") UUID playerId,
             @Param("operatorId") UUID operatorId,
-            @Param("types") Collection<ActivityEventType> types,
+            @Param("typeNames") Collection<String> typeNames,
             @Param("sourceSurface") String sourceSurface,
             @Param("includeArchived") boolean includeArchived);
 }

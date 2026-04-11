@@ -63,7 +63,6 @@ describe('useTeamLocations', () => {
 
     renderHook(() => useTeamLocations('game-1'), { wrapper })
 
-    const queryDefaults = qc.getQueryDefaults(['monitoring', 'locations', 'game-1'])
     // These are set on the query itself, not defaults, so we verify via the observer
     // The key contract is the query key shape - staleTime/refetchInterval are implementation
     // details verified by the fact the query is configured at all

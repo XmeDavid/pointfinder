@@ -75,13 +75,13 @@ export default function ReadinessIndicator({
   gameId: string
   gameStatus?: string
 }) {
-  // Only show in setup mode -- hide when game is live or ended
-  if (gameStatus && gameStatus !== 'setup') return null
-
   const [expanded, setExpanded] = useState(false)
   const checks = useReadinessChecks(gameId)
   const updateStatus = useUpdateGameStatus(gameId)
   const setMode = useWorkspaceStore((s) => s.setMode)
+
+  // Only show in setup mode -- hide when game is live or ended
+  if (gameStatus && gameStatus !== 'setup') return null
 
   const passed = checks.filter((c) => c.passed).length
   const total = checks.length

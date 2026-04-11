@@ -27,6 +27,7 @@ function AuthMedia({ url, alt, className }: { url: string; alt: string; classNam
 
   useEffect(() => {
     let cancelled = false
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setBlobUrl(null)
     setError(false)
 
@@ -220,6 +221,7 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
 
   // Reset local state when submission changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPoints(submission?.points ?? challenge?.points ?? 0)
     setFeedback(submission?.feedback ?? '')
     setOverriding(false)

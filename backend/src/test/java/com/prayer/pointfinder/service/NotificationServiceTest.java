@@ -325,10 +325,10 @@ class NotificationServiceTest {
         assertTrue(ex.getMessage().contains("does not belong"));
     }
 
-    // --- createNotification: null pushPlatform defaults to iOS ---
+    // --- createNotification: null pushPlatform skips push ---
 
     @Test
-    void createNotificationTreatsNullPlatformAsIos() {
+    void createNotificationSkipsPushForNullPlatform() {
         Player nullPlatformPlayer = Player.builder()
                 .id(UUID.randomUUID())
                 .team(team)
@@ -354,10 +354,9 @@ class NotificationServiceTest {
 
         notificationService.createNotification(gameId, request);
 
-        @SuppressWarnings("unchecked")
-        ArgumentCaptor<List<String>> apnsCaptor = ArgumentCaptor.forClass(List.class);
-        verify(apnsPushService).sendPush(apnsCaptor.capture(), eq("Test Game"), eq("Legacy push"), any());
-        assertEquals(List.of("apns-legacy-token"), apnsCaptor.getValue());
+        // Null platform players are excluded from both APNs and FCM push
+        // dispatch — only players with an explicit platform receive push.
+        verify(apnsPushService, never()).sendPush(any(), any(), any(), any());
         verify(fcmPushService, never()).sendPush(any(), any(), any(), any());
     }
 }

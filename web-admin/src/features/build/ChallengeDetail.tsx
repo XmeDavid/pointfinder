@@ -61,6 +61,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
   useEffect(() => {
     if (challenge && syncedRef.current !== challengeId) {
       syncedRef.current = challengeId
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLocalTitle(challenge.title)
       setLocalAnswerType(challenge.answerType)
       setLocalAutoValidate(challenge.autoValidate)

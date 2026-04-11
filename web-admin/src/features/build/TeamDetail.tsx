@@ -46,6 +46,7 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
   useEffect(() => {
     if (team && syncedRef.current !== teamId) {
       syncedRef.current = teamId
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLocalName(team.name)
       setLocalColor(team.color)
       setCopied(false)

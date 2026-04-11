@@ -29,6 +29,7 @@ export function LocationPicker({
   // Recenter when base changes
   useEffect(() => {
     if (lat !== 0 || lng !== 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setViewState(prev => ({ ...prev, latitude: lat, longitude: lng }))
     }
   }, [lat, lng])

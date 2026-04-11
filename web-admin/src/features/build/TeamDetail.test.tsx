@@ -1,18 +1,18 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement, type ReactNode } from 'react'
 import { http, HttpResponse } from 'msw'
 import { server } from '@/test/msw/server'
-import { createMockTeam, resetTeamCounter } from '@/test/factories/team'
+import { resetTeamCounter } from '@/test/factories/team'
 import { createMockAssignment, resetAssignmentCounter } from '@/test/factories/assignment'
 import { createMockBase, resetBaseCounter } from '@/test/factories/base'
 import { createMockChallenge, resetChallengeCounter } from '@/test/factories/challenge'
 import { createMockStage, resetStageCounter } from '@/test/factories/stage'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { TeamDetail } from './TeamDetail'
-import type { Player } from '@/types/v2'
+
 
 function createWrapper() {
   const queryClient = new QueryClient({

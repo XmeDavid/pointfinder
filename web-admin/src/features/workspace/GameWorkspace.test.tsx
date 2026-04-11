@@ -8,19 +8,19 @@ import { useWorkspaceStore } from '@/stores/workspace'
 
 // Mock react-map-gl/maplibre (WebGL not available in jsdom)
 vi.mock('react-map-gl/maplibre', () => ({
-  default: ({ children }: any) => (
+  default: ({ children }: { children?: React.ReactNode }) => (
     <div data-testid="map-container">{children}</div>
   ),
-  Marker: ({ children }: any) => <div data-testid="marker">{children}</div>,
+  Marker: ({ children }: { children?: React.ReactNode }) => <div data-testid="marker">{children}</div>,
   NavigationControl: () => null,
 }))
 
 // Mock motion/react to avoid animation complexity in tests
 vi.mock('motion/react', () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+    div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement> & { children?: React.ReactNode }) => <div {...props}>{children}</div>,
   },
-  AnimatePresence: ({ children }: any) => <>{children}</>,
+  AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
 }))
 
 function createWrapper() {

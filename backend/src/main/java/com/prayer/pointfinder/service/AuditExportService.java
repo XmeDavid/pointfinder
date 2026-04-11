@@ -141,6 +141,14 @@ public class AuditExportService {
         if (types == null || types.isEmpty()) {
             types = EnumSet.allOf(ActivityEventType.class);
         }
+        // Convert enum values to their string names for the JPQL query.
+        // Hibernate 6.6+ has issues binding Java enum collections to
+        // PostgreSQL custom enum type columns in IN clauses — the generated
+        // SQL uses incompatible CAST expressions. Passing string names with
+        // CAST(ae.type AS string) on the JPQL side sidesteps the mismatch.
+        List<String> typeNames = types.stream()
+                .map(Enum::name)
+                .toList();
         boolean includeArchived = Boolean.TRUE.equals(query.includeArchived());
 
         // SQL pushdown — everything filterable on the activity_events row
@@ -153,7 +161,7 @@ public class AuditExportService {
                 query.teamId(),
                 query.playerId(),
                 query.operatorId(),
-                types,
+                typeNames,
                 query.sourceSurface(),
                 includeArchived);
 

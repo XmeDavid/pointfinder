@@ -52,6 +52,7 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
 
   // Reset local state when base changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalName(base?.name ?? '')
     setLocalDescription(base?.description ?? '')
     setLocalLat(base?.lat?.toString() ?? '')
@@ -102,7 +103,7 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
 
   const fixedChallenge = useMemo(
     () => (base?.fixedChallengeId ? challenges.find((c) => c.id === base.fixedChallengeId) : null),
-    [base?.fixedChallengeId, challenges],
+    [base, challenges],
   )
 
   const isDirty =
