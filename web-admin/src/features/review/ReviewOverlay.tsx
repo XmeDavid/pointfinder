@@ -20,15 +20,18 @@ export default function ReviewOverlay({ gameId }: ReviewOverlayProps) {
   const selectSubmission = useWorkspaceStore((s) => s.selectSubmission)
   const isMobile = useIsMobile()
 
-  // Pending submissions sorted newest-first (same order as SubmissionList default)
-  const pendingSubmissions = useMemo(() => {
-    return [...submissions]
-      .filter((s) => s.status === 'pending')
-      .sort(
-        (a, b) =>
-          new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime(),
-      )
+  // All submissions sorted newest-first (same order as SubmissionList default)
+  const sortedSubmissions = useMemo(() => {
+    return [...submissions].sort(
+      (a, b) =>
+        new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime(),
+    )
   }, [submissions])
+
+  // Pending subset for auto-select and advance-after-review
+  const pendingSubmissions = useMemo(() => {
+    return sortedSubmissions.filter((s) => s.status === 'pending')
+  }, [sortedSubmissions])
 
   // Auto-select first pending submission once when data arrives.
   // Uses a ref so that review-driven deselection (advance to null) does not
@@ -89,8 +92,8 @@ export default function ReviewOverlay({ gameId }: ReviewOverlayProps) {
 
   const handleNavigate = useCallback(
     (direction: 'up' | 'down') => {
-      if (pendingSubmissions.length === 0) return
-      const currentIndex = pendingSubmissions.findIndex(
+      if (sortedSubmissions.length === 0) return
+      const currentIndex = sortedSubmissions.findIndex(
         (s) => s.id === selectedSubmissionId,
       )
       let nextIndex: number
@@ -100,26 +103,26 @@ export default function ReviewOverlay({ gameId }: ReviewOverlayProps) {
         nextIndex = Math.max(0, currentIndex - 1)
       } else {
         nextIndex = Math.min(
-          pendingSubmissions.length - 1,
+          sortedSubmissions.length - 1,
           currentIndex + 1,
         )
       }
-      selectSubmission(pendingSubmissions[nextIndex].id)
+      selectSubmission(sortedSubmissions[nextIndex].id)
     },
-    [pendingSubmissions, selectedSubmissionId, selectSubmission],
+    [sortedSubmissions, selectedSubmissionId, selectSubmission],
   )
 
   const handleSkip = useCallback(() => {
-    if (pendingSubmissions.length === 0) return
-    const currentIndex = pendingSubmissions.findIndex(
+    if (sortedSubmissions.length === 0) return
+    const currentIndex = sortedSubmissions.findIndex(
       (s) => s.id === selectedSubmissionId,
     )
     const nextIndex =
-      currentIndex >= 0 && currentIndex < pendingSubmissions.length - 1
+      currentIndex >= 0 && currentIndex < sortedSubmissions.length - 1
         ? currentIndex + 1
         : 0
-    selectSubmission(pendingSubmissions[nextIndex].id)
-  }, [pendingSubmissions, selectedSubmissionId, selectSubmission])
+    selectSubmission(sortedSubmissions[nextIndex].id)
+  }, [sortedSubmissions, selectedSubmissionId, selectSubmission])
 
   // Keyboard shortcuts
   useEffect(() => {

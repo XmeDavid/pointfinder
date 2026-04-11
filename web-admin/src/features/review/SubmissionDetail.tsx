@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useSubmissions } from '@/hooks/queries/useSubmissions'
 import { useTeams } from '@/hooks/queries/useTeams'
@@ -19,7 +20,7 @@ function isVideoUrl(url: string): boolean {
   return /\.(mp4|mov)$/i.test(url)
 }
 
-function AuthMedia({ url, alt }: { url: string; alt: string }) {
+function AuthMedia({ url, alt, className }: { url: string; alt: string; className?: string }) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null)
   const [error, setError] = useState(false)
   const blobRef = useRef<string | null>(null)
@@ -74,7 +75,7 @@ function AuthMedia({ url, alt }: { url: string; alt: string }) {
       <video
         src={blobUrl}
         controls
-        className="w-full rounded-lg"
+        className={className ?? "w-full rounded-lg"}
         data-testid="submission-video"
       />
     )
@@ -84,9 +85,96 @@ function AuthMedia({ url, alt }: { url: string; alt: string }) {
     <img
       src={blobUrl}
       alt={alt}
-      className="w-full h-full object-cover"
+      className={className ?? "w-full h-full object-cover"}
       data-testid="submission-image"
     />
+  )
+}
+
+// ---------------------------------------------------------------------------
+// MediaLightbox — full-screen carousel for images/videos
+// ---------------------------------------------------------------------------
+
+function MediaLightbox({
+  urls,
+  initialIndex,
+  onClose,
+}: {
+  urls: string[]
+  initialIndex: number
+  onClose: () => void
+}) {
+  const { t } = useTranslation()
+  const [index, setIndex] = useState(initialIndex)
+
+  const goPrev = useCallback(() => setIndex((i) => Math.max(0, i - 1)), [])
+  const goNext = useCallback(() => setIndex((i) => Math.min(urls.length - 1, i + 1)), [urls.length])
+
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+      else if (e.key === 'ArrowLeft') goPrev()
+      else if (e.key === 'ArrowRight') goNext()
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [onClose, goPrev, goNext])
+
+  const url = urls[index]
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center"
+      onClick={onClose}
+      data-testid="media-lightbox"
+    >
+      {/* Close button */}
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer z-10"
+      >
+        <X className="h-5 w-5" />
+      </button>
+
+      {/* Counter */}
+      {urls.length > 1 && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 text-white/70 text-sm">
+          {index + 1} / {urls.length}
+        </div>
+      )}
+
+      {/* Prev button */}
+      {index > 0 && (
+        <button
+          onClick={(e) => { e.stopPropagation(); goPrev() }}
+          className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+        >
+          <ChevronLeft className="h-6 w-6" />
+        </button>
+      )}
+
+      {/* Next button */}
+      {index < urls.length - 1 && (
+        <button
+          onClick={(e) => { e.stopPropagation(); goNext() }}
+          className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+        >
+          <ChevronRight className="h-6 w-6" />
+        </button>
+      )}
+
+      {/* Media */}
+      <div
+        className="max-w-[90vw] max-h-[90vh] flex items-center justify-center"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <AuthMedia
+          url={url}
+          alt={t('submissions.altFile', { index: index + 1 })}
+          className={isVideoUrl(url) ? "max-w-full max-h-[85vh] rounded-lg" : "max-w-full max-h-[85vh] object-contain rounded-lg"}
+        />
+      </div>
+    </div>
   )
 }
 
@@ -124,6 +212,7 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
   )
   const [feedback, setFeedback] = useState(submission?.feedback ?? '')
   const [overriding, setOverriding] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
 
   // Reset local state when submission changes
   useEffect(() => {
@@ -267,7 +356,11 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
                       alt={t('submissions.altFile', { index: idx + 1 })}
                     />
                   ) : (
-                    <div className="h-56 relative">
+                    <button
+                      type="button"
+                      onClick={() => setLightboxIndex(idx)}
+                      className="block w-full h-56 relative cursor-pointer"
+                    >
                       <AuthMedia
                         url={url}
                         alt={t('submissions.altFile', { index: idx + 1 })}
@@ -278,11 +371,20 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
                           ? t('submissions.photoSubmissionCount', { current: idx + 1, total: fileUrls.length })
                           : t('submissions.photoSubmission')}
                       </div>
-                    </div>
+                    </button>
                   )}
                 </div>
               ))}
             </div>
+          )}
+
+          {/* Image lightbox */}
+          {lightboxIndex !== null && (
+            <MediaLightbox
+              urls={fileUrls.filter((u) => !isVideoUrl(u))}
+              initialIndex={lightboxIndex}
+              onClose={() => setLightboxIndex(null)}
+            />
           )}
         </div>
 
