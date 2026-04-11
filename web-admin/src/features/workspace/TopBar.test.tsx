@@ -20,6 +20,11 @@ vi.mock('@/hooks/ui/useElapsedTimer', () => ({
   useElapsedTimer: (startIso: string | null) => (startIso ? '01:23:45' : '00:00:00'),
 }))
 
+// Mock useCreateStage to avoid needing QueryClientProvider
+vi.mock('@/hooks/mutations/useStageMutations', () => ({
+  useCreateStage: () => ({ mutate: vi.fn() }),
+}))
+
 function makeGame(overrides: Partial<Game> = {}): Game {
   return {
     id: 'game-1',

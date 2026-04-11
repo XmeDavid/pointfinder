@@ -17,6 +17,13 @@ vi.mock('@/stores/workspace', () => ({
   useWorkspaceStore: (selector: (s: typeof mockStore) => unknown) => selector(mockStore),
 }))
 
+// Mock LocationPicker to avoid WebGL initialization in jsdom
+vi.mock('@/components/map/LocationPicker', () => ({
+  LocationPicker: ({ lat, lng }: { lat: number; lng: number }) => (
+    <div data-testid="location-picker-mock">{lat}, {lng}</div>
+  ),
+}))
+
 function renderBaseDetail(baseId = 'base-1') {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -99,11 +106,10 @@ describe('BaseDetail', () => {
     })
   })
 
-  it('renders coordinate inputs', async () => {
+  it('renders location picker', async () => {
     renderBaseDetail()
     await waitFor(() => {
-      expect(screen.getByTestId('base-lat-input')).toBeInTheDocument()
-      expect(screen.getByTestId('base-lng-input')).toBeInTheDocument()
+      expect(screen.getByTestId('location-picker-mock')).toBeInTheDocument()
     })
   })
 

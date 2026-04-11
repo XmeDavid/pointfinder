@@ -145,16 +145,14 @@ describe('TeamDetail', () => {
     })
   })
 
-  it('shows team variables placeholder', async () => {
+  it('shows team variables editor', async () => {
     render(
       <TeamDetail teamId="team-1" gameId={gameId} />,
       { wrapper: createWrapper() },
     )
 
     await waitFor(() => {
-      expect(
-        screen.getByTestId('team-variables-placeholder'),
-      ).toHaveTextContent('Team variables editor coming soon')
+      expect(screen.getByText(/Variables/i)).toBeInTheDocument()
     })
   })
 
