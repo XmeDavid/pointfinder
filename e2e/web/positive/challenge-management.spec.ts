@@ -1,6 +1,6 @@
 // @scenarios P4, P13, P14
 import { test, expect } from '@playwright/test';
-import { loginAsOperator, waitForVisibleWithReload } from '../../shared/web-helpers';
+import { loginAsOperator, waitForVisibleWithReload, navigateToBuildTab } from '../../shared/web-helpers';
 import { createGame, deleteGame } from '../../shared/api-client';
 import { config } from '../../shared/config';
 import { throwawayGameFixture } from '../../shared/fixtures';
@@ -30,7 +30,7 @@ test.describe('Challenge management via web UI', () => {
   // P4: Create challenge via form
   test('P4: create challenge via UI form', async ({ page }) => {
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/challenges`);
+    await navigateToBuildTab(page, gameId, 'challenges');
 
     const addBtn = page.locator('button', { hasText: /add|create|new challenge/i });
     await expect(addBtn).toBeVisible({ timeout: 10_000 });
@@ -61,7 +61,7 @@ test.describe('Challenge management via web UI', () => {
   // P13: Edit challenge title
   test('P13: edit challenge title via UI', async ({ page }) => {
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/challenges`);
+    await navigateToBuildTab(page, gameId, 'challenges');
 
     // Wait for challenge list to load
     await expect(page.locator('text=Web Challenge Text')).toBeVisible({ timeout: 10_000 });
@@ -103,7 +103,7 @@ test.describe('Challenge management via web UI', () => {
     expect(chRes.status).toBe(201);
 
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/challenges`);
+    await navigateToBuildTab(page, gameId, 'challenges');
 
     // Dismiss any stale error alerts before interacting
     const dismissBtn = page.locator('button', { hasText: /dismiss/i });

@@ -1,6 +1,6 @@
 // @scenarios N7, N9, N10, N11, N12
 import { test, expect } from '@playwright/test';
-import { loginAsOperator } from '../../shared/web-helpers';
+import { loginAsOperator, openSettingsPanel, navigateToBuildTab, navigateToGameWorkspace } from '../../shared/web-helpers';
 import {
   createGame,
   createBase,
@@ -57,26 +57,25 @@ test.describe('Business rules - negative', { tag: '@negative' }, () => {
     expect(activateRes.status).toBe(200);
 
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/settings`);
+    await openSettingsPanel(page, gameId);
 
-    await expect(page).toHaveURL(/\/settings/, { timeout: 10_000 });
-
-    // Scroll to the Danger Zone section at the bottom of the page
+    // Scroll to the Danger Zone section at the bottom of the settings panel
     const dangerZone = page.locator('text=Danger Zone');
     await dangerZone.scrollIntoViewIfNeeded();
 
     // Click the initial "Delete Game" button
-    const initialDeleteBtn = page.getByRole('button', { name: 'Delete Game', exact: true });
+    const initialDeleteBtn = page.getByTestId('delete-game-btn');
     await expect(initialDeleteBtn).toBeVisible({ timeout: 5_000 });
     await initialDeleteBtn.click();
 
-    // Click the confirm button
+    // Click the confirm button if a confirmation dialog appears
     const confirmBtn = page.getByRole('button', { name: /yes.*delete/i });
-    await expect(confirmBtn).toBeVisible({ timeout: 5_000 });
-    await confirmBtn.click();
+    if (await confirmBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
+      await confirmBtn.click();
+    }
 
-    // Backend allows deletion — should redirect to /games list, or show error on failure
-    const redirected = await page.waitForURL(/\/games$/, { timeout: 10_000 }).then(() => true).catch(() => false);
+    // Backend allows deletion — should redirect to /dashboard, or show error on failure
+    const redirected = await page.waitForURL(/\/dashboard/, { timeout: 10_000 }).then(() => true).catch(() => false);
     if (!redirected) {
       // If not redirected, an error message should be visible (e.g. "Unexpected error")
       await expect(page.locator('text=/error/i').first()).toBeVisible({ timeout: 5_000 });
@@ -112,7 +111,7 @@ test.describe('Business rules - negative', { tag: '@negative' }, () => {
 
     // Try to assign same fixed challenge to second base via UI
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/bases`);
+    await navigateToBuildTab(page, gameId, 'bases');
 
     // Find edit for Base B
     const baseBRow = page.locator('li, tr, [data-testid*="base"]').filter({ hasText: 'Base 1' });
@@ -172,20 +171,19 @@ test.describe('Business rules - negative', { tag: '@negative' }, () => {
     await createTeam(token, gameId, teamFixture(0));
 
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/overview`);
+    await navigateToGameWorkspace(page, gameId, 'build');
 
-    // The "Go Live" button should be visible but disabled — readiness checks fail
-    const activateBtn = page.locator('button', { hasText: /go live|activate|start/i });
-    await expect(activateBtn).toBeVisible({ timeout: 10_000 });
+    // The ReadinessIndicator should be visible with a "Go Live" button
+    await expect(page.getByTestId('readiness-indicator')).toBeVisible({ timeout: 10_000 });
 
-    // Button is disabled because readiness checks fail (not enough challenges)
-    await expect(activateBtn).toBeDisabled({ timeout: 5_000 });
+    // Expand the readiness checklist to see failures
+    const toggleBtn = page.getByTestId('readiness-toggle');
+    await expect(toggleBtn).toBeVisible({ timeout: 5_000 });
+    await toggleBtn.click();
 
-    // The readiness checklist should show a warning about challenges
-    const warningEl = page.locator(
-      'text=/challenge|base|not enough|required/i',
-    ).first();
-    await expect(warningEl).toBeVisible({ timeout: 10_000 });
+    // The readiness checklist should show failing checks
+    const failCheck = page.getByTestId('check-fail').first();
+    await expect(failCheck).toBeVisible({ timeout: 5_000 });
   });
 
   // N10: Validate via API: more bases than challenges blocks go-live
@@ -239,29 +237,14 @@ test.describe('Business rules - negative', { tag: '@negative' }, () => {
     appendCreatedGameId(gameId);
 
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/settings`);
-    await expect(page).toHaveURL(/\/settings/, { timeout: 10_000 });
+    await openSettingsPanel(page, gameId);
 
-    // Find the tile source select/dropdown
-    const tileSourceSelect = page.locator(
-      'select[id*="tileSource" i], select[name*="tile" i], [data-testid*="tile-source"]',
-    ).first();
-
-    if (await tileSourceSelect.isVisible({ timeout: 5_000 }).catch(() => false)) {
-      const options = await tileSourceSelect.locator('option').allTextContents();
-      // Should have all 6 tile source options
-      const expectedLabels = [
-        'OpenStreetMap',
-        'OpenStreetMap Classic',
-        'CartoDB Voyager',
-        'CartoDB Positron',
-        'SwissTopo',
-        'SwissTopo Satellite',
-      ];
-      for (const label of expectedLabels) {
-        const found = options.some((opt) => opt.includes(label));
-        expect(found).toBe(true);
-      }
+    // Tile sources are now button-based in the settings panel
+    // Verify all tile source options are visible
+    const expectedSources = ['osm', 'voyager', 'positron', 'swisstopo', 'swisstopo-sat'];
+    for (const source of expectedSources) {
+      const sourceBtn = page.getByTestId(`tile-source-${source}`);
+      await expect(sourceBtn).toBeVisible({ timeout: 5_000 });
     }
   });
 
@@ -293,9 +276,9 @@ test.describe('Business rules - negative', { tag: '@negative' }, () => {
     });
     expect(updateA.status).toBe(200);
 
-    // Navigate to bases page and edit base B
+    // Navigate to bases tab in build mode and edit base B
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/bases`);
+    await navigateToBuildTab(page, gameId, 'bases');
 
     // Bases are rendered as <Card> divs (not li/tr). Each card contains the base name
     // in a <p> and an edit button identified by aria-label (icon-only, no text content).

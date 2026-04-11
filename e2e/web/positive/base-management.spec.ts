@@ -1,6 +1,6 @@
 // @scenarios P3, P13, P14
 import { test, expect } from '@playwright/test';
-import { loginAsOperator, waitForVisibleWithReload } from '../../shared/web-helpers';
+import { loginAsOperator, waitForVisibleWithReload, navigateToBuildTab } from '../../shared/web-helpers';
 import { createGame, deleteGame } from '../../shared/api-client';
 import { config } from '../../shared/config';
 import { throwawayGameFixture } from '../../shared/fixtures';
@@ -30,7 +30,7 @@ test.describe('Base management via web UI', () => {
   // P3: Create base via form
   test('P3: create base via UI form', async ({ page }) => {
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/bases`);
+    await navigateToBuildTab(page, gameId, 'bases');
 
     // Open create form — look for add/create button
     const addBtn = page.locator('button', { hasText: /add|create|new base/i });
@@ -78,7 +78,7 @@ test.describe('Base management via web UI', () => {
         );
       }
 
-      await page.goto(`/games/${gameId}/bases`);
+      await navigateToBuildTab(page, gameId, 'bases');
       const visibleAfterFallback = await waitForVisibleWithReload(page, page.locator('text=Web Base 0'), {
         attempts: 1,
         timeout: 5_000,
@@ -93,7 +93,7 @@ test.describe('Base management via web UI', () => {
   // P13: Edit base name
   test('P13: edit base name via UI', async ({ page }) => {
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/bases`);
+    await navigateToBuildTab(page, gameId, 'bases');
 
     const baseVisible = await waitForVisibleWithReload(page, page.locator('text=Web Base 0'), {
       attempts: 1,
@@ -168,7 +168,7 @@ test.describe('Base management via web UI', () => {
     expect(baseRes.status).toBe(201);
 
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/bases`);
+    await navigateToBuildTab(page, gameId, 'bases');
 
     const baseToDeleteVisible = await waitForVisibleWithReload(page, page.locator('text=Web Base To Delete'), {
       attempts: 1,

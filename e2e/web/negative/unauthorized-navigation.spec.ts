@@ -58,22 +58,15 @@ test.describe('Unauthorized navigation - negative', { tag: '@negative' }, () => 
   // Unauthenticated access to protected route redirects to login
   test('accessing /games without auth redirects to login', async ({ page }) => {
     // Navigate directly without logging in
-    await page.goto('/games');
+    await page.goto('/dashboard');
 
     // Should redirect to login
     await expect(page).toHaveURL(/\/login/, { timeout: 10_000 });
   });
 
-  test('accessing game overview without auth redirects to login', async ({ page }) => {
+  test('accessing game workspace without auth redirects to login', async ({ page }) => {
     const ctx = loadRunContext();
-    await page.goto(`/games/${ctx.mainGameId}/overview`);
-
-    await expect(page).toHaveURL(/\/login/, { timeout: 10_000 });
-  });
-
-  test('accessing monitoring page without auth redirects to login', async ({ page }) => {
-    const ctx = loadRunContext();
-    await page.goto(`/games/${ctx.mainGameId}/monitor/leaderboard`);
+    await page.goto(`/game/${ctx.mainGameId}`);
 
     await expect(page).toHaveURL(/\/login/, { timeout: 10_000 });
   });

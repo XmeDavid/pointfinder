@@ -1,6 +1,6 @@
 // @scenarios P6
 import { test, expect } from '@playwright/test';
-import { loginAsOperator, waitForVisibleWithReload } from '../../shared/web-helpers';
+import { loginAsOperator, waitForVisibleWithReload, navigateToBuildTab } from '../../shared/web-helpers';
 import { createGame, deleteGame, getTeams } from '../../shared/api-client';
 import { config } from '../../shared/config';
 import { throwawayGameFixture } from '../../shared/fixtures';
@@ -30,7 +30,7 @@ test.describe('Team management via web UI', () => {
   // P6: Create team via UI
   test('P6: create team via UI form', async ({ page }) => {
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/teams`);
+    await navigateToBuildTab(page, gameId, 'teams');
 
     const addBtn = page.getByRole('button', { name: /create team/i });
     await expect(addBtn).toBeVisible({ timeout: 10_000 });
@@ -65,7 +65,7 @@ test.describe('Team management via web UI', () => {
 
   test('P6: create second team shows both in list', async ({ page }) => {
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/teams`);
+    await navigateToBuildTab(page, gameId, 'teams');
 
     const addBtn = page.getByRole('button', { name: /create team/i });
     await expect(addBtn).toBeVisible({ timeout: 10_000 });
@@ -89,7 +89,7 @@ test.describe('Team management via web UI', () => {
 
   test('P6: team list page shows join code', async ({ page }) => {
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/teams`);
+    await navigateToBuildTab(page, gameId, 'teams');
 
     const joinCodeEl = page.locator('.font-mono').first();
     const joinCodeVisible = await waitForVisibleWithReload(page, joinCodeEl, {

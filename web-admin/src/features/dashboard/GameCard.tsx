@@ -17,6 +17,7 @@ export function GameCard({
   return (
     <div
       role="article"
+      data-testid={`game-card-${game.id}`}
       onClick={onClick}
       className={cn(
         'cursor-pointer rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/30',

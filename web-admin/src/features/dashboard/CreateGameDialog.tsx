@@ -24,7 +24,7 @@ export function CreateGameDialog({
       description: description.trim(),
     })
     onClose()
-    navigate(`/app/game/${game.id}`)
+    navigate(`/game/${game.id}`)
   }
 
   function handleCancel() {
@@ -60,6 +60,7 @@ export function CreateGameDialog({
             </label>
             <input
               id="game-name"
+              data-testid="game-name-input"
               type="text"
               required
               value={name}
@@ -94,6 +95,7 @@ export function CreateGameDialog({
             </button>
             <button
               type="submit"
+              data-testid="game-save-btn"
               disabled={createGame.isPending || !name.trim()}
               className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
             >

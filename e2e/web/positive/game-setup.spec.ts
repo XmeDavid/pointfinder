@@ -42,25 +42,23 @@ test.describe('Game setup via web UI', { tag: '@smoke' }, () => {
   // P2: Create game via UI
   test('P2: create game via UI form', async ({ page }) => {
     await loginAsOperator(page);
-    await page.goto('/games');
+    await page.goto('/dashboard');
     await page.getByTestId('create-game-btn').click();
 
-    await expect(page).toHaveURL(/\/games\/new/, { timeout: 10_000 });
-
+    // Create dialog opens (not a new page)
     const gameName = throwawayGameFixture(config.runId, 'web-setup').name;
     await page.getByTestId('game-name-input').fill(gameName);
 
-    // Scroll save button into view and click — the form is long
     const saveBtn = page.getByTestId('game-save-btn');
-    await saveBtn.scrollIntoViewIfNeeded();
     await expect(saveBtn).toBeEnabled({ timeout: 5_000 });
     await saveBtn.click();
 
-    const outcome = await waitForUrlOrAlert(page, /\/games\/[0-9a-f]{8}-[0-9a-f-]+/, 15_000);
+    // After creation, app navigates to /game/:id
+    const outcome = await waitForUrlOrAlert(page, /\/app\/game\/[0-9a-f]{8}-[0-9a-f-]+/, 15_000);
 
     if (outcome === 'url') {
       const url = page.url();
-      const match = url.match(/\/games\/([0-9a-f-]+)/);
+      const match = url.match(/\/app\/game\/([0-9a-f-]+)/);
       expect(match).not.toBeNull();
       gameId = match![1].replace(/\/.*$/, '');
     } else {
@@ -84,15 +82,15 @@ test.describe('Game setup via web UI', { tag: '@smoke' }, () => {
         gameId = createRes.data.id;
       }
 
-      await page.goto(`/games/${gameId}/overview`);
-      await expect(page).toHaveURL(new RegExp(`/games/${gameId}/overview`), { timeout: 10_000 });
+      await page.goto(`/game/${gameId}`);
+      await expect(page).toHaveURL(new RegExp(`/game/${gameId}`), { timeout: 10_000 });
     }
 
     expect(gameId).toBeTruthy();
     appendCreatedGameId(gameId);
 
     // Game card should appear in games list
-    await page.goto('/games');
+    await page.goto('/dashboard');
     await expect(page.locator(`[data-testid="game-card-${gameId}"]`)).toBeVisible({ timeout: 10_000 });
   });
 
@@ -109,7 +107,7 @@ test.describe('Game setup via web UI', { tag: '@smoke' }, () => {
     await createTeam(token, gameId, { name: 'Web Setup Team' });
 
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/overview`);
+    await page.goto(`/game/${gameId}`);
 
     // The "Go Live" button is on the overview page (not settings)
     const activateBtn = page.locator('button', { hasText: /go live/i });

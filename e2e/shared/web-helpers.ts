@@ -8,6 +8,92 @@ import {
   syncOperatorSession,
 } from './auth';
 
+export type WorkspaceMode = 'build' | 'command' | 'review' | 'results';
+export type DrawerTab = 'bases' | 'challenges' | 'teams' | 'stages';
+
+/**
+ * Navigate to the game workspace and optionally switch to a specific mode.
+ * The workspace defaults to build mode on load.
+ */
+export async function navigateToGameWorkspace(
+  page: Page,
+  gameId: string,
+  mode?: WorkspaceMode,
+) {
+  await page.goto(`/game/${gameId}`);
+  await expect(page.getByTestId('map-wrapper')).toBeVisible({ timeout: 15_000 });
+
+  if (mode && mode !== 'build') {
+    await switchWorkspaceMode(page, mode);
+  }
+}
+
+/**
+ * Switch workspace mode by clicking the mode button in the IconRail.
+ */
+export async function switchWorkspaceMode(page: Page, mode: WorkspaceMode) {
+  const label = mode.charAt(0).toUpperCase() + mode.slice(1); // Build, Command, Review, Results
+  // Desktop IconRail has mode buttons with aria-label matching the mode name
+  const modeBtn = page.getByRole('button', { name: label, exact: true }).first();
+  await expect(modeBtn).toBeVisible({ timeout: 5_000 });
+  await modeBtn.click();
+  // Small wait for mode transition animation
+  await page.waitForTimeout(300);
+}
+
+/**
+ * Open the content drawer in build mode and switch to a specific tab.
+ */
+export async function openDrawerTab(page: Page, tab: DrawerTab) {
+  // Ensure we're in build mode and drawer is open
+  const openPanelBtn = page.getByTestId('open-content-panel');
+  if (await openPanelBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
+    await openPanelBtn.click();
+  }
+  // Wait for drawer to be visible
+  await expect(page.getByTestId('drawer-tabs')).toBeVisible({ timeout: 5_000 });
+  // Click the desired tab
+  await page.getByTestId(`tab-${tab}`).click();
+  await page.waitForTimeout(200);
+}
+
+/**
+ * Navigate to game workspace in build mode with a specific drawer tab open.
+ * Replaces old routes like /games/:id/bases, /games/:id/challenges, etc.
+ */
+export async function navigateToBuildTab(
+  page: Page,
+  gameId: string,
+  tab: DrawerTab,
+) {
+  await navigateToGameWorkspace(page, gameId, 'build');
+  await openDrawerTab(page, tab);
+}
+
+/**
+ * Open the settings panel in the game workspace.
+ * Replaces old route /games/:id/settings.
+ */
+export async function openSettingsPanel(page: Page, gameId: string) {
+  await navigateToGameWorkspace(page, gameId);
+  const settingsBtn = page.getByTestId('settings-btn');
+  await expect(settingsBtn).toBeVisible({ timeout: 5_000 });
+  await settingsBtn.click();
+  await expect(page.getByTestId('game-settings-panel')).toBeVisible({ timeout: 5_000 });
+}
+
+/**
+ * Open the notification sender in command mode.
+ * Replaces old route /games/:id/notifications.
+ */
+export async function openNotificationSender(page: Page, gameId: string) {
+  await navigateToGameWorkspace(page, gameId, 'command');
+  const rescueBtn = page.getByTestId('rescue-btn');
+  await expect(rescueBtn).toBeVisible({ timeout: 5_000 });
+  await rescueBtn.click();
+  await expect(page.getByTestId('notification-sender')).toBeVisible({ timeout: 5_000 });
+}
+
 let operatorSessionBootstrapped = false;
 const preferStoredSession = /^https:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(config.baseUrl);
 
@@ -98,10 +184,10 @@ async function injectStoredOperatorSession(page: Page) {
       },
     );
 
-    await page.goto('/games');
+    await page.goto('/dashboard');
 
-    const atGames = await page.waitForURL(/\/games/, { timeout: 10_000 }).then(() => true).catch(() => false);
-    if (!atGames) {
+    const atDashboard = await page.waitForURL(/\/app\/dashboard/, { timeout: 10_000 }).then(() => true).catch(() => false);
+    if (!atDashboard) {
       return false;
     }
 
@@ -169,7 +255,7 @@ export async function loginAsOperator(page: Page) {
     const resp = await loginResponsePromise;
 
     if (resp.status() === 200) {
-      await expect(page).toHaveURL(/\/games/, { timeout: 10_000 });
+      await expect(page).toHaveURL(/\/app\/dashboard/, { timeout: 10_000 });
       await waitForPersistedOperatorSession(page);
       await syncSessionFromBrowser(page);
       loggedIn = true;
@@ -201,8 +287,8 @@ export async function loginAsOperator(page: Page) {
       },
     );
 
-    await page.goto('/games');
-    await expect(page).toHaveURL(/\/games/, { timeout: 15_000 });
+    await page.goto('/dashboard');
+    await expect(page).toHaveURL(/\/app\/dashboard/, { timeout: 15_000 });
     await waitForPersistedOperatorSession(page);
     await syncSessionFromBrowser(page);
     operatorSessionBootstrapped = true;

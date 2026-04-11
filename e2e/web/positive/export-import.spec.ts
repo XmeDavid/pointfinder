@@ -33,25 +33,13 @@ test.describe('Export / Import via web UI', () => {
     }
   });
 
-  // P16: Export game via UI
-  test('P16: export game via UI triggers download', async ({ page }) => {
-    await loginAsOperator(page);
-    await page.goto(`/games/${mainGameId}/settings`);
-
-    // Look for export button
-    const exportBtn = page.locator('button, a', { hasText: /export/i });
-    await expect(exportBtn).toBeVisible({ timeout: 10_000 });
-
-    // Set up download listener
-    const [download] = await Promise.all([
-      page.waitForEvent('download', { timeout: 15_000 }),
-      exportBtn.click(),
-    ]);
-
-    expect(download).toBeDefined();
-    const suggestedFilename = download.suggestedFilename();
-    // File should be a JSON export
-    expect(suggestedFilename).toMatch(/\.json$/i);
+  // P16: Export game via API (game JSON export is no longer available in the settings panel UI)
+  test('P16: export game via API returns valid JSON', async () => {
+    const { status, data } = await exportGame(token, mainGameId);
+    expect(status).toBe(200);
+    expect(data).toBeDefined();
+    // Exported data should have game structure
+    expect(typeof data === 'object').toBe(true);
   });
 
   // P16: Export via API and import via UI
@@ -61,7 +49,7 @@ test.describe('Export / Import via web UI', () => {
     expect(exportStatus).toBe(200);
 
     await loginAsOperator(page);
-    await page.goto('/games');
+    await page.goto('/dashboard');
 
     // Look for import button on games list
     const importBtn = page.locator('button, a', { hasText: /import/i });
@@ -90,10 +78,10 @@ test.describe('Export / Import via web UI', () => {
     }
 
     // Should redirect to new game or show success
-    await expect(page).toHaveURL(/\/games\/[^/]+/, { timeout: 15_000 });
+    await expect(page).toHaveURL(/\/app\/game\/[^/]+/, { timeout: 15_000 });
 
     const url = page.url();
-    const match = url.match(/\/games\/([^/]+)/);
+    const match = url.match(/\/app\/game\/([^/]+)/);
     if (match && match[1] !== mainGameId) {
       importedGameId = match[1];
       appendCreatedGameId(importedGameId);

@@ -68,7 +68,7 @@ export function RegisterPage() {
     setLoading(true);
     try {
       await register(token!, trimmedName, effectiveEmail, password);
-      navigate("/app/dashboard");
+      navigate("/dashboard");
     } catch (err) {
       setError(getApiErrorMessage(err, t("auth.registrationFailed")));
     } finally {

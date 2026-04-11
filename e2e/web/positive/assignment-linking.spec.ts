@@ -1,6 +1,6 @@
 // @scenarios P5
 import { test, expect } from '@playwright/test';
-import { loginAsOperator } from '../../shared/web-helpers';
+import { loginAsOperator, navigateToBuildTab } from '../../shared/web-helpers';
 import {
   createGame,
   deleteGame,
@@ -48,10 +48,7 @@ test.describe('Assignment linking via web UI', () => {
   // P5: Link challenge to base via UI
   test('P5: assign challenge to base via UI', async ({ page }) => {
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/assignments`);
-
-    // The assignments page should show bases and allow selecting a challenge to assign
-    await expect(page).toHaveURL(/\/assignments/, { timeout: 10_000 });
+    await navigateToBuildTab(page, gameId, 'bases');
 
     // Locate the assignment challenge select for our base
     const assignSelect = page.getByTestId('assignment-challenge-select').first();
@@ -106,10 +103,10 @@ test.describe('Assignment linking via web UI', () => {
     expect(assignments.length).toBeGreaterThan(0);
 
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/assignments`);
+    await navigateToBuildTab(page, gameId, 'bases');
 
-    // The page should load with the "Assign Challenges" heading
-    await expect(page.locator('text=/Assign/i').first()).toBeVisible({ timeout: 10_000 });
+    // The bases tab should be visible with the drawer open
+    await expect(page.getByTestId('drawer-tabs')).toBeVisible({ timeout: 10_000 });
 
     // The assignment exists (verified via API above). The UI may render assignments
     // in various formats — verify the page loaded without errors.

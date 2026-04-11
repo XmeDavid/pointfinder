@@ -97,6 +97,6 @@ describe('DashboardPage', () => {
     })
 
     await user.click(screen.getByText('Test Game 1'))
-    expect(mockNavigate).toHaveBeenCalledWith('/app/game/game-1')
+    expect(mockNavigate).toHaveBeenCalledWith('/game/game-1')
   })
 })

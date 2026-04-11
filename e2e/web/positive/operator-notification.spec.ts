@@ -1,6 +1,6 @@
 // @scenarios P18
 import { test, expect } from '@playwright/test';
-import { loginAsOperator } from '../../shared/web-helpers';
+import { loginAsOperator, openNotificationSender } from '../../shared/web-helpers';
 import { getNotifications } from '../../shared/api-client';
 import { loadRunContext } from '../../shared/run-context';
 import { getOperatorToken } from '../../shared/auth';
@@ -20,31 +20,30 @@ test.describe('Operator notifications via web UI', () => {
     token = getOperatorToken();
   });
 
-  // P18: Navigate to notifications page
-  test('P18: notifications page renders', async ({ page }) => {
+  // P18: Navigate to notification sender in command mode
+  test('P18: notification sender renders in command mode', async ({ page }) => {
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/notifications`);
+    await openNotificationSender(page, gameId);
 
-    await expect(page).toHaveURL(/\/notifications/, { timeout: 10_000 });
     await expect(page.locator('text=/error|failed to load/i')).not.toBeVisible();
 
-    await expect(page.getByTestId('notification-message-input')).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByTestId('notification-send-btn')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId('notif-message')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId('notif-send')).toBeVisible({ timeout: 10_000 });
   });
 
   // P18: Send broadcast notification via UI form
   test('P18: send broadcast notification via UI', async ({ page }) => {
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/notifications`);
+    await openNotificationSender(page, gameId);
 
     // Wait for any initial error banners (e.g. WebSocket errors) to settle
     await page.waitForTimeout(1_000);
 
-    const messageInput = page.getByTestId('notification-message-input');
+    const messageInput = page.getByTestId('notif-message');
     await expect(messageInput).toBeVisible({ timeout: 10_000 });
     await messageInput.fill(`E2E web broadcast ${config.runId}`);
 
-    await page.getByTestId('notification-send-btn').click();
+    await page.getByTestId('notif-send').click();
 
     // Wait for input to clear (success) or error message to appear
     const inputCleared = async () => {
@@ -91,14 +90,13 @@ test.describe('Operator notifications via web UI', () => {
     const messages: string[] = (notifRes.data as Array<{ message: string }>).map((n) => n.message);
     expect(messages).toContain(`E2E web targeted ${config.runId}`);
 
-    // Verify the notifications page loads without errors
+    // Verify the notification sender loads without errors in command mode
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/notifications`);
-    await expect(page).toHaveURL(/\/notifications/, { timeout: 10_000 });
+    await openNotificationSender(page, gameId);
 
     // The notification was already confirmed via API above. The UI history section
     // may or may not render individual messages depending on cache/timing.
-    // Just verify the page loaded without errors.
+    // Just verify the notification sender loaded without errors.
     await expect(page.locator('text=/error|failed to load/i')).not.toBeVisible({ timeout: 3_000 });
   });
 
@@ -111,24 +109,23 @@ test.describe('Operator notifications via web UI', () => {
     expect(notifications.length).toBeGreaterThan(0);
 
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/notifications`);
+    await openNotificationSender(page, gameId);
 
-    await expect(page).toHaveURL(/\/notifications/, { timeout: 10_000 });
-
-    // Verify notification text from earlier tests appears on the page
+    // Verify notification text from earlier tests appears in the recent notifications section
     // If history section is empty (React Query cache miss), reload
-    const historyText = page.locator(`text=E2E web`).first();
+    const historyText = page.getByTestId('recent-notification').first();
     const isVisible = await historyText.isVisible({ timeout: 5_000 }).catch(() => false);
     if (!isVisible) {
       await page.reload();
+      await openNotificationSender(page, gameId);
     }
 
-    const visibleAfterReload = await page.locator(`text=E2E web`).first().isVisible({ timeout: 10_000 }).catch(() => false);
+    const visibleAfterReload = await page.getByTestId('recent-notification').first().isVisible({ timeout: 10_000 }).catch(() => false);
     if (!visibleAfterReload) {
       expect(notifications.some((notification) => notification.message.includes('E2E web'))).toBe(true);
       return;
     }
 
-    await expect(page.locator(`text=E2E web`).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('recent-notification').first()).toBeVisible({ timeout: 15_000 });
   });
 });

@@ -157,7 +157,7 @@ export function IconRail({ showModes }: IconRailProps) {
       >
         {/* PF Logo */}
         <button
-          onClick={() => navigate("/app/dashboard")}
+          onClick={() => navigate("/dashboard")}
           className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs shrink-0 hover:opacity-90 transition-opacity cursor-pointer"
           aria-label="Dashboard"
           data-testid="pf-logo"
@@ -230,7 +230,7 @@ export function IconRail({ showModes }: IconRailProps) {
       >
         {/* PF Logo */}
         <button
-          onClick={() => navigate("/app/dashboard")}
+          onClick={() => navigate("/dashboard")}
           className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs shrink-0 hover:opacity-90 transition-opacity cursor-pointer"
           aria-label="Dashboard"
         >

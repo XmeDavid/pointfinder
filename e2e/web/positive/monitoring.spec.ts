@@ -1,6 +1,10 @@
 // @scenarios P17
 import { test, expect } from '@playwright/test';
-import { loginAsOperator } from '../../shared/web-helpers';
+import {
+  loginAsOperator,
+  navigateToGameWorkspace,
+  switchWorkspaceMode,
+} from '../../shared/web-helpers';
 import { loadRunContext } from '../../shared/run-context';
 import { getOperatorToken } from '../../shared/auth';
 
@@ -16,78 +20,69 @@ test.describe('Monitoring pages via web UI', () => {
     void getOperatorToken();
   });
 
-  // P17: Leaderboard page renders
-  test('P17: leaderboard page renders with data', async ({ page }) => {
+  // P17: Leaderboard renders in command mode
+  test('P17: leaderboard renders with data in command mode', async ({ page }) => {
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/monitor/leaderboard`);
-
-    await expect(page).toHaveURL(/\/leaderboard/, { timeout: 10_000 });
+    await navigateToGameWorkspace(page, gameId, 'command');
 
     // Page should not show an error state
     await expect(page.locator('text=/error|failed to load/i')).not.toBeVisible();
 
-    // Leaderboard entries are now <button> elements with data-testid="leaderboard-entry"
+    // Leaderboard entries are <button> elements with data-testid="leaderboard-entry"
     const teamEntry = page.getByTestId('leaderboard-entry').first();
     await expect(teamEntry).toBeVisible({ timeout: 15_000 });
   });
 
-  // P17: Activity feed page renders
-  test('P17: activity feed page renders', async ({ page }) => {
+  // P17: Activity feed renders in command mode
+  test('P17: activity feed renders in command mode', async ({ page }) => {
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/monitor/activity`);
+    await navigateToGameWorkspace(page, gameId, 'command');
 
-    await expect(page).toHaveURL(/\/activity/, { timeout: 10_000 });
     await expect(page.locator('text=/error|failed to load/i')).not.toBeVisible();
 
-    // Activity page may be empty but should render without crashing
-    const pageBody = page.locator('main, [role="main"], #root, .content').first();
-    await expect(pageBody).toBeVisible({ timeout: 10_000 });
+    // Activity feed toggle or feed should be visible
+    const activityFeed = page.getByTestId('activity-feed-toggle').or(page.getByTestId('activity-feed'));
+    await expect(activityFeed.first()).toBeVisible({ timeout: 10_000 });
   });
 
-  // P17: Submissions monitoring page renders
-  test('P17: submissions page renders', async ({ page }) => {
+  // P17: Submissions renders in review mode
+  test('P17: submissions overlay renders in review mode', async ({ page }) => {
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/monitor/submissions`);
+    await navigateToGameWorkspace(page, gameId, 'review');
 
-    await expect(page).toHaveURL(/\/submissions/, { timeout: 10_000 });
     await expect(page.locator('text=/error|failed to load/i')).not.toBeVisible();
 
-    const pageBody = page.locator('main, [role="main"], #root, .content').first();
-    await expect(pageBody).toBeVisible({ timeout: 10_000 });
+    // Review overlay should be visible
+    const reviewOverlay = page.getByTestId('review-overlay');
+    await expect(reviewOverlay).toBeVisible({ timeout: 10_000 });
   });
 
-  // P17: Sidebar navigation links work
-  test('P17: sidebar navigation links to monitoring sections', async ({ page }) => {
+  // P17: Mode switching works via IconRail
+  test('P17: mode switching between build, command, and review works', async ({ page }) => {
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/overview`);
+    await navigateToGameWorkspace(page, gameId);
 
-    // Sidebar shows game navigation links — verify key links are present
-    await expect(page.locator('a[href*="overview"]').first()).toBeVisible({ timeout: 10_000 });
+    // Default is build mode — verify map is visible
+    await expect(page.getByTestId('map-wrapper')).toBeVisible({ timeout: 10_000 });
 
-    // Navigate to leaderboard via direct URL and verify it loads
-    await page.goto(`/games/${gameId}/monitor/leaderboard`);
-    await expect(page).toHaveURL(/\/leaderboard/, { timeout: 10_000 });
+    // Switch to command mode — leaderboard should appear
+    await switchWorkspaceMode(page, 'command');
+    const leaderboard = page.getByTestId('leaderboard').or(page.getByTestId('leaderboard-toggle'));
+    await expect(leaderboard.first()).toBeVisible({ timeout: 10_000 });
 
-    // Navigate to activity via sidebar link if available, otherwise via URL
-    const activityLink = page.locator('a[href*="activity"]').first();
-    if (await activityLink.isVisible({ timeout: 3_000 }).catch(() => false)) {
-      await activityLink.click();
-    } else {
-      await page.goto(`/games/${gameId}/monitor/activity`);
-    }
-    await expect(page).toHaveURL(/\/activity/, { timeout: 10_000 });
+    // Switch to review mode — review overlay should appear
+    await switchWorkspaceMode(page, 'review');
+    await expect(page.getByTestId('review-overlay')).toBeVisible({ timeout: 10_000 });
   });
 
-  // P17: Game overview page renders
-  test('P17: game overview page renders', async ({ page }) => {
+  // P17: Game workspace renders (replaces old overview page test)
+  test('P17: game workspace renders without errors', async ({ page }) => {
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/overview`);
+    await navigateToGameWorkspace(page, gameId);
 
-    await expect(page).toHaveURL(/\/overview/, { timeout: 10_000 });
     await expect(page.locator('text=/error|failed to load/i')).not.toBeVisible();
 
-    // Should show game name or status somewhere
-    const content = page.locator('main, [role="main"], #root').first();
-    await expect(content).toBeVisible({ timeout: 10_000 });
+    // Should show the map and workspace content
+    await expect(page.getByTestId('map-wrapper')).toBeVisible({ timeout: 10_000 });
   });
 });

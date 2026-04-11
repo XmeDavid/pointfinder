@@ -14,7 +14,7 @@
  * mirrors the submission-review.spec.ts pattern.
  */
 import { test, expect } from '@playwright/test';
-import { loginAsOperator } from '../../shared/web-helpers';
+import { loginAsOperator, navigateToGameWorkspace } from '../../shared/web-helpers';
 import { loadRunContext } from '../../shared/run-context';
 import { getOperatorToken } from '../../shared/auth';
 import { config } from '../../shared/config';
@@ -254,29 +254,27 @@ test.describe('P27: Mark-completed rescue flow', () => {
     }
   });
 
-  // P27e: Web UI — team detail page visible after mark-completed
-  test('P27: team detail page shows the team after rescue action', async ({ page }) => {
+  // P27e: Web UI — command mode accessible after mark-completed
+  test('P27: command mode renders after rescue action', async ({ page }) => {
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/monitor/teams/${teamIds[0]}`);
+    await navigateToGameWorkspace(page, gameId, 'command');
 
-    await expect(page).toHaveURL(/\/teams\//, { timeout: 10_000 });
     await expect(page.locator('text=/error|failed to load/i')).not.toBeVisible();
 
-    // The page body must render without crashing
-    const content = page.locator('main, [role="main"], #root').first();
-    await expect(content).toBeVisible({ timeout: 10_000 });
+    // Stats bar and leaderboard must render without crashing
+    await expect(page.getByTestId('stats-bar')).toBeVisible({ timeout: 10_000 });
   });
 
   // P27f: Activity feed in web UI shows the rescue event
-  test('P27: activity feed page renders after mark-completed', async ({ page }) => {
+  test('P27: activity feed renders in command mode after mark-completed', async ({ page }) => {
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/monitor/activity`);
+    await navigateToGameWorkspace(page, gameId, 'command');
 
-    await expect(page).toHaveURL(/\/activity/, { timeout: 10_000 });
     await expect(page.locator('text=/error|failed to load/i')).not.toBeVisible();
 
-    const content = page.locator('main, [role="main"], #root').first();
-    await expect(content).toBeVisible({ timeout: 10_000 });
+    // Activity feed toggle or feed should be visible
+    const activityFeed = page.getByTestId('activity-feed-toggle').or(page.getByTestId('activity-feed'));
+    await expect(activityFeed.first()).toBeVisible({ timeout: 10_000 });
   });
 });
 
@@ -416,17 +414,16 @@ test.describe('P28: Unlock override grant and remove', () => {
     expect(overrideEvent).toBeTruthy();
   });
 
-  // P28g: Web UI — team detail page accessible after override
-  test('P28: team detail page in web UI is accessible after override creation', async ({
+  // P28g: Web UI — command mode accessible after override
+  test('P28: command mode in web UI is accessible after override creation', async ({
     page,
   }) => {
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/monitor/teams/${teamIds[0]}`);
+    await navigateToGameWorkspace(page, gameId, 'command');
 
-    await expect(page).toHaveURL(/\/teams\//, { timeout: 10_000 });
     await expect(page.locator('text=/error|failed to load/i')).not.toBeVisible();
 
-    const content = page.locator('main, [role="main"], #root').first();
-    await expect(content).toBeVisible({ timeout: 10_000 });
+    // Stats bar and leaderboard must render without crashing
+    await expect(page.getByTestId('stats-bar')).toBeVisible({ timeout: 10_000 });
   });
 });

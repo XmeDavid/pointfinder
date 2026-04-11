@@ -1,7 +1,7 @@
 // @scenarios P11, P12
 import { randomUUID } from 'crypto';
 import { test, expect } from '@playwright/test';
-import { loginAsOperator, waitForVisibleWithReload } from '../../shared/web-helpers';
+import { loginAsOperator, waitForVisibleWithReload, navigateToGameWorkspace } from '../../shared/web-helpers';
 import {
   submitAnswer,
   playerCheckIn,
@@ -51,9 +51,7 @@ test.describe('Submission review via web UI', () => {
     }
 
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/monitor/submissions`);
-
-    await expect(page).toHaveURL(/\/submissions/, { timeout: 10_000 });
+    await navigateToGameWorkspace(page, gameId, 'review');
 
     const pendingSubmission = page.getByRole('button', { name: /web-review-answer/i }).first();
     await expect(pendingSubmission).toBeVisible({ timeout: 15_000 });
@@ -96,7 +94,7 @@ test.describe('Submission review via web UI', () => {
     }
 
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/monitor/submissions`);
+    await navigateToGameWorkspace(page, gameId, 'review');
 
     const pendingSubmission = page.getByRole('button', { name: /web-reject-answer/i }).first();
     await expect(pendingSubmission).toBeVisible({ timeout: 15_000 });
@@ -122,11 +120,9 @@ test.describe('Submission review via web UI', () => {
   // P12: Leaderboard reflects approved submission
   test('P12: leaderboard updates after submission approval', async ({ page }) => {
     await loginAsOperator(page);
-    await page.goto(`/games/${gameId}/monitor/leaderboard`);
+    await navigateToGameWorkspace(page, gameId, 'command');
 
-    await expect(page).toHaveURL(/\/leaderboard/, { timeout: 10_000 });
-
-    // Leaderboard entries are now <button> elements with data-testid="leaderboard-entry"
+    // Leaderboard entries are <button> elements with data-testid="leaderboard-entry"
     const leaderboardRow = page.getByTestId('leaderboard-entry').first();
     const leaderboardVisible = await waitForVisibleWithReload(page, leaderboardRow, {
       attempts: 1,

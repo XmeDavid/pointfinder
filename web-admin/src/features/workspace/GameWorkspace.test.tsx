@@ -35,12 +35,12 @@ function createWrapper() {
       { client: queryClient },
       createElement(
         MemoryRouter,
-        { initialEntries: ['/app/game/test-id'] },
+        { initialEntries: ['/game/test-id'] },
         createElement(
           Routes,
           null,
           createElement(Route, {
-            path: '/app/game/:id',
+            path: '/game/:id',
             element: children,
           }),
         ),
