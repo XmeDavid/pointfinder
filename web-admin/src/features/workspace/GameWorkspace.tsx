@@ -1,11 +1,12 @@
 import { useParams } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { useGame } from '@/hooks/queries/useGames'
 import { useStages } from '@/hooks/queries/useStages'
 import { useBases } from '@/hooks/queries/useBases'
 import { useTeamLocations } from '@/hooks/queries/useTeamLocations'
 import { useWorkspaceStore } from '@/stores/workspace'
+import type { MapRef } from 'react-map-gl/maplibre'
 import { GameMap } from '@/components/map/GameMap'
 import { getStyleUrl } from '@/lib/tile-sources'
 import { BaseMarkers } from '@/components/map/BaseMarkers'
@@ -27,6 +28,9 @@ export function GameWorkspace() {
   const { data: stages = [] } = useStages(gameId)
   const { data: bases = [] } = useBases(gameId)
 
+  // --- Map ref for programmatic control ---
+  const mapRefInstance = useRef<MapRef | null>(null)
+
   // --- Workspace store ---
   const mode = useWorkspaceStore((s) => s.mode)
   const selectedBaseId = useWorkspaceStore((s) => s.selectedBaseId)
@@ -35,6 +39,10 @@ export function GameWorkspace() {
   const openDrawer = useWorkspaceStore((s) => s.openDrawer)
   const selectBase = useWorkspaceStore((s) => s.selectBase)
   const inspectTeam = useWorkspaceStore((s) => s.inspectTeam)
+  const inspectedBaseId = useWorkspaceStore((s) => s.inspectedBaseId)
+  const inspectBase = useWorkspaceStore((s) => s.inspectBase)
+  const saveMapView = useWorkspaceStore((s) => s.saveMapView)
+  const preInspectMapView = useWorkspaceStore((s) => s.preInspectMapView)
   const settingsPanelOpen = useWorkspaceStore((s) => s.settingsPanelOpen)
   const reset = useWorkspaceStore((s) => s.reset)
 
@@ -49,6 +57,17 @@ export function GameWorkspace() {
       reset()
     }
   }, [reset])
+
+  // Restore map view when base inspector closes
+  useEffect(() => {
+    if (!inspectedBaseId && preInspectMapView && mapRefInstance.current) {
+      mapRefInstance.current.flyTo({
+        center: preInspectMapView.center,
+        zoom: preInspectMapView.zoom,
+        duration: 600,
+      })
+    }
+  }, [inspectedBaseId, preInspectMapView])
 
   // --- Loading / error states ---
   if (gameLoading) {
@@ -73,6 +92,27 @@ export function GameWorkspace() {
   const handleBaseClick = (baseId: string) => {
     if (mode === 'build') {
       selectBase(baseId)
+    } else if (mode === 'command') {
+      const map = mapRefInstance.current
+      if (map && !inspectedBaseId) {
+        const center = map.getCenter()
+        saveMapView([center.lng, center.lat], map.getZoom())
+      }
+      inspectBase(baseId)
+      const base = bases.find(b => b.id === baseId)
+      if (base && map) {
+        map.flyTo({
+          center: [base.lng - 0.002, base.lat],
+          zoom: Math.max(map.getZoom(), 15),
+          duration: 600,
+        })
+      }
+    }
+  }
+
+  const handleMapClick = () => {
+    if (mode === 'command' && inspectedBaseId) {
+      inspectBase(null)
     }
   }
 
@@ -87,11 +127,13 @@ export function GameWorkspace() {
       <GameMap
         mapStyle={getStyleUrl(game.tileSource)}
         fitPoints={bases.length > 0 ? bases.map(b => [b.lng, b.lat] as [number, number]) : undefined}
+        onMapRef={(ref) => { mapRefInstance.current = ref }}
+        onClick={handleMapClick}
       >
         <BaseMarkers
           bases={bases}
           mode={mode}
-          selectedBaseId={selectedBaseId}
+          selectedBaseId={mode === 'command' ? inspectedBaseId : selectedBaseId}
           selectedStageId={selectedStageId}
           onBaseClick={handleBaseClick}
         />

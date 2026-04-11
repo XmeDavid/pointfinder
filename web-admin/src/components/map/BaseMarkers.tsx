@@ -18,13 +18,14 @@ function getBaseStyle(
   selectedStageId: string | null,
 ) {
   if (mode === 'command') {
+    const isInspected = base.id === selectedBaseId
     return {
-      fill: '#a1a1aa',
-      stroke: '#71717a',
-      opacity: 0.4,
-      size: 10,
+      fill: base.nfcLinked ? '#22c55e' : '#ef4444',
+      stroke: base.nfcLinked ? '#16a34a' : '#ef4444',
+      opacity: 0.8,
+      size: isInspected ? 18 : 12,
       dashArray: undefined as string | undefined,
-      ringColor: undefined as string | undefined,
+      ringColor: isInspected ? '#ffffff' : undefined as string | undefined,
     }
   }
 
