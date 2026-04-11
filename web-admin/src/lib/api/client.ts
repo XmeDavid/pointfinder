@@ -129,13 +129,13 @@ apiClient.interceptors.request.use(async (config) => {
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    // If token is null and we're authenticated, the refresh token is
-    // permanently invalid → let the request go through unauthenticated.
-    // The 401 response interceptor will handle cleanup.
+    // token === null means either not authenticated or permanent auth failure.
+    // Let the request through — the 401 response interceptor handles cleanup.
   } catch {
-    // Transient refresh failure (network, timeout). Let the request go
-    // through — it will likely 401, and the response interceptor will
-    // retry with a fresh refresh attempt.
+    // Transient refresh failure (network, timeout).
+    // Reject so React Query (or other callers) can retry with backoff,
+    // rather than sending unauthenticated requests that create server noise.
+    return Promise.reject(new Error('Token refresh temporarily unavailable'));
   }
   return config;
 });
