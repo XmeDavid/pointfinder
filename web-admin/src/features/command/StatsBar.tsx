@@ -1,4 +1,4 @@
-import { LifeBuoy } from 'lucide-react'
+import { Bell } from 'lucide-react'
 import { GlassPanel } from '@/components/layout/GlassPanel'
 import { useDashboardStats } from '@/hooks/queries/useMonitoring'
 import { useElapsedTimer } from '@/hooks/ui/useElapsedTimer'
@@ -65,12 +65,12 @@ export function StatsBar({ gameId }: { gameId: string }) {
       <button
         data-testid="rescue-btn"
         onClick={toggleNotificationSender}
-        className="bg-card/95 backdrop-blur-xl border border-destructive/30 rounded-lg px-2 py-1.5 md:px-3 md:py-2 bg-destructive/10 hover:bg-destructive/20 transition-colors cursor-pointer shrink-0"
+        className="bg-card/95 backdrop-blur-xl border border-primary/30 rounded-lg px-2 py-1.5 md:px-3 md:py-2 bg-primary/10 hover:bg-primary/20 transition-colors cursor-pointer shrink-0"
       >
         <div className="flex items-center justify-center">
-          <LifeBuoy size={18} className="text-destructive md:w-5 md:h-5" />
+          <Bell size={18} className="text-primary md:w-5 md:h-5" />
         </div>
-        <div className="text-[10px] md:text-xs text-muted-foreground">Rescue</div>
+        <div className="text-[10px] md:text-xs text-muted-foreground">Notify</div>
       </button>
     </div>
   )
