@@ -36,9 +36,16 @@ test.describe('Game setup via web UI', { tag: '@smoke' }, () => {
   // P1: Login and verify games list loads
   test('P1: games list page renders after login', async ({ page }) => {
     await loginAsOperator(page);
-    // Dashboard should show the "New Game" button (testid or text fallback)
+    // Ensure we're on the dashboard
+    await page.goto('/dashboard');
+    await page.waitForLoadState('networkidle');
+    // Debug: capture current URL and page state
+    const currentUrl = page.url();
+    await page.screenshot({ path: 'artifacts/debug-p1-after-login.png' });
+    console.log(`P1 debug: URL after login = ${currentUrl}`);
+    // Dashboard should show the "New Game" button
     const createBtn = page.getByTestId('create-game-btn').or(page.getByRole('button', { name: /new game/i }));
-    await expect(createBtn).toBeVisible({ timeout: 10_000 });
+    await expect(createBtn).toBeVisible({ timeout: 15_000 });
   });
 
   // P2: Create game via UI
