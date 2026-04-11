@@ -63,7 +63,7 @@ export default function Standings({ gameId }: Props) {
   if (leaderboard.length === 0) {
     return (
       <div className="text-sm text-muted-foreground text-center py-8">
-        No teams found.
+        No results yet. Team standings will appear here once the game has activity.
       </div>
     )
   }

@@ -1,8 +1,41 @@
+import { useMemo } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { GlassPanel } from '@/components/layout/GlassPanel'
 import { useLeaderboard } from '@/hooks/queries/useMonitoring'
+import { useTeamLocations } from '@/hooks/queries/useTeamLocations'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useIsMobile } from '@/hooks/ui/useMediaQuery'
+
+type Staleness = 'active' | 'stale' | 'unknown'
+
+const stalenessColor: Record<Staleness, string> = {
+  active: '#22c55e',
+  stale: '#f59e0b',
+  unknown: '#a1a1aa',
+}
+
+const stalenessLabel: Record<Staleness, string> = {
+  active: 'Active',
+  stale: 'Stale',
+  unknown: 'No signal',
+}
+
+function computeStaleness(updatedAt: string | undefined): Staleness {
+  if (!updatedAt) return 'unknown'
+  const ageMs = Date.now() - new Date(updatedAt).getTime()
+  if (ageMs < 2 * 60 * 1000) return 'active'
+  if (ageMs < 10 * 60 * 1000) return 'stale'
+  return 'unknown'
+}
+
+function formatLastSeen(updatedAt: string | undefined): string {
+  if (!updatedAt) return 'No location data'
+  const ageMs = Date.now() - new Date(updatedAt).getTime()
+  const mins = Math.floor(ageMs / 60_000)
+  if (mins < 1) return 'Last seen just now'
+  if (mins === 1) return 'Last seen 1 min ago'
+  return `Last seen ${mins} min ago`
+}
 
 const podiumColors: Record<number, string> = {
   1: '#eab308', // gold
@@ -12,6 +45,7 @@ const podiumColors: Record<number, string> = {
 
 export function Leaderboard({ gameId }: { gameId: string }) {
   const { data: entries = [] } = useLeaderboard(gameId)
+  const { data: locations = [] } = useTeamLocations(gameId)
   const leaderboardOpen = useWorkspaceStore((s) => s.leaderboardOpen)
   const toggleLeaderboard = useWorkspaceStore((s) => s.toggleLeaderboard)
   const impersonatedTeamId = useWorkspaceStore((s) => s.impersonatedTeamId)
@@ -19,6 +53,18 @@ export function Leaderboard({ gameId }: { gameId: string }) {
   const isMobile = useIsMobile()
 
   const sorted = [...entries].sort((a, b) => b.points - a.points)
+
+  // Most recent location update per team
+  const teamLastSeen = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const loc of locations) {
+      const prev = map.get(loc.teamId)
+      if (!prev || loc.updatedAt > prev) {
+        map.set(loc.teamId, loc.updatedAt)
+      }
+    }
+    return map
+  }, [locations])
 
   return (
     <GlassPanel
@@ -51,7 +97,7 @@ export function Leaderboard({ gameId }: { gameId: string }) {
         >
           {sorted.length === 0 ? (
             <p className="text-xs text-muted-foreground px-3 py-4 text-center">
-              No teams yet.
+              No teams yet. Add teams in Build mode to see standings here.
             </p>
           ) : (
             sorted.map((entry, idx) => {
@@ -83,6 +129,11 @@ export function Leaderboard({ gameId }: { gameId: string }) {
                   <span className="text-sm flex-1 truncate">
                     {entry.teamName}
                   </span>
+                  <span
+                    className="w-1.5 h-1.5 rounded-full shrink-0"
+                    style={{ backgroundColor: stalenessColor[computeStaleness(teamLastSeen.get(entry.teamId))] }}
+                    title={`${stalenessLabel[computeStaleness(teamLastSeen.get(entry.teamId))]} — ${formatLastSeen(teamLastSeen.get(entry.teamId))}`}
+                  />
                   <span className="text-sm font-bold text-primary tabular-nums">
                     {entry.points}
                   </span>

@@ -137,7 +137,9 @@ export default function SubmissionList({ gameId }: SubmissionListProps) {
       <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
         {filteredSubmissions.length === 0 && (
           <div className="text-center text-muted-foreground text-xs py-8">
-            No submissions match this filter.
+            {filter === 'pending'
+              ? 'All caught up! No pending submissions to review.'
+              : 'No submissions match this filter.'}
           </div>
         )}
 

@@ -96,7 +96,7 @@ describe('ActivityFeed', () => {
     await waitFor(() => {
       expect(screen.getByTestId('empty-activity')).toBeInTheDocument()
     })
-    expect(screen.getByText('No events to show.')).toBeInTheDocument()
+    expect(screen.getByText('No activity yet. Events will appear here once teams start playing.')).toBeInTheDocument()
   })
 
   it('filters by event type when type pill is clicked', async () => {

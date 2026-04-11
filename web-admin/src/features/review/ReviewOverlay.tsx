@@ -200,8 +200,9 @@ export default function ReviewOverlay({ gameId }: ReviewOverlayProps) {
           {selectedSubmissionId ? (
             <SubmissionDetail submissionId={selectedSubmissionId} gameId={gameId} />
           ) : (
-            <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
-              Select a submission to review
+            <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm text-center px-6">
+              Select a submission from the list to review it.{' '}
+              <span className="hidden md:inline">Use ↑↓ to navigate, A to approve, R to reject.</span>
             </div>
           )}
         </div>

@@ -186,7 +186,7 @@ describe('Standings', () => {
     })
 
     await waitFor(() => {
-      expect(screen.getByText('No teams found.')).toBeInTheDocument()
+      expect(screen.getByText('No results yet. Team standings will appear here once the game has activity.')).toBeInTheDocument()
     })
   })
 

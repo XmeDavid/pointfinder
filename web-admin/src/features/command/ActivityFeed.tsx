@@ -301,7 +301,9 @@ export function ActivityFeed({ gameId }: { gameId: string }) {
             data-testid="empty-activity"
             className="text-xs text-muted-foreground px-3 py-4 text-center"
           >
-            No events to show.
+            {typeFilter.size > 0 || teamFilter || timeFilter > 0
+              ? 'No events match your filters. Try broadening your selection.'
+              : 'No activity yet. Events will appear here once teams start playing.'}
           </p>
         ) : (
           filteredEvents.map((event) => (
