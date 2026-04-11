@@ -83,6 +83,7 @@ function isTokenExpiringSoon(token: string, marginSeconds = 60): boolean {
 }
 
 function forceLogout() {
+  console.warn("[AUTH] forceLogout called", new Error().stack);
   useAuthStore.getState().handleAuthFailure();
 }
 

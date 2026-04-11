@@ -90,6 +90,7 @@ export const useAuthStore = create<AuthState>()(
       handleAuthFailure: () => {
         // Only trigger if we think we're authenticated (avoid loops)
         if (get().isAuthenticated) {
+          console.warn("[AUTH] handleAuthFailure called — wiping session", new Error().stack);
           // Disconnect WebSocket before clearing state to prevent the STOMP
           // client from entering a reconnect loop with no valid token.
           // Lazy import to avoid circular dependency (store → websocket → client → store).
@@ -119,6 +120,7 @@ export const useAuthStore = create<AuthState>()(
         if (state) {
           // Validate: if isAuthenticated but refresh token is missing, reset
           if (state.isAuthenticated && !state.refreshToken) {
+            console.warn("[AUTH] onRehydrateStorage: isAuthenticated but no refreshToken — resetting");
             storeSet?.({
               isAuthenticated: false,
               user: null,
