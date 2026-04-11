@@ -482,7 +482,7 @@ export default function GameSettingsPanel({
                   <button
                     onClick={() =>
                       deleteGame.mutate(gameId, {
-                        onSuccess: () => navigate('/games'),
+                        onSuccess: () => navigate('/dashboard'),
                       })
                     }
                     disabled={deleteGame.isPending}
