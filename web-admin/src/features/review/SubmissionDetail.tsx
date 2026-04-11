@@ -192,7 +192,7 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
   return (
     <div className="flex-1 flex flex-col min-w-0 min-h-0">
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto p-4 pb-20 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Header section */}
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -359,7 +359,7 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
 
       {/* Action bar */}
       {showActions && (
-        <div className="sticky bottom-0 px-4 py-3 border-t border-border bg-card/80 backdrop-blur-sm flex items-center gap-3">
+        <div className="shrink-0 px-4 py-3 border-t border-border bg-card/80 backdrop-blur-sm flex items-center gap-3">
           <button
             onClick={handleReject}
             data-testid="reject-btn"

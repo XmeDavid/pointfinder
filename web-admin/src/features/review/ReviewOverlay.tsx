@@ -171,7 +171,7 @@ export default function ReviewOverlay({ gameId }: ReviewOverlayProps) {
 
   return (
     <div
-      className="absolute left-0 right-0 top-12 bottom-14 md:left-3 md:right-3 md:top-14 md:bottom-3 z-20 bg-card/95 backdrop-blur-xl border border-border rounded-none md:rounded-xl flex flex-col md:flex-row overflow-hidden"
+      className="absolute left-0 right-0 top-12 bottom-14 md:left-3 md:right-3 md:top-14 md:bottom-3 z-20 bg-card/95 backdrop-blur-xl border border-border rounded-none md:rounded-xl flex flex-col overflow-hidden"
       data-testid="review-overlay"
     >
       {/* Mobile: back button when viewing detail */}
@@ -185,24 +185,27 @@ export default function ReviewOverlay({ gameId }: ReviewOverlayProps) {
         </button>
       )}
 
-      {/* Left: submission list — hidden on mobile when detail is shown */}
-      <div className={mobileShowDetail ? 'hidden' : 'flex flex-col flex-1 md:flex-none min-h-0'}>
-        <SubmissionList gameId={gameId} />
-      </div>
+      {/* Main content row */}
+      <div className="flex-1 flex flex-col md:flex-row min-h-0">
+        {/* Left: submission list — hidden on mobile when detail is shown */}
+        <div className={mobileShowDetail ? 'hidden' : 'flex flex-col flex-1 md:flex-none min-h-0'}>
+          <SubmissionList gameId={gameId} />
+        </div>
 
-      {/* Right: detail or empty state — hidden on mobile when list is shown */}
-      <div className={!mobileShowDetail && isMobile ? 'hidden' : 'flex-1 flex flex-col min-w-0 min-h-0'}>
-        {selectedSubmissionId ? (
-          <SubmissionDetail submissionId={selectedSubmissionId} gameId={gameId} />
-        ) : (
-          <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
-            Select a submission to review
-          </div>
-        )}
+        {/* Right: detail or empty state — hidden on mobile when list is shown */}
+        <div className={!mobileShowDetail && isMobile ? 'hidden' : 'flex-1 flex flex-col min-w-0 min-h-0'}>
+          {selectedSubmissionId ? (
+            <SubmissionDetail submissionId={selectedSubmissionId} gameId={gameId} />
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+              Select a submission to review
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Footer -- keyboard shortcut hints (hidden on mobile) */}
-      <div className="hidden md:flex absolute bottom-0 left-0 right-0 px-4 py-2 border-t border-border bg-card/80 text-muted-foreground text-xs gap-6 justify-center">
+      <div className="hidden md:flex shrink-0 px-4 py-2 border-t border-border bg-card/80 text-muted-foreground text-xs gap-6 justify-center">
         <span>
           <kbd className="px-1.5 py-0.5 bg-muted rounded text-muted-foreground text-[10px] font-mono">
             A
