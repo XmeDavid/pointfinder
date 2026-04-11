@@ -21,9 +21,15 @@ interface AuthState {
   handleAuthFailure: () => void;
 }
 
+// Captured reference to the store's `set` function, used by onRehydrateStorage
+// which fires during create() before `useAuthStore` is assigned.
+let storeSet: ((state: Partial<AuthState>) => void) | null = null;
+
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set, get) => {
+      storeSet = set;
+      return {
       user: null,
       accessToken: null,
       refreshToken: null,
@@ -98,7 +104,7 @@ export const useAuthStore = create<AuthState>()(
           });
         }
       },
-    }),
+    }},
     {
       name: "pointfinder-auth",
       partialize: (state) => ({
@@ -113,7 +119,7 @@ export const useAuthStore = create<AuthState>()(
         if (state) {
           // Validate: if isAuthenticated but refresh token is missing, reset
           if (state.isAuthenticated && !state.refreshToken) {
-            useAuthStore.setState({
+            storeSet?.({
               isAuthenticated: false,
               user: null,
               accessToken: null,
@@ -123,8 +129,9 @@ export const useAuthStore = create<AuthState>()(
             return;
           }
         }
-        // Use setState() instead of direct mutation to properly notify subscribers
-        useAuthStore.setState({ hasHydrated: true });
+        // Use captured set() to properly notify subscribers (useAuthStore
+        // may not be assigned yet since this fires during create()).
+        storeSet?.({ hasHydrated: true });
       },
     }
   )
