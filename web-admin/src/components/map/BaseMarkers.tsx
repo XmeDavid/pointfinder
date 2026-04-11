@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { Marker } from 'react-map-gl/maplibre'
 import type { Base } from '@/types/base'
+import type { BaseStatus } from '@/types'
 import type { GameMode } from '@/stores/workspace'
 
 interface BaseMarkersProps {
@@ -9,6 +10,16 @@ interface BaseMarkersProps {
   selectedBaseId: string | null
   selectedStageId: string | null
   onBaseClick?: (baseId: string) => void
+  /** When set, bases are colored by this team's progress */
+  impersonation?: Map<string, BaseStatus>
+}
+
+const STATUS_COLORS: Record<BaseStatus, { fill: string; stroke: string }> = {
+  completed: { fill: '#22c55e', stroke: '#16a34a' },   // green
+  checked_in: { fill: '#3b82f6', stroke: '#2563eb' },  // blue
+  submitted: { fill: '#f59e0b', stroke: '#d97706' },   // amber
+  rejected: { fill: '#ef4444', stroke: '#dc2626' },    // red
+  not_visited: { fill: '#a1a1aa', stroke: '#71717a' },  // grey
 }
 
 function getBaseStyle(
@@ -16,13 +27,16 @@ function getBaseStyle(
   mode: GameMode,
   selectedBaseId: string | null,
   selectedStageId: string | null,
+  impersonation?: Map<string, BaseStatus>,
 ) {
   if (mode === 'command') {
     const isInspected = base.id === selectedBaseId
+    const status = impersonation?.get(base.id)
+    const colors = status ? STATUS_COLORS[status] : (base.nfcLinked ? { fill: '#22c55e', stroke: '#16a34a' } : { fill: '#ef4444', stroke: '#ef4444' })
     return {
-      fill: base.nfcLinked ? '#22c55e' : '#ef4444',
-      stroke: base.nfcLinked ? '#16a34a' : '#ef4444',
-      opacity: 0.8,
+      fill: colors.fill,
+      stroke: colors.stroke,
+      opacity: impersonation ? (status === 'not_visited' ? 0.4 : 0.9) : 0.8,
       size: isInspected ? 18 : 12,
       dashArray: undefined as string | undefined,
       ringColor: isInspected ? '#ffffff' : undefined as string | undefined,
@@ -62,6 +76,7 @@ export function BaseMarkers({
   selectedBaseId,
   selectedStageId,
   onBaseClick,
+  impersonation,
 }: BaseMarkersProps) {
   const validBases = useMemo(
     () => bases.filter((b) => b.lat != null && b.lng != null),
@@ -71,7 +86,7 @@ export function BaseMarkers({
   return (
     <>
       {validBases.map((base) => {
-        const style = getBaseStyle(base, mode, selectedBaseId, selectedStageId)
+        const style = getBaseStyle(base, mode, selectedBaseId, selectedStageId, impersonation)
 
         return (
           <Marker

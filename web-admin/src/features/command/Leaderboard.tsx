@@ -14,6 +14,8 @@ export function Leaderboard({ gameId }: { gameId: string }) {
   const { data: entries = [] } = useLeaderboard(gameId)
   const leaderboardOpen = useWorkspaceStore((s) => s.leaderboardOpen)
   const toggleLeaderboard = useWorkspaceStore((s) => s.toggleLeaderboard)
+  const impersonatedTeamId = useWorkspaceStore((s) => s.impersonatedTeamId)
+  const impersonateTeam = useWorkspaceStore((s) => s.impersonateTeam)
   const isMobile = useIsMobile()
 
   const sorted = [...entries].sort((a, b) => b.points - a.points)
@@ -56,10 +58,15 @@ export function Leaderboard({ gameId }: { gameId: string }) {
               const rank = idx + 1
               const borderColor = podiumColors[rank] ?? 'transparent'
               return (
-                <div
+                <button
                   key={entry.teamId}
                   data-testid="leaderboard-entry"
-                  className="px-3 py-1.5 flex items-center gap-2 hover:bg-accent/5 transition-colors"
+                  onClick={() => impersonateTeam(impersonatedTeamId === entry.teamId ? null : entry.teamId)}
+                  className={`w-full px-3 py-1.5 flex items-center gap-2 transition-colors cursor-pointer ${
+                    impersonatedTeamId === entry.teamId
+                      ? 'bg-primary/10'
+                      : 'hover:bg-accent/5'
+                  }`}
                   style={{
                     borderLeftWidth: rank <= 3 ? 2 : 0,
                     borderLeftColor: borderColor,
@@ -82,7 +89,7 @@ export function Leaderboard({ gameId }: { gameId: string }) {
                   <span className="text-xs text-muted-foreground w-6 text-right tabular-nums">
                     {entry.completedChallenges}
                   </span>
-                </div>
+                </button>
               )
             })
           )}

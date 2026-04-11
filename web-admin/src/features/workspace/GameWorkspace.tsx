@@ -1,10 +1,12 @@
 import { useParams } from 'react-router-dom'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { useGame } from '@/hooks/queries/useGames'
 import { useStages } from '@/hooks/queries/useStages'
 import { useBases } from '@/hooks/queries/useBases'
+import { useTeams } from '@/hooks/queries/useTeams'
 import { useTeamLocations } from '@/hooks/queries/useTeamLocations'
+import { useProgress } from '@/hooks/queries/useMonitoring'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { MapRef } from 'react-map-gl/maplibre'
 import { GameMap } from '@/components/map/GameMap'
@@ -26,7 +28,8 @@ export function GameWorkspace() {
   // --- Data queries ---
   const { data: game, isLoading: gameLoading, error: gameError } = useGame(gameId)
   const { data: stages = [] } = useStages(gameId)
-  const { data: bases = [] } = useBases(gameId)
+  const { data: bases = [], isLoading: basesLoading } = useBases(gameId)
+  const { data: teams = [] } = useTeams(gameId)
 
   // --- Map ref for programmatic control ---
   const mapRefInstance = useRef<MapRef | null>(null)
@@ -43,6 +46,8 @@ export function GameWorkspace() {
   const inspectBase = useWorkspaceStore((s) => s.inspectBase)
   const saveMapView = useWorkspaceStore((s) => s.saveMapView)
   const preInspectMapView = useWorkspaceStore((s) => s.preInspectMapView)
+  const teamLocationsVisible = useWorkspaceStore((s) => s.teamLocationsVisible)
+  const impersonatedTeamId = useWorkspaceStore((s) => s.impersonatedTeamId)
   const settingsPanelOpen = useWorkspaceStore((s) => s.settingsPanelOpen)
   const reset = useWorkspaceStore((s) => s.reset)
 
@@ -50,6 +55,23 @@ export function GameWorkspace() {
   const { data: locations = [] } = useTeamLocations(
     mode === 'command' ? gameId : undefined,
   )
+
+  // Fetch progress for impersonation (only when impersonating in command mode)
+  const { data: progress = [] } = useProgress(
+    mode === 'command' && impersonatedTeamId ? gameId : undefined,
+  )
+
+  // Build base→status map for the impersonated team
+  const impersonationMap = useMemo(() => {
+    if (!impersonatedTeamId) return undefined
+    const map = new Map<string, import('@/types').BaseStatus>()
+    for (const p of progress) {
+      if (p.teamId === impersonatedTeamId) {
+        map.set(p.baseId, p.status)
+      }
+    }
+    return map
+  }, [impersonatedTeamId, progress])
 
   // Reset workspace store on unmount
   useEffect(() => {
@@ -70,7 +92,7 @@ export function GameWorkspace() {
   }, [inspectedBaseId, preInspectMapView])
 
   // --- Loading / error states ---
-  if (gameLoading) {
+  if (gameLoading || basesLoading) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-background">
         <Spinner />
@@ -136,11 +158,12 @@ export function GameWorkspace() {
           selectedBaseId={mode === 'command' ? inspectedBaseId : selectedBaseId}
           selectedStageId={selectedStageId}
           onBaseClick={handleBaseClick}
+          impersonation={impersonationMap}
         />
-        {mode === 'command' && (
+        {mode === 'command' && teamLocationsVisible && (
           <TeamMarkers
             locations={locations}
-            teams={[]}
+            teams={teams}
             onTeamClick={handleTeamClick}
           />
         )}

@@ -18,6 +18,8 @@ interface WorkspaceState {
   leaderboardOpen: boolean
   notificationSenderOpen: boolean
   settingsPanelOpen: boolean
+  teamLocationsVisible: boolean
+  impersonatedTeamId: string | null
 }
 
 interface WorkspaceActions {
@@ -36,6 +38,8 @@ interface WorkspaceActions {
   toggleLeaderboard: () => void
   toggleNotificationSender: () => void
   toggleSettingsPanel: () => void
+  toggleTeamLocations: () => void
+  impersonateTeam: (id: string | null) => void
   reset: () => void
 }
 
@@ -54,6 +58,8 @@ const initialState: WorkspaceState = {
   leaderboardOpen: false,
   notificationSenderOpen: false,
   settingsPanelOpen: false,
+  teamLocationsVisible: false,
+  impersonatedTeamId: null,
 }
 
 export const useWorkspaceStore = create<WorkspaceState & WorkspaceActions>()((set) => ({
@@ -115,5 +121,7 @@ export const useWorkspaceStore = create<WorkspaceState & WorkspaceActions>()((se
   toggleLeaderboard: () => set((s) => ({ leaderboardOpen: !s.leaderboardOpen })),
   toggleNotificationSender: () => set((s) => ({ notificationSenderOpen: !s.notificationSenderOpen })),
   toggleSettingsPanel: () => set((s) => ({ settingsPanelOpen: !s.settingsPanelOpen })),
+  toggleTeamLocations: () => set((s) => ({ teamLocationsVisible: !s.teamLocationsVisible })),
+  impersonateTeam: (id) => set({ impersonatedTeamId: id }),
   reset: () => set(initialState),
 }))

@@ -1,4 +1,4 @@
-import { Bell } from 'lucide-react'
+import { Bell, MapPin } from 'lucide-react'
 import { GlassPanel } from '@/components/layout/GlassPanel'
 import { useDashboardStats } from '@/hooks/queries/useMonitoring'
 import { useElapsedTimer } from '@/hooks/ui/useElapsedTimer'
@@ -7,6 +7,8 @@ import { useWorkspaceStore } from '@/stores/workspace'
 export function StatsBar({ gameId }: { gameId: string }) {
   const { data: stats } = useDashboardStats(gameId)
   const toggleNotificationSender = useWorkspaceStore((s) => s.toggleNotificationSender)
+  const toggleTeamLocations = useWorkspaceStore((s) => s.toggleTeamLocations)
+  const teamLocationsVisible = useWorkspaceStore((s) => s.teamLocationsVisible)
 
   const elapsed = useElapsedTimer(stats?.startDate ?? null)
 
@@ -61,7 +63,23 @@ export function StatsBar({ gameId }: { gameId: string }) {
         <div className="text-[10px] md:text-xs text-muted-foreground">Elapsed</div>
       </GlassPanel>
 
-      {/* Rescue */}
+      {/* Team locations toggle */}
+      <button
+        data-testid="team-locations-btn"
+        onClick={toggleTeamLocations}
+        className={`bg-card/95 backdrop-blur-xl border rounded-lg px-2 py-1.5 md:px-3 md:py-2 transition-colors cursor-pointer shrink-0 ${
+          teamLocationsVisible
+            ? 'border-info/30 bg-info/10 hover:bg-info/20'
+            : 'border-border hover:bg-muted'
+        }`}
+      >
+        <div className="flex items-center justify-center">
+          <MapPin size={18} className={`md:w-5 md:h-5 ${teamLocationsVisible ? 'text-info' : 'text-muted-foreground'}`} />
+        </div>
+        <div className="text-[10px] md:text-xs text-muted-foreground">Players</div>
+      </button>
+
+      {/* Notify */}
       <button
         data-testid="rescue-btn"
         onClick={toggleNotificationSender}
