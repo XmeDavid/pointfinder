@@ -138,14 +138,14 @@ public class AuditExportService {
                     "AUDIT_EXPORT_INVALID_RANGE: 'to' must be strictly after 'from'");
         }
         Set<ActivityEventType> types = parseActionTypes(query.actionTypeRaw());
-        if (types == null || types.isEmpty()) {
-            types = EnumSet.allOf(ActivityEventType.class);
-        }
         boolean includeArchived = Boolean.TRUE.equals(query.includeArchived());
 
         // SQL pushdown — everything filterable on the activity_events row
         // happens in one query. JPQL short-circuits each :param IS NULL
         // check, so passing null means "do not filter on this criterion".
+        // Note: type filtering is done in Java post-query because Hibernate
+        // 6.6 cannot bind a Collection<Enum> to a PostgreSQL custom enum
+        // column in an IN clause without generating invalid SQL.
         List<ActivityEvent> rows = activityEventRepository.findForAuditExport(
                 query.gameId(),
                 from,
@@ -153,9 +153,15 @@ public class AuditExportService {
                 query.teamId(),
                 query.playerId(),
                 query.operatorId(),
-                types,
                 query.sourceSurface(),
                 includeArchived);
+
+        // Post-query type filter (when caller specified actionType param)
+        if (types != null && !types.isEmpty()) {
+            rows = rows.stream()
+                    .filter(r -> r.getType() != null && types.contains(r.getType()))
+                    .toList();
+        }
 
         UUID currentOperatorId = null;
         try {
