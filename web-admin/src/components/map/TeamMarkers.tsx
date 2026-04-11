@@ -28,7 +28,15 @@ export function TeamMarkers({ locations, teams, onTeamClick }: TeamMarkersProps)
         const updatedAt = new Date(loc.updatedAt).getTime()
         const isStale = now - updatedAt > STALE_THRESHOLD_MS
         const color = team.color || '#3b82f6'
-        const size = 20
+        const size = 14
+
+        // Triangle pointing up: smaller than base circles (which are 12-18px)
+        const cx = size / 2
+        const top = 1
+        const bottom = size - 1
+        const left = 1
+        const right = size - 1
+        const triangle = `${cx},${top} ${right},${bottom} ${left},${bottom}`
 
         return (
           <Marker
@@ -55,22 +63,19 @@ export function TeamMarkers({ locations, teams, onTeamClick }: TeamMarkersProps)
               >
                 {/* Glow for active teams */}
                 {!isStale && (
-                  <circle
-                    cx={size / 2}
-                    cy={size / 2}
-                    r={size / 2 - 1}
+                  <polygon
+                    points={triangle}
                     fill={color}
                     fillOpacity={0.25}
                   />
                 )}
-                <circle
-                  cx={size / 2}
-                  cy={size / 2}
-                  r={size / 2 - 3}
+                <polygon
+                  points={triangle}
                   fill={color}
                   fillOpacity={isStale ? 0.3 : 0.9}
                   stroke={isStale ? '#9ca3af' : color}
-                  strokeWidth={isStale ? 1 : 2}
+                  strokeWidth={1.5}
+                  strokeLinejoin="round"
                 />
               </svg>
             </div>

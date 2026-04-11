@@ -148,6 +148,8 @@ export function GameWorkspace() {
     <div className="h-[100dvh] w-full relative overflow-hidden">
       <GameMap
         mapStyle={getStyleUrl(game.tileSource)}
+        initialCenter={bases.length > 0 ? [bases[0].lng, bases[0].lat] : undefined}
+        initialZoom={bases.length > 0 ? 15 : 3}
         fitPoints={bases.length > 0 ? bases.map(b => [b.lng, b.lat] as [number, number]) : undefined}
         onMapRef={(ref) => { mapRefInstance.current = ref }}
         onClick={handleMapClick}
