@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSubmissions } from '@/hooks/queries/useSubmissions'
 import { useTeams } from '@/hooks/queries/useTeams'
@@ -7,6 +7,89 @@ import { useBases } from '@/hooks/queries/useBases'
 import { useReviewSubmission } from '@/hooks/mutations/useSubmissionMutations'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { relativeTime } from '@/lib/utils/dates'
+import apiClient from '@/lib/api/client'
+import { Spinner } from '@/components/feedback/Spinner'
+
+// ---------------------------------------------------------------------------
+// AuthMedia — fetches a file through the authenticated API client and renders
+// it as an <img> or <video> depending on the file extension.
+// ---------------------------------------------------------------------------
+
+function isVideoUrl(url: string): boolean {
+  return /\.(mp4|mov)$/i.test(url)
+}
+
+function AuthMedia({ url, alt }: { url: string; alt: string }) {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null)
+  const [error, setError] = useState(false)
+  const blobRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    setBlobUrl(null)
+    setError(false)
+
+    apiClient
+      .get(url, { responseType: 'blob' })
+      .then(({ data }) => {
+        if (cancelled) return
+        const objUrl = URL.createObjectURL(data)
+        blobRef.current = objUrl
+        setBlobUrl(objUrl)
+      })
+      .catch(() => {
+        if (!cancelled) setError(true)
+      })
+
+    return () => {
+      cancelled = true
+      if (blobRef.current) {
+        URL.revokeObjectURL(blobRef.current)
+        blobRef.current = null
+      }
+    }
+  }, [url])
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-56 bg-muted rounded-lg text-muted-foreground text-sm">
+        Failed to load file
+      </div>
+    )
+  }
+
+  if (!blobUrl) {
+    return (
+      <div className="flex items-center justify-center h-56 bg-muted rounded-lg">
+        <Spinner />
+      </div>
+    )
+  }
+
+  if (isVideoUrl(url)) {
+    return (
+      <video
+        src={blobUrl}
+        controls
+        className="w-full rounded-lg"
+        data-testid="submission-video"
+      />
+    )
+  }
+
+  return (
+    <img
+      src={blobUrl}
+      alt={alt}
+      className="w-full h-full object-cover"
+      data-testid="submission-image"
+    />
+  )
+}
+
+// ---------------------------------------------------------------------------
+// SubmissionDetail
+// ---------------------------------------------------------------------------
 
 interface SubmissionDetailProps {
   submissionId: string
@@ -46,7 +129,7 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
 
   if (!submission) {
     return (
-      <div className="flex-1 flex items-center justify-center text-text-muted text-sm">
+      <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
         Submission not found.
       </div>
     )
@@ -78,6 +161,12 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
     )
   }
 
+  const fileUrls = submission.fileUrls?.length
+    ? submission.fileUrls
+    : submission.fileUrl
+      ? [submission.fileUrl]
+      : []
+
   return (
     <div className="flex-1 flex flex-col min-w-0">
       {/* Scrollable content */}
@@ -89,44 +178,44 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
               className="w-3 h-3 rounded-full shrink-0"
               style={{ backgroundColor: team?.color ?? '#888' }}
             />
-            <span className="text-base font-semibold text-text-primary">
+            <span className="text-base font-semibold text-foreground">
               {team?.name ?? 'Unknown'}
             </span>
           </div>
-          <div className="flex items-center gap-2 text-xs text-text-muted">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             {base && <span>at {base.name}</span>}
             <span>{relativeTime(submission.submittedAt)}</span>
           </div>
         </div>
 
         {/* Challenge context */}
-        <div className="bg-elevated/50 rounded-lg p-3 space-y-2" data-testid="challenge-context">
+        <div className="bg-muted/50 rounded-lg p-3 space-y-2" data-testid="challenge-context">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-text-primary">
+            <span className="text-sm font-medium text-foreground">
               {challenge?.title ?? 'Unknown Challenge'}
             </span>
           </div>
           {challenge?.description && (
-            <p className="text-xs text-text-secondary">
+            <p className="text-xs text-muted-foreground">
               {challenge.description}
             </p>
           )}
           {challenge?.correctAnswer && challenge.correctAnswer.length > 0 && (
             <div className="mt-1">
-              <span className="text-[10px] uppercase tracking-wide text-text-muted">
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
                 Expected answer
               </span>
-              <div className="mt-0.5 px-2 py-1 bg-surface rounded border border-border font-mono text-xs text-text-primary">
+              <div className="mt-0.5 px-2 py-1 bg-muted rounded border border-border font-mono text-xs text-foreground">
                 {challenge.correctAnswer.join(', ')}
               </div>
             </div>
           )}
           {challenge?.operatorNotes && (
             <div className="mt-1">
-              <span className="text-[10px] uppercase tracking-wide text-text-muted">
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
                 Operator notes
               </span>
-              <div className="mt-0.5 px-2 py-1 bg-surface/60 rounded border border-border/50 text-xs text-text-muted italic">
+              <div className="mt-0.5 px-2 py-1 bg-muted/60 rounded border border-border/50 text-xs text-muted-foreground italic">
                 {challenge.operatorNotes}
               </div>
             </div>
@@ -137,46 +226,48 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
         <div className="space-y-3">
           {submission.answer && (
             <div>
-              <span className="text-[10px] uppercase tracking-wide text-text-muted mb-1 block">
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">
                 Text answer
               </span>
-              <div className="px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-surface/30">
+              <div className="px-3 py-2 border border-border rounded-lg text-sm text-foreground bg-muted/30">
                 {submission.answer}
               </div>
             </div>
           )}
 
-          {(submission.fileUrl || (submission.fileUrls && submission.fileUrls.length > 0)) && (() => {
-            const urls = submission.fileUrls?.length ? submission.fileUrls : submission.fileUrl ? [submission.fileUrl] : []
-            return (
-              <div className="space-y-2">
-                {urls.map((url, idx) => (
-                  <div key={idx} className="relative rounded-lg overflow-hidden border border-border">
+          {fileUrls.length > 0 && (
+            <div className="space-y-2">
+              {fileUrls.map((url, idx) => (
+                <div key={idx} className="relative rounded-lg overflow-hidden border border-border">
+                  {isVideoUrl(url) ? (
+                    <AuthMedia
+                      url={url}
+                      alt={t('submissions.altFile', { index: idx + 1 })}
+                    />
+                  ) : (
                     <div className="h-56 relative">
-                      <img
-                        src={url}
+                      <AuthMedia
+                        url={url}
                         alt={t('submissions.altFile', { index: idx + 1 })}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none'
-                        }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
-                      <div className="absolute bottom-3 left-3 text-xs text-text-secondary">
-                        {urls.length > 1 ? t('submissions.photoSubmissionCount', { current: idx + 1, total: urls.length }) : t('submissions.photoSubmission')}
+                      <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent pointer-events-none" />
+                      <div className="absolute bottom-3 left-3 text-xs text-muted-foreground">
+                        {fileUrls.length > 1
+                          ? t('submissions.photoSubmissionCount', { current: idx + 1, total: fileUrls.length })
+                          : t('submissions.photoSubmission')}
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )
-          })()}
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Points section */}
         {isPending && (
           <div>
-            <label className="text-[10px] uppercase tracking-wide text-text-muted mb-1 block">
+            <label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">
               Points
             </label>
             <input
@@ -184,7 +275,7 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
               value={points}
               onChange={(e) => setPoints(Number(e.target.value))}
               data-testid="points-input"
-              className="w-24 px-2 py-1.5 bg-surface border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-accent"
+              className="w-24 px-2 py-1.5 bg-muted border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-ring"
             />
           </div>
         )}
@@ -192,7 +283,7 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
         {/* Feedback section */}
         {isPending && (
           <div>
-            <label className="text-[10px] uppercase tracking-wide text-text-muted mb-1 block">
+            <label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">
               Feedback
             </label>
             <textarea
@@ -201,7 +292,7 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
               placeholder="Optional feedback for the team..."
               rows={2}
               data-testid="feedback-input"
-              className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-sm text-text-primary placeholder:text-text-muted/50 focus:outline-none focus:border-accent resize-none"
+              className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-ring resize-none"
             />
           </div>
         )}
@@ -213,8 +304,8 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
               <span
                 className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
                   submission.status === 'approved' || submission.status === 'correct'
-                    ? 'bg-accent/20 text-accent'
-                    : 'bg-danger/20 text-danger'
+                    ? 'bg-success/20 text-success'
+                    : 'bg-destructive/20 text-destructive'
                 }`}
               >
                 {submission.status === 'approved' || submission.status === 'correct'
@@ -223,11 +314,11 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
               </span>
               {(submission.status === 'approved' || submission.status === 'correct') &&
                 submission.points != null && (
-                  <span className="text-text-muted">{submission.points} pts</span>
+                  <span className="text-muted-foreground">{submission.points} pts</span>
                 )}
             </div>
             {submission.feedback && (
-              <div className="px-3 py-2 bg-surface/30 border border-border rounded-lg text-xs text-text-secondary italic">
+              <div className="px-3 py-2 bg-muted/30 border border-border rounded-lg text-xs text-muted-foreground italic">
                 {submission.feedback}
               </div>
             )}
@@ -237,11 +328,11 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
 
       {/* Action bar -- only for pending */}
       {isPending && (
-        <div className="sticky bottom-0 px-4 py-3 border-t border-border bg-surface/80 backdrop-blur-sm flex items-center gap-3">
+        <div className="sticky bottom-0 px-4 py-3 border-t border-border bg-card/80 backdrop-blur-sm flex items-center gap-3">
           <button
             onClick={handleReject}
             data-testid="reject-btn"
-            className="bg-danger hover:bg-danger/90 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground px-6 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
           >
             <span className="flex items-center gap-1.5">
               <span>&#10007; Reject</span>
@@ -249,14 +340,14 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
             </span>
           </button>
 
-          <div className="flex-1 text-center text-xs text-text-muted">
+          <div className="flex-1 text-center text-xs text-muted-foreground">
             {points} pts
           </div>
 
           <button
             onClick={handleApprove}
             data-testid="approve-btn"
-            className="bg-accent hover:bg-accent/90 text-accent-foreground px-6 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+            className="bg-success hover:bg-success/90 text-success-foreground px-6 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
           >
             <span className="flex items-center gap-1.5">
               <span>&#10003; Approve</span>

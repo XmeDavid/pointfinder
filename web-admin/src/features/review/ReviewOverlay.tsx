@@ -195,34 +195,34 @@ export default function ReviewOverlay({ gameId }: ReviewOverlayProps) {
         {selectedSubmissionId ? (
           <SubmissionDetail submissionId={selectedSubmissionId} gameId={gameId} />
         ) : (
-          <div className="flex-1 flex items-center justify-center text-text-muted text-sm">
+          <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
             Select a submission to review
           </div>
         )}
       </div>
 
       {/* Footer -- keyboard shortcut hints (hidden on mobile) */}
-      <div className="hidden md:flex absolute bottom-0 left-0 right-0 px-4 py-2 border-t border-border bg-surface/80 text-text-muted text-xs gap-6 justify-center">
+      <div className="hidden md:flex absolute bottom-0 left-0 right-0 px-4 py-2 border-t border-border bg-card/80 text-muted-foreground text-xs gap-6 justify-center">
         <span>
-          <kbd className="px-1.5 py-0.5 bg-elevated rounded text-text-secondary text-[10px] font-mono">
+          <kbd className="px-1.5 py-0.5 bg-muted rounded text-muted-foreground text-[10px] font-mono">
             A
           </kbd>{' '}
           Approve
         </span>
         <span>
-          <kbd className="px-1.5 py-0.5 bg-elevated rounded text-text-secondary text-[10px] font-mono">
+          <kbd className="px-1.5 py-0.5 bg-muted rounded text-muted-foreground text-[10px] font-mono">
             R
           </kbd>{' '}
           Reject
         </span>
         <span>
-          <kbd className="px-1.5 py-0.5 bg-elevated rounded text-text-secondary text-[10px] font-mono">
+          <kbd className="px-1.5 py-0.5 bg-muted rounded text-muted-foreground text-[10px] font-mono">
             &uarr;&darr;
           </kbd>{' '}
           Navigate
         </span>
         <span>
-          <kbd className="px-1.5 py-0.5 bg-elevated rounded text-text-secondary text-[10px] font-mono">
+          <kbd className="px-1.5 py-0.5 bg-muted rounded text-muted-foreground text-[10px] font-mono">
             &rarr;
           </kbd>{' '}
           Skip

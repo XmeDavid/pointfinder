@@ -16,14 +16,14 @@ const filterOptions: Array<{ value: FilterOption; label: string }> = [
 ]
 
 function filterColor(filter: FilterOption, active: boolean): string {
-  if (!active) return 'text-text-muted hover:text-text-secondary'
+  if (!active) return 'text-muted-foreground hover:text-foreground'
   switch (filter) {
     case 'pending':
       return 'bg-warning/20 text-warning'
     case 'approved':
-      return 'bg-accent/20 text-accent'
+      return 'bg-success/20 text-success'
     case 'rejected':
-      return 'bg-danger/20 text-danger'
+      return 'bg-destructive/20 text-destructive'
     case 'all':
       return 'bg-info/20 text-info'
   }
@@ -35,9 +35,9 @@ function statusBorderClass(status: SubmissionStatus): string {
       return 'border-l-2 border-warning'
     case 'approved':
     case 'correct':
-      return 'border-l-2 border-accent'
+      return 'border-l-2 border-success'
     case 'rejected':
-      return 'border-l-2 border-danger'
+      return 'border-l-2 border-destructive'
   }
 }
 
@@ -75,10 +75,10 @@ export default function SubmissionList({ gameId }: SubmissionListProps) {
       {/* Header */}
       <div className="px-3 py-3 border-b border-border">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-semibold text-text-primary">
+          <span className="text-sm font-semibold text-foreground">
             Submissions
           </span>
-          <span className="text-xs text-text-muted">
+          <span className="text-xs text-muted-foreground">
             {filteredSubmissions.length}
           </span>
         </div>
@@ -102,7 +102,7 @@ export default function SubmissionList({ gameId }: SubmissionListProps) {
           value={teamFilter}
           onChange={(e) => setTeamFilter(e.target.value)}
           data-testid="team-filter"
-          className="w-full px-2 py-1 text-xs bg-surface border border-border rounded text-text-primary"
+          className="w-full px-2 py-1 text-xs bg-muted border border-border rounded text-foreground"
         >
           <option value="">All teams</option>
           {teams.map((team) => (
@@ -116,7 +116,7 @@ export default function SubmissionList({ gameId }: SubmissionListProps) {
       {/* Scrollable list */}
       <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
         {filteredSubmissions.length === 0 && (
-          <div className="text-center text-text-muted text-xs py-8">
+          <div className="text-center text-muted-foreground text-xs py-8">
             No submissions match this filter.
           </div>
         )}
@@ -133,8 +133,8 @@ export default function SubmissionList({ gameId }: SubmissionListProps) {
               data-testid={`submission-card-${sub.id}`}
               className={`w-full text-left px-2.5 py-2 rounded-lg transition-colors cursor-pointer ${statusBorderClass(sub.status)} ${
                 isSelected
-                  ? 'bg-accent/10 border border-accent/30'
-                  : 'hover:bg-elevated/50'
+                  ? 'bg-primary/10 border border-primary/30'
+                  : 'hover:bg-muted/50'
               }`}
             >
               {/* Team row */}
@@ -143,20 +143,20 @@ export default function SubmissionList({ gameId }: SubmissionListProps) {
                   className="w-2 h-2 rounded-full shrink-0"
                   style={{ backgroundColor: team?.color ?? '#888' }}
                 />
-                <span className="text-xs font-medium text-text-primary truncate">
+                <span className="text-xs font-medium text-foreground truncate">
                   {team?.name ?? 'Unknown'}
                 </span>
               </div>
 
               {/* Challenge name */}
               <div className="flex items-center gap-1.5 mb-1">
-                <span className="text-[11px] text-text-secondary truncate">
+                <span className="text-[11px] text-muted-foreground truncate">
                   {challenge?.title ?? 'Unknown'}
                 </span>
               </div>
 
               {/* Timestamp */}
-              <span className="text-[10px] text-text-muted">
+              <span className="text-[10px] text-muted-foreground">
                 {relativeTime(sub.submittedAt)}
               </span>
             </button>
