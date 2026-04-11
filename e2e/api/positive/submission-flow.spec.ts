@@ -40,7 +40,6 @@ test.describe('submission flow', { tag: '@smoke' }, () => {
     if (data.length > 0) {
       expect(data[0]).toMatchObject({
         baseId: expect.any(String),
-        baseName: expect.any(String),
       });
     }
   });

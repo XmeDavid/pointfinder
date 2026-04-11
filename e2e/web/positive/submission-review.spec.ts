@@ -59,11 +59,12 @@ test.describe('Submission review via web UI', () => {
     await expect(pendingSubmission).toBeVisible({ timeout: 15_000 });
     await pendingSubmission.click();
 
-    const approveBtn = page.getByTestId('submission-approve-btn').first();
+    // Wait for SubmissionDetail to load (AuthMedia fetches files asynchronously)
+    const approveBtn = page.getByTestId('approve-btn').first();
     await expect(approveBtn).toBeVisible({ timeout: 15_000 });
 
-    const pointsInput = page.locator('input[type="number"], input[name*="point" i]').first();
-    if (await pointsInput.isVisible({ timeout: 2_000 }).catch(() => false)) {
+    const pointsInput = page.getByTestId('points-input').first();
+    if (await pointsInput.isVisible({ timeout: 3_000 }).catch(() => false)) {
       await pointsInput.fill('10');
     }
 
@@ -101,12 +102,13 @@ test.describe('Submission review via web UI', () => {
     await expect(pendingSubmission).toBeVisible({ timeout: 15_000 });
     await pendingSubmission.click();
 
-    const rejectBtn = page.getByTestId('submission-reject-btn').first();
+    // Wait for SubmissionDetail to load (AuthMedia fetches files asynchronously)
+    const rejectBtn = page.getByTestId('reject-btn').first();
     await expect(rejectBtn).toBeVisible({ timeout: 15_000 });
 
     // Feedback input if present
-    const feedbackInput = page.locator('textarea, input[name*="feedback" i]').first();
-    if (await feedbackInput.isVisible({ timeout: 2_000 }).catch(() => false)) {
+    const feedbackInput = page.getByTestId('feedback-input').first();
+    if (await feedbackInput.isVisible({ timeout: 3_000 }).catch(() => false)) {
       await feedbackInput.fill('E2E rejection test');
     }
 
@@ -124,7 +126,8 @@ test.describe('Submission review via web UI', () => {
 
     await expect(page).toHaveURL(/\/leaderboard/, { timeout: 10_000 });
 
-    const leaderboardRow = page.locator('text=/Team\\s*\\d/i').first();
+    // Leaderboard entries are now <button> elements with data-testid="leaderboard-entry"
+    const leaderboardRow = page.getByTestId('leaderboard-entry').first();
     const leaderboardVisible = await waitForVisibleWithReload(page, leaderboardRow, {
       attempts: 1,
       timeout: 7_500,

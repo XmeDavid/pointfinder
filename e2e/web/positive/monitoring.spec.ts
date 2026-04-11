@@ -3,7 +3,6 @@ import { test, expect } from '@playwright/test';
 import { loginAsOperator } from '../../shared/web-helpers';
 import { loadRunContext } from '../../shared/run-context';
 import { getOperatorToken } from '../../shared/auth';
-import { config } from '../../shared/config';
 
 test.describe('Monitoring pages via web UI', () => {
   test.describe.configure({ mode: 'serial' });
@@ -27,8 +26,8 @@ test.describe('Monitoring pages via web UI', () => {
     // Page should not show an error state
     await expect(page.locator('text=/error|failed to load/i')).not.toBeVisible();
 
-    // Leaderboard shows team names — look for "Team" text anywhere on the page
-    const teamEntry = page.locator('text=/Team\\s*\\d/i').first();
+    // Leaderboard entries are now <button> elements with data-testid="leaderboard-entry"
+    const teamEntry = page.getByTestId('leaderboard-entry').first();
     await expect(teamEntry).toBeVisible({ timeout: 15_000 });
   });
 
