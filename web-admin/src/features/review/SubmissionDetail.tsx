@@ -112,12 +112,16 @@ function MediaLightbox({
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
+      // Capture phase + stopImmediatePropagation prevents ReviewOverlay
+      // shortcuts (A/R/arrows) from firing while the lightbox is open.
+      e.stopImmediatePropagation()
+      e.preventDefault()
       if (e.key === 'Escape') onClose()
       else if (e.key === 'ArrowLeft') goPrev()
       else if (e.key === 'ArrowRight') goNext()
     }
-    window.addEventListener('keydown', handleKey)
-    return () => window.removeEventListener('keydown', handleKey)
+    window.addEventListener('keydown', handleKey, true)
+    return () => window.removeEventListener('keydown', handleKey, true)
   }, [onClose, goPrev, goNext])
 
   const url = urls[index]
