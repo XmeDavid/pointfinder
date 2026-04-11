@@ -10,13 +10,21 @@ const apiClient = axios.create({
 });
 
 // ---------------------------------------------------------------------------
-// Shared token refresh with promise deduplication.
+// Token refresh with promise deduplication.
 // Only one /auth/refresh call runs at a time; concurrent callers await the
 // same promise. This prevents the backend from seeing a second request with
 // an already-rotated (invalid) refresh token.
 // ---------------------------------------------------------------------------
 
 let refreshPromise: Promise<string> | null = null;
+
+/** Sentinel error for unrecoverable auth failures (expired/revoked refresh token). */
+class PermanentAuthError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PermanentAuthError";
+  }
+}
 
 /**
  * Perform a single token refresh, deduplicating concurrent calls.
@@ -28,10 +36,9 @@ function refreshAccessToken(): Promise<string> {
   refreshPromise = (async () => {
     try {
       const refreshToken = useAuthStore.getState().refreshToken;
-      if (!refreshToken) throw new Error("No refresh token");
+      if (!refreshToken) throw new PermanentAuthError("No refresh token");
 
       // Use raw axios to bypass apiClient interceptors and avoid loops.
-      // Timeout prevents hanging if refresh endpoint is unresponsive.
       const response = await axios.post(
         `${API_URL}/auth/refresh`,
         { refreshToken },
@@ -44,14 +51,15 @@ function refreshAccessToken(): Promise<string> {
       useAuthStore.getState().setTokens(newAccessToken, newRefreshToken, user);
       return newAccessToken as string;
     } catch (err) {
-      // Distinguish permanent auth failures from transient errors.
-      // 400/401/403 = refresh token is invalid/expired/rejected → unrecoverable.
-      //   (The backend returns 400 for expired or unknown refresh tokens.)
-      // Network errors / 5xx = transient → let callers decide whether to retry.
+      // 400/401/403 from refresh endpoint = token is invalid/expired → unrecoverable.
+      // (The backend returns 400 for expired or unknown refresh tokens.)
       const status = axios.isAxiosError(err) ? err.response?.status : undefined;
       if (status === 400 || status === 401 || status === 403) {
         throw new PermanentAuthError("Refresh token rejected");
       }
+      // "No refresh token" is already a PermanentAuthError, re-throw as-is
+      if (err instanceof PermanentAuthError) throw err;
+      // Everything else (network, 5xx) is transient
       throw err;
     } finally {
       refreshPromise = null;
@@ -61,67 +69,57 @@ function refreshAccessToken(): Promise<string> {
   return refreshPromise;
 }
 
-/** Sentinel error for unrecoverable auth failures (expired/revoked refresh token). */
-class PermanentAuthError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "PermanentAuthError";
-  }
-}
-
 /**
  * Check whether a JWT is expired or within a safety margin of expiry.
- * Decodes the payload (no signature verification needed — the server
- * validates on receipt) and compares `exp` against the current time.
  */
 function isTokenExpiringSoon(token: string, marginSeconds = 60): boolean {
   try {
     const payload = JSON.parse(atob(token.split(".")[1]));
-    if (typeof payload.exp !== "number") return true; // no exp → treat as expired
+    if (typeof payload.exp !== "number") return true;
     return payload.exp - marginSeconds <= Date.now() / 1000;
   } catch {
-    return true; // malformed → treat as expired
+    return true;
   }
 }
 
+function forceLogout() {
+  useAuthStore.getState().handleAuthFailure();
+}
+
 /**
- * Obtain a valid access token, refreshing if necessary.
- * Safe to call from multiple call-sites concurrently — only one refresh
- * request will be in-flight at a time.
+ * Obtain a valid access token, refreshing proactively if needed.
  *
- * @returns The current (or freshly obtained) access token, or `null` if
- *          the user is not authenticated.
- * @throws  On transient refresh failures (network, 5xx) so callers can retry.
- *          Permanent auth failures (401/403) return `null` after clearing state.
+ * - Returns a valid token on success.
+ * - Calls forceLogout() and returns null on permanent auth failure.
+ * - Throws on transient failure so callers can retry.
  */
 export async function getValidAccessToken(): Promise<string | null> {
   const { accessToken, refreshToken, isAuthenticated } = useAuthStore.getState();
 
-  // Happy path: token available in memory and not near expiry
+  // Happy path: token in memory and not near expiry
   if (accessToken && !isTokenExpiringSoon(accessToken)) return accessToken;
 
-  // Nothing to refresh with
+  // Not authenticated at all
   if (!isAuthenticated || !refreshToken) return null;
 
   try {
     return await refreshAccessToken();
   } catch (err) {
-    // Permanent auth failure (expired/revoked refresh token) → not recoverable
-    if (err instanceof PermanentAuthError) return null;
-    // Transient failure (network, timeout, 5xx) → propagate so callers can retry
+    if (err instanceof PermanentAuthError) {
+      // Refresh token is permanently invalid — logout immediately.
+      // Don't let unauthenticated requests hit the server.
+      forceLogout();
+      return null;
+    }
+    // Transient (network, 5xx) — propagate so callers can retry
     throw err;
   }
 }
 
-function forceLogout() {
-  // handleAuthFailure() sets isAuthenticated=false, which AuthGuard observes
-  // via Zustand subscription and declaratively renders <Navigate to="/login" />.
-  // No hard window.location.href needed — SPA transition preserves app state.
-  useAuthStore.getState().handleAuthFailure();
-}
-
 // ---------------------------------------------------------------------------
-// Request interceptor: attach access token, refreshing if needed.
+// Request interceptor: attach access token, refreshing proactively.
+// This is the PRIMARY token management path. The response interceptor
+// below is only a safety net for rare edge cases.
 // ---------------------------------------------------------------------------
 
 apiClient.interceptors.request.use(async (config) => {
@@ -130,21 +128,22 @@ apiClient.interceptors.request.use(async (config) => {
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    // token === null means either not authenticated or permanent auth failure.
-    // Let the request through — the 401 response interceptor handles cleanup.
+    // null = not authenticated (or just logged out). Let it through —
+    // public endpoints work, protected endpoints 401 naturally.
   } catch {
-    // Transient refresh failure (network, timeout).
-    // Reject so React Query (or other callers) can retry with backoff,
-    // rather than sending unauthenticated requests that create server noise.
-    return Promise.reject(new Error('Token refresh temporarily unavailable'));
+    // Transient refresh failure. Reject so React Query retries with backoff
+    // instead of sending tokenless requests that create 401 noise.
+    return Promise.reject(new Error("Token refresh temporarily unavailable"));
   }
   return config;
 });
 
 // ---------------------------------------------------------------------------
-// Response interceptor: on 401, attempt one refresh then retry.
-// Uses the same deduplicating refreshAccessToken() so concurrent 401s
-// don't each fire their own refresh call.
+// Response interceptor: safety net for the rare case where a valid access
+// token becomes invalid between the proactive check and the server receiving
+// it (e.g., server restart invalidating all tokens).
+//
+// ONE retry only. If it fails → logout. No complex retry chains.
 // ---------------------------------------------------------------------------
 
 apiClient.interceptors.response.use(
@@ -153,23 +152,21 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config;
     const status = error.response?.status;
 
-    // 401 with no prior retry = token may have expired mid-session
     if (status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      // Invalidate the in-memory token so refreshAccessToken() actually fires
+      // Force a fresh refresh by clearing the in-memory access token
       useAuthStore.getState().clearAccessToken();
 
       try {
         const newToken = await refreshAccessToken();
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return apiClient(originalRequest);
-      } catch (refreshErr) {
-        // Only force logout on permanent auth failure (expired/revoked refresh token).
-        // Transient errors (network, 5xx) propagate to let the caller handle/retry.
-        if (refreshErr instanceof PermanentAuthError) {
-          forceLogout();
-        }
+      } catch {
+        // Any refresh failure here (permanent or transient) → logout.
+        // We already tried the proactive path in the request interceptor;
+        // if we're here, something is genuinely wrong.
+        forceLogout();
         return Promise.reject(error);
       }
     }
