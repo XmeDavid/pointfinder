@@ -145,8 +145,12 @@ public class AuthService {
             throw new BadRequestException("Session expired. Please log in again.");
         }
 
-        // Delete old refresh token
-        refreshTokenRepository.delete(storedToken);
+        // Grace period: keep old token valid for 30 seconds instead of deleting
+        // immediately. This handles the race condition where a page refresh kills
+        // the browser before the new token response is processed — the client
+        // retries with the old token on reload and it still works.
+        storedToken.setExpiresAt(Instant.now().plusSeconds(30));
+        refreshTokenRepository.save(storedToken);
 
         return generateAuthResponse(storedToken.getUser());
     }
