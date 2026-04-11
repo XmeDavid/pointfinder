@@ -37,6 +37,51 @@ States: `setup` → `live` → `ended` (can revert to setup or live from ended)
 
 **Core flow**: Teams scan NFC tags at bases → check in → complete assigned challenges → submit answers (text/photo/video) → operators review submissions → points awarded
 
+## Development Workflow
+
+**Every change must be verified before claiming completion.** Follow this checklist after implementing any change:
+
+### 1. Type-check and lint
+```bash
+# Frontend — always run both after any web-admin change
+cd web-admin && npx tsc --noEmit          # Type-check
+cd web-admin && npm run lint              # ESLint
+
+# Backend
+cd backend && ./gradlew build             # Compiles + checks
+```
+
+### 2. Run affected unit tests
+```bash
+# Frontend — run the specific test file for the component you changed
+cd web-admin && npx vitest run src/path/to/Component.test.tsx
+
+# Backend — run the specific test class
+cd backend && ./gradlew test --tests "com.prayer.pointfinder.SomeTest"
+```
+
+### 3. Run full test suites via Docker (preferred over local gradle/npm)
+```bash
+make test-frontend-docker  # Frontend lint + all tests (canonical CI check)
+make test-backend-docker   # Backend tests only
+make test-docker           # Both
+```
+
+### 4. E2E smoke test (for any user-facing change)
+```bash
+cd e2e && ./run.sh smoke   # Quick critical-path API check
+cd e2e && ./run.sh api     # Full API suite (for larger changes)
+cd e2e && ./run.sh web     # Web UI tests (for frontend changes)
+cd e2e && ./run.sh all     # Everything (for cross-cutting changes)
+```
+
+### Common pitfalls to avoid
+- **Test wrappers**: React components using `useNavigate`, `useParams`, or any router hook need `MemoryRouter` in test wrappers. Check existing tests before adding new router dependencies.
+- **Test IDs**: When renaming or removing `data-testid` attributes, search for those IDs in test files (`*.test.tsx`) and E2E tests (`e2e/`). Same for `accessibilityIdentifier` (iOS) and `Modifier.testTag()` (Android).
+- **Route paths**: The web-admin route for the game list is `/dashboard`, not `/games`. Check `App.tsx` routes before hardcoding navigation paths.
+- **Mock factories**: Test factories (e.g. `createMockGame`) have default values (status: `setup`). When testing state-dependent UI, explicitly pass the required state override.
+- **API changes**: If you add/remove/rename an API endpoint or change its contract, update the corresponding mutation hook, API client method, and all consumers. Check both `web-admin` and `web-admin-legacy`.
+
 ## Build & Test Commands
 
 ### Root Makefile
