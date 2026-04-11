@@ -140,28 +140,23 @@ public class AuditExportService {
         Set<ActivityEventType> types = parseActionTypes(query.actionTypeRaw());
         boolean includeArchived = Boolean.TRUE.equals(query.includeArchived());
 
-        // SQL pushdown — everything filterable on the activity_events row
-        // happens in one query. JPQL short-circuits each :param IS NULL
-        // check, so passing null means "do not filter on this criterion".
-        // Note: type filtering is done in Java post-query because Hibernate
-        // 6.6 cannot bind a Collection<Enum> to a PostgreSQL custom enum
-        // column in an IN clause without generating invalid SQL.
-        List<ActivityEvent> rows = activityEventRepository.findForAuditExport(
-                query.gameId(),
-                from,
-                to,
-                query.teamId(),
-                query.playerId(),
-                query.operatorId(),
-                query.sourceSurface(),
-                includeArchived);
-
-        // Post-query type filter (when caller specified actionType param)
-        if (types != null && !types.isEmpty()) {
-            rows = rows.stream()
-                    .filter(r -> r.getType() != null && types.contains(r.getType()))
-                    .toList();
-        }
+        // Fetch all events for the game and filter in Java. Hibernate 6.6
+        // generates invalid SQL for the pushdown query's null-guarded
+        // parameters and PostgreSQL custom enum IN clauses. Since the
+        // dataset is per-game (typically a few hundred rows), in-memory
+        // filtering is negligible.
+        List<ActivityEvent> rows = activityEventRepository
+                .findByGameIdIncludingArchived(query.gameId())
+                .stream()
+                .filter(ae -> includeArchived || !ae.isArchived())
+                .filter(ae -> from == null || !ae.getTimestamp().isBefore(from))
+                .filter(ae -> to == null || ae.getTimestamp().isBefore(to))
+                .filter(ae -> query.teamId() == null || (ae.getTeam() != null && ae.getTeam().getId().equals(query.teamId())))
+                .filter(ae -> query.playerId() == null || (ae.getActorPlayer() != null && ae.getActorPlayer().getId().equals(query.playerId())))
+                .filter(ae -> query.operatorId() == null || (ae.getActorOperatorUser() != null && ae.getActorOperatorUser().getId().equals(query.operatorId())))
+                .filter(ae -> types == null || types.isEmpty() || (ae.getType() != null && types.contains(ae.getType())))
+                .filter(ae -> query.sourceSurface() == null || query.sourceSurface().equals(ae.getSourceSurface()))
+                .toList();
 
         UUID currentOperatorId = null;
         try {
