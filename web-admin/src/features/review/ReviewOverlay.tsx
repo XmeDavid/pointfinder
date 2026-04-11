@@ -191,7 +191,7 @@ export default function ReviewOverlay({ gameId }: ReviewOverlayProps) {
       </div>
 
       {/* Right: detail or empty state — hidden on mobile when list is shown */}
-      <div className={!mobileShowDetail && isMobile ? 'hidden' : 'flex-1 flex flex-col min-w-0'}>
+      <div className={!mobileShowDetail && isMobile ? 'hidden' : 'flex-1 flex flex-col min-w-0 min-h-0'}>
         {selectedSubmissionId ? (
           <SubmissionDetail submissionId={selectedSubmissionId} gameId={gameId} />
         ) : (
