@@ -60,20 +60,22 @@ export function connectWebSocket(
       if (hasConnectedOnce && tokenProvider) {
         try {
           token = await tokenProvider();
-        } catch (err) {
-          console.warn("WebSocket tokenProvider threw; falling back to cached token", err);
+        } catch {
           token = null;
         }
       }
       if (!token) {
-        token = await getValidAccessToken();
+        try {
+          token = await getValidAccessToken();
+        } catch {
+          // Transient refresh failure — STOMP.js will retry via reconnectDelay.
+          // Don't throw into STOMP internals.
+          token = null;
+        }
       }
       if (token) {
         client.connectHeaders = { Authorization: `Bearer ${token}` };
       } else {
-        // Strip any stale header so the STOMP frame is sent without auth —
-        // the backend will reject with a STOMP ERROR frame and our
-        // onStompError handler will clear auth / trigger logout.
         client.connectHeaders = {};
       }
     },
@@ -109,22 +111,13 @@ export function connectWebSocket(
       const errorCode = frame.headers["error-code"];
       console.error("STOMP error:", raw, errorCode ? `(${errorCode})` : "");
 
-      if (errorCode === "WS_ACCESS_DENIED") {
-        // Auth failure — attempt one refresh. If that also fails, the session
-        // is fully expired: trigger logout and stop reconnecting.
-        getValidAccessToken().then((token) => {
-          if (!token) {
-            useAuthStore.getState().handleAuthFailure();
-            client.deactivate();
-          }
-          // If token obtained, STOMP.js auto-reconnect will pick it up via
-          // beforeConnect → tokenProvider / getValidAccessToken.
-        });
-      } else {
-        // Non-auth error (e.g. broker restart) — clear token so next
-        // reconnect triggers a proactive refresh, but don't logout.
-        useAuthStore.getState().clearAccessToken();
-      }
+      // Clear in-memory access token so the next reconnect triggers a
+      // proactive refresh via beforeConnect → getValidAccessToken().
+      // NEVER call handleAuthFailure() here — that wipes the refresh token
+      // from localStorage and logs the user out. The HTTP layer (client.ts)
+      // is the single authority on auth state; WebSocket errors should not
+      // independently decide to logout.
+      useAuthStore.getState().clearAccessToken();
       onError?.(i18n.t("errors.liveUpdatesRetrying"));
     },
     onWebSocketError: () => {

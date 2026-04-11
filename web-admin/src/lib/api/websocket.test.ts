@@ -270,46 +270,17 @@ describe("onStompError WS_ACCESS_DENIED handling", () => {
 
     await client.fireConnect();
 
-    // Simulate WS_ACCESS_DENIED with no valid token available (fully expired)
-    mockGetValidAccessToken.mockResolvedValueOnce(null);
+    // Simulate WS_ACCESS_DENIED — should only clear access token, not logout.
+    // The HTTP layer (client.ts) is the single authority on auth state.
+    // STOMP auto-reconnect will pick up a fresh token via beforeConnect.
     client.options.onStompError!({
       headers: { message: "Auth failed", "error-code": "WS_ACCESS_DENIED" },
     });
 
-    // Let the async getValidAccessToken().then() resolve
-    await vi.waitFor(() => {
-      expect(mockHandleAuthFailure).toHaveBeenCalledTimes(1);
-    });
-    expect(client.deactivated).toBe(true);
-    expect(onError).toHaveBeenCalled();
-  });
-
-  it("does not logout when refresh succeeds after WS_ACCESS_DENIED", async () => {
-    mockGetValidAccessToken.mockResolvedValueOnce("initial-token");
-    const onError = vi.fn();
-
-    const { connectWebSocket } = await importFresh();
-    const client = connectWebSocket(
-      "game-1",
-      () => {},
-      onError,
-      () => {}
-    ) as unknown as MockClient;
-
-    await client.fireConnect();
-
-    // Simulate WS_ACCESS_DENIED but refresh succeeds (only access token was expired)
-    mockGetValidAccessToken.mockResolvedValueOnce("refreshed-token");
-    client.options.onStompError!({
-      headers: { message: "Auth failed", "error-code": "WS_ACCESS_DENIED" },
-    });
-
-    await vi.waitFor(() => {
-      expect(mockGetValidAccessToken).toHaveBeenCalledTimes(2);
-    });
-    // Should NOT have logged out — refresh succeeded
+    expect(mockClearAccessToken).toHaveBeenCalledTimes(1);
     expect(mockHandleAuthFailure).not.toHaveBeenCalled();
     expect(client.deactivated).toBe(false);
+    expect(onError).toHaveBeenCalled();
   });
 
   it("clears access token on non-auth STOMP errors without triggering logout", async () => {
