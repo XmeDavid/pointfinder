@@ -12,6 +12,10 @@ interface GameMapProps {
   mapStyle?: string
   /** Array of [lng, lat] points to fit the map bounds around on initial load */
   fitPoints?: [number, number][]
+  /** Callback to receive the map ref instance for external control (flyTo, getCenter, etc.) */
+  onMapRef?: (ref: MapRef | null) => void
+  /** Called when the map background is clicked (not a marker) */
+  onClick?: () => void
 }
 
 export function GameMap({
@@ -21,8 +25,15 @@ export function GameMap({
   children,
   mapStyle,
   fitPoints,
+  onMapRef,
+  onClick,
 }: GameMapProps) {
   const mapRef = useRef<MapRef>(null)
+
+  const setMapRef = useCallback((ref: MapRef | null) => {
+    (mapRef as React.MutableRefObject<MapRef | null>).current = ref
+    onMapRef?.(ref)
+  }, [onMapRef])
   const hasFitted = useRef(false)
 
   const [viewState, setViewState] = useState({
@@ -56,9 +67,10 @@ export function GameMap({
   return (
     <div className={className} data-testid="map-wrapper">
       <Map
-        ref={mapRef}
+        ref={setMapRef}
         {...viewState}
         onMove={handleMove}
+        onClick={onClick}
         mapStyle={mapStyle ?? DARK_STYLE_URL}
         style={{ width: '100%', height: '100%' }}
         attributionControl={false}
