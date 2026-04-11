@@ -13,6 +13,8 @@ interface WorkspaceState {
   selectedStageId: string | null
   selectedSubmissionId: string | null
   inspectedTeamId: string | null
+  inspectedBaseId: string | null
+  preInspectMapView: { center: [number, number]; zoom: number } | null
   leaderboardOpen: boolean
   notificationSenderOpen: boolean
   settingsPanelOpen: boolean
@@ -29,6 +31,8 @@ interface WorkspaceActions {
   selectStage: (id: string | null) => void
   selectSubmission: (id: string | null) => void
   inspectTeam: (id: string | null) => void
+  inspectBase: (id: string | null) => void
+  saveMapView: (center: [number, number], zoom: number) => void
   toggleLeaderboard: () => void
   toggleNotificationSender: () => void
   toggleSettingsPanel: () => void
@@ -45,6 +49,8 @@ const initialState: WorkspaceState = {
   selectedStageId: null,
   selectedSubmissionId: null,
   inspectedTeamId: null,
+  inspectedBaseId: null,
+  preInspectMapView: null,
   leaderboardOpen: false,
   notificationSenderOpen: false,
   settingsPanelOpen: false,
@@ -57,7 +63,9 @@ export const useWorkspaceStore = create<WorkspaceState & WorkspaceActions>()((se
     mode,
     drawerOpen: false,
     inspectedTeamId: null,
+    inspectedBaseId: null,
     settingsPanelOpen: false,
+    preInspectMapView: null,
   }),
 
   openDrawer: (tab) => set(() => ({
@@ -97,7 +105,13 @@ export const useWorkspaceStore = create<WorkspaceState & WorkspaceActions>()((se
   }),
 
   selectSubmission: (id) => set({ selectedSubmissionId: id }),
-  inspectTeam: (id) => set({ inspectedTeamId: id }),
+  inspectTeam: (id) => set({ inspectedTeamId: id, inspectedBaseId: null, preInspectMapView: null }),
+  inspectBase: (id) => set({
+    inspectedBaseId: id,
+    inspectedTeamId: null,
+    ...(!id ? { preInspectMapView: null } : {}),
+  }),
+  saveMapView: (center, zoom) => set({ preInspectMapView: { center, zoom } }),
   toggleLeaderboard: () => set((s) => ({ leaderboardOpen: !s.leaderboardOpen })),
   toggleNotificationSender: () => set((s) => ({ notificationSenderOpen: !s.notificationSenderOpen })),
   toggleSettingsPanel: () => set((s) => ({ settingsPanelOpen: !s.settingsPanelOpen })),
