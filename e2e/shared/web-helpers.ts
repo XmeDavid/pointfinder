@@ -186,7 +186,7 @@ async function injectStoredOperatorSession(page: Page) {
 
     await page.goto('/dashboard');
 
-    const atDashboard = await page.waitForURL(/\/app\/dashboard/, { timeout: 10_000 }).then(() => true).catch(() => false);
+    const atDashboard = await page.waitForURL(/\/dashboard/, { timeout: 10_000 }).then(() => true).catch(() => false);
     if (!atDashboard) {
       return false;
     }
@@ -240,6 +240,8 @@ export async function loginAsOperator(page: Page) {
 
   // Attempt form login
   await page.goto('/login');
+  await page.waitForLoadState('networkidle');
+  await expect(page.getByTestId('login-email')).toBeVisible({ timeout: 15_000 });
   await page.getByTestId('login-email').fill(config.operatorEmail);
   await page.getByTestId('login-password').fill(config.operatorPassword);
 
