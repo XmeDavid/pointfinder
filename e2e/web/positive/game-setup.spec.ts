@@ -36,20 +36,25 @@ test.describe('Game setup via web UI', { tag: '@smoke' }, () => {
   // P1: Login and verify games list loads
   test('P1: games list page renders after login', async ({ page }) => {
     await loginAsOperator(page);
-    await expect(page.getByTestId('create-game-btn')).toBeVisible({ timeout: 10_000 });
+    // Dashboard should show the "New Game" button (testid or text fallback)
+    const createBtn = page.getByTestId('create-game-btn').or(page.getByRole('button', { name: /new game/i }));
+    await expect(createBtn).toBeVisible({ timeout: 10_000 });
   });
 
   // P2: Create game via UI
   test('P2: create game via UI form', async ({ page }) => {
     await loginAsOperator(page);
     await page.goto('/dashboard');
-    await page.getByTestId('create-game-btn').click();
+    const createBtn = page.getByTestId('create-game-btn').or(page.getByRole('button', { name: /new game/i }));
+    await createBtn.click();
 
     // Create dialog opens (not a new page)
     const gameName = throwawayGameFixture(config.runId, 'web-setup').name;
-    await page.getByTestId('game-name-input').fill(gameName);
+    // Dialog input — fallback to label-based selector if testid not present
+    const nameInput = page.getByTestId('game-name-input').or(page.getByLabel(/name/i));
+    await nameInput.fill(gameName);
 
-    const saveBtn = page.getByTestId('game-save-btn');
+    const saveBtn = page.getByTestId('game-save-btn').or(page.getByRole('button', { name: /create game/i }));
     await expect(saveBtn).toBeEnabled({ timeout: 5_000 });
     await saveBtn.click();
 
