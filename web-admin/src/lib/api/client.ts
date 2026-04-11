@@ -36,6 +36,7 @@ function refreshAccessToken(): Promise<string> {
   refreshPromise = (async () => {
     try {
       const refreshToken = useAuthStore.getState().refreshToken;
+      console.warn("[AUTH] refreshAccessToken: token present?", !!refreshToken, "isAuthenticated?", useAuthStore.getState().isAuthenticated);
       if (!refreshToken) throw new PermanentAuthError("No refresh token");
 
       // Use raw axios to bypass apiClient interceptors and avoid loops.
@@ -48,12 +49,14 @@ function refreshAccessToken(): Promise<string> {
       if (!newAccessToken || !newRefreshToken) {
         throw new Error("Invalid refresh response: missing tokens");
       }
+      console.warn("[AUTH] refreshAccessToken: SUCCESS — new tokens stored");
       useAuthStore.getState().setTokens(newAccessToken, newRefreshToken, user);
       return newAccessToken as string;
     } catch (err) {
       // 400/401/403 from refresh endpoint = token is invalid/expired → unrecoverable.
       // (The backend returns 400 for expired or unknown refresh tokens.)
       const status = axios.isAxiosError(err) ? err.response?.status : undefined;
+      console.warn("[AUTH] refreshAccessToken: FAILED — status:", status, "message:", err instanceof Error ? err.message : err);
       if (status === 400 || status === 401 || status === 403) {
         throw new PermanentAuthError("Refresh token rejected");
       }
