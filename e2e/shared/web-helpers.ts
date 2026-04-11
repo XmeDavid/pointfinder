@@ -290,7 +290,7 @@ export async function loginAsOperator(page: Page) {
     );
 
     await page.goto('/dashboard');
-    await expect(page).toHaveURL(/\/app\/dashboard/, { timeout: 15_000 });
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 });
     await waitForPersistedOperatorSession(page);
     await syncSessionFromBrowser(page);
     operatorSessionBootstrapped = true;

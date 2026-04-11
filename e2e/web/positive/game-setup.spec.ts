@@ -108,22 +108,21 @@ test.describe('Game setup via web UI', { tag: '@smoke' }, () => {
 
     await loginAsOperator(page);
     await page.goto(`/game/${gameId}`);
+    await expect(page.getByTestId('map-wrapper')).toBeVisible({ timeout: 15_000 });
 
-    // The "Go Live" button is on the overview page (not settings)
-    const activateBtn = page.locator('button', { hasText: /go live/i });
-    await expect(activateBtn).toBeVisible({ timeout: 10_000 });
-    await expect(activateBtn).toBeEnabled({ timeout: 5_000 });
-    await activateBtn.click();
+    // Click the ReadinessIndicator to expand it (shows "Ready to launch")
+    const readiness = page.getByTestId('readiness-indicator');
+    await expect(readiness).toBeVisible({ timeout: 10_000 });
+    await readiness.click();
 
-    // Confirm dialog if any
-    const confirmBtn = page.locator('button', { hasText: /confirm|yes/i });
-    if (await confirmBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
-      await confirmBtn.click();
-    }
+    // Click "Go Live" button inside the expanded checklist
+    const goLiveBtn = page.getByTestId('go-live-btn');
+    await expect(goLiveBtn).toBeVisible({ timeout: 5_000 });
+    await goLiveBtn.click();
 
-    // Verify game shows as live somewhere on the page
+    // Verify game transitions to live (mode switches to command)
     await expect(
-      page.locator('text=/live|active|running/i').first(),
+      page.locator('text=/live/i').first(),
     ).toBeVisible({ timeout: 15_000 });
   });
 });
