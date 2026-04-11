@@ -387,8 +387,9 @@ function ChallengeCard({ challenge, baseId, assignments, teams, onSelect, onUnli
 
   const challengeAssignments = assignments.filter((a) => a.challengeId === challenge.id)
   const isGlobal = challengeAssignments.some((a) => !a.teamId)
-  const assignedTeamIds = new Set(
-    challengeAssignments.filter((a) => a.teamId).map((a) => a.teamId),
+  const assignedTeamIds = useMemo(
+    () => new Set(challengeAssignments.filter((a) => a.teamId).map((a) => a.teamId)),
+    [challengeAssignments],
   )
   const assignedTeams = challengeAssignments
     .filter((a) => a.teamId)

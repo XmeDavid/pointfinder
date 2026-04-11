@@ -4,8 +4,8 @@ import { TeamMarkers } from './TeamMarkers'
 import type { TeamLocation, Team } from '@/types'
 
 vi.mock('react-map-gl/maplibre', () => ({
-  default: ({ children }: any) => <div data-testid="map-container">{children}</div>,
-  Marker: ({ children, onClick }: any) => (
+  default: ({ children }: { children: React.ReactNode }) => <div data-testid="map-container">{children}</div>,
+  Marker: ({ children, onClick }: { children: React.ReactNode; onClick?: (e: { originalEvent: { stopPropagation: () => void } }) => void }) => (
     <div data-testid="marker" onClick={() => onClick?.({ originalEvent: { stopPropagation: vi.fn() } })}>
       {children}
     </div>

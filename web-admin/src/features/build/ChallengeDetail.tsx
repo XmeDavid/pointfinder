@@ -96,8 +96,9 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
   )
 
   const isGlobal = challengeAssignments.some((a) => !a.teamId)
-  const assignedTeamIds = new Set(
-    challengeAssignments.filter((a) => a.teamId).map((a) => a.teamId),
+  const assignedTeamIds = useMemo(
+    () => new Set(challengeAssignments.filter((a) => a.teamId).map((a) => a.teamId)),
+    [challengeAssignments],
   )
 
   const [showTeamPicker, setShowTeamPicker] = useState(false)

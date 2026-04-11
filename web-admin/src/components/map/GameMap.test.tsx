@@ -4,7 +4,7 @@ import { GameMap } from './GameMap'
 
 // MapLibre GL uses WebGL which isn't available in jsdom
 vi.mock('react-map-gl/maplibre', () => ({
-  default: ({ children, className }: any) => (
+  default: ({ children, className }: { children: React.ReactNode; className?: string }) => (
     <div data-testid="map-container" className={className}>{children}</div>
   ),
   NavigationControl: () => <div data-testid="nav-control" />,

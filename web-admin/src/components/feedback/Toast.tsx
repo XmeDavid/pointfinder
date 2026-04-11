@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 /**
  * Re-export the existing toast system for v2 layout usage.
  *

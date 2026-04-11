@@ -57,7 +57,7 @@ export default function StageDetail({
     [stagesData, stageId],
   )
 
-  const allBases = basesData ?? []
+  const allBases = useMemo(() => basesData ?? [], [basesData])
   const assignments = assignmentsData ?? []
 
   // Local form state

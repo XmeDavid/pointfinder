@@ -21,7 +21,7 @@ export default function GameStatistics({ gameId }: Props) {
   const { data: bases } = useBases(gameId)
   const { data: teams } = useTeams(gameId)
 
-  const gameSubs = submissions ?? []
+  const gameSubs = useMemo(() => submissions ?? [], [submissions])
   const teamCount = teams?.length ?? 0
 
   // Summary stats
