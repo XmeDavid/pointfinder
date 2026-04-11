@@ -79,7 +79,7 @@ export function SlideDrawer({
             )}
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto">{children}</div>
+            <div className="flex-1 min-h-0 flex flex-col">{children}</div>
           </motion.div>
         </div>
       )}

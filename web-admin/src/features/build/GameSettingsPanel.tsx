@@ -102,7 +102,7 @@ export default function GameSettingsPanel({
       title="Game Settings"
     >
       <div
-        className="px-4 py-4 space-y-6"
+        className="flex-1 overflow-y-auto px-4 py-4 space-y-6"
         data-testid="game-settings-panel"
       >
         {/* Map Settings */}
