@@ -233,6 +233,7 @@
     <string name="label_hidden_base">Hidden Base</string>
     <string name="label_none">None</string>
     <string name="label_challenges_at_base">Challenges (%1$d)</string>
+    <string name="label_bases_at_challenge">Bases (%1$d)</string>
     <string name="label_add_challenge">Add Challenge</string>
     <string name="label_delete_base">Delete</string>
     <string name="label_delete_base_confirm">Delete this base? This cannot be undone.</string>
@@ -500,4 +501,28 @@
     <string name="label_assignment_locked_all_teams">An all-teams assignment already exists for this base.</string>
     <string name="label_select_base">Select Base</string>
     <string name="label_select_challenge">Select Challenge</string>
+    <!-- Stages -->
+    <string name="label_stages">Stages</string>
+    <string name="label_no_stages">No stages created</string>
+    <string name="label_new_stage">New Stage</string>
+    <string name="label_delete_stage">Delete Stage</string>
+    <string name="label_delete_stage_confirm">Delete this stage? This cannot be undone.</string>
+    <string name="label_stage_name">Stage Name</string>
+    <string name="label_transition_type">Transition Type</string>
+    <string name="label_transition_manual">Manual</string>
+    <string name="label_transition_scheduled">Scheduled</string>
+    <string name="label_transition_trigger">Trigger</string>
+    <string name="label_scheduled_at">Scheduled At</string>
+    <string name="label_trigger_base">Trigger Base</string>
+    <string name="label_assigned_bases">Assigned Bases (%1$d)</string>
+    <string name="label_stage_active">Active</string>
+    <string name="label_stage_inactive">Inactive</string>
+    <string name="label_stage_n_of_m">Stage %1$d of %2$d</string>
+    <string name="label_manage_arrow">Manage →</string>
+    <string name="toast_stage_created">Stage created</string>
+    <string name="toast_stage_saved">Stage saved</string>
+    <string name="label_bases_count">%1$d base(s)</string>
+    <string name="label_no_bases_assigned">No bases assigned</string>
+    <string name="label_select_trigger_base">Select trigger base</string>
+    <string name="label_none_trigger_base">None</string>
 </resources>

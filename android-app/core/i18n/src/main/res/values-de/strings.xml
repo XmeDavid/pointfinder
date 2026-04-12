@@ -231,6 +231,7 @@
     <string name="label_hidden_base">Versteckte Station</string>
     <string name="label_none">Keine</string>
     <string name="label_challenges_at_base">Challenges (%1$d)</string>
+    <string name="label_bases_at_challenge">Stationen (%1$d)</string>
     <string name="label_add_challenge">Challenge hinzuf\u00fcgen</string>
     <string name="label_delete_base">Löschen</string>
     <string name="label_delete_base_confirm">Diese Station l\u00f6schen? Dies kann nicht r\u00fcckg\u00e4ngig gemacht werden.</string>

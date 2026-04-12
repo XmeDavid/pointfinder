@@ -22,9 +22,12 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Nfc
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
@@ -588,6 +591,69 @@ fun ChallengeEditScreen(
                                 Text(
                                     text = base.name,
                                     style = MaterialTheme.typography.bodyLarge,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Linked bases section (edit mode only — new challenges can't have assignments yet)
+            if (isEditMode && challenge != null) {
+                val linkedBases = remember(assignments, bases, challenge.id) {
+                    val assignedBaseIds = assignments
+                        .filter { it.challengeId == challenge.id }
+                        .map { it.baseId }
+                        .toSet()
+                    val fixedBase = bases.firstOrNull { it.fixedChallengeId == challenge.id }
+                    val assignmentBases = bases.filter { it.id in assignedBaseIds }
+                    (listOfNotNull(fixedBase) + assignmentBases).distinctBy { it.id }
+                }
+                Spacer(Modifier.height(24.dp))
+                Text(
+                    text = stringResource(R.string.label_bases_at_challenge, linkedBases.size),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Spacer(Modifier.height(8.dp))
+                if (linkedBases.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.label_no_base),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    linkedBases.forEach { base ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = base.name,
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                Icon(
+                                    imageVector = if (base.nfcLinked) Icons.Default.CheckCircle else Icons.Default.Nfc,
+                                    contentDescription = null,
+                                    tint = if (base.nfcLinked) StatusCompleted else StatusSubmitted,
+                                    modifier = Modifier.size(16.dp),
+                                )
+                                Text(
+                                    text = if (base.nfcLinked) {
+                                        stringResource(R.string.label_nfc_linked)
+                                    } else {
+                                        stringResource(R.string.label_nfc_not_linked)
+                                    },
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = if (base.nfcLinked) StatusCompleted else StatusSubmitted,
                                 )
                             }
                         }

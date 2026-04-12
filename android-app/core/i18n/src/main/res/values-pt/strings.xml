@@ -226,6 +226,7 @@
     <string name="label_hidden_base">Base Oculta</string>
     <string name="label_none">Nenhum</string>
     <string name="label_challenges_at_base">Desafios (%1$d)</string>
+    <string name="label_bases_at_challenge">Bases (%1$d)</string>
     <string name="label_add_challenge">Adicionar Desafio</string>
     <string name="label_delete_base">Eliminar Base</string>
     <string name="label_delete_base_confirm">Eliminar esta base? Esta ação não pode ser desfeita.</string>
