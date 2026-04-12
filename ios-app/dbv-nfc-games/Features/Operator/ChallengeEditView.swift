@@ -233,6 +233,36 @@ struct ChallengeEditView: View {
                 }
             }
 
+            // Assigned Bases (read-only)
+            if !isCreateMode {
+                Section {
+                    let assignedBases: [Base] = assignments
+                        .filter { $0.challengeId == challenge?.id }
+                        .compactMap { assignment in bases.first { $0.id == assignment.baseId } }
+
+                    if assignedBases.isEmpty {
+                        Text("Not assigned to any base")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .italic()
+                    } else {
+                        ForEach(assignedBases) { base in
+                            HStack(spacing: 10) {
+                                Circle()
+                                    .fill(base.nfcLinked ? Color.pfCompleted : Color.pfPending)
+                                    .frame(width: 8, height: 8)
+                                Text(base.name)
+                                    .foregroundStyle(Color.pfText)
+                            }
+                        }
+                    }
+                } header: {
+                    Text("BASES")
+                        .font(.caption)
+                        .foregroundStyle(Color.pfTextMuted)
+                }
+            }
+
             Section(locale.t("operator.challengeVariables")) {
                 if areVariablesLoading {
                     ProgressView()
