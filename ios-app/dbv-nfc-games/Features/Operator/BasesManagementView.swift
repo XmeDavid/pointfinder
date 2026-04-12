@@ -135,6 +135,7 @@ struct BasesManagementView: View {
                             base: base,
                             bases: bases,
                             challenges: challenges,
+                            assignments: assignments,
                             onSaved: { updatedBase in
                                 if let index = bases.firstIndex(where: { $0.id == updatedBase.id }) {
                                     bases[index] = updatedBase
@@ -159,6 +160,7 @@ struct BasesManagementView: View {
                         base: nil,
                         bases: bases,
                         challenges: challenges,
+                        assignments: assignments,
                         initialCoordinate: initialCoord,
                         onSaved: { newBase in
                             bases.append(newBase)

@@ -11,6 +11,7 @@ struct BaseEditView: View {
     let base: Base?
     let bases: [Base]
     let challenges: [Challenge]
+    let assignments: [Assignment]
     var onSaved: (Base) -> Void
     var onDeleted: (() -> Void)?
 
@@ -36,6 +37,16 @@ struct BaseEditView: View {
 
     private var isCreateMode: Bool { base == nil }
 
+    /// Challenges assigned to this base via assignments (read-only display).
+    private var challengesAtThisBase: [Challenge] {
+        guard let base else { return [] }
+        let assignedIds = assignments
+            .filter { $0.baseId == base.id }
+            .map { $0.challengeId }
+        let uniqueIds = NSOrderedSet(array: assignedIds).array as? [UUID] ?? assignedIds
+        return uniqueIds.compactMap { id in challenges.first(where: { $0.id == id }) }
+    }
+
     /// Challenges available for the fixed-challenge picker, excluding those already fixed to other bases.
     private var availableChallenges: [Challenge] {
         let unavailableIds = Set(
@@ -53,11 +64,12 @@ struct BaseEditView: View {
         return nil
     }
 
-    init(game: Game, base: Base?, bases: [Base], challenges: [Challenge], initialCoordinate: CLLocationCoordinate2D? = nil, onSaved: @escaping (Base) -> Void, onDeleted: (() -> Void)? = nil) {
+    init(game: Game, base: Base?, bases: [Base], challenges: [Challenge], assignments: [Assignment] = [], initialCoordinate: CLLocationCoordinate2D? = nil, onSaved: @escaping (Base) -> Void, onDeleted: (() -> Void)? = nil) {
         self.game = game
         self.base = base
         self.bases = bases
         self.challenges = challenges
+        self.assignments = assignments
         self.onSaved = onSaved
         self.onDeleted = onDeleted
         self._name = State(initialValue: base?.name ?? "")
@@ -139,6 +151,45 @@ struct BaseEditView: View {
                 }
                 .pickerStyle(.menu)
                 .accessibilityIdentifier("assign-challenge-btn")
+            }
+
+            // Challenges at this base (read-only, edit mode only)
+            if !isCreateMode {
+                Section {
+                    if challengesAtThisBase.isEmpty {
+                        Text(locale.t("operator.noChallengesAssigned"))
+                            .font(.subheadline)
+                            .italic()
+                            .foregroundStyle(Color.pfTextMuted)
+                    } else {
+                        ForEach(challengesAtThisBase) { challenge in
+                            HStack(spacing: 8) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(challenge.title)
+                                        .font(.subheadline)
+                                        .foregroundStyle(Color.pfText)
+                                    Text(challenge.answerType)
+                                        .font(.caption2)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color.pfTextMuted.opacity(0.15))
+                                        .foregroundStyle(Color.pfTextMuted)
+                                        .clipShape(Capsule())
+                                }
+                                Spacer()
+                                Text("\(challenge.points) pts")
+                                    .font(.caption)
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(Color.pfPending)
+                            }
+                        }
+                    }
+                } header: {
+                    Text(locale.t("operator.challenges"))
+                        .font(.caption)
+                        .textCase(.uppercase)
+                        .foregroundStyle(Color.pfTextMuted)
+                }
             }
 
             // NFC section (edit mode only)
