@@ -11,9 +11,20 @@ import com.prayer.pointfinder.core.model.CheckInResponse
 import com.prayer.pointfinder.core.model.CreateAssignmentRequest
 import com.prayer.pointfinder.core.model.CreateBaseRequest
 import com.prayer.pointfinder.core.model.CreateChallengeRequest
+import com.prayer.pointfinder.core.model.CreateOrgRequest
 import com.prayer.pointfinder.core.model.CreateTagRequest
+import com.prayer.pointfinder.core.model.EntityId
 import com.prayer.pointfinder.core.model.GameTag
+import com.prayer.pointfinder.core.model.InviteOrgMemberRequest
+import com.prayer.pointfinder.core.model.OrgMemberResponse
+import com.prayer.pointfinder.core.model.OrgWorkspace
+import com.prayer.pointfinder.core.model.UpdatePermissionsRequest
 import com.prayer.pointfinder.core.model.UpdateTagRequest
+import com.prayer.pointfinder.core.model.WorkspaceResponse
+import com.prayer.pointfinder.core.model.Stage
+import com.prayer.pointfinder.core.model.CreateStageRequest
+import com.prayer.pointfinder.core.model.UpdateStageRequest
+import com.prayer.pointfinder.core.model.ReorderStagesRequest
 import com.prayer.pointfinder.core.model.CreateGameRequest
 import com.prayer.pointfinder.core.model.CreateTeamRequest
 import com.prayer.pointfinder.core.model.Game
@@ -451,6 +462,36 @@ interface CompanionApi {
     @POST("api/games/import")
     suspend fun importGame(@Body request: ImportGameRequest): Game
 
+    // === Workspace & Organizations ===
+
+    @GET("api/workspaces")
+    suspend fun getWorkspaces(): WorkspaceResponse
+
+    @POST("api/orgs")
+    suspend fun createOrganization(@Body request: CreateOrgRequest): OrgWorkspace
+
+    @GET("api/orgs/{orgId}/members")
+    suspend fun getOrgMembers(@Path("orgId") orgId: EntityId): List<OrgMemberResponse>
+
+    @POST("api/orgs/{orgId}/members/invite")
+    suspend fun inviteOrgMember(
+        @Path("orgId") orgId: EntityId,
+        @Body request: InviteOrgMemberRequest,
+    ): OrgMemberResponse
+
+    @HTTP(method = "DELETE", path = "api/orgs/{orgId}/members/{userId}", hasBody = false)
+    suspend fun removeOrgMember(
+        @Path("orgId") orgId: EntityId,
+        @Path("userId") userId: EntityId,
+    ): Response<Unit>
+
+    @PATCH("api/orgs/{orgId}/members/{userId}/permissions")
+    suspend fun updateMemberPermissions(
+        @Path("orgId") orgId: EntityId,
+        @Path("userId") userId: EntityId,
+        @Body request: UpdatePermissionsRequest,
+    ): OrgMemberResponse
+
     // === Tag Management (Wave F — operator-only) ===
 
     @GET("api/games/{gameId}/tags")
@@ -474,6 +515,36 @@ interface CompanionApi {
         @Path("gameId") gameId: String,
         @Path("tagId") tagId: String,
     ): Response<Unit>
+
+    // === Stage Management ===
+
+    @GET("api/games/{gameId}/stages")
+    suspend fun getStages(@Path("gameId") gameId: EntityId): List<Stage>
+
+    @POST("api/games/{gameId}/stages")
+    suspend fun createStage(
+        @Path("gameId") gameId: EntityId,
+        @Body request: CreateStageRequest,
+    ): Stage
+
+    @PUT("api/games/{gameId}/stages/{stageId}")
+    suspend fun updateStage(
+        @Path("gameId") gameId: EntityId,
+        @Path("stageId") stageId: EntityId,
+        @Body request: UpdateStageRequest,
+    ): Stage
+
+    @HTTP(method = "DELETE", path = "api/games/{gameId}/stages/{stageId}", hasBody = false)
+    suspend fun deleteStage(
+        @Path("gameId") gameId: EntityId,
+        @Path("stageId") stageId: EntityId,
+    ): Response<Unit>
+
+    @PATCH("api/games/{gameId}/stages/reorder")
+    suspend fun reorderStages(
+        @Path("gameId") gameId: EntityId,
+        @Body request: ReorderStagesRequest,
+    )
 }
 
 @kotlinx.serialization.Serializable
