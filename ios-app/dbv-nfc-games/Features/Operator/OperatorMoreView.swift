@@ -7,6 +7,7 @@ struct OperatorMoreView: View {
 
     let game: Game
     let onBack: () -> Void
+    var selectedOrg: OrgWorkspace? = nil
 
     @State private var isExporting = false
     @State private var exportError: String?
@@ -105,6 +106,14 @@ struct OperatorMoreView: View {
                         OperatorsManagementView(game: game)
                     } label: {
                         Label(locale.t("operator.operators"), systemImage: "person.2")
+                    }
+
+                    if let org = selectedOrg {
+                        NavigationLink {
+                            OrganizationView(org: org)
+                        } label: {
+                            Label("Organization: \(org.name)", systemImage: "building.2")
+                        }
                     }
 
                     Button {
