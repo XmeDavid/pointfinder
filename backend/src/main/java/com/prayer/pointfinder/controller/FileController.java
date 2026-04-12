@@ -4,9 +4,11 @@ import com.prayer.pointfinder.entity.Player;
 import com.prayer.pointfinder.security.SecurityUtils;
 import com.prayer.pointfinder.service.FileAccessService;
 import com.prayer.pointfinder.service.FileStorageService;
+import com.prayer.pointfinder.service.ObjectStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +23,9 @@ import java.util.UUID;
  * <p>
  * Player-authenticated users access via /api/player/files/{gameId}/{filename}.
  * Operator/admin-authenticated users access via /api/games/{gameId}/files/{filename}.
+ * <p>
+ * When S3 object storage is enabled, access-controlled endpoints redirect (302)
+ * to a short-lived pre-signed S3 URL instead of streaming bytes directly.
  */
 @RestController
 @RequiredArgsConstructor
@@ -28,13 +33,14 @@ public class FileController {
 
     private final FileAccessService fileAccessService;
     private final FileStorageService fileStorageService;
+    private final ObjectStorageService objectStorageService;
 
     /**
      * Player-authenticated file download.
      * Security: /api/player/** requires ROLE_PLAYER (enforced by SecurityConfig).
      */
     @GetMapping("/api/player/files/{gameId}/{filename}")
-    public ResponseEntity<Resource> getFileAsPlayer(
+    public ResponseEntity<?> getFileAsPlayer(
             @PathVariable UUID gameId,
             @PathVariable String filename) {
         Player player = SecurityUtils.getCurrentPlayer();
@@ -47,18 +53,26 @@ public class FileController {
      * Security: /api/games/** requires ROLE_ADMIN or ROLE_OPERATOR (enforced by SecurityConfig).
      */
     @GetMapping("/api/games/{gameId}/files/{filename}")
-    public ResponseEntity<Resource> getFileAsOperator(
+    public ResponseEntity<?> getFileAsOperator(
             @PathVariable UUID gameId,
             @PathVariable String filename) {
         fileAccessService.ensureOperatorCanReadFile(gameId, filename);
         return serveFile(gameId, filename);
     }
 
-    private ResponseEntity<Resource> serveFile(UUID gameId, String filename) {
+    private ResponseEntity<?> serveFile(UUID gameId, String filename) {
+        if (objectStorageService.isEnabled()) {
+            String key = gameId + "/" + filename;
+            String presignedUrl = objectStorageService.generatePresignedUrl(key);
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .header(HttpHeaders.LOCATION, presignedUrl)
+                    .header(HttpHeaders.CACHE_CONTROL, "private, max-age=3500")
+                    .build();
+        }
+
+        // Local storage fallback: stream bytes directly
         Resource resource = fileStorageService.loadFile(gameId, filename);
-
         String contentType = determineContentType(filename);
-
         // Sanitize filename for Content-Disposition header to prevent header injection
         String safeFilename = filename.replaceAll("[^a-zA-Z0-9._-]", "_");
 

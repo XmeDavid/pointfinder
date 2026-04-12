@@ -5,6 +5,7 @@ import com.prayer.pointfinder.exception.FileStorageException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -18,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -65,6 +67,13 @@ public class FileStorageService {
             "isom", "iso2", "mp41", "mp42", "avc1", "m4v ", "msnv", "3gp4", "3gp5", "dash", "iso5", "iso6"
     );
 
+    private final ObjectStorageService objectStorageService;
+
+    @Autowired
+    public FileStorageService(ObjectStorageService objectStorageService) {
+        this.objectStorageService = objectStorageService;
+    }
+
     @Value("${app.uploads.path:/uploads}")
     private String uploadsPath;
 
@@ -94,16 +103,30 @@ public class FileStorageService {
 
         String extension = extensionFor(detectedKind);
         String filename = UUID.randomUUID() + "." + extension;
-        Path gameDir = uploadsRoot.resolve(gameId.toString());
-        try {
-            Files.createDirectories(gameDir);
-            Path target = gameDir.resolve(filename);
-            file.transferTo(target);
-            log.info("Stored file: {}", target);
-            return "/api/games/" + gameId + "/files/" + filename;
-        } catch (IOException e) {
-            throw new FileStorageException("Failed to store file", e);
+
+        if (objectStorageService.isEnabled()) {
+            try {
+                String key = gameId + "/" + filename;
+                byte[] bytes = file.getBytes();
+                String contentType = file.getContentType() != null ? file.getContentType() : "application/octet-stream";
+                objectStorageService.upload(key, bytes, contentType);
+                log.info("Stored file to S3: key={}", key);
+            } catch (IOException e) {
+                throw new FileStorageException("Failed to read uploaded file bytes", e);
+            }
+        } else {
+            Path gameDir = uploadsRoot.resolve(gameId.toString());
+            try {
+                Files.createDirectories(gameDir);
+                Path target = gameDir.resolve(filename);
+                file.transferTo(target);
+                log.info("Stored file locally: {}", target);
+            } catch (IOException e) {
+                throw new FileStorageException("Failed to store file", e);
+            }
         }
+
+        return "/api/games/" + gameId + "/files/" + filename;
     }
 
     public String storeAssembledUpload(Path assembledFile, UUID gameId, String contentType, long expectedSizeBytes) {
@@ -127,16 +150,30 @@ public class FileStorageService {
 
         String extension = extensionFor(detectedKind);
         String filename = UUID.randomUUID() + "." + extension;
-        Path gameDir = uploadsRoot.resolve(gameId.toString());
-        Path target = gameDir.resolve(filename);
-        try {
-            Files.createDirectories(gameDir);
-            Files.move(assembledFile, target);
-            log.info("Stored assembled upload: {}", target);
-            return "/api/games/" + gameId + "/files/" + filename;
-        } catch (IOException e) {
-            throw new FileStorageException("Failed to store assembled upload", e);
+
+        if (objectStorageService.isEnabled()) {
+            String key = gameId + "/" + filename;
+            objectStorageService.upload(key, assembledFile, contentType);
+            log.info("Stored assembled upload to S3: key={}", key);
+            // Clean up local temp file after successful S3 upload
+            try {
+                Files.deleteIfExists(assembledFile);
+            } catch (IOException e) {
+                log.warn("Failed to delete local temp file after S3 upload: {}", assembledFile, e);
+            }
+        } else {
+            Path gameDir = uploadsRoot.resolve(gameId.toString());
+            Path target = gameDir.resolve(filename);
+            try {
+                Files.createDirectories(gameDir);
+                Files.move(assembledFile, target);
+                log.info("Stored assembled upload locally: {}", target);
+            } catch (IOException e) {
+                throw new FileStorageException("Failed to store assembled upload", e);
+            }
         }
+
+        return "/api/games/" + gameId + "/files/" + filename;
     }
 
     public void validateChunkedUploadMetadata(String contentType, long totalSizeBytes) {
@@ -170,6 +207,21 @@ public class FileStorageService {
     }
 
     public void deleteGameFiles(UUID gameId) {
+        if (objectStorageService.isEnabled()) {
+            String prefix = gameId + "/";
+            List<String> keys = objectStorageService.listKeys(prefix);
+            for (String key : keys) {
+                try {
+                    objectStorageService.delete(key);
+                } catch (Exception e) {
+                    log.warn("[S3] Failed to delete key={}: {}", key, e.getMessage());
+                }
+            }
+            log.info("[S3] Deleted {} objects for game {}", keys.size(), gameId);
+            return;
+        }
+
+        // Local storage fallback
         // Delete upload session database records and associated chunk files.
         // UploadSession records are cascade deleted via Game delete,
         // and their UploadSessionChunk records follow via cascade.
@@ -210,6 +262,17 @@ public class FileStorageService {
             }
             gameIdStr = apiMatcher.group(1);
             fileName = apiMatcher.group(2);
+        }
+
+        if (objectStorageService.isEnabled()) {
+            String key = gameIdStr + "/" + fileName;
+            try {
+                objectStorageService.delete(key);
+                log.info("[S3] Deleted file: key={}", key);
+            } catch (Exception e) {
+                log.warn("[S3] Failed to delete key={}: {}", key, e.getMessage());
+            }
+            return;
         }
 
         Path target = uploadsRoot.resolve(gameIdStr).resolve(fileName).normalize();
@@ -256,9 +319,17 @@ public class FileStorageService {
             throw new BadRequestException("File URL does not belong to this game");
         }
 
-        Path target = uploadsRoot.resolve(urlGameId).resolve(fileName).normalize();
-        if (!target.startsWith(uploadsRoot) || !Files.isRegularFile(target)) {
-            throw new BadRequestException("Referenced file does not exist");
+        if (objectStorageService.isEnabled()) {
+            // In S3 mode, verify the object exists in the bucket
+            String key = urlGameId + "/" + fileName;
+            if (!objectStorageService.exists(key)) {
+                throw new BadRequestException("Referenced file does not exist");
+            }
+        } else {
+            Path target = uploadsRoot.resolve(urlGameId).resolve(fileName).normalize();
+            if (!target.startsWith(uploadsRoot) || !Files.isRegularFile(target)) {
+                throw new BadRequestException("Referenced file does not exist");
+            }
         }
 
         return "/api/games/" + urlGameId + "/files/" + fileName;

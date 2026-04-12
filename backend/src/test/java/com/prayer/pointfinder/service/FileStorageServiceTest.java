@@ -14,6 +14,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class FileStorageServiceTest {
 
@@ -24,7 +26,9 @@ class FileStorageServiceTest {
 
     @BeforeEach
     void setUp() {
-        fileStorageService = new FileStorageService();
+        ObjectStorageService objectStorageService = mock(ObjectStorageService.class);
+        when(objectStorageService.isEnabled()).thenReturn(false);
+        fileStorageService = new FileStorageService(objectStorageService);
         ReflectionTestUtils.setField(fileStorageService, "uploadsPath", tempDir.toString());
         ReflectionTestUtils.setField(fileStorageService, "maxFileSizeBytes", 1024L * 1024L * 1024L);
         fileStorageService.init();
