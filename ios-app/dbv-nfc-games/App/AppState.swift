@@ -186,7 +186,7 @@ final class AppState {
             }
             progressLoadTask?.cancel()
             progressLoadTask = Task { await loadProgress() }
-        case "submission_status", "activity":
+        case "submission_status", "activity", "stage_unlock":
             progressLoadTask?.cancel()
             progressLoadTask = Task { await loadProgress() }
         case "notification":
