@@ -50,6 +50,8 @@ class ChallengeServiceTest {
     private GameEventBroadcaster eventBroadcaster;
     @Mock
     private com.prayer.pointfinder.repository.GameTagRepository gameTagRepository;
+    @Mock
+    private ResourceEmbedService resourceEmbedService;
 
     @InjectMocks
     private ChallengeService challengeService;

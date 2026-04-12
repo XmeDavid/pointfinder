@@ -48,6 +48,7 @@ public class BaseService {
     private final GameAccessService gameAccessService;
     private final GameEventBroadcaster eventBroadcaster;
     private final GameTagRepository gameTagRepository;
+    private final ResourceEmbedService resourceEmbedService;
 
     @Transactional(readOnly = true)
     public List<BaseResponse> getBasesByGame(UUID gameId) {
@@ -105,6 +106,7 @@ public class BaseService {
             }
             enforceChallengeUnlockGuardrails(fc.getId());
         }
+        resourceEmbedService.syncBaseEmbeds(base.getId(), base.getDescription());
         eventBroadcaster.broadcastGameConfig(gameId, "bases", "created");
         return toResponse(base);
     }
@@ -179,6 +181,7 @@ public class BaseService {
         }
         impactedChallengeIds.forEach(this::enforceChallengeUnlockGuardrails);
 
+        resourceEmbedService.syncBaseEmbeds(base.getId(), base.getDescription());
         eventBroadcaster.broadcastGameConfig(gameId, "bases", "updated");
         return toResponse(base);
     }

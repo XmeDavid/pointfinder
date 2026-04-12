@@ -28,6 +28,7 @@ class ReorderServiceTest {
     @Mock GameAccessService gameAccessService;
     @Mock GameEventBroadcaster eventBroadcaster;
     @Mock GameTagRepository gameTagRepository;
+    @Mock ResourceEmbedService resourceEmbedService;
 
     UUID gameId;
     Game game;
@@ -51,7 +52,8 @@ class ReorderServiceTest {
                     submissionRepository,
                     gameAccessService,
                     eventBroadcaster,
-                    gameTagRepository
+                    gameTagRepository,
+                    resourceEmbedService
             );
         }
 
@@ -97,7 +99,8 @@ class ReorderServiceTest {
                     submissionRepository,
                     gameAccessService,
                     eventBroadcaster,
-                    gameTagRepository
+                    gameTagRepository,
+                    resourceEmbedService
             );
         }
 

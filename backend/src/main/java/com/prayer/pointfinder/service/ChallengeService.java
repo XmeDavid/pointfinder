@@ -34,6 +34,7 @@ public class ChallengeService {
     private final GameAccessService gameAccessService;
     private final GameEventBroadcaster eventBroadcaster;
     private final GameTagRepository gameTagRepository;
+    private final ResourceEmbedService resourceEmbedService;
 
     @Transactional(readOnly = true)
     public List<ChallengeResponse> getChallengesByGame(UUID gameId) {
@@ -102,6 +103,8 @@ public class ChallengeService {
         );
         handleUnlocksBases(challenge, unlocksBaseIds, gameId, effectiveFixedBaseId);
 
+        resourceEmbedService.syncChallengeEmbeds(challenge.getId(), challenge.getDescription(),
+                challenge.getContent(), challenge.getCompletionContent());
         eventBroadcaster.broadcastGameConfig(game.getId(), "challenges", "created");
         return toResponse(challenge);
     }
@@ -154,6 +157,8 @@ public class ChallengeService {
         );
         handleUnlocksBases(challenge, unlocksBaseIds, gameId, effectiveFixedBaseId);
 
+        resourceEmbedService.syncChallengeEmbeds(challenge.getId(), challenge.getDescription(),
+                challenge.getContent(), challenge.getCompletionContent());
         eventBroadcaster.broadcastGameConfig(gameId, "challenges", "updated");
         return toResponse(challenge);
     }
