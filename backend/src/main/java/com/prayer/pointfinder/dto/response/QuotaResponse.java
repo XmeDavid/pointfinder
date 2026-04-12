@@ -30,6 +30,7 @@ public class QuotaResponse {
         private Long maxFileSizeBytes;
         private Integer maxMembers;
         private Integer maxLiveGames;
+        private Long maxResourceStorageBytes;
     }
 
     @Data
@@ -39,5 +40,6 @@ public class QuotaResponse {
         private int currentActiveGames;
         private Integer currentMembers;
         private Integer currentLiveGames;
+        private Long currentResourceStorageBytes;
     }
 }

@@ -9,6 +9,7 @@ import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.GameRepository;
 import com.prayer.pointfinder.repository.OrgMembershipRepository;
 import com.prayer.pointfinder.repository.OrganizationRepository;
+import com.prayer.pointfinder.repository.ResourceRepository;
 import com.prayer.pointfinder.repository.UserSubscriptionRepository;
 import com.prayer.pointfinder.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class QuotaService {
     private final OrganizationRepository orgRepository;
     private final OrgMembershipRepository membershipRepository;
     private final GameRepository gameRepository;
+    private final ResourceRepository resourceRepository;
 
     @Value("${app.quota.enforcement-enabled:false}")
     private boolean enforcementEnabled;
@@ -48,6 +50,7 @@ public class QuotaService {
         QuotaResponse.Limits limits = resolvePersonalLimits(sub);
         long activeGames = gameRepository.countByCreatedByIdAndOrganizationIsNullAndStatusIn(
             user.getId(), List.of(GameStatus.setup, GameStatus.live));
+        long currentResourceBytes = resourceRepository.sumSizeBytesByCreatedByIdAndOrganizationIsNull(user.getId());
 
         return QuotaResponse.builder()
             .context("personal")
@@ -55,6 +58,7 @@ public class QuotaService {
             .limits(limits)
             .usage(QuotaResponse.Usage.builder()
                 .currentActiveGames((int) activeGames)
+                .currentResourceStorageBytes(currentResourceBytes)
                 .build())
             .overrides(sub.getQuotaOverrides())
             .build();
@@ -75,6 +79,7 @@ public class QuotaService {
         QuotaResponse.Limits limits = resolveOrgLimits(org);
         int memberCount = membershipRepository.countByOrganizationId(orgId);
         long liveGames = gameRepository.countByOrganizationIdAndStatus(orgId, GameStatus.live);
+        long currentResourceBytes = resourceRepository.sumSizeBytesByOrganizationId(orgId);
 
         return QuotaResponse.builder()
             .context("org")
@@ -86,6 +91,7 @@ public class QuotaService {
                     orgId, List.of(GameStatus.setup, GameStatus.live))))
                 .currentMembers(memberCount)
                 .currentLiveGames((int) liveGames)
+                .currentResourceStorageBytes(currentResourceBytes)
                 .build())
             .overrides(org.getQuotaOverrides())
             .build();
@@ -166,6 +172,24 @@ public class QuotaService {
         return resolvePersonalLimits(sub).getMaxFileSizeBytes();
     }
 
+    public long getMaxResourceStorageBytes(Organization org) {
+        Map<String, Object> overrides = org.getQuotaOverrides();
+        Long override = getOverrideLong(overrides, "max_resource_storage_bytes", null);
+        if (override != null) return override;
+        return switch (org.getSubscriptionTier()) {
+            case high -> 25 * GB;
+            case base, free -> 5 * GB;
+        };
+    }
+
+    public long getMaxPersonalResourceStorageBytes(User user) {
+        UserSubscription sub = userSubRepository.findByUserId(user.getId()).orElse(null);
+        if (sub == null || sub.getTier() == IndividualTier.free) return 0;
+        Long override = getOverrideLong(sub.getQuotaOverrides(), "max_resource_storage_bytes", null);
+        if (override != null) return override;
+        return GB; // pro = 1GB
+    }
+
     // --- Limit Resolution ---
 
     private QuotaResponse.Limits resolvePersonalLimits(UserSubscription sub) {
@@ -175,6 +199,7 @@ public class QuotaService {
                 .maxOperatorsPerGame(getOverride(sub != null ? sub.getQuotaOverrides() : null, "max_operators_per_game", 1))
                 .maxBasesPerGame(getOverride(sub != null ? sub.getQuotaOverrides() : null, "max_bases_per_game", 25))
                 .maxFileSizeBytes(getOverrideLong(sub != null ? sub.getQuotaOverrides() : null, "max_file_size_bytes", 100 * MB))
+                .maxResourceStorageBytes(getOverrideLong(sub != null ? sub.getQuotaOverrides() : null, "max_resource_storage_bytes", 0L))
                 .build();
         }
         // Pro
@@ -183,6 +208,7 @@ public class QuotaService {
             .maxOperatorsPerGame(getOverride(sub.getQuotaOverrides(), "max_operators_per_game", 5))
             .maxBasesPerGame(getOverride(sub.getQuotaOverrides(), "max_bases_per_game", null))
             .maxFileSizeBytes(getOverrideLong(sub.getQuotaOverrides(), "max_file_size_bytes", 2 * GB))
+            .maxResourceStorageBytes(getOverrideLong(sub.getQuotaOverrides(), "max_resource_storage_bytes", GB))
             .build();
     }
 
@@ -195,6 +221,7 @@ public class QuotaService {
                 .maxOperatorsPerGame(getOverride(overrides, "max_operators_per_game", null))
                 .maxBasesPerGame(getOverride(overrides, "max_bases_per_game", null))
                 .maxFileSizeBytes(getOverrideLong(overrides, "max_file_size_bytes", 2 * GB))
+                .maxResourceStorageBytes(getOverrideLong(overrides, "max_resource_storage_bytes", 25 * GB))
                 .build();
         }
         // Base (or free — same limits as base but admin-granted)
@@ -204,6 +231,7 @@ public class QuotaService {
             .maxOperatorsPerGame(getOverride(overrides, "max_operators_per_game", null))
             .maxBasesPerGame(getOverride(overrides, "max_bases_per_game", null))
             .maxFileSizeBytes(getOverrideLong(overrides, "max_file_size_bytes", 2 * GB))
+            .maxResourceStorageBytes(getOverrideLong(overrides, "max_resource_storage_bytes", 5 * GB))
             .build();
     }
 
