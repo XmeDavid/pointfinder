@@ -62,6 +62,7 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/**").hasRole("ADMIN")
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/broadcast/**").permitAll()
+                .requestMatchers("/api/webhooks/stripe").permitAll()
                 // WebSocket handshakes must be allowed through HTTP security so
                 // STOMP/native handlers can perform auth after the socket opens.
                 .requestMatchers("/ws/**", "/ws-native").permitAll()
