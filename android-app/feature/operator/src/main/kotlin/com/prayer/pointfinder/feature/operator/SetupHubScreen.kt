@@ -56,6 +56,7 @@ fun SetupHubScreen(
     onNavigateToBases: () -> Unit,
     onNavigateToChallenges: () -> Unit,
     onNavigateToTeams: () -> Unit,
+    onNavigateToStages: () -> Unit = {},
     onGoLive: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -133,6 +134,11 @@ fun SetupHubScreen(
             label = stringResource(R.string.label_teams),
             count = teams.size,
             onClick = onNavigateToTeams,
+        )
+        ManageRow(
+            label = stringResource(R.string.label_stages),
+            count = 0,
+            onClick = onNavigateToStages,
         )
 
         Spacer(Modifier.height(32.dp))

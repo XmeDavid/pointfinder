@@ -1,9 +1,13 @@
 package com.prayer.pointfinder.session.usecase
 
 import com.prayer.pointfinder.core.data.repo.OperatorRepository
+import com.prayer.pointfinder.core.model.EntityId
 import com.prayer.pointfinder.core.model.InviteRequest
 import com.prayer.pointfinder.core.model.InviteResponse
+import com.prayer.pointfinder.core.model.OrgMemberResponse
+import com.prayer.pointfinder.core.model.OrgWorkspace
 import com.prayer.pointfinder.core.model.OperatorUserResponse
+import com.prayer.pointfinder.core.model.WorkspaceResponse
 import javax.inject.Inject
 
 class OperatorManagementUseCase @Inject constructor(
@@ -29,4 +33,19 @@ class OperatorManagementUseCase @Inject constructor(
 
     suspend fun acceptInvite(inviteId: String) =
         operatorRepository.acceptInvite(inviteId)
+
+    suspend fun getWorkspaces(): WorkspaceResponse =
+        operatorRepository.getWorkspaces()
+
+    suspend fun getOrgMembers(orgId: EntityId): List<OrgMemberResponse> =
+        operatorRepository.getOrgMembers(orgId)
+
+    suspend fun inviteOrgMember(orgId: EntityId, email: String): OrgMemberResponse =
+        operatorRepository.inviteOrgMember(orgId, email)
+
+    suspend fun removeOrgMember(orgId: EntityId, userId: EntityId) =
+        operatorRepository.removeOrgMember(orgId, userId)
+
+    suspend fun updateMemberPermissions(orgId: EntityId, userId: EntityId, permissions: Int): OrgMemberResponse =
+        operatorRepository.updateMemberPermissions(orgId, userId, permissions)
 }

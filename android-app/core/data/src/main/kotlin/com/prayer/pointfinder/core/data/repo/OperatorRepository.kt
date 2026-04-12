@@ -36,13 +36,22 @@ import com.prayer.pointfinder.core.model.GameTag
 import com.prayer.pointfinder.core.model.UpdateBaseRequest
 import com.prayer.pointfinder.core.model.UpdateChallengeRequest
 import com.prayer.pointfinder.core.model.UpdateTagRequest
+import com.prayer.pointfinder.core.model.Stage
+import com.prayer.pointfinder.core.model.CreateStageRequest
+import com.prayer.pointfinder.core.model.UpdateStageRequest
 import com.prayer.pointfinder.core.model.UpdateGameRequest
 import com.prayer.pointfinder.core.model.UpdateGameStatusRequest
 import com.prayer.pointfinder.core.model.UpdateOperatorNotificationSettingsRequest
 import com.prayer.pointfinder.core.model.UpdateTeamRequest
+import com.prayer.pointfinder.core.model.EntityId
+import com.prayer.pointfinder.core.model.InviteOrgMemberRequest
 import com.prayer.pointfinder.core.model.MarkCompletedRequest
+import com.prayer.pointfinder.core.model.OrgMemberResponse
+import com.prayer.pointfinder.core.model.OrgWorkspace
 import com.prayer.pointfinder.core.model.UnlockOverrideRequest
 import com.prayer.pointfinder.core.model.BaseUnlockOverrideResponse
+import com.prayer.pointfinder.core.model.UpdatePermissionsRequest
+import com.prayer.pointfinder.core.model.WorkspaceResponse
 import com.prayer.pointfinder.core.network.CompanionApi
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
@@ -469,4 +478,49 @@ class OperatorRepository @Inject constructor(
             checkSuccess(response.code(), errorBody)
         }
     }
+
+    // === Stage Management ===
+
+    suspend fun getStages(gameId: String): List<Stage> =
+        apiCall { api.getStages(gameId) }
+
+    suspend fun createStage(gameId: String, request: CreateStageRequest): Stage =
+        apiCall { api.createStage(gameId, request) }
+
+    suspend fun updateStage(gameId: String, stageId: String, request: UpdateStageRequest): Stage =
+        apiCall { api.updateStage(gameId, stageId, request) }
+
+    suspend fun deleteStage(gameId: String, stageId: String) {
+        apiCall {
+            val response = api.deleteStage(gameId, stageId)
+            val errorBody = if (!response.isSuccessful) {
+                try { response.errorBody()?.string() } catch (_: Exception) { null }
+            } else null
+            checkSuccess(response.code(), errorBody)
+        }
+    }
+
+    // === Workspace & Organizations ===
+
+    suspend fun getWorkspaces(): WorkspaceResponse =
+        apiCall { api.getWorkspaces() }
+
+    suspend fun getOrgMembers(orgId: EntityId): List<OrgMemberResponse> =
+        apiCall { api.getOrgMembers(orgId) }
+
+    suspend fun inviteOrgMember(orgId: EntityId, email: String): OrgMemberResponse =
+        apiCall { api.inviteOrgMember(orgId, InviteOrgMemberRequest(email)) }
+
+    suspend fun removeOrgMember(orgId: EntityId, userId: EntityId) {
+        apiCall {
+            val response = api.removeOrgMember(orgId, userId)
+            val errorBody = if (!response.isSuccessful) {
+                try { response.errorBody()?.string() } catch (_: Exception) { null }
+            } else null
+            checkSuccess(response.code(), errorBody)
+        }
+    }
+
+    suspend fun updateMemberPermissions(orgId: EntityId, userId: EntityId, permissions: Int): OrgMemberResponse =
+        apiCall { api.updateMemberPermissions(orgId, userId, UpdatePermissionsRequest(permissions)) }
 }

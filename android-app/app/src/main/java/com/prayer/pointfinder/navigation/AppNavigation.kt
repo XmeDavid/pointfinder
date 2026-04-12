@@ -117,6 +117,7 @@ import com.prayer.pointfinder.feature.operator.GameSettingsScreen
 import com.prayer.pointfinder.feature.operator.NotificationsScreen
 import com.prayer.pointfinder.feature.operator.MyInvitesScreen
 import com.prayer.pointfinder.feature.operator.OperatorsScreen
+import com.prayer.pointfinder.feature.operator.OrganizationScreen
 import kotlinx.serialization.json.Json
 import com.prayer.pointfinder.core.platform.NfcEventBus
 import com.prayer.pointfinder.core.platform.NfcPayloadCodec
@@ -1037,6 +1038,7 @@ private fun OperatorHomeRoot(
     LaunchedEffect(Unit) {
         viewModel.loadGames()
         viewModel.loadMyInvites()
+        viewModel.loadWorkspaces()
     }
     LaunchedEffect(Unit) {
         while (true) {
@@ -1067,6 +1069,9 @@ private fun OperatorHomeRoot(
             errorMessage = state.errorMessage,
             pendingInviteCount = state.myInvites.count { it.status.lowercase() == "pending" },
             onOpenMyInvites = { showMyInvites = true },
+            orgs = state.workspaces?.organizations ?: emptyList(),
+            selectedOrgId = state.selectedOrgId,
+            onSelectOrg = { orgId -> viewModel.selectOrg(orgId) },
         )
     }
 }
@@ -1896,6 +1901,23 @@ private fun OperatorGameRoot(
                         } else {
                             moreSubScreen = "teams_list"
                         }
+                    } else if (moreSubScreen?.startsWith("org:") == true) {
+                        val orgId = moreSubScreen!!.removePrefix("org:")
+                        val org = state.workspaces?.organizations?.firstOrNull { it.id == orgId }
+                        if (org != null) {
+                            OrganizationScreen(
+                                org = org,
+                                onBack = { moreSubScreen = null },
+                                loadMembers = { viewModel.getOrgMembers(orgId) },
+                                inviteMember = { email -> viewModel.inviteOrgMember(orgId, email) },
+                                removeMember = { userId -> viewModel.removeOrgMember(orgId, userId) },
+                                updatePermissions = { userId, perms ->
+                                    viewModel.updateMemberPermissions(orgId, userId, perms)
+                                },
+                            )
+                        } else {
+                            moreSubScreen = null
+                        }
                     } else {
                         MoreScreen(
                             currentLanguage = currentLanguage,
@@ -1915,6 +1937,9 @@ private fun OperatorGameRoot(
                             onNavigateToTags = { moreSubScreen = "tags" },
                             onNavigateToAssignments = { moreSubScreen = "assignments" },
                             onNavigateToActivity = { moreSubScreen = "activity" },
+                            onNavigateToOrganization = state.selectedOrgId?.let { orgId ->
+                                { moreSubScreen = "org:$orgId" }
+                            },
                             onExportGame = {
                                 viewModel.exportGame { exportDto ->
                                     val jsonString = Json { prettyPrint = true }.encodeToString(

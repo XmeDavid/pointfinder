@@ -31,12 +31,21 @@ import com.prayer.pointfinder.core.model.ActivityEvent
 import com.prayer.pointfinder.core.model.CreateTagRequest
 import com.prayer.pointfinder.core.model.GameTag
 import com.prayer.pointfinder.core.model.UpdateTagRequest
+import com.prayer.pointfinder.core.model.Stage
+import com.prayer.pointfinder.core.model.CreateStageRequest
+import com.prayer.pointfinder.core.model.UpdateStageRequest
 import com.prayer.pointfinder.core.model.LeaderboardEntry
 import com.prayer.pointfinder.core.model.SubmissionResponse
 import com.prayer.pointfinder.core.model.SubmissionStatus
 import com.prayer.pointfinder.core.model.Team
 import com.prayer.pointfinder.core.model.TeamBaseProgressResponse
 import com.prayer.pointfinder.core.model.TeamLocationResponse
+import com.prayer.pointfinder.core.model.EntityId
+import com.prayer.pointfinder.core.model.InviteOrgMemberRequest
+import com.prayer.pointfinder.core.model.OrgMemberResponse
+import com.prayer.pointfinder.core.model.OrgWorkspace
+import com.prayer.pointfinder.core.model.UpdatePermissionsRequest
+import com.prayer.pointfinder.core.model.WorkspaceResponse
 import com.prayer.pointfinder.core.network.ApiErrorParser
 import com.prayer.pointfinder.core.network.MobileRealtimeClient
 import com.prayer.pointfinder.core.network.RealtimeConnectionState
@@ -53,6 +62,7 @@ import com.prayer.pointfinder.session.usecase.SubmissionUseCase
 import com.prayer.pointfinder.session.usecase.TeamManagementUseCase
 import com.prayer.pointfinder.session.usecase.TagManagementUseCase
 import com.prayer.pointfinder.session.usecase.VariableManagementUseCase
+import com.prayer.pointfinder.session.usecase.StageManagementUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -101,6 +111,8 @@ data class OperatorState(
     val myInvites: List<InviteResponse> = emptyList(),
     val errorMessage: String? = null,
     val authExpired: Boolean = false,
+    val workspaces: WorkspaceResponse? = null,
+    val selectedOrgId: EntityId? = null,
 )
 
 @HiltViewModel
@@ -114,6 +126,7 @@ class OperatorViewModel @Inject constructor(
     private val notificationUseCase: NotificationUseCase,
     private val operatorManagementUseCase: OperatorManagementUseCase,
     private val tagManagementUseCase: TagManagementUseCase,
+    private val stageManagementUseCase: StageManagementUseCase,
     private val liveDataUseCase: LiveDataUseCase,
     private val sessionStore: SessionStore,
     private val realtimeClient: MobileRealtimeClient,
@@ -1110,6 +1123,34 @@ class OperatorViewModel @Inject constructor(
         }
     }
 
+    // ── Workspace & Organizations ────────────────────────────────────────
+
+    fun loadWorkspaces() {
+        viewModelScope.launch {
+            runCatching {
+                operatorManagementUseCase.getWorkspaces()
+            }.onSuccess { workspaces ->
+                _state.value = _state.value.copy(workspaces = workspaces)
+            }.onFailure { /* non-critical: workspace sidebar is best-effort */ }
+        }
+    }
+
+    fun selectOrg(orgId: EntityId?) {
+        _state.value = _state.value.copy(selectedOrgId = orgId)
+    }
+
+    suspend fun getOrgMembers(orgId: EntityId): List<OrgMemberResponse> =
+        operatorManagementUseCase.getOrgMembers(orgId)
+
+    suspend fun inviteOrgMember(orgId: EntityId, email: String): OrgMemberResponse =
+        operatorManagementUseCase.inviteOrgMember(orgId, email)
+
+    suspend fun removeOrgMember(orgId: EntityId, userId: EntityId) =
+        operatorManagementUseCase.removeOrgMember(orgId, userId)
+
+    suspend fun updateMemberPermissions(orgId: EntityId, userId: EntityId, permissions: Int): OrgMemberResponse =
+        operatorManagementUseCase.updateMemberPermissions(orgId, userId, permissions)
+
     // ── Tag management ──────────────────────────────────────────────────
 
     suspend fun listTags(gameId: String): List<GameTag> =
@@ -1123,6 +1164,20 @@ class OperatorViewModel @Inject constructor(
 
     suspend fun deleteTag(gameId: String, tagId: String) =
         tagManagementUseCase.deleteTag(gameId, tagId)
+
+    // ── Stage management ─────────────────────────────────────────────────
+
+    suspend fun getStages(gameId: String): List<Stage> =
+        stageManagementUseCase.getStages(gameId)
+
+    suspend fun createStage(gameId: String, request: CreateStageRequest): Stage =
+        stageManagementUseCase.createStage(gameId, request)
+
+    suspend fun updateStage(gameId: String, stageId: String, request: UpdateStageRequest): Stage =
+        stageManagementUseCase.updateStage(gameId, stageId, request)
+
+    suspend fun deleteStage(gameId: String, stageId: String) =
+        stageManagementUseCase.deleteStage(gameId, stageId)
 
     // ── Utilities ───────────────────────────────────────────────────────
 

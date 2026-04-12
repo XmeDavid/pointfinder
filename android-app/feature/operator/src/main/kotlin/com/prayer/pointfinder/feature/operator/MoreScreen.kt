@@ -26,6 +26,8 @@ import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.FormatListNumbered
+import androidx.compose.material.icons.filled.Business
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -64,6 +66,8 @@ fun MoreScreen(
     onNavigateToTags: () -> Unit = {},
     onNavigateToAssignments: () -> Unit = {},
     onNavigateToActivity: () -> Unit = {},
+    onNavigateToStages: () -> Unit = {},
+    onNavigateToOrganization: (() -> Unit)? = null,
     onExportGame: () -> Unit,
     onSwitchGame: () -> Unit,
     onLogout: () -> Unit,
@@ -133,10 +137,22 @@ fun MoreScreen(
                     onClick = onNavigateToActivity,
                 )
                 NavigationRow(
+                    icon = Icons.Default.FormatListNumbered,
+                    label = stringResource(R.string.label_stages),
+                    onClick = onNavigateToStages,
+                )
+                NavigationRow(
                     icon = Icons.Default.People,
                     label = stringResource(R.string.label_manage_operators),
                     onClick = onNavigateToOperators,
                 )
+                if (onNavigateToOrganization != null) {
+                    NavigationRow(
+                        icon = Icons.Default.Business,
+                        label = "Organization",
+                        onClick = onNavigateToOrganization,
+                    )
+                }
             }
         }
 
