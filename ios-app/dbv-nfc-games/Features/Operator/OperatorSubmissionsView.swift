@@ -143,12 +143,12 @@ struct OperatorSubmissionsView: View {
                 .font(.subheadline)
             Text(baseName(for: submission.baseId))
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.pfTextMuted)
 
             if !submission.answer.isEmpty {
                 Text(submission.answer)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.pfTextMuted)
                     .lineLimit(2)
             }
 
@@ -157,18 +157,18 @@ struct OperatorSubmissionsView: View {
                 HStack(spacing: 4) {
                     Image(systemName: mediaUrls.count == 1 ? "photo" : "photo.on.rectangle")
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.pfTextMuted)
                     if mediaUrls.count > 1 {
                         Text("\(mediaUrls.count)")
                             .font(.caption2)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.pfTextMuted)
                     }
                 }
             }
 
             Text(formatDate(submission.submittedAt))
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.pfTextMuted)
         }
         .padding(.vertical, 4)
     }
@@ -251,11 +251,11 @@ struct OperatorSubmissionsView: View {
     private func statusColor(for status: String) -> Color {
         switch status {
         case "pending":
-            return .orange
+            return Color.pfPending
         case "approved", "correct":
-            return .green
+            return Color.pfCompleted
         case "rejected":
-            return .red
+            return Color.pfRejected
         default:
             return .gray
         }
@@ -344,7 +344,7 @@ private struct OperatorSubmissionReviewSheet: View {
                     Section(locale.t("submissions.reviewerHintLabel")) {
                         Text(hint)
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.pfTextMuted)
                     }
                     .accessibilityIdentifier("reviewer-hint-section")
                 }

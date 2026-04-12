@@ -40,7 +40,7 @@ struct OperatorLiveView: View {
                         Text(locale.t("operator.lastSynced", formatSyncTime(syncedAt)))
                             .font(.caption2)
                     }
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.pfTextMuted)
                     .padding(.horizontal)
                     .padding(.bottom, 4)
                     .accessibilityIdentifier("offline-sync-badge")
@@ -107,7 +107,7 @@ struct OperatorLiveView: View {
                                 .fontWeight(isTopThree ? .semibold : .regular)
                             Text(locale.t("operator.completedCount", entry.completedChallenges))
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.pfTextMuted)
                         }
 
                         Spacer()
@@ -169,7 +169,7 @@ struct OperatorLiveView: View {
                             .font(.subheadline)
                         Text(formatTimestamp(event.timestamp))
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.pfTextMuted)
                     }
                 }
                 .padding(.vertical, 2)
@@ -191,10 +191,10 @@ struct OperatorLiveView: View {
 
     private func eventColor(_ type: String) -> Color {
         switch type {
-        case "check_in": return .blue
-        case "submission": return .orange
-        case "approval": return .green
-        case "rejection": return .red
+        case "check_in": return Color.pfCheckedIn
+        case "submission": return Color.pfPending
+        case "approval": return Color.pfCompleted
+        case "rejection": return Color.pfRejected
         default: return .gray
         }
     }
