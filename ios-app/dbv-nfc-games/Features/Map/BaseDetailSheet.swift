@@ -45,7 +45,7 @@ struct BaseDetailSheet: View {
                         }
                     }
                     .padding()
-                    .background(status.color.opacity(0.15))
+                    .background(status.color.opacity(0.08))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
 
                     if isLoading {
@@ -57,14 +57,14 @@ struct BaseDetailSheet: View {
                         VStack(spacing: 12) {
                             Image(systemName: "lock.fill")
                                 .font(.system(size: 48))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.pfTextMuted)
                             Text(locale.t("base.challengeLocked"))
                                 .font(.headline)
                                 .fontWeight(.semibold)
-                                .foregroundStyle(.primary)
+                                .foregroundStyle(.pfText)
                             Text(locale.t("base.challengeLockedHint"))
                                 .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.pfTextMuted)
                                 .multilineTextAlignment(.center)
                         }
                         .frame(maxWidth: .infinity)
@@ -79,7 +79,7 @@ struct BaseDetailSheet: View {
 
                             Text(challenge.description)
                                 .font(.body)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.pfTextMuted)
                                 .fixedSize(horizontal: false, vertical: true)
                                 .padding(.bottom, 2)
 
@@ -139,9 +139,9 @@ struct BaseDetailSheet: View {
                                         .font(.headline)
                                         .frame(maxWidth: .infinity)
                                         .padding()
-                                        .background(Color.accentColor)
+                                        .background(Color.pfPrimary)
                                         .foregroundStyle(.white)
-                                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                                        .clipShape(RoundedRectangle(cornerRadius: PFRadius.button))
                                 }
                             }
                         } else if status == .completed {

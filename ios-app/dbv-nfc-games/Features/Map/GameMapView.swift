@@ -58,7 +58,7 @@ struct GameMapView: View {
                 }
 
                 if shouldBlockGameplay {
-                    Color.black.opacity(0.35)
+                    Color.pfText.opacity(0.7)
                         .ignoresSafeArea()
                     VStack(spacing: 10) {
                         Text(locale.t("player.gameNotLiveTitle"))
@@ -82,6 +82,7 @@ struct GameMapView: View {
                             showNotifications = true
                         } label: {
                             Image(systemName: "bell.fill")
+                                .foregroundStyle(appState.unseenNotificationCount > 0 ? Color.pfPrimary : Color.pfTextMuted)
                                 .overlay(alignment: .topTrailing) {
                                     if appState.unseenNotificationCount > 0 {
                                         Text(appState.unseenNotificationCount > 99 ? "99+" : "\(appState.unseenNotificationCount)")
@@ -98,6 +99,7 @@ struct GameMapView: View {
                             Task { await appState.loadProgress() }
                         } label: {
                             Image(systemName: "arrow.clockwise")
+                                .foregroundStyle(Color.pfTextMuted)
                         }
                         .accessibilityLabel(locale.t("common.refresh"))
                     }
@@ -143,16 +145,16 @@ struct MapLegendView: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            legendItem(color: .gray, label: locale.t("map.notVisited"))
-            legendItem(color: .blue, label: locale.t("map.checkedIn"))
-            legendItem(color: .orange, label: locale.t("map.pending"))
-            legendItem(color: .green, label: locale.t("map.completed"))
-            legendItem(color: .red, label: locale.t("map.rejected"))
+            legendItem(color: BaseStatus.notVisited.color, label: locale.t("map.notVisited"))
+            legendItem(color: BaseStatus.checkedIn.color, label: locale.t("map.checkedIn"))
+            legendItem(color: BaseStatus.submitted.color, label: locale.t("map.pending"))
+            legendItem(color: BaseStatus.completed.color, label: locale.t("map.completed"))
+            legendItem(color: BaseStatus.rejected.color, label: locale.t("map.rejected"))
         }
         .font(.caption2)
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: PFRadius.small))
         .padding(.horizontal)
     }
 
