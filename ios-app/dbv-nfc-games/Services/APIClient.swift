@@ -651,6 +651,9 @@ actor APIClient {
         do {
             return try decoder.decode(T.self, from: data)
         } catch {
+            let path = request.url?.path ?? "unknown"
+            let preview = String(data: data.prefix(500), encoding: .utf8) ?? "binary"
+            print("⚠️ DECODE FAILED for \(T.self) at \(path): \(error)\nResponse preview: \(preview)")
             throw APIError.decodingError(error)
         }
     }

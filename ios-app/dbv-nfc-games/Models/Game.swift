@@ -93,11 +93,32 @@ struct Base: Codable, Identifiable {
     /// Operator-only game-scoped tag IDs. Resolved against game tag vocabulary.
     let tagIds: [UUID]?
 
+    /// Custom decoder: defaults name/description to "" when backend omits them
+    /// (player endpoint strips base names for privacy — players see challenge titles).
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        gameId = try c.decodeIfPresent(UUID.self, forKey: .gameId)
+        name = try c.decodeIfPresent(String.self, forKey: .name) ?? ""
+        description = try c.decodeIfPresent(String.self, forKey: .description) ?? ""
+        lat = try c.decode(Double.self, forKey: .lat)
+        lng = try c.decode(Double.self, forKey: .lng)
+        nfcLinked = try c.decodeIfPresent(Bool.self, forKey: .nfcLinked) ?? false
+        hidden = try c.decodeIfPresent(Bool.self, forKey: .hidden) ?? false
+        fixedChallengeId = try c.decodeIfPresent(UUID.self, forKey: .fixedChallengeId)
+        nfcToken = try c.decodeIfPresent(String.self, forKey: .nfcToken)
+        tagIds = try c.decodeIfPresent([UUID].self, forKey: .tagIds)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, gameId, name, description, lat, lng, nfcLinked, hidden, fixedChallengeId, nfcToken, tagIds
+    }
+
     init(
         id: UUID,
         gameId: UUID? = nil,
-        name: String,
-        description: String,
+        name: String = "",
+        description: String = "",
         lat: Double,
         lng: Double,
         nfcLinked: Bool,
@@ -119,20 +140,6 @@ struct Base: Codable, Identifiable {
         self.tagIds = tagIds
     }
 
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        id = try container.decode(UUID.self, forKey: .id)
-        gameId = try container.decodeIfPresent(UUID.self, forKey: .gameId)
-        name = try container.decode(String.self, forKey: .name)
-        description = try container.decode(String.self, forKey: .description)
-        lat = try container.decode(Double.self, forKey: .lat)
-        lng = try container.decode(Double.self, forKey: .lng)
-        nfcLinked = try container.decode(Bool.self, forKey: .nfcLinked)
-        hidden = try container.decodeIfPresent(Bool.self, forKey: .hidden) ?? false
-        fixedChallengeId = try container.decodeIfPresent(UUID.self, forKey: .fixedChallengeId)
-        nfcToken = try container.decodeIfPresent(String.self, forKey: .nfcToken)
-        tagIds = try container.decodeIfPresent([UUID].self, forKey: .tagIds)
-    }
 }
 
 struct Challenge: Codable, Identifiable {
