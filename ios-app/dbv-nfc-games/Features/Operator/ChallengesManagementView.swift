@@ -68,36 +68,22 @@ struct ChallengesManagementView: View {
                         )
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
-                        List(filteredChallenges) { challenge in
-                            NavigationLink(value: ChallengeNavDestination.edit(challenge.id)) {
-                                HStack {
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text(challenge.title)
-                                            .font(.headline)
-                                        HStack(spacing: 6) {
-                                            Text(challenge.answerType == "none" ? locale.t("common.checkIn") : challenge.answerType == "file" ? locale.t("operator.fileUpload") : locale.t("operator.textInput"))
-                                                .font(.caption)
-                                                .foregroundStyle(Color.pfTextMuted)
-                                            if challenge.locationBound {
-                                                Image(systemName: "location.fill")
-                                                    .font(.caption2)
-                                                    .foregroundStyle(Color.pfCheckedIn)
-                                            }
-                                        }
-                                        Text(baseNameForChallenge(challenge))
-                                            .font(.caption)
-                                            .foregroundStyle(Color.pfTextMuted)
+                        ScrollView {
+                            LazyVStack(spacing: PFSpacing.itemGap) {
+                                ForEach(filteredChallenges) { challenge in
+                                    Button {
+                                        path.append(ChallengeNavDestination.edit(challenge.id))
+                                    } label: {
+                                        challengeCard(challenge)
                                     }
-                                    Spacer()
-                                    Text(locale.t("operator.pts", challenge.points))
-                                        .font(.caption)
-                                        .fontWeight(.semibold)
-                                        .foregroundStyle(Color.pfPending)
+                                    .buttonStyle(.plain)
+                                    .accessibilityIdentifier("challenge-edit-btn")
                                 }
                             }
-                            .accessibilityIdentifier("challenge-edit-btn")
+                            .padding(.horizontal, PFSpacing.screenPadding)
+                            .padding(.vertical, PFSpacing.itemGap)
                         }
-                        .listStyle(.plain)
+                        .background(Color.pfBackground)
                     }
                 } // end VStack
             }
@@ -175,6 +161,46 @@ struct ChallengesManagementView: View {
                   entity == "challenges" else { return }
             Task { await loadData() }
         }
+    }
+
+    // MARK: - Challenge Card
+
+    @ViewBuilder
+    private func challengeCard(_ challenge: Challenge) -> some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(challenge.title)
+                    .font(.headline)
+                    .foregroundStyle(Color.pfText)
+                HStack(spacing: 6) {
+                    Text(challenge.answerType == "none" ? locale.t("common.checkIn") : challenge.answerType == "file" ? locale.t("operator.fileUpload") : locale.t("operator.textInput"))
+                        .font(.caption)
+                        .foregroundStyle(Color.pfTextMuted)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.pfTextMuted.opacity(0.12))
+                        .clipShape(Capsule())
+                    if challenge.locationBound {
+                        Image(systemName: "location.fill")
+                            .font(.caption2)
+                            .foregroundStyle(Color.pfCheckedIn)
+                    }
+                }
+                Text(baseNameForChallenge(challenge))
+                    .font(.caption)
+                    .foregroundStyle(Color.pfTextMuted)
+            }
+            Spacer()
+            Text(locale.t("operator.pts", challenge.points))
+                .font(.subheadline)
+                .fontWeight(.bold)
+                .foregroundStyle(Color.pfPending)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.pfCard)
+        .clipShape(RoundedRectangle(cornerRadius: PFRadius.card))
+        .shadow(color: .black.opacity(0.03), radius: 4, y: 1)
     }
 
     private func baseNameForChallenge(_ challenge: Challenge) -> String {

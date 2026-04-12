@@ -39,49 +39,20 @@ struct TeamsManagementView: View {
                     description: Text(locale.t("operator.noTeamsDesc"))
                 )
             } else {
-                List(teams) { team in
-                    NavigationLink(value: team.id) {
-                        HStack(spacing: 12) {
-                            Circle()
-                                .fill(Color(hex: team.color) ?? .blue)
-                                .frame(width: 28, height: 28)
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(team.name)
-                                    .font(.headline)
-                                if let joinCode = team.joinCode {
-                                    Text(joinCode)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
+                ScrollView {
+                    LazyVStack(spacing: PFSpacing.itemGap) {
+                        ForEach(teams) { team in
+                            NavigationLink(value: team.id) {
+                                teamCard(team)
                             }
-                            Spacer()
-                            if let joinCode = team.joinCode {
-                                Button {
-                                    UIPasteboard.general.string = joinCode
-                                    copiedTeamId = team.id
-                                    withAnimation {
-                                        showCopiedToast = true
-                                    }
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                        if copiedTeamId == team.id {
-                                            copiedTeamId = nil
-                                        }
-                                        withAnimation {
-                                            showCopiedToast = false
-                                        }
-                                    }
-                                } label: {
-                                    Image(systemName: copiedTeamId == team.id ? "checkmark" : "doc.on.doc")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                                .buttonStyle(.plain)
-                            }
+                            .buttonStyle(.plain)
+                            .accessibilityIdentifier("team-edit-btn")
                         }
                     }
-                    .accessibilityIdentifier("team-edit-btn")
+                    .padding(.horizontal, PFSpacing.screenPadding)
+                    .padding(.vertical, PFSpacing.itemGap)
                 }
-                .listStyle(.plain)
+                .background(Color.pfBackground)
             }
         }
         .navigationTitle(locale.t("operator.teams"))
@@ -162,6 +133,55 @@ struct TeamsManagementView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
+    }
+
+    // MARK: - Team Card
+
+    @ViewBuilder
+    private func teamCard(_ team: Team) -> some View {
+        HStack(spacing: 12) {
+            Circle()
+                .fill(Color(hex: team.color) ?? .blue)
+                .frame(width: 28, height: 28)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(team.name)
+                    .font(.headline)
+                    .foregroundStyle(Color.pfText)
+                if let joinCode = team.joinCode {
+                    Text(joinCode)
+                        .font(.caption)
+                        .foregroundStyle(Color.pfTextMuted)
+                }
+            }
+            Spacer()
+            if let joinCode = team.joinCode {
+                Button {
+                    UIPasteboard.general.string = joinCode
+                    copiedTeamId = team.id
+                    withAnimation {
+                        showCopiedToast = true
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                        if copiedTeamId == team.id {
+                            copiedTeamId = nil
+                        }
+                        withAnimation {
+                            showCopiedToast = false
+                        }
+                    }
+                } label: {
+                    Image(systemName: copiedTeamId == team.id ? "checkmark" : "doc.on.doc")
+                        .font(.caption)
+                        .foregroundStyle(Color.pfTextMuted)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.pfCard)
+        .clipShape(RoundedRectangle(cornerRadius: PFRadius.card))
+        .shadow(color: .black.opacity(0.03), radius: 4, y: 1)
     }
 
     private func loadData() async {

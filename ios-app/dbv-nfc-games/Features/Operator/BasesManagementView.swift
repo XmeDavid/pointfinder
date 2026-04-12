@@ -42,18 +42,18 @@ struct BasesManagementView: View {
     }
 
     private var content: some View {
-            Group {
-                if isLoading {
-                    ProgressView(locale.t("operator.loading"))
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if bases.isEmpty {
-                    ContentUnavailableView(
-                        locale.t("operator.noBases"),
-                        systemImage: "mappin.slash",
-                        description: Text(locale.t("operator.noBasesDesc"))
-                    )
-                } else {
-                    VStack(spacing: 0) {
+        Group {
+            if isLoading {
+                ProgressView(locale.t("operator.loading"))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if bases.isEmpty {
+                ContentUnavailableView(
+                    locale.t("operator.noBases"),
+                    systemImage: "mappin.slash",
+                    description: Text(locale.t("operator.noBasesDesc"))
+                )
+            } else {
+                VStack(spacing: 0) {
                     if !gameTags.isEmpty {
                         TagFilterBar(
                             tags: gameTags,
@@ -69,124 +69,153 @@ struct BasesManagementView: View {
                         )
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
-                        List(filteredBases) { base in
-                            NavigationLink(value: BaseNavDestination.edit(base.id)) {
-                                HStack {
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text(base.name)
-                                            .font(.headline)
-                                        if !base.description.isEmpty {
-                                            Text(base.description)
-                                                .font(.caption)
-                                                .foregroundStyle(Color.pfTextMuted)
-                                                .lineLimit(1)
-                                        }
-                                        Text(challengeInfoForBase(base))
-                                            .font(.caption)
-                                            .foregroundStyle(Color.pfTextMuted)
+                        ScrollView {
+                            LazyVStack(spacing: PFSpacing.itemGap) {
+                                ForEach(filteredBases) { base in
+                                    Button {
+                                        path.append(BaseNavDestination.edit(base.id))
+                                    } label: {
+                                        baseCard(base)
                                     }
-                                    Spacer()
-                                    Text(base.nfcLinked ? locale.t("operator.linked") : locale.t("operator.notLinked"))
-                                        .font(.caption2)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(base.nfcLinked ? Color.pfCompleted.opacity(0.2) : Color.pfPending.opacity(0.2))
-                                        .foregroundStyle(base.nfcLinked ? Color.pfCompleted : Color.pfPending)
-                                        .clipShape(Capsule())
-                                    if base.hidden {
-                                        Image(systemName: "eye.slash")
-                                            .font(.caption)
-                                            .foregroundStyle(Color.pfTextMuted)
-                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityIdentifier("base-edit-btn")
                                 }
                             }
-                            .accessibilityIdentifier("base-edit-btn")
+                            .padding(.horizontal, PFSpacing.screenPadding)
+                            .padding(.vertical, PFSpacing.itemGap)
                         }
-                        .listStyle(.plain)
+                        .background(Color.pfBackground)
                     }
-                    } // end VStack
                 }
             }
-            .navigationTitle(locale.t("operator.bases"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                if let onDismiss {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button { onDismiss() } label: {
-                            Image(systemName: "xmark")
-                        }
+        }
+        .navigationTitle(locale.t("operator.bases"))
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if let onDismiss {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button { onDismiss() } label: {
+                        Image(systemName: "xmark")
                     }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        path.append(BaseNavDestination.create)
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                    .accessibilityIdentifier("create-base-btn")
                 }
             }
-            .navigationDestination(for: BaseNavDestination.self) { destination in
-                switch destination {
-                case .edit(let baseId):
-                    if let base = bases.first(where: { $0.id == baseId }) {
-                        BaseEditView(
-                            game: game,
-                            base: base,
-                            bases: bases,
-                            challenges: challenges,
-                            assignments: assignments,
-                            onSaved: { updatedBase in
-                                if let index = bases.firstIndex(where: { $0.id == updatedBase.id }) {
-                                    bases[index] = updatedBase
-                                }
-                                Task { await loadData() }
-                            },
-                            onDeleted: {
-                                bases.removeAll { $0.id == baseId }
-                                path.removeLast()
-                            }
-                        )
-                    }
-                case .create:
-                    let lastBase = bases.last
-                    let initialCoord: CLLocationCoordinate2D = if let base = lastBase {
-                        CLLocationCoordinate2D(latitude: base.lat, longitude: base.lng)
-                    } else {
-                        TileSources.defaultCenter(for: game.tileSource)
-                    }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    path.append(BaseNavDestination.create)
+                } label: {
+                    Image(systemName: "plus")
+                }
+                .accessibilityIdentifier("create-base-btn")
+            }
+        }
+        .navigationDestination(for: BaseNavDestination.self) { destination in
+            switch destination {
+            case .edit(let baseId):
+                if let base = bases.first(where: { $0.id == baseId }) {
                     BaseEditView(
                         game: game,
-                        base: nil,
+                        base: base,
                         bases: bases,
                         challenges: challenges,
                         assignments: assignments,
-                        initialCoordinate: initialCoord,
-                        onSaved: { newBase in
-                            bases.append(newBase)
+                        onSaved: { updatedBase in
+                            if let index = bases.firstIndex(where: { $0.id == updatedBase.id }) {
+                                bases[index] = updatedBase
+                            }
                             Task { await loadData() }
+                        },
+                        onDeleted: {
+                            bases.removeAll { $0.id == baseId }
                             path.removeLast()
-                            path.append(BaseNavDestination.edit(newBase.id))
                         }
                     )
                 }
+            case .create:
+                let lastBase = bases.last
+                let initialCoord: CLLocationCoordinate2D = if let base = lastBase {
+                    CLLocationCoordinate2D(latitude: base.lat, longitude: base.lng)
+                } else {
+                    TileSources.defaultCenter(for: game.tileSource)
+                }
+                BaseEditView(
+                    game: game,
+                    base: nil,
+                    bases: bases,
+                    challenges: challenges,
+                    assignments: assignments,
+                    initialCoordinate: initialCoord,
+                    onSaved: { newBase in
+                        bases.append(newBase)
+                        Task { await loadData() }
+                        path.removeLast()
+                        path.append(BaseNavDestination.edit(newBase.id))
+                    }
+                )
             }
-            .task {
-                await loadData()
+        }
+        .task {
+            await loadData()
+        }
+        .refreshable {
+            await loadData()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .mobileRealtimeEvent)) { notification in
+            guard let rawGameId = notification.userInfo?["gameId"] as? String,
+                  rawGameId.lowercased() == game.id.uuidString.lowercased(),
+                  let type = notification.userInfo?["type"] as? String,
+                  type == "game_config",
+                  let data = notification.userInfo?["data"] as? [String: Any],
+                  let entity = data["entity"] as? String,
+                  entity == "bases" else { return }
+            Task { await loadData() }
+        }
+    }
+
+    // MARK: - Base Card
+
+    @ViewBuilder
+    private func baseCard(_ base: Base) -> some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(base.name)
+                    .font(.headline)
+                    .foregroundStyle(Color.pfText)
+                if !base.description.isEmpty {
+                    Text(base.description)
+                        .font(.caption)
+                        .foregroundStyle(Color.pfTextMuted)
+                        .lineLimit(1)
+                }
+                Text(challengeInfoForBase(base))
+                    .font(.caption)
+                    .foregroundStyle(Color.pfTextMuted)
             }
-            .refreshable {
-                await loadData()
+            Spacer()
+            HStack(spacing: 6) {
+                if base.hidden {
+                    Image(systemName: "eye.slash")
+                        .font(.caption)
+                        .foregroundStyle(Color.pfTextMuted)
+                }
+                HStack(spacing: 4) {
+                    Circle()
+                        .fill(base.nfcLinked ? Color.pfCompleted : Color.pfPending)
+                        .frame(width: 7, height: 7)
+                    Text(base.nfcLinked ? locale.t("operator.linked") : locale.t("operator.notLinked"))
+                        .font(.caption2)
+                        .foregroundStyle(base.nfcLinked ? Color.pfCompleted : Color.pfPending)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background((base.nfcLinked ? Color.pfCompleted : Color.pfPending).opacity(0.15))
+                .clipShape(Capsule())
             }
-            .onReceive(NotificationCenter.default.publisher(for: .mobileRealtimeEvent)) { notification in
-                guard let rawGameId = notification.userInfo?["gameId"] as? String,
-                      rawGameId.lowercased() == game.id.uuidString.lowercased(),
-                      let type = notification.userInfo?["type"] as? String,
-                      type == "game_config",
-                      let data = notification.userInfo?["data"] as? [String: Any],
-                      let entity = data["entity"] as? String,
-                      entity == "bases" else { return }
-                Task { await loadData() }
-            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.pfCard)
+        .clipShape(RoundedRectangle(cornerRadius: PFRadius.card))
+        .shadow(color: .black.opacity(0.03), radius: 4, y: 1)
     }
 
     private func challengeInfoForBase(_ base: Base) -> String {

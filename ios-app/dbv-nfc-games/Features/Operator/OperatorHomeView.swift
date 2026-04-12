@@ -54,46 +54,24 @@ struct OperatorHomeView: View {
                         )
                     }
                 } else {
-                    List {
-                        Section {
+                    ScrollView {
+                        LazyVStack(spacing: PFSpacing.itemGap) {
                             workspaceSwitcher
-                                .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
-                                .listRowBackground(Color.clear)
-                                .listRowSeparator(.hidden)
-                        }
-                        ForEach(games) { game in
-                            Button {
-                                selectedGame = game
-                            } label: {
-                                HStack {
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text(game.name)
-                                            .font(.headline)
-                                        Text(game.description)
-                                            .font(.caption)
-                                            .foregroundStyle(Color.pfTextMuted)
-                                            .lineLimit(2)
-                                    }
+                                .padding(.bottom, 4)
 
-                                    Spacer()
-
-                                    Text(locale.t("game.status.\(game.status)"))
-                                        .font(.caption)
-                                        .fontWeight(.medium)
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 4)
-                                        .background(statusColor(for: game.status).opacity(0.2))
-                                        .foregroundStyle(statusColor(for: game.status))
-                                        .clipShape(Capsule())
-
-                                    Image(systemName: "chevron.right")
-                                        .font(.caption)
-                                        .foregroundStyle(.tertiary)
+                            ForEach(games) { game in
+                                Button {
+                                    selectedGame = game
+                                } label: {
+                                    gameCard(game)
                                 }
+                                .buttonStyle(.plain)
                             }
-                            .foregroundStyle(.primary)
                         }
+                        .padding(.horizontal, PFSpacing.screenPadding)
+                        .padding(.vertical, PFSpacing.itemGap)
                     }
+                    .background(Color.pfBackground)
                 }
             }
             .navigationTitle(locale.t("operator.myGames"))
@@ -164,6 +142,40 @@ struct OperatorHomeView: View {
         }
     }
 
+    // MARK: - Game Card
+
+    @ViewBuilder
+    private func gameCard(_ game: Game) -> some View {
+        let color = statusColor(for: game.status)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(game.name)
+                    .font(.headline)
+                    .foregroundStyle(Color.pfText)
+                Spacer()
+                Text(locale.t("game.status.\(game.status)").uppercased())
+                    .font(.caption2)
+                    .fontWeight(.semibold)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(color.opacity(0.15))
+                    .foregroundStyle(color)
+                    .clipShape(Capsule())
+            }
+            if !game.description.isEmpty {
+                Text(game.description)
+                    .font(.caption)
+                    .foregroundStyle(Color.pfTextMuted)
+                    .lineLimit(2)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.pfCard)
+        .clipShape(RoundedRectangle(cornerRadius: PFRadius.card))
+        .shadow(color: .black.opacity(0.03), radius: 4, y: 1)
+    }
+
     // MARK: - Workspace Switcher
 
     @ViewBuilder
@@ -193,6 +205,7 @@ struct OperatorHomeView: View {
             .padding(.horizontal, PFSpacing.screenPadding)
             .padding(.vertical, 4)
         }
+        .padding(.horizontal, -PFSpacing.screenPadding)
     }
 
     private func workspaceButton(label: String, detail: String?, isSelected: Bool, action: @escaping () -> Void) -> some View {
