@@ -11,6 +11,7 @@ struct CheckInTabView: View {
     @State private var scanError: String?
     @State private var navigationPath = NavigationPath()
     @State private var failedSyncCount = 0
+    @State private var successFlash = false
     @State private var showSyncSheet = false
     /// Whether this device has NFC hardware capable of reading tags.
     /// Checked on every onAppear since it is static for a given device.
@@ -125,6 +126,15 @@ struct CheckInTabView: View {
                         .padding(.bottom, 24)
                     }
 
+                    // Full-screen success flash
+                    if successFlash {
+                        Color.pfPrimary
+                            .opacity(0.25)
+                            .ignoresSafeArea()
+                            .transition(.opacity)
+                            .allowsHitTesting(false)
+                    }
+
                     if shouldBlockGameplay {
                         Color.black.opacity(0.45)
                             .ignoresSafeArea()
@@ -211,7 +221,10 @@ struct CheckInTabView: View {
         let result = await appState.checkIn(baseId: baseId)
         if result != nil {
             scanAnimationState = .success
-            try? await Task.sleep(for: .milliseconds(600))
+            withAnimation(.easeOut(duration: 0.3)) { successFlash = true }
+            try? await Task.sleep(for: .milliseconds(200))
+            withAnimation(.easeOut(duration: 0.4)) { successFlash = false }
+            try? await Task.sleep(for: .milliseconds(400))
             navigationPath.append(baseId)
             try? await Task.sleep(for: .milliseconds(300))
             scanAnimationState = .idle
@@ -233,7 +246,10 @@ struct CheckInTabView: View {
             if result != nil {
                 // Success burst animation, then navigate
                 scanAnimationState = .success
-                try? await Task.sleep(for: .milliseconds(600))
+                withAnimation(.easeOut(duration: 0.3)) { successFlash = true }
+                try? await Task.sleep(for: .milliseconds(200))
+                withAnimation(.easeOut(duration: 0.4)) { successFlash = false }
+                try? await Task.sleep(for: .milliseconds(400))
                 navigationPath.append(payload.baseId)
                 // Reset after navigation
                 try? await Task.sleep(for: .milliseconds(300))

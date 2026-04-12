@@ -35,21 +35,18 @@ struct AnimatedScanView: View {
             // Center icon (not drawn in Canvas — uses SF Symbols)
             centerIcon
         }
-        .overlay {
-            // Success flash
-            if state == .success {
-                Circle()
-                    .fill(Color.pfPrimary.opacity(flashOpacity))
-                    .scaleEffect(burstScale)
-                    .blur(radius: 30)
-            }
-        }
+        .clipped(antialiased: false)
         .onAppear {
             generateParticles()
         }
         .onChange(of: state) { _, newState in
             if newState == .success {
                 triggerSuccessBurst()
+            } else if newState == .idle {
+                // Reset burst state so animations are visible again
+                burstScale = 1.0
+                burstOpacity = 1.0
+                flashOpacity = 0.0
             }
         }
     }
