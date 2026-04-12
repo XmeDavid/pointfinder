@@ -44,209 +44,18 @@ struct OperatorMoreView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                // Game Management section
-                Section {
-                    NavigationLink {
-                        GameSettingsView(game: game, onGameDeleted: onBack)
-                    } label: {
-                        Label(locale.t("operator.gameSettings"), systemImage: "gear")
-                    }
-
-                    NavigationLink {
-                        NotificationsManagementView(game: game)
-                    } label: {
-                        Label(locale.t("operator.notifications"), systemImage: "bell.badge")
-                    }
-
-                    Button {
-                        showBases = true
-                    } label: {
-                        Label(locale.t("operator.bases"), systemImage: "mappin.and.ellipse")
-                    }
-
-                    Button {
-                        showChallenges = true
-                    } label: {
-                        Label(locale.t("operator.challenges"), systemImage: "puzzlepiece")
-                    }
-
-                    Button {
-                        showTeams = true
-                    } label: {
-                        Label(locale.t("operator.teams"), systemImage: "person.3")
-                    }
-
-                    Button {
-                        showStages = true
-                    } label: {
-                        Label("Stages", systemImage: "list.number")
-                    }
-
-                    Button {
-                        showAssignments = true
-                    } label: {
-                        Label(locale.t("operator.assignments"), systemImage: "link")
-                    }
-                    .accessibilityIdentifier("nav-assignments-btn")
-
-                    Button {
-                        showActivity = true
-                    } label: {
-                        Label(locale.t("operator.activity.title"), systemImage: "clock.arrow.circlepath")
-                    }
-
-                    Button {
-                        showManageTags = true
-                    } label: {
-                        Label(locale.t("tags.manage"), systemImage: "tag")
-                    }
-
-                    NavigationLink {
-                        OperatorsManagementView(game: game)
-                    } label: {
-                        Label(locale.t("operator.operators"), systemImage: "person.2")
-                    }
-
-                    if let org = selectedOrg {
-                        NavigationLink {
-                            OrganizationView(org: org)
-                        } label: {
-                            Label("Organization: \(org.name)", systemImage: "building.2")
-                        }
-                    }
-
-                    Button {
-                        Task { await exportGame() }
-                    } label: {
-                        Label {
-                            Text(isExporting ? locale.t("operator.exporting") : locale.t("operator.exportGame"))
-                        } icon: {
-                            if isExporting {
-                                ProgressView()
-                            } else {
-                                Image(systemName: "square.and.arrow.up")
-                            }
-                        }
-                    }
-                    .disabled(isExporting)
-                    .accessibilityIdentifier("game-export-btn")
-
-                    if let exportError {
-                        Text(exportError)
-                            .foregroundStyle(.red)
-                            .font(.caption)
-                    }
+            ScrollView {
+                VStack(spacing: 20) {
+                    gameSection
+                    managementSection
+                    preferencesSection
+                    notificationsSection
+                    accountSection
                 }
-
-                // App Settings section
-                Section(locale.t("operator.appSettings")) {
-                    // Language picker
-                    Picker(locale.t("settings.language"), selection: Binding(
-                        get: { locale.currentLanguage },
-                        set: { locale.setLanguage($0) }
-                    )) {
-                        Text("English").tag("en")
-                        Text("Portugu\u{00EA}s").tag("pt")
-                        Text("Deutsch").tag("de")
-                    }
-
-                    // Theme picker
-                    @Bindable var appearance = appearance
-                    Picker(locale.t("settings.theme"), selection: $appearance.preferredTheme) {
-                        Text(locale.t("settings.themeSystem")).tag("system")
-                        Text(locale.t("settings.themeLight")).tag("light")
-                        Text(locale.t("settings.themeDark")).tag("dark")
-                    }
-                }
-
-                // Notification preferences
-                Section(locale.t("operator.notificationSettings")) {
-                    if isLoadingNotificationSettings && !hasLoadedNotificationSettings {
-                        ProgressView(locale.t("operator.loading"))
-                    } else {
-                        Toggle(locale.t("operator.notifyPendingSubmissions"), isOn: Binding(
-                            get: { notifyPendingSubmissions },
-                            set: { newValue in
-                                notifyPendingSubmissions = newValue
-                                saveNotificationSettings()
-                            }
-                        ))
-                        .disabled(isSavingNotificationSettings)
-                        Toggle(locale.t("operator.notifyAllSubmissions"), isOn: Binding(
-                            get: { notifyAllSubmissions },
-                            set: { newValue in
-                                notifyAllSubmissions = newValue
-                                saveNotificationSettings()
-                            }
-                        ))
-                        .disabled(isSavingNotificationSettings)
-                        Toggle(locale.t("operator.notifyCheckIns"), isOn: Binding(
-                            get: { notifyCheckIns },
-                            set: { newValue in
-                                notifyCheckIns = newValue
-                                saveNotificationSettings()
-                            }
-                        ))
-                        .disabled(isSavingNotificationSettings)
-
-                        if isSavingNotificationSettings {
-                            ProgressView(locale.t("common.saving"))
-                                .font(.caption)
-                        }
-
-                        if let notificationSettingsError {
-                            Text(notificationSettingsError)
-                                .font(.caption)
-                                .foregroundStyle(.red)
-                        }
-                    }
-                }
-
-                // Account section
-                Section(locale.t("operator.account")) {
-                    Link(destination: AppConfiguration.privacyPolicyLink) {
-                        Label(locale.t("settings.privacyPolicy"), systemImage: "hand.raised")
-                    }
-
-                    Button {
-                        onBack()
-                    } label: {
-                        Label(locale.t("operator.switchGame"), systemImage: "arrow.left.circle")
-                    }
-
-                    Button(role: .destructive) {
-                        Task { await appState.logout() }
-                    } label: {
-                        Label(locale.t("operator.logout"), systemImage: "rectangle.portrait.and.arrow.right")
-                    }
-
-                    Button(role: .destructive) {
-                        showDeleteAccountAlert = true
-                    } label: {
-                        Label {
-                            if isDeletingAccount {
-                                Text(locale.t("settings.deletingAccount"))
-                            } else {
-                                Text(locale.t("settings.deleteAccount"))
-                            }
-                        } icon: {
-                            if isDeletingAccount {
-                                ProgressView()
-                            } else {
-                                Image(systemName: "person.crop.circle.badge.minus")
-                            }
-                        }
-                    }
-                    .disabled(isDeletingAccount)
-
-                    if let deleteAccountError {
-                        Text(deleteAccountError)
-                            .foregroundStyle(.red)
-                            .font(.caption)
-                    }
-                }
+                .padding(.horizontal, PFSpacing.screenPadding)
+                .padding(.vertical, 12)
             }
+            .background(Color.pfBackground)
             .navigationTitle(locale.t("operator.more"))
             .navigationBarTitleDisplayMode(.inline)
             .task {
@@ -285,6 +94,289 @@ struct OperatorMoreView: View {
                 Button(locale.t("common.cancel"), role: .cancel) {}
             } message: {
                 Text(locale.t("settings.deleteAccountConfirmMessage"))
+            }
+        }
+    }
+
+    // MARK: - Sections
+
+    private var gameSection: some View {
+        MoreSection(title: "GAME") {
+            NavigationLink {
+                GameSettingsView(game: game, onGameDeleted: onBack)
+            } label: {
+                MoreRowContent(icon: "gearshape", label: locale.t("operator.gameSettings"))
+            }
+            .buttonStyle(.plain)
+
+            MoreDivider()
+
+            NavigationLink {
+                NotificationsManagementView(game: game)
+            } label: {
+                MoreRowContent(icon: "bell.badge", label: locale.t("operator.notifications"))
+            }
+            .buttonStyle(.plain)
+
+            MoreDivider()
+
+            NavigationLink {
+                OperatorsManagementView(game: game)
+            } label: {
+                MoreRowContent(icon: "person.2", label: locale.t("operator.operators"))
+            }
+            .buttonStyle(.plain)
+
+            if let org = selectedOrg {
+                MoreDivider()
+
+                NavigationLink {
+                    OrganizationView(org: org)
+                } label: {
+                    MoreRowContent(icon: "building.2", label: "Organization: \(org.name)")
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private var managementSection: some View {
+        MoreSection(title: locale.t("operator.manage").uppercased()) {
+            MoreRow(icon: "mappin.and.ellipse", label: locale.t("operator.bases")) {
+                showBases = true
+            }
+
+            MoreDivider()
+
+            MoreRow(icon: "puzzlepiece", label: locale.t("operator.challenges")) {
+                showChallenges = true
+            }
+
+            MoreDivider()
+
+            MoreRow(icon: "person.3", label: locale.t("operator.teams")) {
+                showTeams = true
+            }
+
+            MoreDivider()
+
+            MoreRow(icon: "list.number", label: "Stages") {
+                showStages = true
+            }
+
+            MoreDivider()
+
+            MoreRow(icon: "link", label: locale.t("operator.assignments")) {
+                showAssignments = true
+            }
+            .accessibilityIdentifier("nav-assignments-btn")
+
+            MoreDivider()
+
+            MoreRow(icon: "clock.arrow.circlepath", label: locale.t("operator.activity.title")) {
+                showActivity = true
+            }
+
+            MoreDivider()
+
+            MoreRow(icon: "tag", label: locale.t("tags.manage")) {
+                showManageTags = true
+            }
+
+            MoreDivider()
+
+            MoreRow(
+                icon: isExporting ? "arrow.clockwise" : "square.and.arrow.up",
+                label: isExporting ? locale.t("operator.exporting") : locale.t("operator.exportGame"),
+                isLoading: isExporting
+            ) {
+                Task { await exportGame() }
+            }
+            .disabled(isExporting)
+            .accessibilityIdentifier("game-export-btn")
+
+            if let exportError {
+                Text(exportError)
+                    .foregroundStyle(.red)
+                    .font(.caption)
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 8)
+            }
+        }
+    }
+
+    private var preferencesSection: some View {
+        MoreSection(title: locale.t("operator.appSettings").uppercased()) {
+            HStack(spacing: 12) {
+                Image(systemName: "globe")
+                    .font(.body)
+                    .foregroundStyle(Color.pfPrimary)
+                    .frame(width: 32, height: 32)
+                    .background(Color.pfPrimary.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                Text(locale.t("settings.language"))
+                    .font(.subheadline)
+                    .foregroundStyle(.pfText)
+
+                Spacer()
+
+                Picker("", selection: Binding(
+                    get: { locale.currentLanguage },
+                    set: { locale.setLanguage($0) }
+                )) {
+                    Text("English").tag("en")
+                    Text("Portugu\u{00EA}s").tag("pt")
+                    Text("Deutsch").tag("de")
+                }
+                .labelsHidden()
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+
+            MoreDivider()
+
+            HStack(spacing: 12) {
+                Image(systemName: "moon.circle")
+                    .font(.body)
+                    .foregroundStyle(Color.pfPrimary)
+                    .frame(width: 32, height: 32)
+                    .background(Color.pfPrimary.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                Text(locale.t("settings.theme"))
+                    .font(.subheadline)
+                    .foregroundStyle(.pfText)
+
+                Spacer()
+
+                @Bindable var appearance = appearance
+                Picker("", selection: $appearance.preferredTheme) {
+                    Text(locale.t("settings.themeSystem")).tag("system")
+                    Text(locale.t("settings.themeLight")).tag("light")
+                    Text(locale.t("settings.themeDark")).tag("dark")
+                }
+                .labelsHidden()
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+        }
+    }
+
+    private var notificationsSection: some View {
+        MoreSection(title: locale.t("operator.notificationSettings").uppercased()) {
+            if isLoadingNotificationSettings && !hasLoadedNotificationSettings {
+                HStack {
+                    ProgressView(locale.t("operator.loading"))
+                        .font(.subheadline)
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+            } else {
+                MoreToggleRow(
+                    icon: "bell.badge",
+                    label: locale.t("operator.notifyPendingSubmissions"),
+                    isOn: Binding(
+                        get: { notifyPendingSubmissions },
+                        set: { newValue in
+                            notifyPendingSubmissions = newValue
+                            saveNotificationSettings()
+                        }
+                    )
+                )
+                .disabled(isSavingNotificationSettings)
+
+                MoreDivider()
+
+                MoreToggleRow(
+                    icon: "bell",
+                    label: locale.t("operator.notifyAllSubmissions"),
+                    isOn: Binding(
+                        get: { notifyAllSubmissions },
+                        set: { newValue in
+                            notifyAllSubmissions = newValue
+                            saveNotificationSettings()
+                        }
+                    )
+                )
+                .disabled(isSavingNotificationSettings)
+
+                MoreDivider()
+
+                MoreToggleRow(
+                    icon: "figure.walk",
+                    label: locale.t("operator.notifyCheckIns"),
+                    isOn: Binding(
+                        get: { notifyCheckIns },
+                        set: { newValue in
+                            notifyCheckIns = newValue
+                            saveNotificationSettings()
+                        }
+                    )
+                )
+                .disabled(isSavingNotificationSettings)
+
+                if isSavingNotificationSettings {
+                    HStack {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                        Text(locale.t("common.saving"))
+                            .font(.caption)
+                            .foregroundStyle(.pfTextMuted)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                }
+
+                if let notificationSettingsError {
+                    Text(notificationSettingsError)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .padding(.horizontal, 12)
+                        .padding(.bottom, 8)
+                }
+            }
+        }
+    }
+
+    private var accountSection: some View {
+        MoreSection(title: locale.t("operator.account").uppercased()) {
+            Link(destination: AppConfiguration.privacyPolicyLink) {
+                MoreRowContent(icon: "hand.raised", label: locale.t("settings.privacyPolicy"))
+            }
+            .foregroundStyle(.primary)
+
+            MoreDivider()
+
+            MoreRow(icon: "arrow.left.circle", label: locale.t("operator.switchGame")) {
+                onBack()
+            }
+
+            MoreDivider()
+
+            MoreRow(icon: "rectangle.portrait.and.arrow.right", label: locale.t("operator.logout"), role: .destructive) {
+                Task { await appState.logout() }
+            }
+
+            MoreDivider()
+
+            MoreRow(
+                icon: isDeletingAccount ? "arrow.clockwise" : "person.crop.circle.badge.minus",
+                label: isDeletingAccount ? locale.t("settings.deletingAccount") : locale.t("settings.deleteAccount"),
+                role: .destructive,
+                isLoading: isDeletingAccount
+            ) {
+                showDeleteAccountAlert = true
+            }
+            .disabled(isDeletingAccount)
+
+            if let deleteAccountError {
+                Text(deleteAccountError)
+                    .foregroundStyle(.red)
+                    .font(.caption)
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 8)
             }
         }
     }
@@ -377,6 +469,122 @@ struct OperatorMoreView: View {
             deleteAccountError = error.localizedDescription
             isDeletingAccount = false
         }
+    }
+}
+
+// MARK: - Section Container
+
+private struct MoreSection<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(.pfTextMuted)
+                .padding(.leading, 4)
+
+            VStack(spacing: 0) {
+                content()
+            }
+            .background(Color.pfCard)
+            .clipShape(RoundedRectangle(cornerRadius: PFRadius.card))
+            .shadow(color: .black.opacity(0.03), radius: 4, y: 1)
+        }
+    }
+}
+
+// MARK: - Row Helpers
+
+private struct MoreRow: View {
+    let icon: String
+    let label: String
+    var role: ButtonRole? = nil
+    var isLoading: Bool = false
+    let action: () -> Void
+
+    var body: some View {
+        Button(role: role, action: action) {
+            MoreRowContent(icon: icon, label: label, role: role, isLoading: isLoading)
+        }
+    }
+}
+
+private struct MoreRowContent: View {
+    let icon: String
+    let label: String
+    var role: ButtonRole? = nil
+    var isLoading: Bool = false
+
+    private var labelColor: Color {
+        role == .destructive ? Color.pfRejected : Color.pfText
+    }
+
+    private var iconColor: Color {
+        role == .destructive ? Color.pfRejected : Color.pfPrimary
+    }
+
+    private var iconBgColor: Color {
+        role == .destructive ? Color.pfRejected.opacity(0.1) : Color.pfPrimary.opacity(0.1)
+    }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            if isLoading {
+                ProgressView()
+                    .frame(width: 32, height: 32)
+                    .background(iconBgColor)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+            } else {
+                Image(systemName: icon)
+                    .font(.body)
+                    .foregroundStyle(iconColor)
+                    .frame(width: 32, height: 32)
+                    .background(iconBgColor)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+            Text(label)
+                .font(.subheadline)
+                .foregroundStyle(labelColor)
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundStyle(.pfTextMuted)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+    }
+}
+
+private struct MoreToggleRow: View {
+    let icon: String
+    let label: String
+    @Binding var isOn: Bool
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.body)
+                .foregroundStyle(Color.pfPrimary)
+                .frame(width: 32, height: 32)
+                .background(Color.pfPrimary.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+
+            Toggle(label, isOn: $isOn)
+                .font(.subheadline)
+                .foregroundStyle(.pfText)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+    }
+}
+
+private struct MoreDivider: View {
+    var body: some View {
+        Divider()
+            .padding(.leading, 52)
     }
 }
 
