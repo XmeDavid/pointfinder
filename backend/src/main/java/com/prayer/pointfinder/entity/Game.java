@@ -38,6 +38,10 @@ public class Game {
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "org_id")
+    private Organization organization;
+
     @ManyToMany
     @JoinTable(
         name = "game_operators",
