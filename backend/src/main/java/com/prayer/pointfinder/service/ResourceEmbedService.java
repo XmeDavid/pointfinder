@@ -2,6 +2,9 @@ package com.prayer.pointfinder.service;
 
 import com.prayer.pointfinder.dto.response.ResourceResponse;
 import com.prayer.pointfinder.entity.*;
+import com.prayer.pointfinder.exception.BadRequestException;
+import com.prayer.pointfinder.exception.ForbiddenException;
+import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.BaseRepository;
 import com.prayer.pointfinder.repository.ChallengeRepository;
 import com.prayer.pointfinder.repository.ResourceEmbedRepository;
@@ -173,6 +176,28 @@ public class ResourceEmbedService {
         }
 
         return resources.values().stream().map(this::toPlayerResponse).toList();
+    }
+
+    /**
+     * Generates a presigned download URL for a resource, verifying it belongs to the
+     * given game. Used by player-facing endpoints where operator auth is unavailable.
+     */
+    @Transactional(readOnly = true)
+    public String getDownloadUrlForPlayer(UUID gameId, UUID resourceId) {
+        Resource resource = resourceRepository.findById(resourceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Resource", resourceId));
+
+        // Verify the resource belongs to this game
+        if (resource.getGame() == null || !resource.getGame().getId().equals(gameId)) {
+            throw new ForbiddenException("Resource does not belong to this game");
+        }
+        if (resource.getType() != ResourceType.file || resource.getS3Key() == null) {
+            throw new BadRequestException("Resource is not a file or has no S3 key");
+        }
+        if (!objectStorageService.isEnabled()) {
+            throw new BadRequestException("Object storage is not configured");
+        }
+        return objectStorageService.generatePresignedUrl(resource.getS3Key());
     }
 
     // --- Helpers ---
