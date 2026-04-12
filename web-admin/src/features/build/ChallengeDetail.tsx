@@ -9,10 +9,12 @@ import { useTeams } from '@/hooks/queries/useTeams'
 import { useUpdateChallenge, useDeleteChallenge } from '@/hooks/mutations/useChallengeMutations'
 import { useCreateAssignment, useDeleteAssignment } from '@/hooks/mutations/useAssignmentMutations'
 import { useWorkspaceStore } from '@/stores/workspace'
+import { useWorkspaceContext } from '@/stores/workspaceContext'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
+import { ResourcePicker } from '@/components/editor/ResourcePicker'
 import { cn } from '@/lib/utils'
 import type { AnswerType } from '@/types/v2'
 
@@ -38,9 +40,17 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
   const deleteAssignmentMut = useDeleteAssignment(gameId)
   const selectBase = useWorkspaceStore((s) => s.selectBase)
   const selectChallenge = useWorkspaceStore((s) => s.selectChallenge)
+  const { active } = useWorkspaceContext()
+  const orgId = active.type === 'org' ? active.orgId : undefined
 
   const [showBaseDropdown, setShowBaseDropdown] = useState(false)
   const baseDropdownRef = useRef<HTMLDivElement>(null)
+
+  // Resource picker state
+  const [showResourcePicker, setShowResourcePicker] = useState(false)
+  const [activeEditorField, setActiveEditorField] = useState<'content' | 'completion' | null>(null)
+  const contentEditorRef = useRef<((resource: { id: string; name: string; sizeBytes: number; contentType: string }) => void) | null>(null)
+  const completionEditorRef = useRef<((resource: { id: string; name: string; sizeBytes: number; contentType: string }) => void) | null>(null)
 
   const challenge = challenges.find((c) => c.id === challengeId)
 
@@ -289,6 +299,11 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
               content={localContent}
               onChange={setLocalContent}
               placeholder="Challenge content..."
+              onInsertFileEmbed={() => {
+                setActiveEditorField('content')
+                setShowResourcePicker(true)
+              }}
+              insertFileEmbedRef={contentEditorRef}
             />
           </div>
         </div>
@@ -606,9 +621,27 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
             content={localCompletionContent}
             onChange={setLocalCompletionContent}
             placeholder="What teams see after completing this challenge..."
+            onInsertFileEmbed={() => {
+              setActiveEditorField('completion')
+              setShowResourcePicker(true)
+            }}
+            insertFileEmbedRef={completionEditorRef}
           />
         </div>
       </section>
+
+      {/* Resource picker modal */}
+      {showResourcePicker && (
+        <ResourcePicker
+          gameId={gameId}
+          orgId={orgId}
+          onSelect={(resource) => {
+            const ref = activeEditorField === 'content' ? contentEditorRef : completionEditorRef
+            ref.current?.(resource)
+          }}
+          onClose={() => setShowResourcePicker(false)}
+        />
+      )}
 
       {/* Save button */}
       <div className="border-t border-border pt-4 mt-4">
