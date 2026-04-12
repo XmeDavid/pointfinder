@@ -72,6 +72,18 @@ app:
     enabled: ${FCM_ENABLED:false}
     credentials-path: ${FCM_CREDENTIALS_PATH:}
     project-id: ${FCM_PROJECT_ID:}
+  stripe:
+    secret-key: ${STRIPE_SECRET_KEY:}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+    prices:
+      individual-pro-monthly: ${STRIPE_PRICE_PRO_MONTHLY:}
+      individual-pro-annual: ${STRIPE_PRICE_PRO_ANNUAL:}
+      org-base-monthly: ${STRIPE_PRICE_ORG_BASE_MONTHLY:}
+      org-base-annual: ${STRIPE_PRICE_ORG_BASE_ANNUAL:}
+      org-high-monthly: ${STRIPE_PRICE_ORG_HIGH_MONTHLY:}
+      org-high-annual: ${STRIPE_PRICE_ORG_HIGH_ANNUAL:}
+    success-url: ${FRONTEND_URL:http://localhost:5173}/billing/success
+    cancel-url: ${FRONTEND_URL:http://localhost:5173}/billing/cancel
   quota:
     enforcement-enabled: ${QUOTA_ENFORCEMENT_ENABLED:false}
   uploads:
