@@ -272,6 +272,13 @@ const router = createBrowserRouter([
     ),
   },
   {
+    path: "/org/resources",
+    lazy: () =>
+      import("@/features/org/OrgResourcesPage").then((m) => ({
+        Component: m.OrgResourcesPage,
+      })),
+  },
+  {
     path: "/billing",
     element: (
       <AuthGuard>
