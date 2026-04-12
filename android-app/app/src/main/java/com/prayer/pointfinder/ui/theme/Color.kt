@@ -3,18 +3,39 @@ package com.prayer.pointfinder.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // Brand / primary
-val GreenSeed = Color(0xFF16A34A)
+val GreenSeed = Color(0xFF22C55E)
 val GreenDark = Color(0xFF0F7A36)
 val GreenLight = Color(0xFF39B865)
 
 // Status colors (used for base progress, badges, indicators)
-val StatusCheckedIn = Color(0xFF1565C0)
-val StatusCompleted = Color(0xFF2E7D32)
-val StatusSubmitted = Color(0xFFE08A00)
-val StatusRejected = Color(0xFFD32F2F)
+val StatusCheckedIn = Color(0xFF3B82F6)
+val StatusCompleted = Color(0xFF22C55E)
+val StatusSubmitted = Color(0xFFF59E0B)
+val StatusRejected = Color(0xFFEF4444)
+
+// Semantic parity tokens (matching iOS PfCompleted / PfCheckedIn / etc.)
+val PfCompleted = Color(0xFF22C55E)   // green
+val PfCheckedIn = Color(0xFF3B82F6)   // blue
+val PfPending = Color(0xFFF59E0B)     // amber
+val PfRejected = Color(0xFFEF4444)    // red
+
+// Waypoint surface colors (light theme)
+val WaypointBackground = Color(0xFFFAFAF8)
+val WaypointCard = Color(0xFFFFFFFF)
+val WaypointMapBg = Color(0xFFE4E2D0)
+val WaypointTextMuted = Color(0xFF999999)
+val WaypointInactive = Color(0xFFE0DDD0)
+
+// Trail surface colors (dark theme)
+val TrailBackground = Color(0xFF0A1A0D)
+val TrailCard = Color(0xFF14261A)
+val TrailCardBorder = Color(0xFF1E3A26)
+val TrailMapBg = Color(0xFF0D1A0F)
+val TrailTextMuted = Color(0xFF5A8A5A)
+val TrailInactive = Color(0xFF1A3A1A)
 
 // Accent / decorative
-val StarGold = Color(0xFFE08A00)
+val StarGold = Color(0xFFF59E0B)
 val BadgePurple = Color(0xFF7B1FA2)
 val BadgeIndigo = Color(0xFF303F9F)
 

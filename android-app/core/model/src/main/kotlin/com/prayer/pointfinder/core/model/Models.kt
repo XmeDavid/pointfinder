@@ -233,11 +233,11 @@ enum class BaseStatus {
 
     companion object {
         /** Canonical ARGB color values for each status, usable with `Color(Long)` in Compose. */
-        const val COLOR_NOT_VISITED: Long = 0xFF9E9E9E // Gray
-        const val COLOR_CHECKED_IN: Long = 0xFF1565C0  // Blue
-        const val COLOR_SUBMITTED: Long = 0xFFE08A00   // Orange
-        const val COLOR_COMPLETED: Long = 0xFF2E7D32   // Green
-        const val COLOR_REJECTED: Long = 0xFFD32F2F    // Red
+        const val COLOR_NOT_VISITED: Long = 0xFFE0DDD0 // Waypoint inactive (was 0xFF9E9E9E gray)
+        const val COLOR_CHECKED_IN: Long = 0xFF3B82F6  // Blue (was 0xFF1565C0)
+        const val COLOR_SUBMITTED: Long = 0xFFF59E0B   // Amber (was 0xFFE08A00)
+        const val COLOR_COMPLETED: Long = 0xFF22C55E   // Green (was 0xFF2E7D32)
+        const val COLOR_REJECTED: Long = 0xFFEF4444    // Red (was 0xFFD32F2F)
 
         fun colorFor(status: BaseStatus): Long = when (status) {
             NOT_VISITED -> COLOR_NOT_VISITED

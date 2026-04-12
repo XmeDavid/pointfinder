@@ -255,11 +255,11 @@ private fun addMarkerForProgress(
 }
 
 private fun statusColorInt(status: BaseStatus): Int = when (status) {
-    BaseStatus.NOT_VISITED -> android.graphics.Color.GRAY
-    BaseStatus.CHECKED_IN -> android.graphics.Color.parseColor("#1565C0")
-    BaseStatus.SUBMITTED -> android.graphics.Color.parseColor("#E08A00")
-    BaseStatus.COMPLETED -> android.graphics.Color.parseColor("#2E7D32")
-    BaseStatus.REJECTED -> android.graphics.Color.parseColor("#D32F2F")
+    BaseStatus.NOT_VISITED -> android.graphics.Color.parseColor("#E0DDD0")
+    BaseStatus.CHECKED_IN -> android.graphics.Color.parseColor("#3B82F6")
+    BaseStatus.SUBMITTED -> android.graphics.Color.parseColor("#F59E0B")
+    BaseStatus.COMPLETED -> android.graphics.Color.parseColor("#22C55E")
+    BaseStatus.REJECTED -> android.graphics.Color.parseColor("#EF4444")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
