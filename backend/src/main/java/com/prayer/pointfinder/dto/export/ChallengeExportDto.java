@@ -42,4 +42,5 @@ public class ChallengeExportDto {
      * Max 20 entries.
      */
     private List<String> tagLabels;
+    private Integer orderIndex;
 }

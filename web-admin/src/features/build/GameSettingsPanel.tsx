@@ -111,6 +111,12 @@ export default function GameSettingsPanel({
     [game?.unlockTrigger],
   )
 
+  // Game details (name/description)
+  const [editingName, setEditingName] = useState(false)
+  const [draftName, setDraftName] = useState('')
+  const [editingDesc, setEditingDesc] = useState(false)
+  const [draftDesc, setDraftDesc] = useState('')
+
   // Optimistic local state for toggles
   const [localUniform, setLocalUniform] = useState<boolean | null>(null)
   const [localBroadcast, setLocalBroadcast] = useState<boolean | null>(null)
@@ -131,6 +137,113 @@ export default function GameSettingsPanel({
         className="flex-1 overflow-y-auto px-4 py-4 space-y-6"
         data-testid="game-settings-panel"
       >
+        {/* Game Details */}
+        <section className="space-y-3">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Game Details
+          </h3>
+
+          {/* Name */}
+          <div className="space-y-1">
+            <label className="text-sm text-muted-foreground">Name</label>
+            {editingName ? (
+              <div className="flex gap-2">
+                <input
+                  autoFocus
+                  value={draftName}
+                  onChange={(e) => setDraftName(e.target.value)}
+                  data-testid="game-name-input"
+                  className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-border bg-muted text-sm text-foreground focus:outline-none focus:border-ring"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && draftName.trim()) {
+                      updateGame.mutate({ name: draftName.trim() }, {
+                        onSuccess: () => setEditingName(false),
+                      })
+                    }
+                    if (e.key === 'Escape') setEditingName(false)
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    if (draftName.trim()) {
+                      updateGame.mutate({ name: draftName.trim() }, {
+                        onSuccess: () => setEditingName(false),
+                      })
+                    }
+                  }}
+                  className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium cursor-pointer hover:bg-primary/90 transition-colors"
+                >
+                  Save
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  setDraftName(game.name)
+                  setEditingName(true)
+                }}
+                data-testid="edit-game-name-btn"
+                className="w-full text-left px-3 py-2 rounded-lg border border-border text-sm text-foreground hover:bg-muted transition-colors cursor-pointer"
+              >
+                {game.name}
+              </button>
+            )}
+          </div>
+
+          {/* Description */}
+          <div className="space-y-1">
+            <label className="text-sm text-muted-foreground">Description</label>
+            {editingDesc ? (
+              <div className="space-y-2">
+                <textarea
+                  autoFocus
+                  value={draftDesc}
+                  onChange={(e) => setDraftDesc(e.target.value)}
+                  rows={3}
+                  data-testid="game-description-input"
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-muted text-sm text-foreground focus:outline-none focus:border-ring resize-none"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') setEditingDesc(false)
+                  }}
+                />
+                <div className="flex gap-2 justify-end">
+                  <button
+                    onClick={() => setEditingDesc(false)}
+                    className="px-3 py-1.5 rounded-lg border border-border text-sm text-muted-foreground cursor-pointer hover:bg-muted transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      updateGame.mutate({ description: draftDesc }, {
+                        onSuccess: () => setEditingDesc(false),
+                      })
+                    }}
+                    className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium cursor-pointer hover:bg-primary/90 transition-colors"
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  setDraftDesc(game.description)
+                  setEditingDesc(true)
+                }}
+                data-testid="edit-game-desc-btn"
+                className="w-full text-left px-3 py-2 rounded-lg border border-border text-sm text-foreground hover:bg-muted transition-colors cursor-pointer min-h-[40px]"
+              >
+                {game.description || (
+                  <span className="text-muted-foreground italic">
+                    No description
+                  </span>
+                )}
+              </button>
+            )}
+          </div>
+        </section>
+
         {/* Map Settings */}
         <section className="space-y-3">
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">

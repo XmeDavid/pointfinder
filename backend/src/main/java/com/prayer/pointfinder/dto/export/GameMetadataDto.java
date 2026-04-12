@@ -14,4 +14,7 @@ public class GameMetadataDto {
     private String description;
     private Boolean uniformAssignment;
     private String tileSource;
+    private String unlockTrigger;
+    private Boolean broadcastEnabled;
+    private String broadcastCode;
 }

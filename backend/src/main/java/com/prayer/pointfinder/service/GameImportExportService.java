@@ -77,6 +77,9 @@ public class GameImportExportService {
                 .description(game.getDescription())
                 .uniformAssignment(game.getUniformAssignment())
                 .tileSource(game.getTileSource())
+                .unlockTrigger(game.getUnlockTrigger() != null ? game.getUnlockTrigger().name() : null)
+                .broadcastEnabled(game.getBroadcastEnabled())
+                .broadcastCode(game.getBroadcastCode())
                 .build();
 
         // Export tag vocabulary
@@ -110,6 +113,7 @@ public class GameImportExportService {
                             .tagLabels(tagLabels.isEmpty() ? null : tagLabels)
                             .stageTempId(base.getStageId() != null ?
                                     stageIdMap.get(base.getStageId()) : null)
+                            .orderIndex(base.getOrderIndex())
                             .build();
                 })
                 .toList();
@@ -140,6 +144,7 @@ public class GameImportExportService {
                             .unlocksBaseTempIds(unlocksTempIds.isEmpty() ? null : unlocksTempIds)
                             .operatorNotes(challenge.getOperatorNotes())
                             .tagLabels(tagLabels.isEmpty() ? null : tagLabels)
+                            .orderIndex(challenge.getOrderIndex())
                             .build();
                 })
                 .toList();
@@ -231,6 +236,8 @@ public class GameImportExportService {
                 .endDate(request.getEndDate())
                 .uniformAssignment(data.getGame().getUniformAssignment() != null ? data.getGame().getUniformAssignment() : false)
                 .tileSource(data.getGame().getTileSource() != null ? data.getGame().getTileSource() : "osm-classic")
+                .unlockTrigger(data.getGame().getUnlockTrigger() != null ? UnlockTrigger.valueOf(data.getGame().getUnlockTrigger()) : UnlockTrigger.CHECK_IN)
+                .broadcastEnabled(data.getGame().getBroadcastEnabled() != null ? data.getGame().getBroadcastEnabled() : false)
                 .status(GameStatus.setup)
                 .createdBy(currentUser)
                 .build();
@@ -278,6 +285,7 @@ public class GameImportExportService {
                     .locationBound(chDto.getLocationBound() != null ? chDto.getLocationBound() : false)
                     .requirePresenceToSubmit(chDto.getRequirePresenceToSubmit() != null ? chDto.getRequirePresenceToSubmit() : false)
                     .operatorNotes(normalizeOperatorNotes(chDto.getOperatorNotes()))
+                    .orderIndex(chDto.getOrderIndex() != null ? chDto.getOrderIndex() : 0)
                     .build();
             challenge = challengeRepository.save(challenge);
 
@@ -309,6 +317,7 @@ public class GameImportExportService {
                     .nfcLinked(false)
                     .hidden(baseDto.getHidden() != null ? baseDto.getHidden() : false)
                     .fixedChallenge(fixedChallenge)
+                    .orderIndex(baseDto.getOrderIndex() != null ? baseDto.getOrderIndex() : 0)
                     .build();
             base = baseRepository.save(base);
 

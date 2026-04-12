@@ -29,4 +29,5 @@ public class BaseExportDto {
 
     /** References a stage tempId. Null when the base has no stage (flat game). */
     private String stageTempId;
+    private Integer orderIndex;
 }

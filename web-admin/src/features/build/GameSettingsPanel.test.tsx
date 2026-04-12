@@ -191,12 +191,18 @@ describe('GameSettingsPanel', () => {
     })
   })
 
-  it('shows operators placeholder', async () => {
+  it('shows operators section with invite input', async () => {
     useWorkspaceStore.getState().toggleSettingsPanel()
 
     server.use(
       http.get('/api/games/:id', () =>
         HttpResponse.json(createMockGame({ id: 'game-1' })),
+      ),
+      http.get('/api/games/:id/operators', () =>
+        HttpResponse.json([]),
+      ),
+      http.get('/api/games/:id/invites', () =>
+        HttpResponse.json([]),
       ),
     )
 
@@ -205,10 +211,10 @@ describe('GameSettingsPanel', () => {
     })
 
     await waitFor(() => {
-      expect(screen.getByTestId('operators-placeholder')).toBeInTheDocument()
+      expect(screen.getByTestId('invite-email-input')).toBeInTheDocument()
     })
 
-    expect(screen.getByText('Operators panel coming soon')).toBeInTheDocument()
+    expect(screen.getByTestId('send-invite-btn')).toBeInTheDocument()
   })
 
   it('renders danger zone with delete button', async () => {

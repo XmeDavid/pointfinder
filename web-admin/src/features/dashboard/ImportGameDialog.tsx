@@ -108,6 +108,12 @@ export function ImportGameDialog({
                 {parsed.teams && parsed.teams.length > 0
                   ? `, ${parsed.teams.length} teams`
                   : ''}
+                {parsed.tags && parsed.tags.length > 0
+                  ? `, ${parsed.tags.length} tags`
+                  : ''}
+                {parsed.stages && parsed.stages.length > 0
+                  ? `, ${parsed.stages.length} stages`
+                  : ''}
               </span>
             </div>
           )}
