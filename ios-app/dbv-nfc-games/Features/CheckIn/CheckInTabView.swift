@@ -18,6 +18,9 @@ struct CheckInTabView: View {
     var body: some View {
         NavigationStack(path: $navigationPath) {
             ZStack {
+                Color.pfBackground
+                    .ignoresSafeArea()
+
                 let status = appState.currentGame?.status
                 let shouldBlockGameplay = status == "setup" || status == "ended"
 
@@ -33,11 +36,15 @@ struct CheckInTabView: View {
                         VStack(spacing: 16) {
                             ZStack {
                                 Circle()
-                                    .fill(Color.pfPrimary.opacity(0.1))
+                                    .fill(Color.pfPrimary.opacity(0.06))
+                                    .frame(width: 200, height: 200)
+
+                                Circle()
+                                    .fill(Color.pfPrimary.opacity(0.10))
                                     .frame(width: 160, height: 160)
 
                                 Circle()
-                                    .fill(Color.pfPrimary.opacity(0.2))
+                                    .fill(Color.pfPrimary.opacity(0.16))
                                     .frame(width: 120, height: 120)
 
                                 Image(systemName: "mappin.and.ellipse")
@@ -65,39 +72,53 @@ struct CheckInTabView: View {
                                 .padding(.horizontal)
                         }
 
-                        // Pending sync indicator
-                        if appState.pendingActionsCount > 0 {
-                            HStack(spacing: 8) {
-                                Image(systemName: "arrow.triangle.2.circlepath")
-                                    .foregroundStyle(Color.pfPending)
-                                let key = appState.pendingActionsCount == 1
-                                    ? "checkIn.pendingSyncOne"
-                                    : "checkIn.pendingSyncOther"
-                                Text(locale.t(key, appState.pendingActionsCount))
-                                    .font(.caption)
-                                    .foregroundStyle(Color.pfTextMuted)
+                        // Sync indicators
+                        VStack(spacing: 8) {
+                            // Pending sync indicator
+                            if appState.pendingActionsCount > 0 {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "arrow.triangle.2.circlepath")
+                                        .foregroundStyle(Color.pfPending)
+                                    let key = appState.pendingActionsCount == 1
+                                        ? "checkIn.pendingSyncOne"
+                                        : "checkIn.pendingSyncOther"
+                                    Text(locale.t(key, appState.pendingActionsCount))
+                                        .font(.caption)
+                                        .foregroundStyle(Color.pfTextMuted)
+                                }
+                                .padding(10)
+                                .background(Color.pfPending.opacity(0.08))
+                                .clipShape(RoundedRectangle(cornerRadius: PFRadius.small))
                             }
-                            .padding(.horizontal)
-                        }
 
-                        if failedSyncCount > 0 {
-                            HStack(spacing: 8) {
-                                Image(systemName: "exclamationmark.triangle.fill")
-                                    .foregroundStyle(Color.pfRejected)
-                                Text(locale.t("offline.failedSubmissions", String(failedSyncCount)))
-                                    .font(.caption)
-                                    .foregroundStyle(Color.pfRejected)
+                            if failedSyncCount > 0 {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                        .foregroundStyle(Color.pfRejected)
+                                    Text(locale.t("offline.failedSubmissions", String(failedSyncCount)))
+                                        .font(.caption)
+                                        .foregroundStyle(Color.pfRejected)
+                                }
+                                .padding(10)
+                                .background(Color.pfRejected.opacity(0.08))
+                                .clipShape(RoundedRectangle(cornerRadius: PFRadius.small))
                             }
-                            .padding(.horizontal)
-                        }
 
-                        if let syncError = appState.syncEngine.lastSyncError, !syncError.isEmpty {
-                            Text(syncError)
-                                .font(.caption2)
-                                .foregroundStyle(Color.pfPending)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 24)
+                            if let syncError = appState.syncEngine.lastSyncError, !syncError.isEmpty {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "wifi.slash")
+                                        .foregroundStyle(Color.pfPending)
+                                    Text(syncError)
+                                        .font(.caption2)
+                                        .foregroundStyle(Color.pfPending)
+                                        .multilineTextAlignment(.leading)
+                                }
+                                .padding(10)
+                                .background(Color.pfPending.opacity(0.08))
+                                .clipShape(RoundedRectangle(cornerRadius: PFRadius.small))
+                            }
                         }
+                        .padding(.horizontal, 24)
 
                         Spacer()
 
@@ -115,6 +136,7 @@ struct CheckInTabView: View {
                             .background(isScanning ? Color.pfInactive : Color.pfPrimary)
                             .foregroundStyle(.white)
                             .clipShape(RoundedRectangle(cornerRadius: PFRadius.button))
+                            .shadow(color: Color.pfPrimary.opacity(isScanning ? 0 : 0.3), radius: 12, y: 4)
                         }
                         .disabled(isScanning || shouldBlockGameplay)
                         .padding(.horizontal, 24)
@@ -122,19 +144,25 @@ struct CheckInTabView: View {
                     }
 
                     if shouldBlockGameplay {
-                        Color.black.opacity(0.35)
+                        Color.black.opacity(0.45)
                             .ignoresSafeArea()
-                        VStack(spacing: 10) {
+                        VStack(spacing: 16) {
+                            Image(systemName: "clock.fill")
+                                .font(.system(size: 40))
+                                .foregroundStyle(Color.pfTextMuted)
                             Text(locale.t("player.gameNotLiveTitle"))
                                 .font(.headline)
+                                .foregroundStyle(Color.pfText)
                             Text(locale.t("player.gameNotLiveMessage"))
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                                 .multilineTextAlignment(.center)
                         }
-                        .padding(20)
-                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
-                        .padding(.horizontal, 24)
+                        .padding(24)
+                        .background(.ultraThinMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
+                        .shadow(color: .black.opacity(0.12), radius: 16, y: 4)
+                        .padding(.horizontal, 32)
                     }
                 }
             }
@@ -240,7 +268,10 @@ private struct NfcUnsupportedView: View {
 
             ZStack {
                 Circle()
-                    .fill(Color.red.opacity(0.10))
+                    .fill(Color.red.opacity(0.06))
+                    .frame(width: 200, height: 200)
+                Circle()
+                    .fill(Color.red.opacity(0.12))
                     .frame(width: 160, height: 160)
                 Circle()
                     .fill(Color.red.opacity(0.18))
@@ -253,6 +284,7 @@ private struct NfcUnsupportedView: View {
             Text(locale.t("checkIn.nfcUnsupported.title"))
                 .font(.title2)
                 .fontWeight(.bold)
+                .foregroundStyle(Color.pfText)
                 .multilineTextAlignment(.center)
 
             Text(locale.t("checkIn.nfcUnsupported.body"))

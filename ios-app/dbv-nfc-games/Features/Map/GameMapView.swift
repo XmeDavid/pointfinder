@@ -50,61 +50,21 @@ struct GameMapView: View {
                 .ignoresSafeArea()
                 .accessibilityIdentifier("player-base-list")
 
-                // Legend overlay
-                VStack {
+                // Floating UI stack
+                VStack(spacing: 0) {
+                    playerHeaderBar
                     Spacer()
                     MapLegendView()
                         .padding(.bottom, 8)
                 }
 
                 if shouldBlockGameplay {
-                    Color.pfText.opacity(0.7)
+                    Color.black.opacity(0.45)
                         .ignoresSafeArea()
-                    VStack(spacing: 10) {
-                        Text(locale.t("player.gameNotLiveTitle"))
-                            .font(.headline)
-                        Text(locale.t("player.gameNotLiveMessage"))
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-                    .padding(20)
-                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
-                    .padding(.horizontal, 24)
+                    gameNotLiveCard
                 }
             }
-            .navigationTitle(appState.currentGame?.name ?? locale.t("common.map"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    HStack(spacing: 16) {
-                        Button {
-                            showNotifications = true
-                        } label: {
-                            Image(systemName: "bell.fill")
-                                .foregroundStyle(appState.unseenNotificationCount > 0 ? Color.pfPrimary : Color.pfTextMuted)
-                                .overlay(alignment: .topTrailing) {
-                                    if appState.unseenNotificationCount > 0 {
-                                        Text(appState.unseenNotificationCount > 99 ? "99+" : "\(appState.unseenNotificationCount)")
-                                            .font(.system(size: 10, weight: .bold))
-                                            .foregroundStyle(.white)
-                                            .padding(3)
-                                            .background(Color.red, in: Circle())
-                                            .offset(x: 6, y: -6)
-                                    }
-                                }
-                        }
-                        .accessibilityLabel(locale.t("common.notifications"))
-                        Button {
-                            Task { await appState.loadProgress() }
-                        } label: {
-                            Image(systemName: "arrow.clockwise")
-                                .foregroundStyle(Color.pfTextMuted)
-                        }
-                        .accessibilityLabel(locale.t("common.refresh"))
-                    }
-                }
-            }
+            .navigationBarHidden(true)
             .navigationDestination(isPresented: $showNotifications) {
                 PlayerNotificationListView()
             }
@@ -136,6 +96,94 @@ struct GameMapView: View {
             }
         }
     }
+
+    // MARK: - Floating Glass Header
+
+    private var playerHeaderBar: some View {
+        HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(appState.currentGame?.name ?? locale.t("common.map"))
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .foregroundStyle(Color.pfText)
+                if appState.currentGame?.status == "live" {
+                    Text("LIVE")
+                        .font(.caption2)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            Spacer()
+
+            // Notification bell
+            Button {
+                showNotifications = true
+            } label: {
+                Image(systemName: "bell.fill")
+                    .font(.body)
+                    .foregroundStyle(appState.unseenNotificationCount > 0 ? Color.pfPrimary : Color.pfTextMuted)
+                    .overlay(alignment: .topTrailing) {
+                        if appState.unseenNotificationCount > 0 {
+                            Text(appState.unseenNotificationCount > 99 ? "99+" : "\(appState.unseenNotificationCount)")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(.white)
+                                .padding(3)
+                                .background(Color.red, in: Circle())
+                                .offset(x: 6, y: -6)
+                        }
+                    }
+                    .frame(width: 36, height: 36)
+                    .background(.ultraThinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .shadow(color: .black.opacity(0.08), radius: 4, y: 1)
+            }
+            .accessibilityLabel(locale.t("common.notifications"))
+
+            // Refresh button
+            Button {
+                Task { await appState.loadProgress() }
+            } label: {
+                Image(systemName: "arrow.clockwise")
+                    .font(.body)
+                    .fontWeight(.medium)
+                    .foregroundStyle(Color.pfTextMuted)
+                    .frame(width: 36, height: 36)
+                    .background(.ultraThinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .shadow(color: .black.opacity(0.08), radius: 4, y: 1)
+            }
+            .accessibilityLabel(locale.t("common.refresh"))
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .shadow(color: .black.opacity(0.08), radius: 8, y: 2)
+        .padding(.horizontal, 12)
+        .padding(.top, 8)
+    }
+
+    // MARK: - Game Not Live Overlay
+
+    private var gameNotLiveCard: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "clock.fill")
+                .font(.system(size: 40))
+                .foregroundStyle(Color.pfTextMuted)
+            Text(locale.t("player.gameNotLiveTitle"))
+                .font(.headline)
+                .foregroundStyle(Color.pfText)
+            Text(locale.t("player.gameNotLiveMessage"))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(24)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .shadow(color: .black.opacity(0.12), radius: 16, y: 4)
+        .padding(.horizontal, 32)
+    }
 }
 
 // MARK: - Legend
@@ -154,7 +202,9 @@ struct MapLegendView: View {
         .font(.caption2)
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: PFRadius.small))
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: PFRadius.small))
+        .shadow(color: .black.opacity(0.05), radius: 4, y: 1)
         .padding(.horizontal)
     }
 
