@@ -82,4 +82,20 @@ public interface GameRepository extends JpaRepository<Game, UUID> {
      */
     @Query(value = "SELECT state_version FROM games WHERE id = :gameId", nativeQuery = true)
     Long findStateVersionById(@Param("gameId") UUID gameId);
+
+    // ── Quota count methods ───────────────────────────────────────────────
+
+    long countByCreatedByIdAndOrganizationIsNullAndStatusIn(UUID userId, List<GameStatus> statuses);
+
+    long countByOrganizationIdAndStatus(UUID orgId, GameStatus status);
+
+    long countByOrganizationIdAndStatusIn(UUID orgId, List<GameStatus> statuses);
+
+    @Query("SELECT COUNT(b) FROM Base b WHERE b.game.id = :gameId")
+    long countBasesByGameId(@Param("gameId") UUID gameId);
+
+    @Query("SELECT COUNT(o) FROM Game g JOIN g.operators o WHERE g.id = :gameId")
+    long countOperatorsByGameId(@Param("gameId") UUID gameId);
+
+    List<Game> findByOrganizationIdIn(List<UUID> orgIds);
 }

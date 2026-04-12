@@ -72,6 +72,8 @@ app:
     enabled: ${FCM_ENABLED:false}
     credentials-path: ${FCM_CREDENTIALS_PATH:}
     project-id: ${FCM_PROJECT_ID:}
+  quota:
+    enforcement-enabled: ${QUOTA_ENFORCEMENT_ENABLED:false}
   uploads:
     path: ${APP_UPLOADS_PATH:/uploads}
     max-file-size-bytes: ${APP_UPLOADS_MAX_FILE_SIZE_BYTES:2147483648}

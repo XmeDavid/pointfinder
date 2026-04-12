@@ -56,4 +56,18 @@ public enum ErrorCode {
     STAGE_TRIGGER_BASE_NOT_FOUND,
     /** The stage is already the active stage for its game. */
     STAGE_ALREADY_ACTIVE,
+
+    // ── Quota enforcement ────────────────────────────────────────────────
+    /** User has reached the maximum number of active games for their tier. */
+    QUOTA_ACTIVE_GAMES_EXCEEDED,
+    /** Game has reached the maximum number of bases for this tier. */
+    QUOTA_BASES_PER_GAME_EXCEEDED,
+    /** Game has reached the maximum number of operators for this tier. */
+    QUOTA_OPERATORS_PER_GAME_EXCEEDED,
+    /** Organization has reached the maximum number of members for its tier. */
+    QUOTA_ORG_MEMBERS_EXCEEDED,
+    /** Organization has reached the maximum number of live games for its tier. */
+    QUOTA_LIVE_GAMES_EXCEEDED,
+    /** Uploaded file exceeds the maximum file size for this tier. */
+    QUOTA_FILE_SIZE_EXCEEDED,
 }
