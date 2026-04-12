@@ -16,10 +16,12 @@ import {
   Code,
   ImageIcon,
   Music,
+  Paperclip,
   Undo,
   Redo,
 } from "lucide-react";
 import { AudioExtension } from "./AudioExtension";
+import { FileEmbedExtension } from "./FileEmbedExtension";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/useToast";
 import { useTranslation } from "react-i18next";
@@ -75,6 +77,8 @@ function sanitize(html: string): string {
       "img",
       "audio",
       "a",
+      "div",
+      "span",
     ],
     ALLOWED_ATTR: [
       "src",
@@ -85,8 +89,21 @@ function sanitize(html: string): string {
       "controls",
       "preload",
       "style",
+      "data-type",
+      "data-resource-id",
+      "data-resource-name",
+      "data-resource-size",
+      "data-resource-type",
+      "contenteditable",
     ],
   });
+}
+
+interface FileEmbedResource {
+  id: string;
+  name: string;
+  sizeBytes: number;
+  contentType: string;
 }
 
 interface RichTextEditorProps {
@@ -94,6 +111,8 @@ interface RichTextEditorProps {
   onChange: (html: string) => void;
   placeholder?: string;
   className?: string;
+  onInsertFileEmbed?: () => void;
+  insertFileEmbedRef?: React.MutableRefObject<((resource: FileEmbedResource) => void) | null>;
 }
 
 function ToolbarButton({
@@ -133,6 +152,8 @@ export function RichTextEditor({
   onChange,
   placeholder,
   className,
+  onInsertFileEmbed,
+  insertFileEmbedRef,
 }: RichTextEditorProps) {
   const toast = useToast();
   const { t } = useTranslation();
@@ -145,6 +166,7 @@ export function RichTextEditor({
       TiptapImage.configure({ inline: false, allowBase64: true }),
       Placeholder.configure({ placeholder: placeholder ?? "" }),
       AudioExtension,
+      FileEmbedExtension,
     ],
     content,
     onUpdate: ({ editor: e }) => {
@@ -228,6 +250,32 @@ export function RichTextEditor({
       }
     }
   }, [editor, toast, t]);
+
+  const insertFileEmbed = useCallback(
+    (resource: FileEmbedResource) => {
+      if (!editor) return;
+      editor
+        .chain()
+        .focus()
+        .insertContent({
+          type: "fileEmbed",
+          attrs: {
+            resourceId: resource.id,
+            resourceName: resource.name,
+            resourceSize: resource.sizeBytes,
+            resourceType: resource.contentType,
+          },
+        })
+        .run();
+    },
+    [editor],
+  );
+
+  // Expose insertFileEmbed via ref so parent components can call it after
+  // selecting a resource from the picker.
+  if (insertFileEmbedRef) {
+    insertFileEmbedRef.current = insertFileEmbed;
+  }
 
   if (!editor) return null;
 
@@ -325,6 +373,14 @@ export function RichTextEditor({
         <ToolbarButton onClick={addAudio} title={t("editor.uploadAudio")}>
           <Music className="h-4 w-4" />
         </ToolbarButton>
+        {onInsertFileEmbed && (
+          <ToolbarButton
+            onClick={onInsertFileEmbed}
+            title={t("editor.insertFile", "Insert file")}
+          >
+            <Paperclip className="h-4 w-4" />
+          </ToolbarButton>
+        )}
 
         <div className="mx-1 h-5 w-px bg-border" />
 
