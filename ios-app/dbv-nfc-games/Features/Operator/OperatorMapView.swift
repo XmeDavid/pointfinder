@@ -38,6 +38,29 @@ struct OperatorMapView: View {
 
     private let pollInterval: TimeInterval = 5.0
 
+    // MARK: - Computed Stats
+
+    private var pendingCount: Int {
+        teamProgress.filter { $0.baseStatus == .submitted }.count
+    }
+
+    private var progressPercent: Int {
+        let total = teams.count * bases.count
+        guard total > 0 else { return 0 }
+        let completed = teamProgress.filter { $0.baseStatus == .completed }.count
+        return Int((Double(completed) / Double(total)) * 100)
+    }
+
+    private var statusColor: Color {
+        switch game.status {
+        case "live":   return .pfCompleted
+        case "setup":  return .pfPending
+        default:       return .pfTextMuted
+        }
+    }
+
+    // MARK: - Body
+
     var body: some View {
         ZStack {
             let baseAnnotations: [MapAnnotationItem] = bases.map { base in
@@ -91,6 +114,7 @@ struct OperatorMapView: View {
                     }
                 }
 
+            // Full-screen map
             MapLibreMapView(
                 styleURL: TileSources.resolvedStyleURL(for: tileSource, isDark: colorScheme == .dark),
                 annotations: baseAnnotations,
@@ -110,6 +134,7 @@ struct OperatorMapView: View {
             )
             .ignoresSafeArea()
 
+            // Loading overlay
             if isLoading && teams.isEmpty {
                 ProgressView(locale.t("operator.loading"))
                     .padding()
@@ -117,103 +142,38 @@ struct OperatorMapView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             }
 
-            // Edit mode & center-on-me buttons (top-right)
+            // Floating UI stack (left/center column)
+            VStack(spacing: 0) {
+                headerBar
+                statsStrip
+                editModeHint
+                Spacer()
+                MapLegendView()
+                    .padding(.bottom, 8)
+            }
+
+            // Map control buttons (top-right, below header)
             VStack {
                 HStack {
                     Spacer()
-                    VStack(spacing: 8) {
-                        Button {
-                            editMode.toggle()
-                        } label: {
-                            Image(systemName: editMode ? "pencil.circle.fill" : "pencil.circle")
-                                .font(.title2)
-                                .padding(10)
-                                .background(.ultraThinMaterial)
-                                .clipShape(Circle())
-                        }
-                        .accessibilityLabel(editMode ? locale.t("operator.editModeOn") : locale.t("operator.editModeOff"))
-                        .accessibilityIdentifier("map-edit-button")
-
-                        Button {
-                            switch mapFocusState {
-                            case .centerOnMe:
-                                if let loc = locationManager.lastLocation {
-                                    centerTarget = CLLocationCoordinate2D(
-                                        latitude: loc.latitude,
-                                        longitude: loc.longitude
-                                    )
-                                }
-                                mapFocusState = .showAllBases
-                            case .showAllBases:
-                                fitAllBasesId = UUID()
-                                // Request location permission when user explicitly taps "center on me"
-                                locationManager.requestLocationPermission()
-                                mapFocusState = .centerOnMe
-                            }
-                        } label: {
-                            Image(systemName: mapFocusState == .centerOnMe ? "location" : "map")
-                                .font(.title3)
-                                .padding(10)
-                                .background(.ultraThinMaterial)
-                                .clipShape(Circle())
-                        }
-                        .accessibilityLabel(mapFocusState == .centerOnMe ? locale.t("map.centerOnMe") : locale.t("map.showAllBases"))
-                        .accessibilityIdentifier("map-focus-button")
-                    }
-                    .padding(.trailing, 16)
-                    .padding(.top, 8)
+                    mapControls
+                        .padding(.trailing, 12)
+                        .padding(.top, 70)
                 }
                 Spacer()
             }
 
-            // Edit mode hint
-            if editMode {
-                VStack {
-                    Text(locale.t("operator.longPressHint"))
-                        .font(.caption)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(.ultraThinMaterial)
-                        .clipShape(Capsule())
-                        .padding(.top, 8)
-                    Spacer()
-                }
-            }
-
-            // FAB button for adding base at GPS location (edit mode only)
+            // FAB (bottom-right, edit mode only)
             if editMode {
                 VStack {
                     Spacer()
                     HStack {
                         Spacer()
-                        Button {
-                            if let coord = locationManager.lastLocation {
-                                newBaseCoordinate = coord
-                                showBaseCreateSheet = true
-                            }
-                        } label: {
-                            Image(systemName: "plus")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .foregroundStyle(.white)
-                                .frame(width: 56, height: 56)
-                                .background(Color.accentColor)
-                                .clipShape(Circle())
-                                .shadow(radius: 4)
-                        }
-                        .accessibilityLabel(locale.t("operator.addBaseAtLocation"))
-                        .accessibilityIdentifier("map-add-base-button")
-                        .padding(.trailing, 16)
-                        .padding(.bottom, 80)
+                        fabButton
+                            .padding(.trailing, 16)
+                            .padding(.bottom, 80)
                     }
                 }
-            }
-
-            // Legend overlay
-            VStack {
-                Spacer()
-                MapLegendView()
-                    .padding(.bottom, 8)
             }
         }
         .sheet(item: $selectedBase) { base in
@@ -301,6 +261,124 @@ struct OperatorMapView: View {
         }
     }
 
+    // MARK: - Floating UI Subviews
+
+    private var headerBar: some View {
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(game.name)
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.pfText)
+                Text("Stage 2 · \(teams.count) teams active")
+                    .font(.caption2)
+                    .foregroundStyle(.pfTextMuted)
+            }
+            Spacer()
+            Text(game.status.uppercased())
+                .font(.caption2)
+                .fontWeight(.semibold)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(statusColor.opacity(0.15))
+                .foregroundStyle(statusColor)
+                .clipShape(Capsule())
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .shadow(color: .black.opacity(0.08), radius: 8, y: 2)
+        .padding(.horizontal, 12)
+        .padding(.top, 8)
+    }
+
+    @ViewBuilder
+    private var statsStrip: some View {
+        if game.status == "live" && !teams.isEmpty {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    StatPill(value: "\(teams.count)", label: "Teams", color: .pfText)
+                    StatPill(value: "\(pendingCount)", label: "Pending", color: .pfPending)
+                    StatPill(value: "\(progressPercent)%", label: "Progress", color: .pfCompleted)
+                }
+                .padding(.horizontal, 12)
+            }
+            .padding(.top, 4)
+        }
+    }
+
+    @ViewBuilder
+    private var editModeHint: some View {
+        if editMode {
+            Text(locale.t("operator.longPressHint"))
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundStyle(.white)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 7)
+                .background(Color.pfPrimary.opacity(0.9))
+                .clipShape(Capsule())
+                .shadow(color: Color.pfPrimary.opacity(0.2), radius: 6, y: 2)
+                .padding(.top, 6)
+        }
+    }
+
+    private var mapControls: some View {
+        VStack(spacing: 6) {
+            MapControlButton(
+                icon: editMode ? "pencil.circle.fill" : "pencil.circle",
+                isActive: editMode,
+                accessibilityLabel: editMode ? locale.t("operator.editModeOn") : locale.t("operator.editModeOff"),
+                accessibilityIdentifier: "map-edit-button"
+            ) {
+                editMode.toggle()
+            }
+
+            MapControlButton(
+                icon: mapFocusState == .centerOnMe ? "location" : "map",
+                isActive: false,
+                accessibilityLabel: mapFocusState == .centerOnMe ? locale.t("map.centerOnMe") : locale.t("map.showAllBases"),
+                accessibilityIdentifier: "map-focus-button"
+            ) {
+                switch mapFocusState {
+                case .centerOnMe:
+                    if let loc = locationManager.lastLocation {
+                        centerTarget = CLLocationCoordinate2D(
+                            latitude: loc.latitude,
+                            longitude: loc.longitude
+                        )
+                    }
+                    mapFocusState = .showAllBases
+                case .showAllBases:
+                    fitAllBasesId = UUID()
+                    locationManager.requestLocationPermission()
+                    mapFocusState = .centerOnMe
+                }
+            }
+        }
+    }
+
+    private var fabButton: some View {
+        Button {
+            if let coord = locationManager.lastLocation {
+                newBaseCoordinate = coord
+                showBaseCreateSheet = true
+            }
+        } label: {
+            Image(systemName: "plus")
+                .font(.title3)
+                .fontWeight(.bold)
+                .foregroundStyle(.white)
+                .frame(width: 52, height: 52)
+                .background(Color.pfPrimary)
+                .clipShape(Circle())
+                .shadow(color: Color.pfPrimary.opacity(0.3), radius: 12, y: 4)
+        }
+        .accessibilityLabel(locale.t("operator.addBaseAtLocation"))
+        .accessibilityIdentifier("map-add-base-button")
+    }
+
     // MARK: - Data Loading
 
     private func loadInitialData() async {
@@ -376,6 +454,55 @@ struct OperatorMapView: View {
     }
 }
 
+// MARK: - Helper Views
+
+private struct StatPill: View {
+    let value: String
+    let label: String
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 2) {
+            Text(value)
+                .font(.system(.subheadline, design: .rounded))
+                .fontWeight(.bold)
+                .foregroundStyle(color)
+            Text(label)
+                .font(.system(size: 9))
+                .foregroundStyle(.pfTextMuted)
+                .textCase(.uppercase)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .shadow(color: .black.opacity(0.05), radius: 4, y: 1)
+    }
+}
+
+private struct MapControlButton: View {
+    let icon: String
+    let isActive: Bool
+    let accessibilityLabel: String
+    let accessibilityIdentifier: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.body)
+                .fontWeight(.medium)
+                .foregroundStyle(isActive ? .white : Color.pfText)
+                .frame(width: 38, height: 38)
+                .background(isActive ? AnyShapeStyle(Color.pfPrimary) : AnyShapeStyle(.ultraThinMaterial))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .shadow(color: .black.opacity(0.08), radius: 4, y: 1)
+        }
+        .accessibilityLabel(accessibilityLabel)
+        .accessibilityIdentifier(accessibilityIdentifier)
+    }
+}
+
 // MARK: - Location Manager Helper
 
 private class LocationManagerHelper: NSObject, ObservableObject, CLLocationManagerDelegate {
@@ -407,4 +534,3 @@ private class LocationManagerHelper: NSObject, ObservableObject, CLLocationManag
         }
     }
 }
-
