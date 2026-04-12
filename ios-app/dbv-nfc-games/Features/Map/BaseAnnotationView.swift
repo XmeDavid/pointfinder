@@ -31,6 +31,7 @@ struct BaseAnnotationView: View {
                 .frame(width: 10, height: 6)
         }
         .opacity(isHidden ? 0.7 : 1.0)
+        .shadow(color: status.color.opacity(0.3), radius: 6, y: 2)
     }
 
     private var iconName: String {

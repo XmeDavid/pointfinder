@@ -9,11 +9,11 @@ enum BaseStatus: String, Codable {
 
     var color: Color {
         switch self {
-        case .notVisited: return .gray
-        case .checkedIn: return .blue
-        case .submitted: return .orange
-        case .completed: return .green
-        case .rejected: return .red
+        case .notVisited: return .pfInactive
+        case .checkedIn:  return .pfCheckedIn
+        case .submitted:  return .pfPending
+        case .completed:  return .pfCompleted
+        case .rejected:   return .pfRejected
         }
     }
 
