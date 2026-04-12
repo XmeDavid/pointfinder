@@ -347,6 +347,7 @@ struct OrganizationView: View {
         isLoading = true
         do {
             members = try await appState.apiClient.getOrgMembers(orgId: org.id, token: token)
+        } catch is CancellationError {
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -371,6 +372,7 @@ struct OrganizationView: View {
             showInviteSheet = false
             successMessage = "Invite sent to \(email)"
             Task { try? await Task.sleep(for: .seconds(3)); successMessage = nil }
+        } catch is CancellationError {
         } catch {
             inviteError = error.localizedDescription
         }
@@ -382,6 +384,7 @@ struct OrganizationView: View {
         do {
             try await appState.apiClient.removeOrgMember(orgId: org.id, userId: member.userId, token: token)
             members.removeAll { $0.id == member.id }
+        } catch is CancellationError {
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -402,6 +405,7 @@ struct OrganizationView: View {
                 members[idx] = updated
             }
             showPermissionsSheet = false
+        } catch is CancellationError {
         } catch {
             errorMessage = error.localizedDescription
         }

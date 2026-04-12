@@ -224,6 +224,8 @@ struct StageEditView: View {
                 )
             }
             onSaved(savedStage)
+        } catch is CancellationError {
+            // Task cancelled (e.g. view dismissed) — ignore
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -238,6 +240,8 @@ struct StageEditView: View {
             try await appState.apiClient.deleteStage(gameId: game.id, stageId: stage.id, token: token)
             onDeleted?()
             dismiss()
+        } catch is CancellationError {
+            // ignore
         } catch {
             errorMessage = error.localizedDescription
             isSaving = false
