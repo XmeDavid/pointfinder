@@ -10,8 +10,10 @@ struct OperatorLiveView: View {
     @State private var leaderboard: [LeaderboardEntry] = []
     @State private var activity: [ActivityEvent] = []
     @State private var teams: [Team] = []
+    @State private var stages: [Stage] = []
     @State private var isLoading = true
     @State private var lastSyncedAt: Date? = nil
+    @State private var showStagesManagement = false
 
     private var token: String? {
         if case .userOperator(let token, _, _) = appState.authType {
@@ -46,6 +48,11 @@ struct OperatorLiveView: View {
                     .accessibilityIdentifier("offline-sync-badge")
                 }
 
+                // Stage status card
+                if !stages.isEmpty {
+                    stageStatusCard
+                }
+
                 // Content
                 if isLoading {
                     Spacer()
@@ -69,7 +76,66 @@ struct OperatorLiveView: View {
                       UUID(uuidString: rawGameId) == game.id else { return }
                 Task { await loadData() }
             }
+            .sheet(isPresented: $showStagesManagement) {
+                StagesManagementView(game: game, onDismiss: { showStagesManagement = false })
+            }
         }
+    }
+
+    // MARK: - Stage Status Card
+
+    @ViewBuilder
+    private var stageStatusCard: some View {
+        let sortedStages = stages.sorted { $0.orderIndex < $1.orderIndex }
+        let currentStage = sortedStages.last { $0.isActive }
+        let currentIndex = currentStage.flatMap { s in sortedStages.firstIndex { $0.id == s.id } }
+        let totalCount = sortedStages.count
+
+        HStack(spacing: 12) {
+            Image(systemName: "list.number")
+                .font(.title3)
+                .foregroundStyle(Color.pfPrimary)
+                .frame(width: 28)
+
+            VStack(alignment: .leading, spacing: 2) {
+                if let stage = currentStage {
+                    Text(stage.name)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Color.pfText)
+                    Text("Stage \((currentIndex ?? 0) + 1) of \(totalCount)")
+                        .font(.caption)
+                        .foregroundStyle(Color.pfTextMuted)
+                } else {
+                    Text("No active stage")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Color.pfText)
+                    Text("\(totalCount) stage(s) configured")
+                        .font(.caption)
+                        .foregroundStyle(Color.pfTextMuted)
+                }
+            }
+
+            Spacer()
+
+            Button {
+                showStagesManagement = true
+            } label: {
+                Text("Manage →")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color.pfPrimary)
+            }
+            .accessibilityIdentifier("manage-stages-btn")
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(Color(.secondarySystemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .padding(.horizontal)
+        .padding(.bottom, 4)
+        .accessibilityIdentifier("stage-status-card")
     }
 
     // MARK: - Leaderboard
@@ -216,10 +282,12 @@ struct OperatorLiveView: View {
             async let leaderboardResult = appState.apiClient.getLeaderboard(gameId: game.id, token: token)
             async let activityResult = appState.apiClient.getActivity(gameId: game.id, token: token)
             async let teamsResult = appState.apiClient.getTeams(gameId: game.id, token: token)
-            let (l, a, t) = try await (leaderboardResult, activityResult, teamsResult)
+            async let stagesResult = appState.apiClient.getStages(gameId: game.id, token: token)
+            let (l, a, t, s) = try await (leaderboardResult, activityResult, teamsResult, stagesResult)
             leaderboard = l
             activity = a
             teams = t
+            stages = s
             lastSyncedAt = Date()
         } catch is CancellationError {
             // Task cancelled during navigation
