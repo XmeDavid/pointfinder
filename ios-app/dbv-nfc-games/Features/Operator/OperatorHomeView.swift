@@ -45,7 +45,7 @@ struct OperatorHomeView: View {
                                         .font(.headline)
                                     Text(game.description)
                                         .font(.caption)
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(Color.pfTextMuted)
                                         .lineLimit(2)
                                 }
 
@@ -162,10 +162,10 @@ struct OperatorHomeView: View {
 
     private func statusColor(for status: String) -> Color {
         switch status {
-        case "live": return .green
-        case "setup": return .orange
-        case "ended": return .red
-        default: return .gray
+        case "live": return .pfCompleted
+        case "setup": return .pfPending
+        case "ended": return .pfTextMuted
+        default: return .pfTextMuted
         }
     }
 }

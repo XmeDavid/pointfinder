@@ -77,22 +77,22 @@ struct ChallengesManagementView: View {
                                         HStack(spacing: 6) {
                                             Text(challenge.answerType == "none" ? locale.t("common.checkIn") : challenge.answerType == "file" ? locale.t("operator.fileUpload") : locale.t("operator.textInput"))
                                                 .font(.caption)
-                                                .foregroundStyle(.secondary)
+                                                .foregroundStyle(Color.pfTextMuted)
                                             if challenge.locationBound {
                                                 Image(systemName: "location.fill")
                                                     .font(.caption2)
-                                                    .foregroundStyle(.blue)
+                                                    .foregroundStyle(Color.pfCheckedIn)
                                             }
                                         }
                                         Text(baseNameForChallenge(challenge))
                                             .font(.caption)
-                                            .foregroundStyle(.secondary)
+                                            .foregroundStyle(Color.pfTextMuted)
                                     }
                                     Spacer()
                                     Text(locale.t("operator.pts", challenge.points))
                                         .font(.caption)
                                         .fontWeight(.semibold)
-                                        .foregroundStyle(.orange)
+                                        .foregroundStyle(Color.pfPending)
                                 }
                             }
                             .accessibilityIdentifier("challenge-edit-btn")

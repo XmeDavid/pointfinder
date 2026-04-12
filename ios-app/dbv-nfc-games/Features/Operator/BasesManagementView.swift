@@ -78,25 +78,25 @@ struct BasesManagementView: View {
                                         if !base.description.isEmpty {
                                             Text(base.description)
                                                 .font(.caption)
-                                                .foregroundStyle(.secondary)
+                                                .foregroundStyle(Color.pfTextMuted)
                                                 .lineLimit(1)
                                         }
                                         Text(challengeInfoForBase(base))
                                             .font(.caption)
-                                            .foregroundStyle(.secondary)
+                                            .foregroundStyle(Color.pfTextMuted)
                                     }
                                     Spacer()
                                     Text(base.nfcLinked ? locale.t("operator.linked") : locale.t("operator.notLinked"))
                                         .font(.caption2)
                                         .padding(.horizontal, 6)
                                         .padding(.vertical, 2)
-                                        .background(base.nfcLinked ? Color.green.opacity(0.2) : Color.orange.opacity(0.2))
-                                        .foregroundStyle(base.nfcLinked ? .green : .orange)
+                                        .background(base.nfcLinked ? Color.pfCompleted.opacity(0.2) : Color.pfPending.opacity(0.2))
+                                        .foregroundStyle(base.nfcLinked ? Color.pfCompleted : Color.pfPending)
                                         .clipShape(Capsule())
                                     if base.hidden {
                                         Image(systemName: "eye.slash")
                                             .font(.caption)
-                                            .foregroundStyle(.secondary)
+                                            .foregroundStyle(Color.pfTextMuted)
                                     }
                                 }
                             }
