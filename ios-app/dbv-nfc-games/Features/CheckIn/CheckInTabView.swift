@@ -7,6 +7,7 @@ struct CheckInTabView: View {
     @Environment(LocaleManager.self) private var locale
     @State private var nfcReader = NFCReaderService()
     @State private var isScanning = false
+    @State private var scanAnimationState: ScanAnimationState = .idle
     @State private var scanError: String?
     @State private var navigationPath = NavigationPath()
     @State private var failedSyncCount = 0
@@ -31,7 +32,7 @@ struct CheckInTabView: View {
 
                         // Check-in illustration — animated scan area
                         VStack(spacing: 20) {
-                            AnimatedScanView(isScanning: isScanning)
+                            AnimatedScanView(state: scanAnimationState)
                                 .frame(width: 260, height: 260)
 
                             Text(locale.t("checkIn.title"))
@@ -204,11 +205,18 @@ struct CheckInTabView: View {
 
     private func performDeepLinkCheckIn(baseId: UUID) async {
         isScanning = true
+        scanAnimationState = .scanning
         scanError = nil
 
         let result = await appState.checkIn(baseId: baseId)
         if result != nil {
+            scanAnimationState = .success
+            try? await Task.sleep(for: .milliseconds(600))
             navigationPath.append(baseId)
+            try? await Task.sleep(for: .milliseconds(300))
+            scanAnimationState = .idle
+        } else {
+            scanAnimationState = .idle
         }
 
         isScanning = false
@@ -216,13 +224,22 @@ struct CheckInTabView: View {
 
     private func performCheckIn() async {
         isScanning = true
+        scanAnimationState = .scanning
         scanError = nil
 
         do {
             let payload = try await nfcReader.scanForBaseId()
             let result = await appState.checkIn(baseId: payload.baseId, nfcToken: payload.nfcToken)
             if result != nil {
+                // Success burst animation, then navigate
+                scanAnimationState = .success
+                try? await Task.sleep(for: .milliseconds(600))
                 navigationPath.append(payload.baseId)
+                // Reset after navigation
+                try? await Task.sleep(for: .milliseconds(300))
+                scanAnimationState = .idle
+            } else {
+                scanAnimationState = .idle
             }
         } catch let error as NFCError {
             if case .cancelled = error {
@@ -230,8 +247,10 @@ struct CheckInTabView: View {
             } else {
                 scanError = error.localizedDescription
             }
+            scanAnimationState = .idle
         } catch {
             scanError = error.localizedDescription
+            scanAnimationState = .idle
         }
 
         isScanning = false
