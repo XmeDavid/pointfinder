@@ -8,6 +8,7 @@ import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ForbiddenException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.GameRepository;
+import com.prayer.pointfinder.repository.OrgMembershipRepository;
 import com.prayer.pointfinder.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import java.util.UUID;
 public class GameAccessService {
 
     private final GameRepository gameRepository;
+    private final OrgMembershipRepository orgMembershipRepository;
 
     @Transactional(readOnly = true)
     public Game getAccessibleGame(UUID gameId) {
@@ -48,9 +50,20 @@ public class GameAccessService {
         }
 
         boolean isOperator = gameRepository.isUserOperator(game.getId(), currentUserId);
-        if (!isOperator) {
-            throw new ForbiddenException("You do not have access to this game");
+        if (isOperator) {
+            return;
         }
+
+        // Check if org member (for org games)
+        if (game.getOrganization() != null) {
+            boolean isOrgMember = orgMembershipRepository.existsByOrganizationIdAndUserId(
+                game.getOrganization().getId(), currentUserId);
+            if (isOrgMember) {
+                return;
+            }
+        }
+
+        throw new ForbiddenException("You do not have access to this game");
     }
 
     public void ensureCurrentUserIsAdmin() {

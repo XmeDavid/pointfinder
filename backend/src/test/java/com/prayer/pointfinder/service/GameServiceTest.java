@@ -39,6 +39,8 @@ class GameServiceTest {
     @Mock
     private GameRepository gameRepository;
     @Mock
+    private OrgMembershipRepository orgMembershipRepository;
+    @Mock
     private UserRepository userRepository;
     @Mock
     private BaseRepository baseRepository;
@@ -111,6 +113,7 @@ class GameServiceTest {
 
         gameService = new GameService(
                 gameRepository,
+                orgMembershipRepository,
                 userRepository,
                 baseRepository,
                 challengeRepository,

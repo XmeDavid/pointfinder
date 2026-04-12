@@ -25,4 +25,6 @@ public class GameResponse {
     private String broadcastCode;
     private String tileSource;
     private String unlockTrigger;
+    private UUID orgId;
+    private String orgName;
 }

@@ -37,6 +37,8 @@ public final class GameResponseMapper {
                 .broadcastCode(game.getBroadcastCode())
                 .tileSource(game.getTileSource())
                 .unlockTrigger(game.getUnlockTrigger().name())
+                .orgId(game.getOrganization() != null ? game.getOrganization().getId() : null)
+                .orgName(game.getOrganization() != null ? game.getOrganization().getName() : null)
                 .build();
     }
 }
