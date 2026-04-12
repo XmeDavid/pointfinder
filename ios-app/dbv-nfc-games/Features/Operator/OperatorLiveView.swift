@@ -22,51 +22,66 @@ struct OperatorLiveView: View {
         return nil
     }
 
+    // MARK: - Computed Stats
+
+    private var pendingCount: Int {
+        activity.filter { $0.type == "submission" }.count
+    }
+
+    private var progressPercent: Int {
+        guard !leaderboard.isEmpty else { return 0 }
+        let maxCompleted = leaderboard.map { $0.completedChallenges }.max() ?? 0
+        guard maxCompleted > 0 else { return 0 }
+        let totalCompleted = leaderboard.map { $0.completedChallenges }.reduce(0, +)
+        let totalPossible = leaderboard.count * maxCompleted
+        return Int((Double(totalCompleted) / Double(totalPossible)) * 100)
+    }
+
+    // MARK: - Body
+
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Segmented picker
-                Picker("", selection: $selectedSegment) {
-                    Text(locale.t("operator.leaderboard")).tag(0)
-                    Text(locale.t("operator.activity")).tag(1)
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal)
-                .padding(.vertical, 8)
+            ScrollView {
+                VStack(spacing: PFSpacing.sectionGap) {
 
-                // Offline sync badge
-                if !appState.realtimeConnected, let syncedAt = lastSyncedAt {
-                    HStack(spacing: 6) {
-                        Image(systemName: "wifi.slash")
-                            .font(.caption2)
-                        Text(locale.t("operator.lastSynced", formatSyncTime(syncedAt)))
-                            .font(.caption2)
+                    // Offline sync badge
+                    if !appState.realtimeConnected, let syncedAt = lastSyncedAt {
+                        offlineBadge(syncedAt)
                     }
-                    .foregroundStyle(Color.pfTextMuted)
-                    .padding(.horizontal)
-                    .padding(.bottom, 4)
-                    .accessibilityIdentifier("offline-sync-badge")
-                }
 
-                // Stage status card
-                if !stages.isEmpty {
-                    stageStatusCard
-                }
+                    // Stats strip
+                    if !isLoading {
+                        statsStrip
+                    }
 
-                // Content
-                if isLoading {
-                    Spacer()
-                    ProgressView(locale.t("operator.loading"))
-                    Spacer()
-                } else {
-                    switch selectedSegment {
-                    case 0:
-                        leaderboardView
-                    default:
-                        activityView
+                    // Stage status card
+                    if !stages.isEmpty {
+                        stageStatusCard
+                    }
+
+                    // Segmented picker
+                    Picker("", selection: $selectedSegment) {
+                        Text(locale.t("operator.leaderboard")).tag(0)
+                        Text(locale.t("operator.activity")).tag(1)
+                    }
+                    .pickerStyle(.segmented)
+
+                    // Content
+                    if isLoading {
+                        loadingView
+                    } else {
+                        switch selectedSegment {
+                        case 0:
+                            leaderboardView
+                        default:
+                            activityView
+                        }
                     }
                 }
+                .padding(.horizontal, PFSpacing.screenPadding)
+                .padding(.vertical, 12)
             }
+            .background(Color.pfBackground)
             .navigationTitle(locale.t("operator.live"))
             .navigationBarTitleDisplayMode(.inline)
             .task { await loadData() }
@@ -79,6 +94,52 @@ struct OperatorLiveView: View {
             .sheet(isPresented: $showStagesManagement) {
                 StagesManagementView(game: game, onDismiss: { showStagesManagement = false })
             }
+        }
+    }
+
+    // MARK: - Offline Badge
+
+    @ViewBuilder
+    private func offlineBadge(_ syncedAt: Date) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: "wifi.slash")
+                .font(.caption2)
+            Text(locale.t("operator.lastSynced", formatSyncTime(syncedAt)))
+                .font(.caption2)
+        }
+        .foregroundStyle(Color.pfTextMuted)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(Color.pfCard)
+        .clipShape(RoundedRectangle(cornerRadius: PFRadius.small))
+        .shadow(color: .black.opacity(0.03), radius: 4, y: 1)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityIdentifier("offline-sync-badge")
+    }
+
+    // MARK: - Stats Strip
+
+    @ViewBuilder
+    private var statsStrip: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: PFSpacing.itemGap) {
+                LiveStatPill(
+                    value: "\(teams.count)",
+                    label: "Teams",
+                    color: .pfText
+                )
+                LiveStatPill(
+                    value: "\(pendingCount)",
+                    label: "Pending",
+                    color: pendingCount > 0 ? .pfPending : .pfText
+                )
+                LiveStatPill(
+                    value: "\(progressPercent)%",
+                    label: "Progress",
+                    color: .pfCompleted
+                )
+            }
+            .padding(.horizontal, 2)
         }
     }
 
@@ -129,13 +190,24 @@ struct OperatorLiveView: View {
             }
             .accessibilityIdentifier("manage-stages-btn")
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .padding(.horizontal)
-        .padding(.bottom, 4)
+        .padding(PFSpacing.cardPadding)
+        .background(Color.pfCard)
+        .clipShape(RoundedRectangle(cornerRadius: PFRadius.card))
+        .shadow(color: .black.opacity(0.03), radius: 4, y: 1)
         .accessibilityIdentifier("stage-status-card")
+    }
+
+    // MARK: - Loading View
+
+    private var loadingView: some View {
+        VStack(spacing: 12) {
+            ProgressView()
+            Text(locale.t("operator.loading"))
+                .font(.subheadline)
+                .foregroundStyle(Color.pfTextMuted)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 48)
     }
 
     // MARK: - Leaderboard
@@ -143,52 +215,71 @@ struct OperatorLiveView: View {
     @ViewBuilder
     private var leaderboardView: some View {
         if leaderboard.isEmpty {
-            ContentUnavailableView(
-                locale.t("operator.noLeaderboard"),
-                systemImage: "trophy",
-                description: Text(locale.t("operator.noLeaderboardDesc"))
+            emptyState(
+                icon: "trophy",
+                title: locale.t("operator.noLeaderboard"),
+                description: locale.t("operator.noLeaderboardDesc")
             )
+            .accessibilityIdentifier("leaderboard-view")
         } else {
-            List {
+            VStack(spacing: PFSpacing.itemGap) {
                 ForEach(Array(leaderboard.enumerated()), id: \.element.id) { index, entry in
-                    let rank = index + 1
-                    let isTopThree = rank <= 3
-
-                    HStack(spacing: 12) {
-                        // Rank
-                        Text("#\(rank)")
-                            .font(isTopThree ? .title3 : .body)
-                            .fontWeight(isTopThree ? .bold : .regular)
-                            .foregroundStyle(rankColor(rank))
-                            .frame(width: 36)
-
-                        // Team color dot
-                        Circle()
-                            .fill(Color(hex: entry.color) ?? .blue)
-                            .frame(width: 14, height: 14)
-
-                        // Team name + completed
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(entry.teamName)
-                                .fontWeight(isTopThree ? .semibold : .regular)
-                            Text(locale.t("operator.completedCount", entry.completedChallenges))
-                                .font(.caption)
-                                .foregroundStyle(Color.pfTextMuted)
-                        }
-
-                        Spacer()
-
-                        // Points
-                        Text(locale.t("operator.pts", entry.points))
-                            .fontWeight(.bold)
-                            .foregroundStyle(isTopThree ? rankColor(rank) : .primary)
-                    }
-                    .padding(.vertical, 4)
-                    .listRowBackground(isTopThree ? rankColor(rank).opacity(0.08) : Color.clear)
+                    leaderboardRow(rank: index + 1, entry: entry)
                 }
             }
-            .listStyle(.plain)
             .accessibilityIdentifier("leaderboard-view")
+        }
+    }
+
+    @ViewBuilder
+    private func leaderboardRow(rank: Int, entry: LeaderboardEntry) -> some View {
+        let isTopThree = rank <= 3
+        let rColor = rankColor(rank)
+
+        HStack(spacing: 10) {
+            // Rank number
+            Text("\(rank)")
+                .font(.system(.subheadline, design: .rounded))
+                .fontWeight(.bold)
+                .foregroundStyle(rColor)
+                .frame(width: 24)
+
+            // Team color dot
+            Circle()
+                .fill(Color(hex: entry.color) ?? .blue)
+                .frame(width: 12, height: 12)
+
+            // Name + completed
+            VStack(alignment: .leading, spacing: 1) {
+                Text(entry.teamName)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(Color.pfText)
+                Text(locale.t("operator.completedCount", entry.completedChallenges))
+                    .font(.caption2)
+                    .foregroundStyle(Color.pfTextMuted)
+            }
+
+            Spacer()
+
+            // Points
+            Text(locale.t("operator.pts", entry.points))
+                .font(.system(.title3, design: .rounded))
+                .fontWeight(.bold)
+                .foregroundStyle(Color.pfText)
+        }
+        .padding(12)
+        .background(Color.pfCard)
+        .clipShape(RoundedRectangle(cornerRadius: PFRadius.card))
+        .shadow(color: .black.opacity(0.03), radius: 4, y: 1)
+        .overlay(alignment: .leading) {
+            if isTopThree {
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(rColor)
+                    .frame(width: 3)
+                    .padding(.vertical, 4)
+                    .padding(.leading, 0)
+            }
         }
     }
 
@@ -197,7 +288,7 @@ struct OperatorLiveView: View {
         case 1: return .yellow       // Gold
         case 2: return Color(UIColor.systemGray)  // Silver
         case 3: return .orange       // Bronze
-        default: return .primary
+        default: return .pfText
         }
     }
 
@@ -206,44 +297,97 @@ struct OperatorLiveView: View {
     @ViewBuilder
     private var activityView: some View {
         if activity.isEmpty {
-            ContentUnavailableView(
-                locale.t("operator.noActivity"),
-                systemImage: "clock",
-                description: Text(locale.t("operator.noActivityDesc"))
+            emptyState(
+                icon: "clock",
+                title: locale.t("operator.noActivity"),
+                description: locale.t("operator.noActivityDesc")
             )
+            .accessibilityIdentifier("submission-list")
         } else {
             let teamColorMap = Dictionary(uniqueKeysWithValues: teams.map { ($0.id, $0.color) })
 
-            List(activity) { event in
-                HStack(alignment: .top, spacing: 10) {
-                    // Event type icon
-                    Image(systemName: eventIcon(event.type))
-                        .font(.body)
-                        .foregroundStyle(eventColor(event.type))
-                        .frame(width: 24)
-
-                    // Team color dot
-                    if let teamId = event.teamId, let colorHex = teamColorMap[teamId] {
-                        Circle()
-                            .fill(Color(hex: colorHex) ?? .blue)
-                            .frame(width: 10, height: 10)
-                            .padding(.top, 5)
-                    }
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(event.message)
-                            .font(.subheadline)
-                        Text(formatTimestamp(event.timestamp))
-                            .font(.caption)
-                            .foregroundStyle(Color.pfTextMuted)
-                    }
+            VStack(spacing: PFSpacing.itemGap) {
+                ForEach(activity) { event in
+                    activityCard(event: event, teamColorMap: teamColorMap)
                 }
-                .padding(.vertical, 2)
             }
-            .listStyle(.plain)
             .accessibilityIdentifier("submission-list")
         }
     }
+
+    @ViewBuilder
+    private func activityCard(event: ActivityEvent, teamColorMap: [UUID: String]) -> some View {
+        let eColor = eventColor(event.type)
+        let eIcon = eventIcon(event.type)
+
+        HStack(spacing: 10) {
+            // Colored left bar
+            RoundedRectangle(cornerRadius: 2)
+                .fill(eColor)
+                .frame(width: 3)
+
+            // Event icon
+            Image(systemName: eIcon)
+                .font(.caption)
+                .foregroundStyle(eColor)
+                .frame(width: 20)
+
+            // Content
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    // Team color dot if available
+                    if let teamId = event.teamId, let colorHex = teamColorMap[teamId] {
+                        Circle()
+                            .fill(Color(hex: colorHex) ?? .blue)
+                            .frame(width: 8, height: 8)
+                    }
+                    Text(event.message)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(Color.pfText)
+                        .lineLimit(2)
+                }
+                Text(formatTimestamp(event.timestamp))
+                    .font(.caption)
+                    .foregroundStyle(Color.pfTextMuted)
+            }
+
+            Spacer()
+
+            // Relative timestamp (compact)
+            Text(relativeTime(event.timestamp))
+                .font(.caption2)
+                .foregroundStyle(Color.pfTextMuted)
+        }
+        .padding(10)
+        .background(Color.pfCard)
+        .clipShape(RoundedRectangle(cornerRadius: PFRadius.small))
+        .shadow(color: .black.opacity(0.02), radius: 3, y: 1)
+    }
+
+    // MARK: - Empty State
+
+    @ViewBuilder
+    private func emptyState(icon: String, title: String, description: String) -> some View {
+        VStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.largeTitle)
+                .foregroundStyle(Color.pfTextMuted)
+            Text(title)
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .foregroundStyle(Color.pfTextMuted)
+            Text(description)
+                .font(.caption)
+                .foregroundStyle(Color.pfTextMuted)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 48)
+        .padding(.horizontal, 24)
+    }
+
+    // MARK: - Event Helpers
 
     private func eventIcon(_ type: String) -> String {
         switch type {
@@ -268,6 +412,16 @@ struct OperatorLiveView: View {
     private func formatTimestamp(_ timestamp: String) -> String {
         guard let date = DateFormatting.parseISO8601(timestamp) else {
             return timestamp
+        }
+        let formatter = DateFormatter()
+        formatter.dateStyle = .none
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
+    }
+
+    private func relativeTime(_ timestamp: String) -> String {
+        guard let date = DateFormatting.parseISO8601(timestamp) else {
+            return ""
         }
         let relative = RelativeDateTimeFormatter()
         relative.unitsStyle = .abbreviated
@@ -301,5 +455,31 @@ struct OperatorLiveView: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm"
         return formatter.string(from: date)
+    }
+}
+
+// MARK: - LiveStatPill
+
+private struct LiveStatPill: View {
+    let value: String
+    let label: String
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 2) {
+            Text(value)
+                .font(.system(.subheadline, design: .rounded))
+                .fontWeight(.bold)
+                .foregroundStyle(color)
+            Text(label)
+                .font(.system(size: 9))
+                .foregroundStyle(.pfTextMuted)
+                .textCase(.uppercase)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .shadow(color: .black.opacity(0.05), radius: 4, y: 1)
     }
 }
