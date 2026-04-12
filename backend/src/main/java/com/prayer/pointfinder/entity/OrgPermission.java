@@ -6,7 +6,8 @@ public enum OrgPermission {
     DELETE_GAMES(4),
     INVITE_MEMBERS(8),
     MANAGE_PERMS(16),
-    MANAGE_BILLING(32);
+    MANAGE_BILLING(32),
+    MANAGE_RESOURCES(64);
 
     private final int bit;
 
@@ -18,7 +19,7 @@ public enum OrgPermission {
         return bit;
     }
 
-    public static final int ALL = 63;
+    public static final int ALL = 127;
 
     public static boolean hasPermission(int bitmask, OrgPermission permission) {
         return (bitmask & permission.bit) != 0;
