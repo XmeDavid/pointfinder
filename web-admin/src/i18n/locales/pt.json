@@ -49,7 +49,8 @@
     "discard": "Descartar",
     "manageTags": "Gerir Etiquetas",
     "toggleView": "Alternar vista",
-    "useArrowKeys": "Use as teclas de seta ou escreva para alterar o valor"
+    "useArrowKeys": "Use as teclas de seta ou escreva para alterar o valor",
+    "remove": "Remover"
   },
   "auth": {
     "signIn": "Entrar",
@@ -859,5 +860,31 @@
     "label": "Filtrar:",
     "filterByColor": "Filtrar por cor",
     "clear": "Limpar"
+  },
+  "workspace": {
+    "personal": "Pessoal",
+    "createOrg": "Criar organização",
+    "orgName": "Nome da organização"
+  },
+  "org": {
+    "members": "Membros",
+    "inviteEmail": "operador@exemplo.com",
+    "invite": "Convidar",
+    "permissions": "Permissões",
+    "editPermissions": "Editar Permissões"
+  },
+  "billing": {
+    "title": "Faturação & Plano",
+    "personal": "Espaço pessoal",
+    "currentPlan": "Plano atual",
+    "manageSub": "Gerir subscrição",
+    "upgrade": "Melhorar plano",
+    "subscribe": "Subscrever",
+    "baseDesc": "10 membros, 10 jogos em direto",
+    "highDesc": "25 membros, jogos em direto ilimitados",
+    "usage": "Utilização",
+    "activeGames": "Jogos ativos",
+    "members": "Membros",
+    "liveGames": "Jogos em direto"
   }
 }

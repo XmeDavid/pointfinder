@@ -49,7 +49,8 @@
     "discard": "Verwerfen",
     "manageTags": "Tags verwalten",
     "toggleView": "Ansicht wechseln",
-    "useArrowKeys": "Pfeiltasten verwenden oder Wert eintippen"
+    "useArrowKeys": "Pfeiltasten verwenden oder Wert eintippen",
+    "remove": "Entfernen"
   },
   "auth": {
     "signIn": "Anmelden",
@@ -859,5 +860,31 @@
     "label": "Filter:",
     "filterByColor": "Nach Farbe filtern",
     "clear": "Zurücksetzen"
+  },
+  "workspace": {
+    "personal": "Persönlich",
+    "createOrg": "Organisation erstellen",
+    "orgName": "Name der Organisation"
+  },
+  "org": {
+    "members": "Mitglieder",
+    "inviteEmail": "operator@beispiel.com",
+    "invite": "Einladen",
+    "permissions": "Berechtigungen",
+    "editPermissions": "Berechtigungen bearbeiten"
+  },
+  "billing": {
+    "title": "Abrechnung & Plan",
+    "personal": "Persönlicher Arbeitsbereich",
+    "currentPlan": "Aktueller Plan",
+    "manageSub": "Abonnement verwalten",
+    "upgrade": "Upgraden",
+    "subscribe": "Abonnieren",
+    "baseDesc": "10 Mitglieder, 10 Live-Spiele",
+    "highDesc": "25 Mitglieder, unbegrenzte Live-Spiele",
+    "usage": "Nutzung",
+    "activeGames": "Aktive Spiele",
+    "members": "Mitglieder",
+    "liveGames": "Live-Spiele"
   }
 }

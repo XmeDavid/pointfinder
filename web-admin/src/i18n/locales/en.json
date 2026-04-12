@@ -49,7 +49,8 @@
     "discard": "Discard",
     "manageTags": "Manage Tags",
     "toggleView": "Toggle view",
-    "useArrowKeys": "Use arrow keys or type to change the value"
+    "useArrowKeys": "Use arrow keys or type to change the value",
+    "remove": "Remove"
   },
   "auth": {
     "signIn": "Sign In",
@@ -859,5 +860,31 @@
     "label": "Filter:",
     "filterByColor": "Filter by color",
     "clear": "Clear"
+  },
+  "workspace": {
+    "personal": "Personal",
+    "createOrg": "Create organization",
+    "orgName": "Organization name"
+  },
+  "org": {
+    "members": "Members",
+    "inviteEmail": "operator@example.com",
+    "invite": "Invite",
+    "permissions": "Permissions",
+    "editPermissions": "Edit Permissions"
+  },
+  "billing": {
+    "title": "Billing & Plan",
+    "personal": "Personal workspace",
+    "currentPlan": "Current plan",
+    "manageSub": "Manage subscription",
+    "upgrade": "Upgrade",
+    "subscribe": "Subscribe",
+    "baseDesc": "10 members, 10 live games",
+    "highDesc": "25 members, unlimited live games",
+    "usage": "Usage",
+    "activeGames": "Active games",
+    "members": "Members",
+    "liveGames": "Live games"
   }
 }
