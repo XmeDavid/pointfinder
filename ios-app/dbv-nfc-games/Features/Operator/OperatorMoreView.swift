@@ -16,6 +16,7 @@ struct OperatorMoreView: View {
     @State private var showBases = false
     @State private var showChallenges = false
     @State private var showTeams = false
+    @State private var showStages = false
     @State private var showAssignments = false
     @State private var showManageTags = false
     @State private var showActivity = false
@@ -73,6 +74,12 @@ struct OperatorMoreView: View {
                         showTeams = true
                     } label: {
                         Label(locale.t("operator.teams"), systemImage: "person.3")
+                    }
+
+                    Button {
+                        showStages = true
+                    } label: {
+                        Label("Stages", systemImage: "list.number")
                     }
 
                     Button {
@@ -249,6 +256,9 @@ struct OperatorMoreView: View {
             }
             .fullScreenCover(isPresented: $showTeams) {
                 TeamsManagementView(game: game, onDismiss: { showTeams = false })
+            }
+            .fullScreenCover(isPresented: $showStages) {
+                StagesManagementView(game: game, onDismiss: { showStages = false })
             }
             .fullScreenCover(isPresented: $showAssignments) {
                 AssignmentsView(game: game, onDismiss: { showAssignments = false })

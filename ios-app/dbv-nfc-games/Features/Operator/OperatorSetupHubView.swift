@@ -16,6 +16,7 @@ struct OperatorSetupHubView: View {
     @State private var showBases = false
     @State private var showChallenges = false
     @State private var showTeams = false
+    @State private var showStages = false
     @State private var showManageTags = false
 
     private var token: String? {
@@ -160,6 +161,17 @@ struct OperatorSetupHubView: View {
                             }
                             .foregroundStyle(.primary)
                             .accessibilityIdentifier("nav-teams")
+
+                            Button { showStages = true } label: {
+                                HStack {
+                                    Label("Stages", systemImage: "list.number")
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption)
+                                        .foregroundStyle(.tertiary)
+                                }
+                            }
+                            .foregroundStyle(.primary)
                         }
 
                         // Go Live button
@@ -201,6 +213,9 @@ struct OperatorSetupHubView: View {
             }
             .fullScreenCover(isPresented: $showTeams) {
                 TeamsManagementView(game: game, onDismiss: { showTeams = false })
+            }
+            .fullScreenCover(isPresented: $showStages) {
+                StagesManagementView(game: game, onDismiss: { showStages = false })
             }
             .fullScreenCover(isPresented: $showManageTags) {
                 ManageTagsView(game: game, onDismiss: { showManageTags = false })
