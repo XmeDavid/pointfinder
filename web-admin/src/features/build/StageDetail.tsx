@@ -11,10 +11,14 @@ import type { Base } from '@/types/base'
 
 function BaseStatusDot({ base }: { base: Base }) {
   if (base.hidden) {
+    const color = base.nfcLinked
+      ? 'border-primary/60 bg-primary/20'
+      : 'border-destructive/60 bg-destructive/20'
+    const title = base.nfcLinked ? 'Hidden (NFC linked)' : 'Hidden (missing NFC)'
     return (
       <span
-        className="inline-block h-2 w-2 rounded-full border border-dashed border-muted-foreground shrink-0"
-        title="Hidden"
+        className={`inline-block h-2 w-2 rounded-full border border-dashed shrink-0 ${color}`}
+        title={title}
       />
     )
   }
