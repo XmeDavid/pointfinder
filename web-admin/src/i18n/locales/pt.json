@@ -871,7 +871,34 @@
     "inviteEmail": "operador@exemplo.com",
     "invite": "Convidar",
     "permissions": "Permissões",
-    "editPermissions": "Editar Permissões"
+    "editPermissions": "Editar Permissões",
+    "perm": {
+      "operate": "Operar jogos",
+      "create": "Criar jogos",
+      "delete": "Eliminar jogos",
+      "invite": "Convidar membros",
+      "manage": "Gerir permissões",
+      "billing": "Gerir faturação",
+      "resources": "Gerir recursos"
+    }
+  },
+  "resources": {
+    "title": "Recursos",
+    "upload": "Carregar ficheiro",
+    "newDocument": "Novo documento",
+    "search": "Pesquisar recursos...",
+    "noResources": "Sem recursos",
+    "sharedWithPlayers": "Partilhado com jogadores",
+    "folders": "Pastas",
+    "newFolder": "Nova pasta",
+    "rename": "Renomear",
+    "deleteConfirm": "Tens a certeza que queres eliminar este recurso?",
+    "deleteFolderConfirm": "Tens a certeza que queres eliminar esta pasta?",
+    "storageUsed": "Armazenamento utilizado",
+    "attachFile": "Anexar ficheiro",
+    "pickResource": "Selecionar um recurso",
+    "gameResources": "Recursos do jogo",
+    "orgResources": "Recursos da organização"
   },
   "billing": {
     "title": "Faturação & Plano",

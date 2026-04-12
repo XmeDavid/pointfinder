@@ -871,7 +871,34 @@
     "inviteEmail": "operator@beispiel.com",
     "invite": "Einladen",
     "permissions": "Berechtigungen",
-    "editPermissions": "Berechtigungen bearbeiten"
+    "editPermissions": "Berechtigungen bearbeiten",
+    "perm": {
+      "operate": "Spiele betreiben",
+      "create": "Spiele erstellen",
+      "delete": "Spiele löschen",
+      "invite": "Mitglieder einladen",
+      "manage": "Berechtigungen verwalten",
+      "billing": "Abrechnung verwalten",
+      "resources": "Ressourcen verwalten"
+    }
+  },
+  "resources": {
+    "title": "Ressourcen",
+    "upload": "Datei hochladen",
+    "newDocument": "Neues Dokument",
+    "search": "Ressourcen suchen...",
+    "noResources": "Noch keine Ressourcen",
+    "sharedWithPlayers": "Mit Spielern geteilt",
+    "folders": "Ordner",
+    "newFolder": "Neuer Ordner",
+    "rename": "Umbenennen",
+    "deleteConfirm": "Bist du sicher, dass du diese Ressource löschen möchtest?",
+    "deleteFolderConfirm": "Bist du sicher, dass du diesen Ordner löschen möchtest?",
+    "storageUsed": "Speicher verwendet",
+    "attachFile": "Datei anhängen",
+    "pickResource": "Ressource auswählen",
+    "gameResources": "Spiel-Ressourcen",
+    "orgResources": "Organisations-Ressourcen"
   },
   "billing": {
     "title": "Abrechnung & Plan",

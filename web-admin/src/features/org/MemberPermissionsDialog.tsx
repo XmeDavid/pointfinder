@@ -41,6 +41,11 @@ const PERMISSION_LIST = [
     label: 'org.perm.billing',
     fallback: 'Manage billing',
   },
+  {
+    permission: OrgPermission.MANAGE_RESOURCES,
+    label: 'org.perm.resources',
+    fallback: 'Manage resources',
+  },
 ]
 
 export function MemberPermissionsDialog({

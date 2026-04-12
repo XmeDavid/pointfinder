@@ -31,6 +31,7 @@ export const OrgPermission = {
   INVITE_MEMBERS: 8,
   MANAGE_PERMS: 16,
   MANAGE_BILLING: 32,
+  MANAGE_RESOURCES: 64,
 } as const
 
 export type OrgPermission = (typeof OrgPermission)[keyof typeof OrgPermission]

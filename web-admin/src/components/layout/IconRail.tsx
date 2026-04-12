@@ -11,6 +11,7 @@ import {
   Moon,
   Globe,
   Check,
+  FolderOpen,
 } from "lucide-react";
 import {
   useWorkspaceStore,
@@ -24,6 +25,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
+import { useWorkspaceContext } from "@/stores/workspaceContext";
 
 const THEME_KEY = "pointfinder-theme";
 
@@ -146,8 +148,10 @@ export function IconRail({ showModes }: IconRailProps) {
   const navigate = useNavigate();
   const store = useWorkspaceStore();
   const { isDark, toggle: toggleTheme } = useThemeToggle();
+  const { active } = useWorkspaceContext();
 
   const isSettingsActive = store.settingsPanelOpen;
+  const isOrgWorkspace = active.type === 'org';
 
   return (
     <>
@@ -175,6 +179,20 @@ export function IconRail({ showModes }: IconRailProps) {
                 sizeClass="w-8 h-8"
               />
             ))}
+          </div>
+        )}
+
+        {/* Org nav links -- only when in org workspace and not in game mode */}
+        {!showModes && isOrgWorkspace && (
+          <div className="flex flex-col items-center gap-1">
+            <button
+              onClick={() => navigate("/org/resources")}
+              title="Resources"
+              aria-label="Resources"
+              className="w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer text-muted-foreground hover:text-foreground hover:bg-accent"
+            >
+              <FolderOpen size={18} />
+            </button>
           </div>
         )}
 

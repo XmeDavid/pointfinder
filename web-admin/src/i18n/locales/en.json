@@ -871,7 +871,34 @@
     "inviteEmail": "operator@example.com",
     "invite": "Invite",
     "permissions": "Permissions",
-    "editPermissions": "Edit Permissions"
+    "editPermissions": "Edit Permissions",
+    "perm": {
+      "operate": "Operate games",
+      "create": "Create games",
+      "delete": "Delete games",
+      "invite": "Invite members",
+      "manage": "Manage permissions",
+      "billing": "Manage billing",
+      "resources": "Manage resources"
+    }
+  },
+  "resources": {
+    "title": "Resources",
+    "upload": "Upload file",
+    "newDocument": "New document",
+    "search": "Search resources...",
+    "noResources": "No resources yet",
+    "sharedWithPlayers": "Shared with players",
+    "folders": "Folders",
+    "newFolder": "New folder",
+    "rename": "Rename",
+    "deleteConfirm": "Are you sure you want to delete this resource?",
+    "deleteFolderConfirm": "Are you sure you want to delete this folder?",
+    "storageUsed": "Storage used",
+    "attachFile": "Attach file",
+    "pickResource": "Select a resource",
+    "gameResources": "Game resources",
+    "orgResources": "Organization resources"
   },
   "billing": {
     "title": "Billing & Plan",
