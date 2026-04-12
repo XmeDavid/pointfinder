@@ -522,6 +522,32 @@ actor APIClient {
         try await deleteVoid("/api/games/\(gameId)/tags/\(tagId)", token: token)
     }
 
+    // MARK: - Workspaces & Organizations
+
+    func getWorkspaces(token: String) async throws -> WorkspaceResponse {
+        try await get("/api/workspaces", token: token)
+    }
+
+    func createOrganization(request: CreateOrgRequest, token: String) async throws -> OrgWorkspace {
+        try await post("/api/orgs", body: request, token: token)
+    }
+
+    func getOrgMembers(orgId: UUID, token: String) async throws -> [OrgMemberResponse] {
+        try await get("/api/orgs/\(orgId.uuidString.lowercased())/members", token: token)
+    }
+
+    func inviteOrgMember(orgId: UUID, request: InviteOrgMemberRequest, token: String) async throws -> OrgMemberResponse {
+        try await post("/api/orgs/\(orgId.uuidString.lowercased())/members/invite", body: request, token: token)
+    }
+
+    func removeOrgMember(orgId: UUID, userId: UUID, token: String) async throws {
+        try await deleteVoid("/api/orgs/\(orgId.uuidString.lowercased())/members/\(userId.uuidString.lowercased())", token: token)
+    }
+
+    func updateMemberPermissions(orgId: UUID, userId: UUID, request: UpdatePermissionsRequest, token: String) async throws -> OrgMemberResponse {
+        try await patch("/api/orgs/\(orgId.uuidString.lowercased())/members/\(userId.uuidString.lowercased())/permissions", body: request, token: token)
+    }
+
     // MARK: - Operator Stage CRUD
 
     func getStages(gameId: UUID, token: String) async throws -> [Stage] {
