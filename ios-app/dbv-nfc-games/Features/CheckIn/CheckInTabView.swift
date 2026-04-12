@@ -18,9 +18,6 @@ struct CheckInTabView: View {
     var body: some View {
         NavigationStack(path: $navigationPath) {
             ZStack {
-                Color.pfBackground
-                    .ignoresSafeArea()
-
                 let status = appState.currentGame?.status
                 let shouldBlockGameplay = status == "setup" || status == "ended"
 

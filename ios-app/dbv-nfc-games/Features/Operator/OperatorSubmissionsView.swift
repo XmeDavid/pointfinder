@@ -54,15 +54,26 @@ struct OperatorSubmissionsView: View {
                     )
                     Spacer()
                 } else {
-                    List(filteredSubmissions) { submission in
-                        Button {
-                            reviewingSubmission = submission
-                        } label: {
-                            submissionRow(submission)
+                    ScrollView {
+                        LazyVStack(spacing: 10) {
+                            ForEach(filteredSubmissions) { submission in
+                                Button {
+                                    reviewingSubmission = submission
+                                } label: {
+                                    submissionRow(submission)
+                                        .padding(14)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .background(Color.pfCard)
+                                        .clipShape(RoundedRectangle(cornerRadius: PFRadius.card))
+                                        .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
+                                        .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
+                            }
                         }
-                        .buttonStyle(.plain)
+                        .padding(.horizontal, PFSpacing.screenPadding)
+                        .padding(.vertical, PFSpacing.itemGap)
                     }
-                    .listStyle(.plain)
                 }
             }
             .navigationTitle(locale.t("operator.submissionsTitle"))
@@ -170,7 +181,6 @@ struct OperatorSubmissionsView: View {
                 .font(.caption2)
                 .foregroundStyle(Color.pfTextMuted)
         }
-        .padding(.vertical, 4)
     }
 
     private func loadInitialData() async {

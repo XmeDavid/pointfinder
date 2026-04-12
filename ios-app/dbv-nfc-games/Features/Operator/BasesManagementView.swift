@@ -84,7 +84,6 @@ struct BasesManagementView: View {
                             .padding(.horizontal, PFSpacing.screenPadding)
                             .padding(.vertical, PFSpacing.itemGap)
                         }
-                        .background(Color.pfBackground)
                     }
                 }
             }

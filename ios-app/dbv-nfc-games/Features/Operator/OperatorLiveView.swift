@@ -81,7 +81,6 @@ struct OperatorLiveView: View {
                 .padding(.horizontal, PFSpacing.screenPadding)
                 .padding(.vertical, 12)
             }
-            .background(Color.pfBackground)
             .navigationTitle(locale.t("operator.live"))
             .navigationBarTitleDisplayMode(.inline)
             .task { await loadData() }
@@ -436,13 +435,18 @@ struct OperatorLiveView: View {
             async let leaderboardResult = appState.apiClient.getLeaderboard(gameId: game.id, token: token)
             async let activityResult = appState.apiClient.getActivity(gameId: game.id, token: token)
             async let teamsResult = appState.apiClient.getTeams(gameId: game.id, token: token)
-            async let stagesResult = appState.apiClient.getStages(gameId: game.id, token: token)
-            let (l, a, t, s) = try await (leaderboardResult, activityResult, teamsResult, stagesResult)
+            let (l, a, t) = try await (leaderboardResult, activityResult, teamsResult)
             leaderboard = l
             activity = a
             teams = t
-            stages = s
             lastSyncedAt = Date()
+
+            // Load stages separately — non-critical, don't fail the whole view
+            do {
+                stages = try await appState.apiClient.getStages(gameId: game.id, token: token)
+            } catch {
+                // Stages are non-critical for live monitoring
+            }
         } catch is CancellationError {
             // Task cancelled during navigation
         } catch {

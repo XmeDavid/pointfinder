@@ -218,7 +218,6 @@ struct OperatorSetupHubView: View {
                         .padding(.horizontal, PFSpacing.screenPadding)
                         .padding(.vertical, 12)
                     }
-                    .background(Color.pfBackground)
                 }
             }
             .navigationTitle(locale.t("operator.setup"))
