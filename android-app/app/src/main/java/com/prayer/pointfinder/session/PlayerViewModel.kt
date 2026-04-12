@@ -140,7 +140,8 @@ class PlayerViewModel @Inject constructor(
                     }
 
                     "submission_status",
-                    "activity" -> {
+                    "activity",
+                    "stage_unlock" -> {
                         val auth = lastAuth ?: return@collectLatest
                         refresh(auth, lastOnline)
                     }
