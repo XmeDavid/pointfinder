@@ -34,14 +34,15 @@ struct BaseCheckInDetailView: View {
                 // Check-in success banner
                 HStack(spacing: 12) {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
+                        .foregroundStyle(Color.pfCompleted)
                         .font(.title)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(locale.t("base.checkedInBanner"))
                             .font(.headline)
+                            .foregroundStyle(Color.pfCompleted)
                         Text((base?.displayTitle ?? locale.t("base.defaultName")))
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.pfTextMuted)
                     }
                     Spacer()
                     // Status pill
@@ -55,7 +56,7 @@ struct BaseCheckInDetailView: View {
                         .clipShape(Capsule())
                 }
                 .padding()
-                .background(Color.green.opacity(0.08))
+                .background(Color.pfCompleted.opacity(0.08))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
 
                 // Offline indicator
@@ -89,7 +90,7 @@ struct BaseCheckInDetailView: View {
 
                         Text(challenge.description)
                             .font(.body)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.pfTextMuted)
                             .fixedSize(horizontal: false, vertical: true)
                             .padding(.bottom, 2)
 
@@ -169,9 +170,9 @@ struct BaseCheckInDetailView: View {
                                     .font(.headline)
                                     .frame(maxWidth: .infinity)
                                     .padding()
-                                    .background(Color.accentColor)
+                                    .background(Color.pfPrimary)
                                     .foregroundStyle(.white)
-                                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                                    .clipShape(RoundedRectangle(cornerRadius: PFRadius.button))
                             }
                             .padding(.top, 8)
                         }

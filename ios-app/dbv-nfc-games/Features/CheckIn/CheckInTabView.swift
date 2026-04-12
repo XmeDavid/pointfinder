@@ -33,26 +33,27 @@ struct CheckInTabView: View {
                         VStack(spacing: 16) {
                             ZStack {
                                 Circle()
-                                    .fill(Color.accentColor.opacity(0.1))
+                                    .fill(Color.pfPrimary.opacity(0.1))
                                     .frame(width: 160, height: 160)
 
                                 Circle()
-                                    .fill(Color.accentColor.opacity(0.2))
+                                    .fill(Color.pfPrimary.opacity(0.2))
                                     .frame(width: 120, height: 120)
 
                                 Image(systemName: "mappin.and.ellipse")
                                     .font(.system(size: 48))
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(Color.pfPrimary)
                                     .symbolEffect(.pulse, isActive: isScanning)
                             }
 
                             Text(locale.t("checkIn.title"))
                                 .font(.title2)
                                 .fontWeight(.bold)
+                                .foregroundStyle(Color.pfText)
 
                             Text(locale.t("checkIn.instructions"))
                                 .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.pfTextMuted)
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal, 40)
                         }
@@ -68,13 +69,13 @@ struct CheckInTabView: View {
                         if appState.pendingActionsCount > 0 {
                             HStack(spacing: 8) {
                                 Image(systemName: "arrow.triangle.2.circlepath")
-                                    .foregroundStyle(.orange)
+                                    .foregroundStyle(Color.pfPending)
                                 let key = appState.pendingActionsCount == 1
                                     ? "checkIn.pendingSyncOne"
                                     : "checkIn.pendingSyncOther"
                                 Text(locale.t(key, appState.pendingActionsCount))
                                     .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(Color.pfTextMuted)
                             }
                             .padding(.horizontal)
                         }
@@ -82,10 +83,10 @@ struct CheckInTabView: View {
                         if failedSyncCount > 0 {
                             HStack(spacing: 8) {
                                 Image(systemName: "exclamationmark.triangle.fill")
-                                    .foregroundStyle(.red)
+                                    .foregroundStyle(Color.pfRejected)
                                 Text(locale.t("offline.failedSubmissions", String(failedSyncCount)))
                                     .font(.caption)
-                                    .foregroundStyle(.red)
+                                    .foregroundStyle(Color.pfRejected)
                             }
                             .padding(.horizontal)
                         }
@@ -93,7 +94,7 @@ struct CheckInTabView: View {
                         if let syncError = appState.syncEngine.lastSyncError, !syncError.isEmpty {
                             Text(syncError)
                                 .font(.caption2)
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(Color.pfPending)
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal, 24)
                         }
@@ -111,9 +112,9 @@ struct CheckInTabView: View {
                             .font(.headline)
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(isScanning ? Color.gray : Color.accentColor)
+                            .background(isScanning ? Color.pfInactive : Color.pfPrimary)
                             .foregroundStyle(.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                            .clipShape(RoundedRectangle(cornerRadius: PFRadius.button))
                         }
                         .disabled(isScanning || shouldBlockGameplay)
                         .padding(.horizontal, 24)
@@ -256,7 +257,7 @@ private struct NfcUnsupportedView: View {
 
             Text(locale.t("checkIn.nfcUnsupported.body"))
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.pfTextMuted)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
 
