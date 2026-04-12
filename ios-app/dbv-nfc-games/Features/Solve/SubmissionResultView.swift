@@ -37,17 +37,17 @@ struct SubmissionResultView: View {
 
                     Text(resultMessage)
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.pfTextMuted)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 16)
 
                     if let feedback = submission.feedback, !feedback.isEmpty {
                         Text(locale.t("result.feedback", feedback))
                             .font(.subheadline)
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(Color.pfText)
                             .padding()
-                            .background(Color(.systemGray6))
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .background(Color.pfCard)
+                            .clipShape(RoundedRectangle(cornerRadius: PFRadius.small))
                     }
 
                     if showCompletionContent {
@@ -58,8 +58,8 @@ struct SubmissionResultView: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding()
-                        .background(Color(.systemGray6))
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .background(Color.pfCard)
+                        .clipShape(RoundedRectangle(cornerRadius: PFRadius.card))
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -81,9 +81,9 @@ struct SubmissionResultView: View {
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.accentColor)
+                    .background(Color.pfPrimary)
                     .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .clipShape(RoundedRectangle(cornerRadius: PFRadius.button))
             }
             .padding(.horizontal, 24)
             .padding(.top, 8)
@@ -96,9 +96,9 @@ struct SubmissionResultView: View {
 
     private var resultColor: Color {
         switch submission.status {
-        case "correct", "approved": return .green
-        case "rejected": return .red
-        default: return .orange
+        case "correct", "approved": return .pfCompleted
+        case "rejected": return .pfRejected
+        default: return .pfPending
         }
     }
 

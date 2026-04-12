@@ -64,7 +64,7 @@ struct SolveView: View {
                     if !challengeDescription.isEmpty {
                         Text(challengeDescription)
                             .font(.body)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.pfTextMuted)
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
@@ -93,8 +93,8 @@ struct SolveView: View {
                     }
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.orange.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .background(Color.pfPending.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: PFRadius.small))
                 }
 
                 // Instructions
@@ -107,15 +107,15 @@ struct SolveView: View {
                     if isPhotoType {
                         Text(locale.t("solve.photoInstructions"))
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.pfTextMuted)
                     } else if requirePresenceToSubmit {
                         Text(locale.t("solve.presenceInstructions"))
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.pfTextMuted)
                     } else {
                         Text(locale.t("solve.answerInstructions"))
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.pfTextMuted)
                     }
                 }
 
@@ -123,10 +123,10 @@ struct SolveView: View {
                 if !appState.isOnline {
                     HStack(spacing: 8) {
                         Image(systemName: "wifi.slash")
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(Color.pfPending)
                         Text(locale.t("offline.submissionSync"))
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.pfTextMuted)
                     }
                 }
 
@@ -162,8 +162,8 @@ struct SolveView: View {
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.gray)
-                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                            .background(Color.pfInactive)
+                            .clipShape(RoundedRectangle(cornerRadius: PFRadius.button))
                     } else {
                         Label(
                             requirePresenceToSubmit
@@ -174,9 +174,9 @@ struct SolveView: View {
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(canSubmit ? Color.accentColor : Color.gray)
+                        .background(canSubmit ? Color.pfPrimary : Color.pfInactive)
                         .foregroundStyle(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .clipShape(RoundedRectangle(cornerRadius: PFRadius.button))
                     }
                 }
                 .disabled(!canSubmit || isSubmitting)
@@ -189,15 +189,15 @@ struct SolveView: View {
                     if requirePresenceToSubmit {
                         Text(locale.t("solve.presenceHelp"))
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.pfTextMuted)
                     } else if isPhotoType {
                         Text(locale.t("solve.photoHelp"))
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.pfTextMuted)
                     } else {
                         Text(locale.t("solve.answerHelp"))
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.pfTextMuted)
                     }
                 }
             }
@@ -298,7 +298,7 @@ struct SolveView: View {
 
                 Text(locale.t("solve.mediaSelected", "\(selectedMedia.count)"))
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.pfTextMuted)
             }
 
             // Picker buttons
@@ -332,7 +332,7 @@ struct SolveView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(locale.t("solve.notesOptional"))
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.pfTextMuted)
 
                 TextField(locale.t("solve.addNote"), text: $answer, axis: .vertical)
                     .textFieldStyle(.roundedBorder)
