@@ -545,14 +545,14 @@ private fun eventTypeLabel(type: String): String = when (type) {
 }
 
 private fun eventTypeIconAndColor(type: String): Pair<ImageVector, Color> = when (type) {
-    "check_in" -> Icons.Default.LocationOn to Color(0xFF1565C0)
-    "submission" -> Icons.Default.Send to Color(0xFF1565C0)
-    "approval" -> Icons.Default.CheckCircle to Color(0xFF2E7D32)
-    "rejection" -> Icons.Default.Cancel to Color(0xFFD32F2F)
-    "operator_override" -> Icons.Default.Shield to Color(0xFFE08A00)
-    "team_join" -> Icons.Default.Person to Color(0xFF757575)
-    "team_switch" -> Icons.Default.Group to Color(0xFF757575)
-    else -> Icons.Default.Group to Color(0xFF757575)
+    "check_in" -> Icons.Default.LocationOn to StatusCheckedIn
+    "submission" -> Icons.Default.Send to StatusSubmitted
+    "approval" -> Icons.Default.CheckCircle to StatusCompleted
+    "rejection" -> Icons.Default.Cancel to StatusRejected
+    "operator_override" -> Icons.Default.Shield to StatusSubmitted
+    "team_join" -> Icons.Default.Person to Color.Gray
+    "team_switch" -> Icons.Default.Group to Color.Gray
+    else -> Icons.Default.Group to Color.Gray
 }
 
 private fun relativeTime(timestamp: String): String {

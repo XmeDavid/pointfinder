@@ -284,7 +284,7 @@ private fun eventTypeIcon(type: String): Pair<ImageVector, Color> {
         "check_in" -> Icons.Default.LocationOn to StatusCheckedIn
         "submission" -> Icons.AutoMirrored.Filled.Send to StatusSubmitted
         "approval" -> Icons.Default.CheckCircle to StatusCompleted
-        "rejection" -> Icons.Default.Cancel to Color(0xFFD32F2F)
+        "rejection" -> Icons.Default.Cancel to StatusRejected
         else -> Icons.AutoMirrored.Filled.Send to Color.Gray
     }
 }
