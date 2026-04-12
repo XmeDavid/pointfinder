@@ -29,26 +29,10 @@ struct CheckInTabView: View {
                     VStack(spacing: 24) {
                         Spacer()
 
-                        // Check-in illustration
-                        VStack(spacing: 16) {
-                            ZStack {
-                                Circle()
-                                    .fill(Color.pfPrimary.opacity(0.06))
-                                    .frame(width: 200, height: 200)
-
-                                Circle()
-                                    .fill(Color.pfPrimary.opacity(0.10))
-                                    .frame(width: 160, height: 160)
-
-                                Circle()
-                                    .fill(Color.pfPrimary.opacity(0.16))
-                                    .frame(width: 120, height: 120)
-
-                                Image(systemName: "mappin.and.ellipse")
-                                    .font(.system(size: 48))
-                                    .foregroundStyle(Color.pfPrimary)
-                                    .symbolEffect(.pulse, isActive: isScanning)
-                            }
+                        // Check-in illustration — animated scan area
+                        VStack(spacing: 20) {
+                            AnimatedScanView(isScanning: isScanning)
+                                .frame(width: 260, height: 260)
 
                             Text(locale.t("checkIn.title"))
                                 .font(.title2)
