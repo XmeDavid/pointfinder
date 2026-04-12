@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { SlideDrawer } from '@/components/layout/SlideDrawer'
 import { useGame } from '@/hooks/queries/useGames'
 import { useUpdateGame, useUpdateGameStatus, useDeleteGame } from '@/hooks/mutations/useGameMutations'
+import { useGameOperators, useGameInvites } from '@/hooks/queries/useOperators'
+import { useInviteOperator, useRevokeInvite, useRemoveOperator } from '@/hooks/mutations/useOperatorMutations'
+import { useAuthStore } from '@/hooks/useAuth'
+import { gamesApi } from '@/lib/api/games'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { TileSource, UnlockTrigger } from '@/types/game'
 import type { GameStatus } from '@/types'
@@ -78,6 +82,19 @@ export default function GameSettingsPanel({
   const updateGame = useUpdateGame(gameId)
   const updateStatus = useUpdateGameStatus(gameId)
   const deleteGame = useDeleteGame()
+
+  // Operators
+  const { data: operators } = useGameOperators(gameId)
+  const { data: invites } = useGameInvites(gameId)
+  const inviteOperator = useInviteOperator(gameId)
+  const revokeInvite = useRevokeInvite(gameId)
+  const removeOperator = useRemoveOperator(gameId)
+  const currentUser = useAuthStore((s) => s.user)
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteError, setInviteError] = useState<string | null>(null)
+
+  // Export
+  const [exporting, setExporting] = useState(false)
 
   // State change dialog
   const [stateTarget, setStateTarget] = useState<GameStatus | null>(null)
@@ -275,12 +292,140 @@ export default function GameSettingsPanel({
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Operators
           </h3>
-          <div
-            className="px-3 py-4 rounded-lg border border-dashed border-border text-center"
-            data-testid="operators-placeholder"
-          >
-            <p className="text-xs text-muted-foreground">
-              Operators panel coming soon
+
+          {/* Current operators */}
+          <div className="space-y-1.5">
+            {operators?.map((op) => (
+              <div
+                key={op.id}
+                className="flex items-center justify-between px-3 py-2 rounded-lg border border-border"
+                data-testid={`operator-${op.id}`}
+              >
+                <div className="min-w-0">
+                  <p className="text-sm text-foreground truncate">{op.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {op.email}
+                  </p>
+                </div>
+                {op.id === game.createdBy ? (
+                  <span className="text-xs text-muted-foreground px-2 py-0.5 rounded-full bg-muted shrink-0">
+                    Owner
+                  </span>
+                ) : op.id !== currentUser?.id ? (
+                  <button
+                    onClick={() => removeOperator.mutate(op.id)}
+                    data-testid={`remove-operator-${op.id}`}
+                    className="text-xs text-destructive hover:text-destructive/80 shrink-0 cursor-pointer"
+                  >
+                    Remove
+                  </button>
+                ) : null}
+              </div>
+            ))}
+          </div>
+
+          {/* Pending invites */}
+          {invites && invites.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-xs text-muted-foreground px-1">
+                Pending Invitations
+              </p>
+              {invites.map((inv) => (
+                <div
+                  key={inv.id}
+                  className="flex items-center justify-between px-3 py-2 rounded-lg border border-dashed border-border"
+                  data-testid={`invite-${inv.id}`}
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm text-muted-foreground truncate">
+                      {inv.email}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => revokeInvite.mutate(inv.id)}
+                    data-testid={`revoke-invite-${inv.id}`}
+                    className="text-xs text-destructive hover:text-destructive/80 shrink-0 cursor-pointer"
+                  >
+                    Revoke
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Invite form */}
+          <div className="flex gap-2">
+            <input
+              type="email"
+              value={inviteEmail}
+              onChange={(e) => {
+                setInviteEmail(e.target.value)
+                setInviteError(null)
+              }}
+              placeholder="operator@example.com"
+              data-testid="invite-email-input"
+              className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-border bg-muted text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-ring"
+            />
+            <button
+              onClick={() => {
+                if (!inviteEmail.trim()) return
+                setInviteError(null)
+                inviteOperator.mutate(inviteEmail.trim(), {
+                  onSuccess: () => setInviteEmail(''),
+                  onError: () =>
+                    setInviteError('Failed to send invitation.'),
+                })
+              }}
+              disabled={!inviteEmail.trim() || inviteOperator.isPending}
+              data-testid="send-invite-btn"
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors shrink-0 ${
+                inviteEmail.trim() && !inviteOperator.isPending
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer'
+                  : 'bg-muted text-muted-foreground cursor-not-allowed'
+              }`}
+            >
+              {inviteOperator.isPending ? 'Sending...' : 'Invite'}
+            </button>
+          </div>
+          {inviteError && (
+            <p className="text-xs text-destructive px-1">{inviteError}</p>
+          )}
+        </section>
+
+        {/* Export */}
+        <section className="space-y-3">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Export
+          </h3>
+          <div>
+            <button
+              onClick={async () => {
+                setExporting(true)
+                try {
+                  const blob = await gamesApi.exportGame(gameId)
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement('a')
+                  a.href = url
+                  a.download = `${game.name.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-export.json`
+                  document.body.appendChild(a)
+                  a.click()
+                  document.body.removeChild(a)
+                  URL.revokeObjectURL(url)
+                } catch {
+                  // silent — blob error already handled in gamesApi
+                } finally {
+                  setExporting(false)
+                }
+              }}
+              disabled={exporting}
+              data-testid="export-game-btn"
+              className="w-full px-3 py-2 rounded-lg border border-border text-sm text-foreground font-medium cursor-pointer hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {exporting ? 'Exporting...' : 'Export Game'}
+            </button>
+            <p className="text-xs text-muted-foreground mt-1.5 px-1">
+              Download a JSON file with all game configuration that can be
+              imported into a new game.
             </p>
           </div>
         </section>

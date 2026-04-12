@@ -4,6 +4,7 @@ import { useGames } from '@/hooks/queries/useGames'
 import { SearchInput } from '@/components/data/SearchInput'
 import { GameCard } from './GameCard'
 import { CreateGameDialog } from './CreateGameDialog'
+import { ImportGameDialog } from './ImportGameDialog'
 import { Spinner } from '@/components/feedback/Spinner'
 import { EmptyState } from '@/components/feedback/EmptyState'
 
@@ -12,6 +13,7 @@ export function DashboardPage() {
   const { data: games, isLoading, isError, error } = useGames()
   const [search, setSearch] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
 
   const filtered = useMemo(() => {
     if (!games) return []
@@ -28,13 +30,22 @@ export function DashboardPage() {
           <h1 className="text-2xl font-bold text-foreground">PointFinder</h1>
           <p className="text-sm text-muted-foreground mt-1">Your Games</p>
         </div>
-        <button
-          onClick={() => setDialogOpen(true)}
-          data-testid="create-game-btn"
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
-        >
-          + New Game
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setImportOpen(true)}
+            data-testid="import-game-btn"
+            className="px-4 py-2 border border-border text-foreground rounded-lg text-sm font-medium hover:bg-muted transition-colors"
+          >
+            Import
+          </button>
+          <button
+            onClick={() => setDialogOpen(true)}
+            data-testid="create-game-btn"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+          >
+            + New Game
+          </button>
+        </div>
       </div>
 
       {/* Search — only show when there are games */}
@@ -101,6 +112,12 @@ export function DashboardPage() {
       <CreateGameDialog
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
+      />
+
+      {/* Import dialog */}
+      <ImportGameDialog
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
       />
     </div>
   )
