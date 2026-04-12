@@ -1,0 +1,114 @@
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { useWorkspaceContext } from '../../stores/workspaceContext'
+import { useOrgMembers } from '../../hooks/queries/useOrganization'
+import { useInviteOrgMember, useRemoveOrgMember } from '../../hooks/mutations/useOrgMutations'
+import { hasPermission, OrgPermission } from '../../types/organization'
+import { useAuthStore } from '../../lib/auth/store'
+import { MemberPermissionsDialog } from './MemberPermissionsDialog'
+
+export function OrgMembersPage() {
+  const { t } = useTranslation()
+  const { active } = useWorkspaceContext()
+  const user = useAuthStore((s) => s.user)
+  const orgId = active.type === 'org' ? active.orgId : undefined
+  const { data: members, isLoading } = useOrgMembers(orgId)
+  const inviteMember = useInviteOrgMember(orgId ?? '')
+  const removeMember = useRemoveOrgMember(orgId ?? '')
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [editingMember, setEditingMember] = useState<string | null>(null)
+
+  if (active.type !== 'org') return null
+
+  const myMembership = members?.find((m) => m.userId === user?.id)
+  const canInvite = myMembership
+    ? hasPermission(myMembership.permissions, OrgPermission.INVITE_MEMBERS)
+    : false
+  const canManagePerms = myMembership
+    ? hasPermission(myMembership.permissions, OrgPermission.MANAGE_PERMS)
+    : false
+
+  const handleInvite = () => {
+    if (!inviteEmail.trim()) return
+    inviteMember.mutate(inviteEmail.trim(), {
+      onSuccess: () => setInviteEmail(''),
+    })
+  }
+
+  return (
+    <div className="h-screen bg-background p-8 overflow-auto">
+      <h1 className="text-2xl font-bold text-foreground mb-6">
+        {t('org.members', 'Members')}
+      </h1>
+
+      {canInvite && (
+        <div className="flex gap-2 mb-6 max-w-md">
+          <input
+            type="email"
+            value={inviteEmail}
+            onChange={(e) => setInviteEmail(e.target.value)}
+            placeholder={t('org.inviteEmail', 'operator@example.com')}
+            className="flex-1 px-3 py-2 rounded-lg border border-border bg-background text-sm"
+            onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
+          />
+          <button
+            onClick={handleInvite}
+            disabled={inviteMember.isPending}
+            className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50"
+          >
+            {inviteMember.isPending
+              ? t('common.sending', 'Sending...')
+              : t('org.invite', 'Invite')}
+          </button>
+        </div>
+      )}
+
+      {isLoading && (
+        <p className="text-sm text-muted-foreground">{t('common.loading', 'Loading...')}</p>
+      )}
+
+      <div className="space-y-2 max-w-lg">
+        {members?.map((member) => (
+          <div
+            key={member.id}
+            className="flex items-center justify-between px-4 py-3 rounded-lg border border-border"
+          >
+            <div>
+              <p className="text-sm font-medium text-foreground">{member.name}</p>
+              <p className="text-xs text-muted-foreground">{member.email}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              {canManagePerms && member.userId !== user?.id && (
+                <button
+                  onClick={() => setEditingMember(member.userId)}
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                  {t('org.permissions', 'Permissions')}
+                </button>
+              )}
+              {canInvite && member.userId !== user?.id && (
+                <button
+                  onClick={() => removeMember.mutate(member.userId)}
+                  className="text-xs text-destructive hover:text-destructive/80"
+                >
+                  {t('common.remove', 'Remove')}
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {editingMember && orgId && (
+        <MemberPermissionsDialog
+          orgId={orgId}
+          userId={editingMember}
+          currentPermissions={
+            members?.find((m) => m.userId === editingMember)?.permissions ?? 1
+          }
+          onClose={() => setEditingMember(null)}
+        />
+      )}
+    </div>
+  )
+}
