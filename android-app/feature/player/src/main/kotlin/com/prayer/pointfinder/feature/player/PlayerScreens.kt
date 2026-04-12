@@ -81,11 +81,12 @@ enum class PlayerTab {
 }
 
 // Semantic color constants for status, accents, and indicators
-internal val StatusCheckedIn = Color(0xFF1565C0)
-internal val StatusCompleted = Color(0xFF2E7D32)
-internal val StatusSubmitted = Color(0xFFE08A00)
-internal val StatusRejected = Color(0xFFD32F2F)
-internal val StarGold = Color(0xFFE08A00)
+// Values match Color.kt design tokens (StatusCheckedIn, StatusCompleted, etc.)
+internal val StatusCheckedIn = Color(0xFF3B82F6)
+internal val StatusCompleted = Color(0xFF22C55E)
+internal val StatusSubmitted = Color(0xFFF59E0B)
+internal val StatusRejected = Color(0xFFEF4444)
+internal val StarGold = Color(0xFFF59E0B)
 internal val OfflineOrange = Color(0xFFE08A00)
 
 @OptIn(ExperimentalMaterial3Api::class)
