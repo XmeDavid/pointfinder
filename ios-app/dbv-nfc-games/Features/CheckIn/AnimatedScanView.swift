@@ -35,7 +35,6 @@ struct AnimatedScanView: View {
             // Center icon (not drawn in Canvas — uses SF Symbols)
             centerIcon
         }
-        .clipped(antialiased: false)
         .onAppear {
             generateParticles()
         }
@@ -95,7 +94,7 @@ struct AnimatedScanView: View {
         )
         context.fill(
             Circle().path(in: glowRect),
-            with: .color(Color.pfPrimary.opacity(0.04 + glowPulse * 0.06 * intensityMultiplier))
+            with: .color(Color.pfPrimary.opacity((0.04 + glowPulse * 0.06 * intensityMultiplier) * Double(burstOpacity)))
         )
 
         // -- Radar sweep arc --
