@@ -51,6 +51,17 @@ struct OperatorMapView: View {
         return Int((Double(completed) / Double(total)) * 100)
     }
 
+    private var headerSubtitle: String {
+        var parts: [String] = []
+        if !bases.isEmpty {
+            parts.append("\(bases.count) bases")
+        }
+        if !teams.isEmpty {
+            parts.append("\(teams.count) teams")
+        }
+        return parts.isEmpty ? game.status.capitalized : parts.joined(separator: " · ")
+    }
+
     private var statusColor: Color {
         switch game.status {
         case "live":   return .pfCompleted
@@ -270,9 +281,10 @@ struct OperatorMapView: View {
                     .font(.subheadline)
                     .fontWeight(.bold)
                     .foregroundStyle(.pfText)
-                Text("Stage 2 · \(teams.count) teams active")
+                Text(headerSubtitle)
                     .font(.caption2)
-                    .foregroundStyle(.pfTextMuted)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.secondary)
             }
             Spacer()
             Text(game.status.uppercased())
