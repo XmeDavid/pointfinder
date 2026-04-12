@@ -7,11 +7,13 @@ import com.prayer.pointfinder.repository.OrganizationRepository;
 import com.prayer.pointfinder.repository.UserSubscriptionRepository;
 import com.prayer.pointfinder.security.SecurityUtils;
 import com.prayer.pointfinder.service.GameAccessService;
+import com.prayer.pointfinder.service.StorageMigrationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -23,6 +25,7 @@ public class AdminBillingController {
     private final UserSubscriptionRepository userSubRepository;
     private final OrganizationRepository orgRepository;
     private final GameAccessService gameAccessService;
+    private final StorageMigrationService storageMigrationService;
 
     @PatchMapping("/users/{userId}/subscription")
     public ResponseEntity<Void> overrideUserSubscription(
@@ -65,5 +68,13 @@ public class AdminBillingController {
         log.info("[ADMIN] operation=overrideOrgSub orgId={} admin={}",
             orgId, SecurityUtils.getCurrentUser().getId());
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/migrate-storage")
+    public ResponseEntity<Map<String, Object>> migrateStorage() {
+        gameAccessService.ensureCurrentUserIsAdmin();
+        log.info("[ADMIN] operation=migrateStorage admin={}", SecurityUtils.getCurrentUser().getId());
+        Map<String, Object> result = storageMigrationService.migrateLocalToS3();
+        return ResponseEntity.ok(result);
     }
 }
