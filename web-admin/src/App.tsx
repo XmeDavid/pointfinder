@@ -77,6 +77,18 @@ const LiveEntryPage = lazy(() =>
   })),
 );
 
+const OrgMembersPage = lazy(() =>
+  import("@/features/org/OrgMembersPage").then((m) => ({
+    default: m.OrgMembersPage,
+  })),
+);
+
+const BillingPage = lazy(() =>
+  import("@/features/billing/BillingPage").then((m) => ({
+    default: m.BillingPage,
+  })),
+);
+
 // ---------------------------------------------------------------------------
 // Spinner shown while lazy chunks load
 // ---------------------------------------------------------------------------
@@ -244,6 +256,30 @@ const router = createBrowserRouter([
             <GameWorkspace />
           </Suspense>
         </GameLayout>
+      </AuthGuard>
+    ),
+  },
+  {
+    path: "/org/members",
+    element: (
+      <AuthGuard>
+        <AppLayout>
+          <Suspense fallback={<PageSpinner />}>
+            <OrgMembersPage />
+          </Suspense>
+        </AppLayout>
+      </AuthGuard>
+    ),
+  },
+  {
+    path: "/billing",
+    element: (
+      <AuthGuard>
+        <AppLayout>
+          <Suspense fallback={<PageSpinner />}>
+            <BillingPage />
+          </Suspense>
+        </AppLayout>
       </AuthGuard>
     ),
   },
