@@ -522,6 +522,28 @@ actor APIClient {
         try await deleteVoid("/api/games/\(gameId)/tags/\(tagId)", token: token)
     }
 
+    // MARK: - Operator Stage CRUD
+
+    func getStages(gameId: UUID, token: String) async throws -> [Stage] {
+        try await get("/api/games/\(gameId.uuidString.lowercased())/stages", token: token)
+    }
+
+    func createStage(gameId: UUID, request: CreateStageRequest, token: String) async throws -> Stage {
+        try await post("/api/games/\(gameId.uuidString.lowercased())/stages", body: request, token: token)
+    }
+
+    func updateStage(gameId: UUID, stageId: UUID, request: UpdateStageRequest, token: String) async throws -> Stage {
+        try await put("/api/games/\(gameId.uuidString.lowercased())/stages/\(stageId.uuidString.lowercased())", body: request, token: token)
+    }
+
+    func deleteStage(gameId: UUID, stageId: UUID, token: String) async throws {
+        try await deleteVoid("/api/games/\(gameId.uuidString.lowercased())/stages/\(stageId.uuidString.lowercased())", token: token)
+    }
+
+    func reorderStages(gameId: UUID, request: ReorderStagesRequest, token: String) async throws {
+        try await patchVoid("/api/games/\(gameId.uuidString.lowercased())/stages/reorder", body: request, token: token)
+    }
+
     // MARK: - HTTP Methods
 
     private func get<T: Decodable>(_ path: String, token: String? = nil) async throws -> T {
@@ -567,6 +589,13 @@ actor APIClient {
         request.httpBody = try encoder.encode(body)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         return try await execute(request)
+    }
+
+    private func patchVoid<B: Encodable>(_ path: String, body: B, token: String? = nil) async throws {
+        var request = try buildRequest(path: path, method: "PATCH", token: token)
+        request.httpBody = try encoder.encode(body)
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        try await executeVoid(request)
     }
 
     private func deleteVoid(_ path: String, token: String? = nil) async throws {
