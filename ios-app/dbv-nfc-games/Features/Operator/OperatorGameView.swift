@@ -7,15 +7,17 @@ struct OperatorGameView: View {
 
     let game: Game
     let onBack: () -> Void
+    var selectedOrg: OrgWorkspace? = nil
 
     @State private var bases: [Base] = []
     @State private var isLoading = true
     @State private var selectedTab = 0
     @State private var gameStatus: String
 
-    init(game: Game, onBack: @escaping () -> Void) {
+    init(game: Game, onBack: @escaping () -> Void, selectedOrg: OrgWorkspace? = nil) {
         self.game = game
         self.onBack = onBack
+        self.selectedOrg = selectedOrg
         self._gameStatus = State(initialValue: game.status)
     }
 
@@ -71,7 +73,7 @@ struct OperatorGameView: View {
                     }
 
                     // Tab 3: More
-                    OperatorMoreView(game: game, onBack: onBack)
+                    OperatorMoreView(game: game, onBack: onBack, selectedOrg: selectedOrg)
                         .tabItem {
                             Label(locale.t("operator.more"), systemImage: "ellipsis")
                         }
