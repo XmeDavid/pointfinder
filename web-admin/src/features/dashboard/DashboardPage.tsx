@@ -7,6 +7,7 @@ import { CreateGameDialog } from './CreateGameDialog'
 import { ImportGameDialog } from './ImportGameDialog'
 import { Spinner } from '@/components/feedback/Spinner'
 import { EmptyState } from '@/components/feedback/EmptyState'
+import { useWorkspaceContext } from '@/stores/workspaceContext'
 
 export function DashboardPage() {
   const navigate = useNavigate()
@@ -14,13 +15,26 @@ export function DashboardPage() {
   const [search, setSearch] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
+  const { active } = useWorkspaceContext()
 
   const filtered = useMemo(() => {
     if (!games) return []
-    if (!search.trim()) return games
-    const q = search.toLowerCase()
-    return games.filter((g) => g.name.toLowerCase().includes(q))
-  }, [games, search])
+    let result = games
+
+    // Filter by workspace
+    if (active.type === 'personal') {
+      result = result.filter((g) => !g.orgId)
+    } else {
+      result = result.filter((g) => g.orgId === active.orgId)
+    }
+
+    // Then apply search filter
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      result = result.filter((g) => g.name.toLowerCase().includes(q))
+    }
+    return result
+  }, [games, search, active])
 
   return (
     <div className="h-screen bg-background p-8 overflow-auto">

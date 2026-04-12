@@ -23,6 +23,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 
 const THEME_KEY = "pointfinder-theme";
 
@@ -155,15 +156,8 @@ export function IconRail({ showModes }: IconRailProps) {
         className="hidden md:flex w-12 bg-card border-r border-border flex-col items-center py-3 gap-2 shrink-0 z-40"
         data-testid="icon-rail-desktop"
       >
-        {/* PF Logo */}
-        <button
-          onClick={() => navigate("/dashboard")}
-          className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs shrink-0 hover:opacity-90 transition-opacity cursor-pointer"
-          aria-label="Dashboard"
-          data-testid="pf-logo"
-        >
-          PF
-        </button>
+        {/* Workspace Switcher (includes personal + org buttons + create) */}
+        <WorkspaceSwitcher />
 
         {/* Separator */}
         <div className="w-6 h-px bg-border my-1" />

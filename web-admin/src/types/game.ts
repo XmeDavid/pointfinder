@@ -24,4 +24,6 @@ export interface Game {
   tileSource: string
   unlockTrigger: string
   tags?: import('./tag').GameTag[]
+  orgId?: string | null
+  orgName?: string | null
 }
