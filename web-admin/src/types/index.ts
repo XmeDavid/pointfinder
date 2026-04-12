@@ -45,6 +45,8 @@ export interface Game {
    * today, so this is filled by a separate query in useGameTagsMap.
    */
   tags?: Tag[];
+  orgId?: string | null;
+  orgName?: string | null;
 }
 
 export interface Base {
