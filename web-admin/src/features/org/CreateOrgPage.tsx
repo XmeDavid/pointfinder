@@ -10,7 +10,6 @@ export function CreateOrgPage() {
   const navigate = useNavigate()
   const [orgName, setOrgName] = useState('')
   const [plan, setPlan] = useState<'org-base' | 'org-high'>('org-base')
-  const [cycle, setCycle] = useState<'monthly' | 'annual'>('monthly')
 
   const checkout = useMutation({
     mutationFn: () =>
@@ -18,7 +17,7 @@ export function CreateOrgPage() {
         .post<CheckoutResponse>('/api/billing/org-checkout', {
           orgName: orgName.trim(),
           plan,
-          cycle,
+          cycle: 'annual',
         })
         .then((r) => r.data),
     onSuccess: (data) => {
@@ -71,10 +70,10 @@ export function CreateOrgPage() {
                 plan === 'org-base' ? 'border-primary bg-primary/5' : 'border-border'
               }`}
             >
-              <p className="font-semibold text-foreground">Base</p>
-              <p className="text-sm text-muted-foreground mt-1">10 members, 10 live games</p>
+              <p className="font-semibold text-foreground">{t('billing.clubPlan', 'Club')}</p>
+              <p className="text-sm text-muted-foreground mt-1">{t('billing.clubDesc', '10 members, 10 live games')}</p>
               <p className="text-lg font-bold text-foreground mt-2">
-                €10<span className="text-sm font-normal text-muted-foreground">/mo</span>
+                €100<span className="text-sm font-normal text-muted-foreground">/{t('billing.year', 'yr')}</span>
               </p>
             </button>
             <button
@@ -83,37 +82,13 @@ export function CreateOrgPage() {
                 plan === 'org-high' ? 'border-primary bg-primary/5' : 'border-border'
               }`}
             >
-              <p className="font-semibold text-foreground">High</p>
-              <p className="text-sm text-muted-foreground mt-1">25 members, unlimited games</p>
+              <p className="font-semibold text-foreground">{t('billing.institutionPlan', 'Institution')}</p>
+              <p className="text-sm text-muted-foreground mt-1">{t('billing.institutionDesc', '25 members, unlimited games')}</p>
               <p className="text-lg font-bold text-foreground mt-2">
-                €20<span className="text-sm font-normal text-muted-foreground">/mo</span>
+                €200<span className="text-sm font-normal text-muted-foreground">/{t('billing.year', 'yr')}</span>
               </p>
             </button>
           </div>
-        </div>
-
-        {/* Cycle toggle */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => setCycle('monthly')}
-            className={`px-4 py-1.5 rounded-lg text-sm transition-colors ${
-              cycle === 'monthly'
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {t('billing.monthly', 'Monthly')}
-          </button>
-          <button
-            onClick={() => setCycle('annual')}
-            className={`px-4 py-1.5 rounded-lg text-sm transition-colors ${
-              cycle === 'annual'
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {t('billing.annual', 'Annual')}
-          </button>
         </div>
 
         {/* Error */}

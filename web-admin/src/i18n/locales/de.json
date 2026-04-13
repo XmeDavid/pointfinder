@@ -915,14 +915,17 @@
     "manageSub": "Abonnement verwalten",
     "upgrade": "Upgraden",
     "subscribe": "Abonnieren",
-    "baseDesc": "10 Mitglieder, 10 Live-Spiele",
-    "highDesc": "25 Mitglieder, unbegrenzte Live-Spiele",
+    "clubPlan": "Verein",
+    "clubDesc": "10 Mitglieder, 10 gleichzeitige Spiele",
+    "institutionPlan": "Institution",
+    "institutionDesc": "25 Mitglieder, unbegrenzte Spiele",
     "usage": "Nutzung",
     "activeGames": "Aktive Spiele",
     "members": "Mitglieder",
     "liveGames": "Live-Spiele",
     "selectPlan": "Plan auswählen",
     "monthly": "Monatlich",
-    "annual": "Jährlich"
+    "annual": "Jährlich",
+    "year": "Jahr"
   }
 }

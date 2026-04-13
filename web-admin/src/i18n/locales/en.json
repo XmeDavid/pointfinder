@@ -915,14 +915,17 @@
     "manageSub": "Manage subscription",
     "upgrade": "Upgrade",
     "subscribe": "Subscribe",
-    "baseDesc": "10 members, 10 live games",
-    "highDesc": "25 members, unlimited live games",
+    "clubPlan": "Club",
+    "clubDesc": "10 members, 10 live games",
+    "institutionPlan": "Institution",
+    "institutionDesc": "25 members, unlimited games",
     "usage": "Usage",
     "activeGames": "Active games",
     "members": "Members",
     "liveGames": "Live games",
     "selectPlan": "Select a plan",
     "monthly": "Monthly",
-    "annual": "Annual"
+    "annual": "Annual",
+    "year": "yr"
   }
 }

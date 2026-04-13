@@ -78,21 +78,21 @@ export function BillingPage() {
             <>
               <div className="rounded-xl border border-border p-6 flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-foreground">Base</p>
+                  <p className="font-medium text-foreground">{t('billing.clubPlan', 'Club')}</p>
                   <p className="text-sm text-muted-foreground">
-                    {t('billing.baseDesc', '10 members, 10 live games')}
+                    {t('billing.clubDesc', '10 members, 10 live games')}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="text-lg font-bold text-foreground">
-                    €10
-                    <span className="text-sm font-normal text-muted-foreground">/mo</span>
+                    €100
+                    <span className="text-sm font-normal text-muted-foreground">/{t('billing.year', 'yr')}</span>
                   </p>
                   <button
                     onClick={() =>
                       checkout.mutate({
                         plan: 'org-base',
-                        cycle: 'monthly',
+                        cycle: 'annual',
                         orgId: active.orgId,
                       })
                     }
@@ -105,21 +105,21 @@ export function BillingPage() {
               </div>
               <div className="rounded-xl border border-border p-6 flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-foreground">High</p>
+                  <p className="font-medium text-foreground">{t('billing.institutionPlan', 'Institution')}</p>
                   <p className="text-sm text-muted-foreground">
-                    {t('billing.highDesc', '25 members, unlimited live games')}
+                    {t('billing.institutionDesc', '25 members, unlimited games')}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="text-lg font-bold text-foreground">
-                    €20
-                    <span className="text-sm font-normal text-muted-foreground">/mo</span>
+                    €200
+                    <span className="text-sm font-normal text-muted-foreground">/{t('billing.year', 'yr')}</span>
                   </p>
                   <button
                     onClick={() =>
                       checkout.mutate({
                         plan: 'org-high',
-                        cycle: 'monthly',
+                        cycle: 'annual',
                         orgId: active.orgId,
                       })
                     }

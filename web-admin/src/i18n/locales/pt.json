@@ -915,14 +915,17 @@
     "manageSub": "Gerir subscrição",
     "upgrade": "Melhorar plano",
     "subscribe": "Subscrever",
-    "baseDesc": "10 membros, 10 jogos em direto",
-    "highDesc": "25 membros, jogos em direto ilimitados",
+    "clubPlan": "Clube",
+    "clubDesc": "10 membros, 10 jogos em simultâneo",
+    "institutionPlan": "Instituição",
+    "institutionDesc": "25 membros, jogos ilimitados",
     "usage": "Utilização",
     "activeGames": "Jogos ativos",
     "members": "Membros",
     "liveGames": "Jogos em direto",
     "selectPlan": "Seleciona um plano",
     "monthly": "Mensal",
-    "annual": "Anual"
+    "annual": "Anual",
+    "year": "ano"
   }
 }
