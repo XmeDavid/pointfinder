@@ -598,6 +598,29 @@ enum Translations {
         "tags.atCapError": "Maximum %d tags per game",
         "tags.inUseError": "This tag is in use and cannot be deleted",
         "common.delete": "Delete",
+
+        // Common (additional)
+        "common.allTypes": "All Types",
+        "common.clearFilters": "Clear Filters",
+        "common.close": "Close",
+        "common.pullToRefresh": "Pull to refresh",
+
+        // Settings (additional)
+        "settings.checkedIn": "Checked In",
+
+        // Activity Log
+        "activityLog.title": "Activity Log",
+        "activityLog.noActivity": "No activity yet",
+        "activityLog.noMatchingEvents": "No events match your filters",
+        "activityLog.loadError": "Couldn't load activity. Pull to refresh.",
+        "activityLog.loadMore": "Load More",
+        "activityLog.eventType.check_in": "Check-in",
+        "activityLog.eventType.submission": "Submission",
+        "activityLog.eventType.approval": "Approval",
+        "activityLog.eventType.rejection": "Rejection",
+        "activityLog.eventType.operator_override": "Operator Override",
+        "activityLog.eventType.team_join": "Team Join",
+        "activityLog.eventType.team_switch": "Team Switch",
     ]
 
     // MARK: - Portuguese
@@ -1176,6 +1199,29 @@ enum Translations {
         "tags.atCapError": "Máximo de %d etiquetas por jogo",
         "tags.inUseError": "Esta etiqueta está em uso e não pode ser eliminada",
         "common.delete": "Eliminar",
+
+        // Common (additional)
+        "common.allTypes": "Todos os Tipos",
+        "common.clearFilters": "Limpar Filtros",
+        "common.close": "Fechar",
+        "common.pullToRefresh": "Puxar para atualizar",
+
+        // Settings (additional)
+        "settings.checkedIn": "Com check-in",
+
+        // Activity Log
+        "activityLog.title": "Registo de Atividade",
+        "activityLog.noActivity": "Sem atividade ainda",
+        "activityLog.noMatchingEvents": "Nenhum evento corresponde aos filtros",
+        "activityLog.loadError": "Não foi possível carregar a atividade. Puxa para atualizar.",
+        "activityLog.loadMore": "Carregar Mais",
+        "activityLog.eventType.check_in": "Check-in",
+        "activityLog.eventType.submission": "Submissão",
+        "activityLog.eventType.approval": "Aprovação",
+        "activityLog.eventType.rejection": "Rejeição",
+        "activityLog.eventType.operator_override": "Substituição do Operador",
+        "activityLog.eventType.team_join": "Entrada de Equipa",
+        "activityLog.eventType.team_switch": "Mudança de Equipa",
     ]
 
     // MARK: - German
@@ -1754,6 +1800,29 @@ enum Translations {
         "tags.atCapError": "Maximal %d Tags pro Spiel",
         "tags.inUseError": "Dieser Tag wird verwendet und kann nicht gelöscht werden",
         "common.delete": "Löschen",
+
+        // Common (additional)
+        "common.allTypes": "Alle Typen",
+        "common.clearFilters": "Filter löschen",
+        "common.close": "Schließen",
+        "common.pullToRefresh": "Zum Aktualisieren ziehen",
+
+        // Settings (additional)
+        "settings.checkedIn": "Eingecheckt",
+
+        // Activity Log
+        "activityLog.title": "Aktivitätsprotokoll",
+        "activityLog.noActivity": "Noch keine Aktivität",
+        "activityLog.noMatchingEvents": "Keine Ereignisse entsprechen den Filtern",
+        "activityLog.loadError": "Aktivität konnte nicht geladen werden. Zum Aktualisieren ziehen.",
+        "activityLog.loadMore": "Mehr laden",
+        "activityLog.eventType.check_in": "Check-in",
+        "activityLog.eventType.submission": "Einreichung",
+        "activityLog.eventType.approval": "Freigabe",
+        "activityLog.eventType.rejection": "Ablehnung",
+        "activityLog.eventType.operator_override": "Operator-Eingriff",
+        "activityLog.eventType.team_join": "Team-Beitritt",
+        "activityLog.eventType.team_switch": "Team-Wechsel",
     ]
 }
 
