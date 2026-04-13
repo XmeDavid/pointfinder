@@ -123,7 +123,12 @@ function CompassRose({ darkMode }: { darkMode: boolean }) {
 
       {/* Glass circle wrapper (light mode only) */}
       {!darkMode && (
-        <div className="absolute inset-[-12%] rounded-full bg-white/30 backdrop-blur-md border border-white/30 shadow-[0_20px_60px_-20px_rgba(21,111,104,0.15)]" />
+        <div
+          className="absolute inset-[-12%] rounded-full backdrop-blur-lg border border-white/50 shadow-[0_8px_32px_rgba(21,111,104,0.12),0_20px_60px_-20px_rgba(21,111,104,0.18)]"
+          style={{
+            background: "linear-gradient(145deg, rgba(255,255,255,0.40), rgba(255,255,255,0.18))",
+          }}
+        />
       )}
 
       <svg
@@ -187,9 +192,9 @@ function CompassRose({ darkMode }: { darkMode: boolean }) {
 function SectionDivider() {
   return (
     <div className="flex items-center justify-center py-10 md:py-14">
-      <div className="h-px w-20 bg-gradient-to-r from-transparent dark:to-green-500/20 to-teal-600/20" />
-      <div className="mx-3 h-2.5 w-2.5 rounded-full dark:border-green-500/25 dark:bg-green-500/10 border border-teal-600/25 bg-teal-600/10" />
-      <div className="h-px w-20 bg-gradient-to-l from-transparent dark:to-green-500/20 to-teal-600/20" />
+      <div className="h-px w-20 bg-gradient-to-r from-transparent dark:to-green-500/20 to-[rgba(21,111,104,0.12)]" />
+      <div className="mx-3 h-2.5 w-2.5 rounded-full dark:border-green-500/25 dark:bg-green-500/10 border border-[rgba(21,111,104,0.15)] bg-[rgba(21,111,104,0.06)]" />
+      <div className="h-px w-20 bg-gradient-to-l from-transparent dark:to-green-500/20 to-[rgba(21,111,104,0.12)]" />
     </div>
   );
 }
@@ -311,23 +316,23 @@ function Hero({ darkMode }: { darkMode: boolean }) {
         />
       ) : (
         <>
-          {/* Warm beige radial accents */}
+          {/* Layered radial color accents — give the glass blur something to work with */}
           <div
             className="pointer-events-none absolute inset-0"
             style={{
               backgroundImage: [
-                "radial-gradient(ellipse at 15% 20%, rgba(21,111,104,0.07) 0%, transparent 45%)",
-                "radial-gradient(ellipse at 85% 75%, rgba(180,140,80,0.06) 0%, transparent 40%)",
-                "radial-gradient(circle at 50% 42%, rgba(21,111,104,0.05) 0%, transparent 55%)",
+                "radial-gradient(circle at 40% 30%, rgba(21, 111, 104, 0.12), transparent 40%)",
+                "radial-gradient(circle at 70% 60%, rgba(211, 131, 61, 0.08), transparent 35%)",
+                "radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.3), transparent 50%)",
               ].join(","),
             }}
           />
-          {/* Subtle dot grid texture */}
+          {/* Fine grid overlay */}
           <div
-            className="pointer-events-none absolute inset-0 opacity-[0.35]"
+            className="pointer-events-none absolute inset-0"
             style={{
-              backgroundImage: "radial-gradient(circle, rgba(21,111,104,0.25) 1px, transparent 1px)",
-              backgroundSize: "32px 32px",
+              backgroundImage: "linear-gradient(rgba(40,56,48,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(40,56,48,0.04) 1px, transparent 1px)",
+              backgroundSize: "40px 40px",
             }}
           />
         </>
@@ -399,7 +404,9 @@ function Hero({ darkMode }: { darkMode: boolean }) {
 function StoreBadge({ icon, label, availableOn, href, darkMode }: { icon: React.ReactNode; label: string; availableOn: string; href?: string; darkMode: boolean }) {
   const className = darkMode
     ? "flex items-center gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.03] px-5 py-2.5 text-sm text-white/35 transition-colors duration-200 hover:border-green-500/20 hover:bg-white/[0.05]"
-    : "flex items-center gap-2.5 rounded-xl border border-[rgba(21,111,104,0.15)] bg-white/70 backdrop-blur-sm px-5 py-2.5 text-sm text-[#1e2e28]/50 transition-colors duration-200 hover:border-teal-600/25 hover:bg-white/85 shadow-[0_2px_12px_rgba(21,111,104,0.08)]";
+    : "flex items-center gap-2.5 rounded-xl border border-[rgba(21,111,104,0.15)] backdrop-blur-sm px-5 py-2.5 text-sm text-[#1e2e28]/50 transition-colors duration-200 hover:border-teal-600/25 shadow-[0_2px_12px_rgba(21,111,104,0.08)]";
+
+  const lightStyle = darkMode ? undefined : { background: "linear-gradient(180deg, rgba(255, 252, 247, 0.90), rgba(255, 248, 240, 0.75))" };
 
   const content = (
     <>
@@ -412,9 +419,9 @@ function StoreBadge({ icon, label, availableOn, href, darkMode }: { icon: React.
   );
 
   if (href) {
-    return <a href={href} target="_blank" rel="noopener noreferrer" className={className}>{content}</a>;
+    return <a href={href} target="_blank" rel="noopener noreferrer" className={className} style={lightStyle}>{content}</a>;
   }
-  return <div className={className}>{content}</div>;
+  return <div className={className} style={lightStyle}>{content}</div>;
 }
 
 function AppleLogo() {
@@ -472,11 +479,16 @@ function HowItWorks({ darkMode }: { darkMode: boolean }) {
             >
               {/* Icon circle */}
               <div className="relative z-10 mb-6">
-                <div className={`flex h-[72px] w-[72px] items-center justify-center rounded-full ${
-                  darkMode
-                    ? "border border-green-500/15 bg-green-500/[0.04]"
-                    : "border border-teal-600/15 bg-white/70 backdrop-blur-sm shadow-[0_8px_24px_rgba(21,111,104,0.1)]"
-                }`}>
+                <div
+                  className={`flex h-[72px] w-[72px] items-center justify-center rounded-full ${
+                    darkMode
+                      ? "border border-green-500/15 bg-green-500/[0.04]"
+                      : "border border-[rgba(40,56,48,0.08)] backdrop-blur-xl shadow-[0_8px_24px_rgba(21,111,104,0.1)]"
+                  }`}
+                  style={darkMode ? undefined : {
+                    background: "linear-gradient(180deg, rgba(255, 252, 247, 0.88), rgba(255, 248, 240, 0.72))",
+                  }}
+                >
                   <step.icon className={`h-7 w-7 ${darkMode ? "text-green-500/60" : "text-teal-700/60"}`} aria-hidden="true" />
                 </div>
                 <span className={`absolute -right-1.5 -top-1.5 rounded-full border px-2 py-0.5 text-[10px] font-bold ${
@@ -537,9 +549,12 @@ function Features({ darkMode }: { darkMode: boolean }) {
               className={`scroll-reveal group relative overflow-hidden rounded-2xl p-6 transition-all duration-300 ${f.span} ${f.large ? "flex flex-col justify-between" : ""} ${
                 darkMode
                   ? "border border-white/[0.06] bg-white/[0.015] hover:border-green-500/[0.14] hover:bg-green-500/[0.015]"
-                  : "border border-white/65 bg-white/70 backdrop-blur-xl hover:border-teal-600/20 hover:bg-white/85 shadow-[0_20px_50px_-20px_rgba(29,46,38,0.1)]"
+                  : "border border-[rgba(40,56,48,0.08)] backdrop-blur-xl hover:border-teal-600/20 shadow-[0_20px_50px_-20px_rgba(29,46,38,0.12)]"
               }`}
-              style={{ transitionDelay: `${i * 80}ms` }}
+              style={darkMode ? { transitionDelay: `${i * 80}ms` } : {
+                transitionDelay: `${i * 80}ms`,
+                background: "linear-gradient(180deg, rgba(255, 252, 247, 0.88), rgba(255, 248, 240, 0.72))",
+              }}
             >
               {/* Icon */}
               <div className={`mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl border transition-colors duration-300 ${
@@ -811,7 +826,7 @@ function Pricing({ darkMode }: { darkMode: boolean }) {
 
   const cardBase = darkMode
     ? "flex flex-col rounded-2xl border border-white/[0.07] bg-white/[0.03] p-7"
-    : "flex flex-col rounded-2xl border border-white/65 bg-white/70 backdrop-blur-xl p-7 shadow-[0_20px_50px_-20px_rgba(29,46,38,0.12)]";
+    : "flex flex-col rounded-2xl border border-[rgba(40,56,48,0.08)] backdrop-blur-xl p-7 shadow-[0_20px_50px_-20px_rgba(29,46,38,0.12)]";
 
   const featureText = darkMode ? "text-white/50" : "text-[#1e2e28]/55";
   const priceText = darkMode ? "text-white" : "text-[#1e2e28]";
@@ -840,7 +855,10 @@ function Pricing({ darkMode }: { darkMode: boolean }) {
         {/* Cards */}
         <div className="scroll-reveal grid grid-cols-1 gap-5 md:grid-cols-3">
           {/* Free */}
-          <div className={cardBase}>
+          <div
+            className={cardBase}
+            style={darkMode ? undefined : { background: "linear-gradient(180deg, rgba(255, 252, 247, 0.88), rgba(255, 248, 240, 0.72))" }}
+          >
             <div className="mb-6">
               <p className={`mb-1 text-sm font-medium uppercase tracking-widest ${labelText}`}>{t("landing.pricing.free")}</p>
               <p className={`mb-3 text-xs ${descText}`}>{t("landing.pricing.freeDesc")}</p>
@@ -860,11 +878,14 @@ function Pricing({ darkMode }: { darkMode: boolean }) {
           </div>
 
           {/* Pro – highlighted */}
-          <div className={`relative flex flex-col rounded-2xl p-7 ${
-            darkMode
-              ? "border border-green-500/30 bg-white/[0.03] shadow-[0_0_40px_rgba(34,197,94,0.04)]"
-              : "border border-teal-600/30 bg-white/80 backdrop-blur-xl shadow-[0_28px_70px_-38px_rgba(21,111,104,0.3)]"
-          }`}>
+          <div
+            className={`relative flex flex-col rounded-2xl p-7 ${
+              darkMode
+                ? "border border-green-500/30 bg-white/[0.03] shadow-[0_0_40px_rgba(34,197,94,0.04)]"
+                : "border border-teal-600/30 backdrop-blur-xl shadow-[0_28px_70px_-38px_rgba(21,111,104,0.3)]"
+            }`}
+            style={darkMode ? undefined : { background: "linear-gradient(180deg, rgba(255, 252, 247, 0.92), rgba(255, 248, 240, 0.80))" }}
+          >
             {/* Recommended badge */}
             <span className={`absolute -top-3 left-1/2 -translate-x-1/2 rounded-full border px-3 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
               darkMode
@@ -903,7 +924,10 @@ function Pricing({ darkMode }: { darkMode: boolean }) {
           </div>
 
           {/* Organizations */}
-          <div className={cardBase}>
+          <div
+            className={cardBase}
+            style={darkMode ? undefined : { background: "linear-gradient(180deg, rgba(255, 252, 247, 0.88), rgba(255, 248, 240, 0.72))" }}
+          >
             <div className="mb-6">
               <p className={`mb-1 text-sm font-medium uppercase tracking-widest ${labelText}`}>{t("landing.pricing.org")}</p>
               <p className={`mb-3 text-xs ${descText}`}>{t("landing.pricing.orgDesc")}</p>
@@ -1005,7 +1029,13 @@ export function LandingPage() {
       ref={containerRef}
       className={`min-h-screen overflow-x-hidden ${darkMode ? "bg-[#060b06] text-white" : "text-[#1e2e28]"}`}
       style={darkMode ? undefined : {
-        background: "linear-gradient(160deg, #f4efe6 0%, #f1ebe1 60%, #eee6d8 100%)",
+        backgroundImage: [
+          "radial-gradient(circle at 12% 12%, rgba(21, 111, 104, 0.13), transparent 28%)",
+          "radial-gradient(circle at 88% 8%, rgba(211, 131, 61, 0.12), transparent 24%)",
+          "radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.2), transparent 60%)",
+          "repeating-linear-gradient(115deg, rgba(21, 111, 104, 0.025) 0, rgba(21, 111, 104, 0.025) 2px, transparent 2px, transparent 58px)",
+          "linear-gradient(180deg, #f8f4ed 0%, #f1ebe1 50%, #eee6d8 100%)",
+        ].join(","),
       }}
     >
       <Navbar darkMode={darkMode} onToggleTheme={() => setDarkMode(d => !d)} />
