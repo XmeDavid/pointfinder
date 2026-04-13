@@ -110,6 +110,56 @@ public class EmailService {
     }
 
     @Async
+    public void sendOrgInvite(String toEmail, String orgName, String inviterName, String requestHost) {
+        String frontendBaseUrl = resolveFrontendBaseUrl(requestHost);
+        String subject = "You've been invited to join " + escapeHtml(orgName) + " on " + BRAND_NAME;
+        String link = frontendBaseUrl + "/dashboard";
+        String safeInviterName = escapeHtml(inviterName);
+        String safeOrgName = escapeHtml(orgName);
+        String html = buildEmailTemplate(
+                "Organization invitation",
+                "You're invited to join " + safeOrgName,
+                """
+                <p style="margin: 0 0 14px; color: #404040; font-size: 16px; line-height: 1.6;">
+                    <strong>%s</strong> has invited you to join <strong>%s</strong> on <strong>%s</strong>.
+                </p>
+                <p style="margin: 0 0 14px; color: #404040; font-size: 16px; line-height: 1.6;">
+                    Log in to accept the invitation from your dashboard.
+                </p>
+                """.formatted(safeInviterName, safeOrgName, BRAND_NAME),
+                "View Invitation",
+                link
+        );
+
+        sendHtmlEmail(toEmail, subject, html);
+    }
+
+    @Async
+    public void sendOrgRegistrationInvite(String toEmail, String token, String orgName, String inviterName, String requestHost) {
+        String frontendBaseUrl = resolveFrontendBaseUrl(requestHost);
+        String subject = "You've been invited to join " + escapeHtml(orgName) + " on " + BRAND_NAME;
+        String registrationLink = frontendBaseUrl + "/register/" + token + "?org=true";
+        String safeInviterName = escapeHtml(inviterName);
+        String safeOrgName = escapeHtml(orgName);
+        String html = buildEmailTemplate(
+                "Organization invitation",
+                "You're invited to join " + safeOrgName,
+                """
+                <p style="margin: 0 0 14px; color: #404040; font-size: 16px; line-height: 1.6;">
+                    <strong>%s</strong> has invited you to join <strong>%s</strong> on <strong>%s</strong>.
+                </p>
+                <p style="margin: 0 0 14px; color: #404040; font-size: 16px; line-height: 1.6;">
+                    Create your account to get started.
+                </p>
+                """.formatted(safeInviterName, safeOrgName, BRAND_NAME),
+                "Create Account",
+                registrationLink
+        );
+
+        sendHtmlEmail(toEmail, subject, html);
+    }
+
+    @Async
     public void sendGameInvite(String toEmail, String gameName, String inviterName, String requestHost) {
         String frontendBaseUrl = resolveFrontendBaseUrl(requestHost);
         String subject = "You've been invited to operate a game on " + BRAND_NAME;

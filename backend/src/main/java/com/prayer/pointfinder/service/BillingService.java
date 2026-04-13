@@ -129,6 +129,47 @@ public class BillingService {
             .build();
     }
 
+    @Transactional
+    public CheckoutResponse createOrgCheckoutSession(String orgName, String plan, String cycle) {
+        User currentUser = SecurityUtils.getCurrentUser();
+        String priceId = resolvePriceId(plan, cycle);
+
+        if (priceId == null || priceId.isBlank()) {
+            throw new BadRequestException("Stripe price not configured for plan: " + plan + "/" + cycle);
+        }
+
+        // Don't create the org yet — store info in Stripe metadata
+        String clientReferenceId = "new-org:" + currentUser.getId();
+
+        try {
+            SessionCreateParams.Builder builder = SessionCreateParams.builder()
+                .setMode(SessionCreateParams.Mode.SUBSCRIPTION)
+                .setSuccessUrl(stripeConfig.getSuccessUrl() + "?session_id={CHECKOUT_SESSION_ID}&new_org=true")
+                .setCancelUrl(stripeConfig.getCancelUrl())
+                .setClientReferenceId(clientReferenceId)
+                .setCustomerEmail(currentUser.getEmail())
+                .putMetadata("org_name", orgName)
+                .putMetadata("org_plan", plan)
+                .addLineItem(SessionCreateParams.LineItem.builder()
+                    .setPrice(priceId)
+                    .setQuantity(1L)
+                    .build());
+
+            Session session = Session.create(builder.build());
+
+            log.info("[BILLING] operation=createOrgCheckout user={} orgName={} plan={} cycle={}",
+                currentUser.getId(), orgName, plan, cycle);
+
+            return CheckoutResponse.builder()
+                .url(session.getUrl())
+                .sessionId(session.getId())
+                .build();
+        } catch (StripeException e) {
+            log.error("[BILLING] Stripe org checkout creation failed: {}", e.getMessage());
+            throw new BadRequestException("Failed to create checkout session: " + e.getMessage());
+        }
+    }
+
     private String resolvePriceId(String plan, String cycle) {
         return switch (plan + "-" + cycle) {
             case "pro-monthly" -> stripeConfig.getPriceProMonthly();

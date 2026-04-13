@@ -1,6 +1,7 @@
 package com.prayer.pointfinder.controller;
 
 import com.prayer.pointfinder.dto.request.CreateCheckoutRequest;
+import com.prayer.pointfinder.dto.request.CreateOrgCheckoutRequest;
 import com.prayer.pointfinder.dto.response.CheckoutResponse;
 import com.prayer.pointfinder.dto.response.UserSubscriptionResponse;
 import com.prayer.pointfinder.service.BillingService;
@@ -21,6 +22,12 @@ public class BillingController {
     @PostMapping("/checkout")
     public ResponseEntity<CheckoutResponse> createCheckout(@Valid @RequestBody CreateCheckoutRequest request) {
         return ResponseEntity.ok(billingService.createCheckoutSession(request));
+    }
+
+    @PostMapping("/org-checkout")
+    public ResponseEntity<CheckoutResponse> createOrgCheckout(@Valid @RequestBody CreateOrgCheckoutRequest request) {
+        return ResponseEntity.ok(billingService.createOrgCheckoutSession(
+            request.getOrgName(), request.getPlan(), request.getCycle()));
     }
 
     @PostMapping("/portal")

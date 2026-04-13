@@ -1,7 +1,9 @@
 package com.prayer.pointfinder.service;
 
 import com.prayer.pointfinder.entity.*;
+import com.prayer.pointfinder.repository.OrgMembershipRepository;
 import com.prayer.pointfinder.repository.OrganizationRepository;
+import com.prayer.pointfinder.repository.UserRepository;
 import com.prayer.pointfinder.repository.UserSubscriptionRepository;
 import com.stripe.model.Invoice;
 import com.stripe.model.Subscription;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -21,6 +24,8 @@ public class StripeWebhookService {
 
     private final UserSubscriptionRepository userSubRepository;
     private final OrganizationRepository orgRepository;
+    private final UserRepository userRepository;
+    private final OrgMembershipRepository membershipRepository;
 
     @Transactional
     public void handleCheckoutCompleted(Session session) {
@@ -62,6 +67,51 @@ public class StripeWebhookService {
             org.setGracePeriodEnd(null);
             orgRepository.save(org);
             log.info("[WEBHOOK] checkout completed orgId={}", orgId);
+
+        } else if (clientRef.startsWith("new-org:")) {
+            UUID userId = UUID.fromString(clientRef.substring(8));
+            User user = userRepository.findById(userId).orElse(null);
+            if (user == null) {
+                log.warn("[WEBHOOK] No user for userId={}", userId);
+                return;
+            }
+
+            Map<String, String> metadata = session.getMetadata();
+            String orgName = metadata != null ? metadata.get("org_name") : "New Organization";
+            if (orgName == null || orgName.isBlank()) orgName = "New Organization";
+            String orgPlan = metadata != null ? metadata.get("org_plan") : "org-base";
+            if (orgPlan == null) orgPlan = "org-base";
+
+            OrgTier tier = orgPlan.contains("high") ? OrgTier.high : OrgTier.base;
+
+            // Generate slug from org name
+            String slug = orgName.toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("^-|-$", "");
+            if (slug.isEmpty()) slug = "org";
+            // Make unique if needed
+            if (orgRepository.existsBySlug(slug)) {
+                slug = slug + "-" + UUID.randomUUID().toString().substring(0, 6);
+            }
+
+            Organization org = Organization.builder()
+                .name(orgName)
+                .slug(slug)
+                .createdBy(user)
+                .stripeCustomerId(customerId)
+                .stripeSubscriptionId(subscriptionId)
+                .subscriptionTier(tier)
+                .subscriptionStatus(SubscriptionStatus.active)
+                .build();
+            org = orgRepository.save(org);
+
+            OrgMembership membership = OrgMembership.builder()
+                .organization(org)
+                .user(user)
+                .permissions(OrgPermission.ALL)
+                .build();
+            membershipRepository.save(membership);
+
+            log.info("[WEBHOOK] new org created orgId={} name={} tier={} userId={}",
+                org.getId(), orgName, tier, userId);
         }
     }
 

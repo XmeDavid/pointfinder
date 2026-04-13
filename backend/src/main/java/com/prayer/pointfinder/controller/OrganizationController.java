@@ -1,13 +1,16 @@
 package com.prayer.pointfinder.controller;
 
+import com.prayer.pointfinder.dto.request.CreateOrgInviteRequest;
 import com.prayer.pointfinder.dto.request.CreateOrgRequest;
-import com.prayer.pointfinder.dto.request.InviteOrgMemberRequest;
 import com.prayer.pointfinder.dto.request.UpdateMemberPermissionsRequest;
 import com.prayer.pointfinder.dto.request.UpdateOrgRequest;
+import com.prayer.pointfinder.dto.response.OrgInviteResponse;
 import com.prayer.pointfinder.dto.response.OrgMemberResponse;
 import com.prayer.pointfinder.dto.response.OrgResponse;
+import com.prayer.pointfinder.service.OrgInviteService;
 import com.prayer.pointfinder.service.OrgMembershipService;
 import com.prayer.pointfinder.service.OrganizationService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,6 +27,7 @@ public class OrganizationController {
 
     private final OrganizationService organizationService;
     private final OrgMembershipService membershipService;
+    private final OrgInviteService orgInviteService;
 
     @PostMapping
     public ResponseEntity<OrgResponse> createOrg(@Valid @RequestBody CreateOrgRequest request) {
@@ -52,12 +56,6 @@ public class OrganizationController {
         return ResponseEntity.ok(membershipService.getMembers(orgId));
     }
 
-    @PostMapping("/{orgId}/members/invite")
-    public ResponseEntity<OrgMemberResponse> inviteMember(@PathVariable UUID orgId,
-                                                           @Valid @RequestBody InviteOrgMemberRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(membershipService.addMember(orgId, request.getEmail()));
-    }
-
     @DeleteMapping("/{orgId}/members/{userId}")
     public ResponseEntity<Void> removeMember(@PathVariable UUID orgId, @PathVariable UUID userId) {
         membershipService.removeMember(orgId, userId);
@@ -69,5 +67,29 @@ public class OrganizationController {
                                                                 @PathVariable UUID userId,
                                                                 @Valid @RequestBody UpdateMemberPermissionsRequest request) {
         return ResponseEntity.ok(membershipService.updatePermissions(orgId, userId, request.getPermissions()));
+    }
+
+    // --- Org invite endpoints ---
+
+    @PostMapping("/{orgId}/invites")
+    public ResponseEntity<OrgInviteResponse> createInvite(
+            @PathVariable UUID orgId,
+            @Valid @RequestBody CreateOrgInviteRequest request,
+            @RequestHeader(value = "X-Forwarded-Host", required = false) String forwardedHost,
+            HttpServletRequest httpRequest) {
+        String requestHost = forwardedHost != null ? forwardedHost : httpRequest.getHeader("Host");
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(orgInviteService.createInvite(orgId, request.getEmail(), requestHost));
+    }
+
+    @GetMapping("/{orgId}/invites")
+    public ResponseEntity<List<OrgInviteResponse>> listInvites(@PathVariable UUID orgId) {
+        return ResponseEntity.ok(orgInviteService.getOrgInvites(orgId));
+    }
+
+    @DeleteMapping("/{orgId}/invites/{inviteId}")
+    public ResponseEntity<Void> revokeInvite(@PathVariable UUID orgId, @PathVariable UUID inviteId) {
+        orgInviteService.revokeInvite(orgId, inviteId);
+        return ResponseEntity.noContent().build();
     }
 }
