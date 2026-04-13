@@ -11,6 +11,8 @@ import { Toaster } from "@/components/ui/toast";
 import { AuthGuard } from "@/lib/auth/AuthGuard";
 import { GuestGuard } from "@/lib/auth/GuestGuard";
 import { IconRail } from "@/components/layout/IconRail";
+import { FrozenBlocker } from "@/components/feedback/FrozenBlocker";
+import { BillingWarningBanner } from "@/components/feedback/BillingWarningBanner";
 
 // ---------------------------------------------------------------------------
 // Lazy-loaded feature pages
@@ -113,9 +115,12 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden">
       <IconRail showModes={false} />
-      <main className="flex-1 relative overflow-hidden pb-14 md:pb-0">
-        {children}
-      </main>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <BillingWarningBanner />
+        <main className="flex-1 relative overflow-hidden pb-14 md:pb-0">
+          <FrozenBlocker>{children}</FrozenBlocker>
+        </main>
+      </div>
     </div>
   );
 }
@@ -124,9 +129,12 @@ function GameLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden">
       <IconRail showModes={true} />
-      <main className="flex-1 relative overflow-hidden pb-14 md:pb-0">
-        {children}
-      </main>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <BillingWarningBanner />
+        <main className="flex-1 relative overflow-hidden pb-14 md:pb-0">
+          <FrozenBlocker>{children}</FrozenBlocker>
+        </main>
+      </div>
     </div>
   );
 }
@@ -307,6 +315,20 @@ const router = createBrowserRouter([
         </AppLayout>
       </AuthGuard>
     ),
+  },
+  {
+    path: "/billing/success",
+    lazy: () =>
+      import("@/features/billing/BillingSuccessPage").then((m) => ({
+        Component: m.BillingSuccessPage,
+      })),
+  },
+  {
+    path: "/billing/cancel",
+    lazy: () =>
+      import("@/features/billing/BillingCancelPage").then((m) => ({
+        Component: m.BillingCancelPage,
+      })),
   },
 
   // ── Catch-all ──────────────────────────────────────────────────────────
