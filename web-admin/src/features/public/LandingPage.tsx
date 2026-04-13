@@ -14,6 +14,8 @@ import {
   ChevronDown,
   Settings,
   Radio,
+  Sun,
+  Moon,
   type LucideIcon,
 } from "lucide-react";
 
@@ -196,27 +198,52 @@ function SectionDivider() {
    Navigation bar
    ================================================================= */
 
-function Navbar() {
+function Navbar({ darkMode, onToggleTheme }: { darkMode: boolean; onToggleTheme: () => void }) {
   const { t } = useTranslation();
 
   return (
     <nav
-      className="fixed top-0 left-0 right-0 z-50 border-b dark:border-white/[0.04] border-[rgba(40,56,48,0.08)] dark:bg-[rgba(6,11,6,0.82)] bg-white/75 backdrop-blur-[14px]"
+      className={`fixed top-0 left-0 right-0 z-50 border-b backdrop-blur-[14px] ${
+        darkMode
+          ? "border-white/[0.04] bg-[rgba(6,11,6,0.82)]"
+          : "border-[rgba(40,56,48,0.08)] bg-white/75"
+      }`}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link to="/" className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg dark:border-green-500/20 dark:bg-green-500/10 border border-teal-600/25 bg-teal-600/10">
-            <Compass className="h-4 w-4 dark:text-green-500 text-teal-700" />
+          <div className={`flex h-8 w-8 items-center justify-center rounded-lg border ${
+            darkMode ? "border-green-500/20 bg-green-500/10" : "border-teal-600/25 bg-teal-600/10"
+          }`}>
+            <Compass className={`h-4 w-4 ${darkMode ? "text-green-500" : "text-teal-700"}`} />
           </div>
-          <span className="font-semibold tracking-tight dark:text-white text-[#1e2e28]">PointFinder</span>
+          <span className={`font-semibold tracking-tight ${darkMode ? "text-white" : "text-[#1e2e28]"}`}>PointFinder</span>
         </Link>
 
-        <Link
-          to="/login"
-          className="text-sm font-medium dark:text-green-400/70 dark:hover:text-green-400 text-teal-700/70 hover:text-teal-700 transition-colors duration-200"
-        >
-          {t("landing.nav.operatorLogin")}
-        </Link>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={onToggleTheme}
+            className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors duration-200 ${
+              darkMode
+                ? "border-white/[0.08] text-white/40 hover:text-white/70"
+                : "border-[rgba(40,56,48,0.1)] text-[#1e2e28]/40 hover:text-[#1e2e28]/70"
+            }`}
+            title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {darkMode ? (
+              <Sun className="h-4 w-4" />
+            ) : (
+              <Moon className="h-4 w-4" />
+            )}
+          </button>
+          <Link
+            to="/login"
+            className={`text-sm font-medium transition-colors duration-200 ${
+              darkMode ? "text-green-400/70 hover:text-green-400" : "text-teal-700/70 hover:text-teal-700"
+            }`}
+          >
+            {t("landing.nav.operatorLogin")}
+          </Link>
+        </div>
       </div>
     </nav>
   );
@@ -983,7 +1010,7 @@ export function LandingPage() {
         background: "linear-gradient(160deg, #f4efe6 0%, #f1ebe1 60%, #eee6d8 100%)",
       }}
     >
-      <Navbar />
+      <Navbar darkMode={darkMode} onToggleTheme={() => setDarkMode(d => !d)} />
       <Hero darkMode={darkMode} />
       <SectionDivider />
       <HowItWorks darkMode={darkMode} />
