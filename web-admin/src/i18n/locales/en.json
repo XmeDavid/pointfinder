@@ -880,6 +880,8 @@
     "invitedBy": "Invited by",
     "revokeInvite": "Revoke",
     "revoke": "Revoke",
+    "invitedToJoin": "You've been invited to join",
+    "acceptInvite": "Accept",
     "perm": {
       "operate": "Operate games",
       "create": "Create games",
@@ -926,6 +928,24 @@
     "selectPlan": "Select a plan",
     "monthly": "Monthly",
     "annual": "Annual",
-    "year": "yr"
+    "year": "yr",
+    "successTitle": "Subscription activated!",
+    "orgCreated": "Organization created!",
+    "successDesc": "Your subscription is now active.",
+    "goToDashboard": "Go to Dashboard",
+    "cancelledTitle": "Checkout cancelled",
+    "cancelledDesc": "No charges were made. You can try again anytime.",
+    "returnToBilling": "Return to billing",
+    "frozenTitle": "Account frozen",
+    "frozenDesc": "Your subscription has expired. Please update your payment to restore access.",
+    "resolveBilling": "Resolve billing",
+    "paymentFailed": "Payment failed. We're retrying automatically.",
+    "gracePeriod": "Your subscription will be frozen soon. Please update your payment method.",
+    "resolve": "Resolve",
+    "upgradeToInstitution": "Upgrade to Institution"
+  },
+  "quota": {
+    "gameLimit": "Game limit reached. Upgrade your plan.",
+    "memberLimit": "Member limit reached. Upgrade your plan."
   }
 }

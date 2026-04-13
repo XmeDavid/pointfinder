@@ -880,6 +880,8 @@
     "invitedBy": "Convidado por",
     "revokeInvite": "Revogar",
     "revoke": "Revogar",
+    "invitedToJoin": "Foste convidado para",
+    "acceptInvite": "Aceitar",
     "perm": {
       "operate": "Operar jogos",
       "create": "Criar jogos",
@@ -926,6 +928,24 @@
     "selectPlan": "Seleciona um plano",
     "monthly": "Mensal",
     "annual": "Anual",
-    "year": "ano"
+    "year": "ano",
+    "successTitle": "Subscrição ativada!",
+    "orgCreated": "Organização criada!",
+    "successDesc": "A tua subscrição está agora ativa.",
+    "goToDashboard": "Ir para o Dashboard",
+    "cancelledTitle": "Checkout cancelado",
+    "cancelledDesc": "Não foram feitos cobranças. Podes tentar novamente.",
+    "returnToBilling": "Voltar à faturação",
+    "frozenTitle": "Conta congelada",
+    "frozenDesc": "A tua subscrição expirou. Atualiza o pagamento para restaurar o acesso.",
+    "resolveBilling": "Resolver faturação",
+    "paymentFailed": "Pagamento falhou. Estamos a tentar novamente.",
+    "gracePeriod": "A tua subscrição será congelada em breve. Atualiza o método de pagamento.",
+    "resolve": "Resolver",
+    "upgradeToInstitution": "Atualizar para Instituição"
+  },
+  "quota": {
+    "gameLimit": "Limite de jogos atingido. Atualiza o teu plano.",
+    "memberLimit": "Limite de membros atingido. Atualiza o teu plano."
   }
 }

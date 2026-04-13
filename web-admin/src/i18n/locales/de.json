@@ -880,6 +880,8 @@
     "invitedBy": "Eingeladen von",
     "revokeInvite": "Widerrufen",
     "revoke": "Widerrufen",
+    "invitedToJoin": "Du wurdest eingeladen",
+    "acceptInvite": "Annehmen",
     "perm": {
       "operate": "Spiele betreiben",
       "create": "Spiele erstellen",
@@ -926,6 +928,24 @@
     "selectPlan": "Plan auswählen",
     "monthly": "Monatlich",
     "annual": "Jährlich",
-    "year": "Jahr"
+    "year": "Jahr",
+    "successTitle": "Abonnement aktiviert!",
+    "orgCreated": "Organisation erstellt!",
+    "successDesc": "Dein Abonnement ist jetzt aktiv.",
+    "goToDashboard": "Zum Dashboard",
+    "cancelledTitle": "Checkout abgebrochen",
+    "cancelledDesc": "Es wurden keine Gebühren erhoben. Du kannst es jederzeit erneut versuchen.",
+    "returnToBilling": "Zurück zur Abrechnung",
+    "frozenTitle": "Konto eingefroren",
+    "frozenDesc": "Dein Abonnement ist abgelaufen. Bitte aktualisiere deine Zahlung.",
+    "resolveBilling": "Abrechnung klären",
+    "paymentFailed": "Zahlung fehlgeschlagen. Wir versuchen es automatisch erneut.",
+    "gracePeriod": "Dein Abonnement wird bald eingefroren. Bitte aktualisiere deine Zahlungsmethode.",
+    "resolve": "Klären",
+    "upgradeToInstitution": "Auf Institution upgraden"
+  },
+  "quota": {
+    "gameLimit": "Spiellimit erreicht. Upgrade deinen Plan.",
+    "memberLimit": "Mitgliederlimit erreicht. Upgrade deinen Plan."
   }
 }
