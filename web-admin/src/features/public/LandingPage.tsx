@@ -658,6 +658,149 @@ function Platforms() {
 }
 
 /* =================================================================
+   Pricing
+   ================================================================= */
+
+function CheckIcon() {
+  return (
+    <svg className="h-4 w-4 shrink-0 text-green-500/70" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <circle cx="8" cy="8" r="7.5" stroke="#22c55e" strokeOpacity="0.2" />
+      <path d="M4.5 8.5l2.5 2.5 4.5-5" stroke="#22c55e" strokeOpacity="0.7" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function Pricing() {
+  const { t } = useTranslation();
+
+  const freeFeatures = [
+    t("landing.pricing.activeGame"),
+    t("landing.pricing.basesPerGame"),
+    t("landing.pricing.soloOperator"),
+    t("landing.pricing.fileUploads100"),
+  ];
+
+  const proFeatures = [
+    t("landing.pricing.unlimitedGames"),
+    t("landing.pricing.unlimitedBases"),
+    t("landing.pricing.fiveOperators"),
+    t("landing.pricing.fileUploads2g"),
+    t("landing.pricing.sharedResources"),
+  ];
+
+  const orgFeatures = [
+    t("landing.pricing.fifteenMembers"),
+    t("landing.pricing.orgResources"),
+    t("landing.pricing.collaborative"),
+    t("landing.pricing.tenLiveGames"),
+    t("landing.pricing.customDeals"),
+  ];
+
+  return (
+    <section className="relative px-6 py-20 md:py-28">
+      <div className="mx-auto max-w-5xl">
+        {/* Heading */}
+        <div className="scroll-reveal mb-16 text-center">
+          <span className="mb-3 block text-xs font-medium uppercase tracking-[0.2em] text-green-500/70">
+            {t("landing.pricing.label")}
+          </span>
+          <h2 className="text-3xl font-bold text-white md:text-4xl">
+            {t("landing.pricing.title")}
+          </h2>
+          <p className="mx-auto mt-4 max-w-md text-sm text-white/35 md:text-base">
+            {t("landing.pricing.description")}
+          </p>
+        </div>
+
+        {/* Cards */}
+        <div className="scroll-reveal grid grid-cols-1 gap-5 md:grid-cols-3">
+          {/* Free */}
+          <div className="flex flex-col rounded-2xl border border-white/[0.07] bg-white/[0.03] p-7">
+            <div className="mb-6">
+              <p className="mb-1 text-sm font-medium uppercase tracking-widest text-green-500/60">{t("landing.pricing.free")}</p>
+              <p className="mb-3 text-xs text-white/30">{t("landing.pricing.freeDesc")}</p>
+              <p className="text-4xl font-bold text-white">€0</p>
+            </div>
+            <ul className="mb-8 flex flex-col gap-3">
+              {freeFeatures.map((f) => (
+                <li key={f} className="flex items-center gap-2.5 text-sm text-white/50">
+                  <CheckIcon />
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <Link
+              to="/register"
+              className="mt-auto block rounded-xl border border-white/[0.07] bg-white/[0.03] px-5 py-2.5 text-center text-sm font-medium text-white/60 transition-colors duration-200 hover:border-green-500/20 hover:bg-white/[0.06]"
+            >
+              {t("landing.pricing.getStarted")}
+            </Link>
+          </div>
+
+          {/* Pro – highlighted */}
+          <div className="relative flex flex-col rounded-2xl border border-green-500/30 bg-white/[0.03] p-7 shadow-[0_0_40px_rgba(34,197,94,0.04)]">
+            {/* Recommended badge */}
+            <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full border border-green-500/20 bg-green-500/10 px-3 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-green-400/80">
+              {t("landing.pricing.recommended")}
+            </span>
+            <div className="mb-6">
+              <p className="mb-1 text-sm font-medium uppercase tracking-widest text-green-500/60">{t("landing.pricing.pro")}</p>
+              <p className="mb-3 text-xs text-white/30">{t("landing.pricing.proDesc")}</p>
+              <div className="flex items-baseline gap-1">
+                <p className="text-4xl font-bold text-white">€0.99</p>
+                <span className="text-sm text-white/30">/{t("landing.pricing.proMonthly")}</span>
+              </div>
+              <p className="mt-1 text-xs text-white/25">€9.99{t("landing.pricing.perYear")}</p>
+            </div>
+            <ul className="mb-8 flex flex-col gap-3">
+              {proFeatures.map((f) => (
+                <li key={f} className="flex items-center gap-2.5 text-sm text-white/50">
+                  <CheckIcon />
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <Link
+              to="/register"
+              className="mt-auto block rounded-xl border border-green-500/30 bg-green-500/[0.08] px-5 py-2.5 text-center text-sm font-medium text-green-400 transition-colors duration-200 hover:bg-green-500/[0.14]"
+            >
+              {t("landing.pricing.startPro")}
+            </Link>
+          </div>
+
+          {/* Organizations */}
+          <div className="flex flex-col rounded-2xl border border-white/[0.07] bg-white/[0.03] p-7">
+            <div className="mb-6">
+              <p className="mb-1 text-sm font-medium uppercase tracking-widest text-green-500/60">{t("landing.pricing.org")}</p>
+              <p className="mb-3 text-xs text-white/30">{t("landing.pricing.orgDesc")}</p>
+              <div>
+                <p className="text-xs text-white/30">{t("landing.pricing.orgStartingAt")}</p>
+                <p className="text-4xl font-bold text-white">€25{t("landing.pricing.perYear")}</p>
+              </div>
+            </div>
+            <ul className="mb-6 flex flex-col gap-3">
+              {orgFeatures.map((f) => (
+                <li key={f} className="flex items-center gap-2.5 text-sm text-white/50">
+                  <CheckIcon />
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <p className="mb-6 text-[11px] leading-relaxed text-white/20">{t("landing.pricing.orgDetails")}</p>
+            <Link
+              to="/register"
+              className="mt-auto block rounded-xl border border-white/[0.07] bg-white/[0.03] px-5 py-2.5 text-center text-sm font-medium text-white/60 transition-colors duration-200 hover:border-green-500/20 hover:bg-white/[0.06]"
+            >
+              {t("landing.pricing.createOrg")}
+            </Link>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* =================================================================
    Footer
    ================================================================= */
 
@@ -727,6 +870,8 @@ export function LandingPage() {
       <Features />
       <SectionDivider />
       <Platforms />
+      <SectionDivider />
+      <Pricing />
       <Footer />
     </div>
   );
