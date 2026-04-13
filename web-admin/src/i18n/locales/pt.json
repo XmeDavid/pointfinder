@@ -981,5 +981,30 @@
   "quota": {
     "gameLimit": "Limite de jogos atingido. Atualiza o teu plano.",
     "memberLimit": "Limite de membros atingido. Atualiza o teu plano."
+  },
+  "admin": {
+    "title": "Painel de Administração",
+    "users": "Utilizadores",
+    "organizations": "Organizações",
+    "searchUsers": "Pesquisar por nome ou email...",
+    "searchOrgs": "Pesquisar por nome...",
+    "noUsers": "Nenhum utilizador encontrado",
+    "noOrgs": "Nenhuma organização encontrada",
+    "userDetail": "Detalhes do Utilizador",
+    "orgDetail": "Detalhes da Organização",
+    "subscription": "Subscrição",
+    "overrides": "Substituições",
+    "quotaOverrides": "Substituições de Quota (JSON)",
+    "adminNote": "Nota de Administrador",
+    "saveOverrides": "Guardar Substituições",
+    "overridesSaved": "Substituições guardadas",
+    "games": "Jogos",
+    "noGames": "Sem jogos",
+    "storage": "Armazenamento",
+    "enterGame": "Entrar no jogo",
+    "tier": "Plano",
+    "status": "Estado",
+    "member": "membro",
+    "members": "membros"
   }
 }

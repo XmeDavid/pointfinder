@@ -11,6 +11,8 @@ import { useWorkspaceContext } from '@/stores/workspaceContext'
 import { useQuota } from '@/hooks/queries/useQuota'
 import { useTranslation } from 'react-i18next'
 import { PendingOrgInvites } from './PendingOrgInvites'
+import { useAuthStore } from '@/hooks/useAuth'
+import { AdminPanel } from '@/features/admin/AdminPanel'
 
 export function DashboardPage() {
   const { t } = useTranslation()
@@ -21,6 +23,8 @@ export function DashboardPage() {
   const [importOpen, setImportOpen] = useState(false)
   const { active } = useWorkspaceContext()
   const { data: quota } = useQuota()
+  const user = useAuthStore(s => s.user)
+  const isAdmin = user?.role === 'admin'
 
   const atGameLimit =
     quota != null &&
@@ -148,6 +152,9 @@ export function DashboardPage() {
         open={importOpen}
         onClose={() => setImportOpen(false)}
       />
+
+      {/* Admin panel — only visible to admin users */}
+      {isAdmin && <AdminPanel />}
     </div>
   )
 }

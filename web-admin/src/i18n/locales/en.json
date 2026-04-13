@@ -981,5 +981,30 @@
   "quota": {
     "gameLimit": "Game limit reached. Upgrade your plan.",
     "memberLimit": "Member limit reached. Upgrade your plan."
+  },
+  "admin": {
+    "title": "Admin Panel",
+    "users": "Users",
+    "organizations": "Organizations",
+    "searchUsers": "Search by name or email...",
+    "searchOrgs": "Search by name...",
+    "noUsers": "No users found",
+    "noOrgs": "No organizations found",
+    "userDetail": "User Detail",
+    "orgDetail": "Organization Detail",
+    "subscription": "Subscription",
+    "overrides": "Overrides",
+    "quotaOverrides": "Quota Overrides (JSON)",
+    "adminNote": "Admin Note",
+    "saveOverrides": "Save Overrides",
+    "overridesSaved": "Overrides saved",
+    "games": "Games",
+    "noGames": "No games",
+    "storage": "Storage",
+    "enterGame": "Enter game",
+    "tier": "Tier",
+    "status": "Status",
+    "member": "member",
+    "members": "members"
   }
 }

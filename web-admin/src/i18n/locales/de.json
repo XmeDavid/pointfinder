@@ -981,5 +981,30 @@
   "quota": {
     "gameLimit": "Spiellimit erreicht. Upgrade deinen Plan.",
     "memberLimit": "Mitgliederlimit erreicht. Upgrade deinen Plan."
+  },
+  "admin": {
+    "title": "Admin-Panel",
+    "users": "Benutzer",
+    "organizations": "Organisationen",
+    "searchUsers": "Nach Name oder E-Mail suchen...",
+    "searchOrgs": "Nach Name suchen...",
+    "noUsers": "Keine Benutzer gefunden",
+    "noOrgs": "Keine Organisationen gefunden",
+    "userDetail": "Benutzer-Details",
+    "orgDetail": "Organisations-Details",
+    "subscription": "Abonnement",
+    "overrides": "Überschreibungen",
+    "quotaOverrides": "Quota-Überschreibungen (JSON)",
+    "adminNote": "Admin-Notiz",
+    "saveOverrides": "Überschreibungen speichern",
+    "overridesSaved": "Überschreibungen gespeichert",
+    "games": "Spiele",
+    "noGames": "Keine Spiele",
+    "storage": "Speicher",
+    "enterGame": "Spiel betreten",
+    "tier": "Plan",
+    "status": "Status",
+    "member": "Mitglied",
+    "members": "Mitglieder"
   }
 }
