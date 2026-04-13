@@ -317,6 +317,7 @@
     <string name="label_edit_off">Bearbeiten: AUS</string>
     <string name="label_add_base_here">Station hier erstellen</string>
     <string name="label_center_on_me">Auf mich zentrieren</string>
+    <string name="label_long_press_hint">Lange tippen, um eine Station zu platzieren</string>
     <!-- Map Clustering -->
     <string name="cd_map_cluster">%1$d Spieler in der Nähe – antippen zum Einzoomen</string>
     <string name="cd_map_player_pin">Spielerstandort</string>

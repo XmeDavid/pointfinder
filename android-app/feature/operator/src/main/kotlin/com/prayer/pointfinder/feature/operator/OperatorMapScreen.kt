@@ -8,9 +8,9 @@ import android.location.LocationManager
 import android.graphics.Canvas
 import android.graphics.Paint
 import com.prayer.pointfinder.feature.player.createPinMarkerBitmap
-import com.prayer.pointfinder.feature.player.createCircleMarkerBitmap
 import com.prayer.pointfinder.feature.player.createMyLocationBitmap
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.shape.CircleShape
@@ -22,6 +22,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
@@ -31,13 +34,11 @@ import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -101,6 +102,7 @@ private enum class LocationFocusState { CENTER_ON_ME, SHOW_ALL_BASES }
 
 @Composable
 fun OperatorMapScreen(
+    gameName: String,
     bases: List<Base>,
     teamLocations: List<TeamLocationResponse>,
     teams: List<Team>,
@@ -136,6 +138,24 @@ fun OperatorMapScreen(
                 context, Manifest.permission.ACCESS_FINE_LOCATION,
             ) == PackageManager.PERMISSION_GRANTED,
         )
+    }
+
+    // Computed stats
+    val pendingCount = baseProgress.count { it.status == BaseStatus.SUBMITTED }
+    val progressPercent = run {
+        val total = teams.size * bases.size
+        if (total == 0) 0
+        else ((baseProgress.count { it.status == BaseStatus.COMPLETED }.toDouble() / total) * 100).toInt()
+    }
+    val headerSubtitle = buildList {
+        if (bases.isNotEmpty()) add("${bases.size} bases")
+        if (teams.isNotEmpty()) add("${teams.size} teams")
+    }.takeIf { it.isNotEmpty() }?.joinToString(" · ") ?: gameStatus.name.lowercase()
+
+    val statusColor = when (gameStatus) {
+        GameStatus.LIVE  -> StatusCompleted
+        GameStatus.SETUP -> StatusSubmitted
+        else             -> Color(0xFF888888)
     }
 
     // Request location permission on first composition if not already granted
@@ -247,7 +267,12 @@ fun OperatorMapScreen(
         bases.forEach { base ->
             val markerId = "base:${base.id}"
             val status = aggregateBaseStatus(base, baseProgress)
-            val colorInt = statusColor(status)
+            // NFC-unlinked bases always show red (matches web behavior)
+            val colorInt = if (!base.nfcLinked) {
+                android.graphics.Color.parseColor("#EF4444")
+            } else {
+                statusColor(status)
+            }
             val icon = iconFactory.fromBitmap(createPinMarkerBitmap(colorInt, status, density, base.hidden))
             val existingMarker = currentMarkers.firstOrNull { it.snippet == markerId }
 
@@ -538,49 +563,148 @@ fun OperatorMapScreen(
             modifier = Modifier.fillMaxSize(),
         )
 
-        // Top-right: Edit toggle chip + Refresh button
-        if (gameStatus != GameStatus.ENDED) {
-            Row(
+        // ── Floating left/centre column ───────────────────────────────────
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .fillMaxWidth(),
+        ) {
+            // Glass header bar
+            Surface(
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(12.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp)
+                    .padding(top = 12.dp),
+                shape = RoundedCornerShape(14.dp),
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+                tonalElevation = 2.dp,
+                shadowElevation = 4.dp,
             ) {
-                FilterChip(
-                    selected = isEditMode,
-                    onClick = { isEditMode = !isEditMode },
-                    label = {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            if (isEditMode) {
-                                stringResource(R.string.label_edit_on)
-                            } else {
-                                stringResource(R.string.label_edit_off)
-                            },
+                            gameName,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
-                    },
-                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.cd_edit)) },
-                    colors = FilterChipDefaults.filterChipColors(
-                        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-                    ),
-                )
-                SmallFloatingActionButton(onClick = onRefresh) {
-                    Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_refresh))
+                        Text(
+                            headerSubtitle,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    // Status pill
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = statusColor.copy(alpha = 0.15f),
+                    ) {
+                        Text(
+                            gameStatus.name,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = statusColor,
+                        )
+                    }
                 }
             }
-        } else {
-            SmallFloatingActionButton(
-                onClick = onRefresh,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(12.dp),
-            ) {
-                Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_refresh))
+
+            // Stats strip — live games only, when teams are loaded
+            if (gameStatus == GameStatus.LIVE && teams.isNotEmpty()) {
+                LazyRow(
+                    modifier = Modifier.padding(top = 4.dp, start = 12.dp, end = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    item {
+                        StatPill(
+                            value = "${teams.size}",
+                            label = "Teams",
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
+                    item {
+                        StatPill(
+                            value = "$pendingCount",
+                            label = "Pending",
+                            color = if (pendingCount > 0) StatusSubmitted else MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    item {
+                        StatPill(
+                            value = "$progressPercent%",
+                            label = "Progress",
+                            color = StatusCompleted,
+                        )
+                    }
+                }
+            }
+
+            // Edit mode hint pill
+            if (isEditMode) {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Surface(
+                        modifier = Modifier.padding(top = 6.dp),
+                        shape = RoundedCornerShape(50),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
+                        shadowElevation = 4.dp,
+                    ) {
+                        Text(
+                            stringResource(R.string.label_long_press_hint),
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                        )
+                    }
+                }
             }
         }
 
-        // Bottom-left: Location / show-all-bases toggle button
-        SmallFloatingActionButton(
-            onClick = {
+        // ── Map control buttons (top-right) ───────────────────────────────
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 70.dp, end = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            // Edit mode toggle (hidden when game is ended)
+            if (gameStatus != GameStatus.ENDED) {
+                MapControlButton(
+                    icon = Icons.Default.Edit,
+                    isActive = isEditMode,
+                    contentDescription = stringResource(
+                        if (isEditMode) R.string.label_edit_on else R.string.label_edit_off,
+                    ),
+                ) {
+                    isEditMode = !isEditMode
+                }
+            }
+
+            // Refresh button
+            MapControlButton(
+                icon = Icons.Default.Refresh,
+                isActive = false,
+                contentDescription = stringResource(R.string.action_refresh),
+                onClick = onRefresh,
+            )
+
+            // Location / fit-all toggle
+            MapControlButton(
+                icon = when (locationFocusState) {
+                    LocationFocusState.CENTER_ON_ME -> Icons.Default.MyLocation
+                    LocationFocusState.SHOW_ALL_BASES -> Icons.Default.Map
+                },
+                isActive = false,
+                contentDescription = stringResource(R.string.label_center_on_me),
+            ) {
                 when (locationFocusState) {
                     LocationFocusState.CENTER_ON_ME -> {
                         (myLocation ?: getLastKnownLocation(context))?.let { location ->
@@ -604,21 +728,10 @@ fun OperatorMapScreen(
                         locationFocusState = LocationFocusState.CENTER_ON_ME
                     }
                 }
-            },
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(12.dp),
-        ) {
-            Icon(
-                imageVector = when (locationFocusState) {
-                    LocationFocusState.CENTER_ON_ME -> Icons.Default.MyLocation
-                    LocationFocusState.SHOW_ALL_BASES -> Icons.Default.Map
-                },
-                contentDescription = stringResource(R.string.label_center_on_me),
-            )
+            }
         }
 
-        // Bottom-right: Add base at GPS FAB (only in edit mode)
+        // ── Add-base FAB (bottom-right, edit mode only) ───────────────────
         if (isEditMode && gameStatus != GameStatus.ENDED) {
             FloatingActionButton(
                 onClick = {
@@ -634,7 +747,7 @@ fun OperatorMapScreen(
             }
         }
 
-        // Status legend
+        // ── Status legend (bottom-centre) ─────────────────────────────────
         Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -686,6 +799,64 @@ fun OperatorMapScreen(
     }
 }
 
+// ── Composable helpers ────────────────────────────────────────────────────────
+
+@Composable
+private fun StatPill(value: String, label: String, color: Color) {
+    Surface(
+        shape = RoundedCornerShape(10.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+        tonalElevation = 1.dp,
+        shadowElevation = 2.dp,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                value,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = color,
+            )
+            Text(
+                label.uppercase(),
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = androidx.compose.ui.unit.TextUnit(9f, androidx.compose.ui.unit.TextUnitType.Sp)),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MapControlButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    isActive: Boolean,
+    contentDescription: String,
+    onClick: () -> Unit,
+) {
+    Surface(
+        shape = RoundedCornerShape(10.dp),
+        color = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+        tonalElevation = if (isActive) 0.dp else 1.dp,
+        shadowElevation = 3.dp,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(38.dp)
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = contentDescription,
+                tint = if (isActive) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BaseEditActionSheet(
@@ -720,7 +891,7 @@ fun BaseEditActionSheet(
                 CapsuleBadge(label = nfcLabel, color = nfcColor)
                 CapsuleBadge(
                     label = challengeSubtitle,
-                    color = BadgeIndigo,
+                    color = Color(0xFF303F9F),
                 )
             }
 
@@ -762,6 +933,8 @@ fun BaseEditActionSheet(
         }
     }
 }
+
+// ── Pure logic helpers ────────────────────────────────────────────────────────
 
 private fun aggregateBaseStatus(
     base: Base,

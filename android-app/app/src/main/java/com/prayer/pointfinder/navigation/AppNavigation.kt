@@ -879,6 +879,8 @@ private fun PlayerRootScreen(
                         onBaseSelected = { viewModel.selectBase(auth, it) },
                         onRefresh = { viewModel.refresh(auth, isOnline) },
                         onNotificationsClick = { viewModel.openNotifications() },
+                        gameName = auth.gameName,
+                        gameStatus = gameStatus?.name?.lowercase(),
                     )
                     if (shouldBlockGameplay) {
                         GameNotLiveOverlay()
@@ -1258,6 +1260,7 @@ private fun OperatorGameRoot(
                             ThemeMode.DARK -> true
                         }
                         OperatorMapScreen(
+                            gameName = selectedGame.name,
                             bases = state.bases,
                             teamLocations = state.locations,
                             teams = state.teams,
