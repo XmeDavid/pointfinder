@@ -123,7 +123,7 @@ function CompassRose({ darkMode }: { darkMode: boolean }) {
 
       {/* Glass circle wrapper (light mode only) */}
       {!darkMode && (
-        <div className="absolute inset-0 rounded-full bg-white/60 backdrop-blur-xl border border-white/40 shadow-[0_20px_60px_-20px_rgba(21,111,104,0.25)]" />
+        <div className="absolute inset-[-12%] rounded-full bg-white/30 backdrop-blur-md border border-white/30 shadow-[0_20px_60px_-20px_rgba(21,111,104,0.15)]" />
       )}
 
       <svg
@@ -369,6 +369,7 @@ function Hero({ darkMode }: { darkMode: boolean }) {
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
           backgroundClip: "text",
+          color: "transparent",
         }}
       >
         PointFinder
