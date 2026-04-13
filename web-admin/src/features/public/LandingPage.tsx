@@ -334,6 +334,8 @@ function Hero({ darkMode }: { darkMode: boolean }) {
             style={{
               backgroundImage: "linear-gradient(rgba(40,56,48,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(40,56,48,0.06) 1px, transparent 1px)",
               backgroundSize: "34px 34px",
+              maskImage: "linear-gradient(180deg, black 50%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(180deg, black 50%, transparent 100%)",
             }}
           />
         </>
