@@ -1046,8 +1046,6 @@ export function LandingPage() {
       <SectionDivider />
       <Features darkMode={darkMode} />
       <SectionDivider />
-      <Platforms darkMode={darkMode} />
-      <SectionDivider />
       <Pricing darkMode={darkMode} />
       <Footer darkMode={darkMode} />
     </div>
