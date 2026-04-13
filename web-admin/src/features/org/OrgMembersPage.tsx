@@ -6,6 +6,7 @@ import { useCreateOrgInvite, useRemoveOrgMember, useRevokeOrgInvite } from '../.
 import { hasPermission, OrgPermission } from '../../types/organization'
 import { useAuthStore } from '../../lib/auth/store'
 import { MemberPermissionsDialog } from './MemberPermissionsDialog'
+import { useQuota } from '../../hooks/queries/useQuota'
 
 export function OrgMembersPage() {
   const { t } = useTranslation()
@@ -20,12 +21,20 @@ export function OrgMembersPage() {
   const [inviteEmail, setInviteEmail] = useState('')
   const [editingMember, setEditingMember] = useState<string | null>(null)
 
+  const { data: quota } = useQuota()
+
   if (active.type !== 'org') return null
 
   const myMembership = members?.find((m) => m.userId === user?.id)
   const canInvite = myMembership
     ? hasPermission(myMembership.permissions, OrgPermission.INVITE_MEMBERS)
     : false
+
+  const atMemberLimit =
+    quota != null &&
+    quota.limits.maxMembers !== null &&
+    quota.usage.currentMembers !== null &&
+    quota.usage.currentMembers >= quota.limits.maxMembers
   const canManagePerms = myMembership
     ? hasPermission(myMembership.permissions, OrgPermission.MANAGE_PERMS)
     : false
@@ -51,12 +60,13 @@ export function OrgMembersPage() {
             onChange={(e) => setInviteEmail(e.target.value)}
             placeholder={t('org.inviteEmail', 'operator@example.com')}
             className="flex-1 px-3 py-2 rounded-lg border border-border bg-background text-sm"
-            onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
+            onKeyDown={(e) => e.key === 'Enter' && !atMemberLimit && handleInvite()}
           />
           <button
             onClick={handleInvite}
-            disabled={createInvite.isPending}
-            className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50"
+            disabled={createInvite.isPending || !!atMemberLimit}
+            title={atMemberLimit ? t('quota.memberLimit', 'Member limit reached. Upgrade your plan.') : undefined}
+            className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {createInvite.isPending
               ? t('common.sending', 'Sending...')

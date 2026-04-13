@@ -8,14 +8,24 @@ import { ImportGameDialog } from './ImportGameDialog'
 import { Spinner } from '@/components/feedback/Spinner'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { useWorkspaceContext } from '@/stores/workspaceContext'
+import { useQuota } from '@/hooks/queries/useQuota'
+import { useTranslation } from 'react-i18next'
+import { PendingOrgInvites } from './PendingOrgInvites'
 
 export function DashboardPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { data: games, isLoading, isError, error } = useGames()
   const [search, setSearch] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
   const { active } = useWorkspaceContext()
+  const { data: quota } = useQuota()
+
+  const atGameLimit =
+    quota != null &&
+    quota.limits.maxActiveGames !== null &&
+    quota.usage.currentActiveGames >= quota.limits.maxActiveGames
 
   const filtered = useMemo(() => {
     if (!games) return []
@@ -38,6 +48,9 @@ export function DashboardPage() {
 
   return (
     <div className="h-screen bg-background p-8 overflow-auto">
+      {/* Pending org invites */}
+      <PendingOrgInvites />
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -53,9 +66,11 @@ export function DashboardPage() {
             Import
           </button>
           <button
-            onClick={() => setDialogOpen(true)}
+            onClick={() => !atGameLimit && setDialogOpen(true)}
             data-testid="create-game-btn"
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+            disabled={atGameLimit}
+            title={atGameLimit ? t('quota.gameLimit', 'Game limit reached. Upgrade your plan.') : undefined}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             + New Game
           </button>

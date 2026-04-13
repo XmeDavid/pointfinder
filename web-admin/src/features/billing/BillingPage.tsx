@@ -13,6 +13,10 @@ export function BillingPage() {
   const isOrg = active.type === 'org'
   const tier = quota?.tier ?? 'free'
   const isPaying = tier !== 'free'
+  const isClubOrg = isOrg && tier === 'base'
+  const isHighOrg = isOrg && tier === 'high'
+  const isProPersonal = !isOrg && tier === 'pro'
+  const showUpgradeSection = !isPaying || isClubOrg
 
   return (
     <div className="h-screen bg-background p-8 overflow-auto">
@@ -30,7 +34,7 @@ export function BillingPage() {
           {t('billing.currentPlan', 'Current plan')}
         </p>
         <p className="text-xl font-semibold text-foreground capitalize">{tier}</p>
-        {isPaying && (
+        {(isPaying && !isClubOrg) && (
           <button
             onClick={() => portal.mutate()}
             disabled={portal.isPending}
@@ -41,13 +45,13 @@ export function BillingPage() {
         )}
       </div>
 
-      {!isPaying && (
+      {showUpgradeSection && (
         <div className="space-y-4 max-w-lg">
           <h2 className="text-lg font-semibold text-foreground">
             {t('billing.upgrade', 'Upgrade')}
           </h2>
 
-          {!isOrg && (
+          {!isOrg && !isProPersonal && (
             <div className="rounded-xl border border-border p-6 flex items-center justify-between">
               <div>
                 <p className="font-medium text-foreground">Pro</p>
@@ -74,64 +78,79 @@ export function BillingPage() {
             </div>
           )}
 
-          {isOrg && (
-            <>
-              <div className="rounded-xl border border-border p-6 flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-foreground">{t('billing.clubPlan', 'Club')}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {t('billing.clubDesc', '10 members, 10 live games')}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-foreground">
-                    €25
-                    <span className="text-sm font-normal text-muted-foreground">/{t('billing.year', 'yr')}</span>
-                  </p>
-                  <button
-                    onClick={() =>
-                      checkout.mutate({
-                        plan: 'org-base',
-                        cycle: 'annual',
-                        orgId: active.orgId,
-                      })
-                    }
-                    disabled={checkout.isPending}
-                    className="mt-2 px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm disabled:opacity-50"
-                  >
-                    {t('billing.subscribe', 'Subscribe')}
-                  </button>
-                </div>
+          {isOrg && !isPaying && (
+            <div className="rounded-xl border border-border p-6 flex items-center justify-between">
+              <div>
+                <p className="font-medium text-foreground">{t('billing.clubPlan', 'Club')}</p>
+                <p className="text-sm text-muted-foreground">
+                  {t('billing.clubDesc', '10 members, 10 live games')}
+                </p>
               </div>
-              <div className="rounded-xl border border-border p-6 flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-foreground">{t('billing.institutionPlan', 'Institution')}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {t('billing.institutionDesc', '25 members, unlimited games')}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-foreground">
-                    €99.99
-                    <span className="text-sm font-normal text-muted-foreground">/{t('billing.year', 'yr')}</span>
-                  </p>
-                  <button
-                    onClick={() =>
-                      checkout.mutate({
-                        plan: 'org-high',
-                        cycle: 'annual',
-                        orgId: active.orgId,
-                      })
-                    }
-                    disabled={checkout.isPending}
-                    className="mt-2 px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm disabled:opacity-50"
-                  >
-                    {t('billing.subscribe', 'Subscribe')}
-                  </button>
-                </div>
+              <div className="text-right">
+                <p className="text-lg font-bold text-foreground">
+                  €25
+                  <span className="text-sm font-normal text-muted-foreground">/{t('billing.year', 'yr')}</span>
+                </p>
+                <button
+                  onClick={() =>
+                    checkout.mutate({
+                      plan: 'org-base',
+                      cycle: 'annual',
+                      orgId: active.type === 'org' ? active.orgId : undefined,
+                    })
+                  }
+                  disabled={checkout.isPending}
+                  className="mt-2 px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm disabled:opacity-50"
+                >
+                  {t('billing.subscribe', 'Subscribe')}
+                </button>
               </div>
-            </>
+            </div>
           )}
+
+          {(isOrg && (!isPaying || isClubOrg)) && !isHighOrg && (
+            <div className="rounded-xl border border-border p-6 flex items-center justify-between">
+              <div>
+                <p className="font-medium text-foreground">{t('billing.institutionPlan', 'Institution')}</p>
+                <p className="text-sm text-muted-foreground">
+                  {t('billing.institutionDesc', '25 members, unlimited games')}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-lg font-bold text-foreground">
+                  €99.99
+                  <span className="text-sm font-normal text-muted-foreground">/{t('billing.year', 'yr')}</span>
+                </p>
+                <button
+                  onClick={() =>
+                    checkout.mutate({
+                      plan: 'org-high',
+                      cycle: 'annual',
+                      orgId: active.type === 'org' ? active.orgId : undefined,
+                    })
+                  }
+                  disabled={checkout.isPending}
+                  className="mt-2 px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm disabled:opacity-50"
+                >
+                  {isClubOrg
+                    ? t('billing.upgradeToInstitution', 'Upgrade to Institution')
+                    : t('billing.subscribe', 'Subscribe')}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {(isHighOrg || isProPersonal) && (
+        <div className="rounded-xl border border-border p-6 mb-8 max-w-md">
+          <button
+            onClick={() => portal.mutate()}
+            disabled={portal.isPending}
+            className="text-sm text-primary hover:underline disabled:opacity-50"
+          >
+            {t('billing.manageSub', 'Manage subscription')}
+          </button>
         </div>
       )}
 
