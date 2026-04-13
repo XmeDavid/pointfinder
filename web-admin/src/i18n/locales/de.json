@@ -875,6 +875,11 @@
     "invite": "Einladen",
     "permissions": "Berechtigungen",
     "editPermissions": "Berechtigungen bearbeiten",
+    "pendingInvites": "Ausstehende Einladungen",
+    "inviteSent": "Einladung gesendet",
+    "invitedBy": "Eingeladen von",
+    "revokeInvite": "Widerrufen",
+    "revoke": "Widerrufen",
     "perm": {
       "operate": "Spiele betreiben",
       "create": "Spiele erstellen",

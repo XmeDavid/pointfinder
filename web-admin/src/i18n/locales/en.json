@@ -875,6 +875,11 @@
     "invite": "Invite",
     "permissions": "Permissions",
     "editPermissions": "Edit Permissions",
+    "pendingInvites": "Pending invites",
+    "inviteSent": "Invite sent",
+    "invitedBy": "Invited by",
+    "revokeInvite": "Revoke",
+    "revoke": "Revoke",
     "perm": {
       "operate": "Operate games",
       "create": "Create games",

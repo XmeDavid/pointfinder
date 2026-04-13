@@ -8,3 +8,18 @@ export function useOrgMembers(orgId: string | undefined) {
     enabled: !!orgId,
   })
 }
+
+export function useOrgInvites(orgId: string | undefined) {
+  return useQuery({
+    queryKey: ['org-invites', orgId],
+    queryFn: () => organizationsApi.listInvites(orgId!),
+    enabled: !!orgId,
+  })
+}
+
+export function useMyOrgInvites() {
+  return useQuery({
+    queryKey: ['my-org-invites'],
+    queryFn: () => organizationsApi.getMyOrgInvites(),
+  })
+}

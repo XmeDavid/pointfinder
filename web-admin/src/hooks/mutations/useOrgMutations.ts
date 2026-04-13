@@ -11,13 +11,33 @@ export function useCreateOrg() {
   })
 }
 
-export function useInviteOrgMember(orgId: string) {
+export function useCreateOrgInvite(orgId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (email: string) => organizationsApi.inviteMember(orgId, email),
+    mutationFn: (email: string) => organizationsApi.createInvite(orgId, email),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['org-members', orgId] })
+      qc.invalidateQueries({ queryKey: ['org-invites', orgId] })
+    },
+  })
+}
+
+export function useRevokeOrgInvite(orgId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (inviteId: string) => organizationsApi.revokeInvite(orgId, inviteId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['org-invites', orgId] })
+    },
+  })
+}
+
+export function useAcceptOrgInvite() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (inviteId: string) => organizationsApi.acceptOrgInvite(inviteId),
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['workspaces'] })
+      qc.invalidateQueries({ queryKey: ['my-org-invites'] })
     },
   })
 }

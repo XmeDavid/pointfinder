@@ -59,3 +59,14 @@ export interface OrgWorkspace {
   liveGames: number
   permissions: number
 }
+
+export interface OrgInvite {
+  id: string
+  orgId: string
+  orgName: string
+  email: string
+  status: 'pending' | 'accepted' | 'expired'
+  invitedBy: string | null
+  inviterName: string | null
+  createdAt: string
+}
