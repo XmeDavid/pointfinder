@@ -89,6 +89,12 @@ const BillingPage = lazy(() =>
   })),
 );
 
+const CreateOrgPage = lazy(() =>
+  import("@/features/org/CreateOrgPage").then((m) => ({
+    default: m.CreateOrgPage,
+  })),
+);
+
 // ---------------------------------------------------------------------------
 // Spinner shown while lazy chunks load
 // ---------------------------------------------------------------------------
@@ -277,6 +283,18 @@ const router = createBrowserRouter([
       import("@/features/org/OrgResourcesPage").then((m) => ({
         Component: m.OrgResourcesPage,
       })),
+  },
+  {
+    path: "/org/create",
+    element: (
+      <AuthGuard>
+        <AppLayout>
+          <Suspense fallback={<PageSpinner />}>
+            <CreateOrgPage />
+          </Suspense>
+        </AppLayout>
+      </AuthGuard>
+    ),
   },
   {
     path: "/billing",

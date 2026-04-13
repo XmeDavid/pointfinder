@@ -5,6 +5,9 @@ export const billingApi = {
   createCheckout: (plan: string, cycle: string, orgId?: string) =>
     apiClient.post<CheckoutResponse>('/api/billing/checkout', { plan, cycle, orgId }).then(r => r.data),
 
+  createOrgCheckout: (orgName: string, plan: string, cycle: string) =>
+    apiClient.post<CheckoutResponse>('/api/billing/org-checkout', { orgName, plan, cycle }).then(r => r.data),
+
   createPortal: () =>
     apiClient.post<{ url: string }>('/api/billing/portal').then(r => r.data),
 

@@ -867,6 +867,9 @@
     "orgName": "Nome da organização"
   },
   "org": {
+    "createDesc": "Cria uma organização para colaborar com a tua equipa.",
+    "namePlaceholder": "Grupo Escutista 42",
+    "createAndSubscribe": "Criar e Subscrever",
     "members": "Membros",
     "inviteEmail": "operador@exemplo.com",
     "invite": "Convidar",
@@ -912,6 +915,9 @@
     "usage": "Utilização",
     "activeGames": "Jogos ativos",
     "members": "Membros",
-    "liveGames": "Jogos em direto"
+    "liveGames": "Jogos em direto",
+    "selectPlan": "Seleciona um plano",
+    "monthly": "Mensal",
+    "annual": "Anual"
   }
 }

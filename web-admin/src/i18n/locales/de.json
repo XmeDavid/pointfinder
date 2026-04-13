@@ -867,6 +867,9 @@
     "orgName": "Name der Organisation"
   },
   "org": {
+    "createDesc": "Erstelle eine Organisation, um mit deinem Team zusammenzuarbeiten.",
+    "namePlaceholder": "Pfadfindergruppe 42",
+    "createAndSubscribe": "Erstellen & Abonnieren",
     "members": "Mitglieder",
     "inviteEmail": "operator@beispiel.com",
     "invite": "Einladen",
@@ -912,6 +915,9 @@
     "usage": "Nutzung",
     "activeGames": "Aktive Spiele",
     "members": "Mitglieder",
-    "liveGames": "Live-Spiele"
+    "liveGames": "Live-Spiele",
+    "selectPlan": "Plan auswählen",
+    "monthly": "Monatlich",
+    "annual": "Jährlich"
   }
 }

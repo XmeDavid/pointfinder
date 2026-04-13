@@ -867,6 +867,9 @@
     "orgName": "Organization name"
   },
   "org": {
+    "createDesc": "Create an organization to collaborate with your team.",
+    "namePlaceholder": "Scout Group 42",
+    "createAndSubscribe": "Create & Subscribe",
     "members": "Members",
     "inviteEmail": "operator@example.com",
     "invite": "Invite",
@@ -912,6 +915,9 @@
     "usage": "Usage",
     "activeGames": "Active games",
     "members": "Members",
-    "liveGames": "Live games"
+    "liveGames": "Live games",
+    "selectPlan": "Select a plan",
+    "monthly": "Monthly",
+    "annual": "Annual"
   }
 }
