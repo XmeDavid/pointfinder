@@ -216,7 +216,7 @@ public class QuotaService {
         Map<String, Object> overrides = org.getQuotaOverrides();
         if (org.getSubscriptionTier() == OrgTier.high) {
             return QuotaResponse.Limits.builder()
-                .maxMembers(getOverride(overrides, "max_members", 25))
+                .maxMembers(getOverride(overrides, "max_members", 15))
                 .maxLiveGames(getOverride(overrides, "max_live_games", null))
                 .maxOperatorsPerGame(getOverride(overrides, "max_operators_per_game", null))
                 .maxBasesPerGame(getOverride(overrides, "max_bases_per_game", null))
@@ -226,7 +226,7 @@ public class QuotaService {
         }
         // Base (or free — same limits as base but admin-granted)
         return QuotaResponse.Limits.builder()
-            .maxMembers(getOverride(overrides, "max_members", 10))
+            .maxMembers(getOverride(overrides, "max_members", 3))
             .maxLiveGames(getOverride(overrides, "max_live_games", 10))
             .maxOperatorsPerGame(getOverride(overrides, "max_operators_per_game", null))
             .maxBasesPerGame(getOverride(overrides, "max_bases_per_game", null))
