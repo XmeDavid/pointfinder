@@ -73,7 +73,7 @@ export function CreateOrgPage() {
               <p className="font-semibold text-foreground">{t('billing.clubPlan', 'Club')}</p>
               <p className="text-sm text-muted-foreground mt-1">{t('billing.clubDesc', '10 members, 10 live games')}</p>
               <p className="text-lg font-bold text-foreground mt-2">
-                €100<span className="text-sm font-normal text-muted-foreground">/{t('billing.year', 'yr')}</span>
+                €25<span className="text-sm font-normal text-muted-foreground">/{t('billing.year', 'yr')}</span>
               </p>
             </button>
             <button
@@ -85,7 +85,7 @@ export function CreateOrgPage() {
               <p className="font-semibold text-foreground">{t('billing.institutionPlan', 'Institution')}</p>
               <p className="text-sm text-muted-foreground mt-1">{t('billing.institutionDesc', '25 members, unlimited games')}</p>
               <p className="text-lg font-bold text-foreground mt-2">
-                €200<span className="text-sm font-normal text-muted-foreground">/{t('billing.year', 'yr')}</span>
+                €99.99<span className="text-sm font-normal text-muted-foreground">/{t('billing.year', 'yr')}</span>
               </p>
             </button>
           </div>

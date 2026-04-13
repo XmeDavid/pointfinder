@@ -60,7 +60,7 @@ export function BillingPage() {
               </div>
               <div className="text-right">
                 <p className="text-lg font-bold text-foreground">
-                  €2.99
+                  €0.99
                   <span className="text-sm font-normal text-muted-foreground">/mo</span>
                 </p>
                 <button
@@ -85,7 +85,7 @@ export function BillingPage() {
                 </div>
                 <div className="text-right">
                   <p className="text-lg font-bold text-foreground">
-                    €100
+                    €25
                     <span className="text-sm font-normal text-muted-foreground">/{t('billing.year', 'yr')}</span>
                   </p>
                   <button
@@ -112,7 +112,7 @@ export function BillingPage() {
                 </div>
                 <div className="text-right">
                   <p className="text-lg font-bold text-foreground">
-                    €200
+                    €99.99
                     <span className="text-sm font-normal text-muted-foreground">/{t('billing.year', 'yr')}</span>
                   </p>
                   <button
