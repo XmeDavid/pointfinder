@@ -4,14 +4,18 @@ struct BaseAnnotationView: View {
     let status: BaseStatus
     let name: String
     var isHidden: Bool = false
+    /// Optional color override (e.g. red for NFC-unlinked bases on operator map)
+    var colorOverride: Color? = nil
+
+    private var markerColor: Color { colorOverride ?? status.color }
 
     var body: some View {
         VStack(spacing: 2) {
             ZStack {
                 Circle()
-                    .fill(status.color)
+                    .fill(markerColor)
                     .frame(width: 36, height: 36)
-                    .shadow(color: status.color.opacity(0.4), radius: 4, y: 2)
+                    .shadow(color: markerColor.opacity(0.4), radius: 4, y: 2)
 
                 if isHidden {
                     Circle()
@@ -27,11 +31,11 @@ struct BaseAnnotationView: View {
 
             // Small triangle pointing down
             Triangle()
-                .fill(status.color)
+                .fill(markerColor)
                 .frame(width: 10, height: 6)
         }
         .opacity(isHidden ? 0.7 : 1.0)
-        .shadow(color: status.color.opacity(0.3), radius: 6, y: 2)
+        .shadow(color: markerColor.opacity(0.3), radius: 6, y: 2)
     }
 
     private var iconName: String {

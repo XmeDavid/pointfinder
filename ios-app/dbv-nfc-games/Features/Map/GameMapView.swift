@@ -119,23 +119,21 @@ struct GameMapView: View {
             Button {
                 showNotifications = true
             } label: {
-                Image(systemName: "bell.fill")
-                    .font(.body)
-                    .foregroundStyle(appState.unseenNotificationCount > 0 ? Color.pfPrimary : Color.pfTextMuted)
-                    .overlay(alignment: .topTrailing) {
-                        if appState.unseenNotificationCount > 0 {
-                            Text(appState.unseenNotificationCount > 99 ? "99+" : "\(appState.unseenNotificationCount)")
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundStyle(.white)
-                                .padding(3)
-                                .background(Color.red, in: Circle())
-                                .offset(x: 6, y: -6)
-                        }
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: "bell.fill")
+                        .font(.body)
+                        .foregroundStyle(.primary)
+                    if appState.unseenNotificationCount > 0 {
+                        Text(appState.unseenNotificationCount > 99 ? "99+" : "\(appState.unseenNotificationCount)")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 2)
+                            .background(Color.pfRejected, in: Capsule())
+                            .offset(x: 8, y: -8)
                     }
-                    .frame(width: 36, height: 36)
-                    .background(.ultraThinMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .shadow(color: .black.opacity(0.08), radius: 4, y: 1)
+                }
+                .frame(width: 32, height: 32)
             }
             .accessibilityLabel(locale.t("common.notifications"))
 
@@ -146,11 +144,8 @@ struct GameMapView: View {
                 Image(systemName: "arrow.clockwise")
                     .font(.body)
                     .fontWeight(.medium)
-                    .foregroundStyle(Color.pfTextMuted)
-                    .frame(width: 36, height: 36)
-                    .background(.ultraThinMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .shadow(color: .black.opacity(0.08), radius: 4, y: 1)
+                    .foregroundStyle(.primary)
+                    .frame(width: 32, height: 32)
             }
             .accessibilityLabel(locale.t("common.refresh"))
         }

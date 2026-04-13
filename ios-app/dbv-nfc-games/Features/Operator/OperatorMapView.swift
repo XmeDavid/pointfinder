@@ -85,7 +85,8 @@ struct OperatorMapView: View {
                         BaseAnnotationView(
                             status: status,
                             name: base.name,
-                            isHidden: base.hidden
+                            isHidden: base.hidden,
+                            colorOverride: base.nfcLinked ? nil : Color.pfRejected
                         )
                     ),
                     onTap: { [base] in
