@@ -70,10 +70,10 @@ function useScrollReveal() {
    ================================================================= */
 
 function CompassRose({ darkMode }: { darkMode: boolean }) {
-  const stroke = darkMode ? "#22c55e" : "#156f68";
-  const fillBright = darkMode ? "#16a34a" : "#156f68";
-  const fillDim = darkMode ? "#0d5f2d" : "#0d4f48";
-  const centerFill = darkMode ? "#060b06" : "#f4efe6";
+  const stroke = darkMode ? "#22c55e" : "#0e5550";
+  const fillBright = darkMode ? "#16a34a" : "#0e4e49";
+  const fillDim = darkMode ? "#0d5f2d" : "#88afa8";
+  const centerFill = darkMode ? "#060b06" : "#e8e4dc";
 
   const ticks = Array.from({ length: 36 }, (_, i) => {
     const angle = (i * 10 * Math.PI) / 180;
@@ -90,7 +90,7 @@ function CompassRose({ darkMode }: { darkMode: boolean }) {
         y2={100 - r2 * Math.cos(angle)}
         stroke={stroke}
         strokeWidth={isMajor ? 1.6 : isMinor ? 0.8 : 0.4}
-        opacity={isMajor ? 0.6 : isMinor ? 0.3 : 0.15}
+        opacity={darkMode ? (isMajor ? 0.6 : isMinor ? 0.3 : 0.15) : (isMajor ? 0.8 : isMinor ? 0.45 : 0.2)}
       />
     );
   });
@@ -124,9 +124,10 @@ function CompassRose({ darkMode }: { darkMode: boolean }) {
       {/* Glass circle wrapper (light mode only) */}
       {!darkMode && (
         <div
-          className="absolute inset-[-12%] rounded-full backdrop-blur-xl border border-white/60 shadow-[0_8px_40px_rgba(21,111,104,0.15),inset_0_1px_0_rgba(255,255,255,0.5)]"
+          className="absolute inset-[-12%] rounded-full backdrop-blur-xl border border-white/70"
           style={{
-            background: "linear-gradient(145deg, rgba(255,255,255,0.50), rgba(255,255,255,0.25))",
+            background: "linear-gradient(145deg, rgba(255,255,255,0.55), rgba(240,238,232,0.30))",
+            boxShadow: "0 12px 48px rgba(21,111,104,0.18), inset 0 2px 4px rgba(255,255,255,0.6), inset 0 -2px 8px rgba(21,111,104,0.06)",
           }}
         />
       )}
