@@ -125,10 +125,9 @@ fun ChallengesListScreen(
                     }
                 } else {
                     LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 12.dp),
                     ) {
                         items(filteredChallenges, key = { it.id }) { challenge ->
                             val fixedBaseAssignment = assignments.firstOrNull {
@@ -148,10 +147,11 @@ fun ChallengesListScreen(
                                     .fillMaxWidth()
                                     .testTag("challenge-edit-btn")
                                     .clickable { onSelectChallenge(challenge) },
-                                tonalElevation = 2.dp,
-                                shape = MaterialTheme.shapes.medium,
+                                tonalElevation = 1.dp,
+                                shadowElevation = 2.dp,
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
                             ) {
-                                Column(modifier = Modifier.padding(12.dp)) {
+                                Column(modifier = Modifier.padding(14.dp)) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -159,17 +159,18 @@ fun ChallengesListScreen(
                                     ) {
                                         Text(
                                             text = challenge.title,
-                                            fontWeight = FontWeight.SemiBold,
-                                            modifier = Modifier.weight(1f),
+                                            fontWeight = FontWeight.Bold,
+                                            style = MaterialTheme.typography.titleSmall,
+                                            modifier = Modifier.weight(1f).padding(end = 8.dp),
                                         )
                                         Text(
                                             text = stringResource(R.string.label_pts, challenge.points),
-                                            style = MaterialTheme.typography.labelMedium,
+                                            style = MaterialTheme.typography.labelLarge,
                                             color = StarGold,
-                                            fontWeight = FontWeight.SemiBold,
+                                            fontWeight = FontWeight.Bold,
                                         )
                                     }
-                                    Spacer(Modifier.height(4.dp))
+                                    Spacer(Modifier.height(6.dp))
                                     Row(
                                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                                         verticalAlignment = Alignment.CenterVertically,
@@ -178,6 +179,7 @@ fun ChallengesListScreen(
                                             text = linkedBaseName ?: stringResource(R.string.label_no_base),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.weight(1f, fill = false),
                                         )
                                         CapsuleBadge(
                                             label = answerTypeBadge,

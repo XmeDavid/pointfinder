@@ -201,21 +201,22 @@ private fun SyncStatusPill(
     uploadPercent: Int? = null,
     onClick: () -> Unit,
 ) {
-    val pillColor = if (isOffline) Color(0xFFD32F2F) else Color(0xFF1565C0)
+    val pillColor = if (isOffline) Color(0xFFEF4444) else Color(0xFF3B82F6)
     val label = when {
         isOffline -> stringResource(R.string.label_offline_count, pendingActionsCount)
         uploadPercent != null -> stringResource(R.string.label_uploading_percent, uploadPercent)
         else -> stringResource(R.string.label_syncing, pendingActionsCount)
     }
     Surface(
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(50),
         color = pillColor,
+        shadowElevation = 4.dp,
         modifier = Modifier.clickable { onClick() },
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             if (isOffline) {
                 Icon(
@@ -234,7 +235,7 @@ private fun SyncStatusPill(
             Text(
                 text = label,
                 color = Color.White,
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
             )
         }
@@ -293,53 +294,59 @@ private fun SyncQueueItem(
         else -> stringResource(R.string.label_submission)
     }
 
-    Column(
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        shape = RoundedCornerShape(12.dp),
+        tonalElevation = 1.dp,
+        shadowElevation = 1.dp,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(20.dp),
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = name,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.weight(1f),
-            )
-            val (badgeLabel, badgeColor) = when {
-                isOffline -> stringResource(R.string.label_no_connection) to Color(0xFFD32F2F)
-                isUploading -> stringResource(R.string.label_uploading) to Color(0xFF1565C0)
-                else -> stringResource(R.string.label_queued) to Color(0xFF757575)
-            }
-            Surface(
-                shape = RoundedCornerShape(4.dp),
-                color = badgeColor.copy(alpha = 0.12f),
+        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = badgeLabel,
-                    color = badgeColor,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                    text = name,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.weight(1f),
+                )
+                val (badgeLabel, badgeColor) = when {
+                    isOffline -> stringResource(R.string.label_no_connection) to Color(0xFFEF4444)
+                    isUploading -> stringResource(R.string.label_uploading) to Color(0xFF3B82F6)
+                    else -> stringResource(R.string.label_queued) to Color(0xFF9E9E9E)
+                }
+                Surface(
+                    shape = RoundedCornerShape(50),
+                    color = badgeColor.copy(alpha = 0.15f),
+                ) {
+                    Text(
+                        text = badgeLabel,
+                        color = badgeColor,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                    )
+                }
+            }
+            if (isUploading) {
+                val progress = action.uploadChunkIndex!!.toFloat() / action.uploadTotalChunks!!.toFloat()
+                LinearProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 6.dp),
                 )
             }
-        }
-        if (isUploading) {
-            val progress = action.uploadChunkIndex!!.toFloat() / action.uploadTotalChunks!!.toFloat()
-            LinearProgressIndicator(
-                progress = { progress },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp),
-            )
         }
     }
 }

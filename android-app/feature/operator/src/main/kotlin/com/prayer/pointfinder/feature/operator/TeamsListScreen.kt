@@ -132,9 +132,9 @@ fun TeamsListScreen(
             LazyColumn(
                 modifier = modifier
                     .fillMaxSize()
-                    .padding(padding)
-                    .padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                    .padding(padding),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 12.dp),
             ) {
                 items(teams, key = { it.id }) { team ->
                     Surface(
@@ -142,23 +142,28 @@ fun TeamsListScreen(
                             .fillMaxWidth()
                             .testTag("team-edit-btn")
                             .clickable { onSelectTeam(team) },
-                        tonalElevation = 2.dp,
-                        shape = MaterialTheme.shapes.medium,
+                        tonalElevation = 1.dp,
+                        shadowElevation = 2.dp,
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
                     ) {
                         Row(
-                            modifier = Modifier.padding(12.dp),
+                            modifier = Modifier.padding(14.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            // Colored circle
+                            // Colored circle — slightly larger for visual weight
                             Box(
                                 modifier = Modifier
-                                    .size(32.dp)
+                                    .size(36.dp)
                                     .clip(CircleShape)
                                     .background(parseTeamColor(team.color)),
                             )
-                            Spacer(Modifier.width(12.dp))
+                            Spacer(Modifier.width(14.dp))
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(team.name, fontWeight = FontWeight.SemiBold)
+                                Text(
+                                    text = team.name,
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.titleSmall,
+                                )
                                 val joinCode = team.joinCode
                                 if (!joinCode.isNullOrBlank()) {
                                     Spacer(Modifier.height(2.dp))
@@ -178,6 +183,7 @@ fun TeamsListScreen(
                                     Icon(
                                         Icons.Default.ContentCopy,
                                         contentDescription = stringResource(R.string.label_copied),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.size(18.dp),
                                     )
                                 }

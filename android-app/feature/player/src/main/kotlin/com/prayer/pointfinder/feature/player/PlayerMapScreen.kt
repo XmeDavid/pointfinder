@@ -77,6 +77,8 @@ fun PlayerMapScreen(
     onBaseSelected: (BaseProgress) -> Unit,
     onRefresh: () -> Unit,
     onNotificationsClick: () -> Unit,
+    gameName: String? = null,
+    gameStatus: String? = null,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -185,6 +187,75 @@ fun PlayerMapScreen(
             modifier = Modifier.fillMaxSize(),
         )
 
+        // Floating glass header bar — matches iOS playerHeaderBar
+        androidx.compose.material3.Surface(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+            tonalElevation = 2.dp,
+            shadowElevation = 8.dp,
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = gameName ?: stringResource(R.string.label_map),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    if (gameStatus == "live") {
+                        Text(
+                            text = "LIVE",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        )
+                    }
+                }
+                // Notification bell
+                BadgedBox(
+                    badge = {
+                        if (unseenNotificationCount > 0) {
+                            val badgeLabel = if (unseenNotificationCount > 99) "99+" else unseenNotificationCount.toString()
+                            Badge(containerColor = StatusRejected) { Text(badgeLabel) }
+                        }
+                    },
+                ) {
+                    androidx.compose.material3.IconButton(onClick = onNotificationsClick) {
+                        Icon(
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = stringResource(R.string.label_notifications),
+                            tint = MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
+                }
+                // Refresh button
+                androidx.compose.material3.IconButton(onClick = onRefresh) {
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = stringResource(R.string.action_refresh),
+                            tint = MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
+                }
+            }
+        }
+
+        // Map legend at bottom
         Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -198,40 +269,6 @@ fun PlayerMapScreen(
             LegendDot(color = StatusSubmitted, label = stringResource(R.string.status_submitted))
             LegendDot(color = StatusCompleted, label = stringResource(R.string.status_completed))
             LegendDot(color = StatusRejected, label = stringResource(R.string.status_rejected))
-        }
-
-        Row(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            FilledTonalIconButton(onClick = onNotificationsClick) {
-                BadgedBox(
-                    badge = {
-                        if (unseenNotificationCount > 0) {
-                            val badgeLabel = if (unseenNotificationCount > 99) "99+" else unseenNotificationCount.toString()
-                            Badge { Text(badgeLabel) }
-                        }
-                    },
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Notifications,
-                        contentDescription = stringResource(R.string.label_notifications),
-                    )
-                }
-            }
-            FilledTonalIconButton(onClick = onRefresh) {
-                if (isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                } else {
-                    Icon(
-                        imageVector = Icons.Default.Refresh,
-                        contentDescription = stringResource(R.string.action_refresh),
-                    )
-                }
-            }
         }
     }
 }

@@ -174,14 +174,14 @@ fun OperatorHomeScreen(
                 else -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(bottom = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
                     ) {
-                        // Workspace switcher — only shown when there are orgs
+                        // Workspace switcher — always shown when there are orgs
                         if (orgs.isNotEmpty()) {
                             item {
                                 LazyRow(
-                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                                    contentPadding = PaddingValues(vertical = 4.dp),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 ) {
                                     item {
@@ -199,41 +199,63 @@ fun OperatorHomeScreen(
                                         )
                                     }
                                 }
+                                Spacer(Modifier.height(4.dp))
                             }
                         }
 
                         items(games, key = { it.id }, contentType = { "game" }) { game ->
+                            val statusColor = when (game.status) {
+                                GameStatus.LIVE -> StatusCompleted
+                                GameStatus.SETUP -> StatusSubmitted
+                                GameStatus.ENDED -> Color(0xFF9E9E9E)
+                            }
                             Surface(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 12.dp)
                                     .clickable { onSelectGame(game) },
-                                tonalElevation = 2.dp,
-                                shape = MaterialTheme.shapes.medium,
+                                tonalElevation = 1.dp,
+                                shadowElevation = 2.dp,
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
                             ) {
-                                Column(modifier = Modifier.padding(12.dp)) {
-                                    Text(game.name, fontWeight = FontWeight.SemiBold)
-                                    Spacer(Modifier.height(4.dp))
-                                    Text(game.description, style = MaterialTheme.typography.bodySmall)
-                                    Spacer(Modifier.height(6.dp))
-                                    val statusColor = when (game.status) {
-                                        GameStatus.LIVE -> StatusCompleted
-                                        GameStatus.SETUP -> StatusSubmitted
-                                        GameStatus.ENDED -> Color(0xFFD32F2F)
+                                Column(modifier = Modifier.padding(14.dp)) {
+                                    androidx.compose.foundation.layout.Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.Top,
+                                    ) {
+                                        Text(
+                                            text = game.name,
+                                            fontWeight = FontWeight.Bold,
+                                            style = MaterialTheme.typography.titleSmall,
+                                            modifier = Modifier.weight(1f).padding(end = 8.dp),
+                                        )
+                                        Text(
+                                            text = when (game.status) {
+                                                GameStatus.SETUP -> stringResource(R.string.game_status_setup)
+                                                GameStatus.LIVE -> stringResource(R.string.game_status_live)
+                                                GameStatus.ENDED -> stringResource(R.string.game_status_ended)
+                                            }.uppercase(),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = statusColor,
+                                            modifier = Modifier
+                                                .background(
+                                                    statusColor.copy(alpha = 0.15f),
+                                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(50),
+                                                )
+                                                .padding(horizontal = 8.dp, vertical = 3.dp),
+                                        )
                                     }
-                                    Text(
-                                        text = when (game.status) {
-                                            GameStatus.SETUP -> stringResource(R.string.game_status_setup)
-                                            GameStatus.LIVE -> stringResource(R.string.game_status_live)
-                                            GameStatus.ENDED -> stringResource(R.string.game_status_ended)
-                                        }.uppercase(),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.Medium,
-                                        color = statusColor,
-                                        modifier = Modifier
-                                            .background(statusColor.copy(alpha = 0.15f), shape = MaterialTheme.shapes.small)
-                                            .padding(horizontal = 10.dp, vertical = 5.dp),
-                                    )
+                                    if (game.description.isNotBlank()) {
+                                        Spacer(Modifier.height(6.dp))
+                                        Text(
+                                            text = game.description,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 2,
+                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                        )
+                                    }
                                 }
                             }
                         }
