@@ -124,9 +124,9 @@ function CompassRose({ darkMode }: { darkMode: boolean }) {
       {/* Glass circle wrapper (light mode only) */}
       {!darkMode && (
         <div
-          className="absolute inset-[-12%] rounded-full backdrop-blur-lg border border-white/50 shadow-[0_8px_32px_rgba(21,111,104,0.12),0_20px_60px_-20px_rgba(21,111,104,0.18)]"
+          className="absolute inset-[-12%] rounded-full backdrop-blur-xl border border-white/60 shadow-[0_8px_40px_rgba(21,111,104,0.15),inset_0_1px_0_rgba(255,255,255,0.5)]"
           style={{
-            background: "linear-gradient(145deg, rgba(255,255,255,0.40), rgba(255,255,255,0.18))",
+            background: "linear-gradient(145deg, rgba(255,255,255,0.50), rgba(255,255,255,0.25))",
           }}
         />
       )}
@@ -321,9 +321,9 @@ function Hero({ darkMode }: { darkMode: boolean }) {
             className="pointer-events-none absolute inset-0"
             style={{
               backgroundImage: [
-                "radial-gradient(circle at 40% 30%, rgba(21, 111, 104, 0.12), transparent 40%)",
-                "radial-gradient(circle at 70% 60%, rgba(211, 131, 61, 0.08), transparent 35%)",
-                "radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.3), transparent 50%)",
+                "radial-gradient(circle at 35% 25%, rgba(21, 111, 104, 0.18), transparent 45%)",
+                "radial-gradient(circle at 75% 65%, rgba(211, 131, 61, 0.12), transparent 40%)",
+                "radial-gradient(circle at 20% 70%, rgba(21, 111, 104, 0.08), transparent 30%)",
               ].join(","),
             }}
           />
@@ -331,8 +331,8 @@ function Hero({ darkMode }: { darkMode: boolean }) {
           <div
             className="pointer-events-none absolute inset-0"
             style={{
-              backgroundImage: "linear-gradient(rgba(40,56,48,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(40,56,48,0.04) 1px, transparent 1px)",
-              backgroundSize: "40px 40px",
+              backgroundImage: "linear-gradient(rgba(40,56,48,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(40,56,48,0.06) 1px, transparent 1px)",
+              backgroundSize: "34px 34px",
             }}
           />
         </>
@@ -348,11 +348,11 @@ function Hero({ darkMode }: { darkMode: boolean }) {
           >
             <div
               className={`rounded-full ${darkMode ? "bg-green-500" : "bg-teal-600"}`}
-              style={{ width: wp.s * 4, height: wp.s * 4, opacity: darkMode ? wp.o : wp.o * 0.7 }}
+              style={{ width: wp.s * 4, height: wp.s * 4, opacity: darkMode ? wp.o : wp.o * 1.7 }}
             />
             <div
               className={`absolute rounded-full border ${darkMode ? "border-green-500" : "border-teal-600"}`}
-              style={{ inset: -(wp.s * 2.5), opacity: (darkMode ? wp.o : wp.o * 0.7) * 0.4 }}
+              style={{ inset: -(wp.s * 2.5), opacity: (darkMode ? wp.o : wp.o * 1.7) * 0.4 }}
             />
           </div>
         ))}
@@ -404,7 +404,7 @@ function Hero({ darkMode }: { darkMode: boolean }) {
 function StoreBadge({ icon, label, availableOn, href, darkMode }: { icon: React.ReactNode; label: string; availableOn: string; href?: string; darkMode: boolean }) {
   const className = darkMode
     ? "flex items-center gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.03] px-5 py-2.5 text-sm text-white/35 transition-colors duration-200 hover:border-green-500/20 hover:bg-white/[0.05]"
-    : "flex items-center gap-2.5 rounded-xl border border-[rgba(21,111,104,0.15)] backdrop-blur-sm px-5 py-2.5 text-sm text-[#1e2e28]/50 transition-colors duration-200 hover:border-teal-600/25 shadow-[0_2px_12px_rgba(21,111,104,0.08)]";
+    : "flex items-center gap-2.5 rounded-xl border border-[rgba(40,56,48,0.12)] bg-white/60 backdrop-blur-sm px-5 py-2.5 text-sm text-[#1e2e28]/50 transition-colors duration-200 hover:border-teal-600/25 shadow-[0_4px_16px_rgba(29,46,38,0.08)]";
 
   const lightStyle = darkMode ? undefined : { background: "linear-gradient(180deg, rgba(255, 252, 247, 0.90), rgba(255, 248, 240, 0.75))" };
 
@@ -549,7 +549,7 @@ function Features({ darkMode }: { darkMode: boolean }) {
               className={`scroll-reveal group relative overflow-hidden rounded-2xl p-6 transition-all duration-300 ${f.span} ${f.large ? "flex flex-col justify-between" : ""} ${
                 darkMode
                   ? "border border-white/[0.06] bg-white/[0.015] hover:border-green-500/[0.14] hover:bg-green-500/[0.015]"
-                  : "border border-[rgba(40,56,48,0.08)] backdrop-blur-xl hover:border-teal-600/20 shadow-[0_20px_50px_-20px_rgba(29,46,38,0.12)]"
+                  : "border border-white/70 backdrop-blur-xl hover:border-teal-600/20 shadow-[0_24px_60px_-16px_rgba(29,46,38,0.25)]"
               }`}
               style={darkMode ? { transitionDelay: `${i * 80}ms` } : {
                 transitionDelay: `${i * 80}ms`,
@@ -826,7 +826,7 @@ function Pricing({ darkMode }: { darkMode: boolean }) {
 
   const cardBase = darkMode
     ? "flex flex-col rounded-2xl border border-white/[0.07] bg-white/[0.03] p-7"
-    : "flex flex-col rounded-2xl border border-[rgba(40,56,48,0.08)] backdrop-blur-xl p-7 shadow-[0_20px_50px_-20px_rgba(29,46,38,0.12)]";
+    : "flex flex-col rounded-2xl border border-white/70 backdrop-blur-xl p-7 shadow-[0_24px_60px_-16px_rgba(29,46,38,0.25)]";
 
   const featureText = darkMode ? "text-white/50" : "text-[#1e2e28]/55";
   const priceText = darkMode ? "text-white" : "text-[#1e2e28]";
@@ -882,7 +882,7 @@ function Pricing({ darkMode }: { darkMode: boolean }) {
             className={`relative flex flex-col rounded-2xl p-7 ${
               darkMode
                 ? "border border-green-500/30 bg-white/[0.03] shadow-[0_0_40px_rgba(34,197,94,0.04)]"
-                : "border border-teal-600/30 backdrop-blur-xl shadow-[0_28px_70px_-38px_rgba(21,111,104,0.3)]"
+                : "border border-[rgba(21,111,104,0.25)] backdrop-blur-xl shadow-[0_24px_60px_-16px_rgba(21,111,104,0.2)]"
             }`}
             style={darkMode ? undefined : { background: "linear-gradient(180deg, rgba(255, 252, 247, 0.92), rgba(255, 248, 240, 0.80))" }}
           >
@@ -1030,11 +1030,12 @@ export function LandingPage() {
       className={`min-h-screen overflow-x-hidden ${darkMode ? "bg-[#060b06] text-white" : "text-[#1e2e28]"}`}
       style={darkMode ? undefined : {
         backgroundImage: [
-          "radial-gradient(circle at 12% 12%, rgba(21, 111, 104, 0.13), transparent 28%)",
-          "radial-gradient(circle at 88% 8%, rgba(211, 131, 61, 0.12), transparent 24%)",
-          "radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.2), transparent 60%)",
-          "repeating-linear-gradient(115deg, rgba(21, 111, 104, 0.025) 0, rgba(21, 111, 104, 0.025) 2px, transparent 2px, transparent 58px)",
-          "linear-gradient(180deg, #f8f4ed 0%, #f1ebe1 50%, #eee6d8 100%)",
+          "radial-gradient(circle at 10% 10%, rgba(21, 111, 104, 0.18), transparent 35%)",
+          "radial-gradient(circle at 90% 5%, rgba(211, 131, 61, 0.15), transparent 30%)",
+          "radial-gradient(circle at 50% 60%, rgba(21, 111, 104, 0.06), transparent 40%)",
+          "radial-gradient(circle at 80% 80%, rgba(211, 131, 61, 0.08), transparent 30%)",
+          "repeating-linear-gradient(115deg, rgba(21, 111, 104, 0.04) 0, rgba(21, 111, 104, 0.04) 1.5px, transparent 1.5px, transparent 50px)",
+          "linear-gradient(180deg, #f4efe6 0%, #efe8dc 50%, #eae2d4 100%)",
         ].join(","),
       }}
     >
