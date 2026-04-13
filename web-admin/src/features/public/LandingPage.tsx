@@ -360,16 +360,13 @@ function Hero({ darkMode }: { darkMode: boolean }) {
 
       {/* Title */}
       <h1
-        className="landing-fade-in mb-5 text-center text-5xl font-bold tracking-tight md:text-7xl lg:text-8xl"
+        key={darkMode ? "dark" : "light"}
+        className="landing-fade-in mb-5 text-center text-5xl font-bold tracking-tight md:text-7xl lg:text-8xl bg-clip-text text-transparent"
         style={{
           animationDelay: "0.5s",
-          background: darkMode
+          backgroundImage: darkMode
             ? "linear-gradient(135deg, #4ade80 0%, #22c55e 35%, #16a34a 65%, #15803d 100%)"
             : "linear-gradient(135deg, #156f68 0%, #1a8a82 35%, #156f68 65%, #0e4e49 100%)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-          backgroundClip: "text",
-          color: "transparent",
         }}
       >
         PointFinder
