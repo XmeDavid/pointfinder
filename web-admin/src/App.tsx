@@ -97,6 +97,12 @@ const CreateOrgPage = lazy(() =>
   })),
 );
 
+const AdminPanelLazy = lazy(() =>
+  import("@/features/admin/AdminPanel").then((m) => ({
+    default: m.AdminPanel,
+  })),
+);
+
 // ---------------------------------------------------------------------------
 // Spinner shown while lazy chunks load
 // ---------------------------------------------------------------------------
@@ -329,6 +335,18 @@ const router = createBrowserRouter([
       import("@/features/billing/BillingCancelPage").then((m) => ({
         Component: m.BillingCancelPage,
       })),
+  },
+  {
+    path: "/admin",
+    element: (
+      <AuthGuard>
+        <AppLayout>
+          <Suspense fallback={<PageSpinner />}>
+            <AdminPanelLazy />
+          </Suspense>
+        </AppLayout>
+      </AuthGuard>
+    ),
   },
 
   // ── Catch-all ──────────────────────────────────────────────────────────

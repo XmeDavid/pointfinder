@@ -12,6 +12,7 @@ import {
   Globe,
   Check,
   FolderOpen,
+  Shield,
 } from "lucide-react";
 import {
   useWorkspaceStore,
@@ -26,6 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { useWorkspaceContext } from "@/stores/workspaceContext";
+import { useAuthStore } from "@/lib/auth/store";
 
 const THEME_KEY = "pointfinder-theme";
 
@@ -149,6 +151,8 @@ export function IconRail({ showModes }: IconRailProps) {
   const store = useWorkspaceStore();
   const { isDark, toggle: toggleTheme } = useThemeToggle();
   const { active } = useWorkspaceContext();
+  const { t } = useTranslation();
+  const user = useAuthStore(s => s.user);
 
   const isSettingsActive = store.settingsPanelOpen;
   const isOrgWorkspace = active.type === 'org';
@@ -198,6 +202,18 @@ export function IconRail({ showModes }: IconRailProps) {
 
         {/* Spacer when modes are hidden */}
         {!showModes && <div className="flex-1" />}
+
+        {/* Admin panel link -- only for admin users */}
+        {user?.role === 'admin' && (
+          <button
+            onClick={() => navigate('/admin')}
+            title={t('admin.title', 'Admin')}
+            aria-label={t('admin.title', 'Admin')}
+            className="w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer text-muted-foreground hover:text-foreground hover:bg-accent"
+          >
+            <Shield size={18} />
+          </button>
+        )}
 
         {/* Language picker */}
         <LanguagePicker />
