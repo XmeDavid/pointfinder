@@ -31,6 +31,7 @@ public class QuotaResponse {
         private Integer maxMembers;
         private Integer maxLiveGames;
         private Long maxResourceStorageBytes;
+        private Integer maxPlayersPerGame;
     }
 
     @Data

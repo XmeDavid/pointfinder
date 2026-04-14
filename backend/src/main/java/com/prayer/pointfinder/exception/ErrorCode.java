@@ -74,4 +74,6 @@ public enum ErrorCode {
     QUOTA_LIVE_GAMES_EXCEEDED,
     /** Uploaded file exceeds the maximum file size for this tier. */
     QUOTA_FILE_SIZE_EXCEEDED,
+    /** Game has reached the maximum number of players for this tier. */
+    QUOTA_PLAYERS_PER_GAME_EXCEEDED,
 }

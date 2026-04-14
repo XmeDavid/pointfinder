@@ -4,6 +4,7 @@ import com.prayer.pointfinder.dto.request.CheckInRequest;
 import com.prayer.pointfinder.dto.request.CreateSubmissionRequest;
 import com.prayer.pointfinder.dto.request.PlayerJoinRequest;
 import com.prayer.pointfinder.dto.request.PlayerSubmissionRequest;
+import com.prayer.pointfinder.service.QuotaService;
 import com.prayer.pointfinder.util.LazyInitHelper;
 import com.prayer.pointfinder.util.NotificationMapper;
 import com.prayer.pointfinder.dto.response.*;
@@ -48,6 +49,7 @@ public class PlayerService {
     private final UploadSessionRepository uploadSessionRepository;
     private final BaseUnlockOverrideRepository baseUnlockOverrideRepository;
     private final StageRepository stageRepository;
+    private final QuotaService quotaService;
 
     @Transactional(timeout = 10)
     public PlayerAuthResponse joinTeam(PlayerJoinRequest request) {
@@ -65,6 +67,8 @@ public class PlayerService {
                 .orElse(null);
 
         if (player == null) {
+            // Enforce player limit only for new players (not rejoins)
+            quotaService.enforcePlayersPerGameLimit(game);
             player = Player.builder()
                     .team(team)
                     .deviceId(request.getDeviceId())

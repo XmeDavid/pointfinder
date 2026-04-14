@@ -14,6 +14,7 @@ export interface QuotaLimits {
   maxFileSizeBytes: number | null
   maxMembers: number | null
   maxLiveGames: number | null
+  maxPlayersPerGame: number | null
 }
 
 export interface QuotaUsage {

@@ -9,6 +9,7 @@ import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.GameRepository;
 import com.prayer.pointfinder.repository.OrgMembershipRepository;
 import com.prayer.pointfinder.repository.OrganizationRepository;
+import com.prayer.pointfinder.repository.PlayerRepository;
 import com.prayer.pointfinder.repository.ResourceRepository;
 import com.prayer.pointfinder.repository.UserSubscriptionRepository;
 import com.prayer.pointfinder.security.SecurityUtils;
@@ -32,6 +33,7 @@ public class QuotaService {
     private final OrgMembershipRepository membershipRepository;
     private final GameRepository gameRepository;
     private final ResourceRepository resourceRepository;
+    private final PlayerRepository playerRepository;
 
     @Value("${app.quota.enforcement-enabled:false}")
     private boolean enforcementEnabled;
@@ -159,6 +161,23 @@ public class QuotaService {
         }
     }
 
+    public void enforcePlayersPerGameLimit(Game game) {
+        if (!enforcementEnabled) return;
+        Integer max;
+        if (game.getOrganization() != null) {
+            max = resolveOrgLimits(game.getOrganization()).getMaxPlayersPerGame();
+        } else {
+            UserSubscription sub = userSubRepository.findByUserId(game.getCreatedBy().getId()).orElse(null);
+            max = resolvePersonalLimits(sub).getMaxPlayersPerGame();
+        }
+        if (max == null) return;
+
+        long current = playerRepository.countByGameId(game.getId());
+        if (current >= max) {
+            throw new BadRequestException("Player limit reached (" + max + ")", ErrorCode.QUOTA_PLAYERS_PER_GAME_EXCEEDED);
+        }
+    }
+
     public int getMaxMembers(Organization org) {
         QuotaResponse.Limits limits = resolveOrgLimits(org);
         return limits.getMaxMembers() != null ? limits.getMaxMembers() : Integer.MAX_VALUE;
@@ -201,6 +220,7 @@ public class QuotaService {
                 .maxBasesPerGame(getOverride(sub != null ? sub.getQuotaOverrides() : null, "max_bases_per_game", 25))
                 .maxFileSizeBytes(getOverrideLong(sub != null ? sub.getQuotaOverrides() : null, "max_file_size_bytes", 100 * MB))
                 .maxResourceStorageBytes(getOverrideLong(sub != null ? sub.getQuotaOverrides() : null, "max_resource_storage_bytes", 0L))
+                .maxPlayersPerGame(getOverride(sub != null ? sub.getQuotaOverrides() : null, "max_players_per_game", 50))
                 .build();
         }
         // Pro
@@ -210,6 +230,7 @@ public class QuotaService {
             .maxBasesPerGame(getOverride(sub.getQuotaOverrides(), "max_bases_per_game", null))
             .maxFileSizeBytes(getOverrideLong(sub.getQuotaOverrides(), "max_file_size_bytes", 2 * GB))
             .maxResourceStorageBytes(getOverrideLong(sub.getQuotaOverrides(), "max_resource_storage_bytes", GB))
+            .maxPlayersPerGame(getOverride(sub.getQuotaOverrides(), "max_players_per_game", null))
             .build();
     }
 
@@ -223,6 +244,7 @@ public class QuotaService {
                 .maxBasesPerGame(getOverride(overrides, "max_bases_per_game", null))
                 .maxFileSizeBytes(getOverrideLong(overrides, "max_file_size_bytes", 2 * GB))
                 .maxResourceStorageBytes(getOverrideLong(overrides, "max_resource_storage_bytes", 25 * GB))
+                .maxPlayersPerGame(getOverride(overrides, "max_players_per_game", null))
                 .build();
         }
         if (org.getSubscriptionTier() == OrgTier.base) {
@@ -233,6 +255,7 @@ public class QuotaService {
                 .maxBasesPerGame(getOverride(overrides, "max_bases_per_game", null))
                 .maxFileSizeBytes(getOverrideLong(overrides, "max_file_size_bytes", 2 * GB))
                 .maxResourceStorageBytes(getOverrideLong(overrides, "max_resource_storage_bytes", 5 * GB))
+                .maxPlayersPerGame(getOverride(overrides, "max_players_per_game", 200))
                 .build();
         }
         // Free tier — minimal limits for cancelled/downgraded orgs
@@ -243,6 +266,7 @@ public class QuotaService {
             .maxBasesPerGame(getOverride(overrides, "max_bases_per_game", 25))
             .maxFileSizeBytes(getOverrideLong(overrides, "max_file_size_bytes", 100 * MB))
             .maxResourceStorageBytes(getOverrideLong(overrides, "max_resource_storage_bytes", 0L))
+            .maxPlayersPerGame(getOverride(overrides, "max_players_per_game", 50))
             .build();
     }
 

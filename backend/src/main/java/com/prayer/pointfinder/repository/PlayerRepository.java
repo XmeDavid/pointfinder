@@ -33,6 +33,9 @@ public interface PlayerRepository extends JpaRepository<Player, UUID> {
             """)
     Optional<Player> findAuthPlayerById(@Param("playerId") UUID playerId);
 
+    @Query("SELECT COUNT(DISTINCT p.id) FROM Player p WHERE p.team.game.id = :gameId")
+    long countByGameId(@Param("gameId") UUID gameId);
+
     @Modifying
     @Query("UPDATE Player p SET p.pushToken = NULL WHERE p.pushToken = :token")
     void setInvalidPushTokenToNull(@Param("token") String token);
