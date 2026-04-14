@@ -13,6 +13,7 @@ import {
   Check,
   FolderOpen,
   Shield,
+  LogOut,
 } from "lucide-react";
 import {
   useWorkspaceStore,
@@ -153,6 +154,7 @@ export function IconRail({ showModes }: IconRailProps) {
   const { active } = useWorkspaceContext();
   const { t } = useTranslation();
   const user = useAuthStore(s => s.user);
+  const logout = useAuthStore(s => s.logout);
 
   const isSettingsActive = store.settingsPanelOpen;
   const isOrgWorkspace = active.type === 'org';
@@ -227,6 +229,16 @@ export function IconRail({ showModes }: IconRailProps) {
           className="w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer text-muted-foreground hover:text-foreground hover:bg-accent"
         >
           {isDark ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
+
+        {/* Logout */}
+        <button
+          onClick={() => { logout(); navigate('/login') }}
+          title={t('common.logout', 'Logout')}
+          aria-label={t('common.logout', 'Logout')}
+          className="w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+        >
+          <LogOut size={18} />
         </button>
 
         {/* Settings icon at bottom -- only in game workspace */}

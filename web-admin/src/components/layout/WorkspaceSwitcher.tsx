@@ -1,5 +1,5 @@
 import { Plus } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useWorkspaces } from '../../hooks/queries/useWorkspaces'
 import { useWorkspaceContext } from '../../stores/workspaceContext'
 import { cn } from '../../lib/utils/cn'
@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 export function WorkspaceSwitcher() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const { data: workspaces } = useWorkspaces()
   const { active, setActive } = useWorkspaceContext()
 
@@ -17,7 +18,10 @@ export function WorkspaceSwitcher() {
     <div className="flex flex-col items-center gap-2">
       {/* Personal workspace */}
       <button
-        onClick={() => setActive({ type: 'personal' })}
+        onClick={() => {
+          setActive({ type: 'personal' })
+          if (location.pathname !== '/dashboard') navigate('/dashboard')
+        }}
         className={cn(
           'w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-sm transition-all',
           'bg-indigo-500',
@@ -47,7 +51,10 @@ export function WorkspaceSwitcher() {
         return (
           <button
             key={org.id}
-            onClick={() => setActive({ type: 'org', orgId: org.id, orgName: org.name })}
+            onClick={() => {
+              setActive({ type: 'org', orgId: org.id, orgName: org.name })
+              if (location.pathname !== '/dashboard') navigate('/dashboard')
+            }}
             className={cn(
               'w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-xs transition-all',
               'bg-emerald-600',
