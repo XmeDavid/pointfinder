@@ -26,6 +26,7 @@ public class StripeWebhookService {
     private final OrganizationRepository orgRepository;
     private final UserRepository userRepository;
     private final OrgMembershipRepository membershipRepository;
+    private final SubscriptionLifecycleService lifecycleService;
 
     @Transactional
     public void handleCheckoutCompleted(Session session) {
@@ -186,17 +187,43 @@ public class StripeWebhookService {
     public void handleSubscriptionUpdated(Subscription subscription) {
         String customerId = subscription.getCustomer();
         Instant periodEnd = Instant.ofEpochSecond(subscription.getCurrentPeriodEnd());
+        String stripeStatus = subscription.getStatus(); // active, past_due, canceled, etc.
 
         UserSubscription userSub = userSubRepository.findByStripeCustomerId(customerId).orElse(null);
         if (userSub != null) {
             userSub.setCurrentPeriodEnd(periodEnd);
-            userSubRepository.save(userSub);
+
+            // Sync status from Stripe
+            if ("past_due".equals(stripeStatus) && userSub.getStatus() == SubscriptionStatus.active) {
+                lifecycleService.startGracePeriod(userSub);
+                log.info("[WEBHOOK] subscription.updated userId={} -> grace_period", userSub.getUser().getId());
+            } else if ("active".equals(stripeStatus)
+                    && userSub.getStatus() != SubscriptionStatus.active) {
+                userSub.setStatus(SubscriptionStatus.active);
+                userSub.setGracePeriodEnd(null);
+                userSubRepository.save(userSub);
+                log.info("[WEBHOOK] subscription.updated userId={} -> active", userSub.getUser().getId());
+            } else {
+                userSubRepository.save(userSub);
+            }
             return;
         }
 
         Organization org = orgRepository.findByStripeCustomerId(customerId).orElse(null);
         if (org != null) {
-            orgRepository.save(org);
+            if ("past_due".equals(stripeStatus)
+                    && org.getSubscriptionStatus() == SubscriptionStatus.active) {
+                lifecycleService.startGracePeriod(org);
+                log.info("[WEBHOOK] subscription.updated orgId={} -> grace_period", org.getId());
+            } else if ("active".equals(stripeStatus)
+                    && org.getSubscriptionStatus() != SubscriptionStatus.active) {
+                org.setSubscriptionStatus(SubscriptionStatus.active);
+                org.setGracePeriodEnd(null);
+                orgRepository.save(org);
+                log.info("[WEBHOOK] subscription.updated orgId={} -> active", org.getId());
+            } else {
+                orgRepository.save(org);
+            }
         }
     }
 
