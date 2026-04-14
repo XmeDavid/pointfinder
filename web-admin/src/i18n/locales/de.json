@@ -977,7 +977,14 @@
     "paymentFailed": "Zahlung fehlgeschlagen. Wir versuchen es automatisch erneut.",
     "gracePeriod": "Dein Abonnement wird bald eingefroren. Bitte aktualisiere deine Zahlungsmethode.",
     "resolve": "Klären",
-    "upgradeToInstitution": "Auf Institution upgraden"
+    "upgradeToInstitution": "Auf Institution upgraden",
+    "operatorsPerGame": "Operatoren pro Spiel",
+    "basesPerGame": "Basen pro Spiel",
+    "playersPerGame": "Spieler pro Spiel",
+    "maxFileSize": "Maximale Dateigrösse",
+    "resourceStorage": "Ressourcenspeicher",
+    "billingPeriod": "Abrechnungszeitraum",
+    "renewsOn": "Erneuert am"
   },
   "quota": {
     "gameLimit": "Spiellimit erreicht. Upgrade deinen Plan.",

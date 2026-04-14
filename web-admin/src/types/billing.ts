@@ -15,12 +15,14 @@ export interface QuotaLimits {
   maxMembers: number | null
   maxLiveGames: number | null
   maxPlayersPerGame: number | null
+  maxResourceStorageBytes: number | null
 }
 
 export interface QuotaUsage {
   currentActiveGames: number
   currentMembers: number | null
   currentLiveGames: number | null
+  currentResourceStorageBytes: number | null
 }
 
 export interface UserSubscription {

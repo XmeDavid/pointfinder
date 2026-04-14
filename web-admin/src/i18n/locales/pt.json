@@ -977,7 +977,14 @@
     "paymentFailed": "Pagamento falhou. Estamos a tentar novamente.",
     "gracePeriod": "A tua subscrição será congelada em breve. Atualiza o método de pagamento.",
     "resolve": "Resolver",
-    "upgradeToInstitution": "Atualizar para Instituição"
+    "upgradeToInstitution": "Atualizar para Instituição",
+    "operatorsPerGame": "Operadores por jogo",
+    "basesPerGame": "Bases por jogo",
+    "playersPerGame": "Jogadores por jogo",
+    "maxFileSize": "Tamanho máximo de ficheiro",
+    "resourceStorage": "Armazenamento de recursos",
+    "billingPeriod": "Período de faturação",
+    "renewsOn": "Renova em"
   },
   "quota": {
     "gameLimit": "Limite de jogos atingido. Atualiza o teu plano.",

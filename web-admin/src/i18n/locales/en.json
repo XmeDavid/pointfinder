@@ -977,7 +977,14 @@
     "paymentFailed": "Payment failed. We're retrying automatically.",
     "gracePeriod": "Your subscription will be frozen soon. Please update your payment method.",
     "resolve": "Resolve",
-    "upgradeToInstitution": "Upgrade to Institution"
+    "upgradeToInstitution": "Upgrade to Institution",
+    "operatorsPerGame": "Operators per game",
+    "basesPerGame": "Bases per game",
+    "playersPerGame": "Players per game",
+    "maxFileSize": "Max file size",
+    "resourceStorage": "Resource storage",
+    "billingPeriod": "Billing period",
+    "renewsOn": "Renews on"
   },
   "quota": {
     "gameLimit": "Game limit reached. Upgrade your plan.",
