@@ -1,12 +1,18 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { IconRail } from "./IconRail";
 import { useWorkspaceStore } from "@/stores/workspace";
 
-// Wrap in router since IconRail uses useNavigate / useLocation
+// Wrap in router + query client since IconRail uses useNavigate / useLocation and react-query
 function renderWithRouter(ui: React.ReactNode) {
-  return render(<MemoryRouter>{ui}</MemoryRouter>);
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </QueryClientProvider>,
+  );
 }
 
 describe("IconRail", () => {
