@@ -178,7 +178,8 @@ public class QuotaService {
         if (override != null) return override;
         return switch (org.getSubscriptionTier()) {
             case high -> 25 * GB;
-            case base, free -> 5 * GB;
+            case base -> 5 * GB;
+            case free -> 0;
         };
     }
 
@@ -224,14 +225,24 @@ public class QuotaService {
                 .maxResourceStorageBytes(getOverrideLong(overrides, "max_resource_storage_bytes", 25 * GB))
                 .build();
         }
-        // Base (or free — same limits as base but admin-granted)
+        if (org.getSubscriptionTier() == OrgTier.base) {
+            return QuotaResponse.Limits.builder()
+                .maxMembers(getOverride(overrides, "max_members", 10))
+                .maxLiveGames(getOverride(overrides, "max_live_games", 10))
+                .maxOperatorsPerGame(getOverride(overrides, "max_operators_per_game", null))
+                .maxBasesPerGame(getOverride(overrides, "max_bases_per_game", null))
+                .maxFileSizeBytes(getOverrideLong(overrides, "max_file_size_bytes", 2 * GB))
+                .maxResourceStorageBytes(getOverrideLong(overrides, "max_resource_storage_bytes", 5 * GB))
+                .build();
+        }
+        // Free tier — minimal limits for cancelled/downgraded orgs
         return QuotaResponse.Limits.builder()
             .maxMembers(getOverride(overrides, "max_members", 3))
-            .maxLiveGames(getOverride(overrides, "max_live_games", 10))
-            .maxOperatorsPerGame(getOverride(overrides, "max_operators_per_game", null))
-            .maxBasesPerGame(getOverride(overrides, "max_bases_per_game", null))
-            .maxFileSizeBytes(getOverrideLong(overrides, "max_file_size_bytes", 2 * GB))
-            .maxResourceStorageBytes(getOverrideLong(overrides, "max_resource_storage_bytes", 5 * GB))
+            .maxLiveGames(getOverride(overrides, "max_live_games", 1))
+            .maxOperatorsPerGame(getOverride(overrides, "max_operators_per_game", 1))
+            .maxBasesPerGame(getOverride(overrides, "max_bases_per_game", 25))
+            .maxFileSizeBytes(getOverrideLong(overrides, "max_file_size_bytes", 100 * MB))
+            .maxResourceStorageBytes(getOverrideLong(overrides, "max_resource_storage_bytes", 0L))
             .build();
     }
 
