@@ -142,6 +142,9 @@ public class BaseService {
             base.setFixedChallenge(null);
         }
 
+        // Stage assignment — write through (null clears)
+        base.setStageId(request.getStageId());
+
         // Always write through tags — null clears all tags
         Set<GameTag> resolvedTags = resolveTagIds(request.getTagIds(), gameId);
         base.setTags(resolvedTags);

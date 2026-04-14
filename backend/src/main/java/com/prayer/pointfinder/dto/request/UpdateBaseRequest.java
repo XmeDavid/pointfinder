@@ -41,4 +41,7 @@ public class UpdateBaseRequest {
      */
     @Size(max = 20, message = "A base can have at most 20 tags")
     private List<UUID> tagIds;
+
+    /** Stage assignment. Null keeps current value; explicit JSON null clears it. */
+    private UUID stageId;
 }

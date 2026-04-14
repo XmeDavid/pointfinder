@@ -96,10 +96,10 @@ export default function StageDetail({
     [allBases, stage?.baseIds],
   )
 
-  // Bases not assigned to any stage (or assigned to a different stage)
-  const unassignedBases = useMemo(() => {
-    return allBases.filter((b) => !b.stageId || b.stageId === null)
-  }, [allBases])
+  // Bases not in this stage (available to add/move here)
+  const availableBases = useMemo(() => {
+    return allBases.filter((b) => b.stageId !== stageId)
+  }, [allBases, stageId])
 
   // Bases available for trigger selection (from previous stages)
   const previousStageBases = useMemo(() => {
@@ -316,20 +316,31 @@ export default function StageDetail({
         <div className="relative mt-3">
           <button
             onClick={() => setShowAddBaseDropdown((v) => !v)}
-            disabled={unassignedBases.length === 0}
+            disabled={availableBases.length === 0}
             data-testid="add-existing-base-btn"
             className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground border border-dashed border-border hover:border-muted-foreground hover:text-foreground rounded-md transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Plus className="h-3 w-3" />
             Add existing base
           </button>
-          {showAddBaseDropdown && unassignedBases.length > 0 && (
+          {showAddBaseDropdown && availableBases.length > 0 && (
             <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-60 overflow-y-auto rounded-md border border-border bg-popover shadow-lg">
-              {unassignedBases.map((b) => (
+              {availableBases.map((b) => (
                 <button
                   key={b.id}
                   onClick={() => {
-                    updateBase.mutate({ baseId: b.id, dto: { stageId: stageId } })
+                    updateBase.mutate({
+                      baseId: b.id,
+                      dto: {
+                        name: b.name,
+                        description: b.description ?? '',
+                        lat: b.lat,
+                        lng: b.lng,
+                        hidden: b.hidden,
+                        nfcLinked: b.nfcLinked,
+                        stageId: stageId,
+                      },
+                    })
                     setShowAddBaseDropdown(false)
                   }}
                   data-testid={`add-base-option-${b.id}`}

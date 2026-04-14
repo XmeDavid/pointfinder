@@ -16,7 +16,10 @@ export function useUpdateBase(gameId: string) {
   return useMutation({
     mutationFn: ({ baseId, dto }: { baseId: string; dto: Partial<CreateBaseDto> }) =>
       basesApi.update(baseId, { ...dto, gameId }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['bases', gameId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['bases', gameId] })
+      qc.invalidateQueries({ queryKey: ['stages', gameId] })
+    },
   })
 }
 
