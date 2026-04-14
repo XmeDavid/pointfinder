@@ -56,7 +56,8 @@ import com.prayer.pointfinder.core.model.UpdateStageRequest
 fun StageEditScreen(
     stage: Stage?,
     bases: List<Base>,
-    onSave: (Any) -> Unit,
+    onCreate: (CreateStageRequest) -> Unit,
+    onUpdate: (UpdateStageRequest) -> Unit,
     onDelete: (() -> Unit)?,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
@@ -281,7 +282,7 @@ fun StageEditScreen(
                     val resolvedTriggerBaseId = if (transitionType == "trigger") triggerBaseId else null
                     val resolvedScheduledAt = if (transitionType == "scheduled" && scheduledAt.isNotBlank()) scheduledAt else null
                     if (isEditMode) {
-                        onSave(
+                        onUpdate(
                             UpdateStageRequest(
                                 name = name,
                                 description = description.ifBlank { null },
@@ -291,7 +292,7 @@ fun StageEditScreen(
                             ),
                         )
                     } else {
-                        onSave(
+                        onCreate(
                             CreateStageRequest(
                                 name = name,
                                 description = description.ifBlank { null },

@@ -54,18 +54,18 @@ struct OrganizationView: View {
                 .padding(.vertical, 4)
 
                 HStack(spacing: PFSpacing.sectionGap) {
-                    statPill(label: "Members", value: "\(org.memberCount)", icon: "person.2")
-                    statPill(label: "Live Games", value: "\(org.liveGames)", icon: "gamecontroller")
+                    statPill(label: locale.t("org.members"), value: "\(org.memberCount)", icon: "person.2")
+                    statPill(label: locale.t("org.liveGames"), value: "\(org.liveGames)", icon: "gamecontroller")
                 }
                 .padding(.vertical, 2)
             }
 
             // Members section
-            Section("Members") {
+            Section(locale.t("org.members")) {
                 if isLoading {
-                    ProgressView("Loading members…")
+                    ProgressView(locale.t("org.loadingMembers"))
                 } else if members.isEmpty {
-                    Text("No members yet.")
+                    Text(locale.t("org.noMembers"))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 } else {
@@ -81,7 +81,7 @@ struct OrganizationView: View {
                         inviteError = nil
                         showInviteSheet = true
                     } label: {
-                        Label("Invite Member", systemImage: "person.badge.plus")
+                        Label(locale.t("org.inviteMember"), systemImage: "person.badge.plus")
                             .foregroundStyle(Color.pfPrimary)
                     }
                 }
@@ -117,16 +117,16 @@ struct OrganizationView: View {
             }
         }
         // Remove confirmation
-        .alert("Remove Member", isPresented: Binding(
+        .alert(locale.t("org.removeMember"), isPresented: Binding(
             get: { memberToRemove != nil },
             set: { if !$0 { memberToRemove = nil } }
         )) {
-            Button("Remove", role: .destructive) {
+            Button(locale.t("org.remove"), role: .destructive) {
                 if let m = memberToRemove { Task { await removeMember(m) } }
             }
-            Button("Cancel", role: .cancel) {}
+            Button(locale.t("common.cancel"), role: .cancel) {}
         } message: {
-            Text("Remove \(memberToRemove?.name ?? "") from \(org.name)?")
+            Text(String(format: locale.t("org.removeMemberMessage"), memberToRemove?.name ?? "", org.name))
         }
     }
 
@@ -163,7 +163,7 @@ struct OrganizationView: View {
                 Button(role: .destructive) {
                     memberToRemove = member
                 } label: {
-                    Label("Remove", systemImage: "trash")
+                    Label(locale.t("org.remove"), systemImage: "trash")
                 }
             }
         }
@@ -173,7 +173,7 @@ struct OrganizationView: View {
     private func permissionBadges(_ mask: Int) -> some View {
         let labels = permissionLabels(for: mask)
         if labels.isEmpty {
-            Text("No permissions")
+            Text(locale.t("org.noPermissions"))
                 .font(.caption2)
                 .foregroundStyle(Color.pfTextMuted)
         } else {
@@ -197,8 +197,8 @@ struct OrganizationView: View {
     private var inviteSheet: some View {
         NavigationStack {
             Form {
-                Section("Invite by Email") {
-                    TextField("Email address", text: $inviteEmail)
+                Section(locale.t("org.inviteByEmail")) {
+                    TextField(locale.t("org.emailAddress"), text: $inviteEmail)
                         .textInputAutocapitalization(.never)
                         .keyboardType(.emailAddress)
                         .autocorrectionDisabled()
@@ -211,14 +211,14 @@ struct OrganizationView: View {
                     }
                 }
             }
-            .navigationTitle("Invite Member")
+            .navigationTitle(locale.t("org.inviteMember"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { showInviteSheet = false }
+                    Button(locale.t("common.cancel")) { showInviteSheet = false }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Send") {
+                    Button(locale.t("org.send")) {
                         Task { await sendInvite() }
                     }
                     .disabled(inviteEmail.trimmingCharacters(in: .whitespaces).isEmpty || isSendingInvite)
@@ -235,13 +235,13 @@ struct OrganizationView: View {
     private func permissionsSheet(for member: OrgMemberResponse) -> some View {
         NavigationStack {
             Form {
-                Section("Permissions for \(member.name)") {
-                    permissionToggle("Operate Games", flag: OrgPermission.operateGames)
-                    permissionToggle("Create Games", flag: OrgPermission.createGames)
-                    permissionToggle("Delete Games", flag: OrgPermission.deleteGames)
-                    permissionToggle("Invite Members", flag: OrgPermission.inviteMembers)
-                    permissionToggle("Manage Permissions", flag: OrgPermission.managePerms)
-                    permissionToggle("Manage Billing", flag: OrgPermission.manageBilling)
+                Section(String(format: locale.t("org.permissionsFor"), member.name)) {
+                    permissionToggle(locale.t("org.permOperateGamesFull"), flag: OrgPermission.operateGames)
+                    permissionToggle(locale.t("org.permCreateGamesFull"), flag: OrgPermission.createGames)
+                    permissionToggle(locale.t("org.permDeleteGamesFull"), flag: OrgPermission.deleteGames)
+                    permissionToggle(locale.t("org.permInviteMembersFull"), flag: OrgPermission.inviteMembers)
+                    permissionToggle(locale.t("org.permManagePermsFull"), flag: OrgPermission.managePerms)
+                    permissionToggle(locale.t("org.permManageBillingFull"), flag: OrgPermission.manageBilling)
                 }
                 if let errorMessage {
                     Section {
@@ -251,14 +251,14 @@ struct OrganizationView: View {
                     }
                 }
             }
-            .navigationTitle("Edit Permissions")
+            .navigationTitle(locale.t("org.editPermissions"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { showPermissionsSheet = false }
+                    Button(locale.t("common.cancel")) { showPermissionsSheet = false }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                    Button(locale.t("operator.save")) {
                         Task { await savePermissions(for: member) }
                     }
                     .disabled(isSavingPermissions)
@@ -324,12 +324,12 @@ struct OrganizationView: View {
 
     private func permissionLabels(for mask: Int) -> [String] {
         var labels: [String] = []
-        if OrgPermission.has(mask, OrgPermission.operateGames)  { labels.append("Operate") }
-        if OrgPermission.has(mask, OrgPermission.createGames)   { labels.append("Create") }
-        if OrgPermission.has(mask, OrgPermission.deleteGames)   { labels.append("Delete") }
-        if OrgPermission.has(mask, OrgPermission.inviteMembers) { labels.append("Invite") }
-        if OrgPermission.has(mask, OrgPermission.managePerms)   { labels.append("Perms") }
-        if OrgPermission.has(mask, OrgPermission.manageBilling) { labels.append("Billing") }
+        if OrgPermission.has(mask, OrgPermission.operateGames)  { labels.append(Translations.string("org.permOperateGames")) }
+        if OrgPermission.has(mask, OrgPermission.createGames)   { labels.append(Translations.string("org.permCreateGames")) }
+        if OrgPermission.has(mask, OrgPermission.deleteGames)   { labels.append(Translations.string("org.permDeleteGames")) }
+        if OrgPermission.has(mask, OrgPermission.inviteMembers) { labels.append(Translations.string("org.permInviteMembers")) }
+        if OrgPermission.has(mask, OrgPermission.managePerms)   { labels.append(Translations.string("org.permManagePerms")) }
+        if OrgPermission.has(mask, OrgPermission.manageBilling) { labels.append(Translations.string("org.permManageBilling")) }
         return labels
     }
 
@@ -370,7 +370,7 @@ struct OrganizationView: View {
             )
             members.insert(newMember, at: 0)
             showInviteSheet = false
-            successMessage = "Invite sent to \(email)"
+            successMessage = String(format: locale.t("org.inviteSentTo"), email)
             Task { try? await Task.sleep(for: .seconds(3)); successMessage = nil }
         } catch is CancellationError {
         } catch {

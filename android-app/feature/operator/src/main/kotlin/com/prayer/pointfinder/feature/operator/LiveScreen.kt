@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.FormatListNumbered
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -49,6 +50,7 @@ import androidx.compose.ui.unit.sp
 import com.prayer.pointfinder.core.i18n.R
 import com.prayer.pointfinder.core.model.ActivityEvent
 import com.prayer.pointfinder.core.model.LeaderboardEntry
+import com.prayer.pointfinder.core.model.Stage
 import com.prayer.pointfinder.core.model.Team
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -57,6 +59,8 @@ fun LiveScreen(
     leaderboard: List<LeaderboardEntry>,
     activity: List<ActivityEvent>,
     teams: List<Team>,
+    stages: List<Stage> = emptyList(),
+    onManageStages: () -> Unit = {},
     onRefresh: () -> Unit,
     isRefreshing: Boolean = false,
     isConnected: Boolean = true,
@@ -109,6 +113,11 @@ fun LiveScreen(
             pendingCount = pendingCount,
             progressPercent = progressPercent,
         )
+
+        // Stage status card (only when stages are configured)
+        if (stages.isNotEmpty()) {
+            StageStatusCard(stages = stages, onManageStages = onManageStages)
+        }
 
         // Segmented picker
         SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
@@ -407,6 +416,76 @@ private fun ActivityCard(event: ActivityEvent, teamColorMap: Map<*, String>) {
                     text = formatTimestamp(event.timestamp),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun StageStatusCard(stages: List<Stage>, onManageStages: () -> Unit) {
+    val sortedStages = stages.sortedBy { it.orderIndex }
+    val currentStage = sortedStages.lastOrNull { it.isActive }
+    val currentIndex = currentStage?.let { s -> sortedStages.indexOfFirst { it.id == s.id } }
+    val totalCount = sortedStages.size
+
+    Surface(
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 1.dp,
+        shadowElevation = 2.dp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("stage-status-card"),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Default.FormatListNumbered,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp),
+            )
+
+            Column(modifier = Modifier.weight(1f)) {
+                if (currentStage != null && currentIndex != null) {
+                    Text(
+                        text = currentStage.name,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        text = stringResource(R.string.label_stage_n_of_m, currentIndex + 1, totalCount),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    Text(
+                        text = stringResource(R.string.label_no_active_stage),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        text = stringResource(R.string.label_stages_configured, totalCount),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            androidx.compose.material3.TextButton(
+                onClick = onManageStages,
+                modifier = Modifier.testTag("manage-stages-btn"),
+            ) {
+                Text(
+                    text = stringResource(R.string.label_manage_arrow),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
                 )
             }
         }

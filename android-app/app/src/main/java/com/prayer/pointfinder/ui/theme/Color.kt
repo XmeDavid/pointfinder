@@ -4,8 +4,8 @@ import androidx.compose.ui.graphics.Color
 
 // Brand / primary
 val GreenSeed = Color(0xFF22C55E)
-val GreenDark = Color(0xFF0F7A36)
-val GreenLight = Color(0xFF39B865)
+val GreenDark = Color(0xFF16A34A)
+val GreenLight = Color(0xFF86EFAC)
 
 // Status colors (used for base progress, badges, indicators)
 val StatusCheckedIn = Color(0xFF3B82F6)

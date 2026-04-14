@@ -882,7 +882,7 @@ fun BaseEditActionSheet(
 
             // Status badges
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                val nfcColor = if (base.nfcLinked) StatusCompleted else StatusSubmitted
+                val nfcColor = if (base.nfcLinked) StatusCompleted else StatusRejected
                 val nfcLabel = if (base.nfcLinked) {
                     stringResource(R.string.label_nfc_linked)
                 } else {

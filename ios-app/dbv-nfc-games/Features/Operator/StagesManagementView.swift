@@ -37,9 +37,9 @@ struct StagesManagementView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if stages.isEmpty {
                 ContentUnavailableView(
-                    "No Stages",
+                    locale.t("stages.noStages"),
                     systemImage: "list.number",
-                    description: Text("Create stages to gate base visibility during the game.")
+                    description: Text(locale.t("stages.noStagesDesc"))
                 )
             } else {
                 List(stages.sorted { $0.orderIndex < $1.orderIndex }) { stage in
@@ -51,7 +51,7 @@ struct StagesManagementView: View {
                 .listStyle(.plain)
             }
         }
-        .navigationTitle("Stages")
+        .navigationTitle(locale.t("stages.title"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if let onDismiss {
@@ -152,23 +152,23 @@ struct StagesManagementView: View {
     private func transitionBadge(for transitionType: String) -> some View {
         switch transitionType {
         case "scheduled":
-            Label("Scheduled", systemImage: "clock")
+            Label(locale.t("stages.scheduled"), systemImage: "clock")
                 .font(.caption2)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
-                .background(Color.blue.opacity(0.15))
-                .foregroundStyle(.blue)
+                .background(Color.pfCheckedIn.opacity(0.15))
+                .foregroundStyle(Color.pfCheckedIn)
                 .clipShape(Capsule())
         case "trigger":
-            Label("Trigger", systemImage: "flag")
+            Label(locale.t("stages.trigger"), systemImage: "flag")
                 .font(.caption2)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
-                .background(Color.orange.opacity(0.15))
-                .foregroundStyle(.orange)
+                .background(Color.pfPending.opacity(0.15))
+                .foregroundStyle(Color.pfPending)
                 .clipShape(Capsule())
         default:
-            Text("Manual")
+            Text(locale.t("stages.manual"))
                 .font(.caption2)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
@@ -180,7 +180,7 @@ struct StagesManagementView: View {
 
     private func baseCountLabel(_ stage: Stage) -> String {
         let count = stage.baseIds?.count ?? 0
-        return count == 1 ? "1 base" : "\(count) bases"
+        return count == 1 ? locale.t("stages.oneBase") : String(format: locale.t("stages.nBases"), count)
     }
 
     private func loadData() async {

@@ -63,26 +63,26 @@ struct StageEditView: View {
     var body: some View {
         Form {
             // MARK: - Basic Info
-            Section("Details") {
-                TextField("Name", text: $name)
+            Section(locale.t("stages.details")) {
+                TextField(locale.t("stages.name"), text: $name)
                     .accessibilityIdentifier("stage-name-field")
-                TextField("Description (optional)", text: $descriptionText)
+                TextField(locale.t("stages.descriptionOptional"), text: $descriptionText)
                     .accessibilityIdentifier("stage-description-field")
             }
 
             // MARK: - Transition Type
-            Section("Transition") {
-                Picker("Type", selection: $transitionType) {
-                    Text("Manual").tag("manual")
-                    Text("Scheduled").tag("scheduled")
-                    Text("Trigger").tag("trigger")
+            Section(locale.t("stages.transition")) {
+                Picker(locale.t("stages.transition"), selection: $transitionType) {
+                    Text(locale.t("stages.manual")).tag("manual")
+                    Text(locale.t("stages.scheduled")).tag("scheduled")
+                    Text(locale.t("stages.trigger")).tag("trigger")
                 }
                 .pickerStyle(.segmented)
                 .accessibilityIdentifier("stage-transition-type-picker")
 
                 if transitionType == "scheduled" {
                     DatePicker(
-                        "Activate At",
+                        locale.t("stages.activateAt"),
                         selection: $scheduledAt,
                         displayedComponents: [.date, .hourAndMinute]
                     )
@@ -90,8 +90,8 @@ struct StageEditView: View {
                 }
 
                 if transitionType == "trigger" {
-                    Picker("Trigger Base", selection: $triggerBaseId) {
-                        Text("None").tag(Optional<UUID>.none)
+                    Picker(locale.t("stages.triggerBase"), selection: $triggerBaseId) {
+                        Text(locale.t("stages.none")).tag(Optional<UUID>.none)
                         ForEach(bases) { base in
                             Text(base.name).tag(Optional(base.id))
                         }
@@ -102,7 +102,7 @@ struct StageEditView: View {
 
             // MARK: - Assigned Bases (read-only)
             if let stage, let baseIds = stage.baseIds, !baseIds.isEmpty {
-                Section("Assigned Bases") {
+                Section(locale.t("stages.assignedBases")) {
                     ForEach(baseIds, id: \.self) { baseId in
                         if let base = bases.first(where: { $0.id == baseId }) {
                             Text(base.name)

@@ -519,6 +519,8 @@
     <string name="label_stage_active">Active</string>
     <string name="label_stage_inactive">Inactive</string>
     <string name="label_stage_n_of_m">Stage %1$d of %2$d</string>
+    <string name="label_no_active_stage">No active stage</string>
+    <string name="label_stages_configured">%1$d stage(s) configured</string>
     <string name="label_manage_arrow">Manage →</string>
     <string name="toast_stage_created">Stage created</string>
     <string name="toast_stage_saved">Stage saved</string>

@@ -26,9 +26,9 @@ struct MyInvitesView: View {
             } else if invites.isEmpty {
                 Section {
                     ContentUnavailableView(
-                        "No Pending Invitations",
+                        locale.t("invites.noPending"),
                         systemImage: "envelope",
-                        description: Text("You have no pending game invitations.")
+                        description: Text(locale.t("invites.noPendingDesc"))
                     )
                 }
             } else {
@@ -36,7 +36,7 @@ struct MyInvitesView: View {
                     ForEach(invites) { invite in
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("\(invite.inviterName ?? "Someone") invited you to \(invite.gameName ?? "a game")")
+                                Text(String(format: locale.t("invites.invitedYouTo"), invite.inviterName ?? "Someone", invite.gameName ?? "a game"))
                                     .font(.body)
                                 if let createdAt = invite.createdAt,
                                    let date = DateFormatting.parseISO8601(createdAt) {
@@ -53,11 +53,11 @@ struct MyInvitesView: View {
                                     ProgressView()
                                         .frame(width: 60)
                                 } else {
-                                    Text("Accept")
+                                    Text(locale.t("invites.accept"))
                                         .fontWeight(.semibold)
                                         .padding(.horizontal, 12)
                                         .padding(.vertical, 6)
-                                        .background(Color.blue)
+                                        .background(Color.pfPrimary)
                                         .foregroundStyle(.white)
                                         .clipShape(Capsule())
                                 }
@@ -76,7 +76,7 @@ struct MyInvitesView: View {
                 }
             }
         }
-        .navigationTitle("Invitations")
+        .navigationTitle(locale.t("invites.title"))
         .navigationBarTitleDisplayMode(.inline)
         .task {
             await loadInvites()
