@@ -41,6 +41,9 @@ class GlobalExceptionHandlerIT {
     @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @MockitoBean
+    private com.prayer.pointfinder.security.FrozenAccountFilter frozenAccountFilter;
+
     // ── 404 ResourceNotFoundException ────────────────────────────────────────
 
     @Test

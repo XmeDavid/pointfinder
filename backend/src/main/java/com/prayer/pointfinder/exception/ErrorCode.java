@@ -57,6 +57,10 @@ public enum ErrorCode {
     /** The stage is already the active stage for its game. */
     STAGE_ALREADY_ACTIVE,
 
+    // ── Billing / account state ──────────────────────────────────────────
+    /** The operator's account is frozen; they must update their payment method. */
+    ACCOUNT_FROZEN,
+
     // ── Quota enforcement ────────────────────────────────────────────────
     /** User has reached the maximum number of active games for their tier. */
     QUOTA_ACTIVE_GAMES_EXCEEDED,

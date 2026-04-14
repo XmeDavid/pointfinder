@@ -59,6 +59,9 @@ class AuthControllerTest {
     @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @MockitoBean
+    private com.prayer.pointfinder.security.FrozenAccountFilter frozenAccountFilter;
+
     // ── Player Join tests ─────────────────────────────────────────────
 
     @Test

@@ -61,6 +61,9 @@ class OperatorOverrideControllerTest {
     @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @MockitoBean
+    private com.prayer.pointfinder.security.FrozenAccountFilter frozenAccountFilter;
+
     // ── Fixtures ─────────────────────────────────────────────────────────────
 
     private static final UUID GAME_ID = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");

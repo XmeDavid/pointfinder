@@ -50,6 +50,9 @@ class SubmissionControllerTest {
     @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @MockitoBean
+    private com.prayer.pointfinder.security.FrozenAccountFilter frozenAccountFilter;
+
     // ── List submissions ────────────────────────────────────────────
 
     @Test

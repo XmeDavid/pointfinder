@@ -48,6 +48,9 @@ class GameTagControllerTest {
     @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @MockitoBean
+    private com.prayer.pointfinder.security.FrozenAccountFilter frozenAccountFilter;
+
     private static final UUID GAME_ID = UUID.randomUUID();
     private static final UUID TAG_ID  = UUID.randomUUID();
 

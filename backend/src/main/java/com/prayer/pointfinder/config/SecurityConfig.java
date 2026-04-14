@@ -1,5 +1,6 @@
 package com.prayer.pointfinder.config;
 
+import com.prayer.pointfinder.security.FrozenAccountFilter;
 import com.prayer.pointfinder.security.JwtAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final FrozenAccountFilter frozenAccountFilter;
 
     @Value("${app.cors.allowed-origins}")
     private String allowedOrigins;
@@ -80,7 +82,8 @@ public class SecurityConfig {
                 .hasAnyRole("ADMIN", "OPERATOR")
                 .anyRequest().authenticated()
             )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterAfter(frozenAccountFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

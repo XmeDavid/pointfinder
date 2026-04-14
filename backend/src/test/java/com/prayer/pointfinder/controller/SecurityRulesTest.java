@@ -39,7 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     GameController.class,
     PlayerController.class
 })
-@Import({SecurityConfig.class, JwtAuthenticationFilter.class})
+@Import({SecurityConfig.class, JwtAuthenticationFilter.class, com.prayer.pointfinder.security.FrozenAccountFilter.class})
 @TestPropertySource(properties = {
     "app.cors.allowed-origins=http://localhost:5173",
     "management.endpoints.web.exposure.include=health,info,metrics,prometheus"
@@ -51,6 +51,9 @@ class SecurityRulesTest {
 
     @MockitoBean
     private JwtTokenProvider tokenProvider;
+
+    @MockitoBean
+    private com.prayer.pointfinder.repository.UserSubscriptionRepository userSubscriptionRepository;
 
     @MockitoBean
     private UserRepository userRepository;

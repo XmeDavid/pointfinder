@@ -46,6 +46,9 @@ class StageControllerTest {
     @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @MockitoBean
+    private com.prayer.pointfinder.security.FrozenAccountFilter frozenAccountFilter;
+
     private static final UUID GAME_ID = UUID.randomUUID();
     private static final UUID STAGE_ID = UUID.randomUUID();
 

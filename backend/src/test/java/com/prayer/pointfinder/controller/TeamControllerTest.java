@@ -47,6 +47,9 @@ class TeamControllerTest {
     @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @MockitoBean
+    private com.prayer.pointfinder.security.FrozenAccountFilter frozenAccountFilter;
+
     private static final UUID GAME_ID = UUID.randomUUID();
     private static final UUID TEAM_ID = UUID.randomUUID();
     private static final UUID PLAYER_ID = UUID.randomUUID();

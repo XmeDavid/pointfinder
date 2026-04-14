@@ -49,6 +49,9 @@ class InviteControllerTest {
     @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @MockitoBean
+    private com.prayer.pointfinder.security.FrozenAccountFilter frozenAccountFilter;
+
     private static final UUID INVITE_ID = UUID.randomUUID();
     private static final UUID GAME_ID = UUID.randomUUID();
     private static final UUID INVITER_ID = UUID.randomUUID();

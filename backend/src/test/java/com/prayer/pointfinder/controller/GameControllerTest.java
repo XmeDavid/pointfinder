@@ -51,6 +51,9 @@ class GameControllerTest {
     @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @MockitoBean
+    private com.prayer.pointfinder.security.FrozenAccountFilter frozenAccountFilter;
+
     // ── Create game ─────────────────────────────────────────────────
 
     @Test

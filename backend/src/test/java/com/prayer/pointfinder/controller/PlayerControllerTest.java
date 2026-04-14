@@ -65,6 +65,9 @@ class PlayerControllerTest {
     @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @MockitoBean
+    private com.prayer.pointfinder.security.FrozenAccountFilter frozenAccountFilter;
+
     private MockedStatic<SecurityUtils> securityUtilsMock;
     private Player testPlayer;
 

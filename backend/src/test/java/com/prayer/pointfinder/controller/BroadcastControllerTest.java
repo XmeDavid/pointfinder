@@ -39,6 +39,9 @@ class BroadcastControllerTest {
     @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @MockitoBean
+    private com.prayer.pointfinder.security.FrozenAccountFilter frozenAccountFilter;
+
     private static final String BROADCAST_CODE = "ABC123";
     private static final UUID GAME_ID = UUID.randomUUID();
     private static final UUID TEAM_ID = UUID.randomUUID();

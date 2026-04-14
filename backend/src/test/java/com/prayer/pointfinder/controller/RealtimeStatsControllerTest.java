@@ -43,6 +43,9 @@ class RealtimeStatsControllerTest {
     @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @MockitoBean
+    private com.prayer.pointfinder.security.FrozenAccountFilter frozenAccountFilter;
+
     @Test
     void getRealtimeStatsReturnsShape() throws Exception {
         UUID gameId = UUID.randomUUID();
