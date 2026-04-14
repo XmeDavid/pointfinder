@@ -45,14 +45,21 @@ public class StripeWebhookService {
                 log.warn("[WEBHOOK] No UserSubscription for userId={}", userId);
                 return;
             }
+
+            Map<String, String> metadata = session.getMetadata();
+            String cycleStr = metadata != null ? metadata.get("billing_cycle") : null;
+            BillingCycle cycle = BillingCycle.monthly; // safe default
+            if ("annual".equals(cycleStr)) cycle = BillingCycle.annual;
+            else if ("lifetime".equals(cycleStr)) cycle = BillingCycle.lifetime;
+
             sub.setStripeCustomerId(customerId);
             sub.setStripeSubscriptionId(subscriptionId);
             sub.setTier(IndividualTier.pro);
             sub.setStatus(SubscriptionStatus.active);
-            sub.setBillingCycle(BillingCycle.monthly);
+            sub.setBillingCycle(cycle);
             sub.setGracePeriodEnd(null);
             userSubRepository.save(sub);
-            log.info("[WEBHOOK] checkout completed userId={} tier=pro", userId);
+            log.info("[WEBHOOK] checkout completed userId={} tier=pro cycle={}", userId, cycle);
 
         } else if (clientRef.startsWith("org:")) {
             UUID orgId = UUID.fromString(clientRef.substring(4));
@@ -61,12 +68,20 @@ public class StripeWebhookService {
                 log.warn("[WEBHOOK] No Organization for orgId={}", orgId);
                 return;
             }
+
+            Map<String, String> metadata = session.getMetadata();
+            String plan = metadata != null ? metadata.get("plan") : null;
+            if (plan != null) {
+                OrgTier tier = plan.contains("high") ? OrgTier.high : OrgTier.base;
+                org.setSubscriptionTier(tier);
+            }
+
             org.setStripeCustomerId(customerId);
             org.setStripeSubscriptionId(subscriptionId);
             org.setSubscriptionStatus(SubscriptionStatus.active);
             org.setGracePeriodEnd(null);
             orgRepository.save(org);
-            log.info("[WEBHOOK] checkout completed orgId={}", orgId);
+            log.info("[WEBHOOK] checkout completed orgId={} tier={}", orgId, org.getSubscriptionTier());
 
         } else if (clientRef.startsWith("new-org:")) {
             UUID userId = UUID.fromString(clientRef.substring(8));
