@@ -30,8 +30,15 @@ public class BillingService {
     private final OrganizationRepository orgRepository;
     private final OrganizationService organizationService;
 
+    private void ensureStripeConfigured() {
+        if (stripeConfig.getSecretKey() == null || stripeConfig.getSecretKey().isBlank()) {
+            throw new BadRequestException("Stripe is not configured. Please set STRIPE_SECRET_KEY.");
+        }
+    }
+
     @Transactional
     public CheckoutResponse createCheckoutSession(CreateCheckoutRequest request) {
+        ensureStripeConfigured();
         User currentUser = SecurityUtils.getCurrentUser();
         String priceId = resolvePriceId(request.getPlan(), request.getCycle());
 
@@ -84,13 +91,14 @@ public class BillingService {
                 .url(session.getUrl())
                 .sessionId(session.getId())
                 .build();
-        } catch (StripeException e) {
-            log.error("[BILLING] Stripe checkout creation failed: {}", e.getMessage());
+        } catch (Exception e) {
+            log.error("[BILLING] Stripe checkout creation failed: {}", e.getMessage(), e);
             throw new BadRequestException("Failed to create checkout session: " + e.getMessage());
         }
     }
 
     public String createPortalSession() {
+        ensureStripeConfigured();
         User currentUser = SecurityUtils.getCurrentUser();
         UserSubscription sub = userSubRepository.findByUserId(currentUser.getId())
             .orElseThrow(() -> new BadRequestException("No subscription found"));
@@ -115,6 +123,7 @@ public class BillingService {
     }
 
     public String createOrgPortalSession(UUID orgId) {
+        ensureStripeConfigured();
         organizationService.ensureCurrentUserHasPermission(orgId, OrgPermission.MANAGE_BILLING);
 
         Organization org = orgRepository.findById(orgId)
@@ -158,6 +167,7 @@ public class BillingService {
 
     @Transactional
     public CheckoutResponse createOrgCheckoutSession(String orgName, String plan, String cycle) {
+        ensureStripeConfigured();
         User currentUser = SecurityUtils.getCurrentUser();
         String priceId = resolvePriceId(plan, cycle);
 
