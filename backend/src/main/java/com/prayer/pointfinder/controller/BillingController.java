@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/billing")
@@ -33,6 +34,13 @@ public class BillingController {
     @PostMapping("/portal")
     public ResponseEntity<Map<String, String>> createPortal() {
         String url = billingService.createPortalSession();
+        return ResponseEntity.ok(Map.of("url", url));
+    }
+
+    @PostMapping("/org-portal")
+    public ResponseEntity<Map<String, String>> createOrgPortal(@RequestBody Map<String, String> request) {
+        UUID orgId = UUID.fromString(request.get("orgId"));
+        String url = billingService.createOrgPortalSession(orgId);
         return ResponseEntity.ok(Map.of("url", url));
     }
 

@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { useWorkspaceContext } from '../../stores/workspaceContext'
 import { useQuota } from '../../hooks/queries/useQuota'
-import { useCreateCheckout, useCreatePortal } from '../../hooks/mutations/useBillingMutations'
+import { useCreateCheckout, useCreatePortal, useCreateOrgPortal } from '../../hooks/mutations/useBillingMutations'
 
 export function BillingPage() {
   const { t } = useTranslation()
@@ -9,6 +9,7 @@ export function BillingPage() {
   const { data: quota } = useQuota()
   const checkout = useCreateCheckout()
   const portal = useCreatePortal()
+  const orgPortal = useCreateOrgPortal()
 
   const isOrg = active.type === 'org'
   const tier = quota?.tier ?? 'free'
@@ -36,8 +37,10 @@ export function BillingPage() {
         <p className="text-xl font-semibold text-foreground capitalize">{tier}</p>
         {(isPaying && !isClubOrg) && (
           <button
-            onClick={() => portal.mutate()}
-            disabled={portal.isPending}
+            onClick={() => isOrg && active.type === 'org'
+              ? orgPortal.mutate(active.orgId)
+              : portal.mutate()}
+            disabled={portal.isPending || orgPortal.isPending}
             className="mt-4 text-sm text-primary hover:underline disabled:opacity-50"
           >
             {t('billing.manageSub', 'Manage subscription')}
@@ -145,8 +148,10 @@ export function BillingPage() {
       {(isHighOrg || isProPersonal) && (
         <div className="rounded-xl border border-border p-6 mb-8 max-w-md">
           <button
-            onClick={() => portal.mutate()}
-            disabled={portal.isPending}
+            onClick={() => isOrg && active.type === 'org'
+              ? orgPortal.mutate(active.orgId)
+              : portal.mutate()}
+            disabled={portal.isPending || orgPortal.isPending}
             className="text-sm text-primary hover:underline disabled:opacity-50"
           >
             {t('billing.manageSub', 'Manage subscription')}

@@ -114,6 +114,31 @@ public class BillingService {
         }
     }
 
+    public String createOrgPortalSession(UUID orgId) {
+        organizationService.ensureCurrentUserHasPermission(orgId, OrgPermission.MANAGE_BILLING);
+
+        Organization org = orgRepository.findById(orgId)
+            .orElseThrow(() -> new ResourceNotFoundException("Organization", orgId));
+
+        if (org.getStripeCustomerId() == null) {
+            throw new BadRequestException("No Stripe customer associated with this organization");
+        }
+
+        try {
+            com.stripe.param.billingportal.SessionCreateParams params =
+                com.stripe.param.billingportal.SessionCreateParams.builder()
+                    .setCustomer(org.getStripeCustomerId())
+                    .setReturnUrl(stripeConfig.getSuccessUrl())
+                    .build();
+            com.stripe.model.billingportal.Session portalSession =
+                com.stripe.model.billingportal.Session.create(params);
+            return portalSession.getUrl();
+        } catch (StripeException e) {
+            log.error("[BILLING] Stripe org portal creation failed: {}", e.getMessage());
+            throw new BadRequestException("Failed to create billing portal session");
+        }
+    }
+
     @Transactional(readOnly = true)
     public UserSubscriptionResponse getSubscriptionStatus() {
         User currentUser = SecurityUtils.getCurrentUser();

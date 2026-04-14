@@ -11,6 +11,9 @@ export const billingApi = {
   createPortal: () =>
     apiClient.post<{ url: string }>('/api/billing/portal').then(r => r.data),
 
+  createOrgPortal: (orgId: string) =>
+    apiClient.post<{ url: string }>('/api/billing/org-portal', { orgId }).then(r => r.data),
+
   getStatus: () =>
     apiClient.get<UserSubscription>('/api/billing/status').then(r => r.data),
 }

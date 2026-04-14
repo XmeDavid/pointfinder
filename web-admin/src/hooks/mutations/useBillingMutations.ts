@@ -19,3 +19,12 @@ export function useCreatePortal() {
     },
   })
 }
+
+export function useCreateOrgPortal() {
+  return useMutation({
+    mutationFn: (orgId: string) => billingApi.createOrgPortal(orgId),
+    onSuccess: (data) => {
+      window.location.href = data.url
+    },
+  })
+}
