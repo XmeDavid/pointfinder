@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import TiptapImage from "@tiptap/extension-image";
@@ -104,6 +104,12 @@ interface FileEmbedResource {
   name: string;
   sizeBytes: number;
   contentType: string;
+}
+
+function useSyncRef<T>(ref: React.MutableRefObject<T> | undefined, value: T) {
+  useEffect(() => {
+    if (ref) ref.current = value;
+  }, [ref, value]);
 }
 
 interface RichTextEditorProps {
@@ -273,9 +279,7 @@ export function RichTextEditor({
 
   // Expose insertFileEmbed via ref so parent components can call it after
   // selecting a resource from the picker.
-  if (insertFileEmbedRef) {
-    insertFileEmbedRef.current = insertFileEmbed;
-  }
+  useSyncRef(insertFileEmbedRef, insertFileEmbed);
 
   if (!editor) return null;
 
