@@ -71,28 +71,24 @@ public class GameService {
         currentUser = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
 
-        List<Game> games;
-        if (currentUser.getRole() == UserRole.admin) {
-            games = gameRepository.findAll();
-        } else {
-            List<Game> personalGames = gameRepository.findByOperatorOrCreator(currentUser.getId());
+        // All users (including admin) see only their own games
+        List<Game> personalGames = gameRepository.findByOperatorOrCreator(currentUser.getId());
 
-            // Org games (from all orgs user is member of)
-            List<UUID> orgIds = orgMembershipRepository.findByUserId(currentUser.getId()).stream()
-                    .map(m -> m.getOrganization().getId())
-                    .toList();
-            List<Game> orgGames = orgIds.isEmpty() ? List.of() :
-                    gameRepository.findByOrganizationIdIn(orgIds);
+        // Org games (from all orgs user is member of)
+        List<UUID> orgIds = orgMembershipRepository.findByUserId(currentUser.getId()).stream()
+                .map(m -> m.getOrganization().getId())
+                .toList();
+        List<Game> orgGames = orgIds.isEmpty() ? List.of() :
+                gameRepository.findByOrganizationIdIn(orgIds);
 
-            // Merge, deduplicating by game ID
-            Set<UUID> seen = new java.util.HashSet<>();
-            List<Game> merged = new java.util.ArrayList<>(personalGames);
-            personalGames.forEach(g -> seen.add(g.getId()));
-            orgGames.stream()
-                    .filter(g -> seen.add(g.getId()))
-                    .forEach(merged::add);
-            games = merged;
-        }
+        // Merge, deduplicating by game ID
+        Set<UUID> seen = new java.util.HashSet<>();
+        List<Game> merged = new java.util.ArrayList<>(personalGames);
+        personalGames.forEach(g -> seen.add(g.getId()));
+        orgGames.stream()
+                .filter(g -> seen.add(g.getId()))
+                .forEach(merged::add);
+        List<Game> games = merged;
         return games.stream().map(this::toResponse).toList();
     }
 
