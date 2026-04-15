@@ -3,6 +3,7 @@ package com.prayer.pointfinder.controller;
 import com.prayer.pointfinder.dto.request.CreateCheckoutRequest;
 import com.prayer.pointfinder.dto.request.CreateOrgCheckoutRequest;
 import com.prayer.pointfinder.dto.response.CheckoutResponse;
+import com.prayer.pointfinder.dto.response.InvoiceListResponse;
 import com.prayer.pointfinder.dto.response.UserSubscriptionResponse;
 import com.prayer.pointfinder.service.BillingService;
 import jakarta.validation.Valid;
@@ -47,5 +48,13 @@ public class BillingController {
     @GetMapping("/status")
     public ResponseEntity<UserSubscriptionResponse> getStatus() {
         return ResponseEntity.ok(billingService.getSubscriptionStatus());
+    }
+
+    @GetMapping("/invoices")
+    public ResponseEntity<InvoiceListResponse> getInvoices(
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(required = false) String startingAfter,
+            @RequestParam(required = false) UUID orgId) {
+        return ResponseEntity.ok(billingService.getInvoices(orgId, Math.min(limit, 100), startingAfter));
     }
 }
