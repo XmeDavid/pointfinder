@@ -1,8 +1,140 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ChevronDown, ChevronUp, Download } from 'lucide-react'
 import { useWorkspaceContext } from '../../stores/workspaceContext'
 import { useQuota } from '../../hooks/queries/useQuota'
 import { useBillingStatus } from '../../hooks/queries/useBillingStatus'
 import { useCreateCheckout, useCreatePortal, useCreateOrgPortal } from '../../hooks/mutations/useBillingMutations'
+import { useInvoices } from '@/hooks/queries/useInvoices'
+import type { Invoice } from '@/types/billing'
+
+function formatAmount(amount: number, currency: string): string {
+  return new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency: currency.toUpperCase(),
+    minimumFractionDigits: 2,
+  }).format(amount / 100)
+}
+
+function StatusBadge({ status }: { status: Invoice['status'] }) {
+  const { t } = useTranslation()
+  const colorMap: Record<Invoice['status'], string> = {
+    paid: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+    open: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+    draft: 'bg-muted text-muted-foreground',
+    void: 'bg-muted text-muted-foreground',
+    uncollectible: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+  }
+  return (
+    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${colorMap[status]}`}>
+      {t(`billing.invoiceStatus.${status}`, status)}
+    </span>
+  )
+}
+
+function InvoiceRow({ invoice }: { invoice: Invoice }) {
+  const { t } = useTranslation()
+  const [expanded, setExpanded] = useState(false)
+
+  return (
+    <div className="border border-border rounded-lg overflow-hidden">
+      <button
+        type="button"
+        className="w-full px-4 py-3 text-sm flex items-center gap-3 hover:bg-muted/40 transition-colors text-left"
+        onClick={() => setExpanded((v) => !v)}
+      >
+        <span className="text-muted-foreground w-24 shrink-0">
+          {new Date(invoice.date).toLocaleDateString()}
+        </span>
+        <span className="flex-1 font-medium text-foreground truncate">
+          {invoice.planName ?? '—'}
+        </span>
+        <span className="text-foreground font-medium shrink-0">
+          {formatAmount(invoice.amount, invoice.currency)}
+        </span>
+        <span className="shrink-0">
+          <StatusBadge status={invoice.status} />
+        </span>
+        {invoice.paymentMethodBrand && invoice.paymentMethodLast4 && (
+          <span className="text-muted-foreground shrink-0 hidden sm:block">
+            {invoice.paymentMethodBrand} ····{invoice.paymentMethodLast4}
+          </span>
+        )}
+        {invoice.pdfUrl && (
+          <a
+            href={invoice.pdfUrl}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={t('billing.downloadPdf', 'Download PDF')}
+            className="text-muted-foreground hover:text-foreground shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Download className="w-4 h-4" />
+          </a>
+        )}
+        <span className="text-muted-foreground shrink-0">
+          {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </span>
+      </button>
+
+      {expanded && (
+        <div className="px-4 py-3 border-t border-border bg-muted/30 space-y-3 text-sm">
+          {invoice.billingPeriodStart && invoice.billingPeriodEnd && (
+            <div>
+              <span className="text-muted-foreground">{t('billing.billingPeriodLabel', 'Billing period')}: </span>
+              <span className="text-foreground">
+                {new Date(invoice.billingPeriodStart).toLocaleDateString()} –{' '}
+                {new Date(invoice.billingPeriodEnd).toLocaleDateString()}
+              </span>
+            </div>
+          )}
+
+          {invoice.lineItems.length > 0 && (
+            <div>
+              <p className="text-muted-foreground mb-1">{t('billing.lineItemsLabel', 'Line items')}</p>
+              <div className="space-y-1">
+                {invoice.lineItems.map((item, idx) => (
+                  <div key={idx} className="flex justify-between">
+                    <span className="text-foreground">
+                      {item.description}
+                      {item.quantity > 1 && (
+                        <span className="text-muted-foreground"> × {item.quantity}</span>
+                      )}
+                    </span>
+                    <span className="text-foreground">{formatAmount(item.amount, invoice.currency)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {invoice.tax > 0 && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{t('billing.tax', 'Tax')}</span>
+              <span className="text-foreground">{formatAmount(invoice.tax, invoice.currency)}</span>
+            </div>
+          )}
+
+          {invoice.refundedAmount > 0 && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{t('billing.refunded', 'Refunded')}</span>
+              <span className="text-foreground">−{formatAmount(invoice.refundedAmount, invoice.currency)}</span>
+            </div>
+          )}
+
+          {invoice.paymentMethodBrand && invoice.paymentMethodLast4 && (
+            <div>
+              <span className="text-muted-foreground">{t('billing.paymentMethodLabel', 'Payment method')}: </span>
+              <span className="text-foreground">
+                {invoice.paymentMethodBrand} ····{invoice.paymentMethodLast4}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
 
 function formatSize(bytes: number): string {
   if (bytes === 0) return '0'
@@ -40,6 +172,9 @@ export function BillingTab() {
   const checkout = useCreateCheckout()
   const portal = useCreatePortal()
   const orgPortal = useCreateOrgPortal()
+
+  const invoicesQuery = useInvoices()
+  const allInvoices = invoicesQuery.data?.pages.flatMap((p) => p.invoices) ?? []
 
   const isOrg = active.type === 'org'
   const tier = quota?.tier ?? 'free'
@@ -234,6 +369,45 @@ export function BillingTab() {
           </div>
         </div>
       )}
+
+      <div className="mt-8 max-w-lg">
+        <h2 className="text-lg font-semibold text-foreground mb-4">
+          {t('billing.history', 'Billing History')}
+        </h2>
+
+        {invoicesQuery.isLoading && (
+          <div className="flex items-center justify-center py-8">
+            <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+
+        {!invoicesQuery.isLoading && allInvoices.length === 0 && (
+          <p className="text-sm text-muted-foreground py-4">
+            {t('billing.noInvoices', 'No invoices yet')}
+          </p>
+        )}
+
+        {allInvoices.length > 0 && (
+          <div className="space-y-2">
+            {allInvoices.map((invoice) => (
+              <InvoiceRow key={invoice.id} invoice={invoice} />
+            ))}
+          </div>
+        )}
+
+        {invoicesQuery.hasNextPage && (
+          <button
+            type="button"
+            onClick={() => invoicesQuery.fetchNextPage()}
+            disabled={invoicesQuery.isFetchingNextPage}
+            className="mt-4 text-sm text-primary hover:underline disabled:opacity-50"
+          >
+            {invoicesQuery.isFetchingNextPage
+              ? '…'
+              : t('billing.loadMore', 'Load more')}
+          </button>
+        )}
+      </div>
     </>
   )
 }
