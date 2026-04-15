@@ -984,7 +984,24 @@
     "maxFileSize": "Maximale Dateigrösse",
     "resourceStorage": "Ressourcenspeicher",
     "billingPeriod": "Abrechnungszeitraum",
-    "renewsOn": "Erneuert am"
+    "renewsOn": "Erneuert am",
+    "history": "Rechnungsverlauf",
+    "noInvoices": "Noch keine Rechnungen",
+    "loadMore": "Mehr laden",
+    "invoiceStatus": {
+      "paid": "Bezahlt",
+      "open": "Offen",
+      "failed": "Fehlgeschlagen",
+      "void": "Storniert",
+      "draft": "Entwurf",
+      "uncollectible": "Uneinbringlich"
+    },
+    "tax": "Steuer",
+    "refunded": "Erstattet",
+    "downloadPdf": "PDF herunterladen",
+    "billingPeriodLabel": "Abrechnungszeitraum",
+    "lineItemsLabel": "Positionen",
+    "paymentMethodLabel": "Zahlungsmethode"
   },
   "profile": {
     "title": "Profil",

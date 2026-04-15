@@ -984,7 +984,24 @@
     "maxFileSize": "Max file size",
     "resourceStorage": "Resource storage",
     "billingPeriod": "Billing period",
-    "renewsOn": "Renews on"
+    "renewsOn": "Renews on",
+    "history": "Billing History",
+    "noInvoices": "No invoices yet",
+    "loadMore": "Load more",
+    "invoiceStatus": {
+      "paid": "Paid",
+      "open": "Open",
+      "failed": "Failed",
+      "void": "Void",
+      "draft": "Draft",
+      "uncollectible": "Uncollectible"
+    },
+    "tax": "Tax",
+    "refunded": "Refunded",
+    "downloadPdf": "Download PDF",
+    "billingPeriodLabel": "Billing period",
+    "lineItemsLabel": "Line items",
+    "paymentMethodLabel": "Payment method"
   },
   "profile": {
     "title": "Profile",

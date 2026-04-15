@@ -984,7 +984,24 @@
     "maxFileSize": "Tamanho máximo de ficheiro",
     "resourceStorage": "Armazenamento de recursos",
     "billingPeriod": "Período de faturação",
-    "renewsOn": "Renova em"
+    "renewsOn": "Renova em",
+    "history": "Histórico de Faturação",
+    "noInvoices": "Ainda sem faturas",
+    "loadMore": "Carregar mais",
+    "invoiceStatus": {
+      "paid": "Paga",
+      "open": "Aberta",
+      "failed": "Falhada",
+      "void": "Anulada",
+      "draft": "Rascunho",
+      "uncollectible": "Incobrável"
+    },
+    "tax": "Imposto",
+    "refunded": "Reembolsado",
+    "downloadPdf": "Descarregar PDF",
+    "billingPeriodLabel": "Período de faturação",
+    "lineItemsLabel": "Itens",
+    "paymentMethodLabel": "Método de pagamento"
   },
   "profile": {
     "title": "Perfil",
