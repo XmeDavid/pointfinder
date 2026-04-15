@@ -14,7 +14,7 @@ export function CreateOrgPage() {
   const checkout = useMutation({
     mutationFn: () =>
       apiClient
-        .post<CheckoutResponse>('/api/billing/org-checkout', {
+        .post<CheckoutResponse>('/billing/org-checkout', {
           orgName: orgName.trim(),
           plan,
           cycle: 'annual',
