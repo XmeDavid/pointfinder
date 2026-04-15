@@ -91,6 +91,12 @@ const BillingPage = lazy(() =>
   })),
 );
 
+const ProfilePage = lazy(() =>
+  import("@/features/profile/ProfilePage").then((m) => ({
+    default: m.ProfilePage,
+  })),
+);
+
 const CreateOrgPage = lazy(() =>
   import("@/features/org/CreateOrgPage").then((m) => ({
     default: m.CreateOrgPage,
@@ -311,16 +317,20 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: "/billing",
+    path: "/profile",
     element: (
       <AuthGuard>
         <AppLayout>
           <Suspense fallback={<PageSpinner />}>
-            <BillingPage />
+            <ProfilePage />
           </Suspense>
         </AppLayout>
       </AuthGuard>
     ),
+  },
+  {
+    path: "/billing",
+    element: <Navigate to="/profile?tab=billing" replace />,
   },
   {
     path: "/billing/success",
