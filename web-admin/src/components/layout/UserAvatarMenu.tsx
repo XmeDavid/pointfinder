@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { User, Sun, Moon, Check, LogOut } from 'lucide-react'
+import { User, LogOut } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth/store'
 import {
   DropdownMenu,
@@ -8,18 +8,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu'
-
-const LANGUAGES = [
-  { code: 'en', label: 'English' },
-  { code: 'pt', label: 'Português' },
-  { code: 'de', label: 'Deutsch' },
-] as const
-
-interface UserAvatarMenuProps {
-  isDark: boolean
-  onToggleTheme: () => void
-  className?: string
-}
 
 function getInitials(name: string): string {
   return name
@@ -30,13 +18,12 @@ function getInitials(name: string): string {
     .toUpperCase()
 }
 
-export function UserAvatarMenu({ isDark, onToggleTheme, className }: UserAvatarMenuProps) {
+export function UserAvatarMenu({ className }: { className?: string }) {
   const navigate = useNavigate()
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
 
-  const currentLang = (i18n.resolvedLanguage ?? i18n.language ?? 'en').slice(0, 2)
   const initials = user?.name ? getInitials(user.name) : '?'
 
   return (
@@ -57,27 +44,6 @@ export function UserAvatarMenu({ isDark, onToggleTheme, className }: UserAvatarM
           <User size={14} />
           {t('profile.title', 'Profile')}
         </DropdownMenuItem>
-
-        <DropdownMenuItem
-          onClick={onToggleTheme}
-          className="flex items-center gap-2"
-        >
-          {isDark ? <Sun size={14} /> : <Moon size={14} />}
-          {isDark ? t('common.lightMode', 'Light mode') : t('common.darkMode', 'Dark mode')}
-        </DropdownMenuItem>
-
-        {LANGUAGES.map((lang) => (
-          <DropdownMenuItem
-            key={lang.code}
-            onClick={() => i18n.changeLanguage(lang.code)}
-            className="flex items-center justify-between gap-4 pl-8"
-          >
-            {lang.label}
-            {currentLang === lang.code && (
-              <Check size={14} className="text-primary" />
-            )}
-          </DropdownMenuItem>
-        ))}
 
         <div className="h-px bg-border my-1" />
 
