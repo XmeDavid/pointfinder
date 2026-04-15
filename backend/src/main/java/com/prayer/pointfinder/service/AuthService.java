@@ -1,17 +1,20 @@
 package com.prayer.pointfinder.service;
 
+import com.prayer.pointfinder.dto.request.ChangePasswordRequest;
 import com.prayer.pointfinder.dto.request.LoginRequest;
 import com.prayer.pointfinder.dto.request.RegisterRequest;
 import com.prayer.pointfinder.dto.response.AuthResponse;
 import com.prayer.pointfinder.dto.response.UserResponse;
 import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.exception.BadRequestException;
+import com.prayer.pointfinder.exception.ErrorCode;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.OperatorInviteRepository;
 import com.prayer.pointfinder.repository.PasswordResetTokenRepository;
 import com.prayer.pointfinder.repository.RefreshTokenRepository;
 import com.prayer.pointfinder.repository.UserRepository;
 import com.prayer.pointfinder.security.JwtTokenProvider;
+import com.prayer.pointfinder.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -213,6 +216,23 @@ public class AuthService {
 
         // Delete all refresh tokens to log out all sessions
         refreshTokenRepository.deleteByUserId(user.getId());
+    }
+
+    @Transactional(timeout = 10)
+    public void changePassword(ChangePasswordRequest request) {
+        User user = SecurityUtils.getCurrentUser();
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
+            throw new BadRequestException("Current password is incorrect", ErrorCode.INVALID_CURRENT_PASSWORD);
+        }
+
+        validatePassword(request.getNewPassword());
+
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        // Invalidate all other sessions, keep the caller's
+        refreshTokenRepository.deleteByUserIdAndTokenNot(user.getId(), request.getRefreshToken());
     }
 
     void validatePassword(String password) {

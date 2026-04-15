@@ -57,6 +57,18 @@ public enum ErrorCode {
     /** The stage is already the active stage for its game. */
     STAGE_ALREADY_ACTIVE,
 
+    // ── Auth / profile ───────────────────────────────────────────────────
+    /** The current password provided does not match the account's stored password. */
+    INVALID_CURRENT_PASSWORD,
+    /** The new password does not meet complexity requirements. */
+    INVALID_NEW_PASSWORD,
+    /** The email address is already registered to another account. */
+    EMAIL_ALREADY_TAKEN,
+    /** The email-change verification token is invalid or does not exist. */
+    EMAIL_CHANGE_TOKEN_INVALID,
+    /** The email-change verification token has expired. */
+    EMAIL_CHANGE_TOKEN_EXPIRED,
+
     // ── Billing / account state ──────────────────────────────────────────
     /** The operator's account is frozen; they must update their payment method. */
     ACCOUNT_FROZEN,
