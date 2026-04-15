@@ -986,6 +986,43 @@
     "billingPeriod": "Billing period",
     "renewsOn": "Renews on"
   },
+  "profile": {
+    "title": "Profile",
+    "tabs": {
+      "general": "General",
+      "security": "Security",
+      "billing": "Billing",
+      "dangerZone": "Danger Zone"
+    },
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "memberSince": "Member since",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "emailVerificationNote": "A verification email will be sent to the new address",
+    "emailVerificationSent": "Verification email sent. Check your inbox.",
+    "emailConfirmed": "Email address updated successfully.",
+    "nameUpdated": "Name updated successfully.",
+    "security": {
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "changePassword": "Change password",
+      "passwordChanged": "Password changed successfully. Other sessions have been logged out.",
+      "invalidCurrentPassword": "Current password is incorrect",
+      "passwordMismatch": "Passwords do not match"
+    },
+    "dangerZone": {
+      "title": "Delete Account",
+      "warning": "This action is irreversible. All your data will be permanently deleted.",
+      "confirmEmail": "Type your email to confirm",
+      "deleteButton": "Delete my account",
+      "activeGamesBlock": "Cannot delete account while you own active games. Please end or delete them first.",
+      "deleted": "Account deleted successfully."
+    }
+  },
   "quota": {
     "gameLimit": "Game limit reached. Upgrade your plan.",
     "memberLimit": "Member limit reached. Upgrade your plan."

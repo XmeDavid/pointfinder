@@ -986,6 +986,43 @@
     "billingPeriod": "Período de faturação",
     "renewsOn": "Renova em"
   },
+  "profile": {
+    "title": "Perfil",
+    "tabs": {
+      "general": "Geral",
+      "security": "Segurança",
+      "billing": "Faturação",
+      "dangerZone": "Zona de Perigo"
+    },
+    "name": "Nome",
+    "email": "Email",
+    "role": "Função",
+    "memberSince": "Membro desde",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "edit": "Editar",
+    "emailVerificationNote": "Um email de verificação será enviado para o novo endereço",
+    "emailVerificationSent": "Email de verificação enviado. Verifique a sua caixa de entrada.",
+    "emailConfirmed": "Endereço de email atualizado com sucesso.",
+    "nameUpdated": "Nome atualizado com sucesso.",
+    "security": {
+      "currentPassword": "Password atual",
+      "newPassword": "Nova password",
+      "confirmPassword": "Confirmar nova password",
+      "changePassword": "Alterar password",
+      "passwordChanged": "Password alterada com sucesso. Outras sessões foram encerradas.",
+      "invalidCurrentPassword": "Password atual incorreta",
+      "passwordMismatch": "As passwords não coincidem"
+    },
+    "dangerZone": {
+      "title": "Eliminar Conta",
+      "warning": "Esta ação é irreversível. Todos os seus dados serão permanentemente eliminados.",
+      "confirmEmail": "Escreva o seu email para confirmar",
+      "deleteButton": "Eliminar a minha conta",
+      "activeGamesBlock": "Não é possível eliminar a conta enquanto tiver jogos ativos. Termine ou elimine-os primeiro.",
+      "deleted": "Conta eliminada com sucesso."
+    }
+  },
   "quota": {
     "gameLimit": "Limite de jogos atingido. Atualiza o teu plano.",
     "memberLimit": "Limite de membros atingido. Atualiza o teu plano."

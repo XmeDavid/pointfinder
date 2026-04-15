@@ -986,6 +986,43 @@
     "billingPeriod": "Abrechnungszeitraum",
     "renewsOn": "Erneuert am"
   },
+  "profile": {
+    "title": "Profil",
+    "tabs": {
+      "general": "Allgemein",
+      "security": "Sicherheit",
+      "billing": "Abrechnung",
+      "dangerZone": "Gefahrenzone"
+    },
+    "name": "Name",
+    "email": "E-Mail",
+    "role": "Rolle",
+    "memberSince": "Mitglied seit",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "edit": "Bearbeiten",
+    "emailVerificationNote": "Eine Bestätigungs-E-Mail wird an die neue Adresse gesendet",
+    "emailVerificationSent": "Bestätigungs-E-Mail gesendet. Überprüfen Sie Ihren Posteingang.",
+    "emailConfirmed": "E-Mail-Adresse erfolgreich aktualisiert.",
+    "nameUpdated": "Name erfolgreich aktualisiert.",
+    "security": {
+      "currentPassword": "Aktuelles Passwort",
+      "newPassword": "Neues Passwort",
+      "confirmPassword": "Neues Passwort bestätigen",
+      "changePassword": "Passwort ändern",
+      "passwordChanged": "Passwort erfolgreich geändert. Andere Sitzungen wurden abgemeldet.",
+      "invalidCurrentPassword": "Aktuelles Passwort ist falsch",
+      "passwordMismatch": "Passwörter stimmen nicht überein"
+    },
+    "dangerZone": {
+      "title": "Konto löschen",
+      "warning": "Diese Aktion ist unwiderruflich. Alle Ihre Daten werden dauerhaft gelöscht.",
+      "confirmEmail": "Geben Sie Ihre E-Mail-Adresse zur Bestätigung ein",
+      "deleteButton": "Mein Konto löschen",
+      "activeGamesBlock": "Konto kann nicht gelöscht werden, solange aktive Spiele vorhanden sind. Bitte beenden oder löschen Sie diese zuerst.",
+      "deleted": "Konto erfolgreich gelöscht."
+    }
+  },
   "quota": {
     "gameLimit": "Spiellimit erreicht. Upgrade deinen Plan.",
     "memberLimit": "Mitgliederlimit erreicht. Upgrade deinen Plan."
