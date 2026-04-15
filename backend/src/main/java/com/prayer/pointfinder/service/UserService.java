@@ -1,12 +1,17 @@
 package com.prayer.pointfinder.service;
 
+import com.prayer.pointfinder.dto.request.UpdateProfileRequest;
+import com.prayer.pointfinder.dto.response.UpdateProfileResponse;
 import com.prayer.pointfinder.dto.response.UserResponse;
+import com.prayer.pointfinder.entity.EmailChangeToken;
 import com.prayer.pointfinder.entity.Game;
 import com.prayer.pointfinder.entity.GameStatus;
 import com.prayer.pointfinder.entity.PushPlatform;
 import com.prayer.pointfinder.entity.User;
 import com.prayer.pointfinder.exception.BadRequestException;
+import com.prayer.pointfinder.exception.ErrorCode;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
+import com.prayer.pointfinder.repository.EmailChangeTokenRepository;
 import com.prayer.pointfinder.repository.GameRepository;
 import com.prayer.pointfinder.repository.RefreshTokenRepository;
 import com.prayer.pointfinder.repository.UserRepository;
@@ -15,6 +20,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -26,6 +33,8 @@ public class UserService {
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final GameRepository gameRepository;
+    private final EmailChangeTokenRepository emailChangeTokenRepository;
+    private final EmailService emailService;
 
     @Transactional(readOnly = true)
     public List<UserResponse> getAllUsers() {
@@ -74,6 +83,43 @@ public class UserService {
 
         // Delete the user record
         userRepository.delete(user);
+    }
+
+    @Transactional(timeout = 10)
+    public UpdateProfileResponse updateProfile(UpdateProfileRequest request, String requestHost) {
+        User user = SecurityUtils.getCurrentUser();
+        String message = null;
+
+        if (request.getName() != null) {
+            user.setName(request.getName().trim());
+        }
+
+        if (request.getEmail() != null && !request.getEmail().equalsIgnoreCase(user.getEmail())) {
+            if (userRepository.existsByEmail(request.getEmail())) {
+                throw new BadRequestException("Email is already taken", ErrorCode.EMAIL_ALREADY_TAKEN);
+            }
+
+            // Invalidate any previous pending email change
+            emailChangeTokenRepository.invalidateAllForUser(user.getId());
+
+            EmailChangeToken token = EmailChangeToken.builder()
+                    .user(user)
+                    .newEmail(request.getEmail())
+                    .token(UUID.randomUUID().toString())
+                    .expiresAt(Instant.now().plus(Duration.ofHours(24)))
+                    .build();
+            emailChangeTokenRepository.save(token);
+
+            emailService.sendEmailChangeConfirmation(request.getEmail(), token.getToken(), requestHost);
+            message = "A verification email has been sent to the new address.";
+        }
+
+        userRepository.save(user);
+
+        return UpdateProfileResponse.builder()
+                .user(toResponse(user))
+                .message(message)
+                .build();
     }
 
     private UserResponse toResponse(User user) {

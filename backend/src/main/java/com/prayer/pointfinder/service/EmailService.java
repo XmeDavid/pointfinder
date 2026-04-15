@@ -160,6 +160,23 @@ public class EmailService {
     }
 
     @Async
+    public void sendEmailChangeConfirmation(String newEmail, String token, String requestHost) {
+        String actionUrl = "https://" + normalizeHost(requestHost) + "/api/auth/confirm-email?token=" + token;
+
+        String contentHtml = "<p style=\"margin: 0 0 14px; color: #404040; font-size: 16px; line-height: 1.6;\">"
+                + "A request was made to change your email address on <strong>" + BRAND_NAME + "</strong>.</p>"
+                + "<p style=\"margin: 0 0 14px; color: #404040; font-size: 16px; line-height: 1.6;\">"
+                + "Click the button below to confirm this change. This link will expire in <strong>24 hours</strong>.</p>"
+                + "<p style=\"margin: 0 0 14px; color: #404040; font-size: 16px; line-height: 1.6;\">"
+                + "If you didn't request this change, you can safely ignore this email.</p>";
+
+        String html = buildEmailTemplate("Email Change", "Confirm your new email", contentHtml,
+                "Confirm Email Change", actionUrl);
+
+        sendHtmlEmail(newEmail, BRAND_NAME + " \u2014 Confirm Email Change", html);
+    }
+
+    @Async
     public void sendGameInvite(String toEmail, String gameName, String inviterName, String requestHost) {
         String frontendBaseUrl = resolveFrontendBaseUrl(requestHost);
         String subject = "You've been invited to operate a game on " + BRAND_NAME;
