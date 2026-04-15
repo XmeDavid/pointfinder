@@ -9,7 +9,7 @@ interface TooltipProps {
 
 export function Tooltip({ content, children, className }: TooltipProps) {
   const [visible, setVisible] = React.useState(false);
-  const timeoutRef = React.useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = React.useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const show = () => {
     clearTimeout(timeoutRef.current);
