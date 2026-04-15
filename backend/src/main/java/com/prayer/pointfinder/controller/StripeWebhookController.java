@@ -4,7 +4,9 @@ import com.prayer.pointfinder.config.StripeConfig;
 import com.prayer.pointfinder.service.StripeWebhookService;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
+import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.Invoice;
+import com.stripe.model.StripeObject;
 import com.stripe.model.Subscription;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
@@ -22,6 +24,25 @@ public class StripeWebhookController {
 
     private final StripeConfig stripeConfig;
     private final StripeWebhookService webhookService;
+
+    /**
+     * Deserialize event data, falling back to unsafe deserialization if the
+     * Stripe SDK API version doesn't match the event's version.
+     */
+    private <T extends StripeObject> T deserialize(Event event, Class<T> clazz) {
+        EventDataObjectDeserializer deserializer = event.getDataObjectDeserializer();
+        StripeObject obj = deserializer.getObject().orElse(null);
+        if (obj == null) {
+            try {
+                obj = deserializer.deserializeUnsafe();
+                log.info("[WEBHOOK] Used unsafe deserialization for event={}", event.getId());
+            } catch (Exception e) {
+                log.error("[WEBHOOK] Failed to deserialize event={}: {}", event.getId(), e.getMessage());
+                return null;
+            }
+        }
+        return clazz.isInstance(obj) ? clazz.cast(obj) : null;
+    }
 
     @PostMapping("/stripe")
     public ResponseEntity<String> handleStripeWebhook(
@@ -42,33 +63,28 @@ public class StripeWebhookController {
         try {
             switch (type) {
                 case "checkout.session.completed" -> {
-                    Session session = (Session) event.getDataObjectDeserializer()
-                        .getObject().orElse(null);
+                    Session session = deserialize(event, Session.class);
                     if (session != null) {
                         log.info("[WEBHOOK] checkout.session.completed clientRef={} customer={}", session.getClientReferenceId(), session.getCustomer());
                         webhookService.handleCheckoutCompleted(session);
                     } else {
-                        log.warn("[WEBHOOK] checkout.session.completed deserialization returned null for event={}", event.getId());
+                        log.error("[WEBHOOK] checkout.session.completed could not deserialize event={}", event.getId());
                     }
                 }
                 case "invoice.paid" -> {
-                    Invoice invoice = (Invoice) event.getDataObjectDeserializer()
-                        .getObject().orElse(null);
+                    Invoice invoice = deserialize(event, Invoice.class);
                     if (invoice != null) webhookService.handleInvoicePaid(invoice);
                 }
                 case "invoice.payment_failed" -> {
-                    Invoice invoice = (Invoice) event.getDataObjectDeserializer()
-                        .getObject().orElse(null);
+                    Invoice invoice = deserialize(event, Invoice.class);
                     if (invoice != null) webhookService.handleInvoicePaymentFailed(invoice);
                 }
                 case "customer.subscription.deleted" -> {
-                    Subscription sub = (Subscription) event.getDataObjectDeserializer()
-                        .getObject().orElse(null);
+                    Subscription sub = deserialize(event, Subscription.class);
                     if (sub != null) webhookService.handleSubscriptionDeleted(sub);
                 }
                 case "customer.subscription.updated" -> {
-                    Subscription sub = (Subscription) event.getDataObjectDeserializer()
-                        .getObject().orElse(null);
+                    Subscription sub = deserialize(event, Subscription.class);
                     if (sub != null) webhookService.handleSubscriptionUpdated(sub);
                 }
                 default -> log.debug("[WEBHOOK] Unhandled event type: {}", type);
