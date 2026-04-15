@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/feedback/EmptyState'
 import { useWorkspaceContext } from '@/stores/workspaceContext'
 import { useQuota } from '@/hooks/queries/useQuota'
 import { useTranslation } from 'react-i18next'
+import { Tooltip } from '@/components/ui/tooltip'
 import { PendingOrgInvites } from './PendingOrgInvites'
 export function DashboardPage() {
   const { t } = useTranslation()
@@ -64,15 +65,16 @@ export function DashboardPage() {
           >
             Import
           </button>
-          <button
-            onClick={() => !atGameLimit && setDialogOpen(true)}
-            data-testid="create-game-btn"
-            disabled={atGameLimit}
-            title={atGameLimit ? t('quota.gameLimit', 'Game limit reached. Upgrade your plan.') : undefined}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            + New Game
-          </button>
+          <Tooltip content={atGameLimit ? t('quota.gameLimit', 'Game limit reached. Upgrade your plan.') : null}>
+            <button
+              onClick={() => !atGameLimit && setDialogOpen(true)}
+              data-testid="create-game-btn"
+              disabled={atGameLimit}
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              + New Game
+            </button>
+          </Tooltip>
         </div>
       </div>
 
