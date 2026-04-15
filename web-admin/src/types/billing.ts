@@ -39,3 +39,31 @@ export interface CheckoutResponse {
   url: string
   sessionId: string
 }
+
+export interface InvoiceLineItem {
+  description: string
+  amount: number
+  quantity: number
+}
+
+export interface Invoice {
+  id: string
+  date: string
+  amount: number
+  currency: string
+  status: 'paid' | 'open' | 'draft' | 'uncollectible' | 'void'
+  planName: string | null
+  billingPeriodStart: string | null
+  billingPeriodEnd: string | null
+  paymentMethodLast4: string | null
+  paymentMethodBrand: string | null
+  lineItems: InvoiceLineItem[]
+  tax: number
+  refundedAmount: number
+  pdfUrl: string | null
+}
+
+export interface InvoiceListResponse {
+  invoices: Invoice[]
+  hasMore: boolean
+}

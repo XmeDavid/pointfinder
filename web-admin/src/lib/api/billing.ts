@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { CheckoutResponse, UserSubscription } from '../../types/billing'
+import type { CheckoutResponse, UserSubscription, InvoiceListResponse } from '../../types/billing'
 
 export const billingApi = {
   createCheckout: (plan: string, cycle: string, orgId?: string) =>
@@ -16,4 +16,7 @@ export const billingApi = {
 
   getStatus: () =>
     apiClient.get<UserSubscription>('/billing/status').then(r => r.data),
+
+  getInvoices: (params: { limit?: number; startingAfter?: string; orgId?: string }) =>
+    apiClient.get<InvoiceListResponse>('/billing/invoices', { params }).then(r => r.data),
 }
