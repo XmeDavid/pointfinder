@@ -12,6 +12,7 @@ import { useQuota } from '@/hooks/queries/useQuota'
 import { useTranslation } from 'react-i18next'
 import { Tooltip } from '@/components/ui/tooltip'
 import { PendingOrgInvites } from './PendingOrgInvites'
+import { PendingGameInvites } from './PendingGameInvites'
 export function DashboardPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -48,8 +49,9 @@ export function DashboardPage() {
 
   return (
     <div className="h-screen bg-background p-8 overflow-auto">
-      {/* Pending org invites */}
+      {/* Pending invites */}
       <PendingOrgInvites />
+      <PendingGameInvites />
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6">

@@ -180,7 +180,7 @@ public class EmailService {
     public void sendGameInvite(String toEmail, String gameName, String inviterName, String requestHost) {
         String frontendBaseUrl = resolveFrontendBaseUrl(requestHost);
         String subject = "You've been invited to operate a game on " + BRAND_NAME;
-        String link = frontendBaseUrl + "/games";
+        String link = frontendBaseUrl + "/dashboard";
         String safeInviterName = escapeHtml(inviterName);
         String safeGameName = escapeHtml(gameName);
         String html = buildEmailTemplate(
