@@ -39,33 +39,43 @@ public class StripeWebhookController {
         String type = event.getType();
         log.info("[WEBHOOK] Received event type={} id={}", type, event.getId());
 
-        switch (type) {
-            case "checkout.session.completed" -> {
-                Session session = (Session) event.getDataObjectDeserializer()
-                    .getObject().orElse(null);
-                if (session != null) webhookService.handleCheckoutCompleted(session);
+        try {
+            switch (type) {
+                case "checkout.session.completed" -> {
+                    Session session = (Session) event.getDataObjectDeserializer()
+                        .getObject().orElse(null);
+                    if (session != null) {
+                        log.info("[WEBHOOK] checkout.session.completed clientRef={} customer={}", session.getClientReferenceId(), session.getCustomer());
+                        webhookService.handleCheckoutCompleted(session);
+                    } else {
+                        log.warn("[WEBHOOK] checkout.session.completed deserialization returned null for event={}", event.getId());
+                    }
+                }
+                case "invoice.paid" -> {
+                    Invoice invoice = (Invoice) event.getDataObjectDeserializer()
+                        .getObject().orElse(null);
+                    if (invoice != null) webhookService.handleInvoicePaid(invoice);
+                }
+                case "invoice.payment_failed" -> {
+                    Invoice invoice = (Invoice) event.getDataObjectDeserializer()
+                        .getObject().orElse(null);
+                    if (invoice != null) webhookService.handleInvoicePaymentFailed(invoice);
+                }
+                case "customer.subscription.deleted" -> {
+                    Subscription sub = (Subscription) event.getDataObjectDeserializer()
+                        .getObject().orElse(null);
+                    if (sub != null) webhookService.handleSubscriptionDeleted(sub);
+                }
+                case "customer.subscription.updated" -> {
+                    Subscription sub = (Subscription) event.getDataObjectDeserializer()
+                        .getObject().orElse(null);
+                    if (sub != null) webhookService.handleSubscriptionUpdated(sub);
+                }
+                default -> log.debug("[WEBHOOK] Unhandled event type: {}", type);
             }
-            case "invoice.paid" -> {
-                Invoice invoice = (Invoice) event.getDataObjectDeserializer()
-                    .getObject().orElse(null);
-                if (invoice != null) webhookService.handleInvoicePaid(invoice);
-            }
-            case "invoice.payment_failed" -> {
-                Invoice invoice = (Invoice) event.getDataObjectDeserializer()
-                    .getObject().orElse(null);
-                if (invoice != null) webhookService.handleInvoicePaymentFailed(invoice);
-            }
-            case "customer.subscription.deleted" -> {
-                Subscription sub = (Subscription) event.getDataObjectDeserializer()
-                    .getObject().orElse(null);
-                if (sub != null) webhookService.handleSubscriptionDeleted(sub);
-            }
-            case "customer.subscription.updated" -> {
-                Subscription sub = (Subscription) event.getDataObjectDeserializer()
-                    .getObject().orElse(null);
-                if (sub != null) webhookService.handleSubscriptionUpdated(sub);
-            }
-            default -> log.debug("[WEBHOOK] Unhandled event type: {}", type);
+        } catch (Exception e) {
+            log.error("[WEBHOOK] Error processing event type={} id={}: {}", type, event.getId(), e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing webhook");
         }
 
         return ResponseEntity.ok("ok");
