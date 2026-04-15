@@ -36,7 +36,6 @@ function refreshAccessToken(): Promise<string> {
   refreshPromise = (async () => {
     try {
       const refreshToken = useAuthStore.getState().refreshToken;
-      console.warn("[AUTH] refreshAccessToken: token:", refreshToken?.substring(0, 15) + "...", "isAuthenticated?", useAuthStore.getState().isAuthenticated);
       if (!refreshToken) throw new PermanentAuthError("No refresh token");
 
       // Use raw axios to bypass apiClient interceptors and avoid loops.
@@ -50,15 +49,6 @@ function refreshAccessToken(): Promise<string> {
         throw new Error("Invalid refresh response: missing tokens");
       }
       useAuthStore.getState().setTokens(newAccessToken, newRefreshToken, user);
-      const storedAfter = useAuthStore.getState().refreshToken;
-      const lsRaw = localStorage.getItem("pointfinder-auth");
-      const lsToken = lsRaw ? JSON.parse(lsRaw)?.state?.refreshToken : null;
-      console.warn("[AUTH] refreshAccessToken: SUCCESS",
-        "\n  received:", newRefreshToken?.substring(0, 15) + "...",
-        "\n  in store:", storedAfter?.substring(0, 15) + "...",
-        "\n  in localStorage:", lsToken?.substring(0, 15) + "...",
-        "\n  match?", newRefreshToken === storedAfter && storedAfter === lsToken
-      );
       return newAccessToken as string;
     } catch (err) {
       // 400/401/403 from refresh endpoint = token is invalid/expired → unrecoverable.
