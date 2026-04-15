@@ -544,9 +544,15 @@ public class ChunkedUploadService {
         List<String> tokens = List.of(pushToken);
         if (platform == PushPlatform.android) {
             fcmPushService.sendPush(tokens, title, body, customData);
-        } else {
-            // Default to APNs when push_platform is null (legacy iOS players)
+        } else if (platform == PushPlatform.ios) {
             apnsPushService.sendPush(tokens, title, body, customData);
+        } else {
+            // Unknown platform (null): do not attempt to push. Sending an
+            // Android FCM token via APNs (or vice versa) would fail anyway
+            // and could be misattributed as an iOS delivery in metrics.
+            // The client will re-register with a platform on next sign-in.
+            meterRegistry.counter("uploads.sessions.expired_push_skipped_unknown_platform").increment();
+            return;
         }
         meterRegistry.counter("uploads.sessions.expired_push_sent").increment();
     }

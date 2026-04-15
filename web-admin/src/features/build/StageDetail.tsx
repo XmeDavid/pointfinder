@@ -337,7 +337,6 @@ export default function StageDetail({
                         lat: b.lat,
                         lng: b.lng,
                         hidden: b.hidden,
-                        nfcLinked: b.nfcLinked,
                         stageId: stageId,
                       },
                     })
