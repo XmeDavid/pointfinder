@@ -48,7 +48,7 @@ export function UserAvatarMenu({ isDark, onToggleTheme, className }: UserAvatarM
       >
         {initials}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" side="right" sideOffset={8}>
+      <DropdownMenuContent align="start">
         <DropdownMenuItem
           onClick={() => navigate('/profile')}
           className="flex items-center gap-2"
