@@ -11,6 +11,7 @@ import com.prayer.pointfinder.service.PlayerService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,6 +23,9 @@ public class AuthController {
     private final AuthService authService;
     private final InviteService inviteService;
     private final PlayerService playerService;
+
+    @Value("${app.frontend-url:https://pointfinder.pt}")
+    private String frontendUrl;
 
     @PostMapping("/player/join")
     public ResponseEntity<PlayerAuthResponse> joinTeam(@Valid @RequestBody PlayerJoinRequest request) {
@@ -88,5 +92,13 @@ public class AuthController {
     public ResponseEntity<MessageResponse> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
         authService.changePassword(request);
         return ResponseEntity.ok(new MessageResponse("Password changed successfully."));
+    }
+
+    @GetMapping("/confirm-email")
+    public ResponseEntity<Void> confirmEmailChange(@RequestParam String token) {
+        authService.confirmEmailChange(token);
+        return ResponseEntity.status(302)
+                .header("Location", frontendUrl + "/profile?tab=general&emailConfirmed=true")
+                .build();
     }
 }

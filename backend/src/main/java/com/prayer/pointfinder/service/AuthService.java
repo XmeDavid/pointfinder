@@ -9,6 +9,7 @@ import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ErrorCode;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
+import com.prayer.pointfinder.repository.EmailChangeTokenRepository;
 import com.prayer.pointfinder.repository.OperatorInviteRepository;
 import com.prayer.pointfinder.repository.PasswordResetTokenRepository;
 import com.prayer.pointfinder.repository.RefreshTokenRepository;
@@ -41,6 +42,7 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final OperatorInviteRepository inviteRepository;
+    private final EmailChangeTokenRepository emailChangeTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
     private final EmailService emailService;
@@ -233,6 +235,35 @@ public class AuthService {
 
         // Invalidate all other sessions, keep the caller's
         refreshTokenRepository.deleteByUserIdAndTokenNot(user.getId(), request.getRefreshToken());
+    }
+
+    @Transactional(timeout = 10)
+    public void confirmEmailChange(String tokenStr) {
+        EmailChangeToken token = emailChangeTokenRepository.findByToken(tokenStr)
+                .orElseThrow(() -> new BadRequestException("Invalid email change token", ErrorCode.EMAIL_CHANGE_TOKEN_INVALID));
+
+        if (token.isUsed()) {
+            throw new BadRequestException("This link has already been used", ErrorCode.EMAIL_CHANGE_TOKEN_INVALID);
+        }
+
+        if (token.isExpired()) {
+            throw new BadRequestException("This link has expired", ErrorCode.EMAIL_CHANGE_TOKEN_EXPIRED);
+        }
+
+        // Check the new email hasn't been taken since the request was made
+        if (userRepository.existsByEmail(token.getNewEmail())) {
+            throw new BadRequestException("Email is already taken", ErrorCode.EMAIL_ALREADY_TAKEN);
+        }
+
+        User user = token.getUser();
+        user.setEmail(token.getNewEmail());
+        userRepository.save(user);
+
+        token.setUsed(true);
+        emailChangeTokenRepository.save(token);
+
+        // Invalidate any other pending email change tokens for this user
+        emailChangeTokenRepository.invalidateAllForUser(user.getId());
     }
 
     void validatePassword(String password) {
