@@ -1,6 +1,7 @@
 package com.prayer.pointfinder.service;
 
 import com.prayer.pointfinder.entity.*;
+import com.prayer.pointfinder.repository.EmailChangeTokenRepository;
 import com.prayer.pointfinder.repository.GameRepository;
 import com.prayer.pointfinder.repository.PasswordResetTokenRepository;
 import com.prayer.pointfinder.repository.RefreshTokenRepository;
@@ -29,6 +30,7 @@ public class GameSchedulerService {
     private final GameRepository gameRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final EmailChangeTokenRepository emailChangeTokenRepository;
     private final ChunkedUploadService chunkedUploadService;
     private final UploadSessionRepository uploadSessionRepository;
     private final StageRepository stageRepository;
@@ -95,6 +97,18 @@ public class GameSchedulerService {
         int deleted = passwordResetTokenRepository.deleteExpiredOrUsed(Instant.now());
         if (deleted > 0) {
             log.info("Purged {} expired/used password reset tokens", deleted);
+        }
+    }
+
+    /**
+     * Runs every hour to purge expired or used email change tokens from the database.
+     */
+    @Scheduled(fixedRate = 3600000)
+    @Transactional(timeout = 10)
+    public void purgeExpiredEmailChangeTokens() {
+        int emailTokensPurged = emailChangeTokenRepository.deleteExpiredOrUsed(Instant.now());
+        if (emailTokensPurged > 0) {
+            log.info("Purged {} expired/used email change tokens", emailTokensPurged);
         }
     }
 
