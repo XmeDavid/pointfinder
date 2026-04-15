@@ -528,4 +528,10 @@
     <string name="label_no_bases_assigned">No bases assigned</string>
     <string name="label_select_trigger_base">Select trigger base</string>
     <string name="label_none_trigger_base">None</string>
+    <string name="label_select_date">Select Date</string>
+    <string name="label_select_time">Select Time</string>
+    <string name="label_tap_to_set_schedule">Tap to set schedule</string>
+    <!-- Workspace switcher -->
+    <string name="label_personal_workspace">Personal</string>
+    <string name="label_member_count">%1$d members</string>
 </resources>

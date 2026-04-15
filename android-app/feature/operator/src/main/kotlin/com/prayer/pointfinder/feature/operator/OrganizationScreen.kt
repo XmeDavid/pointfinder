@@ -21,20 +21,23 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -324,60 +327,79 @@ fun OrganizationScreen(
         )
     }
 
-    // Permission edit dialog
+    // Permission edit bottom sheet
     val memberBeingEdited = editingMember
     if (memberBeingEdited != null) {
-        AlertDialog(
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
             onDismissRequest = { editingMember = null },
-            title = { Text("Permissions: ${memberBeingEdited.name}") },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    OrgPermission.ALL.forEach { perm ->
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Checkbox(
-                                checked = OrgPermission.has(editingPermMask, perm),
-                                onCheckedChange = { checked ->
-                                    editingPermMask = if (checked) {
-                                        editingPermMask or perm
-                                    } else {
-                                        editingPermMask and perm.inv()
-                                    }
-                                },
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                OrgPermission.label(perm),
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                        }
+            sheetState = sheetState,
+        ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                // Header
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    TextButton(onClick = { editingMember = null }) {
+                        Text("Cancel")
                     }
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        val targetMember = memberBeingEdited
-                        val newMask = editingPermMask
-                        editingMember = null
-                        scope.launch {
-                            try {
-                                val updated = updatePermissions(targetMember.userId, newMask)
-                                val idx = members.indexOfFirst { it.id == updated.id }
-                                if (idx >= 0) members[idx] = updated
-                            } catch (e: Exception) {
-                                errorMessage = e.message ?: "Failed to update permissions"
+                    Text(
+                        text = "Permissions for ${memberBeingEdited.name}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.weight(1f),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    )
+                    Button(
+                        onClick = {
+                            val targetMember = memberBeingEdited
+                            val newMask = editingPermMask
+                            editingMember = null
+                            scope.launch {
+                                try {
+                                    val updated = updatePermissions(targetMember.userId, newMask)
+                                    val idx = members.indexOfFirst { it.id == updated.id }
+                                    if (idx >= 0) members[idx] = updated
+                                } catch (e: Exception) {
+                                    errorMessage = e.message ?: "Failed to update permissions"
+                                }
                             }
-                        }
-                    },
-                ) { Text("Save") }
-            },
-            dismissButton = {
-                TextButton(onClick = { editingMember = null }) { Text("Cancel") }
-            },
-        )
+                        },
+                    ) { Text("Save") }
+                }
+                HorizontalDivider()
+                // Permission toggles
+                OrgPermission.ALL.forEach { perm ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = OrgPermission.label(perm),
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Switch(
+                            checked = OrgPermission.has(editingPermMask, perm),
+                            onCheckedChange = { checked ->
+                                editingPermMask = if (checked) {
+                                    editingPermMask or perm
+                                } else {
+                                    editingPermMask and perm.inv()
+                                }
+                            },
+                        )
+                    }
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                }
+                Spacer(Modifier.height(32.dp))
+            }
+        }
     }
 
     // Remove confirm dialog

@@ -160,6 +160,12 @@ fun OperatorHomeScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center,
                     ) {
+                        WorkspaceSwitcher(
+                            orgs = orgs,
+                            selectedOrgId = selectedOrgId,
+                            onSelectOrg = onSelectOrg,
+                        )
+                        Spacer(Modifier.height(16.dp))
                         Text(stringResource(R.string.label_no_games), style = MaterialTheme.typography.titleMedium)
                         Spacer(Modifier.height(8.dp))
                         Text(
@@ -177,30 +183,13 @@ fun OperatorHomeScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
                     ) {
-                        // Workspace switcher — always shown when there are orgs
-                        if (orgs.isNotEmpty()) {
-                            item {
-                                LazyRow(
-                                    contentPadding = PaddingValues(vertical = 4.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                ) {
-                                    item {
-                                        FilterChip(
-                                            selected = selectedOrgId == null,
-                                            onClick = { onSelectOrg(null) },
-                                            label = { Text("Personal") },
-                                        )
-                                    }
-                                    items(orgs, key = { it.id }) { org ->
-                                        FilterChip(
-                                            selected = selectedOrgId == org.id,
-                                            onClick = { onSelectOrg(org.id) },
-                                            label = { Text(org.name) },
-                                        )
-                                    }
-                                }
-                                Spacer(Modifier.height(4.dp))
-                            }
+                        item {
+                            WorkspaceSwitcher(
+                                orgs = orgs,
+                                selectedOrgId = selectedOrgId,
+                                onSelectOrg = onSelectOrg,
+                            )
+                            Spacer(Modifier.height(4.dp))
                         }
 
                         items(games, key = { it.id }, contentType = { "game" }) { game ->
@@ -261,6 +250,78 @@ fun OperatorHomeScreen(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun WorkspaceSwitcher(
+    orgs: List<OrgWorkspace>,
+    selectedOrgId: EntityId?,
+    onSelectOrg: (EntityId?) -> Unit,
+) {
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        item {
+            WorkspaceChip(
+                label = stringResource(R.string.label_personal_workspace),
+                detail = null,
+                selected = selectedOrgId == null,
+                onClick = { onSelectOrg(null) },
+            )
+        }
+        items(orgs, key = { it.id }) { org ->
+            WorkspaceChip(
+                label = org.name,
+                detail = stringResource(R.string.label_member_count, org.memberCount),
+                selected = selectedOrgId == org.id,
+                onClick = { onSelectOrg(org.id) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun WorkspaceChip(
+    label: String,
+    detail: String?,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val containerColor = if (selected) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant
+    }
+    val contentColor = if (selected) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    Surface(
+        onClick = onClick,
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(50),
+        color = containerColor,
+        contentColor = contentColor,
+        tonalElevation = if (selected) 0.dp else 1.dp,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            )
+            if (detail != null) {
+                Text(
+                    text = detail,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = contentColor.copy(alpha = 0.75f),
+                )
             }
         }
     }

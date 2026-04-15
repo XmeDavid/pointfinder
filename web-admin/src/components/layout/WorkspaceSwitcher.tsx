@@ -23,7 +23,7 @@ export function WorkspaceSwitcher() {
           if (location.pathname !== '/dashboard') navigate('/dashboard')
         }}
         className={cn(
-          'w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-sm transition-all',
+          'w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-sm transition-all cursor-pointer',
           'bg-indigo-500',
           isPersonalActive ? 'ring-2 ring-white' : 'opacity-60 hover:opacity-100'
         )}
@@ -56,7 +56,7 @@ export function WorkspaceSwitcher() {
               if (location.pathname !== '/dashboard') navigate('/dashboard')
             }}
             className={cn(
-              'w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-xs transition-all',
+              'w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-xs transition-all cursor-pointer',
               'bg-emerald-600',
               isActive ? 'ring-2 ring-white' : 'opacity-60 hover:opacity-100'
             )}
@@ -71,7 +71,7 @@ export function WorkspaceSwitcher() {
       {/* Create org button — navigates to checkout page, no free orgs */}
       <button
         onClick={() => navigate('/org/create')}
-        className="mt-2 w-9 h-9 rounded-lg border-2 border-dashed border-indigo-500/50 flex items-center justify-center text-indigo-400 hover:border-indigo-400 hover:text-indigo-300 transition-colors"
+        className="mt-2 w-9 h-9 rounded-lg border-2 border-dashed border-indigo-500/50 flex items-center justify-center text-indigo-400 hover:border-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer"
         title={t('workspace.createOrg', 'Create organization')}
         aria-label={t('workspace.createOrg', 'Create organization')}
       >

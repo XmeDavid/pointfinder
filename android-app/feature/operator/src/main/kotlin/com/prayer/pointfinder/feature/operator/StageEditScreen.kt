@@ -1,5 +1,6 @@
 package com.prayer.pointfinder.feature.operator
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,8 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,7 +36,10 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,6 +51,11 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import com.prayer.pointfinder.core.i18n.R
 import com.prayer.pointfinder.core.model.Base
 import com.prayer.pointfinder.core.model.CreateStageRequest
@@ -64,12 +75,46 @@ fun StageEditScreen(
 ) {
     val isEditMode = stage != null
 
+    // Parse initial scheduledAt into epoch millis + hour/minute for picker state
+    val isoFormatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss", Locale.US) }
+    val displayFormatter = remember { DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm", Locale.getDefault()) }
+    val initialDateTime: LocalDateTime? = remember(stage?.scheduledAt) {
+        stage?.scheduledAt?.takeIf { it.isNotBlank() }?.let {
+            runCatching { LocalDateTime.parse(it, isoFormatter) }.getOrNull()
+                ?: runCatching { LocalDateTime.parse(it.take(19), isoFormatter) }.getOrNull()
+        }
+    }
+    val initialEpochMillis: Long? = remember(initialDateTime) {
+        initialDateTime?.atZone(ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
+    }
+
     // Form state
     var name by remember { mutableStateOf(stage?.name ?: "") }
     var description by remember { mutableStateOf(stage?.description ?: "") }
     var transitionType by remember { mutableStateOf(stage?.transitionType ?: "manual") }
+    // scheduledAt ISO string derived from picker selections
     var scheduledAt by remember { mutableStateOf(stage?.scheduledAt ?: "") }
     var triggerBaseId by remember { mutableStateOf<String?>(stage?.triggerBaseId) }
+
+    // Date/time picker state
+    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialEpochMillis)
+    val timePickerState = rememberTimePickerState(
+        initialHour = initialDateTime?.hour ?: 0,
+        initialMinute = initialDateTime?.minute ?: 0,
+        is24Hour = true,
+    )
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
+
+    // Human-readable display of the selected date+time
+    val scheduledAtDisplay: String = remember(scheduledAt) {
+        if (scheduledAt.isBlank()) "" else {
+            runCatching {
+                val ldt = LocalDateTime.parse(scheduledAt.take(19), isoFormatter)
+                ldt.format(displayFormatter)
+            }.getOrElse { scheduledAt }
+        }
+    }
 
     // Menu state
     var showOverflowMenu by remember { mutableStateOf(false) }
@@ -198,14 +243,23 @@ fun StageEditScreen(
             // Scheduled at field (only when transition type is "scheduled")
             if (transitionType == "scheduled") {
                 Spacer(Modifier.height(12.dp))
-                OutlinedTextField(
-                    value = scheduledAt,
-                    onValueChange = { scheduledAt = it },
-                    label = { Text(stringResource(R.string.label_scheduled_at)) },
-                    placeholder = { Text("e.g. 2026-06-01T10:00:00") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = scheduledAtDisplay,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text(stringResource(R.string.label_scheduled_at)) },
+                        placeholder = { Text(stringResource(R.string.label_tap_to_set_schedule)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    // Transparent overlay to capture taps (readOnly fields block keyboard but not clicks)
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clickable { showDatePicker = true },
+                    )
+                }
             }
 
             // Trigger base dropdown (only when transition type is "trigger")
@@ -332,6 +386,59 @@ fun StageEditScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+
+    // Date picker dialog
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDatePicker = false
+                    showTimePicker = true
+                }) {
+                    Text(stringResource(R.string.action_continue))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    // Time picker dialog (shown after date is selected)
+    if (showTimePicker) {
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            title = { Text(stringResource(R.string.label_select_time)) },
+            text = {
+                TimePicker(state = timePickerState)
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showTimePicker = false
+                    val epochMillis = datePickerState.selectedDateMillis
+                    if (epochMillis != null) {
+                        val date = Instant.ofEpochMilli(epochMillis)
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate()
+                        val ldt = date.atTime(timePickerState.hour, timePickerState.minute, 0)
+                        scheduledAt = ldt.format(isoFormatter)
+                    }
+                }) {
+                    Text(stringResource(R.string.action_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTimePicker = false }) {
                     Text(stringResource(R.string.action_cancel))
                 }
             },

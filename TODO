@@ -1,1 +1,11 @@
-pre visualizar como equipa, em modo de checkin (nao existe desafiu) no previsualizar mostra informacoes de desafio
+General:
+-Limit max players per game based on quota
+Web:
+-See quotas, billing period and so on. Right now quotas are a json, but for the user on the frontend should not be like this
+-Admin screen can't go back to games
+-Dashboard for sys admins they see all games, they should only see their games(to see user games there is already a way from inside the user on the admin section)
+-No way to logout
+-Clicking on the personal workspace doesnt take me there(same issue as admin cant go back to games i think)
+Backend:
+iOS:
+Android: 

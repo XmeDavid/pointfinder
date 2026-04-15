@@ -1,11 +1,6 @@
 package com.prayer.pointfinder.feature.player
 
 import android.graphics.Bitmap
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -44,13 +39,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -100,16 +93,9 @@ fun CheckInScreen(
         return
     }
 
-    val pulseTransition = rememberInfiniteTransition(label = "check-in-pulse")
-    val pulseScale by pulseTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.08f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1400),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "check-in-scale",
-    )
+    // Derive scan animation state: scanning when no error has been shown yet,
+    // success would be driven by the caller if/when a successful scan occurs.
+    val scanState = if (!scanError.isNullOrBlank()) ScanAnimationState.IDLE else ScanAnimationState.SCANNING
 
     Column(
         modifier = modifier
@@ -118,25 +104,10 @@ fun CheckInScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.graphicsLayer {
-                scaleX = pulseScale
-                scaleY = pulseScale
-            },
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(160.dp)
-                    .background(StatusCompleted.copy(alpha = 0.10f), shape = MaterialTheme.shapes.extraLarge),
-            )
-            Box(
-                modifier = Modifier
-                    .size(120.dp)
-                    .background(StatusCompleted.copy(alpha = 0.20f), shape = MaterialTheme.shapes.extraLarge),
-            )
-            Icon(Icons.Default.LocationOn, contentDescription = null, modifier = Modifier.size(52.dp), tint = MaterialTheme.colorScheme.primary)
-        }
+        AnimatedScanView(
+            state = scanState,
+            modifier = Modifier.size(280.dp),
+        )
         Spacer(Modifier.height(18.dp))
         Text(stringResource(R.string.label_base_check_in), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
