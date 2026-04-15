@@ -7,75 +7,20 @@ import {
   ClipboardList,
   Trophy,
   Settings,
-  Sun,
-  Moon,
-  Globe,
-  Check,
   FolderOpen,
   Shield,
-  LogOut,
 } from "lucide-react";
 import {
   useWorkspaceStore,
   type GameMode,
 } from "@/stores/workspace";
 import { cn } from "@/lib/utils";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { useWorkspaceContext } from "@/stores/workspaceContext";
 import { useAuthStore } from "@/lib/auth/store";
+import { UserAvatarMenu } from "./UserAvatarMenu";
 
 const THEME_KEY = "pointfinder-theme";
-
-const LANGUAGES = [
-  { code: "en", label: "English" },
-  { code: "pt", label: "Português" },
-  { code: "de", label: "Deutsch" },
-] as const;
-
-function LanguagePicker() {
-  const { i18n } = useTranslation();
-  const currentLang = (i18n.resolvedLanguage ?? i18n.language ?? "en").slice(
-    0,
-    2,
-  );
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        className="w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer text-muted-foreground hover:text-foreground hover:bg-accent"
-        aria-label="Change language"
-        data-testid="language-picker-btn"
-      >
-        <div className="relative">
-          <Globe size={18} />
-          <span className="absolute -bottom-1 -right-1.5 text-[8px] font-bold leading-none">
-            {currentLang.toUpperCase()}
-          </span>
-        </div>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        {LANGUAGES.map((lang) => (
-          <DropdownMenuItem
-            key={lang.code}
-            onClick={() => i18n.changeLanguage(lang.code)}
-            className="flex items-center justify-between gap-4"
-          >
-            {lang.label}
-            {currentLang === lang.code && (
-              <Check size={14} className="text-primary" />
-            )}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
 
 function useThemeToggle() {
   const [isDark, setIsDark] = useState(() => {
@@ -154,7 +99,6 @@ export function IconRail({ showModes }: IconRailProps) {
   const { active } = useWorkspaceContext();
   const { t } = useTranslation();
   const user = useAuthStore(s => s.user);
-  const logout = useAuthStore(s => s.logout);
 
   const isSettingsActive = store.settingsPanelOpen;
   const isOrgWorkspace = active.type === 'org';
@@ -217,29 +161,8 @@ export function IconRail({ showModes }: IconRailProps) {
           </button>
         )}
 
-        {/* Language picker */}
-        <LanguagePicker />
-
-        {/* Dark/light mode toggle */}
-        <button
-          onClick={toggleTheme}
-          title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-          aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-          data-testid="theme-toggle-btn"
-          className="w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer text-muted-foreground hover:text-foreground hover:bg-accent"
-        >
-          {isDark ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
-
-        {/* Logout */}
-        <button
-          onClick={() => { logout(); navigate('/login') }}
-          title={t('common.logout', 'Logout')}
-          aria-label={t('common.logout', 'Logout')}
-          className="w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-        >
-          <LogOut size={18} />
-        </button>
+        {/* User avatar menu (profile, theme, language, logout) */}
+        <UserAvatarMenu isDark={isDark} onToggleTheme={toggleTheme} />
 
         {/* Settings icon at bottom -- only in game workspace */}
         {showModes && (
@@ -299,8 +222,8 @@ export function IconRail({ showModes }: IconRailProps) {
         {/* Push remaining icons to the right */}
         <div className="flex-1" />
 
-        {/* Language picker */}
-        <LanguagePicker />
+        {/* User avatar menu (profile, theme, language, logout) */}
+        <UserAvatarMenu isDark={isDark} onToggleTheme={toggleTheme} />
       </div>
     </>
   );
