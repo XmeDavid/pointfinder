@@ -14,6 +14,7 @@ import com.prayer.pointfinder.repository.OperatorInviteRepository;
 import com.prayer.pointfinder.repository.PasswordResetTokenRepository;
 import com.prayer.pointfinder.repository.RefreshTokenRepository;
 import com.prayer.pointfinder.repository.UserRepository;
+import com.prayer.pointfinder.repository.UserSubscriptionRepository;
 import com.prayer.pointfinder.security.JwtTokenProvider;
 import com.prayer.pointfinder.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +47,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
     private final EmailService emailService;
+    private final UserSubscriptionRepository userSubRepository;
     private final LoginAttemptService loginAttemptService;
 
     @Transactional(timeout = 10)
@@ -103,6 +105,13 @@ public class AuthService {
         if (invite.getGame() != null) {
             invite.getGame().getOperators().add(user);
         }
+
+        // Create free-tier subscription row so checkout webhooks can find it
+        userSubRepository.save(UserSubscription.builder()
+                .user(user)
+                .tier(IndividualTier.free)
+                .status(SubscriptionStatus.active)
+                .build());
 
         return generateAuthResponse(user);
     }

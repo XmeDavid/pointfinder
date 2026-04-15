@@ -41,11 +41,20 @@ public class StripeWebhookService {
 
         if (clientRef.startsWith("user:")) {
             UUID userId = UUID.fromString(clientRef.substring(5));
-            UserSubscription sub = userSubRepository.findByUserId(userId).orElse(null);
-            if (sub == null) {
-                log.warn("[WEBHOOK] No UserSubscription for userId={}", userId);
+            User user = userRepository.findById(userId).orElse(null);
+            if (user == null) {
+                log.warn("[WEBHOOK] No user for userId={}", userId);
                 return;
             }
+            UserSubscription sub = userSubRepository.findByUserId(userId)
+                    .orElseGet(() -> {
+                        log.info("[WEBHOOK] Creating missing UserSubscription for userId={}", userId);
+                        return UserSubscription.builder()
+                                .user(user)
+                                .tier(IndividualTier.free)
+                                .status(SubscriptionStatus.active)
+                                .build();
+                    });
 
             Map<String, String> metadata = session.getMetadata();
             String cycleStr = metadata != null ? metadata.get("billing_cycle") : null;

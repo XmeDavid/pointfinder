@@ -5,10 +5,12 @@ import com.prayer.pointfinder.dto.request.RegisterRequest;
 import com.prayer.pointfinder.dto.response.AuthResponse;
 import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.exception.BadRequestException;
+import com.prayer.pointfinder.repository.EmailChangeTokenRepository;
 import com.prayer.pointfinder.repository.OperatorInviteRepository;
 import com.prayer.pointfinder.repository.PasswordResetTokenRepository;
 import com.prayer.pointfinder.repository.RefreshTokenRepository;
 import com.prayer.pointfinder.repository.UserRepository;
+import com.prayer.pointfinder.repository.UserSubscriptionRepository;
 import com.prayer.pointfinder.security.JwtTokenProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -48,6 +50,8 @@ class AuthServiceTest {
     @Mock private JwtTokenProvider tokenProvider;
     @Mock private EmailService emailService;
     @Mock private LoginAttemptService loginAttemptService;
+    @Mock private EmailChangeTokenRepository emailChangeTokenRepository;
+    @Mock private UserSubscriptionRepository userSubRepository;
 
     @InjectMocks private AuthService authService;
 
