@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { gamesApi } from '@/lib/api/games'
 import type { CreateGameDto, GameImportData } from '@/lib/api/games'
-import type { GameStatus } from '@/types'
+import type { Game, GameStatus } from '@/types'
 
 export function useCreateGame() {
   const qc = useQueryClient()
@@ -14,7 +14,23 @@ export function useCreateGame() {
 export function useUpdateGame(gameId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (dto: Partial<CreateGameDto>) => gamesApi.update(gameId, dto),
+    mutationFn: (dto: Partial<CreateGameDto>) => {
+      const current = qc.getQueryData<Game>(['game', gameId])
+      const merged: Partial<CreateGameDto> = current
+        ? {
+            name: current.name,
+            description: current.description,
+            startDate: current.startDate ?? undefined,
+            endDate: current.endDate ?? undefined,
+            uniformAssignment: current.uniformAssignment,
+            broadcastEnabled: current.broadcastEnabled,
+            tileSource: current.tileSource,
+            unlockTrigger: current.unlockTrigger,
+            ...dto,
+          }
+        : dto
+      return gamesApi.update(gameId, merged)
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['game', gameId] })
       qc.invalidateQueries({ queryKey: ['games'] })
