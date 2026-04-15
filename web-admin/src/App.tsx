@@ -85,12 +85,6 @@ const OrgMembersPage = lazy(() =>
   })),
 );
 
-const BillingPage = lazy(() =>
-  import("@/features/billing/BillingPage").then((m) => ({
-    default: m.BillingPage,
-  })),
-);
-
 const ProfilePage = lazy(() =>
   import("@/features/profile/ProfilePage").then((m) => ({
     default: m.ProfilePage,

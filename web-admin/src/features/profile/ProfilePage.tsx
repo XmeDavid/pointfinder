@@ -2,6 +2,10 @@ import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/lib/auth/store'
 import { cn } from '@/lib/utils'
+import { GeneralTab } from './GeneralTab'
+import { SecurityTab } from './SecurityTab'
+import { BillingTab } from './BillingTab'
+import { DangerZoneTab } from './DangerZoneTab'
 
 const TABS = ['general', 'security', 'billing', 'danger-zone'] as const
 type Tab = (typeof TABS)[number]
@@ -50,20 +54,11 @@ export function ProfilePage() {
           ))}
         </div>
 
-        {/* Tab content — placeholder until tab components are wired in Task 13 */}
         <div data-testid="profile-tab-content">
-          {activeTab === 'general' && (
-            <p className="text-muted-foreground">General tab content</p>
-          )}
-          {activeTab === 'security' && (
-            <p className="text-muted-foreground">Security tab content</p>
-          )}
-          {activeTab === 'billing' && (
-            <p className="text-muted-foreground">Billing tab content</p>
-          )}
-          {activeTab === 'danger-zone' && (
-            <p className="text-muted-foreground">Danger zone tab content</p>
-          )}
+          {activeTab === 'general' && <GeneralTab />}
+          {activeTab === 'security' && <SecurityTab />}
+          {activeTab === 'billing' && <BillingTab />}
+          {activeTab === 'danger-zone' && <DangerZoneTab />}
         </div>
       </div>
     </div>

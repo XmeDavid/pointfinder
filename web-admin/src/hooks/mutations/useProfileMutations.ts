@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { profileApi, type UpdateProfilePayload, type ChangePasswordPayload } from '@/lib/api/profile'
+import { profileApi, type UpdateProfilePayload } from '@/lib/api/profile'
 import { useAuthStore } from '@/lib/auth/store'
 import { useNavigate } from 'react-router-dom'
 import type { User } from '@/types'
