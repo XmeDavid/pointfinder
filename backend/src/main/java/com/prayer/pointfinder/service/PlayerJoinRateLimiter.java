@@ -65,7 +65,7 @@ public class PlayerJoinRateLimiter {
     }
 
     // visible for testing
-    void clear() {
+    public void clear() {
         ipCounters.clear();
         deviceCounters.clear();
     }

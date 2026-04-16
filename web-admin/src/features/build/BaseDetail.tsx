@@ -136,7 +136,7 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
   if (!base) {
     return (
       <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
-        {t('build.selectBasePrompt')}
+        {t('build.baseNotFound')}
       </div>
     )
   }

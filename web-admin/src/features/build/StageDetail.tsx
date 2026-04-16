@@ -149,7 +149,7 @@ export default function StageDetail({
   if (!stage) {
     return (
       <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
-        {t('build.selectStagePrompt')}
+        {t('build.stageNotFound')}
       </div>
     )
   }

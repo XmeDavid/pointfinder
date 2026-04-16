@@ -188,7 +188,7 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
   if (!team) {
     return (
       <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
-        {t('build.selectTeamPrompt')}
+        {t('build.teamNotFound')}
       </div>
     )
   }
