@@ -25,6 +25,7 @@
 14. [Operator Notification Settings](#14-operator-notification-settings)
 15. [Users & Invites](#15-users--invites)
 16. [Notifications](#16-notifications)
+17. [Stages](#17-stages)
 
 ---
 
@@ -1294,6 +1295,55 @@ Per-game, per-operator push notification preferences.
 
 ---
 
+## 17. Stages
+
+**Base path**: `/api/games/:gameId/stages`
+**Auth**: `ROLE_ADMIN` or `ROLE_OPERATOR` with access to the game.
+**Added**: migration `V46__stages.sql`. See `docs/business-logic.md` § 4d for semantics (auto-activation of the first stage, transition types, delete behaviour, broadcasts).
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/games/:gameId/stages` | List stages ordered by `orderIndex`. |
+| POST | `/games/:gameId/stages` | Create a stage. First stage in a game auto-activates and captures all existing bases. |
+| PUT | `/games/:gameId/stages/:stageId` | Update name, description, transition type, schedule, or trigger base. |
+| DELETE | `/games/:gameId/stages/:stageId` | Delete stage; detaches bases (sets their `stage_id` to null). |
+| PATCH | `/games/:gameId/stages/reorder` | Reorder stages. Body: `{ "ids": ["stageId1", "stageId2", ...] }` in desired order. |
+
+**StageResponse**
+```json
+{
+  "id": "UUID",
+  "gameId": "UUID",
+  "name": "string",
+  "description": "string",
+  "orderIndex": 0,
+  "transitionType": "manual | scheduled | trigger",
+  "scheduledAt": "ISO-8601 or null",
+  "triggerBaseId": "UUID or null",
+  "isActive": false,
+  "baseIds": ["UUID", "..."],
+  "createdAt": "ISO-8601",
+  "updatedAt": "ISO-8601"
+}
+```
+
+**CreateStageRequest / UpdateStageRequest**
+```json
+{
+  "name": "string (required)",
+  "description": "string (optional)",
+  "transitionType": "manual | scheduled | trigger",
+  "scheduledAt": "ISO-8601 (required if transitionType='scheduled')",
+  "triggerBaseId": "UUID (required if transitionType='trigger')"
+}
+```
+
+**Broadcasts**: `game_config` on every CRUD; `stage_unlock` additionally fires on activation (including the auto-activation of the first stage). See `docs/realtime-and-mobile.md`.
+
+**Error codes**: `STAGE_NOT_FOUND`, `STAGE_GAME_MISMATCH`, `STAGE_HAS_BASES`, `STAGE_TRIGGER_BASE_NOT_FOUND`, `STAGE_ALREADY_ACTIVE` (see Error Codes appendix below).
+
+---
+
 ## Error Codes (Machine-Readable)
 
 All error responses include a machine-readable `code` field in addition to the human-readable `message`. Clients and mobile apps use the `code` to localize error messages and implement context-specific recovery paths. Codes are defined in the backend's `ErrorCode` enum (`backend/src/main/java/com/prayer/pointfinder/exception/ErrorCode.java`).
@@ -1323,6 +1373,16 @@ All error responses include a machine-readable `code` field in addition to the h
 | `TAG_LABEL_DUPLICATE` | 409 Conflict | A tag with this label already exists in the game (case-insensitive) | Operator tried to create a tag named "Water" when "WATER" already exists | Use a different label or delete the existing tag and recreate it |
 | `TAG_CAP_EXCEEDED` | 400 Bad Request | The game has already reached the maximum of 50 tags | Operator created 50 tags and tried to add a 51st | Delete some unused tags before creating new ones |
 | `TAG_IN_USE` | 409 Conflict | The tag is assigned to at least one base or challenge and cannot be deleted | Operator tried to delete a tag still in use | Remove the tag from all bases and challenges first, then delete |
+
+### Stage Error Codes
+
+| Code | HTTP Status | Meaning | Typical cause | Recovery |
+|---|---|---|---|---|
+| `STAGE_NOT_FOUND` | 404 Not Found | The stage ID does not exist | Client referenced a deleted or never-created stage | Refresh the stage list (`GET /games/:gameId/stages`) and retry against a known ID |
+| `STAGE_GAME_MISMATCH` | 400 Bad Request | The stage exists but belongs to a different game than the URL path's `gameId` | Client crossed games in a single request (e.g. stale tab) | Use the correct `gameId` for the stage, or fetch the stage via its own game |
+| `STAGE_HAS_BASES` | 400 Bad Request | Reserved for future policy; current `DELETE /stages/:id` flow auto-detaches bases instead | — | N/A |
+| `STAGE_TRIGGER_BASE_NOT_FOUND` | 400 Bad Request | `transitionType='trigger'` was set with a `triggerBaseId` that does not exist | Operator deleted the trigger base between picking it and saving | Pick a valid base from the current list and retry |
+| `STAGE_ALREADY_ACTIVE` | — | Reserved; `activateStage` is idempotent and does not throw when re-activating an active stage | — | N/A |
 
 ### WebSocket Error Codes
 

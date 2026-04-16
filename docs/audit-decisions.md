@@ -151,3 +151,13 @@ Design decisions made while fixing findings from `docs/full-codebase-audit-2026-
 **Alternatives considered:** Limiting data URIs to specific MIME types.
 
 **Rationale:** Data URIs in user content are a phishing vector and provide no legitimate value for challenge descriptions that can reference uploaded images via URLs.
+
+---
+
+## Finding 3.9 -- AppState God Object (2026-04-16 addendum)
+
+**Decision:** Added comprehensive doc comment to `AppState.swift` documenting the god-object tech debt, its current mitigation (extension-based split), and guidance for future refactoring.
+
+**Alternatives considered:** (a) Full decomposition into focused @Observable classes, (b) No action.
+
+**Rationale:** Full decomposition would touch every SwiftUI view and risk regressions without view-level tests (finding 9.6). The doc comment makes the debt visible for a future dedicated refactor.

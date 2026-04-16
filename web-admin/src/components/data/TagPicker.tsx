@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useTags } from '@/hooks/queries/useTags'
 import { useCreateTag } from '@/hooks/mutations/useTagMutations'
 import { COLOR_PALETTE, pickNextDefaultColor } from '@/lib/colorPalette'
+import { getReadableTextColor } from '@/lib/colorContrast'
 import type { Tag } from '@/types'
 
 interface TagPickerProps {
@@ -56,6 +57,10 @@ export function TagPicker({ gameId, selectedTagIds, onChange }: TagPickerProps) 
       <div className="flex flex-wrap gap-1.5">
         {tags.map((tag) => {
           const selected = selectedSet.has(tag.id)
+          // Selected pills use the tag's solid colour as background; pair with
+          // WCAG-derived black/white text so operator palette choices stay
+          // readable regardless of hue (white text on pale yellow → unreadable).
+          // Unselected pills keep the transparent-bg + tag-coloured-text look.
           return (
             <button
               key={tag.id}
@@ -64,9 +69,9 @@ export function TagPicker({ gameId, selectedTagIds, onChange }: TagPickerProps) 
               data-testid={`tag-toggle-${tag.id}`}
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-all cursor-pointer border"
               style={{
-                backgroundColor: selected ? `${tag.color}25` : 'transparent',
-                color: tag.color,
-                borderColor: selected ? `${tag.color}60` : `${tag.color}30`,
+                backgroundColor: selected ? tag.color : 'transparent',
+                color: selected ? getReadableTextColor(tag.color) : tag.color,
+                borderColor: selected ? tag.color : `${tag.color}30`,
               }}
             >
               {selected && <Check className="h-3 w-3" />}

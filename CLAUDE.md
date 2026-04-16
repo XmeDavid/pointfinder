@@ -80,7 +80,7 @@ cd e2e && ./run.sh all     # Everything (for cross-cutting changes)
 - **Test IDs**: When renaming or removing `data-testid` attributes, search for those IDs in test files (`*.test.tsx`) and E2E tests (`e2e/`). Same for `accessibilityIdentifier` (iOS) and `Modifier.testTag()` (Android).
 - **Route paths**: The web-admin route for the game list is `/dashboard`, not `/games`. Check `App.tsx` routes before hardcoding navigation paths.
 - **Mock factories**: Test factories (e.g. `createMockGame`) have default values (status: `setup`). When testing state-dependent UI, explicitly pass the required state override.
-- **API changes**: If you add/remove/rename an API endpoint or change its contract, update the corresponding mutation hook, API client method, and all consumers. Check both `web-admin` and `web-admin-legacy`.
+- **API changes**: If you add/remove/rename an API endpoint or change its contract, update the corresponding mutation hook, API client method, and all consumers in `web-admin`.
 
 ## Build & Test Commands
 
@@ -142,15 +142,15 @@ docker-compose up -d       # Start full stack
 
 ## Database
 
-- 24 tables, 42 Flyway migrations in `backend/src/main/resources/db/migration/`
+- 36 tables, 54 Flyway migrations in `backend/src/main/resources/db/migration/`
 - Flyway runs in validation mode (no auto-DDL) on startup
-- Key entities: Game, Base, Challenge, Assignment, Team, Player, Submission, CheckIn, UploadSession, TeamVariable, GameTag, BaseUnlockOverride, AuditEvent
-- Post-pilot additions: game_tags table (V40), base_unlock_overrides table (V36), audit_event table (V36)
-- Unique constraints: one check-in per team per base, idempotent submissions via idempotency_key, case-insensitive tag label per game
+- Key entities: Game, Base, Challenge, Assignment, Team, Player, Submission, CheckIn, UploadSession, TeamVariable, GameTag, BaseUnlockOverride, ActivityEvent, Stage, Organization, UserSubscription, Resource
+- Post-pilot additions: audit foundation (V36), base_unlock_overrides table (V37), challenge_operator_notes (V38), game_tags table (V40), optimistic-lock version columns (V43), base/challenge order_index (V44–V45), stages table (V46), organizations + subscriptions (V47–V49), resources + embeds (V50–V51), org_invites (V52), email_change_tokens (V53), per-team submission idempotency (V54)
+- Unique constraints: one check-in per team per base, idempotent submissions via idempotency_key (team-scoped per V54), case-insensitive tag label per game
 
 ## Localization
 
-Three languages: EN, PT, DE (533 keys each in frontend)
+Three languages: EN, PT, DE (932 keys each in frontend)
 - Frontend: `web-admin/src/i18n/locales/{en,pt,de}.json` — hostname-based detection (pointfinder.pt → PT, pointfinder.ch → DE)
 - Android: `android-app/app/src/main/res/values{,-de}/strings.xml`
 - iOS: Standard .strings localization
@@ -283,6 +283,20 @@ Mobile apps now block check-in when NFC is unavailable:
 Every rescue action, tag CRUD, audit export, and game status change is logged at INFO level with contextual fields (gameId, operator, action, result). Auth failures logged at WARN. Enables troubleshooting and compliance audits.
 
 See `docs/api-reference.md` "Error Codes" appendix and `docs/business-logic.md` "Audit Trail" for full reference.
+
+### Stages (V46)
+
+Stages partition a game's bases into ordered phases that unlock over time. A base without a stage is always visible; a base attached to a stage is only visible to players once that stage is active.
+
+- **Data model**: `stages` table (`id`, `game_id`, `name`, `description`, `order_index`, `transition_type`, `scheduled_at`, `trigger_base_id`, `is_active`). `bases.stage_id` (nullable) foreign-keys to `stages.id` with `ON DELETE SET NULL`.
+- **Transition types**: `manual` (operator activates), `scheduled` (auto-activates at `scheduledAt`), `trigger` (activates when any team completes `triggerBaseId`).
+- **Activation semantics**: Creating the first stage in a game auto-activates it and auto-assigns every existing base to that stage (so the game's current content keeps being visible). `activateStage` is idempotent — re-activating an active stage is a no-op.
+- **Broadcast**: Stage create/update/delete/reorder emit `game_config` events; activation additionally emits `stage_unlock` so players can refresh visibility.
+- **Endpoints**: `GET/POST /api/games/{gameId}/stages`, `PUT/DELETE /api/games/{gameId}/stages/{stageId}`, `PATCH /api/games/{gameId}/stages/reorder`.
+- **Error codes**: `STAGE_NOT_FOUND`, `STAGE_GAME_MISMATCH`, `STAGE_HAS_BASES`, `STAGE_TRIGGER_BASE_NOT_FOUND`, `STAGE_ALREADY_ACTIVE`.
+- **UI surface**: web-admin has `StagesTab` and `StageDetail` under `features/build/`, plus `StageStrip` in the workspace header showing active stage progress.
+
+See `docs/business-logic.md` "Stages" section and `docs/api-reference.md` "Stages" endpoints for details.
 
 ## E2E Testing
 

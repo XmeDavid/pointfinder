@@ -12,6 +12,7 @@
 3. [Challenge & Submission Flow](#3-challenge--submission-flow)
 4. [State Snapshot and Version Contract](#4-state-snapshot-and-version-contract)
 4a. [Audit Trail Foundation](#4a-audit-trail-foundation)
+4d. [Stages](#4d-stages)
 5. [Team Variables](#5-team-variables)
 6. [Authentication & Authorization](#6-authentication--authorization)
 7. [Push Notifications](#7-push-notifications)
@@ -789,6 +790,92 @@ Both formats return the same rows in the same chronological order (`timestamp AS
 - Service: `backend/src/main/java/com/prayer/pointfinder/service/AuditExportService.java`.
 - Repository pushdown query: `ActivityEventRepository.findForAuditExport`.
 - API reference: §10a (wire contract, query parameters, example JSON and CSV).
+
+---
+
+## 4d. Stages
+
+Source migration: `backend/src/main/resources/db/migration/V46__stages.sql`. Backend: `StageService`, `StageController`, `Stage` entity. Frontend: `web-admin/src/features/build/StagesTab.tsx`, `StageDetail.tsx`, `features/workspace/StageStrip.tsx`.
+
+### Purpose
+
+Stages let operators partition a game's bases into ordered phases that unlock over time. A base without a stage (`bases.stage_id IS NULL`) is always visible; a base attached to a stage is only visible to players after that stage is active. This enables multi-act games (e.g., first stage at the scout hut, second stage unlocks in the forest after a checkpoint) without requiring separate games.
+
+### Data model
+
+```
+stages
+  id              UUID PK
+  game_id         UUID FK → games(id) ON DELETE CASCADE
+  name            VARCHAR(255) NOT NULL
+  description     TEXT NOT NULL DEFAULT ''
+  order_index     INT NOT NULL DEFAULT 0      -- 0-based, contiguous per game
+  transition_type VARCHAR(20) NOT NULL        -- 'manual' | 'scheduled' | 'trigger'
+  scheduled_at    TIMESTAMPTZ NULL            -- required when transition_type='scheduled'
+  trigger_base_id UUID NULL FK → bases(id) ON DELETE SET NULL  -- required when transition_type='trigger'
+  is_active       BOOLEAN NOT NULL DEFAULT false
+  created_at      TIMESTAMPTZ NOT NULL
+  updated_at      TIMESTAMPTZ NOT NULL
+
+bases
+  stage_id        UUID NULL FK → stages(id) ON DELETE SET NULL  -- added in V46
+```
+
+Indexes: `idx_stages_game_id`, `idx_stages_game_order (game_id, order_index)`, `idx_bases_stage_id`.
+
+### Transition types
+
+| Type | Activation trigger |
+|------|-------------------|
+| `manual` | Operator clicks "Activate" in the stage UI. |
+| `scheduled` | A backend scheduler activates the stage at `scheduled_at`. |
+| `trigger` | The stage activates when any team completes the base identified by `trigger_base_id`. |
+
+All three call the same `StageService.activateStage(gameId, stageId)` code path, which is idempotent (`STAGE_ALREADY_ACTIVE` is not thrown — re-activation is a no-op).
+
+### Creation semantics
+
+When an operator creates the **first** stage in a game (`existingCount == 0`):
+
+1. The stage is saved with `is_active = true`.
+2. Every existing base in that game has its `stage_id` updated to this new stage via `BaseRepository.setStageIdForAllInGame(stageId, gameId)`. This keeps the game's existing content visible — without the auto-assign, introducing stages to a running game would instantly hide every base.
+3. A `stage_unlock` WebSocket event is broadcast so all connected players refresh visibility.
+
+Subsequent stages are created with `is_active = false` and bases must be explicitly attached to them (via `PUT /api/games/:gameId/bases/:baseId` with `stageId`).
+
+### Reorder and delete
+
+- **Reorder** (`PATCH /stages/reorder`) sends the full ordered list of stage IDs; the service updates `order_index` atomically.
+- **Delete** clears `bases.stage_id` to `NULL` for every base attached to the stage (they become "no-stage" bases, i.e., always visible), then deletes the stage row. `STAGE_HAS_BASES` is reserved for future policy but currently the delete cascades without warning.
+
+### Broadcasts
+
+Every CRUD operation emits `broadcaster.broadcastGameConfig(gameId, "stages", action)` so operator clients refresh. Activation additionally emits `broadcaster.broadcastStageUnlock(gameId, stageId)` so players refresh their visible-bases list.
+
+### Error codes
+
+| Code | HTTP | Meaning |
+|------|------|---------|
+| `STAGE_NOT_FOUND` | 404 | Stage ID does not exist. |
+| `STAGE_GAME_MISMATCH` | 400 | Stage exists but belongs to a different game than the URL path's `gameId`. |
+| `STAGE_HAS_BASES` | 400 | Reserved; not emitted by current delete flow (which auto-detaches). |
+| `STAGE_TRIGGER_BASE_NOT_FOUND` | 400 | Update payload set `transitionType='trigger'` with a `triggerBaseId` that does not exist. |
+| `STAGE_ALREADY_ACTIVE` | — | Reserved; not thrown — `activateStage` is idempotent and returns silently. |
+
+### Operator workflow
+
+1. Open the game's Build mode → "Stages" tab.
+2. Create Stage 1. It auto-activates and captures all existing bases.
+3. Create additional stages (Stage 2, Stage 3, ...). Each is inactive on creation.
+4. In the base editor, assign bases to later stages (a base can belong to exactly one stage or none).
+5. Pick a transition type per stage: manual (operator activates), scheduled (auto at a time), or trigger (auto when a base is completed).
+6. During the live game, the Workspace shows a `StageStrip` displaying the active stage and progress; the operator can also activate the next stage manually regardless of its configured transition type.
+
+### Platform coverage
+
+- **Backend**: authoritative. `StageService` enforces transitions and broadcasts.
+- **Web admin**: full CRUD (`StagesTab`, `StageDetail`), plus `StageStrip` on the workspace map.
+- **iOS / Android**: player apps listen for `stage_unlock` and refresh the visible bases list via the existing game-data snapshot; operator mobile apps do not currently expose stage CRUD.
 
 ---
 

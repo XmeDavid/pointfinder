@@ -45,12 +45,12 @@ Legend: [D] = required a design decision (see `docs/audit-decisions.md`)
 | # | Status | What was done |
 |---|--------|---------------|
 | 3.3 | Fixed | Added `seek(toOffset:)` to skip already-uploaded chunks in SyncEngine resumable upload |
-| 3.5 | Acknowledged | Receive loop structure is correct due to optional chaining; noted for MainActor awareness |
 | 3.4 | Fixed | Deferred Task launch to a separate `startAsyncSetup()` method called after init |
+| 3.5 | Fixed | Added detailed doc comment to receive loop explaining MainActor serialization safety and optional-chaining teardown behavior |
 | 3.6 | Fixed | Added `isSendingLocation` guard to prevent overlapping location send Tasks |
 | 3.7 | Fixed | Made logout await offline queue clearing before proceeding |
 | 3.8 | Fixed | Marked `onCountChanged` callback as `@Sendable` |
-| 3.9 | Acknowledged | AppState God Object tendency noted; extension files provide logical separation; deferred to dedicated refactor |
+| 3.9 | Fixed [D] | Added doc comment to AppState documenting tech debt and refactoring guidance |
 | 3.10 | Fixed | Extracted duplicated polling logic to shared `startProgressPollingTask()` method |
 | 3.12 | Fixed | Changed SolveView to pass video URL for chunked upload instead of loading full Data into memory |
 | 3.13 | Fixed | Added `@MainActor` annotation to NFCReaderService |
@@ -113,6 +113,7 @@ Legend: [D] = required a design decision (see `docs/audit-decisions.md`)
 | 6.6 | Fixed | Removed dead code (unreachable cancel/recreate) in PlayerLocationService |
 | 6.7 | Fixed | Fixed polling loop to re-read current game state on each iteration |
 | 6.8 | Fixed | Replaced `runBlocking` with coroutine-based token refresh on OkHttp interceptor |
+| 6.10 | Acknowledged | AppNavigation.kt 1614 lines; extraction deferred to dedicated refactor task |
 | 6.11 | Fixed | Added composite index on `pending_actions(gameId, baseId, type, permanentlyFailed)` |
 | 6.12 | Fixed | Overrode `equals()`/`hashCode()` on data class containing ByteArray |
 | 6.13 | Fixed | Added `key` parameters to LazyColumn items() calls in RichTextEditorScreen |
