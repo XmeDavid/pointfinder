@@ -134,26 +134,13 @@ describe("useBroadcastWebSocket", () => {
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["broadcast-progress", "MYCODE"] });
   });
 
-  it("invalidates broadcast-leaderboard and broadcast-progress on submission_status event", () => {
-    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-    renderHook(() => useBroadcastWebSocket("game-1", "MYCODE"), { wrapper });
-
-    act(() => {
-      capturedOnConnect?.();
-    });
-
-    const messageHandler = mockSubscribe.mock.calls[0][1];
-
-    act(() => {
-      messageHandler({ body: JSON.stringify({ type: "submission_status", data: null }) });
-      flushRaf();
-    });
-
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["broadcast-leaderboard", "MYCODE"] });
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["broadcast-progress", "MYCODE"] });
-    // Should NOT invalidate locations
-    expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ["broadcast-locations", "MYCODE"] });
-  });
+  // Wave A (audit remediation): submission_status and leaderboard now
+  // broadcast on operator-only sub-topics that spectator/broadcast
+  // sessions are fenced off from. Broadcast viewers still see progress
+  // move because every review emits an `activity` approval/rejection
+  // event on the legacy public topic, exercised above. The tests that
+  // used to assert direct submission_status/leaderboard handling are
+  // retired intentionally.
 
   it("invalidates broadcast-locations on location event", () => {
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
@@ -174,24 +161,10 @@ describe("useBroadcastWebSocket", () => {
     expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ["broadcast-leaderboard", "MYCODE"] });
   });
 
-  it("invalidates broadcast-leaderboard on leaderboard event", () => {
-    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-    renderHook(() => useBroadcastWebSocket("game-1", "MYCODE"), { wrapper });
-
-    act(() => {
-      capturedOnConnect?.();
-    });
-
-    const messageHandler = mockSubscribe.mock.calls[0][1];
-
-    act(() => {
-      messageHandler({ body: JSON.stringify({ type: "leaderboard", data: null }) });
-      flushRaf();
-    });
-
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["broadcast-leaderboard", "MYCODE"] });
-    expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ["broadcast-progress", "MYCODE"] });
-  });
+  // The old dedicated `leaderboard` case was removed; spectators only see
+  // public channels now (activity/location/game_status/presence). Any
+  // rogue `leaderboard` frame is routed through the defensive default
+  // branch in `invalidates all broadcast keys on unknown event type`.
 
   it("invalidates all broadcast keys on unknown event type", () => {
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");

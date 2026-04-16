@@ -58,7 +58,17 @@ public class Submission {
     @Column
     private Integer points;
 
-    @Column(name = "idempotency_key", unique = true)
+    /**
+     * Offline-sync dedupe key, unique per (team_id, idempotency_key) rather
+     * than globally. Composite uniqueness is enforced by the
+     * {@code uq_submissions_team_idempotency} partial unique index introduced
+     * in V54; the JPA annotation is intentionally non-unique because this
+     * column participates only in a composite constraint. Before V54 a global
+     * UNIQUE let any player replay another team's submission by posting the
+     * same idempotencyKey — backend would return the other team's row and
+     * leak its answer, feedback, and points.
+     */
+    @Column(name = "idempotency_key")
     private UUID idempotencyKey;
 
     @Version

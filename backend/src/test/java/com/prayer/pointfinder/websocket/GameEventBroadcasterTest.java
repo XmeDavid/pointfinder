@@ -97,7 +97,7 @@ class GameEventBroadcasterTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void broadcastSubmissionStatusIncludesAllRequiredFields() {
+    void broadcastSubmissionStatusSplitsOperatorAndTeamPayloads() {
         UUID submissionId = UUID.randomUUID();
         UUID teamId = UUID.randomUUID();
         UUID challengeId = UUID.randomUUID();
@@ -125,20 +125,38 @@ class GameEventBroadcasterTest {
 
         broadcaster.broadcastSubmissionStatus(gameId, submission);
 
-        ArgumentCaptor<Map<String, Object>> payloadCaptor = ArgumentCaptor.forClass(Map.class);
-        verify(messagingTemplate).convertAndSend(eq("/topic/games/" + gameId), payloadCaptor.capture());
+        // Operator envelope carries the scoring fields.
+        ArgumentCaptor<Map<String, Object>> operatorCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(messagingTemplate).convertAndSend(
+                eq("/topic/games/" + gameId + "/operator/submission_status"),
+                operatorCaptor.capture());
+        Map<String, Object> operatorData = (Map<String, Object>) operatorCaptor.getValue().get("data");
+        assertEquals(submissionId, operatorData.get("id"));
+        assertEquals(teamId, operatorData.get("teamId"));
+        assertEquals(challengeId, operatorData.get("challengeId"));
+        assertEquals("approved", operatorData.get("status"));
+        assertEquals(50, operatorData.get("points"));
+        assertEquals(reviewerId, operatorData.get("reviewedBy"));
+        assertEquals("Good job", operatorData.get("feedback"));
 
-        Map<String, Object> payload = payloadCaptor.getValue();
-        assertEquals("submission_status", payload.get("type"));
+        // Team envelope must NOT carry points/feedback/reviewer id.
+        ArgumentCaptor<Map<String, Object>> teamCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(messagingTemplate).convertAndSend(
+                eq("/topic/games/" + gameId + "/team/" + teamId + "/submission_status"),
+                teamCaptor.capture());
+        Map<String, Object> teamData = (Map<String, Object>) teamCaptor.getValue().get("data");
+        assertEquals(submissionId, teamData.get("id"));
+        assertEquals(teamId, teamData.get("teamId"));
+        assertEquals("approved", teamData.get("status"));
+        assertFalse(teamData.containsKey("points"), "team payload must not include points");
+        assertFalse(teamData.containsKey("feedback"), "team payload must not include feedback");
+        assertFalse(teamData.containsKey("reviewedBy"), "team payload must not include reviewedBy");
 
-        Map<String, Object> data = (Map<String, Object>) payload.get("data");
-        assertEquals(submissionId, data.get("id"));
-        assertEquals(teamId, data.get("teamId"));
-        assertEquals(challengeId, data.get("challengeId"));
-        assertEquals("approved", data.get("status"));
-        assertEquals(50, data.get("points"));
-        assertEquals(reviewerId, data.get("reviewedBy"));
-        assertEquals("Good job", data.get("feedback"));
+        // Mobile hub fan-out must also split by audience.
+        verify(mobileRealtimeHub).broadcastToOperators(eq(gameId), any(Map.class));
+        verify(mobileRealtimeHub).broadcastToTeam(eq(gameId), eq(teamId), any(Map.class));
+        // Legacy full-fan-out must NOT be called for submission_status.
+        verify(mobileRealtimeHub, never()).broadcast(eq(gameId), any(Map.class));
     }
 
     @Test

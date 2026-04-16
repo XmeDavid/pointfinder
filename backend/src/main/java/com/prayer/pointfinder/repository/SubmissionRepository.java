@@ -25,7 +25,30 @@ import java.util.UUID;
  */
 public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
 
-    Optional<Submission> findByIdempotencyKey(UUID idempotencyKey);
+    /**
+     * Idempotency lookup scoped to the owning team. Replaces the pre-V54
+     * globally-unique variant {@code findByIdempotencyKey} which allowed any
+     * player to replay another team's submission by reusing the idempotency
+     * key. Always prefer this method on the ingestion path; the hit-path
+     * associations-fetching variant below avoids the N+1 when the response
+     * needs to be rendered immediately.
+     */
+    Optional<Submission> findByTeamIdAndIdempotencyKey(UUID teamId, UUID idempotencyKey);
+
+    /**
+     * Idempotency hit-path lookup that also eagerly fetches the associations
+     * needed to build a {@code SubmissionResponse} without triggering lazy
+     * loading after the transaction closes. The fan-out joins mirror
+     * {@link #findByGameId(UUID, Pageable)} so the hit path stays in a single
+     * round-trip.
+     */
+    @Query("SELECT s FROM Submission s " +
+           "JOIN FETCH s.team t JOIN FETCH t.game " +
+           "JOIN FETCH s.challenge JOIN FETCH s.base " +
+           "WHERE t.id = :teamId AND s.idempotencyKey = :idempotencyKey")
+    Optional<Submission> findByTeamIdAndIdempotencyKeyWithAssociations(
+            @Param("teamId") UUID teamId,
+            @Param("idempotencyKey") UUID idempotencyKey);
 
     @Query("SELECT s FROM Submission s LEFT JOIN FETCH s.team LEFT JOIN FETCH s.challenge LEFT JOIN FETCH s.base " +
            "WHERE s.team.game.id = :gameId AND s.archived = false ORDER BY s.submittedAt DESC")

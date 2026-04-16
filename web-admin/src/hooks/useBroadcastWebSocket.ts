@@ -42,19 +42,24 @@ export function useBroadcastWebSocket(
       heartbeatOutgoing: 10000,
       onConnect: () => {
         setConnectionError(null);
+        // Broadcast (spectator) viewers subscribe ONLY to the legacy
+        // public channel, which carries activity, location, game_status
+        // and presence events. Post-Wave-A, the backend routes
+        // submission_status (with points/feedback) and leaderboard to
+        // operator-only sub-topics that subscribe-auth blocks for
+        // broadcast principals. An approval/rejection still surfaces to
+        // spectators as an `activity` event, which invalidates the
+        // broadcast leaderboard/progress REST queries so the UI stays
+        // live without leaking scoring data through the websocket itself.
         client.subscribe(`/topic/games/${gameId}`, (message) => {
           try {
             const payload = JSON.parse(message.body);
             switch (payload.type) {
               case "activity":
-              case "submission_status":
                 scheduleInvalidate("broadcast-leaderboard", "broadcast-progress");
                 break;
               case "location":
                 scheduleInvalidate("broadcast-locations");
-                break;
-              case "leaderboard":
-                scheduleInvalidate("broadcast-leaderboard");
                 break;
               default:
                 scheduleInvalidate("broadcast-leaderboard", "broadcast-progress", "broadcast-locations");

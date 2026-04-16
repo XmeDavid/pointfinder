@@ -85,6 +85,34 @@ public class MobileRealtimeHub {
     }
 
     public void broadcast(UUID gameId, Object payload) {
+        fanOut(gameId, payload, session -> true);
+    }
+
+    /**
+     * Delivers {@code payload} only to mobile sessions authenticated as
+     * operators/admins (handshake-set {@code principalType == "user"}).
+     * Used by {@link GameEventBroadcaster} for payloads that must never
+     * reach player clients (leaderboard, full submission_status with
+     * points/feedback). Sessions whose principal type is missing (legacy
+     * connections predating handshake attribute population) are treated as
+     * players and filtered out; that is the safe default.
+     */
+    public void broadcastToOperators(UUID gameId, Object payload) {
+        fanOut(gameId, payload, MobileRealtimeHub::isOperatorSession);
+    }
+
+    /**
+     * Delivers {@code payload} to operators/admins AND to players whose
+     * handshake-set {@code teamId} attribute matches the given team. Used
+     * for the sanitized player-facing submission_status projection: the
+     * owning team's players see their submission transition, operators see
+     * the same event for monitoring, and other teams' players see nothing.
+     */
+    public void broadcastToTeam(UUID gameId, UUID teamId, Object payload) {
+        fanOut(gameId, payload, session -> isOperatorSession(session) || isTeamSession(session, teamId));
+    }
+
+    private void fanOut(UUID gameId, Object payload, java.util.function.Predicate<WebSocketSession> filter) {
         Set<WebSocketSession> sessions = sessionsByGame.get(gameId);
         if (sessions == null || sessions.isEmpty()) {
             return;
@@ -99,7 +127,20 @@ public class MobileRealtimeHub {
         }
 
         TextMessage message = new TextMessage(json);
-        sessions.forEach(session -> sendSafely(gameId, session, message));
+        sessions.forEach(session -> {
+            if (!filter.test(session)) return;
+            sendSafely(gameId, session, message);
+        });
+    }
+
+    private static boolean isOperatorSession(WebSocketSession session) {
+        Object principalType = session.getAttributes().get("principalType");
+        return "user".equals(principalType);
+    }
+
+    private static boolean isTeamSession(WebSocketSession session, UUID teamId) {
+        Object sessionTeamId = session.getAttributes().get("teamId");
+        return teamId != null && teamId.equals(sessionTeamId);
     }
 
     @Scheduled(fixedRate = 60000)

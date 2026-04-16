@@ -1108,36 +1108,40 @@ These endpoints expose live game data using a 6-character broadcast code. The co
 
 ### Operator/Web Client
 
-**Subscribe**: `/topic/games/:gameId`
+**Subscribe**: three topic families per game (see audience split below).
 
-| Message Type | Payload | Frontend Cache Invalidation |
-|-------------|---------|---------------------------|
-| `activity` | Activity event | activity, submissions, dashboard-stats, leaderboard, progress |
-| `submission_status` | Submission update | submissions, dashboard-stats, leaderboard, progress |
-| `notification` | Notification sent | notifications |
-| `game_status` | Game status change | game, dashboard-stats, games list |
-| `leaderboard` | Points update | leaderboard |
-| `location` | Team location update | team-locations |
-| `presence` | Operator online list | operator presence store |
+| Topic | Payload | Audience | Frontend Cache Invalidation |
+|-------|---------|----------|---------------------------|
+| `/topic/games/:gameId` | `activity`, `game_status`, `game_config`, `stage_unlock`, `notification`, `location`, `presence` | All principals that can access the game (operator / broadcast / player) | activity, submissions, dashboard-stats, team-locations, etc. |
+| `/topic/games/:gameId/operator/submission_status` | Full review payload: `id`, `teamId`, `challengeId`, `baseId`, `status`, `submittedAt`, `reviewedBy`, `feedback`, `points` | Operator/admin/creator only (subscribe-auth rejects players + broadcast viewers) | submissions, dashboard-stats, leaderboard, progress |
+| `/topic/games/:gameId/operator/leaderboard` | Leaderboard refresh signal | Operator/admin/creator only | leaderboard |
+| `/topic/games/:gameId/team/:teamId/submission_status` | Sanitized review for the owning team: `id`, `teamId`, `challengeId`, `baseId`, `status`, `submittedAt` — never `points`, `feedback`, or `reviewedBy` | Player whose JWT `teamId` matches; operators of the game may also read | progress (player app) |
+
+Wave A audit remediation note: before 2026-04-16, `submission_status` and `leaderboard` broadcast on `/topic/games/:gameId` directly, so any player subscribed to the game topic could harvest other teams' scores and review feedback. The split above enforces the product invariant "players don't see scores or leaderboards" at the transport layer.
 
 ### Broadcast (Public) Client
 
 **Subscribe**: `/topic/games/:gameId`
 **Auth**: `X-Broadcast-Code` header (no Bearer token required)
 
-Receives the same message types filtered to the broadcast game.
+Receives only the public channels (`activity`, `location`, `game_status`, `presence`, `notification`, `stage_unlock`). Operator-only and team-scoped sub-topics are rejected at SUBSCRIBE time. Score changes surface to spectators indirectly: every review emits an `activity` approval/rejection event that invalidates the REST leaderboard/progress queries.
+
+**Broadcast-code throttle**: invalid `X-Broadcast-Code` attempts are rate-limited per source IP (via `X-Forwarded-For` / `X-Real-IP`): 5 failures in 60 seconds → 15-minute lockout. Failures are logged at WARN; the attempted code itself is never logged.
 
 ### Mobile Client (iOS/Android)
 
 **Endpoint**: `/ws/mobile?gameId=:gameId`
 **Auth**: Bearer token in HTTP upgrade header
 
-| Event Type | Action |
-|-----------|--------|
-| `game_status` | Update local game state, reload progress |
-| `submission_status` | Reload progress |
-| `activity` | Reload progress |
-| `notification` | Increment unseen notification count |
+Mobile uses a single raw WebSocket per game instead of STOMP topics; the server filters payloads on the hub based on the handshake-authenticated principal (player vs operator) and, for team-scoped events, the player's `teamId` claim. Player tokens MUST include the `teamId` claim so the handshake can bind the session to a team.
+
+| Event Type | Audience | Player app action |
+|-----------|----------|-------------------|
+| `game_status` | All | Update local game state, reload progress |
+| `activity` | All | Reload progress (no scoring fields) |
+| `submission_status` | Operator: full payload. Player: sanitized projection delivered only to the owning team's players. Other teams' players see nothing. | Reload progress |
+| `leaderboard` | Operator only | Not delivered to player apps |
+| `notification` | All | Increment unseen notification count |
 
 ---
 

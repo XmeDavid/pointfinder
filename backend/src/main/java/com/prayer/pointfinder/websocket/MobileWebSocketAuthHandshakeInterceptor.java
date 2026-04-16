@@ -76,15 +76,21 @@ public class MobileWebSocketAuthHandshakeInterceptor implements HandshakeInterce
     private boolean authorizePlayer(String token, ServerHttpResponse response, Map<String, Object> attributes) {
         Claims claims = tokenProvider.getClaims(token);
         String gameIdValue = claims.get("gameId", String.class);
-        if (!StringUtils.hasText(gameIdValue)) {
+        String teamIdValue = claims.get("teamId", String.class);
+        if (!StringUtils.hasText(gameIdValue) || !StringUtils.hasText(teamIdValue)) {
+            // Team scope is required so the realtime hub can restrict
+            // team-scoped broadcasts (e.g. submission_status) to the
+            // owning team without a round-trip to the player table.
             response.setStatusCode(HttpStatus.FORBIDDEN);
             return false;
         }
         try {
             UUID gameId = UUID.fromString(gameIdValue);
+            UUID teamId = UUID.fromString(teamIdValue);
             attributes.put(MobileRealtimeWebSocketHandler.ATTR_GAME_ID, gameId);
             attributes.put("principalType", "player");
             attributes.put("principalId", tokenProvider.getUserIdFromToken(token));
+            attributes.put("teamId", teamId);
             return true;
         } catch (IllegalArgumentException e) {
             response.setStatusCode(HttpStatus.FORBIDDEN);

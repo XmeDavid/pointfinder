@@ -14,17 +14,17 @@ The backend exposes a STOMP WebSocket endpoint with SockJS fallback.
 - **Message broker prefix**: `/topic`
 - **Auth**: JWT token passed in STOMP `CONNECT` headers
 
-**7 broadcast topics** under `/topic/games/{gameId}`:
+**Broadcast topics (Wave A layout, post-audit split)** — the backend fans out across three topic families so players cannot eavesdrop on other teams' scoring data:
 
-| Topic | Purpose |
-|---|---|
-| `activity` | New activity events (check-ins, submissions) |
-| `submission_status` | Submission reviewed/updated |
-| `leaderboard` | Leaderboard score changes |
-| `location` | Team location updates |
-| `notification` | Player/operator notifications |
-| `game_status` | Game status transitions (setup → live → ended) |
-| `presence` | Operator online status |
+| Topic family | Events carried | Who can subscribe |
+|---|---|---|
+| `/topic/games/{gameId}` | `activity`, `location`, `presence`, `notification`, `game_status`, `game_config`, `stage_unlock` | Any game member (operator / player / broadcast viewer) |
+| `/topic/games/{gameId}/operator/{type}` (`submission_status`, `leaderboard`) | Full review payload (`points`, `feedback`, `reviewedBy`) and leaderboard refresh signal | Operators / admins / game creators only — subscribe-auth rejects players and broadcast viewers |
+| `/topic/games/{gameId}/team/{teamId}/submission_status` | Sanitized per-team review payload: `id`, `teamId`, `challengeId`, `baseId`, `status`, `submittedAt`. No `points`, `feedback`, or `reviewedBy`. | The player whose JWT `teamId` matches; operators/admins may also read for monitoring |
+
+Wave A audit remediation: before 2026-04-16, `submission_status` (with `points`/`feedback`/`reviewedBy`) and `leaderboard` broadcast on `/topic/games/{gameId}` directly, so any player subscribed to the game channel could harvest other teams' scores. The split above enforces "players don't see scores or leaderboards" at the transport layer.
+
+**Mobile raw WebSocket (`/ws/mobile`)** follows the same split conceptually but without STOMP topics: `MobileRealtimeHub` filters each broadcast on the handshake-authenticated principal (operator vs player) and, for team-scoped events, the handshake-captured `teamId` attribute. Players whose JWT lacks a `teamId` claim are rejected at handshake.
 
 ### Frontend (STOMP Client)
 

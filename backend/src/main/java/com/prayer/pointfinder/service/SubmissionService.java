@@ -93,16 +93,16 @@ public class SubmissionService {
             throw new BadRequestException("Submissions can only be created when the game is live. Current status: " + game.getStatus());
         }
 
-        // Check for idempotency - if submission with this key exists, return it
+        // Check for idempotency - if submission with this key exists for
+        // THIS team, return it. The lookup is team-scoped (V54 composite
+        // unique index) so a client cannot replay another team's
+        // submission by reusing the same idempotency key.
         if (request.getIdempotencyKey() != null) {
-            var existing = submissionRepository.findByIdempotencyKey(request.getIdempotencyKey());
+            var existing = submissionRepository.findByTeamIdAndIdempotencyKeyWithAssociations(
+                    request.getTeamId(), request.getIdempotencyKey());
             if (existing.isPresent()) {
                 Submission sub = existing.get();
                 ensureBelongsToGame(sub.getTeam().getGame().getId(), gameId, "Submission");
-                // Initialize lazy proxies before returning
-                sub.getTeam().getId();
-                sub.getChallenge().getId();
-                sub.getBase().getId();
                 return toResponse(sub);
             }
         }
@@ -195,15 +195,16 @@ public class SubmissionService {
         try {
             submission = submissionRepository.save(submission);
         } catch (DataIntegrityViolationException ex) {
-            // Race-safe idempotency: return existing submission if another request created it first.
+            // Race-safe idempotency: return existing submission if another
+            // request for the same team+key beat us to the insert. The
+            // lookup is team-scoped so we cannot accidentally return
+            // another team's row here either.
             if (request.getIdempotencyKey() != null) {
-                var existing = submissionRepository.findByIdempotencyKey(request.getIdempotencyKey());
+                var existing = submissionRepository.findByTeamIdAndIdempotencyKeyWithAssociations(
+                        request.getTeamId(), request.getIdempotencyKey());
                 if (existing.isPresent()) {
                     Submission sub = existing.get();
                     ensureBelongsToGame(sub.getTeam().getGame().getId(), gameId, "Submission");
-                    sub.getTeam().getId();
-                    sub.getChallenge().getId();
-                    sub.getBase().getId();
                     return toResponse(sub);
                 }
             }
@@ -430,18 +431,16 @@ public class SubmissionService {
 
         // Deterministic idempotency key derived from the natural tuple.
         // This makes re-clicking the rescue button return the existing row
-        // instead of creating a duplicate or awarding extra points.
+        // instead of creating a duplicate or awarding extra points. The
+        // derivation already includes teamId so the key is naturally
+        // unique per (team_id, idempotency_key) scope (V54).
         UUID idempotencyKey = deriveMarkCompletedIdempotencyKey(
                 operatorId, teamId, baseId, challengeId);
 
-        Optional<Submission> existing = submissionRepository.findByIdempotencyKey(idempotencyKey);
+        Optional<Submission> existing = submissionRepository
+                .findByTeamIdAndIdempotencyKeyWithAssociations(teamId, idempotencyKey);
         if (existing.isPresent()) {
-            Submission sub = existing.get();
-            // Touch lazy proxies before returning.
-            sub.getTeam().getId();
-            sub.getChallenge().getId();
-            sub.getBase().getId();
-            return toResponse(sub);
+            return toResponse(existing.get());
         }
 
         Integer points = request.getPointsOverride() != null
@@ -469,14 +468,11 @@ public class SubmissionService {
             submission = submissionRepository.save(submission);
         } catch (DataIntegrityViolationException ex) {
             // Race-safe idempotency: if another operator raced us on the
-            // same tuple, return the winning row.
-            Optional<Submission> winner = submissionRepository.findByIdempotencyKey(idempotencyKey);
+            // same (team, key) tuple, return the winning row.
+            Optional<Submission> winner = submissionRepository
+                    .findByTeamIdAndIdempotencyKeyWithAssociations(teamId, idempotencyKey);
             if (winner.isPresent()) {
-                Submission sub = winner.get();
-                sub.getTeam().getId();
-                sub.getChallenge().getId();
-                sub.getBase().getId();
-                return toResponse(sub);
+                return toResponse(winner.get());
             }
             throw ex;
         }

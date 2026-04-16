@@ -83,14 +83,30 @@ export function connectWebSocket(
     heartbeatIncoming: 10000,
     heartbeatOutgoing: 10000,
     onConnect: () => {
-      client.subscribe(`/topic/games/${gameId}`, (message) => {
+      // Legacy per-game channel carries activity, location, presence,
+      // notification, game_status, game_config, stage_unlock — everything
+      // that does NOT leak scoring or private review metadata.
+      const handle = (message: { body: string }) => {
         try {
           const payload = JSON.parse(message.body);
           onMessage(payload);
         } catch (e) {
           console.error("Failed to parse WebSocket message:", e);
         }
-      });
+      };
+      client.subscribe(`/topic/games/${gameId}`, handle);
+      // Operator-only sub-topics (post-audit Wave A): submission_status
+      // (full payload with points/feedback) and leaderboard are fenced off
+      // from players by server-side subscribe-auth. Web-admin is operator
+      // surface, so always subscribe to both.
+      client.subscribe(
+        `/topic/games/${gameId}/operator/submission_status`,
+        handle
+      );
+      client.subscribe(
+        `/topic/games/${gameId}/operator/leaderboard`,
+        handle
+      );
 
       // Fire the reconnect hook on every connect *after* the first. This is
       // the web-admin equivalent of iOS `MobileRealtimeClient.onReconnect`

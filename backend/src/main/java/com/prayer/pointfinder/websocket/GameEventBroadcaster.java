@@ -82,8 +82,16 @@ public class GameEventBroadcaster {
         broadcast(gameId, "notification", notification, true);
     }
 
+    /**
+     * Leaderboard updates are OPERATOR-ONLY. Players do not see scores or
+     * leaderboards anywhere in the product (per CLAUDE.md "Players don't see
+     * scores or leaderboards"), so the broadcast lands on the operator
+     * sub-topic and on the mobile hub filtered to operator principals. The
+     * legacy {@code /topic/games/{gameId}} player-visible broadcast has been
+     * removed.
+     */
     public void broadcastLeaderboardUpdate(UUID gameId, Object leaderboard) {
-        broadcast(gameId, "leaderboard", leaderboard, true);
+        broadcastOperatorOnly(gameId, "leaderboard", leaderboard, true);
     }
 
     public void broadcastLocationUpdate(UUID gameId, Object locationData) {
@@ -119,36 +127,119 @@ public class GameEventBroadcaster {
         broadcast(gameId, "presence", presenceData, false);
     }
 
+    /**
+     * Submission review events are split across two audiences:
+     *
+     * <ul>
+     *   <li>Operators receive the full payload (points, feedback, reviewer
+     *       id) on {@code /topic/games/{gameId}/operator/submission_status}
+     *       and via {@link MobileRealtimeHub} filtered to operator
+     *       principals. Operators need the scoring fields to drive the
+     *       submission review UX.</li>
+     *   <li>The owning team receives a sanitized payload with ONLY
+     *       {@code id}, {@code teamId}, {@code challengeId}, {@code baseId},
+     *       {@code status}, {@code submittedAt} on
+     *       {@code /topic/games/{gameId}/team/{teamId}/submission_status}
+     *       and via the mobile hub filtered to players on that team. No
+     *       {@code points}, {@code feedback}, or {@code reviewedBy} — the
+     *       player app must never surface scoring data (per CLAUDE.md
+     *       "Players don't see scores or leaderboards").</li>
+     * </ul>
+     *
+     * Both broadcasts share the same stateVersion bump so a single submission
+     * review counts as one snapshot-invalidation event for every consumer.
+     */
     public void broadcastSubmissionStatus(UUID gameId, Submission submission) {
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("id", submission.getId());
-        payload.put("teamId", submission.getTeam().getId());
-        payload.put("challengeId", submission.getChallenge().getId());
-        payload.put("baseId", submission.getBase().getId());
-        payload.put("status", submission.getStatus().name());
-        payload.put("submittedAt", submission.getSubmittedAt() != null ? submission.getSubmittedAt().toString() : null);
-        payload.put("reviewedBy", submission.getReviewedBy() != null ? submission.getReviewedBy().getId() : null);
-        payload.put("feedback", submission.getFeedback());
-        payload.put("points", submission.getPoints());
-        broadcast(gameId, "submission_status", payload, true);
+        Long stateVersion = bumpStateVersion(gameId, "submission_status");
+
+        UUID teamId = submission.getTeam().getId();
+
+        Map<String, Object> operatorData = new HashMap<>();
+        operatorData.put("id", submission.getId());
+        operatorData.put("teamId", teamId);
+        operatorData.put("challengeId", submission.getChallenge().getId());
+        operatorData.put("baseId", submission.getBase().getId());
+        operatorData.put("status", submission.getStatus().name());
+        operatorData.put("submittedAt", submission.getSubmittedAt() != null
+                ? submission.getSubmittedAt().toString() : null);
+        operatorData.put("reviewedBy", submission.getReviewedBy() != null
+                ? submission.getReviewedBy().getId() : null);
+        operatorData.put("feedback", submission.getFeedback());
+        operatorData.put("points", submission.getPoints());
+
+        // Player-safe projection: no points, no feedback, no reviewer id.
+        Map<String, Object> teamData = new HashMap<>();
+        teamData.put("id", submission.getId());
+        teamData.put("teamId", teamId);
+        teamData.put("challengeId", submission.getChallenge().getId());
+        teamData.put("baseId", submission.getBase().getId());
+        teamData.put("status", submission.getStatus().name());
+        teamData.put("submittedAt", submission.getSubmittedAt() != null
+                ? submission.getSubmittedAt().toString() : null);
+
+        String operatorDest = "/topic/games/" + gameId + "/operator/submission_status";
+        String teamDest = "/topic/games/" + gameId + "/team/" + teamId + "/submission_status";
+
+        Map<String, Object> operatorEnvelope = buildEnvelope(gameId, "submission_status", operatorData, stateVersion);
+        Map<String, Object> teamEnvelope = buildEnvelope(gameId, "submission_status", teamData, stateVersion);
+
+        dispatchAfterCommit(() -> {
+            log.debug("Broadcasting submission_status operator envelope to {}", operatorDest);
+            messagingTemplate.convertAndSend(operatorDest, operatorEnvelope);
+            log.debug("Broadcasting submission_status team envelope to {}", teamDest);
+            messagingTemplate.convertAndSend(teamDest, teamEnvelope);
+            mobileRealtimeHub.broadcastToOperators(gameId, operatorEnvelope);
+            mobileRealtimeHub.broadcastToTeam(gameId, teamId, teamEnvelope);
+        });
     }
 
     private void broadcast(UUID gameId, String type, Object data, boolean bumpStateVersion) {
-        Long stateVersion = null;
-        if (bumpStateVersion) {
-            try {
-                stateVersion = gameRepository.incrementStateVersion(gameId);
-            } catch (Exception ex) {
-                // A failed bump must never prevent a broadcast from landing.
-                // A dropped bump degrades the snapshot freshness contract
-                // (clients might miss a state change) but a dropped broadcast
-                // would corrupt live UX. Prefer honest realtime over a
-                // version-correct silence.
-                log.warn("Failed to bump state_version for game {} on {} event: {}",
-                        gameId, type, ex.getMessage());
-            }
-        }
+        Long stateVersion = bumpStateVersion ? bumpStateVersion(gameId, type) : null;
+        Map<String, Object> payload = buildEnvelope(gameId, type, data, stateVersion);
 
+        dispatchAfterCommit(() -> {
+            String destination = "/topic/games/" + gameId;
+            log.debug("Broadcasting {} event to {}", type, destination);
+            messagingTemplate.convertAndSend(destination, payload);
+            mobileRealtimeHub.broadcast(gameId, payload);
+        });
+    }
+
+    /**
+     * Operator-audience variant of {@link #broadcast}. Lands on the
+     * {@code /topic/games/{gameId}/operator/{type}} STOMP sub-topic and is
+     * filtered to operator principals on the mobile hub. Used for payloads
+     * that must never reach player clients (leaderboard today; other
+     * sensitive channels can reuse this in future waves).
+     */
+    private void broadcastOperatorOnly(UUID gameId, String type, Object data, boolean bumpStateVersion) {
+        Long stateVersion = bumpStateVersion ? bumpStateVersion(gameId, type) : null;
+        Map<String, Object> payload = buildEnvelope(gameId, type, data, stateVersion);
+
+        dispatchAfterCommit(() -> {
+            String destination = "/topic/games/" + gameId + "/operator/" + type;
+            log.debug("Broadcasting operator-only {} event to {}", type, destination);
+            messagingTemplate.convertAndSend(destination, payload);
+            mobileRealtimeHub.broadcastToOperators(gameId, payload);
+        });
+    }
+
+    private Long bumpStateVersion(UUID gameId, String type) {
+        try {
+            return gameRepository.incrementStateVersion(gameId);
+        } catch (Exception ex) {
+            // A failed bump must never prevent a broadcast from landing.
+            // A dropped bump degrades the snapshot freshness contract
+            // (clients might miss a state change) but a dropped broadcast
+            // would corrupt live UX. Prefer honest realtime over a
+            // version-correct silence.
+            log.warn("Failed to bump state_version for game {} on {} event: {}",
+                    gameId, type, ex.getMessage());
+            return null;
+        }
+    }
+
+    private Map<String, Object> buildEnvelope(UUID gameId, String type, Object data, Long stateVersion) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("version", EVENT_VERSION);
         payload.put("type", type);
@@ -158,14 +249,10 @@ public class GameEventBroadcaster {
             payload.put("stateVersion", stateVersion);
         }
         payload.put("data", data);
+        return payload;
+    }
 
-        Runnable dispatch = () -> {
-            String destination = "/topic/games/" + gameId;
-            log.debug("Broadcasting {} event to {}", type, destination);
-            messagingTemplate.convertAndSend(destination, payload);
-            mobileRealtimeHub.broadcast(gameId, payload);
-        };
-
+    private void dispatchAfterCommit(Runnable dispatch) {
         if (TransactionSynchronizationManager.isSynchronizationActive()
                 && TransactionSynchronizationManager.isActualTransactionActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {

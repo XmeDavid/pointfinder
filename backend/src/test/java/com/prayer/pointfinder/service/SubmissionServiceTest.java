@@ -169,7 +169,7 @@ class SubmissionServiceTest {
                 .idempotencyKey(idempotencyKey)
                 .build();
 
-        when(submissionRepository.findByIdempotencyKey(idempotencyKey))
+        when(submissionRepository.findByTeamIdAndIdempotencyKeyWithAssociations(teamId, idempotencyKey))
                 .thenReturn(Optional.empty(), Optional.of(existing));
         when(fileStorageService.validateStoredFileUrl(null, gameId)).thenReturn(null);
         when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
@@ -181,7 +181,8 @@ class SubmissionServiceTest {
         SubmissionResponse response = submissionService.createSubmission(gameId, request);
 
         assertEquals(existingSubmissionId, response.getId());
-        verify(submissionRepository, times(2)).findByIdempotencyKey(idempotencyKey);
+        verify(submissionRepository, times(2))
+                .findByTeamIdAndIdempotencyKeyWithAssociations(teamId, idempotencyKey);
     }
 
     @Test
@@ -504,7 +505,7 @@ class SubmissionServiceTest {
         request.setIdempotencyKey(idempotencyKey);
 
         // First call finds existing - returns it directly without saving
-        when(submissionRepository.findByIdempotencyKey(idempotencyKey))
+        when(submissionRepository.findByTeamIdAndIdempotencyKeyWithAssociations(teamId, idempotencyKey))
                 .thenReturn(Optional.of(existing));
 
         SubmissionResponse response = submissionService.createSubmission(gameId, request);

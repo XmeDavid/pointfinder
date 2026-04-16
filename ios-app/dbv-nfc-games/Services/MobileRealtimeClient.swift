@@ -117,6 +117,15 @@ final class MobileRealtimeClient {
     }
 
     private func startReceiveLoop(task: URLSessionWebSocketTask) {
+        // The receive loop runs as a detached Task but mutates state on
+        // `self`, which is @MainActor-isolated. Every `self?.` access below
+        // hops back to MainActor and is therefore serialized with any other
+        // state changes (reconnect, foreground handling, teardown), so there
+        // is no data-race concern between reads (e.g. `self?.reconnectAttempt`)
+        // and later writes (e.g. `self?.connectionState = .connected`).
+        // The optional chaining also ensures that if `self` has been released
+        // mid-receive the loop terminates cleanly without touching dangling
+        // references. (Audit finding 3.5.)
         receiveTask = Task { [weak self] in
             // First successful receive confirms connection
             var firstMessage = true
