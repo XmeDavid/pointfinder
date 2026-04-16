@@ -77,16 +77,19 @@ struct BaseCheckInDetailView: View {
                         .padding(.top, 40)
                 } else if let challenge = challenge {
                     // Challenge content
+                    //
+                    // Wave F: the points badge that used to live next to
+                    // the challenge title has been removed — players do
+                    // not see point values anywhere in the product (per
+                    // CLAUDE.md "Players don't see scores or leaderboards").
+                    // The backend PlayerChallengeResponse no longer even
+                    // carries a `points` field, so reintroducing the badge
+                    // would require a server-side leak first.
                     VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Text(challenge.title)
-                                .font(.title3)
-                                .fontWeight(.bold)
-                            Spacer()
-                            Label("\(challenge.points) \(locale.t("common.pts"))", systemImage: "star.fill")
-                                .font(.subheadline)
-                                .foregroundStyle(.orange)
-                        }
+                        Text(challenge.title)
+                            .font(.title3)
+                            .fontWeight(.bold)
+                            .frame(maxWidth: .infinity, alignment: .leading)
 
                         Text(challenge.description)
                             .font(.body)

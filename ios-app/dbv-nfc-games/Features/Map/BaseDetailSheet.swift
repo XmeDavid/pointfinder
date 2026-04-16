@@ -33,16 +33,21 @@ struct BaseDetailSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     // Status banner
+                    //
+                    // Wave F: the trailing points badge that used to sit
+                    // opposite the status label has been removed — the
+                    // player-facing map sheet is a pure navigation /
+                    // unlock-state surface and must not carry scoring
+                    // information (per CLAUDE.md "Players don't see
+                    // scores or leaderboards"). The backend
+                    // PlayerChallengeResponse no longer serializes
+                    // `points` on the wire, so reintroducing the badge
+                    // would first require a server-side leak.
                     HStack {
                         Image(systemName: status.systemImage)
                         Text(locale.t(status.translationKey))
                             .fontWeight(.medium)
                         Spacer()
-                        if status != .notVisited, let points = challenge?.points {
-                            Label("\(points) \(locale.t("common.pts"))", systemImage: "star.fill")
-                                .font(.subheadline)
-                                .foregroundStyle(.orange)
-                        }
                     }
                     .padding()
                     .background(status.color.opacity(0.08))

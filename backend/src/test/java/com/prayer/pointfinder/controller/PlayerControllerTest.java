@@ -105,7 +105,6 @@ class PlayerControllerTest {
                         .description("desc")
                         .content("content")
                         .answerType("text")
-                        .points(50)
                         .build())
                 .build();
 
@@ -113,13 +112,16 @@ class PlayerControllerTest {
 
         // P1 Phase 4 W4: the check-in response carries the challenge
         // title (shown prominently to the player) but never the base
-        // name. The last two assertions are the W4 privacy guardrail.
+        // name. The baseName/name assertions are the W4 privacy guardrail.
+        // Wave F: the check-in response also never carries challenge.points;
+        // scoring is operator-only and must not leak to any player-facing
+        // endpoint.
         mockMvc.perform(post("/api/player/games/" + gameId + "/bases/" + baseId + "/check-in"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.checkInId").value(checkInId.toString()))
                 .andExpect(jsonPath("$.challenge.title").value("Find the tree"))
                 .andExpect(jsonPath("$.challenge.answerType").value("text"))
-                .andExpect(jsonPath("$.challenge.points").value(50))
+                .andExpect(jsonPath("$.challenge.points").doesNotExist())
                 .andExpect(jsonPath("$.baseName").doesNotExist())
                 .andExpect(jsonPath("$.name").doesNotExist());
     }
@@ -134,7 +136,7 @@ class PlayerControllerTest {
                 .checkedInAt(Instant.now())
                 .challenge(CheckInResponse.ChallengeInfo.builder()
                         .id(UUID.randomUUID()).title("T").description("d").content("c")
-                        .answerType("text").points(10).build())
+                        .answerType("text").build())
                 .build();
 
         when(playerService.checkIn(eq(gameId), eq(baseId), any(Player.class), any())).thenReturn(response);
@@ -404,7 +406,6 @@ class PlayerControllerTest {
                 .completionContent("Well done!")
                 .answerType("text")
                 .autoValidate(false)
-                .points(100)
                 .locationBound(false)
                 .requirePresenceToSubmit(false)
                 .build();
@@ -448,7 +449,6 @@ class PlayerControllerTest {
                 .completionContent("done")
                 .answerType("text")
                 .autoValidate(false)
-                .points(50)
                 .locationBound(false)
                 .requirePresenceToSubmit(false)
                 .build();
@@ -518,7 +518,6 @@ class PlayerControllerTest {
                 .completionContent("Well done!")
                 .answerType("text")
                 .autoValidate(false)
-                .points(100)
                 .locationBound(false)
                 .requirePresenceToSubmit(false)
                 .build();
@@ -574,7 +573,6 @@ class PlayerControllerTest {
                 .completionContent("done")
                 .answerType("text")
                 .autoValidate(false)
-                .points(50)
                 .locationBound(false)
                 .requirePresenceToSubmit(false)
                 .build();
@@ -667,7 +665,6 @@ class PlayerControllerTest {
                 .completionContent("Well done!")
                 .answerType("text")
                 .autoValidate(false)
-                .points(100)
                 .locationBound(false)
                 .requirePresenceToSubmit(false)
                 .build();
@@ -735,7 +732,6 @@ class PlayerControllerTest {
                 .completionContent("done")
                 .answerType("text")
                 .autoValidate(false)
-                .points(50)
                 .locationBound(false)
                 .requirePresenceToSubmit(false)
                 .build();

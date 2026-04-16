@@ -17,12 +17,17 @@ import java.util.UUID;
  * the relevant post-check-in label is the challenge title which lives
  * on the nested {@link ChallengeInfo}.
  *
+ * <p>Wave F: {@code points} is also omitted from {@link ChallengeInfo}.
+ * Scoring is operator-only in PointFinder (per CLAUDE.md "Players don't
+ * see scores or leaderboards"); the check-in response is a player-facing
+ * surface so the scoring field must be structurally absent.
+ *
  * <p>Note this DTO is also returned by the operator-only manual
  * check-in rescue endpoint via {@code TeamService}. The operator UI
- * does not need {@code baseName} in this response either, because
- * operators trigger the rescue from a screen that already knows the
- * base they are rescuing; the confirmation path relies on the returned
- * {@code baseId} plus local state.
+ * does not need {@code baseName} or {@code points} in this response
+ * either, because operators trigger the rescue from a screen that
+ * already knows the base + challenge metadata; the confirmation path
+ * relies on the returned {@code baseId} plus local state.
  *
  * <p>Source spec: docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md
  * — P1 Operator Workflow and Content Model.
@@ -46,7 +51,6 @@ public class CheckInResponse {
         private String content;
         private String completionContent;
         private String answerType;
-        private Integer points;
         private Boolean requirePresenceToSubmit;
     }
 }

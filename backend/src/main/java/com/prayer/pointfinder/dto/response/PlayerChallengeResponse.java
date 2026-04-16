@@ -17,6 +17,12 @@ import java.util.UUID;
  *   <li>{@code correctAnswer} — would leak the auto-validate answer list.</li>
  *   <li>{@code operatorNotes} — P1 Phase 4 W2: plain operator-only
  *       challenge notes must never be visible to players.</li>
+ *   <li>{@code points} — scoring is operator-only in PointFinder. The
+ *       player app must never surface point values (per CLAUDE.md
+ *       "Players don't see scores or leaderboards"). Omitting the field
+ *       at the DTO level means a regression that adds a score badge on
+ *       a player surface cannot ship because the field is structurally
+ *       absent from the response body.</li>
  * </ul>
  *
  * <p>Any player-facing endpoint that needs challenge data MUST use this
@@ -42,7 +48,6 @@ public class PlayerChallengeResponse {
     private String completionContent;
     private String answerType;
     private Boolean autoValidate;
-    private Integer points;
     private Boolean locationBound;
     private Boolean requirePresenceToSubmit;
     private List<UUID> unlocksBaseIds;

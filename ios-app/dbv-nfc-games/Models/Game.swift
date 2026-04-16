@@ -150,6 +150,19 @@ struct Challenge: Codable, Identifiable {
     let content: String
     let completionContent: String?
     let answerType: String
+    /// Point value for a correct submission.
+    ///
+    /// Wave F: this field is now **operator-only on the wire** —
+    /// {@code PlayerChallengeResponse} no longer serializes it because
+    /// players do not see scores anywhere in PointFinder (per CLAUDE.md
+    /// "Players don't see scores or leaderboards"). The operator
+    /// endpoints (`ChallengeResponse`) still carry it. The property is
+    /// kept non-optional to avoid cascading changes to the operator
+    /// views that render it (ChallengeEditView, OperatorSubmissionsView,
+    /// AssignmentsView, NFCWriteView, BaseEditView, ChallengesManagementView)
+    /// — instead, the custom decoder below tolerates a missing field by
+    /// defaulting to 0. A player-mode render that accidentally reads
+    /// `.points` will therefore see 0, not a decode failure.
     let points: Int
     let unlocksBaseIds: [UUID]?
     let autoValidate: Bool
