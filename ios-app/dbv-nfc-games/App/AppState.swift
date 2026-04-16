@@ -3,6 +3,17 @@ import SwiftUI
 import UIKit
 import os
 
+/// Central observable state container for the iOS player/operator app.
+///
+/// **Known tech debt (audit 3.9):** AppState is a "god object" (~700
+/// lines across this file and four extensions: +Auth, +GameActions,
+/// +Notifications, +Snapshot). It holds auth, game progress, solve
+/// sessions, deep links, notifications, location, sync, realtime, and
+/// error handling. A future refactor should extract independent
+/// subsystems (e.g. notifications, location tracking, realtime) into
+/// dedicated @Observable classes and inject them where needed. The
+/// current design works but makes unit-testing individual subsystems
+/// harder than it needs to be.
 @MainActor
 @Observable
 final class AppState {
@@ -215,6 +226,18 @@ final class AppState {
             }
             // Set initial value
             self.pendingActionsCount = await OfflineQueue.shared.pendingCount
+        }
+
+        // Surface offline-queue disk-write failures as a user-visible
+        // error banner. Without this the queue would silently claim to
+        // be saving work while actually losing it on app restart
+        // (audit Wave D item 8).
+        Task {
+            await OfflineQueue.shared.setOnPersistFailed { [weak self] in
+                Task { @MainActor [weak self] in
+                    self?.setError(Translations.string("errors.offlineQueuePersistFailed"))
+                }
+            }
         }
     }
 

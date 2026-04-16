@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.prayer.pointfinder.BuildConfig
 import com.prayer.pointfinder.core.data.repo.OfflineSyncWorker
 import com.prayer.pointfinder.core.data.local.PendingActionEntity
+import com.prayer.pointfinder.core.data.repo.OfflineQueueFullException
 import com.prayer.pointfinder.core.data.repo.PlayerRepository
 import com.prayer.pointfinder.core.model.AuthType
 import com.prayer.pointfinder.core.model.BaseProgress
@@ -20,6 +21,7 @@ import com.prayer.pointfinder.core.network.MobileRealtimeClient
 import com.prayer.pointfinder.core.network.RealtimeConnectionState
 import com.prayer.pointfinder.core.platform.NfcEventBus
 import com.prayer.pointfinder.core.platform.NfcPayloadCodec
+import com.prayer.pointfinder.core.platform.NfcScanEvent
 import com.prayer.pointfinder.core.platform.PlayerLocationService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -102,6 +104,18 @@ class PlayerViewModel @Inject constructor(
                 _state.value = _state.value.copy(lastScannedBaseId = baseId)
                 val expected = _state.value.awaitingPresenceBaseId ?: return@collectLatest
                 verifyPresence(baseId, expected)
+            }
+        }
+        viewModelScope.launch {
+            // Surface invalid-payload scans as a localised error. iOS parity:
+            // `NFCError.invalidData` shows "Invalid tag data" to the player
+            // instead of silently dropping the scan (audit Wave D finding 4).
+            nfcEventBus.scanEvents.collectLatest { event ->
+                if (event is NfcScanEvent.InvalidPayload) {
+                    _state.value = _state.value.copy(
+                        scanError = context.getString(StringR.string.nfc_invalid_tag_data),
+                    )
+                }
             }
         }
         viewModelScope.launch {
@@ -670,10 +684,13 @@ class PlayerViewModel @Inject constructor(
         private const val MEDIA_COPY_THRESHOLD_BYTES = 100L * 1024L * 1024L
     }
 
-    private fun friendlyError(err: Throwable): String =
-        if (ApiErrorParser.isNetworkError(err))
+    private fun friendlyError(err: Throwable): String = when {
+        err is OfflineQueueFullException ->
+            context.getString(StringR.string.error_offline_queue_full)
+        ApiErrorParser.isNetworkError(err) ->
             context.getString(StringR.string.error_network_unavailable)
-        else ApiErrorParser.extractMessage(err)
+        else -> ApiErrorParser.extractMessage(err)
+    }
 
     fun clearSubmissionResult() {
         _state.value = _state.value.copy(latestSubmission = null)

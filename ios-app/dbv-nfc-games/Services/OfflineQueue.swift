@@ -1,16 +1,35 @@
 import Foundation
 import os
 
+/// Thrown when [OfflineQueue.enqueue] is called while the queue has
+/// reached [OfflineQueue.maxPendingActions]. Parity with Android
+/// `OfflineQueueFullException`.
+enum OfflineQueueError: Error {
+    case queueFull
+}
+
 /// Persistent queue for actions that need to be synced when connectivity is restored.
 /// Stores pending check-ins and submissions as JSON on disk.
 actor OfflineQueue {
 
     static let shared = OfflineQueue()
 
+    /// Hard cap on queue size. Mirrors Android's
+    /// `PlayerRepository.MAX_PENDING_ACTIONS`. Once hit, `enqueue`
+    /// throws `OfflineQueueError.queueFull` so callers can surface the
+    /// `errors.offlineQueueFull` banner instead of silently losing work.
+    static let maxPendingActions = 1000
+
     private let fileURL: URL
     private var pendingActions: [PendingAction] = []
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
+
+    /// Set to true when a disk write failed (e.g. storage full, sandbox
+    /// permission issue). Callers can inspect this to decide whether to
+    /// show the `errors.offlineQueuePersistFailed` banner. Cleared on the
+    /// next successful save.
+    private(set) var persistFailed: Bool = false
 
     var pendingCount: Int {
         pendingActions.filter { !$0.permanentlyFailed }.count
@@ -20,9 +39,20 @@ actor OfflineQueue {
     /// Set by AppState to reactively update `pendingActionsCount`.
     private var onCountChanged: (@Sendable (Int) -> Void)?
 
+    /// Callback invoked after a disk write failure so AppState can show a
+    /// banner. Debounced to fire only on transitions (not on every save).
+    private var onPersistFailed: (@Sendable () -> Void)?
+
     /// Set the callback for queue count changes (actor-safe setter).
     func setOnCountChanged(_ callback: @escaping @Sendable (Int) -> Void) {
         onCountChanged = callback
+    }
+
+    /// Set the callback invoked when saving to disk fails. Used by
+    /// AppState to surface `errors.offlineQueuePersistFailed` (audit
+    /// Wave D item 8).
+    func setOnPersistFailed(_ callback: @escaping @Sendable () -> Void) {
+        onPersistFailed = callback
     }
 
     private func notifyCountChanged() {
@@ -60,8 +90,21 @@ actor OfflineQueue {
 
     // MARK: - Queue Operations
 
-    /// Add an action to the pending queue
-    func enqueue(_ action: PendingAction) {
+    /// Add an action to the pending queue.
+    ///
+    /// Throws `OfflineQueueError.queueFull` if the queue already contains
+    /// [maxPendingActions] items (iOS parity with Android). Callers should
+    /// surface `errors.offlineQueueFull` to the user.
+    func enqueue(_ action: PendingAction) throws {
+        if pendingCount >= Self.maxPendingActions {
+            throw OfflineQueueError.queueFull
+        }
+        // If the last save failed, retry persistence before enqueueing so
+        // the new item has a chance to survive a restart (audit Wave D
+        // item 8 — "Also run a retry on next enqueue").
+        if persistFailed {
+            saveToDisk()
+        }
         pendingActions.append(action)
         saveToDisk()
         notifyCountChanged()
@@ -146,14 +189,16 @@ actor OfflineQueue {
 
     // MARK: - Convenience Methods
 
-    /// Create and enqueue a check-in action
-    func enqueueCheckIn(gameId: UUID, baseId: UUID, nfcToken: String? = nil) {
+    /// Create and enqueue a check-in action.
+    /// Throws [OfflineQueueError.queueFull] when the queue is at cap.
+    func enqueueCheckIn(gameId: UUID, baseId: UUID, nfcToken: String? = nil) throws {
         let action = PendingAction(type: .checkIn, gameId: gameId, baseId: baseId, nfcToken: nfcToken)
-        enqueue(action)
+        try enqueue(action)
     }
 
-    /// Create and enqueue a submission action
-    func enqueueSubmission(gameId: UUID, baseId: UUID, challengeId: UUID, answer: String) -> UUID {
+    /// Create and enqueue a submission action.
+    /// Throws [OfflineQueueError.queueFull] when the queue is at cap.
+    func enqueueSubmission(gameId: UUID, baseId: UUID, challengeId: UUID, answer: String) throws -> UUID {
         let action = PendingAction(
             type: .submission,
             gameId: gameId,
@@ -161,11 +206,12 @@ actor OfflineQueue {
             challengeId: challengeId,
             answer: answer
         )
-        enqueue(action)
+        try enqueue(action)
         return action.id  // Return the idempotency key
     }
 
     /// Create and enqueue a media submission action.
+    /// Throws [OfflineQueueError.queueFull] when the queue is at cap.
     func enqueueMediaSubmission(
         gameId: UUID,
         baseId: UUID,
@@ -176,7 +222,7 @@ actor OfflineQueue {
         localFilePath: String?,
         sourcePath: String?,
         fileName: String?
-    ) -> UUID {
+    ) throws -> UUID {
         var action = PendingAction(
             type: .mediaSubmission,
             gameId: gameId,
@@ -191,18 +237,19 @@ actor OfflineQueue {
         action.mediaFileName = fileName
         action.uploadChunkIndex = 0
         action.needsReselect = false
-        enqueue(action)
+        try enqueue(action)
         return action.id
     }
 
     /// Create and enqueue a multi-media submission action with multiple media items.
+    /// Throws [OfflineQueueError.queueFull] when the queue is at cap.
     func enqueueMultiMediaSubmission(
         gameId: UUID,
         baseId: UUID,
         challengeId: UUID,
         answer: String,
         mediaItems: [PendingMediaItem]
-    ) -> UUID {
+    ) throws -> UUID {
         var action = PendingAction(
             type: .mediaSubmission,
             gameId: gameId,
@@ -220,7 +267,7 @@ actor OfflineQueue {
         }
         action.uploadChunkIndex = 0
         action.needsReselect = false
-        enqueue(action)
+        try enqueue(action)
         return action.id
     }
 
@@ -284,8 +331,20 @@ actor OfflineQueue {
         do {
             let data = try encoder.encode(pendingActions)
             try data.write(to: fileURL, options: .atomic)
+            // Successful write — clear the failed flag. Also do NOT fire
+            // the callback on recovery; AppState only cares about the
+            // failure→failure transition so it doesn't spam the user.
+            persistFailed = false
         } catch {
             Logger(subsystem: "com.prayer.pointfinder", category: "OfflineQueue").warning(" Failed to save to disk: \(error.localizedDescription)")
+            // Surface via AppState so the user sees the
+            // `errors.offlineQueuePersistFailed` banner instead of
+            // assuming their work is safely queued (audit Wave D item 8).
+            let wasFailed = persistFailed
+            persistFailed = true
+            if !wasFailed {
+                onPersistFailed?()
+            }
         }
     }
 

@@ -37,6 +37,14 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 
+/**
+ * Thrown when the offline queue cannot accept another item because it
+ * has reached [PlayerRepository.MAX_PENDING_ACTIONS]. iOS parity:
+ * surfaces `errors.offlineQueueFull` so the user sees an actionable
+ * error instead of silently losing the action.
+ */
+class OfflineQueueFullException : Exception("Offline queue is full")
+
 data class CheckInResult(
     val response: CheckInResponse,
     val queued: Boolean,
@@ -200,6 +208,7 @@ class PlayerRepository @Inject constructor(
 
         val alreadyQueued = db.pendingActionDao().hasPendingCheckIn(auth.gameId, baseId)
         if (!alreadyQueued) {
+            ensureQueueCapacity()
             db.pendingActionDao().upsert(
                 PendingActionEntity(
                     id = UUID.randomUUID().toString(),
@@ -260,6 +269,7 @@ class PlayerRepository @Inject constructor(
             }
         }
 
+        ensureQueueCapacity()
         val idempotencyKey = UUID.randomUUID().toString()
         db.pendingActionDao().upsert(
             PendingActionEntity(
@@ -306,6 +316,7 @@ class PlayerRepository @Inject constructor(
     ): SubmitResult {
         // Game-live guard removed: auth.gameStatus can be stale (set at join time,
         // never updated). The backend enforces game-live status on submissions.
+        ensureQueueCapacity()
         val idempotencyKey = UUID.randomUUID().toString()
         db.pendingActionDao().upsert(
             PendingActionEntity(
@@ -358,6 +369,7 @@ class PlayerRepository @Inject constructor(
     ): SubmitResult {
         // Game-live guard removed: auth.gameStatus can be stale (set at join time,
         // never updated). The backend enforces game-live status on submissions.
+        ensureQueueCapacity()
         val idempotencyKey = UUID.randomUUID().toString()
         val mediaItemsJson = kotlinx.serialization.json.Json.encodeToString(
             kotlinx.serialization.builtins.ListSerializer(PendingMediaItem.serializer()),
@@ -887,8 +899,20 @@ class PlayerRepository @Inject constructor(
     suspend fun markNeedsReselect(actionId: String, message: String) =
         db.pendingActionDao().updateNeedsReselect(actionId, true, message)
 
-    suspend fun clearAll() {
-        db.pendingActionDao().clearAll()
+    /**
+     * Clear player-scoped caches.
+     *
+     * @param preserveOfflineQueue when true, leaves the pendingActionDao
+     *        contents intact so unsynced actions survive the clear. iOS
+     *        parity: [AppState.forceLogout] passes `clearOfflineQueue: false`
+     *        when the server kicks an operator/player mid-session, so that
+     *        offline work isn't silently lost. Voluntary logout still
+     *        clears everything (preserveOfflineQueue = false).
+     */
+    suspend fun clearAll(preserveOfflineQueue: Boolean = false) {
+        if (!preserveOfflineQueue) {
+            db.pendingActionDao().clearAll()
+        }
         db.progressDao().clearAll()
         db.challengeDao().clearAll()
     }
@@ -898,9 +922,27 @@ class PlayerRepository @Inject constructor(
         val open: () -> InputStream,
     )
 
+    /**
+     * Throws [OfflineQueueFullException] if the queue has reached the hard
+     * cap. Callers should call this before enqueueing a new action.
+     * iOS parity: matching cap enforced in `OfflineQueue.enqueue*`.
+     */
+    private suspend fun ensureQueueCapacity() {
+        if (db.pendingActionDao().pendingCount() >= MAX_PENDING_ACTIONS) {
+            throw OfflineQueueFullException()
+        }
+    }
+
     companion object {
         private const val ACTION_TYPE_MEDIA_SUBMISSION = "media_submission"
         private const val DEFAULT_CHUNK_SIZE_BYTES = 8 * 1024 * 1024
         private const val MAX_RETRIES = 5
+        /**
+         * Hard cap on offline queue size (iOS parity). Once reached, new
+         * enqueue attempts throw [OfflineQueueFullException] so the user
+         * receives `errors.offlineQueueFull` instead of the repository
+         * silently losing the action (or blowing up local storage).
+         */
+        const val MAX_PENDING_ACTIONS = 1000
     }
 }

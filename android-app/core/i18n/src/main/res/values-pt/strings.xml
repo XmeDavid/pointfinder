@@ -203,6 +203,10 @@
     <string name="error_nfc_link_failed">NFC gravado mas associação falhou: %1$s</string>
     <string name="error_network_unavailable">Rede indisponível. Verifique sua conexão.</string>
     <string name="error_session_expired">A sua sessão expirou. Por favor, inicie sessão novamente.</string>
+    <string name="nfc_invalid_tag_data">Dados da etiqueta inválidos.</string>
+    <string name="nfc_write_verify_failed">Não foi possível verificar a gravação NFC. Por favor, grave a etiqueta novamente.</string>
+    <string name="error_offline_queue_full">A fila offline está cheia. Sincronize os itens existentes antes de adicionar mais.</string>
+    <string name="rescue_success_message">Ação concluída com sucesso.</string>
     <!-- Setup Hub -->
     <string name="label_needs_attention">Atenção necessária</string>
     <string name="label_manage">Gerir</string>

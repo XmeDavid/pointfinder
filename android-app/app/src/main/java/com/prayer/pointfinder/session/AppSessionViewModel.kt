@@ -125,6 +125,11 @@ class AppSessionViewModel @Inject constructor(
      * Clears the session and returns the app to the auth screen. Invoked
      * from the realtime tokenProvider when operator refresh fails, so the
      * user is not stuck watching a dead dashboard.
+     *
+     * iOS parity (`AppState.forceLogout`): the offline queue is preserved
+     * across forced logouts so that in-flight work (pending check-ins and
+     * submissions) survives a server-initiated kick. Voluntary `logout()`
+     * continues to clear everything since that is an explicit user choice.
      */
     private fun triggerForcedLogout() {
         if (!forcedLogoutInFlight.compareAndSet(false, true)) return
@@ -137,7 +142,7 @@ class AppSessionViewModel @Inject constructor(
                     // tokenProvider while it's still running.
                     authRepository.clearSession()
                 }
-                playerRepository.clearAll()
+                playerRepository.clearAll(preserveOfflineQueue = true)
                 operatorRepository.clearCache()
                 locationService.stop()
                 realtimeClient.disconnect()

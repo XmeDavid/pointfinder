@@ -56,7 +56,16 @@ class MainActivity : AppCompatActivity() {
         nfcService.enableReaderMode(this) { tag ->
             val payload = nfcService.parsePayloadFromTag(tag)
             nfcEventBus.emitDiscoveredTag(tag)
-            nfcEventBus.emitScannedPayload(payload)
+            if (payload != null) {
+                nfcEventBus.emitScannedPayload(payload)
+            } else {
+                // A tag WAS discovered but the payload could not be parsed
+                // (malformed URL, unsupported format, corrupted NDEF).
+                // iOS parity: surface this as a user-visible error instead
+                // of silently dropping. Write operations still see the raw
+                // tag via `discoveredTags` and can proceed.
+                nfcEventBus.emitInvalidPayload()
+            }
         }
     }
 
@@ -81,14 +90,21 @@ class MainActivity : AppCompatActivity() {
             }
             else -> {
                 val scannedBaseId = nfcService.parseBaseIdFromIntent(intent)
-                if (intent.hasExtra(NfcAdapter.EXTRA_TAG)) {
+                val hasTag = intent.hasExtra(NfcAdapter.EXTRA_TAG)
+                if (hasTag) {
                     @Suppress("DEPRECATION")
                     val tag = intent.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG)
                     if (tag != null) {
                         nfcEventBus.emitDiscoveredTag(tag)
                     }
                 }
-                nfcEventBus.emitScannedBaseId(scannedBaseId)
+                if (scannedBaseId != null) {
+                    nfcEventBus.emitScannedBaseId(scannedBaseId)
+                } else if (hasTag) {
+                    // Tag present but payload unreadable — surface as invalid
+                    // rather than dropping silently. Mirrors iOS invalidData.
+                    nfcEventBus.emitInvalidPayload()
+                }
             }
         }
     }

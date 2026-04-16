@@ -71,8 +71,11 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -137,6 +140,18 @@ class OperatorViewModel @Inject constructor(
 ) : ViewModel() {
     private val _state = MutableStateFlow(OperatorState())
     val state: StateFlow<OperatorState> = _state.asStateFlow()
+
+    /**
+     * Emits once per successful rescue mutation (manual check-in,
+     * mark-completed, grant/remove override). The TeamDetailScreen
+     * collects this to show a green confirmation snackbar, matching the
+     * iOS `TeamDetailView.showRescueToast` behaviour.
+     *
+     * `extraBufferCapacity = 1` ensures the emission is never dropped if
+     * the collector is briefly slow.
+     */
+    private val _rescueSuccessEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val rescueSuccessEvents: SharedFlow<Unit> = _rescueSuccessEvents.asSharedFlow()
 
     private var pollingJob: Job? = null
 
@@ -641,6 +656,7 @@ class OperatorViewModel @Inject constructor(
             runCatching { baseManagementUseCase.manualCheckIn(gameId, teamId, baseId) }
                 .onSuccess {
                     refreshSelectedGameData()
+                    _rescueSuccessEvents.tryEmit(Unit)
                     onSuccess()
                 }
                 .onFailure { e ->
@@ -705,9 +721,17 @@ class OperatorViewModel @Inject constructor(
                 }
             }
         } else {
+            // Distinguish write-then-verify failures from plain write
+            // failures so the operator knows whether to retry or replace
+            // the tag. iOS parity: `errors.nfcWriteVerifyFailed`.
+            val err = result.exceptionOrNull()
+            val verifyFailed = err?.message?.contains("verification failed") == true
             _state.value = _state.value.copy(
                 awaitingNfcWrite = false,
-                writeStatus = context.getString(StringR.string.error_nfc_write_failed),
+                writeStatus = context.getString(
+                    if (verifyFailed) StringR.string.nfc_write_verify_failed
+                    else StringR.string.error_nfc_write_failed,
+                ),
                 writeSuccess = false,
             )
         }
@@ -895,7 +919,10 @@ class OperatorViewModel @Inject constructor(
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
             runCatching { teamManagementUseCase.markCompleted(gameId, teamId, baseId, request) }
-                .onSuccess { onSuccess() }
+                .onSuccess {
+                    _rescueSuccessEvents.tryEmit(Unit)
+                    onSuccess()
+                }
                 .onFailure { e ->
                     if (markAuthExpiredIfNeeded(e)) return@onFailure
                     _state.value = _state.value.copy(errorMessage = friendlyError(e))
@@ -914,7 +941,10 @@ class OperatorViewModel @Inject constructor(
             runCatching {
                 teamManagementUseCase.createUnlockOverride(gameId, teamId, baseId, UnlockOverrideRequest(reason = reason))
             }
-                .onSuccess(onSuccess)
+                .onSuccess { response ->
+                    _rescueSuccessEvents.tryEmit(Unit)
+                    onSuccess(response)
+                }
                 .onFailure { e ->
                     if (markAuthExpiredIfNeeded(e)) return@onFailure
                     _state.value = _state.value.copy(errorMessage = friendlyError(e))
@@ -930,7 +960,10 @@ class OperatorViewModel @Inject constructor(
         val gameId = _state.value.selectedGame?.id ?: return
         viewModelScope.launch {
             runCatching { teamManagementUseCase.removeUnlockOverride(gameId, teamId, baseId) }
-                .onSuccess { onSuccess() }
+                .onSuccess {
+                    _rescueSuccessEvents.tryEmit(Unit)
+                    onSuccess()
+                }
                 .onFailure { e ->
                     if (markAuthExpiredIfNeeded(e)) return@onFailure
                     _state.value = _state.value.copy(errorMessage = friendlyError(e))

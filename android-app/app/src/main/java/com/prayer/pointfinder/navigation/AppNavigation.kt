@@ -1579,6 +1579,10 @@ private fun OperatorGameRoot(
                                     }
                                 },
                                 onBack = { setupSubScreen = "teams_list" },
+                                // iOS parity: show an in-screen 3s success
+                                // snackbar after each rescue mutation (mirrors
+                                // `TeamDetailView.showRescueToast`).
+                                rescueSuccessTrigger = viewModel.rescueSuccessEvents,
                             )
                         } else {
                             setupSubScreen = "teams_list"
@@ -1900,6 +1904,9 @@ private fun OperatorGameRoot(
                                     }
                                 },
                                 onBack = { moreSubScreen = "teams_list" },
+                                // iOS parity: in-screen 3s success snackbar
+                                // after each rescue mutation.
+                                rescueSuccessTrigger = viewModel.rescueSuccessEvents,
                             )
                         } else {
                             moreSubScreen = "teams_list"

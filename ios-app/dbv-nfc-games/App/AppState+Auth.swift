@@ -106,6 +106,10 @@ extension AppState {
 
     /// Called by the API client on auth expiry (forced logout). Preserves the offline
     /// queue so the user doesn't silently lose unsynced data.
+    ///
+    /// Also surfaces a translated `WS_ACCESS_DENIED` banner on the login
+    /// screen so the user understands why they were kicked — matches
+    /// Android's `error_session_expired` snackbar (audit Wave D item 2).
     func forceLogout() {
         Task {
             let pending = await OfflineQueue.shared.pendingCount
@@ -115,6 +119,7 @@ extension AppState {
         }
         Task {
             await performLogout(clearOfflineQueue: false)
+            setError(Translations.string("errors.WS_ACCESS_DENIED"))
         }
     }
 

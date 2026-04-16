@@ -482,7 +482,7 @@ private fun FullscreenMediaViewer(
                     ) {
                         Icon(
                             Icons.Default.Download,
-                            contentDescription = "Download",
+                            contentDescription = stringResource(R.string.action_download),
                             tint = Color.White,
                         )
                     }

@@ -462,6 +462,9 @@ enum Translations {
         "nfcError.noData": "No data found on tag",
         "nfcError.invalidData": "Tag does not contain valid base data",
         "nfcError.writeFailed": "NFC write failed: %@",
+        "nfcError.writeVerifyFailed": "NFC write could not be verified. Please write the tag again.",
+        "errors.offlineQueueFull": "Offline queue is full. Sync existing items before adding more.",
+        "errors.offlineQueuePersistFailed": "Unable to save pending actions to disk. Your offline work may be lost if the app is closed.",
 
         // API Errors
         "apiError.invalidURL": "Invalid URL",
@@ -1126,6 +1129,9 @@ enum Translations {
         "nfcError.noData": "Nenhum dado encontrado na etiqueta",
         "nfcError.invalidData": "A etiqueta não contém dados válidos de base",
         "nfcError.writeFailed": "Escrita NFC falhou: %@",
+        "nfcError.writeVerifyFailed": "Não foi possível verificar a gravação NFC. Por favor, grave a etiqueta novamente.",
+        "errors.offlineQueueFull": "A fila offline está cheia. Sincronize os itens existentes antes de adicionar mais.",
+        "errors.offlineQueuePersistFailed": "Não foi possível guardar as ações pendentes em disco. O teu trabalho offline pode perder-se se fechares a app.",
 
         // API Errors
         "apiError.invalidURL": "URL inválido",
@@ -1790,6 +1796,9 @@ enum Translations {
         "nfcError.noData": "Keine Daten auf dem Tag gefunden",
         "nfcError.invalidData": "Tag enthält keine gültigen Stationsdaten",
         "nfcError.writeFailed": "NFC-Schreiben fehlgeschlagen: %@",
+        "nfcError.writeVerifyFailed": "NFC-Schreiben konnte nicht verifiziert werden. Bitte den Tag erneut beschreiben.",
+        "errors.offlineQueueFull": "Offline-Warteschlange ist voll. Synchronisiere vorhandene Einträge, bevor du weitere hinzufügst.",
+        "errors.offlineQueuePersistFailed": "Ausstehende Aktionen konnten nicht auf die Festplatte gespeichert werden. Deine Offline-Arbeit geht möglicherweise verloren, wenn die App geschlossen wird.",
 
         // API Errors
         "apiError.invalidURL": "Ungültige URL",

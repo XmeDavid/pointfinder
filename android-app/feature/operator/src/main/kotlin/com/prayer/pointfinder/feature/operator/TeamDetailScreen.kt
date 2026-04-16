@@ -39,10 +39,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -99,7 +102,26 @@ fun TeamDetailScreen(
     onRemoveOverride: (baseId: String) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    // A `Flow<Unit>` that emits once for each successful rescue mutation.
+    // When present, the screen shows a 3-second success snackbar on every
+    // emission (iOS parity: `TeamDetailView.showRescueToast`).
+    rescueSuccessTrigger: kotlinx.coroutines.flow.Flow<Unit>? = null,
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val rescueSuccessText = stringResource(R.string.rescue_success_message)
+    if (rescueSuccessTrigger != null) {
+        LaunchedEffect(rescueSuccessTrigger) {
+            rescueSuccessTrigger.collect {
+                // Dismiss any in-flight snackbar before showing a new one so
+                // rapid successive mutations do not queue up silently.
+                snackbarHostState.currentSnackbarData?.dismiss()
+                snackbarHostState.showSnackbar(
+                    message = rescueSuccessText,
+                    duration = androidx.compose.material3.SnackbarDuration.Short,
+                )
+            }
+        }
+    }
     val context = LocalContext.current
     var editedName by remember(team.id) { mutableStateOf(team.name) }
     var editedColor by remember(team.id) { mutableStateOf(team.color) }
@@ -117,6 +139,7 @@ fun TeamDetailScreen(
     var manualCheckInTarget by remember { mutableStateOf<Base?>(null) }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(team.name) },
@@ -641,9 +664,9 @@ private fun BaseProgressRow(
                         contentColor = AmberAction,
                     ),
                     modifier = Modifier
-                        .height(36.dp)
+                        .height(48.dp)
                         .testTag("manual-check-in-btn-${base.id}"),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 8.dp),
                 ) {
                     Text(
                         text = stringResource(R.string.action_manual_check_in),
@@ -662,9 +685,9 @@ private fun BaseProgressRow(
                         contentColor = AmberAction,
                     ),
                     modifier = Modifier
-                        .height(36.dp)
+                        .height(48.dp)
                         .testTag("mark-completed-btn-${base.id}"),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 8.dp),
                 ) {
                     Text(
                         text = stringResource(R.string.action_mark_completed),
@@ -691,7 +714,7 @@ private fun BaseProgressRow(
                         modifier = Modifier
                             .height(36.dp)
                             .testTag("grant-override-btn-${base.id}"),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 8.dp),
                     ) {
                         Text(
                             text = stringResource(R.string.action_grant_override),
@@ -709,7 +732,7 @@ private fun BaseProgressRow(
                         modifier = Modifier
                             .height(36.dp)
                             .testTag("remove-override-btn-${base.id}"),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 8.dp),
                     ) {
                         Text(
                             text = stringResource(R.string.action_remove_override),

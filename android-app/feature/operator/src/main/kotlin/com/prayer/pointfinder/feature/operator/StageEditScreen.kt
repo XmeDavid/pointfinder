@@ -172,7 +172,7 @@ fun StageEditScreen(
                                     leadingIcon = {
                                         Icon(
                                             Icons.Default.Delete,
-                                            contentDescription = null,
+                                            contentDescription = stringResource(R.string.cd_delete),
                                             tint = MaterialTheme.colorScheme.error,
                                         )
                                     },

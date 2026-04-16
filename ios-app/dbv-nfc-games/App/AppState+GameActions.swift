@@ -89,10 +89,18 @@ extension AppState {
             }
         }
 
-        // Offline path: enqueue action once and return local response
+        // Offline path: enqueue action once and return local response.
+        // A `OfflineQueueError.queueFull` means we've hit the 1000-item
+        // hard cap — surface the error instead of silently losing work
+        // (audit Wave D item 9).
         let alreadyQueued = await OfflineQueue.shared.hasPendingCheckIn(gameId: gameId, baseId: baseId)
         if !alreadyQueued {
-            await OfflineQueue.shared.enqueueCheckIn(gameId: gameId, baseId: baseId, nfcToken: nfcToken)
+            do {
+                try await OfflineQueue.shared.enqueueCheckIn(gameId: gameId, baseId: baseId, nfcToken: nfcToken)
+            } catch {
+                setError(Translations.string("errors.offlineQueueFull"))
+                return nil
+            }
         }
 
         // Trigger sync immediately so queued actions retry as soon as possible
@@ -166,13 +174,21 @@ extension AppState {
             }
         }
 
-        // Offline path: enqueue action with idempotency key
-        let idempotencyKey = await OfflineQueue.shared.enqueueSubmission(
-            gameId: gameId,
-            baseId: baseId,
-            challengeId: challengeId,
-            answer: answer
-        )
+        // Offline path: enqueue action with idempotency key.
+        // Surface `errors.offlineQueueFull` when the 1000-item cap is hit
+        // instead of silently dropping the submission.
+        let idempotencyKey: UUID
+        do {
+            idempotencyKey = try await OfflineQueue.shared.enqueueSubmission(
+                gameId: gameId,
+                baseId: baseId,
+                challengeId: challengeId,
+                answer: answer
+            )
+        } catch {
+            setError(Translations.string("errors.offlineQueueFull"))
+            return nil
+        }
 
         // Trigger sync immediately so queued actions retry as soon as possible
         Task { await SyncEngine.shared.syncPendingActions() }
@@ -295,13 +311,21 @@ extension AppState {
             return nil
         }
 
-        let idempotencyKey = await OfflineQueue.shared.enqueueMultiMediaSubmission(
-            gameId: gameId,
-            baseId: baseId,
-            challengeId: challengeId,
-            answer: notes,
-            mediaItems: pendingItems
-        )
+        // Surface `errors.offlineQueueFull` when the 1000-item cap is hit
+        // instead of silently dropping the submission (audit Wave D item 9).
+        let idempotencyKey: UUID
+        do {
+            idempotencyKey = try await OfflineQueue.shared.enqueueMultiMediaSubmission(
+                gameId: gameId,
+                baseId: baseId,
+                challengeId: challengeId,
+                answer: notes,
+                mediaItems: pendingItems
+            )
+        } catch {
+            setError(Translations.string("errors.offlineQueueFull"))
+            return nil
+        }
 
         // Trigger sync immediately
         Task { await SyncEngine.shared.syncPendingActions() }
@@ -396,17 +420,25 @@ extension AppState {
             sourcePath = mediaSourceURL.path
         }
 
-        let idempotencyKey = await OfflineQueue.shared.enqueueMediaSubmission(
-            gameId: gameId,
-            baseId: baseId,
-            challengeId: challengeId,
-            answer: notes,
-            contentType: contentType,
-            sizeBytes: sizeBytes,
-            localFilePath: localFilePath,
-            sourcePath: sourcePath,
-            fileName: fileName
-        )
+        // Surface `errors.offlineQueueFull` when the 1000-item cap is hit
+        // instead of silently dropping the submission (audit Wave D item 9).
+        let idempotencyKey: UUID
+        do {
+            idempotencyKey = try await OfflineQueue.shared.enqueueMediaSubmission(
+                gameId: gameId,
+                baseId: baseId,
+                challengeId: challengeId,
+                answer: notes,
+                contentType: contentType,
+                sizeBytes: sizeBytes,
+                localFilePath: localFilePath,
+                sourcePath: sourcePath,
+                fileName: fileName
+            )
+        } catch {
+            setError(Translations.string("errors.offlineQueueFull"))
+            return nil
+        }
 
         // Trigger sync immediately so queued media retries as soon as possible.
         Task { await SyncEngine.shared.syncPendingActions() }

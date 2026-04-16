@@ -210,6 +210,10 @@
     <string name="error_nfc_link_failed">NFC written but link failed: %1$s</string>
     <string name="error_network_unavailable">Network unavailable. Please check your connection.</string>
     <string name="error_session_expired">Your session expired. Please sign in again.</string>
+    <string name="nfc_invalid_tag_data">Invalid tag data.</string>
+    <string name="nfc_write_verify_failed">NFC write could not be verified. Please write the tag again.</string>
+    <string name="error_offline_queue_full">Offline queue is full. Sync existing items before adding more.</string>
+    <string name="rescue_success_message">Action completed successfully.</string>
     <!-- Setup Hub -->
     <string name="label_needs_attention">Needs Attention</string>
     <string name="label_manage">Manage</string>
@@ -465,6 +469,7 @@
     <string name="cd_edit">Edit</string>
     <string name="cd_add">Add</string>
     <string name="cd_delete">Delete</string>
+    <string name="action_download">Download</string>
     <string name="cd_nfc">NFC</string>
     <string name="cd_send">Send</string>
     <string name="cd_invite">Invite operator</string>

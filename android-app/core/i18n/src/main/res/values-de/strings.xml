@@ -208,6 +208,10 @@
     <string name="error_nfc_link_failed">NFC geschrieben, aber Verknüpfung fehlgeschlagen: %1$s</string>
     <string name="error_network_unavailable">Netzwerk nicht verfügbar. Überprüfe deine Verbindung.</string>
     <string name="error_session_expired">Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.</string>
+    <string name="nfc_invalid_tag_data">Ungültige Tag-Daten.</string>
+    <string name="nfc_write_verify_failed">NFC-Schreiben konnte nicht verifiziert werden. Bitte erneut schreiben.</string>
+    <string name="error_offline_queue_full">Offline-Warteschlange ist voll. Synchronisiere vorhandene Einträge, bevor du weitere hinzufügst.</string>
+    <string name="rescue_success_message">Aktion erfolgreich abgeschlossen.</string>
     <!-- Setup Hub -->
     <string name="label_needs_attention">Handlungsbedarf</string>
     <string name="label_manage">Verwalten</string>
@@ -463,6 +467,7 @@
     <string name="cd_edit">Bearbeiten</string>
     <string name="cd_add">Hinzufuegen</string>
     <string name="cd_delete">Loeschen</string>
+    <string name="action_download">Herunterladen</string>
     <string name="cd_nfc">NFC</string>
     <string name="cd_send">Senden</string>
     <string name="cd_invite">Operator einladen</string>
