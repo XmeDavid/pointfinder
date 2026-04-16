@@ -519,7 +519,7 @@ public class PlayerService {
                                 c.getCompletionContent(), gameId, c.getId(), teamId))
                         .answerType(c.getAnswerType().name())
                         .autoValidate(c.getAutoValidate())
-                        .points(c.getPoints())
+                        // Wave F: `points` is omitted from PlayerChallengeResponse.
                         .locationBound(c.getLocationBound())
                         .requirePresenceToSubmit(c.getRequirePresenceToSubmit())
                         .unlocksBaseIds(c.getUnlocksBases().isEmpty() ? null :
@@ -774,7 +774,7 @@ public class PlayerService {
                     .completionContent(templateVariableService.resolveTemplate(
                             challenge.getCompletionContent(), gameId, challenge.getId(), team.getId()))
                     .answerType(challenge.getAnswerType().name())
-                    .points(challenge.getPoints())
+                    // Wave F: `points` is omitted from CheckInResponse.ChallengeInfo.
                     .requirePresenceToSubmit(challenge.getRequirePresenceToSubmit())
                     .build();
         }

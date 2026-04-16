@@ -200,37 +200,9 @@ function CoordBadge({
 }
 
 /* =================================================================
-   Stamp badge — rubber-stamp styled label
+   Stamp badge — "outline only" stamp variant (no double-border ring)
    ================================================================= */
 
-function StampBadge({
-  children,
-  rotate = -3,
-  color,
-  className,
-}: {
-  children: React.ReactNode;
-  rotate?: number;
-  color: string;
-  className?: string;
-}) {
-  return (
-    <span
-      className={`stamp-wobble font-mono-atlas relative inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.28em] ${className ?? ""}`}
-      style={{
-        color,
-        transform: `rotate(${rotate}deg)`,
-        border: `1.5px solid ${color}`,
-        boxShadow: `inset 0 0 0 3px ${palette(false).paper === "#f5efe1" ? "transparent" : "transparent"}, inset 0 0 0 4px ${color}`,
-        opacity: 0.88,
-      }}
-    >
-      {children}
-    </span>
-  );
-}
-
-/* A simpler "outline only" stamp variant (no double-border ring) */
 function StampOutline({
   children,
   rotate = -2,
