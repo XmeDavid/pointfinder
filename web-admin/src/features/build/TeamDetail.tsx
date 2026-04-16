@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { Copy, Check, Trash2, Save, QrCode, Download } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import QRCode from 'qrcode'
 import { TeamVariablesEditor } from '@/components/data/TeamVariablesEditor'
 import { useTeams, useTeamPlayers } from '@/hooks/queries/useTeams'
@@ -12,6 +13,7 @@ import { useWorkspaceStore } from '@/stores/workspace'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-dialog'
 import type { Assignment } from '@/types/v2'
 import type { Base } from '@/types/base'
 
@@ -21,6 +23,8 @@ interface TeamDetailProps {
 }
 
 export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
+  const { t } = useTranslation()
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const { data: teams = [] } = useTeams(gameId)
   const { data: players = [] } = useTeamPlayers(gameId, teamId)
   const { data: assignments = [] } = useAssignments(gameId)
@@ -184,10 +188,17 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
   if (!team) {
     return (
       <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
-        Team not found
+        {t('build.selectTeamPrompt')}
       </div>
     )
   }
+
+  const memberCount = players.length
+  const deleteDescription =
+    t('common.confirm.deleteTeamDescription') +
+    (memberCount > 0
+      ? ' ' + t('common.confirm.deleteTeamMembers', { count: memberCount })
+      : '')
 
   return (
     <div className="p-4 space-y-0" data-testid="team-detail">
@@ -415,17 +426,24 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
       {/* Delete */}
       <div className="border-t border-border pt-4 mt-4">
         <button
-          onClick={() => {
-            if (confirm('Delete this team?')) {
-              deleteTeam.mutate(teamId, { onSuccess: () => selectTeam(null) })
-            }
-          }}
+          onClick={() => setConfirmDeleteOpen(true)}
           data-testid="delete-team-btn"
           className="text-xs text-destructive hover:underline cursor-pointer"
         >
           Delete team
         </button>
       </div>
+
+      <ConfirmDeleteDialog
+        open={confirmDeleteOpen}
+        onCancel={() => setConfirmDeleteOpen(false)}
+        onConfirm={() => {
+          setConfirmDeleteOpen(false)
+          deleteTeam.mutate(teamId, { onSuccess: () => selectTeam(null) })
+        }}
+        title={t('common.confirm.deleteTeamTitle')}
+        description={deleteDescription}
+      />
     </div>
   )
 }

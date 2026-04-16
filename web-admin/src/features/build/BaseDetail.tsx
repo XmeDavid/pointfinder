@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { Pin, Plus, Pencil, Save, X, ChevronDown, Users } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { TagPicker } from '@/components/data/TagPicker'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useBases } from '@/hooks/queries/useBases'
@@ -11,6 +12,7 @@ import { useTeams } from '@/hooks/queries/useTeams'
 import { LocationPicker } from '@/components/map/LocationPicker'
 import { useGame } from '@/hooks/queries/useGames'
 import { getStyleUrl } from '@/lib/tile-sources'
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-dialog'
 import type { Assignment, Challenge, Team } from '@/types'
 
 interface BaseDetailProps {
@@ -25,8 +27,10 @@ const ANSWER_TYPE_BADGE: Record<string, { bg: string; text: string; label: strin
 }
 
 export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
+  const { t } = useTranslation()
   const selectChallenge = useWorkspaceStore((s) => s.selectChallenge)
   const selectBase = useWorkspaceStore((s) => s.selectBase)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
 
   const { data: game } = useGame(gameId)
   const { data: bases = [] } = useBases(gameId)
@@ -132,10 +136,17 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
   if (!base) {
     return (
       <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
-        Base not found
+        {t('build.selectBasePrompt')}
       </div>
     )
   }
+
+  const cascadeCount = baseAssignments.length
+  const deleteDescription =
+    t('common.confirm.deleteBaseDescription') +
+    (cascadeCount > 0
+      ? ' ' + t('common.confirm.deleteBaseCascade', { count: cascadeCount })
+      : '')
 
   return (
     <div className="p-4 space-y-0" data-testid="base-detail">
@@ -160,7 +171,7 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
             <textarea
               value={localDescription}
               onChange={(e) => setLocalDescription(e.target.value)}
-              placeholder="Base description..."
+              placeholder={t('build.baseDescription')}
               rows={2}
               data-testid="base-description-input"
               className="w-full px-3 py-2 text-sm rounded-md bg-background border border-border text-foreground resize-none"
@@ -356,17 +367,24 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
       {/* Delete */}
       <div className="border-t border-border pt-4 mt-4">
         <button
-          onClick={() => {
-            if (confirm('Delete this base?')) {
-              deleteBase.mutate(baseId, { onSuccess: () => selectBase(null) })
-            }
-          }}
+          onClick={() => setConfirmDeleteOpen(true)}
           data-testid="delete-base-btn"
           className="text-xs text-destructive hover:underline cursor-pointer"
         >
           Delete base
         </button>
       </div>
+
+      <ConfirmDeleteDialog
+        open={confirmDeleteOpen}
+        onCancel={() => setConfirmDeleteOpen(false)}
+        onConfirm={() => {
+          setConfirmDeleteOpen(false)
+          deleteBase.mutate(baseId, { onSuccess: () => selectBase(null) })
+        }}
+        title={t('common.confirm.deleteBaseTitle')}
+        description={deleteDescription}
+      />
     </div>
   )
 }

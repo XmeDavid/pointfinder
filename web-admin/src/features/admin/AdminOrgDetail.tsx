@@ -14,7 +14,7 @@ interface Props {
 }
 
 export function AdminOrgDetail({ orgId, onBack }: Props) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
@@ -125,12 +125,12 @@ export function AdminOrgDetail({ orgId, onBack }: Props) {
           {org.gracePeriodEnd && (
             <div>
               <p className="text-muted-foreground">Grace period end</p>
-              <p className="text-foreground">{new Date(org.gracePeriodEnd).toLocaleDateString()}</p>
+              <p className="text-foreground">{new Date(org.gracePeriodEnd).toLocaleDateString(i18n.language)}</p>
             </div>
           )}
           <div>
             <p className="text-muted-foreground">Joined</p>
-            <p className="text-foreground">{new Date(org.createdAt).toLocaleDateString()}</p>
+            <p className="text-foreground">{new Date(org.createdAt).toLocaleDateString(i18n.language)}</p>
           </div>
         </div>
       </div>
@@ -224,7 +224,7 @@ export function AdminOrgDetail({ orgId, onBack }: Props) {
                   <p className="text-xs text-muted-foreground">{m.email}</p>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {new Date(m.joinedAt).toLocaleDateString()}
+                  {new Date(m.joinedAt).toLocaleDateString(i18n.language)}
                 </p>
               </li>
             ))}

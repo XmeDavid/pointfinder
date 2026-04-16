@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { Save, ChevronDown, X, Plus, Users } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { TagPicker } from '@/components/data/TagPicker'
 import { TeamVariablesEditor } from '@/components/data/TeamVariablesEditor'
 import { useChallenges } from '@/hooks/queries/useChallenges'
@@ -15,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
 import { ResourcePicker } from '@/components/editor/ResourcePicker'
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-dialog'
 import { cn } from '@/lib/utils'
 import type { AnswerType } from '@/types/v2'
 
@@ -30,6 +32,8 @@ interface ChallengeDetailProps {
 }
 
 export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
+  const { t } = useTranslation()
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const { data: challenges = [] } = useChallenges(gameId)
   const { data: assignments = [] } = useAssignments(gameId)
   const { data: bases = [] } = useBases(gameId)
@@ -204,10 +208,17 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
   if (!challenge) {
     return (
       <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
-        Challenge not found
+        {t('build.selectChallengePrompt')}
       </div>
     )
   }
+
+  const deleteCascadeCount = challengeAssignments.length
+  const deleteDescription =
+    t('common.confirm.deleteChallengeDescription') +
+    (deleteCascadeCount > 0
+      ? ' ' + t('common.confirm.deleteChallengeCascade', { count: deleteCascadeCount })
+      : '')
 
   return (
     <div className="p-4 space-y-0" data-testid="challenge-detail">
@@ -298,7 +309,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
             <RichTextEditor
               content={localContent}
               onChange={setLocalContent}
-              placeholder="Challenge content..."
+              placeholder={t('build.challengeContentPlaceholder')}
               onInsertFileEmbed={() => {
                 setActiveEditorField('content')
                 setShowResourcePicker(true)
@@ -323,7 +334,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
               <Input
                 value={localCorrectAnswer}
                 onChange={(e) => setLocalCorrectAnswer(e.target.value)}
-                placeholder="Comma-separated accepted answers"
+                placeholder={t('build.correctAnswerPlaceholder')}
                 data-testid="correct-answer-input"
                 className="h-8 text-sm"
               />
@@ -548,7 +559,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
           rows={3}
           value={localOperatorNotes}
           onChange={(e) => setLocalOperatorNotes(e.target.value)}
-          placeholder="Internal notes visible only to operators..."
+          placeholder={t('build.operatorNotesPlaceholder')}
           data-testid="operator-notes"
           className="text-sm resize-none"
         />
@@ -620,7 +631,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
           <RichTextEditor
             content={localCompletionContent}
             onChange={setLocalCompletionContent}
-            placeholder="What teams see after completing this challenge..."
+            placeholder={t('build.completionPlaceholder')}
             onInsertFileEmbed={() => {
               setActiveEditorField('completion')
               setShowResourcePicker(true)
@@ -659,17 +670,24 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
       {/* Delete */}
       <div className="border-t border-border pt-4 mt-4">
         <button
-          onClick={() => {
-            if (confirm('Delete this challenge?')) {
-              deleteChallenge.mutate(challengeId, { onSuccess: () => selectChallenge(null) })
-            }
-          }}
+          onClick={() => setConfirmDeleteOpen(true)}
           data-testid="delete-challenge-btn"
           className="text-xs text-destructive hover:underline cursor-pointer"
         >
           Delete challenge
         </button>
       </div>
+
+      <ConfirmDeleteDialog
+        open={confirmDeleteOpen}
+        onCancel={() => setConfirmDeleteOpen(false)}
+        onConfirm={() => {
+          setConfirmDeleteOpen(false)
+          deleteChallenge.mutate(challengeId, { onSuccess: () => selectChallenge(null) })
+        }}
+        title={t('common.confirm.deleteChallengeTitle')}
+        description={deleteDescription}
+      />
     </div>
   )
 }

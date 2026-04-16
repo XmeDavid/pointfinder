@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/useToast'
 import { useUpdateProfile } from '@/hooks/mutations/useProfileMutations'
 
 export function GeneralTab() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const toast = useToast()
   const user = useAuthStore((s) => s.user)
   const updateProfile = useUpdateProfile()
@@ -61,7 +61,7 @@ export function GeneralTab() {
   }
 
   const memberSince = user?.createdAt
-    ? new Date(user.createdAt).toLocaleDateString()
+    ? new Date(user.createdAt).toLocaleDateString(i18n.language)
     : '—'
 
   return (

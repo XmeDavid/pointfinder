@@ -1,5 +1,6 @@
+import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Radio } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { broadcastApi } from "@/lib/api/broadcast";
@@ -9,10 +10,13 @@ import { BroadcastMap } from "./components/BroadcastMap";
 import { BroadcastTeamList } from "./components/BroadcastTeamList";
 import { BroadcastBasesList } from "./components/BroadcastBasesList";
 
+const BROADCAST_REFETCH_MS = 15000;
+
 export function LiveBroadcastPage() {
   const { t } = useTranslation();
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const upperCode = code?.toUpperCase() ?? "";
 
   const {
@@ -28,11 +32,13 @@ export function LiveBroadcastPage() {
 
   const gameId = initialData?.gameId;
 
+  // Each sub-query runs on demand, but we drive cache invalidation from a single
+  // interval instead of three independent timers. This preserves independent
+  // fetch semantics while cutting timer count from 3 -> 1.
   const { data: leaderboard = initialData?.leaderboard ?? [] } = useQuery({
     queryKey: ["broadcast-leaderboard", upperCode],
     queryFn: () => broadcastApi.getLeaderboard(upperCode),
     enabled: !!gameId,
-    refetchInterval: 15000,
     initialData: initialData?.leaderboard,
   });
 
@@ -40,7 +46,6 @@ export function LiveBroadcastPage() {
     queryKey: ["broadcast-locations", upperCode],
     queryFn: () => broadcastApi.getLocations(upperCode),
     enabled: !!gameId,
-    refetchInterval: 15000,
     initialData: initialData?.locations,
   });
 
@@ -48,9 +53,19 @@ export function LiveBroadcastPage() {
     queryKey: ["broadcast-progress", upperCode],
     queryFn: () => broadcastApi.getProgress(upperCode),
     enabled: !!gameId,
-    refetchInterval: 15000,
     initialData: initialData?.progress,
   });
+
+  // Single interval drives invalidation for all three broadcast sub-queries.
+  useEffect(() => {
+    if (!gameId) return;
+    const id = window.setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ["broadcast-leaderboard", upperCode] });
+      queryClient.invalidateQueries({ queryKey: ["broadcast-locations", upperCode] });
+      queryClient.invalidateQueries({ queryKey: ["broadcast-progress", upperCode] });
+    }, BROADCAST_REFETCH_MS);
+    return () => window.clearInterval(id);
+  }, [gameId, upperCode, queryClient]);
 
   useBroadcastWebSocket(gameId, upperCode);
 

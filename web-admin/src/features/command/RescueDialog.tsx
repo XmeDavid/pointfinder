@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { useBases } from '@/hooks/queries/useBases'
 import { useChallenges } from '@/hooks/queries/useChallenges'
@@ -23,6 +24,7 @@ export function RescueDialog({
   baseHidden,
   onClose,
 }: RescueDialogProps) {
+  const { t } = useTranslation()
   const { data: teams = [] } = useTeams(gameId)
   const { data: bases = [] } = useBases(gameId)
   const { data: challenges = [] } = useChallenges(gameId)
@@ -136,7 +138,7 @@ export function RescueDialog({
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-semibold text-foreground">
-            Rescue — {base?.name ?? 'Base'}
+            {t('command.rescue.title')} — {base?.name ?? t('command.rescue.fallbackBase')}
           </h2>
           <button
             onClick={onClose}
@@ -148,7 +150,7 @@ export function RescueDialog({
 
         {/* Team selector */}
         <label className="block text-xs font-medium text-muted-foreground mb-1">
-          Team
+          {t('command.rescue.teamLabel')}
         </label>
         <select
           data-testid="rescue-team-select"
@@ -156,37 +158,37 @@ export function RescueDialog({
           onChange={(e) => setSelectedTeamId(e.target.value)}
           className="w-full bg-muted border border-border/50 rounded-lg px-3 py-2 text-sm mb-4"
         >
-          <option value="">Select team...</option>
-          {teams.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name}
+          <option value="">{t('command.rescue.selectTeam')}</option>
+          {teams.map((tm) => (
+            <option key={tm.id} value={tm.id}>
+              {tm.name}
             </option>
           ))}
         </select>
 
         {/* Action selector */}
         <label className="block text-xs font-medium text-muted-foreground mb-1">
-          Action
+          {t('command.rescue.actionLabel')}
         </label>
         <div className="space-y-2 mb-4">
           <ActionCard
             selected={action === 'checkin'}
             onClick={() => setAction('checkin')}
-            title="Manual Check-in"
-            description="Bypass NFC scan for this team"
+            title={t('command.rescue.action.manualCheckIn')}
+            description={t('command.rescue.action.manualCheckInDesc')}
           />
           <ActionCard
             selected={action === 'completed'}
             onClick={() => setAction('completed')}
-            title="Mark Completed"
-            description="Award points without submission"
+            title={t('command.rescue.action.markCompleted')}
+            description={t('command.rescue.action.markCompletedDesc')}
           />
           {baseHidden && (
             <ActionCard
               selected={action === 'unlock'}
               onClick={() => setAction('unlock')}
-              title="Unlock Override"
-              description="Make base visible for team"
+              title={t('command.rescue.action.unlockOverride')}
+              description={t('command.rescue.action.unlockOverrideDesc')}
             />
           )}
         </div>
@@ -195,7 +197,7 @@ export function RescueDialog({
         {action === 'completed' && (
           <>
             <label className="block text-xs font-medium text-muted-foreground mb-1">
-              Challenge
+              {t('command.rescue.challengeLabel')}
             </label>
             <select
               data-testid="rescue-challenge-select"
@@ -203,17 +205,17 @@ export function RescueDialog({
               onChange={(e) => setSelectedChallengeId(e.target.value)}
               className="w-full bg-muted border border-border/50 rounded-lg px-3 py-2 text-sm mb-4"
             >
-              <option value="">Select challenge...</option>
+              <option value="">{t('command.rescue.selectChallenge')}</option>
               {baseChallenges.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.title} ({c.points} pts)
+                  {c.title} ({c.points} {t('common.pts')})
                 </option>
               ))}
             </select>
 
             {/* Points override */}
             <label className="block text-xs font-medium text-muted-foreground mb-1">
-              Points override (optional)
+              {t('command.rescue.pointsOverrideLabel')}
             </label>
             <input
               data-testid="rescue-points-override"
@@ -225,14 +227,14 @@ export function RescueDialog({
                 )
               }
               className="w-full bg-muted border border-border/50 rounded-lg px-3 py-2 text-sm mb-4"
-              placeholder="Default challenge points"
+              placeholder={t('command.rescue.pointsOverridePlaceholder')}
             />
           </>
         )}
 
         {/* Reason */}
         <label className="block text-xs font-medium text-muted-foreground mb-1">
-          Reason
+          {t('command.rescue.reasonLabel')}
         </label>
         <input
           data-testid="rescue-reason"
@@ -240,7 +242,7 @@ export function RescueDialog({
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           maxLength={500}
-          placeholder="e.g. NFC reader broken"
+          placeholder={t('command.rescue.reasonPlaceholder')}
           className="w-full bg-muted border border-border/50 rounded-lg px-3 py-2 text-sm mb-4"
         />
 
@@ -250,7 +252,7 @@ export function RescueDialog({
             onClick={onClose}
             className="px-4 py-2 rounded-lg text-sm border border-border text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
-            Cancel
+            {t('command.rescue.cancel')}
           </button>
           <button
             data-testid="rescue-confirm"
@@ -258,7 +260,7 @@ export function RescueDialog({
             onClick={handleConfirm}
             className="px-4 py-2 rounded-lg text-sm font-medium bg-success text-success-foreground hover:bg-success/90 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {isPending ? 'Sending...' : 'Confirm'}
+            {isPending ? t('command.rescue.sending') : t('command.rescue.confirm')}
           </button>
         </div>
       </div>

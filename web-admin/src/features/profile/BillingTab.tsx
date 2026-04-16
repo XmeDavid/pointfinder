@@ -8,6 +8,67 @@ import { useCreateCheckout, useCreatePortal, useCreateOrgPortal } from '../../ho
 import { useInvoices } from '@/hooks/queries/useInvoices'
 import type { Invoice } from '@/types/billing'
 
+function formatSize(bytes: number): string {
+  if (bytes === 0) return '0 B'
+  if (bytes >= 1024 * 1024 * 1024) {
+    const gb = bytes / (1024 * 1024 * 1024)
+    return `${gb.toFixed(gb < 10 ? 1 : 0)} GB`
+  }
+  if (bytes >= 1024 * 1024) {
+    const mb = bytes / (1024 * 1024)
+    return `${mb.toFixed(mb < 10 ? 1 : 0)} MB`
+  }
+  if (bytes >= 1024) return `${(bytes / 1024).toFixed(0)} KB`
+  return `${bytes} B`
+}
+
+function QuotaBar({
+  label,
+  current,
+  max,
+  formatBytes,
+  unlimitedLabel,
+}: {
+  label: string
+  current?: number | null
+  max?: number | null
+  formatBytes?: boolean
+  unlimitedLabel: string
+}) {
+  const fmt = (v: number | null | undefined) => {
+    if (v == null) return unlimitedLabel
+    if (formatBytes) return formatSize(v)
+    return String(v)
+  }
+  const hasBar = current != null && max != null && max > 0
+  const pct = hasBar ? Math.min(100, Math.round((current / max) * 100)) : 0
+  const barColor =
+    pct >= 90
+      ? 'bg-destructive'
+      : pct >= 75
+        ? 'bg-warning'
+        : 'bg-primary'
+
+  return (
+    <div>
+      <div className="flex justify-between items-baseline mb-1">
+        <span className="text-sm text-muted-foreground">{label}</span>
+        <span className="text-sm text-foreground font-medium">
+          {current != null ? `${fmt(current)} / ${fmt(max)}` : fmt(max)}
+        </span>
+      </div>
+      {hasBar && (
+        <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+          <div
+            className={`h-full ${barColor} transition-all`}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
 function formatAmount(amount: number, currency: string): string {
   return new Intl.NumberFormat(undefined, {
     style: 'currency',
@@ -33,7 +94,7 @@ function StatusBadge({ status }: { status: Invoice['status'] }) {
 }
 
 function InvoiceRow({ invoice }: { invoice: Invoice }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [expanded, setExpanded] = useState(false)
 
   return (
@@ -44,7 +105,7 @@ function InvoiceRow({ invoice }: { invoice: Invoice }) {
         onClick={() => setExpanded((v) => !v)}
       >
         <span className="text-muted-foreground w-24 shrink-0">
-          {new Date(invoice.date).toLocaleDateString()}
+          {new Date(invoice.date).toLocaleDateString(i18n.language)}
         </span>
         <span className="flex-1 font-medium text-foreground truncate">
           {invoice.planName ?? '—'}
@@ -83,8 +144,8 @@ function InvoiceRow({ invoice }: { invoice: Invoice }) {
             <div>
               <span className="text-muted-foreground">{t('billing.billingPeriodLabel', 'Billing period')}: </span>
               <span className="text-foreground">
-                {new Date(invoice.billingPeriodStart).toLocaleDateString()} –{' '}
-                {new Date(invoice.billingPeriodEnd).toLocaleDateString()}
+                {new Date(invoice.billingPeriodStart).toLocaleDateString(i18n.language)} –{' '}
+                {new Date(invoice.billingPeriodEnd).toLocaleDateString(i18n.language)}
               </span>
             </div>
           )}
@@ -136,39 +197,12 @@ function InvoiceRow({ invoice }: { invoice: Invoice }) {
   )
 }
 
-function formatSize(bytes: number): string {
-  if (bytes === 0) return '0'
-  if (bytes >= 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024 * 1024)).toFixed(0)} GB`
-  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(0)} MB`
-  return `${(bytes / 1024).toFixed(0)} KB`
-}
-
-function QuotaRow({ label, current, max, formatBytes }: {
-  label: string
-  current?: number | null
-  max?: number | null
-  formatBytes?: boolean
-}) {
-  const fmt = (v: number | null | undefined) => {
-    if (v == null) return '∞'
-    if (formatBytes) return formatSize(v)
-    return String(v)
-  }
-  return (
-    <div className="flex justify-between">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="text-foreground">
-        {current != null ? `${fmt(current)} / ${fmt(max)}` : fmt(max)}
-      </span>
-    </div>
-  )
-}
-
 export function BillingTab() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { active } = useWorkspaceContext()
   const { data: quota } = useQuota()
   const { data: billingStatus } = useBillingStatus()
+  const unlimitedLabel = t('billingProgress.unlimited')
   const checkout = useCreateCheckout()
   const portal = useCreatePortal()
   const orgPortal = useCreateOrgPortal()
@@ -213,7 +247,7 @@ export function BillingTab() {
           {billingStatus.currentPeriodEnd && (
             <p className="text-sm text-muted-foreground mt-1">
               {t('billing.renewsOn', 'Renews on')}{' '}
-              {new Date(billingStatus.currentPeriodEnd).toLocaleDateString()}
+              {new Date(billingStatus.currentPeriodEnd).toLocaleDateString(i18n.language)}
             </p>
           )}
         </div>
@@ -333,38 +367,62 @@ export function BillingTab() {
       {quota && (
         <div className="mt-8 max-w-md">
           <h2 className="text-lg font-semibold text-foreground mb-4">
-            {t('billing.usage', 'Usage & Limits')}
+            {t('billingProgress.usageTitle', 'Usage & Limits')}
           </h2>
-          <div className="space-y-2 text-sm">
-            <QuotaRow label={t('billing.activeGames', 'Active games')}
+          <div className="space-y-4 text-sm">
+            <QuotaBar
+              label={t('billing.activeGames', 'Active games')}
               current={quota.usage.currentActiveGames}
-              max={quota.limits.maxActiveGames} />
+              max={quota.limits.maxActiveGames}
+              unlimitedLabel={unlimitedLabel}
+            />
             {quota.usage.currentMembers != null && (
-              <QuotaRow label={t('billing.members', 'Members')}
+              <QuotaBar
+                label={t('billing.members', 'Members')}
                 current={quota.usage.currentMembers}
-                max={quota.limits.maxMembers} />
+                max={quota.limits.maxMembers}
+                unlimitedLabel={unlimitedLabel}
+              />
             )}
             {quota.usage.currentLiveGames != null && (
-              <QuotaRow label={t('billing.liveGames', 'Live games')}
+              <QuotaBar
+                label={t('billing.liveGames', 'Live games')}
                 current={quota.usage.currentLiveGames}
-                max={quota.limits.maxLiveGames} />
+                max={quota.limits.maxLiveGames}
+                unlimitedLabel={unlimitedLabel}
+              />
             )}
-            <QuotaRow label={t('billing.operatorsPerGame', 'Operators per game')}
-              max={quota.limits.maxOperatorsPerGame} />
-            <QuotaRow label={t('billing.basesPerGame', 'Bases per game')}
-              max={quota.limits.maxBasesPerGame} />
+            <QuotaBar
+              label={t('billing.operatorsPerGame', 'Operators per game')}
+              max={quota.limits.maxOperatorsPerGame}
+              unlimitedLabel={unlimitedLabel}
+            />
+            <QuotaBar
+              label={t('billing.basesPerGame', 'Bases per game')}
+              max={quota.limits.maxBasesPerGame}
+              unlimitedLabel={unlimitedLabel}
+            />
             {quota.limits.maxPlayersPerGame !== undefined && (
-              <QuotaRow label={t('billing.playersPerGame', 'Players per game')}
-                max={quota.limits.maxPlayersPerGame} />
+              <QuotaBar
+                label={t('billing.playersPerGame', 'Players per game')}
+                max={quota.limits.maxPlayersPerGame}
+                unlimitedLabel={unlimitedLabel}
+              />
             )}
-            <QuotaRow label={t('billing.maxFileSize', 'Max file size')}
+            <QuotaBar
+              label={t('billing.maxFileSize', 'Max file size')}
               max={quota.limits.maxFileSizeBytes}
-              formatBytes />
+              formatBytes
+              unlimitedLabel={unlimitedLabel}
+            />
             {quota.limits.maxResourceStorageBytes != null && (
-              <QuotaRow label={t('billing.resourceStorage', 'Resource storage')}
+              <QuotaBar
+                label={t('billing.resourceStorage', 'Resource storage')}
                 current={quota.usage.currentResourceStorageBytes}
                 max={quota.limits.maxResourceStorageBytes}
-                formatBytes />
+                formatBytes
+                unlimitedLabel={unlimitedLabel}
+              />
             )}
           </div>
         </div>

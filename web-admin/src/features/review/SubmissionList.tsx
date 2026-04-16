@@ -1,20 +1,15 @@
 import { useState, useMemo } from 'react'
 import { FileText, Image, Video } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useSubmissions } from '@/hooks/queries/useSubmissions'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { useChallenges } from '@/hooks/queries/useChallenges'
 import { useWorkspaceStore } from '@/stores/workspace'
+import { Spinner } from '@/components/feedback/Spinner'
 import { relativeTime } from '@/lib/utils/dates'
 import type { Submission, SubmissionStatus } from '@/types'
 
 type FilterOption = 'pending' | 'all' | 'approved' | 'rejected'
-
-const filterOptions: Array<{ value: FilterOption; label: string }> = [
-  { value: 'pending', label: 'Pending' },
-  { value: 'all', label: 'All' },
-  { value: 'approved', label: 'Approved' },
-  { value: 'rejected', label: 'Rejected' },
-]
 
 function filterColor(filter: FilterOption, active: boolean): string {
   if (!active) return 'text-muted-foreground hover:text-foreground'
@@ -66,7 +61,13 @@ interface SubmissionListProps {
 }
 
 export default function SubmissionList({ gameId }: SubmissionListProps) {
-  const { data: submissions = [] } = useSubmissions(gameId)
+  const { t } = useTranslation()
+  const {
+    data: submissions = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useSubmissions(gameId)
   const { data: teams = [] } = useTeams(gameId)
   const { data: challenges = [] } = useChallenges(gameId)
   const selectedSubmissionId = useWorkspaceStore((s) => s.selectedSubmissionId)
@@ -74,6 +75,16 @@ export default function SubmissionList({ gameId }: SubmissionListProps) {
 
   const [filter, setFilter] = useState<FilterOption>('pending')
   const [teamFilter, setTeamFilter] = useState<string>('')
+
+  const filterOptions: Array<{ value: FilterOption; label: string }> = useMemo(
+    () => [
+      { value: 'pending', label: t('review.filters.pending') },
+      { value: 'all', label: t('review.filters.all') },
+      { value: 'approved', label: t('review.filters.approved') },
+      { value: 'rejected', label: t('review.filters.rejected') },
+    ],
+    [t],
+  )
 
   const filteredSubmissions = useMemo(() => {
     let subs = [...submissions]
@@ -96,7 +107,7 @@ export default function SubmissionList({ gameId }: SubmissionListProps) {
       <div className="px-3 py-3 border-b border-border">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-semibold text-foreground">
-            Submissions
+            {t('review.title')}
           </span>
           <span className="text-xs text-muted-foreground">
             {filteredSubmissions.length}
@@ -124,7 +135,7 @@ export default function SubmissionList({ gameId }: SubmissionListProps) {
           data-testid="team-filter"
           className="w-full px-2 py-1 text-xs bg-muted border border-border rounded text-foreground"
         >
-          <option value="">All teams</option>
+          <option value="">{t('review.allTeams')}</option>
           {teams.map((team) => (
             <option key={team.id} value={team.id}>
               {team.name}
@@ -135,11 +146,29 @@ export default function SubmissionList({ gameId }: SubmissionListProps) {
 
       {/* Scrollable list */}
       <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
-        {filteredSubmissions.length === 0 && (
+        {isLoading && (
+          <div className="py-6">
+            <Spinner />
+          </div>
+        )}
+
+        {!isLoading && isError && (
+          <div className="text-center text-destructive text-xs py-8 space-y-2">
+            <p>{t('review.loadError')}</p>
+            <button
+              onClick={() => refetch()}
+              className="text-xs text-primary hover:underline cursor-pointer"
+            >
+              {t('review.retry')}
+            </button>
+          </div>
+        )}
+
+        {!isLoading && !isError && filteredSubmissions.length === 0 && (
           <div className="text-center text-muted-foreground text-xs py-8">
             {filter === 'pending'
-              ? 'All caught up! No pending submissions to review.'
-              : 'No submissions match this filter.'}
+              ? t('review.emptyPending')
+              : t('review.emptyFilter')}
           </div>
         )}
 
@@ -166,14 +195,14 @@ export default function SubmissionList({ gameId }: SubmissionListProps) {
                   style={{ backgroundColor: team?.color ?? '#888' }}
                 />
                 <span className="text-xs font-medium text-foreground truncate">
-                  {team?.name ?? 'Unknown'}
+                  {team?.name ?? t('review.unknownTeam')}
                 </span>
               </div>
 
               {/* Challenge name */}
               <div className="flex items-center gap-1.5 mb-1">
                 <span className="text-[11px] text-muted-foreground truncate">
-                  {challenge?.title ?? 'Unknown'}
+                  {challenge?.title ?? t('review.unknownChallenge')}
                 </span>
               </div>
 

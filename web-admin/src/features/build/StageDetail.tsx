@@ -1,11 +1,13 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Plus } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useStages } from '@/hooks/queries/useStages'
 import { useUpdateStage, useDeleteStage } from '@/hooks/mutations/useStageMutations'
 import { useBases } from '@/hooks/queries/useBases'
 import { useUpdateBase } from '@/hooks/mutations/useBaseMutations'
 import { useAssignments } from '@/hooks/queries/useAssignments'
 import { useWorkspaceStore } from '@/stores/workspace'
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-dialog'
 import type { TransitionType } from '@/types/stage'
 import type { Base } from '@/types/base'
 
@@ -45,6 +47,8 @@ export default function StageDetail({
   stageId: string
   gameId: string
 }) {
+  const { t } = useTranslation()
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const { data: stagesData } = useStages(gameId)
   const { data: basesData } = useBases(gameId)
   const { data: assignmentsData } = useAssignments(gameId)
@@ -145,10 +149,17 @@ export default function StageDetail({
   if (!stage) {
     return (
       <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
-        Stage not found
+        {t('build.selectStagePrompt')}
       </div>
     )
   }
+
+  const stageBaseCount = stageBases.length
+  const deleteDescription =
+    t('common.confirm.deleteStageDescription') +
+    (stageBaseCount > 0
+      ? ' ' + t('common.confirm.deleteStageCascade', { count: stageBaseCount })
+      : '')
 
   return (
     <div className="p-4 space-y-0" data-testid="stage-detail">
@@ -368,17 +379,24 @@ export default function StageDetail({
       {/* Delete */}
       <div className="border-t border-border pt-4 mt-4">
         <button
-          onClick={() => {
-            if (confirm('Delete this stage?')) {
-              deleteStage.mutate(stageId, { onSuccess: () => selectStage(null) })
-            }
-          }}
+          onClick={() => setConfirmDeleteOpen(true)}
           data-testid="delete-stage-btn"
           className="text-xs text-destructive hover:underline cursor-pointer"
         >
           Delete stage
         </button>
       </div>
+
+      <ConfirmDeleteDialog
+        open={confirmDeleteOpen}
+        onCancel={() => setConfirmDeleteOpen(false)}
+        onConfirm={() => {
+          setConfirmDeleteOpen(false)
+          deleteStage.mutate(stageId, { onSuccess: () => selectStage(null) })
+        }}
+        title={t('common.confirm.deleteStageTitle')}
+        description={deleteDescription}
+      />
     </div>
   )
 }

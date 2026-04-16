@@ -33,7 +33,7 @@ function QuotaRow({ label, current, max, formatBytes }: {
 }
 
 export function BillingPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { active } = useWorkspaceContext()
   const { data: quota } = useQuota()
   const { data: billingStatus } = useBillingStatus()
@@ -87,7 +87,7 @@ export function BillingPage() {
           {billingStatus.currentPeriodEnd && (
             <p className="text-sm text-muted-foreground mt-1">
               {t('billing.renewsOn', 'Renews on')}{' '}
-              {new Date(billingStatus.currentPeriodEnd).toLocaleDateString()}
+              {new Date(billingStatus.currentPeriodEnd).toLocaleDateString(i18n.language)}
             </p>
           )}
         </div>

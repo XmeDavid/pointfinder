@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useImportGame } from '@/hooks/mutations/useGameMutations'
 import { isGameExportDto, type GameExportDto } from '@/lib/api/games'
 
@@ -12,6 +13,7 @@ export function ImportGameDialog({
   open: boolean
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const importGame = useImportGame()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -38,11 +40,11 @@ export function ImportGameDialog({
     if (!f) return
 
     if (!f.name.endsWith('.json')) {
-      setError('Please select a JSON file')
+      setError(t('game.invalidFileType'))
       return
     }
     if (f.size > MAX_FILE_SIZE) {
-      setError('File size exceeds 5MB limit')
+      setError(t('game.fileTooLarge'))
       return
     }
 
@@ -51,12 +53,12 @@ export function ImportGameDialog({
       const text = await f.text()
       const data = JSON.parse(text)
       if (!isGameExportDto(data)) {
-        setError('Invalid game export file structure')
+        setError(t('import.invalidStructure'))
         return
       }
       setParsed(data)
     } catch {
-      setError('Invalid JSON file')
+      setError(t('game.invalidJsonFile'))
     }
   }
 
@@ -69,7 +71,7 @@ export function ImportGameDialog({
           handleClose()
           navigate(`/game/${game.id}`)
         },
-        onError: () => setError('Failed to import game. Please try again.'),
+        onError: () => setError(t('import.failed')),
       },
     )
   }
@@ -83,10 +85,9 @@ export function ImportGameDialog({
         onClick={handleClose}
       />
       <div className="relative bg-card border border-border rounded-xl shadow-lg w-full max-w-md p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-foreground">Import Game</h2>
+        <h2 className="text-lg font-semibold text-foreground">{t('import.title')}</h2>
         <p className="text-sm text-muted-foreground">
-          Upload a game export file to create a new game with all bases,
-          challenges, and teams.
+          {t('import.description')}
         </p>
 
         {/* File input */}
@@ -130,7 +131,7 @@ export function ImportGameDialog({
             onClick={handleClose}
             className="px-4 py-2 rounded-lg border border-border text-sm text-muted-foreground font-medium hover:bg-muted transition-colors"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             onClick={handleImport}
@@ -142,7 +143,7 @@ export function ImportGameDialog({
                 : 'bg-muted text-muted-foreground cursor-not-allowed'
             }`}
           >
-            {importGame.isPending ? 'Importing...' : 'Import'}
+            {importGame.isPending ? t('import.importing') : t('import.importBtn')}
           </button>
         </div>
       </div>

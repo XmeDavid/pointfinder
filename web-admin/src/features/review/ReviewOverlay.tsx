@@ -1,5 +1,6 @@
 import { useEffect, useCallback, useMemo, useRef } from 'react'
 import { ArrowLeft } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useSubmissions } from '@/hooks/queries/useSubmissions'
 import { useChallenges } from '@/hooks/queries/useChallenges'
 import { useReviewSubmission } from '@/hooks/mutations/useSubmissionMutations'
@@ -13,6 +14,7 @@ interface ReviewOverlayProps {
 }
 
 export default function ReviewOverlay({ gameId }: ReviewOverlayProps) {
+  const { t } = useTranslation()
   const { data: submissions = [] } = useSubmissions(gameId)
   const { data: challenges = [] } = useChallenges(gameId)
   const reviewMutation = useReviewSubmission(gameId)
@@ -184,7 +186,7 @@ export default function ReviewOverlay({ gameId }: ReviewOverlayProps) {
           className="md:hidden flex items-center gap-1.5 px-3 py-2 border-b border-border text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0"
         >
           <ArrowLeft size={16} />
-          Back to submissions
+          {t('review.backToSubmissions')}
         </button>
       )}
 
@@ -201,8 +203,8 @@ export default function ReviewOverlay({ gameId }: ReviewOverlayProps) {
             <SubmissionDetail submissionId={selectedSubmissionId} gameId={gameId} />
           ) : (
             <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm text-center px-6">
-              Select a submission from the list to review it.{' '}
-              <span className="hidden md:inline">Use ↑↓ to navigate, A to approve, R to reject.</span>
+              {t('review.selectOnePrompt')}{' '}
+              <span className="hidden md:inline">{t('review.keyboardHintDesktop')}</span>
             </div>
           )}
         </div>
@@ -214,25 +216,25 @@ export default function ReviewOverlay({ gameId }: ReviewOverlayProps) {
           <kbd className="px-1.5 py-0.5 bg-muted rounded text-muted-foreground text-[10px] font-mono">
             A
           </kbd>{' '}
-          Approve
+          {t('review.kbd.approve')}
         </span>
         <span>
           <kbd className="px-1.5 py-0.5 bg-muted rounded text-muted-foreground text-[10px] font-mono">
             R
           </kbd>{' '}
-          Reject
+          {t('review.kbd.reject')}
         </span>
         <span>
           <kbd className="px-1.5 py-0.5 bg-muted rounded text-muted-foreground text-[10px] font-mono">
             &uarr;&darr;
           </kbd>{' '}
-          Navigate
+          {t('review.kbd.navigate')}
         </span>
         <span>
           <kbd className="px-1.5 py-0.5 bg-muted rounded text-muted-foreground text-[10px] font-mono">
             &rarr;
           </kbd>{' '}
-          Skip
+          {t('review.kbd.skip')}
         </span>
       </div>
     </div>

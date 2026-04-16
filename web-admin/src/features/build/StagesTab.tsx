@@ -1,10 +1,12 @@
 import { useMemo } from 'react'
 import { GripVertical, Plus, Layers } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useStages } from '@/hooks/queries/useStages'
 import { useCreateStage } from '@/hooks/mutations/useStageMutations'
 import { useBases } from '@/hooks/queries/useBases'
 import { useAssignments } from '@/hooks/queries/useAssignments'
 import { useWorkspaceStore } from '@/stores/workspace'
+import { useToast } from '@/hooks/useToast'
 import type { Stage } from '@/types/stage'
 import type { Base } from '@/types/base'
 import type { Assignment } from '@/types/assignment'
@@ -95,6 +97,8 @@ function StageListItem({
 }
 
 export default function StagesTab({ gameId }: { gameId: string }) {
+  const { t } = useTranslation()
+  const toast = useToast()
   const { data: stagesData } = useStages(gameId)
   const { data: basesData } = useBases(gameId)
   const { data: assignmentsData } = useAssignments(gameId)
@@ -121,7 +125,8 @@ export default function StagesTab({ gameId }: { gameId: string }) {
       {
         onError: (err) => {
           console.error('Failed to create stage:', err)
-          alert(`Failed to create stage: ${(err as Error).message ?? 'Unknown error'}`)
+          const message = (err as Error).message ?? t('common.unknownError')
+          toast.error(t('build.stage.createFailed', { err: message }))
         },
       },
     )
@@ -144,7 +149,7 @@ export default function StagesTab({ gameId }: { gameId: string }) {
           ))}
           {stages.length === 0 && (
             <div className="px-3 py-6 text-xs text-muted-foreground text-center">
-              No stages yet
+              {t('build.noStagesYet', 'No stages yet')}
             </div>
           )}
         </div>
@@ -170,7 +175,7 @@ export default function StagesTab({ gameId }: { gameId: string }) {
           <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
             <div className="text-center space-y-2">
               <Layers className="h-8 w-8 mx-auto opacity-40" />
-              <p>Select a stage to view details</p>
+              <p>{t('build.selectStagePrompt')}</p>
             </div>
           </div>
         )}

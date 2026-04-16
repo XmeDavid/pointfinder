@@ -1,11 +1,13 @@
 import { useState, useMemo } from 'react'
 import { AlertTriangle } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useChallenges } from '@/hooks/queries/useChallenges'
 import { useAssignments } from '@/hooks/queries/useAssignments'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { useBases } from '@/hooks/queries/useBases'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { SearchInput } from '@/components/data/SearchInput'
+import { Spinner } from '@/components/feedback/Spinner'
 import { Badge } from '@/components/ui/badge'
 import { ChallengeDetail } from './ChallengeDetail'
 import { cn } from '@/lib/utils'
@@ -121,9 +123,15 @@ interface ChallengesTabProps {
 }
 
 export function ChallengesTab({ gameId }: ChallengesTabProps) {
+  const { t } = useTranslation()
   const [search, setSearch] = useState('')
 
-  const { data: challenges = [] } = useChallenges(gameId)
+  const {
+    data: challenges = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useChallenges(gameId)
   const { data: assignments = [] } = useAssignments(gameId)
   const { data: teams = [] } = useTeams(gameId)
   const { data: bases = [] } = useBases(gameId)
@@ -150,13 +158,25 @@ export function ChallengesTab({ gameId }: ChallengesTabProps) {
           <SearchInput
             value={search}
             onChange={setSearch}
-            placeholder="Search challenges..."
+            placeholder={t('build.searchChallenges')}
           />
         </div>
 
         {/* List */}
         <div className="flex-1 overflow-y-auto p-1.5 space-y-0.5">
-          {filtered.map((challenge) => (
+          {isLoading && <Spinner />}
+          {!isLoading && isError && (
+            <div className="px-3 py-6 text-xs text-destructive text-center space-y-2">
+              <p>{t('common.error')}</p>
+              <button
+                onClick={() => refetch()}
+                className="text-xs text-primary hover:underline cursor-pointer"
+              >
+                {t('common.retry')}
+              </button>
+            </div>
+          )}
+          {!isLoading && !isError && filtered.map((challenge) => (
             <ChallengeListItem
               key={challenge.id}
               challenge={challenge}
@@ -167,11 +187,11 @@ export function ChallengesTab({ gameId }: ChallengesTabProps) {
               teams={teams}
             />
           ))}
-          {filtered.length === 0 && (
+          {!isLoading && !isError && filtered.length === 0 && (
             <div className="px-3 py-6 text-xs text-muted-foreground text-center">
               {search
-                ? 'No challenges match your search'
-                : 'No challenges yet'}
+                ? t('build.searchChallengesEmpty')
+                : t('build.noChallengesYet')}
             </div>
           )}
         </div>
@@ -186,7 +206,7 @@ export function ChallengesTab({ gameId }: ChallengesTabProps) {
           />
         ) : (
           <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
-            Select a challenge to view details
+            {t('build.selectChallengePrompt')}
           </div>
         )}
       </div>

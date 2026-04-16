@@ -13,6 +13,9 @@ export function BillingSuccessPage() {
 
   useEffect(() => {
     qc.invalidateQueries({ queryKey: ['workspaces'] })
+    qc.invalidateQueries({ queryKey: ['quota'] })
+    qc.invalidateQueries({ queryKey: ['billing-status'] })
+    qc.invalidateQueries({ queryKey: ['invoices'] })
   }, [qc])
 
   return (

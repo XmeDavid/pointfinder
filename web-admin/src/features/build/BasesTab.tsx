@@ -1,8 +1,10 @@
 import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useBases } from '@/hooks/queries/useBases'
 import { useAssignments } from '@/hooks/queries/useAssignments'
 import { SearchInput } from '@/components/data/SearchInput'
+import { Spinner } from '@/components/feedback/Spinner'
 import { BaseDetail } from './BaseDetail'
 import type { Base, Assignment } from '@/types'
 
@@ -44,7 +46,7 @@ function getBaseSubtitle(base: Base, assignments: Assignment[]): string {
   const uniqueChallenges = new Set(baseAssignments.map((a) => a.challengeId))
   const challengeCount = uniqueChallenges.size
 
-  if (baseAssignments.length === 0) return 'No challenges'
+  if (baseAssignments.length === 0) return ''
 
   const challengeText =
     challengeCount === 1 ? '1 challenge' : `${challengeCount} challenges`
@@ -89,10 +91,11 @@ function BaseListItem({ base, isSelected, onSelect, subtitle }: BaseListItemProp
 }
 
 export function BasesTab({ gameId }: BasesTabProps) {
+  const { t } = useTranslation()
   const selectedBaseId = useWorkspaceStore((s) => s.selectedBaseId)
   const selectBase = useWorkspaceStore((s) => s.selectBase)
 
-  const { data: bases = [] } = useBases(gameId)
+  const { data: bases = [], isLoading, isError, refetch } = useBases(gameId)
   const { data: assignments = [] } = useAssignments(gameId)
 
   const [search, setSearch] = useState('')
@@ -112,14 +115,26 @@ export function BasesTab({ gameId }: BasesTabProps) {
           <SearchInput
             value={search}
             onChange={setSearch}
-            placeholder="Search bases..."
+            placeholder={t('build.searchBases')}
             debounceMs={150}
           />
         </div>
 
         {/* List */}
         <div className="flex-1 overflow-y-auto p-1.5 space-y-0.5" data-testid="base-list">
-          {filteredBases.map((base) => (
+          {isLoading && <Spinner />}
+          {!isLoading && isError && (
+            <div className="px-3 py-6 text-xs text-destructive text-center space-y-2">
+              <p>{t('common.error')}</p>
+              <button
+                onClick={() => refetch()}
+                className="text-xs text-primary hover:underline cursor-pointer"
+              >
+                {t('common.retry')}
+              </button>
+            </div>
+          )}
+          {!isLoading && !isError && filteredBases.map((base) => (
             <BaseListItem
               key={base.id}
               base={base}
@@ -128,9 +143,9 @@ export function BasesTab({ gameId }: BasesTabProps) {
               subtitle={getBaseSubtitle(base, assignments)}
             />
           ))}
-          {filteredBases.length === 0 && (
+          {!isLoading && !isError && filteredBases.length === 0 && (
             <div className="px-3 py-6 text-xs text-muted-foreground text-center">
-              {search ? 'No bases match your search' : 'No bases yet'}
+              {search ? t('build.searchBasesEmpty') : t('build.noBasesYet')}
             </div>
           )}
         </div>
@@ -142,7 +157,7 @@ export function BasesTab({ gameId }: BasesTabProps) {
           <BaseDetail baseId={selectedBaseId} gameId={gameId} />
         ) : (
           <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
-            Select a base to view details
+            {t('build.selectBasePrompt')}
           </div>
         )}
       </div>

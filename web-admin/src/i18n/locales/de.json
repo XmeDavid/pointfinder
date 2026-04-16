@@ -51,7 +51,28 @@
     "manageTags": "Tags verwalten",
     "toggleView": "Ansicht wechseln",
     "useArrowKeys": "Pfeiltasten verwenden oder Wert eintippen",
-    "remove": "Entfernen"
+    "remove": "Entfernen",
+    "error": "Etwas ist schiefgelaufen.",
+    "unknownError": "Unbekannter Fehler",
+    "retry": "Erneut versuchen",
+    "confirm": {
+      "deleteBaseTitle": "Diese Basis löschen?",
+      "deleteBaseDescription": "Diese Aktion kann nicht rückgängig gemacht werden.",
+      "deleteBaseCascade_one": "Dadurch wird auch {{count}} verknüpfte Challenge-Zuweisung entfernt.",
+      "deleteBaseCascade_other": "Dadurch werden auch {{count}} verknüpfte Challenge-Zuweisungen entfernt.",
+      "deleteChallengeTitle": "Diese Challenge löschen?",
+      "deleteChallengeDescription": "Diese Aktion kann nicht rückgängig gemacht werden.",
+      "deleteChallengeCascade_one": "Dadurch wird auch {{count}} Zuweisung entfernt.",
+      "deleteChallengeCascade_other": "Dadurch werden auch {{count}} Zuweisungen entfernt.",
+      "deleteStageTitle": "Diese Phase löschen?",
+      "deleteStageDescription": "Basen in dieser Phase werden aus ihr entfernt. Diese Aktion kann nicht rückgängig gemacht werden.",
+      "deleteStageCascade_one": "Diese Phase enthält {{count}} Basis.",
+      "deleteStageCascade_other": "Diese Phase enthält {{count}} Basen.",
+      "deleteTeamTitle": "Dieses Team löschen?",
+      "deleteTeamDescription": "Alle Spieler und Zuweisungen dieses Teams sind betroffen. Diese Aktion kann nicht rückgängig gemacht werden.",
+      "deleteTeamMembers_one": "Dieses Team hat {{count}} Mitglied.",
+      "deleteTeamMembers_other": "Dieses Team hat {{count}} Mitglieder."
+    }
   },
   "auth": {
     "signIn": "Anmelden",
@@ -1068,5 +1089,126 @@
     "status": "Status",
     "member": "Mitglied",
     "members": "Mitglieder"
+  },
+  "command": {
+    "rescue": {
+      "title": "Rettung",
+      "fallbackBase": "Basis",
+      "teamLabel": "Team",
+      "selectTeam": "Team auswählen...",
+      "actionLabel": "Aktion",
+      "action": {
+        "manualCheckIn": "Manuelles Check-in",
+        "manualCheckInDesc": "NFC-Scan für dieses Team umgehen",
+        "markCompleted": "Als erledigt markieren",
+        "markCompletedDesc": "Punkte ohne Einreichung vergeben",
+        "unlockOverride": "Basis freischalten",
+        "unlockOverrideDesc": "Basis für dieses Team sichtbar machen"
+      },
+      "challengeLabel": "Challenge",
+      "selectChallenge": "Challenge auswählen...",
+      "pointsOverrideLabel": "Punkte überschreiben (optional)",
+      "pointsOverridePlaceholder": "Standard-Punktzahl der Challenge",
+      "reasonLabel": "Grund",
+      "reasonPlaceholder": "z. B. NFC-Lesegerät defekt",
+      "cancel": "Abbrechen",
+      "sending": "Wird gesendet...",
+      "confirm": "Bestätigen"
+    }
+  },
+  "review": {
+    "title": "Einreichungen",
+    "filters": {
+      "pending": "Ausstehend",
+      "all": "Alle",
+      "approved": "Genehmigt",
+      "rejected": "Abgelehnt"
+    },
+    "allTeams": "Alle Teams",
+    "emptyPending": "Alles erledigt! Keine ausstehenden Einreichungen.",
+    "emptyFilter": "Keine Einreichungen entsprechen diesem Filter.",
+    "unknownTeam": "Unbekannt",
+    "unknownChallenge": "Unbekannt",
+    "backToSubmissions": "Zurück zu Einreichungen",
+    "selectOnePrompt": "Wähle eine Einreichung aus der Liste zum Prüfen.",
+    "keyboardHintDesktop": "Mit ↑↓ navigieren, A zum Genehmigen, R zum Ablehnen.",
+    "kbd": {
+      "approve": "Genehmigen",
+      "reject": "Ablehnen",
+      "navigate": "Navigieren",
+      "skip": "Überspringen"
+    },
+    "loading": "Einreichungen werden geladen...",
+    "loadError": "Einreichungen konnten nicht geladen werden.",
+    "retry": "Erneut versuchen"
+  },
+  "dashboard": {
+    "yourGames": "Deine Spiele",
+    "createYourFirst": "Erstelle dein erstes Spiel, um loszulegen.",
+    "loadFailed": "Spiele konnten nicht geladen werden: {{err}}",
+    "noMatches": "Keine Spiele entsprechen \"{{query}}\".",
+    "importBtn": "Importieren",
+    "searchPlaceholder": "Spiele suchen...",
+    "noGamesYet": "Noch keine Spiele"
+  },
+  "import": {
+    "title": "Spiel importieren",
+    "description": "Lade eine Spiel-Exportdatei hoch, um ein neues Spiel mit allen Basen, Challenges und Teams zu erstellen.",
+    "invalidStructure": "Ungültige Struktur der Exportdatei",
+    "failed": "Import fehlgeschlagen. Bitte erneut versuchen.",
+    "importing": "Wird importiert...",
+    "importBtn": "Importieren"
+  },
+  "build": {
+    "searchBases": "Basen suchen...",
+    "searchBasesEmpty": "Keine Basen entsprechen der Suche",
+    "noBasesYet": "Noch keine Basen",
+    "selectBasePrompt": "Wähle eine Basis, um Details zu sehen",
+    "selectChallengePrompt": "Wähle eine Challenge, um Details zu sehen",
+    "selectTeamPrompt": "Wähle ein Team, um Details zu sehen",
+    "selectStagePrompt": "Wähle eine Phase, um Details zu sehen",
+    "searchChallenges": "Challenges suchen...",
+    "searchChallengesEmpty": "Keine Challenges entsprechen der Suche",
+    "noChallengesYet": "Noch keine Challenges",
+    "noTeamsYet": "Noch keine Teams",
+    "baseDescription": "Beschreibung der Basis...",
+    "correctAnswerPlaceholder": "Zulässige Antworten, kommagetrennt",
+    "operatorNotesPlaceholder": "Interne Notizen nur für Operatoren...",
+    "completionPlaceholder": "Was Teams nach Abschluss dieser Challenge sehen...",
+    "challengeContentPlaceholder": "Challenge-Inhalt...",
+    "tagPlaceholder": "Tag-Name...",
+    "variableKeyPlaceholder": "Variablen-Schlüssel (z. B. teamCode)",
+    "variableValuePlaceholder": "Wert...",
+    "stage": {
+      "createFailed": "Phase konnte nicht erstellt werden: {{err}}"
+    }
+  },
+  "command2": {
+    "empty": {
+      "loading": "Live-Daten werden geladen...",
+      "statsLoading": "Statistiken werden geladen...",
+      "activityLoading": "Aktivität wird geladen...",
+      "leaderboardLoading": "Rangliste wird geladen..."
+    },
+    "error": {
+      "retry": "Erneut versuchen"
+    }
+  },
+  "broadcast": {
+    "loadFailed": "Live-Daten konnten nicht geladen werden."
+  },
+  "billingProgress": {
+    "used": "verbraucht",
+    "of": "von",
+    "unlimited": "unbegrenzt",
+    "usageTitle": "Nutzung & Limits"
+  },
+  "invites": {
+    "accept": "Annehmen",
+    "decline": "Ablehnen",
+    "declineConfirmTitle": "Einladung ablehnen?",
+    "declineConfirmDescription": "Die Einladung wird entfernt und du kannst über diese nicht mehr am Spiel teilnehmen.",
+    "declineFailed": "Einladung konnte nicht abgelehnt werden.",
+    "declined": "Einladung abgelehnt."
   }
 }

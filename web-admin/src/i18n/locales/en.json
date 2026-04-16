@@ -51,7 +51,28 @@
     "manageTags": "Manage Tags",
     "toggleView": "Toggle view",
     "useArrowKeys": "Use arrow keys or type to change the value",
-    "remove": "Remove"
+    "remove": "Remove",
+    "error": "Something went wrong.",
+    "unknownError": "Unknown error",
+    "retry": "Retry",
+    "confirm": {
+      "deleteBaseTitle": "Delete this base?",
+      "deleteBaseDescription": "This action cannot be undone.",
+      "deleteBaseCascade_one": "This will also remove {{count}} linked challenge assignment.",
+      "deleteBaseCascade_other": "This will also remove {{count}} linked challenge assignments.",
+      "deleteChallengeTitle": "Delete this challenge?",
+      "deleteChallengeDescription": "This action cannot be undone.",
+      "deleteChallengeCascade_one": "This will also remove {{count}} assignment.",
+      "deleteChallengeCascade_other": "This will also remove {{count}} assignments.",
+      "deleteStageTitle": "Delete this stage?",
+      "deleteStageDescription": "Bases in this stage will be moved out of it. This action cannot be undone.",
+      "deleteStageCascade_one": "This stage contains {{count}} base.",
+      "deleteStageCascade_other": "This stage contains {{count}} bases.",
+      "deleteTeamTitle": "Delete this team?",
+      "deleteTeamDescription": "All players and assignments tied to this team will be affected. This action cannot be undone.",
+      "deleteTeamMembers_one": "This team has {{count}} member.",
+      "deleteTeamMembers_other": "This team has {{count}} members."
+    }
   },
   "auth": {
     "signIn": "Sign In",
@@ -1068,5 +1089,126 @@
     "status": "Status",
     "member": "member",
     "members": "members"
+  },
+  "command": {
+    "rescue": {
+      "title": "Rescue",
+      "fallbackBase": "Base",
+      "teamLabel": "Team",
+      "selectTeam": "Select team...",
+      "actionLabel": "Action",
+      "action": {
+        "manualCheckIn": "Manual Check-in",
+        "manualCheckInDesc": "Bypass NFC scan for this team",
+        "markCompleted": "Mark Completed",
+        "markCompletedDesc": "Award points without submission",
+        "unlockOverride": "Unlock Override",
+        "unlockOverrideDesc": "Make base visible for team"
+      },
+      "challengeLabel": "Challenge",
+      "selectChallenge": "Select challenge...",
+      "pointsOverrideLabel": "Points override (optional)",
+      "pointsOverridePlaceholder": "Default challenge points",
+      "reasonLabel": "Reason",
+      "reasonPlaceholder": "e.g. NFC reader broken",
+      "cancel": "Cancel",
+      "sending": "Sending...",
+      "confirm": "Confirm"
+    }
+  },
+  "review": {
+    "title": "Submissions",
+    "filters": {
+      "pending": "Pending",
+      "all": "All",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "allTeams": "All teams",
+    "emptyPending": "All caught up! No pending submissions to review.",
+    "emptyFilter": "No submissions match this filter.",
+    "unknownTeam": "Unknown",
+    "unknownChallenge": "Unknown",
+    "backToSubmissions": "Back to submissions",
+    "selectOnePrompt": "Select a submission from the list to review it.",
+    "keyboardHintDesktop": "Use ↑↓ to navigate, A to approve, R to reject.",
+    "kbd": {
+      "approve": "Approve",
+      "reject": "Reject",
+      "navigate": "Navigate",
+      "skip": "Skip"
+    },
+    "loading": "Loading submissions...",
+    "loadError": "Could not load submissions.",
+    "retry": "Retry"
+  },
+  "dashboard": {
+    "yourGames": "Your Games",
+    "createYourFirst": "Create your first game to get started.",
+    "loadFailed": "Failed to load games: {{err}}",
+    "noMatches": "No games match \"{{query}}\".",
+    "importBtn": "Import",
+    "searchPlaceholder": "Search games...",
+    "noGamesYet": "No games yet"
+  },
+  "import": {
+    "title": "Import Game",
+    "description": "Upload a game export file to create a new game with all bases, challenges, and teams.",
+    "invalidStructure": "Invalid game export file structure",
+    "failed": "Failed to import game. Please try again.",
+    "importing": "Importing...",
+    "importBtn": "Import"
+  },
+  "build": {
+    "searchBases": "Search bases...",
+    "searchBasesEmpty": "No bases match your search",
+    "noBasesYet": "No bases yet",
+    "selectBasePrompt": "Select a base to view details",
+    "selectChallengePrompt": "Select a challenge to view details",
+    "selectTeamPrompt": "Select a team to view details",
+    "selectStagePrompt": "Select a stage to view details",
+    "searchChallenges": "Search challenges...",
+    "searchChallengesEmpty": "No challenges match your search",
+    "noChallengesYet": "No challenges yet",
+    "noTeamsYet": "No teams yet",
+    "baseDescription": "Base description...",
+    "correctAnswerPlaceholder": "Comma-separated accepted answers",
+    "operatorNotesPlaceholder": "Internal notes visible only to operators...",
+    "completionPlaceholder": "What teams see after completing this challenge...",
+    "challengeContentPlaceholder": "Challenge content...",
+    "tagPlaceholder": "Tag name...",
+    "variableKeyPlaceholder": "Variable key (e.g. teamCode)",
+    "variableValuePlaceholder": "Value...",
+    "stage": {
+      "createFailed": "Failed to create stage: {{err}}"
+    }
+  },
+  "command2": {
+    "empty": {
+      "loading": "Loading live data...",
+      "statsLoading": "Loading stats...",
+      "activityLoading": "Loading activity...",
+      "leaderboardLoading": "Loading leaderboard..."
+    },
+    "error": {
+      "retry": "Retry"
+    }
+  },
+  "broadcast": {
+    "loadFailed": "Could not load live data."
+  },
+  "billingProgress": {
+    "used": "used",
+    "of": "of",
+    "unlimited": "unlimited",
+    "usageTitle": "Usage & Limits"
+  },
+  "invites": {
+    "accept": "Accept",
+    "decline": "Decline",
+    "declineConfirmTitle": "Decline invitation?",
+    "declineConfirmDescription": "The invitation will be removed and you won't be able to join this game from it.",
+    "declineFailed": "Failed to decline invitation.",
+    "declined": "Invitation declined."
   }
 }

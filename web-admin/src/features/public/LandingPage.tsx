@@ -1,40 +1,64 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import {
-  Compass,
-  Smartphone,
-  MapPin,
-  Camera,
-  Trophy,
-  LayoutDashboard,
-  Bell,
-  WifiOff,
-  Globe,
-  ChevronDown,
-  Settings,
-  Radio,
-  Sun,
-  Moon,
-  type LucideIcon,
-} from "lucide-react";
+import { Sun, Moon } from "lucide-react";
 
-const APP_STORE_COUNTRY: Record<string, string> = {
-  "pointfinder.pt": "pt",
-  "pointfinder.ch": "ch",
+/* =================================================================
+   PointFinder — "Field Atlas" landing page
+   Aesthetic: premium cartographic / editorial field manual
+   (No glass, no rounded-2xl SaaS floaters.)
+   ================================================================= */
+
+/* ---------- Palette helpers (Day Chart / Night Chart) -----------
+   All colour decisions route through this function so every helper
+   component stays symmetrical across light/dark. */
+
+type Palette = {
+  paper: string;            // page background
+  paperAlt: string;         // card / panel background (slightly distinct)
+  ink: string;              // body text
+  inkStrong: string;        // display text
+  moss: string;             // muted text
+  trail: string;            // primary action / route
+  stamp: string;            // accent / stamp rust
+  grid: string;             // grid + contour stroke (already alpha-blended)
+  gridSoft: string;         // fainter grid
+  rule: string;             // hand-ruled dividers
+  brass: string;            // compass ring metal
 };
 
-function appStoreUrl() {
-  if (typeof window === "undefined") return "https://apps.apple.com/app/pointfinder/id6759060734";
-  const country = APP_STORE_COUNTRY[window.location.hostname.toLowerCase()];
-  const prefix = country ? `/${country}` : "";
-  return `https://apps.apple.com${prefix}/app/pointfinder/id6759060734`;
+function palette(dark: boolean): Palette {
+  return dark
+    ? {
+        paper: "#0d1915",
+        paperAlt: "#11201b",
+        ink: "#f2e7d0",
+        inkStrong: "#f6ecd8",
+        moss: "#8aa08d",
+        trail: "#5caa6a",
+        stamp: "#d87447",
+        grid: "rgba(242,231,208,0.09)",
+        gridSoft: "rgba(242,231,208,0.05)",
+        rule: "rgba(242,231,208,0.35)",
+        brass: "#b08a4a",
+      }
+    : {
+        paper: "#f5efe1",
+        paperAlt: "#eee5cf",
+        ink: "#15261e",
+        inkStrong: "#0c1a14",
+        moss: "#4d6250",
+        trail: "#2f6b3d",
+        stamp: "#b8481e",
+        grid: "rgba(21,38,30,0.09)",
+        gridSoft: "rgba(21,38,30,0.05)",
+        rule: "rgba(21,38,30,0.55)",
+        brass: "#9a6f2b",
+      };
 }
 
 /* =================================================================
    Scroll-reveal hook
-   Observes all .scroll-reveal children within the container and
-   adds .revealed once they enter the viewport (one-shot).
    ================================================================= */
 
 function useScrollReveal() {
@@ -66,21 +90,378 @@ function useScrollReveal() {
 }
 
 /* =================================================================
-   Animated compass rose (SVG)
+   Global SVG defs — paper grain + filters
+   Rendered once at the top of the tree.
    ================================================================= */
 
-function CompassRose({ darkMode }: { darkMode: boolean }) {
-  const stroke = darkMode ? "#22c55e" : "#0e5550";
-  const fillBright = darkMode ? "#16a34a" : "#0e4e49";
-  const fillDim = darkMode ? "#0d5f2d" : "#88afa8";
-  const centerFill = darkMode ? "#060b06" : "#e8e4dc";
+function AtlasDefs({ dark }: { dark: boolean }) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      width="0"
+      height="0"
+      style={{ position: "absolute" }}
+    >
+      <defs>
+        <filter id="paperGrain">
+          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="4" />
+          <feColorMatrix
+            type="matrix"
+            values={dark
+              ? "0 0 0 0 0.95  0 0 0 0 0.90  0 0 0 0 0.80  0 0 0 0.07 0"
+              : "0 0 0 0 0.08  0 0 0 0 0.15  0 0 0 0 0.12  0 0 0 0.12 0"}
+          />
+        </filter>
+        <filter id="stampBleed">
+          <feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="1" />
+          <feDisplacementMap in="SourceGraphic" scale="1.2" />
+        </filter>
+      </defs>
+    </svg>
+  );
+}
 
-  const ticks = Array.from({ length: 36 }, (_, i) => {
-    const angle = (i * 10 * Math.PI) / 180;
-    const isMajor = i % 9 === 0; // N E S W
-    const isMinor = i % 3 === 0 && !isMajor; // 30-degree marks
+/* =================================================================
+   Paper grain overlay — subtle fixed-position texture
+   ================================================================= */
+
+function PaperGrain() {
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none fixed inset-0 z-[1] mix-blend-multiply"
+      style={{
+        backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='3' /><feColorMatrix values='0 0 0 0 0.09  0 0 0 0 0.15  0 0 0 0 0.11  0 0 0 0.09 0' /></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")",
+        opacity: 0.55,
+      }}
+    />
+  );
+}
+
+/* =================================================================
+   Cross-reticle corner markers — 4 L-shaped ticks per card
+   ================================================================= */
+
+function Reticle({ color, size = 14 }: { color: string; size?: number }) {
+  const arm = size;
+  const stroke = 1.25;
+  const common = { stroke: color, strokeWidth: stroke, fill: "none" } as const;
+
+  return (
+    <>
+      {/* top-left */}
+      <svg width={arm} height={arm} className="pointer-events-none absolute left-0 top-0" aria-hidden="true">
+        <line x1="0" y1="0.5" x2={arm} y2="0.5" {...common} />
+        <line x1="0.5" y1="0" x2="0.5" y2={arm} {...common} />
+      </svg>
+      {/* top-right */}
+      <svg width={arm} height={arm} className="pointer-events-none absolute right-0 top-0" aria-hidden="true">
+        <line x1="0" y1="0.5" x2={arm} y2="0.5" {...common} />
+        <line x1={arm - 0.5} y1="0" x2={arm - 0.5} y2={arm} {...common} />
+      </svg>
+      {/* bottom-left */}
+      <svg width={arm} height={arm} className="pointer-events-none absolute bottom-0 left-0" aria-hidden="true">
+        <line x1="0" y1={arm - 0.5} x2={arm} y2={arm - 0.5} {...common} />
+        <line x1="0.5" y1="0" x2="0.5" y2={arm} {...common} />
+      </svg>
+      {/* bottom-right */}
+      <svg width={arm} height={arm} className="pointer-events-none absolute bottom-0 right-0" aria-hidden="true">
+        <line x1="0" y1={arm - 0.5} x2={arm} y2={arm - 0.5} {...common} />
+        <line x1={arm - 0.5} y1="0" x2={arm - 0.5} y2={arm} {...common} />
+      </svg>
+    </>
+  );
+}
+
+/* =================================================================
+   Coordinate badge — a small mono label placed absolutely
+   ================================================================= */
+
+function CoordBadge({
+  children,
+  className,
+  style,
+  color,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+  color: string;
+}) {
+  return (
+    <span
+      className={`font-mono-atlas pointer-events-none absolute text-[10px] uppercase tracking-[0.22em] ${className ?? ""}`}
+      style={{ color, ...style }}
+    >
+      {children}
+    </span>
+  );
+}
+
+/* =================================================================
+   Stamp badge — rubber-stamp styled label
+   ================================================================= */
+
+function StampBadge({
+  children,
+  rotate = -3,
+  color,
+  className,
+}: {
+  children: React.ReactNode;
+  rotate?: number;
+  color: string;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`stamp-wobble font-mono-atlas relative inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.28em] ${className ?? ""}`}
+      style={{
+        color,
+        transform: `rotate(${rotate}deg)`,
+        border: `1.5px solid ${color}`,
+        boxShadow: `inset 0 0 0 3px ${palette(false).paper === "#f5efe1" ? "transparent" : "transparent"}, inset 0 0 0 4px ${color}`,
+        opacity: 0.88,
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+/* A simpler "outline only" stamp variant (no double-border ring) */
+function StampOutline({
+  children,
+  rotate = -2,
+  color,
+  className,
+}: {
+  children: React.ReactNode;
+  rotate?: number;
+  color: string;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`stamp-wobble font-mono-atlas inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.28em] ${className ?? ""}`}
+      style={{
+        color,
+        transform: `rotate(${rotate}deg)`,
+        border: `1.25px solid ${color}`,
+        opacity: 0.82,
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+/* =================================================================
+   Scale bar — alternating black/paper ticks à la USGS legend
+   ================================================================= */
+
+function ScaleBar({ pal }: { pal: Palette }) {
+  const ticks = [0, 1, 2, 3, 4];
+  return (
+    <div className="inline-flex flex-col gap-1.5">
+      <div className="flex h-2.5 items-stretch border" style={{ borderColor: pal.ink }}>
+        {ticks.slice(0, -1).map((_, i) => (
+          <div
+            key={i}
+            className="flex-1"
+            style={{ background: i % 2 === 0 ? pal.ink : "transparent" }}
+          />
+        ))}
+      </div>
+      <div className="flex justify-between font-mono-atlas text-[9px] uppercase tracking-[0.2em]" style={{ color: pal.moss }}>
+        <span>0 km</span>
+        <span>1</span>
+        <span>2</span>
+        <span>3</span>
+        <span>4 km</span>
+      </div>
+    </div>
+  );
+}
+
+/* =================================================================
+   Hand-ruled double-line divider
+   ================================================================= */
+
+function DoubleRule({ pal, className }: { pal: Palette; className?: string }) {
+  return (
+    <div className={`flex flex-col gap-[3px] ${className ?? ""}`} aria-hidden="true">
+      <div style={{ height: 1, background: pal.ink, opacity: 0.7 }} />
+      <div style={{ height: 1, background: pal.ink, opacity: 0.35 }} />
+    </div>
+  );
+}
+
+/* =================================================================
+   Section legend marker — "§ 02 · HOW IT WORKS" with underscore
+   ================================================================= */
+
+function SectionKey({
+  num,
+  label,
+  pal,
+}: {
+  num: string;
+  label: string;
+  pal: Palette;
+}) {
+  return (
+    <div className="inline-flex flex-col items-start gap-1.5">
+      <span
+        className="font-mono-atlas text-[11px] font-medium uppercase tracking-[0.32em]"
+        style={{ color: pal.moss }}
+      >
+        <span style={{ color: pal.stamp }}>§</span> {num} &nbsp;·&nbsp; {label}
+      </span>
+      <svg width="60" height="6" aria-hidden="true">
+        <path
+          d="M0 3 C 12 1, 24 5, 36 3 S 60 1, 60 3"
+          stroke={pal.ink}
+          strokeOpacity="0.55"
+          strokeWidth="1"
+          fill="none"
+          strokeLinecap="round"
+        />
+      </svg>
+    </div>
+  );
+}
+
+/* =================================================================
+   Contour background — layered irregular closed blobs
+   ================================================================= */
+
+function ContourField({ pal, className }: { pal: Palette; className?: string }) {
+  // A family of irregular closed bezier paths at different scales.
+  const paths = [
+    "M 120 260 C 180 180, 320 160, 420 220 S 640 340, 700 280 S 820 160, 760 100 S 540 60, 420 100 S 200 160, 120 260 Z",
+    "M 180 280 C 240 220, 340 200, 420 240 S 600 320, 660 280 S 740 200, 700 160 S 540 120, 440 150 S 260 210, 180 280 Z",
+    "M 230 290 C 280 250, 360 230, 420 260 S 560 300, 610 280 S 660 230, 640 200 S 540 170, 460 180 S 290 240, 230 290 Z",
+    "M 280 290 C 320 260, 380 250, 420 270 S 520 290, 560 280 S 600 250, 590 230 S 530 210, 480 215 S 340 260, 280 290 Z",
+    "M 330 285 C 360 265, 400 260, 420 275 S 490 290, 515 285 S 545 265, 540 250 S 510 238, 485 240 S 380 260, 330 285 Z",
+  ];
+
+  return (
+    <svg
+      className={`contour-breathe pointer-events-none ${className ?? ""}`}
+      viewBox="0 0 880 460"
+      preserveAspectRatio="xMidYMid slice"
+      aria-hidden="true"
+    >
+      {paths.map((d, i) => (
+        <path
+          key={i}
+          d={d}
+          fill="none"
+          stroke={pal.ink}
+          strokeOpacity={0.09 - i * 0.012}
+          strokeWidth={1}
+        />
+      ))}
+      {/* Elevation labels */}
+      <text x="545" y="225" className="font-mono-atlas" fontSize="10" fill={pal.moss} opacity="0.6" letterSpacing="1">
+        312m
+      </text>
+      <text x="230" y="285" className="font-mono-atlas" fontSize="10" fill={pal.moss} opacity="0.45" letterSpacing="1">
+        180m
+      </text>
+      <text x="130" y="255" className="font-mono-atlas" fontSize="10" fill={pal.moss} opacity="0.35" letterSpacing="1">
+        120m
+      </text>
+    </svg>
+  );
+}
+
+/* =================================================================
+   Hero route path — dashed hand-drawn bearing trace
+   ================================================================= */
+
+function RoutePath({ pal }: { pal: Palette }) {
+  // Waypoints along the route (viewBox 0 0 800 500)
+  const waypoints = [
+    { x: 60, y: 380 },
+    { x: 220, y: 260 },
+    { x: 380, y: 310 },
+    { x: 560, y: 160 },
+    { x: 740, y: 230 },
+  ];
+
+  // Build a smooth bezier path through waypoints
+  const d = waypoints.reduce((acc, pt, i) => {
+    if (i === 0) return `M ${pt.x} ${pt.y}`;
+    const prev = waypoints[i - 1];
+    const cx1 = prev.x + (pt.x - prev.x) * 0.5;
+    const cy1 = prev.y;
+    const cx2 = prev.x + (pt.x - prev.x) * 0.5;
+    const cy2 = pt.y;
+    return `${acc} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${pt.x} ${pt.y}`;
+  }, "");
+
+  return (
+    <svg
+      className="pointer-events-none absolute inset-0 h-full w-full"
+      viewBox="0 0 800 500"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      {/* Shadow trace */}
+      <path
+        d={d}
+        stroke={pal.trail}
+        strokeWidth="2"
+        strokeOpacity="0.15"
+        fill="none"
+        strokeLinecap="round"
+      />
+      {/* Main dashed route (animated) */}
+      <path
+        d={d}
+        stroke={pal.trail}
+        strokeWidth="1.6"
+        strokeOpacity="0.75"
+        fill="none"
+        strokeLinecap="round"
+        strokeDasharray="7 5"
+        className="route-draw"
+      />
+      {/* Waypoint dots */}
+      {waypoints.map((wp, i) => (
+        <g key={i}>
+          <circle
+            cx={wp.x}
+            cy={wp.y}
+            r={5}
+            fill={pal.paper}
+            stroke={pal.trail}
+            strokeWidth="1.4"
+          />
+          <circle cx={wp.x} cy={wp.y} r={1.5} fill={pal.trail} />
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+/* =================================================================
+   Compass rose — restyled: aged paper face, cross-reticle plate
+   ================================================================= */
+
+function CompassRose({ pal }: { pal: Palette }) {
+  const { ink, moss, brass } = pal;
+
+  const ticks = Array.from({ length: 72 }, (_, i) => {
+    const angle = (i * 5 * Math.PI) / 180;
+    const isCardinal = i % 18 === 0;
+    const isMajor = i % 6 === 0 && !isCardinal;
+    const isMinor = i % 2 === 0 && !isMajor && !isCardinal;
     const r1 = 90;
-    const r2 = isMajor ? 78 : isMinor ? 83 : 86;
+    const r2 = isCardinal ? 74 : isMajor ? 80 : isMinor ? 84 : 87;
     return (
       <line
         key={i}
@@ -88,166 +469,159 @@ function CompassRose({ darkMode }: { darkMode: boolean }) {
         y1={100 - r1 * Math.cos(angle)}
         x2={100 + r2 * Math.sin(angle)}
         y2={100 - r2 * Math.cos(angle)}
-        stroke={stroke}
-        strokeWidth={isMajor ? 1.6 : isMinor ? 0.8 : 0.4}
-        opacity={darkMode ? (isMajor ? 0.6 : isMinor ? 0.3 : 0.15) : (isMajor ? 0.8 : isMinor ? 0.45 : 0.2)}
+        stroke={ink}
+        strokeWidth={isCardinal ? 1.4 : isMajor ? 0.9 : isMinor ? 0.5 : 0.35}
+        opacity={isCardinal ? 0.8 : isMajor ? 0.5 : isMinor ? 0.3 : 0.18}
       />
     );
   });
 
-  return (
-    <div className="relative flex items-center justify-center">
-      {/* Sonar pulse rings */}
-      {[0, 1, 2].map((i) => (
-        <div
-          key={i}
-          className={`absolute rounded-full landing-ping ${
-            darkMode
-              ? "border border-green-500/20"
-              : "border border-teal-600/15"
-          }`}
-          style={{
-            width: "100%",
-            height: "100%",
-            animationDelay: `${i * 1.5}s`,
-          }}
-        />
-      ))}
+  const bearings = Array.from({ length: 12 }, (_, i) => {
+    const deg = i * 30;
+    const rad = (deg * Math.PI) / 180;
+    const r = 68;
+    return (
+      <text
+        key={i}
+        x={100 + r * Math.sin(rad)}
+        y={100 - r * Math.cos(rad) + 3}
+        textAnchor="middle"
+        fontSize="5.5"
+        className="font-mono-atlas"
+        fill={moss}
+        opacity="0.55"
+      >
+        {deg.toString().padStart(3, "0")}
+      </text>
+    );
+  });
 
-      {/* Glow behind compass */}
-      <div
-        className={`absolute w-full h-full rounded-full blur-3xl scale-150 ${
-          darkMode ? "bg-green-500/[0.04]" : "bg-teal-600/[0.06]"
-        }`}
+  return (
+    <svg
+      viewBox="0 0 200 200"
+      className="landing-rotate-slow h-full w-full"
+      aria-hidden="true"
+    >
+      <defs>
+        <radialGradient id="compassFace" cx="50%" cy="50%" r="55%">
+          <stop offset="0%" stopColor={pal.paper === "#0d1915" ? "#1a2a24" : "#faf4e6"} />
+          <stop offset="70%" stopColor={pal.paper === "#0d1915" ? "#122019" : "#f0e7d2"} />
+          <stop offset="100%" stopColor={pal.paperAlt} />
+        </radialGradient>
+      </defs>
+
+      {/* Aged paper disc */}
+      <circle cx="100" cy="100" r="92" fill="url(#compassFace)" />
+
+      {/* Brass ring */}
+      <circle cx="100" cy="100" r="92" fill="none" stroke={brass} strokeWidth="1.2" opacity="0.55" />
+      <circle cx="100" cy="100" r="88" fill="none" stroke={ink} strokeWidth="0.4" opacity="0.3" />
+
+      {/* Tick marks and bearings */}
+      {ticks}
+      {bearings}
+
+      {/* Intercardinal diamond */}
+      <polygon
+        points="100,58 72,100 100,142 128,100"
+        fill="none"
+        stroke={ink}
+        strokeWidth="0.5"
+        opacity="0.2"
       />
 
-      {/* Glass circle wrapper (light mode only) */}
-      {!darkMode && (
-        <div
-          className="absolute inset-[-12%] rounded-full backdrop-blur-xl border border-white/70"
-          style={{
-            background: "linear-gradient(145deg, rgba(255,255,255,0.55), rgba(240,238,232,0.30))",
-            boxShadow: "0 12px 48px rgba(21,111,104,0.18), inset 0 2px 4px rgba(255,255,255,0.6), inset 0 -2px 8px rgba(21,111,104,0.06)",
-          }}
-        />
-      )}
+      {/* Rose North – solid ink */}
+      <polygon points="100,44 93,100 107,100" fill={ink} opacity="0.92" />
+      <polygon points="100,44 100,100 93,100" fill={pal.paper === "#0d1915" ? "#26382d" : "#5a6e59"} opacity="0.8" />
 
-      <svg
-        viewBox="0 0 200 200"
-        className="relative w-52 h-52 md:w-72 md:h-72 lg:w-80 lg:h-80 landing-rotate-slow"
-        aria-hidden="true"
-      >
-        {/* Outer rings */}
-        <circle
-          cx="100" cy="100" r="96"
-          fill="none" stroke={stroke} strokeWidth="0.5" opacity="0.15"
-        />
-        <circle
-          cx="100" cy="100" r="90"
-          fill="none" stroke={stroke} strokeWidth="0.4" opacity="0.1"
-        />
+      {/* Rose South – lighter */}
+      <polygon points="100,156 93,100 107,100" fill={ink} opacity="0.38" />
+      <polygon points="100,156 100,100 107,100" fill={moss} opacity="0.5" />
 
-        {/* Tick marks */}
-        {ticks}
+      {/* East */}
+      <polygon points="156,100 100,93 100,107" fill={ink} opacity="0.38" />
+      <polygon points="156,100 100,100 100,93" fill={moss} opacity="0.5" />
 
-        {/* Cardinal labels */}
-        <text x="100" y="40" textAnchor="middle" fill={stroke} fontSize="10" fontWeight="700" fontFamily="Inter, sans-serif" opacity="0.7">N</text>
-        <text x="100" y="170" textAnchor="middle" fill={stroke} fontSize="10" fontWeight="700" fontFamily="Inter, sans-serif" opacity="0.45">S</text>
-        <text x="33" y="104" textAnchor="middle" fill={stroke} fontSize="10" fontWeight="700" fontFamily="Inter, sans-serif" opacity="0.45">W</text>
-        <text x="167" y="104" textAnchor="middle" fill={stroke} fontSize="10" fontWeight="700" fontFamily="Inter, sans-serif" opacity="0.45">E</text>
+      {/* West */}
+      <polygon points="44,100 100,93 100,107" fill={ink} opacity="0.38" />
+      <polygon points="44,100 100,100 100,107" fill={moss} opacity="0.5" />
 
-        {/* Intercardinal diamond */}
-        <polygon
-          points="100,58 76,100 100,142 124,100"
-          fill="none" stroke={stroke} strokeWidth="0.5" opacity="0.1"
-        />
+      {/* Serif N / E / S / W labels */}
+      <text x="100" y="34" textAnchor="middle" fill={ink} fontSize="12" fontStyle="italic" fontFamily="Fraunces, serif" fontWeight="700">N</text>
+      <text x="168" y="104" textAnchor="middle" fill={ink} fontSize="10" fontStyle="italic" fontFamily="Fraunces, serif" opacity="0.7">E</text>
+      <text x="100" y="174" textAnchor="middle" fill={ink} fontSize="10" fontStyle="italic" fontFamily="Fraunces, serif" opacity="0.7">S</text>
+      <text x="32" y="104" textAnchor="middle" fill={ink} fontSize="10" fontStyle="italic" fontFamily="Fraunces, serif" opacity="0.7">W</text>
 
-        {/* Rose – North (bright) */}
-        <polygon points="100,48 93,100 107,100" fill={fillBright} opacity="0.85" />
-        <polygon points="100,48 100,100 93,100" fill={stroke} opacity="0.6" />
-
-        {/* Rose – South (dim) */}
-        <polygon points="100,152 93,100 107,100" fill={fillBright} opacity="0.3" />
-        <polygon points="100,152 100,100 107,100" fill={fillDim} opacity="0.2" />
-
-        {/* Rose – East */}
-        <polygon points="152,100 100,93 100,107" fill={fillBright} opacity="0.3" />
-        <polygon points="152,100 100,100 100,93" fill={stroke} opacity="0.2" />
-
-        {/* Rose – West */}
-        <polygon points="48,100 100,93 100,107" fill={fillBright} opacity="0.3" />
-        <polygon points="48,100 100,100 100,107" fill={stroke} opacity="0.2" />
-
-        {/* Centre */}
-        <circle cx="100" cy="100" r="5" fill={stroke} opacity="0.8" />
-        <circle cx="100" cy="100" r="2.5" fill={centerFill} />
-      </svg>
-    </div>
+      {/* Pivot */}
+      <circle cx="100" cy="100" r="4" fill={brass} opacity="0.8" />
+      <circle cx="100" cy="100" r="1.5" fill={pal.paper === "#0d1915" ? "#0d1915" : "#0c1a14"} />
+    </svg>
   );
 }
 
 /* =================================================================
-   Section divider (waypoint on a line)
+   Navbar
    ================================================================= */
 
-function SectionDivider() {
-  return (
-    <div className="flex items-center justify-center py-10 md:py-14">
-      <div className="h-px w-20 bg-gradient-to-r from-transparent dark:to-green-500/20 to-[rgba(21,111,104,0.12)]" />
-      <div className="mx-3 h-2.5 w-2.5 rounded-full dark:border-green-500/25 dark:bg-green-500/10 border border-[rgba(21,111,104,0.15)] bg-[rgba(21,111,104,0.06)]" />
-      <div className="h-px w-20 bg-gradient-to-l from-transparent dark:to-green-500/20 to-[rgba(21,111,104,0.12)]" />
-    </div>
-  );
-}
-
-/* =================================================================
-   Navigation bar
-   ================================================================= */
-
-function Navbar({ darkMode, onToggleTheme }: { darkMode: boolean; onToggleTheme: () => void }) {
+function Navbar({
+  dark,
+  onToggleTheme,
+  pal,
+}: {
+  dark: boolean;
+  onToggleTheme: () => void;
+  pal: Palette;
+}) {
   const { t } = useTranslation();
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 border-b backdrop-blur-[14px] ${
-        darkMode
-          ? "border-white/[0.04] bg-[rgba(6,11,6,0.82)]"
-          : "border-[rgba(40,56,48,0.08)] bg-white/75"
-      }`}
+      className="fixed left-0 right-0 top-0 z-40"
+      style={{
+        background: dark ? "rgba(13,25,21,0.92)" : "rgba(245,239,225,0.92)",
+        borderTop: `3px solid ${pal.ink}`,
+        boxShadow: `inset 0 -1px 0 ${pal.grid}`,
+        backdropFilter: "saturate(140%) blur(6px)",
+        WebkitBackdropFilter: "saturate(140%) blur(6px)",
+      }}
     >
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link to="/" className="flex items-center gap-2.5">
-          <div className={`flex h-8 w-8 items-center justify-center rounded-lg border ${
-            darkMode ? "border-green-500/20 bg-green-500/10" : "border-teal-600/25 bg-teal-600/10"
-          }`}>
-            <Compass className={`h-4 w-4 ${darkMode ? "text-green-500" : "text-teal-700"}`} />
-          </div>
-          <span className={`font-semibold tracking-tight ${darkMode ? "text-white" : "text-[#1e2e28]"}`}>PointFinder</span>
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
+        <Link to="/" className="flex items-baseline gap-3">
+          <CompassMiniMark pal={pal} />
+          <span
+            className="font-display text-xl font-semibold tracking-[-0.02em]"
+            style={{ color: pal.inkStrong }}
+          >
+            PointFinder
+          </span>
+          <span
+            className="font-display-italic hidden text-sm sm:inline"
+            style={{ color: pal.moss }}
+          >
+            — a field atlas
+          </span>
         </Link>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-5">
           <button
             onClick={onToggleTheme}
-            className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors duration-200 ${
-              darkMode
-                ? "border-white/[0.08] text-white/40 hover:text-white/70"
-                : "border-[rgba(40,56,48,0.1)] text-[#1e2e28]/40 hover:text-[#1e2e28]/70"
-            }`}
-            title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+            className="flex h-8 w-8 items-center justify-center transition-colors"
+            style={{
+              border: `1px solid ${pal.ink}`,
+              color: pal.ink,
+              background: "transparent",
+            }}
+            title={dark ? "Switch to Day Chart" : "Switch to Night Chart"}
+            aria-label="Toggle theme"
           >
-            {darkMode ? (
-              <Sun className="h-4 w-4" />
-            ) : (
-              <Moon className="h-4 w-4" />
-            )}
+            {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
           <Link
             to="/login"
-            className={`text-sm font-medium transition-colors duration-200 ${
-              darkMode ? "text-green-400/70 hover:text-green-400" : "text-teal-700/70 hover:text-teal-700"
-            }`}
+            className="font-ui text-sm font-medium transition-opacity hover:opacity-70"
+            style={{ color: pal.trail }}
           >
-            {t("landing.nav.operatorLogin")}
+            {t("landing.nav.operatorLogin")} &rarr;
           </Link>
         </div>
       </div>
@@ -255,31 +629,15 @@ function Navbar({ darkMode, onToggleTheme }: { darkMode: boolean; onToggleTheme:
   );
 }
 
-/* =================================================================
-   Scroll hint – fades out once the user starts scrolling
-   ================================================================= */
-
-function ScrollHint({ label }: { label: string }) {
-  const [visible, setVisible] = useState(true);
-
-  useEffect(() => {
-    const onScroll = () => {
-      setVisible(window.scrollY < 50);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
+function CompassMiniMark({ pal }: { pal: Palette }) {
   return (
-    <div
-      className="landing-fade-in absolute bottom-8 left-1/2 -translate-x-1/2 transition-opacity duration-500"
-      style={{ animationDelay: "1.6s", opacity: visible ? 1 : 0, pointerEvents: visible ? "auto" : "none" }}
-    >
-      <div className="flex flex-col items-center gap-1.5 dark:text-white/20 text-[#1e2e28]/30">
-        <span className="text-[10px] font-medium uppercase tracking-[0.2em]">{label}</span>
-        <ChevronDown className="h-4 w-4 landing-bounce" />
-      </div>
-    </div>
+    <svg width="22" height="22" viewBox="0 0 40 40" aria-hidden="true">
+      <circle cx="20" cy="20" r="18" fill="none" stroke={pal.ink} strokeWidth="1.2" />
+      <circle cx="20" cy="20" r="14" fill="none" stroke={pal.ink} strokeWidth="0.4" opacity="0.4" />
+      <polygon points="20,4 16,20 24,20" fill={pal.ink} />
+      <polygon points="20,36 16,20 24,20" fill={pal.ink} opacity="0.35" />
+      <circle cx="20" cy="20" r="1.8" fill={pal.paper} stroke={pal.ink} strokeWidth="0.6" />
+    </svg>
   );
 }
 
@@ -287,149 +645,257 @@ function ScrollHint({ label }: { label: string }) {
    Hero
    ================================================================= */
 
-const heroWaypoints = [
-  { x: 8, y: 22, s: 3, o: 0.14, d: 0 },
-  { x: 88, y: 14, s: 2, o: 0.1, d: 2 },
-  { x: 14, y: 74, s: 2.5, o: 0.12, d: 4 },
-  { x: 92, y: 62, s: 2, o: 0.1, d: 1 },
-  { x: 50, y: 90, s: 2, o: 0.08, d: 3 },
-  { x: 74, y: 80, s: 1.5, o: 0.09, d: 5 },
-  { x: 30, y: 12, s: 1.5, o: 0.07, d: 6 },
-];
-
-function Hero({ darkMode }: { darkMode: boolean }) {
+function Hero({ pal, dark }: { pal: Palette; dark: boolean }) {
   const { t } = useTranslation();
 
   return (
-    <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-6 pt-20">
-      {/* Background: grid + radial glow */}
-      {darkMode ? (
+    <section className="relative overflow-hidden px-6 pt-28 pb-20 md:pb-24">
+      {/* Sheet number, top-right */}
+      <CoordBadge
+        color={pal.moss}
+        className="right-6 top-[84px] md:right-10"
+      >
+        SHEET N° 01
+      </CoordBadge>
+
+      {/* Background grid + contour layer */}
+      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+        {/* Fine grid */}
         <div
-          className="pointer-events-none absolute inset-0"
+          className="absolute inset-0"
           style={{
-            backgroundImage: [
-              "radial-gradient(circle at 50% 42%, rgba(22,163,74,0.09) 0%, transparent 55%)",
-              "linear-gradient(rgba(22,163,74,0.03) 1px, transparent 1px)",
-              "linear-gradient(90deg, rgba(22,163,74,0.03) 1px, transparent 1px)",
-            ].join(","),
-            backgroundSize: "100% 100%, 60px 60px, 60px 60px",
+            backgroundImage: `linear-gradient(${pal.gridSoft} 1px, transparent 1px), linear-gradient(90deg, ${pal.gridSoft} 1px, transparent 1px)`,
+            backgroundSize: "36px 36px",
+            maskImage: "radial-gradient(ellipse 80% 60% at 50% 40%, black 35%, transparent 100%)",
+            WebkitMaskImage: "radial-gradient(ellipse 80% 60% at 50% 40%, black 35%, transparent 100%)",
           }}
         />
-      ) : (
-        <>
-          {/* Layered radial color accents — give the glass blur something to work with */}
-          <div
-            className="pointer-events-none absolute inset-0"
-            style={{
-              backgroundImage: [
-                "radial-gradient(circle at 35% 25%, rgba(21, 111, 104, 0.18), transparent 45%)",
-                "radial-gradient(circle at 75% 65%, rgba(211, 131, 61, 0.12), transparent 40%)",
-                "radial-gradient(circle at 20% 70%, rgba(21, 111, 104, 0.08), transparent 30%)",
-              ].join(","),
-            }}
-          />
-          {/* Fine grid overlay */}
-          <div
-            className="pointer-events-none absolute inset-0"
-            style={{
-              backgroundImage: "linear-gradient(rgba(40,56,48,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(40,56,48,0.06) 1px, transparent 1px)",
-              backgroundSize: "34px 34px",
-              maskImage: "linear-gradient(180deg, black 50%, transparent 100%)",
-              WebkitMaskImage: "linear-gradient(180deg, black 50%, transparent 100%)",
-            }}
-          />
-        </>
-      )}
+        {/* Contour blobs, pushed right */}
+        <div className="absolute inset-y-0 right-[-10%] w-[90%] opacity-80">
+          <ContourField pal={pal} className="h-full w-full" />
+        </div>
+      </div>
 
-      {/* Floating waypoint dots */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        {heroWaypoints.map((wp, i) => (
-          <div
-            key={i}
-            className="absolute landing-float"
-            style={{ left: `${wp.x}%`, top: `${wp.y}%`, animationDelay: `${wp.d}s` }}
+      {/* Route path across the hero */}
+      <div className="pointer-events-none absolute inset-x-0 top-28 bottom-0">
+        <RoutePath pal={pal} />
+      </div>
+
+      {/* Coordinate corner badges */}
+      <CoordBadge color={pal.moss} className="left-6 top-[130px] md:left-10">
+        41.1579° N &nbsp;·&nbsp; 8.6291° W
+      </CoordBadge>
+      <CoordBadge color={pal.moss} className="left-6 bottom-40 hidden md:block">
+        BEARING 047° &nbsp;·&nbsp; ELEV 312m
+      </CoordBadge>
+      <CoordBadge color={pal.moss} className="right-6 bottom-40 hidden md:block">
+        DATUM WGS-84
+      </CoordBadge>
+
+      <div className="relative mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 md:grid-cols-12 md:gap-10">
+        {/* LEFT — editorial column */}
+        <div className="relative md:col-span-7">
+          <div className="landing-fade-in mb-5 flex items-center gap-3" style={{ animationDelay: "0.1s" }}>
+            <StampOutline color={pal.stamp} rotate={-2}>
+              Field Manual · v1
+            </StampOutline>
+            <span className="font-mono-atlas text-[10px] uppercase tracking-[0.24em]" style={{ color: pal.moss }}>
+              est. 2025
+            </span>
+          </div>
+
+          <h1
+            className="landing-fade-in font-display mb-6 text-[15vw] font-black leading-[0.88] tracking-[-0.035em] md:text-[9rem] lg:text-[10.5rem]"
+            style={{ animationDelay: "0.25s", color: pal.inkStrong }}
           >
-            <div
-              className={`rounded-full ${darkMode ? "bg-green-500" : "bg-teal-600"}`}
-              style={{ width: wp.s * 4, height: wp.s * 4, opacity: darkMode ? wp.o : wp.o * 1.7 }}
+            Point<span style={{ color: pal.trail, fontStyle: "italic", fontWeight: 700 }}>f</span>inder
+          </h1>
+
+          <p
+            className="landing-fade-in font-display-italic mb-2 max-w-xl text-lg leading-snug md:text-xl"
+            style={{ animationDelay: "0.55s", color: pal.ink }}
+          >
+            &ldquo;{t("landing.hero.tagline")}&rdquo;
+          </p>
+
+          <div
+            className="landing-fade-in mb-8 flex items-center gap-3"
+            style={{ animationDelay: "0.75s" }}
+          >
+            <span
+              className="font-mono-atlas text-[11px] uppercase tracking-[0.24em]"
+              style={{ color: pal.moss }}
+            >
+              Scouting &middot; Outdoor &middot; NFC
+            </span>
+          </div>
+
+          {/* Scale bar */}
+          <div className="landing-fade-in mb-10" style={{ animationDelay: "0.95s" }}>
+            <div className="mb-2 font-mono-atlas text-[9px] uppercase tracking-[0.3em]" style={{ color: pal.moss }}>
+              SCALE 1 : 25 000
+            </div>
+            <ScaleBar pal={pal} />
+          </div>
+
+          {/* Store badges — field-notebook tickets */}
+          <div
+            className="landing-fade-in flex flex-col gap-3 sm:flex-row"
+            style={{ animationDelay: "1.15s" }}
+          >
+            <StoreTicket
+              pal={pal}
+              label={t("landing.hero.appStore")}
+              availableOn={t("landing.hero.availableOn")}
+              logo={<AppleLogo />}
+              code="iOS·01"
+              href={appStoreUrl()}
             />
-            <div
-              className={`absolute rounded-full border ${darkMode ? "border-green-500" : "border-teal-600"}`}
-              style={{ inset: -(wp.s * 2.5), opacity: (darkMode ? wp.o : wp.o * 1.7) * 0.4 }}
+            <StoreTicket
+              pal={pal}
+              label={t("landing.hero.googlePlay")}
+              availableOn={t("landing.hero.availableOn")}
+              logo={<PlayLogo />}
+              code="AND·02"
+              href="https://play.google.com/store/apps/details?id=com.prayer.pointfinder"
             />
           </div>
-        ))}
-      </div>
+        </div>
 
-      {/* Compass */}
-      <div className="landing-fade-in mb-10" style={{ animationDelay: "0.2s" }}>
-        <CompassRose darkMode={darkMode} />
-      </div>
-
-      {/* Title */}
-      <h1
-        key={darkMode ? "dark" : "light"}
-        className="landing-fade-in mb-5 text-center text-5xl font-bold tracking-tight md:text-7xl lg:text-8xl bg-clip-text text-transparent"
-        style={{
-          animationDelay: "0.5s",
-          backgroundImage: darkMode
-            ? "linear-gradient(135deg, #4ade80 0%, #22c55e 35%, #16a34a 65%, #15803d 100%)"
-            : "linear-gradient(135deg, #156f68 0%, #1a8a82 35%, #156f68 65%, #0e4e49 100%)",
-        }}
-      >
-        PointFinder
-      </h1>
-
-      {/* Tagline */}
-      <p
-        className={`landing-fade-in max-w-lg text-center text-base leading-relaxed md:text-lg ${
-          darkMode ? "text-white/45" : "text-[#1e2e28]/55"
-        }`}
-        style={{ animationDelay: "0.8s" }}
-      >
-        {t("landing.hero.tagline")}
-      </p>
-
-      {/* Store badges */}
-      <div className="landing-fade-in mt-10 flex flex-wrap items-center justify-center gap-3" style={{ animationDelay: "1.1s" }}>
-        <StoreBadge darkMode={darkMode} icon={<AppleLogo />} label={t("landing.hero.appStore")} availableOn={t("landing.hero.availableOn")} href={appStoreUrl()} />
-        <StoreBadge darkMode={darkMode} icon={<PlayLogo />} label={t("landing.hero.googlePlay")} availableOn={t("landing.hero.availableOn")} href="https://play.google.com/store/apps/details?id=com.prayer.pointfinder" />
+        {/* RIGHT — compass plate */}
+        <div className="relative md:col-span-5">
+          <CompassPlate pal={pal} dark={dark} />
+        </div>
       </div>
 
       {/* Scroll hint */}
-      <ScrollHint label={t("landing.hero.scroll")} />
+      <ScrollHint label={t("landing.hero.scroll")} pal={pal} />
     </section>
   );
 }
 
-/* Store badge helpers */
-
-function StoreBadge({ icon, label, availableOn, href, darkMode }: { icon: React.ReactNode; label: string; availableOn: string; href?: string; darkMode: boolean }) {
-  const className = darkMode
-    ? "flex items-center gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.03] px-5 py-2.5 text-sm text-white/35 transition-colors duration-200 hover:border-green-500/20 hover:bg-white/[0.05]"
-    : "flex items-center gap-2.5 rounded-xl border border-[rgba(40,56,48,0.12)] bg-white/60 backdrop-blur-sm px-5 py-2.5 text-sm text-[#1e2e28]/50 transition-colors duration-200 hover:border-teal-600/25 shadow-[0_4px_16px_rgba(29,46,38,0.08)]";
-
-  const lightStyle = darkMode ? undefined : { background: "linear-gradient(180deg, rgba(255, 252, 247, 0.90), rgba(255, 248, 240, 0.75))" };
-
-  const content = (
-    <>
-      {icon}
+/* Store ticket — looks like a perforated-edge field-notebook voucher */
+function StoreTicket({
+  pal,
+  label,
+  availableOn,
+  logo,
+  code,
+  href,
+}: {
+  pal: Palette;
+  label: string;
+  availableOn: string;
+  logo: React.ReactNode;
+  code: string;
+  href: string;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="relative flex items-center gap-3 pl-5 pr-6 py-3 transition-transform hover:-translate-y-0.5"
+      style={{
+        background: pal.paperAlt,
+        border: `1.25px solid ${pal.ink}`,
+        color: pal.ink,
+      }}
+    >
+      <Reticle color={pal.ink} size={10} />
+      <span style={{ color: pal.ink }}>{logo}</span>
       <div className="flex flex-col">
-        <span className={`text-[9px] uppercase tracking-wider ${darkMode ? "text-white/25" : "text-[#1e2e28]/35"}`}>{availableOn}</span>
-        <span className="font-medium leading-tight">{label}</span>
+        <span
+          className="font-mono-atlas text-[9px] uppercase tracking-[0.24em]"
+          style={{ color: pal.moss }}
+        >
+          {availableOn}
+        </span>
+        <span className="font-display text-[15px] font-semibold leading-tight">
+          {label}
+        </span>
       </div>
-    </>
+      <span
+        className="font-mono-atlas ml-2 border-l pl-3 text-[9px] uppercase tracking-[0.28em]"
+        style={{ borderColor: pal.ink, color: pal.moss }}
+      >
+        {code}
+      </span>
+    </a>
   );
+}
 
-  if (href) {
-    return <a href={href} target="_blank" rel="noopener noreferrer" className={className} style={lightStyle}>{content}</a>;
-  }
-  return <div className={className} style={lightStyle}>{content}</div>;
+/* Compass plate — a square field plate with reticles around the compass */
+function CompassPlate({ pal, dark }: { pal: Palette; dark: boolean }) {
+  return (
+    <div
+      className="relative mx-auto aspect-square w-[min(420px,90vw)]"
+      style={{ perspective: "900px" }}
+    >
+      {/* Plate backdrop */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: dark
+            ? "linear-gradient(160deg, #142420 0%, #0d1915 100%)"
+            : "linear-gradient(160deg, #eee4ca 0%, #e7dcbf 100%)",
+          border: `1.25px solid ${pal.ink}`,
+        }}
+      >
+        <Reticle color={pal.ink} size={18} />
+        {/* Corner labels */}
+        <span
+          className="font-mono-atlas absolute left-3 top-3 text-[9px] uppercase tracking-[0.28em]"
+          style={{ color: pal.moss }}
+        >
+          PLATE · 01
+        </span>
+        <span
+          className="font-mono-atlas absolute right-3 top-3 text-[9px] uppercase tracking-[0.28em]"
+          style={{ color: pal.moss }}
+        >
+          N ↑
+        </span>
+        <span
+          className="font-mono-atlas absolute bottom-3 left-3 text-[9px] uppercase tracking-[0.28em]"
+          style={{ color: pal.moss }}
+        >
+          DECL 2.1° E
+        </span>
+        <span
+          className="font-mono-atlas absolute bottom-3 right-3 text-[9px] uppercase tracking-[0.28em]"
+          style={{ color: pal.moss }}
+        >
+          1:25k
+        </span>
+
+        {/* Sonar echoes, kept tasteful */}
+        {[0, 1].map((i) => (
+          <div
+            key={i}
+            className="landing-ping absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
+            style={{
+              width: "72%",
+              height: "72%",
+              border: `1px solid ${pal.trail}`,
+              opacity: 0.25,
+              animationDelay: `${i * 1.8}s`,
+            }}
+          />
+        ))}
+
+        {/* The compass itself */}
+        <div className="absolute inset-[10%]">
+          <CompassRose pal={pal} />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function AppleLogo() {
   return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M18.71 19.5C17.88 20.74 17 21.95 15.66 21.97C14.32 21.99 13.89 21.18 12.37 21.18C10.84 21.18 10.37 21.95 9.1 21.99C7.79 22.03 6.8 20.68 5.96 19.47C4.25 17 2.94 12.45 4.7 9.39C5.57 7.87 7.13 6.91 8.82 6.88C10.1 6.86 11.32 7.75 12.11 7.75C12.89 7.75 14.37 6.68 15.92 6.84C16.57 6.87 18.39 7.1 19.56 8.82C19.47 8.88 17.39 10.1 17.41 12.63C17.44 15.65 20.06 16.66 20.09 16.67C20.06 16.74 19.67 18.11 18.71 19.5ZM13 3.5C13.73 2.67 14.94 2.04 15.94 2C16.07 3.17 15.6 4.35 14.9 5.19C14.21 6.04 13.07 6.7 11.95 6.61C11.8 5.46 12.36 4.26 13 3.5Z" />
     </svg>
   );
@@ -437,76 +903,156 @@ function AppleLogo() {
 
 function PlayLogo() {
   return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M3 20.5V3.5C3 2.91 3.34 2.39 3.84 2.15L13.69 12L3.84 21.85C3.34 21.61 3 21.09 3 20.5M16.81 15.12L6.05 21.34L14.54 12.85L16.81 15.12M20.16 10.81C20.5 11.08 20.75 11.5 20.75 12C20.75 12.5 20.53 12.9 20.18 13.18L17.89 14.5L15.39 12L17.89 9.5L20.16 10.81M6.05 2.66L16.81 8.88L14.54 11.15L6.05 2.66Z" />
     </svg>
   );
 }
 
+/* App-store URL helper (unchanged) */
+const APP_STORE_COUNTRY: Record<string, string> = {
+  "pointfinder.pt": "pt",
+  "pointfinder.ch": "ch",
+};
+function appStoreUrl() {
+  if (typeof window === "undefined")
+    return "https://apps.apple.com/app/pointfinder/id6759060734";
+  const country = APP_STORE_COUNTRY[window.location.hostname.toLowerCase()];
+  const prefix = country ? `/${country}` : "";
+  return `https://apps.apple.com${prefix}/app/pointfinder/id6759060734`;
+}
+
+/* Scroll hint, subdued mono label */
+function ScrollHint({ label, pal }: { label: string; pal: Palette }) {
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const onScroll = () => setVisible(window.scrollY < 60);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  return (
+    <div
+      className="landing-fade-in absolute bottom-6 left-1/2 -translate-x-1/2 transition-opacity duration-500"
+      style={{
+        animationDelay: "1.7s",
+        opacity: visible ? 1 : 0,
+        pointerEvents: visible ? "auto" : "none",
+      }}
+    >
+      <span
+        className="font-mono-atlas text-[10px] uppercase tracking-[0.32em]"
+        style={{ color: pal.moss }}
+      >
+        {label} ↓
+      </span>
+    </div>
+  );
+}
+
 /* =================================================================
-   How It Works
+   How It Works — horizontal legend, dashed bearing line
    ================================================================= */
 
-const steps: { num: string; icon: LucideIcon; titleKey: string; bodyKey: string }[] = [
-  { num: "01", icon: Settings, titleKey: "landing.howItWorks.step1Title", bodyKey: "landing.howItWorks.step1Body" },
-  { num: "02", icon: Smartphone, titleKey: "landing.howItWorks.step2Title", bodyKey: "landing.howItWorks.step2Body" },
-  { num: "03", icon: LayoutDashboard, titleKey: "landing.howItWorks.step3Title", bodyKey: "landing.howItWorks.step3Body" },
+const steps: {
+  num: string;
+  titleKey: string;
+  bodyKey: string;
+  bearing: string;
+}[] = [
+  { num: "01", titleKey: "landing.howItWorks.step1Title", bodyKey: "landing.howItWorks.step1Body", bearing: "BEARING 012° · 1.8 KM" },
+  { num: "02", titleKey: "landing.howItWorks.step2Title", bodyKey: "landing.howItWorks.step2Body", bearing: "BEARING 078° · 3.4 KM" },
+  { num: "03", titleKey: "landing.howItWorks.step3Title", bodyKey: "landing.howItWorks.step3Body", bearing: "BEARING 135° · 2.1 KM" },
 ];
 
-function HowItWorks({ darkMode }: { darkMode: boolean }) {
+function HowItWorks({ pal }: { pal: Palette }) {
   const { t } = useTranslation();
 
   return (
     <section className="relative px-6 py-20 md:py-28">
-      <div className="mx-auto max-w-5xl">
-        {/* Heading */}
-        <div className="scroll-reveal mb-16 text-center">
-          <span className={`mb-3 block text-xs font-medium uppercase tracking-[0.2em] ${darkMode ? "text-green-500/70" : "text-teal-700/70"}`}>
-            {t("landing.howItWorks.label")}
-          </span>
-          <h2 className={`text-3xl font-bold md:text-4xl ${darkMode ? "text-white" : "text-[#1e2e28]"}`}>
+      <div className="mx-auto max-w-6xl">
+        <div className="scroll-reveal mb-14">
+          <SectionKey num="02" label={t("landing.howItWorks.label")} pal={pal} />
+          <h2
+            className="font-display mt-5 max-w-3xl text-4xl font-semibold leading-[1.05] tracking-[-0.02em] md:text-5xl"
+            style={{ color: pal.inkStrong }}
+          >
             {t("landing.howItWorks.title")}
           </h2>
         </div>
 
-        {/* Steps */}
-        <div className="relative grid grid-cols-1 gap-12 md:grid-cols-3 md:gap-6">
-          {/* Connector (desktop) */}
-          <div className={`pointer-events-none absolute left-[calc(16.67%+28px)] right-[calc(16.67%+28px)] top-[36px] hidden h-px border-t border-dashed md:block ${darkMode ? "border-green-500/[0.12]" : "border-teal-600/[0.18]"}`} />
+        {/* Three waypoints with a dashed bearing line across */}
+        <div className="relative">
+          {/* The bearing line, desktop only */}
+          <svg
+            className="pointer-events-none absolute left-0 right-0 top-[44px] hidden h-6 w-full md:block"
+            aria-hidden="true"
+          >
+            <line
+              x1="14%"
+              y1="50%"
+              x2="86%"
+              y2="50%"
+              stroke={pal.trail}
+              strokeOpacity="0.6"
+              strokeWidth="1.2"
+              strokeDasharray="6 6"
+            />
+          </svg>
 
-          {steps.map((step, i) => (
-            <div
-              key={step.num}
-              className="scroll-reveal relative flex flex-col items-center text-center"
-              style={{ transitionDelay: `${i * 150}ms` }}
-            >
-              {/* Icon circle */}
-              <div className="relative z-10 mb-6">
-                <div
-                  className={`flex h-[72px] w-[72px] items-center justify-center rounded-full ${
-                    darkMode
-                      ? "border border-green-500/15 bg-green-500/[0.04]"
-                      : "border border-[rgba(40,56,48,0.08)] backdrop-blur-xl shadow-[0_8px_24px_rgba(21,111,104,0.1)]"
-                  }`}
-                  style={darkMode ? undefined : {
-                    background: "linear-gradient(180deg, rgba(255, 252, 247, 0.88), rgba(255, 248, 240, 0.72))",
-                  }}
-                >
-                  <step.icon className={`h-7 w-7 ${darkMode ? "text-green-500/60" : "text-teal-700/60"}`} aria-hidden="true" />
+          <div className="grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-6">
+            {steps.map((step, i) => (
+              <div
+                key={step.num}
+                className="scroll-reveal relative flex flex-col items-start"
+                style={{ transitionDelay: `${i * 140}ms` }}
+              >
+                {/* Waypoint marker + stamp-style number */}
+                <div className="relative z-10 mb-6 flex items-center gap-4">
+                  <div
+                    className="relative flex h-[60px] w-[60px] items-center justify-center"
+                    style={{
+                      background: pal.paper,
+                      border: `1.25px solid ${pal.ink}`,
+                    }}
+                  >
+                    <Reticle color={pal.ink} size={10} />
+                    <span
+                      className="font-display text-2xl font-bold"
+                      style={{ color: pal.inkStrong }}
+                    >
+                      {step.num}
+                    </span>
+                  </div>
+                  <div className="flex flex-col">
+                    <StampOutline color={pal.stamp} rotate={i % 2 === 0 ? -3 : 2}>
+                      Waypoint {step.num}
+                    </StampOutline>
+                  </div>
                 </div>
-                <span className={`absolute -right-1.5 -top-1.5 rounded-full border px-2 py-0.5 text-[10px] font-bold ${
-                  darkMode
-                    ? "border-green-500/10 bg-[#060b06] text-green-500/50"
-                    : "border-teal-600/15 bg-[#f4efe6] text-teal-700/50"
-                }`}>
-                  {step.num}
+
+                <h3
+                  className="font-display mb-2 max-w-xs text-2xl font-semibold leading-tight tracking-[-0.01em]"
+                  style={{ color: pal.inkStrong }}
+                >
+                  {t(step.titleKey)}
+                </h3>
+                <p
+                  className="font-ui mb-4 max-w-xs text-[15px] leading-relaxed"
+                  style={{ color: pal.moss }}
+                >
+                  {t(step.bodyKey)}
+                </p>
+                <span
+                  className="font-mono-atlas text-[10px] uppercase tracking-[0.24em]"
+                  style={{ color: pal.trail }}
+                >
+                  {step.bearing}
                 </span>
               </div>
-
-              <h3 className={`mb-3 text-lg font-semibold ${darkMode ? "text-white" : "text-[#1e2e28]"}`}>{t(step.titleKey)}</h3>
-              <p className={`max-w-xs text-sm leading-relaxed ${darkMode ? "text-white/35" : "text-[#1e2e28]/55"}`}>{t(step.bodyKey)}</p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -514,78 +1060,48 @@ function HowItWorks({ darkMode }: { darkMode: boolean }) {
 }
 
 /* =================================================================
-   Features – bento grid
+   Features — asymmetric editorial bento, field-notebook pages
    ================================================================= */
 
-const features: { id: string; icon: LucideIcon; titleKey: string; bodyKey: string; span: string; large?: boolean }[] = [
-  { id: "nfc", icon: Radio, titleKey: "landing.features.nfcTitle", bodyKey: "landing.features.nfcBody", span: "md:col-span-2 md:row-span-2", large: true },
-  { id: "maps", icon: MapPin, titleKey: "landing.features.mapsTitle", bodyKey: "landing.features.mapsBody", span: "" },
-  { id: "challenges", icon: Camera, titleKey: "landing.features.challengesTitle", bodyKey: "landing.features.challengesBody", span: "" },
-  { id: "leaderboard", icon: Trophy, titleKey: "landing.features.leaderboardTitle", bodyKey: "landing.features.leaderboardBody", span: "" },
-  { id: "dashboard", icon: LayoutDashboard, titleKey: "landing.features.dashboardTitle", bodyKey: "landing.features.dashboardBody", span: "md:col-span-2" },
-  { id: "push", icon: Bell, titleKey: "landing.features.pushTitle", bodyKey: "landing.features.pushBody", span: "" },
-  { id: "offline", icon: WifiOff, titleKey: "landing.features.offlineTitle", bodyKey: "landing.features.offlineBody", span: "" },
-  { id: "i18n", icon: Globe, titleKey: "landing.features.multiLangTitle", bodyKey: "landing.features.multiLangBody", span: "" },
+type Feature = {
+  id: string;
+  short: string;     // catalogue code "§ 01 — NFC"
+  titleKey: string;
+  bodyKey: string;
+  span: string;
+  large?: boolean;
+};
+
+const features: Feature[] = [
+  { id: "nfc",          short: "§ 01 — NFC",   titleKey: "landing.features.nfcTitle",          bodyKey: "landing.features.nfcBody",        span: "md:col-span-2 md:row-span-2", large: true },
+  { id: "maps",         short: "§ 02 — MAP",   titleKey: "landing.features.mapsTitle",         bodyKey: "landing.features.mapsBody",       span: "" },
+  { id: "challenges",   short: "§ 03 — CHL",   titleKey: "landing.features.challengesTitle",   bodyKey: "landing.features.challengesBody", span: "" },
+  { id: "leaderboard",  short: "§ 04 — SCR",   titleKey: "landing.features.leaderboardTitle",  bodyKey: "landing.features.leaderboardBody",span: "" },
+  { id: "dashboard",    short: "§ 05 — OPS",   titleKey: "landing.features.dashboardTitle",    bodyKey: "landing.features.dashboardBody",  span: "md:col-span-2" },
+  { id: "push",         short: "§ 06 — PSH",   titleKey: "landing.features.pushTitle",         bodyKey: "landing.features.pushBody",       span: "" },
+  { id: "offline",      short: "§ 07 — OFF",   titleKey: "landing.features.offlineTitle",      bodyKey: "landing.features.offlineBody",    span: "" },
+  { id: "i18n",         short: "§ 08 — L10N",  titleKey: "landing.features.multiLangTitle",    bodyKey: "landing.features.multiLangBody",  span: "" },
 ];
 
-function Features({ darkMode }: { darkMode: boolean }) {
+function Features({ pal }: { pal: Palette }) {
   const { t } = useTranslation();
 
   return (
     <section className="relative px-6 py-20 md:py-28">
-      <div className="mx-auto max-w-5xl">
-        {/* Heading */}
-        <div className="scroll-reveal mb-16 text-center">
-          <span className={`mb-3 block text-xs font-medium uppercase tracking-[0.2em] ${darkMode ? "text-green-500/70" : "text-teal-700/70"}`}>
-            {t("landing.features.label")}
-          </span>
-          <h2 className={`text-3xl font-bold md:text-4xl ${darkMode ? "text-white" : "text-[#1e2e28]"}`}>
+      <div className="mx-auto max-w-6xl">
+        <div className="scroll-reveal mb-14">
+          <SectionKey num="03" label={t("landing.features.label")} pal={pal} />
+          <h2
+            className="font-display mt-5 max-w-3xl text-4xl font-semibold leading-[1.05] tracking-[-0.02em] md:text-5xl"
+            style={{ color: pal.inkStrong }}
+          >
             {t("landing.features.title")}
           </h2>
         </div>
 
-        {/* Bento grid */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="grid auto-rows-[minmax(200px,auto)] grid-cols-1 gap-4 md:grid-cols-3">
           {features.map((f, i) => (
-            <div
-              key={f.id}
-              className={`scroll-reveal group relative overflow-hidden rounded-2xl p-6 transition-all duration-300 ${f.span} ${f.large ? "flex flex-col justify-between" : ""} ${
-                darkMode
-                  ? "border border-white/[0.06] bg-white/[0.015] hover:border-green-500/[0.14] hover:bg-green-500/[0.015]"
-                  : "border border-white/70 backdrop-blur-xl hover:border-teal-600/20 shadow-[0_24px_60px_-16px_rgba(29,46,38,0.25)]"
-              }`}
-              style={darkMode ? { transitionDelay: `${i * 80}ms` } : {
-                transitionDelay: `${i * 80}ms`,
-                background: "linear-gradient(180deg, rgba(255, 252, 247, 0.88), rgba(255, 248, 240, 0.72))",
-              }}
-            >
-              {/* Icon */}
-              <div className={`mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl border transition-colors duration-300 ${
-                darkMode
-                  ? "border-green-500/10 bg-green-500/[0.06] group-hover:bg-green-500/[0.1]"
-                  : "border-teal-600/15 bg-teal-600/[0.06] group-hover:bg-teal-600/[0.1]"
-              }`}>
-                <f.icon className={`h-5 w-5 ${darkMode ? "text-green-500/60" : "text-teal-700/60"}`} aria-hidden="true" />
-              </div>
-
-              <h3 className={`mb-2 font-semibold ${f.large ? "text-xl" : "text-base"} ${darkMode ? "text-white" : "text-[#1e2e28]"}`}>
-                {t(f.titleKey)}
-              </h3>
-              <p className={`leading-relaxed ${f.large ? "max-w-md text-[15px]" : "text-sm"} ${darkMode ? "text-white/35" : "text-[#1e2e28]/55"}`}>
-                {t(f.bodyKey)}
-              </p>
-
-              {/* Decorative corner arcs on the hero card */}
-              {f.large && (
-                <div className="pointer-events-none absolute -right-6 -top-6 opacity-[0.025]">
-                  <svg width="160" height="160" viewBox="0 0 160 160" fill="none" aria-hidden="true">
-                    <circle cx="120" cy="40" r="100" stroke={darkMode ? "#22c55e" : "#156f68"} strokeWidth="0.8" />
-                    <circle cx="120" cy="40" r="70" stroke={darkMode ? "#22c55e" : "#156f68"} strokeWidth="0.6" />
-                    <circle cx="120" cy="40" r="40" stroke={darkMode ? "#22c55e" : "#156f68"} strokeWidth="0.4" />
-                  </svg>
-                </div>
-              )}
-            </div>
+            <FeatureCard key={f.id} feature={f} pal={pal} index={i} t={t} />
           ))}
         </div>
       </div>
@@ -593,26 +1109,136 @@ function Features({ darkMode }: { darkMode: boolean }) {
   );
 }
 
-/* =================================================================
-   Platform showcase – device mockups
-   ================================================================= */
-
-
-/* =================================================================
-   Pricing
-   ================================================================= */
-
-function CheckIcon({ darkMode }: { darkMode: boolean }) {
-  const stroke = darkMode ? "#22c55e" : "#156f68";
+function FeatureCard({
+  feature,
+  pal,
+  index,
+  t,
+}: {
+  feature: Feature;
+  pal: Palette;
+  index: number;
+  t: (k: string) => string;
+}) {
   return (
-    <svg className={`h-4 w-4 shrink-0 ${darkMode ? "text-green-500/70" : "text-teal-700/70"}`} viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <circle cx="8" cy="8" r="7.5" stroke={stroke} strokeOpacity="0.2" />
-      <path d="M4.5 8.5l2.5 2.5 4.5-5" stroke={stroke} strokeOpacity="0.7" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <div
+      className={`scroll-reveal group relative overflow-hidden p-6 md:p-7 ${feature.span} ${feature.large ? "flex flex-col justify-between" : ""}`}
+      style={{
+        transitionDelay: `${index * 70}ms`,
+        background: pal.paperAlt,
+        border: `1px solid ${pal.ink}`,
+      }}
+    >
+      <Reticle color={pal.ink} size={14} />
+
+      {/* Catalogue code, top-right */}
+      <span
+        className="font-mono-atlas absolute right-4 top-4 text-[9px] uppercase tracking-[0.26em]"
+        style={{ color: pal.moss }}
+      >
+        {feature.short}
+      </span>
+
+      {/* Ghost topo blob behind the large card */}
+      {feature.large && (
+        <svg
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-10 -top-10 h-[320px] w-[320px] opacity-[0.12]"
+          viewBox="0 0 300 300"
+        >
+          {[110, 88, 66, 44].map((r, i) => (
+            <circle
+              key={i}
+              cx="150"
+              cy="150"
+              r={r}
+              fill="none"
+              stroke={pal.ink}
+              strokeWidth="1"
+              strokeDasharray={i === 0 ? "1 0" : "2 3"}
+            />
+          ))}
+          {/* A hand-drawn trail */}
+          <path
+            d="M 40 220 C 90 180, 140 210, 180 160 S 260 120, 280 70"
+            fill="none"
+            stroke={pal.trail}
+            strokeWidth="1.5"
+            strokeDasharray="6 5"
+            opacity="0.6"
+          />
+        </svg>
+      )}
+
+      <div className="relative">
+        <h3
+          className={`font-display mb-3 font-semibold leading-tight tracking-[-0.01em] ${feature.large ? "text-3xl md:text-4xl" : "text-xl"}`}
+          style={{ color: pal.inkStrong }}
+        >
+          {t(feature.titleKey)}
+        </h3>
+        <p
+          className={`font-ui leading-relaxed ${feature.large ? "max-w-md text-[15px]" : "text-[14px]"}`}
+          style={{ color: pal.moss }}
+        >
+          {t(feature.bodyKey)}
+        </p>
+      </div>
+
+      {feature.large && (
+        <div className="relative mt-8 flex items-center gap-4">
+          <StampOutline color={pal.stamp} rotate={-3}>
+            Field Tested
+          </StampOutline>
+          <span
+            className="font-mono-atlas text-[10px] uppercase tracking-[0.24em]"
+            style={{ color: pal.trail }}
+          >
+            RANGE: 10m &middot; LATENCY: &lt;500ms
+          </span>
+        </div>
+      )}
+    </div>
   );
 }
 
-function Pricing({ darkMode }: { darkMode: boolean }) {
+/* =================================================================
+   Pricing — perforated-ticket cards
+   ================================================================= */
+
+function TicketPerforation({ pal }: { pal: Palette }) {
+  // A row of small dots mimicking perforation
+  return (
+    <div
+      className="flex h-2 items-center gap-[5px] px-5"
+      aria-hidden="true"
+    >
+      {Array.from({ length: 44 }).map((_, i) => (
+        <span
+          key={i}
+          className="h-[2px] flex-1"
+          style={{
+            background: i % 2 === 0 ? pal.ink : "transparent",
+            opacity: 0.55,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function FraunDivider({ pal }: { pal: Palette }) {
+  return (
+    <span
+      className="font-display-italic mx-2 inline-block"
+      style={{ color: pal.moss }}
+    >
+      ·
+    </span>
+  );
+}
+
+function Pricing({ pal }: { pal: Palette }) {
   const { t } = useTranslation();
 
   const freeFeatures = [
@@ -621,7 +1247,6 @@ function Pricing({ darkMode }: { darkMode: boolean }) {
     t("landing.pricing.soloOperator"),
     t("landing.pricing.fileUploads100"),
   ];
-
   const proFeatures = [
     t("landing.pricing.unlimitedGames"),
     t("landing.pricing.unlimitedBases"),
@@ -629,7 +1254,6 @@ function Pricing({ darkMode }: { darkMode: boolean }) {
     t("landing.pricing.fileUploads2g"),
     t("landing.pricing.sharedResources"),
   ];
-
   const orgFeatures = [
     t("landing.pricing.fifteenMembers"),
     t("landing.pricing.orgResources"),
@@ -638,134 +1262,215 @@ function Pricing({ darkMode }: { darkMode: boolean }) {
     t("landing.pricing.customDeals"),
   ];
 
-  const cardBase = darkMode
-    ? "flex flex-col rounded-2xl border border-white/[0.07] bg-white/[0.03] p-7"
-    : "flex flex-col rounded-2xl border border-white/70 backdrop-blur-xl p-7 shadow-[0_24px_60px_-16px_rgba(29,46,38,0.25)]";
-
-  const featureText = darkMode ? "text-white/50" : "text-[#1e2e28]/55";
-  const priceText = darkMode ? "text-white" : "text-[#1e2e28]";
-  const labelText = darkMode ? "text-green-500/60" : "text-teal-700/60";
-  const descText = darkMode ? "text-white/30" : "text-[#1e2e28]/40";
-  const btnSecondary = darkMode
-    ? "mt-auto block rounded-xl border border-white/[0.07] bg-white/[0.03] px-5 py-2.5 text-center text-sm font-medium text-white/60 transition-colors duration-200 hover:border-green-500/20 hover:bg-white/[0.06]"
-    : "mt-auto block rounded-xl border border-[rgba(21,111,104,0.18)] bg-white/50 px-5 py-2.5 text-center text-sm font-medium text-[#1e2e28]/60 transition-colors duration-200 hover:border-teal-600/30 hover:bg-white/70";
-
   return (
     <section className="relative px-6 py-20 md:py-28">
-      <div className="mx-auto max-w-5xl">
-        {/* Heading */}
-        <div className="scroll-reveal mb-16 text-center">
-          <span className={`mb-3 block text-xs font-medium uppercase tracking-[0.2em] ${darkMode ? "text-green-500/70" : "text-teal-700/70"}`}>
-            {t("landing.pricing.label")}
-          </span>
-          <h2 className={`text-3xl font-bold md:text-4xl ${darkMode ? "text-white" : "text-[#1e2e28]"}`}>
+      <div className="mx-auto max-w-6xl">
+        <div className="scroll-reveal mb-14">
+          <SectionKey num="04" label={t("landing.pricing.label")} pal={pal} />
+          <h2
+            className="font-display mt-5 max-w-3xl text-4xl font-semibold leading-[1.05] tracking-[-0.02em] md:text-5xl"
+            style={{ color: pal.inkStrong }}
+          >
             {t("landing.pricing.title")}
           </h2>
-          <p className={`mx-auto mt-4 max-w-md text-sm md:text-base ${darkMode ? "text-white/35" : "text-[#1e2e28]/55"}`}>
+          <p
+            className="font-display-italic mt-4 max-w-xl text-lg"
+            style={{ color: pal.moss }}
+          >
             {t("landing.pricing.description")}
           </p>
         </div>
 
-        {/* Cards */}
-        <div className="scroll-reveal grid grid-cols-1 gap-5 md:grid-cols-3">
-          {/* Free */}
-          <div
-            className={cardBase}
-            style={darkMode ? undefined : { background: "linear-gradient(180deg, rgba(255, 252, 247, 0.88), rgba(255, 248, 240, 0.72))" }}
-          >
-            <div className="mb-6">
-              <p className={`mb-1 text-sm font-medium uppercase tracking-widest ${labelText}`}>{t("landing.pricing.free")}</p>
-              <p className={`mb-3 text-xs ${descText}`}>{t("landing.pricing.freeDesc")}</p>
-              <p className={`text-4xl font-bold ${priceText}`}>€0</p>
-            </div>
-            <ul className="mb-8 flex flex-col gap-3">
-              {freeFeatures.map((f) => (
-                <li key={f} className={`flex items-center gap-2.5 text-sm ${featureText}`}>
-                  <CheckIcon darkMode={darkMode} />
-                  {f}
-                </li>
-              ))}
-            </ul>
-            <Link to="/register" className={btnSecondary}>
-              {t("landing.pricing.getStarted")}
-            </Link>
-          </div>
-
-          {/* Pro – highlighted */}
-          <div
-            className={`relative flex flex-col rounded-2xl p-7 ${
-              darkMode
-                ? "border border-green-500/30 bg-white/[0.03] shadow-[0_0_40px_rgba(34,197,94,0.04)]"
-                : "border border-[rgba(21,111,104,0.25)] backdrop-blur-xl shadow-[0_24px_60px_-16px_rgba(21,111,104,0.2)]"
-            }`}
-            style={darkMode ? undefined : { background: "linear-gradient(180deg, rgba(255, 252, 247, 0.92), rgba(255, 248, 240, 0.80))" }}
-          >
-            {/* Recommended badge */}
-            <span className={`absolute -top-3 left-1/2 -translate-x-1/2 rounded-full border px-3 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
-              darkMode
-                ? "border-green-500/20 bg-green-500/10 text-green-400/80"
-                : "border-teal-600/20 bg-teal-600/10 text-teal-700/80"
-            }`}>
-              {t("landing.pricing.recommended")}
-            </span>
-            <div className="mb-6">
-              <p className={`mb-1 text-sm font-medium uppercase tracking-widest ${labelText}`}>{t("landing.pricing.pro")}</p>
-              <p className={`mb-3 text-xs ${descText}`}>{t("landing.pricing.proDesc")}</p>
-              <div className="flex items-baseline gap-1">
-                <p className={`text-4xl font-bold ${priceText}`}>€0.99</p>
-                <span className={`text-sm ${descText}`}>/{t("landing.pricing.proMonthly")}</span>
-              </div>
-              <p className={`mt-1 text-xs ${darkMode ? "text-white/25" : "text-[#1e2e28]/30"}`}>€9.99{t("landing.pricing.perYear")}</p>
-            </div>
-            <ul className="mb-8 flex flex-col gap-3">
-              {proFeatures.map((f) => (
-                <li key={f} className={`flex items-center gap-2.5 text-sm ${featureText}`}>
-                  <CheckIcon darkMode={darkMode} />
-                  {f}
-                </li>
-              ))}
-            </ul>
-            <Link
-              to="/register"
-              className={`mt-auto block rounded-xl border px-5 py-2.5 text-center text-sm font-medium transition-colors duration-200 ${
-                darkMode
-                  ? "border-green-500/30 bg-green-500/[0.08] text-green-400 hover:bg-green-500/[0.14]"
-                  : "border-teal-600/30 bg-teal-600/[0.08] text-teal-700 hover:bg-teal-600/[0.14]"
-              }`}
-            >
-              {t("landing.pricing.startPro")}
-            </Link>
-          </div>
-
-          {/* Organizations */}
-          <div
-            className={cardBase}
-            style={darkMode ? undefined : { background: "linear-gradient(180deg, rgba(255, 252, 247, 0.88), rgba(255, 248, 240, 0.72))" }}
-          >
-            <div className="mb-6">
-              <p className={`mb-1 text-sm font-medium uppercase tracking-widest ${labelText}`}>{t("landing.pricing.org")}</p>
-              <p className={`mb-3 text-xs ${descText}`}>{t("landing.pricing.orgDesc")}</p>
-              <div>
-                <p className={`text-xs ${descText}`}>{t("landing.pricing.orgStartingAt")}</p>
-                <p className={`text-4xl font-bold ${priceText}`}>€25{t("landing.pricing.perYear")}</p>
-              </div>
-            </div>
-            <ul className="mb-6 flex flex-col gap-3">
-              {orgFeatures.map((f) => (
-                <li key={f} className={`flex items-center gap-2.5 text-sm ${featureText}`}>
-                  <CheckIcon darkMode={darkMode} />
-                  {f}
-                </li>
-              ))}
-            </ul>
-            <p className={`mb-6 text-[11px] leading-relaxed ${darkMode ? "text-white/20" : "text-[#1e2e28]/30"}`}>{t("landing.pricing.orgDetails")}</p>
-            <Link to="/register" className={btnSecondary}>
-              {t("landing.pricing.createOrg")}
-            </Link>
-          </div>
+        <div className="scroll-reveal grid grid-cols-1 gap-6 md:grid-cols-3">
+          <PricingCard
+            pal={pal}
+            planLabel={t("landing.pricing.free")}
+            planDesc={t("landing.pricing.freeDesc")}
+            price="€0"
+            priceSuffix=""
+            features={freeFeatures}
+            cta={t("landing.pricing.getStarted")}
+            ctaHref="/register"
+            stampColor={pal.moss}
+          />
+          <PricingCard
+            pal={pal}
+            planLabel={t("landing.pricing.pro")}
+            planDesc={t("landing.pricing.proDesc")}
+            price="€0.99"
+            priceSuffix={`/ ${t("landing.pricing.proMonthly")}`}
+            priceSub={`€9.99${t("landing.pricing.perYear")}`}
+            features={proFeatures}
+            cta={t("landing.pricing.startPro")}
+            ctaHref="/register"
+            recommendedLabel={t("landing.pricing.recommended")}
+            stampColor={pal.stamp}
+            highlighted
+          />
+          <PricingCard
+            pal={pal}
+            planLabel={t("landing.pricing.org")}
+            planDesc={t("landing.pricing.orgDesc")}
+            priceKicker={t("landing.pricing.orgStartingAt")}
+            price="€25"
+            priceSuffix={t("landing.pricing.perYear")}
+            features={orgFeatures}
+            footnote={t("landing.pricing.orgDetails")}
+            cta={t("landing.pricing.createOrg")}
+            ctaHref="/register"
+            stampColor={pal.moss}
+          />
         </div>
       </div>
     </section>
+  );
+}
+
+function PricingCard({
+  pal,
+  planLabel,
+  planDesc,
+  price,
+  priceSuffix,
+  priceKicker,
+  priceSub,
+  features,
+  cta,
+  ctaHref,
+  footnote,
+  recommendedLabel,
+  stampColor,
+  highlighted,
+}: {
+  pal: Palette;
+  planLabel: string;
+  planDesc: string;
+  price: string;
+  priceSuffix?: string;
+  priceKicker?: string;
+  priceSub?: string;
+  features: string[];
+  cta: string;
+  ctaHref: string;
+  footnote?: string;
+  recommendedLabel?: string;
+  stampColor: string;
+  highlighted?: boolean;
+}) {
+  return (
+    <div
+      className="relative flex flex-col"
+      style={{
+        background: highlighted ? pal.paper : pal.paperAlt,
+        border: `1.5px solid ${pal.ink}`,
+        boxShadow: highlighted
+          ? `0 0 0 4px ${pal.paper}, 0 0 0 5px ${pal.ink}`
+          : "none",
+      }}
+    >
+      <Reticle color={pal.ink} size={14} />
+
+      {/* Recommended rotated stamp */}
+      {recommendedLabel && (
+        <div className="absolute -top-4 right-6 z-10">
+          <span
+            className="stamp-wobble font-mono-atlas inline-block bg-[color:var(--tw-bg)] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.3em]"
+            style={{
+              color: pal.stamp,
+              background: pal.paper,
+              border: `1.5px solid ${pal.stamp}`,
+              boxShadow: `inset 0 0 0 3px ${pal.paper}, inset 0 0 0 4px ${pal.stamp}`,
+              transform: "rotate(-4deg)",
+            }}
+          >
+            ★ {recommendedLabel}
+          </span>
+        </div>
+      )}
+
+      {/* Top perforation */}
+      <TicketPerforation pal={pal} />
+
+      <div className="flex flex-1 flex-col p-7 pt-5">
+        <StampOutline color={stampColor} rotate={-2} className="mb-5 self-start">
+          {planLabel}
+        </StampOutline>
+        <p className="font-display-italic mb-5 text-sm" style={{ color: pal.moss }}>
+          {planDesc}
+        </p>
+
+        {priceKicker && (
+          <p
+            className="font-mono-atlas mb-1 text-[10px] uppercase tracking-[0.24em]"
+            style={{ color: pal.moss }}
+          >
+            {priceKicker}
+          </p>
+        )}
+        <div className="mb-6 flex items-baseline gap-1.5">
+          <span
+            className="font-display text-5xl font-bold tracking-[-0.03em]"
+            style={{ color: pal.inkStrong }}
+          >
+            {price}
+          </span>
+          {priceSuffix && (
+            <span
+              className="font-mono-atlas text-sm uppercase tracking-[0.2em]"
+              style={{ color: pal.moss }}
+            >
+              {priceSuffix}
+            </span>
+          )}
+        </div>
+        {priceSub && (
+          <p
+            className="font-mono-atlas -mt-4 mb-6 text-[10px] uppercase tracking-[0.24em]"
+            style={{ color: pal.moss }}
+          >
+            {priceSub}
+          </p>
+        )}
+
+        <div className="mb-6">
+          <p
+            className="font-display-italic text-sm leading-relaxed"
+            style={{ color: pal.ink }}
+          >
+            {features.map((f, i) => (
+              <span key={i}>
+                {f}
+                {i < features.length - 1 && <FraunDivider pal={pal} />}
+              </span>
+            ))}
+          </p>
+        </div>
+
+        {footnote && (
+          <p
+            className="font-mono-atlas mb-6 text-[10px] leading-relaxed tracking-[0.14em]"
+            style={{ color: pal.moss }}
+          >
+            {footnote}
+          </p>
+        )}
+
+        <Link
+          to={ctaHref}
+          className="font-ui mt-auto inline-flex items-center justify-center px-5 py-3 text-sm font-semibold uppercase tracking-[0.18em] transition-opacity hover:opacity-85"
+          style={{
+            background: highlighted ? pal.trail : "transparent",
+            color: highlighted ? pal.paper : pal.ink,
+            border: `1.25px solid ${highlighted ? pal.trail : pal.ink}`,
+          }}
+        >
+          {cta} &nbsp;&rarr;
+        </Link>
+      </div>
+
+      {/* Bottom perforation */}
+      <TicketPerforation pal={pal} />
+    </div>
   );
 }
 
@@ -773,50 +1478,104 @@ function Pricing({ darkMode }: { darkMode: boolean }) {
    Footer
    ================================================================= */
 
-function Footer({ darkMode }: { darkMode: boolean }) {
+function Footer({ pal }: { pal: Palette }) {
   const { t } = useTranslation();
 
   return (
-    <footer className={`border-t px-6 py-12 ${darkMode ? "border-white/[0.04]" : "border-[rgba(40,56,48,0.08)]"}`}>
-      <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-6 md:flex-row">
-        <div className="flex items-center gap-3">
-          <div className={`flex h-8 w-8 items-center justify-center rounded-lg border ${
-            darkMode ? "border-green-500/20 bg-green-500/10" : "border-teal-600/25 bg-teal-600/10"
-          }`}>
-            <Compass className={`h-4 w-4 ${darkMode ? "text-green-500" : "text-teal-700"}`} />
+    <footer className="relative px-6 pb-14 pt-10">
+      <div className="mx-auto max-w-6xl">
+        <DoubleRule pal={pal} className="mb-8" />
+
+        <div className="flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
+          <div className="flex items-center gap-3">
+            <CompassMiniMark pal={pal} />
+            <div>
+              <span
+                className="font-display block text-base font-semibold tracking-[-0.01em]"
+                style={{ color: pal.inkStrong }}
+              >
+                PointFinder
+              </span>
+              <span
+                className="font-display-italic block text-sm"
+                style={{ color: pal.moss }}
+              >
+                &mdash; {t("landing.footer.tagline")}
+              </span>
+            </div>
           </div>
-          <div>
-            <span className={`block text-sm font-semibold ${darkMode ? "text-white" : "text-[#1e2e28]"}`}>PointFinder</span>
-            <span className={`block text-xs ${darkMode ? "text-white/25" : "text-[#1e2e28]/35"}`}>{t("landing.footer.tagline")}</span>
+
+          <div className="font-mono-atlas flex flex-wrap items-center gap-5 text-[11px] uppercase tracking-[0.24em]">
+            <Link
+              to="/faq"
+              className="transition-opacity hover:opacity-60"
+              style={{ color: pal.ink }}
+            >
+              {t("faq.label")}
+            </Link>
+            <span style={{ color: pal.moss }}>·</span>
+            <Link
+              to="/privacy"
+              className="transition-opacity hover:opacity-60"
+              style={{ color: pal.ink }}
+            >
+              {t("landing.footer.privacyPolicy")}
+            </Link>
+            <span style={{ color: pal.moss }}>·</span>
+            <Link
+              to="/login"
+              className="transition-opacity hover:opacity-60"
+              style={{ color: pal.trail }}
+            >
+              {t("landing.footer.operatorLogin")} &rarr;
+            </Link>
           </div>
+
+          <span
+            className="font-mono-atlas text-[10px] uppercase tracking-[0.22em]"
+            style={{ color: pal.moss }}
+          >
+            {t("landing.footer.copyright", { year: new Date().getFullYear() })}
+          </span>
         </div>
 
-        <div className="flex items-center gap-4 text-sm">
-          <Link
-            to="/faq"
-            className={`transition-colors duration-200 ${darkMode ? "text-white/25 hover:text-green-400" : "text-[#1e2e28]/30 hover:text-teal-700"}`}
-          >
-            {t("faq.label")}
-          </Link>
-          <Link
-            to="/privacy"
-            className={`transition-colors duration-200 ${darkMode ? "text-white/25 hover:text-green-400" : "text-[#1e2e28]/30 hover:text-teal-700"}`}
-          >
-            {t("landing.footer.privacyPolicy")}
-          </Link>
-          <Link
-            to="/login"
-            className={`transition-colors duration-200 ${darkMode ? "text-white/25 hover:text-green-400" : "text-[#1e2e28]/30 hover:text-teal-700"}`}
-          >
-            {t("landing.footer.operatorLogin")} &rarr;
-          </Link>
-        </div>
+        <DoubleRule pal={pal} className="mt-8" />
 
-        <span className={`text-xs ${darkMode ? "text-white/15" : "text-[#1e2e28]/25"}`}>
-          {t("landing.footer.copyright", { year: new Date().getFullYear() })}
-        </span>
+        <div className="mt-6 flex items-center justify-between">
+          <span
+            className="font-mono-atlas text-[9px] uppercase tracking-[0.3em]"
+            style={{ color: pal.moss }}
+          >
+            PLATE 04 / 04 · END OF SHEET
+          </span>
+          <span
+            className="font-mono-atlas text-[9px] uppercase tracking-[0.3em]"
+            style={{ color: pal.moss }}
+          >
+            WGS-84 · 41.1579° N · 8.6291° W
+          </span>
+        </div>
       </div>
     </footer>
+  );
+}
+
+/* =================================================================
+   Section spacer — section-to-section ornamental divider
+   ================================================================= */
+
+function SectionDivider({ pal }: { pal: Palette }) {
+  return (
+    <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-6">
+      <div className="h-px flex-1" style={{ background: pal.ink, opacity: 0.18 }} />
+      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+        <circle cx="11" cy="11" r="9" fill="none" stroke={pal.ink} strokeWidth="0.8" opacity="0.55" />
+        <line x1="11" y1="2" x2="11" y2="20" stroke={pal.ink} strokeWidth="0.6" opacity="0.55" />
+        <line x1="2" y1="11" x2="20" y2="11" stroke={pal.ink} strokeWidth="0.6" opacity="0.55" />
+        <circle cx="11" cy="11" r="1.5" fill={pal.ink} opacity="0.7" />
+      </svg>
+      <div className="h-px flex-1" style={{ background: pal.ink, opacity: 0.18 }} />
+    </div>
   );
 }
 
@@ -827,7 +1586,7 @@ function Footer({ darkMode }: { darkMode: boolean }) {
 export function LandingPage() {
   const containerRef = useScrollReveal();
   const [darkMode, setDarkMode] = useState(() => {
-    if (typeof window === "undefined") return true;
+    if (typeof window === "undefined") return false;
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
 
@@ -838,30 +1597,42 @@ export function LandingPage() {
     return () => mq.removeEventListener("change", handler);
   }, []);
 
+  const pal = palette(darkMode);
+
   return (
     <div
       ref={containerRef}
-      className={`min-h-screen overflow-x-hidden ${darkMode ? "bg-[#060b06] text-white" : "text-[#1e2e28]"}`}
-      style={darkMode ? undefined : {
-        backgroundImage: [
-          "radial-gradient(circle at 10% 10%, rgba(21, 111, 104, 0.18), transparent 35%)",
-          "radial-gradient(circle at 90% 5%, rgba(211, 131, 61, 0.15), transparent 30%)",
-          "radial-gradient(circle at 50% 60%, rgba(21, 111, 104, 0.06), transparent 40%)",
-          "radial-gradient(circle at 80% 80%, rgba(211, 131, 61, 0.08), transparent 30%)",
-          "repeating-linear-gradient(115deg, rgba(21, 111, 104, 0.04) 0, rgba(21, 111, 104, 0.04) 1.5px, transparent 1.5px, transparent 50px)",
-          "linear-gradient(180deg, #f4efe6 0%, #efe8dc 50%, #eae2d4 100%)",
-        ].join(","),
+      className="font-ui relative min-h-screen overflow-x-hidden"
+      style={{
+        background: pal.paper,
+        color: pal.ink,
       }}
     >
-      <Navbar darkMode={darkMode} onToggleTheme={() => setDarkMode(d => !d)} />
-      <Hero darkMode={darkMode} />
-      <SectionDivider />
-      <HowItWorks darkMode={darkMode} />
-      <SectionDivider />
-      <Features darkMode={darkMode} />
-      <SectionDivider />
-      <Pricing darkMode={darkMode} />
-      <Footer darkMode={darkMode} />
+      <AtlasDefs dark={darkMode} />
+      <PaperGrain />
+
+      {/* Subtle page-wide grid backdrop */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 z-0"
+        style={{
+          backgroundImage: `linear-gradient(${pal.gridSoft} 1px, transparent 1px), linear-gradient(90deg, ${pal.gridSoft} 1px, transparent 1px)`,
+          backgroundSize: "48px 48px",
+          opacity: 0.6,
+        }}
+      />
+
+      <div className="relative z-10">
+        <Navbar dark={darkMode} pal={pal} onToggleTheme={() => setDarkMode((d) => !d)} />
+        <Hero pal={pal} dark={darkMode} />
+        <SectionDivider pal={pal} />
+        <HowItWorks pal={pal} />
+        <SectionDivider pal={pal} />
+        <Features pal={pal} />
+        <SectionDivider pal={pal} />
+        <Pricing pal={pal} />
+        <Footer pal={pal} />
+      </div>
     </div>
   );
 }

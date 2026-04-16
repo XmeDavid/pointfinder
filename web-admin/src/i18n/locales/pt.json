@@ -51,7 +51,28 @@
     "manageTags": "Gerir Etiquetas",
     "toggleView": "Alternar vista",
     "useArrowKeys": "Use as teclas de seta ou escreva para alterar o valor",
-    "remove": "Remover"
+    "remove": "Remover",
+    "error": "Algo correu mal.",
+    "unknownError": "Erro desconhecido",
+    "retry": "Tentar novamente",
+    "confirm": {
+      "deleteBaseTitle": "Eliminar esta base?",
+      "deleteBaseDescription": "Esta ação não pode ser anulada.",
+      "deleteBaseCascade_one": "Também será removida {{count}} atribuição de desafio ligada.",
+      "deleteBaseCascade_other": "Também serão removidas {{count}} atribuições de desafios ligadas.",
+      "deleteChallengeTitle": "Eliminar este desafio?",
+      "deleteChallengeDescription": "Esta ação não pode ser anulada.",
+      "deleteChallengeCascade_one": "Também será removida {{count}} atribuição.",
+      "deleteChallengeCascade_other": "Também serão removidas {{count}} atribuições.",
+      "deleteStageTitle": "Eliminar esta fase?",
+      "deleteStageDescription": "As bases nesta fase serão retiradas dela. Esta ação não pode ser anulada.",
+      "deleteStageCascade_one": "Esta fase contém {{count}} base.",
+      "deleteStageCascade_other": "Esta fase contém {{count}} bases.",
+      "deleteTeamTitle": "Eliminar esta equipa?",
+      "deleteTeamDescription": "Todos os jogadores e atribuições ligados a esta equipa serão afetados. Esta ação não pode ser anulada.",
+      "deleteTeamMembers_one": "Esta equipa tem {{count}} membro.",
+      "deleteTeamMembers_other": "Esta equipa tem {{count}} membros."
+    }
   },
   "auth": {
     "signIn": "Entrar",
@@ -1068,5 +1089,126 @@
     "status": "Estado",
     "member": "membro",
     "members": "membros"
+  },
+  "command": {
+    "rescue": {
+      "title": "Resgate",
+      "fallbackBase": "Base",
+      "teamLabel": "Equipa",
+      "selectTeam": "Seleciona equipa...",
+      "actionLabel": "Ação",
+      "action": {
+        "manualCheckIn": "Check-in manual",
+        "manualCheckInDesc": "Contornar leitura NFC para esta equipa",
+        "markCompleted": "Marcar como concluído",
+        "markCompletedDesc": "Atribuir pontos sem submissão",
+        "unlockOverride": "Desbloquear base",
+        "unlockOverrideDesc": "Tornar a base visível para a equipa"
+      },
+      "challengeLabel": "Desafio",
+      "selectChallenge": "Seleciona desafio...",
+      "pointsOverrideLabel": "Pontos personalizados (opcional)",
+      "pointsOverridePlaceholder": "Pontos predefinidos do desafio",
+      "reasonLabel": "Motivo",
+      "reasonPlaceholder": "p. ex. leitor NFC avariado",
+      "cancel": "Cancelar",
+      "sending": "A enviar...",
+      "confirm": "Confirmar"
+    }
+  },
+  "review": {
+    "title": "Submissões",
+    "filters": {
+      "pending": "Pendentes",
+      "all": "Todas",
+      "approved": "Aprovadas",
+      "rejected": "Rejeitadas"
+    },
+    "allTeams": "Todas as equipas",
+    "emptyPending": "Tudo em dia! Sem submissões pendentes para rever.",
+    "emptyFilter": "Nenhuma submissão corresponde a este filtro.",
+    "unknownTeam": "Desconhecida",
+    "unknownChallenge": "Desconhecido",
+    "backToSubmissions": "Voltar às submissões",
+    "selectOnePrompt": "Seleciona uma submissão da lista para a rever.",
+    "keyboardHintDesktop": "Usa ↑↓ para navegar, A para aprovar, R para rejeitar.",
+    "kbd": {
+      "approve": "Aprovar",
+      "reject": "Rejeitar",
+      "navigate": "Navegar",
+      "skip": "Saltar"
+    },
+    "loading": "A carregar submissões...",
+    "loadError": "Não foi possível carregar submissões.",
+    "retry": "Tentar novamente"
+  },
+  "dashboard": {
+    "yourGames": "Os Teus Jogos",
+    "createYourFirst": "Cria o teu primeiro jogo para começar.",
+    "loadFailed": "Falha ao carregar jogos: {{err}}",
+    "noMatches": "Nenhum jogo corresponde a \"{{query}}\".",
+    "importBtn": "Importar",
+    "searchPlaceholder": "Procurar jogos...",
+    "noGamesYet": "Ainda sem jogos"
+  },
+  "import": {
+    "title": "Importar Jogo",
+    "description": "Carrega um ficheiro de exportação para criar um novo jogo com todas as bases, desafios e equipas.",
+    "invalidStructure": "Estrutura do ficheiro de exportação inválida",
+    "failed": "Falha ao importar jogo. Tenta novamente.",
+    "importing": "A importar...",
+    "importBtn": "Importar"
+  },
+  "build": {
+    "searchBases": "Procurar bases...",
+    "searchBasesEmpty": "Nenhuma base corresponde à pesquisa",
+    "noBasesYet": "Ainda sem bases",
+    "selectBasePrompt": "Seleciona uma base para ver os detalhes",
+    "selectChallengePrompt": "Seleciona um desafio para ver os detalhes",
+    "selectTeamPrompt": "Seleciona uma equipa para ver os detalhes",
+    "selectStagePrompt": "Seleciona uma fase para ver os detalhes",
+    "searchChallenges": "Procurar desafios...",
+    "searchChallengesEmpty": "Nenhum desafio corresponde à pesquisa",
+    "noChallengesYet": "Ainda sem desafios",
+    "noTeamsYet": "Ainda sem equipas",
+    "baseDescription": "Descrição da base...",
+    "correctAnswerPlaceholder": "Respostas aceites separadas por vírgula",
+    "operatorNotesPlaceholder": "Notas internas visíveis apenas para operadores...",
+    "completionPlaceholder": "O que as equipas veem após concluir este desafio...",
+    "challengeContentPlaceholder": "Conteúdo do desafio...",
+    "tagPlaceholder": "Nome da etiqueta...",
+    "variableKeyPlaceholder": "Chave da variável (p. ex. teamCode)",
+    "variableValuePlaceholder": "Valor...",
+    "stage": {
+      "createFailed": "Falha ao criar fase: {{err}}"
+    }
+  },
+  "command2": {
+    "empty": {
+      "loading": "A carregar dados em tempo real...",
+      "statsLoading": "A carregar estatísticas...",
+      "activityLoading": "A carregar atividade...",
+      "leaderboardLoading": "A carregar classificação..."
+    },
+    "error": {
+      "retry": "Tentar novamente"
+    }
+  },
+  "broadcast": {
+    "loadFailed": "Não foi possível carregar dados em direto."
+  },
+  "billingProgress": {
+    "used": "utilizado",
+    "of": "de",
+    "unlimited": "ilimitado",
+    "usageTitle": "Utilização & Limites"
+  },
+  "invites": {
+    "accept": "Aceitar",
+    "decline": "Recusar",
+    "declineConfirmTitle": "Recusar convite?",
+    "declineConfirmDescription": "O convite será removido e não poderás entrar neste jogo através dele.",
+    "declineFailed": "Falha ao recusar convite.",
+    "declined": "Convite recusado."
   }
 }

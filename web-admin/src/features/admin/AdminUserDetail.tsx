@@ -14,7 +14,7 @@ interface Props {
 }
 
 export function AdminUserDetail({ userId, onBack }: Props) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
@@ -126,18 +126,18 @@ export function AdminUserDetail({ userId, onBack }: Props) {
           {user.currentPeriodEnd && (
             <div>
               <p className="text-muted-foreground">Period end</p>
-              <p className="text-foreground">{new Date(user.currentPeriodEnd).toLocaleDateString()}</p>
+              <p className="text-foreground">{new Date(user.currentPeriodEnd).toLocaleDateString(i18n.language)}</p>
             </div>
           )}
           {user.gracePeriodEnd && (
             <div>
               <p className="text-muted-foreground">Grace period end</p>
-              <p className="text-foreground">{new Date(user.gracePeriodEnd).toLocaleDateString()}</p>
+              <p className="text-foreground">{new Date(user.gracePeriodEnd).toLocaleDateString(i18n.language)}</p>
             </div>
           )}
           <div>
             <p className="text-muted-foreground">Joined</p>
-            <p className="text-foreground">{new Date(user.createdAt).toLocaleDateString()}</p>
+            <p className="text-foreground">{new Date(user.createdAt).toLocaleDateString(i18n.language)}</p>
           </div>
         </div>
       </div>

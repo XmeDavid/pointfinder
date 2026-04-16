@@ -57,7 +57,7 @@ export function DashboardPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground">PointFinder</h1>
-          <p className="text-sm text-muted-foreground mt-1">Your Games</p>
+          <p className="text-sm text-muted-foreground mt-1">{t('dashboard.yourGames')}</p>
         </div>
         <div className="flex gap-2">
           <button
@@ -65,7 +65,7 @@ export function DashboardPage() {
             data-testid="import-game-btn"
             className="px-4 py-2 border border-border text-foreground rounded-lg text-sm font-medium hover:bg-muted transition-colors"
           >
-            Import
+            {t('dashboard.importBtn')}
           </button>
           <Tooltip content={atGameLimit ? t('quota.gameLimit', 'Game limit reached. Upgrade your plan.') : null}>
             <button
@@ -74,7 +74,7 @@ export function DashboardPage() {
               disabled={atGameLimit}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              + New Game
+              {t('games.newGame')}
             </button>
           </Tooltip>
         </div>
@@ -85,7 +85,7 @@ export function DashboardPage() {
         <SearchInput
           value={search}
           onChange={setSearch}
-          placeholder="Search games..."
+          placeholder={t('dashboard.searchPlaceholder')}
           className="mb-6 max-w-sm"
         />
       )}
@@ -96,21 +96,23 @@ export function DashboardPage() {
       {/* Error */}
       {isError && (
         <p className="text-sm text-destructive">
-          Failed to load games: {(error as Error)?.message ?? 'Unknown error'}
+          {t('dashboard.loadFailed', {
+            err: (error as Error)?.message ?? t('common.unknownError'),
+          })}
         </p>
       )}
 
       {/* Empty state */}
       {!isLoading && !isError && games && games.length === 0 && (
         <EmptyState
-          title="No games yet"
-          description="Create your first game to get started."
+          title={t('dashboard.noGamesYet')}
+          description={t('dashboard.createYourFirst')}
           action={
             <button
               onClick={() => setDialogOpen(true)}
               className="mt-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
             >
-              + New Game
+              {t('games.newGame')}
             </button>
           }
         />
@@ -123,7 +125,7 @@ export function DashboardPage() {
         games.length > 0 &&
         filtered.length === 0 && (
           <p className="text-sm text-muted-foreground">
-            No games match &ldquo;{search}&rdquo;
+            {t('dashboard.noMatches', { query: search })}
           </p>
         )}
 

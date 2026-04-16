@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Plus, Check } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useTags } from '@/hooks/queries/useTags'
 import { useCreateTag } from '@/hooks/mutations/useTagMutations'
 import { COLOR_PALETTE, pickNextDefaultColor } from '@/lib/colorPalette'
@@ -12,6 +13,7 @@ interface TagPickerProps {
 }
 
 export function TagPicker({ gameId, selectedTagIds, onChange }: TagPickerProps) {
+  const { t } = useTranslation()
   const { data: tags = [] } = useTags(gameId)
   const createTag = useCreateTag(gameId)
 
@@ -86,7 +88,7 @@ export function TagPicker({ gameId, selectedTagIds, onChange }: TagPickerProps) 
               type="text"
               value={newLabel}
               onChange={(e) => setNewLabel(e.target.value)}
-              placeholder="Tag name..."
+              placeholder={t('build.tagPlaceholder')}
               maxLength={40}
               autoFocus
               data-testid="tag-create-input"

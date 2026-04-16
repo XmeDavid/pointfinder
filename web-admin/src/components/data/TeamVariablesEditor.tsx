@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { Plus, Trash2, Save, ChevronRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useGameVariables, useChallengeVariables } from '@/hooks/queries/useVariables'
@@ -14,6 +15,7 @@ interface TeamVariablesEditorProps {
 }
 
 export function TeamVariablesEditor({ gameId, challengeId, teams }: TeamVariablesEditorProps) {
+  const { t } = useTranslation()
   const gameVarsQuery = useGameVariables(challengeId ? undefined : gameId)
   const challengeVarsQuery = useChallengeVariables(
     challengeId ? gameId : undefined,
@@ -170,7 +172,7 @@ export function TeamVariablesEditor({ gameId, challengeId, teams }: TeamVariable
                         <Input
                           value={variable.teamValues[team.id] ?? ''}
                           onChange={(e) => updateValue(variable.key, team.id, e.target.value)}
-                          placeholder="Value..."
+                          placeholder={t('build.variableValuePlaceholder')}
                           className="h-8 text-sm"
                         />
                       </div>
@@ -191,7 +193,7 @@ export function TeamVariablesEditor({ gameId, challengeId, teams }: TeamVariable
               setNewKeyName(e.target.value)
               setKeyError('')
             }}
-            placeholder="Variable key (e.g. teamCode)"
+            placeholder={t('build.variableKeyPlaceholder')}
             className="h-8 text-sm font-mono"
             data-testid="variable-key-input"
             onKeyDown={(e) => {

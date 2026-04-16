@@ -49,7 +49,7 @@ function fileTypeIcon(contentType: string, type: 'file' | 'document') {
 }
 
 export function ResourceBrowser({ orgId, gameId, showShareToggle }: ResourceBrowserProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [editingDocId, setEditingDocId] = useState<string | null>(null)
@@ -395,7 +395,7 @@ export function ResourceBrowser({ orgId, gameId, showShareToggle }: ResourceBrow
                       <span>·</span>
                       <span>{resource.createdByName}</span>
                       <span>·</span>
-                      <span>{new Date(resource.createdAt).toLocaleDateString()}</span>
+                      <span>{new Date(resource.createdAt).toLocaleDateString(i18n.language)}</span>
                     </div>
                   </div>
 
