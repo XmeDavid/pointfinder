@@ -217,6 +217,11 @@ public class AuthService {
 
         User user = resetToken.getUser();
         user.setPasswordHash(passwordEncoder.encode(newPassword));
+        // Bump token_version so every access JWT minted before the reset is
+        // rejected by JwtAuthenticationFilter. Refresh tokens are also wiped
+        // below; the tv bump closes the ~15 min window where a stolen access
+        // token could otherwise continue to work after reset.
+        bumpTokenVersion(user);
         userRepository.save(user);
 
         resetToken.setUsed(true);
@@ -227,6 +232,16 @@ public class AuthService {
 
         // Delete all refresh tokens to log out all sessions
         refreshTokenRepository.deleteByUserId(user.getId());
+    }
+
+    /**
+     * Centralised tv++ helper so every password / role / force-logout path
+     * bumps consistently. Initialises null values (legacy rows before V54's
+     * default) to a fresh counter of 1.
+     */
+    private void bumpTokenVersion(User user) {
+        int current = user.getTokenVersion() != null ? user.getTokenVersion() : 0;
+        user.setTokenVersion(current + 1);
     }
 
     @Transactional(timeout = 10)
@@ -240,6 +255,7 @@ public class AuthService {
         validatePassword(request.getNewPassword());
 
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        bumpTokenVersion(user);
         userRepository.save(user);
 
         // Invalidate all other sessions, keep the caller's
@@ -291,8 +307,9 @@ public class AuthService {
     }
 
     private AuthResponse generateAuthResponse(User user) {
+        int tokenVersion = user.getTokenVersion() != null ? user.getTokenVersion() : 0;
         String accessToken = tokenProvider.generateAccessToken(
-                user.getId(), user.getEmail(), user.getRole().name());
+                user.getId(), user.getEmail(), user.getRole().name(), tokenVersion);
 
         String refreshTokenStr = tokenProvider.generateRefreshTokenString();
 

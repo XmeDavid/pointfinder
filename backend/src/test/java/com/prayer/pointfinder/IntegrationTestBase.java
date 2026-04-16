@@ -189,4 +189,18 @@ public abstract class IntegrationTestBase {
         headers.set("Content-Type", "application/json");
         return headers;
     }
+
+    /**
+     * Builds a {@link com.prayer.pointfinder.dto.request.CheckInRequest} carrying
+     * the provided base's current {@code nfcToken}. Wave B hardened the check-in
+     * endpoint to reject requests without an NFC token; existing integration
+     * tests that historically passed an empty {@code new CheckInRequest()} now
+     * flow through this helper so the proof-of-presence invariant holds.
+     */
+    protected com.prayer.pointfinder.dto.request.CheckInRequest checkInRequestFor(Base base) {
+        Base refreshed = baseRepository.findById(base.getId()).orElse(base);
+        com.prayer.pointfinder.dto.request.CheckInRequest request = new com.prayer.pointfinder.dto.request.CheckInRequest();
+        request.setNfcToken(refreshed.getNfcToken());
+        return request;
+    }
 }

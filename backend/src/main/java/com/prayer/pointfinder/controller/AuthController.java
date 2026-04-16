@@ -5,12 +5,15 @@ import com.prayer.pointfinder.dto.response.AuthResponse;
 import com.prayer.pointfinder.dto.response.InviteTokenResponse;
 import com.prayer.pointfinder.dto.response.MessageResponse;
 import com.prayer.pointfinder.dto.response.PlayerAuthResponse;
+import com.prayer.pointfinder.exception.RateLimitExceededException;
 import com.prayer.pointfinder.service.AuthService;
 import com.prayer.pointfinder.service.InviteService;
+import com.prayer.pointfinder.service.PlayerJoinRateLimiter;
 import com.prayer.pointfinder.service.PlayerService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,18 +21,40 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
 
     private final AuthService authService;
     private final InviteService inviteService;
     private final PlayerService playerService;
+    private final PlayerJoinRateLimiter playerJoinRateLimiter;
 
     @Value("${app.frontend-url:https://pointfinder.pt}")
     private String frontendUrl;
 
     @PostMapping("/player/join")
-    public ResponseEntity<PlayerAuthResponse> joinTeam(@Valid @RequestBody PlayerJoinRequest request) {
+    public ResponseEntity<PlayerAuthResponse> joinTeam(
+            @Valid @RequestBody PlayerJoinRequest request,
+            HttpServletRequest httpRequest) {
+        String ip = resolveClientIp(httpRequest);
+        if (!playerJoinRateLimiter.tryAcquire(ip, request.getDeviceId())) {
+            log.warn("[AUTH] operation=playerJoin result=rateLimited ip={} deviceId={}",
+                    ip, request.getDeviceId());
+            throw new RateLimitExceededException("Too many join attempts. Please try again shortly.");
+        }
         return ResponseEntity.ok(playerService.joinTeam(request));
+    }
+
+    private String resolveClientIp(HttpServletRequest request) {
+        // Prefer X-Forwarded-For (first hop) from the reverse proxy; fall back
+        // to the direct remote addr when the app is hit without nginx in
+        // front of it (dev, tests).
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            int comma = forwarded.indexOf(',');
+            return comma > 0 ? forwarded.substring(0, comma).trim() : forwarded.trim();
+        }
+        return request.getRemoteAddr();
     }
 
     @PostMapping("/login")

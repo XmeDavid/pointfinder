@@ -161,8 +161,10 @@ public class AuditExportService {
         UUID currentOperatorId = null;
         try {
             currentOperatorId = SecurityUtils.getCurrentUser().getId();
-        } catch (Exception ignored) {
-            // tolerate unauthenticated or system calls
+        } catch (org.springframework.security.core.AuthenticationException | IllegalStateException ignored) {
+            // Tolerate unauthenticated or system invocations explicitly; narrower
+            // than the previous catch-all which also swallowed programmer errors
+            // (NPEs, repo failures, JSON serialization bugs) from the logging path.
         }
         log.info("[AUDIT] operation=export gameId={} operatorId={} format={} from={} to={} teamId={} playerId={} filterOperatorId={} sourceSurface={} includeArchived={} rowCount={}",
                 query.gameId(), currentOperatorId,

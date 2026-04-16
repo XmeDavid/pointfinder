@@ -50,6 +50,18 @@ public class JwtTokenProvider {
     private static final String AUDIENCE = "pointfinder-api";
 
     public String generateAccessToken(UUID userId, String email, String role) {
+        return generateAccessToken(userId, email, role, 0);
+    }
+
+    /**
+     * Access token minted with an explicit {@code tokenVersion} claim. Callers
+     * that have the current {@link com.prayer.pointfinder.entity.User} entity
+     * in hand should prefer this overload so the token tracks the user's
+     * live invalidation counter; otherwise the legacy 3-arg overload mints a
+     * token with {@code tv=0}, which is still valid for accounts that have
+     * not bumped their version since migration V54.
+     */
+    public String generateAccessToken(UUID userId, String email, String role, int tokenVersion) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + accessTokenExpirationMs);
 
@@ -60,6 +72,7 @@ public class JwtTokenProvider {
                 .claim("email", email)
                 .claim("role", role)
                 .claim("type", "user")
+                .claim("tv", tokenVersion)
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(key)
@@ -104,6 +117,17 @@ public class JwtTokenProvider {
             throw new JwtException("Token missing required 'type' claim");
         }
         return type;
+    }
+
+    /**
+     * Extracts the token's {@code tv} claim. Tokens minted before V54 do not
+     * carry the claim — those return 0 (the default user value) so pre-bump
+     * tokens keep working without forcing a mass logout at rollout time.
+     */
+    public int getTokenVersion(String token) {
+        Claims claims = getClaims(token);
+        Integer tv = claims.get("tv", Integer.class);
+        return tv == null ? 0 : tv;
     }
 
     public Claims getClaims(String token) {

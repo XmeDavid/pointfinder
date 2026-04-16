@@ -73,6 +73,14 @@ public enum ErrorCode {
     /** The operator's account is frozen; they must update their payment method. */
     ACCOUNT_FROZEN,
 
+    // ── Player join & check-in ───────────────────────────────────────────
+    /** Player check-in missing required nfcToken; client must scan the base NFC tag. */
+    NFC_TOKEN_REQUIRED,
+    /** The device already joined this game on a different team; switching teams mid-game is not allowed. */
+    DEVICE_ALREADY_IN_DIFFERENT_TEAM,
+    /** Too many join attempts for this IP or device in the current window. */
+    RATE_LIMITED,
+
     // ── Quota enforcement ────────────────────────────────────────────────
     /** User has reached the maximum number of active games for their tier. */
     QUOTA_ACTIVE_GAMES_EXCEEDED,

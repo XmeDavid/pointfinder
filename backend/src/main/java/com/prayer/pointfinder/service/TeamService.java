@@ -242,6 +242,10 @@ public class TeamService {
 
         CheckInResponse.ChallengeInfo challengeInfo = null;
         if (challenge != null) {
+            // Wave F contract: points is intentionally omitted from the
+            // player-/operator-facing CheckInResponse.ChallengeInfo because
+            // scoring is operator-only and the check-in surface is shared
+            // with the player app. See CheckInResponse javadoc.
             challengeInfo = CheckInResponse.ChallengeInfo.builder()
                     .id(challenge.getId())
                     .title(challenge.getTitle())
@@ -249,7 +253,6 @@ public class TeamService {
                     .content(challenge.getContent())
                     .completionContent(challenge.getCompletionContent())
                     .answerType(challenge.getAnswerType().name())
-                    .points(challenge.getPoints())
                     .requirePresenceToSubmit(challenge.getRequirePresenceToSubmit())
                     .build();
         }

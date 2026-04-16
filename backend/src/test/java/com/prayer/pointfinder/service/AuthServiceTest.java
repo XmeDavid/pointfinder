@@ -34,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -72,7 +73,7 @@ class AuthServiceTest {
     // --- Helper methods ---
 
     private void stubTokenGeneration() {
-        when(tokenProvider.generateAccessToken(any(), anyString(), anyString())).thenReturn("access-token");
+        when(tokenProvider.generateAccessToken(any(), anyString(), anyString(), anyInt())).thenReturn("access-token");
         when(tokenProvider.generateRefreshTokenString()).thenReturn("refresh-token");
         when(tokenProvider.getRefreshTokenExpirationMs()).thenReturn(604800000L);
         when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -353,7 +354,7 @@ class AuthServiceTest {
                     .build();
 
             when(refreshTokenRepository.findByToken("current-token")).thenReturn(Optional.of(storedToken));
-            when(tokenProvider.generateAccessToken(any(), anyString(), anyString())).thenReturn("access");
+            when(tokenProvider.generateAccessToken(any(), anyString(), anyString(), anyInt())).thenReturn("access");
             when(tokenProvider.generateRefreshTokenString()).thenReturn("new-refresh");
             when(tokenProvider.getRefreshTokenExpirationMs()).thenReturn(604800000L);
             when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(inv -> inv.getArgument(0));

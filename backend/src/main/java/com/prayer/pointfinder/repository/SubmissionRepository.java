@@ -119,18 +119,76 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
     @Query("SELECT COUNT(s) FROM Submission s WHERE s.challenge.id = :challengeId AND s.archived = false")
     long countByChallengeId(@Param("challengeId") UUID challengeId);
 
+    /**
+     * Exact-URL, game-scoped existence check used by {@code FileAccessService}
+     * to authorise operator reads. Matches via exact equality against the
+     * scalar {@code file_url} column or exact JSON-string membership in the
+     * {@code file_urls} column.
+     *
+     * <p>The previous implementation used a {@code LIKE '%filename%'}
+     * substring match, which could be broadened by {@code %} or {@code _}
+     * characters in the filename and allowed URL-fragment collisions across
+     * teams. The substring branch has been removed; both branches now require
+     * an exact string match, either scalar or element-equal inside the JSON
+     * array.
+     *
+     * <p>JSON branch: we iterate the candidate URLs in a subquery and check
+     * whether the submission's {@code file_urls} array, cast to {@code jsonb},
+     * contains a JSON array with the candidate as its sole element. The
+     * containment operator {@code @>} on {@code jsonb} performs exact
+     * equality on each array element (no LIKE, no normalization), so this is
+     * NOT vulnerable to substring collisions. Acceptable performance: the
+     * candidate list is tiny (three entries per filename) and the scalar
+     * {@code file_url} branch short-circuits the common case.
+     */
     @Query(value = "SELECT COUNT(*) > 0 FROM submissions s " +
            "JOIN teams t ON s.team_id = t.id " +
            "WHERE t.game_id = :gameId AND s.archived = false " +
-           "AND (s.file_url IN (:urls) OR (s.file_urls IS NOT NULL AND s.file_urls LIKE :urlPattern))",
+           "AND (s.file_url IN (:urls) " +
+           "     OR (s.file_urls IS NOT NULL " +
+           "         AND EXISTS (SELECT 1 FROM jsonb_array_elements_text(s.file_urls::jsonb) elt " +
+           "                     WHERE elt IN (:urls))))",
+           nativeQuery = true)
+    boolean existsByGameIdAndFileUrlIn(@Param("gameId") UUID gameId,
+                                       @Param("urls") List<String> urls);
+
+    /**
+     * Exact-URL, team-scoped existence check used by {@code FileAccessService}
+     * to authorise player reads. Same semantics as
+     * {@link #existsByGameIdAndFileUrlIn(UUID, List)} but scoped to a single
+     * team so a player can never probe another team's files.
+     */
+    @Query(value = "SELECT COUNT(*) > 0 FROM submissions s " +
+           "WHERE s.team_id = :teamId AND s.archived = false " +
+           "AND (s.file_url IN (:urls) " +
+           "     OR (s.file_urls IS NOT NULL " +
+           "         AND EXISTS (SELECT 1 FROM jsonb_array_elements_text(s.file_urls::jsonb) elt " +
+           "                     WHERE elt IN (:urls))))",
+           nativeQuery = true)
+    boolean existsByTeamIdAndFileUrlIn(@Param("teamId") UUID teamId,
+                                       @Param("urls") List<String> urls);
+
+    /**
+     * @deprecated Retained only to keep Wave A in-flight SubmissionRepository
+     *     edits from conflicting; callers must switch to
+     *     {@link #existsByGameIdAndFileUrlIn(UUID, List)}. The LIKE branch has
+     *     been removed; the {@code urlPattern} argument is ignored.
+     */
+    @Deprecated
+    @Query(value = "SELECT COUNT(*) > 0 FROM submissions s " +
+           "JOIN teams t ON s.team_id = t.id " +
+           "WHERE t.game_id = :gameId AND s.archived = false " +
+           "AND s.file_url IN (:urls)",
            nativeQuery = true)
     boolean existsByGameIdAndFileUrlOrFileUrls(@Param("gameId") UUID gameId,
                                                @Param("urls") List<String> urls,
                                                @Param("urlPattern") String urlPattern);
 
+    /** @deprecated see {@link #existsByGameIdAndFileUrlOrFileUrls(UUID, List, String)}. */
+    @Deprecated
     @Query(value = "SELECT COUNT(*) > 0 FROM submissions s " +
            "WHERE s.team_id = :teamId AND s.archived = false " +
-           "AND (s.file_url IN (:urls) OR (s.file_urls IS NOT NULL AND s.file_urls LIKE :urlPattern))",
+           "AND s.file_url IN (:urls)",
            nativeQuery = true)
     boolean existsByTeamIdAndFileUrlOrFileUrls(@Param("teamId") UUID teamId,
                                                @Param("urls") List<String> urls,

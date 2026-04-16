@@ -10,6 +10,7 @@ import com.prayer.pointfinder.util.NotificationMapper;
 import com.prayer.pointfinder.dto.response.*;
 import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.exception.BadRequestException;
+import com.prayer.pointfinder.exception.ErrorCode;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.*;
 import com.prayer.pointfinder.security.JwtTokenProvider;
@@ -62,7 +63,10 @@ public class PlayerService {
         }
 
         // Find existing player by device ID in this game, or create a new one.
-        // If the device rejoins with another team code in the same game, we switch teams.
+        // Device→team switching within the same game is rejected: once a device has
+        // joined a team, rejoining is only idempotent for the SAME team. A different
+        // team code means a different identity and would enable stealth takeover
+        // of another team's score/history.
         Player player = playerRepository.findFirstByDeviceIdAndTeamGameIdOrderByCreatedAtDesc(request.getDeviceId(), game.getId())
                 .orElse(null);
 
@@ -75,7 +79,14 @@ public class PlayerService {
                     .displayName(request.getDisplayName())
                     .build();
         } else {
-            player.setTeam(team);
+            // Existing device in this game — must match the team they originally
+            // joined. Force initialization of the lazy team proxy before comparing.
+            UUID existingTeamId = player.getTeam() != null ? player.getTeam().getId() : null;
+            if (existingTeamId != null && !existingTeamId.equals(team.getId())) {
+                throw new BadRequestException(
+                        "This device has already joined a different team in this game",
+                        ErrorCode.DEVICE_ALREADY_IN_DIFFERENT_TEAM);
+            }
             player.setDisplayName(request.getDisplayName());
         }
 
@@ -86,7 +97,12 @@ public class PlayerService {
             player = playerRepository.findFirstByDeviceIdAndTeamGameIdOrderByCreatedAtDesc(
                     request.getDeviceId(), game.getId())
                     .orElseThrow(() -> new BadRequestException("Join failed, please try again"));
-            player.setTeam(team);
+            UUID existingTeamId = player.getTeam() != null ? player.getTeam().getId() : null;
+            if (existingTeamId != null && !existingTeamId.equals(team.getId())) {
+                throw new BadRequestException(
+                        "This device has already joined a different team in this game",
+                        ErrorCode.DEVICE_ALREADY_IN_DIFFERENT_TEAM);
+            }
             player.setDisplayName(request.getDisplayName());
             player = playerRepository.save(player);
         }
@@ -134,13 +150,18 @@ public class PlayerService {
             throw new BadRequestException("Base does not belong to this game");
         }
 
-        // Validate NFC token if provided by client
-        if (request != null && request.getNfcToken() != null) {
-            if (!request.getNfcToken().equals(base.getNfcToken())) {
-                throw new BadRequestException("Invalid NFC verification token");
-            }
+        // NFC token is required: clients MUST scan the physical NFC tag at the
+        // base before checking in. A missing token means either the client is
+        // out-of-date or someone is attempting to bypass the physical proof of
+        // presence. The @Valid annotation on the controller already rejects
+        // null/blank values, but we keep this server-side guard for defense in
+        // depth (e.g. if a caller bypasses bean validation).
+        if (request == null || request.getNfcToken() == null || request.getNfcToken().isBlank()) {
+            throw new BadRequestException("NFC token is required for check-in", ErrorCode.NFC_TOKEN_REQUIRED);
         }
-        // TODO: Remove backwards-compat — require nfcToken for all check-ins once iOS app is updated
+        if (!request.getNfcToken().equals(base.getNfcToken())) {
+            throw new BadRequestException("Invalid NFC verification token");
+        }
 
         // Check if already checked in
         Optional<CheckIn> existing = checkInRepository.findByTeamIdAndBaseId(team.getId(), baseId);

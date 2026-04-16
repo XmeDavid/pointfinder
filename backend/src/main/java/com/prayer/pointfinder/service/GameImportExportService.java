@@ -14,8 +14,11 @@ import com.prayer.pointfinder.util.CodeGenerator;
 import com.prayer.pointfinder.util.HtmlSanitizer;
 import com.prayer.pointfinder.util.TagPalette;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.format.DateTimeParseException;
 
 import java.time.Instant;
 import java.util.*;
@@ -25,6 +28,7 @@ import java.util.stream.Collectors;
  * Handles game export and import logic.
  * Extracted from GameService to reduce complexity.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GameImportExportService {
@@ -369,8 +373,14 @@ public class GameImportExportService {
                 if (stageDto.getScheduledAt() != null && !stageDto.getScheduledAt().isBlank()) {
                     try {
                         scheduledAt = java.time.OffsetDateTime.parse(stageDto.getScheduledAt());
-                    } catch (Exception ignored) {
-                        // Invalid date format — leave null
+                    } catch (DateTimeParseException e) {
+                        // Malformed scheduled-at is recoverable — we leave the field null
+                        // and surface the skip in operator logs so the import result can
+                        // be audited. Previously this was a silent {@code Exception ignored}
+                        // that also masked NPEs and runtime failures.
+                        log.warn("[IMPORT] gameId={} stageName='{}' skipping malformed scheduledAt='{}' reason={}",
+                                newGame.getId(), stageDto.getName(),
+                                stageDto.getScheduledAt(), e.getMessage());
                     }
                 }
 

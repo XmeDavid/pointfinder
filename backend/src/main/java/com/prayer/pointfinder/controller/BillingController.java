@@ -2,9 +2,11 @@ package com.prayer.pointfinder.controller;
 
 import com.prayer.pointfinder.dto.request.CreateCheckoutRequest;
 import com.prayer.pointfinder.dto.request.CreateOrgCheckoutRequest;
+import com.prayer.pointfinder.dto.request.OrgPortalRequest;
 import com.prayer.pointfinder.dto.response.CheckoutResponse;
 import com.prayer.pointfinder.dto.response.InvoiceListResponse;
 import com.prayer.pointfinder.dto.response.UserSubscriptionResponse;
+import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.service.BillingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -39,8 +41,13 @@ public class BillingController {
     }
 
     @PostMapping("/org-portal")
-    public ResponseEntity<Map<String, String>> createOrgPortal(@RequestBody Map<String, String> request) {
-        UUID orgId = UUID.fromString(request.get("orgId"));
+    public ResponseEntity<Map<String, String>> createOrgPortal(@Valid @RequestBody OrgPortalRequest request) {
+        UUID orgId;
+        try {
+            orgId = UUID.fromString(request.orgId());
+        } catch (IllegalArgumentException ex) {
+            throw new BadRequestException("orgId must be a valid UUID");
+        }
         String url = billingService.createOrgPortalSession(orgId);
         return ResponseEntity.ok(Map.of("url", url));
     }

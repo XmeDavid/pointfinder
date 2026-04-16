@@ -45,6 +45,22 @@ public class User {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    /**
+     * Monotonically-increasing version used to invalidate JWTs issued before
+     * a security-sensitive event (password reset, role change, or explicit
+     * logout-everywhere). Every issued token embeds this value; the
+     * authentication filter rejects any token whose embedded version is less
+     * than the user's current version.
+     *
+     * <p>Defaults to 0 for backward compatibility with pre-V54 rows. Bumps
+     * happen inside the same transaction that mutates the triggering field
+     * (password, role) so a token minted before the bump can never outlive
+     * the commit.
+     */
+    @Builder.Default
+    @Column(name = "token_version", nullable = false)
+    private Integer tokenVersion = 0;
+
     @ManyToMany(mappedBy = "operators")
     @Builder.Default
     private Set<Game> operatedGames = new HashSet<>();

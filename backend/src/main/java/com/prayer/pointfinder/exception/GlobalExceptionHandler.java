@@ -75,6 +75,12 @@ public class GlobalExceptionHandler {
                 ex.getErrorCode() != null ? ex.getErrorCode().name() : null, null);
     }
 
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ErrorResponse> handleRateLimit(RateLimitExceededException ex) {
+        return jsonError(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage(), null, null,
+                ex.getErrorCode() != null ? ex.getErrorCode().name() : null, Boolean.TRUE);
+    }
+
     @ExceptionHandler(UploadSessionException.class)
     public ResponseEntity<ErrorResponse> handleUploadSession(UploadSessionException ex) {
         return jsonError(ex.getStatus(), ex.getMessage(), null, null, ex.getCode(), ex.isRetryable());

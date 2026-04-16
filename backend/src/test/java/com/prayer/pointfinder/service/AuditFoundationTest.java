@@ -86,7 +86,7 @@ class AuditFoundationTest extends IntegrationTestBase {
         authenticateAsPlayer(ctx.player);
 
         CheckInResponse response = playerService.checkIn(
-                ctx.game.getId(), ctx.base.getId(), ctx.player, new CheckInRequest());
+                ctx.game.getId(), ctx.base.getId(), ctx.player, checkInRequestFor(ctx.base));
 
         assertNotNull(response);
 
@@ -121,7 +121,7 @@ class AuditFoundationTest extends IntegrationTestBase {
         authenticateAsPlayer(ctx.player);
 
         // Player must check in before submitting.
-        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, new CheckInRequest());
+        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, checkInRequestFor(ctx.base));
 
         CreateSubmissionRequest request = new CreateSubmissionRequest();
         request.setTeamId(ctx.team.getId());
@@ -222,7 +222,7 @@ class AuditFoundationTest extends IntegrationTestBase {
         TestContext ctx = createLiveGameWithPlayer("archive");
         authenticateAsPlayer(ctx.player);
 
-        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, new CheckInRequest());
+        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, checkInRequestFor(ctx.base));
 
         CreateSubmissionRequest request = new CreateSubmissionRequest();
         request.setTeamId(ctx.team.getId());

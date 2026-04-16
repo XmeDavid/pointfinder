@@ -91,7 +91,7 @@ class AuditExportServiceTest extends IntegrationTestBase {
 
         // Player check-in + submission.
         authenticateAsPlayer(ctx.player);
-        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, new CheckInRequest());
+        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, checkInRequestFor(ctx.base));
 
         CreateSubmissionRequest submitReq = new CreateSubmissionRequest();
         submitReq.setTeamId(ctx.team.getId());
@@ -172,7 +172,7 @@ class AuditExportServiceTest extends IntegrationTestBase {
 
         // Generate events of at least two distinct types (check_in + submission).
         authenticateAsPlayer(ctx.player);
-        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, new CheckInRequest());
+        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, checkInRequestFor(ctx.base));
 
         CreateSubmissionRequest req = new CreateSubmissionRequest();
         req.setTeamId(ctx.team.getId());
@@ -207,7 +207,7 @@ class AuditExportServiceTest extends IntegrationTestBase {
         Player otherPlayer = createPlayer(otherTeam, "Other Scout", "device-other-fb");
 
         authenticateAsPlayer(ctx.player);
-        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, new CheckInRequest());
+        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, checkInRequestFor(ctx.base));
 
         authenticateAsPlayer(otherPlayer);
         playerService.checkIn(ctx.game.getId(), ctx.base.getId(), otherPlayer, new CheckInRequest());
@@ -236,7 +236,7 @@ class AuditExportServiceTest extends IntegrationTestBase {
         TestContext ctx = createLiveGameWithPlayer("fb-op");
         // Player check-in to have a non-matching row in the stream.
         authenticateAsPlayer(ctx.player);
-        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, new CheckInRequest());
+        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, checkInRequestFor(ctx.base));
 
         // Operator rescue: manual check-in on a second base.
         Base secondBase = createBase(ctx.game, "Second Base fb-op");
@@ -263,7 +263,7 @@ class AuditExportServiceTest extends IntegrationTestBase {
     void filterByDateRangeReturnsOnlyEventsWithinWindow() throws Exception {
         TestContext ctx = createLiveGameWithPlayer("fb-date");
         authenticateAsPlayer(ctx.player);
-        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, new CheckInRequest());
+        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, checkInRequestFor(ctx.base));
 
         Instant cutoff = Instant.now().plusSeconds(3600);
 
@@ -297,7 +297,7 @@ class AuditExportServiceTest extends IntegrationTestBase {
     void filterByActionTypeSingleValueMatchesExactly() throws Exception {
         TestContext ctx = createLiveGameWithPlayer("fb-type-single");
         authenticateAsPlayer(ctx.player);
-        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, new CheckInRequest());
+        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, checkInRequestFor(ctx.base));
 
         CreateSubmissionRequest req = new CreateSubmissionRequest();
         req.setTeamId(ctx.team.getId());
@@ -321,7 +321,7 @@ class AuditExportServiceTest extends IntegrationTestBase {
     void filterByActionTypeCommaSeparatedValueMatchesAnyOfTheSet() throws Exception {
         TestContext ctx = createLiveGameWithPlayer("fb-type-csv");
         authenticateAsPlayer(ctx.player);
-        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, new CheckInRequest());
+        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, checkInRequestFor(ctx.base));
 
         CreateSubmissionRequest req = new CreateSubmissionRequest();
         req.setTeamId(ctx.team.getId());
@@ -362,7 +362,7 @@ class AuditExportServiceTest extends IntegrationTestBase {
     void includeArchivedDefaultFalseHidesArchivedEvents() throws Exception {
         TestContext ctx = createLiveGameWithPlayer("fb-archive");
         authenticateAsPlayer(ctx.player);
-        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, new CheckInRequest());
+        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, checkInRequestFor(ctx.base));
 
         // Force an archive via resetProgress.
         authenticateAsOperator(ctx.operator);
@@ -391,7 +391,7 @@ class AuditExportServiceTest extends IntegrationTestBase {
     void csvFormatEmitsHeaderAndCorrectDataRows() {
         TestContext ctx = createLiveGameWithPlayer("csv-happy");
         authenticateAsPlayer(ctx.player);
-        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, new CheckInRequest());
+        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, checkInRequestFor(ctx.base));
 
         authenticateAsOperator(ctx.operator);
         AuditExportResult result = auditExportService.export(query(ctx.game.getId())
@@ -540,7 +540,7 @@ class AuditExportServiceTest extends IntegrationTestBase {
     void legacyRowWithNullSnapshotFallsBackToLiveJoin() throws Exception {
         TestContext ctx = createLiveGameWithPlayer("legacy");
         authenticateAsPlayer(ctx.player);
-        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, new CheckInRequest());
+        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, checkInRequestFor(ctx.base));
 
         // Simulate a pre-V36 row: clear the snapshot but leave the FK.
         ActivityEvent checkInEvent = activityEventRepository.findByGameIdIncludingArchived(ctx.game.getId())
@@ -567,7 +567,7 @@ class AuditExportServiceTest extends IntegrationTestBase {
     void legacyRowWithNullSnapshotAndNoActorEmitsUnknown() throws Exception {
         TestContext ctx = createLiveGameWithPlayer("legacy-unknown");
         authenticateAsPlayer(ctx.player);
-        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, new CheckInRequest());
+        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, checkInRequestFor(ctx.base));
 
         // Detach all actor information so the service has to emit "Unknown".
         ActivityEvent checkInEvent = activityEventRepository.findByGameIdIncludingArchived(ctx.game.getId())

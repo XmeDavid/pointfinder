@@ -43,7 +43,7 @@ public class PlayerController {
     @PostMapping("/games/{gameId}/bases/{baseId}/check-in")
     public ResponseEntity<CheckInResponse> checkIn(@PathVariable UUID gameId,
                                                     @PathVariable UUID baseId,
-                                                    @RequestBody(required = false) CheckInRequest request) {
+                                                    @Valid @RequestBody CheckInRequest request) {
         Player player = SecurityUtils.getCurrentPlayer();
         return ResponseEntity.ok(playerService.checkIn(gameId, baseId, player, request));
     }

@@ -69,6 +69,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return false;
         }
 
+        // Token-version check: tokens minted before a password reset or role
+        // change carry a lower {@code tv} claim than the user's current value.
+        // Reject them so the old credential material cannot re-enter once the
+        // user's state has moved forward.
+        int tokenVersion = tokenProvider.getTokenVersion(jwt);
+        int currentVersion = user.getTokenVersion() != null ? user.getTokenVersion() : 0;
+        if (tokenVersion < currentVersion) {
+            log.warn("[AUTH] operation=validateToken result=rejected reason=stale_token_version userId={} tokenTv={} currentTv={}",
+                    userId, tokenVersion, currentVersion);
+            return false;
+        }
+
         var authorities = List.of(
             new SimpleGrantedAuthority("ROLE_" + user.getRole().name().toUpperCase())
         );

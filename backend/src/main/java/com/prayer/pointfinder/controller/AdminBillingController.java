@@ -8,6 +8,7 @@ import com.prayer.pointfinder.repository.UserSubscriptionRepository;
 import com.prayer.pointfinder.security.SecurityUtils;
 import com.prayer.pointfinder.service.GameAccessService;
 import com.prayer.pointfinder.service.StorageMigrationService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +31,7 @@ public class AdminBillingController {
     @PatchMapping("/users/{userId}/subscription")
     public ResponseEntity<Void> overrideUserSubscription(
             @PathVariable UUID userId,
-            @RequestBody AdminSubscriptionOverrideRequest request) {
+            @Valid @RequestBody AdminSubscriptionOverrideRequest request) {
         gameAccessService.ensureCurrentUserIsAdmin();
 
         UserSubscription sub = userSubRepository.findByUserId(userId)
@@ -52,7 +53,7 @@ public class AdminBillingController {
     @PatchMapping("/orgs/{orgId}/subscription")
     public ResponseEntity<Void> overrideOrgSubscription(
             @PathVariable UUID orgId,
-            @RequestBody AdminSubscriptionOverrideRequest request) {
+            @Valid @RequestBody AdminSubscriptionOverrideRequest request) {
         gameAccessService.ensureCurrentUserIsAdmin();
 
         Organization org = orgRepository.findById(orgId)

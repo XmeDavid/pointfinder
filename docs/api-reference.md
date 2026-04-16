@@ -585,7 +585,7 @@ All three endpoints emit an `operator_override` activity event via the standard 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | POST | `/auth/player/join` | None | Join team via join code (see Auth section) |
-| POST | `/player/games/:gameId/bases/:baseId/check-in` | Player | Check in at NFC base |
+| POST | `/player/games/:gameId/bases/:baseId/check-in` | Player | Check in at NFC base. **Requires** `nfcToken` in body (Wave B). |
 | GET | `/player/games/:gameId/progress` | Player | Get team progress across all bases |
 | GET | `/player/games/:gameId/bases` | Player | Get available bases for player's team |
 | GET | `/player/games/:gameId/data` | Player | Get full game data (assignments, challenges, status) |
@@ -684,7 +684,17 @@ No `name`, `description`, `tags`, `color`, or `nfcToken` — those are operator-
 
 `challengeTitle` is **nullable**: `null` when no challenge is assigned for this `(team, base)` pair (e.g. a revealed hidden base that is purely a check-in-only unlock target, or a base whose assignment was cleared after the team joined). Player UIs fall back to a localized placeholder when the title is null.
 
-**`POST /player/games/:gameId/bases/:baseId/check-in` — `CheckInResponse`**
+**`POST /player/games/:gameId/bases/:baseId/check-in`**
+
+Request body (`CheckInRequest`): `nfcToken` is **required** (Wave B hardening). The client must scan the physical NFC tag to obtain the token, which the server compares against `base.nfc_token`. Missing or blank value → 400 with code `NFC_TOKEN_REQUIRED`; mismatch → 400 "Invalid NFC verification token".
+
+```json
+{
+  "nfcToken": "ABC12345"
+}
+```
+
+Response body (`CheckInResponse`):
 
 ```json
 {
@@ -1297,6 +1307,14 @@ All error responses include a machine-readable `code` field in addition to the h
 | `MANUAL_CHECKIN_ALREADY_CHECKED_IN` | 409 Conflict | Team is already checked in at this base | Operator called manual check-in after the team already checked in naturally | Safe to retry; endpoint returns the existing check-in without error |
 | `UNLOCK_OVERRIDE_ALREADY_EXISTS` | 409 Conflict | An active unlock override already exists for this (team, base) pair | Operator clicked "Unlock" twice | Safe to retry; endpoint is idempotent on the pair |
 | `UNLOCK_OVERRIDE_NOT_FOUND` | 404 Not Found | No active unlock override exists for this (team, base) pair | Operator tried to remove an override that has already been removed or never existed | Verify the team and base IDs; no action needed if the override is already gone |
+
+### Player Join & Check-in Error Codes
+
+| Code | HTTP Status | Meaning | Typical cause | Recovery |
+|---|---|---|---|---|
+| `NFC_TOKEN_REQUIRED` | 400 Bad Request | Check-in request omitted the `nfcToken` field | Client did not scan the base's NFC tag, or is running a pre-Wave-B build that sent empty requests | Scan the physical NFC tag; upgrade the mobile client |
+| `DEVICE_ALREADY_IN_DIFFERENT_TEAM` | 400 Bad Request | The device already joined this game on a different team and cannot switch via a new join code | Player entered the join code of a different team after already joining team A | Continue with the original team; operators can move the player server-side if intended |
+| `RATE_LIMITED` | 429 Too Many Requests | Too many join attempts from this IP (>10/min) or device (>20/min) | Brute-force attempt, or a misbehaving client retrying in a tight loop | Wait 60s before retrying; `retryable` is `true` in the response body |
 
 ### Tag Error Codes
 

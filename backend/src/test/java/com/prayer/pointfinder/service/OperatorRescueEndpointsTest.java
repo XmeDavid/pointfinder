@@ -98,7 +98,7 @@ class OperatorRescueEndpointsTest extends IntegrationTestBase {
         TestContext ctx = createLiveGameWithPlayer("mc-happy");
         // Team must be checked in first.
         authenticateAsPlayer(ctx.player);
-        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, new CheckInRequest());
+        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, checkInRequestFor(ctx.base));
 
         authenticateAsOperator(ctx.operator);
         MarkCompletedRequest request = new MarkCompletedRequest();
@@ -142,7 +142,7 @@ class OperatorRescueEndpointsTest extends IntegrationTestBase {
     void markCompletedIsIdempotentOnSameOperatorTeamBaseChallenge() {
         TestContext ctx = createLiveGameWithPlayer("mc-idem");
         authenticateAsPlayer(ctx.player);
-        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, new CheckInRequest());
+        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, checkInRequestFor(ctx.base));
 
         authenticateAsOperator(ctx.operator);
         MarkCompletedRequest request = new MarkCompletedRequest();
@@ -166,7 +166,7 @@ class OperatorRescueEndpointsTest extends IntegrationTestBase {
     void markCompletedWithPointsOverrideUsesSuppliedValue() {
         TestContext ctx = createLiveGameWithPlayer("mc-points");
         authenticateAsPlayer(ctx.player);
-        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, new CheckInRequest());
+        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, checkInRequestFor(ctx.base));
 
         authenticateAsOperator(ctx.operator);
         MarkCompletedRequest request = new MarkCompletedRequest();
@@ -203,7 +203,7 @@ class OperatorRescueEndpointsTest extends IntegrationTestBase {
     void markCompletedWithUnknownChallengeReturnsNotFound() {
         TestContext ctx = createLiveGameWithPlayer("mc-unknown");
         authenticateAsPlayer(ctx.player);
-        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, new CheckInRequest());
+        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, checkInRequestFor(ctx.base));
 
         authenticateAsOperator(ctx.operator);
         MarkCompletedRequest request = new MarkCompletedRequest();
@@ -218,7 +218,7 @@ class OperatorRescueEndpointsTest extends IntegrationTestBase {
     void markCompletedByUnauthorizedOperatorIsForbidden() {
         TestContext ctx = createLiveGameWithPlayer("mc-forbid");
         authenticateAsPlayer(ctx.player);
-        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, new CheckInRequest());
+        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, checkInRequestFor(ctx.base));
 
         // Create a second operator with NO access to the game.
         User outsider = createOperator("outsider-mc@rescue.test", "password");
@@ -236,7 +236,7 @@ class OperatorRescueEndpointsTest extends IntegrationTestBase {
     void markCompletedReasonIsCapturedOnSubmissionRow() {
         TestContext ctx = createLiveGameWithPlayer("mc-reason");
         authenticateAsPlayer(ctx.player);
-        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, new CheckInRequest());
+        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, checkInRequestFor(ctx.base));
 
         authenticateAsOperator(ctx.operator);
         MarkCompletedRequest request = new MarkCompletedRequest();
