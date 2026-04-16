@@ -65,7 +65,7 @@ class WaveBSecurityIntegrationTest extends IntegrationTestBase {
     void checkInReturns400WithNfcTokenRequiredWhenTokenMissing() {
         rateLimiter.clear();
         User operator = createOperator("nfc-required-op@test.com", "Password1");
-        Game game = createLiveGameWithBase(operator, "Alpha", "expected-nfc");
+        Game game = createLiveGameWithBase(operator, "Alpha", "nfctkn01");
         Team team = createTeam(game, "Team A", "NFCREQ01");
         Base base = baseRepository.findByGameId(game.getId()).get(0);
 

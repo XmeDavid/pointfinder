@@ -168,7 +168,11 @@ class PlayerServiceTest {
     }
 
     @Test
-    void joinTeamReusesExistingPlayerByDeviceInGameAndSwitchesTeam() {
+    void joinTeamRejectsDeviceSwitchingToDifferentTeamInSameGame() {
+        // Wave B hardening: once a device has joined a team in a game, rejoining
+        // with a different team's join code is rejected with
+        // DEVICE_ALREADY_IN_DIFFERENT_TEAM. This closes a stealth-takeover vector
+        // where a scout could jump onto another team's score/history.
         UUID gameId = UUID.randomUUID();
         UUID oldTeamId = UUID.randomUUID();
         UUID newTeamId = UUID.randomUUID();
@@ -210,18 +214,11 @@ class PlayerServiceTest {
         when(teamRepository.findByJoinCode(newTeam.getJoinCode())).thenReturn(Optional.of(newTeam));
         when(playerRepository.findFirstByDeviceIdAndTeamGameIdOrderByCreatedAtDesc(deviceId, gameId))
                 .thenReturn(Optional.of(existingPlayer));
-        when(playerRepository.save(any(Player.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(tokenProvider.generatePlayerToken(playerId, newTeamId, gameId)).thenReturn("jwt-token");
 
-        PlayerAuthResponse response = playerService.joinTeam(request);
-
-        assertEquals(playerId, response.getPlayer().getId());
-        assertEquals("Updated Name", response.getPlayer().getDisplayName());
-        assertEquals(newTeamId, response.getTeam().getId());
-        assertEquals(newTeamId, existingPlayer.getTeam().getId());
-        assertEquals("jwt-token", response.getToken());
-        verify(playerRepository).findFirstByDeviceIdAndTeamGameIdOrderByCreatedAtDesc(deviceId, gameId);
-        verify(playerRepository).save(existingPlayer);
+        BadRequestException ex = assertThrows(BadRequestException.class,
+                () -> playerService.joinTeam(request));
+        assertEquals(com.prayer.pointfinder.exception.ErrorCode.DEVICE_ALREADY_IN_DIFFERENT_TEAM, ex.getErrorCode());
+        verify(playerRepository, org.mockito.Mockito.never()).save(any(Player.class));
     }
 
     @Test
@@ -514,6 +511,7 @@ class PlayerServiceTest {
                 .lat(1.0)
                 .lng(2.0)
                 .nfcLinked(true)
+                .nfcToken("abc12345")
                 .build();
         CheckIn checkIn = CheckIn.builder()
                 .id(checkInId)
@@ -530,7 +528,9 @@ class PlayerServiceTest {
         when(checkInRepository.save(any(CheckIn.class))).thenReturn(checkIn);
         when(assignmentRepository.findByBaseId(baseId)).thenReturn(java.util.List.of());
 
-        playerService.checkIn(gameId, baseId, player, null);
+        com.prayer.pointfinder.dto.request.CheckInRequest request = new com.prayer.pointfinder.dto.request.CheckInRequest();
+        request.setNfcToken("abc12345");
+        playerService.checkIn(gameId, baseId, player, request);
 
         verify(operatorPushNotificationService).notifyOperatorsForCheckIn(eq(game), eq(team), eq(base));
     }

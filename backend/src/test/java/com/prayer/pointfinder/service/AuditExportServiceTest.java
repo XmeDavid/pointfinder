@@ -105,7 +105,7 @@ class AuditExportServiceTest extends IntegrationTestBase {
         // operator_override event that is cleanly distinct).
         Base secondBase = createBase(ctx.game, "Second Base happy");
         authenticateAsPlayer(ctx.player);
-        playerService.checkIn(ctx.game.getId(), secondBase.getId(), ctx.player, new CheckInRequest());
+        playerService.checkIn(ctx.game.getId(), secondBase.getId(), ctx.player, checkInRequestFor(secondBase));
 
         authenticateAsOperator(ctx.operator);
         MarkCompletedRequest markReq = new MarkCompletedRequest();
@@ -210,7 +210,7 @@ class AuditExportServiceTest extends IntegrationTestBase {
         playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, checkInRequestFor(ctx.base));
 
         authenticateAsPlayer(otherPlayer);
-        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), otherPlayer, new CheckInRequest());
+        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), otherPlayer, checkInRequestFor(ctx.base));
 
         authenticateAsOperator(ctx.operator);
         List<AuditEntryDto> allEntries = exportJson(query(ctx.game.getId()).build());
@@ -494,7 +494,7 @@ class AuditExportServiceTest extends IntegrationTestBase {
         Base base = createBase(ctx.game, "Escape Base csv-escape");
 
         authenticateAsPlayer(trickyPlayer);
-        playerService.checkIn(ctx.game.getId(), base.getId(), trickyPlayer, new CheckInRequest());
+        playerService.checkIn(ctx.game.getId(), base.getId(), trickyPlayer, checkInRequestFor(base));
 
         authenticateAsOperator(ctx.operator);
         AuditExportResult result = auditExportService.export(query(ctx.game.getId())

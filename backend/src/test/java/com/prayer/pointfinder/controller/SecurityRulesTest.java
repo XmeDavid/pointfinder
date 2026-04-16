@@ -75,6 +75,9 @@ class SecurityRulesTest {
     private com.prayer.pointfinder.service.PlayerService playerService;
 
     @MockitoBean
+    private com.prayer.pointfinder.service.PlayerJoinRateLimiter playerJoinRateLimiter;
+
+    @MockitoBean
     private com.prayer.pointfinder.service.ChunkedUploadService chunkedUploadService;
 
     @MockitoBean

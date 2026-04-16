@@ -1,5 +1,7 @@
 package com.prayer.pointfinder.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.prayer.pointfinder.dto.request.CheckInRequest;
 import com.prayer.pointfinder.dto.response.BaseProgressResponse;
 import com.prayer.pointfinder.dto.response.CheckInResponse;
 import com.prayer.pointfinder.dto.response.GameDataResponse;
@@ -20,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -79,6 +82,9 @@ class PlayerResponsePointsInvarianceTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @MockitoBean
     private PlayerService playerService;
@@ -215,8 +221,12 @@ class PlayerResponsePointsInvarianceTest {
         when(playerService.checkIn(eq(gameId), eq(baseId), any(Player.class), any()))
                 .thenReturn(response);
 
+        CheckInRequest body = new CheckInRequest();
+        body.setNfcToken("nfc-tok");
         MvcResult result = mockMvc.perform(
-                        post("/api/player/games/" + gameId + "/bases/" + baseId + "/check-in"))
+                        post("/api/player/games/" + gameId + "/bases/" + baseId + "/check-in")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isOk())
                 .andReturn();
 

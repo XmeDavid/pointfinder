@@ -66,7 +66,7 @@ class SubmissionReviewTransitionsTest extends IntegrationTestBase {
         // Player checks in
         restTemplate.exchange(
                 "/api/player/games/" + gameId + "/bases/" + base.getId() + "/check-in",
-                HttpMethod.POST, new HttpEntity<>(null, playerHeaders), CheckInResponse.class);
+                HttpMethod.POST, new HttpEntity<>(checkInRequestFor(base), playerHeaders), CheckInResponse.class);
 
         // Player submits
         PlayerSubmissionRequest submitReq = new PlayerSubmissionRequest();
@@ -233,7 +233,7 @@ class SubmissionReviewTransitionsTest extends IntegrationTestBase {
         // Check in — get the assigned challenge from the check-in response
         ResponseEntity<CheckInResponse> checkInResp = restTemplate.exchange(
                 "/api/player/games/" + gameId + "/bases/" + base.getId() + "/check-in",
-                HttpMethod.POST, new HttpEntity<>(null, playerHeaders), CheckInResponse.class);
+                HttpMethod.POST, new HttpEntity<>(checkInRequestFor(base), playerHeaders), CheckInResponse.class);
         assertEquals(HttpStatus.OK, checkInResp.getStatusCode());
         UUID assignedChallengeId = checkInResp.getBody().getChallenge().getId();
 

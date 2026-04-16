@@ -1,6 +1,7 @@
 package com.prayer.pointfinder.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.prayer.pointfinder.dto.request.CheckInRequest;
 import com.prayer.pointfinder.dto.request.PlayerJoinRequest;
 import com.prayer.pointfinder.dto.request.PlayerSubmissionRequest;
 import com.prayer.pointfinder.dto.response.*;
@@ -116,7 +117,9 @@ class PlayerControllerTest {
         // Wave F: the check-in response also never carries challenge.points;
         // scoring is operator-only and must not leak to any player-facing
         // endpoint.
-        mockMvc.perform(post("/api/player/games/" + gameId + "/bases/" + baseId + "/check-in"))
+        mockMvc.perform(post("/api/player/games/" + gameId + "/bases/" + baseId + "/check-in")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(checkInRequest("nfc-tok"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.checkInId").value(checkInId.toString()))
                 .andExpect(jsonPath("$.challenge.title").value("Find the tree"))
@@ -141,7 +144,9 @@ class PlayerControllerTest {
 
         when(playerService.checkIn(eq(gameId), eq(baseId), any(Player.class), any())).thenReturn(response);
 
-        mockMvc.perform(post("/api/player/games/" + gameId + "/bases/" + baseId + "/check-in"))
+        mockMvc.perform(post("/api/player/games/" + gameId + "/bases/" + baseId + "/check-in")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(checkInRequest("nfc-tok"))))
                 .andExpect(status().isOk());
 
         verify(playerService).checkIn(eq(gameId), eq(baseId), any(Player.class), any());
@@ -155,7 +160,9 @@ class PlayerControllerTest {
         when(playerService.checkIn(eq(gameId), eq(unknownBaseId), any(Player.class), any()))
                 .thenThrow(new ResourceNotFoundException("Base not found: " + unknownBaseId));
 
-        mockMvc.perform(post("/api/player/games/" + gameId + "/bases/" + unknownBaseId + "/check-in"))
+        mockMvc.perform(post("/api/player/games/" + gameId + "/bases/" + unknownBaseId + "/check-in")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(checkInRequest("nfc-tok"))))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Base not found: " + unknownBaseId));
     }
@@ -168,9 +175,17 @@ class PlayerControllerTest {
         when(playerService.checkIn(eq(gameId), eq(baseId), any(Player.class), any()))
                 .thenThrow(new ConflictException("Team has already checked in at this base"));
 
-        mockMvc.perform(post("/api/player/games/" + gameId + "/bases/" + baseId + "/check-in"))
+        mockMvc.perform(post("/api/player/games/" + gameId + "/bases/" + baseId + "/check-in")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(checkInRequest("nfc-tok"))))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("Team has already checked in at this base"));
+    }
+
+    private static CheckInRequest checkInRequest(String token) {
+        CheckInRequest req = new CheckInRequest();
+        req.setNfcToken(token);
+        return req;
     }
 
     // ── Submission endpoint ────────

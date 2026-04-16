@@ -14,6 +14,7 @@ import com.prayer.pointfinder.security.JwtAuthenticationFilter;
 import com.prayer.pointfinder.service.AuthService;
 import com.prayer.pointfinder.service.InviteService;
 import com.prayer.pointfinder.service.PlayerService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,10 +58,18 @@ class AuthControllerTest {
     private PlayerService playerService;
 
     @MockitoBean
+    private com.prayer.pointfinder.service.PlayerJoinRateLimiter playerJoinRateLimiter;
+
+    @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @MockitoBean
     private com.prayer.pointfinder.security.FrozenAccountFilter frozenAccountFilter;
+
+    @BeforeEach
+    void stubRateLimiterAllow() {
+        when(playerJoinRateLimiter.tryAcquire(any(), any())).thenReturn(true);
+    }
 
     // ── Player Join tests ─────────────────────────────────────────────
 

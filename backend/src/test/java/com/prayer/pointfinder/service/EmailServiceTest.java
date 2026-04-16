@@ -228,7 +228,7 @@ class EmailServiceTest {
         emailService.sendGameInvite("user@example.com", "Fun Game", "Admin", "pointfinder.pt");
 
         String bodyText = extractTextFromContent(realMessage.getContent());
-        assertThat(bodyText).contains("https://pointfinder.pt/games");
+        assertThat(bodyText).contains("https://pointfinder.pt/dashboard");
     }
 
     // ── XSS / HTML escaping ─────────────────────────────────────────

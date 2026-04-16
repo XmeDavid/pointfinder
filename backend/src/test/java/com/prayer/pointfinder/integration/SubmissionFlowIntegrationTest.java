@@ -91,7 +91,7 @@ class SubmissionFlowIntegrationTest extends IntegrationTestBase {
         ResponseEntity<CheckInResponse> checkInResp = restTemplate.exchange(
                 "/api/player/games/" + gameId + "/bases/" + base.getId() + "/check-in",
                 HttpMethod.POST,
-                new HttpEntity<>(null, playerHeaders),
+                new HttpEntity<>(checkInRequestFor(base), playerHeaders),
                 CheckInResponse.class);
 
         assertEquals(HttpStatus.OK, checkInResp.getStatusCode());

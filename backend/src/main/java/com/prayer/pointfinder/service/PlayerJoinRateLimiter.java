@@ -34,15 +34,43 @@ public class PlayerJoinRateLimiter {
 
     private final ConcurrentHashMap<String, Counter> ipCounters = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Counter> deviceCounters = new ConcurrentHashMap<>();
+    // Tracks which (ip, deviceId) pairs have already counted toward the IP
+    // bucket in the current window so a single device reusing the same IP
+    // doesn't double-dip. The device bucket handles same-device abuse; the
+    // IP bucket is meant to catch multi-device flood from one IP.
+    private final ConcurrentHashMap<String, Counter> countedPairs = new ConcurrentHashMap<>();
 
     /**
-     * Record one attempt and return {@code true} if either bucket is now
-     * exceeded. Callers must treat a {@code true} return as an immediate
-     * rejection — do not proceed with the join.
+     * Record one attempt and return {@code true} if neither bucket is
+     * exceeded (i.e. the join should proceed). A {@code false} return means
+     * the caller must reject the request.
      */
     public boolean tryAcquire(String ip, String deviceId) {
-        boolean ipBlocked = ip != null && bump(ipCounters, ip) > MAX_IP_ATTEMPTS;
         boolean deviceBlocked = deviceId != null && bump(deviceCounters, deviceId) > MAX_DEVICE_ATTEMPTS;
+
+        boolean ipBlocked = false;
+        if (ip != null) {
+            Instant now = Instant.now();
+            boolean countTowardIp;
+            if (deviceId == null) {
+                countTowardIp = true;
+            } else {
+                String pairKey = ip + "|" + deviceId;
+                Counter existing = countedPairs.get(pairKey);
+                if (existing == null || existing.isExpired(now)) {
+                    countedPairs.put(pairKey, new Counter(1, now));
+                    countTowardIp = true;
+                } else {
+                    countTowardIp = false;
+                }
+            }
+            if (countTowardIp) {
+                ipBlocked = bump(ipCounters, ip) > MAX_IP_ATTEMPTS;
+            } else {
+                Counter c = ipCounters.get(ip);
+                ipBlocked = c != null && !c.isExpired(now) && c.count > MAX_IP_ATTEMPTS;
+            }
+        }
         return !(ipBlocked || deviceBlocked);
     }
 
@@ -62,12 +90,14 @@ public class PlayerJoinRateLimiter {
         Instant now = Instant.now();
         ipCounters.entrySet().removeIf(e -> e.getValue().isExpired(now));
         deviceCounters.entrySet().removeIf(e -> e.getValue().isExpired(now));
+        countedPairs.entrySet().removeIf(e -> e.getValue().isExpired(now));
     }
 
     // visible for testing
     public void clear() {
         ipCounters.clear();
         deviceCounters.clear();
+        countedPairs.clear();
     }
 
     // visible for testing
