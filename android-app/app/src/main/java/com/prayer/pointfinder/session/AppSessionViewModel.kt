@@ -61,6 +61,28 @@ class AppSessionViewModel @Inject constructor(
     private val _state = MutableStateFlow(AppSessionState())
     val state: StateFlow<AppSessionState> = _state.asStateFlow()
 
+    /**
+     * Raised when the app was opened via a `https://pointfinder.{pt,ch}/dashboard`
+     * universal link (email invite). The operator home screen observes this
+     * flow to reveal the My Invites sheet and refresh pending invitations
+     * instead of stranding the user on the games list. iOS parity:
+     * `AppState.pendingDashboardDeepLink`.
+     *
+     * Survives across operator login: if the user taps the link while
+     * unauthenticated, the flag is consumed the moment the operator home
+     * screen first composes post-login.
+     */
+    private val _pendingDashboardDeepLink = MutableStateFlow(false)
+    val pendingDashboardDeepLink: StateFlow<Boolean> = _pendingDashboardDeepLink.asStateFlow()
+
+    fun onDashboardDeepLink() {
+        _pendingDashboardDeepLink.value = true
+    }
+
+    fun consumeDashboardDeepLink() {
+        _pendingDashboardDeepLink.value = false
+    }
+
     // Guards against concurrent logout cascades when the reconnect-time
     // tokenProvider discovers the refresh token is also expired. Without
     // this flag, a flapping socket would enqueue one logout() per reconnect

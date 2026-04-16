@@ -1030,6 +1030,7 @@ private fun OperatorHomeRoot(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var showMyInvites by remember { mutableStateOf(false) }
+    val pendingDashboardDeepLink by sessionViewModel.pendingDashboardDeepLink.collectAsStateWithLifecycle()
 
     LaunchedEffect(state.authExpired) {
         if (state.authExpired) {
@@ -1046,6 +1047,18 @@ private fun OperatorHomeRoot(
         while (true) {
             delay(30_000)
             viewModel.loadMyInvites()
+        }
+    }
+    // Email invite universal link: the user tapped
+    // https://pointfinder.{pt,ch}/dashboard. Surface the My Invites screen
+    // and refresh the list so pending invitations are visible without
+    // bouncing to the browser. Flag is consumed after use so re-entering
+    // the home screen later doesn't force the invites sheet again.
+    LaunchedEffect(pendingDashboardDeepLink) {
+        if (pendingDashboardDeepLink) {
+            viewModel.loadMyInvites()
+            showMyInvites = true
+            sessionViewModel.consumeDashboardDeepLink()
         }
     }
 

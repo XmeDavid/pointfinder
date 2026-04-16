@@ -45,6 +45,12 @@ final class AppState {
 
     var pendingDeepLinkBaseId: UUID?
 
+    /// Set to `true` when the app was opened via a `/dashboard` universal
+    /// link (e.g. an email invite). The operator home view consumes this
+    /// flag on appear to open the My Invites screen and refresh the list.
+    /// iOS parity with Android `pendingDashboardDeepLink` StateFlow.
+    var pendingDashboardDeepLink: Bool = false
+
     // MARK: - Notifications
 
     var notifications: [PlayerNotificationResponse] = []

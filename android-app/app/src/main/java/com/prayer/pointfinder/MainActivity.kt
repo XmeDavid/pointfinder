@@ -85,6 +85,16 @@ class MainActivity : AppCompatActivity() {
 
         when (intent.action) {
             Intent.ACTION_VIEW -> {
+                // Dashboard deep link (email invite landing page) takes
+                // priority: /dashboard isn't an NFC tag URL, so the base-id
+                // extractor would have rejected it anyway. We still need to
+                // emit a null baseId to avoid leaving a stale value from a
+                // prior tag scan sitting in the event bus.
+                if (isDashboardDeepLink(intent.data)) {
+                    sessionViewModel.onDashboardDeepLink()
+                    nfcEventBus.emitDeepLinkBaseId(null)
+                    return
+                }
                 val baseId = extractBaseIdFromUri(intent.data)
                 nfcEventBus.emitDeepLinkBaseId(baseId)
             }
@@ -114,5 +124,33 @@ class MainActivity : AppCompatActivity() {
         if (!path.startsWith("/tag/")) return null
         val rawId = path.removePrefix("/tag/").trimEnd('/')
         return NfcPayloadCodec.normalizeBaseId(rawId)
+    }
+
+    /**
+     * Email invite links direct to `https://pointfinder.{pt,ch}/dashboard`.
+     * The native app catches the link (see AndroidManifest intent-filter)
+     * and notifies the session VM so the operator home screen can reveal
+     * pending invitations without bouncing out to the browser.
+     */
+    private fun isDashboardDeepLink(uri: Uri?): Boolean {
+        if (uri == null) return false
+        return DeepLinkRouter.isDashboardDeepLink(uri.host, uri.path)
+    }
+
+    /**
+     * Pure helpers for deep link routing, extracted so they can be
+     * exercised from plain JVM unit tests without instantiating
+     * `android.net.Uri` (which requires Robolectric).
+     */
+    object DeepLinkRouter {
+        private val ALLOWED_HOSTS = setOf("pointfinder.pt", "pointfinder.ch")
+        private const val DASHBOARD_PATH = "/dashboard"
+
+        fun isDashboardDeepLink(host: String?, path: String?): Boolean {
+            if (host == null) return false
+            val normalizedHost = host.lowercase()
+            if (normalizedHost !in ALLOWED_HOSTS) return false
+            return path == DASHBOARD_PATH
+        }
     }
 }

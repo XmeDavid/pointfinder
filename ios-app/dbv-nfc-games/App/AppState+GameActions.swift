@@ -485,11 +485,23 @@ extension AppState {
 
     private static let supportedTagHosts: Set<String> = ["pointfinder.pt", "pointfinder.ch"]
     private static let tagPathPrefix = "/tag/"
+    private static let dashboardPath = "/dashboard"
 
     func handleDeepLink(url: URL) {
         guard let host = url.host?.lowercased(),
               Self.supportedTagHosts.contains(host) else { return }
         let path = url.path
+
+        // Email invite links land on /dashboard. The backend email
+        // (`EmailService.sendGameInvite`/`sendOrgInvite`) only includes
+        // the base dashboard URL — there is no invite code query param.
+        // Mobile parity: opening this URL in the app should reveal the
+        // user's pending invites without bouncing to the browser.
+        if path == Self.dashboardPath {
+            pendingDashboardDeepLink = true
+            return
+        }
+
         guard path.hasPrefix(Self.tagPathPrefix) else { return }
         let rawId = String(path.dropFirst(Self.tagPathPrefix.count))
         guard let baseId = UUID(uuidString: rawId) else { return }

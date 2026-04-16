@@ -51,6 +51,16 @@
                 <data android:scheme="https" android:host="pointfinder.pt" android:pathPrefix="/tag/" />
                 <data android:scheme="https" android:host="pointfinder.ch" android:pathPrefix="/tag/" />
             </intent-filter>
+            <!-- Dashboard deep link: email invite links land here. Opening
+                 /dashboard in the native app triggers a refresh of pending
+                 invites instead of bouncing to the browser. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="pointfinder.pt" android:path="/dashboard" />
+                <data android:scheme="https" android:host="pointfinder.ch" android:path="/dashboard" />
+            </intent-filter>
             <intent-filter>
                 <action android:name="android.nfc.action.TAG_DISCOVERED" />
                 <category android:name="android.intent.category.DEFAULT" />

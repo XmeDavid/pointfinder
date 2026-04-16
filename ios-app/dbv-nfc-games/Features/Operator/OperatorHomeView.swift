@@ -138,6 +138,16 @@ struct OperatorHomeView: View {
             .task {
                 await pollInviteCount()
             }
+            // Email invite deep link: user tapped a /dashboard universal
+            // link. Reveal the My Invites sheet so pending invitations are
+            // immediately visible instead of stranding the user on the
+            // games list. Flag is cleared after consumption.
+            .onChange(of: appState.pendingDashboardDeepLink, initial: true) { _, newValue in
+                guard newValue else { return }
+                showMyInvites = true
+                appState.pendingDashboardDeepLink = false
+                Task { await pollInviteCount() }
+            }
         }
     }
 
