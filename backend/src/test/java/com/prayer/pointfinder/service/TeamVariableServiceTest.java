@@ -648,6 +648,169 @@ class TeamVariableServiceTest {
         assertTrue(errors.isEmpty());
     }
 
+    // ── Challenge-reference scanning (undefined {{key}} references) ───
+
+    @Test
+    void validateVariableCompleteness_flagsUndefinedReferenceInChallengeContent() {
+        Challenge ch = Challenge.builder()
+                .id(challengeId)
+                .game(game)
+                .title("Find the treasure")
+                .description("")
+                .content("Find the {{secret}} location")
+                .completionContent("")
+                .correctAnswer(List.of("{{secret}}"))
+                .answerType(AnswerType.text)
+                .autoValidate(true)
+                .points(10)
+                .locationBound(false)
+                .build();
+
+        when(teamRepository.countByGameId(gameId)).thenReturn(1L);
+        when(teamRepository.findByGameId(gameId)).thenReturn(List.of(team1));
+        when(challengeRepository.findByGameId(gameId)).thenReturn(List.of(ch));
+        when(teamVariableRepository.countTeamsPerKeyByGameId(gameId)).thenReturn(List.of());
+        when(teamVariableRepository.findByGameId(gameId)).thenReturn(List.of());
+        when(challengeTeamVariableRepository.findByGameId(gameId)).thenReturn(List.of());
+
+        List<String> errors = teamVariableService.validateVariableCompleteness(gameId);
+
+        assertFalse(errors.isEmpty(), "expected an error flagging the undefined reference");
+        assertTrue(
+                errors.stream().anyMatch(e -> e.contains("secret") && e.contains("Team Alpha")),
+                "expected error mentioning 'secret' and team 'Team Alpha', got: " + errors
+        );
+    }
+
+    @Test
+    void validateVariableCompleteness_passesWhenAllReferencesResolveAtGameScope() {
+        Challenge ch = Challenge.builder()
+                .id(challengeId)
+                .game(game)
+                .title("Challenge with vars")
+                .description("")
+                .content("Find {{secret}}")
+                .completionContent("")
+                .correctAnswer(List.of("{{secret}}"))
+                .answerType(AnswerType.text)
+                .autoValidate(true)
+                .points(10)
+                .locationBound(false)
+                .build();
+
+        TeamVariable tv = TeamVariable.builder()
+                .game(game).team(team1).variableKey("secret").variableValue("FOX").build();
+
+        when(teamRepository.countByGameId(gameId)).thenReturn(1L);
+        when(teamRepository.findByGameId(gameId)).thenReturn(List.of(team1));
+        when(challengeRepository.findByGameId(gameId)).thenReturn(List.of(ch));
+        when(teamVariableRepository.countTeamsPerKeyByGameId(gameId))
+                .thenReturn(List.of(new TeamKeyCount("secret", 1L)));
+        when(teamVariableRepository.findByGameId(gameId)).thenReturn(List.of(tv));
+        when(challengeTeamVariableRepository.findByGameId(gameId)).thenReturn(List.of());
+
+        List<String> errors = teamVariableService.validateVariableCompleteness(gameId);
+
+        assertTrue(errors.isEmpty(), "expected no errors, got: " + errors);
+    }
+
+    @Test
+    void validateVariableCompleteness_passesWhenReferenceResolvedAtChallengeScopeOnly() {
+        Challenge ch = Challenge.builder()
+                .id(challengeId)
+                .game(game)
+                .title("Challenge with challenge-scope var")
+                .description("")
+                .content("Find {{clue}}")
+                .completionContent("")
+                .correctAnswer(List.of())
+                .answerType(AnswerType.text)
+                .autoValidate(false)
+                .points(10)
+                .locationBound(false)
+                .build();
+
+        ChallengeTeamVariable ctv = ChallengeTeamVariable.builder()
+                .challenge(ch).team(team1).variableKey("clue").variableValue("Look up").build();
+
+        when(teamRepository.countByGameId(gameId)).thenReturn(1L);
+        when(teamRepository.findByGameId(gameId)).thenReturn(List.of(team1));
+        when(challengeRepository.findByGameId(gameId)).thenReturn(List.of(ch));
+        when(teamVariableRepository.countTeamsPerKeyByGameId(gameId)).thenReturn(List.of());
+        when(teamVariableRepository.findByGameId(gameId)).thenReturn(List.of());
+        when(challengeTeamVariableRepository.findByGameId(gameId)).thenReturn(List.of(ctv));
+
+        List<String> errors = teamVariableService.validateVariableCompleteness(gameId);
+
+        assertTrue(errors.isEmpty(), "expected no errors, got: " + errors);
+    }
+
+    @Test
+    void validateVariableCompleteness_flagsReferenceMissingForOneOfMultipleTeams() {
+        Challenge ch = Challenge.builder()
+                .id(challengeId)
+                .game(game)
+                .title("Shared challenge")
+                .description("")
+                .content("")
+                .completionContent("")
+                .correctAnswer(List.of("{{secret}}"))
+                .answerType(AnswerType.text)
+                .autoValidate(true)
+                .points(10)
+                .locationBound(false)
+                .build();
+
+        // Only team1 has 'secret' defined — team2 is missing a value
+        TeamVariable tv1 = TeamVariable.builder()
+                .game(game).team(team1).variableKey("secret").variableValue("FOX").build();
+
+        when(teamRepository.countByGameId(gameId)).thenReturn(2L);
+        when(teamRepository.findByGameId(gameId)).thenReturn(List.of(team1, team2));
+        when(challengeRepository.findByGameId(gameId)).thenReturn(List.of(ch));
+        // Aggregate count (DISTINCT teams) — present for 1 of 2 teams, so also flagged by the existing
+        // game-level completeness check. We want the new check to independently catch the reference too.
+        when(teamVariableRepository.countTeamsPerKeyByGameId(gameId))
+                .thenReturn(List.of(new TeamKeyCount("secret", 1L)));
+        when(teamVariableRepository.findByGameId(gameId)).thenReturn(List.of(tv1));
+        when(challengeTeamVariableRepository.findByGameId(gameId)).thenReturn(List.of());
+
+        List<String> errors = teamVariableService.validateVariableCompleteness(gameId);
+
+        assertTrue(
+                errors.stream().anyMatch(e -> e.contains("secret") && e.contains("Team Beta")),
+                "expected error mentioning 'secret' and missing team 'Team Beta', got: " + errors
+        );
+    }
+
+    @Test
+    void validateVariableCompleteness_ignoresChallengesWithNoVariableReferences() {
+        Challenge ch = Challenge.builder()
+                .id(challengeId)
+                .game(game)
+                .title("Plain challenge")
+                .description("")
+                .content("Just plain text with no template markers")
+                .completionContent("")
+                .correctAnswer(List.of("literal answer"))
+                .answerType(AnswerType.text)
+                .autoValidate(false)
+                .points(10)
+                .locationBound(false)
+                .build();
+
+        when(teamRepository.countByGameId(gameId)).thenReturn(1L);
+        when(teamRepository.findByGameId(gameId)).thenReturn(List.of(team1));
+        when(challengeRepository.findByGameId(gameId)).thenReturn(List.of(ch));
+        when(teamVariableRepository.countTeamsPerKeyByGameId(gameId)).thenReturn(List.of());
+        when(teamVariableRepository.findByGameId(gameId)).thenReturn(List.of());
+        when(challengeTeamVariableRepository.findByGameId(gameId)).thenReturn(List.of());
+
+        List<String> errors = teamVariableService.validateVariableCompleteness(gameId);
+
+        assertTrue(errors.isEmpty(), "expected no errors for challenges without variable references");
+    }
+
     // ── Key validation edge cases ─────────────────────────────────────
 
     @Test

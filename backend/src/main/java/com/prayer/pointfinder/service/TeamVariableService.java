@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -163,6 +165,11 @@ public class TeamVariableService {
             }
         }
 
+        // Scan each challenge's body (content / completionContent / correctAnswer) for
+        // {{key}} references and verify each referenced key has a value for every team
+        // at either game scope or the challenge's own scope.
+        errors.addAll(scanChallengeReferences(gameId));
+
         return errors;
     }
 
@@ -207,5 +214,91 @@ public class TeamVariableService {
                         .build())
                 .toList();
         return TeamVariablesResponse.builder().variables(defs).build();
+    }
+
+    // ── Challenge-reference scanning ──
+
+    /**
+     * Matches {@code {{key}}} where {@code key} starts with a letter and
+     * contains only letters, digits, and underscores — mirrors
+     * {@link #validateVariableKey(String)}.
+     */
+    private static final Pattern VARIABLE_REF_PATTERN =
+            Pattern.compile("\\{\\{([a-zA-Z][a-zA-Z0-9_]*)}}");
+
+    /**
+     * Scans every challenge in the game for {@code {{key}}} references in
+     * {@code content}, {@code completionContent}, and {@code correctAnswer}.
+     * For each referenced key, verifies that every team in the game has a
+     * value defined at either game scope or this challenge's scope. Returns
+     * a list of human-readable error strings, one per (challenge, key, missing-team)
+     * tuple. Each error mentions the challenge title (or id fallback), the
+     * referenced key, and the team name (or id fallback).
+     */
+    private List<String> scanChallengeReferences(UUID gameId) {
+        List<Challenge> challenges = challengeRepository.findByGameId(gameId);
+        List<Team> teams = teamRepository.findByGameId(gameId);
+        if (challenges.isEmpty() || teams.isEmpty()) return List.of();
+
+        // (teamId → set of game-scope keys defined for that team)
+        Map<UUID, Set<String>> gameKeysByTeam = new HashMap<>();
+        for (TeamVariable tv : teamVariableRepository.findByGameId(gameId)) {
+            gameKeysByTeam
+                    .computeIfAbsent(tv.getTeam().getId(), k -> new HashSet<>())
+                    .add(tv.getVariableKey());
+        }
+
+        // (challengeId → teamId → set of challenge-scope keys defined)
+        Map<UUID, Map<UUID, Set<String>>> challengeKeysByTeam = new HashMap<>();
+        for (ChallengeTeamVariable ctv : challengeTeamVariableRepository.findByGameId(gameId)) {
+            challengeKeysByTeam
+                    .computeIfAbsent(ctv.getChallenge().getId(), k -> new HashMap<>())
+                    .computeIfAbsent(ctv.getTeam().getId(), k -> new HashSet<>())
+                    .add(ctv.getVariableKey());
+        }
+
+        List<String> errors = new ArrayList<>();
+        for (Challenge ch : challenges) {
+            Set<String> refs = extractReferences(ch);
+            if (refs.isEmpty()) continue;
+            String challengeLabel = (ch.getTitle() == null || ch.getTitle().isEmpty())
+                    ? ch.getId().toString()
+                    : ch.getTitle();
+            Map<UUID, Set<String>> thisChallengeKeys =
+                    challengeKeysByTeam.getOrDefault(ch.getId(), Map.of());
+            for (String key : refs) {
+                for (Team team : teams) {
+                    boolean hasGameLevel = gameKeysByTeam
+                            .getOrDefault(team.getId(), Set.of()).contains(key);
+                    boolean hasChallengeLevel = thisChallengeKeys
+                            .getOrDefault(team.getId(), Set.of()).contains(key);
+                    if (!hasGameLevel && !hasChallengeLevel) {
+                        String teamLabel = (team.getName() == null || team.getName().isEmpty())
+                                ? team.getId().toString()
+                                : team.getName();
+                        errors.add(String.format(
+                                "Challenge '%s' references variable '%s' but team '%s' has no value defined",
+                                challengeLabel, key, teamLabel));
+                    }
+                }
+            }
+        }
+        return errors;
+    }
+
+    private Set<String> extractReferences(Challenge ch) {
+        Set<String> out = new LinkedHashSet<>();
+        addRefs(out, ch.getContent());
+        addRefs(out, ch.getCompletionContent());
+        if (ch.getCorrectAnswer() != null) {
+            ch.getCorrectAnswer().forEach(ans -> addRefs(out, ans));
+        }
+        return out;
+    }
+
+    private void addRefs(Set<String> out, String text) {
+        if (text == null || text.isEmpty()) return;
+        Matcher m = VARIABLE_REF_PATTERN.matcher(text);
+        while (m.find()) out.add(m.group(1));
     }
 }
