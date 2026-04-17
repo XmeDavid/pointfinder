@@ -41,6 +41,8 @@
     { "id": "P25", "name": "requirePresenceToSubmit enforcement",        "api": true,  "web": false, "mobile": false },
     { "id": "P26", "name": "WebSocket real-time broadcasts",             "api": true,  "web": false, "mobile": false },
     { "id": "P27", "name": "Mark-completed rescue flow",                 "api": true,  "web": true,  "mobile": false },
-    { "id": "P28", "name": "Unlock override grant and remove",           "api": true,  "web": true,  "mobile": false }
+    { "id": "P28", "name": "Unlock override grant and remove",           "api": true,  "web": true,  "mobile": false },
+    { "id": "P29", "name": "Per-team auto-validation via {{variable}}",  "api": true,  "web": false, "mobile": false },
+    { "id": "N15", "name": "Go-live undefined {{key}} rejection",        "api": true,  "web": false, "mobile": false }
   ]
 }
