@@ -54,6 +54,9 @@ struct RichTextEditorView: View {
     @State private var previewTeam: Team?
     @State private var previewHtml = ""
     @State private var createVariableErrorMessage: String?
+    @State private var suggestionPartial: String = ""
+    @State private var suggestionPosition: CGPoint = .zero
+    @State private var suggestionOpen: Bool = false
 
     private var hasOverflowMenu: Bool {
         variables != nil || onCreateVariable != nil || (teams != nil && !(teams?.isEmpty ?? true))
@@ -120,12 +123,46 @@ struct RichTextEditorView: View {
                 .background(Color(.systemGray6))
 
                 // Editor WebView
-                ZStack {
+                ZStack(alignment: .topLeading) {
                     RichTextWebView(
                         coordinator: webViewCoordinator,
                         initialHtml: initialHtml,
                         isDark: colorScheme == .dark
                     )
+                    .onReceive(NotificationCenter.default.publisher(for: .variableSuggestionOpen)) { note in
+                        guard variables != nil else { return }
+                        let partial = note.userInfo?["partial"] as? String ?? ""
+                        let x = (note.userInfo?["x"] as? CGFloat) ?? 0
+                        let y = (note.userInfo?["y"] as? CGFloat) ?? 0
+                        suggestionPartial = partial
+                        suggestionPosition = CGPoint(x: x, y: y)
+                        suggestionOpen = true
+                    }
+                    .onReceive(NotificationCenter.default.publisher(for: .variableSuggestionClose)) { _ in
+                        suggestionOpen = false
+                    }
+
+                    if suggestionOpen, let availableKeys = variables {
+                        VariableAutocompleteOverlay(
+                            partial: suggestionPartial,
+                            position: suggestionPosition,
+                            availableKeys: availableKeys,
+                            onSelect: { key in
+                                webViewCoordinator.deletePartialVariableTrigger {
+                                    webViewCoordinator.insertVariable(key)
+                                }
+                                suggestionOpen = false
+                            },
+                            onCreate: { partial in
+                                suggestionOpen = false
+                                if onCreateVariable != nil {
+                                    newVariableName = partial
+                                    showCreateVariable = true
+                                }
+                            },
+                            onDismiss: { suggestionOpen = false }
+                        )
+                    }
 
                     if isLoadingImage {
                         Color.black.opacity(0.3)
