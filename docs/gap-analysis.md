@@ -218,6 +218,43 @@
 - **Description**: `MobileRealtimeClient` exists but is not fully implemented. Android uses HTTP polling instead of WebSocket for real-time updates.
 - **Fix**: Complete the WebSocket implementation and wire it to the UI.
 
+### Variable autocomplete & auto-validation UX (2026-04-17)
+
+Cross-platform parity matrix for the variable autocomplete / auto-validation
+authoring UX wave. Tracks coverage of the `{{variable}}` authoring path
+(editor autocomplete, chip input on `correctAnswer`, preview-as-team), the
+save-time and go-live guards around undefined keys, and the operator review
+surface where resolved expected answers appear. Commit SHAs point at the
+trunk landing commit for each client.
+
+| Surface | Status |
+|---|---|
+| Backend — emit `VARIABLE_REFERENCE_UNDEFINED` at go-live (Wave A) | Covered (`7e895a7`, hardened `a3888d2`) |
+| Backend — scanner covers `content`, `completionContent`, and each `correctAnswer` entry (Wave A) | Covered (`TeamVariableService.scanChallengeReferences`) |
+| Backend — per-team template resolution for `autoValidate` submissions | Covered (pre-existing `TemplateVariableService.resolveTemplates`, Wave A exposes the go-live guard) |
+| Web-admin — editor `{{`-triggered autocomplete + `VariableMention` pill (Wave B) | Covered (`02aeb5e`, `8da41ef`) |
+| Web-admin — `correctAnswer` chip input with variable chips (Wave B) | Covered (`281e786`) |
+| Web-admin — preview-as-team toggle in editor (Wave B) | Covered (`f2c8de4`) |
+| Web-admin — SubmissionDetail resolved expected answer for the submitting team (Wave B) | Covered (`521f44a`) |
+| Web-admin — create-dialog, preview sanitize, test coverage review fixes (Wave B) | Covered (`b8c8a98`) |
+| iOS operator — editor JS→native `{{` trigger bridge in WKWebView (Wave C) | Covered (`d476e58`) |
+| iOS operator — `VariableAutocompleteOverlay` SwiftUI view + editor wiring (Wave C) | Covered (`27a3de5`, `e5a2589`, `be3a1bf`) |
+| iOS operator — `VariableResolver` + `VariableReferenceScanner` utilities (Wave C) | Covered (`2d7e653`, `a3d086d`) |
+| iOS operator — review fixes (regex parity, overlay clamp, i18n) (Wave C) | Covered (`86e07ef`) |
+| Android operator — `VariableAutocompleteOverlay` composable + editor wiring (Wave D) | Covered (`ecc499c`, `07b6b5b`) |
+| Android operator — chip autocomplete + preview + save-guard in `ChallengeEditScreen` (Wave D) | Covered (`4031ba2`) |
+| Android operator — review fixes (threading, i18n, regex parity, clamp) (Wave D) | Covered (`b9103c6`) |
+| E2E — per-team auto-validation API smoke (Wave E) | Covered (`e2e/api/positive/variables-auto-validate.spec.ts`, scenarios `P29`, `N15`) |
+| E2E — go-live undefined `{{key}}` rejection API smoke (Wave E) | Covered (same spec) |
+| Docs — `VARIABLE_REFERENCE_UNDEFINED` + authoring UX reference (Wave A) | Covered (`1fb4bca`) |
+| iOS / Android SubmissionDetail resolved expected answer | Out of scope — operator review is web-only today. Mobile operator surfaces do not render per-submission expected-answer evaluation; tracked as future work if mobile operator review lands. |
+| Player-facing `{{variable}}` preview (pre-submit) | Out of scope — players see server-resolved text only; no client-side preview of unresolved templates. |
+
+**Scope guard notes.**
+- The editor autocomplete and `correctAnswer` chip input are authoring-time only; no run-time player-facing UX changed.
+- The go-live rejection path re-uses the existing `BadRequestException` + `ErrorCode` carrier — no response shape changes for clients.
+- E2E smoke exercises the backend contract end-to-end; web-admin / iOS / Android UX is covered by each wave's unit + component tests.
+
 ---
 
 ## 5. Localization Completeness
