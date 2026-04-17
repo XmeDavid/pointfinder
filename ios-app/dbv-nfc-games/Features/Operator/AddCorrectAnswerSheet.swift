@@ -87,7 +87,7 @@ struct AddCorrectAnswerSheet: View {
                                 HStack(spacing: 6) {
                                     Image(systemName: "plus")
                                         .font(.caption)
-                                    Text("Create variable ")
+                                    Text(locale.t("operator.autocomplete.createVariable"))
                                         .font(.caption)
                                     Text("{{\(partial)}}")
                                         .font(.system(.caption, design: .monospaced))

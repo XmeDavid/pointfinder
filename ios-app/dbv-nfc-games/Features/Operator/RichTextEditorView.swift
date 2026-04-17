@@ -744,7 +744,7 @@ private struct RichTextWebView: UIViewRepresentable {
                       return;
                     }
                     var before = container.textContent.substring(0, r.startOffset);
-                    var match = before.match(/\\{\\{([a-zA-Z0-9_]*)$/);
+                    var match = before.match(/\\{\\{([a-zA-Z][a-zA-Z0-9_]*|)$/);
                     if (match) {
                       var rect = r.getBoundingClientRect();
                       if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.variableTrigger) {
