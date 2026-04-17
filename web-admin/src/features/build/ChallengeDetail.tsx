@@ -1,8 +1,10 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { Save, ChevronDown, X, Plus, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import DOMPurify from 'dompurify'
 import { TagPicker } from '@/components/data/TagPicker'
 import { TeamVariablesEditor } from '@/components/data/TeamVariablesEditor'
+import { CreateVariableDialog } from '@/components/data/CreateVariableDialog'
 import { useChallenges } from '@/hooks/queries/useChallenges'
 import { useAssignments } from '@/hooks/queries/useAssignments'
 import { useBases } from '@/hooks/queries/useBases'
@@ -23,6 +25,50 @@ import { resolveTemplate, type VariableMap } from '@/lib/variables/resolveTempla
 import { findUndefinedReferences } from '@/lib/variables/scanReferences'
 import { cn } from '@/lib/utils'
 import type { AnswerType } from '@/types/v2'
+
+// Allowlist mirrored from RichTextEditor#sanitize; the resolved preview is
+// rendered via dangerouslySetInnerHTML after variable substitution, and a
+// variable VALUE could contain `<script>` — so we re-sanitize here too.
+const PREVIEW_SANITIZE_CONFIG = {
+  ALLOWED_TAGS: [
+    'p',
+    'br',
+    'strong',
+    'em',
+    'h1',
+    'h2',
+    'h3',
+    'ul',
+    'ol',
+    'li',
+    'blockquote',
+    'code',
+    'pre',
+    'img',
+    'audio',
+    'a',
+    'div',
+    'span',
+  ],
+  ALLOWED_ATTR: [
+    'src',
+    'alt',
+    'href',
+    'target',
+    'rel',
+    'controls',
+    'preload',
+    'style',
+    'class',
+    'data-type',
+    'data-resource-id',
+    'data-resource-name',
+    'data-resource-size',
+    'data-resource-type',
+    'data-variable-key',
+    'contenteditable',
+  ],
+}
 
 const ANSWER_TYPES: { value: AnswerType; label: string }[] = [
   { value: 'text', label: 'Text' },
@@ -76,6 +122,18 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
   const [activeEditorField, setActiveEditorField] = useState<'content' | 'completion' | null>(null)
   const contentEditorRef = useRef<((resource: { id: string; name: string; sizeBytes: number; contentType: string }) => void) | null>(null)
   const completionEditorRef = useRef<((resource: { id: string; name: string; sizeBytes: number; contentType: string }) => void) | null>(null)
+
+  // Refs for programmatic pill insertion after the create-variable dialog
+  // resolves — one per editor so we can insert into the originating field.
+  const contentInsertVariableRef = useRef<((key: string) => void) | null>(null)
+  const completionInsertVariableRef = useRef<((key: string) => void) | null>(null)
+
+  // Create-variable dialog state — opened from the `{{foo` autocomplete.
+  const [createVarDialogOpen, setCreateVarDialogOpen] = useState(false)
+  const [createVarInitialKey, setCreateVarInitialKey] = useState('')
+  const [createVarTargetField, setCreateVarTargetField] = useState<
+    'content' | 'completion'
+  >('content')
 
   const challenge = challenges.find((c) => c.id === challengeId)
 
@@ -274,17 +332,55 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
     return map
   }, [gameVars, challengeVars, previewTeam])
 
-  // "Create variable..." autocomplete action — for now, opens a prompt to
-  // grab the new key and uses a simple confirm. Full bulk-create UX is a
-  // follow-up (tracked separately); this unblocks the autocomplete path.
-  const handleCreateVariable = useCallback(
-    (partial: string) => {
-      window.alert(
-        `To add the variable "${partial}", open the Team Variables editor below ` +
-          `(game-level) or in the sidebar (challenge-level) and define values per team.`,
-      )
+  // "Create variable..." autocomplete action — opens a dialog prefilled
+  // with the partial key the user typed after `{{`. On confirm, the new
+  // variable is persisted (challenge-scoped) and the pill is inserted into
+  // the originating editor at the current caret.
+  const handleCreateContentVariable = useCallback((partial: string) => {
+    setCreateVarTargetField('content')
+    setCreateVarInitialKey(partial)
+    setCreateVarDialogOpen(true)
+  }, [])
+  const handleCreateCompletionVariable = useCallback((partial: string) => {
+    setCreateVarTargetField('completion')
+    setCreateVarInitialKey(partial)
+    setCreateVarDialogOpen(true)
+  }, [])
+
+  const handleVariableCreated = useCallback(
+    (newKey: string) => {
+      setCreateVarDialogOpen(false)
+      // Insert the pill into the editor that triggered the dialog. The
+      // original trigger caret is gone after the dialog round-trip, but
+      // the editor still has its last known selection; `.focus()` restores
+      // it before we insert.
+      const ref =
+        createVarTargetField === 'content'
+          ? contentInsertVariableRef
+          : completionInsertVariableRef
+      ref.current?.(newKey)
     },
-    [],
+    [createVarTargetField],
+  )
+
+  // Resolved preview HTML — sanitized AFTER variable substitution so a
+  // team-variable VALUE can't smuggle `<script>` through the editor's
+  // authoring-time sanitize pass.
+  const resolvedContentHtml = useMemo(
+    () =>
+      DOMPurify.sanitize(
+        resolveTemplate(localContent, previewVars),
+        PREVIEW_SANITIZE_CONFIG,
+      ),
+    [localContent, previewVars],
+  )
+  const resolvedCompletionHtml = useMemo(
+    () =>
+      DOMPurify.sanitize(
+        resolveTemplate(localCompletionContent, previewVars),
+        PREVIEW_SANITIZE_CONFIG,
+      ),
+    [localCompletionContent, previewVars],
   )
 
   if (!challenge) {
@@ -453,11 +549,10 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
               <div
                 data-testid="content-preview"
                 className="prose prose-sm dark:prose-invert max-w-none rounded-md border border-input bg-muted/30 px-3 py-2 min-h-[150px]"
-                // Preview is read-only display of server-trusted template
-                // output; we don't accept user input here.
-                dangerouslySetInnerHTML={{
-                  __html: resolveTemplate(localContent, previewVars),
-                }}
+                // Preview HTML has been DOMPurify-sanitized AFTER variable
+                // substitution (see resolvedContentHtml memo) so values
+                // containing `<script>` can't escape.
+                dangerouslySetInnerHTML={{ __html: resolvedContentHtml }}
               />
             ) : (
               <RichTextEditor
@@ -470,7 +565,8 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
                 }}
                 insertFileEmbedRef={contentEditorRef}
                 variableKeys={availableKeys}
-                onCreateVariable={handleCreateVariable}
+                onCreateVariable={handleCreateContentVariable}
+                insertVariableRef={contentInsertVariableRef}
               />
             )}
           </div>
@@ -821,9 +917,8 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
             <div
               data-testid="completion-content-preview"
               className="prose prose-sm dark:prose-invert max-w-none rounded-md border border-input bg-muted/30 px-3 py-2 min-h-[150px]"
-              dangerouslySetInnerHTML={{
-                __html: resolveTemplate(localCompletionContent, previewVars),
-              }}
+              // See resolvedCompletionHtml memo — sanitized post-resolve.
+              dangerouslySetInnerHTML={{ __html: resolvedCompletionHtml }}
             />
           ) : (
             <RichTextEditor
@@ -836,7 +931,8 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
               }}
               insertFileEmbedRef={completionEditorRef}
               variableKeys={availableKeys}
-              onCreateVariable={handleCreateVariable}
+              onCreateVariable={handleCreateCompletionVariable}
+              insertVariableRef={completionInsertVariableRef}
             />
           )}
         </div>
@@ -854,6 +950,18 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
           onClose={() => setShowResourcePicker(false)}
         />
       )}
+
+      {/* Create-variable dialog — opened from {{foo}} autocomplete */}
+      <CreateVariableDialog
+        open={createVarDialogOpen}
+        initialKey={createVarInitialKey}
+        gameId={gameId}
+        challengeId={challengeId}
+        scope="challenge"
+        teams={teams}
+        onCancel={() => setCreateVarDialogOpen(false)}
+        onCreated={handleVariableCreated}
+      />
 
       {/* Save button */}
       <div className="border-t border-border pt-4 mt-4">

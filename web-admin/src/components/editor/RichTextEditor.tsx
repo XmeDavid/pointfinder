@@ -129,6 +129,9 @@ interface RichTextEditorProps {
   variableKeys?: string[];
   /** Called when the user picks "Create variable {{foo}}" from the autocomplete popover. */
   onCreateVariable?: (partialKey: string) => void;
+  /** Exposes a callback to programmatically insert a `{{key}}` pill at the
+   *  current caret — used after the parent's create-variable dialog resolves. */
+  insertVariableRef?: React.MutableRefObject<((key: string) => void) | null>;
 }
 
 function ToolbarButton({
@@ -172,6 +175,7 @@ export function RichTextEditor({
   insertFileEmbedRef,
   variableKeys,
   onCreateVariable,
+  insertVariableRef,
 }: RichTextEditorProps) {
   const toast = useToast();
   const { t } = useTranslation();
@@ -340,6 +344,25 @@ export function RichTextEditor({
   // Expose insertFileEmbed via ref so parent components can call it after
   // selecting a resource from the picker.
   useSyncRef(insertFileEmbedRef, insertFileEmbed);
+
+  const insertVariable = useCallback(
+    (key: string) => {
+      if (!editor) return;
+      editor
+        .chain()
+        .focus()
+        .insertContent([
+          { type: "variableMention", attrs: { key } },
+          { type: "text", text: " " },
+        ])
+        .run();
+    },
+    [editor],
+  );
+
+  // Expose insertVariable via ref so parent components can insert a pill
+  // after their create-variable dialog resolves.
+  useSyncRef(insertVariableRef, insertVariable);
 
   if (!editor) return null;
 
