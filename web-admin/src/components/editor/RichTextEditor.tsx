@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import TiptapImage from "@tiptap/extension-image";
@@ -17,11 +17,14 @@ import {
   ImageIcon,
   Music,
   Paperclip,
+  Braces,
   Undo,
   Redo,
 } from "lucide-react";
 import { AudioExtension } from "./AudioExtension";
 import { FileEmbedExtension } from "./FileEmbedExtension";
+import { VariableMention } from "./extensions/VariableMention";
+import { makeVariableSuggestion } from "./variableSuggestion";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/useToast";
 import { useTranslation } from "react-i18next";
@@ -89,11 +92,13 @@ function sanitize(html: string): string {
       "controls",
       "preload",
       "style",
+      "class",
       "data-type",
       "data-resource-id",
       "data-resource-name",
       "data-resource-size",
       "data-resource-type",
+      "data-variable-key",
       "contenteditable",
     ],
   });
@@ -119,6 +124,11 @@ interface RichTextEditorProps {
   className?: string;
   onInsertFileEmbed?: () => void;
   insertFileEmbedRef?: React.MutableRefObject<((resource: FileEmbedResource) => void) | null>;
+  /** Known variable keys for the current game/challenge. Enables `{{`-autocomplete
+   *  and pill rendering; keys not in this list render with the `--undefined` warning style. */
+  variableKeys?: string[];
+  /** Called when the user picks "Create variable {{foo}}" from the autocomplete popover. */
+  onCreateVariable?: (partialKey: string) => void;
 }
 
 function ToolbarButton({
@@ -160,11 +170,42 @@ export function RichTextEditor({
   className,
   onInsertFileEmbed,
   insertFileEmbedRef,
+  variableKeys,
+  onCreateVariable,
 }: RichTextEditorProps) {
   const toast = useToast();
   const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
+
+  // Keep a ref to the latest variableKeys / onCreateVariable so the
+  // suggestion plugin (registered once at editor init) always reads fresh data.
+  const variableKeysRef = useRef<string[]>(variableKeys ?? []);
+  const onCreateVariableRef = useRef<((partial: string) => void) | undefined>(
+    onCreateVariable,
+  );
+  useEffect(() => {
+    variableKeysRef.current = variableKeys ?? [];
+  }, [variableKeys]);
+  useEffect(() => {
+    onCreateVariableRef.current = onCreateVariable;
+  }, [onCreateVariable]);
+
+  const variableExtensions = useMemo(() => {
+    const suggestion = makeVariableSuggestion({
+      getAvailableKeys: () => variableKeysRef.current,
+      onCreate: (partial) => onCreateVariableRef.current?.(partial),
+    });
+    return [
+      VariableMention.configure({
+        availableKeys: variableKeys ?? [],
+        suggestion,
+      }),
+    ];
+    // `variableKeys` is intentionally used only for the initial availableKeys;
+    // the suggestion plugin reads live keys via the ref.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const editor = useEditor({
     extensions: [
@@ -173,6 +214,7 @@ export function RichTextEditor({
       Placeholder.configure({ placeholder: placeholder ?? "" }),
       AudioExtension,
       FileEmbedExtension,
+      ...variableExtensions,
     ],
     content,
     onUpdate: ({ editor: e }) => {
@@ -185,6 +227,24 @@ export function RichTextEditor({
       },
     },
   });
+
+  // Reconfigure the pill node when availableKeys change, so newly-created
+  // variables stop rendering with the undefined-warning style.
+  useEffect(() => {
+    if (!editor) return;
+    editor.extensionManager.extensions.forEach((ext) => {
+      if (ext.name === "variableMention") {
+        ext.options.availableKeys = variableKeys ?? [];
+      }
+    });
+    // Re-render the doc so pills repaint with the new class.
+    editor.view.dispatch(editor.state.tr);
+  }, [editor, variableKeys]);
+
+  const insertVariableTrigger = useCallback(() => {
+    if (!editor) return;
+    editor.chain().focus().insertContent("{{").run();
+  }, [editor]);
 
   const addImage = useCallback(() => {
     fileInputRef.current?.click();
@@ -383,6 +443,15 @@ export function RichTextEditor({
             title={t("editor.insertFile", "Insert file")}
           >
             <Paperclip className="h-4 w-4" />
+          </ToolbarButton>
+        )}
+
+        {variableKeys !== undefined && (
+          <ToolbarButton
+            onClick={insertVariableTrigger}
+            title={t("editor.insertVariable", "Insert variable")}
+          >
+            <Braces className="h-4 w-4" data-testid="insert-variable-btn" />
           </ToolbarButton>
         )}
 

@@ -1,10 +1,17 @@
 import { Node, mergeAttributes } from '@tiptap/core'
+import { Suggestion, type SuggestionOptions } from '@tiptap/suggestion'
+import { PluginKey } from '@tiptap/pm/state'
+import type { SuggestionItem } from '../VariableSuggestionList'
 
 export interface VariableMentionOptions {
   /** Keys that are defined for the current game/challenge — used to flag undefined refs. */
   availableKeys: string[]
   HTMLAttributes: Record<string, unknown>
+  /** Optional suggestion plugin config. When provided, `{{` triggers autocomplete. */
+  suggestion?: Omit<SuggestionOptions<SuggestionItem>, 'editor'> | null
 }
+
+const variableSuggestionPluginKey = new PluginKey('variableSuggestion')
 
 /**
  * Atomic pill node for `{{key}}` variable references.
@@ -27,6 +34,7 @@ export const VariableMention = Node.create<VariableMentionOptions>({
     return {
       availableKeys: [],
       HTMLAttributes: {},
+      suggestion: null,
     }
   },
 
@@ -67,5 +75,17 @@ export const VariableMention = Node.create<VariableMentionOptions>({
 
   renderText({ node }) {
     return `{{${node.attrs.key}}}`
+  },
+
+  addProseMirrorPlugins() {
+    const suggestion = this.options.suggestion
+    if (!suggestion) return []
+    return [
+      Suggestion<SuggestionItem>({
+        editor: this.editor,
+        pluginKey: variableSuggestionPluginKey,
+        ...suggestion,
+      }),
+    ]
   },
 })
