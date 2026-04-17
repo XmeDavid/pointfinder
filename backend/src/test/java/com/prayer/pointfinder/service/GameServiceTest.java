@@ -8,6 +8,7 @@ import com.prayer.pointfinder.dto.request.GameImportRequest;
 import com.prayer.pointfinder.dto.response.GameResponse;
 import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.exception.BadRequestException;
+import com.prayer.pointfinder.exception.ErrorCode;
 import com.prayer.pointfinder.repository.*;
 import com.prayer.pointfinder.websocket.GameEventBroadcaster;
 import org.junit.jupiter.api.AfterEach;
@@ -495,6 +496,36 @@ class GameServiceTest {
 
         assertThrows(com.prayer.pointfinder.exception.ResourceNotFoundException.class,
                 () -> gameService.updateStatus(gameId, "live", false));
+    }
+
+    @Test
+    void transitionToLive_throwsWithVariableReferenceUndefined_whenChallengeHasUndefinedKey() {
+        // Wave A gap closure: the go-live readiness check must surface
+        // VARIABLE_REFERENCE_UNDEFINED when a challenge references a
+        // {{key}} that no team has defined. TeamVariableServiceTest covers
+        // the scan itself; this test proves GameService wraps the error
+        // list into a BadRequestException carrying the new error code.
+        UUID gameId = UUID.randomUUID();
+        Game game = Game.builder().id(gameId).name("G").description("").status(GameStatus.setup)
+                .createdBy(authenticatedUser).build();
+
+        when(gameRepository.findByIdForUpdate(gameId)).thenReturn(Optional.of(game));
+        // All structural readiness checks must pass so that validation
+        // reaches the variable-completeness check.
+        when(baseRepository.countByGameId(gameId)).thenReturn(1L);
+        when(baseRepository.countByGameIdAndNfcLinkedTrue(gameId)).thenReturn(1L);
+        when(teamRepository.countByGameId(gameId)).thenReturn(1L);
+        when(challengeRepository.countByGameId(gameId)).thenReturn(1L);
+        // Challenge content "Find {{missing}}" with no team variable named
+        // "missing" — TeamVariableService returns an error entry.
+        when(teamVariableService.validateVariableCompleteness(gameId))
+                .thenReturn(List.of("Challenge 'Find it' references undefined variable {{missing}}"));
+
+        BadRequestException ex = assertThrows(BadRequestException.class,
+                () -> gameService.updateStatus(gameId, "live", false));
+
+        assertEquals(ErrorCode.VARIABLE_REFERENCE_UNDEFINED, ex.getErrorCode());
+        assertTrue(ex.getMessage().contains("Team variables incomplete"));
     }
 
     @Test
