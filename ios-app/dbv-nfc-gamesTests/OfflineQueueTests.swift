@@ -28,7 +28,7 @@ final class OfflineQueueTests: XCTestCase {
         let baseId = UUID()
         let action = PendingAction(type: .checkIn, gameId: gameId, baseId: baseId)
 
-        await queue.enqueue(action)
+        try? await queue.enqueue(action)
         let pending = await queue.allPending()
 
         XCTAssertEqual(pending.count, 1)
@@ -44,8 +44,8 @@ final class OfflineQueueTests: XCTestCase {
         let action1 = PendingAction(type: .checkIn, gameId: UUID(), baseId: UUID())
         let action2 = PendingAction(type: .checkIn, gameId: UUID(), baseId: UUID())
 
-        await queue.enqueue(action1)
-        await queue.enqueue(action2)
+        try? await queue.enqueue(action1)
+        try? await queue.enqueue(action2)
         await queue.dequeue(action1.id)
 
         let pending = await queue.allPending()
@@ -61,8 +61,8 @@ final class OfflineQueueTests: XCTestCase {
         try? await Task.sleep(nanoseconds: 10_000_000) // 10ms
         let action2 = PendingAction(type: .checkIn, gameId: UUID(), baseId: UUID())
 
-        await queue.enqueue(action2)
-        await queue.enqueue(action1)
+        try? await queue.enqueue(action2)
+        try? await queue.enqueue(action1)
 
         let pending = await queue.allPending()
         XCTAssertEqual(pending.count, 2)
@@ -79,8 +79,8 @@ final class OfflineQueueTests: XCTestCase {
         let actionA = PendingAction(type: .checkIn, gameId: gameA, baseId: UUID())
         let actionB = PendingAction(type: .checkIn, gameId: gameB, baseId: UUID())
 
-        await queue.enqueue(actionA)
-        await queue.enqueue(actionB)
+        try? await queue.enqueue(actionA)
+        try? await queue.enqueue(actionB)
 
         let forGameA = await queue.pendingForGame(gameA)
         XCTAssertEqual(forGameA.count, 1)
@@ -92,7 +92,7 @@ final class OfflineQueueTests: XCTestCase {
     func testHasPendingCheckInDetectsExistingCheckIn() async {
         let gameId = UUID()
         let baseId = UUID()
-        await queue.enqueueCheckIn(gameId: gameId, baseId: baseId)
+        try? await queue.enqueueCheckIn(gameId: gameId, baseId: baseId)
 
         let has = await queue.hasPendingCheckIn(gameId: gameId, baseId: baseId)
         XCTAssertTrue(has)
@@ -106,7 +106,7 @@ final class OfflineQueueTests: XCTestCase {
     func testHasPendingSubmissionDetectsExisting() async {
         let baseId = UUID()
         let challengeId = UUID()
-        _ = await queue.enqueueSubmission(
+        _ = try? await queue.enqueueSubmission(
             gameId: UUID(),
             baseId: baseId,
             challengeId: challengeId,
@@ -124,7 +124,8 @@ final class OfflineQueueTests: XCTestCase {
 
     func testIncrementRetryCount() async {
         let action = PendingAction(type: .checkIn, gameId: UUID(), baseId: UUID())
-        await queue.enqueue(action)
+        try? await queue.enqueue(action)
+
 
         await queue.incrementRetryCount(action.id)
         await queue.incrementRetryCount(action.id)
@@ -137,7 +138,7 @@ final class OfflineQueueTests: XCTestCase {
 
     func testMarkFailedSetsPermanentlyFailedAndExcludesFromPendingCount() async {
         let action = PendingAction(type: .checkIn, gameId: UUID(), baseId: UUID())
-        await queue.enqueue(action)
+        try? await queue.enqueue(action)
 
         await queue.markFailed(action.id, reason: "too many retries")
 
@@ -155,8 +156,8 @@ final class OfflineQueueTests: XCTestCase {
     func testClearGameRemovesOnlyThatGamesActions() async {
         let gameA = UUID()
         let gameB = UUID()
-        await queue.enqueueCheckIn(gameId: gameA, baseId: UUID())
-        await queue.enqueueCheckIn(gameId: gameB, baseId: UUID())
+        try? await queue.enqueueCheckIn(gameId: gameA, baseId: UUID())
+        try? await queue.enqueueCheckIn(gameId: gameB, baseId: UUID())
 
         await queue.clearGame(gameA)
 
@@ -170,7 +171,7 @@ final class OfflineQueueTests: XCTestCase {
     func testEnqueueCheckInCreatesCorrectActionType() async {
         let gameId = UUID()
         let baseId = UUID()
-        await queue.enqueueCheckIn(gameId: gameId, baseId: baseId)
+        try? await queue.enqueueCheckIn(gameId: gameId, baseId: baseId)
 
         let pending = await queue.allPending()
         XCTAssertEqual(pending.count, 1)
@@ -186,7 +187,7 @@ final class OfflineQueueTests: XCTestCase {
         let baseId = UUID()
         let challengeId = UUID()
 
-        let actionId = await queue.enqueueSubmission(
+        let actionId = try? await queue.enqueueSubmission(
             gameId: gameId,
             baseId: baseId,
             challengeId: challengeId,
@@ -208,7 +209,7 @@ final class OfflineQueueTests: XCTestCase {
         let baseId = UUID()
         let challengeId = UUID()
 
-        let actionId = await queue.enqueueMediaSubmission(
+        let actionId = try? await queue.enqueueMediaSubmission(
             gameId: gameId,
             baseId: baseId,
             challengeId: challengeId,
@@ -242,7 +243,7 @@ final class OfflineQueueTests: XCTestCase {
             PendingMediaItem(localFilePath: "/tmp/b.png", contentType: "image/png", sizeBytes: 800, fileName: "b.png"),
         ]
 
-        let actionId = await queue.enqueueMultiMediaSubmission(
+        let actionId = try? await queue.enqueueMultiMediaSubmission(
             gameId: UUID(),
             baseId: UUID(),
             challengeId: UUID(),
@@ -267,7 +268,7 @@ final class OfflineQueueTests: XCTestCase {
 
     func testUpdateUploadProgressUpdatesCheckpointFields() async {
         let action = PendingAction(type: .mediaSubmission, gameId: UUID(), baseId: UUID(), challengeId: UUID())
-        await queue.enqueue(action)
+        try? await queue.enqueue(action)
 
         let sessionId = UUID()
         await queue.updateUploadProgress(
@@ -290,7 +291,7 @@ final class OfflineQueueTests: XCTestCase {
     func testDiskPersistenceActionsSurviveReInit() async {
         let gameId = UUID()
         let baseId = UUID()
-        await queue.enqueueCheckIn(gameId: gameId, baseId: baseId)
+        try? await queue.enqueueCheckIn(gameId: gameId, baseId: baseId)
 
         // Create a new queue from the same file URL
         let queue2 = OfflineQueue(fileURL: tempFileURL)

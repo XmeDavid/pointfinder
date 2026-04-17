@@ -46,10 +46,10 @@ final class SyncEngineTests: XCTestCase {
         let challengeId = UUID()
 
         // Enqueue a submission first, then a check-in
-        _ = await offlineQueue.enqueueSubmission(
+        _ = try? await offlineQueue.enqueueSubmission(
             gameId: gameId, baseId: baseId, challengeId: challengeId, answer: "answer"
         )
-        await offlineQueue.enqueueCheckIn(gameId: gameId, baseId: baseId)
+        try? await offlineQueue.enqueueCheckIn(gameId: gameId, baseId: baseId)
 
         await syncEngine.syncPendingActions()
 
@@ -65,7 +65,7 @@ final class SyncEngineTests: XCTestCase {
         // Start a sync that will block
         mockAPI.checkInDelay = 0.2
         let gameId = UUID()
-        await offlineQueue.enqueueCheckIn(gameId: gameId, baseId: UUID())
+        try? await offlineQueue.enqueueCheckIn(gameId: gameId, baseId: UUID())
 
         // Start first sync (will be slow)
         let task = Task { @MainActor in
@@ -86,7 +86,7 @@ final class SyncEngineTests: XCTestCase {
 
     func testOfflineGuardSkipsWhenNoConnectivity() async {
         isOnline = false
-        await offlineQueue.enqueueCheckIn(gameId: UUID(), baseId: UUID())
+        try? await offlineQueue.enqueueCheckIn(gameId: UUID(), baseId: UUID())
 
         await syncEngine.syncPendingActions()
 
@@ -100,7 +100,7 @@ final class SyncEngineTests: XCTestCase {
     func testSuccessfulSyncDequeuesAction() async {
         let gameId = UUID()
         let baseId = UUID()
-        await offlineQueue.enqueueCheckIn(gameId: gameId, baseId: baseId)
+        try? await offlineQueue.enqueueCheckIn(gameId: gameId, baseId: baseId)
 
         await syncEngine.syncPendingActions()
 
@@ -114,7 +114,7 @@ final class SyncEngineTests: XCTestCase {
     func testNetworkErrorIncrementsRetryCount() async {
         let gameId = UUID()
         let baseId = UUID()
-        await offlineQueue.enqueueCheckIn(gameId: gameId, baseId: baseId)
+        try? await offlineQueue.enqueueCheckIn(gameId: gameId, baseId: baseId)
 
         mockAPI.checkInError = APIError.networkError(URLError(.notConnectedToInternet))
 
@@ -139,7 +139,7 @@ final class SyncEngineTests: XCTestCase {
         try! mediaData.write(to: mediaURL)
         defer { try? FileManager.default.removeItem(at: mediaURL) }
 
-        _ = await offlineQueue.enqueueMediaSubmission(
+        _ = try? await offlineQueue.enqueueMediaSubmission(
             gameId: gameId,
             baseId: baseId,
             challengeId: challengeId,
@@ -176,8 +176,8 @@ final class SyncEngineTests: XCTestCase {
         let baseId = UUID()
 
         // Enqueue and manually set retry count to maxRetries
-        var action = PendingAction(type: .checkIn, gameId: gameId, baseId: baseId)
-        await offlineQueue.enqueue(action)
+        let action = PendingAction(type: .checkIn, gameId: gameId, baseId: baseId)
+        try? await offlineQueue.enqueue(action)
         // Increment retry count to maxRetries (3)
         for _ in 0..<3 {
             await offlineQueue.incrementRetryCount(action.id)
