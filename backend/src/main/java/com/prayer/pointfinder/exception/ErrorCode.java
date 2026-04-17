@@ -96,4 +96,14 @@ public enum ErrorCode {
     QUOTA_FILE_SIZE_EXCEEDED,
     /** Game has reached the maximum number of players for this tier. */
     QUOTA_PLAYERS_PER_GAME_EXCEEDED,
+
+    // ── Variables ─────────────────────────────────────────────────────────
+    /**
+     * A challenge's content, completionContent, or correctAnswer references a
+     * {@code {{key}}} that has no matching variable defined for at least one
+     * team. Emitted at {@code setup → live} transition. The error payload
+     * includes the offending challenge id, referenced key, and teams that
+     * are missing a value for that key.
+     */
+    VARIABLE_REFERENCE_UNDEFINED,
 }
