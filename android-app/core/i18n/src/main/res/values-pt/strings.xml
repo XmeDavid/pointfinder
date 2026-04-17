@@ -236,6 +236,9 @@
     <string name="label_delete_base_confirm">Eliminar esta base? Esta ação não pode ser desfeita.</string>
     <string name="label_tap_map_to_set_location">Toca no mapa para definir a localização</string>
     <string name="action_save">Guardar</string>
+    <string name="action_save_anyway">Guardar mesmo assim</string>
+    <string name="operator_undefined_variables_title">Variáveis indefinidas</string>
+    <string name="operator_undefined_variables_message">Referências sem definição: %1$s</string>
     <string name="label_write_nfc">Gravar NFC</string>
     <!-- Rich Text Editor -->
     <string name="action_done">Concluir</string>

@@ -241,6 +241,9 @@
     <string name="label_delete_base_confirm">Diese Station l\u00f6schen? Dies kann nicht r\u00fcckg\u00e4ngig gemacht werden.</string>
     <string name="label_tap_map_to_set_location">Tippe auf die Karte, um den Standort festzulegen</string>
     <string name="action_save">Speichern</string>
+    <string name="action_save_anyway">Trotzdem speichern</string>
+    <string name="operator_undefined_variables_title">Undefinierte Variablen</string>
+    <string name="operator_undefined_variables_message">Referenzen ohne Definition: %1$s</string>
     <string name="label_write_nfc">NFC schreiben</string>
     <!-- Rich Text Editor -->
     <string name="action_done">Fertig</string>

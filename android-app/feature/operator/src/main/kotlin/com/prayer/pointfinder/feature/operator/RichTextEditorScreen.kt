@@ -54,7 +54,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
 import com.prayer.pointfinder.core.i18n.R
 import com.prayer.pointfinder.core.model.Team
 import com.prayer.pointfinder.core.model.TeamVariable
@@ -95,8 +97,13 @@ fun RichTextEditorScreen(
     var suggestionX by remember { mutableFloatStateOf(0f) }
     var suggestionY by remember { mutableFloatStateOf(0f) }
 
-    val bridge = remember(variables) {
-        if (variables == null && onCreateVariable == null) {
+    // Bridge is created once; AndroidView.factory only runs once so a
+    // re-created bridge would never be re-registered with the WebView.
+    // The callbacks below close over Compose state via mutable refs, so they
+    // always read the latest values.
+    val hasVariablesSupport = variables != null || onCreateVariable != null
+    val bridge = remember {
+        if (!hasVariablesSupport) {
             null
         } else {
             VariableBridge(
@@ -282,24 +289,26 @@ fun RichTextEditorScreen(
                 )
 
                 if (suggestionOpen && variables != null) {
-                    val offsetX = with(density) { suggestionX.toDp() }
-                    val offsetY = with(density) { suggestionY.toDp() }
-                    VariableAutocompleteOverlay(
-                        partial = suggestionPartial,
-                        availableKeys = variables.map { it.key },
-                        onSelect = { key -> consumePartialAndInsert(key) },
-                        onCreate = { partial ->
-                            suggestionOpen = false
-                            if (onCreateVariable != null) {
-                                newVariablePrefill = partial
-                                showCreateVariable = true
-                            }
-                        },
-                        modifier = Modifier.padding(
-                            start = offsetX,
-                            top = offsetY + 8.dp,
-                        ),
-                    )
+                    // Popup auto-clamps to the screen so the overlay can't
+                    // render offscreen when the caret is near the edge.
+                    val popupYPx = with(density) { (suggestionY.toDp() + 8.dp).toPx() }
+                    Popup(
+                        offset = IntOffset(suggestionX.toInt(), popupYPx.toInt()),
+                        onDismissRequest = { suggestionOpen = false },
+                    ) {
+                        VariableAutocompleteOverlay(
+                            partial = suggestionPartial,
+                            availableKeys = variables.map { it.key },
+                            onSelect = { key -> consumePartialAndInsert(key) },
+                            onCreate = { partial ->
+                                suggestionOpen = false
+                                if (onCreateVariable != null) {
+                                    newVariablePrefill = partial
+                                    showCreateVariable = true
+                                }
+                            },
+                        )
+                    }
                 }
             }
 

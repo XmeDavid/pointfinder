@@ -243,6 +243,9 @@
     <string name="label_delete_base_confirm">Delete this base? This cannot be undone.</string>
     <string name="label_tap_map_to_set_location">Tap map to set location</string>
     <string name="action_save">Save</string>
+    <string name="action_save_anyway">Save anyway</string>
+    <string name="operator_undefined_variables_title">Undefined variables</string>
+    <string name="operator_undefined_variables_message">References with no definition: %1$s</string>
     <string name="label_write_nfc">Write NFC</string>
     <!-- Rich Text Editor -->
     <string name="action_done">Done</string>

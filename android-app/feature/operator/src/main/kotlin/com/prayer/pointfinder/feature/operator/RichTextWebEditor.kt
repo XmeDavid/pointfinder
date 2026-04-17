@@ -1,5 +1,7 @@
 package com.prayer.pointfinder.feature.operator
 
+import android.os.Handler
+import android.os.Looper
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebView
@@ -62,14 +64,16 @@ class VariableBridge(
     val onOpen: (partial: String, x: Float, y: Float) -> Unit,
     val onClose: () -> Unit,
 ) {
+    private val mainHandler = Handler(Looper.getMainLooper())
+
     @JavascriptInterface
     fun onTriggerOpen(partial: String, x: Float, y: Float) {
-        onOpen(partial, x, y)
+        mainHandler.post { onOpen(partial, x, y) }
     }
 
     @JavascriptInterface
     fun onTriggerClose() {
-        onClose()
+        mainHandler.post { onClose() }
     }
 }
 
@@ -146,7 +150,7 @@ private fun editorHTML(content: String, isDark: Boolean): String {
       return;
     }
     var before = container.textContent.substring(0, r.startOffset);
-    var match = before.match(/\{\{([a-zA-Z0-9_]*)${'$'}/);
+    var match = before.match(/\{\{([a-zA-Z][a-zA-Z0-9_]*|)${'$'}/);
     if (match) {
       var rect = r.getBoundingClientRect();
       window.VariableBridge.onTriggerOpen(match[1], rect.left, rect.top + rect.height);

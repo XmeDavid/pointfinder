@@ -885,18 +885,20 @@ fun ChallengeEditScreen(
             if (showUndefinedDialog) {
                 AlertDialog(
                     onDismissRequest = { showUndefinedDialog = false },
-                    title = { Text("Undefined variables") },
+                    title = { Text(stringResource(R.string.operator_undefined_variables_title)) },
                     text = {
                         Text(
-                            "References with no definition: " +
-                                undefinedKeys.joinToString(", ") { "{{$it}}" }
+                            stringResource(
+                                R.string.operator_undefined_variables_message,
+                                undefinedKeys.joinToString(", ") { "{{$it}}" },
+                            )
                         )
                     },
                     confirmButton = {
                         TextButton(onClick = {
                             showUndefinedDialog = false
                             performSave()
-                        }) { Text("Save anyway") }
+                        }) { Text(stringResource(R.string.action_save_anyway)) }
                     },
                     dismissButton = {
                         TextButton(onClick = { showUndefinedDialog = false }) {

@@ -23,4 +23,15 @@ class VariableResolverTest {
         assertEquals("", VariableResolver.resolve("", emptyMap()))
         assertEquals("", VariableResolver.resolve(null, emptyMap()))
     }
+
+    @Test fun substitutesMultipleDistinctKeysInOneString() {
+        val vars = mapOf("a" to "AA", "b" to "BB")
+        assertEquals("prefix AA middle BB tail", VariableResolver.resolve("prefix {{a}} middle {{b}} tail", vars))
+    }
+
+    @Test fun doesNotReSubstituteValuesContainingPlaceholders() {
+        val vars = mapOf("key" to "{{other}}", "other" to "FINAL")
+        // Output of key substitution should NOT be re-scanned.
+        assertEquals("{{other}}", VariableResolver.resolve("{{key}}", vars))
+    }
 }

@@ -22,4 +22,13 @@ class VariableReferenceScannerTest {
         )
         assertEquals(listOf("typo"), out)
     }
+
+    @Test fun scanIsCaseSensitiveOnLookup() {
+        // Scanner returns keys verbatim; undefined check is case-sensitive so {{Secret}} != "secret".
+        val out = VariableReferenceScanner.findUndefined(
+            texts = listOf("Find {{Secret}}"),
+            availableKeys = setOf("secret")
+        )
+        assertEquals(listOf("Secret"), out)
+    }
 }

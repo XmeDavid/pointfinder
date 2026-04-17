@@ -45,7 +45,7 @@ fun VariableAutocompleteOverlay(
     modifier: Modifier = Modifier,
 ) {
     val filtered = availableKeys.filter { it.contains(partial, ignoreCase = true) }.take(8)
-    val showsCreate = partial.isNotEmpty() && partial !in availableKeys
+    val showsCreate = partial.isNotEmpty() && availableKeys.none { it.equals(partial, ignoreCase = true) }
 
     Surface(
         modifier = modifier
