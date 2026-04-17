@@ -33,6 +33,7 @@ dependencies {
     val composeBom = platform(libs.androidx.compose.bom)
 
     implementation(project(":core:model"))
+    implementation(project(":core:data"))
     implementation(project(":core:i18n"))
     implementation(project(":feature:player"))
 

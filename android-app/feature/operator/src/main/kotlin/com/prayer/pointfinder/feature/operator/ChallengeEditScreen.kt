@@ -37,11 +37,13 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -49,6 +51,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -65,6 +68,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.prayer.pointfinder.core.data.variables.VariableReferenceScanner
+import com.prayer.pointfinder.core.data.variables.VariableResolver
 import com.prayer.pointfinder.core.i18n.R
 import com.prayer.pointfinder.core.model.Assignment
 import com.prayer.pointfinder.core.model.Base
@@ -73,6 +78,7 @@ import com.prayer.pointfinder.core.model.CreateChallengeRequest
 import com.prayer.pointfinder.core.model.Team
 import com.prayer.pointfinder.core.model.TeamVariable
 import com.prayer.pointfinder.core.model.UpdateChallengeRequest
+import com.prayer.pointfinder.feature.player.HtmlContentView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -151,6 +157,25 @@ fun ChallengeEditScreen(
     var answerTypeExpanded by remember { mutableStateOf(false) }
     var fixedBaseExpanded by remember { mutableStateOf(false) }
     var unlocksBaseExpanded by remember { mutableStateOf(false) }
+
+    // Preview-as-team state — when enabled, content / correctAnswers render
+    // with {{key}} resolved against the selected team's variables.
+    var previewMode by remember { mutableStateOf(false) }
+    var previewTeamId by remember { mutableStateOf<String?>(teams.firstOrNull()?.id) }
+    var previewTeamExpanded by remember { mutableStateOf(false) }
+    val previewTeam = remember(previewTeamId, teams) {
+        teams.firstOrNull { it.id == previewTeamId }
+    }
+    val previewVariableMap: Map<String, String> = remember(previewTeam, variables) {
+        val team = previewTeam ?: return@remember emptyMap<String, String>()
+        variables.associate { v ->
+            v.key to (v.teamValues[team.id] ?: v.teamValues[team.name] ?: "")
+        }
+    }
+
+    // Save-time undefined-key guard
+    var showUndefinedDialog by remember { mutableStateOf(false) }
+    var undefinedKeys by remember { mutableStateOf<List<String>>(emptyList()) }
 
     // Show rich text editors as full-screen overlays
     when {
@@ -271,6 +296,64 @@ fun ChallengeEditScreen(
 
             Spacer(Modifier.height(8.dp))
 
+            // Edit / Preview-as-team toggle
+            if (teams.isNotEmpty() && variables.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    FilterChip(
+                        selected = !previewMode,
+                        onClick = { previewMode = false },
+                        label = { Text(stringResource(R.string.action_edit)) },
+                        modifier = Modifier.testTag("challenge-edit-mode-chip"),
+                    )
+                    FilterChip(
+                        selected = previewMode,
+                        onClick = { previewMode = true },
+                        label = { Text(stringResource(R.string.label_preview)) },
+                        modifier = Modifier.testTag("challenge-preview-mode-chip"),
+                    )
+                }
+                if (previewMode) {
+                    Spacer(Modifier.height(8.dp))
+                    ExposedDropdownMenuBox(
+                        expanded = previewTeamExpanded,
+                        onExpandedChange = { previewTeamExpanded = it },
+                    ) {
+                        OutlinedTextField(
+                            value = previewTeam?.name ?: "",
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text(stringResource(R.string.label_preview)) },
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = previewTeamExpanded)
+                            },
+                            modifier = Modifier
+                                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                                .fillMaxWidth()
+                                .testTag("challenge-preview-team-select"),
+                        )
+                        ExposedDropdownMenu(
+                            expanded = previewTeamExpanded,
+                            onDismissRequest = { previewTeamExpanded = false },
+                        ) {
+                            teams.forEach { team ->
+                                DropdownMenuItem(
+                                    text = { Text(team.name) },
+                                    onClick = {
+                                        previewTeamId = team.id
+                                        previewTeamExpanded = false
+                                    },
+                                )
+                            }
+                        }
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+            }
+
             // Description preview
             Text(
                 text = stringResource(R.string.label_description),
@@ -278,14 +361,29 @@ fun ChallengeEditScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(4.dp))
-            OutlinedTextField(
-                value = descriptionHtml,
-                onValueChange = { descriptionHtml = it },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 2,
-                maxLines = 4,
-                placeholder = { Text(stringResource(R.string.label_description)) },
-            )
+            if (previewMode) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    tonalElevation = 2.dp,
+                    shape = MaterialTheme.shapes.medium,
+                ) {
+                    Text(
+                        text = VariableResolver.resolve(descriptionHtml, previewVariableMap)
+                            .ifBlank { stringResource(R.string.label_no_content) },
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(12.dp),
+                    )
+                }
+            } else {
+                OutlinedTextField(
+                    value = descriptionHtml,
+                    onValueChange = { descriptionHtml = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 2,
+                    maxLines = 4,
+                    placeholder = { Text(stringResource(R.string.label_description)) },
+                )
+            }
 
             Spacer(Modifier.height(12.dp))
 
@@ -297,10 +395,26 @@ fun ChallengeEditScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(Modifier.height(4.dp))
-                HtmlPreviewCard(
-                    html = contentHtml,
-                    onClick = { showContentEditor = true },
-                )
+                if (previewMode) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        tonalElevation = 2.dp,
+                        shape = MaterialTheme.shapes.medium,
+                    ) {
+                        HtmlContentView(
+                            html = VariableResolver.resolve(contentHtml, previewVariableMap),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(220.dp)
+                                .padding(12.dp),
+                        )
+                    }
+                } else {
+                    HtmlPreviewCard(
+                        html = contentHtml,
+                        onClick = { showContentEditor = true },
+                    )
+                }
 
                 Spacer(Modifier.height(12.dp))
             }
@@ -312,10 +426,26 @@ fun ChallengeEditScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(4.dp))
-            HtmlPreviewCard(
-                html = completionContentHtml,
-                onClick = { showCompletionEditor = true },
-            )
+            if (previewMode) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    tonalElevation = 2.dp,
+                    shape = MaterialTheme.shapes.medium,
+                ) {
+                    HtmlContentView(
+                        html = VariableResolver.resolve(completionContentHtml, previewVariableMap),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(180.dp)
+                            .padding(12.dp),
+                    )
+                }
+            } else {
+                HtmlPreviewCard(
+                    html = completionContentHtml,
+                    onClick = { showCompletionEditor = true },
+                )
+            }
 
             Spacer(Modifier.height(20.dp))
 
@@ -427,15 +557,24 @@ fun ChallengeEditScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         correctAnswers.forEachIndexed { index, answer ->
+                            val displayed = if (previewMode) {
+                                VariableResolver.resolve(answer, previewVariableMap)
+                            } else {
+                                answer
+                            }
                             AssistChip(
-                                onClick = { correctAnswers.removeAt(index) },
-                                label = { Text(answer) },
-                                trailingIcon = {
-                                    Icon(
-                                        Icons.Default.Close,
-                                        contentDescription = stringResource(R.string.action_remove),
-                                        modifier = Modifier.size(16.dp),
-                                    )
+                                onClick = {
+                                    if (!previewMode) correctAnswers.removeAt(index)
+                                },
+                                label = { Text(displayed) },
+                                trailingIcon = if (previewMode) null else {
+                                    {
+                                        Icon(
+                                            Icons.Default.Close,
+                                            contentDescription = stringResource(R.string.action_remove),
+                                            modifier = Modifier.size(16.dp),
+                                        )
+                                    }
                                 },
                             )
                         }
@@ -678,50 +817,93 @@ fun ChallengeEditScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // Save button
+            val performSave: () -> Unit = {
+                val effectiveUnlocksBaseIds = unlocksBaseIds.toList().ifEmpty { null }
+                if (isEditMode) {
+                    onSave(
+                        UpdateChallengeRequest(
+                            title = title,
+                            description = descriptionHtml,
+                            content = contentHtml,
+                            completionContent = completionContentHtml,
+                            answerType = answerType,
+                            autoValidate = autoValidate,
+                            correctAnswer = correctAnswers.toList(),
+                            points = points,
+                            locationBound = locationBound,
+                            fixedBaseId = fixedBaseId,
+                            unlocksBaseIds = effectiveUnlocksBaseIds,
+                            requirePresenceToSubmit = requirePresence,
+                        ),
+                    )
+                } else {
+                    onSave(
+                        CreateChallengeRequest(
+                            title = title,
+                            description = descriptionHtml,
+                            content = contentHtml,
+                            completionContent = completionContentHtml,
+                            answerType = answerType,
+                            autoValidate = autoValidate,
+                            correctAnswer = correctAnswers.toList(),
+                            points = points,
+                            locationBound = locationBound,
+                            fixedBaseId = fixedBaseId,
+                            unlocksBaseIds = effectiveUnlocksBaseIds,
+                            requirePresenceToSubmit = requirePresence,
+                        ),
+                    )
+                }
+            }
+
+            // Save button — intercepts to show undefined-key dialog before
+            // actually persisting when any {{key}} has no matching variable.
             Button(
                 onClick = {
-                    val effectiveUnlocksBaseIds = unlocksBaseIds.toList().ifEmpty { null }
-                    if (isEditMode) {
-                        onSave(
-                            UpdateChallengeRequest(
-                                title = title,
-                                description = descriptionHtml,
-                                content = contentHtml,
-                                completionContent = completionContentHtml,
-                                answerType = answerType,
-                                autoValidate = autoValidate,
-                                correctAnswer = correctAnswers.toList(),
-                                points = points,
-                                locationBound = locationBound,
-                                fixedBaseId = fixedBaseId,
-                                unlocksBaseIds = effectiveUnlocksBaseIds,
-                                requirePresenceToSubmit = requirePresence,
-                            ),
-                        )
+                    val undefined = VariableReferenceScanner.findUndefined(
+                        texts = buildList {
+                            add(descriptionHtml)
+                            add(contentHtml)
+                            add(completionContentHtml)
+                            addAll(correctAnswers)
+                        },
+                        availableKeys = variables.map { it.key }.toSet(),
+                    )
+                    if (undefined.isNotEmpty()) {
+                        undefinedKeys = undefined
+                        showUndefinedDialog = true
                     } else {
-                        onSave(
-                            CreateChallengeRequest(
-                                title = title,
-                                description = descriptionHtml,
-                                content = contentHtml,
-                                completionContent = completionContentHtml,
-                                answerType = answerType,
-                                autoValidate = autoValidate,
-                                correctAnswer = correctAnswers.toList(),
-                                points = points,
-                                locationBound = locationBound,
-                                fixedBaseId = fixedBaseId,
-                                unlocksBaseIds = effectiveUnlocksBaseIds,
-                                requirePresenceToSubmit = requirePresence,
-                            ),
-                        )
+                        performSave()
                     }
                 },
                 enabled = canSave,
                 modifier = Modifier.fillMaxWidth().testTag("challenge-save-btn"),
             ) {
                 Text(stringResource(R.string.action_save))
+            }
+
+            if (showUndefinedDialog) {
+                AlertDialog(
+                    onDismissRequest = { showUndefinedDialog = false },
+                    title = { Text("Undefined variables") },
+                    text = {
+                        Text(
+                            "References with no definition: " +
+                                undefinedKeys.joinToString(", ") { "{{$it}}" }
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            showUndefinedDialog = false
+                            performSave()
+                        }) { Text("Save anyway") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showUndefinedDialog = false }) {
+                            Text(stringResource(R.string.action_cancel))
+                        }
+                    },
+                )
             }
 
             Spacer(Modifier.height(24.dp))
@@ -753,40 +935,85 @@ fun ChallengeEditScreen(
         )
     }
 
-    // Add answer dialog
+    // Add answer bottom sheet with {{-trigger autocomplete. Replaces the
+    // plain AlertDialog to give operators the same authoring affordances as
+    // the rich editor when entering accepted answers that reference
+    // team-specific variables.
     if (showAddAnswerDialog) {
-        AlertDialog(
-            onDismissRequest = { showAddAnswerDialog = false },
-            title = { Text(stringResource(R.string.label_add_answer)) },
-            text = {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
+            onDismissRequest = {
+                showAddAnswerDialog = false
+                newAnswerText = ""
+            },
+            sheetState = sheetState,
+        ) {
+            val partialMatch = Regex("""\{\{([a-zA-Z0-9_]*)$""").find(newAnswerText)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.label_add_answer),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
                     value = newAnswerText,
                     onValueChange = { newAnswerText = it },
                     label = { Text(stringResource(R.string.label_answer)) },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("add-answer-input"),
                 )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        if (newAnswerText.isNotBlank()) {
-                            correctAnswers.add(newAnswerText.trim())
-                            newAnswerText = ""
-                        }
-                        showAddAnswerDialog = false
-                    },
-                    enabled = newAnswerText.isNotBlank(),
+                if (partialMatch != null) {
+                    Spacer(Modifier.height(4.dp))
+                    VariableAutocompleteOverlay(
+                        partial = partialMatch.groupValues[1],
+                        availableKeys = variables.map { it.key },
+                        onSelect = { key ->
+                            val before = newAnswerText.substring(0, partialMatch.range.first)
+                            newAnswerText = "$before{{$key}}"
+                        },
+                        onCreate = { partial ->
+                            onCreateVariable(partial)
+                            val before = newAnswerText.substring(0, partialMatch.range.first)
+                            newAnswerText = "$before{{$partial}}"
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                Spacer(Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
                 ) {
-                    Text(stringResource(R.string.label_add_answer))
+                    TextButton(onClick = {
+                        showAddAnswerDialog = false
+                        newAnswerText = ""
+                    }) {
+                        Text(stringResource(R.string.action_cancel))
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            if (newAnswerText.isNotBlank()) {
+                                correctAnswers.add(newAnswerText.trim())
+                                newAnswerText = ""
+                                showAddAnswerDialog = false
+                            }
+                        },
+                        enabled = newAnswerText.isNotBlank(),
+                    ) {
+                        Text(stringResource(R.string.label_add_answer))
+                    }
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { showAddAnswerDialog = false }) {
-                    Text(stringResource(R.string.action_cancel))
-                }
-            },
-        )
+                Spacer(Modifier.height(8.dp))
+            }
+        }
     }
 }
 
