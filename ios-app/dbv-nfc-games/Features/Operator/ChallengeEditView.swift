@@ -31,12 +31,15 @@ struct ChallengeEditView: View {
     @State private var errorMessage: String?
     @State private var showSaveSuccess = false
     @State private var editingField: EditableField?
-    @State private var showAddAnswerAlert = false
-    @State private var newAnswerText = ""
+    @State private var showAddAnswerSheet = false
     @State private var gameVariables: [TeamVariable] = []
     @State private var challengeVariables: [TeamVariable] = []
     @State private var teams: [Team] = []
     @State private var areVariablesLoading = true
+    @State private var previewMode: Bool = false
+    @State private var previewTeamId: UUID?
+    @State private var showUndefinedWarning: Bool = false
+    @State private var undefinedKeys: [String] = []
 
     private var isCreateMode: Bool { challenge == nil }
 
@@ -114,6 +117,36 @@ struct ChallengeEditView: View {
                 }
             }
 
+            // Preview-as-team toggle (only if any team/vars exist)
+            if !teams.isEmpty && !availableVariableKeys.isEmpty {
+                Section {
+                    Picker("", selection: $previewMode) {
+                        Text(locale.t("operator.edit")).tag(false)
+                        Text(locale.t("operator.preview")).tag(true)
+                    }
+                    .pickerStyle(.segmented)
+                    .accessibilityIdentifier("preview-mode-picker")
+                    .onChange(of: previewMode) { _, newValue in
+                        if newValue && previewTeamId == nil {
+                            previewTeamId = teams
+                                .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+                                .first?
+                                .id
+                        }
+                    }
+
+                    if previewMode {
+                        Picker(locale.t("operator.previewAsTeam"), selection: $previewTeamId) {
+                            ForEach(teams.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }, id: \.id) { team in
+                                Text(team.name).tag(Optional(team.id))
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .accessibilityIdentifier("preview-team-picker")
+                    }
+                }
+            }
+
             // Description (plain text)
             Section(locale.t("common.description")) {
                 TextField(locale.t("common.description"), text: $descriptionText, axis: .vertical)
@@ -125,13 +158,13 @@ struct ChallengeEditView: View {
                 if answerType != "none" {
                     htmlEditorRow(
                         label: locale.t("operator.content"),
-                        html: contentHtml,
+                        html: previewMode ? previewResolved(contentHtml) : contentHtml,
                         field: .content
                     )
                 }
                 htmlEditorRow(
                     label: locale.t("common.unlockedInformation"),
-                    html: completionContentHtml,
+                    html: previewMode ? previewResolved(completionContentHtml) : completionContentHtml,
                     field: .completionContent
                 )
             }
@@ -163,14 +196,16 @@ struct ChallengeEditView: View {
                             FlowLayout(spacing: 6) {
                                 ForEach(correctAnswers, id: \.self) { answer in
                                     HStack(spacing: 4) {
-                                        Text(answer)
+                                        Text(previewMode ? previewResolved(answer) : answer)
                                             .font(.subheadline)
-                                        Button {
-                                            correctAnswers.removeAll { $0 == answer }
-                                        } label: {
-                                            Image(systemName: "xmark.circle.fill")
-                                                .font(.caption)
-                                                .foregroundStyle(.secondary)
+                                        if !previewMode {
+                                            Button {
+                                                correctAnswers.removeAll { $0 == answer }
+                                            } label: {
+                                                Image(systemName: "xmark.circle.fill")
+                                                    .font(.caption)
+                                                    .foregroundStyle(.secondary)
+                                            }
                                         }
                                     }
                                     .padding(.horizontal, 10)
@@ -181,8 +216,7 @@ struct ChallengeEditView: View {
                             }
 
                             Button {
-                                newAnswerText = ""
-                                showAddAnswerAlert = true
+                                showAddAnswerSheet = true
                             } label: {
                                 Label(locale.t("operator.addAnswer"), systemImage: "plus.circle")
                                     .font(.subheadline)
@@ -339,15 +373,29 @@ struct ChallengeEditView: View {
         } message: {
             Text(locale.t("common.cannotUndo"))
         }
-        .alert(locale.t("operator.addAnswer"), isPresented: $showAddAnswerAlert) {
-            TextField(locale.t("common.answer"), text: $newAnswerText)
-            Button(locale.t("common.ok")) {
-                let trimmed = newAnswerText.trimmingCharacters(in: .whitespacesAndNewlines)
-                if !trimmed.isEmpty {
-                    correctAnswers.append(trimmed)
+        .sheet(isPresented: $showAddAnswerSheet) {
+            AddCorrectAnswerSheet(
+                availableKeys: availableVariableKeys,
+                onCreateVariable: { partial in
+                    Task { _ = await createVariable(partial) }
+                },
+                onAdd: { answer in
+                    correctAnswers.append(answer)
                 }
+            )
+            .presentationDetents([.medium])
+        }
+        .alert(locale.t("operator.undefinedVariables"), isPresented: $showUndefinedWarning) {
+            Button(locale.t("operator.saveAnyway"), role: .destructive) {
+                showUndefinedWarning = false
+                Task { await performSave() }
             }
-            Button(locale.t("common.cancel"), role: .cancel) {}
+            Button(locale.t("common.cancel"), role: .cancel) {
+                showUndefinedWarning = false
+            }
+        } message: {
+            let list = undefinedKeys.map { "{{\($0)}}" }.joined(separator: ", ")
+            Text(String(format: locale.t("operator.undefinedVariablesMessage"), list))
         }
         .fullScreenCover(item: $editingField) { field in
             RichTextEditorView(
@@ -444,6 +492,28 @@ struct ChallengeEditView: View {
         }
     }
 
+    // MARK: - Preview helper
+
+    /// Returns the template string with `{{key}}` placeholders substituted
+    /// for the currently-selected preview team. Unknown keys are preserved
+    /// so the operator can still see the undefined references visually.
+    private func previewResolved(_ template: String) -> String {
+        guard let teamId = previewTeamId else { return template }
+        let teamKey = teamId.uuidString.lowercased()
+        var merged: [String: String] = [:]
+        for v in gameVariables {
+            if let val = v.teamValues[teamKey] ?? v.teamValues[teamId.uuidString] {
+                merged[v.key] = val
+            }
+        }
+        for v in challengeVariables {
+            if let val = v.teamValues[teamKey] ?? v.teamValues[teamId.uuidString] {
+                merged[v.key] = val
+            }
+        }
+        return VariableResolver.resolve(template, variables: merged)
+    }
+
     // MARK: - Data Loading
 
     private func loadVariablesAndTeams() async {
@@ -534,7 +604,23 @@ struct ChallengeEditView: View {
 
     // MARK: - Actions
 
+    /// Entry point for Save: scans challenge content + correctAnswers for
+    /// undefined `{{key}}` references and prompts the operator if any are found.
+    /// The actual save is `performSave`.
     private func save() async {
+        let offenders = VariableReferenceScanner.findUndefined(
+            in: [contentHtml, completionContentHtml] + correctAnswers,
+            availableKeys: Set(availableVariableKeys)
+        )
+        if !offenders.isEmpty {
+            undefinedKeys = offenders
+            showUndefinedWarning = true
+            return
+        }
+        await performSave()
+    }
+
+    private func performSave() async {
         guard let token else { return }
         isSaving = true
         errorMessage = nil
