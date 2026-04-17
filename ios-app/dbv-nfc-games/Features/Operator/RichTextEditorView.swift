@@ -195,8 +195,7 @@ struct RichTextEditorView: View {
                 VariablePickerSheet(
                     variables: variables ?? [],
                     onSelect: { key in
-                        let tag = "<span class=\"variable-tag\">{{\(key)}}</span>&nbsp;"
-                        webViewCoordinator.insertHTML(tag)
+                        webViewCoordinator.insertVariable(key)
                         showVariablePicker = false
                     }
                 )
@@ -212,8 +211,7 @@ struct RichTextEditorView: View {
                             if let errorMessage = await onCreateVariable(trimmed) {
                                 createVariableErrorMessage = errorMessage
                             } else {
-                                let tag = "<span class=\"variable-tag\">{{\(trimmed)}}</span>&nbsp;"
-                                webViewCoordinator.insertHTML(tag)
+                                webViewCoordinator.insertVariable(trimmed)
                             }
                         }
                     }
@@ -514,6 +512,61 @@ class RichTextWebViewCoordinator {
         }
     }
 
+    /// Inserts an atomic pill span for a variable key. The span is
+    /// `contenteditable="false"` so backspace removes it whole.
+    func insertVariable(_ key: String) {
+        let safeKey = jsEscape(key)
+        let js = """
+        (function() {
+          var editor = document.getElementById('editor');
+          editor.focus();
+          var sel = window.getSelection();
+          if (!sel.rangeCount || !editor.contains(sel.anchorNode)) {
+              var range = document.createRange();
+              range.selectNodeContents(editor);
+              range.collapse(false);
+              sel.removeAllRanges();
+              sel.addRange(range);
+          }
+          var span = document.createElement('span');
+          span.className = 'variable-tag';
+          span.setAttribute('contenteditable', 'false');
+          span.setAttribute('data-variable-key', '\(safeKey)');
+          span.textContent = '{{\(safeKey)}}';
+          document.execCommand('insertHTML', false, span.outerHTML + '\u{00a0}');
+        })();
+        """
+        webView?.evaluateJavaScript(js) { _, error in
+            if let error { print("[RichTextEditor] insertVariable JS error: \(error)") }
+        }
+    }
+
+    /// Removes the `{{partial` fragment the user typed before the caret,
+    /// so that `insertVariable(key)` replaces the in-progress trigger.
+    func deletePartialVariableTrigger(completion: @escaping () -> Void) {
+        let js = """
+        (function() {
+          var sel = window.getSelection();
+          if (!sel.rangeCount) return;
+          var r = sel.getRangeAt(0);
+          var container = r.startContainer;
+          if (container.nodeType !== 3) return;
+          var text = container.textContent;
+          var idx = text.lastIndexOf('{{', r.startOffset);
+          if (idx < 0) return;
+          container.textContent = text.substring(0, idx) + text.substring(r.startOffset);
+          var range = document.createRange();
+          range.setStart(container, idx);
+          range.setEnd(container, idx);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        })();
+        """
+        webView?.evaluateJavaScript(js) { _, _ in
+            completion()
+        }
+    }
+
     func getHTML(completion: @escaping (String) -> Void) {
         htmlCallback = completion
         webView?.evaluateJavaScript("document.getElementById('editor').innerHTML") { [weak self] result, _ in
@@ -537,6 +590,9 @@ private struct RichTextWebView: UIViewRepresentable {
 
     func makeUIView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
+        let contentController = WKUserContentController()
+        contentController.add(context.coordinator, name: "variableTrigger")
+        config.userContentController = contentController
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.isOpaque = false
         webView.backgroundColor = .clear
@@ -621,20 +677,60 @@ private struct RichTextWebView: UIViewRepresentable {
                     border-radius: 4px;
                     font-size: 0.85em;
                     font-weight: 500;
+                    user-select: all;
                 }
             </style>
         </head>
         <body>
             <div id="editor" contenteditable="true">\(escaped)</div>
             <script>
+                (function() {
+                  // Upgrade any legacy variable-tag spans (loaded from storage) to atomic pills.
+                  var pills = document.querySelectorAll('#editor .variable-tag');
+                  for (var i = 0; i < pills.length; i++) {
+                    pills[i].setAttribute('contenteditable', 'false');
+                  }
+                })();
                 document.getElementById('editor').focus();
+
+                (function() {
+                  var editor = document.getElementById('editor');
+                  editor.addEventListener('input', function() {
+                    var sel = window.getSelection();
+                    if (!sel.rangeCount) return;
+                    var r = sel.getRangeAt(0);
+                    var container = r.startContainer;
+                    if (container.nodeType !== Node.TEXT_NODE) {
+                      if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.variableTrigger) {
+                        window.webkit.messageHandlers.variableTrigger.postMessage({ close: true });
+                      }
+                      return;
+                    }
+                    var before = container.textContent.substring(0, r.startOffset);
+                    var match = before.match(/\\{\\{([a-zA-Z0-9_]*)$/);
+                    if (match) {
+                      var rect = r.getBoundingClientRect();
+                      if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.variableTrigger) {
+                        window.webkit.messageHandlers.variableTrigger.postMessage({
+                          partial: match[1],
+                          x: rect.left,
+                          y: rect.top + (rect.height || 20)
+                        });
+                      }
+                    } else {
+                      if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.variableTrigger) {
+                        window.webkit.messageHandlers.variableTrigger.postMessage({ close: true });
+                      }
+                    }
+                  });
+                })();
             </script>
         </body>
         </html>
         """
     }
 
-    class WebViewDelegate: NSObject, WKNavigationDelegate {
+    class WebViewDelegate: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
             if navigationAction.navigationType == .linkActivated {
                 decisionHandler(.cancel)
@@ -642,5 +738,27 @@ private struct RichTextWebView: UIViewRepresentable {
                 decisionHandler(.allow)
             }
         }
+
+        func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+            guard message.name == "variableTrigger",
+                  let body = message.body as? [String: Any] else { return }
+            if body["close"] as? Bool == true {
+                NotificationCenter.default.post(name: .variableSuggestionClose, object: nil)
+                return
+            }
+            let partial = (body["partial"] as? String) ?? ""
+            let x = CGFloat((body["x"] as? Double) ?? 0)
+            let y = CGFloat((body["y"] as? Double) ?? 0)
+            NotificationCenter.default.post(
+                name: .variableSuggestionOpen,
+                object: nil,
+                userInfo: ["partial": partial, "x": x, "y": y]
+            )
+        }
     }
+}
+
+extension Notification.Name {
+    static let variableSuggestionOpen = Notification.Name("variableSuggestionOpen")
+    static let variableSuggestionClose = Notification.Name("variableSuggestionClose")
 }
