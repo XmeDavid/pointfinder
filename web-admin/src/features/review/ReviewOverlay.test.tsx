@@ -2,6 +2,9 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { http, HttpResponse } from 'msw'
+import { server } from '@/test/msw/server'
+import { createMockChallenge } from '@/test/factories/challenge'
 import { useWorkspaceStore } from '@/stores/workspace'
 import ReviewOverlay from './ReviewOverlay'
 import SubmissionList from './SubmissionList'
@@ -302,5 +305,90 @@ describe('SubmissionDetail', () => {
       expect(screen.getByTestId('reviewed-state')).toBeInTheDocument()
       expect(screen.getByText('Approved')).toBeInTheDocument()
     })
+  })
+
+  it('shows team-resolved expected answer alongside the raw template', async () => {
+    server.use(
+      http.get('/api/games/:gameId/challenges', () => {
+        return HttpResponse.json([
+          createMockChallenge({
+            id: 'challenge-1',
+            title: 'Challenge Alpha',
+            correctAnswer: ['{{teamColor}}'],
+          }),
+        ])
+      }),
+    )
+
+    render(
+      <Wrapper>
+        <SubmissionDetail submissionId="sub-1" gameId="game-1" />
+      </Wrapper>,
+    )
+
+    await waitFor(() =>
+      expect(screen.getByTestId('expected-answer-block')).toBeInTheDocument(),
+    )
+    // Raw shows the template, resolved shows the team-1 value ('red' per the
+    // mock variables factory).
+    expect(screen.getByTestId('expected-answer-block').textContent).toContain(
+      '{{teamColor}}',
+    )
+    expect(screen.getByTestId('resolved-expected-answer')).toHaveTextContent(
+      'red',
+    )
+  })
+
+  it('warns when a referenced variable has no value for the team', async () => {
+    server.use(
+      http.get('/api/games/:gameId/challenges', () => {
+        return HttpResponse.json([
+          createMockChallenge({
+            id: 'challenge-1',
+            title: 'Challenge Alpha',
+            correctAnswer: ['{{notDefined}}'],
+          }),
+        ])
+      }),
+    )
+
+    render(
+      <Wrapper>
+        <SubmissionDetail submissionId="sub-1" gameId="game-1" />
+      </Wrapper>,
+    )
+
+    await waitFor(() =>
+      expect(
+        screen.getByTestId('resolved-expected-answer-warning'),
+      ).toHaveTextContent('notDefined'),
+    )
+  })
+
+  it('does not show a resolved row when correctAnswer has no {{key}}', async () => {
+    server.use(
+      http.get('/api/games/:gameId/challenges', () => {
+        return HttpResponse.json([
+          createMockChallenge({
+            id: 'challenge-1',
+            title: 'Challenge Alpha',
+            correctAnswer: ['FOX', 'fox'],
+          }),
+        ])
+      }),
+    )
+
+    render(
+      <Wrapper>
+        <SubmissionDetail submissionId="sub-1" gameId="game-1" />
+      </Wrapper>,
+    )
+
+    await waitFor(() =>
+      expect(screen.getByTestId('expected-answer-block')).toBeInTheDocument(),
+    )
+    expect(
+      screen.queryByTestId('resolved-expected-answer'),
+    ).not.toBeInTheDocument()
   })
 })

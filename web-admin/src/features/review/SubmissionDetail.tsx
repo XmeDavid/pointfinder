@@ -1,13 +1,16 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useSubmissions } from '@/hooks/queries/useSubmissions'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { useChallenges } from '@/hooks/queries/useChallenges'
 import { useBases } from '@/hooks/queries/useBases'
+import { useGameVariables, useChallengeVariables } from '@/hooks/queries/useVariables'
 import { useReviewSubmission } from '@/hooks/mutations/useSubmissionMutations'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { relativeTime } from '@/lib/utils/dates'
+import { resolveTemplate, type VariableMap } from '@/lib/variables/resolveTemplate'
+import { scanReferences } from '@/lib/variables/scanReferences'
 import apiClient from '@/lib/api/client'
 import { Spinner } from '@/components/feedback/Spinner'
 
@@ -198,6 +201,7 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
   const { data: teams = [] } = useTeams(gameId)
   const { data: challenges = [] } = useChallenges(gameId)
   const { data: bases = [] } = useBases(gameId)
+  const { data: gameVarsData } = useGameVariables(gameId)
   const reviewMutation = useReviewSubmission(gameId)
   const selectSubmission = useWorkspaceStore((s) => s.selectSubmission)
 
@@ -211,6 +215,67 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
   const base = submission
     ? bases.find((b) => b.id === submission.baseId)
     : undefined
+
+  // Load challenge-scoped variables too; they override game-scoped keys.
+  const { data: challengeVarsData } = useChallengeVariables(
+    gameId,
+    submission?.challengeId,
+  )
+  const gameVars = useMemo(
+    () => gameVarsData?.variables ?? [],
+    [gameVarsData],
+  )
+  const challengeVars = useMemo(
+    () => challengeVarsData?.variables ?? [],
+    [challengeVarsData],
+  )
+
+  // Variable map for the submitting team: challenge-scoped wins over game-scoped.
+  const teamVars = useMemo<VariableMap>(() => {
+    const map = new Map<string, string>()
+    if (!submission) return map
+    for (const v of gameVars) {
+      const val = v.teamValues?.[submission.teamId]
+      if (val != null) map.set(v.key, val)
+    }
+    for (const v of challengeVars) {
+      const val = v.teamValues?.[submission.teamId]
+      if (val != null) map.set(v.key, val)
+    }
+    return map
+  }, [gameVars, challengeVars, submission])
+
+  // Stable reference to the challenge's correctAnswer so downstream
+  // memoizations aren't re-run just because React Query returned a
+  // new array instance with identical contents.
+  const correctAnswer = useMemo(
+    () => challenge?.correctAnswer ?? null,
+    [challenge?.correctAnswer],
+  )
+
+  // Does the challenge's correctAnswer actually contain any `{{key}}`
+  // references? If not, the resolved row is pointless noise.
+  const hasTemplateRefs = useMemo(
+    () => (correctAnswer ? scanReferences(correctAnswer).length > 0 : false),
+    [correctAnswer],
+  )
+
+  // Per-item resolution with undefined-key signalling so the UX can
+  // distinguish "resolved to X" from "key missing for this team".
+  const resolvedAnswers = useMemo(() => {
+    if (!correctAnswer) return []
+    return correctAnswer.map((a) => {
+      const refs = scanReferences(a)
+      const missing = refs.filter((k) => !teamVars.has(k))
+      return {
+        raw: a,
+        resolved: resolveTemplate(a, teamVars),
+        missing,
+      }
+    })
+  }, [correctAnswer, teamVars])
+
+  const anyMissing = resolvedAnswers.some((r) => r.missing.length > 0)
 
   const [points, setPoints] = useState(
     submission?.points ?? challenge?.points ?? 0,
@@ -318,13 +383,49 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
             </p>
           )}
           {challenge?.correctAnswer && challenge.correctAnswer.length > 0 && (
-            <div className="mt-1">
-              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                Expected answer
-              </span>
-              <div className="mt-0.5 px-2 py-1 bg-muted rounded border border-border font-mono text-xs text-foreground">
-                {challenge.correctAnswer.join(', ')}
+            <div
+              className="mt-1 space-y-1"
+              data-testid="expected-answer-block"
+            >
+              <div>
+                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                  {hasTemplateRefs ? 'Expected (raw)' : 'Expected answer'}
+                </span>
+                <div className="mt-0.5 px-2 py-1 bg-muted rounded border border-border font-mono text-xs text-foreground">
+                  {challenge.correctAnswer.join(', ')}
+                </div>
               </div>
+              {hasTemplateRefs && (
+                <div>
+                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                    Expected (resolved for {team?.name ?? submission.teamId})
+                  </span>
+                  <div
+                    className="mt-0.5 px-2 py-1 bg-muted rounded border border-border font-mono text-xs text-foreground"
+                    data-testid="resolved-expected-answer"
+                  >
+                    {resolvedAnswers
+                      .map((r) => r.resolved)
+                      .join(', ')}
+                  </div>
+                  {anyMissing && (
+                    <div
+                      className="mt-1 text-[10px] text-destructive"
+                      data-testid="resolved-expected-answer-warning"
+                    >
+                      {resolvedAnswers
+                        .filter((r) => r.missing.length > 0)
+                        .flatMap((r) => r.missing)
+                        .filter((k, i, arr) => arr.indexOf(k) === i)
+                        .map(
+                          (k) =>
+                            `⚠ Variable "${k}" not defined for this team`,
+                        )
+                        .join(' · ')}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
           {challenge?.operatorNotes && (
