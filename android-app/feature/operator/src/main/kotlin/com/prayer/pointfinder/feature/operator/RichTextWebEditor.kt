@@ -1,5 +1,6 @@
 package com.prayer.pointfinder.feature.operator
 
+import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -47,11 +48,37 @@ class RichTextWebEditorState {
 @Composable
 fun rememberRichTextWebEditorState() = remember { RichTextWebEditorState() }
 
+/**
+ * JS-to-Compose bridge that forwards `{{`-trigger events from the WebView
+ * editor to the host Compose screen. The caller drives an overlay state
+ * machine: `onOpen` fires on every keystroke while a partial key is being
+ * typed after `{{`, and `onClose` fires when the trigger is no longer active
+ * (selection moved, key closed, etc.).
+ *
+ * `x` and `y` are viewport pixel coordinates relative to the WebView; callers
+ * should translate to Dp via `LocalDensity.current`.
+ */
+class VariableBridge(
+    val onOpen: (partial: String, x: Float, y: Float) -> Unit,
+    val onClose: () -> Unit,
+) {
+    @JavascriptInterface
+    fun onTriggerOpen(partial: String, x: Float, y: Float) {
+        onOpen(partial, x, y)
+    }
+
+    @JavascriptInterface
+    fun onTriggerClose() {
+        onClose()
+    }
+}
+
 @Composable
 fun RichTextWebEditor(
     state: RichTextWebEditorState,
     initialHtml: String,
-    modifier: Modifier = Modifier
+    bridge: VariableBridge? = null,
+    modifier: Modifier = Modifier,
 ) {
     val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
     AndroidView(
@@ -63,6 +90,9 @@ fun RichTextWebEditor(
                 setBackgroundColor(android.graphics.Color.TRANSPARENT)
                 webChromeClient = WebChromeClient()
                 webViewClient = WebViewClient()
+                if (bridge != null) {
+                    addJavascriptInterface(bridge, "VariableBridge")
+                }
                 state.webView = this
                 loadDataWithBaseURL(
                     null,
@@ -93,6 +123,43 @@ private fun editorHTML(content: String, isDark: Boolean): String {
         .replace("<embed", "&lt;embed", ignoreCase = true)
         .replace(Regex("\\bon\\w+\\s*=", RegexOption.IGNORE_CASE), "")
         .replace("`", "\\`")
+    // Trigger script: watches for `{{partial` typed inside a plain text node
+    // and posts viewport-space coordinates back to Compose so the overlay can
+    // be anchored to the caret. `${'$'}` emits a literal `$` inside the
+    // Kotlin raw-string so the JavaScript regex sees `$` as end-of-input.
+    val triggerScript = """
+<script>
+(function() {
+  var editor = document.getElementById('editor');
+  editor.focus();
+  editor.addEventListener('input', function(e) {
+    if (!window.VariableBridge) return;
+    var sel = window.getSelection();
+    if (!sel || !sel.rangeCount) {
+      window.VariableBridge.onTriggerClose();
+      return;
+    }
+    var r = sel.getRangeAt(0);
+    var container = r.startContainer;
+    if (container.nodeType !== Node.TEXT_NODE) {
+      window.VariableBridge.onTriggerClose();
+      return;
+    }
+    var before = container.textContent.substring(0, r.startOffset);
+    var match = before.match(/\{\{([a-zA-Z0-9_]*)${'$'}/);
+    if (match) {
+      var rect = r.getBoundingClientRect();
+      window.VariableBridge.onTriggerOpen(match[1], rect.left, rect.top + rect.height);
+    } else {
+      window.VariableBridge.onTriggerClose();
+    }
+  });
+  editor.addEventListener('blur', function() {
+    if (window.VariableBridge) window.VariableBridge.onTriggerClose();
+  });
+})();
+</script>
+""".trimIndent()
     return """<!DOCTYPE html>
 <html><head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -119,6 +186,6 @@ body { font-family: sans-serif; font-size: 17px; line-height: 1.5;
   padding:2px 6px; border-radius:4px; font-size:0.85em; font-weight:500; }
 </style></head>
 <body><div id="editor" contenteditable="true">$sanitized</div>
-<script>document.getElementById('editor').focus();</script>
+$triggerScript
 </body></html>"""
 }
