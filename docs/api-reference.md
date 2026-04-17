@@ -1384,6 +1384,12 @@ All error responses include a machine-readable `code` field in addition to the h
 | `STAGE_TRIGGER_BASE_NOT_FOUND` | 400 Bad Request | `transitionType='trigger'` was set with a `triggerBaseId` that does not exist | Operator deleted the trigger base between picking it and saving | Pick a valid base from the current list and retry |
 | `STAGE_ALREADY_ACTIVE` | — | Reserved; `activateStage` is idempotent and does not throw when re-activating an active stage | — | N/A |
 
+### Variable Error Codes
+
+| Code | HTTP Status | Meaning | Typical cause | Recovery |
+|---|---|---|---|---|
+| `VARIABLE_REFERENCE_UNDEFINED` | 400 Bad Request | A challenge body (`content`, `completionContent`) or auto-validated `correctAnswer` references `{{key}}` where `key` has no variable value defined for at least one team. Emitted at `setup → live`. | Operator referenced a variable that was never defined, or defined the variable for only some teams. | Define the variable for every team (game scope or challenge scope), or remove the `{{key}}` reference. |
+
 ### WebSocket Error Codes
 
 WebSocket errors are transmitted via STOMP ERROR frames and do not use HTTP status codes. The error `code` appears in the STOMP ERROR header.

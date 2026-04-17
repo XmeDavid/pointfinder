@@ -62,7 +62,7 @@ The backend validates all 8 conditions before allowing `setup → live`. The fro
 | 5 | All bases have at least one challenge assigned | Yes | Yes |
 | 6 | All location-bound challenges are assigned to a base | Yes | Yes |
 | 7 | Enough unique challenges for uniform assignment (number of bases ≤ number of challenges, when `uniformAssignment = true`) | Yes | Yes |
-| 8 | All team variables have values for every team | Yes | Yes (via `/games/:id/team-variables/completeness`) |
+| 8 | All team variables have values for every team, **and** every `{{key}}` reference in any challenge's `content`, `completionContent`, or `correctAnswer` resolves to a defined variable for every team (see § 5 Team Variables). Emits `VARIABLE_REFERENCE_UNDEFINED` when undefined. | Yes | Yes (via `/games/:id/team-variables/completeness`) |
 
 If any condition fails, `PATCH /api/games/{id}/status` returns 400. The frontend checks readiness via the game detail + variables completeness endpoint and disables the "Go Live" button accordingly.
 
@@ -917,12 +917,19 @@ At submission auto-validation time (`TemplateVariableService.resolveTemplates()`
 
 ### Completeness Check
 
-Before go-live, all team variables must have values for all teams. This is checked via `GET /api/games/:gameId/team-variables/completeness`. The frontend shows this as readiness condition #8; the backend re-validates at the `setup → live` transition.
+Before go-live, all team variables must have values for all teams **and** every `{{key}}` reference in challenge content must resolve for every team. This is checked via `GET /api/games/:gameId/team-variables/completeness`. The frontend shows this as readiness condition #8; the backend re-validates at the `setup → live` transition.
+
+`TeamVariableService.validateVariableCompleteness` runs two passes:
+
+1. **Definition completeness** — every key present in `team_variables` or `challenge_team_variables` has a row for every team in the game.
+2. **Reference scanning** (added for the variable-autocomplete UX wave) — every challenge in the game is scanned for `{{key}}` references in `content`, `completionContent`, and `correctAnswer[*]`. For each referenced key, every team must have a value at either game scope or the challenge's own scope. Any (challenge, key, missing-team) tuple produces a separate error string, and the `setup → live` transition throws `VARIABLE_REFERENCE_UNDEFINED`.
+
+`{{key}}` references use the same key grammar as definitions (`[a-zA-Z][a-zA-Z0-9_]*`). References that do not match the grammar are ignored by the scanner (they also would not resolve at submission time).
 
 **Key validation (frontend)**: Variable keys must start with a letter and contain only alphanumerics and underscores. No duplicate keys allowed per scope.
 
 **Platform coverage**:
-- Backend: `TemplateVariableService` (authoritative resolver)
+- Backend: `TemplateVariableService` (authoritative resolver); `TeamVariableService` (completeness + reference scanning)
 - Frontend: `TeamVariablesEditor` component; completeness shown on OverviewPage
 - iOS: `APIClientAuthRegressionTests` covers the team/challenge variable endpoints (routing verified)
 - Android: listed as "Incomplete" in audit — endpoint exists but UI not fully built
