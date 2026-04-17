@@ -9,6 +9,7 @@ import com.prayer.pointfinder.dto.response.UserResponse;
 import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.entity.UnlockTrigger;
 import com.prayer.pointfinder.exception.BadRequestException;
+import com.prayer.pointfinder.exception.ErrorCode;
 import com.prayer.pointfinder.exception.ForbiddenException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.mapper.GameResponseMapper;
@@ -342,10 +343,14 @@ public class GameService {
                             baseCount, challengeCount));
         }
 
-        // Ensure all team variables have values for every team
+        // Ensure all team variables have values for every team and every
+        // {{key}} reference in challenge content/completionContent/correctAnswer
+        // resolves for every team (scanned by TeamVariableService).
         List<String> variableErrors = teamVariableService.validateVariableCompleteness(game.getId());
         if (!variableErrors.isEmpty()) {
-            throw new BadRequestException("Team variables incomplete: " + variableErrors.get(0));
+            throw new BadRequestException(
+                    "Team variables incomplete: " + variableErrors.get(0),
+                    ErrorCode.VARIABLE_REFERENCE_UNDEFINED);
         }
 
         // Ensure all location-bound challenges are assigned (via fixedChallengeId or assignment record)
