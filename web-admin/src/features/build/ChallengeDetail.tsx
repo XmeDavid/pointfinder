@@ -7,6 +7,7 @@ import { useChallenges } from '@/hooks/queries/useChallenges'
 import { useAssignments } from '@/hooks/queries/useAssignments'
 import { useBases } from '@/hooks/queries/useBases'
 import { useTeams } from '@/hooks/queries/useTeams'
+import { useGameVariables, useChallengeVariables } from '@/hooks/queries/useVariables'
 import { useUpdateChallenge, useDeleteChallenge } from '@/hooks/mutations/useChallengeMutations'
 import { useCreateAssignment, useDeleteAssignment } from '@/hooks/mutations/useAssignmentMutations'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -17,6 +18,9 @@ import { Button } from '@/components/ui/button'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
 import { ResourcePicker } from '@/components/editor/ResourcePicker'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-dialog'
+import { VariableAwareChipInput } from '@/components/inputs/VariableAwareChipInput'
+import { resolveTemplate, type VariableMap } from '@/lib/variables/resolveTemplate'
+import { findUndefinedReferences } from '@/lib/variables/scanReferences'
 import { cn } from '@/lib/utils'
 import type { AnswerType } from '@/types/v2'
 
@@ -38,6 +42,23 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
   const { data: assignments = [] } = useAssignments(gameId)
   const { data: bases = [] } = useBases(gameId)
   const { data: teams = [] } = useTeams(gameId)
+  const { data: gameVarsData } = useGameVariables(gameId)
+  const { data: challengeVarsData } = useChallengeVariables(gameId, challengeId)
+  const gameVars = useMemo(() => gameVarsData?.variables ?? [], [gameVarsData])
+  const challengeVars = useMemo(
+    () => challengeVarsData?.variables ?? [],
+    [challengeVarsData],
+  )
+  const availableKeys = useMemo(
+    () =>
+      Array.from(
+        new Set([
+          ...gameVars.map((v) => v.key),
+          ...challengeVars.map((v) => v.key),
+        ]),
+      ),
+    [gameVars, challengeVars],
+  )
   const updateChallenge = useUpdateChallenge(gameId)
   const deleteChallenge = useDeleteChallenge(gameId)
   const createAssignment = useCreateAssignment(gameId)
@@ -64,11 +85,16 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
   const [localAutoValidate, setLocalAutoValidate] = useState(false)
   const [localDescription, setLocalDescription] = useState('')
   const [localContent, setLocalContent] = useState('')
-  const [localCorrectAnswer, setLocalCorrectAnswer] = useState('')
+  const [localCorrectAnswer, setLocalCorrectAnswer] = useState<string[]>([])
   const [localPoints, setLocalPoints] = useState('0')
   const [localOperatorNotes, setLocalOperatorNotes] = useState('')
   const [localLocationBound, setLocalLocationBound] = useState(false)
   const [localCompletionContent, setLocalCompletionContent] = useState('')
+
+  // Preview-as-team state — toggles the editors from authoring to read-only
+  // rendering with `{{key}}` references resolved for the selected team.
+  const [previewMode, setPreviewMode] = useState(false)
+  const [previewTeamId, setPreviewTeamId] = useState<string | null>(null)
 
   // Sync local state when challenge data loads or challengeId changes
   const syncedRef = useRef<string | null>(null)
@@ -81,7 +107,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
       setLocalAutoValidate(challenge.autoValidate)
       setLocalDescription(challenge.description)
       setLocalContent(challenge.content)
-      setLocalCorrectAnswer(challenge.correctAnswer?.join(', ') ?? '')
+      setLocalCorrectAnswer(challenge.correctAnswer ?? [])
       setLocalPoints(challenge.points.toString())
       setLocalOperatorNotes(challenge.operatorNotes ?? '')
       setLocalLocationBound(challenge.locationBound)
@@ -170,10 +196,28 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
 
   const showAnswerConfig = localAnswerType === 'text'
 
+  // Undefined-key guard: collect every `{{key}}` referenced in authoring
+  // fields and flag any that aren't defined as game/challenge variables.
+  const undefinedKeys = useMemo(
+    () =>
+      findUndefinedReferences(
+        [localContent, localCompletionContent, ...localCorrectAnswer],
+        new Set(availableKeys),
+      ),
+    [localContent, localCompletionContent, localCorrectAnswer, availableKeys],
+  )
+
   const handleSave = useCallback(() => {
-    const correctAnswerArray = localCorrectAnswer.trim()
-      ? localCorrectAnswer.split(',').map((s) => s.trim()).filter(Boolean)
-      : undefined
+    if (undefinedKeys.length > 0) {
+      const ok = window.confirm(
+        `Undefined variables: ${undefinedKeys
+          .map((k) => `{{${k}}}`)
+          .join(', ')}\n\nThese references won't resolve for any team. Save anyway?`,
+      )
+      if (!ok) return
+    }
+    const correctAnswerArray =
+      localCorrectAnswer.length > 0 ? localCorrectAnswer : undefined
 
     updateChallenge.mutate({
       challengeId,
@@ -202,8 +246,46 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
     localOperatorNotes,
     localLocationBound,
     localCompletionContent,
+    undefinedKeys,
     updateChallenge,
   ])
+
+  // Preview-team resolution: merge game + challenge vars, challenge wins.
+  const sortedTeams = useMemo(
+    () => [...teams].sort((a, b) => a.name.localeCompare(b.name)),
+    [teams],
+  )
+  const previewTeam = useMemo(
+    () =>
+      sortedTeams.find((tm) => tm.id === previewTeamId) ?? sortedTeams[0] ?? null,
+    [sortedTeams, previewTeamId],
+  )
+  const previewVars = useMemo<VariableMap>(() => {
+    const map = new Map<string, string>()
+    if (!previewTeam) return map
+    for (const v of gameVars) {
+      const val = v.teamValues?.[previewTeam.id]
+      if (val != null) map.set(v.key, val)
+    }
+    for (const v of challengeVars) {
+      const val = v.teamValues?.[previewTeam.id]
+      if (val != null) map.set(v.key, val)
+    }
+    return map
+  }, [gameVars, challengeVars, previewTeam])
+
+  // "Create variable..." autocomplete action — for now, opens a prompt to
+  // grab the new key and uses a simple confirm. Full bulk-create UX is a
+  // follow-up (tracked separately); this unblocks the autocomplete path.
+  const handleCreateVariable = useCallback(
+    (partial: string) => {
+      window.alert(
+        `To add the variable "${partial}", open the Team Variables editor below ` +
+          `(game-level) or in the sidebar (challenge-level) and define values per team.`,
+      )
+    },
+    [],
+  )
 
   if (!challenge) {
     return (
@@ -286,9 +368,70 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
 
       {/* Content section */}
       <section className="border-t border-border pt-4 mt-4">
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-          Content
-        </h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Content
+          </h3>
+          <div className="flex items-center gap-2">
+            <div
+              role="tablist"
+              aria-label="Editor mode"
+              className="inline-flex rounded-md border border-border p-0.5"
+            >
+              <button
+                type="button"
+                role="tab"
+                aria-selected={!previewMode}
+                onClick={() => setPreviewMode(false)}
+                data-testid="preview-edit-btn"
+                className={cn(
+                  'px-2 py-0.5 text-xs rounded cursor-pointer transition-colors',
+                  !previewMode
+                    ? 'bg-accent text-accent-foreground'
+                    : 'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={previewMode}
+                onClick={() => setPreviewMode(true)}
+                disabled={sortedTeams.length === 0}
+                data-testid="preview-preview-btn"
+                className={cn(
+                  'px-2 py-0.5 text-xs rounded cursor-pointer transition-colors',
+                  previewMode
+                    ? 'bg-accent text-accent-foreground'
+                    : 'text-muted-foreground hover:text-foreground',
+                  sortedTeams.length === 0 && 'opacity-40 cursor-not-allowed',
+                )}
+                title={
+                  sortedTeams.length === 0
+                    ? 'Create at least one team to preview'
+                    : undefined
+                }
+              >
+                Preview
+              </button>
+            </div>
+            {previewMode && sortedTeams.length > 0 && (
+              <select
+                value={previewTeam?.id ?? ''}
+                onChange={(e) => setPreviewTeamId(e.target.value)}
+                data-testid="preview-team-select"
+                className="text-xs rounded border border-border bg-background px-2 py-0.5"
+              >
+                {sortedTeams.map((tm) => (
+                  <option key={tm.id} value={tm.id}>
+                    {tm.name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+        </div>
         <div className="space-y-3">
           <div>
             <label className="block text-xs text-muted-foreground mb-1">
@@ -306,16 +449,30 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
             <label className="block text-xs text-muted-foreground mb-1">
               Content
             </label>
-            <RichTextEditor
-              content={localContent}
-              onChange={setLocalContent}
-              placeholder={t('build.challengeContentPlaceholder')}
-              onInsertFileEmbed={() => {
-                setActiveEditorField('content')
-                setShowResourcePicker(true)
-              }}
-              insertFileEmbedRef={contentEditorRef}
-            />
+            {previewMode ? (
+              <div
+                data-testid="content-preview"
+                className="prose prose-sm dark:prose-invert max-w-none rounded-md border border-input bg-muted/30 px-3 py-2 min-h-[150px]"
+                // Preview is read-only display of server-trusted template
+                // output; we don't accept user input here.
+                dangerouslySetInnerHTML={{
+                  __html: resolveTemplate(localContent, previewVars),
+                }}
+              />
+            ) : (
+              <RichTextEditor
+                content={localContent}
+                onChange={setLocalContent}
+                placeholder={t('build.challengeContentPlaceholder')}
+                onInsertFileEmbed={() => {
+                  setActiveEditorField('content')
+                  setShowResourcePicker(true)
+                }}
+                insertFileEmbedRef={contentEditorRef}
+                variableKeys={availableKeys}
+                onCreateVariable={handleCreateVariable}
+              />
+            )}
           </div>
         </div>
       </section>
@@ -331,17 +488,49 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
               <label className="block text-xs text-muted-foreground mb-1">
                 Correct answer(s)
               </label>
-              <Input
-                value={localCorrectAnswer}
-                onChange={(e) => setLocalCorrectAnswer(e.target.value)}
-                placeholder={t('build.correctAnswerPlaceholder')}
-                data-testid="correct-answer-input"
-                className="h-8 text-sm"
-              />
+              {previewMode ? (
+                <div
+                  data-testid="correct-answer-preview"
+                  className="flex flex-wrap gap-2 rounded-md border border-input bg-muted/30 px-2 py-1.5 min-h-[34px]"
+                >
+                  {localCorrectAnswer.length === 0 ? (
+                    <span className="text-xs text-muted-foreground italic">
+                      No answers configured
+                    </span>
+                  ) : (
+                    localCorrectAnswer.map((chip, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center rounded bg-muted px-2 py-0.5 text-sm"
+                      >
+                        {resolveTemplate(chip, previewVars)}
+                      </span>
+                    ))
+                  )}
+                </div>
+              ) : (
+                <VariableAwareChipInput
+                  chips={localCorrectAnswer}
+                  onChange={setLocalCorrectAnswer}
+                  availableKeys={availableKeys}
+                  placeholder={t('build.correctAnswerPlaceholder')}
+                  data-testid="correct-answer-input"
+                />
+              )}
             </div>
+            {undefinedKeys.length > 0 && (
+              <p
+                className="text-[10px] text-destructive"
+                data-testid="undefined-key-warning"
+              >
+                Unknown variable{undefinedKeys.length > 1 ? 's' : ''}:{' '}
+                {undefinedKeys.map((k) => `{{${k}}}`).join(', ')}
+              </p>
+            )}
             <p className="text-[10px] text-muted-foreground">
               When auto-validate is on, submissions matching any of these
-              answers are automatically approved.
+              answers are automatically approved. Use {'{{variable}}'} to
+              reference per-team values.
             </p>
           </div>
         </section>
@@ -628,16 +817,28 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
           Post-completion
         </h3>
         <div data-testid="completion-content">
-          <RichTextEditor
-            content={localCompletionContent}
-            onChange={setLocalCompletionContent}
-            placeholder={t('build.completionPlaceholder')}
-            onInsertFileEmbed={() => {
-              setActiveEditorField('completion')
-              setShowResourcePicker(true)
-            }}
-            insertFileEmbedRef={completionEditorRef}
-          />
+          {previewMode ? (
+            <div
+              data-testid="completion-content-preview"
+              className="prose prose-sm dark:prose-invert max-w-none rounded-md border border-input bg-muted/30 px-3 py-2 min-h-[150px]"
+              dangerouslySetInnerHTML={{
+                __html: resolveTemplate(localCompletionContent, previewVars),
+              }}
+            />
+          ) : (
+            <RichTextEditor
+              content={localCompletionContent}
+              onChange={setLocalCompletionContent}
+              placeholder={t('build.completionPlaceholder')}
+              onInsertFileEmbed={() => {
+                setActiveEditorField('completion')
+                setShowResourcePicker(true)
+              }}
+              insertFileEmbedRef={completionEditorRef}
+              variableKeys={availableKeys}
+              onCreateVariable={handleCreateVariable}
+            />
+          )}
         </div>
       </section>
 

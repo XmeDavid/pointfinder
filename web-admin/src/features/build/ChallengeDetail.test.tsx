@@ -279,4 +279,105 @@ describe('ChallengeDetail', () => {
 
     expect(toggle.className).toContain('bg-primary/10')
   })
+
+  it('renders correctAnswer as chip input instead of comma-separated Input', async () => {
+    server.use(
+      http.get('/api/games/:gameId/challenges', () => {
+        return HttpResponse.json([
+          createMockChallenge({
+            id: 'challenge-1',
+            title: 'Challenge Alpha',
+            answerType: 'text',
+            correctAnswer: ['FOX', '{{secret}}'],
+          }),
+        ])
+      }),
+    )
+
+    render(
+      <ChallengeDetail challengeId="challenge-1" gameId={gameId} />,
+      { wrapper: createWrapper() },
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('correct-answer-input')).toBeInTheDocument()
+    })
+    // Chip UI: both literal and variable chips render.
+    expect(screen.getByText('FOX')).toBeInTheDocument()
+    expect(screen.getByText('{{secret}}')).toBeInTheDocument()
+    // variable-tag pill has the --undefined modifier because the mocked
+    // variable set uses keys teamColor/motto, not "secret".
+    expect(screen.getByTestId('chip-pill-secret')).toHaveClass('variable-tag')
+  })
+
+  it('shows Preview toggle and switches to resolved view', async () => {
+    const user = userEvent.setup()
+    server.use(
+      http.get('/api/games/:gameId/challenges', () => {
+        return HttpResponse.json([
+          createMockChallenge({
+            id: 'challenge-1',
+            title: 'Challenge Alpha',
+            answerType: 'text',
+            content: '<p>Find {{teamColor}} at base</p>',
+            correctAnswer: ['{{teamColor}}'],
+          }),
+        ])
+      }),
+    )
+
+    render(
+      <ChallengeDetail challengeId="challenge-1" gameId={gameId} />,
+      { wrapper: createWrapper() },
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('preview-preview-btn')).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByTestId('preview-preview-btn'))
+
+    // Default team (alphabetical first — "Team Alpha" has teamColor="red")
+    await waitFor(() =>
+      expect(screen.getByTestId('content-preview')).toBeInTheDocument(),
+    )
+    expect(screen.getByTestId('content-preview').innerHTML).toContain('red')
+
+    // Switch to team-2 (Team Beta, teamColor="blue")
+    await user.selectOptions(screen.getByTestId('preview-team-select'), 'team-2')
+    await waitFor(() =>
+      expect(screen.getByTestId('content-preview').innerHTML).toContain('blue'),
+    )
+
+    // correctAnswer preview shows resolved chip
+    expect(screen.getByTestId('correct-answer-preview').textContent).toContain(
+      'blue',
+    )
+  })
+
+  it('warns about undefined-key references', async () => {
+    server.use(
+      http.get('/api/games/:gameId/challenges', () => {
+        return HttpResponse.json([
+          createMockChallenge({
+            id: 'challenge-1',
+            title: 'Challenge Alpha',
+            answerType: 'text',
+            correctAnswer: ['{{missing}}'],
+          }),
+        ])
+      }),
+    )
+
+    render(
+      <ChallengeDetail challengeId="challenge-1" gameId={gameId} />,
+      { wrapper: createWrapper() },
+    )
+
+    await waitFor(() =>
+      expect(screen.getByTestId('undefined-key-warning')).toHaveTextContent(
+        '{{missing}}',
+      ),
+    )
+  })
 })
