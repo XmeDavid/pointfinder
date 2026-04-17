@@ -20,7 +20,7 @@ type Palette = {
   inkStrong: string;        // display text
   moss: string;             // muted text
   trail: string;            // primary action / route
-  stamp: string;            // accent / stamp rust
+  stamp: string;            // stamp / accent (green, matches trail)
   grid: string;             // grid + contour stroke (already alpha-blended)
   gridSoft: string;         // fainter grid
   rule: string;             // hand-ruled dividers
@@ -34,9 +34,9 @@ function palette(dark: boolean): Palette {
         paperAlt: "#11201b",
         ink: "#f2e7d0",
         inkStrong: "#f6ecd8",
-        moss: "#8aa08d",
+        moss: "#a9bfa9",
         trail: "#5caa6a",
-        stamp: "#d87447",
+        stamp: "#5caa6a",
         grid: "rgba(242,231,208,0.09)",
         gridSoft: "rgba(242,231,208,0.05)",
         rule: "rgba(242,231,208,0.35)",
@@ -49,7 +49,7 @@ function palette(dark: boolean): Palette {
         inkStrong: "#0c1a14",
         moss: "#4d6250",
         trail: "#2f6b3d",
-        stamp: "#b8481e",
+        stamp: "#2f6b3d",
         grid: "rgba(21,38,30,0.09)",
         gridSoft: "rgba(21,38,30,0.05)",
         rule: "rgba(21,38,30,0.55)",
@@ -590,10 +590,10 @@ function Navbar({
           </button>
           <Link
             to="/login"
-            className="font-ui text-sm font-medium transition-opacity hover:opacity-70"
-            style={{ color: pal.trail }}
+            className="font-mono-atlas text-[11px] uppercase tracking-[0.24em] transition-opacity hover:opacity-70"
+            style={{ color: pal.moss }}
           >
-            {t("landing.nav.operatorLogin")} &rarr;
+            {t("landing.nav.operatorLogin")}
           </Link>
         </div>
       </div>
@@ -667,32 +667,31 @@ function Hero({ pal, dark }: { pal: Palette; dark: boolean }) {
       <div className="relative mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 md:grid-cols-12 md:gap-10">
         {/* LEFT — editorial column */}
         <div className="relative md:col-span-7">
-          <div className="landing-fade-in mb-5 flex items-center gap-3" style={{ animationDelay: "0.1s" }}>
-            <StampOutline color={pal.stamp} rotate={-2}>
-              Field Manual · v1
-            </StampOutline>
-            <span className="font-mono-atlas text-[10px] uppercase tracking-[0.24em]" style={{ color: pal.moss }}>
-              est. 2025
-            </span>
-          </div>
-
           <h1
-            className="landing-fade-in font-display mb-6 text-[15vw] font-black leading-[0.88] tracking-[-0.035em] md:text-[9rem] lg:text-[10.5rem]"
-            style={{ animationDelay: "0.25s", color: pal.inkStrong }}
+            className="landing-fade-in font-display mb-6 font-black leading-[0.9] tracking-[-0.035em]"
+            style={{
+              animationDelay: "0.1s",
+              color: pal.inkStrong,
+              fontSize: "clamp(2.75rem, 9vw, 5.75rem)",
+            }}
           >
             Point<span style={{ color: pal.trail, fontStyle: "italic", fontWeight: 700 }}>f</span>inder
           </h1>
 
           <p
-            className="landing-fade-in font-display-italic mb-2 max-w-xl text-lg leading-snug md:text-xl"
-            style={{ animationDelay: "0.55s", color: pal.ink }}
+            className="landing-fade-in font-display-italic mb-4 max-w-2xl leading-[1.2]"
+            style={{
+              animationDelay: "0.3s",
+              color: pal.inkStrong,
+              fontSize: "clamp(1.375rem, 3.2vw, 1.875rem)",
+            }}
           >
-            &ldquo;{t("landing.hero.tagline")}&rdquo;
+            {t("landing.hero.tagline")}
           </p>
 
           <div
             className="landing-fade-in mb-8 flex items-center gap-3"
-            style={{ animationDelay: "0.75s" }}
+            style={{ animationDelay: "0.5s" }}
           >
             <span
               className="font-mono-atlas text-[11px] uppercase tracking-[0.24em]"
@@ -703,34 +702,38 @@ function Hero({ pal, dark }: { pal: Palette; dark: boolean }) {
           </div>
 
           {/* Scale bar */}
-          <div className="landing-fade-in mb-10" style={{ animationDelay: "0.95s" }}>
+          <div className="landing-fade-in mb-10" style={{ animationDelay: "0.7s" }}>
             <div className="mb-2 font-mono-atlas text-[9px] uppercase tracking-[0.3em]" style={{ color: pal.moss }}>
               SCALE 1 : 25 000
             </div>
             <ScaleBar pal={pal} />
           </div>
 
-          {/* Store badges — field-notebook tickets */}
+          {/* Store badges — official-style, large, primary action */}
           <div
-            className="landing-fade-in flex flex-col gap-3 sm:flex-row"
-            style={{ animationDelay: "1.15s" }}
+            className="landing-fade-in flex flex-col gap-3 sm:flex-row sm:gap-4"
+            style={{ animationDelay: "0.9s" }}
           >
-            <StoreTicket
-              pal={pal}
-              label={t("landing.hero.appStore")}
-              availableOn={t("landing.hero.availableOn")}
-              logo={<AppleLogo />}
-              code="iOS·01"
+            <a
               href={appStoreUrl()}
-            />
-            <StoreTicket
-              pal={pal}
-              label={t("landing.hero.googlePlay")}
-              availableOn={t("landing.hero.availableOn")}
-              logo={<PlayLogo />}
-              code="AND·02"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Download on the App Store"
+              className="inline-block transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+              style={{ outlineColor: pal.trail }}
+            >
+              <AppStoreBadge />
+            </a>
+            <a
               href="https://play.google.com/store/apps/details?id=com.prayer.pointfinder"
-            />
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Get it on Google Play"
+              className="inline-block transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+              style={{ outlineColor: pal.trail }}
+            >
+              <GooglePlayBadge />
+            </a>
           </div>
         </div>
 
@@ -746,54 +749,80 @@ function Hero({ pal, dark }: { pal: Palette; dark: boolean }) {
   );
 }
 
-/* Store ticket — looks like a perforated-edge field-notebook voucher */
-function StoreTicket({
-  pal,
-  label,
-  availableOn,
-  logo,
-  code,
-  href,
-}: {
-  pal: Palette;
-  label: string;
-  availableOn: string;
-  logo: React.ReactNode;
-  code: string;
-  href: string;
-}) {
+/* Official-style Apple App Store badge
+ * Matches Apple's "Download on the App Store" spec: black rounded rect,
+ * white Apple glyph, "Download on the" eyebrow + "App Store" wordmark.
+ * Swap in the asset from https://tools.applemediaservices.com/app-store/
+ * before release if strict brand compliance is needed. */
+function AppStoreBadge() {
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="relative flex items-center gap-3 pl-5 pr-6 py-3 transition-transform hover:-translate-y-0.5"
-      style={{
-        background: pal.paperAlt,
-        border: `1.25px solid ${pal.ink}`,
-        color: pal.ink,
-      }}
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 180 60"
+      role="img"
+      aria-label="Download on the App Store"
+      className="h-[56px] w-auto sm:h-[60px]"
     >
-      <Reticle color={pal.ink} size={10} />
-      <span style={{ color: pal.ink }}>{logo}</span>
-      <div className="flex flex-col">
-        <span
-          className="font-mono-atlas text-[9px] uppercase tracking-[0.24em]"
-          style={{ color: pal.moss }}
-        >
-          {availableOn}
-        </span>
-        <span className="font-display text-[15px] font-semibold leading-tight">
-          {label}
-        </span>
-      </div>
-      <span
-        className="font-mono-atlas ml-2 border-l pl-3 text-[9px] uppercase tracking-[0.28em]"
-        style={{ borderColor: pal.ink, color: pal.moss }}
-      >
-        {code}
-      </span>
-    </a>
+      <rect x="0.75" y="0.75" width="178.5" height="58.5" rx="10.5" fill="#000" stroke="#fff" strokeOpacity="0.18" strokeWidth="1.5" />
+      {/* Apple logo */}
+      <g transform="translate(18 13)" fill="#fff">
+        <path d="M27.03 17.98c-.02-3.74 3.05-5.53 3.19-5.62-1.73-2.54-4.43-2.88-5.39-2.92-2.29-.23-4.48 1.35-5.64 1.35-1.18 0-2.96-1.32-4.88-1.28-2.5.04-4.82 1.45-6.1 3.69-2.6 4.5-.66 11.14 1.86 14.78 1.25 1.78 2.73 3.77 4.66 3.7 1.87-.07 2.58-1.21 4.85-1.21 2.25 0 2.9 1.21 4.89 1.17 2.02-.03 3.3-1.8 4.52-3.59 1.42-2.06 2-4.06 2.03-4.16-.04-.02-3.89-1.49-3.93-5.91zM23.34 7.05c1.03-1.25 1.73-2.98 1.54-4.72-1.49.06-3.3 1-4.37 2.25-.95 1.1-1.8 2.88-1.57 4.57 1.66.13 3.36-.84 4.4-2.1z"/>
+      </g>
+      {/* Wordmark */}
+      <g fill="#fff" fontFamily="-apple-system, BlinkMacSystemFont, 'SF Pro Text', Inter, system-ui, sans-serif">
+        <text x="52" y="24" fontSize="10" fontWeight="400" letterSpacing="0.4">Download on the</text>
+        <text x="52" y="44" fontSize="19" fontWeight="600" letterSpacing="-0.4">App Store</text>
+      </g>
+    </svg>
+  );
+}
+
+/* Official-style Google Play badge
+ * Matches Google's "Get it on Google Play" spec: black rounded rect,
+ * colour play triangle, "GET IT ON" eyebrow + "Google Play" wordmark.
+ * Swap in the official SVG from https://play.google.com/intl/en_us/badges/
+ * before release if strict brand compliance is needed. */
+function GooglePlayBadge() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 180 60"
+      role="img"
+      aria-label="Get it on Google Play"
+      className="h-[56px] w-auto sm:h-[60px]"
+    >
+      <rect x="0.75" y="0.75" width="178.5" height="58.5" rx="10.5" fill="#000" stroke="#fff" strokeOpacity="0.18" strokeWidth="1.5" />
+      {/* Google Play triangle (official multi-color) */}
+      <g transform="translate(14 13)">
+        <defs>
+          <linearGradient id="gpBlue" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#00A1FF" />
+            <stop offset="1" stopColor="#00D5FF" />
+          </linearGradient>
+          <linearGradient id="gpRed" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#FF3A44" />
+            <stop offset="1" stopColor="#C31162" />
+          </linearGradient>
+          <linearGradient id="gpYellow" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#FFE000" />
+            <stop offset="1" stopColor="#FFBD00" />
+          </linearGradient>
+          <linearGradient id="gpGreen" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#00F076" />
+            <stop offset="1" stopColor="#00A94F" />
+          </linearGradient>
+        </defs>
+        <path d="M0.5 1.2v31.6c0 .6.3 1.1.7 1.4L18 17 1.2 0.2c-.4.3-.7.6-.7 1z" fill="url(#gpBlue)" />
+        <path d="M23.3 11.7L19.3 14 18 17l1.3 3 4 2.3 7-4c.9-.5.9-1.9 0-2.4l-7-3.2z" fill="url(#gpYellow)" />
+        <path d="M1.2 33.8c.5.4 1.2.4 1.9.1l20.2-11.6-4-4L1.2 33.8z" fill="url(#gpGreen)" />
+        <path d="M3.1.1C2.4-.2 1.7-.2 1.2.2L19.3 20l4-4L3.1.1z" fill="url(#gpRed)" />
+      </g>
+      {/* Wordmark */}
+      <g fill="#fff" fontFamily="Inter, Roboto, -apple-system, system-ui, sans-serif">
+        <text x="54" y="24" fontSize="10" fontWeight="400" letterSpacing="0.6">GET IT ON</text>
+        <text x="54" y="44" fontSize="19" fontWeight="500" letterSpacing="-0.2">Google Play</text>
+      </g>
+    </svg>
   );
 }
 
@@ -862,22 +891,6 @@ function CompassPlate({ pal, dark }: { pal: Palette; dark: boolean }) {
         </div>
       </div>
     </div>
-  );
-}
-
-function AppleLogo() {
-  return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M18.71 19.5C17.88 20.74 17 21.95 15.66 21.97C14.32 21.99 13.89 21.18 12.37 21.18C10.84 21.18 10.37 21.95 9.1 21.99C7.79 22.03 6.8 20.68 5.96 19.47C4.25 17 2.94 12.45 4.7 9.39C5.57 7.87 7.13 6.91 8.82 6.88C10.1 6.86 11.32 7.75 12.11 7.75C12.89 7.75 14.37 6.68 15.92 6.84C16.57 6.87 18.39 7.1 19.56 8.82C19.47 8.88 17.39 10.1 17.41 12.63C17.44 15.65 20.06 16.66 20.09 16.67C20.06 16.74 19.67 18.11 18.71 19.5ZM13 3.5C13.73 2.67 14.94 2.04 15.94 2C16.07 3.17 15.6 4.35 14.9 5.19C14.21 6.04 13.07 6.7 11.95 6.61C11.8 5.46 12.36 4.26 13 3.5Z" />
-    </svg>
-  );
-}
-
-function PlayLogo() {
-  return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M3 20.5V3.5C3 2.91 3.34 2.39 3.84 2.15L13.69 12L3.84 21.85C3.34 21.61 3 21.09 3 20.5M16.81 15.12L6.05 21.34L14.54 12.85L16.81 15.12M20.16 10.81C20.5 11.08 20.75 11.5 20.75 12C20.75 12.5 20.53 12.9 20.18 13.18L17.89 14.5L15.39 12L17.89 9.5L20.16 10.81M6.05 2.66L16.81 8.88L14.54 11.15L6.05 2.66Z" />
-    </svg>
   );
 }
 
