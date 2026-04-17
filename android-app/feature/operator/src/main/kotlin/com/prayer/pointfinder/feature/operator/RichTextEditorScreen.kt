@@ -45,12 +45,14 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.prayer.pointfinder.core.i18n.R
@@ -73,16 +75,76 @@ fun RichTextEditorScreen(
 ) {
     val editorState = rememberRichTextWebEditorState()
     val scope = rememberCoroutineScope()
+    val density = LocalDensity.current
 
     var showOverflowMenu by remember { mutableStateOf(false) }
     var showVariablePicker by remember { mutableStateOf(false) }
     var showCreateVariable by remember { mutableStateOf(false) }
+    var newVariablePrefill by remember { mutableStateOf("") }
     var showLinkDialog by remember { mutableStateOf(false) }
     var showPreviewTeamPicker by remember { mutableStateOf(false) }
     var previewTeam by remember { mutableStateOf<Team?>(null) }
     var previewHtml by remember { mutableStateOf("") }
     var showAudioSizeError by remember { mutableStateOf(false) }
     var showImageSizeError by remember { mutableStateOf(false) }
+
+    // {{-trigger autocomplete overlay state. Coordinates are viewport pixels
+    // reported by the WebView bridge and translated to Dp via LocalDensity.
+    var suggestionOpen by remember { mutableStateOf(false) }
+    var suggestionPartial by remember { mutableStateOf("") }
+    var suggestionX by remember { mutableFloatStateOf(0f) }
+    var suggestionY by remember { mutableFloatStateOf(0f) }
+
+    val bridge = remember(variables) {
+        if (variables == null && onCreateVariable == null) {
+            null
+        } else {
+            VariableBridge(
+                onOpen = { partial, x, y ->
+                    suggestionPartial = partial
+                    suggestionX = x
+                    suggestionY = y
+                    suggestionOpen = true
+                },
+                onClose = { suggestionOpen = false },
+            )
+        }
+    }
+
+    fun insertVariablePill(key: String) {
+        editorState.insertHTML(
+            "<span class=\"variable-tag\" contenteditable=\"false\" data-variable-key=\"$key\">{{$key}}</span>&nbsp;"
+        )
+    }
+
+    fun consumePartialAndInsert(key: String) {
+        // Delete the `{{partial` text node prefix at the caret, then insert
+        // the atomic pill so typing `{{fox` then selecting `fox` replaces the
+        // partial cleanly.
+        editorState.webView?.evaluateJavascript(
+            """
+            (function() {
+              var sel = window.getSelection();
+              if (!sel || !sel.rangeCount) return;
+              var r = sel.getRangeAt(0);
+              var container = r.startContainer;
+              if (container.nodeType !== 3) return;
+              var text = container.textContent;
+              var idx = text.lastIndexOf('{{', r.startOffset);
+              if (idx < 0) return;
+              container.textContent = text.substring(0, idx) + text.substring(r.startOffset);
+              var range = document.createRange();
+              range.setStart(container, idx);
+              range.setEnd(container, idx);
+              sel.removeAllRanges();
+              sel.addRange(range);
+            })();
+            """.trimIndent(),
+            null,
+        )
+        insertVariablePill(key)
+        suggestionOpen = false
+    }
 
     val context = LocalContext.current
     val audioLauncher = rememberLauncherForActivityResult(
@@ -204,14 +266,42 @@ fun RichTextEditorScreen(
 
             HorizontalDivider()
 
-            // Rich text editor area
-            RichTextWebEditor(
-                state = editorState,
-                initialHtml = initialHtml,
+            // Rich text editor area + autocomplete overlay. The overlay is
+            // anchored to the WebView's caret coordinates in a Box so the
+            // popover floats above editor content.
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
-            )
+            ) {
+                RichTextWebEditor(
+                    state = editorState,
+                    initialHtml = initialHtml,
+                    bridge = bridge,
+                    modifier = Modifier.fillMaxSize(),
+                )
+
+                if (suggestionOpen && variables != null) {
+                    val offsetX = with(density) { suggestionX.toDp() }
+                    val offsetY = with(density) { suggestionY.toDp() }
+                    VariableAutocompleteOverlay(
+                        partial = suggestionPartial,
+                        availableKeys = variables.map { it.key },
+                        onSelect = { key -> consumePartialAndInsert(key) },
+                        onCreate = { partial ->
+                            suggestionOpen = false
+                            if (onCreateVariable != null) {
+                                newVariablePrefill = partial
+                                showCreateVariable = true
+                            }
+                        },
+                        modifier = Modifier.padding(
+                            start = offsetX,
+                            top = offsetY + 8.dp,
+                        ),
+                    )
+                }
+            }
 
             // Done button
             Button(
@@ -230,7 +320,7 @@ fun RichTextEditorScreen(
         VariablePickerDialog(
             variables = variables,
             onSelect = { key ->
-                editorState.insertHTML("<span class=\"variable-tag\">{{$key}}</span>&nbsp;")
+                insertVariablePill(key)
                 showVariablePicker = false
             },
             onDismiss = { showVariablePicker = false },
@@ -240,12 +330,23 @@ fun RichTextEditorScreen(
     // Create variable dialog
     if (showCreateVariable && onCreateVariable != null) {
         CreateVariableDialog(
+            prefill = newVariablePrefill,
             onCreate = { name ->
                 onCreateVariable(name)
-                editorState.insertHTML("<span class=\"variable-tag\">{{$name}}</span>&nbsp;")
+                // If we got here from the {{-trigger overlay the partial is
+                // still in the editor; strip it before inserting the pill.
+                if (newVariablePrefill.isNotEmpty()) {
+                    consumePartialAndInsert(name)
+                } else {
+                    insertVariablePill(name)
+                }
+                newVariablePrefill = ""
                 showCreateVariable = false
             },
-            onDismiss = { showCreateVariable = false },
+            onDismiss = {
+                newVariablePrefill = ""
+                showCreateVariable = false
+            },
         )
     }
 
@@ -421,8 +522,9 @@ private fun VariablePickerDialog(
 private fun CreateVariableDialog(
     onCreate: (String) -> Unit,
     onDismiss: () -> Unit,
+    prefill: String = "",
 ) {
-    var variableName by remember { mutableStateOf("") }
+    var variableName by remember(prefill) { mutableStateOf(prefill) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
