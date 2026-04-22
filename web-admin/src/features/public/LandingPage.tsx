@@ -230,34 +230,6 @@ function StampOutline({
 }
 
 /* =================================================================
-   Scale bar — alternating black/paper ticks à la USGS legend
-   ================================================================= */
-
-function ScaleBar({ pal }: { pal: Palette }) {
-  const ticks = [0, 1, 2, 3, 4];
-  return (
-    <div className="inline-flex flex-col gap-1.5">
-      <div className="flex h-2.5 items-stretch border" style={{ borderColor: pal.ink }}>
-        {ticks.slice(0, -1).map((_, i) => (
-          <div
-            key={i}
-            className="flex-1"
-            style={{ background: i % 2 === 0 ? pal.ink : "transparent" }}
-          />
-        ))}
-      </div>
-      <div className="flex justify-between font-mono-atlas text-[9px] uppercase tracking-[0.2em]" style={{ color: pal.moss }}>
-        <span>0 km</span>
-        <span>1</span>
-        <span>2</span>
-        <span>3</span>
-        <span>4 km</span>
-      </div>
-    </div>
-  );
-}
-
-/* =================================================================
    Hand-ruled double-line divider
    ================================================================= */
 
@@ -332,8 +304,11 @@ function ContourField({ pal, className }: { pal: Palette; className?: string }) 
           d={d}
           fill="none"
           stroke={pal.ink}
-          strokeOpacity={0.09 - i * 0.012}
+          strokeOpacity={0.14 - i * 0.015}
           strokeWidth={1}
+          strokeDasharray="140 60"
+          className="contour-flow"
+          style={{ animationDuration: `${28 + i * 6}s`, animationDelay: `${i * -4}s` }}
         />
       ))}
       {/* Elevation labels */}
@@ -566,12 +541,6 @@ function Navbar({
           >
             PointFinder
           </span>
-          <span
-            className="font-display-italic hidden text-sm sm:inline"
-            style={{ color: pal.moss }}
-          >
-            — a field atlas
-          </span>
         </Link>
 
         <div className="flex items-center gap-5">
@@ -657,9 +626,6 @@ function Hero({ pal, dark }: { pal: Palette; dark: boolean }) {
       <CoordBadge color={pal.moss} className="left-6 top-[130px] md:left-10">
         41.1579° N &nbsp;·&nbsp; 8.6291° W
       </CoordBadge>
-      <CoordBadge color={pal.moss} className="left-6 bottom-40 hidden md:block">
-        BEARING 047° &nbsp;·&nbsp; ELEV 312m
-      </CoordBadge>
       <CoordBadge color={pal.moss} className="right-6 bottom-40 hidden md:block">
         DATUM WGS-84
       </CoordBadge>
@@ -701,17 +667,9 @@ function Hero({ pal, dark }: { pal: Palette; dark: boolean }) {
             </span>
           </div>
 
-          {/* Scale bar */}
-          <div className="landing-fade-in mb-10" style={{ animationDelay: "0.7s" }}>
-            <div className="mb-2 font-mono-atlas text-[9px] uppercase tracking-[0.3em]" style={{ color: pal.moss }}>
-              SCALE 1 : 25 000
-            </div>
-            <ScaleBar pal={pal} />
-          </div>
-
           {/* Store badges — official-style, large, primary action */}
           <div
-            className="landing-fade-in flex flex-col gap-3 sm:flex-row sm:gap-4"
+            className="landing-fade-in mt-10 flex flex-col gap-3 sm:flex-row sm:gap-4"
             style={{ animationDelay: "0.9s" }}
           >
             <a

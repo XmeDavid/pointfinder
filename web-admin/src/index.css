@@ -234,3 +234,29 @@ body {
     transform: scale(1.015);
   }
 }
+
+/* Contour flow – dashes drift along each path like wind over a map */
+.contour-flow {
+  animation-name: contourFlow;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes contourFlow {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -400;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contour-flow,
+  .contour-breathe,
+  .landing-rotate-slow,
+  .landing-ping,
+  .route-draw {
+    animation: none;
+  }
+}
