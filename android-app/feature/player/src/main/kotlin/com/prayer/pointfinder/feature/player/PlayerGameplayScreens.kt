@@ -183,7 +183,7 @@ private fun NfcUnavailableScreen(
             )
             Icon(
                 Icons.Default.Nfc,
-                contentDescription = null,
+                contentDescription = stringResource(R.string.cd_nfc_unavailable),
                 modifier = Modifier.size(52.dp),
                 tint = MaterialTheme.colorScheme.error,
             )
@@ -506,7 +506,7 @@ fun SubmissionResultScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(Modifier.height(32.dp))
-        Icon(resultIcon, contentDescription = null, modifier = Modifier.size(72.dp), tint = resultColor)
+        Icon(resultIcon, contentDescription = stringResource(R.string.cd_submission_result), modifier = Modifier.size(72.dp), tint = resultColor)
         Spacer(Modifier.height(12.dp))
         Text(resultTitle, style = MaterialTheme.typography.titleLarge, modifier = Modifier.testTag("player-submission-status"))
         Spacer(Modifier.height(4.dp))

@@ -79,7 +79,7 @@ fun NfcScanDialog(
                 Spacer(Modifier.height(8.dp))
                 Icon(
                     Icons.Default.Nfc,
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.cd_nfc_scan),
                     modifier = Modifier
                         .size(64.dp)
                         .graphicsLayer {
@@ -146,7 +146,7 @@ fun PlayerNotificationListScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
                         Icons.Default.Notifications,
-                        contentDescription = null,
+                        contentDescription = stringResource(R.string.cd_no_notifications),
                         modifier = Modifier.size(48.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                     )

@@ -470,7 +470,7 @@ private fun ActivityLogEmpty(
     ) {
         Icon(
             Icons.Default.Group,
-            contentDescription = null,
+            contentDescription = stringResource(R.string.cd_no_activity),
             modifier = Modifier.size(48.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -505,7 +505,7 @@ private fun ActivityLogError(
     ) {
         Icon(
             Icons.Default.Warning,
-            contentDescription = null,
+            contentDescription = stringResource(R.string.cd_error),
             modifier = Modifier.size(48.dp),
             tint = MaterialTheme.colorScheme.error,
         )

@@ -267,7 +267,7 @@ private fun WarningsSection(warnings: List<SetupWarning>) {
                 ) {
                     Icon(
                         imageVector = Icons.Default.Warning,
-                        contentDescription = null,
+                        contentDescription = stringResource(R.string.cd_warning),
                         tint = WarningAmber,
                         modifier = Modifier.size(20.dp),
                     )

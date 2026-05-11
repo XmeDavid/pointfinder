@@ -367,7 +367,7 @@ fun BaseDetailBottomSheet(
                 ) {
                     Icon(
                         Icons.Default.Lock,
-                        contentDescription = null,
+                        contentDescription = stringResource(R.string.cd_challenge_locked),
                         modifier = Modifier.size(48.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                     )

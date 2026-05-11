@@ -565,7 +565,7 @@ private fun ZoomableImage(
     ) {
         AsyncImage(
             model = model,
-            contentDescription = null,
+            contentDescription = stringResource(R.string.cd_submission_image),
             modifier = Modifier
                 .fillMaxWidth()
                 .graphicsLayer(

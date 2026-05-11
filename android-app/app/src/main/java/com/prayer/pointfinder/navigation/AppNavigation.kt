@@ -2022,17 +2022,17 @@ private fun PermissionDisclosureDialog(onContinue: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 DisclosureRow(
-                    icon = { Icon(Icons.Default.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp)) },
+                    icon = { Icon(Icons.Default.LocationOn, contentDescription = stringResource(com.prayer.pointfinder.core.i18n.R.string.cd_location), tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp)) },
                     title = stringResource(com.prayer.pointfinder.core.i18n.R.string.disclosure_location_title),
                     detail = stringResource(com.prayer.pointfinder.core.i18n.R.string.disclosure_location_detail),
                 )
                 DisclosureRow(
-                    icon = { Icon(Icons.Default.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp)) },
+                    icon = { Icon(Icons.Default.Notifications, contentDescription = stringResource(com.prayer.pointfinder.core.i18n.R.string.cd_notifications), tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp)) },
                     title = stringResource(com.prayer.pointfinder.core.i18n.R.string.label_notifications),
                     detail = stringResource(com.prayer.pointfinder.core.i18n.R.string.disclosure_notifications_detail),
                 )
                 DisclosureRow(
-                    icon = { Icon(Icons.Default.CameraAlt, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp)) },
+                    icon = { Icon(Icons.Default.CameraAlt, contentDescription = stringResource(com.prayer.pointfinder.core.i18n.R.string.cd_camera), tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp)) },
                     title = stringResource(com.prayer.pointfinder.core.i18n.R.string.disclosure_camera_title),
                     detail = stringResource(com.prayer.pointfinder.core.i18n.R.string.disclosure_camera_detail),
                 )

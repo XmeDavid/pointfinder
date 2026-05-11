@@ -87,7 +87,7 @@ fun StagesListScreen(
                 ) {
                     Icon(
                         Icons.Default.FormatListNumbered,
-                        contentDescription = null,
+                        contentDescription = stringResource(R.string.cd_no_stages),
                         modifier = Modifier.size(48.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
