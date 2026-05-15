@@ -6,6 +6,11 @@ on:
   push:
     branches: [main]
 
+permissions:
+  actions: read
+  contents: read
+  packages: write
+
 jobs:
   backend:
     name: Backend Tests
@@ -76,3 +81,10 @@ jobs:
   # Temporarily disabled during the deployment/refactor workstream. Re-enable
   # this job once the local E2E stack is stable enough to gate production.
   # e2e-smoke:
+
+  deploy:
+    name: Deploy
+    needs: [backend, frontend, android]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/deploy.yml
+    secrets: inherit

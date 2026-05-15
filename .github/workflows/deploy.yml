@@ -1,13 +1,7 @@
 name: Deploy
 
 on:
-  workflow_run:
-    workflows:
-      - CI
-    branches:
-      - main
-    types:
-      - completed
+  workflow_call:
   workflow_dispatch:
 
 concurrency:
@@ -27,17 +21,16 @@ jobs:
   deploy:
     name: Build and deploy
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          ref: ${{ github.sha }}
 
       - name: Set deploy SHA
         id: deploy-sha
-        run: echo "sha=${{ github.event.workflow_run.head_sha || github.sha }}" >> "$GITHUB_OUTPUT"
+        run: echo "sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
 
       - name: Verify manual deploy target
         if: github.event_name == 'workflow_dispatch'
