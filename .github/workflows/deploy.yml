@@ -1,9 +1,13 @@
 name: Deploy
 
 on:
-  push:
+  workflow_run:
+    workflows:
+      - CI
     branches:
       - main
+    types:
+      - completed
   workflow_dispatch:
 
 concurrency:
@@ -11,6 +15,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
+  actions: read
   contents: read
   packages: write
 
@@ -22,10 +27,43 @@ jobs:
   deploy:
     name: Build and deploy
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Set deploy SHA
+        id: deploy-sha
+        run: echo "sha=${{ github.event.workflow_run.head_sha || github.sha }}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify manual deploy target
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPLOY_SHA: ${{ steps.deploy-sha.outputs.sha }}
+          DEPLOY_REF: ${{ github.ref_name }}
+        run: |
+          set -eu
+          if [ "$DEPLOY_REF" != "main" ]; then
+            echo "Manual production deploys must run from main, got '$DEPLOY_REF'."
+            exit 1
+          fi
+
+          conclusion="$(
+            gh api \
+              -H "Accept: application/vnd.github+json" \
+              "/repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?head_sha=${DEPLOY_SHA}&branch=main&event=push&status=completed&per_page=20" \
+              --jq '.workflow_runs[] | select(.conclusion == "success") | .conclusion' \
+              | head -n 1
+          )"
+
+          if [ "$conclusion" != "success" ]; then
+            echo "No successful CI push run found for ${DEPLOY_SHA} on main."
+            exit 1
+          fi
 
       - name: Set image owner
         id: image-owner
@@ -49,7 +87,7 @@ jobs:
           cache-from: type=gha,scope=pointfinder-backend
           cache-to: type=gha,mode=max,scope=pointfinder-backend
           tags: |
-            ${{ env.REGISTRY }}/${{ steps.image-owner.outputs.owner }}/pointfinder-backend:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ steps.image-owner.outputs.owner }}/pointfinder-backend:${{ steps.deploy-sha.outputs.sha }}
             ${{ env.REGISTRY }}/${{ steps.image-owner.outputs.owner }}/pointfinder-backend:latest
 
       - name: Build and push web image
@@ -63,7 +101,7 @@ jobs:
             VITE_API_URL=/api
             VITE_WS_URL=/ws-native
           tags: |
-            ${{ env.REGISTRY }}/${{ steps.image-owner.outputs.owner }}/pointfinder-web:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ steps.image-owner.outputs.owner }}/pointfinder-web:${{ steps.deploy-sha.outputs.sha }}
             ${{ env.REGISTRY }}/${{ steps.image-owner.outputs.owner }}/pointfinder-web:latest
 
       - name: Build and push nginx image
@@ -74,7 +112,7 @@ jobs:
           cache-from: type=gha,scope=pointfinder-nginx
           cache-to: type=gha,mode=max,scope=pointfinder-nginx
           tags: |
-            ${{ env.REGISTRY }}/${{ steps.image-owner.outputs.owner }}/pointfinder-nginx:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ steps.image-owner.outputs.owner }}/pointfinder-nginx:${{ steps.deploy-sha.outputs.sha }}
             ${{ env.REGISTRY }}/${{ steps.image-owner.outputs.owner }}/pointfinder-nginx:latest
 
       - name: Prepare deploy directory
@@ -120,7 +158,7 @@ jobs:
             cd ${{ env.DEPLOY_PATH }}
             test -f .env
             export GHCR_OWNER=${{ steps.image-owner.outputs.owner }}
-            export IMAGE_TAG=${{ github.sha }}
+            export IMAGE_TAG=${{ steps.deploy-sha.outputs.sha }}
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
             docker compose --project-directory . --env-file .env -f deploy/docker-compose.yml pull
             docker compose --project-directory . --env-file .env -f deploy/docker-compose.yml up -d --remove-orphans
