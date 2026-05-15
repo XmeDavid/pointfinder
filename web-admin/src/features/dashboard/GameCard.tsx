@@ -1,11 +1,6 @@
-import type { Game, GameStatus } from '@/types'
+import type { Game } from '@/types'
+import { GameStatusBadge } from '@/components/status'
 import { cn } from '@/lib/utils'
-
-const statusStyles: Record<GameStatus, string> = {
-  setup: 'bg-blue-500/20 text-blue-400',
-  live: 'bg-emerald-500/20 text-emerald-400',
-  ended: 'bg-zinc-500/20 text-zinc-400',
-}
 
 export function GameCard({
   game,
@@ -27,14 +22,7 @@ export function GameCard({
         <h3 className="text-sm font-medium text-foreground truncate">
           {game.name}
         </h3>
-        <span
-          className={cn(
-            'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium capitalize',
-            statusStyles[game.status],
-          )}
-        >
-          {game.status}
-        </span>
+        <GameStatusBadge status={game.status} labelCase="lower" />
       </div>
       {game.description && (
         <p className="mt-1 text-xs text-muted-foreground line-clamp-2">

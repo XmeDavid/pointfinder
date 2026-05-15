@@ -9,6 +9,12 @@
 
 Seven services compose the production stack. Start order is enforced via `depends_on`.
 
+> **VPS deploy path:** New deployments use `deploy/docker-compose.yml` and
+> `.github/workflows/deploy.yml`. That path borrows Folio's GHCR-based CI/CD
+> flow while preserving PointFinder's project-owned nginx/certbot containers.
+> The legacy root `docker-compose.yml` remains documented below for the existing
+> self-contained stack.
+
 | Service | Container | Image / Build | Purpose |
 |---------|-----------|---------------|---------|
 | `postgres` | `pointfinder-db` | `postgres:16` | Primary database — internal only, no published ports |

@@ -41,6 +41,23 @@ States: `setup` → `live` → `ended` (can revert to setup or live from ended)
 
 **Every change must be verified before claiming completion.** Follow this checklist after implementing any change:
 
+## Visual System
+
+All UI work must follow the PointFinder visual system in `docs/visual-system/`.
+This applies to new UI, refactors, AI-generated prototypes, and visual fixes
+across web, iOS, and Android.
+
+Before touching UI:
+- Read `docs/visual-system/README.md` and `docs/visual-system/agent-checklist.md`.
+- Identify the product mode from `docs/visual-system/product-modes.md`.
+- Reuse or extract components according to `docs/visual-system/components.md`.
+- Use semantic tokens from `docs/visual-system/tokens.md`.
+- For web UI, follow `docs/visual-system/web-tailwind.md`; do not use raw Tailwind palette classes or one-off panel/status styling in authenticated product UI.
+- Preserve the "one app, different post-login worlds" model: player UI is field-ready and simple; operator UI is map-first, dense, recoverable, and calm under pressure.
+
+If existing code conflicts with the visual system, prefer moving touched code
+toward the system rather than copying inconsistent old styling.
+
 ### 1. Type-check and lint
 ```bash
 # Frontend — always run both after any web-admin change

@@ -36,13 +36,17 @@ describe('GameCard', () => {
     const game = createMockGame({ status: 'setup' })
     render(<GameCard game={game} onClick={() => {}} />)
     const badge = screen.getByText('setup')
-    expect(badge.className).toContain('bg-blue-500/20')
+    expect(badge.closest('[aria-label="Game status: setup"]')).toHaveClass(
+      'bg-info/10',
+    )
   })
 
   it('renders ended status with appropriate styling', () => {
     const game = createMockGame({ status: 'ended' })
     render(<GameCard game={game} onClick={() => {}} />)
     const badge = screen.getByText('ended')
-    expect(badge.className).toContain('bg-zinc-500/20')
+    expect(badge.closest('[aria-label="Game status: ended"]')).toHaveClass(
+      'bg-muted',
+    )
   })
 })

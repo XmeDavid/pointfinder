@@ -1,6 +1,15 @@
 import { useState, useMemo, useCallback } from 'react'
 import { CheckCircle, XCircle, Download, ChevronDown, Activity } from 'lucide-react'
-import { GlassPanel } from '@/components/layout/GlassPanel'
+import { EmptyState } from '@/components/feedback/EmptyState'
+import { OverlayPanel } from '@/components/layout/OverlayPanel'
+import { Button } from '@/components/ui/button'
+import {
+  ActivityEventBadge,
+  StatusBadge,
+  activityEventBorderClass,
+  activityEventLabel,
+  activityEventTone,
+} from '@/components/status'
 import { useActivityFeed } from '@/hooks/queries/useMonitoring'
 import { useSubmissions } from '@/hooks/queries/useSubmissions'
 import { useTeams } from '@/hooks/queries/useTeams'
@@ -10,13 +19,6 @@ import { relativeTime } from '@/lib/utils/dates'
 import type { ActivityEvent } from '@/types'
 
 type EventType = ActivityEvent['type']
-
-const typeColors: Record<string, string> = {
-  check_in: '#22c55e',
-  submission: '#f59e0b',
-  approval: '#a855f6',
-  rejection: '#ef4444',
-}
 
 const allEventTypes: EventType[] = ['check_in', 'submission', 'approval', 'rejection']
 
@@ -30,8 +32,6 @@ function EventCard({
   const [acted, setActed] = useState(false)
   const { data: submissions } = useSubmissions(gameId)
   const reviewMutation = useReviewSubmission(gameId)
-
-  const color = typeColors[event.type] ?? '#71717a'
 
   const matchingPending = useMemo(() => {
     if (event.type !== 'submission' || !submissions) return null
@@ -49,20 +49,10 @@ function EventCard({
   return (
     <div
       data-testid="activity-event"
-      className="px-3 py-2 border-b border-border/30"
-      style={{
-        borderLeftWidth: 2,
-        borderLeftColor: color,
-        borderLeftStyle: 'solid',
-      }}
+      className={`border-b border-l-2 border-border/30 px-3 py-2 ${activityEventBorderClass[event.type]}`}
     >
       <div className="flex items-center justify-between gap-2">
-        <span
-          className="text-xs font-semibold uppercase"
-          style={{ color }}
-        >
-          {event.type.replace('_', ' ')}
-        </span>
+        <ActivityEventBadge status={event.type} />
         <span className="text-xs text-muted-foreground whitespace-nowrap">
           {relativeTime(event.timestamp)}
         </span>
@@ -72,7 +62,10 @@ function EventCard({
       </p>
       {showActions && (
         <div className="flex items-center gap-2 mt-1.5">
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
             data-testid="inline-approve"
             onClick={() => {
               reviewMutation.mutate({
@@ -82,12 +75,15 @@ function EventCard({
               })
               setActed(true)
             }}
-            className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-emerald-500/15 text-emerald-500 hover:bg-emerald-500/25 transition-colors cursor-pointer"
+            className="h-auto gap-1 border border-success/30 bg-success/10 px-2 py-0.5 text-xs text-success hover:bg-success/20 hover:text-success"
           >
             <CheckCircle size={12} />
             Approve
-          </button>
-          <button
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
             data-testid="inline-reject"
             onClick={() => {
               reviewMutation.mutate({
@@ -96,11 +92,11 @@ function EventCard({
               })
               setActed(true)
             }}
-            className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-destructive/15 text-destructive hover:bg-destructive/25 transition-colors cursor-pointer"
+            className="h-auto gap-1 border border-destructive/30 bg-destructive/10 px-2 py-0.5 text-xs text-destructive hover:bg-destructive/20 hover:text-destructive"
           >
             <XCircle size={12} />
             Reject
-          </button>
+          </Button>
         </div>
       )}
       {acted && (
@@ -170,28 +166,31 @@ export function ActivityFeed({ gameId }: { gameId: string }) {
   // Mobile: collapsed badge to toggle bottom sheet
   if (isMobile && !mobileExpanded) {
     return (
-      <button
+      <OverlayPanel
+        as="button"
         data-testid="activity-feed-toggle"
         onClick={() => setMobileExpanded(true)}
-        className="absolute bottom-20 right-3 z-20 flex items-center gap-1.5 px-3 py-2 bg-card/95 backdrop-blur-xl border border-border rounded-full shadow-lg cursor-pointer"
+        padding="none"
+        shape="pill"
+        className="absolute bottom-20 right-3 z-20 flex cursor-pointer items-center gap-1.5 px-3 py-2"
       >
         <Activity size={16} className="text-primary" />
         <span className="text-xs font-semibold">Activity</span>
         {pendingCount > 0 && (
-          <span className="ml-1 px-1.5 py-0.5 bg-primary/20 text-primary text-[10px] font-bold rounded-full">
-            {pendingCount}
-          </span>
+          <StatusBadge tone="info" label={pendingCount} size="sm" className="ml-1" />
         )}
-      </button>
+      </OverlayPanel>
     )
   }
 
   return (
-    <GlassPanel
+    <OverlayPanel
       data-testid="activity-feed"
+      padding="none"
+      shape={isMobile ? 'sheet' : 'default'}
       className={
         isMobile
-          ? 'absolute left-0 right-0 bottom-14 max-h-[50vh] z-20 flex flex-col overflow-hidden rounded-t-xl rounded-b-none'
+          ? 'absolute left-0 right-0 bottom-14 max-h-[50vh] z-20 flex flex-col overflow-hidden'
           : 'absolute top-14 right-3 bottom-3 w-[250px] z-20 flex flex-col overflow-hidden'
       }
     >
@@ -225,32 +224,28 @@ export function ActivityFeed({ gameId }: { gameId: string }) {
           <button
             data-testid="filter-all"
             onClick={() => setTypeFilter(new Set())}
-            className={`px-2 py-0.5 rounded text-[10px] font-medium whitespace-nowrap cursor-pointer transition-colors ${
-              typeFilter.size === 0
-                ? 'bg-primary/20 text-primary'
-                : 'bg-muted text-muted-foreground'
-            }`}
+            className="cursor-pointer whitespace-nowrap"
           >
-            All
+            <StatusBadge
+              tone={typeFilter.size === 0 ? 'info' : 'muted'}
+              label="All"
+              size="sm"
+            />
           </button>
           {allEventTypes.map((type) => {
-            const c = typeColors[type] ?? '#71717a'
             const isActive = typeFilter.has(type)
             return (
               <button
                 key={type}
                 data-testid={`filter-${type}`}
                 onClick={() => toggleType(type)}
-                className={`px-2 py-0.5 rounded text-[10px] font-medium whitespace-nowrap cursor-pointer transition-colors ${
-                  isActive ? '' : 'bg-muted text-muted-foreground'
-                }`}
-                style={
-                  isActive
-                    ? { backgroundColor: `${c}33`, color: c }
-                    : undefined
-                }
+                className="cursor-pointer whitespace-nowrap"
               >
-                {type.replace('_', ' ')}
+                <StatusBadge
+                  tone={isActive ? activityEventTone[type] : 'muted'}
+                  label={activityEventLabel[type]}
+                  size="sm"
+                />
               </button>
             )
           })}
@@ -297,20 +292,21 @@ export function ActivityFeed({ gameId }: { gameId: string }) {
       {/* Scrollable list */}
       <div className="flex-1 overflow-y-auto">
         {filteredEvents.length === 0 ? (
-          <p
+          <EmptyState
             data-testid="empty-activity"
-            className="text-xs text-muted-foreground px-3 py-4 text-center"
-          >
-            {typeFilter.size > 0 || teamFilter || timeFilter > 0
-              ? 'No events match your filters. Try broadening your selection.'
-              : 'No activity yet. Events will appear here once teams start playing.'}
-          </p>
+            density="compact"
+            title={
+              typeFilter.size > 0 || teamFilter || timeFilter > 0
+                ? 'No events match your filters. Try broadening your selection.'
+                : 'No activity yet. Events will appear here once teams start playing.'
+            }
+          />
         ) : (
           filteredEvents.map((event) => (
             <EventCard key={event.id} event={event} gameId={gameId} />
           ))
         )}
       </div>
-    </GlassPanel>
+    </OverlayPanel>
   )
 }

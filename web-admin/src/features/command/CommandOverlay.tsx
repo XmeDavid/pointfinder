@@ -1,4 +1,5 @@
 import { useGameStream } from '@/hooks/subscriptions/useGameStream'
+import { OverlayPanel } from '@/components/layout/OverlayPanel'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { ActivityFeed } from './ActivityFeed'
 import { StatsBar } from './StatsBar'
@@ -16,12 +17,13 @@ export function CommandOverlay({ gameId }: { gameId: string }) {
   return (
     <>
       {connectionError && (
-        <div
+        <OverlayPanel
           data-testid="ws-error-banner"
-          className="absolute top-14 left-1/2 -translate-x-1/2 z-30 bg-destructive/90 text-destructive-foreground text-xs px-3 py-1.5 rounded-lg backdrop-blur"
+          padding="none"
+          className="absolute left-1/2 top-14 z-30 -translate-x-1/2 border-destructive/30 bg-destructive/90 px-3 py-1.5 text-xs text-destructive-foreground"
         >
           Connection issue: {connectionError}
-        </div>
+        </OverlayPanel>
       )}
       <ActivityFeed gameId={gameId} />
       <StatsBar gameId={gameId} />

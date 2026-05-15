@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { Marker } from 'react-map-gl/maplibre'
+import { cn } from '@/lib/utils'
 import type { TeamLocation, Team } from '@/types'
 
 const STALE_THRESHOLD_MS = 5 * 60 * 1000 // 5 minutes
@@ -28,7 +29,7 @@ export function TeamMarkers({ locations, teams, onTeamClick }: TeamMarkersProps)
 
         const updatedAt = new Date(loc.updatedAt).getTime()
         const isStale = now - updatedAt > STALE_THRESHOLD_MS
-        const color = team.color || '#3b82f6'
+        const color = team.color || 'var(--color-info)'
         const size = 14
 
         // Triangle pointing up: smaller than base circles (which are 12-18px)
@@ -74,7 +75,8 @@ export function TeamMarkers({ locations, teams, onTeamClick }: TeamMarkersProps)
                   points={triangle}
                   fill={color}
                   fillOpacity={isStale ? 0.3 : 0.9}
-                  stroke={isStale ? '#9ca3af' : color}
+                  stroke={isStale ? 'var(--color-muted-foreground)' : color}
+                  className={cn(isStale && 'stroke-muted-foreground')}
                   strokeWidth={1.5}
                   strokeLinejoin="round"
                 />

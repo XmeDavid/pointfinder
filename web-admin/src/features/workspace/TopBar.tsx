@@ -1,4 +1,5 @@
 import { FloatingBar } from '@/components/layout/FloatingBar'
+import { GameStatusBadge } from '@/components/status'
 import { useElapsedTimer } from '@/hooks/ui/useElapsedTimer'
 import { useWorkspaceStore, type GameMode } from '@/stores/workspace'
 import { useCreateStage } from '@/hooks/mutations/useStageMutations'
@@ -12,44 +13,13 @@ const modeLabels: Array<{ mode: GameMode; label: string }> = [
   { mode: 'results', label: 'Results' },
 ]
 
-function StatusBadge({ game }: { game: Game }) {
-  const elapsed = useElapsedTimer(
-    game.status === 'live' ? game.startDate : null,
-  )
-
-  if (game.status === 'setup') {
-    return (
-      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-info/20 text-info">
-        SETUP
-      </span>
-    )
-  }
-
-  if (game.status === 'live') {
-    return (
-      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-primary/20 text-primary">
-        <span className="relative flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
-        </span>
-        LIVE {elapsed && `\u00B7 ${elapsed}`}
-      </span>
-    )
-  }
-
-  return (
-    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
-      ENDED
-    </span>
-  )
-}
-
 export interface TopBarProps {
   game: Game
   stages: Stage[]
 }
 
 export function TopBar({ game, stages }: TopBarProps) {
+  const elapsed = useElapsedTimer(game.status === 'live' ? game.startDate : null)
   const selectedStageId = useWorkspaceStore((s) => s.selectedStageId)
   const selectStage = useWorkspaceStore((s) => s.selectStage)
   const mode = useWorkspaceStore((s) => s.mode)
@@ -71,7 +41,11 @@ export function TopBar({ game, stages }: TopBarProps) {
       {/* Left: Game name + status badge */}
       <div className="flex items-center gap-2 md:gap-3 shrink-0 min-w-0">
         <span className="font-bold text-foreground text-sm truncate max-w-[120px] md:max-w-none">{game.name}</span>
-        <StatusBadge game={game} />
+        <GameStatusBadge
+          status={game.status}
+          elapsed={elapsed}
+          labelCase="upper"
+        />
       </div>
 
       {/* Divider — only when stage strip is visible */}

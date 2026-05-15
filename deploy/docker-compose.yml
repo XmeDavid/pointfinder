@@ -1,0 +1,189 @@
+# Production compose file for the PointFinder host.
+# Expects .env at /opt/pointfinder/.env with production secrets.
+#
+# Nginx remains project-owned and runs as a container, matching the existing
+# PointFinder stack. The nginx container publishes 80/443 and proxies backend
+# traffic over the internal Docker network.
+
+name: pointfinder
+
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-pointfinder}
+      POSTGRES_USER: ${POSTGRES_USER:-scout}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+    volumes:
+      - ${PGDATA_PATH:-./data/pgdata}:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-scout} -d $${POSTGRES_DB:-pointfinder}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks: [internal]
+
+  backend:
+    image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER}/pointfinder-backend:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:--Xms256m -Xmx1200m}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-pointfinder}?stringtype=unspecified
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-scout}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+      JWT_ENFORCE_PROD_SECRET: ${JWT_ENFORCE_PROD_SECRET:-true}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost,https://pointfinder.pt,https://pointfinder.ch}
+      FRONTEND_URL: ${FRONTEND_URL:-https://pointfinder.pt}
+      MAIL_HOST: ${MAIL_HOST:-smtp.resend.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-resend}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-info@pointfinder.pt}
+      MAIL_ENABLED: ${MAIL_ENABLED:-false}
+      APNS_ENABLED: ${APNS_ENABLED:-false}
+      APNS_KEY_PATH: ${APNS_KEY_PATH:-file:/app/config/apns-key.p8}
+      APNS_KEY_ID: ${APPLE_PROD_APNS_KEY:-}
+      APNS_TEAM_ID: ${APNS_TEAM_ID:-}
+      APNS_BUNDLE_ID: ${APNS_BUNDLE_ID:-com.prayer.pointfinder}
+      APNS_PRODUCTION: ${APNS_PRODUCTION:-false}
+      FCM_ENABLED: ${FCM_ENABLED:-false}
+      FCM_CREDENTIALS_PATH: ${FCM_CREDENTIALS_PATH:-file:/app/config/firebase-service-account.json}
+      FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_PRICE_PRO_MONTHLY: ${STRIPE_PRICE_PRO_MONTHLY:-}
+      STRIPE_PRICE_PRO_ANNUAL: ${STRIPE_PRICE_PRO_ANNUAL:-}
+      STRIPE_PRICE_ORG_BASE_MONTHLY: ${STRIPE_PRICE_ORG_BASE_MONTHLY:-}
+      STRIPE_PRICE_ORG_BASE_ANNUAL: ${STRIPE_PRICE_ORG_BASE_ANNUAL:-}
+      STRIPE_PRICE_ORG_HIGH_MONTHLY: ${STRIPE_PRICE_ORG_HIGH_MONTHLY:-}
+      STRIPE_PRICE_ORG_HIGH_ANNUAL: ${STRIPE_PRICE_ORG_HIGH_ANNUAL:-}
+      QUOTA_ENFORCEMENT_ENABLED: ${QUOTA_ENFORCEMENT_ENABLED:-false}
+      STORAGE_TYPE: ${STORAGE_TYPE:-local}
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_REGION: ${S3_REGION:-eu-central-1}
+      S3_BUCKET: ${S3_BUCKET:-}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-}
+      S3_PRESIGN_EXPIRY_SECONDS: ${S3_PRESIGN_EXPIRY_SECONDS:-3600}
+      APP_UPLOADS_PATH: /uploads
+      APP_UPLOADS_MAX_FILE_SIZE_BYTES: ${APP_UPLOADS_MAX_FILE_SIZE_BYTES:-2147483648}
+      APP_UPLOADS_CHUNK_ENABLED: ${APP_UPLOADS_CHUNK_ENABLED:-true}
+      APP_UPLOADS_CHUNK_DEFAULT_SIZE_BYTES: ${APP_UPLOADS_CHUNK_DEFAULT_SIZE_BYTES:-8388608}
+      APP_UPLOADS_CHUNK_MAX_SIZE_BYTES: ${APP_UPLOADS_CHUNK_MAX_SIZE_BYTES:-16777216}
+      APP_UPLOADS_CHUNK_SESSION_TTL_SECONDS: ${APP_UPLOADS_CHUNK_SESSION_TTL_SECONDS:-172800}
+      APP_UPLOADS_MAX_ACTIVE_SESSIONS_PER_PLAYER: ${APP_UPLOADS_MAX_ACTIVE_SESSIONS_PER_PLAYER:-3}
+      APP_UPLOADS_MAX_ACTIVE_BYTES_PER_GAME: ${APP_UPLOADS_MAX_ACTIVE_BYTES_PER_GAME:-17179869184}
+    volumes:
+      - ${UPLOADS_PATH:-./data/uploads}:/uploads
+      - ${SECRETS_PATH:-./secrets}/AuthKey_${APPLE_PROD_APNS_KEY}.p8:/app/config/apns-key.p8:ro
+      - ${SECRETS_PATH:-./secrets}/firebase-service-account.json:/app/config/firebase-service-account.json:ro
+    stop_grace_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
+          cpus: "2.0"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    networks: [internal]
+
+  frontend:
+    image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER}/pointfinder-web:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    volumes:
+      - frontend_dist:/app/dist
+    healthcheck:
+      test: ["CMD", "test", "-f", "/app/dist/index.html"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    networks: [internal]
+
+  nginx:
+    image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER}/pointfinder-nginx:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.5"
+    ports:
+      - "${HTTP_BIND:-0.0.0.0}:${HTTP_PORT:-80}:80"
+      - "${HTTPS_BIND:-0.0.0.0}:${HTTPS_PORT:-443}:443"
+    volumes:
+      - ${CERTBOT_CONF_PATH:-./certbot/conf}:/etc/letsencrypt:ro
+      - ${CERTBOT_WWW_PATH:-./certbot/www}:/var/www/certbot:ro
+      - ${UPLOADS_PATH:-./data/uploads}:/uploads:ro
+      - frontend_dist:/usr/share/nginx/html/app:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+      grafana:
+        condition: service_started
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+    networks: [internal]
+
+  certbot:
+    image: certbot/certbot:v2.9.0
+    restart: unless-stopped
+    volumes:
+      - ${CERTBOT_CONF_PATH:-./certbot/conf}:/etc/letsencrypt
+      - ${CERTBOT_WWW_PATH:-./certbot/www}:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks: [internal]
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    restart: unless-stopped
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "${PROMETHEUS_BIND:-127.0.0.1}:${PROMETHEUS_PORT:-9090}:9090"
+    depends_on:
+      backend:
+        condition: service_started
+    networks: [internal]
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD must be set}
+      GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-https://grafana.pointfinder.pt}
+    expose:
+      - "3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    networks: [internal]
+
+volumes:
+  pgdata:
+  frontend_dist:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  internal:

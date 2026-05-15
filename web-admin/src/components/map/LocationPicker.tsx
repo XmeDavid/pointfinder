@@ -69,7 +69,7 @@ export function LocationPicker({
       >
         {hasPosition && (
           <Marker longitude={lng} latitude={lat} anchor="bottom">
-            <PinMarkerSvg color="#6366f1" />
+            <PinMarkerSvg color="var(--color-info)" />
           </Marker>
         )}
       </Map>

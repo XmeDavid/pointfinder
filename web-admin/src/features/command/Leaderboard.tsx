@@ -1,26 +1,19 @@
 import { useMemo } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
-import { GlassPanel } from '@/components/layout/GlassPanel'
+import { EmptyState } from '@/components/feedback/EmptyState'
+import { OverlayPanel } from '@/components/layout/OverlayPanel'
+import {
+  locationSignalDotClass,
+  locationSignalLabel,
+  type LocationSignalStatus,
+} from '@/components/status'
+import { cn } from '@/lib/utils'
 import { useLeaderboard } from '@/hooks/queries/useMonitoring'
 import { useTeamLocations } from '@/hooks/queries/useTeamLocations'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useIsMobile } from '@/hooks/ui/useMediaQuery'
 
-type Staleness = 'active' | 'stale' | 'unknown'
-
-const stalenessColor: Record<Staleness, string> = {
-  active: '#22c55e',
-  stale: '#f59e0b',
-  unknown: '#a1a1aa',
-}
-
-const stalenessLabel: Record<Staleness, string> = {
-  active: 'Active',
-  stale: 'Stale',
-  unknown: 'No signal',
-}
-
-function computeStaleness(updatedAt: string | undefined): Staleness {
+function computeStaleness(updatedAt: string | undefined): LocationSignalStatus {
   if (!updatedAt) return 'unknown'
   const ageMs = Date.now() - new Date(updatedAt).getTime()
   if (ageMs < 2 * 60 * 1000) return 'active'
@@ -37,10 +30,10 @@ function formatLastSeen(updatedAt: string | undefined): string {
   return `Last seen ${mins} min ago`
 }
 
-const podiumColors: Record<number, string> = {
-  1: '#eab308', // gold
-  2: '#a1a1aa', // silver
-  3: '#cd7f32', // bronze
+const rankBorderClass: Record<number, string> = {
+  1: 'border-l-warning',
+  2: 'border-l-muted-foreground',
+  3: 'border-l-override',
 }
 
 export function Leaderboard({ gameId }: { gameId: string }) {
@@ -67,11 +60,13 @@ export function Leaderboard({ gameId }: { gameId: string }) {
   }, [locations])
 
   return (
-    <GlassPanel
+    <OverlayPanel
       data-testid="leaderboard"
+      padding="none"
+      shape={isMobile ? 'sheet' : 'default'}
       className={
         isMobile
-          ? 'absolute bottom-16 left-0 right-0 z-20 overflow-hidden rounded-t-xl rounded-b-none'
+          ? 'absolute bottom-16 left-0 right-0 z-20 overflow-hidden'
           : 'absolute bottom-3 right-[266px] z-20 overflow-hidden'
       }
     >
@@ -96,28 +91,26 @@ export function Leaderboard({ gameId }: { gameId: string }) {
           className="border-t border-border/30 max-h-[280px] overflow-y-auto"
         >
           {sorted.length === 0 ? (
-            <p className="text-xs text-muted-foreground px-3 py-4 text-center">
-              No teams yet. Add teams in Build mode to see standings here.
-            </p>
+            <EmptyState
+              density="compact"
+              title="No teams yet. Add teams in Build mode to see standings here."
+            />
           ) : (
             sorted.map((entry, idx) => {
               const rank = idx + 1
-              const borderColor = podiumColors[rank] ?? 'transparent'
+              const locationSignal = computeStaleness(teamLastSeen.get(entry.teamId))
               return (
                 <button
                   key={entry.teamId}
                   data-testid="leaderboard-entry"
                   onClick={() => impersonateTeam(impersonatedTeamId === entry.teamId ? null : entry.teamId)}
-                  className={`w-full px-3 py-1.5 flex items-center gap-2 transition-colors cursor-pointer ${
+                  className={cn(
+                    'flex w-full cursor-pointer items-center gap-2 border-l-2 px-3 py-1.5 transition-colors',
+                    rankBorderClass[rank] ?? 'border-l-transparent',
                     impersonatedTeamId === entry.teamId
                       ? 'bg-primary/10'
-                      : 'hover:bg-accent/5'
-                  }`}
-                  style={{
-                    borderLeftWidth: rank <= 3 ? 2 : 0,
-                    borderLeftColor: borderColor,
-                    borderLeftStyle: 'solid',
-                  }}
+                      : 'hover:bg-accent/5',
+                  )}
                 >
                   <span className="text-xs text-muted-foreground w-5 text-right shrink-0">
                     #{rank}
@@ -130,9 +123,12 @@ export function Leaderboard({ gameId }: { gameId: string }) {
                     {entry.teamName}
                   </span>
                   <span
-                    className="w-1.5 h-1.5 rounded-full shrink-0"
-                    style={{ backgroundColor: stalenessColor[computeStaleness(teamLastSeen.get(entry.teamId))] }}
-                    title={`${stalenessLabel[computeStaleness(teamLastSeen.get(entry.teamId))]} — ${formatLastSeen(teamLastSeen.get(entry.teamId))}`}
+                    className={cn(
+                      'h-1.5 w-1.5 shrink-0 rounded-full',
+                      locationSignalDotClass[locationSignal],
+                    )}
+                    data-signal={locationSignal}
+                    title={`${locationSignalLabel[locationSignal]} — ${formatLastSeen(teamLastSeen.get(entry.teamId))}`}
                   />
                   <span className="text-sm font-bold text-primary tabular-nums">
                     {entry.points}
@@ -146,6 +142,6 @@ export function Leaderboard({ gameId }: { gameId: string }) {
           )}
         </div>
       )}
-    </GlassPanel>
+    </OverlayPanel>
   )
 }

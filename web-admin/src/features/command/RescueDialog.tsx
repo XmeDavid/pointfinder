@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { SurfacePanel } from '@/components/layout/SurfacePanel'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { useBases } from '@/hooks/queries/useBases'
 import { useChallenges } from '@/hooks/queries/useChallenges'
@@ -131,8 +132,9 @@ export function RescueDialog({
       className="fixed inset-0 z-[60] bg-black/40"
       onClick={onClose}
     >
-      <div
-        className="bg-card border border-border rounded-xl shadow-xl max-w-md mx-auto mt-[20vh] p-5"
+      <SurfacePanel
+        elevation="panel"
+        className="mx-auto mt-[20vh] max-w-md"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -263,7 +265,7 @@ export function RescueDialog({
             {isPending ? t('command.rescue.sending') : t('command.rescue.confirm')}
           </button>
         </div>
-      </div>
+      </SurfacePanel>
     </div>
   )
 }

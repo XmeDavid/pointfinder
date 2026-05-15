@@ -1,5 +1,11 @@
 import { useMemo } from 'react'
 import { Marker } from 'react-map-gl/maplibre'
+import { cn } from '@/lib/utils'
+import {
+  baseStatusMarkerTone,
+  markerToneClass,
+  type MarkerTone,
+} from './markerStyles'
 import type { Base } from '@/types/base'
 import type { BaseStatus } from '@/types'
 import type { GameMode } from '@/stores/workspace'
@@ -14,14 +20,6 @@ interface BaseMarkersProps {
   impersonation?: Map<string, BaseStatus>
 }
 
-const STATUS_COLORS: Record<BaseStatus, { fill: string; stroke: string }> = {
-  completed: { fill: '#22c55e', stroke: '#16a34a' },   // green
-  checked_in: { fill: '#3b82f6', stroke: '#2563eb' },  // blue
-  submitted: { fill: '#f59e0b', stroke: '#d97706' },   // amber
-  rejected: { fill: '#ef4444', stroke: '#dc2626' },    // red
-  not_visited: { fill: '#a1a1aa', stroke: '#71717a' },  // grey
-}
-
 function getBaseStyle(
   base: Base,
   mode: GameMode,
@@ -32,14 +30,17 @@ function getBaseStyle(
   if (mode === 'command') {
     const isInspected = base.id === selectedBaseId
     const status = impersonation?.get(base.id)
-    const colors = status ? STATUS_COLORS[status] : (base.nfcLinked ? { fill: '#22c55e', stroke: '#16a34a' } : { fill: '#ef4444', stroke: '#ef4444' })
+    const tone: MarkerTone = status
+      ? baseStatusMarkerTone[status]
+      : base.nfcLinked
+        ? 'success'
+        : 'destructive'
     return {
-      fill: colors.fill,
-      stroke: colors.stroke,
+      tone,
       opacity: impersonation ? (status === 'not_visited' ? 0.4 : 0.9) : 0.8,
       size: isInspected ? 18 : 12,
       dashArray: undefined as string | undefined,
-      ringColor: isInspected ? '#ffffff' : undefined as string | undefined,
+      selected: isInspected,
     }
   }
 
@@ -47,27 +48,22 @@ function getBaseStyle(
   const isSelected = base.id === selectedBaseId
   const dimmedByStage = selectedStageId != null && base.stageId !== selectedStageId
 
-  let fill: string
-  let stroke: string
+  let tone: MarkerTone
   let dashArray: string | undefined
 
   if (base.hidden) {
-    fill = '#52525b'
-    stroke = '#71717a'
+    tone = 'hidden'
   } else if (!base.nfcLinked) {
-    fill = '#ef4444'
-    stroke = '#ef4444'
+    tone = 'destructive'
     dashArray = '4 2'
   } else {
-    fill = '#22c55e'
-    stroke = '#16a34a'
+    tone = 'success'
   }
 
   const size = isSelected ? 18 : 14
   const opacity = dimmedByStage ? 0.3 : base.hidden ? 0.5 : 1
-  const ringColor = isSelected ? '#ffffff' : undefined
 
-  return { fill, stroke, opacity, size, dashArray, ringColor }
+  return { tone, opacity, size, dashArray, selected: isSelected }
 }
 
 export function BaseMarkers({
@@ -87,6 +83,7 @@ export function BaseMarkers({
     <>
       {validBases.map((base) => {
         const style = getBaseStyle(base, mode, selectedBaseId, selectedStageId, impersonation)
+        const markerClass = markerToneClass[style.tone]
 
         return (
           <Marker
@@ -118,13 +115,13 @@ export function BaseMarkers({
                 style={{ display: 'block' }}
               >
                 {/* Selection ring */}
-                {style.ringColor && (
+                {style.selected && (
                   <circle
                     cx={(style.size + 8) / 2}
                     cy={(style.size + 8) / 2}
                     r={(style.size + 8) / 2 - 1}
                     fill="none"
-                    stroke={style.ringColor}
+                    className="stroke-background"
                     strokeWidth={2}
                     strokeOpacity={0.8}
                   />
@@ -134,8 +131,7 @@ export function BaseMarkers({
                   cx={(style.size + 8) / 2}
                   cy={(style.size + 8) / 2}
                   r={style.size / 2}
-                  fill={style.fill}
-                  stroke={style.stroke}
+                  className={cn(markerClass.fill, markerClass.stroke)}
                   strokeWidth={2}
                   strokeDasharray={style.dashArray}
                 />

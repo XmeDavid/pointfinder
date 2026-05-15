@@ -103,6 +103,18 @@ const AdminPanelLazy = lazy(() =>
   })),
 );
 
+const devRoutes = import.meta.env.DEV
+  ? [
+      {
+        path: "/dev/visual-system",
+        lazy: () =>
+          import("@/features/dev/VisualHarnessPage").then((m) => ({
+            Component: m.VisualHarnessPage,
+          })),
+      },
+    ]
+  : [];
+
 // ---------------------------------------------------------------------------
 // Spinner shown while lazy chunks load
 // ---------------------------------------------------------------------------
@@ -352,6 +364,7 @@ const router = createBrowserRouter([
       </AuthGuard>
     ),
   },
+  ...devRoutes,
 
   // ── Catch-all ──────────────────────────────────────────────────────────
   {

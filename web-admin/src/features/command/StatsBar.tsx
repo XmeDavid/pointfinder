@@ -1,5 +1,5 @@
 import { Bell, MapPin } from 'lucide-react'
-import { GlassPanel } from '@/components/layout/GlassPanel'
+import { OverlayPanel } from '@/components/layout/OverlayPanel'
 import { useDashboardStats } from '@/hooks/queries/useMonitoring'
 import { useElapsedTimer } from '@/hooks/ui/useElapsedTimer'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -27,69 +27,73 @@ export function StatsBar({ gameId }: { gameId: string }) {
       className="absolute bottom-16 md:bottom-3 left-2 md:left-3 z-20 flex gap-1.5 md:gap-2 overflow-x-auto scrollbar-none max-w-[calc(100vw-16px)] md:max-w-none"
     >
       {/* Active teams */}
-      <GlassPanel className="rounded-lg px-2 py-1.5 md:px-3 md:py-2 shrink-0">
+      <OverlayPanel padding="none" className="shrink-0 px-2 py-1.5 md:px-3 md:py-2">
         <div data-testid="stat-teams" className="text-sm md:text-lg font-bold text-primary">
           {totalTeams}
         </div>
         <div className="text-[10px] md:text-xs text-muted-foreground">Teams</div>
-      </GlassPanel>
+      </OverlayPanel>
 
       {/* Pending */}
-      <GlassPanel className="rounded-lg px-2 py-1.5 md:px-3 md:py-2 shrink-0">
+      <OverlayPanel padding="none" className="shrink-0 px-2 py-1.5 md:px-3 md:py-2">
         <div
           data-testid="stat-pending"
           className={`text-sm md:text-lg font-bold ${
-            pendingCount > 5 ? 'text-destructive' : 'text-yellow-500'
+            pendingCount > 5 ? 'text-destructive' : 'text-warning'
           }`}
         >
           {pendingCount}
         </div>
         <div className="text-[10px] md:text-xs text-muted-foreground">Pending</div>
-      </GlassPanel>
+      </OverlayPanel>
 
       {/* Progress */}
-      <GlassPanel className="rounded-lg px-2 py-1.5 md:px-3 md:py-2 shrink-0">
+      <OverlayPanel padding="none" className="shrink-0 px-2 py-1.5 md:px-3 md:py-2">
         <div data-testid="stat-progress" className="text-sm md:text-lg font-bold">
           {progressPct}%
         </div>
         <div className="text-[10px] md:text-xs text-muted-foreground">Progress</div>
-      </GlassPanel>
+      </OverlayPanel>
 
       {/* Elapsed */}
-      <GlassPanel className="rounded-lg px-2 py-1.5 md:px-3 md:py-2 shrink-0">
+      <OverlayPanel padding="none" className="shrink-0 px-2 py-1.5 md:px-3 md:py-2">
         <div data-testid="stat-elapsed" className="text-sm md:text-lg font-bold font-mono">
           {elapsed}
         </div>
         <div className="text-[10px] md:text-xs text-muted-foreground">Elapsed</div>
-      </GlassPanel>
+      </OverlayPanel>
 
       {/* Team locations toggle */}
-      <button
+      <OverlayPanel
+        as="button"
         data-testid="team-locations-btn"
         onClick={toggleTeamLocations}
-        className={`bg-card/95 backdrop-blur-xl border rounded-lg px-2 py-1.5 md:px-3 md:py-2 transition-colors cursor-pointer shrink-0 ${
+        padding="none"
+        className={`shrink-0 cursor-pointer px-2 py-1.5 transition-colors md:px-3 md:py-2 ${
           teamLocationsVisible
             ? 'border-info/30 bg-info/10 hover:bg-info/20'
-            : 'border-border hover:bg-muted'
+            : 'hover:bg-muted'
         }`}
       >
         <div className="flex items-center justify-center">
           <MapPin size={18} className={`md:w-5 md:h-5 ${teamLocationsVisible ? 'text-info' : 'text-muted-foreground'}`} />
         </div>
         <div className="text-[10px] md:text-xs text-muted-foreground">Players</div>
-      </button>
+      </OverlayPanel>
 
       {/* Notify */}
-      <button
+      <OverlayPanel
+        as="button"
         data-testid="rescue-btn"
         onClick={toggleNotificationSender}
-        className="bg-card/95 backdrop-blur-xl border border-primary/30 rounded-lg px-2 py-1.5 md:px-3 md:py-2 bg-primary/10 hover:bg-primary/20 transition-colors cursor-pointer shrink-0"
+        padding="none"
+        className="shrink-0 cursor-pointer border-primary/30 bg-primary/10 px-2 py-1.5 transition-colors hover:bg-primary/20 md:px-3 md:py-2"
       >
         <div className="flex items-center justify-center">
           <Bell size={18} className="text-primary md:w-5 md:h-5" />
         </div>
         <div className="text-[10px] md:text-xs text-muted-foreground">Notify</div>
-      </button>
+      </OverlayPanel>
     </div>
   )
 }
