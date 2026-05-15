@@ -155,4 +155,18 @@ jobs:
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
             docker compose --project-directory . --env-file .env -f deploy/docker-compose.yml pull
             docker compose --project-directory . --env-file .env -f deploy/docker-compose.yml up -d --remove-orphans
+            for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
+              if curl -kfsS --resolve pointfinder.pt:443:127.0.0.1 https://pointfinder.pt/ >/dev/null; then
+                docker compose --project-directory . --env-file .env -f deploy/docker-compose.yml ps
+                break
+              fi
+
+              if [ "$attempt" = "12" ]; then
+                docker compose --project-directory . --env-file .env -f deploy/docker-compose.yml ps
+                docker compose --project-directory . --env-file .env -f deploy/docker-compose.yml logs --tail=120 nginx backend frontend
+                exit 1
+              fi
+
+              sleep 5
+            done
             docker image prune -f
