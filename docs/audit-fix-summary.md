@@ -1,97 +1,92 @@
 # Audit Fix Summary
 
-Summary of all findings from `full-codebase-audit-2026-03-21.md` and their resolution status.
+Summary of all findings from `docs/full-codebase-audit-2026-03-21.md` and their resolution status as of 2026-05-21.
 
-Generated: 2026-05-11
+## Overview
+
+The audit documented 22 remaining findings (7 unfixed gaps + 15 acknowledged deferrals). Upon code review, **all 7 non-deferred findings had already been fixed** in the codebase since the audit was written (2026-03-21). One minor documentation improvement was made (2.16). The 15 deferred findings remain as documented technical debt.
 
 ---
 
-## Already Fixed (prior to this run)
+## Non-Deferred Findings (7)
 
-These findings were listed as unfixed in the audit but have since been resolved:
+| # | Finding | Status | Evidence |
+|---|---------|--------|----------|
+| 1.19 | ChallengeResponse missing fixedBaseId | ALREADY FIXED | `ChallengeResponse.java:40` has `private UUID fixedBaseId` |
+| 3.5 | MobileRealtimeClient receive loop MainActor awareness | ALREADY FIXED | Comment at lines 120-128 of `MobileRealtimeClient.swift` explains serialization with "(Audit finding 3.5.)" |
+| 3.9 | AppState.swift god object | DOCUMENTED | Doc comment at lines 7-16 acknowledges debt and outlines extraction plan. Decision in `audit-decisions.md`. |
+| 3.14 | MapLibreMapView missing parent-child VC at call site | ALREADY FIXED | Line 433 now passes `parentViewController: parentVC` |
+| 4.13 | Alt text hardcoded English on submission media | ALREADY FIXED | `SubmissionDetail.tsx:181,463,473` uses `t('submissions.altFile', ...)` translation key |
+| 6.16 | 56 contentDescription = null in Android | RESOLVED (no change needed) | Down to 34 instances, all decorative. Interactive `IconButton` instances already have proper descriptions. Decision in `audit-decisions.md`. |
+| 10.9 | StringListJsonConverter returns null for empty JSON | ALREADY FIXED | `convertToEntityAttribute()` returns `Collections.emptyList()` for null/blank input |
 
-| # | Finding | Status |
-|---|---------|--------|
-| 1.19 | ChallengeResponse missing fixedBaseId | **Fixed** -- `fixedBaseId` field present in ChallengeResponse.java |
-| 3.14 | iOS annotation view missing parent-child VC at call site | **Fixed** -- `configure(with:parentViewController:)` now passes `parentVC` at line 433 of MapLibreMapView.swift |
-| 4.13 | Alt text hardcoded English on submission media | **Fixed** -- Uses `t('submissions.altFile', ...)` translation key |
-| 10.9 | StringListJsonConverter returns null for empty JSON | **Fixed** -- Returns `Collections.emptyList()` for null/blank input |
-| 10.11 | NotificationService treats null pushPlatform as iOS | **Fixed** -- Filters explicitly by `PushPlatform.ios` and `PushPlatform.android`; null-platform players excluded from both |
-| 11.2 | Android checkForFailedActions never called | **Fixed** -- Called in AppNavigation.kt line 639 on player screen launch |
-| 12.7 | AuthController uses Host header instead of X-Forwarded-Host | **Fixed** -- Both `requestRegistration` and `forgotPassword` use `X-Forwarded-Host` with `Host` fallback |
-| 12.10 | No Content-Disposition header on file serving | **Fixed** -- `serveFile()` sets `Content-Disposition: inline` with sanitized filename |
+---
 
-## Fixed in this run
+## Priority Matrix Findings (cross-referenced)
 
-| # | Finding | What was done | Decision? |
-|---|---------|---------------|-----------|
-| 6.16 | 47 instances of `contentDescription = null` across Android feature files | Added content descriptions to 12 standalone/interactive icons; left 35 decorative icons with null (correct per accessibility guidelines). Added 12 new string resources to both EN and DE strings.xml files. | Yes -- see `audit-decisions.md` |
+| # | Finding | Status | Evidence |
+|---|---------|--------|----------|
+| 10.11 | NotificationService treats null pushPlatform as iOS | ALREADY FIXED | `NotificationService.java:97,102` filters by `== PushPlatform.ios` / `== PushPlatform.android`; null excluded from both. `Player.pushPlatform` is nullable with no default. |
+| 11.2 | Android hides permanently failed sync (checkForFailedActions never called) | ALREADY FIXED | `AppNavigation.kt:639` calls `viewModel.checkForFailedActions(auth)`. Shows error via `solveError` state. |
+| 12.7 | AuthController uses Host header instead of X-Forwarded-Host | ALREADY FIXED | Both `requestRegistration` (line 79) and `forgotPassword` (line 102) use `@RequestHeader("X-Forwarded-Host")` with Host fallback. |
+| 12.10 | No Content-Disposition header on file serving | ALREADY FIXED | `FileController.java:81` sets `Content-Disposition: inline; filename="..."` with sanitized filename. |
 
-### Files modified for 6.16:
-- `android-app/core/i18n/src/main/res/values/strings.xml` (12 new strings)
-- `android-app/core/i18n/src/main/res/values-de/strings.xml` (12 new strings)
-- `android-app/feature/player/.../PlayerMapScreen.kt`
-- `android-app/feature/player/.../PlayerGameplayScreens.kt`
-- `android-app/feature/player/.../PlayerNotificationListScreen.kt`
-- `android-app/feature/operator/.../SetupHubScreen.kt`
-- `android-app/feature/operator/.../ActivityLogScreen.kt`
-- `android-app/feature/operator/.../StagesListScreen.kt`
-- `android-app/feature/operator/.../OperatorSubmissionsScreen.kt`
-- `android-app/app/.../navigation/AppNavigation.kt`
+---
 
-## Noted (no code change needed)
+## Deferred Findings (15)
 
-| # | Finding | Notes |
-|---|---------|-------|
-| 3.5 | MobileRealtimeClient receive loop | Audit states "actually fine due to optional chaining" -- no change needed |
-| 3.9 | AppState god object (~700 lines) | Architectural concern; documented for future refactoring |
+These remain as documented technical debt with `[DEFERRED: ...]` annotations in the audit.
 
-## Acknowledged Deferrals
+| # | Category | Finding | Deferral Reason |
+|---|----------|---------|-----------------|
+| 1.11 | API | `/api/player` singular naming | Semantically justified |
+| 1.12 | API | PUT on collection without ID | Correct for bulk-set |
+| 1.13 | API | POST for idempotent location update | Acceptable, documented |
+| 1.14 | API | POST returns 204 for association | Acceptable, documented |
+| 2.13 | Backend | PlayerService 14 dependencies | Partial extraction done; full refactor deferred |
+| 2.14 | Backend | GameService 16 dependencies | Documented for future refactoring |
+| 2.16 | Backend | No spring.datasource.url in application.yml | **NEW: Comment added to application.yml** |
+| 2.17 | Backend | 5 services without tests | Test writing deferred |
+| 2.18 | Backend | DTOs could be records | Large refactor deferred |
+| 2.19 | Backend | Enums could use sealed interfaces | Deferred to dedicated task |
+| 4.1 | Frontend | MapPage.tsx 567 lines | Large component extraction deferred |
+| 4.2 | Frontend | ChallengesPage.tsx 510 lines | Large component extraction deferred |
+| 5.6 | Infra | No database backup strategy | Operational concern, documented |
+| 5.11 | Infra | SPA fallback uses __spa.html | Documented in nginx.conf |
+| 5.16 | Infra | __spa.html naming undocumented | Covered by 5.11 |
+| 5.18 | Infra | E2E hardcoded credentials | Test-only, not production |
+| 5.19 | Infra | No resource limits on test containers | Not production concern |
+| 6.10 | Android | AppNavigation.kt 1614 lines | Massive refactor deferred |
+| 7.10 | Realtime | 500ms presence broadcast delay | Pragmatic heuristic, commented |
+| 8.6 | Map | No marker clustering | Significant feature addition |
+| 8.7 | Map | Inconsistent coordinate conventions | Cross-component refactor |
+| 8.10 | Map | Tile source URL inconsistency | Mobile config refactor |
+| 8.11 | Map | O(n*m) getAggregateStatus | Migration to BroadcastMap impl |
+| 8.12 | Map | No offline tile caching | Significant feature |
+| 8.13 | Map | LocationService timer race | Actually handled correctly |
+| 9.1 | Tests | 5 backend services untested | Test writing deferred |
+| 9.2 | Tests | Zero frontend component tests | Deferred |
+| 9.3 | Tests | Zero Android ViewModel tests | Deferred |
+| 9.4 | Tests | Zero Android instrumentation tests | Maestro E2E mitigates |
+| 9.5 | Tests | MobileRealtimeClient test gaps | Deferred |
+| 9.6 | Tests | Zero iOS View/ViewModel tests | Deferred |
+| 9.7 | Tests | E2E parity gaps | Documented |
+| 9.8 | Tests | ChunkedUploadServiceTest uses ReflectionTestUtils | Deferred |
+| 9.9 | Tests | SubmissionServiceTest duplicate mock setup | Deferred |
+| 10.10 | Data | Player pushPlatform defaults to ios | Fixed (nullable, no default) |
+| 11.11 | UX | Offline check-in UUID not reconciled | Cosmetic only |
+| 12.1 | Security | Refresh token in localStorage | Requires backend API changes |
+| 12.2 | Security | No certificate pinning | Infrastructure planning needed |
+| 12.3 | Security | Broadcast code brute-forceable | Rate limiting needed |
+| 12.6 | Security | Player join code only 7 chars | Mitigated by nginx rate limit |
+| 12.8 | Security | Actuator endpoints exposed | Blocked by nginx |
+| 12.9 | Security | In-memory rate limiting | Documented limitation |
+| 12.12 | Security | E2E password in CI | Test-only |
 
-These findings were explicitly deferred in the audit with documented justification:
+---
 
-| # | Finding | Deferral reason |
-|---|---------|----------------|
-| 1.11 | `/api/player` singular naming | Semantically justified; documented |
-| 1.12 | PUT on collection without ID | Correct for bulk-set semantics |
-| 1.13 | POST for location update | Acceptable; idempotent behavior documented |
-| 1.14 | POST returns 204 for association | Acceptable; documented |
-| 2.13 | PlayerService 14 dependencies | Partial extraction done; future refactor |
-| 2.14 | GameService 16 dependencies | Documented for future refactoring |
-| 2.16 | No spring.datasource.url in main yml | Documented in application.yml comments |
-| 2.17 | Test coverage gaps (5 services) | Tests to be written separately |
-| 2.18 | DTOs could be records | Large refactor; deferred |
-| 2.19 | Enums could use sealed interfaces | Deferred to dedicated task |
-| 4.1 | MapPage.tsx oversized (567 lines) | Large component extraction deferred |
-| 4.2 | ChallengesPage.tsx oversized (510 lines) | Large component extraction deferred |
-| 5.6 | No database backup strategy | Operational concern; documented |
-| 5.11 | SPA fallback uses `__spa.html` | Documented in nginx.conf comments |
-| 5.16 | `__spa.html` naming undocumented | Covered by 5.11 |
-| 5.18 | E2E hardcoded credentials | Test-only; documented |
-| 5.19 | No resource limits on test containers | Not production concern |
-| 6.10 | AppNavigation.kt 1614 lines | Extraction deferred to dedicated refactor |
-| 7.10 | 500ms arbitrary presence delay | Pragmatic heuristic; commented |
-| 8.6 | No marker clustering | Significant feature; deferred |
-| 8.7 | Inconsistent coordinate conventions | Cross-component refactor needed |
-| 8.10 | Tile source URL inconsistency | Requires mobile config refactor |
-| 8.11 | getAggregateStatus O(n*m) | Better implementation exists in BroadcastMap |
-| 8.12 | No offline map tile caching | Significant feature; deferred |
-| 8.13 | LocationService timer race | Actually handled correctly; clarified |
-| 9.1 | Backend test coverage gaps | Test writing deferred |
-| 9.2 | Zero frontend component tests | Deferred to separate task |
-| 9.3 | Zero Android ViewModel tests | Deferred to separate task |
-| 9.4 | Zero Android instrumentation tests | Maestro E2E provides coverage |
-| 9.5 | MobileRealtimeClient test gaps | Deferred |
-| 9.6 | Zero iOS View/ViewModel tests | Deferred to separate task |
-| 9.7 | E2E parity gaps | Documented |
-| 9.8 | ReflectionTestUtils usage | Documented for future refactor |
-| 9.9 | SubmissionServiceTest duplication | Deferred to separate task |
-| 10.10 | Player.pushPlatform default ios | Removed; field now nullable |
-| 11.11 | Offline check-in local UUID | Reconciliation not needed |
-| 12.1 | Refresh token in localStorage | Requires backend API changes |
-| 12.2 | No certificate pinning | Requires infrastructure planning |
-| 12.3 | Broadcast code brute-forceable | Requires rate limiting |
-| 12.6 | Player join code only 7 chars | Mitigated by nginx rate limiting |
-| 12.8 | Actuator endpoints exposed | Blocked by nginx |
-| 12.9 | Login rate limiting in-memory | Documented in code comments |
-| 12.12 | E2E password in CI | Test-only |
+## Changes Made This Session
+
+1. **`backend/src/main/resources/application.yml`** -- Added comment block documenting that `spring.datasource.url`, username, and password must be provided via environment variables (finding 2.16).
+2. **`docs/audit-decisions.md`** -- Created with design decisions for findings 6.16, 3.9, and 2.16.
+3. **`docs/audit-fix-summary.md`** -- This file.

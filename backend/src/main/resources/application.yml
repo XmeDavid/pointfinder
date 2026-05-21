@@ -14,6 +14,12 @@ spring:
       hibernate:
         format_sql: true
 
+  # NOTE: spring.datasource.url, username, and password are NOT defined here.
+  # They MUST be provided via environment variables (SPRING_DATASOURCE_URL,
+  # SPRING_DATASOURCE_USERNAME, SPRING_DATASOURCE_PASSWORD) or via a
+  # profile-specific application-{profile}.yml. The Docker Compose files and
+  # CI workflows set these through their respective environment blocks.
+  # See docs/infrastructure.md for the full list of required env vars.
   datasource:
     hikari:
       maximum-pool-size: 20
