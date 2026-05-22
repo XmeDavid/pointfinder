@@ -279,7 +279,7 @@ internal fun ColorPickerRow(
                 if (isSelected) {
                     Icon(
                         Icons.Default.Check,
-                        contentDescription = null,
+                        contentDescription = "Selected",
                         tint = Color.White,
                         modifier = Modifier.size(18.dp),
                     )

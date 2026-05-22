@@ -346,12 +346,12 @@ fun BaseDetailBottomSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(statusIcon, contentDescription = null, tint = statusColor, modifier = Modifier.size(20.dp))
+                    Icon(statusIcon, contentDescription = "Status", tint = statusColor, modifier = Modifier.size(20.dp))
                     Text(baseStatusLabel(status), fontWeight = FontWeight.Medium, color = statusColor)
                 }
                 if (challenge != null && status != BaseStatus.NOT_VISITED) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Icon(Icons.Default.Star, contentDescription = null, tint = StarGold, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.Star, contentDescription = "Points", tint = StarGold, modifier = Modifier.size(16.dp))
                         Text("${challenge.points} pts", style = MaterialTheme.typography.labelMedium, color = StarGold)
                     }
                 }
@@ -416,7 +416,7 @@ fun BaseDetailBottomSheet(
                 ) {
                     Icon(
                         Icons.Default.LocationOn,
-                        contentDescription = null,
+                        contentDescription = "Location required",
                         tint = OfflineOrange,
                     )
                     Column {
@@ -456,7 +456,7 @@ fun BaseDetailBottomSheet(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center,
                     ) {
-                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = StatusSubmitted, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.CheckCircle, contentDescription = "Awaiting review", tint = StatusSubmitted, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.size(8.dp))
                         Text(stringResource(R.string.label_awaiting_review), color = StatusSubmitted, fontWeight = FontWeight.Medium)
                     }
@@ -470,7 +470,7 @@ fun BaseDetailBottomSheet(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center,
                     ) {
-                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = StatusCompleted, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.CheckCircle, contentDescription = "Completed", tint = StatusCompleted, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.size(8.dp))
                         Text(stringResource(R.string.status_completed), color = StatusCompleted, fontWeight = FontWeight.Medium)
                     }

@@ -385,7 +385,7 @@ private fun ActivityCard(event: ActivityEvent, teamColorMap: Map<*, String>) {
             // Event icon
             Icon(
                 imageVector = icon,
-                contentDescription = null,
+                contentDescription = "Activity event",
                 tint = iconColor,
                 modifier = Modifier.size(20.dp),
             )
@@ -447,7 +447,7 @@ private fun StageStatusCard(stages: List<Stage>, onManageStages: () -> Unit) {
         ) {
             Icon(
                 imageVector = Icons.Default.FormatListNumbered,
-                contentDescription = null,
+                contentDescription = "Stages",
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp),
             )

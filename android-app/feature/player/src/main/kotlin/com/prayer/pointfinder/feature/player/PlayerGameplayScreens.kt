@@ -119,7 +119,7 @@ fun CheckInScreen(
         Spacer(Modifier.height(16.dp))
         if (pendingActionsCount > 0) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.CheckCircle, contentDescription = null, tint = StatusSubmitted)
+                Icon(Icons.Default.CheckCircle, contentDescription = "Pending", tint = StatusSubmitted)
                 val label = if (pendingActionsCount == 1) {
                     stringResource(R.string.label_pending_sync_one, pendingActionsCount)
                 } else {
@@ -268,7 +268,7 @@ fun BaseCheckInDetailScreen(
                     ) {
                         Icon(
                             Icons.Default.LocationOn,
-                            contentDescription = null,
+                            contentDescription = "Location required",
                             tint = OfflineOrange,
                         )
                         Column {
@@ -360,14 +360,14 @@ fun SolveScreen(
                         ) {
                             Image(
                                 bitmap = item.thumbnail.asImageBitmap(),
-                                contentDescription = null,
+                                contentDescription = "Media thumbnail",
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Crop,
                             )
                             if (item.isVideo) {
                                 Icon(
                                     Icons.Default.PlayCircleFilled,
-                                    contentDescription = null,
+                                    contentDescription = "Video",
                                     modifier = Modifier
                                         .size(36.dp)
                                         .align(Alignment.Center),

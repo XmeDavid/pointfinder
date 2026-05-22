@@ -431,7 +431,7 @@ private fun ChallengeCard(challenge: Challenge) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
             Text(challenge.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                Icon(Icons.Default.Star, contentDescription = null, tint = StarGold, modifier = Modifier.size(14.dp))
+                Icon(Icons.Default.Star, contentDescription = "Points", tint = StarGold, modifier = Modifier.size(14.dp))
                 Text(stringResource(R.string.label_pts, challenge.points), style = MaterialTheme.typography.labelSmall, color = StarGold)
             }
         }
@@ -459,7 +459,7 @@ private fun TeamAssignmentRow(team: Team, challenge: Challenge) {
             Text(challenge.title, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-            Icon(Icons.Default.Star, contentDescription = null, tint = StarGold, modifier = Modifier.size(12.dp))
+            Icon(Icons.Default.Star, contentDescription = "Points", tint = StarGold, modifier = Modifier.size(12.dp))
             Text("${challenge.points}", style = MaterialTheme.typography.labelSmall, color = StarGold)
         }
     }

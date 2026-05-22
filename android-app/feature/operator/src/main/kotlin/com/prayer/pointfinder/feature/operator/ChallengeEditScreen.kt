@@ -781,7 +781,7 @@ fun ChallengeEditScreen(
                             ) {
                                 Icon(
                                     imageVector = if (base.nfcLinked) Icons.Default.CheckCircle else Icons.Default.Nfc,
-                                    contentDescription = null,
+                                    contentDescription = if (base.nfcLinked) "NFC linked" else "NFC not linked",
                                     tint = if (base.nfcLinked) StatusCompleted else StatusSubmitted,
                                     modifier = Modifier.size(16.dp),
                                 )

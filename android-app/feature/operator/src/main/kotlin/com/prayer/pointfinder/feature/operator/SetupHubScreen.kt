@@ -372,7 +372,7 @@ private fun ManageCard(
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = icon,
-                        contentDescription = null,
+                        contentDescription = label,
                         tint = StatusCompleted,
                         modifier = Modifier.size(18.dp),
                     )
@@ -400,7 +400,7 @@ private fun ManageCard(
 
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = null,
+                contentDescription = "Navigate",
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(18.dp),
             )

@@ -343,7 +343,7 @@ private fun ActivityLogRow(
             ) {
                 Icon(
                     imageVector = icon,
-                    contentDescription = null,
+                    contentDescription = event.type,
                     tint = iconColor,
                     modifier = Modifier
                         .size(20.dp)

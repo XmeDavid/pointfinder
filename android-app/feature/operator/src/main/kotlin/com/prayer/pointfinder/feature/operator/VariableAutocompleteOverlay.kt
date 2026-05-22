@@ -87,7 +87,7 @@ fun VariableAutocompleteOverlay(
                 ) {
                     Icon(
                         Icons.Default.Add,
-                        contentDescription = null,
+                        contentDescription = "Create variable",
                         modifier = Modifier.size(14.dp),
                     )
                     Spacer(Modifier.width(6.dp))

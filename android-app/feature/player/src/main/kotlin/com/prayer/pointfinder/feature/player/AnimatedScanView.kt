@@ -358,7 +358,7 @@ private fun CenterIcon(
             ) {}
             Icon(
                 imageVector        = icon,
-                contentDescription = null,
+                contentDescription = "Scan status",
                 tint               = iconTint,
                 modifier           = Modifier.size(30.dp),
             )

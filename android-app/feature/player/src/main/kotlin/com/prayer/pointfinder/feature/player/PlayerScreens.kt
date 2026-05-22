@@ -221,7 +221,7 @@ private fun SyncStatusPill(
             if (isOffline) {
                 Icon(
                     imageVector = Icons.Default.WifiOff,
-                    contentDescription = null,
+                    contentDescription = "Offline",
                     tint = Color.White,
                     modifier = Modifier.size(14.dp),
                 )
@@ -309,7 +309,7 @@ private fun SyncQueueItem(
             ) {
                 Icon(
                     imageVector = icon,
-                    contentDescription = null,
+                    contentDescription = name,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp),
                 )

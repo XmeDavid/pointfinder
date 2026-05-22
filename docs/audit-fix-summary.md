@@ -1,10 +1,10 @@
 # Audit Fix Summary
 
-Summary of all findings from `docs/full-codebase-audit-2026-03-21.md` and their resolution status as of 2026-05-21.
+Summary of all findings from `docs/full-codebase-audit-2026-03-21.md` and their resolution status as of 2026-05-22.
 
 ## Overview
 
-The audit documented 22 remaining findings (7 unfixed gaps + 15 acknowledged deferrals). Upon code review, **all 7 non-deferred findings had already been fixed** in the codebase since the audit was written (2026-03-21). One minor documentation improvement was made (2.16). The 15 deferred findings remain as documented technical debt.
+The audit documented 22 remaining findings (7 unfixed gaps + 15 acknowledged deferrals). Most non-deferred findings had already been fixed in the codebase since the audit was written (2026-03-21). Two findings required new fixes: 10.11 (push_platform DB default) and 6.16 (Android contentDescription accessibility). The 15 deferred findings remain as documented technical debt.
 
 ---
 
@@ -17,7 +17,7 @@ The audit documented 22 remaining findings (7 unfixed gaps + 15 acknowledged def
 | 3.9 | AppState.swift god object | DOCUMENTED | Doc comment at lines 7-16 acknowledges debt and outlines extraction plan. Decision in `audit-decisions.md`. |
 | 3.14 | MapLibreMapView missing parent-child VC at call site | ALREADY FIXED | Line 433 now passes `parentViewController: parentVC` |
 | 4.13 | Alt text hardcoded English on submission media | ALREADY FIXED | `SubmissionDetail.tsx:181,463,473` uses `t('submissions.altFile', ...)` translation key |
-| 6.16 | 56 contentDescription = null in Android | RESOLVED (no change needed) | Down to 34 instances, all decorative. Interactive `IconButton` instances already have proper descriptions. Decision in `audit-decisions.md`. |
+| 6.16 | 56 contentDescription = null in Android | FIXED (2026-05-22) | Fixed 31 of 34 remaining instances across 15 files. 3 truly decorative instances left as null. Decision in `audit-decisions.md`. |
 | 10.9 | StringListJsonConverter returns null for empty JSON | ALREADY FIXED | `convertToEntityAttribute()` returns `Collections.emptyList()` for null/blank input |
 
 ---
@@ -26,7 +26,7 @@ The audit documented 22 remaining findings (7 unfixed gaps + 15 acknowledged def
 
 | # | Finding | Status | Evidence |
 |---|---------|--------|----------|
-| 10.11 | NotificationService treats null pushPlatform as iOS | ALREADY FIXED | `NotificationService.java:97,102` filters by `== PushPlatform.ios` / `== PushPlatform.android`; null excluded from both. `Player.pushPlatform` is nullable with no default. |
+| 10.11 | NotificationService treats null pushPlatform as iOS | FIXED (2026-05-22) | NotificationService code was already correct, but DB column still had `DEFAULT 'ios'` from V2. Created V56 migration to drop the default. Decision in `audit-decisions.md`. |
 | 11.2 | Android hides permanently failed sync (checkForFailedActions never called) | ALREADY FIXED | `AppNavigation.kt:639` calls `viewModel.checkForFailedActions(auth)`. Shows error via `solveError` state. |
 | 12.7 | AuthController uses Host header instead of X-Forwarded-Host | ALREADY FIXED | Both `requestRegistration` (line 79) and `forgotPassword` (line 102) use `@RequestHeader("X-Forwarded-Host")` with Host fallback. |
 | 12.10 | No Content-Disposition header on file serving | ALREADY FIXED | `FileController.java:81` sets `Content-Disposition: inline; filename="..."` with sanitized filename. |
@@ -85,8 +85,15 @@ These remain as documented technical debt with `[DEFERRED: ...]` annotations in 
 
 ---
 
-## Changes Made This Session
+## Changes Made (2026-05-22 session)
 
-1. **`backend/src/main/resources/application.yml`** -- Added comment block documenting that `spring.datasource.url`, username, and password must be provided via environment variables (finding 2.16).
-2. **`docs/audit-decisions.md`** -- Created with design decisions for findings 6.16, 3.9, and 2.16.
-3. **`docs/audit-fix-summary.md`** -- This file.
+1. **`backend/src/main/resources/db/migration/V56__drop_push_platform_default.sql`** -- New Flyway migration to drop `DEFAULT 'ios'` from players.push_platform column (finding 10.11).
+2. **31 Android files** -- Added contentDescription strings to interactive Icon composables across 15 feature files (finding 6.16).
+3. **`docs/audit-decisions.md`** -- Updated with decisions for findings 10.11 and 6.16.
+4. **`docs/audit-fix-summary.md`** -- Updated this file.
+
+### Previous session changes (2026-05-21)
+
+1. **`backend/src/main/resources/application.yml`** -- Added comment block documenting datasource config requirement (finding 2.16).
+2. **`docs/audit-decisions.md`** -- Created with initial decisions.
+3. **`docs/audit-fix-summary.md`** -- Created.
