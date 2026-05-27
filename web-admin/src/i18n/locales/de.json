@@ -450,6 +450,7 @@
     "member_other": "{{count}} Mitglieder",
     "teamColor": "Teamfarbe",
     "downloadQr": "QR-Code herunterladen",
+    "qrCodeAlt": "QR-Code für {{code}}",
     "removeMember": "Spieler entfernen",
     "removeMemberConfirm": "{{name}} aus diesem Spiel entfernen?",
     "deleteConfirmTitle": "Dieses Team löschen?",

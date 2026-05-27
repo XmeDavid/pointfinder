@@ -286,7 +286,7 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
                   {qrUrl && (
                     <img
                       src={qrUrl}
-                      alt={`QR code for ${team.joinCode}`}
+                      alt={t('teams.qrCodeAlt', { code: team.joinCode })}
                       className="w-64 h-64"
                       data-testid="qr-code-img"
                     />

@@ -1,6 +1,6 @@
 # Audit Fix Summary
 
-> Generated 2026-05-24. Verification pass against `docs/full-codebase-audit-2026-03-21.md`.
+> Generated 2026-05-24, updated 2026-05-27. Verification pass against `docs/full-codebase-audit-2026-03-21.md`.
 
 All 22 remaining findings from the March 2026 audit have been verified. Every actionable finding has been addressed by prior commits. This document records the current status of each finding.
 
@@ -25,8 +25,8 @@ Comments added to `MobileRealtimeClient.swift` (lines 120-126) explaining that t
 `MapLibreMapView.swift` line 433 now calls `swiftUIView.configure(with: item.view, parentViewController: parentVC)` with the parent view controller, ensuring correct lifecycle events for Dynamic Type and dark mode transitions.
 
 ### 4.13 -- Alt text hardcoded in English on submission media
-**Status: FIXED (prior commit)**
-All `alt` attributes in `SubmissionDetail.tsx` use `t('submissions.altFile', { index: ... })` with the i18n translation function. The key exists in all three locale files (en.json, pt.json, de.json).
+**Status: FIXED (prior commit + 2026-05-27)**
+All `alt` attributes in `SubmissionDetail.tsx` use `t('submissions.altFile', { index: ... })` with the i18n translation function. A remaining hardcoded English alt text in `TeamDetail.tsx` (`alt="QR code for ${team.joinCode}"`) was fixed on 2026-05-27 to use `t('teams.qrCodeAlt', { code: team.joinCode })`. Translation keys added to all three locale files (en.json: "QR code for {{code}}", pt.json: "Codigo QR para {{code}}", de.json: "QR-Code fur {{code}}").
 
 ### 6.16 -- 56 instances of contentDescription = null
 **Status: FIXED (prior commit), 3 correct instances remain**
@@ -104,4 +104,4 @@ Both `/request-registration` and `/forgot-password` endpoints now use `@RequestH
 | Acknowledged (observational, no change needed) | 1 |
 | Deferred (documented with rationale) | 31 |
 
-All actionable findings have been resolved. No new code changes were required during this verification pass.
+All actionable findings have been resolved. One additional fix was made on 2026-05-27: hardcoded English alt text for QR code images in `TeamDetail.tsx` was replaced with i18n translation keys (finding 4.13).

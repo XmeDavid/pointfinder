@@ -450,6 +450,7 @@
     "member_other": "{{count}} members",
     "teamColor": "Team Color",
     "downloadQr": "Download QR Code",
+    "qrCodeAlt": "QR code for {{code}}",
     "removeMember": "Remove player",
     "removeMemberConfirm": "Remove {{name}} from this game?",
     "deleteConfirmTitle": "Delete this team?",

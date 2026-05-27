@@ -1,6 +1,6 @@
 # Audit Decisions
 
-> Decisions made during audit fix verification (2026-05-24).
+> Decisions made during audit fix verification (2026-05-24, updated 2026-05-27).
 
 ## Finding 6.16 -- Remaining contentDescription = null instances
 
