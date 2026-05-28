@@ -28,7 +28,7 @@ States: `setup` → `live` → `ended` (can revert to setup or live from ended)
 
 **Go-live readiness checklist** (enforced by backend):
 1. Game has at least one base
-2. Game has at least one challenge
+2. Game has at least as many challenges as bases (`challengeCount >= baseCount` — i.e. enough unique challenges for one per base)
 3. Game has at least one team
 4. All bases have NFC tags linked
 5. All assignments are valid (base + challenge exist)
@@ -159,15 +159,15 @@ docker-compose up -d       # Start full stack
 
 ## Database
 
-- 36 tables, 54 Flyway migrations in `backend/src/main/resources/db/migration/`
+- 36 tables, 57 Flyway migrations in `backend/src/main/resources/db/migration/`
 - Flyway runs in validation mode (no auto-DDL) on startup
 - Key entities: Game, Base, Challenge, Assignment, Team, Player, Submission, CheckIn, UploadSession, TeamVariable, GameTag, BaseUnlockOverride, ActivityEvent, Stage, Organization, UserSubscription, Resource
-- Post-pilot additions: audit foundation (V36), base_unlock_overrides table (V37), challenge_operator_notes (V38), game_tags table (V40), optimistic-lock version columns (V43), base/challenge order_index (V44–V45), stages table (V46), organizations + subscriptions (V47–V49), resources + embeds (V50–V51), org_invites (V52), email_change_tokens (V53), per-team submission idempotency (V54)
+- Post-pilot additions: audit foundation (V36), base_unlock_overrides table (V37), challenge_operator_notes (V38), game_tags table (V40), optimistic-lock version columns (V43), base/challenge order_index (V44–V45), stages table (V46), organizations + subscriptions (V47–V49), resources + embeds (V50–V51), org_invites (V52), email_change_tokens (V53), per-team submission idempotency (V54), user token-version invalidation (V55), drop push platform default (V56), widen broadcast code to 10 chars (V57)
 - Unique constraints: one check-in per team per base, idempotent submissions via idempotency_key (team-scoped per V54), case-insensitive tag label per game
 
 ## Localization
 
-Three languages: EN, PT, DE (932 keys each in frontend)
+Three languages: EN, PT, DE (1052 keys each in frontend)
 - Frontend: `web-admin/src/i18n/locales/{en,pt,de}.json` — hostname-based detection (pointfinder.pt → PT, pointfinder.ch → DE)
 - Android: `android-app/app/src/main/res/values{,-de}/strings.xml`
 - iOS: Standard .strings localization

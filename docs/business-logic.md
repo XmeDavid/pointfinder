@@ -56,12 +56,12 @@ The backend validates all 8 conditions before allowing `setup → live`. The fro
 | # | Condition | Backend check | Frontend display |
 |---|-----------|---------------|-----------------|
 | 1 | At least 1 base created | Yes | Yes |
-| 2 | At least 1 challenge created | Yes | Yes |
+| 2 | At least as many challenges as bases (`challengeCount >= baseCount`) | Yes | Yes |
 | 3 | At least 1 team created | Yes | Yes |
 | 4 | All bases have NFC linked (`nfc_linked = true`) | Yes | Yes |
 | 5 | All bases have at least one challenge assigned | Yes | Yes |
 | 6 | All location-bound challenges are assigned to a base | Yes | Yes |
-| 7 | Enough unique challenges for uniform assignment (number of bases ≤ number of challenges, when `uniformAssignment = true`) | Yes | Yes |
+| 7 | Enough unique challenges for one-per-base coverage: `challengeCount >= baseCount`. Enforced unconditionally (NOT gated on `uniformAssignment`) — this is the same backend rule surfaced in row #2. | Yes | Yes |
 | 8 | All team variables have values for every team, **and** every `{{key}}` reference in any challenge's `content`, `completionContent`, or `correctAnswer` resolves to a defined variable for every team (see § 5 Team Variables). Emits `VARIABLE_REFERENCE_UNDEFINED` when undefined. | Yes | Yes (via `/games/:id/team-variables/completeness`) |
 
 If any condition fails, `PATCH /api/games/{id}/status` returns 400. The frontend checks readiness via the game detail + variables completeness endpoint and disables the "Go Live" button accordingly.
