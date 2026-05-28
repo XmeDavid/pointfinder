@@ -15,7 +15,7 @@ spring:
 app:
   jwt:
     secret: test-secret-key-that-is-at-least-256-bits-long-for-hs256-algorithm
-    enforce-prod-secret: false
+    allow-insecure: false
     access-token-expiration-ms: 900000
     refresh-token-expiration-ms: 604800000
   cors:

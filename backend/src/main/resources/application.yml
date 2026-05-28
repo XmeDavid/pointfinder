@@ -57,7 +57,12 @@ server:
 app:
   jwt:
     secret: ${JWT_SECRET:scout-mission-dev-secret-key-that-is-at-least-256-bits-long-for-hs256}
-    enforce-prod-secret: ${JWT_ENFORCE_PROD_SECRET:true}
+    # Hard-fail on startup if the insecure default secret is in use, on ANY
+    # profile. For local development only, set JWT_ALLOW_INSECURE=true to run
+    # with the default secret without configuring JWT_SECRET. Any deployed
+    # environment MUST leave this false (the default) and supply a real
+    # JWT_SECRET.
+    allow-insecure: ${JWT_ALLOW_INSECURE:false}
     access-token-expiration-ms: 900000       # 15 minutes
     refresh-token-expiration-ms: 604800000   # 7 days
   cors:

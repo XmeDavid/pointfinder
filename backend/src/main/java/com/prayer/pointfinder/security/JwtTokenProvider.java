@@ -5,8 +5,6 @@ import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
-import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -30,15 +28,18 @@ public class JwtTokenProvider {
     @Value("${app.jwt.refresh-token-expiration-ms}")
     private long refreshTokenExpirationMs;
 
-    @Value("${app.jwt.enforce-prod-secret:true}")
-    private boolean enforceProdSecret;
+    /**
+     * Explicit developer opt-in to allow the known insecure default JWT
+     * secret. Defaults to {@code false} so a deployment that forgets to set
+     * {@code JWT_SECRET} fails hard on startup REGARDLESS of the active
+     * Spring profile, instead of silently signing tokens with a public key.
+     * Set {@code APP_JWT_ALLOW_INSECURE=true} (or
+     * {@code app.jwt.allow-insecure=true}) for local development only.
+     */
+    @Value("${app.jwt.allow-insecure:false}")
+    private boolean allowInsecureSecret;
 
     private SecretKey key;
-    private final Environment environment;
-
-    public JwtTokenProvider(Environment environment) {
-        this.environment = environment;
-    }
 
     @PostConstruct
     public void init() {
@@ -170,15 +171,21 @@ public class JwtTokenProvider {
             throw new IllegalStateException("JWT secret must be at least 32 bytes");
         }
 
-        // Always prevent default secret in production
-        if (environment.acceptsProfiles(Profiles.of("prod", "production"))
-                && INSECURE_DEFAULT_SECRET.equals(jwtSecret)) {
-            throw new IllegalStateException("JWT_SECRET must be configured in production. Do not use the default insecure secret.");
-        }
-
-        // Warn in non-production but still allow (developer convenience)
-        if (enforceProdSecret && INSECURE_DEFAULT_SECRET.equals(jwtSecret)) {
-            System.err.println("WARNING: Using default insecure JWT secret. This is only acceptable in development. Set JWT_SECRET environment variable for any non-development deployment.");
+        // Reject the known insecure default secret on EVERY profile unless a
+        // developer has explicitly opted in. Keying the hard-fail off the
+        // profile name (prod/production) is unsafe: a real prod deploy that
+        // forgets to set the prod profile would silently run with a public
+        // signing key. Failing hard by default closes that gap while keeping
+        // dev ergonomics behind app.jwt.allow-insecure.
+        if (INSECURE_DEFAULT_SECRET.equals(jwtSecret)) {
+            if (!allowInsecureSecret) {
+                throw new IllegalStateException(
+                        "JWT_SECRET is unset or equal to the known insecure default. "
+                                + "Set JWT_SECRET to a strong secret. For local development only, "
+                                + "set app.jwt.allow-insecure=true (APP_JWT_ALLOW_INSECURE=true).");
+            }
+            log.warn("[AUTH] Using the insecure default JWT secret because app.jwt.allow-insecure=true. "
+                    + "This MUST NOT be enabled in any deployed environment.");
         }
     }
 }
