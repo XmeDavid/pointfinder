@@ -429,18 +429,35 @@ public class SubmissionService {
                 request.getReason() != null ? request.getReason().length() : 0,
                 request.getPointsOverride() != null);
 
-        // Deterministic idempotency key derived from the natural tuple.
-        // This makes re-clicking the rescue button return the existing row
-        // instead of creating a duplicate or awarding extra points. The
-        // derivation already includes teamId so the key is naturally
-        // unique per (team_id, idempotency_key) scope (V54).
+        // Deterministic idempotency key derived from the natural
+        // (team, base, challenge) tuple — deliberately NOT including the
+        // operatorId. Two different operators (or the same operator after a
+        // handover) marking the same team/base/challenge complete must
+        // collapse to a single approved submission, otherwise points would
+        // be awarded twice. The derivation includes teamId so the key is
+        // naturally unique per (team_id, idempotency_key) scope (V54).
         UUID idempotencyKey = deriveMarkCompletedIdempotencyKey(
-                operatorId, teamId, baseId, challengeId);
+                teamId, baseId, challengeId);
 
         Optional<Submission> existing = submissionRepository
                 .findByTeamIdAndIdempotencyKeyWithAssociations(teamId, idempotencyKey);
         if (existing.isPresent()) {
             return toResponse(existing.get());
+        }
+
+        // Explicit guard: an approved submission for this (team, base,
+        // challenge) already exists (e.g. created via the normal review
+        // flow rather than this rescue path, so it carries a different
+        // idempotency key). Surface the documented error code rather than
+        // silently creating a second approval that double-awards points.
+        boolean alreadyApproved = submissionRepository
+                .findByTeamIdAndChallengeIdAndBaseId(teamId, challengeId, baseId)
+                .stream()
+                .anyMatch(s -> s.getStatus() == SubmissionStatus.approved);
+        if (alreadyApproved) {
+            throw new ConflictException(
+                    "This base/challenge is already completed for this team.",
+                    ErrorCode.MARK_COMPLETED_ALREADY_COMPLETED);
         }
 
         Integer points = request.getPointsOverride() != null
@@ -509,8 +526,10 @@ public class SubmissionService {
 
     /**
      * Derives the deterministic idempotency key for a mark-completed
-     * action from the {@code (operatorId, teamId, baseId, challengeId)}
-     * tuple. Using {@link UUID#nameUUIDFromBytes(byte[])} avoids a
+     * action from the {@code (teamId, baseId, challengeId)} tuple. The
+     * operator identity is intentionally excluded so two different
+     * operators marking the same base complete collapse to one row and
+     * cannot double-award points. Using {@link UUID#nameUUIDFromBytes(byte[])} avoids a
      * round-trip to the database to pre-check existence: the caller can
      * compute the key and do a single INSERT, with the partial unique
      * index on {@code submissions.idempotency_key} enforcing race safety.
@@ -518,8 +537,8 @@ public class SubmissionService {
      * <p>Package-private for direct unit-test coverage.
      */
     static UUID deriveMarkCompletedIdempotencyKey(
-            UUID operatorId, UUID teamId, UUID baseId, UUID challengeId) {
-        String seed = "mark-completed|" + operatorId + "|" + teamId + "|" + baseId + "|" + challengeId;
+            UUID teamId, UUID baseId, UUID challengeId) {
+        String seed = "mark-completed|" + teamId + "|" + baseId + "|" + challengeId;
         return UUID.nameUUIDFromBytes(seed.getBytes(StandardCharsets.UTF_8));
     }
 

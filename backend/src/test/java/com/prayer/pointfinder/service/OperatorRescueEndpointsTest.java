@@ -22,6 +22,7 @@ import com.prayer.pointfinder.entity.Team;
 import com.prayer.pointfinder.entity.User;
 import com.prayer.pointfinder.entity.UserRole;
 import com.prayer.pointfinder.exception.BadRequestException;
+import com.prayer.pointfinder.exception.ConflictException;
 import com.prayer.pointfinder.exception.ErrorCode;
 import com.prayer.pointfinder.exception.ForbiddenException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
@@ -154,12 +155,96 @@ class OperatorRescueEndpointsTest extends IntegrationTestBase {
                 ctx.game.getId(), ctx.team.getId(), ctx.base.getId(), request);
 
         assertEquals(first.getId(), second.getId(),
-                "re-call for the same (operator, team, base, challenge) must return the same row");
+                "re-call for the same (team, base, challenge) must return the same row");
 
         long count = submissionRepository.findByTeamId(ctx.team.getId()).stream()
                 .filter(s -> s.getChallenge().getId().equals(ctx.challenge.getId()))
                 .count();
         assertEquals(1, count, "only one submission should exist after idempotent re-call");
+    }
+
+    /**
+     * Regression for the double-award audit finding: two DIFFERENT operators
+     * marking the same (team, base, challenge) complete must collapse to a
+     * single approved submission so points are awarded exactly once. The
+     * idempotency key no longer depends on operator identity, so the second
+     * operator's attempt returns the first operator's row.
+     */
+    @Test
+    void markCompletedByTwoDifferentOperatorsAwardsPointsOnce() {
+        TestContext ctx = createLiveGameWithPlayer("mc-twoop");
+        authenticateAsPlayer(ctx.player);
+        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, checkInRequestFor(ctx.base));
+
+        // A second operator who also has access to the same game.
+        User secondOperator = createOperator("op2-mc-twoop@rescue.test", "password");
+        Game game = gameRepository.findById(ctx.game.getId()).orElseThrow();
+        game.getOperators().add(secondOperator);
+        gameRepository.save(game);
+
+        MarkCompletedRequest request = new MarkCompletedRequest();
+        request.setChallengeId(ctx.challenge.getId());
+
+        authenticateAsOperator(ctx.operator);
+        SubmissionResponse first = submissionService.markCompletedByOperator(
+                ctx.game.getId(), ctx.team.getId(), ctx.base.getId(), request);
+
+        // Different operator, same target: must NOT create a second approval.
+        authenticateAsOperator(secondOperator);
+        SubmissionResponse second = submissionService.markCompletedByOperator(
+                ctx.game.getId(), ctx.team.getId(), ctx.base.getId(), request);
+
+        assertEquals(first.getId(), second.getId(),
+                "a second operator must collapse to the same approved row");
+
+        long approvedCount = submissionRepository.findByTeamId(ctx.team.getId()).stream()
+                .filter(s -> s.getChallenge().getId().equals(ctx.challenge.getId()))
+                .filter(s -> s.getStatus() == SubmissionStatus.approved)
+                .count();
+        assertEquals(1, approvedCount,
+                "only one approved submission may exist — points awarded once");
+    }
+
+    /**
+     * If the (team, base, challenge) is already approved via a path that
+     * carried a different idempotency key (e.g. the normal review flow),
+     * mark-completed must surface MARK_COMPLETED_ALREADY_COMPLETED rather
+     * than silently creating a second approval.
+     */
+    @Test
+    void markCompletedWhenAlreadyApprovedThrowsAlreadyCompleted() {
+        TestContext ctx = createLiveGameWithPlayer("mc-already");
+        authenticateAsPlayer(ctx.player);
+        playerService.checkIn(ctx.game.getId(), ctx.base.getId(), ctx.player, checkInRequestFor(ctx.base));
+
+        // Pre-existing approved submission with an UNRELATED idempotency key,
+        // simulating the normal player-submit + operator-review flow.
+        submissionRepository.save(Submission.builder()
+                .team(ctx.team)
+                .challenge(ctx.challenge)
+                .base(ctx.base)
+                .answer("player answer")
+                .status(SubmissionStatus.approved)
+                .submittedAt(java.time.Instant.now())
+                .points(ctx.challenge.getPoints())
+                .idempotencyKey(UUID.randomUUID())
+                .build());
+
+        authenticateAsOperator(ctx.operator);
+        MarkCompletedRequest request = new MarkCompletedRequest();
+        request.setChallengeId(ctx.challenge.getId());
+
+        ConflictException ex = assertThrows(ConflictException.class,
+                () -> submissionService.markCompletedByOperator(
+                        ctx.game.getId(), ctx.team.getId(), ctx.base.getId(), request));
+        assertEquals(ErrorCode.MARK_COMPLETED_ALREADY_COMPLETED, ex.getErrorCode(),
+                "error must carry MARK_COMPLETED_ALREADY_COMPLETED");
+
+        long approvedCount = submissionRepository.findByTeamId(ctx.team.getId()).stream()
+                .filter(s -> s.getChallenge().getId().equals(ctx.challenge.getId()))
+                .filter(s -> s.getStatus() == SubmissionStatus.approved)
+                .count();
+        assertEquals(1, approvedCount, "no second approval may be created");
     }
 
     @Test
