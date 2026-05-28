@@ -167,4 +167,57 @@ class TemplateVariableServiceTest {
     void resolveTemplates_nullList_returnsNull() {
         assertNull(service.resolveTemplates(null, gameId, challengeId, teamId));
     }
+
+    /**
+     * The runtime resolver must use the same strict key pattern as the
+     * go-live validator: a key must start with a letter. A reference like
+     * {@code {{1foo}}} is NOT a valid variable reference and must be left
+     * untouched, even if a (validator-invisible) variable named "1foo"
+     * somehow exists. This prevents the divergence where a challenge could
+     * go live with a reference the validator never scanned.
+     */
+    @Test
+    void resolveTemplate_keyStartingWithDigit_leftAsIs() {
+        // A real game-scope variable exists, but the reference uses a
+        // leading-digit token. The strict pattern must not match it, so the
+        // braces are returned verbatim — never resolved.
+        when(teamVariableRepository.findByGameIdAndTeamId(gameId, teamId))
+                .thenReturn(List.of(
+                        TeamVariable.builder().game(game).team(team)
+                                .variableKey("region").variableValue("North").build()
+                ));
+        when(challengeTeamVariableRepository.findByChallengeIdAndTeamId(challengeId, teamId))
+                .thenReturn(List.of());
+
+        String result = service.resolveTemplate("Code {{1foo}}", gameId, challengeId, teamId);
+        assertEquals("Code {{1foo}}", result);
+    }
+
+    @Test
+    void resolveTemplate_keyStartingWithUnderscore_leftAsIs() {
+        when(teamVariableRepository.findByGameIdAndTeamId(gameId, teamId))
+                .thenReturn(List.of(
+                        TeamVariable.builder().game(game).team(team)
+                                .variableKey("region").variableValue("North").build()
+                ));
+        when(challengeTeamVariableRepository.findByChallengeIdAndTeamId(challengeId, teamId))
+                .thenReturn(List.of());
+
+        String result = service.resolveTemplate("Code {{_x}}", gameId, challengeId, teamId);
+        assertEquals("Code {{_x}}", result);
+    }
+
+    @Test
+    void resolveTemplate_htmlEncodedKeyStartingWithDigit_leftAsIs() {
+        when(teamVariableRepository.findByGameIdAndTeamId(gameId, teamId))
+                .thenReturn(List.of(
+                        TeamVariable.builder().game(game).team(team)
+                                .variableKey("region").variableValue("North").build()
+                ));
+        when(challengeTeamVariableRepository.findByChallengeIdAndTeamId(challengeId, teamId))
+                .thenReturn(List.of());
+
+        String result = service.resolveTemplate("Code &#123;&#123;1foo&#125;&#125;", gameId, challengeId, teamId);
+        assertEquals("Code &#123;&#123;1foo&#125;&#125;", result);
+    }
 }

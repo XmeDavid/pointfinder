@@ -19,8 +19,16 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TemplateVariableService {
 
-    private static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{\\{(\\w+)}}");
-    private static final Pattern HTML_ENCODED_PATTERN = Pattern.compile("\\{\\{(\\w+)}}|&#123;&#123;(\\w+)&#125;&#125;");
+    // Variable keys must start with a letter and contain only letters,
+    // digits, and underscores. This MUST stay in sync with the go-live
+    // validator (TeamVariableService.VARIABLE_REF_PATTERN) and all clients;
+    // a looser pattern here would let a challenge go live with a reference
+    // the validator cannot see (e.g. {{1foo}}, {{_x}}), which then renders
+    // as a literal placeholder to players.
+    private static final String KEY_PATTERN = "[a-zA-Z][a-zA-Z0-9_]*";
+    private static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{\\{(" + KEY_PATTERN + ")}}");
+    private static final Pattern HTML_ENCODED_PATTERN = Pattern.compile(
+            "\\{\\{(" + KEY_PATTERN + ")}}|&#123;&#123;(" + KEY_PATTERN + ")&#125;&#125;");
 
     private final TeamVariableRepository teamVariableRepository;
     private final ChallengeTeamVariableRepository challengeTeamVariableRepository;
@@ -31,7 +39,8 @@ public class TemplateVariableService {
      * Unresolved variables are left as-is.
      */
     public String resolveTemplate(String template, UUID gameId, UUID challengeId, UUID teamId) {
-        if (template == null || template.isEmpty() || !template.contains("{{") && !template.contains("&#123;")) {
+        if (template == null || template.isEmpty()
+                || (!template.contains("{{") && !template.contains("&#123;"))) {
             return template;
         }
 
