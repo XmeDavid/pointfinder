@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Compass, Mail } from "lucide-react";
@@ -23,8 +23,20 @@ export function RegisterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [arrivedFromLanding] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+    return window.sessionStorage.getItem("pointfinder:register-arrival") === "cinematic";
+  });
   const register = useAuthStore((s) => s.register);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (arrivedFromLanding) {
+      window.sessionStorage.removeItem("pointfinder:register-arrival");
+    }
+  }, [arrivedFromLanding]);
 
   const { data: invite } = useQuery({
     queryKey: ["invite", token],
@@ -79,8 +91,13 @@ export function RegisterPage() {
   // No token — email request flow
   if (!token) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
-        <Card className="w-full max-w-md">
+      <div
+        className={`register-atlas-screen flex min-h-screen items-center justify-center bg-muted/30 p-4 ${
+          arrivedFromLanding ? "register-atlas-screen--arrived" : ""
+        }`}
+      >
+        <div className="register-atlas-screen__backdrop" aria-hidden="true" />
+        <Card className="register-atlas-card w-full max-w-md">
           <CardHeader className="text-center">
             <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary">
               <Compass className="h-6 w-6 text-primary-foreground" />
@@ -127,8 +144,13 @@ export function RegisterPage() {
 
   // Token present — full registration form
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
-      <Card className="w-full max-w-md">
+    <div
+      className={`register-atlas-screen flex min-h-screen items-center justify-center bg-muted/30 p-4 ${
+        arrivedFromLanding ? "register-atlas-screen--arrived" : ""
+      }`}
+    >
+      <div className="register-atlas-screen__backdrop" aria-hidden="true" />
+      <Card className="register-atlas-card w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary">
             <Compass className="h-6 w-6 text-primary-foreground" />

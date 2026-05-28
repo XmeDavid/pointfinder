@@ -12,9 +12,9 @@ import {
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { ReactNode } from "react";
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import type { MouseEvent, ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,7 +46,56 @@ type BillingCycle = "yearly" | "monthly";
 
 export function LandingPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("yearly");
+  const [isRegisterTransitionActive, setIsRegisterTransitionActive] = useState(false);
+  const transitionTimer = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      if (transitionTimer.current !== null) {
+        window.clearTimeout(transitionTimer.current);
+      }
+    },
+    [],
+  );
+
+  const startRegisterTransition = useCallback(
+    (event?: MouseEvent<HTMLElement>) => {
+      if (
+        event &&
+        (event.defaultPrevented ||
+          event.button !== 0 ||
+          event.metaKey ||
+          event.altKey ||
+          event.ctrlKey ||
+          event.shiftKey)
+      ) {
+        return;
+      }
+
+      event?.preventDefault();
+      if (isRegisterTransitionActive) {
+        return;
+      }
+
+      const shouldReduceMotion =
+        typeof window !== "undefined" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      if (shouldReduceMotion) {
+        navigate("/register");
+        return;
+      }
+
+      setIsRegisterTransitionActive(true);
+      window.sessionStorage.setItem("pointfinder:register-arrival", "cinematic");
+      transitionTimer.current = window.setTimeout(() => {
+        navigate("/register");
+      }, 620);
+    },
+    [isRegisterTransitionActive, navigate],
+  );
 
   const workflow = [
     {
@@ -113,8 +162,14 @@ export function LandingPage() {
   ];
 
   return (
-    <div className="dark min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-40 border-b border-border/70 bg-card/70 shadow-sm backdrop-blur-xl">
+    <div
+      className={cn(
+        "dark min-h-screen bg-background text-foreground",
+        isRegisterTransitionActive && "landing-page-transitioning",
+      )}
+    >
+      <TopoRegisterTransition active={isRegisterTransitionActive} />
+      <header className="landing-transition-fade sticky top-0 z-40 border-b border-border/70 bg-card/70 shadow-sm backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           <Link to="/" className="flex items-center gap-3" aria-label="PointFinder">
             <BrandMark />
@@ -143,6 +198,7 @@ export function LandingPage() {
             <Link
               to="/register"
               className={cn(buttonVariants({ size: "sm" }), "hidden sm:inline-flex")}
+              onClick={startRegisterTransition}
             >
               {t("landing.nav.getStarted")}
             </Link>
@@ -150,7 +206,7 @@ export function LandingPage() {
         </div>
       </header>
 
-      <main>
+      <main className="landing-transition-fade">
         <section className="relative overflow-hidden border-b border-border bg-card">
           <HeroBackdrop />
           <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-[0.92fr_1.08fr] lg:px-8 lg:py-24">
@@ -163,7 +219,11 @@ export function LandingPage() {
               </p>
 
               <div className="mt-8">
-                <Link to="/register" className={cn(buttonVariants({ size: "lg" }))}>
+                <Link
+                  to="/register"
+                  className={cn(buttonVariants({ size: "lg" }))}
+                  onClick={startRegisterTransition}
+                >
                   {t("landing.nav.getStarted")}
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
@@ -268,6 +328,7 @@ export function LandingPage() {
                 features={freeFeatures}
                 cta={t("landing.pricing.startFree")}
                 href="/register"
+                onRegisterClick={startRegisterTransition}
               />
               <PersonalPricingCard
                 icon={Smartphone}
@@ -283,6 +344,7 @@ export function LandingPage() {
                 features={personalFeatures}
                 cta={personalCta}
                 href="/register"
+                onRegisterClick={startRegisterTransition}
                 billingCycle={billingCycle}
                 onBillingCycleChange={setBillingCycle}
                 monthlyLabel={t("landing.pricing.monthlyToggle")}
@@ -331,7 +393,7 @@ export function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t border-border px-4 py-8 sm:px-6 lg:px-8">
+      <footer className="landing-transition-fade border-t border-border px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-7xl flex-col gap-5 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3 text-foreground">
             <BrandMark />
@@ -390,6 +452,21 @@ function HeroBackdrop() {
         />
       </div>
       <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,transparent_58%,var(--color-background)_100%)]" />
+    </div>
+  );
+}
+
+function TopoRegisterTransition({ active }: { active: boolean }) {
+  if (!active) {
+    return null;
+  }
+
+  return (
+    <div className="topo-register-transition" aria-hidden="true">
+      <div className="topo-register-transition__map" />
+      <div className="topo-register-transition__scan" />
+      <div className="topo-register-transition__pulse" />
+      <span className="topo-register-transition__pin" />
     </div>
   );
 }
@@ -555,6 +632,7 @@ type PricingCardProps = {
   highlighted?: boolean;
   external?: boolean;
   headerAction?: ReactNode;
+  onRegisterClick?: (event: MouseEvent<HTMLElement>) => void;
 };
 
 function PricingCard({
@@ -571,6 +649,7 @@ function PricingCard({
   highlighted,
   external,
   headerAction,
+  onRegisterClick,
 }: PricingCardProps) {
   const body = (
     <>
@@ -616,7 +695,11 @@ function PricingCard({
               {cta}
             </a>
           ) : (
-            <Link to={href} className={cn(buttonVariants({ variant: highlighted ? "default" : "outline" }), "w-full")}>
+            <Link
+              to={href}
+              className={cn(buttonVariants({ variant: highlighted ? "default" : "outline" }), "w-full")}
+              onClick={href === "/register" ? onRegisterClick : undefined}
+            >
               {cta}
             </Link>
           )}
