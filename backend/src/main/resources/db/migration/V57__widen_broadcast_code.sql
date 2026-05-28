@@ -1,0 +1,12 @@
+-- V57: Widen the public spectator broadcast code from 6 to 10 characters.
+--
+-- The /api/broadcast/{code} endpoints are intentionally unauthenticated
+-- (public spectator view) and expose live team GPS. A 6-character code over
+-- the 32-symbol ambiguity-reduced alphabet (~1.07e9 combinations) is on the
+-- weak side for an enumeration-resistant public secret. Widening to 10
+-- characters (~1.13e15 combinations) makes brute-force enumeration
+-- impractical without changing the access model.
+--
+-- This is a non-destructive widening: existing 6-character codes remain valid
+-- (they still fit in VARCHAR(10)); only newly generated codes are longer.
+ALTER TABLE games ALTER COLUMN broadcast_code TYPE VARCHAR(10);

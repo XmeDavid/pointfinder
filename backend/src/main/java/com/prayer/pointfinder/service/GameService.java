@@ -59,7 +59,11 @@ public class GameService {
     private final GameImportExportService gameImportExportService;
     private final TeamVariableService teamVariableService;
 
-    private static final int BROADCAST_CODE_LENGTH = 6;
+    // Public spectator broadcast codes are unauthenticated and expose live
+    // team GPS, so they must resist enumeration. 10 chars over the 32-symbol
+    // ambiguity-reduced alphabet (~1.13e15 combinations) makes brute-forcing
+    // a valid code impractical. Existing 6-char codes remain valid (see V57).
+    private static final int BROADCAST_CODE_LENGTH = 10;
     private static final java.util.Set<String> VALID_TILE_SOURCES = java.util.Set.of("osm", "osm-classic", "voyager", "positron", "swisstopo", "swisstopo-sat");
     private static final java.util.Set<String> VALID_UNLOCK_TRIGGERS = java.util.Set.of("CHECK_IN", "SUBMISSION", "COMPLETED");
 

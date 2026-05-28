@@ -71,7 +71,7 @@ public class Game {
     @Builder.Default
     private Boolean broadcastEnabled = false;
 
-    @Column(name = "broadcast_code", length = 6)
+    @Column(name = "broadcast_code", length = 10)
     private String broadcastCode;
 
     @Column(name = "tile_source", nullable = false, length = 50)

@@ -374,13 +374,13 @@ export default function GameSettingsPanel({
                 </label>
                 <input
                   type="text"
-                  maxLength={6}
+                  maxLength={10}
                   value={game.broadcastCode ?? ''}
                   onChange={(e) => {
                     const val = e.target.value
                       .toUpperCase()
                       .replace(/[^A-Z0-9]/g, '')
-                      .slice(0, 6)
+                      .slice(0, 10)
                     if (val !== (game.broadcastCode ?? '')) {
                       updateGame.mutate({
                         broadcastEnabled: true,
