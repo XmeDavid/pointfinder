@@ -10,6 +10,7 @@ import com.prayer.pointfinder.entity.PushPlatform;
 import com.prayer.pointfinder.entity.UploadSession;
 import com.prayer.pointfinder.entity.UploadSessionChunk;
 import com.prayer.pointfinder.entity.UploadSessionStatus;
+import com.prayer.pointfinder.config.ChunkedUploadProperties;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.FileStorageException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
@@ -20,7 +21,6 @@ import com.prayer.pointfinder.repository.UploadSessionRepository;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -61,31 +61,11 @@ public class ChunkedUploadService {
     private final MeterRegistry meterRegistry;
     private final ApnsPushService apnsPushService;
     private final FcmPushService fcmPushService;
-
-    @Value("${app.uploads.path:/uploads}")
-    private String uploadsPath;
-
-    @Value("${app.uploads.chunk.default-size-bytes:8388608}")
-    private int defaultChunkSizeBytes;
-
-    @Value("${app.uploads.chunk.enabled:true}")
-    private boolean chunkedUploadEnabled;
-
-    @Value("${app.uploads.chunk.max-size-bytes:16777216}")
-    private int maxChunkSizeBytes;
-
-    @Value("${app.uploads.chunk.session-ttl-seconds:86400}")
-    private long uploadSessionTtlSeconds;
-
-    @Value("${app.uploads.limits.max-active-sessions-per-player:3}")
-    private int maxActiveSessionsPerPlayer;
-
-    @Value("${app.uploads.limits.max-active-bytes-per-game:17179869184}")
-    private long maxActiveBytesPerGame;
+    private final ChunkedUploadProperties uploadProps;
 
     @Transactional(timeout = 10)
     public UploadSessionResponse createSession(UUID gameId, Player authPlayer, UploadSessionInitRequest request) {
-        if (!chunkedUploadEnabled) {
+        if (!uploadProps.getChunk().isEnabled()) {
             throw retryable(HttpStatus.BAD_REQUEST, "UPLOADS_DISABLED",
                     "Chunked uploads are temporarily disabled");
         }
@@ -113,7 +93,7 @@ public class ChunkedUploadService {
                 UploadSessionStatus.active,
                 now
         );
-        if (playerActiveSessions >= maxActiveSessionsPerPlayer) {
+        if (playerActiveSessions >= uploadProps.getLimits().getMaxActiveSessionsPerPlayer()) {
             throw retryable(HttpStatus.BAD_REQUEST, "UPLOAD_SESSION_LIMIT",
                     "Too many active upload sessions for player");
         }
@@ -122,7 +102,7 @@ public class ChunkedUploadService {
                 UploadSessionStatus.active,
                 now
         );
-        if (activeBytesForGame + metadata.totalSizeBytes() > maxActiveBytesPerGame) {
+        if (activeBytesForGame + metadata.totalSizeBytes() > uploadProps.getLimits().getMaxActiveBytesPerGame()) {
             throw retryable(HttpStatus.BAD_REQUEST, "UPLOAD_GAME_CAPACITY",
                     "Game upload capacity exceeded, retry later");
         }
@@ -137,7 +117,7 @@ public class ChunkedUploadService {
                 .chunkSizeBytes(metadata.chunkSizeBytes())
                 .totalChunks(metadata.totalChunks())
                 .status(UploadSessionStatus.active)
-                .expiresAt(now.plusSeconds(uploadSessionTtlSeconds))
+                .expiresAt(now.plusSeconds(uploadProps.getChunk().getSessionTtlSeconds()))
                 .build();
         session = uploadSessionRepository.save(session);
         if (metadata.mediaItemKey() != null) {
@@ -230,7 +210,7 @@ public class ChunkedUploadService {
             );
             meterRegistry.counter("uploads.chunks.uploaded").increment();
         }
-        session.setExpiresAt(now.plusSeconds(uploadSessionTtlSeconds));
+        session.setExpiresAt(now.plusSeconds(uploadProps.getChunk().getSessionTtlSeconds()));
         uploadSessionRepository.save(session);
         return buildResponse(session);
     }
@@ -392,10 +372,10 @@ public class ChunkedUploadService {
             throw permanent(HttpStatus.BAD_REQUEST, "UPLOAD_INVALID_METADATA", ex.getMessage());
         }
 
-        int chunkSizeBytes = request.getChunkSizeBytes() != null ? request.getChunkSizeBytes() : defaultChunkSizeBytes;
-        if (chunkSizeBytes <= 0 || chunkSizeBytes > maxChunkSizeBytes) {
+        int chunkSizeBytes = request.getChunkSizeBytes() != null ? request.getChunkSizeBytes() : uploadProps.getChunk().getDefaultSizeBytes();
+        if (chunkSizeBytes <= 0 || chunkSizeBytes > uploadProps.getChunk().getMaxSizeBytes()) {
             throw permanent(HttpStatus.BAD_REQUEST, "UPLOAD_INVALID_METADATA",
-                    "chunkSizeBytes must be between 1 and " + maxChunkSizeBytes);
+                    "chunkSizeBytes must be between 1 and " + uploadProps.getChunk().getMaxSizeBytes());
         }
 
         long calculatedTotalChunks = (totalSizeBytes + chunkSizeBytes - 1L) / chunkSizeBytes;
@@ -622,7 +602,7 @@ public class ChunkedUploadService {
     }
 
     private Path chunkSessionsRoot() {
-        return Paths.get(uploadsPath).resolve("_chunk_sessions");
+        return Paths.get(uploadProps.getPath()).resolve("_chunk_sessions");
     }
 
     private void ensureSessionDirectory(UUID sessionId) {

@@ -1,5 +1,6 @@
 package com.prayer.pointfinder.service;
 
+import com.prayer.pointfinder.config.ChunkedUploadProperties;
 import com.prayer.pointfinder.dto.request.UploadSessionInitRequest;
 import com.prayer.pointfinder.dto.response.UploadSessionClearResponse;
 import com.prayer.pointfinder.dto.response.UploadSessionResponse;
@@ -25,7 +26,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.nio.file.Files;
@@ -81,12 +81,23 @@ class ChunkedUploadServiceTest {
     private FcmPushService fcmPushService;
 
     private ChunkedUploadService chunkedUploadService;
+    private ChunkedUploadProperties testUploadProps;
 
     private final Map<UUID, UploadSession> sessions = new HashMap<>();
     private final Map<UUID, Set<Integer>> uploadedChunks = new HashMap<>();
 
     @BeforeEach
     void setUp() {
+        ChunkedUploadProperties props = new ChunkedUploadProperties();
+        testUploadProps = props;
+        props.setPath(tempDir.toString());
+        props.getChunk().setDefaultSizeBytes(4);
+        props.getChunk().setEnabled(true);
+        props.getChunk().setMaxSizeBytes(16 * 1024 * 1024);
+        props.getChunk().setSessionTtlSeconds(3600L);
+        props.getLimits().setMaxActiveSessionsPerPlayer(5);
+        props.getLimits().setMaxActiveBytesPerGame(1024L * 1024L * 1024L);
+
         chunkedUploadService = new ChunkedUploadService(
                 uploadSessionRepository,
                 uploadSessionChunkRepository,
@@ -95,15 +106,9 @@ class ChunkedUploadServiceTest {
                 fileStorageService,
                 meterRegistry,
                 apnsPushService,
-                fcmPushService
+                fcmPushService,
+                props
         );
-        ReflectionTestUtils.setField(chunkedUploadService, "uploadsPath", tempDir.toString());
-        ReflectionTestUtils.setField(chunkedUploadService, "defaultChunkSizeBytes", 4);
-        ReflectionTestUtils.setField(chunkedUploadService, "chunkedUploadEnabled", true);
-        ReflectionTestUtils.setField(chunkedUploadService, "maxChunkSizeBytes", 16 * 1024 * 1024);
-        ReflectionTestUtils.setField(chunkedUploadService, "uploadSessionTtlSeconds", 3600L);
-        ReflectionTestUtils.setField(chunkedUploadService, "maxActiveSessionsPerPlayer", 5);
-        ReflectionTestUtils.setField(chunkedUploadService, "maxActiveBytesPerGame", 1024L * 1024L * 1024L);
         Counter counter = mock(Counter.class);
         when(meterRegistry.counter(any(String.class))).thenReturn(counter);
         when(meterRegistry.counter(any(String.class), any(String.class), any(String.class))).thenReturn(counter);
@@ -314,7 +319,7 @@ class ChunkedUploadServiceTest {
 
     @Test
     void expiredActiveSessionsDoNotBlockSessionCap() {
-        ReflectionTestUtils.setField(chunkedUploadService, "maxActiveSessionsPerPlayer", 1);
+        testUploadProps.getLimits().setMaxActiveSessionsPerPlayer(1);
         UUID gameId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
         Player authPlayer = Player.builder().id(playerId).build();

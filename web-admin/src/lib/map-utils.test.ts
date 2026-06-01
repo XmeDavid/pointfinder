@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getAggregateStatus, parseTimestamp, STATUS_COLORS, STATUS_PRIORITY, computeBounds } from "./map-utils";
+import { getAggregateStatus, getAggregateStatusFlat, parseTimestamp, STATUS_COLORS, STATUS_PRIORITY, computeBounds } from "./map-utils";
 
 describe("STATUS_COLORS", () => {
   it("defines colors for all five statuses", () => {
@@ -55,6 +55,40 @@ describe("getAggregateStatus", () => {
   it("returns not_visited for empty base map", () => {
     const index = new Map([["base-1", new Map()]]);
     expect(getAggregateStatus("base-1", index)).toBe("not_visited");
+  });
+});
+
+describe("getAggregateStatusFlat", () => {
+  it("returns not_visited for empty progress index", () => {
+    const index = new Map<string, Map<string, string>>();
+    expect(getAggregateStatusFlat("base-1", index)).toBe("not_visited");
+  });
+
+  it("returns the single status when only one team", () => {
+    const index = new Map([
+      ["base-1", new Map([["team-1", "completed"]])],
+    ]);
+    expect(getAggregateStatusFlat("base-1", index)).toBe("completed");
+  });
+
+  it("returns lowest priority status across teams", () => {
+    const index = new Map([
+      [
+        "base-1",
+        new Map([
+          ["team-1", "completed"],
+          ["team-2", "checked_in"],
+        ]),
+      ],
+    ]);
+    expect(getAggregateStatusFlat("base-1", index)).toBe("checked_in");
+  });
+
+  it("treats unknown statuses as not_visited", () => {
+    const index = new Map([
+      ["base-1", new Map([["team-1", "unknown_status"]])],
+    ]);
+    expect(getAggregateStatusFlat("base-1", index)).toBe("not_visited");
   });
 });
 

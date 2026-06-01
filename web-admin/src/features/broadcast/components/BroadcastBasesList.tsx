@@ -1,8 +1,7 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { BroadcastBase, BroadcastTeam, BroadcastProgress } from "@/lib/api/broadcast";
-import { STATUS_COLORS, STATUS_PRIORITY } from "@/lib/map-utils";
-import type { BaseStatus } from "@/types";
+import { STATUS_COLORS, getAggregateStatusFlat } from "@/lib/map-utils";
 
 interface Props {
   bases: BroadcastBase[];
@@ -22,18 +21,6 @@ export function BroadcastBasesList({ bases, teams, progress }: Props) {
     return idx;
   }, [progress]);
 
-  const getAggregateStatus = (baseId: string): string => {
-    const baseProgress = progressIndex.get(baseId);
-    if (!baseProgress || baseProgress.size === 0) return "not_visited";
-    let minPriority = Infinity;
-    let minStatus = "not_visited";
-    baseProgress.forEach((status) => {
-      const priority = STATUS_PRIORITY[status as keyof typeof STATUS_PRIORITY] ?? 0;
-      if (priority < minPriority) { minPriority = priority; minStatus = status; }
-    });
-    return minStatus;
-  };
-
   const getCompletedCount = (baseId: string): number => {
     const baseProgress = progressIndex.get(baseId);
     if (!baseProgress) return 0;
@@ -52,7 +39,7 @@ export function BroadcastBasesList({ bases, teams, progress }: Props) {
       <div className="flex-1 overflow-y-auto">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
           {bases.map((base) => {
-            const status = getAggregateStatus(base.id);
+            const status = getAggregateStatusFlat(base.id, progressIndex);
             const completed = getCompletedCount(base.id);
             const pct = teams.length > 0 ? Math.round((completed / teams.length) * 100) : 0;
             return (
@@ -63,7 +50,7 @@ export function BroadcastBasesList({ bases, teams, progress }: Props) {
                 <div className="flex items-start gap-2">
                   <div
                     className="h-2.5 w-2.5 rounded-full shrink-0 mt-0.5"
-                    style={{ backgroundColor: STATUS_COLORS[status as BaseStatus] ?? STATUS_COLORS.not_visited }}
+                    style={{ backgroundColor: STATUS_COLORS[status] ?? STATUS_COLORS.not_visited }}
                   />
                   <span className="text-xs font-medium leading-tight line-clamp-2">{base.name}</span>
                 </div>

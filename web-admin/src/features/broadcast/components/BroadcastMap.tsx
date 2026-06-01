@@ -7,10 +7,9 @@ import type {
   BroadcastLocation,
   BroadcastProgress,
 } from "@/lib/api/broadcast";
-import { STATUS_COLORS, STATUS_PRIORITY, computeBounds } from "@/lib/map-utils";
+import { STATUS_COLORS, getAggregateStatusFlat, computeBounds } from "@/lib/map-utils";
 import { PinMarkerSvg, CircleDot } from "@/components/common/MapMarkers";
 import { getResolvedStyleUrl, getDefaultCenter } from "@/lib/tile-sources";
-import type { BaseStatus } from "@/types";
 import type { MapRef } from "react-map-gl/maplibre";
 
 const STALE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
@@ -41,18 +40,6 @@ export function BroadcastMap({ bases, teams, locations, progress, tileSource }: 
     });
     return idx;
   }, [progress]);
-
-  const getAggregateStatus = (baseId: string): string => {
-    const baseProgress = progressIndex.get(baseId);
-    if (!baseProgress || baseProgress.size === 0) return "not_visited";
-    let minPriority = Infinity;
-    let minStatus = "not_visited";
-    baseProgress.forEach((status) => {
-      const priority = STATUS_PRIORITY[status as keyof typeof STATUS_PRIORITY] ?? 0;
-      if (priority < minPriority) { minPriority = priority; minStatus = status; }
-    });
-    return minStatus;
-  };
 
   // Latest location per team
   const latestByTeam = useMemo(() => {
@@ -113,8 +100,8 @@ export function BroadcastMap({ bases, teams, locations, progress, tileSource }: 
         attributionControl={false}
       >
         {bases.map((base) => {
-          const status = getAggregateStatus(base.id);
-          const color = STATUS_COLORS[status as BaseStatus] ?? STATUS_COLORS.not_visited;
+          const status = getAggregateStatusFlat(base.id, progressIndex);
+          const color = STATUS_COLORS[status] ?? STATUS_COLORS.not_visited;
           return (
             <Marker key={base.id} longitude={base.lng} latitude={base.lat} anchor="bottom">
               <PinMarkerSvg color={color} />

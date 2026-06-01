@@ -146,6 +146,32 @@ class SubmissionServiceTest {
         SecurityContextHolder.clearContext();
     }
 
+    /**
+     * Stub the four repositories that almost every createSubmission call needs.
+     * Accepts a nullable fileUrl override for the validateStoredFileUrl stub.
+     */
+    private void stubDefaultRepositories(String fileUrl) {
+        when(fileStorageService.validateStoredFileUrl(fileUrl, gameId)).thenReturn(fileUrl);
+        when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
+        when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
+        when(baseRepository.findById(baseId)).thenReturn(Optional.of(base));
+    }
+
+    /**
+     * Stub submissionRepository.save to assign an ID and timestamp, mimicking
+     * JPA auto-generation. Returns the ID that will be set on the saved entity.
+     */
+    private UUID stubSubmissionSave() {
+        UUID id = UUID.randomUUID();
+        when(submissionRepository.save(any(Submission.class))).thenAnswer(invocation -> {
+            Submission saved = invocation.getArgument(0);
+            saved.setId(id);
+            saved.setSubmittedAt(Instant.now());
+            return saved;
+        });
+        return id;
+    }
+
     @Test
     void createSubmissionReturnsExistingRecordWhenIdempotencySaveRaces() {
         UUID idempotencyKey = UUID.randomUUID();
@@ -171,10 +197,7 @@ class SubmissionServiceTest {
 
         when(submissionRepository.findByTeamIdAndIdempotencyKeyWithAssociations(teamId, idempotencyKey))
                 .thenReturn(Optional.empty(), Optional.of(existing));
-        when(fileStorageService.validateStoredFileUrl(null, gameId)).thenReturn(null);
-        when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
-        when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
-        when(baseRepository.findById(baseId)).thenReturn(Optional.of(base));
+        stubDefaultRepositories(null);
         when(submissionRepository.save(any(Submission.class)))
                 .thenThrow(new DataIntegrityViolationException("duplicate key value"));
 
@@ -188,8 +211,6 @@ class SubmissionServiceTest {
     @Test
     void createSubmissionPersistsValidatedFileUrl() {
         String rawFileUrl = "/uploads/" + gameId + "/" + UUID.randomUUID() + ".jpg";
-        String normalizedFileUrl = rawFileUrl;
-        UUID createdSubmissionId = UUID.randomUUID();
 
         CreateSubmissionRequest request = new CreateSubmissionRequest();
         request.setTeamId(teamId);
@@ -198,22 +219,14 @@ class SubmissionServiceTest {
         request.setAnswer("answer");
         request.setFileUrl(rawFileUrl);
 
-        when(fileStorageService.validateStoredFileUrl(rawFileUrl, gameId)).thenReturn(normalizedFileUrl);
-        when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
-        when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
-        when(baseRepository.findById(baseId)).thenReturn(Optional.of(base));
-        when(submissionRepository.save(any(Submission.class))).thenAnswer(invocation -> {
-            Submission saved = invocation.getArgument(0);
-            saved.setId(createdSubmissionId);
-            saved.setSubmittedAt(Instant.now());
-            return saved;
-        });
+        stubDefaultRepositories(rawFileUrl);
+        UUID createdSubmissionId = stubSubmissionSave();
 
         SubmissionResponse response = submissionService.createSubmission(gameId, request);
 
         ArgumentCaptor<Submission> submissionCaptor = ArgumentCaptor.forClass(Submission.class);
         verify(submissionRepository).save(submissionCaptor.capture());
-        assertEquals(normalizedFileUrl, submissionCaptor.getValue().getFileUrl());
+        assertEquals(rawFileUrl, submissionCaptor.getValue().getFileUrl());
         assertEquals(createdSubmissionId, response.getId());
         verify(fileStorageService).validateStoredFileUrl(eq(rawFileUrl), eq(gameId));
         verify(operatorPushNotificationService).notifyOperatorsForSubmission(any(Submission.class));
@@ -222,7 +235,6 @@ class SubmissionServiceTest {
     @Test
     void createSubmissionWithDetachedPlayerPrincipalRefetchesPlayerBeforeTeamAccess() {
         UUID playerId = UUID.randomUUID();
-        UUID createdSubmissionId = UUID.randomUUID();
 
         Player detachedPrincipal = Player.builder()
                 .id(playerId)
@@ -245,16 +257,8 @@ class SubmissionServiceTest {
         request.setAnswer("answer");
 
         when(playerRepository.findById(playerId)).thenReturn(Optional.of(hydratedPlayer));
-        when(fileStorageService.validateStoredFileUrl(null, gameId)).thenReturn(null);
-        when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
-        when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
-        when(baseRepository.findById(baseId)).thenReturn(Optional.of(base));
-        when(submissionRepository.save(any(Submission.class))).thenAnswer(invocation -> {
-            Submission saved = invocation.getArgument(0);
-            saved.setId(createdSubmissionId);
-            saved.setSubmittedAt(Instant.now());
-            return saved;
-        });
+        stubDefaultRepositories(null);
+        UUID createdSubmissionId = stubSubmissionSave();
 
         SubmissionResponse response = assertDoesNotThrow(() -> submissionService.createSubmission(gameId, request));
         assertEquals(createdSubmissionId, response.getId());
@@ -263,7 +267,6 @@ class SubmissionServiceTest {
 
     @Test
     void createSubmissionAutoValidationStoresCorrectStatusWhenAnswerMatches() {
-        UUID createdSubmissionId = UUID.randomUUID();
         challenge.setAutoValidate(true);
         challenge.setCorrectAnswer(List.of("Open Sesame"));
 
@@ -273,16 +276,8 @@ class SubmissionServiceTest {
         request.setBaseId(baseId);
         request.setAnswer("  open sesame  ");
 
-        when(fileStorageService.validateStoredFileUrl(null, gameId)).thenReturn(null);
-        when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
-        when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
-        when(baseRepository.findById(baseId)).thenReturn(Optional.of(base));
-        when(submissionRepository.save(any(Submission.class))).thenAnswer(invocation -> {
-            Submission saved = invocation.getArgument(0);
-            saved.setId(createdSubmissionId);
-            saved.setSubmittedAt(Instant.now());
-            return saved;
-        });
+        stubDefaultRepositories(null);
+        stubSubmissionSave();
 
         SubmissionResponse response = submissionService.createSubmission(gameId, request);
 
@@ -294,7 +289,6 @@ class SubmissionServiceTest {
 
     @Test
     void createSubmissionAutoValidationStoresCorrectStatusWhenAnyAnswerMatches() {
-        UUID createdSubmissionId = UUID.randomUUID();
         challenge.setAutoValidate(true);
         challenge.setCorrectAnswer(List.of("Open Sesame", "Abracadabra", "Please"));
 
@@ -304,16 +298,8 @@ class SubmissionServiceTest {
         request.setBaseId(baseId);
         request.setAnswer("abracadabra");
 
-        when(fileStorageService.validateStoredFileUrl(null, gameId)).thenReturn(null);
-        when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
-        when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
-        when(baseRepository.findById(baseId)).thenReturn(Optional.of(base));
-        when(submissionRepository.save(any(Submission.class))).thenAnswer(invocation -> {
-            Submission saved = invocation.getArgument(0);
-            saved.setId(createdSubmissionId);
-            saved.setSubmittedAt(Instant.now());
-            return saved;
-        });
+        stubDefaultRepositories(null);
+        stubSubmissionSave();
 
         SubmissionResponse response = submissionService.createSubmission(gameId, request);
 
@@ -325,7 +311,6 @@ class SubmissionServiceTest {
 
     @Test
     void createSubmissionAutoValidationStoresRejectedStatusWhenAnswerDoesNotMatch() {
-        UUID createdSubmissionId = UUID.randomUUID();
         challenge.setAutoValidate(true);
         challenge.setCorrectAnswer(List.of("Open Sesame"));
 
@@ -335,16 +320,8 @@ class SubmissionServiceTest {
         request.setBaseId(baseId);
         request.setAnswer("wrong answer");
 
-        when(fileStorageService.validateStoredFileUrl(null, gameId)).thenReturn(null);
-        when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
-        when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
-        when(baseRepository.findById(baseId)).thenReturn(Optional.of(base));
-        when(submissionRepository.save(any(Submission.class))).thenAnswer(invocation -> {
-            Submission saved = invocation.getArgument(0);
-            saved.setId(createdSubmissionId);
-            saved.setSubmittedAt(Instant.now());
-            return saved;
-        });
+        stubDefaultRepositories(null);
+        stubSubmissionSave();
 
         SubmissionResponse response = submissionService.createSubmission(gameId, request);
 
@@ -356,7 +333,6 @@ class SubmissionServiceTest {
 
     @Test
     void createSubmissionAutoValidationStoresRejectedStatusWhenNoAnswerMatchesMultiple() {
-        UUID createdSubmissionId = UUID.randomUUID();
         challenge.setAutoValidate(true);
         challenge.setCorrectAnswer(List.of("Open Sesame", "Abracadabra"));
 
@@ -366,16 +342,8 @@ class SubmissionServiceTest {
         request.setBaseId(baseId);
         request.setAnswer("wrong answer");
 
-        when(fileStorageService.validateStoredFileUrl(null, gameId)).thenReturn(null);
-        when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
-        when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
-        when(baseRepository.findById(baseId)).thenReturn(Optional.of(base));
-        when(submissionRepository.save(any(Submission.class))).thenAnswer(invocation -> {
-            Submission saved = invocation.getArgument(0);
-            saved.setId(createdSubmissionId);
-            saved.setSubmittedAt(Instant.now());
-            return saved;
-        });
+        stubDefaultRepositories(null);
+        stubSubmissionSave();
 
         SubmissionResponse response = submissionService.createSubmission(gameId, request);
 
@@ -387,7 +355,6 @@ class SubmissionServiceTest {
 
     @Test
     void createSubmissionWithAnswerTypeNoneAutoApproves() {
-        UUID createdSubmissionId = UUID.randomUUID();
         challenge.setAnswerType(AnswerType.none);
 
         CreateSubmissionRequest request = new CreateSubmissionRequest();
@@ -396,16 +363,8 @@ class SubmissionServiceTest {
         request.setBaseId(baseId);
         request.setAnswer("");
 
-        when(fileStorageService.validateStoredFileUrl(null, gameId)).thenReturn(null);
-        when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
-        when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
-        when(baseRepository.findById(baseId)).thenReturn(Optional.of(base));
-        when(submissionRepository.save(any(Submission.class))).thenAnswer(invocation -> {
-            Submission saved = invocation.getArgument(0);
-            saved.setId(createdSubmissionId);
-            saved.setSubmittedAt(Instant.now());
-            return saved;
-        });
+        stubDefaultRepositories(null);
+        stubSubmissionSave();
 
         SubmissionResponse response = submissionService.createSubmission(gameId, request);
 
@@ -418,7 +377,6 @@ class SubmissionServiceTest {
 
     @Test
     void createSubmissionAutoValidationIsCaseInsensitive() {
-        UUID createdSubmissionId = UUID.randomUUID();
         challenge.setAutoValidate(true);
         challenge.setCorrectAnswer(List.of("Hello World"));
 
@@ -428,16 +386,8 @@ class SubmissionServiceTest {
         request.setBaseId(baseId);
         request.setAnswer("  HELLO WORLD  ");
 
-        when(fileStorageService.validateStoredFileUrl(null, gameId)).thenReturn(null);
-        when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
-        when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
-        when(baseRepository.findById(baseId)).thenReturn(Optional.of(base));
-        when(submissionRepository.save(any(Submission.class))).thenAnswer(invocation -> {
-            Submission saved = invocation.getArgument(0);
-            saved.setId(createdSubmissionId);
-            saved.setSubmittedAt(Instant.now());
-            return saved;
-        });
+        stubDefaultRepositories(null);
+        stubSubmissionSave();
 
         SubmissionResponse response = submissionService.createSubmission(gameId, request);
 
@@ -448,7 +398,6 @@ class SubmissionServiceTest {
 
     @Test
     void createSubmissionAutoValidationResolvesTemplateVariablesBeforeMatching() {
-        UUID createdSubmissionId = UUID.randomUUID();
         challenge.setAutoValidate(true);
         challenge.setCorrectAnswer(List.of("{{teamColor}}"));
 
@@ -463,16 +412,8 @@ class SubmissionServiceTest {
         request.setBaseId(baseId);
         request.setAnswer("red");
 
-        when(fileStorageService.validateStoredFileUrl(null, gameId)).thenReturn(null);
-        when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
-        when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
-        when(baseRepository.findById(baseId)).thenReturn(Optional.of(base));
-        when(submissionRepository.save(any(Submission.class))).thenAnswer(invocation -> {
-            Submission saved = invocation.getArgument(0);
-            saved.setId(createdSubmissionId);
-            saved.setSubmittedAt(Instant.now());
-            return saved;
-        });
+        stubDefaultRepositories(null);
+        stubSubmissionSave();
 
         SubmissionResponse response = submissionService.createSubmission(gameId, request);
 
@@ -517,7 +458,6 @@ class SubmissionServiceTest {
 
     @Test
     void createSubmissionAutoValidationWithNullCorrectAnswerStaysPending() {
-        UUID createdSubmissionId = UUID.randomUUID();
         challenge.setAutoValidate(true);
         challenge.setCorrectAnswer(null);
 
@@ -527,16 +467,8 @@ class SubmissionServiceTest {
         request.setBaseId(baseId);
         request.setAnswer("any answer");
 
-        when(fileStorageService.validateStoredFileUrl(null, gameId)).thenReturn(null);
-        when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
-        when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
-        when(baseRepository.findById(baseId)).thenReturn(Optional.of(base));
-        when(submissionRepository.save(any(Submission.class))).thenAnswer(invocation -> {
-            Submission saved = invocation.getArgument(0);
-            saved.setId(createdSubmissionId);
-            saved.setSubmittedAt(Instant.now());
-            return saved;
-        });
+        stubDefaultRepositories(null);
+        stubSubmissionSave();
 
         SubmissionResponse response = submissionService.createSubmission(gameId, request);
 
@@ -555,10 +487,7 @@ class SubmissionServiceTest {
         request.setAnswer("answer");
         // No idempotencyKey set
 
-        when(fileStorageService.validateStoredFileUrl(null, gameId)).thenReturn(null);
-        when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
-        when(challengeRepository.findById(challengeId)).thenReturn(Optional.of(challenge));
-        when(baseRepository.findById(baseId)).thenReturn(Optional.of(base));
+        stubDefaultRepositories(null);
         when(submissionRepository.save(any(Submission.class)))
                 .thenThrow(new DataIntegrityViolationException("some constraint"));
 

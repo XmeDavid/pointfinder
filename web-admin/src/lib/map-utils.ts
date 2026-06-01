@@ -28,14 +28,42 @@ export function getAggregateStatus(
   if (!baseProgress || baseProgress.size === 0) return "not_visited";
 
   let minPriority = Infinity;
+  let minStatus: BaseStatus = "not_visited";
   baseProgress.forEach((p) => {
     const status = isBaseStatus(p.status) ? p.status : "not_visited";
     const priority = STATUS_PRIORITY[status] ?? 0;
-    if (priority < minPriority) minPriority = priority;
+    if (priority < minPriority) {
+      minPriority = priority;
+      minStatus = status;
+    }
   });
 
-  const entry = Object.entries(STATUS_PRIORITY).find(([, v]) => v === minPriority);
-  return (entry?.[0] as BaseStatus) ?? "not_visited";
+  return minStatus;
+}
+
+/**
+ * Same as getAggregateStatus but for a flat progress map where values are
+ * status strings directly (used by broadcast components).
+ */
+export function getAggregateStatusFlat(
+  baseId: string,
+  progressIndex: Map<string, Map<string, string>>,
+): BaseStatus {
+  const baseProgress = progressIndex.get(baseId);
+  if (!baseProgress || baseProgress.size === 0) return "not_visited";
+
+  let minPriority = Infinity;
+  let minStatus: BaseStatus = "not_visited";
+  baseProgress.forEach((status) => {
+    const s = isBaseStatus(status) ? status : "not_visited";
+    const priority = STATUS_PRIORITY[s] ?? 0;
+    if (priority < minPriority) {
+      minPriority = priority;
+      minStatus = s;
+    }
+  });
+
+  return minStatus;
 }
 
 export function parseTimestamp(value: string): number {

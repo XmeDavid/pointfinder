@@ -1,8 +1,6 @@
 package com.prayer.pointfinder.dto.response;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -10,14 +8,12 @@ import java.util.UUID;
 /**
  * Operator-facing tag DTO. Never exposed to players.
  */
-@Data
 @Builder
-@AllArgsConstructor
-public class TagResponse {
-    private UUID id;
-    private UUID gameId;
-    private String label;
-    private String color;
-    private Instant createdAt;
-    private Instant updatedAt;
-}
+public record TagResponse(
+        UUID id,
+        UUID gameId,
+        String label,
+        String color,
+        Instant createdAt,
+        Instant updatedAt
+) {}

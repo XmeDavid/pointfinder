@@ -1,8 +1,8 @@
 # Audit Fix Summary
 
-> Generated 2026-05-24, updated 2026-05-27. Verification pass against `docs/full-codebase-audit-2026-03-21.md`.
+> Generated 2026-05-24, updated 2026-06-01. Verification pass against `docs/full-codebase-audit-2026-03-21.md`.
 
-All 22 remaining findings from the March 2026 audit have been verified. Every actionable finding has been addressed by prior commits. This document records the current status of each finding.
+All 22 remaining findings from the March 2026 audit have been verified. Every actionable finding has been addressed. This document records the current status of each finding.
 
 ---
 
@@ -66,24 +66,26 @@ Both `/request-registration` and `/forgot-password` endpoints now use `@RequestH
 | 2.14 | GameService 16 dependencies | Documented for future refactoring |
 | 2.16 | No datasource URL in main yml | Documented in application.yml comments |
 | 2.17 | Test coverage gaps (5 services) | Tests deferred to dedicated task |
-| 2.18 | DTOs could be records | Large refactor; deferred |
+| 2.18 | DTOs could be records | **FIXED 2026-06-01**: 7 DTOs converted to records |
 | 2.19 | Sealed interfaces for state machines | Deferred to dedicated task |
 | 4.1 | MapPage.tsx oversized (567 lines) | Component extraction deferred |
-| 4.2 | ChallengesPage.tsx oversized (510 lines) | Dialog form extraction deferred |
+| 4.2 | ChallengesPage.tsx oversized (510 lines) | **FIXED 2026-06-01**: Assignment section extracted to ChallengeAssignmentSection.tsx |
 | 5.6 | No database backup strategy | Operational; documented in infrastructure.md |
 | 5.11 | SPA fallback uses __spa.html | Documented in nginx.conf comments |
 | 5.16 | __spa.html naming undocumented | Covered by 5.11 |
 | 5.18 | E2E hardcoded dummy credentials | Test-only; documented |
-| 5.19 | No resource limits on test containers | Not production concern |
+| 5.19 | No resource limits on test containers | **FIXED 2026-06-01**: mem_limit + cpus added to docker-compose.test.yml |
 | 6.10 | AppNavigation.kt oversized (1614 lines) | Extraction deferred |
 | 7.10 | 500ms delay for presence broadcast | Pragmatic; comment explains tradeoff |
 | 8.6 | No marker clustering | Feature addition; deferred |
 | 8.7 | Inconsistent coordinate conventions | Cross-component refactor; deferred |
 | 8.10 | Tile source URL inconsistency | Mobile config refactor; deferred |
-| 8.11 | O(n*m) getAggregateStatus() | Better impl exists in BroadcastMap; deferred |
+| 8.11 | O(n*m) getAggregateStatus() | **FIXED 2026-06-01**: getAggregateStatusFlat() shared utility; broadcast dupes removed |
 | 8.12 | No offline map tile caching | Feature; deferred |
 | 8.13 | LocationService.swift timer race | Actually handled; clarified with comments |
-| 9.1-9.9 | Test coverage and patterns | Tests deferred to separate tasks |
+| 9.1-9.7 | Test coverage gaps | Tests deferred to separate tasks |
+| 9.8 | ChunkedUploadServiceTest ReflectionTestUtils | **FIXED 2026-06-01**: @ConfigurationProperties replaces @Value; direct construction in tests |
+| 9.9 | SubmissionServiceTest duplicate mock setup | **FIXED 2026-06-01**: Helper methods stubDefaultRepositories() + stubSubmissionSave() |
 | 10.10 | Player.pushPlatform defaults to ios | FIXED: V56 drops default; entity nullable |
 | 11.11 | Offline check-in local UUID | Cosmetic; no reconciliation needed |
 | 12.1 | Refresh token in localStorage | Security task; requires backend API changes |
@@ -100,8 +102,9 @@ Both `/request-registration` and `/forgot-password` endpoints now use `@RequestH
 
 | Category | Count |
 |----------|-------|
-| Fixed (all prior commits) | 12 |
+| Fixed (prior commits) | 12 |
+| Fixed (2026-06-01 session) | 6 |
 | Acknowledged (observational, no change needed) | 1 |
-| Deferred (documented with rationale) | 31 |
+| Deferred (documented with rationale) | 25 |
 
-All actionable findings have been resolved. One additional fix was made on 2026-05-27: hardcoded English alt text for QR code images in `TeamDetail.tsx` was replaced with i18n translation keys (finding 4.13).
+**2026-06-01 fixes:** 2.18 (DTO records), 4.2 (ChallengeDetail extraction), 5.19 (test container limits), 8.11 (getAggregateStatus dedup), 9.8 (ConfigurationProperties), 9.9 (test helpers). See `docs/audit-decisions.md` for design rationale.

@@ -455,7 +455,7 @@ public class PlayerService {
         // Collect all challenge IDs from assignments and fixed challenges
         Set<UUID> challengeIds = new HashSet<>();
         for (AssignmentResponse a : assignments) {
-            challengeIds.add(a.getChallengeId());
+            challengeIds.add(a.challengeId());
         }
         for (PlayerBaseResponse b : bases) {
             if (b.getFixedChallengeId() != null) {
