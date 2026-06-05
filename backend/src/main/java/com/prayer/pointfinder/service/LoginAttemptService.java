@@ -6,6 +6,20 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * In-memory login rate limiter. Tracks failed login attempts per email
+ * and blocks further attempts after {@link #MAX_ATTEMPTS} within
+ * {@link #BLOCK_DURATION_MINUTES}.
+ *
+ * <p><strong>Limitation (audit 12.9):</strong> State is held in a
+ * {@link ConcurrentHashMap} and is lost on application restart. An
+ * attacker could theoretically time brute-force attempts around
+ * deployments. For production hardening, consider migrating to a
+ * Redis-backed store or database table so rate-limit state survives
+ * restarts. The current design is acceptable for the expected
+ * deployment cadence and nginx-level IP rate limiting that provides
+ * a first line of defense.
+ */
 @Service
 public class LoginAttemptService {
 

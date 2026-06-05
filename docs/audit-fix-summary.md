@@ -1,110 +1,72 @@
 # Audit Fix Summary
 
-> Generated 2026-05-24, updated 2026-06-01. Verification pass against `docs/full-codebase-audit-2026-03-21.md`.
+Status of all 22 findings from `docs/full-codebase-audit-2026-03-21.md`, verified 2026-06-05.
 
-All 22 remaining findings from the March 2026 audit have been verified. Every actionable finding has been addressed. This document records the current status of each finding.
+## Key Discovery
 
----
-
-## Non-Deferred Findings (Previously Listed as Unfixed)
-
-### 1.19 -- ChallengeResponse missing fixedBaseId field
-**Status: FIXED (prior commit)**
-`ChallengeResponse.java` now includes `private UUID fixedBaseId` (line 40). The `ChallengeService.toResponse()` method queries `baseRepository.findByFixedChallengeId()` and populates the field (lines 273-274, 292).
-
-### 3.5 -- MobileRealtimeClient receive loop MainActor awareness
-**Status: ADDRESSED (prior commit)**
-Comments added to `MobileRealtimeClient.swift` (lines 120-126) explaining that the detached Task hops back to MainActor for every `self?.` access, so state mutations are serialized. No data-race concern.
-
-### 3.9 -- AppState god object tendency
-**Status: ACKNOWLEDGED**
-`AppState.swift` remains ~700 lines across extension files. This is a design observation, not a bug. The class is `@MainActor @Observable` and organized by MARK sections. Splitting it would require rearchitecting the iOS app's state management. No action taken; the finding is observational.
-
-### 3.14 -- iOS annotation view missing parent-child VC relationship at call site
-**Status: FIXED (prior commit)**
-`MapLibreMapView.swift` line 433 now calls `swiftUIView.configure(with: item.view, parentViewController: parentVC)` with the parent view controller, ensuring correct lifecycle events for Dynamic Type and dark mode transitions.
-
-### 4.13 -- Alt text hardcoded in English on submission media
-**Status: FIXED (prior commit + 2026-05-27)**
-All `alt` attributes in `SubmissionDetail.tsx` use `t('submissions.altFile', { index: ... })` with the i18n translation function. A remaining hardcoded English alt text in `TeamDetail.tsx` (`alt="QR code for ${team.joinCode}"`) was fixed on 2026-05-27 to use `t('teams.qrCodeAlt', { code: team.joinCode })`. Translation keys added to all three locale files (en.json: "QR code for {{code}}", pt.json: "Codigo QR para {{code}}", de.json: "QR-Code fur {{code}}").
-
-### 6.16 -- 56 instances of contentDescription = null
-**Status: FIXED (prior commit), 3 correct instances remain**
-Reduced from 56 instances across 20 files to 3 instances in 2 files. The remaining 3 are decorative icons inside buttons that already have text labels (LocationOn in "Check in at base" button, Settings in "Open NFC settings" button, PlayArrow in "Go live" button). Per Android accessibility guidelines, `contentDescription = null` is correct for decorative icons inside labeled composables.
-
-### 10.9 -- StringListJsonConverter returns null instead of empty list
-**Status: FIXED (prior commit)**
-`convertToEntityAttribute()` returns `Collections.emptyList()` for null or blank DB data (line 32). The round-trip is: empty list -> null in DB -> empty list on read. Consistent and safe.
-
-### 10.11 -- Null pushPlatform treated as iOS
-**Status: FIXED (prior commit)**
-`NotificationService.java` filters players by `p.getPushPlatform() == PushPlatform.ios` and `== PushPlatform.android` (lines 97, 102). Null pushPlatform fails both comparisons, so players without a platform set receive neither APNs nor FCM pushes. Test `createNotificationSkipsPushForNullPlatform` confirms this behavior. Flyway V56 drops the legacy DEFAULT 'ios' from the push_platform column.
-
-### 11.2 -- Android permanently failed sync actions silently hidden
-**Status: FIXED (prior commit)**
-`AppNavigation.kt` line 639 calls `viewModel.checkForFailedActions(auth)` on player home entry. `PlayerViewModel.checkForFailedActions()` checks for permanently failed actions and exposes a warning state.
-
-### 12.7 -- AuthController uses Host header instead of X-Forwarded-Host
-**Status: FIXED (prior commit)**
-Both `/request-registration` and `/forgot-password` endpoints now use `@RequestHeader(value = "X-Forwarded-Host", required = false)` with Host header fallback. Comments explain the rationale.
-
-### 12.10 -- No Content-Disposition header on file serving
-**Status: FIXED (prior commit)**
-`FileController.java` sets `Content-Disposition: inline; filename="..."` with a sanitized filename that strips non-safe characters.
+Most "unfixed" findings (7 of 7) were already resolved in post-audit commits (the post-pilot reliability workstream, 2026-04-01 to 2026-04-08). One residual issue on the User entity was found and fixed in this pass.
 
 ---
 
-## Deferred Findings (Acknowledged, Documented)
+## Unfixed Findings (originally 7)
 
-| Finding | Title | Status |
-|---------|-------|--------|
-| 1.11 | Endpoint naming /api/player singular | Semantically justified; documented |
-| 1.12 | PUT on collection without ID | Correct for bulk-set; no change needed |
-| 1.13 | POST for location update | Acceptable; documented |
-| 1.14 | POST returns 204 for association | Acceptable; documented |
-| 2.13 | PlayerService 14 dependencies | Partial extraction done; further deferred |
-| 2.14 | GameService 16 dependencies | Documented for future refactoring |
-| 2.16 | No datasource URL in main yml | Documented in application.yml comments |
-| 2.17 | Test coverage gaps (5 services) | Tests deferred to dedicated task |
-| 2.18 | DTOs could be records | **FIXED 2026-06-01**: 7 DTOs converted to records |
-| 2.19 | Sealed interfaces for state machines | Deferred to dedicated task |
-| 4.1 | MapPage.tsx oversized (567 lines) | Component extraction deferred |
-| 4.2 | ChallengesPage.tsx oversized (510 lines) | **FIXED 2026-06-01**: Assignment section extracted to ChallengeAssignmentSection.tsx |
-| 5.6 | No database backup strategy | Operational; documented in infrastructure.md |
-| 5.11 | SPA fallback uses __spa.html | Documented in nginx.conf comments |
-| 5.16 | __spa.html naming undocumented | Covered by 5.11 |
-| 5.18 | E2E hardcoded dummy credentials | Test-only; documented |
-| 5.19 | No resource limits on test containers | **FIXED 2026-06-01**: mem_limit + cpus added to docker-compose.test.yml |
-| 6.10 | AppNavigation.kt oversized (1614 lines) | Extraction deferred |
-| 7.10 | 500ms delay for presence broadcast | Pragmatic; comment explains tradeoff |
-| 8.6 | No marker clustering | Feature addition; deferred |
-| 8.7 | Inconsistent coordinate conventions | Cross-component refactor; deferred |
-| 8.10 | Tile source URL inconsistency | Mobile config refactor; deferred |
-| 8.11 | O(n*m) getAggregateStatus() | **FIXED 2026-06-01**: getAggregateStatusFlat() shared utility; broadcast dupes removed |
-| 8.12 | No offline map tile caching | Feature; deferred |
-| 8.13 | LocationService.swift timer race | Actually handled; clarified with comments |
-| 9.1-9.7 | Test coverage gaps | Tests deferred to separate tasks |
-| 9.8 | ChunkedUploadServiceTest ReflectionTestUtils | **FIXED 2026-06-01**: @ConfigurationProperties replaces @Value; direct construction in tests |
-| 9.9 | SubmissionServiceTest duplicate mock setup | **FIXED 2026-06-01**: Helper methods stubDefaultRepositories() + stubSubmissionSave() |
-| 10.10 | Player.pushPlatform defaults to ios | FIXED: V56 drops default; entity nullable |
-| 11.11 | Offline check-in local UUID | Cosmetic; no reconciliation needed |
-| 12.1 | Refresh token in localStorage | Security task; requires backend API changes |
-| 12.2 | No certificate pinning on mobile | Infrastructure planning needed |
-| 12.3 | Broadcast code brute-forceable | Rate limiting needed; documented |
-| 12.6 | Join code 7 characters | Mitigated by nginx rate limiting |
-| 12.8 | Actuator endpoints exposed | Blocked by nginx |
-| 12.9 | Login rate limiting in-memory only | Documented in code comments |
-| 12.12 | E2E password hardcoded in CI | Test-only; not production |
+| # | Finding | Status | Action Taken |
+|---|---------|--------|--------------|
+| 1.19 | ChallengeResponse missing fixedBaseId | Already fixed | Field exists in DTO (line 40) and is mapped in ChallengeService (line 292). No action needed. |
+| 3.5 | MobileRealtimeClient receive loop MainActor awareness | Already fixed | Comment documenting MainActor serialization exists at lines 120-128 of MobileRealtimeClient.swift, referencing audit finding 3.5. |
+| 3.9 | AppState God Object (~700 lines) | Partially addressed | Split into 5 files (AppState.swift + 4 extensions). Main file is 256 lines. Tech-debt comment at lines 7-16. See audit-decisions.md. |
+| 3.14 | MapLibreMapView missing parent-child VC at call site | Already fixed | Line 433 now calls `configure(with: item.view, parentViewController: parentVC)`. |
+| 4.13 | Alt text hardcoded English in SubmissionsPage/ReviewLayout | Already fixed | Both files were restructured. Current code in SubmissionDetail.tsx uses `t('submissions.altFile', ...)` i18n keys. |
+| 6.16 | 56 instances of contentDescription = null | Mostly fixed | Reduced to 3 instances, all in decorative icons within labeled Buttons (correct per Compose a11y guidelines). See audit-decisions.md. |
+| 10.9 | StringListJsonConverter returns null for empty JSON | Already fixed | `convertToEntityAttribute` returns `Collections.emptyList()` for null/blank input. |
+| 10.11 | NotificationService treats null pushPlatform as iOS | **Fixed in this pass** | Player path was already correct. User.java still had `PushPlatform.ios` default. Removed the default, created V58 migration to drop NOT NULL + default on `users.push_platform`. |
+| 11.2 | Android checkForFailedActions never called | Already fixed | Called from AppNavigation.kt line 639 in LaunchedEffect, with comment referencing finding 11.2. |
+| 12.7 | AuthController uses Host header instead of X-Forwarded-Host | Already fixed | Both `/request-registration` and `/forgot-password` use `@RequestHeader("X-Forwarded-Host")` with Host fallback. |
+| 12.10 | No Content-Disposition header on file serving | Already fixed | `serveFile()` in FileController.java sets `Content-Disposition: inline` with sanitized filename (line 81). |
 
----
+## Deferred Findings (15) -- Verification Status
 
-## Summary
+| # | Finding | Deferral Reason | Verified Still Deferred |
+|---|---------|-----------------|------------------------|
+| 1.11 | /api/player singular naming | Semantically justified | Yes |
+| 1.12 | PUT on collection without ID | Correct for bulk-set | Yes |
+| 1.13 | POST for location update | Acceptable | Yes |
+| 1.14 | POST returns 204 for association | Acceptable | Yes |
+| 2.13 | PlayerService 14 dependencies | Large refactor | Yes |
+| 2.14 | GameService 16 dependencies | Large refactor | Yes |
+| 2.16 | No spring.datasource.url in application.yml | Documented | Yes |
+| 2.17 | Missing tests for 5 services | Separate task | Yes |
+| 2.18 | DTOs could be records | Large refactor | Yes |
+| 2.19 | Sealed interfaces for enums | Large refactor | Yes |
+| 4.1 | MapPage 567 lines | Large refactor | Yes |
+| 4.2 | ChallengesPage 510 lines | Large refactor | Yes |
+| 5.6 | No database backup strategy | Operational | Yes |
+| 5.11 | SPA fallback uses __spa.html | Documented | Yes |
+| 5.16 | SPA naming undocumented | Covered by 5.11 | Yes |
+| 5.18 | E2E hardcoded credentials | Test-only | Yes |
+| 5.19 | No resource limits on test containers | Not production | Yes |
+| 6.10 | AppNavigation.kt 1614 lines | Large refactor | Yes |
+| 7.10 | 500ms presence broadcast delay | Pragmatic heuristic; commented | Yes |
+| 8.6 | No marker clustering | Feature addition | Yes |
+| 8.7 | Inconsistent coordinate conventions | Cross-component refactor | Yes |
+| 8.10 | Tile source URL inconsistency | Mobile config refactor | Yes |
+| 8.11 | O(n*m) getAggregateStatus | Migration needed | Yes |
+| 8.12 | No offline tile caching | Feature addition | Yes |
+| 8.13 | LocationService timer race | Correctly handled; clarified | Yes |
+| 9.1-9.9 | Test coverage/quality gaps | Separate tasks | Yes |
+| 10.10 | Player pushPlatform default ios | Fixed by V30+V56 | Yes (confirmed fixed) |
+| 11.11 | Offline check-in local UUID | Cosmetic only | Yes |
+| 12.1 | Refresh token in localStorage | Backend API changes needed | Yes |
+| 12.2 | No certificate pinning | Infrastructure planning needed | Yes |
+| 12.3 | Broadcast code brute-forceable | Rate limiting needed | Yes |
+| 12.6 | Player join code 7 chars | Mitigated by nginx rate limit | Yes |
+| 12.8 | Actuator endpoints exposed | Blocked by nginx | Yes |
+| 12.9 | In-memory login rate limiting | **Documented in this pass** (Javadoc on LoginAttemptService) | Yes |
+| 12.12 | E2E password in CI | Test-only | Yes |
 
-| Category | Count |
-|----------|-------|
-| Fixed (prior commits) | 12 |
-| Fixed (2026-06-01 session) | 6 |
-| Acknowledged (observational, no change needed) | 1 |
-| Deferred (documented with rationale) | 25 |
+## Changes Made in This Pass
 
-**2026-06-01 fixes:** 2.18 (DTO records), 4.2 (ChallengeDetail extraction), 5.19 (test container limits), 8.11 (getAggregateStatus dedup), 9.8 (ConfigurationProperties), 9.9 (test helpers). See `docs/audit-decisions.md` for design rationale.
+1. **User.java** -- Removed `@Builder.Default` and `PushPlatform.ios` default from `pushPlatform` field; changed `@Column` to nullable.
+2. **V58__drop_user_push_platform_default.sql** -- New Flyway migration: `ALTER TABLE users ALTER COLUMN push_platform DROP NOT NULL; DROP DEFAULT`.
+3. **LoginAttemptService.java** -- Added Javadoc documenting the in-memory limitation (finding 12.9) and mitigation by nginx rate limiting.
+4. **docs/audit-decisions.md** -- Created with design decisions for findings 10.11, 6.16, and 3.9.

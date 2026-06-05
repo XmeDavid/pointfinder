@@ -36,10 +36,9 @@ public class User {
     @Column(name = "push_token")
     private String pushToken;
 
-    @Builder.Default
     @Enumerated(EnumType.STRING)
-    @Column(name = "push_platform", nullable = false)
-    private PushPlatform pushPlatform = PushPlatform.ios;
+    @Column(name = "push_platform")
+    private PushPlatform pushPlatform;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
