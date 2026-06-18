@@ -37,17 +37,46 @@ jobs:
             exit 1
           fi
 
-          curl --fail-with-body --show-error --silent \
-            --request POST "$DOKPLOY_RELAY_URL" \
-            --header "X-Deploy-Token: $DOKPLOY_RELAY_TOKEN" \
-            --header "Content-Type: application/json" \
-            --data @- <<JSON
+          response_file="$(mktemp)"
+          http_code="$(
+            curl --show-error --silent \
+              --output "$response_file" \
+              --write-out "%{http_code}" \
+              --request POST "$DOKPLOY_RELAY_URL" \
+              --header "X-Deploy-Token: $DOKPLOY_RELAY_TOKEN" \
+              --header "X-GitHub-Event: push" \
+              --header "X-GitHub-Delivery: $GITHUB_RUN_ID" \
+              --header "Content-Type: application/json" \
+              --data @- <<JSON
           {
-            "repository": "${GITHUB_REPOSITORY}",
             "ref": "${GITHUB_REF}",
-            "sha": "${GITHUB_SHA}",
-            "workflow": "${GITHUB_WORKFLOW}",
-            "run_id": "${GITHUB_RUN_ID}",
-            "actor": "${GITHUB_ACTOR}"
+            "after": "${GITHUB_SHA}",
+            "head_commit": {
+              "id": "${GITHUB_SHA}",
+              "message": "GitHub Actions deploy ${GITHUB_SHA}"
+            },
+            "commits": [
+              {
+                "id": "${GITHUB_SHA}",
+                "message": "GitHub Actions deploy ${GITHUB_SHA}",
+                "modified": ["backend/Dockerfile"]
+              }
+            ],
+            "repository": {
+              "name": "${GITHUB_REPOSITORY#*/}",
+              "full_name": "${GITHUB_REPOSITORY}"
+            }
           }
           JSON
+          )"
+
+          cat "$response_file"
+          echo
+
+          case "$http_code" in
+            2*) ;;
+            *)
+              echo "Dokploy relay returned HTTP $http_code"
+              exit 1
+              ;;
+          esac
