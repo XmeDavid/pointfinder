@@ -64,9 +64,9 @@ class GameTagServiceTest {
         List<TagResponse> result = gameTagService.listByGame(gameId);
 
         assertEquals(1, result.size());
-        assertEquals(tagId, result.get(0).getId());
-        assertEquals("trail", result.get(0).getLabel());
-        assertEquals("#3b82f6", result.get(0).getColor());
+        assertEquals(tagId, result.get(0).id());
+        assertEquals("trail", result.get(0).label());
+        assertEquals("#3b82f6", result.get(0).color());
     }
 
     // ── createTag ─────────────────────────────────────────────────────
@@ -91,9 +91,9 @@ class GameTagServiceTest {
 
         TagResponse response = gameTagService.createTag(gameId, request);
 
-        assertNotNull(response.getColor());
-        assertTrue(response.getColor().startsWith("#"));
-        assertEquals("trail", response.getLabel());
+        assertNotNull(response.color());
+        assertTrue(response.color().startsWith("#"));
+        assertEquals("trail", response.label());
     }
 
     @Test
@@ -115,7 +115,7 @@ class GameTagServiceTest {
 
         TagResponse response = gameTagService.createTag(gameId, request);
 
-        assertEquals("#ff0000", response.getColor());
+        assertEquals("#ff0000", response.color());
     }
 
     @Test
@@ -166,8 +166,8 @@ class GameTagServiceTest {
 
         TagResponse response = gameTagService.updateTag(gameId, tagId, request);
 
-        assertEquals("new", response.getLabel());
-        assertEquals("#222222", response.getColor());
+        assertEquals("new", response.label());
+        assertEquals("#222222", response.color());
     }
 
     @Test

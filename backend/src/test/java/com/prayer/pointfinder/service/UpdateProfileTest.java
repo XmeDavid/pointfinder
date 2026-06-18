@@ -63,7 +63,7 @@ class UpdateProfileTest {
 
             assertThat(testUser.getName()).isEqualTo("New Name");
             verify(userRepository).save(testUser);
-            assertThat(response.getUser().getName()).isEqualTo("New Name");
+            assertThat(response.getUser().name()).isEqualTo("New Name");
             assertThat(response.getMessage()).isNull();
             verifyNoInteractions(emailChangeTokenRepository, emailService);
         }

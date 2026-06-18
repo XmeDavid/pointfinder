@@ -85,6 +85,17 @@ jobs:
   deploy:
     name: Deploy
     needs: [backend, frontend, android]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: |
+      always() &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      (
+        (
+          needs.backend.result == 'success' &&
+          needs.frontend.result == 'success' &&
+          needs.android.result == 'success'
+        ) ||
+        vars.DOKPLOY_DEPLOY_WITH_FAILED_CI == 'true'
+      )
     uses: ./.github/workflows/deploy.yml
     secrets: inherit
