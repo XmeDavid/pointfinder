@@ -17,7 +17,7 @@ public class UpdatePushTokenRequest {
 
     public PushPlatform resolvePlatform() {
         if (platform == null || platform.isBlank()) {
-            return PushPlatform.ios;
+            return null;
         }
         return PushPlatform.valueOf(platform.toLowerCase(Locale.ROOT));
     }
