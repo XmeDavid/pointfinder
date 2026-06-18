@@ -209,19 +209,6 @@ body {
   }
 }
 
-/* Route path draw-on (stroke-dashoffset) */
-.route-draw {
-  stroke-dasharray: 1600;
-  stroke-dashoffset: 1600;
-  animation: routeDraw 2.2s cubic-bezier(0.22, 0.61, 0.36, 1) 0.4s forwards;
-}
-
-@keyframes routeDraw {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
 /* Stamp – a gentle wobble on hover to suggest freshly-inked rubber stamp */
 .stamp-wobble {
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
@@ -230,36 +217,15 @@ body {
   transform: rotate(0deg) scale(1.04) !important;
 }
 
-/* Contour lines: very slow breathing – barely perceptible, but alive */
+/* Hero contour terrain.
+   Previously this 143 KB / 134-path SVG mask scale-animated infinitely, which
+   kept a viewport-sized masked layer re-compositing every frame — and because
+   the sticky backdrop-blur header sits over it, the blur was re-rasterized each
+   frame too (GPU pegged, fans spun). It is now rendered once and contained, so
+   the GPU goes idle after first paint. The breathing was barely perceptible. */
 .contour-breathe {
   transform-origin: center;
-  animation: contourBreathe 22s ease-in-out infinite;
-}
-
-@keyframes contourBreathe {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.015);
-  }
-}
-
-/* Contour flow – dashes drift along each path like wind over a map */
-.contour-flow {
-  animation-name: contourFlow;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-}
-
-@keyframes contourFlow {
-  from {
-    stroke-dashoffset: 0;
-  }
-  to {
-    stroke-dashoffset: -400;
-  }
+  contain: layout paint style;
 }
 
 /* ---------- Landing → Register cinematic transition ----------
@@ -280,151 +246,350 @@ body {
   transform: translateY(-10px) scale(0.985);
 }
 
+/* Shared topographic-map framing. The landing hero, the walk transition, and the
+   register backdrop are all viewport-anchored windows onto ONE baked contour map.
+   The transition pans that window from the landing crop (lower-left) to the
+   register crop (upper-right) along a weaving valley path. Scale is held constant
+   across waypoints so it reads as a lateral pan, not a zoom. Only transform +
+   opacity animate (no mask/filter/re-raster) so it stays smooth on weak GPUs. */
+:root {
+  --map-scale: 1.9; /* deeper zoom = tighter window = more terrain sweeps past */
+  --map-from: translate(22%, -12%) scale(1.9); /* landing window — lower-left valley */
+  --map-to: translate(-22%, 12%) scale(1.9); /* register window — upper-right */
+  --map-light-opacity: 0.12; /* faint light terrain over white = register backdrop */
+  --landing-header-h: 61px; /* sticky header height; the hero map sits behind it so
+                               its viewport-anchored crop matches the fixed overlay */
+}
+
+/* one composited window onto the baked map: cover + center, transform applied by
+   the caller. Both transition terrains use this; the hero/register use siblings
+   with the same sizing so every crop lines up pixel-for-pixel. */
+.topo-map-layer {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+/* Landing hero map: a viewport-sized, viewport-anchored crop of the dark map,
+   clipped to the hero by the section's overflow-hidden. Anchoring it to the
+   viewport (not the hero box) — width 100vw, top pulled up behind the header —
+   makes it share the transition overlay's exact framing, so when the chrome
+   fades the hero map simply becomes fullscreen (no second map "spawning"). */
+.landing-hero-map {
+  position: absolute;
+  left: 0;
+  top: calc(-1 * var(--landing-header-h));
+  width: 100vw;
+  height: 100vh;
+  background: url("/landing/topo-terrain-dark.webp") center / cover no-repeat;
+  transform: var(--map-from);
+  transform-origin: 50% 50%;
+}
+
+/* "Walk the map" transition: the landing chrome fades while this fixed overlay —
+   already showing the same dark-map crop as the hero — pans across the map to the
+   register crop, inverting dark→light (bright-green-on-dark → faint-green-on-white)
+   so the overlay's final frame is identical to register's backdrop. */
 .topo-register-transition {
+  --topo-walk-duration: 1.5s;
+
   position: fixed;
   inset: 0;
   z-index: 80;
   pointer-events: none;
   overflow: hidden;
   contain: strict;
-  background:
-    radial-gradient(circle at 50% 44%, #0e2016 0%, #070d09 58%, rgb(4 6 5 / 0) 100%),
-    #050806;
-  animation: topoTransitionVeil 0.62s ease-out forwards;
 }
 
-/* contour terrain (tinted lines via mask, like the hero) diving forward */
-.topo-register-transition__map {
+/* solid dark base under the dark terrain — matches the landing's dark field, then
+   gives way to the white wash during the inversion */
+.topo-register-transition__field {
   position: absolute;
-  inset: -20%;
+  inset: 0;
   z-index: 1;
-  background-color: var(--color-primary);
-  -webkit-mask: url("/landing/topography-contours.svg") center / cover no-repeat;
-  mask: url("/landing/topography-contours.svg") center / cover no-repeat;
-  opacity: 0.24;
-  transform-origin: 50% 44%;
-  will-change: opacity, transform;
-  animation: topoTransitionDive 0.62s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  background:
+    radial-gradient(circle at 50% 45%, #0e2016 0%, #070d09 58%, #050806 100%),
+    #050806;
+  opacity: 1;
+  will-change: opacity;
+  animation: topoWalkField var(--topo-walk-duration) ease-out forwards;
 }
 
-/* light sweep across the terrain — the "coming alive" beat */
-.topo-register-transition__scan {
-  position: absolute;
-  inset: -20%;
-  z-index: 2;
-  background: linear-gradient(
-    115deg,
-    transparent 40%,
-    rgb(187 247 208 / 0.55) 50%,
-    transparent 60%
-  );
-  mix-blend-mode: screen;
-  opacity: 0;
-  will-change: opacity, transform;
-  animation: topoTransitionScan 0.62s ease-out forwards;
-}
-
-/* glow blooming from the destination point */
-.topo-register-transition__pulse {
+/* light destination wash — fades in late as the world inverts. The landing renders
+   inside a `.dark` scope but register is the light theme, so the wash's final color
+   is pinned to register's literal white backdrop (not the inherited dark vars),
+   otherwise the last frame would stay dark and flash against the light page. */
+.topo-register-transition__wash {
   position: absolute;
   inset: 0;
   z-index: 2;
+  background:
+    radial-gradient(120% 90% at 50% -15%, rgb(21 128 61 / 0.06), transparent 55%),
+    radial-gradient(130% 120% at 50% 42%, transparent 58%, rgb(2 6 4 / 0.04)),
+    linear-gradient(to bottom, #ffffff, #ffffff);
+  opacity: 0;
+  will-change: opacity;
+  animation: topoWalkWash var(--topo-walk-duration) ease-out forwards;
+}
+
+/* the panning "camera": one promoted layer holding both terrain textures, so the
+   transform composites the cached bitmaps (no re-raster). Pans through the valley
+   waypoints from the landing crop to the register crop. */
+.topo-register-transition__walk {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  transform: var(--map-from);
+  transform-origin: 50% 50%;
+  will-change: transform;
+  /* linear timing: the slow→fast→slow cadence and the curve are baked into the
+     densely-sampled keyframes below, so motion stays smooth with no per-waypoint
+     stutter (a single ease would restart at every keyframe and cause kinks) */
+  animation: topoWalkPan var(--topo-walk-duration) linear forwards;
+}
+
+.topo-register-transition__terrain {
+  will-change: opacity;
+}
+
+/* bright green terrain on the dark field — the landing look; fades out as we invert */
+.topo-register-transition__terrain--dark {
+  background-image: url("/landing/topo-terrain-dark.webp");
+  opacity: 1;
+  animation: topoWalkDark var(--topo-walk-duration) ease-out forwards;
+}
+
+/* faint terrain matching register — fades in to its final (page) opacity */
+.topo-register-transition__terrain--light {
+  background-image: url("/landing/topo-terrain-light.webp");
+  opacity: 0;
+  animation: topoWalkLight var(--topo-walk-duration) ease-out forwards;
+}
+
+/* soft arrival bloom where the register card will sit */
+.topo-register-transition__glow {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
   background: radial-gradient(
-    circle at 50% 44%,
-    rgb(34 197 94 / 0.5) 0%,
-    rgb(34 197 94 / 0.14) 16%,
-    transparent 40%
+    circle at 50% 45%,
+    rgb(34 197 94 / 0.3) 0%,
+    rgb(34 197 94 / 0.08) 18%,
+    transparent 42%
   );
   opacity: 0;
-  transform: scale(0.6);
-  transform-origin: 50% 44%;
-  will-change: opacity, transform;
-  animation: topoTransitionPulse 0.62s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity;
+  animation: topoWalkGlow var(--topo-walk-duration) ease-out forwards;
 }
 
-/* locator ring that locks onto the destination (echoes register's compass) */
-.topo-register-transition__pin {
+/* Register card "ghost": the destination the walk arrives at. Over the last third
+   of the pan it fades and rises into place so we settle INTO the card, rather than
+   the real card popping in after navigation. Pinned to register's centered layout
+   and light palette so handing off to the real page is seamless. */
+.topo-register-transition__card-dock {
   position: absolute;
-  left: 50%;
-  top: 44%;
-  z-index: 3;
-  height: 18px;
-  width: 18px;
-  margin: -9px 0 0 -9px;
-  border-radius: 999px;
-  border: 2px solid var(--color-primary);
-  box-shadow: 0 0 22px 2px rgb(34 197 94 / 0.7);
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.topo-register-transition__card {
+  width: 100%;
+  max-width: 28rem; /* matches register card's max-w-md */
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid #e5e5e5;
+  background: #ffffff;
+  /* Match the real register card's Tailwind shadow-sm exactly for a seamless handoff. */
+  box-shadow:
+    0 1px 3px 0 rgb(0 0 0 / 0.1),
+    0 1px 2px -1px rgb(0 0 0 / 0.1);
+  color: #0a0a0a;
+  text-align: center;
   opacity: 0;
-  transform: scale(0.4);
+  transform: translateY(16px) scale(0.96);
   will-change: opacity, transform;
-  animation: topoTransitionPin 0.62s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: topoCardWalkIn var(--topo-walk-duration) cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes topoTransitionVeil {
-  0% {
-    opacity: 0;
-  }
-  18%,
-  100% {
-    opacity: 1;
-  }
+.topo-register-transition__card-icon {
+  width: 3rem;
+  height: 3rem;
+  margin: 0 auto 0.5rem;
+  border-radius: 9999px;
+  background: #15803d;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-@keyframes topoTransitionDive {
-  0% {
-    opacity: 0.24;
-    transform: scale(1);
-  }
-  45% {
-    opacity: 0.92;
-  }
-  100% {
-    opacity: 0.62;
-    transform: scale(1.9);
-  }
+.topo-register-transition__card-title {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 600;
 }
 
-@keyframes topoTransitionScan {
-  0% {
-    opacity: 0;
-    transform: translateX(-32%);
-  }
-  35% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(32%);
-  }
+.topo-register-transition__card-sub {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: #737373;
 }
 
-@keyframes topoTransitionPulse {
+.topo-register-transition__card-label {
+  margin-top: 1.25rem;
+  display: block;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.topo-register-transition__card-req {
+  color: #ef4444;
+}
+
+.topo-register-transition__card-field {
+  margin-top: 0.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  padding: 0 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid #e5e5e5;
+  background: #ffffff;
+  text-align: left;
+  font-size: 0.875rem;
+  color: #a3a3a3;
+}
+
+.topo-register-transition__card-btn {
+  margin-top: 1rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: #15803d;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Valley walk: a smooth quadratic curve from the lower-left crop to the upper-right
+   crop that dips down into the valley around the first third before rising to the
+   register frame. Sampled every 10% along the curve, with the camera's progress
+   eased (slow→fast→slow) by the sampling cadence, so the motion reads as a single
+   continuous walk with no corners. Scale held at 1.9 throughout (a pan, not a zoom). */
+@keyframes topoWalkPan {
   0% {
-    opacity: 0;
-    transform: scale(0.6);
+    transform: translate(22%, -12%) scale(1.9);
+  }
+  10% {
+    transform: translate(21.8%, -12.1%) scale(1.9);
+  }
+  20% {
+    transform: translate(20.6%, -12.6%) scale(1.9);
+  }
+  30% {
+    transform: translate(17.3%, -13.7%) scale(1.9);
   }
   40% {
-    opacity: 1;
+    transform: translate(10.7%, -14.2%) scale(1.9);
+  }
+  50% {
+    transform: translate(0%, -11%) scale(1.9);
+  }
+  60% {
+    transform: translate(-10.7%, -2.5%) scale(1.9);
+  }
+  70% {
+    transform: translate(-17.3%, 5.2%) scale(1.9);
+  }
+  80% {
+    transform: translate(-20.6%, 9.9%) scale(1.9);
+  }
+  90% {
+    transform: translate(-21.8%, 11.7%) scale(1.9);
   }
   100% {
-    opacity: 0;
-    transform: scale(2.6);
+    transform: translate(-22%, 12%) scale(1.9);
   }
 }
 
-@keyframes topoTransitionPin {
-  0% {
-    opacity: 0;
-    transform: scale(0.4);
-  }
-  40%,
-  72% {
+/* dark field holds until the inversion, then yields to the white wash */
+@keyframes topoWalkField {
+  0%,
+  60% {
     opacity: 1;
-    transform: scale(1);
   }
+  92%,
   100% {
     opacity: 0;
-    transform: scale(1.5);
+  }
+}
+
+@keyframes topoWalkWash {
+  0%,
+  52% {
+    opacity: 0;
+  }
+  90%,
+  100% {
+    opacity: 1;
+  }
+}
+
+/* dark terrain stays strong through most of the pan so the map never goes blank,
+   then fades out as the light terrain + white wash arrive */
+@keyframes topoWalkDark {
+  0%,
+  58% {
+    opacity: 1;
+  }
+  90%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes topoWalkLight {
+  0%,
+  58% {
+    opacity: 0;
+  }
+  100% {
+    opacity: var(--map-light-opacity);
+  }
+}
+
+@keyframes topoWalkGlow {
+  0%,
+  58% {
+    opacity: 0;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.35;
+  }
+}
+
+/* card holds off-screen through the pan, then walks into place over the final third */
+@keyframes topoCardWalkIn {
+  0%,
+  64% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -437,12 +602,21 @@ body {
   position: absolute;
   inset: 0;
   background:
-    repeating-radial-gradient(ellipse at 16% 28%, transparent 0 42px, rgb(21 128 61 / 0.06) 44px 46px, transparent 48px 82px),
-    repeating-radial-gradient(ellipse at 82% 72%, transparent 0 50px, rgb(21 128 61 / 0.05) 52px 54px, transparent 56px 96px),
-    repeating-radial-gradient(ellipse at 54% 8%, transparent 0 46px, rgb(21 128 61 / 0.035) 48px 50px, transparent 52px 90px),
-    radial-gradient(circle at 50% 8%, var(--color-primary) 0, transparent 30%),
+    radial-gradient(120% 90% at 50% -15%, rgb(21 128 61 / 0.06), transparent 55%),
+    radial-gradient(130% 120% at 50% 42%, transparent 58%, rgb(2 6 4 / 0.04)),
     linear-gradient(to bottom, var(--color-card), var(--color-background));
-  opacity: 0.9;
+}
+
+/* baked faint-green terrain at the register crop — pixel-identical to the walk
+   transition's final frame, so "the map becomes the page" */
+.register-atlas-screen__backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("/landing/topo-terrain-light.webp") center / cover no-repeat;
+  transform: var(--map-to);
+  transform-origin: 50% 50%;
+  opacity: var(--map-light-opacity);
 }
 
 .register-atlas-card {
@@ -450,65 +624,12 @@ body {
   z-index: 1;
 }
 
-/* dark-green terrain veil continuing from the landing dive, dissolving away */
-.register-atlas-screen--arrived::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 50% 44%, rgb(34 197 94 / 0.2), transparent 38%),
-    radial-gradient(circle at 50% 44%, #0e2016 0%, #070d09 62%);
-  animation: registerVeilFade 0.6s ease-out forwards;
-}
-
-.register-atlas-screen--arrived::after {
-  content: "";
-  position: fixed;
-  inset: -20%;
-  z-index: 51;
-  pointer-events: none;
-  background-color: var(--color-primary);
-  -webkit-mask: url("/landing/topography-contours.svg") center / cover no-repeat;
-  mask: url("/landing/topography-contours.svg") center / cover no-repeat;
-  transform: scale(1.9);
-  transform-origin: 50% 44%;
-  opacity: 0.55;
-  animation: registerVeilLines 0.6s ease-out forwards;
-}
-
+/* Arriving from the landing walk, the card is already at rest: the transition's
+   card ghost performed the entrance and ended on this exact frame, so the real
+   card must appear settled (no second rise) for a seamless handoff. */
 .register-atlas-screen--arrived .register-atlas-card {
-  opacity: 0;
-  transform: translateY(16px) scale(0.97);
-  animation: registerAtlasArrival 0.62s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
-}
-
-@keyframes registerVeilFade {
-  0% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
-@keyframes registerVeilLines {
-  0% {
-    opacity: 0.55;
-    transform: scale(1.9);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(2.7);
-  }
-}
-
-@keyframes registerAtlasArrival {
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  opacity: 1;
+  transform: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -517,23 +638,17 @@ body {
   .landing-rotate-slow,
   .landing-ping,
   .route-draw,
-  .topo-register-transition,
-  .topo-register-transition__map,
-  .topo-register-transition__scan,
-  .topo-register-transition__pulse,
-  .topo-register-transition__pin,
-  .register-atlas-screen--arrived::before,
-  .register-atlas-screen--arrived::after,
+  .topo-register-transition__field,
+  .topo-register-transition__wash,
+  .topo-register-transition__walk,
+  .topo-register-transition__terrain,
+  .topo-register-transition__glow,
   .register-atlas-screen--arrived .register-atlas-card {
     animation: none;
   }
 
-  /* keep the bridge veil from sticking on-screen when motion is reduced */
-  .register-atlas-screen--arrived::before,
-  .register-atlas-screen--arrived::after {
-    display: none;
-  }
-
+  /* with motion reduced we navigate instantly, so the overlay never renders;
+     still pin the card to its final state in case the class is present */
   .register-atlas-screen--arrived .register-atlas-card {
     opacity: 1;
     transform: none;

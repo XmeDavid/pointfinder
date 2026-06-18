@@ -109,9 +109,17 @@ export const useAuthStore = create<AuthState>()(
     {
       name: "pointfinder-auth",
       partialize: (state) => ({
-        // Only persist refresh token and user info — NOT the access token.
-        // The access token is kept in-memory only, reducing XSS exposure.
-        // On page load, a fresh access token is obtained via the refresh token.
+        // SECURITY (audit 12.1): The refresh token is stored in localStorage,
+        // which is readable by any JS on the page. An XSS vulnerability would
+        // expose the 7-day refresh token. The ideal fix is migrating to an
+        // HttpOnly, Secure, SameSite=Strict cookie, which requires backend
+        // API changes (cookie-based refresh endpoint). This is deferred.
+        //
+        // Current mitigations:
+        // - Access token is in-memory only (not persisted), limiting XSS
+        //   exposure to the refresh token rather than the short-lived JWT.
+        // - V55 token-version invalidation allows revoking all user sessions.
+        // - CSP headers restrict script sources.
         user: state.user,
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,

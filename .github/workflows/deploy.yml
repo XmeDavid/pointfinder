@@ -9,164 +9,45 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  actions: read
   contents: read
-  packages: write
 
 env:
-  REGISTRY: ghcr.io
-  DEPLOY_PATH: /opt/pointfinder
+  DOKPLOY_RELAY_URL: https://actions.davidsbatista.com/deploy/pointfinder-backend
 
 jobs:
   deploy:
-    name: Build and deploy
+    name: Trigger Dokploy
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.sha }}
-
-      - name: Set deploy SHA
-        id: deploy-sha
-        run: echo "sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
-
-      - name: Verify manual deploy target
-        if: github.event_name == 'workflow_dispatch'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DEPLOY_SHA: ${{ steps.deploy-sha.outputs.sha }}
-          DEPLOY_REF: ${{ github.ref_name }}
+      - name: Verify manual deploy branch
+        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
         run: |
-          set -eu
-          if [ "$DEPLOY_REF" != "main" ]; then
-            echo "Manual production deploys must run from main, got '$DEPLOY_REF'."
+          echo "Manual production deploys must run from main, got '${GITHUB_REF}'."
+          exit 1
+
+      - name: Trigger backend deployment
+        env:
+          DOKPLOY_RELAY_TOKEN: ${{ secrets.DOKPLOY_RELAY_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${DOKPLOY_RELAY_TOKEN}" ]; then
+            echo "Missing required secret: DOKPLOY_RELAY_TOKEN"
             exit 1
           fi
 
-          conclusion="$(
-            gh api \
-              -H "Accept: application/vnd.github+json" \
-              "/repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?head_sha=${DEPLOY_SHA}&branch=main&event=push&status=completed&per_page=20" \
-              --jq '.workflow_runs[] | select(.conclusion == "success") | .conclusion' \
-              | head -n 1
-          )"
-
-          if [ "$conclusion" != "success" ]; then
-            echo "No successful CI push run found for ${DEPLOY_SHA} on main."
-            exit 1
-          fi
-
-      - name: Set image owner
-        id: image-owner
-        run: echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push backend image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./backend
-          push: true
-          cache-from: type=gha,scope=pointfinder-backend
-          cache-to: type=gha,mode=max,scope=pointfinder-backend
-          tags: |
-            ${{ env.REGISTRY }}/${{ steps.image-owner.outputs.owner }}/pointfinder-backend:${{ steps.deploy-sha.outputs.sha }}
-            ${{ env.REGISTRY }}/${{ steps.image-owner.outputs.owner }}/pointfinder-backend:latest
-
-      - name: Build and push web image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./web-admin
-          push: true
-          cache-from: type=gha,scope=pointfinder-web
-          cache-to: type=gha,mode=max,scope=pointfinder-web
-          build-args: |
-            VITE_API_URL=/api
-            VITE_WS_URL=/ws-native
-          tags: |
-            ${{ env.REGISTRY }}/${{ steps.image-owner.outputs.owner }}/pointfinder-web:${{ steps.deploy-sha.outputs.sha }}
-            ${{ env.REGISTRY }}/${{ steps.image-owner.outputs.owner }}/pointfinder-web:latest
-
-      - name: Build and push nginx image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./nginx
-          push: true
-          cache-from: type=gha,scope=pointfinder-nginx
-          cache-to: type=gha,mode=max,scope=pointfinder-nginx
-          tags: |
-            ${{ env.REGISTRY }}/${{ steps.image-owner.outputs.owner }}/pointfinder-nginx:${{ steps.deploy-sha.outputs.sha }}
-            ${{ env.REGISTRY }}/${{ steps.image-owner.outputs.owner }}/pointfinder-nginx:latest
-
-      - name: Prepare deploy directory
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            mkdir -p ${{ env.DEPLOY_PATH }}/deploy
-            mkdir -p ${{ env.DEPLOY_PATH }}/certbot/conf
-            mkdir -p ${{ env.DEPLOY_PATH }}/certbot/www
-            mkdir -p ${{ env.DEPLOY_PATH }}/secrets
-
-      - name: Upload deploy files
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          source: deploy/docker-compose.yml
-          target: ${{ env.DEPLOY_PATH }}
-          overwrite: true
-
-      - name: Upload monitoring config
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          source: prometheus,grafana
-          target: ${{ env.DEPLOY_PATH }}
-          overwrite: true
-
-      - name: Restart production stack
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            set -eu
-            cd ${{ env.DEPLOY_PATH }}
-            test -f .env
-            export GHCR_OWNER=${{ steps.image-owner.outputs.owner }}
-            export IMAGE_TAG=${{ steps.deploy-sha.outputs.sha }}
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-            docker compose --project-directory . --env-file .env -f deploy/docker-compose.yml pull
-            docker compose --project-directory . --env-file .env -f deploy/docker-compose.yml up -d --remove-orphans
-            for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
-              if curl -kfsS --resolve pointfinder.pt:443:127.0.0.1 https://pointfinder.pt/ >/dev/null; then
-                docker compose --project-directory . --env-file .env -f deploy/docker-compose.yml ps
-                break
-              fi
-
-              if [ "$attempt" = "12" ]; then
-                docker compose --project-directory . --env-file .env -f deploy/docker-compose.yml ps
-                docker compose --project-directory . --env-file .env -f deploy/docker-compose.yml logs --tail=120 nginx backend frontend
-                exit 1
-              fi
-
-              sleep 5
-            done
-            docker image prune -f
+          curl --fail-with-body --show-error --silent \
+            --request POST "$DOKPLOY_RELAY_URL" \
+            --header "X-Deploy-Token: $DOKPLOY_RELAY_TOKEN" \
+            --header "Content-Type: application/json" \
+            --data @- <<JSON
+          {
+            "repository": "${GITHUB_REPOSITORY}",
+            "ref": "${GITHUB_REF}",
+            "sha": "${GITHUB_SHA}",
+            "workflow": "${GITHUB_WORKFLOW}",
+            "run_id": "${GITHUB_RUN_ID}",
+            "actor": "${GITHUB_ACTOR}"
+          }
+          JSON

@@ -1,6 +1,7 @@
 import {
   ArrowRight,
   Check,
+  Compass,
   Gift,
   MapPinned,
   MessageSquare,
@@ -41,7 +42,10 @@ function appStoreUrl() {
 
 const workflowIcons = [MapPinned, ScanLine, RadioTower];
 const featureIcons = [MapPinned, ScanLine, MessageSquare, ShieldCheck];
-const TOPOGRAPHY_BACKGROUND = "/landing/topography-contours.svg";
+const REGISTER_TERRAIN_TEXTURES = [
+  "/landing/topo-terrain-dark.webp",
+  "/landing/topo-terrain-light.webp",
+];
 type BillingCycle = "yearly" | "monthly";
 
 export function LandingPage() {
@@ -50,6 +54,7 @@ export function LandingPage() {
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("yearly");
   const [isRegisterTransitionActive, setIsRegisterTransitionActive] = useState(false);
   const transitionTimer = useRef<number | null>(null);
+  const preloadedRef = useRef(false);
 
   useEffect(
     () => () => {
@@ -59,6 +64,25 @@ export function LandingPage() {
     },
     [],
   );
+
+  // Warm the register route + both walk textures so first paint of the transition is instant.
+  const preloadRegister = useCallback(() => {
+    if (preloadedRef.current || typeof window === "undefined") {
+      return;
+    }
+    preloadedRef.current = true;
+    void import("@/features/auth/RegisterPage");
+    for (const src of REGISTER_TERRAIN_TEXTURES) {
+      const img = new Image();
+      img.src = src;
+    }
+  }, []);
+
+  // Preload on idle even without hover, so slow networks still have textures ready.
+  useEffect(() => {
+    const idle = window.setTimeout(preloadRegister, 1500);
+    return () => window.clearTimeout(idle);
+  }, [preloadRegister]);
 
   const startRegisterTransition = useCallback(
     (event?: MouseEvent<HTMLElement>) => {
@@ -92,7 +116,7 @@ export function LandingPage() {
       window.sessionStorage.setItem("pointfinder:register-arrival", "cinematic");
       transitionTimer.current = window.setTimeout(() => {
         navigate("/register");
-      }, 620);
+      }, 1500);
     },
     [isRegisterTransitionActive, navigate],
   );
@@ -169,7 +193,7 @@ export function LandingPage() {
       )}
     >
       <TopoRegisterTransition active={isRegisterTransitionActive} />
-      <header className="landing-transition-fade sticky top-0 z-40 border-b border-border/70 bg-card/70 shadow-sm backdrop-blur-xl">
+      <header className="landing-transition-fade sticky top-0 z-40 border-b border-border/70 bg-card/95 shadow-sm">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           <Link to="/" className="flex items-center gap-3" aria-label="PointFinder">
             <BrandMark />
@@ -199,6 +223,8 @@ export function LandingPage() {
               to="/register"
               className={cn(buttonVariants({ size: "sm" }), "hidden sm:inline-flex")}
               onClick={startRegisterTransition}
+              onMouseEnter={preloadRegister}
+              onFocus={preloadRegister}
             >
               {t("landing.nav.getStarted")}
             </Link>
@@ -223,6 +249,8 @@ export function LandingPage() {
                   to="/register"
                   className={cn(buttonVariants({ size: "lg" }))}
                   onClick={startRegisterTransition}
+                  onMouseEnter={preloadRegister}
+                  onFocus={preloadRegister}
                 >
                   {t("landing.nav.getStarted")}
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -427,46 +455,56 @@ function BrandMark() {
 }
 
 function HeroBackdrop() {
+  // The hero shows the same dark-map crop the walk transition opens on, in a
+  // viewport-anchored layer (see .landing-hero-map) so that when the chrome fades
+  // the hero map simply becomes fullscreen instead of a second map appearing.
   return (
     <div aria-hidden="true" className="absolute inset-0 overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_30%,var(--color-primary)_0,transparent_34%),linear-gradient(to_bottom,var(--color-card),var(--color-background))] opacity-20" />
-      <div
-        className="contour-breathe absolute inset-x-[-18%] top-[-30%] h-[136%] w-[136%] opacity-25"
-        style={{
-          WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 58%, transparent 100%)",
-          maskImage: "linear-gradient(to bottom, black 0%, black 58%, transparent 100%)",
-        }}
-      >
-        <div
-          className="h-full w-full bg-primary"
-          style={{
-            WebkitMaskImage: `url(${TOPOGRAPHY_BACKGROUND})`,
-            WebkitMaskPosition: "center top",
-            WebkitMaskRepeat: "no-repeat",
-            WebkitMaskSize: "cover",
-            maskImage: `url(${TOPOGRAPHY_BACKGROUND})`,
-            maskPosition: "center top",
-            maskRepeat: "no-repeat",
-            maskSize: "cover",
-          }}
-        />
-      </div>
-      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,transparent_58%,var(--color-background)_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,#0e2016_0%,#070d09_58%,#050806_100%)]" />
+      <div className="landing-hero-map" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,transparent_52%,var(--color-background)_100%)]" />
     </div>
   );
 }
 
 function TopoRegisterTransition({ active }: { active: boolean }) {
+  const { t } = useTranslation();
+
   if (!active) {
     return null;
   }
 
   return (
     <div className="topo-register-transition" aria-hidden="true">
-      <div className="topo-register-transition__map" />
-      <div className="topo-register-transition__scan" />
-      <div className="topo-register-transition__pulse" />
-      <span className="topo-register-transition__pin" />
+      <div className="topo-register-transition__field" />
+      <div className="topo-register-transition__wash" />
+      <div className="topo-register-transition__walk">
+        <div className="topo-map-layer topo-register-transition__terrain topo-register-transition__terrain--dark" />
+        <div className="topo-map-layer topo-register-transition__terrain topo-register-transition__terrain--light" />
+      </div>
+      <div className="topo-register-transition__glow" />
+      {/* Card ghost — a faithful stand-in for register's card that we walk into,
+          so the real card is already settled when the route swaps in. */}
+      <div className="topo-register-transition__card-dock">
+        <div className="topo-register-transition__card">
+          <div className="topo-register-transition__card-icon">
+            <Compass className="h-6 w-6" aria-hidden="true" />
+          </div>
+          <div className="topo-register-transition__card-title">
+            {t("auth.createAccount")}
+          </div>
+          <div className="topo-register-transition__card-sub">
+            {t("auth.registerDescription")}
+          </div>
+          <div className="topo-register-transition__card-label">
+            {t("auth.email")} <span className="topo-register-transition__card-req">*</span>
+          </div>
+          <div className="topo-register-transition__card-field">you@example.com</div>
+          <div className="topo-register-transition__card-btn">
+            {t("auth.sendRegistrationLink")}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
