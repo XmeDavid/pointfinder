@@ -11,13 +11,18 @@ concurrency:
 permissions:
   contents: read
 
-env:
-  DOKPLOY_RELAY_URL: https://actions.davidsbatista.com/deploy/pointfinder-backend
-
 jobs:
   deploy:
-    name: Trigger Dokploy
+    name: Trigger Dokploy (${{ matrix.service }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: pointfinder-backend
+            touched_path: backend/Dockerfile
+          - service: pointfinder-frontend
+            touched_path: web-admin/Dockerfile
 
     steps:
       - name: Verify manual deploy branch
@@ -26,9 +31,11 @@ jobs:
           echo "Manual production deploys must run from main, got '${GITHUB_REF}'."
           exit 1
 
-      - name: Trigger backend deployment
+      - name: Trigger deployment
         env:
           DOKPLOY_RELAY_TOKEN: ${{ secrets.DOKPLOY_RELAY_TOKEN }}
+          DOKPLOY_RELAY_URL: https://actions.davidsbatista.com/deploy/${{ matrix.service }}
+          DOKPLOY_TOUCHED_PATH: ${{ matrix.touched_path }}
         run: |
           set -euo pipefail
 
@@ -59,7 +66,7 @@ jobs:
               {
                 "id": "${GITHUB_SHA}",
                 "message": "GitHub Actions deploy ${GITHUB_SHA}",
-                "modified": ["backend/Dockerfile"]
+                "modified": ["${DOKPLOY_TOUCHED_PATH}"]
               }
             ],
             "repository": {
