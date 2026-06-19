@@ -1,6 +1,6 @@
 # PointFinder Web Admin
 
-React + TypeScript web admin panel for the PointFinder NFC gaming platform.
+React + TypeScript web admin panel for the PointFinder NFC gaming platform. 
 
 ## Stack
 
