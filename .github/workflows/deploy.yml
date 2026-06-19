@@ -20,9 +20,9 @@ jobs:
       matrix:
         include:
           - service: pointfinder-backend
-            touched_path: backend/Dockerfile
+            touched_path: backend/
           - service: pointfinder-frontend
-            touched_path: web-admin/Dockerfile
+            touched_path: web-admin/
 
     steps:
       - name: Verify manual deploy branch
