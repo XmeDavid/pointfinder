@@ -63,7 +63,7 @@ public class FileController {
     private ResponseEntity<?> serveFile(UUID gameId, String filename) {
         if (objectStorageService.isEnabled()) {
             String key = gameId + "/" + filename;
-            String presignedUrl = objectStorageService.generatePresignedUrl(key);
+            String presignedUrl = objectStorageService.generatePresignedUrl(key, filename);
             return ResponseEntity.status(HttpStatus.FOUND)
                     .header(HttpHeaders.LOCATION, presignedUrl)
                     .header(HttpHeaders.CACHE_CONTROL, "private, max-age=3500")

@@ -32,7 +32,9 @@ public class StringListJsonConverter implements AttributeConverter<List<String>,
             return Collections.emptyList();
         }
         try {
-            return MAPPER.readValue(dbData, new TypeReference<>() {});
+            List<String> result = MAPPER.readValue(dbData, new TypeReference<>() {});
+            // Guard against JSON literal "null" deserializing to Java null (audit 10.9)
+            return result != null ? result : Collections.emptyList();
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Failed to deserialize JSON to list", e);
         }

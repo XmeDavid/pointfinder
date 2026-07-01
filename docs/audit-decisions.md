@@ -27,6 +27,30 @@ Design decisions made while resolving findings from `docs/full-codebase-audit-20
 
 ---
 
+## Finding 12.3 -- Broadcast code brute-force mitigation
+
+**Decision:** Rely on nginx rate limiting (10r/m per IP) combined with the widened broadcast code (10 chars, 28-char alphabet) rather than adding application-level rate limiting.
+
+**Alternatives considered:**
+- Add a Spring-level rate limiter (e.g. Bucket4j or custom service similar to PlayerJoinRateLimiter)
+- Require lightweight authentication (e.g. a short-lived viewer token)
+
+**Rationale:** V57 widened the broadcast code from 6 to 10 characters, increasing the search space from ~480M to ~280 trillion combinations. The nginx `broadcast_limit` zone (10r/m per IP, burst=5) makes enumeration impractical even from distributed sources given the code entropy. Application-level rate limiting would add complexity for marginal benefit. If the threat model changes (e.g. targeted attacks with botnets), the next step would be adding a CAPTCHA or requiring a lightweight viewer token.
+
+---
+
+## Finding 10.9 -- StringListJsonConverter null safety
+
+**Decision:** Add a null guard after Jackson deserialization in `convertToEntityAttribute` so the converter never returns null, even if the database column contains the JSON literal `null`.
+
+**Alternatives considered:**
+- Also change `convertToDatabaseColumn` to write `"[]"` instead of SQL NULL for null input
+- Leave as-is since callers already handle nulls
+
+**Rationale:** The converter's contract should be: always return a non-null list. The `convertToEntityAttribute` already returns `Collections.emptyList()` for SQL NULL and blank strings, but Jackson can deserialize the JSON string `"null"` to Java null, which would slip through. Adding a post-deserialization null check makes the contract airtight without changing write behavior (which could affect queries that check `IS NULL`).
+
+---
+
 ## Finding 3.9 -- AppState God Object
 
 **Decision:** Accept the current extension-based decomposition as sufficient.

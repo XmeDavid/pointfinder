@@ -58,12 +58,25 @@ public class ObjectStorageService {
     }
 
     public String generatePresignedUrl(String key) {
+        return generatePresignedUrl(key, null);
+    }
+
+    /**
+     * Generates a presigned GET URL. When {@code filename} is provided, the
+     * response includes a {@code Content-Disposition: inline} header so browsers
+     * handle the file correctly (audit finding 12.10).
+     */
+    public String generatePresignedUrl(String key, String filename) {
+        GetObjectRequest.Builder getBuilder = GetObjectRequest.builder()
+                .bucket(config.getBucket())
+                .key(key);
+        if (filename != null && !filename.isBlank()) {
+            String safe = filename.replaceAll("[^a-zA-Z0-9._-]", "_");
+            getBuilder.responseContentDisposition("inline; filename=\"" + safe + "\"");
+        }
         GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
                 .signatureDuration(Duration.ofSeconds(config.getPresignExpirySeconds()))
-                .getObjectRequest(GetObjectRequest.builder()
-                        .bucket(config.getBucket())
-                        .key(key)
-                        .build())
+                .getObjectRequest(getBuilder.build())
                 .build();
         URL url = s3Presigner.presignGetObject(presignRequest).url();
         return url.toString();
