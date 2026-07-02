@@ -7,7 +7,7 @@ import com.prayer.pointfinder.dto.response.UserResponse;
 import com.prayer.pointfinder.entity.User;
 import com.prayer.pointfinder.security.SecurityUtils;
 import com.prayer.pointfinder.service.UserService;
-import jakarta.servlet.http.HttpServletRequest;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -43,10 +43,9 @@ public class UserController {
     @PutMapping("/me")
     public ResponseEntity<UpdateProfileResponse> updateProfile(
             @Valid @RequestBody UpdateProfileRequest request,
-            @RequestHeader(value = "X-Forwarded-Host", required = false) String forwardedHost,
-            HttpServletRequest httpRequest) {
-        String requestHost = forwardedHost != null ? forwardedHost : httpRequest.getHeader("Host");
-        return ResponseEntity.ok(userService.updateProfile(request, requestHost));
+            @RequestHeader(value = "X-Forwarded-Host", required = false) String forwardedHost) {
+        // Audit 12.7: Only use X-Forwarded-Host; no Host header fallback.
+        return ResponseEntity.ok(userService.updateProfile(request, forwardedHost));
     }
 
     @PutMapping("/me/push-token")

@@ -95,6 +95,15 @@ public class NotificationService {
         }
 
         if (!pushTargets.isEmpty()) {
+            // Audit 10.11: warn about players with null pushPlatform (silently dropped)
+            long nullPlatformCount = pushTargets.stream()
+                    .filter(p -> p.getPushPlatform() == null)
+                    .count();
+            if (nullPlatformCount > 0) {
+                log.warn("Skipping {} player(s) with null pushPlatform for game {} — push platform not set",
+                        nullPlatformCount, gameId);
+            }
+
             List<String> apnsTokens = pushTargets.stream()
                     .filter(p -> p.getPushPlatform() == PushPlatform.ios)
                     .map(Player::getPushToken)

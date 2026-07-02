@@ -89,6 +89,9 @@ class PlayerRepository @Inject constructor(
 
     fun pendingCountFlow(): Flow<Int> = db.pendingActionDao().pendingCountFlow()
 
+    // Audit 11.2: expose permanently failed count as a reactive flow
+    fun failedCountFlow(): Flow<Int> = db.pendingActionDao().failedCountFlow()
+
     suspend fun loadProgress(auth: AuthType.Player, online: Boolean): ProgressResult {
         if (online) {
             try {

@@ -19,9 +19,9 @@ Most "unfixed" findings (7 of 7) were already resolved in post-audit commits (th
 | 4.13 | Alt text hardcoded English in SubmissionsPage/ReviewLayout | Already fixed | Both files were restructured. Current code in SubmissionDetail.tsx uses `t('submissions.altFile', ...)` i18n keys. |
 | 6.16 | 56 instances of contentDescription = null | Mostly fixed | Reduced to 3 instances, all in decorative icons within labeled Buttons (correct per Compose a11y guidelines). See audit-decisions.md. |
 | 10.9 | StringListJsonConverter returns null for empty JSON | **Fixed in this pass (2026-07-01)** | Added null guard after Jackson deserialization to handle JSON literal `null`. |
-| 10.11 | NotificationService treats null pushPlatform as iOS | **Fixed in this pass** | Player path was already correct. User.java still had `PushPlatform.ios` default. Removed the default, created V58 migration to drop NOT NULL + default on `users.push_platform`. |
-| 11.2 | Android checkForFailedActions never called | Already fixed | Called from AppNavigation.kt line 639 in LaunchedEffect, with comment referencing finding 11.2. |
-| 12.7 | AuthController uses Host header instead of X-Forwarded-Host | Already fixed | Both `/request-registration` and `/forgot-password` use `@RequestHeader("X-Forwarded-Host")` with Host fallback. |
+| 10.11 | NotificationService treats null pushPlatform as iOS | **Fixed** | Player path was already correct (null drops from both lists). User.java default fixed in prior pass. Warning log added 2026-07-02 for observability when players have null pushPlatform. |
+| 11.2 | Android checkForFailedActions never called | **Fixed** | checkForFailedActions was already called. 2026-07-02: added reactive failedCountFlow to DAO/Repository/ViewModel and visible warning on CheckInScreen (matching iOS's red warning triangle). |
+| 12.7 | AuthController uses Host header instead of X-Forwarded-Host | **Fixed** | 2026-07-02: Removed Host header fallback from AuthController, UserController, InviteController, OrganizationController. Only X-Forwarded-Host used; null falls back to configured app.frontend-url via EmailService. See audit-decisions.md. |
 | 12.10 | No Content-Disposition header on file serving | **Fixed in this pass (2026-07-01)** | Local path was already fixed. S3 presigned URL path now includes `responseContentDisposition` override via `generatePresignedUrl(key, filename)`. |
 
 ## Deferred Findings (15) -- Verification Status
@@ -92,3 +92,18 @@ Most "unfixed" findings (7 of 7) were already resolved in post-audit commits (th
 2. **ObjectStorageService.java** -- Added `generatePresignedUrl(key, filename)` overload that sets `responseContentDisposition` on the S3 presigned URL (finding 12.10).
 3. **FileController.java** -- Updated `serveFile()` to pass filename to `generatePresignedUrl` so S3-served files include `Content-Disposition` header.
 4. **docs/audit-decisions.md** -- Added decision for finding 10.9 (StringListJsonConverter null safety approach).
+
+## Changes Made (2026-07-02 pass)
+
+1. **NotificationService.java** -- Added warning log when players with null pushPlatform are silently dropped from push delivery (finding 10.11).
+2. **AuthController.java** -- Removed Host header fallback; only uses X-Forwarded-Host. Removed HttpServletRequest parameter (finding 12.7).
+3. **UserController.java** -- Same Host header fix as AuthController (finding 12.7).
+4. **InviteController.java** -- Same Host header fix as AuthController (finding 12.7).
+5. **OrganizationController.java** -- Same Host header fix as AuthController (finding 12.7).
+6. **CompanionDatabase.kt** -- Added `failedCountFlow()` DAO query for reactive permanently-failed count (finding 11.2).
+7. **PlayerRepository.kt** -- Exposed `failedCountFlow()` from DAO (finding 11.2).
+8. **AppSessionViewModel.kt** -- Added `failedActionsCount` to state and observer (finding 11.2).
+9. **AppNavigation.kt** -- Plumbed `failedActionsCount` through PlayerRootScreen to CheckInScreen (finding 11.2).
+10. **PlayerGameplayScreens.kt** -- Added `failedActionsCount` parameter and red warning row with Warning icon on CheckInScreen (finding 11.2).
+11. **strings.xml (en/pt/de)** -- Added `label_failed_sync_count` and `label_failed_sync_warning` string resources (finding 11.2).
+12. **docs/audit-decisions.md** -- Added decisions for findings 12.7 and 11.2.

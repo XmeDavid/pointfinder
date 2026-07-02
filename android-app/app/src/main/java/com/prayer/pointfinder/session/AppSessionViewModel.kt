@@ -37,6 +37,7 @@ data class AppSessionState(
     val isDeletingAccount: Boolean = false,
     val isOnline: Boolean = true,
     val pendingActionsCount: Int = 0,
+    val failedActionsCount: Int = 0, // Audit 11.2: track permanently failed sync actions
     val currentLanguage: String = "en",
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val errorMessage: String? = null,
@@ -201,6 +202,12 @@ class AppSessionViewModel @Inject constructor(
         viewModelScope.launch {
             playerRepository.pendingCountFlow().collectLatest { count ->
                 _state.value = _state.value.copy(pendingActionsCount = count)
+            }
+        }
+        // Audit 11.2: also observe permanently failed actions count
+        viewModelScope.launch {
+            playerRepository.failedCountFlow().collectLatest { count ->
+                _state.value = _state.value.copy(failedActionsCount = count)
             }
         }
     }

@@ -10,7 +10,7 @@ import com.prayer.pointfinder.dto.response.OrgResponse;
 import com.prayer.pointfinder.service.OrgInviteService;
 import com.prayer.pointfinder.service.OrgMembershipService;
 import com.prayer.pointfinder.service.OrganizationService;
-import jakarta.servlet.http.HttpServletRequest;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -75,11 +75,10 @@ public class OrganizationController {
     public ResponseEntity<OrgInviteResponse> createInvite(
             @PathVariable UUID orgId,
             @Valid @RequestBody CreateOrgInviteRequest request,
-            @RequestHeader(value = "X-Forwarded-Host", required = false) String forwardedHost,
-            HttpServletRequest httpRequest) {
-        String requestHost = forwardedHost != null ? forwardedHost : httpRequest.getHeader("Host");
+            @RequestHeader(value = "X-Forwarded-Host", required = false) String forwardedHost) {
+        // Audit 12.7: Only use X-Forwarded-Host; no Host header fallback.
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(orgInviteService.createInvite(orgId, request.getEmail(), requestHost));
+                .body(orgInviteService.createInvite(orgId, request.getEmail(), forwardedHost));
     }
 
     @GetMapping("/{orgId}/invites")

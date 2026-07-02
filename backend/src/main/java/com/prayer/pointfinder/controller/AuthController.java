@@ -76,12 +76,12 @@ public class AuthController {
     @PostMapping("/request-registration")
     public ResponseEntity<MessageResponse> requestRegistration(
             @Valid @RequestBody RequestRegistrationRequest request,
-            @RequestHeader(value = "X-Forwarded-Host", required = false) String forwardedHost,
-            HttpServletRequest httpRequest) {
-        // Prefer X-Forwarded-Host (set by reverse proxy) over Host header for consistency
-        // with other endpoints (e.g., forgot-password) and to avoid spoofing risks
-        String requestHost = forwardedHost != null ? forwardedHost : httpRequest.getHeader("Host");
-        authService.requestRegistration(request.getEmail().trim(), requestHost);
+            @RequestHeader(value = "X-Forwarded-Host", required = false) String forwardedHost) {
+        // Audit 12.7: Only use X-Forwarded-Host (set by reverse proxy). Do not fall back
+        // to the raw Host header — it is user-controlled and spoofable. If X-Forwarded-Host
+        // is absent, pass null; EmailService.resolveFrontendBaseUrl falls back to the
+        // configured app.frontend-url.
+        authService.requestRegistration(request.getEmail().trim(), forwardedHost);
         return ResponseEntity.ok(new MessageResponse("If eligible, a registration link has been sent."));
     }
 
@@ -99,11 +99,9 @@ public class AuthController {
     @PostMapping("/forgot-password")
     public ResponseEntity<MessageResponse> forgotPassword(
             @Valid @RequestBody ForgotPasswordRequest request,
-            @RequestHeader(value = "X-Forwarded-Host", required = false) String forwardedHost,
-            HttpServletRequest httpRequest) {
-        // Use X-Forwarded-Host with Host fallback, consistent with /request-registration
-        String requestHost = forwardedHost != null ? forwardedHost : httpRequest.getHeader("Host");
-        authService.requestPasswordReset(request.getEmail(), requestHost);
+            @RequestHeader(value = "X-Forwarded-Host", required = false) String forwardedHost) {
+        // Audit 12.7: Only use X-Forwarded-Host. See /request-registration comment.
+        authService.requestPasswordReset(request.getEmail(), forwardedHost);
         return ResponseEntity.ok(new MessageResponse("If an account with that email exists, a reset link has been sent."));
     }
 

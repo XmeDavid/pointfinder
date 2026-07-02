@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.material.icons.filled.PlayCircleFilled
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -77,6 +78,7 @@ data class MediaItem(
 @Composable
 fun CheckInScreen(
     pendingActionsCount: Int,
+    failedActionsCount: Int = 0, // Audit 11.2: show permanently failed sync actions
     scanError: String?,
     onScan: () -> Unit,
     nfcState: NfcState = NfcState.ENABLED,
@@ -126,6 +128,17 @@ fun CheckInScreen(
                     stringResource(R.string.label_pending_sync_other, pendingActionsCount)
                 }
                 Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Spacer(Modifier.height(8.dp))
+        }
+        // Audit 11.2: show warning when sync actions have permanently failed
+        if (failedActionsCount > 0) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Warning, contentDescription = stringResource(R.string.label_failed_sync_warning), tint = MaterialTheme.colorScheme.error)
+                Text(
+                    stringResource(R.string.label_failed_sync_count, failedActionsCount),
+                    color = MaterialTheme.colorScheme.error,
+                )
             }
             Spacer(Modifier.height(8.dp))
         }

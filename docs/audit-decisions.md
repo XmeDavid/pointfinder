@@ -59,3 +59,27 @@ Design decisions made while resolving findings from `docs/full-codebase-audit-20
 - Extract subsystems into dedicated @Observable classes (LocationTracker, NotificationManager, RealtimeClient, etc.)
 
 **Rationale:** AppState is already split across 5 files (AppState.swift + 4 extensions: Auth, GameActions, Notifications, Snapshot) with clear MARK sections. The main file is 256 lines. While `AppState+GameActions.swift` at 666 lines could benefit from further extraction, this is a significant architectural change that affects the entire iOS app's dependency graph. The current structure is documented with a tech-debt comment (lines 7-16 of AppState.swift) and works correctly.
+
+---
+
+## Finding 12.7 -- AuthController Host header fallback (2026-07-02)
+
+**Decision:** Remove Host header fallback from all controllers. Only use `X-Forwarded-Host` (set by nginx reverse proxy). When absent, pass null through to `EmailService.resolveFrontendBaseUrl`, which falls back to the configured `app.frontend-url`.
+
+**Alternatives considered:**
+- Keep Host fallback but validate it against `SUPPORTED_FRONTEND_HOSTS` at the controller level
+- Add a centralized utility to resolve request host
+
+**Rationale:** The `Host` header is user-controlled and spoofable. Although `EmailService` already validates against a whitelist, relying on Host creates a maintenance hazard: any new code path using `requestHost` before validation could introduce a vulnerability. The `X-Forwarded-Host` header is set by nginx and is trustworthy behind the reverse proxy. In development (no proxy), the fallback to `app.frontend-url` is the correct behavior. Applied the same fix to `UserController`, `InviteController`, and `OrganizationController` which had the same pattern.
+
+---
+
+## Finding 11.2 -- Android failed sync actions visibility (2026-07-02)
+
+**Decision:** Add reactive `failedCountFlow()` to the DAO and display a red warning with count on the CheckInScreen, matching iOS's red warning triangle behavior.
+
+**Alternatives considered:**
+- Only rely on the existing `solveError` message from `checkForFailedActions()`
+- Add a full-screen overlay for failed actions
+
+**Rationale:** The existing `checkForFailedActions()` call is a one-shot check that sets `solveError`, which is only visible on the solve screen and can be cleared. A reactive flow ensures the warning stays visible whenever failed actions exist, regardless of screen transitions. Showing it on CheckInScreen (the idle/home screen for players) maximizes visibility. The count format matches the existing pending actions pattern, and the red color + Warning icon matches iOS's treatment.

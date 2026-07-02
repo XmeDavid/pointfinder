@@ -3,7 +3,7 @@ package com.prayer.pointfinder.controller;
 import com.prayer.pointfinder.dto.request.CreateInviteRequest;
 import com.prayer.pointfinder.dto.response.InviteResponse;
 import com.prayer.pointfinder.service.InviteService;
-import jakarta.servlet.http.HttpServletRequest;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -37,11 +37,10 @@ public class InviteController {
     @PostMapping("/api/invites")
     public ResponseEntity<InviteResponse> createInvite(
             @Valid @RequestBody CreateInviteRequest request,
-            @RequestHeader(value = "X-Forwarded-Host", required = false) String forwardedHost,
-            HttpServletRequest httpRequest
+            @RequestHeader(value = "X-Forwarded-Host", required = false) String forwardedHost
     ) {
-        String requestHost = forwardedHost != null ? forwardedHost : httpRequest.getHeader("Host");
-        return ResponseEntity.status(HttpStatus.CREATED).body(inviteService.createInvite(request, requestHost));
+        // Audit 12.7: Only use X-Forwarded-Host; no Host header fallback.
+        return ResponseEntity.status(HttpStatus.CREATED).body(inviteService.createInvite(request, forwardedHost));
     }
 
     @PostMapping("/api/invites/{inviteId}/accept")

@@ -296,6 +296,7 @@ fun AppNavigation(
                 sessionViewModel = sessionViewModel,
                 isOnline = sessionState.isOnline,
                 pendingActionsCount = sessionState.pendingActionsCount,
+                failedActionsCount = sessionState.failedActionsCount, // Audit 11.2
                 currentLanguage = sessionState.currentLanguage,
                 currentThemeMode = sessionState.themeMode,
                 isDeletingAccount = sessionState.isDeletingAccount,
@@ -390,6 +391,7 @@ private fun PlayerRootScreen(
     sessionViewModel: AppSessionViewModel,
     isOnline: Boolean,
     pendingActionsCount: Int,
+    failedActionsCount: Int = 0, // Audit 11.2
     currentLanguage: String,
     currentThemeMode: ThemeMode,
     isDeletingAccount: Boolean,
@@ -892,6 +894,7 @@ private fun PlayerRootScreen(
                 Box(modifier = Modifier.fillMaxSize()) {
                     CheckInScreen(
                         pendingActionsCount = pendingActionsCount,
+                        failedActionsCount = failedActionsCount, // Audit 11.2
                         scanError = state.scanError,
                         onScan = {
                             showNfcScanDialog = true

@@ -84,6 +84,8 @@
     <string name="label_no_pending_actions">All synced</string>
     <string name="label_pending_sync_one">%1$d pending action to sync</string>
     <string name="label_pending_sync_other">%1$d pending actions to sync</string>
+    <string name="label_failed_sync_count">%1$d action(s) failed to sync</string>
+    <string name="label_failed_sync_warning">Sync failures</string>
     <string name="label_syncing">Syncing %d</string>
     <string name="label_offline_count">Offline (%d)</string>
     <string name="label_uploading">UPLOADING</string>

@@ -81,6 +81,8 @@
     <string name="label_no_pending_actions">Tudo sincronizado</string>
     <string name="label_pending_sync_one">%1$d ação pendente para sincronizar</string>
     <string name="label_pending_sync_other">%1$d ações pendentes para sincronizar</string>
+    <string name="label_failed_sync_count">%1$d ação(ões) falharam ao sincronizar</string>
+    <string name="label_failed_sync_warning">Falhas de sincronização</string>
     <string name="label_syncing">A sincronizar %d</string>
     <string name="label_offline_count">Sem ligação (%d)</string>
     <string name="label_uploading">A ENVIAR</string>

@@ -157,6 +157,10 @@ interface PendingActionDao {
 
     @Query("SELECT COUNT(*) FROM pending_actions WHERE gameId = :gameId AND permanentlyFailed = 1")
     suspend fun getPermanentlyFailedCount(gameId: String): Int
+
+    // Audit 11.2: reactive flow so the UI can show failed count
+    @Query("SELECT COUNT(*) FROM pending_actions WHERE permanentlyFailed = 1")
+    fun failedCountFlow(): Flow<Int>
 }
 
 @Dao
