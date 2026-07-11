@@ -36,7 +36,7 @@ struct OperatorSubmissionsView: View {
                 if let errorMessage {
                     Text(errorMessage)
                         .font(.caption)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(PFColorToken.contentDanger)
                         .padding(.horizontal)
                 }
 
@@ -57,18 +57,7 @@ struct OperatorSubmissionsView: View {
                     ScrollView {
                         LazyVStack(spacing: 10) {
                             ForEach(filteredSubmissions) { submission in
-                                Button {
-                                    reviewingSubmission = submission
-                                } label: {
-                                    submissionRow(submission)
-                                        .padding(14)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                        .background(Color.pfCard)
-                                        .clipShape(RoundedRectangle(cornerRadius: PFRadius.card))
-                                        .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
-                                        .contentShape(Rectangle())
-                                }
-                                .buttonStyle(.plain)
+                                submissionRow(submission)
                             }
                         }
                         .padding(.horizontal, PFSpacing.screenPadding)
@@ -134,53 +123,17 @@ struct OperatorSubmissionsView: View {
     }
 
     private func submissionRow(_ submission: SubmissionResponse) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text(teamName(for: submission.teamId))
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                Spacer()
-                Text(statusLabel(for: submission.status))
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(statusColor(for: submission.status).opacity(0.15))
-                    .foregroundStyle(statusColor(for: submission.status))
-                    .clipShape(Capsule())
-            }
-
-            Text(challengeTitle(for: submission.challengeId))
-                .font(.subheadline)
-            Text(baseName(for: submission.baseId))
-                .font(.caption)
-                .foregroundStyle(Color.pfTextMuted)
-
-            if !submission.answer.isEmpty {
-                Text(submission.answer)
-                    .font(.caption)
-                    .foregroundStyle(Color.pfTextMuted)
-                    .lineLimit(2)
-            }
-
-            let mediaUrls = getMediaUrls(submission)
-            if !mediaUrls.isEmpty {
-                HStack(spacing: 4) {
-                    Image(systemName: mediaUrls.count == 1 ? "photo" : "photo.on.rectangle")
-                        .font(.caption2)
-                        .foregroundStyle(Color.pfTextMuted)
-                    if mediaUrls.count > 1 {
-                        Text("\(mediaUrls.count)")
-                            .font(.caption2)
-                            .foregroundStyle(Color.pfTextMuted)
-                    }
-                }
-            }
-
-            Text(formatDate(submission.submittedAt))
-                .font(.caption2)
-                .foregroundStyle(Color.pfTextMuted)
-        }
+        OperatorSubmissionCard(
+            teamName: teamName(for: submission.teamId),
+            challengeTitle: challengeTitle(for: submission.challengeId),
+            baseName: baseName(for: submission.baseId),
+            answer: submission.answer,
+            submittedAt: formatDate(submission.submittedAt),
+            statusLabel: statusLabel(for: submission.status),
+            statusTone: statusTone(for: submission.status),
+            mediaCount: getMediaUrls(submission).count,
+            action: { reviewingSubmission = submission }
+        )
     }
 
     private func loadInitialData() async {
@@ -258,16 +211,12 @@ struct OperatorSubmissionsView: View {
         }
     }
 
-    private func statusColor(for status: String) -> Color {
+    private func statusTone(for status: String) -> OperatorTone {
         switch status {
-        case "pending":
-            return Color.pfPending
-        case "approved", "correct":
-            return Color.pfCompleted
-        case "rejected":
-            return Color.pfRejected
-        default:
-            return .gray
+        case "pending": .pending
+        case "approved", "correct": .success
+        case "rejected": .danger
+        default: .muted
         }
     }
 
@@ -375,7 +324,7 @@ private struct OperatorSubmissionReviewSheet: View {
                     Section {
                         Text(errorMessage)
                             .font(.caption)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(PFColorToken.contentDanger)
                     }
                 }
             }
@@ -796,7 +745,7 @@ private struct AuthenticatedImageView: View {
             } else {
                 Text(Translations.string("common.error"))
                     .font(.caption)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(PFColorToken.contentDanger)
             }
         }
         .task(id: fileUrl) {
@@ -859,7 +808,7 @@ private struct AuthenticatedVideoView: View {
             } else {
                 Text(Translations.string("common.error"))
                     .font(.caption)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(PFColorToken.contentDanger)
             }
         }
         .task(id: fileUrl) {
@@ -906,4 +855,3 @@ private struct AuthenticatedVideoView: View {
         isLoading = false
     }
 }
-

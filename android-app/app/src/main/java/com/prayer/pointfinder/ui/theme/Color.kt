@@ -1,6 +1,7 @@
 package com.prayer.pointfinder.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import com.prayer.pointfinder.core.designsystem.PFColors
 
 // Brand / primary
 val GreenSeed = Color(0xFF22C55E)
@@ -14,10 +15,10 @@ val StatusSubmitted = Color(0xFFF59E0B)
 val StatusRejected = Color(0xFFEF4444)
 
 // Semantic parity tokens (matching iOS PfCompleted / PfCheckedIn / etc.)
-val PfCompleted = Color(0xFF22C55E)   // green
-val PfCheckedIn = Color(0xFF3B82F6)   // blue
-val PfPending = Color(0xFFF59E0B)     // amber
-val PfRejected = Color(0xFFEF4444)    // red
+val PfCompleted = PFColors.StatusCompletedLight
+val PfCheckedIn = PFColors.StatusCheckedInLight
+val PfPending = PFColors.StatusPendingLight
+val PfRejected = PFColors.StatusRejectedLight
 
 // Waypoint surface colors (light theme)
 val WaypointBackground = Color(0xFFFAFAF8)
@@ -44,8 +45,8 @@ val ErrorRed = Color(0xFFB00020)
 val OfflineOrange = Color(0xFFE08A00)
 
 // ── Light theme palette ──────────────────────────────────────────────
-val LightPrimary = GreenSeed
-val LightOnPrimary = Color(0xFFFFFFFF)
+val LightPrimary = PFColors.ActionPrimaryLight
+val LightOnPrimary = PFColors.ActionOnPrimaryLight
 val LightPrimaryContainer = Color(0xFFD4EDDA)
 val LightOnPrimaryContainer = Color(0xFF0A5C2B)
 val LightSecondary = Color(0xFF4B6B5A)
@@ -56,10 +57,10 @@ val LightTertiary = Color(0xFF7C6520)
 val LightOnTertiary = Color(0xFFFFFFFF)
 val LightTertiaryContainer = Color(0xFFFFE08D)
 val LightOnTertiaryContainer = Color(0xFF261A00)
-val LightBackground = Color(0xFFFAFAFA)
-val LightOnBackground = Color(0xFF1B1B1B)
-val LightSurface = Color(0xFFFAFAFA)
-val LightOnSurface = Color(0xFF1B1B1B)
+val LightBackground = PFColors.SurfaceCanvasLight
+val LightOnBackground = PFColors.ContentPrimaryLight
+val LightSurface = PFColors.SurfacePanelLight
+val LightOnSurface = PFColors.ContentPrimaryLight
 val LightSurfaceVariant = Color(0xFFE0E8E2)
 val LightOnSurfaceVariant = Color(0xFF44483E)
 val LightOutline = Color(0xFF74796D)
@@ -75,7 +76,7 @@ val LightSurfaceTint = GreenSeed
 val LightScrim = Color(0xFF000000)
 
 // ── Dark theme palette ───────────────────────────────────────────────
-val DarkPrimary = GreenLight
+val DarkPrimary = PFColors.ActionPrimaryDark
 val DarkOnPrimary = Color(0xFF003919)
 val DarkPrimaryContainer = Color(0xFF005227)
 val DarkOnPrimaryContainer = Color(0xFFA8F0B6)
@@ -87,10 +88,10 @@ val DarkTertiary = Color(0xFFE2C36E)
 val DarkOnTertiary = Color(0xFF3F2E00)
 val DarkTertiaryContainer = Color(0xFF5A4400)
 val DarkOnTertiaryContainer = Color(0xFFFFE08D)
-val DarkBackground = Color(0xFF1B1B1B)
-val DarkOnBackground = Color(0xFFE2E3DD)
-val DarkSurface = Color(0xFF1B1B1B)
-val DarkOnSurface = Color(0xFFE2E3DD)
+val DarkBackground = PFColors.SurfaceCanvasDark
+val DarkOnBackground = PFColors.ContentPrimaryDark
+val DarkSurface = PFColors.SurfacePanelDark
+val DarkOnSurface = PFColors.ContentPrimaryDark
 val DarkSurfaceVariant = Color(0xFF44483E)
 val DarkOnSurfaceVariant = Color(0xFFC4C8BB)
 val DarkOutline = Color(0xFF8E9285)

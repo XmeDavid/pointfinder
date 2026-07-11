@@ -296,10 +296,10 @@ private struct PulseRing: View {
 // MARK: - Compass colours
 
 extension Color {
-    static let compassGreen = Color(red: 0x22 / 255.0, green: 0xC5 / 255.0, blue: 0x5E / 255.0)
-    static let compassGreenDark = Color(red: 0x16 / 255.0, green: 0xA3 / 255.0, blue: 0x4A / 255.0)
-    static let compassGreenDeep = Color(red: 0x0D / 255.0, green: 0x5F / 255.0, blue: 0x2D / 255.0)
-    static let compassCenter = Color(red: 0x06 / 255.0, green: 0x0B / 255.0, blue: 0x06 / 255.0)
+    static let compassGreen = PFColorToken.actionPrimary
+    static let compassGreenDark = PFColorToken.actionPrimaryStrong
+    static let compassGreenDeep = PFColorToken.statusLive
+    static let compassCenter = PFColorToken.surfaceCanvas
 }
 
 #Preview {

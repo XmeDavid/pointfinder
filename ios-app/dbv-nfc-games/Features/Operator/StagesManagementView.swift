@@ -42,13 +42,27 @@ struct StagesManagementView: View {
                     description: Text(locale.t("stages.noStagesDesc"))
                 )
             } else {
-                List(stages.sorted { $0.orderIndex < $1.orderIndex }) { stage in
-                    NavigationLink(value: StageNavDestination.edit(stage.id)) {
-                        stageRow(stage)
+                ScrollView {
+                    LazyVStack(spacing: PFSpacing.itemGap) {
+                        ManagementListSummary(label: locale.t("stages.title"), count: stages.count)
+                        ForEach(stages.sorted { $0.orderIndex < $1.orderIndex }) { stage in
+                            ManagementResourceRow(
+                                title: stage.name,
+                                subtitle: stage.description,
+                                metadata: [
+                                    ManagementMetadata(label: transitionLabel(for: stage.transitionType), tone: .info),
+                                    ManagementMetadata(label: baseCountLabel(stage), tone: .muted),
+                                    ManagementMetadata(label: stage.isActive ? locale.t("stages.active") : locale.t("stages.inactive"), tone: stage.isActive ? .success : .muted),
+                                ],
+                                systemImage: "list.number",
+                                action: { path.append(StageNavDestination.edit(stage.id)) }
+                            )
+                            .accessibilityIdentifier("stage-edit-btn")
+                        }
                     }
-                    .accessibilityIdentifier("stage-edit-btn")
+                    .padding(.horizontal, PFSpacing.screenPadding)
+                    .padding(.vertical, PFSpacing.itemGap)
                 }
-                .listStyle(.plain)
             }
         }
         .navigationTitle(locale.t("stages.title"))
@@ -121,60 +135,14 @@ struct StagesManagementView: View {
         }
     }
 
-    @ViewBuilder
-    private func stageRow(_ stage: Stage) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(stage.name)
-                    .font(.headline)
-                    .foregroundStyle(.pfText)
-                if !stage.description.isEmpty {
-                    Text(stage.description)
-                        .font(.caption)
-                        .foregroundStyle(.pfTextMuted)
-                        .lineLimit(1)
-                }
-                HStack(spacing: 6) {
-                    transitionBadge(for: stage.transitionType)
-                    Text(baseCountLabel(stage))
-                        .font(.caption)
-                        .foregroundStyle(.pfTextMuted)
-                }
-            }
-            Spacer()
-            Circle()
-                .fill(stage.isActive ? Color.pfCompleted : Color.pfInactive)
-                .frame(width: 10, height: 10)
-        }
-    }
-
-    @ViewBuilder
-    private func transitionBadge(for transitionType: String) -> some View {
+    private func transitionLabel(for transitionType: String) -> String {
         switch transitionType {
         case "scheduled":
-            Label(locale.t("stages.scheduled"), systemImage: "clock")
-                .font(.caption2)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
-                .background(Color.pfCheckedIn.opacity(0.15))
-                .foregroundStyle(Color.pfCheckedIn)
-                .clipShape(Capsule())
+            return locale.t("stages.scheduled")
         case "trigger":
-            Label(locale.t("stages.trigger"), systemImage: "flag")
-                .font(.caption2)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
-                .background(Color.pfPending.opacity(0.15))
-                .foregroundStyle(Color.pfPending)
-                .clipShape(Capsule())
+            return locale.t("stages.trigger")
         default:
-            Text(locale.t("stages.manual"))
-                .font(.caption2)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
-                .background(Color.secondary.opacity(0.15))
-                .foregroundStyle(.secondary)
-                .clipShape(Capsule())
+            return locale.t("stages.manual")
         }
     }
 

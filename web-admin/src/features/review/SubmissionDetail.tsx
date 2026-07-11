@@ -132,7 +132,7 @@ function MediaLightbox({
 
   return (
     <div
-      className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-[var(--pf-color-surface-scrim)]"
       onClick={onClose}
       data-testid="media-lightbox"
     >
@@ -568,7 +568,7 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
 
       {/* Action bar */}
       {showActions && (
-        <div className="shrink-0 px-4 py-3 border-t border-border bg-card/80 backdrop-blur-sm flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-3 border-t border-border bg-card px-4 py-3">
           <button
             onClick={handleReject}
             data-testid="reject-btn"

@@ -52,8 +52,7 @@ services:
       MAIL_FROM: ${MAIL_FROM:-info@pointfinder.pt}
       MAIL_ENABLED: ${MAIL_ENABLED:-false}
       APNS_ENABLED: ${APNS_ENABLED:-false}
-      APNS_KEY_PATH: ${APNS_KEY_PATH:-file:/app/config/apns-key.p8}
-      APNS_KEY_ID: ${APPLE_PROD_APNS_KEY:-}
+      APNS_KEY_ID: ${APNS_KEY_ID:-}
       APNS_TEAM_ID: ${APNS_TEAM_ID:-}
       APNS_BUNDLE_ID: ${APNS_BUNDLE_ID:-com.prayer.pointfinder}
       APNS_PRODUCTION: ${APNS_PRODUCTION:-false}
@@ -86,8 +85,7 @@ services:
       APP_UPLOADS_MAX_ACTIVE_BYTES_PER_GAME: ${APP_UPLOADS_MAX_ACTIVE_BYTES_PER_GAME:-17179869184}
     volumes:
       - ${UPLOADS_PATH:-./data/uploads}:/uploads
-      - ${SECRETS_PATH:-./secrets}/AuthKey_${APPLE_PROD_APNS_KEY}.p8:/app/config/apns-key.p8:ro
-      - ${SECRETS_PATH:-./secrets}/firebase-service-account.json:/app/config/firebase-service-account.json:ro
+      - ${SECRETS_PATH:-./secrets}:/app/config:ro
     stop_grace_period: 40s
     deploy:
       resources:

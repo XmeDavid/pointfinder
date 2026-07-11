@@ -1,11 +1,12 @@
 import type { BaseStatus } from "@/types";
+import { dataColors, lightColorValues } from "@/generated/colorValues";
 
 export const STATUS_COLORS: Record<BaseStatus, string> = {
-  not_visited: "#9ca3af",
-  checked_in: "#3b82f6",
-  submitted: "#f59e0b",
-  completed: "#22c55e",
-  rejected: "#ef4444",
+  not_visited: dataColors.statusNotVisited,
+  checked_in: lightColorValues["status.checkedIn"],
+  submitted: lightColorValues["status.pending"],
+  completed: lightColorValues["status.completed"],
+  rejected: lightColorValues["status.rejected"],
 };
 
 export const STATUS_PRIORITY: Record<BaseStatus, number> = {

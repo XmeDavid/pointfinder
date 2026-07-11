@@ -1,0 +1,69 @@
+// Generated from design-system/icons.json. Do not edit.
+export const semanticIconCatalog = {
+  "scan": {
+    "lucide": "ScanLine",
+    "sfSymbol": "wave.3.right.circle",
+    "material": "Nfc"
+  },
+  "base": {
+    "lucide": "MapPin",
+    "sfSymbol": "mappin.circle",
+    "material": "LocationOn"
+  },
+  "team": {
+    "lucide": "Users",
+    "sfSymbol": "person.3",
+    "material": "Groups"
+  },
+  "review": {
+    "lucide": "ClipboardCheck",
+    "sfSymbol": "checklist",
+    "material": "FactCheck"
+  },
+  "rescue": {
+    "lucide": "LifeBuoy",
+    "sfSymbol": "lifepreserver",
+    "material": "HealthAndSafety"
+  },
+  "sync": {
+    "lucide": "RefreshCw",
+    "sfSymbol": "arrow.triangle.2.circlepath",
+    "material": "Sync"
+  },
+  "location": {
+    "lucide": "LocateFixed",
+    "sfSymbol": "location",
+    "material": "MyLocation"
+  },
+  "map": {
+    "lucide": "Map",
+    "sfSymbol": "map",
+    "material": "Map"
+  },
+  "notifications": {
+    "lucide": "Bell",
+    "sfSymbol": "bell",
+    "material": "Notifications"
+  },
+  "results": {
+    "lucide": "Trophy",
+    "sfSymbol": "trophy",
+    "material": "EmojiEvents"
+  },
+  "setup": {
+    "lucide": "Hammer",
+    "sfSymbol": "hammer",
+    "material": "Build"
+  },
+  "command": {
+    "lucide": "RadioTower",
+    "sfSymbol": "dot.radiowaves.left.and.right",
+    "material": "CellTower"
+  },
+  "settings": {
+    "lucide": "Settings",
+    "sfSymbol": "gearshape",
+    "material": "Settings"
+  }
+} as const
+export type SemanticIcon = "scan" | "base" | "team" | "review" | "rescue" | "sync" | "location" | "map" | "notifications" | "results" | "setup" | "command" | "settings"

@@ -57,6 +57,20 @@ struct GameSettingsView: View {
 
     var body: some View {
         Form {
+            Section {
+                ManagementEditorSummary(
+                    title: locale.t("operator.gameSettings"),
+                    metadata: [
+                        ManagementMetadata(id: "status", label: locale.t("game.status.\(gameStatus)"), tone: gameStatus == "live" ? .success : gameStatus == "setup" ? .pending : .muted),
+                        ManagementMetadata(id: "broadcast", label: locale.t("operator.broadcastEnabled"), tone: broadcastEnabled ? .info : .muted),
+                        ManagementMetadata(id: "map", label: tileSource, tone: .muted),
+                    ],
+                    validationLabel: String(format: locale.t("setup.readyCount"), name.isEmpty ? 0 : 1, 1),
+                    isValid: !name.isEmpty
+                )
+                .listRowInsets(EdgeInsets(top: PFSpaceToken.space2, leading: 0, bottom: PFSpaceToken.space2, trailing: 0))
+            }
+
             // Name & Description
             Section {
                 TextField(locale.t("operator.gameName"), text: $name)
@@ -145,7 +159,7 @@ struct GameSettingsView: View {
             if let errorMessage {
                 Section {
                     Text(errorMessage)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(PFColorToken.contentDanger)
                         .font(.caption)
                 }
             }

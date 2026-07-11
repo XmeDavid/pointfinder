@@ -84,7 +84,7 @@ describe('ResultsOverlay', () => {
     const breakdownTab = screen.getByTestId('tab-breakdown')
 
     // Standings is active by default
-    expect(standingsTab.className).toContain('text-primary')
-    expect(breakdownTab.className).not.toContain('text-primary')
+    expect(standingsTab).toHaveAttribute('aria-selected', 'true')
+    expect(breakdownTab).toHaveAttribute('aria-selected', 'false')
   })
 })

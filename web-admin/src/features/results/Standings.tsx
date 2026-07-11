@@ -3,6 +3,8 @@ import { useLeaderboard } from '@/hooks/queries/useMonitoring'
 import { useSubmissions } from '@/hooks/queries/useSubmissions'
 import { useChallenges } from '@/hooks/queries/useChallenges'
 import { cn } from '@/lib/utils'
+import { EmptyState } from '@/components/feedback/EmptyState'
+import { LoadingState } from '@/components/feedback/LoadingState'
 
 interface Props {
   gameId: string
@@ -46,26 +48,18 @@ export default function Standings({ gameId }: Props) {
   }, [leaderboard, submissions, challenges])
 
   const rankBorder = (rank: number): string => {
-    if (rank === 1) return 'border-l-4 border-[#eab308]'
-    if (rank === 2) return 'border-l-4 border-[#a1a1aa]'
-    if (rank === 3) return 'border-l-4 border-[#cd7f32]'
+    if (rank === 1) return 'border-l-4 border-[var(--pf-dataColor-yellow)]'
+    if (rank === 2) return 'border-l-4 border-[var(--pf-dataColor-rankSilver)]'
+    if (rank === 3) return 'border-l-4 border-[var(--pf-dataColor-rankBronze)]'
     return 'border-l-4 border-transparent'
   }
 
   if (!leaderboard) {
-    return (
-      <div className="text-sm text-muted-foreground text-center py-8">
-        Loading standings...
-      </div>
-    )
+    return <LoadingState label="Loading standings..." />
   }
 
   if (leaderboard.length === 0) {
-    return (
-      <div className="text-sm text-muted-foreground text-center py-8">
-        No results yet. Team standings will appear here once the game has activity.
-      </div>
-    )
+    return <EmptyState density="compact" title="No results yet" description="Team standings will appear here once the game has activity." />
   }
 
   return (

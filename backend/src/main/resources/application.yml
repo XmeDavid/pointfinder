@@ -73,8 +73,8 @@ app:
     enabled: ${MAIL_ENABLED:false}
   apns:
     enabled: ${APNS_ENABLED:false}
-    # Default to filesystem path used in Docker (can be overridden via APNS_KEY_PATH env)
-    key-path: ${APNS_KEY_PATH:file:/app/config/apns-key.p8}
+    # Default to the Apple key filename convention used in the mounted secrets folder.
+    key-path: ${APNS_KEY_PATH:file:/app/config/AuthKey_${APNS_KEY_ID:}.p8}
     key-id: ${APNS_KEY_ID:}
     team-id: ${APNS_TEAM_ID:}
     bundle-id: ${APNS_BUNDLE_ID:}

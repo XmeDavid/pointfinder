@@ -3,22 +3,22 @@ import SwiftUI
 // MARK: - Palette (16 WCAG-safe hues, matches web-admin colorPalette.ts)
 
 private let tagColorPalette: [String] = [
-    "#3b82f6", // blue
-    "#ef4444", // red
-    "#22c55e", // green
-    "#f59e0b", // amber
-    "#a855f7", // purple
-    "#ec4899", // pink
-    "#14b8a6", // teal
-    "#f97316", // orange
-    "#6366f1", // indigo
-    "#84cc16", // lime
-    "#06b6d4", // cyan
-    "#e11d48", // rose
-    "#8b5cf6", // violet
-    "#10b981", // emerald
-    "#f43f5e", // fuchsia-red
-    "#0ea5e9", // sky
+    PFDataColorToken.blue,
+    PFDataColorToken.red,
+    PFDataColorToken.green,
+    PFDataColorToken.amber,
+    PFDataColorToken.purple,
+    PFDataColorToken.pink,
+    PFDataColorToken.teal,
+    PFDataColorToken.orange,
+    PFDataColorToken.indigo,
+    PFDataColorToken.lime,
+    PFDataColorToken.cyan,
+    PFDataColorToken.rose,
+    PFDataColorToken.violet,
+    PFDataColorToken.emerald,
+    PFDataColorToken.yellow,
+    PFDataColorToken.sky,
 ]
 
 /// Pick the next palette color not already used by existing tags.

@@ -3,7 +3,6 @@ package com.prayer.pointfinder.feature.operator
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,7 +18,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -172,57 +170,19 @@ fun NotificationsScreen(
                 }
 
                 items(notifications, key = { it.id }) { notification ->
-                    NotificationHistoryRow(
-                        notification = notification,
-                        teams = teams,
+                    val targetName = if (notification.targetTeamId == null) {
+                        stringResource(R.string.label_all_teams)
+                    } else {
+                        teams.firstOrNull { it.id == notification.targetTeamId }?.name ?: stringResource(R.string.label_unknown_team)
+                    }
+                    ManagementNotificationRow(
+                        message = notification.message,
+                        targetLabel = stringResource(R.string.label_sent_to, targetName),
+                        timeLabel = formatTimestamp(notification.sentAt),
                     )
                 }
 
                 item { Spacer(Modifier.height(16.dp)) }
-            }
-        }
-    }
-}
-
-@Composable
-private fun NotificationHistoryRow(
-    notification: NotificationResponse,
-    teams: List<Team>,
-) {
-    val targetName = if (notification.targetTeamId == null) {
-        stringResource(R.string.label_all_teams)
-    } else {
-        teams.firstOrNull { it.id == notification.targetTeamId }?.name
-            ?: stringResource(R.string.label_unknown_team)
-    }
-
-    Surface(
-        shape = MaterialTheme.shapes.small,
-        tonalElevation = 0.5.dp,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Text(
-                notification.message,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(
-                    stringResource(R.string.label_sent_to, targetName),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    formatTimestamp(notification.sentAt),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline,
-                )
             }
         }
     }

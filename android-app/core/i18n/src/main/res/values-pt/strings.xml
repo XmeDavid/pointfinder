@@ -79,6 +79,7 @@
     <string name="label_total_bases">Total de bases</string>
     <string name="label_pending_actions">Ações pendentes</string>
     <string name="label_no_pending_actions">Tudo sincronizado</string>
+    <string name="label_pending_sync_icon">Sincronização pendente</string>
     <string name="label_pending_sync_one">%1$d ação pendente para sincronizar</string>
     <string name="label_pending_sync_other">%1$d ações pendentes para sincronizar</string>
     <string name="label_failed_sync_count">%1$d ação(ões) falharam ao sincronizar</string>
@@ -222,6 +223,22 @@
     <string name="warning_team_variables_incomplete">Algumas equipas têm valores de variáveis incompletos</string>
     <string name="label_go_live_confirm_title">Iniciar jogo?</string>
     <string name="label_go_live_confirm_message">As equipas poderão entrar e jogar. Podes continuar a editar bases e desafios durante o jogo.</string>
+    <string name="setup_spatial_plan">Plano espacial</string>
+    <string name="setup_spatial_plan_description">Coloca e inspeciona as bases no mapa em tempo real.</string>
+    <string name="setup_open_map">Abrir mapa de configuração</string>
+    <string name="setup_bases_count">%1$d base(s)</string>
+    <string name="setup_nfc_count">%1$d/%2$d NFC</string>
+    <string name="setup_assignments_count">%1$d atribuição(ões)</string>
+    <string name="setup_launch_readiness">Prontidão para iniciar</string>
+    <string name="setup_ready_count">%1$d de %2$d verificações prontas</string>
+    <string name="setup_configure">Configurar</string>
+    <string name="setup_field_plan">Plano de campo</string>
+    <string name="setup_nfc">Etiquetas NFC</string>
+    <string name="setup_nfc_ready">Todas as etiquetas NFC estão associadas</string>
+    <string name="setup_challenges_ready">%1$d desafio(s) pronto(s)</string>
+    <string name="setup_teams_ready">%1$d equipa(s) configurada(s)</string>
+    <string name="setup_team_variables">Variáveis das equipas</string>
+    <string name="setup_team_variables_ready">Todos os valores obrigatórios estão completos</string>
     <string name="label_challenges">Desafios</string>
     <string name="label_teams">Equipas</string>
     <!-- Base Management -->
@@ -298,7 +315,7 @@
     <string name="label_join_code_section">Código de Entrada</string>
     <string name="label_show_qr">Mostrar QR</string>
     <string name="label_qr_code">Código QR</string>
-    <string name="label_variables">Variáveis</string>
+<string name="label_variables">Variáveis</string><string name="label_values_complete">Valores</string>
     <string name="label_players">Jogadores (%1$d)</string>
     <string name="label_no_players">Sem jogadores ainda</string>
     <string name="label_remove_player">Remover Jogador</string>
@@ -481,4 +498,20 @@
     <string name="label_assignment_locked_all_teams">Já existe uma atribuição para todas as equipas nesta base.</string>
     <string name="label_select_base">Selecionar Base</string>
     <string name="label_select_challenge">Selecionar Desafio</string>
+    <string name="org_members">Membros</string>
+    <string name="org_live_games">Jogos em direto</string>
+    <string name="org_no_members">Ainda não existem membros.</string>
+    <string name="org_invite_member">Convidar membro</string>
+    <string name="org_email_address">Endereço de email</string>
+    <string name="org_invite_failed">Falha ao convidar</string>
+    <string name="org_permissions_for">Permissões de %1$s</string>
+    <string name="org_update_permissions_failed">Falha ao atualizar permissões</string>
+    <string name="org_remove_member">Remover membro</string>
+    <string name="org_remove_member_message">Remover %1$s de %2$s?</string>
+    <string name="org_remove_failed">Falha ao remover membro</string>
+    <string name="org_no_permissions">Sem permissões</string>
+    <string name="org_edit_permissions_short">Permissões</string>
+    <string name="org_load_members_failed">Falha ao carregar membros</string>
+    <string name="cd_invite_member">Convidar membro</string>
+    <string name="cd_remove_member">Remover membro</string>
 </resources>

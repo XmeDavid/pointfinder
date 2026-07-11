@@ -7,6 +7,9 @@ import { useTeams } from '@/hooks/queries/useTeams'
 import { useNotifications } from '@/hooks/queries/useNotifications'
 import { useSendNotification } from '@/hooks/mutations/useNotificationMutations'
 import { relativeTime } from '@/lib/utils/dates'
+import { Button } from '@/components/ui/button'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { StatusBadge } from '@/components/status'
 
 export function NotificationSender({ gameId }: { gameId: string }) {
   const toggleNotificationSender = useWorkspaceStore(
@@ -57,40 +60,24 @@ export function NotificationSender({ gameId }: { gameId: string }) {
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <span className="text-sm font-semibold">Send Notification</span>
-        <button
+        <Button
           data-testid="notif-close"
           onClick={toggleNotificationSender}
-          className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          variant="ghost"
+          size="icon"
+          aria-label="Close notifications"
         >
           <X size={16} />
-        </button>
+        </Button>
       </div>
 
       {/* Recipient toggle */}
-      <div className="flex items-center gap-2 mb-3">
-        <button
-          data-testid="recipient-all"
-          onClick={() => setRecipientMode('all')}
-          className={`px-3 py-1 rounded text-xs font-medium cursor-pointer transition-colors ${
-            recipientMode === 'all'
-              ? 'bg-primary/15 text-primary'
-              : 'text-muted-foreground hover:text-foreground bg-muted'
-          }`}
-        >
-          All Teams
-        </button>
-        <button
-          data-testid="recipient-specific"
-          onClick={() => setRecipientMode('specific')}
-          className={`px-3 py-1 rounded text-xs font-medium cursor-pointer transition-colors ${
-            recipientMode === 'specific'
-              ? 'bg-primary/15 text-primary'
-              : 'text-muted-foreground hover:text-foreground bg-muted'
-          }`}
-        >
-          Specific Team
-        </button>
-      </div>
+      <Tabs value={recipientMode} onValueChange={(value) => setRecipientMode(value as 'all' | 'specific')} className="mb-3">
+        <TabsList className="w-full">
+          <TabsTrigger value="all" data-testid="recipient-all" className="flex-1">All Teams</TabsTrigger>
+          <TabsTrigger value="specific" data-testid="recipient-specific" className="flex-1">Specific Team</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Team dropdown */}
       {recipientMode === 'specific' && (
@@ -120,15 +107,16 @@ export function NotificationSender({ gameId }: { gameId: string }) {
       />
 
       {/* Send button */}
-      <button
+      <Button
         data-testid="notif-send"
         onClick={handleSend}
         disabled={!message.trim() || sendMutation.isPending}
-        className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+        className="w-full"
+        loading={sendMutation.isPending}
       >
         <Send size={14} />
         {sentFeedback ? 'Sent!' : 'Send'}
-      </button>
+      </Button>
 
       {/* Recent notifications */}
       {recentNotifications.length > 0 && (
@@ -148,7 +136,7 @@ export function NotificationSender({ gameId }: { gameId: string }) {
                   className="text-xs text-muted-foreground"
                 >
                   <div className="flex items-center gap-1">
-                    <span>{recipientTeam ? recipientTeam.name : 'All Teams'}</span>
+                    <StatusBadge size="sm" tone="info" label={recipientTeam ? recipientTeam.name : 'All Teams'} />
                     <span>{relativeTime(n.sentAt)}</span>
                   </div>
                   <p className="truncate">{n.message}</p>

@@ -115,7 +115,7 @@ struct SettingsView: View {
                     Spacer()
                     HStack(spacing: 6) {
                         Circle()
-                            .fill(Color(hex: team.color) ?? .blue)
+                            .fill(Color(hex: team.color) ?? PFColorToken.statusUnknown)
                             .frame(width: 12, height: 12)
                         Text(team.name)
                             .foregroundStyle(.pfTextMuted)

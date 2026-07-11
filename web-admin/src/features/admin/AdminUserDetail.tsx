@@ -4,6 +4,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { adminApi } from '@/lib/api/admin'
 import { Spinner } from '@/components/feedback/Spinner'
+import { Button } from '@/components/ui/button'
+import { SurfacePanel } from '@/components/layout/SurfacePanel'
+import { ResultsStat, ResultsSummary } from '@/components/results/ResultsSummary'
+import { EmptyState } from '@/components/feedback/EmptyState'
 
 const USER_TIERS = ['free', 'pro']
 const SUBSCRIPTION_STATUSES = ['active', 'past_due', 'grace_period', 'frozen', 'cancelled']
@@ -83,38 +87,27 @@ export function AdminUserDetail({ userId, onBack }: Props) {
 
   return (
     <div>
-      <button
+      <Button
         onClick={onBack}
-        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
+        variant="ghost"
+        className="mb-6"
       >
         ← {t('common.back', 'Back')}
-      </button>
+      </Button>
 
       <h2 className="text-xl font-bold text-foreground mb-1">{user.name}</h2>
       <p className="text-sm text-muted-foreground mb-6">{user.email}</p>
 
       {/* Info row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-        <div className="rounded-xl border border-border p-4">
-          <p className="text-xs text-muted-foreground mb-1">Role</p>
-          <p className="font-semibold text-foreground capitalize">{user.role}</p>
-        </div>
-        <div className="rounded-xl border border-border p-4">
-          <p className="text-xs text-muted-foreground mb-1">{t('admin.games', 'Games')}</p>
-          <p className="font-semibold text-foreground">{user.gameCount}</p>
-        </div>
-        <div className="rounded-xl border border-border p-4">
-          <p className="text-xs text-muted-foreground mb-1">{t('admin.organizations', 'Organizations')}</p>
-          <p className="font-semibold text-foreground">{user.orgCount}</p>
-        </div>
-        <div className="rounded-xl border border-border p-4">
-          <p className="text-xs text-muted-foreground mb-1">{t('admin.storage', 'Storage')}</p>
-          <p className="font-semibold text-foreground">{formatBytes(user.resourceStorageBytes)}</p>
-        </div>
-      </div>
+      <ResultsSummary className="mb-8">
+        <ResultsStat label="Role" value={user.role} />
+        <ResultsStat label={t('admin.games', 'Games')} value={user.gameCount} />
+        <ResultsStat label={t('admin.organizations', 'Organizations')} value={user.orgCount} />
+        <ResultsStat label={t('admin.storage', 'Storage')} value={formatBytes(user.resourceStorageBytes)} />
+      </ResultsSummary>
 
       {/* Subscription section */}
-      <div className="rounded-xl border border-border p-6 mb-6">
+      <SurfacePanel padding="lg" className="mb-6">
         <h3 className="font-semibold text-foreground mb-4">{t('admin.subscription', 'Subscription')}</h3>
         <div className="grid grid-cols-2 gap-4 text-sm mb-4">
           {user.billingCycle && (
@@ -140,10 +133,10 @@ export function AdminUserDetail({ userId, onBack }: Props) {
             <p className="text-foreground">{new Date(user.createdAt).toLocaleDateString(i18n.language)}</p>
           </div>
         </div>
-      </div>
+      </SurfacePanel>
 
       {/* Override form */}
-      <div className="rounded-xl border border-border p-6 mb-6">
+      <SurfacePanel padding="lg" className="mb-6">
         <h3 className="font-semibold text-foreground mb-4">{t('admin.overrides', 'Overrides')}</h3>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -200,28 +193,28 @@ export function AdminUserDetail({ userId, onBack }: Props) {
           </div>
 
           <div className="flex items-center gap-3">
-            <button
+            <Button
               onClick={handleSave}
               disabled={override.isPending}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+              loading={override.isPending}
             >
               {override.isPending ? t('common.saving', 'Saving...') : t('admin.saveOverrides', 'Save Overrides')}
-            </button>
+            </Button>
             {saved && (
-              <span className="text-sm text-green-600">{t('admin.overridesSaved', 'Overrides saved')}</span>
+              <span className="text-sm text-success">{t('admin.overridesSaved', 'Overrides saved')}</span>
             )}
             {override.isError && (
               <span className="text-sm text-destructive">{t('common.serverError', 'An error occurred.')}</span>
             )}
           </div>
         </div>
-      </div>
+      </SurfacePanel>
 
       {/* Games list */}
-      <div className="rounded-xl border border-border p-6">
+      <SurfacePanel padding="lg">
         <h3 className="font-semibold text-foreground mb-4">{t('admin.games', 'Games')}</h3>
         {!games || games.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t('admin.noGames', 'No games')}</p>
+          <EmptyState density="compact" title={t('admin.noGames', 'No games')} />
         ) : (
           <ul className="space-y-2">
             {games.map(g => (
@@ -230,17 +223,18 @@ export function AdminUserDetail({ userId, onBack }: Props) {
                   <p className="text-sm font-medium text-foreground">{g.name}</p>
                   <p className="text-xs text-muted-foreground capitalize">{g.status}</p>
                 </div>
-                <button
+                <Button
                   onClick={() => navigate(`/game/${g.id}`)}
-                  className="text-xs text-primary hover:underline"
+                  variant="link"
+                  size="sm"
                 >
                   {t('admin.enterGame', 'Enter game')} →
-                </button>
+                </Button>
               </li>
             ))}
           </ul>
         )}
-      </div>
+      </SurfacePanel>
     </div>
   )
 }

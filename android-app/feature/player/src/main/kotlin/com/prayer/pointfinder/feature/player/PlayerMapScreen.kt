@@ -1,13 +1,8 @@
 package com.prayer.pointfinder.feature.player
 
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Paint
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,16 +13,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -42,12 +29,11 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
@@ -58,6 +44,7 @@ import com.prayer.pointfinder.core.model.BaseProgress
 import com.prayer.pointfinder.core.model.BaseStatus
 import com.prayer.pointfinder.core.model.CheckInResponse
 import com.prayer.pointfinder.core.model.TileSources
+import com.prayer.pointfinder.core.designsystem.PFColors
 import org.maplibre.android.annotations.IconFactory
 import org.maplibre.android.annotations.MarkerOptions
 import org.maplibre.android.camera.CameraUpdateFactory
@@ -124,7 +111,7 @@ fun PlayerMapScreen(
     val defaultMapLabel = stringResource(R.string.base_default_name)
 
     // Update markers whenever progress changes (incremental: remove only changed markers, add new ones)
-    LaunchedEffect(map, progress) {
+    LaunchedEffect(map, progress, isDark) {
         val m = map ?: return@LaunchedEffect
         val currentMarkers = m.annotations.filterIsInstance<org.maplibre.android.annotations.Marker>()
         val progressIds = progress.map { it.baseId }.toSet()
@@ -142,13 +129,13 @@ fun PlayerMapScreen(
             val existingMarker = currentMarkers.firstOrNull { it.snippet == item.baseId }
             if (existingMarker != null) {
                 // Update existing marker icon/position in case status changed
-                val icon = iconFactory.fromBitmap(createPinMarkerBitmap(statusColorInt(item.status), item.status, density))
+                val icon = iconFactory.fromBitmap(createPinMarkerBitmap(statusColorInt(item.status, isDark), item.status, density))
                 existingMarker.icon = icon
                 existingMarker.position = LatLng(item.lat, item.lng)
                 existingMarker.title = label
             } else {
                 // New marker
-                addMarkerForProgress(m, item, label, iconFactory, density)
+                addMarkerForProgress(m, item, label, iconFactory, density, isDark)
             }
         }
 
@@ -187,89 +174,34 @@ fun PlayerMapScreen(
             modifier = Modifier.fillMaxSize(),
         )
 
-        // Floating glass header bar — matches iOS playerHeaderBar
-        androidx.compose.material3.Surface(
+        PlayerMapHeader(
+            title = gameName ?: stringResource(R.string.label_map),
+            liveLabel = if (gameStatus == "live") stringResource(R.string.label_live) else null,
+            unseenNotificationCount = unseenNotificationCount,
+            isLoading = isLoading,
+            notificationsLabel = stringResource(R.string.label_notifications),
+            refreshLabel = stringResource(R.string.action_refresh),
+            onNotificationsClick = onNotificationsClick,
+            onRefresh = onRefresh,
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .fillMaxWidth()
                 .padding(horizontal = 12.dp, vertical = 8.dp),
-            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
-            tonalElevation = 2.dp,
-            shadowElevation = 8.dp,
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = gameName ?: stringResource(R.string.label_map),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    if (gameStatus == "live") {
-                        Text(
-                            text = "LIVE",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        )
-                    }
-                }
-                // Notification bell
-                BadgedBox(
-                    badge = {
-                        if (unseenNotificationCount > 0) {
-                            val badgeLabel = if (unseenNotificationCount > 99) "99+" else unseenNotificationCount.toString()
-                            Badge(containerColor = StatusRejected) { Text(badgeLabel) }
-                        }
-                    },
-                ) {
-                    androidx.compose.material3.IconButton(onClick = onNotificationsClick) {
-                        Icon(
-                            imageVector = Icons.Default.Notifications,
-                            contentDescription = stringResource(R.string.label_notifications),
-                            tint = MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
-                }
-                // Refresh button
-                androidx.compose.material3.IconButton(onClick = onRefresh) {
-                    if (isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = stringResource(R.string.action_refresh),
-                            tint = MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
-                }
-            }
-        }
+        )
 
         // Map legend at bottom
-        Row(
+        PlayerMapLegend(
+            items = listOf(
+                PlayerMapLegendItem(stringResource(R.string.status_not_visited), PlayerFieldTone.UNKNOWN),
+                PlayerMapLegendItem(stringResource(R.string.status_checked_in), PlayerFieldTone.INFO),
+                PlayerMapLegendItem(stringResource(R.string.status_submitted), PlayerFieldTone.PENDING),
+                PlayerMapLegendItem(stringResource(R.string.status_completed), PlayerFieldTone.SUCCESS),
+                PlayerMapLegendItem(stringResource(R.string.status_rejected), PlayerFieldTone.DANGER),
+            ),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 12.dp, start = 16.dp, end = 16.dp)
-                .background(Color.Black.copy(alpha = 0.55f), shape = MaterialTheme.shapes.small)
-                .padding(horizontal = 12.dp, vertical = 6.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            LegendDot(color = Color.Gray, label = stringResource(R.string.status_not_visited))
-            LegendDot(color = StatusCheckedIn, label = stringResource(R.string.status_checked_in))
-            LegendDot(color = StatusSubmitted, label = stringResource(R.string.status_submitted))
-            LegendDot(color = StatusCompleted, label = stringResource(R.string.status_completed))
-            LegendDot(color = StatusRejected, label = stringResource(R.string.status_rejected))
-        }
+                .fillMaxWidth()
+                .padding(bottom = 12.dp, start = 16.dp, end = 16.dp),
+        )
     }
 }
 
@@ -279,8 +211,9 @@ private fun addMarkerForProgress(
     label: String,
     iconFactory: IconFactory,
     density: Float,
+    isDark: Boolean,
 ) {
-    val colorInt = statusColorInt(item.status)
+    val colorInt = statusColorInt(item.status, isDark)
     val icon = iconFactory.fromBitmap(createPinMarkerBitmap(colorInt, item.status, density))
     map.addMarker(
         MarkerOptions()
@@ -291,12 +224,12 @@ private fun addMarkerForProgress(
     )
 }
 
-private fun statusColorInt(status: BaseStatus): Int = when (status) {
-    BaseStatus.NOT_VISITED -> android.graphics.Color.parseColor("#E0DDD0")
-    BaseStatus.CHECKED_IN -> android.graphics.Color.parseColor("#3B82F6")
-    BaseStatus.SUBMITTED -> android.graphics.Color.parseColor("#F59E0B")
-    BaseStatus.COMPLETED -> android.graphics.Color.parseColor("#22C55E")
-    BaseStatus.REJECTED -> android.graphics.Color.parseColor("#EF4444")
+private fun statusColorInt(status: BaseStatus, isDark: Boolean): Int = when (status) {
+    BaseStatus.NOT_VISITED -> if (isDark) PFColors.StatusUnknownDark.toArgb() else PFColors.StatusUnknownLight.toArgb()
+    BaseStatus.CHECKED_IN -> if (isDark) PFColors.StatusCheckedInDark.toArgb() else PFColors.StatusCheckedInLight.toArgb()
+    BaseStatus.SUBMITTED -> if (isDark) PFColors.StatusPendingDark.toArgb() else PFColors.StatusPendingLight.toArgb()
+    BaseStatus.COMPLETED -> if (isDark) PFColors.StatusCompletedDark.toArgb() else PFColors.StatusCompletedLight.toArgb()
+    BaseStatus.REJECTED -> if (isDark) PFColors.StatusRejectedDark.toArgb() else PFColors.StatusRejectedLight.toArgb()
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -309,12 +242,12 @@ fun BaseDetailBottomSheet(
     onDismiss: () -> Unit,
 ) {
     val status = baseProgress.status
-    val statusColor = when (status) {
-        BaseStatus.NOT_VISITED -> Color.Gray
-        BaseStatus.CHECKED_IN -> StatusCheckedIn
-        BaseStatus.SUBMITTED -> StatusSubmitted
-        BaseStatus.COMPLETED -> StatusCompleted
-        BaseStatus.REJECTED -> StatusRejected
+    val statusTone = when (status) {
+        BaseStatus.NOT_VISITED -> PlayerFieldTone.UNKNOWN
+        BaseStatus.CHECKED_IN -> PlayerFieldTone.INFO
+        BaseStatus.SUBMITTED -> PlayerFieldTone.PENDING
+        BaseStatus.COMPLETED -> PlayerFieldTone.SUCCESS
+        BaseStatus.REJECTED -> PlayerFieldTone.DANGER
     }
     val statusIcon = when (status) {
         BaseStatus.NOT_VISITED -> Icons.Default.LocationOn
@@ -336,54 +269,20 @@ fun BaseDetailBottomSheet(
             Text(sheetTitle, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(12.dp))
 
-            // Status banner
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(statusColor.copy(alpha = 0.12f), shape = MaterialTheme.shapes.medium)
-                    .padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(statusIcon, contentDescription = "Status", tint = statusColor, modifier = Modifier.size(20.dp))
-                    Text(baseStatusLabel(status), fontWeight = FontWeight.Medium, color = statusColor)
-                }
-                if (challenge != null && status != BaseStatus.NOT_VISITED) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Icon(Icons.Default.Star, contentDescription = "Points", tint = StarGold, modifier = Modifier.size(16.dp))
-                        Text("${challenge.points} pts", style = MaterialTheme.typography.labelMedium, color = StarGold)
-                    }
-                }
-            }
+            PlayerFieldStatusBanner(
+                title = baseStatusLabel(status),
+                icon = statusIcon,
+                tone = statusTone,
+            )
 
             Spacer(Modifier.height(12.dp))
 
             if (status == BaseStatus.NOT_VISITED) {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Icon(
-                        Icons.Default.Lock,
-                        contentDescription = stringResource(R.string.cd_challenge_locked),
-                        modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                    )
-                    Text(
-                        stringResource(R.string.label_challenge_locked),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(
-                        stringResource(R.string.label_challenge_locked_hint),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                        textAlign = TextAlign.Center,
-                    )
-                }
+                PlayerDetailMessage(
+                    icon = Icons.Default.Lock,
+                    title = stringResource(R.string.label_challenge_locked),
+                    message = stringResource(R.string.label_challenge_locked_hint),
+                )
             } else {
                 val detailHtml = when {
                     challenge == null -> null
@@ -404,35 +303,12 @@ fun BaseDetailBottomSheet(
             }
             if (challenge?.requirePresenceToSubmit == true && (status == BaseStatus.CHECKED_IN || status == BaseStatus.REJECTED)) {
                 Spacer(Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            OfflineOrange.copy(alpha = 0.1f),
-                            shape = MaterialTheme.shapes.medium,
-                        )
-                        .padding(12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    Icon(
-                        Icons.Default.LocationOn,
-                        contentDescription = "Location required",
-                        tint = OfflineOrange,
-                    )
-                    Column {
-                        Text(
-                            stringResource(R.string.label_presence_warning_title),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        Spacer(Modifier.height(2.dp))
-                        Text(
-                            stringResource(R.string.label_presence_warning_body),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
+                PlayerFieldStatusBanner(
+                    title = stringResource(R.string.label_presence_warning_title),
+                    message = stringResource(R.string.label_presence_warning_body),
+                    icon = Icons.Default.LocationOn,
+                    tone = PlayerFieldTone.PENDING,
+                )
             }
             Spacer(Modifier.height(16.dp))
 
@@ -444,36 +320,21 @@ fun BaseDetailBottomSheet(
                     Button(
                         onClick = onSolve,
                         modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = StatusCheckedIn),
                     ) { Text(stringResource(R.string.action_solve_challenge)) }
                 }
                 BaseStatus.SUBMITTED -> {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(StatusSubmitted.copy(alpha = 0.12f), shape = MaterialTheme.shapes.small)
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
-                    ) {
-                        Icon(Icons.Default.CheckCircle, contentDescription = "Awaiting review", tint = StatusSubmitted, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.size(8.dp))
-                        Text(stringResource(R.string.label_awaiting_review), color = StatusSubmitted, fontWeight = FontWeight.Medium)
-                    }
+                    PlayerFieldStatusBanner(
+                        title = stringResource(R.string.label_awaiting_review),
+                        icon = Icons.Default.CheckCircle,
+                        tone = PlayerFieldTone.PENDING,
+                    )
                 }
                 BaseStatus.COMPLETED -> {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(StatusCompleted.copy(alpha = 0.12f), shape = MaterialTheme.shapes.small)
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
-                    ) {
-                        Icon(Icons.Default.CheckCircle, contentDescription = "Completed", tint = StatusCompleted, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.size(8.dp))
-                        Text(stringResource(R.string.status_completed), color = StatusCompleted, fontWeight = FontWeight.Medium)
-                    }
+                    PlayerFieldStatusBanner(
+                        title = stringResource(R.string.status_completed),
+                        icon = Icons.Default.CheckCircle,
+                        tone = PlayerFieldTone.SUCCESS,
+                    )
                 }
             }
             Spacer(Modifier.height(16.dp))

@@ -3,6 +3,9 @@ import { useWorkspaceContext } from '../../stores/workspaceContext'
 import { useQuota } from '../../hooks/queries/useQuota'
 import { useBillingStatus } from '../../hooks/queries/useBillingStatus'
 import { useCreateCheckout, useCreatePortal, useCreateOrgPortal } from '../../hooks/mutations/useBillingMutations'
+import { Button } from '@/components/ui/button'
+import { SurfacePanel } from '@/components/layout/SurfacePanel'
+import { StatusBadge } from '@/components/status'
 
 function formatSize(bytes: number): string {
   if (bytes === 0) return '0'
@@ -60,26 +63,28 @@ export function BillingPage() {
           : t('billing.personal', 'Personal workspace')}
       </p>
 
-      <div className="rounded-xl border border-border p-6 mb-8 max-w-md">
+      <SurfacePanel padding="lg" className="mb-8 max-w-md">
         <p className="text-sm text-muted-foreground mb-1">
           {t('billing.currentPlan', 'Current plan')}
         </p>
-        <p className="text-xl font-semibold text-foreground capitalize">{tier}</p>
+        <StatusBadge tone={isPaying ? 'success' : 'muted'} label={tier} />
         {(isPaying && !isClubOrg) && (
-          <button
+          <Button
             onClick={() => isOrg && active.type === 'org'
               ? orgPortal.mutate(active.orgId)
               : portal.mutate()}
             disabled={portal.isPending || orgPortal.isPending}
-            className="mt-4 text-sm text-primary hover:underline disabled:opacity-50"
+            className="mt-4"
+            variant="outline"
+            loading={portal.isPending || orgPortal.isPending}
           >
             {t('billing.manageSub', 'Manage subscription')}
-          </button>
+          </Button>
         )}
-      </div>
+      </SurfacePanel>
 
       {!isOrg && billingStatus && billingStatus.billingCycle && (
-        <div className="rounded-xl border border-border p-6 mb-8 max-w-md">
+        <SurfacePanel padding="lg" className="mb-8 max-w-md">
           <p className="text-sm text-muted-foreground mb-1">
             {t('billing.billingPeriod', 'Billing period')}
           </p>
@@ -90,7 +95,7 @@ export function BillingPage() {
               {new Date(billingStatus.currentPeriodEnd).toLocaleDateString(i18n.language)}
             </p>
           )}
-        </div>
+        </SurfacePanel>
       )}
 
       {showUpgradeSection && (
@@ -100,7 +105,7 @@ export function BillingPage() {
           </h2>
 
           {!isOrg && !isProPersonal && (
-            <div className="rounded-xl border border-border p-6 flex items-center justify-between">
+            <SurfacePanel padding="lg" className="flex items-center justify-between gap-4">
               <div>
                 <p className="font-medium text-foreground">Pro</p>
                 <p className="text-sm text-muted-foreground">
@@ -115,19 +120,21 @@ export function BillingPage() {
                   €0.99
                   <span className="text-sm font-normal text-muted-foreground">/mo</span>
                 </p>
-                <button
+                <Button
                   onClick={() => checkout.mutate({ plan: 'pro', cycle: 'monthly' })}
                   disabled={checkout.isPending}
-                  className="mt-2 px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm disabled:opacity-50"
+                  className="mt-2"
+                  size="sm"
+                  loading={checkout.isPending}
                 >
                   {t('billing.subscribe', 'Subscribe')}
-                </button>
+                </Button>
               </div>
-            </div>
+            </SurfacePanel>
           )}
 
           {isOrg && !isPaying && (
-            <div className="rounded-xl border border-border p-6 flex items-center justify-between">
+            <SurfacePanel padding="lg" className="flex items-center justify-between gap-4">
               <div>
                 <p className="font-medium text-foreground">{t('billing.clubPlan', 'Club')}</p>
                 <p className="text-sm text-muted-foreground">
@@ -139,7 +146,7 @@ export function BillingPage() {
                   €25
                   <span className="text-sm font-normal text-muted-foreground">/{t('billing.year', 'yr')}</span>
                 </p>
-                <button
+                <Button
                   onClick={() =>
                     checkout.mutate({
                       plan: 'org-base',
@@ -148,16 +155,18 @@ export function BillingPage() {
                     })
                   }
                   disabled={checkout.isPending}
-                  className="mt-2 px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm disabled:opacity-50"
+                  className="mt-2"
+                  size="sm"
+                  loading={checkout.isPending}
                 >
                   {t('billing.subscribe', 'Subscribe')}
-                </button>
+                </Button>
               </div>
-            </div>
+            </SurfacePanel>
           )}
 
           {(isOrg && (!isPaying || isClubOrg)) && !isHighOrg && (
-            <div className="rounded-xl border border-border p-6 flex items-center justify-between">
+            <SurfacePanel padding="lg" className="flex items-center justify-between gap-4">
               <div>
                 <p className="font-medium text-foreground">{t('billing.institutionPlan', 'Institution')}</p>
                 <p className="text-sm text-muted-foreground">
@@ -169,7 +178,7 @@ export function BillingPage() {
                   €99.99
                   <span className="text-sm font-normal text-muted-foreground">/{t('billing.year', 'yr')}</span>
                 </p>
-                <button
+                <Button
                   onClick={() =>
                     checkout.mutate({
                       plan: 'org-high',
@@ -178,30 +187,33 @@ export function BillingPage() {
                     })
                   }
                   disabled={checkout.isPending}
-                  className="mt-2 px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm disabled:opacity-50"
+                  className="mt-2"
+                  size="sm"
+                  loading={checkout.isPending}
                 >
                   {isClubOrg
                     ? t('billing.upgradeToInstitution', 'Upgrade to Institution')
                     : t('billing.subscribe', 'Subscribe')}
-                </button>
+                </Button>
               </div>
-            </div>
+            </SurfacePanel>
           )}
         </div>
       )}
 
       {(isHighOrg || isProPersonal) && (
-        <div className="rounded-xl border border-border p-6 mb-8 max-w-md">
-          <button
+        <SurfacePanel padding="lg" className="mb-8 max-w-md">
+          <Button
             onClick={() => isOrg && active.type === 'org'
               ? orgPortal.mutate(active.orgId)
               : portal.mutate()}
             disabled={portal.isPending || orgPortal.isPending}
-            className="text-sm text-primary hover:underline disabled:opacity-50"
+            variant="outline"
+            loading={portal.isPending || orgPortal.isPending}
           >
             {t('billing.manageSub', 'Manage subscription')}
-          </button>
-        </div>
+          </Button>
+        </SurfacePanel>
       )}
 
       {quota && (
@@ -209,7 +221,7 @@ export function BillingPage() {
           <h2 className="text-lg font-semibold text-foreground mb-4">
             {t('billing.usage', 'Usage & Limits')}
           </h2>
-          <div className="space-y-2 text-sm">
+          <SurfacePanel padding="lg" className="space-y-2 text-sm">
             <QuotaRow label={t('billing.activeGames', 'Active games')}
               current={quota.usage.currentActiveGames}
               max={quota.limits.maxActiveGames} />
@@ -240,7 +252,7 @@ export function BillingPage() {
                 max={quota.limits.maxResourceStorageBytes}
                 formatBytes />
             )}
-          </div>
+          </SurfacePanel>
         </div>
       )}
     </div>

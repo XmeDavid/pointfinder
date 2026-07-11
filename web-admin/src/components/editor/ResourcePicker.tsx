@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { useGameResources } from '@/hooks/queries/useResources'
 import { useOrgResources } from '@/hooks/queries/useResources'
 import type { Resource } from '@/types/resource'
+import { SurfacePanel } from '@/components/layout/SurfacePanel'
 
 interface ResourcePickerProps {
   gameId: string
@@ -22,7 +23,7 @@ function formatBytes(bytes: number): string {
 }
 
 function fileTypeIcon(contentType: string, type: 'file' | 'document') {
-  if (type === 'document') return <FileText className="h-4 w-4 text-blue-500 shrink-0" />
+  if (type === 'document') return <FileText className="h-4 w-4 shrink-0 text-info" />
   if (contentType.startsWith('image/')) return <span className="text-sm shrink-0">🖼️</span>
   if (contentType.startsWith('audio/')) return <span className="text-sm shrink-0">🎵</span>
   if (contentType.startsWith('video/')) return <span className="text-sm shrink-0">🎬</span>
@@ -98,11 +99,13 @@ export function ResourcePicker({ gameId, orgId, onSelect, onClose }: ResourcePic
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--pf-color-surface-scrim)]"
       onClick={onClose}
     >
-      <div
-        className="bg-background rounded-xl shadow-xl w-full max-w-md flex flex-col max-h-[70vh]"
+      <SurfacePanel
+        padding="none"
+        elevation="panel"
+        className="flex max-h-[70vh] w-full max-w-md flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -159,7 +162,7 @@ export function ResourcePicker({ gameId, orgId, onSelect, onClose }: ResourcePic
             onSelect={handleSelect}
           />
         </div>
-      </div>
+      </SurfacePanel>
     </div>
   )
 }

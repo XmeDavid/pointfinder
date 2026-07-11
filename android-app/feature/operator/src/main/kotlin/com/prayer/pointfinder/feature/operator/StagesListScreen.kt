@@ -81,22 +81,7 @@ fun StagesListScreen(
                     .padding(padding),
                 contentAlignment = Alignment.Center,
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Icon(
-                        Icons.Default.FormatListNumbered,
-                        contentDescription = stringResource(R.string.cd_no_stages),
-                        modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(
-                        text = stringResource(R.string.label_no_stages),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+                ManagementEmptyState(stringResource(R.string.label_no_stages))
             }
         } else {
             LazyColumn(
@@ -106,95 +91,25 @@ fun StagesListScreen(
                     .padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                item { ManagementListSummary(stringResource(R.string.label_stages), sortedStages.size) }
                 items(sortedStages, key = { it.id }) { stage ->
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("stage-item")
-                            .clickable { onSelectStage(stage) },
-                        tonalElevation = 2.dp,
-                        shape = MaterialTheme.shapes.medium,
-                    ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(
-                                    text = stage.name,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.SemiBold,
-                                    modifier = Modifier.weight(1f),
-                                )
-                                // Active status dot
-                                val dotColor = if (stage.isActive) StatusCompleted else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                                Box(
-                                    modifier = Modifier
-                                        .size(10.dp)
-                                        .clip(CircleShape)
-                                        .then(
-                                            Modifier.padding(0.dp)
-                                        ),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    androidx.compose.foundation.Canvas(modifier = Modifier.size(10.dp)) {
-                                        drawCircle(color = dotColor)
-                                    }
-                                }
-                            }
-
-                            if (stage.description.isNotBlank()) {
-                                Spacer(Modifier.height(4.dp))
-                                Text(
-                                    text = stage.description,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
-                                )
-                            }
-
-                            Spacer(Modifier.height(8.dp))
-
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                // Transition type badge
-                                val transitionLabel = when (stage.transitionType) {
-                                    "scheduled" -> stringResource(R.string.label_transition_scheduled)
-                                    "trigger" -> stringResource(R.string.label_transition_trigger)
-                                    else -> stringResource(R.string.label_transition_manual)
-                                }
-                                CapsuleBadge(
-                                    label = transitionLabel,
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
-
-                                // Base count badge
-                                val baseCount = stage.baseIds?.size ?: 0
-                                CapsuleBadge(
-                                    label = stringResource(R.string.label_bases_count, baseCount),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-
-                                Spacer(Modifier.width(4.dp))
-
-                                // Active label
-                                val activeLabel = if (stage.isActive) {
-                                    stringResource(R.string.label_stage_active)
-                                } else {
-                                    stringResource(R.string.label_stage_inactive)
-                                }
-                                val activeColor = if (stage.isActive) StatusCompleted else MaterialTheme.colorScheme.onSurfaceVariant
-                                Text(
-                                    text = activeLabel,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = activeColor,
-                                )
-                            }
-                        }
+                    val transitionLabel = when (stage.transitionType) {
+                        "scheduled" -> stringResource(R.string.label_transition_scheduled)
+                        "trigger" -> stringResource(R.string.label_transition_trigger)
+                        else -> stringResource(R.string.label_transition_manual)
                     }
+                    ManagementResourceRow(
+                        title = stage.name,
+                        subtitle = stage.description,
+                        metadata = listOf(
+                            ManagementMetadata(transitionLabel, OperatorTone.INFO),
+                            ManagementMetadata(stringResource(R.string.label_bases_count, stage.baseIds?.size ?: 0), OperatorTone.MUTED),
+                            ManagementMetadata(if (stage.isActive) stringResource(R.string.label_stage_active) else stringResource(R.string.label_stage_inactive), if (stage.isActive) OperatorTone.SUCCESS else OperatorTone.MUTED),
+                        ),
+                        onClick = { onSelectStage(stage) },
+                        modifier = Modifier.testTag("stage-item"),
+                        leadingIcon = Icons.Default.FormatListNumbered,
+                    )
                 }
             }
         }

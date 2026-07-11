@@ -134,7 +134,7 @@ export default function ReadinessIndicator({
                 cy={size / 2}
                 r={radius}
                 fill="none"
-                stroke="#22c55e"
+                stroke="var(--pf-color-status-completed)"
                 strokeWidth={strokeWidth}
                 strokeLinecap="round"
                 strokeDasharray={circumference}
@@ -182,7 +182,7 @@ export default function ReadinessIndicator({
                       data-testid={`check-${check.passed ? 'pass' : 'fail'}`}
                     >
                       {check.passed ? (
-                        <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
+                        <CheckCircle className="h-4 w-4 shrink-0 text-success" />
                       ) : (
                         <XCircle className="w-4 h-4 text-destructive shrink-0" />
                       )}

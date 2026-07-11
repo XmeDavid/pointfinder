@@ -4,15 +4,15 @@ import SwiftUI
 
 extension Color {
     // Primary brand
-    static let pfPrimary = Color(red: 34/255, green: 197/255, blue: 94/255)        // #22c55e
-    static let pfPrimaryDark = Color(red: 22/255, green: 163/255, blue: 74/255)     // #16a34a
-    static let pfPrimaryLight = Color(red: 134/255, green: 239/255, blue: 172/255)  // #86efac
+    static let pfPrimary = PFColorToken.actionPrimary
+    static let pfPrimaryDark = PFColorToken.actionPrimaryStrong
+    static let pfPrimaryLight = PFColorToken.statusCompleted
 
     // Semantic status (constant across modes)
-    static let pfCompleted = Color(red: 34/255, green: 197/255, blue: 94/255)       // #22c55e green
-    static let pfCheckedIn = Color(red: 59/255, green: 130/255, blue: 246/255)      // #3b82f6 blue
-    static let pfPending = Color(red: 245/255, green: 158/255, blue: 11/255)        // #f59e0b amber
-    static let pfRejected = Color(red: 239/255, green: 68/255, blue: 68/255)        // #ef4444 red
+    static let pfCompleted = PFColorToken.statusCompleted
+    static let pfCheckedIn = PFColorToken.statusCheckedIn
+    static let pfPending = PFColorToken.statusPending
+    static let pfRejected = PFColorToken.statusRejected
 }
 
 // MARK: - Adaptive Surface Colors
@@ -24,15 +24,15 @@ extension Color {
 // MARK: - Dimensions
 
 enum PFRadius {
-    static let card: CGFloat = 14
-    static let button: CGFloat = 16
-    static let badge: CGFloat = 20
-    static let small: CGFloat = 10
+    static let card = PFRadiusToken.lg
+    static let button = PFRadiusToken.xl
+    static let badge = PFRadiusToken.full
+    static let small = PFRadiusToken.md
 }
 
 enum PFSpacing {
-    static let screenPadding: CGFloat = 16
-    static let cardPadding: CGFloat = 12
-    static let sectionGap: CGFloat = 16
-    static let itemGap: CGFloat = 8
+    static let screenPadding = PFSpaceToken.space4
+    static let cardPadding = PFSpaceToken.space3
+    static let sectionGap = PFSpaceToken.space4
+    static let itemGap = PFSpaceToken.space2
 }

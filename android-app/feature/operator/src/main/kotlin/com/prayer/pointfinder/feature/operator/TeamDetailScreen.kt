@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -25,6 +26,10 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.QrCode
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -75,11 +80,9 @@ import com.prayer.pointfinder.core.model.Team
 import com.prayer.pointfinder.core.model.TeamBaseProgressResponse
 import com.prayer.pointfinder.core.model.TeamVariable
 import com.prayer.pointfinder.core.model.UpdateTeamRequest
+import com.prayer.pointfinder.core.designsystem.PFColors
 
 private const val REASON_MAX_LENGTH = 500
-
-// Amber color for mark-completed / manual check-in — rescue overrides
-private val AmberAction = Color(0xFFE08A00)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -577,6 +580,7 @@ fun TeamDetailScreen(
 
 // MARK: - Base Progress Row
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun BaseProgressRow(
     base: Base,
@@ -594,12 +598,12 @@ private fun BaseProgressRow(
         BaseStatus.REJECTED -> stringResource(R.string.label_base_status_rejected)
         else -> stringResource(R.string.label_base_status_not_visited)
     }
-    val statusColor = when (progress?.status) {
-        BaseStatus.COMPLETED -> Color(BaseStatus.COLOR_COMPLETED)
-        BaseStatus.CHECKED_IN -> Color(BaseStatus.COLOR_CHECKED_IN)
-        BaseStatus.SUBMITTED -> Color(BaseStatus.COLOR_SUBMITTED)
-        BaseStatus.REJECTED -> Color(BaseStatus.COLOR_REJECTED)
-        else -> Color(BaseStatus.COLOR_NOT_VISITED)
+    val statusTone = when (progress?.status) {
+        BaseStatus.COMPLETED -> OperatorTone.SUCCESS
+        BaseStatus.CHECKED_IN -> OperatorTone.INFO
+        BaseStatus.SUBMITTED -> OperatorTone.PENDING
+        BaseStatus.REJECTED -> OperatorTone.DANGER
+        else -> OperatorTone.MUTED
     }
     val isCompleted = progress?.status == BaseStatus.COMPLETED
     val isCheckedIn = progress?.status == BaseStatus.CHECKED_IN
@@ -630,116 +634,66 @@ private fun BaseProgressRow(
                         fontWeight = FontWeight.Medium,
                     )
                 }
-                Text(
-                    text = statusLabel,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = statusColor,
-                )
+                OperatorStatusBadge(statusLabel, statusTone)
             }
             if (override != null) {
                 val overrideLabel = buildOverrideLabel(override)
-                Text(
-                    text = overrideLabel,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .background(
-                            MaterialTheme.colorScheme.primaryContainer,
-                            shape = MaterialTheme.shapes.small,
-                        )
-                        .padding(horizontal = 8.dp, vertical = 3.dp),
-                )
+                OperatorOverrideBadge(overrideLabel)
             }
         }
 
         Spacer(Modifier.height(6.dp))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             // Manual Check-In: shown when not yet checked in and not completed/pending
             if (!isCompleted && !isCheckedIn && !isPendingSubmission) {
-                Button(
+                OperatorRescueActionButton(
+                    label = stringResource(R.string.action_manual_check_in),
+                    icon = Icons.Default.LocationOn,
+                    tone = OperatorTone.OVERRIDE,
                     onClick = onManualCheckIn,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = AmberAction.copy(alpha = 0.15f),
-                        contentColor = AmberAction,
-                    ),
                     modifier = Modifier
-                        .height(48.dp)
                         .testTag("manual-check-in-btn-${base.id}"),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                ) {
-                    Text(
-                        text = stringResource(R.string.action_manual_check_in),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Medium,
-                    )
-                }
+                )
             }
 
             // Mark Completed: hidden if already completed or submission is pending review
             if (!isCompleted && !isPendingSubmission) {
-                Button(
+                OperatorRescueActionButton(
+                    label = stringResource(R.string.action_mark_completed),
+                    icon = Icons.Default.CheckCircle,
+                    tone = OperatorTone.OVERRIDE,
                     onClick = onMarkCompleted,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = AmberAction.copy(alpha = 0.15f),
-                        contentColor = AmberAction,
-                    ),
                     modifier = Modifier
-                        .height(48.dp)
                         .testTag("mark-completed-btn-${base.id}"),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                ) {
-                    Text(
-                        text = stringResource(R.string.action_mark_completed),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Medium,
-                    )
-                }
+                )
             } else if (isPendingSubmission) {
                 Text(
                     text = stringResource(R.string.label_pending_review_hint),
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color(BaseStatus.COLOR_SUBMITTED),
+                    color = PFColors.StatusPendingLight,
                 )
             }
 
             if (base.hidden) {
                 if (override == null) {
-                    Button(
+                    OperatorRescueActionButton(
+                        label = stringResource(R.string.action_grant_override),
+                        icon = Icons.Default.LockOpen,
+                        tone = OperatorTone.INFO,
                         onClick = onGrantOverride,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                        ),
                         modifier = Modifier
-                            .height(36.dp)
-                            .testTag("grant-override-btn-${base.id}"),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                    ) {
-                        Text(
-                            text = stringResource(R.string.action_grant_override),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Medium,
-                        )
-                    }
+                        .testTag("grant-override-btn-${base.id}"),
+                    )
                 } else {
-                    Button(
+                    OperatorRescueActionButton(
+                        label = stringResource(R.string.action_remove_override),
+                        icon = Icons.Default.Lock,
+                        tone = OperatorTone.DANGER,
                         onClick = onRemoveOverride,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer,
-                            contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                        ),
                         modifier = Modifier
-                            .height(36.dp)
-                            .testTag("remove-override-btn-${base.id}"),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                    ) {
-                        Text(
-                            text = stringResource(R.string.action_remove_override),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Medium,
-                        )
-                    }
+                        .testTag("remove-override-btn-${base.id}"),
+                    )
                 }
             }
         }
@@ -769,6 +723,7 @@ private fun ManualCheckInDialog(
     onDismiss: () -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
+    val overrideColor = operatorToneColor(OperatorTone.OVERRIDE)
     var reason by remember { mutableStateOf("") }
     var isSubmitting by remember { mutableStateOf(false) }
 
@@ -819,7 +774,7 @@ private fun ManualCheckInDialog(
                 ) {
                     Text(
                         text = stringResource(R.string.action_manual_check_in),
-                        color = AmberAction,
+                        color = overrideColor,
                         fontWeight = FontWeight.SemiBold,
                     )
                 }
@@ -843,6 +798,7 @@ private fun MarkCompletedDialog(
     onDismiss: () -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
+    val overrideColor = operatorToneColor(OperatorTone.OVERRIDE)
     var reason by remember { mutableStateOf("") }
     var pointsText by remember { mutableStateOf("") }
     var pointsError by remember { mutableStateOf(false) }
@@ -932,7 +888,7 @@ private fun MarkCompletedDialog(
                 ) {
                     Text(
                         text = stringResource(R.string.action_mark_completed),
-                        color = if (noChallengeAssigned) MaterialTheme.colorScheme.onSurfaceVariant else AmberAction,
+                        color = if (noChallengeAssigned) MaterialTheme.colorScheme.onSurfaceVariant else overrideColor,
                         fontWeight = FontWeight.SemiBold,
                     )
                 }

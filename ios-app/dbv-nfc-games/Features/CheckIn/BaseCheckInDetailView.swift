@@ -61,14 +61,11 @@ struct BaseCheckInDetailView: View {
 
                 // Offline indicator
                 if !appState.isOnline {
-                    HStack(spacing: 8) {
-                        Image(systemName: "wifi.slash")
-                            .foregroundStyle(.orange)
-                        Text(locale.t("offline.checkInSync"))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(.horizontal)
+                    PlayerFieldStatusBanner(
+                        title: locale.t("offline.checkInSync"),
+                        systemImage: "wifi.slash",
+                        tone: .pending
+                    )
                 }
 
                 if isLoading {
@@ -82,9 +79,8 @@ struct BaseCheckInDetailView: View {
                     // the challenge title has been removed — players do
                     // not see point values anywhere in the product (per
                     // CLAUDE.md "Players don't see scores or leaderboards").
-                    // The backend PlayerChallengeResponse no longer even
-                    // carries a `points` field, so reintroducing the badge
-                    // would require a server-side leak first.
+                    // The compatibility model still carries a `points`
+                    // field, but player surfaces must never render it.
                     VStack(alignment: .leading, spacing: 12) {
                         Text(challenge.title)
                             .font(.title3)
@@ -119,23 +115,12 @@ struct BaseCheckInDetailView: View {
 
                         // Presence warning
                         if challenge.requirePresenceToSubmit && status != .completed && status != .submitted {
-                            HStack(alignment: .top, spacing: 10) {
-                                Image(systemName: "location.circle.fill")
-                                    .foregroundStyle(.orange)
-                                    .font(.title3)
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(locale.t("base.presenceWarningTitle"))
-                                        .font(.subheadline)
-                                        .fontWeight(.semibold)
-                                    Text(locale.t("base.presenceWarningBody"))
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                            .padding()
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color.orange.opacity(0.1))
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            PlayerFieldStatusBanner(
+                                title: locale.t("base.presenceWarningTitle"),
+                                message: locale.t("base.presenceWarningBody"),
+                                systemImage: "location.circle.fill",
+                                tone: .pending
+                            )
                             .padding(.top, 4)
                         }
                     }

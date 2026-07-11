@@ -23,6 +23,7 @@ include(
     ":core:data",
     ":core:platform",
     ":core:i18n",
+    ":core:designsystem",
     ":feature:auth",
     ":feature:player",
     ":feature:operator",

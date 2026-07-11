@@ -42,6 +42,14 @@ struct OperatorHomeView: View {
             Group {
                 if isLoading {
                     ProgressView(locale.t("operator.loadingGames"))
+                } else if let errorMessage, games.isEmpty {
+                    ContentUnavailableView {
+                        Label(locale.t("common.error"), systemImage: "exclamationmark.triangle")
+                    } description: {
+                        Text(errorMessage)
+                    } actions: {
+                        Button(locale.t("common.refresh")) { Task { await loadGames() } }
+                    }
                 } else if games.isEmpty {
                     VStack(spacing: 0) {
                         workspaceSwitcher
@@ -59,13 +67,16 @@ struct OperatorHomeView: View {
                             workspaceSwitcher
                                 .padding(.bottom, 4)
 
+                            GameLibrarySummary(metrics: gameMetrics)
+
                             ForEach(games) { game in
-                                Button {
-                                    selectedGame = game
-                                } label: {
-                                    gameCard(game)
-                                }
-                                .buttonStyle(.plain)
+                                GameLibraryCard(
+                                    name: game.name,
+                                    description: game.description,
+                                    statusLabel: locale.t("game.status.\(game.status)"),
+                                    statusTone: statusTone(for: game.status),
+                                    action: { selectedGame = game }
+                                )
                             }
                         }
                         .padding(.horizontal, PFSpacing.screenPadding)
@@ -151,38 +162,12 @@ struct OperatorHomeView: View {
         }
     }
 
-    // MARK: - Game Card
-
-    @ViewBuilder
-    private func gameCard(_ game: Game) -> some View {
-        let color = statusColor(for: game.status)
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(game.name)
-                    .font(.headline)
-                    .foregroundStyle(Color.pfText)
-                Spacer()
-                Text(locale.t("game.status.\(game.status)").uppercased())
-                    .font(.caption2)
-                    .fontWeight(.semibold)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(color.opacity(0.15))
-                    .foregroundStyle(color)
-                    .clipShape(Capsule())
-            }
-            if !game.description.isEmpty {
-                Text(game.description)
-                    .font(.caption)
-                    .foregroundStyle(Color.pfTextMuted)
-                    .lineLimit(2)
-            }
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.pfCard)
-        .clipShape(RoundedRectangle(cornerRadius: PFRadius.card))
-        .shadow(color: .black.opacity(0.03), radius: 4, y: 1)
+    private var gameMetrics: [GameLibraryMetric] {
+        [
+            GameLibraryMetric(id: "setup", value: "\(games.filter { $0.status == "setup" }.count)", label: locale.t("game.status.setup"), tone: .info),
+            GameLibraryMetric(id: "live", value: "\(games.filter { $0.status == "live" }.count)", label: locale.t("game.status.live"), tone: .success),
+            GameLibraryMetric(id: "ended", value: "\(games.filter { $0.status == "ended" }.count)", label: locale.t("game.status.ended"), tone: .muted),
+        ]
     }
 
     // MARK: - Workspace Switcher
@@ -193,8 +178,8 @@ struct OperatorHomeView: View {
             HStack(spacing: 8) {
                 // Personal workspace button
                 workspaceButton(
-                    label: "Personal",
-                    detail: workspaces.map { "\($0.personal.activeGames) games" },
+                    label: locale.t("operator.personalWorkspace"),
+                    detail: workspaces.map { locale.t("operator.gamesCount", $0.personal.activeGames) },
                     isSelected: selectedOrgId == nil,
                     action: { selectedOrgId = nil }
                 )
@@ -204,7 +189,7 @@ struct OperatorHomeView: View {
                     ForEach(orgs) { org in
                         workspaceButton(
                             label: org.name,
-                            detail: "\(org.memberCount) members",
+                            detail: locale.t("operator.membersCount", org.memberCount),
                             isSelected: selectedOrgId == org.id,
                             action: { selectedOrgId = org.id }
                         )
@@ -218,27 +203,7 @@ struct OperatorHomeView: View {
     }
 
     private func workspaceButton(label: String, detail: String?, isSelected: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(label)
-                    .font(.subheadline)
-                    .fontWeight(isSelected ? .semibold : .regular)
-                if let detail {
-                    Text(detail)
-                        .font(.caption2)
-                        .opacity(0.75)
-                }
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .background(isSelected ? Color.pfPrimary.opacity(0.15) : Color.pfCard)
-            .foregroundStyle(isSelected ? Color.pfPrimary : Color.pfText)
-            .overlay(
-                Capsule()
-                    .strokeBorder(isSelected ? Color.pfPrimary : Color.pfCardBorder, lineWidth: 1)
-            )
-            .clipShape(Capsule())
-        }
+        GameLibraryWorkspaceChip(label: label, detail: detail, selected: isSelected, action: action)
     }
 
     // MARK: - Data Loading
@@ -276,12 +241,12 @@ struct OperatorHomeView: View {
         }
     }
 
-    private func statusColor(for status: String) -> Color {
+    private func statusTone(for status: String) -> OperatorTone {
         switch status {
-        case "live": return .pfCompleted
-        case "setup": return .pfPending
-        case "ended": return .pfTextMuted
-        default: return .pfTextMuted
+        case "live": return .success
+        case "setup": return .info
+        case "ended": return .muted
+        default: return .muted
         }
     }
 }

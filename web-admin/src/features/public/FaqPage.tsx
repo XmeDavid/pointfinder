@@ -95,11 +95,11 @@ function AccordionItem({ questionKey, answerKey }: FaqItem) {
     <div className="border-b border-white/[0.06]">
       <button
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between gap-4 py-5 text-left transition-colors duration-200 hover:text-green-400"
+        className="flex w-full items-center justify-between gap-4 py-5 text-left transition-colors duration-200 hover:text-primary"
       >
         <span className="text-[15px] font-medium text-white/80">{t(questionKey)}</span>
         <ChevronDown
-          className={`h-4 w-4 shrink-0 text-green-500/50 transition-transform duration-300 ${open ? "rotate-180" : ""}`}
+          className={`h-4 w-4 shrink-0 text-primary/60 transition-transform duration-300 ${open ? "rotate-180" : ""}`}
         />
       </button>
       <div
@@ -118,20 +118,19 @@ function Navbar() {
 
   return (
     <nav
-      className="fixed top-0 left-0 right-0 z-50 border-b border-white/[0.04]"
-      style={{ background: "rgba(6,11,6,0.82)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)" }}
+      className="fixed left-0 right-0 top-0 z-50 border-b border-border bg-card/95 shadow-panel"
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link to="/" className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-green-500/20 bg-green-500/10">
-            <Compass className="h-4 w-4 text-green-500" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-primary/30 bg-primary/10">
+            <Compass className="h-4 w-4 text-primary" />
           </div>
           <span className="font-semibold tracking-tight text-white">PointFinder</span>
         </Link>
 
         <Link
           to="/login"
-          className="text-sm font-medium text-green-400/70 transition-colors duration-200 hover:text-green-400"
+          className="text-sm font-medium text-primary/80 transition-colors duration-200 hover:text-primary"
         >
           {t("landing.nav.operatorLogin")}
         </Link>
@@ -147,8 +146,8 @@ function Footer() {
     <footer className="border-t border-white/[0.04] px-6 py-12">
       <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-6 md:flex-row">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-green-500/20 bg-green-500/10">
-            <Compass className="h-4 w-4 text-green-500" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-primary/30 bg-primary/10">
+            <Compass className="h-4 w-4 text-primary" />
           </div>
           <div>
             <span className="block text-sm font-semibold text-white">PointFinder</span>
@@ -159,13 +158,13 @@ function Footer() {
         <div className="flex items-center gap-4 text-sm">
           <Link
             to="/privacy"
-            className="text-white/25 transition-colors duration-200 hover:text-green-400"
+            className="text-muted-foreground transition-colors duration-200 hover:text-primary"
           >
             {t("landing.footer.privacyPolicy")}
           </Link>
           <Link
             to="/"
-            className="text-white/25 transition-colors duration-200 hover:text-green-400"
+            className="text-muted-foreground transition-colors duration-200 hover:text-primary"
           >
             {t("faq.backToHome")}
           </Link>
@@ -186,15 +185,14 @@ export function FaqPage() {
   return (
     <div
       ref={containerRef}
-      className="min-h-screen overflow-x-hidden"
-      style={{ background: "#060b06", color: "#ffffff" }}
+      className="dark min-h-screen overflow-x-hidden bg-background text-foreground"
     >
       <Navbar />
 
       {/* Header */}
       <section className="px-6 pt-28 pb-16 md:pt-36 md:pb-20">
         <div className="mx-auto max-w-3xl text-center">
-          <span className="mb-3 block text-xs font-medium uppercase tracking-[0.2em] text-green-500/70">
+          <span className="mb-3 block text-xs font-medium uppercase tracking-[0.2em] text-primary/80">
             {t("faq.label")}
           </span>
           <h1 className="mb-4 text-4xl font-bold text-white md:text-5xl">
@@ -215,10 +213,10 @@ export function FaqPage() {
               className="scroll-reveal mb-12 last:mb-0"
               style={{ transitionDelay: `${ci * 100}ms` }}
             >
-              <h2 className="mb-6 text-lg font-semibold text-green-400/80">
+              <h2 className="mb-6 text-lg font-semibold text-primary">
                 {t(category.titleKey)}
               </h2>
-              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.015] px-6">
+              <div className="rounded-lg border border-border bg-card px-6 shadow-panel">
                 {category.items.map((item) => (
                   <AccordionItem key={item.questionKey} {...item} />
                 ))}

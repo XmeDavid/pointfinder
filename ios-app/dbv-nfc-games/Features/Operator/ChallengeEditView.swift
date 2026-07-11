@@ -100,6 +100,20 @@ struct ChallengeEditView: View {
 
     var body: some View {
         Form {
+            Section {
+                ManagementEditorSummary(
+                    title: isCreateMode ? locale.t("operator.createChallenge") : locale.t("operator.editChallenge"),
+                    metadata: [
+                        ManagementMetadata(id: "points", label: "\(points) \(locale.t("common.points"))", tone: .pending),
+                        ManagementMetadata(id: "answer", label: answerType, tone: .info),
+                        ManagementMetadata(id: "location", label: locale.t("operator.locationBound"), tone: locationBound ? .success : .muted),
+                    ],
+                    validationLabel: String(format: locale.t("setup.readyCount"), title.isEmpty ? 0 : 1, 1),
+                    isValid: !title.isEmpty
+                )
+                .listRowInsets(EdgeInsets(top: PFSpaceToken.space2, leading: 0, bottom: PFSpaceToken.space2, trailing: 0))
+            }
+
             // Title & Points
             Section {
                 TextField(locale.t("operator.challengeTitle"), text: $title)
@@ -325,7 +339,7 @@ struct ChallengeEditView: View {
             if let errorMessage {
                 Section {
                     Text(errorMessage)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(PFColorToken.contentDanger)
                         .font(.caption)
                 }
             }

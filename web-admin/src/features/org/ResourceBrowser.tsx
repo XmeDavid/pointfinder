@@ -40,7 +40,7 @@ function formatBytes(bytes: number): string {
 }
 
 function fileTypeIcon(contentType: string, type: 'file' | 'document') {
-  if (type === 'document') return <FileText className="h-4 w-4 text-blue-500" />
+  if (type === 'document') return <FileText className="h-4 w-4 text-info" />
   if (contentType.startsWith('image/')) return <span className="text-sm">🖼️</span>
   if (contentType.startsWith('audio/')) return <span className="text-sm">🎵</span>
   if (contentType.startsWith('video/')) return <span className="text-sm">🎬</span>
@@ -308,7 +308,7 @@ export function ResourceBrowser({ orgId, gameId, showShareToggle }: ResourceBrow
               className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-accent/50 group cursor-pointer"
               onClick={() => setCurrentFolderId(folder.id)}
             >
-              <Folder className="h-4 w-4 text-yellow-500 shrink-0" />
+              <Folder className="h-4 w-4 shrink-0 text-warning" />
               <span className="flex-1 text-sm font-medium">{folder.name}</span>
               <button
                 onClick={(e) => { e.stopPropagation(); handleDeleteFolder(folder.id) }}
@@ -331,7 +331,7 @@ export function ResourceBrowser({ orgId, gameId, showShareToggle }: ResourceBrow
               {editingDocId === resource.id && editingDoc ? (
                 <div className="border border-border rounded-md mb-2 overflow-hidden">
                   <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-muted/30">
-                    <FileText className="h-4 w-4 text-blue-500" />
+                    <FileText className="h-4 w-4 text-info" />
                     <span className="text-sm font-medium flex-1">{resource.name}</span>
                     <button
                       onClick={() => handleSaveDoc(resource)}

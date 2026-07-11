@@ -18,27 +18,27 @@ export interface ColorSwatch {
 }
 
 export const COLOR_PALETTE: ColorSwatch[] = [
-  { value: "#ef4444", nameKey: "color.red" },
-  { value: "#f97316", nameKey: "color.orange" },
-  { value: "#f59e0b", nameKey: "color.amber" },
-  { value: "#eab308", nameKey: "color.yellow" },
-  { value: "#84cc16", nameKey: "color.lime" },
-  { value: "#22c55e", nameKey: "color.green" },
-  { value: "#10b981", nameKey: "color.emerald" },
-  { value: "#14b8a6", nameKey: "color.teal" },
-  { value: "#06b6d4", nameKey: "color.cyan" },
-  { value: "#3b82f6", nameKey: "color.blue" },
-  { value: "#6366f1", nameKey: "color.indigo" },
-  { value: "#8b5cf6", nameKey: "color.violet" },
-  { value: "#a855f7", nameKey: "color.purple" },
-  { value: "#ec4899", nameKey: "color.pink" },
-  { value: "#f43f5e", nameKey: "color.rose" },
-  { value: "#64748b", nameKey: "color.slate" },
+  { value: dataColors.red, nameKey: "color.red" },
+  { value: dataColors.orange, nameKey: "color.orange" },
+  { value: dataColors.amber, nameKey: "color.amber" },
+  { value: dataColors.yellow, nameKey: "color.yellow" },
+  { value: dataColors.lime, nameKey: "color.lime" },
+  { value: dataColors.green, nameKey: "color.green" },
+  { value: dataColors.emerald, nameKey: "color.emerald" },
+  { value: dataColors.teal, nameKey: "color.teal" },
+  { value: dataColors.cyan, nameKey: "color.cyan" },
+  { value: dataColors.blue, nameKey: "color.blue" },
+  { value: dataColors.indigo, nameKey: "color.indigo" },
+  { value: dataColors.violet, nameKey: "color.violet" },
+  { value: dataColors.purple, nameKey: "color.purple" },
+  { value: dataColors.pink, nameKey: "color.pink" },
+  { value: dataColors.rose, nameKey: "color.rose" },
+  { value: dataColors.statusNotVisited, nameKey: "color.slate" },
 ];
 
 /**
  * Hex regex matching the backend `@Pattern` on the request DTO.
- * Accepts both `#3b82f6` and `#3B82F6`.
+ * Accepts both lower- and upper-case six-digit hex values.
  */
 export const HEX_COLOR_REGEX = /^#[0-9a-fA-F]{6}$/;
 
@@ -61,3 +61,4 @@ export function pickNextDefaultColor(existingTagColors: string[]): string {
   // All used — pick random
   return COLOR_PALETTE[Math.floor(Math.random() * COLOR_PALETTE.length)].value;
 }
+import { dataColors } from "@/generated/colorValues";

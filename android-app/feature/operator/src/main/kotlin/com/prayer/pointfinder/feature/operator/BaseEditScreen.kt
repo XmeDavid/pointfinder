@@ -61,6 +61,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.prayer.pointfinder.core.i18n.R
+import com.prayer.pointfinder.core.designsystem.PFColorHexToken
 import com.prayer.pointfinder.core.model.Base
 import com.prayer.pointfinder.core.model.Challenge
 import com.prayer.pointfinder.core.model.CreateBaseRequest
@@ -223,6 +224,19 @@ fun BaseEditScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp),
         ) {
+            Spacer(Modifier.height(8.dp))
+            ManagementEditorSummary(
+                title = if (isEditMode) stringResource(R.string.label_edit_base) else stringResource(R.string.label_new_base),
+                metadata = buildList {
+                    add(ManagementMetadata(stringResource(R.string.label_challenges_at_base, linkedChallenges.size), OperatorTone.INFO))
+                    if (hidden) add(ManagementMetadata(stringResource(R.string.label_hidden_base), OperatorTone.PENDING))
+                    if (isEditMode) add(ManagementMetadata(stringResource(if (base?.nfcLinked == true) R.string.label_nfc_linked else R.string.label_nfc_not_linked), if (base?.nfcLinked == true) OperatorTone.SUCCESS else OperatorTone.PENDING))
+                },
+                validationLabel = stringResource(R.string.setup_ready_count, if (canSave) 1 else 0, 1),
+                isValid = canSave,
+            )
+            Spacer(Modifier.height(12.dp))
+
             // Embedded mini map
             Text(
                 text = if (hasPin) "" else stringResource(R.string.label_tap_map_to_set_location),
@@ -561,7 +575,7 @@ private fun createPinBitmap(density: Float): Bitmap {
     val radius = circleDiameterPx / 2f
     val cy = radius + shadowPx
 
-    val colorInt = android.graphics.Color.parseColor("#D32F2F")
+    val colorInt = android.graphics.Color.parseColor(PFColorHexToken.Light.StatusRejected)
 
     // Shadow
     val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {

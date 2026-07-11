@@ -65,6 +65,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.prayer.pointfinder.core.i18n.R
+import com.prayer.pointfinder.core.designsystem.PFColors
 import com.prayer.pointfinder.core.model.Base
 import com.prayer.pointfinder.core.model.Challenge
 import com.prayer.pointfinder.core.model.SubmissionResponse
@@ -168,49 +169,26 @@ fun OperatorSubmissionsScreen(
                             ?: stringResource(R.string.label_unknown_base)
                         val mediaUrls = getMediaUrls(submission)
 
-                        Surface(
+                        OperatorSubmissionCard(
+                            teamName = teamName,
+                            challengeTitle = challengeTitle,
+                            baseName = baseName,
+                            answer = submission.answer,
+                            submittedAt = formatTimestamp(submission.submittedAt),
+                            statusLabel = statusLabel(submission.status),
+                            statusTone = statusTone(submission.status),
+                            mediaCount = mediaUrls.size,
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    selectedSubmission = submission
-                                    feedback = submission.feedback.orEmpty()
-                                    val defaultPts = submission.points
-                                        ?: challenges.firstOrNull { it.id == submission.challengeId }?.points
-                                        ?: 0
-                                    pointsText = defaultPts.toString()
-                                },
-                            tonalElevation = 1.dp,
-                            shape = MaterialTheme.shapes.medium,
-                        ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(teamName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                                    Spacer(Modifier.weight(1f))
-                                    if (mediaUrls.size > 1) {
-                                        Badge(
-                                            modifier = Modifier.padding(end = 6.dp),
-                                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                        ) {
-                                            Text(
-                                                "\uD83D\uDCF7 ${mediaUrls.size}",
-                                                style = MaterialTheme.typography.labelSmall,
-                                            )
-                                        }
-                                    }
-                                    Text(
-                                        statusLabel(submission.status),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = statusColor(submission.status),
-                                    )
-                                }
-                                Spacer(Modifier.height(4.dp))
-                                Text(challengeTitle, style = MaterialTheme.typography.bodyMedium)
-                                Text(baseName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Spacer(Modifier.height(2.dp))
-                                Text(formatTimestamp(submission.submittedAt), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
-                            }
-                        }
+                                .fillMaxWidth(),
+                            onClick = {
+                                selectedSubmission = submission
+                                feedback = submission.feedback.orEmpty()
+                                val defaultPts = submission.points
+                                    ?: challenges.firstOrNull { it.id == submission.challengeId }?.points
+                                    ?: 0
+                                pointsText = defaultPts.toString()
+                            },
+                        )
                     }
                 }
             }
@@ -439,7 +417,7 @@ private fun FullscreenMediaViewer(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
+                .background(PFColors.SurfaceCanvasDark),
         ) {
             HorizontalPager(
                 state = pagerState,
@@ -729,12 +707,10 @@ private fun statusLabel(status: SubmissionStatus): String {
 }
 
 @Composable
-private fun statusColor(status: SubmissionStatus): Color {
-    return when (status) {
-        SubmissionStatus.PENDING -> StatusSubmitted
-        SubmissionStatus.APPROVED, SubmissionStatus.CORRECT -> StatusCompleted
-        SubmissionStatus.REJECTED -> MaterialTheme.colorScheme.error
-    }
+private fun statusTone(status: SubmissionStatus): OperatorTone = when (status) {
+    SubmissionStatus.PENDING -> OperatorTone.PENDING
+    SubmissionStatus.APPROVED, SubmissionStatus.CORRECT -> OperatorTone.SUCCESS
+    SubmissionStatus.REJECTED -> OperatorTone.DANGER
 }
 
 private fun parseSubmissionInstant(value: String): Instant {

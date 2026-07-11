@@ -82,6 +82,7 @@
     <string name="label_total_bases">Total Bases</string>
     <string name="label_pending_actions">Pending actions</string>
     <string name="label_no_pending_actions">All synced</string>
+    <string name="label_pending_sync_icon">Pending sync</string>
     <string name="label_pending_sync_one">%1$d pending action to sync</string>
     <string name="label_pending_sync_other">%1$d pending actions to sync</string>
     <string name="label_failed_sync_count">%1$d action(s) failed to sync</string>
@@ -229,6 +230,22 @@
     <string name="warning_team_variables_incomplete">Some teams have incomplete variable values</string>
     <string name="label_go_live_confirm_title">Go Live?</string>
     <string name="label_go_live_confirm_message">Teams will be able to join and play. You can still edit bases and challenges during the game.</string>
+    <string name="setup_spatial_plan">Spatial plan</string>
+    <string name="setup_spatial_plan_description">Place and inspect field stations on the live map.</string>
+    <string name="setup_open_map">Open setup map</string>
+    <string name="setup_bases_count">%1$d base(s)</string>
+    <string name="setup_nfc_count">%1$d/%2$d NFC</string>
+    <string name="setup_assignments_count">%1$d assignment(s)</string>
+    <string name="setup_launch_readiness">Launch readiness</string>
+    <string name="setup_ready_count">%1$d of %2$d checks ready</string>
+    <string name="setup_configure">Configure</string>
+    <string name="setup_field_plan">Field plan</string>
+    <string name="setup_nfc">NFC tags</string>
+    <string name="setup_nfc_ready">All NFC tags are linked</string>
+    <string name="setup_challenges_ready">%1$d challenge(s) ready</string>
+    <string name="setup_teams_ready">%1$d team(s) configured</string>
+    <string name="setup_team_variables">Team variables</string>
+    <string name="setup_team_variables_ready">All required team values are complete</string>
     <string name="label_challenges">Challenges</string>
     <string name="label_teams">Teams</string>
     <!-- Base Management -->
@@ -308,6 +325,7 @@
     <string name="label_show_qr">Show QR</string>
     <string name="label_qr_code">QR Code</string>
     <string name="label_variables">Variables</string>
+    <string name="label_values_complete">Values</string>
     <string name="label_players">Players (%1$d)</string>
     <string name="label_no_players">No players yet</string>
     <string name="label_remove_player">Remove Player</string>
@@ -556,4 +574,20 @@
     <!-- Workspace switcher -->
     <string name="label_personal_workspace">Personal</string>
     <string name="label_member_count">%1$d members</string>
+    <string name="org_members">Members</string>
+    <string name="org_live_games">Live Games</string>
+    <string name="org_no_members">No members yet.</string>
+    <string name="org_invite_member">Invite Member</string>
+    <string name="org_email_address">Email address</string>
+    <string name="org_invite_failed">Invite failed</string>
+    <string name="org_permissions_for">Permissions for %1$s</string>
+    <string name="org_update_permissions_failed">Failed to update permissions</string>
+    <string name="org_remove_member">Remove Member</string>
+    <string name="org_remove_member_message">Remove %1$s from %2$s?</string>
+    <string name="org_remove_failed">Failed to remove member</string>
+    <string name="org_no_permissions">No permissions</string>
+    <string name="org_edit_permissions_short">Permissions</string>
+    <string name="org_load_members_failed">Failed to load members</string>
+    <string name="cd_invite_member">Invite member</string>
+    <string name="cd_remove_member">Remove member</string>
 </resources>

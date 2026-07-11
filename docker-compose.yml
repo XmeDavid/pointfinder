@@ -35,12 +35,10 @@ services:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in .env or environment}
       CORS_ORIGINS: http://localhost,https://pointfinder.pt,https://pointfinder.ch
-      # APNs (Apple Push Notifications) configuration - values come from .env
-      # Single source of truth: APPLE_PROD_APNS_KEY is both the Key ID and part of the filename
+      # APNs (Apple Push Notifications) configuration - values come from .env.
+      # The key file is read from /app/config/AuthKey_${APNS_KEY_ID}.p8 by default.
       APNS_ENABLED: ${APNS_ENABLED:-false}
-      # Use file: URL so Spring's ResourceLoader reads from filesystem, not classpath
-      APNS_KEY_PATH: ${APNS_KEY_PATH:-file:/app/config/apns-key.p8}
-      APNS_KEY_ID: ${APPLE_PROD_APNS_KEY:-}      # e.g. G9D86M2578
+      APNS_KEY_ID: ${APNS_KEY_ID:-}              # e.g. G9D86M2578
       APNS_TEAM_ID: ${APNS_TEAM_ID:-}            # e.g. ABC123DEFG
       APNS_BUNDLE_ID: ${APNS_BUNDLE_ID:-com.prayer.pointfinder}
       APNS_PRODUCTION: ${APNS_PRODUCTION:-false}
@@ -73,11 +71,8 @@ services:
       APP_UPLOADS_MAX_ACTIVE_BYTES_PER_GAME: ${APP_UPLOADS_MAX_ACTIVE_BYTES_PER_GAME:-17179869184}
     volumes:
       - ${UPLOADS_PATH:-./data/uploads}:/uploads
-      # Mount your APNs .p8 key from the host into the container (read-only)
-      # The filename includes the Key ID from APPLE_PROD_APNS_KEY (e.g. AuthKey_G9D86M2578.p8)
-      - ./secrets/AuthKey_${APPLE_PROD_APNS_KEY}.p8:/app/config/apns-key.p8:ro
-      # Mount your Firebase service account JSON from the host into the container (read-only)
-      - ./secrets/firebase-service-account.json:/app/config/firebase-service-account.json:ro
+      # Mount notification secrets into /app/config (read-only).
+      - ${SECRETS_PATH:-./secrets}:/app/config:ro
     restart: unless-stopped
     stop_grace_period: 40s
     deploy:

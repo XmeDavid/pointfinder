@@ -9,6 +9,9 @@ import { BroadcastPodium } from "./components/BroadcastPodium";
 import { BroadcastMap } from "./components/BroadcastMap";
 import { BroadcastTeamList } from "./components/BroadcastTeamList";
 import { BroadcastBasesList } from "./components/BroadcastBasesList";
+import { LoadingState } from "@/components/feedback/LoadingState";
+import { EmptyState } from "@/components/feedback/EmptyState";
+import { Button } from "@/components/ui/button";
 
 const BROADCAST_REFETCH_MS = 15000;
 
@@ -71,23 +74,14 @@ export function LiveBroadcastPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-950 text-white">
-        <p className="text-lg text-white/50">{t("common.loading")}</p>
-      </div>
+      <div className="dark min-h-screen bg-background text-foreground"><LoadingState label={t("common.loading")} className="min-h-screen" /></div>
     );
   }
 
   if (isError || !initialData) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gray-950 text-white">
-        <p className="text-xl font-semibold">{t("live.notFound")}</p>
-        <p className="text-white/50">{t("live.notFoundDescription")}</p>
-        <button
-          onClick={() => navigate("/live")}
-          className="rounded-lg bg-white/10 px-4 py-2 text-sm hover:bg-white/20 transition-colors"
-        >
-          {t("live.backToEntry")}
-        </button>
+      <div className="dark min-h-screen bg-background text-foreground">
+        <EmptyState className="min-h-screen" title={t("live.notFound")} description={t("live.notFoundDescription")} action={<Button variant="secondary" onClick={() => navigate("/live")}>{t("live.backToEntry")}</Button>} />
       </div>
     );
   }
@@ -96,34 +90,34 @@ export function LiveBroadcastPage() {
   const bases = initialData.bases;
 
   return (
-    <div className="flex h-screen flex-col bg-gray-950 text-white overflow-hidden">
+    <div className="dark flex min-h-screen flex-col bg-background text-foreground lg:h-screen lg:overflow-hidden">
       {/* Header bar */}
-      <div className="flex items-center justify-between border-b border-white/10 px-4 py-2 shrink-0">
+      <div className="flex items-center justify-between border-b border-border bg-card px-4 py-2 shrink-0">
         <div className="flex items-center gap-2">
-          <Radio className="h-5 w-5 text-green-400" />
+          <Radio className="h-5 w-5 text-success" />
           <span className="font-semibold text-sm">PointFinder</span>
         </div>
         <span className="text-sm font-medium truncate mx-4">{initialData.gameName}</span>
-        <code className="rounded bg-white/10 px-2 py-0.5 font-mono text-xs tracking-wider">
+        <code className="rounded bg-muted px-2 py-0.5 font-mono text-xs tracking-wider text-muted-foreground">
           {upperCode}
         </code>
       </div>
 
       {/* Main layout: left 1/3 | right 2/3 */}
-      <div className="flex-1 flex gap-3 p-3 overflow-hidden">
+      <div className="grid flex-1 grid-cols-1 gap-3 overflow-visible p-3 lg:grid-cols-3 lg:overflow-hidden">
         {/* Left column: 1/3 width — podium (1/3 height) + team list (2/3 height) */}
-        <div className="w-1/3 flex flex-col gap-3 min-w-0">
-          <div className="h-1/3 min-h-0">
+        <div className="flex min-w-0 flex-col gap-3 lg:col-span-1">
+          <div className="h-72 min-h-0 lg:h-1/3">
             <BroadcastPodium leaderboard={leaderboard} />
           </div>
-          <div className="h-2/3 min-h-0">
+          <div className="h-96 min-h-0 lg:h-2/3">
             <BroadcastTeamList teams={teams} leaderboard={leaderboard} />
           </div>
         </div>
 
         {/* Right column: 2/3 width — map (2/3 height) + bases grid (1/3 height) */}
-        <div className="w-2/3 flex flex-col gap-3 min-w-0">
-          <div className="h-2/3 min-h-0">
+        <div className="flex min-w-0 flex-col gap-3 lg:col-span-2">
+          <div className="h-[28rem] min-h-0 lg:h-2/3">
             <BroadcastMap
               bases={bases}
               teams={teams}
@@ -132,7 +126,7 @@ export function LiveBroadcastPage() {
               tileSource={initialData?.tileSource}
             />
           </div>
-          <div className="h-1/3 min-h-0">
+          <div className="h-80 min-h-0 lg:h-1/3">
             <BroadcastBasesList bases={bases} teams={teams} progress={progress} />
           </div>
         </div>

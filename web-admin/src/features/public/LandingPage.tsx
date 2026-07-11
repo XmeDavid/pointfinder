@@ -460,7 +460,7 @@ function HeroBackdrop() {
   // the hero map simply becomes fullscreen instead of a second map appearing.
   return (
     <div aria-hidden="true" className="absolute inset-0 overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,#0e2016_0%,#070d09_58%,#050806_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,var(--pf-dataColor-atlasDark1)_0%,var(--pf-dataColor-atlasDark2)_58%,var(--pf-dataColor-atlasDark3)_100%)]" />
       <div className="landing-hero-map" />
       <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,transparent_52%,var(--color-background)_100%)]" />
     </div>
@@ -776,10 +776,10 @@ function GooglePlayBadge({ className = "h-[54px] w-auto" }: { className?: string
     <svg viewBox="0 0 180 60" role="img" aria-label="Get it on Google Play" className={className}>
       <rect x="0.75" y="0.75" width="178.5" height="58.5" rx="10.5" fill="#000" stroke="#fff" strokeOpacity="0.18" strokeWidth="1.5" />
       <g transform="translate(14 13)">
-        <path d="M0.5 1.2v31.6c0 .6.3 1.1.7 1.4L18 17 1.2 0.2c-.4.3-.7.6-.7 1z" fill="#00A1FF" />
-        <path d="M23.3 11.7L19.3 14 18 17l1.3 3 4 2.3 7-4c.9-.5.9-1.9 0-2.4l-7-3.2z" fill="#FFBD00" />
-        <path d="M1.2 33.8c.5.4 1.2.4 1.9.1l20.2-11.6-4-4L1.2 33.8z" fill="#00A94F" />
-        <path d="M3.1.1C2.4-.2 1.7-.2 1.2.2L19.3 20l4-4L3.1.1z" fill="#FF3A44" />
+        <path d="M0.5 1.2v31.6c0 .6.3 1.1.7 1.4L18 17 1.2 0.2c-.4.3-.7.6-.7 1z" fill="var(--pf-dataColor-googlePlayBlue)" />
+        <path d="M23.3 11.7L19.3 14 18 17l1.3 3 4 2.3 7-4c.9-.5.9-1.9 0-2.4l-7-3.2z" fill="var(--pf-dataColor-googlePlayYellow)" />
+        <path d="M1.2 33.8c.5.4 1.2.4 1.9.1l20.2-11.6-4-4L1.2 33.8z" fill="var(--pf-dataColor-googlePlayGreen)" />
+        <path d="M3.1.1C2.4-.2 1.7-.2 1.2.2L19.3 20l4-4L3.1.1z" fill="var(--pf-dataColor-googlePlayRed)" />
       </g>
       <g fill="#fff" fontFamily="Inter, Roboto, system-ui, sans-serif">
         <text x="54" y="24" fontSize="10">GET IT ON</text>

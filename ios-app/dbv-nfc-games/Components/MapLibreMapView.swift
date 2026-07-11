@@ -240,9 +240,9 @@ struct MapLibreMapView: UIViewRepresentable {
         // Color: primary for small, darker for medium, warning-amber for large
         clusterCircle.circleColor = NSExpression(
             format: "TERNARY(point_count >= 10, %@, TERNARY(point_count >= 5, %@, %@))",
-            UIColor(red: 0.80, green: 0.47, blue: 0.00, alpha: 1.0),  // amber for 10+
-            UIColor(red: 0.04, green: 0.40, blue: 0.75, alpha: 1.0),  // darker blue for 5-9
-            UIColor(red: 0.08, green: 0.55, blue: 1.00, alpha: 1.0)   // brand blue for 1-4
+            UIColor(PFColorToken.statusPending),
+            UIColor(PFColorToken.actionPrimaryStrong),
+            UIColor(PFColorToken.statusCheckedIn)
         )
         clusterCircle.circleStrokeWidth = NSExpression(forConstantValue: 2)
         clusterCircle.circleStrokeColor = NSExpression(forConstantValue: UIColor.white)
@@ -266,7 +266,7 @@ struct MapLibreMapView: UIViewRepresentable {
         let individualPin = MLNCircleStyleLayer(identifier: Self.individualPinLayerId, source: source)
         individualPin.predicate = NSPredicate(format: "point_count = NULL")
         individualPin.circleRadius = NSExpression(forConstantValue: 8)
-        individualPin.circleColor = NSExpression(forConstantValue: UIColor(red: 0.08, green: 0.55, blue: 1.00, alpha: 1.0))
+        individualPin.circleColor = NSExpression(forConstantValue: UIColor(PFColorToken.statusCheckedIn))
         individualPin.circleStrokeWidth = NSExpression(forConstantValue: 2)
         individualPin.circleStrokeColor = NSExpression(forConstantValue: UIColor.white)
         style.addLayer(individualPin)
@@ -306,7 +306,7 @@ struct MapLibreMapView: UIViewRepresentable {
         style.addSource(source)
 
         let layer = MLNLineStyleLayer(identifier: Self.connectionLayerId, source: source)
-        layer.lineColor = NSExpression(forConstantValue: UIColor(red: 107.0/255.0, green: 114.0/255.0, blue: 128.0/255.0, alpha: 1))
+        layer.lineColor = NSExpression(forConstantValue: UIColor(PFColorToken.statusUnknown))
         layer.lineWidth = NSExpression(forConstantValue: 2)
         layer.lineOpacity = NSExpression(forConstantValue: 0.5)
         layer.lineDashPattern = NSExpression(forConstantValue: [8, 8])

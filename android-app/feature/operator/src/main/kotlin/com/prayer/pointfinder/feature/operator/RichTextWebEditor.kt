@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.viewinterop.AndroidView
+import com.prayer.pointfinder.core.designsystem.PFColorHexToken
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -112,13 +113,13 @@ fun RichTextWebEditor(
 }
 
 private fun editorHTML(content: String, isDark: Boolean): String {
-    val textColor = if (isDark) "#FFFFFF" else "#000000"
-    val bgColor = if (isDark) "#1C1C1E" else "#FFFFFF"
-    val placeholderColor = if (isDark) "#636366" else "#C7C7CC"
-    val dividerColor = if (isDark) "#48484A" else "#D1D1D6"
-    val blockBg = if (isDark) "#2C2C2E" else "#F2F2F7"
-    val varBg = if (isDark) "#2C5282" else "#BEE3F8"
-    val varFg = if (isDark) "#BEE3F8" else "#2C5282"
+    val textColor = if (isDark) PFColorHexToken.Dark.EditorText else PFColorHexToken.Light.EditorText
+    val bgColor = if (isDark) PFColorHexToken.Dark.EditorCanvas else PFColorHexToken.Light.EditorCanvas
+    val placeholderColor = if (isDark) PFColorHexToken.Dark.EditorPlaceholder else PFColorHexToken.Light.EditorPlaceholder
+    val dividerColor = if (isDark) PFColorHexToken.Dark.EditorDivider else PFColorHexToken.Light.EditorDivider
+    val blockBg = if (isDark) PFColorHexToken.Dark.EditorBlock else PFColorHexToken.Light.EditorBlock
+    val varBg = if (isDark) PFColorHexToken.Dark.EditorVariableBackground else PFColorHexToken.Light.EditorVariableBackground
+    val varFg = if (isDark) PFColorHexToken.Dark.EditorVariableContent else PFColorHexToken.Light.EditorVariableContent
     val sanitized = content
         .replace("<script", "&lt;script", ignoreCase = true)
         .replace("</script", "&lt;/script", ignoreCase = true)

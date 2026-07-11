@@ -53,7 +53,7 @@ struct NotificationsManagementView: View {
 
                 if let errorMessage {
                     Text(errorMessage)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(PFColorToken.contentDanger)
                         .font(.caption)
                 }
             }
@@ -68,35 +68,11 @@ struct NotificationsManagementView: View {
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(notifications) { notification in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(notification.message)
-                                .font(.body)
-                            HStack {
-                                if let teamId = notification.targetTeamId {
-                                    let teamName = teams.first(where: { $0.id == teamId })?.name ?? locale.t("operator.unknownTeam")
-                                    Text(teamName)
-                                        .font(.caption)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(Color(.systemGray5))
-                                        .clipShape(Capsule())
-                                } else {
-                                    Text(locale.t("operator.allTeams"))
-                                        .font(.caption)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(Color(.systemGray5))
-                                        .clipShape(Capsule())
-                                }
-                                Spacer()
-                                if let date = DateFormatting.parseISO8601(notification.sentAt) {
-                                    Text(date, style: .relative)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                        }
-                        .padding(.vertical, 2)
+                        ManagementNotificationRow(
+                            message: notification.message,
+                            targetLabel: notification.targetTeamId.flatMap { id in teams.first(where: { $0.id == id })?.name } ?? (notification.targetTeamId == nil ? locale.t("operator.allTeams") : locale.t("operator.unknownTeam")),
+                            time: DateFormatting.parseISO8601(notification.sentAt)
+                        )
                     }
                 }
             }

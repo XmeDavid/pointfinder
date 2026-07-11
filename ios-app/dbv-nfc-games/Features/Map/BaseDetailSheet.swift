@@ -41,17 +41,14 @@ struct BaseDetailSheet: View {
                     // information (per CLAUDE.md "Players don't see
                     // scores or leaderboards"). The backend
                     // PlayerChallengeResponse no longer serializes
-                    // `points` on the wire, so reintroducing the badge
-                    // would first require a server-side leak.
-                    HStack {
-                        Image(systemName: status.systemImage)
-                        Text(locale.t(status.translationKey))
-                            .fontWeight(.medium)
-                        Spacer()
-                    }
-                    .padding()
-                    .background(status.color.opacity(0.08))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    // Although the cached challenge model still carries
+                    // points for compatibility, this player surface must
+                    // never render them.
+                    PlayerFieldStatusBanner(
+                        title: locale.t(status.translationKey),
+                        systemImage: status.systemImage,
+                        tone: status.playerFieldTone
+                    )
 
                     if isLoading {
                         ProgressView(locale.t("base.loadingChallenge"))
@@ -59,21 +56,11 @@ struct BaseDetailSheet: View {
                             .padding(.top, 40)
                     } else if status == .notVisited {
                         // Challenge locked -- player must check in first
-                        VStack(spacing: 12) {
-                            Image(systemName: "lock.fill")
-                                .font(.system(size: 48))
-                                .foregroundStyle(.pfTextMuted)
-                            Text(locale.t("base.challengeLocked"))
-                                .font(.headline)
-                                .fontWeight(.semibold)
-                                .foregroundStyle(.pfText)
-                            Text(locale.t("base.challengeLockedHint"))
-                                .font(.subheadline)
-                                .foregroundStyle(.pfTextMuted)
-                                .multilineTextAlignment(.center)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 40)
+                        PlayerDetailMessage(
+                            systemImage: "lock.fill",
+                            title: locale.t("base.challengeLocked"),
+                            message: locale.t("base.challengeLockedHint")
+                        )
                     } else if let challenge = challenge {
                         // Challenge content
                         VStack(alignment: .leading, spacing: 12) {
@@ -101,23 +88,12 @@ struct BaseDetailSheet: View {
 
                         // Presence warning
                         if challenge.requirePresenceToSubmit && (status == .checkedIn || status == .rejected) {
-                            HStack(alignment: .top, spacing: 10) {
-                                Image(systemName: "location.circle.fill")
-                                    .foregroundStyle(.orange)
-                                    .font(.title3)
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(locale.t("base.presenceWarningTitle"))
-                                        .font(.subheadline)
-                                        .fontWeight(.semibold)
-                                    Text(locale.t("base.presenceWarningBody"))
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                            .padding()
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color.orange.opacity(0.1))
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            PlayerFieldStatusBanner(
+                                title: locale.t("base.presenceWarningTitle"),
+                                message: locale.t("base.presenceWarningBody"),
+                                systemImage: "location.circle.fill",
+                                tone: .pending
+                            )
                         }
 
                         // Solve button (only for checked-in or rejected bases)
@@ -150,48 +126,33 @@ struct BaseDetailSheet: View {
                                 }
                             }
                         } else if status == .completed {
-                            Label(locale.t("base.challengeCompleted"), systemImage: "checkmark.seal.fill")
-                                .font(.headline)
-                                .foregroundStyle(.green)
-                                .frame(maxWidth: .infinity, alignment: .center)
-                                .padding()
+                            PlayerFieldStatusBanner(
+                                title: locale.t("base.challengeCompleted"),
+                                systemImage: "checkmark.seal.fill",
+                                tone: .success
+                            )
                         } else if status == .submitted {
-                            Label(locale.t("base.awaitingReview"), systemImage: "clock.fill")
-                                .font(.headline)
-                                .foregroundStyle(.orange)
-                                .frame(maxWidth: .infinity, alignment: .center)
-                                .padding()
+                            PlayerFieldStatusBanner(
+                                title: locale.t("base.awaitingReview"),
+                                systemImage: "clock.fill",
+                                tone: .pending
+                            )
                         }
                     } else if !appState.isOnline {
                         // Offline and no cached data
-                        VStack(spacing: 12) {
-                            Image(systemName: "wifi.slash")
-                                .font(.system(size: 48))
-                                .foregroundStyle(.orange)
-                            Text(locale.t("base.offlineNoChallengeCache"))
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                            Text(locale.t("base.offlineNoChallegeCacheDesc"))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .multilineTextAlignment(.center)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.top, 40)
+                        PlayerDetailMessage(
+                            systemImage: "wifi.slash",
+                            title: locale.t("base.offlineNoChallengeCache"),
+                            message: locale.t("base.offlineNoChallegeCacheDesc"),
+                            tone: .pending
+                        )
                     } else {
-                        VStack(spacing: 12) {
-                            Image(systemName: "exclamationmark.triangle")
-                                .font(.system(size: 48))
-                                .foregroundStyle(.orange)
-                            Text(locale.t("base.noChallengeAssigned"))
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                            Text(locale.t("base.contactOperator"))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.top, 40)
+                        PlayerDetailMessage(
+                            systemImage: "exclamationmark.triangle",
+                            title: locale.t("base.noChallengeAssigned"),
+                            message: locale.t("base.contactOperator"),
+                            tone: .pending
+                        )
                     }
                 }
                 .padding()

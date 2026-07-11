@@ -72,7 +72,7 @@ export function MemberPermissionsDialog({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--pf-color-surface-scrim)]"
       onClick={onClose}
     >
       <div

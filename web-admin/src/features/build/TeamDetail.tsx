@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-dialog'
 import type { Assignment } from '@/types/v2'
 import type { Base } from '@/types/base'
+import { dataColors } from '@/generated/colorValues'
 
 interface TeamDetailProps {
   teamId: string
@@ -40,7 +41,7 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
 
   // Local form state
   const [localName, setLocalName] = useState('')
-  const [localColor, setLocalColor] = useState(team?.color ?? '#888888')
+  const [localColor, setLocalColor] = useState(team?.color ?? dataColors.legacyFallback)
   const [copied, setCopied] = useState(false)
   const [qrUrl, setQrUrl] = useState<string | null>(null)
   const [qrDialogOpen, setQrDialogOpen] = useState(false)
@@ -255,7 +256,7 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
                 className="h-8 w-8"
               >
                 {copied ? (
-                  <Check className="h-4 w-4 text-green-500" />
+                  <Check className="h-4 w-4 text-success" />
                 ) : (
                   <Copy className="h-4 w-4" />
                 )}

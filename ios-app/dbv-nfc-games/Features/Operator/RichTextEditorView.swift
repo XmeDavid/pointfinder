@@ -647,9 +647,9 @@ private struct RichTextWebView: UIViewRepresentable {
     }
 
     private func editorHTML(content: String, isDark: Bool) -> String {
-        let textColor = isDark ? "#FFFFFF" : "#000000"
-        let bgColor = isDark ? "#1C1C1E" : "#FFFFFF"
-        let placeholderColor = isDark ? "#636366" : "#C7C7CC"
+        let textColor = isDark ? PFColorHexToken.Dark.editorText : PFColorHexToken.Light.editorText
+        let bgColor = isDark ? PFColorHexToken.Dark.editorCanvas : PFColorHexToken.Light.editorCanvas
+        let placeholderColor = isDark ? PFColorHexToken.Dark.editorPlaceholder : PFColorHexToken.Light.editorPlaceholder
         let sanitized = content.replacingOccurrences(of: "<script", with: "&lt;script", options: .caseInsensitive)
             .replacingOccurrences(of: "</script", with: "&lt;/script", options: .caseInsensitive)
             .replacingOccurrences(of: "<iframe", with: "&lt;iframe", options: .caseInsensitive)
@@ -692,24 +692,24 @@ private struct RichTextWebView: UIViewRepresentable {
                 #editor p { margin: 0.5em 0; }
                 #editor ul, #editor ol { margin: 0.5em 0; padding-left: 1.5em; }
                 #editor li { margin: 0.25em 0; }
-                #editor hr { border: none; border-top: 1px solid \(isDark ? "#48484A" : "#D1D1D6"); margin: 1em 0; }
+                #editor hr { border: none; border-top: 1px solid \(isDark ? PFColorHexToken.Dark.editorDivider : PFColorHexToken.Light.editorDivider); margin: 1em 0; }
                 #editor blockquote {
                     margin: 0.5em 0; padding: 0.5em 1em;
-                    border-left: 4px solid \(isDark ? "#48484A" : "#D1D1D6");
-                    background: \(isDark ? "#2C2C2E" : "#F2F2F7");
+                    border-left: 4px solid \(isDark ? PFColorHexToken.Dark.editorDivider : PFColorHexToken.Light.editorDivider);
+                    background: \(isDark ? PFColorHexToken.Dark.editorBlock : PFColorHexToken.Light.editorBlock);
                 }
                 #editor code {
                     font-family: 'SF Mono', Menlo, monospace;
                     font-size: 0.9em;
                     padding: 0.15em 0.3em;
-                    background: \(isDark ? "#2C2C2E" : "#F2F2F7");
+                    background: \(isDark ? PFColorHexToken.Dark.editorBlock : PFColorHexToken.Light.editorBlock);
                     border-radius: 4px;
                 }
                 #editor img { max-width: 100%; height: auto; border-radius: 8px; }
                 .variable-tag {
                     display: inline-block;
-                    background: \(isDark ? "#2C5282" : "#BEE3F8");
-                    color: \(isDark ? "#BEE3F8" : "#2C5282");
+                    background: \(isDark ? PFColorHexToken.Dark.editorVariableBackground : PFColorHexToken.Light.editorVariableBackground);
+                    color: \(isDark ? PFColorHexToken.Dark.editorVariableContent : PFColorHexToken.Light.editorVariableContent);
                     padding: 2px 6px;
                     border-radius: 4px;
                     font-size: 0.85em;

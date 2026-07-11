@@ -8,6 +8,7 @@ import { useWorkspaceStore } from '@/stores/workspace'
 import { useIsMobile } from '@/hooks/ui/useMediaQuery'
 import SubmissionList from './SubmissionList'
 import SubmissionDetail from './SubmissionDetail'
+import { OverlayPanel } from '@/components/layout/OverlayPanel'
 
 interface ReviewOverlayProps {
   gameId: string
@@ -175,8 +176,9 @@ export default function ReviewOverlay({ gameId }: ReviewOverlayProps) {
   }, [selectSubmission])
 
   return (
-    <div
-      className="absolute left-0 right-0 top-12 bottom-14 md:left-3 md:right-3 md:top-14 md:bottom-3 z-20 bg-card/95 backdrop-blur-xl border border-border rounded-none md:rounded-xl flex flex-col overflow-hidden"
+    <OverlayPanel
+      padding="none"
+      className="absolute bottom-14 left-0 right-0 top-12 z-20 flex flex-col overflow-hidden rounded-none md:bottom-3 md:left-3 md:right-3 md:top-14 md:rounded-lg"
       data-testid="review-overlay"
     >
       {/* Mobile: back button when viewing detail */}
@@ -237,6 +239,6 @@ export default function ReviewOverlay({ gameId }: ReviewOverlayProps) {
           {t('review.kbd.skip')}
         </span>
       </div>
-    </div>
+    </OverlayPanel>
   )
 }

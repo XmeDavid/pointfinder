@@ -136,9 +136,9 @@ describe('Standings', () => {
     const row3 = screen.getByTestId('standing-row-3')
     const row4 = screen.getByTestId('standing-row-4')
 
-    expect(row1.className).toContain('#eab308') // gold
-    expect(row2.className).toContain('#a1a1aa') // silver
-    expect(row3.className).toContain('#cd7f32') // bronze
+    expect(row1.className).toContain('var(--pf-dataColor-yellow)')
+    expect(row2.className).toContain('var(--pf-dataColor-rankSilver)')
+    expect(row3.className).toContain('var(--pf-dataColor-rankBronze)')
     expect(row4.className).toContain('border-transparent') // no special styling
   })
 
@@ -186,7 +186,8 @@ describe('Standings', () => {
     })
 
     await waitFor(() => {
-      expect(screen.getByText('No results yet. Team standings will appear here once the game has activity.')).toBeInTheDocument()
+      expect(screen.getByText('No results yet')).toBeInTheDocument()
+      expect(screen.getByText('Team standings will appear here once the game has activity.')).toBeInTheDocument()
     })
   })
 

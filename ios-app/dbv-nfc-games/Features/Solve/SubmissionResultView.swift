@@ -19,27 +19,14 @@ struct SubmissionResultView: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(spacing: 16) {
-                    // Result icon
-                    ZStack {
-                        Circle()
-                            .fill(resultColor.opacity(0.15))
-                            .frame(width: 120, height: 120)
-
-                        Image(systemName: resultIcon)
-                            .font(.system(size: 48))
-                            .foregroundStyle(resultColor)
-                    }
-
-                    Text(resultTitle)
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .accessibilityIdentifier("player-submission-status")
-
-                    Text(resultMessage)
-                        .font(.subheadline)
-                        .foregroundStyle(Color.pfTextMuted)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 16)
+                    PlayerSubmissionState(
+                        title: resultTitle,
+                        message: resultMessage,
+                        systemImage: resultIcon,
+                        tone: resultTone,
+                        titleIdentifier: "player-submission-status"
+                    )
+                    .padding(.horizontal, 16)
 
                     if let feedback = submission.feedback, !feedback.isEmpty {
                         Text(locale.t("result.feedback", feedback))
@@ -94,11 +81,11 @@ struct SubmissionResultView: View {
         .navigationBarBackButtonHidden(true)
     }
 
-    private var resultColor: Color {
+    private var resultTone: PlayerFieldTone {
         switch submission.status {
-        case "correct", "approved": return .pfCompleted
-        case "rejected": return .pfRejected
-        default: return .pfPending
+        case "correct", "approved": .success
+        case "rejected": .danger
+        default: .pending
         }
     }
 

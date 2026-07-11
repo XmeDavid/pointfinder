@@ -82,6 +82,7 @@
     <string name="label_total_bases">Stationen gesamt</string>
     <string name="label_pending_actions">Ausstehende Aktionen</string>
     <string name="label_no_pending_actions">Alles synchronisiert</string>
+    <string name="label_pending_sync_icon">Ausstehende Synchronisierung</string>
     <string name="label_pending_sync_one">%1$d ausstehende Aktion zum Synchronisieren</string>
     <string name="label_pending_sync_other">%1$d ausstehende Aktionen zum Synchronisieren</string>
     <string name="label_failed_sync_count">%1$d Aktion(en) konnten nicht synchronisiert werden</string>
@@ -227,6 +228,22 @@
     <string name="warning_team_variables_incomplete">Einige Teams haben unvollständige Variablenwerte</string>
     <string name="label_go_live_confirm_title">Live gehen?</string>
     <string name="label_go_live_confirm_message">Teams können beitreten und spielen. Stationen und Challenges können weiterhin bearbeitet werden.</string>
+    <string name="setup_spatial_plan">Räumlicher Plan</string>
+    <string name="setup_spatial_plan_description">Stationen auf der Live-Karte platzieren und prüfen.</string>
+    <string name="setup_open_map">Einrichtungskarte öffnen</string>
+    <string name="setup_bases_count">%1$d Station(en)</string>
+    <string name="setup_nfc_count">%1$d/%2$d NFC</string>
+    <string name="setup_assignments_count">%1$d Zuweisung(en)</string>
+    <string name="setup_launch_readiness">Startbereitschaft</string>
+    <string name="setup_ready_count">%1$d von %2$d Prüfungen bereit</string>
+    <string name="setup_configure">Konfigurieren</string>
+    <string name="setup_field_plan">Feldplan</string>
+    <string name="setup_nfc">NFC-Tags</string>
+    <string name="setup_nfc_ready">Alle NFC-Tags sind verknüpft</string>
+    <string name="setup_challenges_ready">%1$d Challenge(s) bereit</string>
+    <string name="setup_teams_ready">%1$d Team(s) konfiguriert</string>
+    <string name="setup_team_variables">Teamvariablen</string>
+    <string name="setup_team_variables_ready">Alle erforderlichen Teamwerte sind vollständig</string>
     <string name="label_challenges">Challenges</string>
     <string name="label_teams">Teams</string>
     <!-- Base Management -->
@@ -305,7 +322,7 @@
     <string name="label_join_code_section">Beitrittscode</string>
     <string name="label_show_qr">QR anzeigen</string>
     <string name="label_qr_code">QR-Code</string>
-    <string name="label_variables">Variablen</string>
+<string name="label_variables">Variablen</string><string name="label_values_complete">Werte</string>
     <string name="label_players">Spieler (%1$d)</string>
     <string name="label_no_players">Noch keine Spieler</string>
     <string name="label_remove_player">Spieler entfernen</string>
@@ -522,4 +539,20 @@
     <string name="label_assignment_locked_all_teams">Für diese Station existiert bereits eine Alle-Teams-Zuweisung.</string>
     <string name="label_select_base">Station auswählen</string>
     <string name="label_select_challenge">Challenge auswählen</string>
+    <string name="org_members">Mitglieder</string>
+    <string name="org_live_games">Laufende Spiele</string>
+    <string name="org_no_members">Noch keine Mitglieder.</string>
+    <string name="org_invite_member">Mitglied einladen</string>
+    <string name="org_email_address">E-Mail-Adresse</string>
+    <string name="org_invite_failed">Einladung fehlgeschlagen</string>
+    <string name="org_permissions_for">Berechtigungen für %1$s</string>
+    <string name="org_update_permissions_failed">Berechtigungen konnten nicht aktualisiert werden</string>
+    <string name="org_remove_member">Mitglied entfernen</string>
+    <string name="org_remove_member_message">%1$s aus %2$s entfernen?</string>
+    <string name="org_remove_failed">Mitglied konnte nicht entfernt werden</string>
+    <string name="org_no_permissions">Keine Berechtigungen</string>
+    <string name="org_edit_permissions_short">Berechtigungen</string>
+    <string name="org_load_members_failed">Mitglieder konnten nicht geladen werden</string>
+    <string name="cd_invite_member">Mitglied einladen</string>
+    <string name="cd_remove_member">Mitglied entfernen</string>
 </resources>

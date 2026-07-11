@@ -38,26 +38,8 @@ struct OrganizationView: View {
         List {
             // Header section: org metadata
             Section {
-                HStack(spacing: PFSpacing.itemGap) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(org.name)
-                            .font(.title3)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(Color.pfText)
-                        Text("@\(org.slug)")
-                            .font(.subheadline)
-                            .foregroundStyle(Color.pfTextMuted)
-                    }
-                    Spacer()
-                    tierBadge(org.tier)
-                }
-                .padding(.vertical, 4)
-
-                HStack(spacing: PFSpacing.sectionGap) {
-                    statPill(label: locale.t("org.members"), value: "\(org.memberCount)", icon: "person.2")
-                    statPill(label: locale.t("org.liveGames"), value: "\(org.liveGames)", icon: "gamecontroller")
-                }
-                .padding(.vertical, 2)
+                OrganizationWorkspaceSummary(name: org.name, slug: org.slug, tier: org.tier, memberCount: org.memberCount, liveGameCount: org.liveGames, membersLabel: locale.t("org.members"), liveGamesLabel: locale.t("org.liveGames"))
+                    .listRowInsets(EdgeInsets(top: PFSpaceToken.space2, leading: 0, bottom: PFSpaceToken.space2, trailing: 0))
             }
 
             // Members section
@@ -90,7 +72,7 @@ struct OrganizationView: View {
             if let successMessage {
                 Section {
                     Text(successMessage)
-                        .foregroundStyle(.green)
+                        .foregroundStyle(PFColorToken.statusCompleted)
                         .font(.caption)
                 }
             }
@@ -98,7 +80,7 @@ struct OrganizationView: View {
             if let errorMessage {
                 Section {
                     Text(errorMessage)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(PFColorToken.contentDanger)
                         .font(.caption)
                 }
             }
@@ -206,7 +188,7 @@ struct OrganizationView: View {
                 if let inviteError {
                     Section {
                         Text(inviteError)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(PFColorToken.contentDanger)
                             .font(.caption)
                     }
                 }
@@ -246,7 +228,7 @@ struct OrganizationView: View {
                 if let errorMessage {
                     Section {
                         Text(errorMessage)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(PFColorToken.contentDanger)
                             .font(.caption)
                     }
                 }
@@ -281,46 +263,7 @@ struct OrganizationView: View {
         ))
     }
 
-    @ViewBuilder
-    private func tierBadge(_ tier: String) -> some View {
-        Text(tier.uppercased())
-            .font(.caption2)
-            .fontWeight(.bold)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(tierColor(tier).opacity(0.15))
-            .foregroundStyle(tierColor(tier))
-            .clipShape(Capsule())
-    }
-
-    @ViewBuilder
-    private func statPill(label: String, value: String, icon: String) -> some View {
-        HStack(spacing: 4) {
-            Image(systemName: icon)
-                .font(.caption)
-            Text(value)
-                .font(.caption)
-                .fontWeight(.semibold)
-            Text(label)
-                .font(.caption)
-                .foregroundStyle(Color.pfTextMuted)
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 5)
-        .background(Color.pfCard)
-        .clipShape(Capsule())
-        .overlay(Capsule().strokeBorder(Color.pfCardBorder, lineWidth: 0.5))
-    }
-
     // MARK: - Helpers
-
-    private func tierColor(_ tier: String) -> Color {
-        switch tier.lowercased() {
-        case "pro": return .pfPrimary
-        case "enterprise": return Color(red: 0.6, green: 0.3, blue: 1.0)
-        default: return Color.pfTextMuted
-        }
-    }
 
     private func permissionLabels(for mask: Int) -> [String] {
         var labels: [String] = []

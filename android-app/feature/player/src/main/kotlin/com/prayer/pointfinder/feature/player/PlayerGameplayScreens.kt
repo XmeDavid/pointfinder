@@ -106,40 +106,34 @@ fun CheckInScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        AnimatedScanView(
+        PlayerNfcScanPrompt(
             state = scanState,
-            modifier = Modifier.size(280.dp),
-        )
-        Spacer(Modifier.height(18.dp))
-        Text(stringResource(R.string.label_base_check_in), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(8.dp))
-        Text(
-            stringResource(R.string.hint_checkin_instructions),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.bodyMedium,
+            title = stringResource(R.string.label_base_check_in),
+            instructions = stringResource(R.string.hint_checkin_instructions),
         )
         Spacer(Modifier.height(16.dp))
         if (pendingActionsCount > 0) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.CheckCircle, contentDescription = "Pending", tint = StatusSubmitted)
-                val label = if (pendingActionsCount == 1) {
-                    stringResource(R.string.label_pending_sync_one, pendingActionsCount)
-                } else {
-                    stringResource(R.string.label_pending_sync_other, pendingActionsCount)
-                }
-                Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            val label = if (pendingActionsCount == 1) {
+                stringResource(R.string.label_pending_sync_one, pendingActionsCount)
+            } else {
+                stringResource(R.string.label_pending_sync_other, pendingActionsCount)
             }
+            PlayerFieldStatusBanner(
+                label,
+                icon = Icons.Default.CheckCircle,
+                iconContentDescription = stringResource(R.string.label_pending_sync_icon),
+                tone = PlayerFieldTone.PENDING,
+            )
             Spacer(Modifier.height(8.dp))
         }
         // Audit 11.2: show warning when sync actions have permanently failed
         if (failedActionsCount > 0) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Warning, contentDescription = stringResource(R.string.label_failed_sync_warning), tint = MaterialTheme.colorScheme.error)
-                Text(
-                    stringResource(R.string.label_failed_sync_count, failedActionsCount),
-                    color = MaterialTheme.colorScheme.error,
-                )
-            }
+            PlayerFieldStatusBanner(
+                title = stringResource(R.string.label_failed_sync_count, failedActionsCount),
+                icon = Icons.Default.Warning,
+                iconContentDescription = stringResource(R.string.label_failed_sync_warning),
+                tone = PlayerFieldTone.DANGER,
+            )
             Spacer(Modifier.height(8.dp))
         }
         if (!scanError.isNullOrBlank()) {
@@ -254,7 +248,11 @@ fun BaseCheckInDetailScreen(
         Text(stringResource(R.string.label_checked_in_at_base, bannerTitle), style = MaterialTheme.typography.titleLarge)
         if (isOffline) {
             Spacer(Modifier.height(8.dp))
-            Text(stringResource(R.string.hint_offline_sync), color = OfflineOrange)
+            PlayerFieldStatusBanner(
+                title = stringResource(R.string.hint_offline_sync),
+                icon = Icons.Default.Schedule,
+                tone = PlayerFieldTone.PENDING,
+            )
         }
         Spacer(Modifier.height(12.dp))
         val challenge = response.challenge
@@ -269,35 +267,12 @@ fun BaseCheckInDetailScreen(
                 }
                 if (challenge.requirePresenceToSubmit) {
                     Spacer(Modifier.height(12.dp))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(
-                                OfflineOrange.copy(alpha = 0.1f),
-                                shape = MaterialTheme.shapes.medium,
-                            )
-                            .padding(12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        Icon(
-                            Icons.Default.LocationOn,
-                            contentDescription = "Location required",
-                            tint = OfflineOrange,
-                        )
-                        Column {
-                            Text(
-                                stringResource(R.string.label_presence_warning_title),
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            Spacer(Modifier.height(2.dp))
-                            Text(
-                                stringResource(R.string.label_presence_warning_body),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
+                    PlayerFieldStatusBanner(
+                        title = stringResource(R.string.label_presence_warning_title),
+                        message = stringResource(R.string.label_presence_warning_body),
+                        icon = Icons.Default.LocationOn,
+                        tone = PlayerFieldTone.PENDING,
+                    )
                 }
                 Spacer(Modifier.height(12.dp))
                 Button(onClick = { onSolve(response.baseId, challenge.id) }) {
@@ -493,11 +468,6 @@ fun SubmissionResultScreen(
         isFailure -> Icons.Default.Cancel
         else -> Icons.Default.Schedule
     }
-    val resultColor = when {
-        isSuccess -> StatusCompleted
-        isFailure -> StatusRejected
-        else -> StatusSubmitted
-    }
     val resultTitle = when (submission.status) {
         SubmissionStatus.CORRECT -> stringResource(R.string.result_correct)
         SubmissionStatus.APPROVED -> stringResource(R.string.result_approved)
@@ -519,15 +489,16 @@ fun SubmissionResultScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(Modifier.height(32.dp))
-        Icon(resultIcon, contentDescription = stringResource(R.string.cd_submission_result), modifier = Modifier.size(72.dp), tint = resultColor)
-        Spacer(Modifier.height(12.dp))
-        Text(resultTitle, style = MaterialTheme.typography.titleLarge, modifier = Modifier.testTag("player-submission-status"))
-        Spacer(Modifier.height(4.dp))
-        Text(
-            resultMessage,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
+        PlayerSubmissionState(
+            title = resultTitle,
+            message = resultMessage,
+            icon = resultIcon,
+            tone = when {
+                isSuccess -> PlayerFieldTone.SUCCESS
+                isFailure -> PlayerFieldTone.DANGER
+                else -> PlayerFieldTone.PENDING
+            },
+            modifier = Modifier.testTag("player-submission-status"),
         )
         val feedback = submission.feedback
         if (!feedback.isNullOrBlank()) {

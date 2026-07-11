@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { XCircle } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { SurfacePanel } from '@/components/layout/SurfacePanel'
 
 export function BillingCancelPage() {
   const { t } = useTranslation()
@@ -8,7 +10,7 @@ export function BillingCancelPage() {
 
   return (
     <div className="flex h-screen items-center justify-center bg-background">
-      <div className="max-w-md w-full text-center px-6">
+      <SurfacePanel className="w-full max-w-md text-center" padding="lg" elevation="panel">
         <div className="flex justify-center mb-4">
           <XCircle className="h-16 w-16 text-muted-foreground" />
         </div>
@@ -18,13 +20,12 @@ export function BillingCancelPage() {
         <p className="text-muted-foreground mb-8">
           {t('billing.cancelledDesc', 'No charges were made. You can try again anytime.')}
         </p>
-        <button
+        <Button
           onClick={() => navigate('/billing')}
-          className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
         >
           {t('billing.returnToBilling', 'Return to billing')}
-        </button>
-      </div>
+        </Button>
+      </SurfacePanel>
     </div>
   )
 }

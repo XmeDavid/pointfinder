@@ -2,36 +2,36 @@ import { useState, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { adminApi } from '@/lib/api/admin'
-import { Spinner } from '@/components/feedback/Spinner'
 import { AdminUserDetail } from './AdminUserDetail'
 import { AdminOrgDetail } from './AdminOrgDetail'
 import type { AdminUser, AdminOrg } from '@/types/admin'
+import { StatusBadge, type StatusBadgeTone } from '@/components/status'
+import { SurfacePanel } from '@/components/layout/SurfacePanel'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Input } from '@/components/ui/input'
+import { LoadingState } from '@/components/feedback/LoadingState'
+import { EmptyState } from '@/components/feedback/EmptyState'
 
 type Tab = 'users' | 'orgs'
 type Detail = { type: 'user'; id: string } | { type: 'org'; id: string } | null
 
-const TIER_COLORS: Record<string, string> = {
-  free: 'bg-muted text-muted-foreground',
-  pro: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  base: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-  high: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+const TIER_TONES: Record<string, StatusBadgeTone> = {
+  free: 'muted',
+  pro: 'info',
+  base: 'override',
+  high: 'warning',
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  active: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-  past_due: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-  grace_period: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-  frozen: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-  cancelled: 'bg-muted text-muted-foreground',
+const STATUS_TONES: Record<string, StatusBadgeTone> = {
+  active: 'success',
+  past_due: 'warning',
+  grace_period: 'warning',
+  frozen: 'destructive',
+  cancelled: 'muted',
 }
 
-function Badge({ value, colorMap }: { value: string; colorMap: Record<string, string> }) {
-  const cls = colorMap[value] ?? 'bg-muted text-muted-foreground'
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${cls}`}>
-      {value}
-    </span>
-  )
+function AdminBadge({ value, toneMap }: { value: string; toneMap: Record<string, StatusBadgeTone> }) {
+  return <StatusBadge tone={toneMap[value] ?? 'muted'} label={value} />
 }
 
 export function AdminPanel() {
@@ -61,7 +61,7 @@ export function AdminPanel() {
         {t('admin.title', 'Admin Panel')}
       </h1>
 
-      <div className="rounded-xl border border-border bg-card p-6">
+      <SurfacePanel padding="lg">
         {detail ? (
           detail.type === 'user' ? (
             <AdminUserDetail userId={detail.id} onBack={handleBack} />
@@ -71,35 +71,26 @@ export function AdminPanel() {
         ) : (
           <>
             {/* Tabs */}
-            <div className="flex gap-1 mb-6 border-b border-border">
-              {(['users', 'orgs'] as Tab[]).map(tabKey => (
-                <button
-                  key={tabKey}
-                  onClick={() => setTab(tabKey)}
-                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                    tab === tabKey
-                      ? 'border-primary text-primary'
-                      : 'border-transparent text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {tabKey === 'users' ? t('admin.users', 'Users') : t('admin.organizations', 'Organizations')}
-                </button>
-              ))}
-            </div>
+            <Tabs value={tab} onValueChange={(value) => setTab(value as Tab)} className="mb-6">
+              <TabsList>
+                <TabsTrigger value="users">{t('admin.users', 'Users')}</TabsTrigger>
+                <TabsTrigger value="orgs">{t('admin.organizations', 'Organizations')}</TabsTrigger>
+              </TabsList>
+            </Tabs>
 
             {/* Users tab */}
             {tab === 'users' && (
               <div>
-                <input
+                <Input
                   type="text"
                   value={userSearch}
                   onChange={e => setUserSearch(e.target.value)}
                   placeholder={t('admin.searchUsers', 'Search by name or email...')}
-                  className="w-full max-w-sm rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary mb-4"
+                  className="mb-4 max-w-sm"
                 />
-                {usersLoading && <Spinner />}
+                {usersLoading && <LoadingState label={t('common.loading', 'Loading')} />}
                 {!usersLoading && usersPage?.content.length === 0 && (
-                  <p className="text-sm text-muted-foreground">{t('admin.noUsers', 'No users found')}</p>
+                  <EmptyState density="compact" title={t('admin.noUsers', 'No users found')} />
                 )}
                 {!usersLoading && usersPage && usersPage.content.length > 0 && (
                   <ul className="space-y-2">
@@ -114,8 +105,8 @@ export function AdminPanel() {
                           <p className="text-xs text-muted-foreground truncate">{u.email}</p>
                         </div>
                         <div className="flex items-center gap-2 ml-4 shrink-0">
-                          <Badge value={u.subscriptionTier} colorMap={TIER_COLORS} />
-                          <Badge value={u.subscriptionStatus} colorMap={STATUS_COLORS} />
+                          <AdminBadge value={u.subscriptionTier} toneMap={TIER_TONES} />
+                          <AdminBadge value={u.subscriptionStatus} toneMap={STATUS_TONES} />
                           <span className="text-xs text-muted-foreground">→</span>
                         </div>
                       </li>
@@ -133,16 +124,16 @@ export function AdminPanel() {
             {/* Orgs tab */}
             {tab === 'orgs' && (
               <div>
-                <input
+                <Input
                   type="text"
                   value={orgSearch}
                   onChange={e => setOrgSearch(e.target.value)}
                   placeholder={t('admin.searchOrgs', 'Search by name...')}
-                  className="w-full max-w-sm rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary mb-4"
+                  className="mb-4 max-w-sm"
                 />
-                {orgsLoading && <Spinner />}
+                {orgsLoading && <LoadingState label={t('common.loading', 'Loading')} />}
                 {!orgsLoading && orgsPage?.content.length === 0 && (
-                  <p className="text-sm text-muted-foreground">{t('admin.noOrgs', 'No organizations found')}</p>
+                  <EmptyState density="compact" title={t('admin.noOrgs', 'No organizations found')} />
                 )}
                 {!orgsLoading && orgsPage && orgsPage.content.length > 0 && (
                   <ul className="space-y-2">
@@ -157,8 +148,8 @@ export function AdminPanel() {
                           <p className="text-xs text-muted-foreground">/{o.slug} · {o.memberCount} {o.memberCount === 1 ? t('admin.member', 'member') : t('admin.members', 'members')}</p>
                         </div>
                         <div className="flex items-center gap-2 ml-4 shrink-0">
-                          <Badge value={o.subscriptionTier} colorMap={TIER_COLORS} />
-                          <Badge value={o.subscriptionStatus} colorMap={STATUS_COLORS} />
+                          <AdminBadge value={o.subscriptionTier} toneMap={TIER_TONES} />
+                          <AdminBadge value={o.subscriptionStatus} toneMap={STATUS_TONES} />
                           <span className="text-xs text-muted-foreground">→</span>
                         </div>
                       </li>
@@ -174,7 +165,7 @@ export function AdminPanel() {
             )}
           </>
         )}
-      </div>
+      </SurfacePanel>
     </div>
   )
 }

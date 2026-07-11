@@ -1,3 +1,5 @@
+import { dataColors } from "@/generated/colorValues";
+
 /**
  * WCAG 2.1 colour-contrast helpers.
  *
@@ -10,8 +12,7 @@
  *
  * Usage example (e.g., in a tag chip component):
  * ```
- * const tagBgColor = "#ff6b6b";  // operator-chosen colour
- * const textColor = getReadableTextColor(tagBgColor);  // "#ffffff" or "#000000"
+ * const textColor = getReadableTextColor(tagBgColor);
  * ```
  *
  * This ensures WCAG 2.1 AA compliance (≥4.5:1 contrast ratio) for all
@@ -67,8 +68,7 @@ function relativeLuminance(r: number, g: number, b: number): number {
  * @returns contrast ratio in the range [1, 21]
  *
  * @example
- * getContrastRatio("#000000", "#ffffff") // → 21 (maximum contrast)
- * getContrastRatio("#cccccc", "#ffffff") // → 1.1 (very low contrast, fails AA)
+ * Black against white produces the maximum ratio; similar light values fail AA.
  *
  * See https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum.html
  */
@@ -84,22 +84,15 @@ export function getContrastRatio(fgHex: string, bgHex: string): number {
 }
 
 /**
- * Return "#000000" or "#ffffff" — whichever has a higher contrast ratio
- * against `bgHex`. Defaults to "#000000" when the input cannot be parsed.
+ * Return the canonical black or white value with the higher contrast ratio.
  *
  * WCAG 2.1 AA requires ≥ 4.5:1 for normal text. This helper always picks
  * the higher-contrast option, guaranteeing compliance on any palette colour.
  *
  * @param bgHex - a hex colour string in "#rgb", "#rrggbb", "rgb", or "rrggbb" format
- * @returns "#ffffff" if white has higher contrast; "#000000" otherwise
+ * @returns canonical white if it has higher contrast; canonical black otherwise
  *
  * @example
- * // For a light tag background:
- * getReadableTextColor("#ffeb3b") // → "#000000" (black text)
- *
- * // For a dark tag background:
- * getReadableTextColor("#1a237e") // → "#ffffff" (white text)
- *
  * Typical usage in tag chip components:
  * ```
  * <span style={{ backgroundColor: tagColor, color: getReadableTextColor(tagColor) }}>
@@ -107,8 +100,8 @@ export function getContrastRatio(fgHex: string, bgHex: string): number {
  * </span>
  * ```
  */
-export function getReadableTextColor(bgHex: string): "#000000" | "#ffffff" {
-  const contrastWhite = getContrastRatio("#ffffff", bgHex);
-  const contrastBlack = getContrastRatio("#000000", bgHex);
-  return contrastWhite >= contrastBlack ? "#ffffff" : "#000000";
+export function getReadableTextColor(bgHex: string): string {
+  const contrastWhite = getContrastRatio(dataColors.white, bgHex);
+  const contrastBlack = getContrastRatio(dataColors.black, bgHex);
+  return contrastWhite >= contrastBlack ? dataColors.white : dataColors.black;
 }

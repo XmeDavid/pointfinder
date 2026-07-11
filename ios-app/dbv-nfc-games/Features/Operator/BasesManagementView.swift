@@ -71,13 +71,22 @@ struct BasesManagementView: View {
                     } else {
                         ScrollView {
                             LazyVStack(spacing: PFSpacing.itemGap) {
+                                ManagementListSummary(
+                                    label: locale.t("operator.bases"),
+                                    count: filteredBases.count,
+                                    attentionLabel: bases.filter { !$0.nfcLinked }.isEmpty ? nil : locale.t("operator.warningNfcMissing", bases.filter { !$0.nfcLinked }.count)
+                                )
                                 ForEach(filteredBases) { base in
-                                    Button {
-                                        path.append(BaseNavDestination.edit(base.id))
-                                    } label: {
-                                        baseCard(base)
-                                    }
-                                    .buttonStyle(.plain)
+                                    ManagementResourceRow(
+                                        title: base.name,
+                                        subtitle: [base.description.isEmpty ? nil : base.description, challengeInfoForBase(base)].compactMap { $0 }.joined(separator: " · "),
+                                        metadata: [
+                                            ManagementMetadata(label: base.nfcLinked ? locale.t("operator.linked") : locale.t("operator.notLinked"), tone: base.nfcLinked ? .success : .pending),
+                                            base.hidden ? ManagementMetadata(label: locale.t("operator.hiddenBase"), tone: .muted) : nil,
+                                        ].compactMap { $0 },
+                                        systemImage: "mappin.and.ellipse",
+                                        action: { path.append(BaseNavDestination.edit(base.id)) }
+                                    )
                                     .accessibilityIdentifier("base-edit-btn")
                                 }
                             }
@@ -168,53 +177,6 @@ struct BasesManagementView: View {
                   entity == "bases" else { return }
             Task { await loadData() }
         }
-    }
-
-    // MARK: - Base Card
-
-    @ViewBuilder
-    private func baseCard(_ base: Base) -> some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(base.name)
-                    .font(.headline)
-                    .foregroundStyle(Color.pfText)
-                if !base.description.isEmpty {
-                    Text(base.description)
-                        .font(.caption)
-                        .foregroundStyle(Color.pfTextMuted)
-                        .lineLimit(1)
-                }
-                Text(challengeInfoForBase(base))
-                    .font(.caption)
-                    .foregroundStyle(Color.pfTextMuted)
-            }
-            Spacer()
-            HStack(spacing: 6) {
-                if base.hidden {
-                    Image(systemName: "eye.slash")
-                        .font(.caption)
-                        .foregroundStyle(Color.pfTextMuted)
-                }
-                HStack(spacing: 4) {
-                    Circle()
-                        .fill(base.nfcLinked ? Color.pfCompleted : Color.pfPending)
-                        .frame(width: 7, height: 7)
-                    Text(base.nfcLinked ? locale.t("operator.linked") : locale.t("operator.notLinked"))
-                        .font(.caption2)
-                        .foregroundStyle(base.nfcLinked ? Color.pfCompleted : Color.pfPending)
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background((base.nfcLinked ? Color.pfCompleted : Color.pfPending).opacity(0.15))
-                .clipShape(Capsule())
-            }
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.pfCard)
-        .clipShape(RoundedRectangle(cornerRadius: PFRadius.card))
-        .shadow(color: .black.opacity(0.03), radius: 4, y: 1)
     }
 
     private func challengeInfoForBase(_ base: Base) -> String {

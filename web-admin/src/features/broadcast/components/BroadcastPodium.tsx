@@ -1,15 +1,17 @@
 import { Trophy } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { BroadcastLeaderboardEntry } from "@/lib/api/broadcast";
+import { BroadcastPanel } from "@/components/broadcast/BroadcastPanel";
+import { EmptyState } from "@/components/feedback/EmptyState";
 
 interface Props {
   leaderboard: BroadcastLeaderboardEntry[];
 }
 
 const PODIUM_CONFIG = [
-  { rank: 2, height: "h-16", bg: "bg-gray-400/20", border: "border-gray-400/30", medal: "\u{1F948}" },
-  { rank: 1, height: "h-24", bg: "bg-yellow-500/20", border: "border-yellow-500/40", medal: "\u{1F947}" },
-  { rank: 3, height: "h-12", bg: "bg-orange-400/15", border: "border-orange-400/30", medal: "\u{1F949}" },
+  { rank: 2, height: "h-16", bg: "bg-muted", border: "border-border", medal: "\u{1F948}" },
+  { rank: 1, height: "h-24", bg: "bg-warning/20", border: "border-warning/40", medal: "\u{1F947}" },
+  { rank: 3, height: "h-12", bg: "bg-override/15", border: "border-override/30", medal: "\u{1F949}" },
 ];
 
 export function BroadcastPodium({ leaderboard }: Props) {
@@ -17,12 +19,7 @@ export function BroadcastPodium({ leaderboard }: Props) {
 
   if (leaderboard.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center rounded-xl border border-white/10 bg-white/5">
-        <div className="text-center space-y-1">
-          <Trophy className="h-6 w-6 text-white/20 mx-auto" />
-          <p className="text-sm text-white/30">{t("leaderboard.noScores")}</p>
-        </div>
-      </div>
+      <BroadcastPanel><EmptyState density="compact" icon={<Trophy className="h-6 w-6" />} title={t("leaderboard.noScores")} /></BroadcastPanel>
     );
   }
 
@@ -30,12 +27,7 @@ export function BroadcastPodium({ leaderboard }: Props) {
   const podiumOrder = [1, 0, 2];
 
   return (
-    <div className="flex h-full flex-col rounded-xl border border-white/10 bg-white/5 p-3 overflow-hidden">
-      <div className="flex items-center gap-2 mb-2">
-        <Trophy className="h-4 w-4 text-yellow-400" />
-        <h2 className="text-sm font-semibold text-white/70">{t("nav.leaderboard")}</h2>
-      </div>
-
+    <BroadcastPanel title={t("nav.leaderboard")} leading={<Trophy className="h-4 w-4 text-warning" />}>
       <div className="flex-1 flex items-end justify-center gap-2">
         {podiumOrder.map((idx) => {
           const entry = leaderboard[idx];
@@ -52,7 +44,7 @@ export function BroadcastPodium({ leaderboard }: Props) {
               <span className="text-xs font-medium text-center truncate w-full px-1">
                 {entry.teamName}
               </span>
-              <span className="text-xs font-bold text-white/80 tabular-nums">
+              <span className="text-xs font-bold text-foreground tabular-nums">
                 {entry.points} {t("common.pts")}
               </span>
               <div
@@ -62,6 +54,6 @@ export function BroadcastPodium({ leaderboard }: Props) {
           );
         })}
       </div>
-    </div>
+    </BroadcastPanel>
   );
 }

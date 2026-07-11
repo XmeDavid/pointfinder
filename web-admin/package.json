@@ -10,7 +10,10 @@
     "typecheck": "tsc -b",
     "test": "npx --yes vitest run",
     "test:watch": "npx --yes vitest",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "design-system:generate": "node ../design-system/scripts/generate.mjs",
+    "design-system:check": "node ../design-system/scripts/generate.mjs --check",
+    "design-system:audit": "node ../design-system/scripts/audit.mjs"
   },
   "dependencies": {
     "@stomp/stompjs": "^7.3.0",

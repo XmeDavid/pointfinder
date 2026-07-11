@@ -35,6 +35,7 @@ dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:data"))
     implementation(project(":core:i18n"))
+    implementation(project(":core:designsystem"))
     implementation(project(":feature:player"))
 
     implementation(libs.androidx.core.ktx)

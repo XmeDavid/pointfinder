@@ -55,6 +55,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import com.prayer.pointfinder.core.i18n.R
+import com.prayer.pointfinder.core.designsystem.PFDataColorToken
 import com.prayer.pointfinder.core.model.CreateTagRequest
 import com.prayer.pointfinder.core.model.GameTag
 import com.prayer.pointfinder.core.model.OperatorError
@@ -64,22 +65,22 @@ import kotlinx.coroutines.launch
 // MARK: - Palette (16 WCAG-safe hues, matches web-admin colorPalette.ts)
 
 private val TAG_COLOR_PALETTE = listOf(
-    "#3b82f6", // blue
-    "#ef4444", // red
-    "#22c55e", // green
-    "#f59e0b", // amber
-    "#a855f7", // purple
-    "#ec4899", // pink
-    "#14b8a6", // teal
-    "#f97316", // orange
-    "#6366f1", // indigo
-    "#84cc16", // lime
-    "#06b6d4", // cyan
-    "#e11d48", // rose
-    "#8b5cf6", // violet
-    "#10b981", // emerald
-    "#f43f5e", // fuchsia-red
-    "#0ea5e9", // sky
+    PFDataColorToken.Blue,
+    PFDataColorToken.Red,
+    PFDataColorToken.Green,
+    PFDataColorToken.Amber,
+    PFDataColorToken.Purple,
+    PFDataColorToken.Pink,
+    PFDataColorToken.Teal,
+    PFDataColorToken.Orange,
+    PFDataColorToken.Indigo,
+    PFDataColorToken.Lime,
+    PFDataColorToken.Cyan,
+    PFDataColorToken.Rose,
+    PFDataColorToken.Violet,
+    PFDataColorToken.Emerald,
+    PFDataColorToken.Yellow,
+    PFDataColorToken.Sky,
 )
 
 private fun nextPaletteColor(usedColors: List<String>): String {
@@ -100,7 +101,7 @@ private fun parseHexColor(hex: String): Color {
             blue = (value and 0xFF) / 255f,
         )
     } catch (_: Exception) {
-        Color(0xFF3b82f6)
+        Color(android.graphics.Color.parseColor(PFDataColorToken.Blue))
     }
 }
 

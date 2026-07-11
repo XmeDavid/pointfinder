@@ -104,7 +104,7 @@ struct OperatorMapView: View {
                 guard let team = teams.first(where: { $0.id == location.teamId }) else { return nil }
                 let label = location.displayName ?? team.name
                 let teamColor: UIColor = UIColor(hex: team.color)
-                    ?? UIColor(red: 0.08, green: 0.55, blue: 1.00, alpha: 1.0)
+                    ?? UIColor(PFColorToken.statusCheckedIn)
                 return PlayerLocationPoint(
                     id: "loc-\(location.id)",
                     coordinate: CLLocationCoordinate2D(latitude: location.lat, longitude: location.lng),

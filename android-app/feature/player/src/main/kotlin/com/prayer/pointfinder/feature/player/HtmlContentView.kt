@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.viewinterop.AndroidView
+import com.prayer.pointfinder.core.designsystem.PFColorHexToken
 
 /**
  * Renders TipTap HTML content using a WebView.
@@ -86,10 +87,10 @@ private fun sanitizeHtml(html: String): String =
         .replace(Regex("""on\w+\s*=\s*'[^']*'""", RegexOption.IGNORE_CASE), "")
 
 private fun wrapHtml(content: String, isDark: Boolean): String {
-    val textColor = if (isDark) "#FFFFFF" else "#000000"
-    val codeBackground = if (isDark) "#2C2C2E" else "#F2F2F7"
-    val blockquoteBackground = if (isDark) "#1C1C1E" else "#F5F5F5"
-    val blockquoteBorder = if (isDark) "#48484A" else "#D1D1D6"
+    val textColor = if (isDark) PFColorHexToken.Dark.EditorText else PFColorHexToken.Light.EditorText
+    val codeBackground = if (isDark) PFColorHexToken.Dark.EditorBlock else PFColorHexToken.Light.EditorBlock
+    val blockquoteBackground = if (isDark) PFColorHexToken.Dark.EditorCanvas else PFColorHexToken.Light.EditorCanvas
+    val blockquoteBorder = if (isDark) PFColorHexToken.Dark.EditorDivider else PFColorHexToken.Light.EditorDivider
 
     return """
         <!DOCTYPE html>

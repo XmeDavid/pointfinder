@@ -5,6 +5,8 @@ import { useChallenges } from '@/hooks/queries/useChallenges'
 import { useBases } from '@/hooks/queries/useBases'
 import { useStages } from '@/hooks/queries/useStages'
 import { cn } from '@/lib/utils'
+import { EmptyState } from '@/components/feedback/EmptyState'
+import { LoadingState } from '@/components/feedback/LoadingState'
 
 interface Props {
   gameId: string
@@ -77,11 +79,11 @@ export default function TeamBreakdown({ gameId }: Props) {
   }
 
   if (!leaderboard) {
-    return (
-      <div className="text-sm text-muted-foreground text-center py-8">
-        Loading breakdown...
-      </div>
-    )
+    return <LoadingState label="Loading breakdown..." />
+  }
+
+  if (rankedTeams.length === 0) {
+    return <EmptyState density="compact" title="No team breakdown yet" description="Team progress appears after the first completed activity." />
   }
 
   return (

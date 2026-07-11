@@ -11,6 +11,7 @@ import { STATUS_COLORS, getAggregateStatusFlat, computeBounds } from "@/lib/map-
 import { PinMarkerSvg, CircleDot } from "@/components/common/MapMarkers";
 import { getResolvedStyleUrl, getDefaultCenter } from "@/lib/tile-sources";
 import type { MapRef } from "react-map-gl/maplibre";
+import { BroadcastPanel } from "@/components/broadcast/BroadcastPanel";
 
 const STALE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -85,7 +86,7 @@ export function BroadcastMap({ bases, teams, locations, progress, tileSource }: 
   }, []);
 
   return (
-    <div className="h-full rounded-xl border border-white/10 overflow-hidden">
+    <BroadcastPanel className="h-full" contentClassName="p-0">
       <MapGL
         ref={mapRef}
         initialViewState={{ longitude: defaultCenter[0], latitude: defaultCenter[1], zoom: 13 }}
@@ -121,6 +122,6 @@ export function BroadcastMap({ bases, teams, locations, progress, tileSource }: 
           );
         })}
       </MapGL>
-    </div>
+    </BroadcastPanel>
   );
 }

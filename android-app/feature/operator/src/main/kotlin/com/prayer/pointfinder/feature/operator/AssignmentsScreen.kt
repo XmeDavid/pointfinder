@@ -141,10 +141,10 @@ fun AssignmentsScreen(
             ) {
                 // Summary chip
                 item {
-                    Text(
-                        text = stringResource(R.string.label_assignment_count, assignments.size),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ManagementListSummary(
+                        label = stringResource(R.string.label_assignments),
+                        count = assignments.size,
+                        attentionLabel = assignmentsByBase.count { it.second.isEmpty() }.takeIf { it > 0 }?.let { stringResource(R.string.label_bases_without_assignments) },
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                     )
                 }
@@ -269,65 +269,16 @@ private fun AssignmentItem(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 10.dp)
-            .testTag("assignment-row"),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = challenge?.title ?: "?",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-            )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                if (team != null) {
-                    val teamColor = parseTeamColor(team.color)
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .clip(CircleShape)
-                            .background(teamColor),
-                    )
-                    Text(
-                        text = team.name,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                } else {
-                    Text(
-                        text = stringResource(R.string.label_all_teams),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                if (challenge != null) {
-                    Text(
-                        text = "· ${challenge.points} pts",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        }
-        IconButton(
-            onClick = onDelete,
-            modifier = Modifier.testTag("delete-assignment-btn"),
-        ) {
-            Icon(
-                Icons.Default.Delete,
-                contentDescription = stringResource(R.string.cd_delete),
-                tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier.size(20.dp),
-            )
-        }
-    }
+    ManagementAssignmentRow(
+        challengeTitle = challenge?.title ?: "?",
+        teamLabel = team?.name ?: stringResource(R.string.label_all_teams),
+        pointsLabel = challenge?.let { stringResource(R.string.label_pts, it.points) },
+        teamColor = team?.let { parseTeamColor(it.color) },
+        deleteLabel = stringResource(R.string.cd_delete),
+        onDelete = onDelete,
+        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).testTag("assignment-row"),
+        deleteModifier = Modifier.testTag("delete-assignment-btn"),
+    )
 }
 
 // ── Create Dialog ───────────────────────────────────────────────────────────

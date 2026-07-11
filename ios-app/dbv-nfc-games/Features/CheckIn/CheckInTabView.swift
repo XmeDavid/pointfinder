@@ -31,22 +31,12 @@ struct CheckInTabView: View {
                     VStack(spacing: 24) {
                         Spacer()
 
-                        // Check-in illustration — animated scan area
-                        VStack(spacing: 20) {
-                            AnimatedScanView(state: scanAnimationState)
-                                .frame(width: 260, height: 260)
-
-                            Text(locale.t("checkIn.title"))
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .foregroundStyle(Color.pfText)
-
-                            Text(locale.t("checkIn.instructions"))
-                                .font(.subheadline)
-                                .foregroundStyle(Color.pfTextMuted)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 40)
-                        }
+                        PlayerNFCScanPrompt(
+                            state: scanAnimationState,
+                            title: locale.t("checkIn.title"),
+                            instructions: locale.t("checkIn.instructions")
+                        )
+                        .padding(.horizontal, PFSpaceToken.space6)
 
                         if let error = scanError {
                             Text(error)
@@ -59,46 +49,30 @@ struct CheckInTabView: View {
                         VStack(spacing: 8) {
                             // Pending sync indicator
                             if appState.pendingActionsCount > 0 {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "arrow.triangle.2.circlepath")
-                                        .foregroundStyle(Color.pfPending)
-                                    let key = appState.pendingActionsCount == 1
-                                        ? "checkIn.pendingSyncOne"
-                                        : "checkIn.pendingSyncOther"
-                                    Text(locale.t(key, appState.pendingActionsCount))
-                                        .font(.caption)
-                                        .foregroundStyle(Color.pfTextMuted)
-                                }
-                                .padding(10)
-                                .background(Color.pfPending.opacity(0.08))
-                                .clipShape(RoundedRectangle(cornerRadius: PFRadius.small))
+                                let key = appState.pendingActionsCount == 1
+                                    ? "checkIn.pendingSyncOne"
+                                    : "checkIn.pendingSyncOther"
+                                PlayerFieldStatusBanner(
+                                    title: locale.t(key, appState.pendingActionsCount),
+                                    systemImage: "arrow.triangle.2.circlepath",
+                                    tone: .pending
+                                )
                             }
 
                             if failedSyncCount > 0 {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "exclamationmark.triangle.fill")
-                                        .foregroundStyle(Color.pfRejected)
-                                    Text(locale.t("offline.failedSubmissions", String(failedSyncCount)))
-                                        .font(.caption)
-                                        .foregroundStyle(Color.pfRejected)
-                                }
-                                .padding(10)
-                                .background(Color.pfRejected.opacity(0.08))
-                                .clipShape(RoundedRectangle(cornerRadius: PFRadius.small))
+                                PlayerFieldStatusBanner(
+                                    title: locale.t("offline.failedSubmissions", String(failedSyncCount)),
+                                    systemImage: "exclamationmark.triangle.fill",
+                                    tone: .danger
+                                )
                             }
 
                             if let syncError = appState.syncEngine.lastSyncError, !syncError.isEmpty {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "wifi.slash")
-                                        .foregroundStyle(Color.pfPending)
-                                    Text(syncError)
-                                        .font(.caption2)
-                                        .foregroundStyle(Color.pfPending)
-                                        .multilineTextAlignment(.leading)
-                                }
-                                .padding(10)
-                                .background(Color.pfPending.opacity(0.08))
-                                .clipShape(RoundedRectangle(cornerRadius: PFRadius.small))
+                                PlayerFieldStatusBanner(
+                                    title: syncError,
+                                    systemImage: "wifi.slash",
+                                    tone: .pending
+                                )
                             }
                         }
                         .padding(.horizontal, 24)

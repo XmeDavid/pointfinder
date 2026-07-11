@@ -81,7 +81,7 @@ export function ImportGameDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-[var(--pf-color-surface-scrim)]"
         onClick={handleClose}
       />
       <div className="relative bg-card border border-border rounded-xl shadow-lg w-full max-w-md p-6 space-y-4">

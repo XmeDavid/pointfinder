@@ -4,15 +4,18 @@ import { useChallenges } from '@/hooks/queries/useChallenges'
 import { useBases } from '@/hooks/queries/useBases'
 import { useTeams } from '@/hooks/queries/useTeams'
 import type { AnswerType } from '@/types'
+import { StatusBadge, type StatusBadgeTone } from '@/components/status'
+import { ResultsStat, ResultsSummary } from '@/components/results/ResultsSummary'
+import { EmptyState } from '@/components/feedback/EmptyState'
 
 interface Props {
   gameId: string
 }
 
-const typeBadgeStyles: Record<AnswerType, string> = {
-  text: 'bg-blue-500/20 text-blue-400',
-  file: 'bg-purple-500/20 text-purple-400',
-  none: 'bg-gray-500/20 text-gray-400',
+const typeBadgeTones: Record<AnswerType, StatusBadgeTone> = {
+  text: 'info',
+  file: 'override',
+  none: 'muted',
 }
 
 export default function GameStatistics({ gameId }: Props) {
@@ -82,32 +85,16 @@ export default function GameStatistics({ gameId }: Props) {
   return (
     <div className="space-y-8" data-testid="game-statistics">
       {/* Summary stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-secondary rounded-lg p-4">
-          <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
-            Total Submissions
-          </div>
-          <div className="text-2xl font-bold">{totalSubmissions}</div>
-        </div>
-        <div className="bg-secondary rounded-lg p-4">
-          <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
-            Approval Rate
-          </div>
-          <div className="text-2xl font-bold">{approvalRate}%</div>
-        </div>
-        <div className="bg-secondary rounded-lg p-4">
-          <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
-            Average Time
-          </div>
-          <div className="text-2xl font-bold">47 min avg</div>
-        </div>
-        <div className="bg-secondary rounded-lg p-4">
-          <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
-            Pending Reviews
-          </div>
-          <div className="text-2xl font-bold">{pendingCount}</div>
-        </div>
-      </div>
+      <ResultsSummary>
+        <ResultsStat label="Total Submissions" value={totalSubmissions} />
+        <ResultsStat label="Approval Rate" value={`${approvalRate}%`} tone="success" />
+        <ResultsStat label="Average Time" value="47 min avg" />
+        <ResultsStat label="Pending Reviews" value={pendingCount} tone={pendingCount > 0 ? 'pending' : 'default'} />
+      </ResultsSummary>
+
+      {challengeStats.length === 0 && baseStats.length === 0 && (
+        <EmptyState density="compact" title="No statistics yet" description="Challenge and base statistics appear after teams begin playing." />
+      )}
 
       {/* Per-challenge table */}
       {challengeStats.length > 0 && (
@@ -131,14 +118,11 @@ export default function GameStatistics({ gameId }: Props) {
                   {challenge.title}
                 </span>
                 <span className="w-20">
-                  <span
-                    className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${
-                      typeBadgeStyles[challenge.answerType] ??
-                      'bg-gray-500/20 text-gray-400'
-                    }`}
-                  >
-                    {challenge.answerType}
-                  </span>
+                  <StatusBadge
+                    size="sm"
+                    tone={typeBadgeTones[challenge.answerType] ?? 'muted'}
+                    label={challenge.answerType}
+                  />
                 </span>
                 <span className="w-28 text-right text-sm text-muted-foreground">
                   {completionRate}%

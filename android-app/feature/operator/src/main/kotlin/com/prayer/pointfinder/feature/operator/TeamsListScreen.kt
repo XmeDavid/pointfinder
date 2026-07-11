@@ -56,11 +56,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.prayer.pointfinder.core.i18n.R
+import com.prayer.pointfinder.core.designsystem.PFDataColorToken
 import com.prayer.pointfinder.core.model.Team
 
 internal val teamColors = listOf(
-    "#ef4444", "#f97316", "#eab308", "#22c55e", "#14b8a6", "#06b6d4",
-    "#3b82f6", "#6366f1", "#8b5cf6", "#a855f7", "#ec4899", "#f43f5e",
+    PFDataColorToken.Red, PFDataColorToken.Orange, PFDataColorToken.Yellow,
+    PFDataColorToken.Green, PFDataColorToken.Teal, PFDataColorToken.Cyan,
+    PFDataColorToken.Blue, PFDataColorToken.Indigo, PFDataColorToken.Violet,
+    PFDataColorToken.Purple, PFDataColorToken.Pink, PFDataColorToken.Rose,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -122,11 +125,7 @@ fun TeamsListScreen(
                     .padding(padding),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    text = stringResource(R.string.label_no_teams),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                ManagementEmptyState(stringResource(R.string.label_no_teams))
             }
         } else {
             LazyColumn(
@@ -136,60 +135,19 @@ fun TeamsListScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 12.dp),
             ) {
+                item { ManagementListSummary(stringResource(R.string.label_teams), teams.size) }
                 items(teams, key = { it.id }) { team ->
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("team-edit-btn")
-                            .clickable { onSelectTeam(team) },
-                        tonalElevation = 1.dp,
-                        shadowElevation = 2.dp,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            // Colored circle — slightly larger for visual weight
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(parseTeamColor(team.color)),
-                            )
-                            Spacer(Modifier.width(14.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = team.name,
-                                    fontWeight = FontWeight.Bold,
-                                    style = MaterialTheme.typography.titleSmall,
-                                )
-                                val joinCode = team.joinCode
-                                if (!joinCode.isNullOrBlank()) {
-                                    Spacer(Modifier.height(2.dp))
-                                    Text(
-                                        text = joinCode,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.testTag("team-join-code"),
-                                    )
-                                }
-                            }
-                            val joinCode = team.joinCode
-                            if (!joinCode.isNullOrBlank()) {
-                                IconButton(onClick = {
-                                    copyToClipboard(context, joinCode)
-                                }) {
-                                    Icon(
-                                        Icons.Default.ContentCopy,
-                                        contentDescription = stringResource(R.string.label_copied),
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(18.dp),
-                                    )
-                                }
-                            }
-                        }
-                    }
+                    val joinCode = team.joinCode
+                    ManagementTeamRow(
+                        name = team.name,
+                        joinCode = joinCode,
+                        teamColor = parseTeamColor(team.color),
+                        copyLabel = stringResource(R.string.label_copied),
+                        onCopy = joinCode?.takeIf { it.isNotBlank() }?.let { code -> { copyToClipboard(context, code) } },
+                        onClick = { onSelectTeam(team) },
+                        modifier = Modifier.testTag("team-edit-btn"),
+                        joinCodeModifier = Modifier.testTag("team-join-code"),
+                    )
                 }
             }
         }

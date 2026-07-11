@@ -7,7 +7,7 @@ IOS_DESTINATION ?= platform=iOS Simulator,name=iPhone 17
 ANDROID_PROJECT ?= android-app
 ANDROID_GRADLEW ?= android-app/gradlew
 
-.PHONY: help check-docker check-xcode check-android-gradle test-backend-docker test-frontend-docker test-docker test-ios test-android test-all
+.PHONY: help check-docker check-xcode check-android-gradle design-system-generate design-system-check design-system-audit test-backend-docker test-frontend-docker test-docker test-ios test-android test-all
 
 help:
 	@echo "Available targets:"
@@ -17,6 +17,18 @@ help:
 	@echo "  test-ios             Run iOS tests on macOS host (xcodebuild)"
 	@echo "  test-android         Run Android JVM/unit checks via Gradle"
 	@echo "  test-all             Run docker, Android, and iOS tests"
+	@echo "  design-system-generate Generate checked-in web/iOS/Android adapters"
+	@echo "  design-system-check  Validate JSON and generated adapter freshness"
+	@echo "  design-system-audit  Report advisory migration findings"
+
+design-system-generate:
+	@node design-system/scripts/generate.mjs
+
+design-system-check:
+	@cd design-system && npm run check
+
+design-system-audit:
+	@node design-system/scripts/audit.mjs
 
 check-docker:
 	@command -v docker >/dev/null 2>&1 || { echo "docker is required for Docker-based tests."; exit 1; }

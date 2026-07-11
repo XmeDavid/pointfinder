@@ -78,23 +78,12 @@ struct SolveView: View {
                 // Game not live warning - only show if we KNOW the game is not live
                 // (not when currentGame is nil / not yet loaded from API)
                 if let status = appState.currentGame?.status, status != "live" {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack(spacing: 8) {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundStyle(.orange)
-                                .font(.headline)
-                            Text(locale.t("solve.gameNotLive"))
-                                .font(.subheadline)
-                                .fontWeight(.semibold)
-                        }
-                        Text(locale.t("solve.gameNotLiveExplanation"))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding()
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.pfPending.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: PFRadius.small))
+                    PlayerFieldStatusBanner(
+                        title: locale.t("solve.gameNotLive"),
+                        message: locale.t("solve.gameNotLiveExplanation"),
+                        systemImage: "exclamationmark.triangle.fill",
+                        tone: .pending
+                    )
                 }
 
                 // Instructions
@@ -121,13 +110,11 @@ struct SolveView: View {
 
                 // Offline indicator
                 if !appState.isOnline {
-                    HStack(spacing: 8) {
-                        Image(systemName: "wifi.slash")
-                            .foregroundStyle(Color.pfPending)
-                        Text(locale.t("offline.submissionSync"))
-                            .font(.caption)
-                            .foregroundStyle(Color.pfTextMuted)
-                    }
+                    PlayerFieldStatusBanner(
+                        title: locale.t("offline.submissionSync"),
+                        systemImage: "wifi.slash",
+                        tone: .pending
+                    )
                 }
 
                 if isPhotoType {

@@ -54,12 +54,13 @@ struct GameMapView: View {
                 VStack(spacing: 0) {
                     playerHeaderBar
                     Spacer()
-                    MapLegendView()
+                    PlayerMapLegend(items: mapLegendItems)
+                        .padding(.horizontal, PFSpaceToken.space4)
                         .padding(.bottom, 8)
                 }
 
                 if shouldBlockGameplay {
-                    Color.black.opacity(0.45)
+                    PFColorToken.surfaceScrim
                         .ignoresSafeArea()
                     gameNotLiveCard
                 }
@@ -100,117 +101,42 @@ struct GameMapView: View {
     // MARK: - Floating Glass Header
 
     private var playerHeaderBar: some View {
-        HStack(spacing: 8) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(appState.currentGame?.name ?? locale.t("common.map"))
-                    .font(.subheadline)
-                    .fontWeight(.bold)
-                    .foregroundStyle(Color.pfText)
-                if appState.currentGame?.status == "live" {
-                    Text("LIVE")
-                        .font(.caption2)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            Spacer()
-
-            // Notification bell
-            Button {
-                showNotifications = true
-            } label: {
-                ZStack(alignment: .topTrailing) {
-                    Image(systemName: "bell.fill")
-                        .font(.body)
-                        .foregroundStyle(.primary)
-                    if appState.unseenNotificationCount > 0 {
-                        Text(appState.unseenNotificationCount > 99 ? "99+" : "\(appState.unseenNotificationCount)")
-                            .font(.system(size: 9, weight: .bold))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 4)
-                            .padding(.vertical, 2)
-                            .background(Color.pfRejected, in: Capsule())
-                            .offset(x: 8, y: -8)
-                    }
-                }
-                .frame(width: 32, height: 32)
-            }
-            .accessibilityLabel(locale.t("common.notifications"))
-
-            // Refresh button
-            Button {
-                Task { await appState.loadProgress() }
-            } label: {
-                Image(systemName: "arrow.clockwise")
-                    .font(.body)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.primary)
-                    .frame(width: 32, height: 32)
-            }
-            .accessibilityLabel(locale.t("common.refresh"))
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .shadow(color: .black.opacity(0.08), radius: 8, y: 2)
+        PlayerMapHeader(
+            title: appState.currentGame?.name ?? locale.t("common.map"),
+            liveLabel: appState.currentGame?.status == "live" ? locale.t("game.status.live") : nil,
+            unseenNotificationCount: appState.unseenNotificationCount,
+            notificationsLabel: locale.t("common.notifications"),
+            refreshLabel: locale.t("common.refresh"),
+            onNotifications: { showNotifications = true },
+            onRefresh: { Task { await appState.loadProgress() } }
+        )
         .padding(.horizontal, 12)
         .padding(.top, 8)
+    }
+
+    private var mapLegendItems: [PlayerMapLegendItem] {
+        [
+            .init(locale.t("map.notVisited"), tone: .unknown),
+            .init(locale.t("map.checkedIn"), tone: .info),
+            .init(locale.t("map.pending"), tone: .pending),
+            .init(locale.t("map.completed"), tone: .success),
+            .init(locale.t("map.rejected"), tone: .danger),
+        ]
     }
 
     // MARK: - Game Not Live Overlay
 
     private var gameNotLiveCard: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "clock.fill")
-                .font(.system(size: 40))
-                .foregroundStyle(Color.pfTextMuted)
-            Text(locale.t("player.gameNotLiveTitle"))
-                .font(.headline)
-                .foregroundStyle(Color.pfText)
-            Text(locale.t("player.gameNotLiveMessage"))
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .padding(24)
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-        .shadow(color: .black.opacity(0.12), radius: 16, y: 4)
+        PlayerDetailMessage(
+            systemImage: "clock.fill",
+            title: locale.t("player.gameNotLiveTitle"),
+            message: locale.t("player.gameNotLiveMessage")
+        )
+        .padding(PFSpaceToken.space6)
+        .background(PFColorToken.surfaceOverlay)
+        .clipShape(RoundedRectangle(cornerRadius: PFRadiusToken.lg))
+        .shadow(color: PFShadowToken.overlay.color, radius: PFShadowToken.overlay.radius, y: PFShadowToken.overlay.y)
         .padding(.horizontal, 32)
-    }
-}
-
-// MARK: - Legend
-
-struct MapLegendView: View {
-    @Environment(LocaleManager.self) private var locale
-
-    var body: some View {
-        HStack(spacing: 12) {
-            legendItem(color: BaseStatus.notVisited.color, label: locale.t("map.notVisited"))
-            legendItem(color: BaseStatus.checkedIn.color, label: locale.t("map.checkedIn"))
-            legendItem(color: BaseStatus.submitted.color, label: locale.t("map.pending"))
-            legendItem(color: BaseStatus.completed.color, label: locale.t("map.completed"))
-            legendItem(color: BaseStatus.rejected.color, label: locale.t("map.rejected"))
-        }
-        .font(.caption2)
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: PFRadius.small))
-        .shadow(color: .black.opacity(0.05), radius: 4, y: 1)
-        .padding(.horizontal)
-    }
-
-    private func legendItem(color: Color, label: String) -> some View {
-        HStack(spacing: 4) {
-            Circle()
-                .fill(color)
-                .frame(width: 8, height: 8)
-            Text(label)
-                .foregroundStyle(.secondary)
-        }
     }
 }
 
@@ -218,4 +144,21 @@ struct MapLegendView: View {
     GameMapView()
         .environment(AppState())
         .environment(LocaleManager())
+}
+
+/// Compatibility wrapper shared by existing operator map surfaces.
+/// Visual styling is owned by the canonical scroll-safe map legend component.
+struct MapLegendView: View {
+    @Environment(LocaleManager.self) private var locale
+
+    var body: some View {
+        PlayerMapLegend(items: [
+            .init(locale.t("map.notVisited"), tone: .unknown),
+            .init(locale.t("map.checkedIn"), tone: .info),
+            .init(locale.t("map.pending"), tone: .pending),
+            .init(locale.t("map.completed"), tone: .success),
+            .init(locale.t("map.rejected"), tone: .danger),
+        ])
+        .padding(.horizontal, PFSpaceToken.space4)
+    }
 }

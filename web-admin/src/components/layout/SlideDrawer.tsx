@@ -41,7 +41,7 @@ export function SlideDrawer({
         <div className="fixed inset-0 z-50" data-testid="slide-drawer">
           {/* Backdrop */}
           <motion.div
-            className="absolute inset-0 bg-black/40"
+            className="absolute inset-0 bg-[var(--pf-color-surface-scrim)]"
             onClick={onClose}
             {...overlay}
           />
@@ -49,7 +49,7 @@ export function SlideDrawer({
           {/* Panel */}
           <motion.div
             className={cn(
-              "absolute right-0 top-0 bottom-0 flex flex-col bg-card border-l border-border shadow-xl",
+              "absolute right-0 top-0 bottom-0 flex flex-col bg-card border-l border-border shadow-modal",
               "w-full",
               width,
               className,

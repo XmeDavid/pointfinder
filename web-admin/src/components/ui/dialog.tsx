@@ -49,7 +49,7 @@ function Dialog({ open, onOpenChange, children }: DialogProps) {
     <DialogContext.Provider value={{ titleId }}>
       <div className="fixed inset-0 z-50">
         <div
-          className="fixed inset-0 bg-black/50"
+          className="fixed inset-0 bg-[var(--pf-color-surface-scrim)]"
           aria-hidden="true"
           onClick={() => onOpenChange(false)}
         />

@@ -37,7 +37,7 @@ export function CreateGameDialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60"
+        className="absolute inset-0 bg-[var(--pf-color-surface-scrim)]"
         onClick={handleCancel}
         data-testid="dialog-backdrop"
       />
@@ -45,7 +45,7 @@ export function CreateGameDialog({
       <div
         role="dialog"
         aria-label="Create new game"
-        className="relative z-10 w-full max-w-md rounded-lg border border-border bg-card p-6 shadow-xl"
+        className="relative z-10 w-full max-w-md rounded-lg border border-border bg-card p-6 shadow-modal"
       >
         <h2 className="text-lg font-semibold text-foreground mb-4">
           Create New Game

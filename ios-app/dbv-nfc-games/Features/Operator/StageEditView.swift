@@ -62,6 +62,19 @@ struct StageEditView: View {
 
     var body: some View {
         Form {
+            Section {
+                ManagementEditorSummary(
+                    title: isCreateMode ? locale.t("stages.name") : (stage?.name ?? locale.t("stages.name")),
+                    metadata: [
+                        ManagementMetadata(id: "transition", label: transitionSummaryLabel, tone: .info),
+                        ManagementMetadata(id: "bases", label: String(format: locale.t("stages.nBases"), stage?.baseIds?.count ?? 0), tone: .muted),
+                    ],
+                    validationLabel: String(format: locale.t("setup.readyCount"), name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0 : 1, 1),
+                    isValid: !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                )
+                .listRowInsets(EdgeInsets(top: PFSpaceToken.space2, leading: 0, bottom: PFSpaceToken.space2, trailing: 0))
+            }
+
             // MARK: - Basic Info
             Section(locale.t("stages.details")) {
                 TextField(locale.t("stages.name"), text: $name)
@@ -126,7 +139,7 @@ struct StageEditView: View {
             if let errorMessage {
                 Section {
                     Text(errorMessage)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(PFColorToken.contentDanger)
                         .font(.caption)
                 }
             }
@@ -176,6 +189,14 @@ struct StageEditView: View {
     }
 
     // MARK: - Actions
+
+    private var transitionSummaryLabel: String {
+        switch transitionType {
+        case "scheduled": locale.t("stages.scheduled")
+        case "trigger": locale.t("stages.trigger")
+        default: locale.t("stages.manual")
+        }
+    }
 
     private func save() async {
         guard let token else { return }

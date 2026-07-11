@@ -26,11 +26,9 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.IconButton
-import androidx.compose.foundation.background
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -45,7 +43,6 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -56,6 +53,7 @@ import com.prayer.pointfinder.core.model.Game
 import com.prayer.pointfinder.core.model.GameStatus
 import com.prayer.pointfinder.core.model.OrgWorkspace
 import com.prayer.pointfinder.core.model.PRIVACY_POLICY_URL
+import com.prayer.pointfinder.core.designsystem.PFColors
 
 enum class OperatorTab {
     LIVE_MAP,
@@ -66,13 +64,13 @@ enum class OperatorTab {
 }
 
 // Semantic color constants shared across operator screens
-internal val StatusCheckedIn = Color(0xFF3B82F6)   // was 0xFF1565C0
-internal val StatusCompleted = Color(0xFF22C55E)   // was 0xFF2E7D32
-internal val StatusSubmitted = Color(0xFFF59E0B)   // was 0xFFE08A00
-internal val StatusRejected = Color(0xFFEF4444)    // was 0xFFD32F2F
-internal val StarGold = Color(0xFFF59E0B)          // was 0xFFE08A00
-internal val BadgePurple = Color(0xFF7B1FA2)
-internal val BadgeIndigo = Color(0xFF303F9F)
+internal val StatusCheckedIn = PFColors.StatusCheckedInLight
+internal val StatusCompleted = PFColors.StatusCompletedLight
+internal val StatusSubmitted = PFColors.StatusPendingLight
+internal val StatusRejected = PFColors.StatusRejectedLight
+internal val StarGold = PFColors.StatusPendingLight
+internal val BadgePurple = PFColors.StatusOperatorOverrideLight
+internal val BadgeIndigo = PFColors.StatusOperatorOverrideLight
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -192,61 +190,32 @@ fun OperatorHomeScreen(
                             Spacer(Modifier.height(4.dp))
                         }
 
+                        item {
+                            GameLibrarySummary(
+                                listOf(
+                                    GameLibraryMetric(games.count { it.status == GameStatus.SETUP }.toString(), stringResource(R.string.game_status_setup), OperatorTone.INFO),
+                                    GameLibraryMetric(games.count { it.status == GameStatus.LIVE }.toString(), stringResource(R.string.game_status_live), OperatorTone.SUCCESS),
+                                    GameLibraryMetric(games.count { it.status == GameStatus.ENDED }.toString(), stringResource(R.string.game_status_ended), OperatorTone.MUTED),
+                                ),
+                            )
+                        }
+
                         items(games, key = { it.id }, contentType = { "game" }) { game ->
-                            val statusColor = when (game.status) {
-                                GameStatus.LIVE -> StatusCompleted
-                                GameStatus.SETUP -> StatusSubmitted
-                                GameStatus.ENDED -> Color(0xFF9E9E9E)
-                            }
-                            Surface(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onSelectGame(game) },
-                                tonalElevation = 1.dp,
-                                shadowElevation = 2.dp,
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
-                            ) {
-                                Column(modifier = Modifier.padding(14.dp)) {
-                                    androidx.compose.foundation.layout.Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.Top,
-                                    ) {
-                                        Text(
-                                            text = game.name,
-                                            fontWeight = FontWeight.Bold,
-                                            style = MaterialTheme.typography.titleSmall,
-                                            modifier = Modifier.weight(1f).padding(end = 8.dp),
-                                        )
-                                        Text(
-                                            text = when (game.status) {
-                                                GameStatus.SETUP -> stringResource(R.string.game_status_setup)
-                                                GameStatus.LIVE -> stringResource(R.string.game_status_live)
-                                                GameStatus.ENDED -> stringResource(R.string.game_status_ended)
-                                            }.uppercase(),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = statusColor,
-                                            modifier = Modifier
-                                                .background(
-                                                    statusColor.copy(alpha = 0.15f),
-                                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(50),
-                                                )
-                                                .padding(horizontal = 8.dp, vertical = 3.dp),
-                                        )
-                                    }
-                                    if (game.description.isNotBlank()) {
-                                        Spacer(Modifier.height(6.dp))
-                                        Text(
-                                            text = game.description,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            maxLines = 2,
-                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                                        )
-                                    }
-                                }
-                            }
+                            GameLibraryCard(
+                                name = game.name,
+                                description = game.description,
+                                statusLabel = when (game.status) {
+                                    GameStatus.SETUP -> stringResource(R.string.game_status_setup)
+                                    GameStatus.LIVE -> stringResource(R.string.game_status_live)
+                                    GameStatus.ENDED -> stringResource(R.string.game_status_ended)
+                                },
+                                statusTone = when (game.status) {
+                                    GameStatus.SETUP -> OperatorTone.INFO
+                                    GameStatus.LIVE -> OperatorTone.SUCCESS
+                                    GameStatus.ENDED -> OperatorTone.MUTED
+                                },
+                                onClick = { onSelectGame(game) },
+                            )
                         }
                     }
                 }
@@ -291,40 +260,7 @@ private fun WorkspaceChip(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
-    val containerColor = if (selected) {
-        MaterialTheme.colorScheme.primaryContainer
-    } else {
-        MaterialTheme.colorScheme.surfaceVariant
-    }
-    val contentColor = if (selected) {
-        MaterialTheme.colorScheme.onPrimaryContainer
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
-    }
-    Surface(
-        onClick = onClick,
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(50),
-        color = containerColor,
-        contentColor = contentColor,
-        tonalElevation = if (selected) 0.dp else 1.dp,
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-            )
-            if (detail != null) {
-                Text(
-                    text = detail,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = contentColor.copy(alpha = 0.75f),
-                )
-            }
-        }
-    }
+    GameLibraryWorkspaceChip(label, detail, selected, onClick)
 }
 
 @Composable

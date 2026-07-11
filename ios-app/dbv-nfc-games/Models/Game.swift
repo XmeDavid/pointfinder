@@ -74,7 +74,7 @@ struct GameTag: Codable, Identifiable {
     let id: UUID
     let gameId: UUID
     let label: String
-    let color: String   // 7-char hex, e.g. "#3b82f6"
+    let color: String   // Seven-character hex color.
     let createdAt: String
     let updatedAt: String
 }

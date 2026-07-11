@@ -129,7 +129,7 @@ export function RescueDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[60] bg-black/40"
+      className="fixed inset-0 z-[60] bg-[var(--pf-color-surface-scrim)]"
       onClick={onClose}
     >
       <SurfacePanel

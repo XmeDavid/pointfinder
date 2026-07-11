@@ -7,6 +7,7 @@ import { useBillingStatus } from '../../hooks/queries/useBillingStatus'
 import { useCreateCheckout, useCreatePortal, useCreateOrgPortal } from '../../hooks/mutations/useBillingMutations'
 import { useInvoices } from '@/hooks/queries/useInvoices'
 import type { Invoice } from '@/types/billing'
+import { StatusBadge as SemanticStatusBadge, type StatusBadgeTone } from '@/components/status'
 
 function formatSize(bytes: number): string {
   if (bytes === 0) return '0 B'
@@ -79,18 +80,14 @@ function formatAmount(amount: number, currency: string): string {
 
 function StatusBadge({ status }: { status: Invoice['status'] }) {
   const { t } = useTranslation()
-  const colorMap: Record<Invoice['status'], string> = {
-    paid: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-    open: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-    draft: 'bg-muted text-muted-foreground',
-    void: 'bg-muted text-muted-foreground',
-    uncollectible: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+  const toneMap: Record<Invoice['status'], StatusBadgeTone> = {
+    paid: 'success',
+    open: 'warning',
+    draft: 'muted',
+    void: 'muted',
+    uncollectible: 'destructive',
   }
-  return (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${colorMap[status]}`}>
-      {t(`billing.invoiceStatus.${status}`, status)}
-    </span>
-  )
+  return <SemanticStatusBadge tone={toneMap[status]} label={t(`billing.invoiceStatus.${status}`, status)} />
 }
 
 function InvoiceRow({ invoice }: { invoice: Invoice }) {

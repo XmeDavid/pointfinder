@@ -13,6 +13,7 @@ struct TeamsManagementView: View {
     @State private var showManageVariables = false
     @State private var copiedTeamId: UUID?
     @State private var showCopiedToast = false
+    @State private var path = NavigationPath()
 
     private var token: String? {
         if case .userOperator(let token, _, _) = appState.authType {
@@ -22,7 +23,7 @@ struct TeamsManagementView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             content
         }
     }
@@ -41,11 +42,17 @@ struct TeamsManagementView: View {
             } else {
                 ScrollView {
                     LazyVStack(spacing: PFSpacing.itemGap) {
+                        ManagementListSummary(label: locale.t("operator.teams"), count: teams.count)
                         ForEach(teams) { team in
-                            NavigationLink(value: team.id) {
-                                teamCard(team)
-                            }
-                            .buttonStyle(.plain)
+                            ManagementTeamRow(
+                                name: team.name,
+                                joinCode: team.joinCode,
+                                teamColor: Color(hex: team.color) ?? PFColorToken.statusUnknown,
+                                copyLabel: locale.t("operator.copied"),
+                                copied: copiedTeamId == team.id,
+                                copyAction: team.joinCode.map { code in { copyJoinCode(code, teamId: team.id) } },
+                                action: { path.append(team.id) }
+                            )
                             .accessibilityIdentifier("team-edit-btn")
                         }
                     }
@@ -134,53 +141,14 @@ struct TeamsManagementView: View {
         }
     }
 
-    // MARK: - Team Card
-
-    @ViewBuilder
-    private func teamCard(_ team: Team) -> some View {
-        HStack(spacing: 12) {
-            Circle()
-                .fill(Color(hex: team.color) ?? .blue)
-                .frame(width: 28, height: 28)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(team.name)
-                    .font(.headline)
-                    .foregroundStyle(Color.pfText)
-                if let joinCode = team.joinCode {
-                    Text(joinCode)
-                        .font(.caption)
-                        .foregroundStyle(Color.pfTextMuted)
-                }
-            }
-            Spacer()
-            if let joinCode = team.joinCode {
-                Button {
-                    UIPasteboard.general.string = joinCode
-                    copiedTeamId = team.id
-                    withAnimation {
-                        showCopiedToast = true
-                    }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                        if copiedTeamId == team.id {
-                            copiedTeamId = nil
-                        }
-                        withAnimation {
-                            showCopiedToast = false
-                        }
-                    }
-                } label: {
-                    Image(systemName: copiedTeamId == team.id ? "checkmark" : "doc.on.doc")
-                        .font(.caption)
-                        .foregroundStyle(Color.pfTextMuted)
-                }
-                .buttonStyle(.plain)
-            }
+    private func copyJoinCode(_ joinCode: String, teamId: UUID) {
+        UIPasteboard.general.string = joinCode
+        copiedTeamId = teamId
+        withAnimation { showCopiedToast = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            if copiedTeamId == teamId { copiedTeamId = nil }
+            withAnimation { showCopiedToast = false }
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.pfCard)
-        .clipShape(RoundedRectangle(cornerRadius: PFRadius.card))
-        .shadow(color: .black.opacity(0.03), radius: 4, y: 1)
     }
 
     private func loadData() async {
@@ -207,13 +175,15 @@ private struct TeamCreateSheet: View {
     var onCreated: (Team) -> Void
 
     @State private var name = ""
-    @State private var selectedColor = "#3b82f6"
+    @State private var selectedColor = PFDataColorToken.blue
     @State private var isCreating = false
     @State private var errorMessage: String?
 
     private let colorOptions = [
-        "#ef4444", "#f97316", "#eab308", "#22c55e", "#14b8a6", "#06b6d4",
-        "#3b82f6", "#6366f1", "#8b5cf6", "#a855f7", "#ec4899", "#f43f5e"
+        PFDataColorToken.red, PFDataColorToken.orange, PFDataColorToken.yellow,
+        PFDataColorToken.green, PFDataColorToken.teal, PFDataColorToken.cyan,
+        PFDataColorToken.blue, PFDataColorToken.indigo, PFDataColorToken.violet,
+        PFDataColorToken.purple, PFDataColorToken.pink, PFDataColorToken.rose
     ]
 
     private var token: String? {

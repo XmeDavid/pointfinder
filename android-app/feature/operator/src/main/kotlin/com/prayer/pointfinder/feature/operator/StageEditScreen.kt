@@ -198,6 +198,18 @@ fun StageEditScreen(
         ) {
             Spacer(Modifier.height(8.dp))
 
+            ManagementEditorSummary(
+                title = title,
+                metadata = listOf(
+                    ManagementMetadata(transitionLabels[transitionOptions.indexOf(transitionType).coerceAtLeast(0)], OperatorTone.INFO),
+                    ManagementMetadata(stringResource(R.string.label_bases_count, stage?.baseIds?.size ?: 0), OperatorTone.MUTED),
+                ),
+                validationLabel = stringResource(R.string.setup_ready_count, if (canSave) 1 else 0, 1),
+                isValid = canSave,
+            )
+
+            Spacer(Modifier.height(12.dp))
+
             // Name field
             OutlinedTextField(
                 value = name,

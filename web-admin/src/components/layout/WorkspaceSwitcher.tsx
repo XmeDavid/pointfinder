@@ -24,7 +24,7 @@ export function WorkspaceSwitcher() {
         }}
         className={cn(
           'w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-sm transition-all cursor-pointer',
-          'bg-indigo-500',
+          'bg-override',
           isPersonalActive ? 'ring-2 ring-white' : 'opacity-60 hover:opacity-100'
         )}
         title={t('workspace.personal', 'Personal')}
@@ -35,7 +35,7 @@ export function WorkspaceSwitcher() {
 
       {/* Divider */}
       {workspaces?.organizations && workspaces.organizations.length > 0 && (
-        <div className="w-5 h-px bg-indigo-400/50" />
+        <div className="h-px w-5 bg-border" />
       )}
 
       {/* Org workspaces */}
@@ -57,7 +57,7 @@ export function WorkspaceSwitcher() {
             }}
             className={cn(
               'w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-xs transition-all cursor-pointer',
-              'bg-emerald-600',
+              'bg-primary',
               isActive ? 'ring-2 ring-white' : 'opacity-60 hover:opacity-100'
             )}
             title={org.name}
@@ -71,7 +71,7 @@ export function WorkspaceSwitcher() {
       {/* Create org button — navigates to checkout page, no free orgs */}
       <button
         onClick={() => navigate('/org/create')}
-        className="mt-2 w-9 h-9 rounded-lg border-2 border-dashed border-indigo-500/50 flex items-center justify-center text-indigo-400 hover:border-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer"
+        className="mt-2 flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-override/50 text-override transition-colors hover:border-override hover:bg-override/10"
         title={t('workspace.createOrg', 'Create organization')}
         aria-label={t('workspace.createOrg', 'Create organization')}
       >

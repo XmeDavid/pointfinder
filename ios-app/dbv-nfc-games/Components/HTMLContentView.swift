@@ -71,11 +71,11 @@ struct HTMLContentView: UIViewRepresentable {
     /// Wraps the HTML content with a stylesheet that matches the app's design
     private func wrapHTML(_ content: String) -> String {
         let isDark = colorScheme == .dark
-        let textColor = isDark ? "#FFFFFF" : "#000000"
+        let textColor = isDark ? PFColorHexToken.Dark.editorText : PFColorHexToken.Light.editorText
         let backgroundColor = "transparent"
-        let codeBackground = isDark ? "#2C2C2E" : "#F2F2F7"
-        let blockquoteBackground = isDark ? "#1C1C1E" : "#F5F5F5"
-        let blockquoteBorder = isDark ? "#48484A" : "#D1D1D6"
+        let codeBackground = isDark ? PFColorHexToken.Dark.editorBlock : PFColorHexToken.Light.editorBlock
+        let blockquoteBackground = isDark ? PFColorHexToken.Dark.editorCanvas : PFColorHexToken.Light.editorCanvas
+        let blockquoteBorder = isDark ? PFColorHexToken.Dark.editorDivider : PFColorHexToken.Light.editorDivider
         
         return """
         <!DOCTYPE html>

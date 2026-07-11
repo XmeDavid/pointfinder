@@ -6,11 +6,11 @@ export function PrivacyPage() {
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
+    <div className="dark min-h-screen bg-background text-foreground">
       {/* Header */}
       <header className="border-b border-white/10 px-6 py-4">
         <div className="mx-auto max-w-3xl flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 text-green-400 hover:text-green-300 transition-colors">
+          <Link to="/" className="flex items-center gap-2 text-primary transition-colors hover:text-primary/80">
             <Compass className="h-5 w-5" />
             <span className="font-bold text-lg">PointFinder</span>
           </Link>
@@ -31,12 +31,12 @@ export function PrivacyPage() {
 
         {/* Section: What we collect */}
         <section className="space-y-3">
-          <h2 className="text-xl font-semibold text-green-400">{t("privacy.collectTitle")}</h2>
+          <h2 className="text-xl font-semibold text-primary">{t("privacy.collectTitle")}</h2>
           <p className="text-white/70 leading-relaxed">{t("privacy.collectIntro")}</p>
           <ul className="space-y-2 text-white/70 list-none">
             {(["displayName", "deviceId", "location", "media", "nfc"] as const).map((key) => (
               <li key={key} className="flex gap-2">
-                <span className="text-green-400 mt-1">&#8226;</span>
+                <span className="mt-1 text-primary">&#8226;</span>
                 <span>{t(`privacy.collect.${key}`)}</span>
               </li>
             ))}
@@ -45,30 +45,30 @@ export function PrivacyPage() {
 
         {/* Section: How we use it */}
         <section className="space-y-3">
-          <h2 className="text-xl font-semibold text-green-400">{t("privacy.useTitle")}</h2>
+          <h2 className="text-xl font-semibold text-primary">{t("privacy.useTitle")}</h2>
           <p className="text-white/70 leading-relaxed">{t("privacy.useBody")}</p>
         </section>
 
         {/* Section: Data retention */}
         <section className="space-y-3">
-          <h2 className="text-xl font-semibold text-green-400">{t("privacy.retentionTitle")}</h2>
+          <h2 className="text-xl font-semibold text-primary">{t("privacy.retentionTitle")}</h2>
           <p className="text-white/70 leading-relaxed">{t("privacy.retentionBody")}</p>
         </section>
 
         {/* Section: Children's privacy */}
         <section className="space-y-3">
-          <h2 className="text-xl font-semibold text-green-400">{t("privacy.childrenTitle")}</h2>
+          <h2 className="text-xl font-semibold text-primary">{t("privacy.childrenTitle")}</h2>
           <p className="text-white/70 leading-relaxed">{t("privacy.childrenBody")}</p>
         </section>
 
         {/* Section: Contact */}
         <section className="space-y-3">
-          <h2 className="text-xl font-semibold text-green-400">{t("privacy.contactTitle")}</h2>
+          <h2 className="text-xl font-semibold text-primary">{t("privacy.contactTitle")}</h2>
           <p className="text-white/70 leading-relaxed">
             {t("privacy.contactBody")}{" "}
             <a
               href="https://pointfinder.pt"
-              className="text-green-400 hover:text-green-300 underline transition-colors"
+              className="text-primary underline transition-colors hover:text-primary/80"
               target="_blank"
               rel="noopener noreferrer"
             >

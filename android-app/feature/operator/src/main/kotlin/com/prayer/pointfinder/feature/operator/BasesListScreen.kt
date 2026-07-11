@@ -20,6 +20,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -122,11 +123,7 @@ fun BasesListScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(
-                            text = stringResource(R.string.label_no_bases_filtered),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        ManagementEmptyState(stringResource(R.string.label_no_bases_filtered))
                     }
                 } else {
                     LazyColumn(
@@ -134,6 +131,13 @@ fun BasesListScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 12.dp),
                     ) {
+                        item {
+                            ManagementListSummary(
+                                stringResource(R.string.label_bases),
+                                filteredBases.size,
+                                bases.count { !it.nfcLinked }.takeIf { it > 0 }?.let { stringResource(R.string.label_nfc_missing, it) },
+                            )
+                        }
                         items(filteredBases, key = { it.id }) { base ->
                             val baseAssignments = assignments.filter { it.baseId == base.id }
                             val perTeamCount = baseAssignments.count { it.teamId != null }
@@ -151,86 +155,22 @@ fun BasesListScreen(
                                 }
                                 else -> stringResource(R.string.label_no_challenge)
                             }
-                            val nfcColor = if (base.nfcLinked) StatusCompleted else StatusSubmitted
                             val nfcLabel = if (base.nfcLinked) {
                                 stringResource(R.string.label_nfc_linked)
                             } else {
                                 stringResource(R.string.label_nfc_not_linked)
                             }
-                            Surface(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .testTag("base-edit-btn")
-                                    .clickable { onSelectBase(base) },
-                                tonalElevation = 1.dp,
-                                shadowElevation = 2.dp,
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(14.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
-                                        Text(
-                                            text = base.name,
-                                            fontWeight = FontWeight.Bold,
-                                            style = MaterialTheme.typography.titleSmall,
-                                        )
-                                        if (base.description.isNotBlank()) {
-                                            Spacer(Modifier.height(2.dp))
-                                            Text(
-                                                text = base.description,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                maxLines = 1,
-                                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                                            )
-                                        }
-                                        Spacer(Modifier.height(4.dp))
-                                        Text(
-                                            text = challengeSubtitle,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        )
-                                    }
-                                    Row(
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                    ) {
-                                        if (base.hidden) {
-                                            CapsuleBadge(
-                                                label = stringResource(R.string.label_hidden_base),
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            )
-                                        }
-                                        // NFC dot + label badge matching iOS style
-                                        Surface(
-                                            shape = androidx.compose.foundation.shape.RoundedCornerShape(50),
-                                            color = nfcColor.copy(alpha = 0.15f),
-                                        ) {
-                                            Row(
-                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                            ) {
-                                                androidx.compose.foundation.layout.Box(
-                                                    modifier = Modifier
-                                                        .size(7.dp)
-                                                        .clip(androidx.compose.foundation.shape.CircleShape)
-                                                        .background(nfcColor),
-                                                )
-                                                Text(
-                                                    text = nfcLabel,
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = nfcColor,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            ManagementResourceRow(
+                                title = base.name,
+                                subtitle = listOf(base.description.takeIf { it.isNotBlank() }, challengeSubtitle).filterNotNull().joinToString(" · "),
+                                metadata = listOfNotNull(
+                                    ManagementMetadata(nfcLabel, if (base.nfcLinked) OperatorTone.SUCCESS else OperatorTone.PENDING),
+                                    ManagementMetadata(stringResource(R.string.label_hidden_base), OperatorTone.MUTED).takeIf { base.hidden },
+                                ),
+                                onClick = { onSelectBase(base) },
+                                modifier = Modifier.testTag("base-edit-btn"),
+                                leadingIcon = Icons.Default.LocationOn,
+                            )
                         }
                     }
                 }

@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -117,11 +118,7 @@ fun ChallengesListScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(
-                            text = stringResource(R.string.label_no_challenges_filtered),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        ManagementEmptyState(stringResource(R.string.label_no_challenges_filtered))
                     }
                 } else {
                     LazyColumn(
@@ -129,6 +126,7 @@ fun ChallengesListScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 12.dp),
                     ) {
+                        item { ManagementListSummary(stringResource(R.string.label_challenges), filteredChallenges.size) }
                         items(filteredChallenges, key = { it.id }) { challenge ->
                             val fixedBaseAssignment = assignments.firstOrNull {
                                 it.challengeId == challenge.id && it.teamId == null
@@ -142,52 +140,17 @@ fun ChallengesListScreen(
                                 else -> stringResource(R.string.label_text_input)
                             }
 
-                            Surface(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .testTag("challenge-edit-btn")
-                                    .clickable { onSelectChallenge(challenge) },
-                                tonalElevation = 1.dp,
-                                shadowElevation = 2.dp,
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
-                            ) {
-                                Column(modifier = Modifier.padding(14.dp)) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically,
-                                    ) {
-                                        Text(
-                                            text = challenge.title,
-                                            fontWeight = FontWeight.Bold,
-                                            style = MaterialTheme.typography.titleSmall,
-                                            modifier = Modifier.weight(1f).padding(end = 8.dp),
-                                        )
-                                        Text(
-                                            text = stringResource(R.string.label_pts, challenge.points),
-                                            style = MaterialTheme.typography.labelLarge,
-                                            color = StarGold,
-                                            fontWeight = FontWeight.Bold,
-                                        )
-                                    }
-                                    Spacer(Modifier.height(6.dp))
-                                    Row(
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                    ) {
-                                        Text(
-                                            text = linkedBaseName ?: stringResource(R.string.label_no_base),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.weight(1f, fill = false),
-                                        )
-                                        CapsuleBadge(
-                                            label = answerTypeBadge,
-                                            color = BadgeIndigo,
-                                        )
-                                    }
-                                }
-                            }
+                            ManagementResourceRow(
+                                title = challenge.title,
+                                subtitle = linkedBaseName ?: stringResource(R.string.label_no_base),
+                                metadata = listOf(
+                                    ManagementMetadata(stringResource(R.string.label_pts, challenge.points), OperatorTone.PENDING),
+                                    ManagementMetadata(answerTypeBadge, OperatorTone.INFO),
+                                ),
+                                onClick = { onSelectChallenge(challenge) },
+                                modifier = Modifier.testTag("challenge-edit-btn"),
+                                leadingIcon = Icons.Default.Star,
+                            )
                         }
                     }
                 }

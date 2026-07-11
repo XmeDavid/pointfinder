@@ -212,9 +212,9 @@ struct TeamStatusRow: View {
             fixedChallengeId: nil
         ),
         teams: [
-            Team(id: UUID(), name: "Red Dragons", color: "#ef4444"),
-            Team(id: UUID(), name: "Blue Hawks", color: "#3b82f6"),
-            Team(id: UUID(), name: "Green Wolves", color: "#22c55e"),
+            Team(id: UUID(), name: "Red Dragons", color: PFDataColorToken.red),
+            Team(id: UUID(), name: "Blue Hawks", color: PFDataColorToken.blue),
+            Team(id: UUID(), name: "Green Wolves", color: PFDataColorToken.green),
         ],
         progress: []
     )

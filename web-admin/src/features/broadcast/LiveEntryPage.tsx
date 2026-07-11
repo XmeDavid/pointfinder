@@ -2,6 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Radio } from "lucide-react";
+import { SurfacePanel } from "@/components/layout/SurfacePanel";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export function LiveEntryPage() {
   const { t } = useTranslation();
@@ -22,35 +25,36 @@ export function LiveEntryPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-950 text-white p-4">
-      <div className="w-full max-w-sm space-y-8 text-center">
+    <div className="dark flex min-h-screen items-center justify-center bg-background p-4 text-foreground">
+      <SurfacePanel elevation="panel" className="w-full max-w-sm space-y-8 text-center" padding="lg">
         <div className="space-y-2">
           <div className="flex items-center justify-center gap-2">
-            <Radio className="h-8 w-8 text-green-400" />
+            <Radio className="h-8 w-8 text-success" />
             <h1 className="text-3xl font-bold tracking-tight">PointFinder</h1>
           </div>
-          <p className="text-white/60">{t("live.description")}</p>
+          <p className="text-muted-foreground">{t("live.description")}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <input
+          <Input
             type="text"
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, MAX_CODE_LENGTH))}
             placeholder={t("live.codeInputPlaceholder")}
             maxLength={MAX_CODE_LENGTH}
-            className="w-full rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-center font-mono text-2xl tracking-[0.3em] text-white placeholder-white/30 focus:border-green-400 focus:outline-none focus:ring-1 focus:ring-green-400"
+            className="h-14 text-center font-mono text-2xl tracking-[0.3em]"
             autoFocus
           />
-          <button
+          <Button
             type="submit"
             disabled={code.trim().length < MIN_CODE_LENGTH}
-            className="w-full rounded-lg bg-green-600 px-4 py-3 font-medium text-white transition-colors hover:bg-green-500 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full"
+            size="lg"
           >
             {t("live.viewGame")}
-          </button>
+          </Button>
         </form>
-      </div>
+      </SurfacePanel>
     </div>
   );
 }

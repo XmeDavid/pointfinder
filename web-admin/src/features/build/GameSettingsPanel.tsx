@@ -10,6 +10,7 @@ import { gamesApi } from '@/lib/api/games'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { TileSource, UnlockTrigger } from '@/types/game'
 import type { GameStatus } from '@/types'
+import { GameStatusBadge } from '@/components/status'
 
 const tileSources: Array<{ value: TileSource; label: string }> = [
   { value: 'osm', label: 'OpenStreetMap' },
@@ -549,20 +550,12 @@ export default function GameSettingsPanel({
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Game State
             </h3>
-            <div className="rounded-lg border border-amber-500/30 p-3 space-y-3">
+            <div className="space-y-3 rounded-lg border border-warning/30 p-3">
               <div className="flex items-center gap-2 px-1">
                 <span className="text-xs text-muted-foreground">
                   Current status:
                 </span>
-                <span
-                  className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                    game.status === 'live'
-                      ? 'bg-green-500/15 text-green-600'
-                      : 'bg-red-500/15 text-red-600'
-                  }`}
-                >
-                  {game.status}
-                </span>
+                <GameStatusBadge status={game.status} />
               </div>
 
               {game.status === 'ended' && (
@@ -573,7 +566,7 @@ export default function GameSettingsPanel({
                       setProgressChoice('keep')
                     }}
                     data-testid="revert-to-live-btn"
-                    className="w-full px-3 py-2 rounded-lg border border-amber-500/40 text-sm text-amber-600 font-medium cursor-pointer hover:bg-amber-500/10 transition-colors"
+                    className="w-full cursor-pointer rounded-lg border border-warning/40 px-3 py-2 text-sm font-medium text-warning transition-colors hover:bg-warning/10"
                   >
                     Revert to Live
                   </button>
@@ -590,7 +583,7 @@ export default function GameSettingsPanel({
                     setProgressChoice(null)
                   }}
                   data-testid="revert-to-setup-btn"
-                  className="w-full px-3 py-2 rounded-lg border border-amber-500/40 text-sm text-amber-600 font-medium cursor-pointer hover:bg-amber-500/10 transition-colors"
+                  className="w-full cursor-pointer rounded-lg border border-warning/40 px-3 py-2 text-sm font-medium text-warning transition-colors hover:bg-warning/10"
                 >
                   Revert to Setup
                 </button>
@@ -601,7 +594,7 @@ export default function GameSettingsPanel({
 
               {/* State change confirmation */}
               {stateTarget && (
-                <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 space-y-3">
+                <div className="space-y-3 rounded-lg border border-warning/30 bg-warning/10 p-3">
                   <p className="text-sm font-medium text-foreground">
                     Revert to {stateTarget}?
                   </p>

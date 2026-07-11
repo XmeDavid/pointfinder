@@ -3,6 +3,7 @@ package com.prayer.pointfinder.feature.player
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
+import com.prayer.pointfinder.core.designsystem.PFDataColorToken
 import com.prayer.pointfinder.core.model.BaseStatus
 
 /**
@@ -101,7 +102,7 @@ fun createPinMarkerBitmap(colorInt: Int, status: BaseStatus, density: Float, isH
 /**
  * Creates a blue-dot marker for the user's own location.
  * Mimics MapLibre / iOS native user-location indicator:
- * solid #4285F4 fill with white border and a subtle shadow ring.
+ * Uses the canonical location-blue fill with a white border and subtle shadow ring.
  */
 fun createMyLocationBitmap(density: Float): Bitmap {
     val sizePx = (20 * density).toInt()
@@ -113,7 +114,7 @@ fun createMyLocationBitmap(density: Float): Bitmap {
 
     // Outer glow / accuracy ring
     val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = android.graphics.Color.parseColor("#4285F4")
+        color = android.graphics.Color.parseColor(PFDataColorToken.LocationBlue)
         alpha = 40
         style = Paint.Style.FILL
     }
@@ -128,7 +129,7 @@ fun createMyLocationBitmap(density: Float): Bitmap {
 
     // Blue fill
     val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = android.graphics.Color.parseColor("#4285F4")
+        color = android.graphics.Color.parseColor(PFDataColorToken.LocationBlue)
         style = Paint.Style.FILL
     }
     canvas.drawCircle(cx, cy, radius, fillPaint)

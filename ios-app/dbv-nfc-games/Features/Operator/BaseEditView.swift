@@ -87,6 +87,20 @@ struct BaseEditView: View {
 
     var body: some View {
         Form {
+            Section {
+                ManagementEditorSummary(
+                    title: isCreateMode ? locale.t("operator.createBase") : locale.t("operator.editBase"),
+                    metadata: [
+                        ManagementMetadata(id: "location", label: String(format: "%.5f, %.5f", lat, lng), tone: .info),
+                        ManagementMetadata(id: "visibility", label: hidden ? locale.t("operator.hiddenBase") : locale.t("operator.visibleBase"), tone: hidden ? .pending : .muted),
+                        ManagementMetadata(id: "nfc", label: nfcLinked ? locale.t("nfc.nfcLinked") : locale.t("nfc.nfcNotLinked"), tone: nfcLinked ? .success : .pending),
+                    ],
+                    validationLabel: String(format: locale.t("setup.readyCount"), name.isEmpty ? 0 : 1, 1),
+                    isValid: !name.isEmpty
+                )
+                .listRowInsets(EdgeInsets(top: PFSpaceToken.space2, leading: 0, bottom: PFSpaceToken.space2, trailing: 0))
+            }
+
             // Map with draggable pin (tap to reposition)
             Section {
                 MapLibreMapView(
@@ -120,7 +134,7 @@ struct BaseEditView: View {
 
                 HStack {
                     Image(systemName: "location.fill")
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(PFColorToken.statusCheckedIn)
                         .font(.caption)
                     Text(String(format: "%.6f, %.6f", lat, lng))
                         .font(.caption)
@@ -198,10 +212,10 @@ struct BaseEditView: View {
                     HStack {
                         if nfcLinked {
                             Label(locale.t("nfc.nfcLinked"), systemImage: "checkmark.circle.fill")
-                                .foregroundStyle(.green)
+                                .foregroundStyle(PFColorToken.statusCompleted)
                         } else {
                             Label(locale.t("nfc.nfcNotLinked"), systemImage: "xmark.circle")
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(PFColorToken.statusPending)
                         }
                     }
                     Button {
@@ -233,7 +247,7 @@ struct BaseEditView: View {
             if let errorMessage {
                 Section {
                     Text(errorMessage)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(PFColorToken.contentDanger)
                         .font(.caption)
                 }
             }
@@ -258,8 +272,8 @@ struct BaseEditView: View {
                     .fontWeight(.medium)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 10)
-                    .background(.green.opacity(0.9))
-                    .foregroundStyle(.white)
+                    .background(PFColorToken.statusCompleted.opacity(0.9))
+                    .foregroundStyle(PFColorToken.actionOnPrimary)
                     .clipShape(Capsule())
                     .transition(.move(edge: .top).combined(with: .opacity))
                     .onAppear {

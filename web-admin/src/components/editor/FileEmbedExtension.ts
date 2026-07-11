@@ -44,7 +44,7 @@ export const FileEmbedExtension = Node.create({
         'data-resource-name': HTMLAttributes.resourceName,
         'data-resource-size': String(HTMLAttributes.resourceSize),
         'data-resource-type': HTMLAttributes.resourceType,
-        style: 'margin: 0.5em 0; padding: 0.75em 1em; background: #f1f5f9; border-radius: 8px; border-left: 4px solid #6366f1; display: flex; align-items: center; gap: 0.75em; font-size: 0.9em;',
+        style: 'margin: 0.5em 0; padding: 0.75em 1em; background: var(--pf-color-surface-subtle); border-radius: 8px; border-left: 4px solid var(--pf-dataColor-indigo); display: flex; align-items: center; gap: 0.75em; font-size: 0.9em;',
         contenteditable: 'false',
       }),
       ['span', { style: 'font-size: 1.2em;' }, '\u{1F4CE}'],
@@ -52,7 +52,7 @@ export const FileEmbedExtension = Node.create({
         'span',
         {},
         ['strong', {}, HTMLAttributes.resourceName || 'File'],
-        ['span', { style: 'color: #64748b; margin-left: 0.5em;' }, `(${sizeLabel})`],
+        ['span', { style: 'color: var(--pf-color-content-muted); margin-left: 0.5em;' }, `(${sizeLabel})`],
       ],
     ]
   },

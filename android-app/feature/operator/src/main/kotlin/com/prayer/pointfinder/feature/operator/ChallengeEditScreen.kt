@@ -261,6 +261,19 @@ fun ChallengeEditScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp),
         ) {
+            Spacer(Modifier.height(8.dp))
+            ManagementEditorSummary(
+                title = screenTitle,
+                metadata = buildList {
+                    add(ManagementMetadata("$points ${stringResource(R.string.label_challenge_points)}", OperatorTone.PENDING))
+                    add(ManagementMetadata(stringResource(R.string.label_answer_type, answerType), OperatorTone.INFO))
+                    if (locationBound) add(ManagementMetadata(stringResource(R.string.label_location_bound), OperatorTone.SUCCESS))
+                },
+                validationLabel = stringResource(R.string.setup_ready_count, if (canSave) 1 else 0, 1),
+                isValid = canSave,
+            )
+            Spacer(Modifier.height(12.dp))
+
             // Title field
             OutlinedTextField(
                 value = title,

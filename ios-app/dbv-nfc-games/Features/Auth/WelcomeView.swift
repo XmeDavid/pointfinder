@@ -59,7 +59,7 @@ struct WelcomeView: View {
             .navigationDestination(isPresented: $showOperatorLogin) {
                 OperatorLoginView()
             }
-            .background(Color(red: 0x0A / 255.0, green: 0x0A / 255.0, blue: 0x0A / 255.0))
+            .background(PFColorToken.surfaceCanvas)
         }
         .preferredColorScheme(.dark)
     }

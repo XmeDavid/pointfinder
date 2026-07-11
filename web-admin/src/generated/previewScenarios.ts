@@ -1,0 +1,59 @@
+// Generated from design-system/scenarios.json. Do not edit.
+export const previewScenarios = [
+  {
+    "id": "default",
+    "label": "Ready",
+    "description": "Nominal online state"
+  },
+  {
+    "id": "selected",
+    "label": "Selected",
+    "description": "Focused map or list object"
+  },
+  {
+    "id": "disabled",
+    "label": "Unavailable",
+    "description": "Permission or lifecycle prevents action"
+  },
+  {
+    "id": "loading",
+    "label": "Loading",
+    "description": "Initial read model is pending"
+  },
+  {
+    "id": "empty",
+    "label": "Empty",
+    "description": "Valid result with no records"
+  },
+  {
+    "id": "error",
+    "label": "Error",
+    "description": "Recoverable request failure"
+  },
+  {
+    "id": "offline",
+    "label": "Offline",
+    "description": "Network unavailable"
+  },
+  {
+    "id": "queued",
+    "label": "Queued",
+    "description": "Local action awaits sync"
+  },
+  {
+    "id": "stale",
+    "label": "Stale",
+    "description": "Realtime data exceeded freshness threshold"
+  },
+  {
+    "id": "destructive",
+    "label": "Destructive",
+    "description": "Confirmation required"
+  },
+  {
+    "id": "longCopy",
+    "label": "Sehr lange lokalisierte Beschriftung",
+    "description": "Verifies wrapping without hiding the operational meaning"
+  }
+] as const
+export type PreviewScenarioId = (typeof previewScenarios)[number]['id']

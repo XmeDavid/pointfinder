@@ -14,16 +14,17 @@ import { useGame } from '@/hooks/queries/useGames'
 import { getStyleUrl } from '@/lib/tile-sources'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-dialog'
 import type { Assignment, Challenge, Team } from '@/types'
+import { NfcStatusBadge, StatusBadge, type StatusBadgeTone } from '@/components/status'
 
 interface BaseDetailProps {
   baseId: string
   gameId: string
 }
 
-const ANSWER_TYPE_BADGE: Record<string, { bg: string; text: string; label: string }> = {
-  text: { bg: 'bg-blue-500/20', text: 'text-blue-400', label: 'Text' },
-  file: { bg: 'bg-amber-500/20', text: 'text-amber-400', label: 'File' },
-  none: { bg: 'bg-cyan-500/20', text: 'text-cyan-400', label: 'Check-in' },
+const ANSWER_TYPE_BADGE: Record<string, { tone: StatusBadgeTone; label: string }> = {
+  text: { tone: 'info', label: 'Text' },
+  file: { tone: 'warning', label: 'File' },
+  none: { tone: 'muted', label: 'Check-in' },
 }
 
 export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
@@ -193,15 +194,7 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
           </div>
           <div>
             <label className="block text-xs text-muted-foreground mb-1">NFC</label>
-            {base.nfcLinked ? (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/20 text-primary">
-                NFC linked
-              </span>
-            ) : (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-destructive/20 text-destructive">
-                No NFC tag
-              </span>
-            )}
+            <NfcStatusBadge status={base.nfcLinked ? 'linked' : 'missing'} />
           </div>
         </div>
       </section>
@@ -228,7 +221,7 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
             data-testid="visibility-hidden"
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
               localHidden
-                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                ? 'border border-warning/30 bg-warning/10 text-warning'
                 : 'bg-background text-muted-foreground border border-border hover:text-foreground'
             }`}
           >
@@ -454,11 +447,7 @@ function ChallengeCard({ challenge, baseId, assignments, teams, onSelect, onUnli
         >
           {challenge.title}
         </button>
-        <span
-          className={`shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${typeBadge.bg} ${typeBadge.text}`}
-        >
-          {typeBadge.label}
-        </span>
+        <StatusBadge tone={typeBadge.tone} size="sm" label={typeBadge.label} />
         <span className="shrink-0 text-xs font-semibold text-primary ml-auto">
           {challenge.points}pts
         </span>

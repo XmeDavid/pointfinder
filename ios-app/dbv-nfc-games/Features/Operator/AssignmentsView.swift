@@ -109,35 +109,36 @@ struct AssignmentsView: View {
             if let errorMessage {
                 Section {
                     Text(errorMessage)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(OperatorTone.danger.color)
                         .font(.caption)
                 }
             }
 
             // Summary row
             Section {
-                HStack {
-                    Label("\(assignments.count)", systemImage: "link")
-                    Spacer()
-                    Text(locale.t("operator.assignments"))
-                        .foregroundStyle(.secondary)
-                        .font(.caption)
-                }
+                ManagementListSummary(
+                    label: locale.t("operator.assignments"),
+                    count: assignments.count,
+                    attentionLabel: assignmentsByBase.filter { $0.assignments.isEmpty }.isEmpty ? nil : locale.t("operator.basesWithNoAssignments")
+                )
             }
 
             ForEach(assignmentsByBase, id: \.base.id) { group in
                 if !group.assignments.isEmpty {
                     Section {
                         ForEach(group.assignments) { assignment in
-                            AssignmentRow(
-                                assignment: assignment,
-                                challenge: challengeById[assignment.challengeId],
-                                team: assignment.teamId.flatMap { teamById[$0] },
-                                locale: locale,
-                                onDelete: {
-                                    deleteTarget = assignment.id
-                                }
+                            let challenge = challengeById[assignment.challengeId]
+                            let team = assignment.teamId.flatMap { teamById[$0] }
+                            ManagementAssignmentRow(
+                                challengeTitle: challenge?.title ?? "?",
+                                teamLabel: team?.name ?? locale.t("common.allTeams"),
+                                pointsLabel: challenge.map { locale.t("operator.pts", $0.points) },
+                                teamColor: team.flatMap { Color(hex: $0.color) },
+                                deleteLabel: locale.t("common.delete"),
+                                deleteIdentifier: "delete-assignment-btn",
+                                onDelete: { deleteTarget = assignment.id }
                             )
+                            .accessibilityIdentifier("assignment-row")
                         }
                     } header: {
                         Text(group.base.name)
@@ -156,9 +157,7 @@ struct AssignmentsView: View {
                             Text(group.base.name)
                                 .foregroundStyle(.secondary)
                             Spacer()
-                            Image(systemName: "exclamationmark.triangle")
-                                .foregroundStyle(.orange)
-                                .font(.caption)
+                            OperatorStatusBadge(label: locale.t("operator.unassigned"), tone: .pending)
                         }
                     }
                 }
@@ -200,55 +199,6 @@ struct AssignmentsView: View {
         }
         isDeleting = false
         deleteTarget = nil
-    }
-}
-
-// MARK: - Assignment Row
-
-private struct AssignmentRow: View {
-    let assignment: Assignment
-    let challenge: Challenge?
-    let team: Team?
-    let locale: LocaleManager
-    let onDelete: () -> Void
-
-    var body: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(challenge?.title ?? "?")
-                    .font(.body)
-                HStack(spacing: 6) {
-                    if let team {
-                        Circle()
-                            .fill(Color(hex: team.color) ?? .blue)
-                            .frame(width: 10, height: 10)
-                        Text(team.name)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Text(locale.t("common.allTeams"))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    if let pts = challenge?.points {
-                        Text("· \(pts) \(locale.t("common.pts"))")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
-            Spacer()
-            Button(role: .destructive) {
-                onDelete()
-            } label: {
-                Image(systemName: "trash")
-                    .font(.caption)
-                    .foregroundStyle(.red)
-            }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("delete-assignment-btn")
-        }
-        .accessibilityIdentifier("assignment-row")
     }
 }
 
@@ -350,7 +300,7 @@ private struct AssignmentCreateSheet: View {
                         ForEach(availableTeams) { team in
                             HStack {
                                 Circle()
-                                    .fill(Color(hex: team.color) ?? .blue)
+                                    .fill(Color(hex: team.color) ?? PFColorToken.statusUnknown)
                                     .frame(width: 12, height: 12)
                                 Text(team.name)
                             }
@@ -369,7 +319,7 @@ private struct AssignmentCreateSheet: View {
                 if let errorMessage {
                     Section {
                         Text(errorMessage)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(OperatorTone.danger.color)
                             .font(.caption)
                     }
                 }

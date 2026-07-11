@@ -99,8 +99,20 @@ fun TeamVariablesEditorSection(
     var isSaving by remember { mutableStateOf(false) }
 
     val hasChanges = workingVariables != baseline
+    val totalValues = workingVariables.size * teams.size
+    val completedValues = workingVariables.sumOf { variable -> teams.count { team -> !variable.teamValues[team.id].isNullOrBlank() } }
 
     Column(modifier = modifier.fillMaxWidth()) {
+        VariableCompletenessSummary(
+            variableCount = workingVariables.size,
+            teamCount = teams.size,
+            completedValues = completedValues,
+            totalValues = totalValues,
+            variablesLabel = stringResource(R.string.label_variables),
+            teamsLabel = stringResource(R.string.label_teams),
+            completeLabel = stringResource(R.string.label_values_complete),
+        )
+        Spacer(Modifier.height(12.dp))
         // Empty states
         if (teams.isEmpty()) {
             Text(

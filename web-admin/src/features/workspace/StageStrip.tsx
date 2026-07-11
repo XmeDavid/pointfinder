@@ -1,12 +1,13 @@
 import type { Stage, GameStatus } from '@/types/v2'
+import { dataColors } from '@/generated/colorValues'
 
 const STAGE_COLOR_PALETTE = [
-  '#3b82f6', // blue
-  '#22c55e', // green
-  '#a855f6', // purple
-  '#ec4899', // pink
-  '#06b6d4', // cyan
-  '#f59e0b', // amber
+  dataColors.blue,
+  dataColors.green,
+  dataColors.purple,
+  dataColors.pink,
+  dataColors.cyan,
+  dataColors.amber,
 ]
 
 function getStageColor(orderIndex: number): string {
@@ -16,8 +17,8 @@ function getStageColor(orderIndex: number): string {
 function TransitionArrow({ type }: { type: Stage['transitionType'] }) {
   return (
     <span className="flex items-center gap-0.5 text-muted-foreground text-xs shrink-0 select-none">
-      {type === 'scheduled' && <span title="Scheduled">&#9201;</span>}
-      {type === 'trigger' && <span title="Trigger">&#127937;</span>}
+      {type === 'scheduled' && <span title="Scheduled">⏱</span>}
+      {type === 'trigger' && <span title="Trigger">🏁</span>}
       <span>&rarr;</span>
     </span>
   )
@@ -82,8 +83,8 @@ export function StageStrip({ stages, selectedStageId, onSelectStage, gameStatus,
                 }
               `}
             >
-              {isCompleted && <span className="text-primary">&#10003;</span>}
-              {isLocked && <span>&#128274;</span>}
+              {isCompleted && <span className="text-primary">✓</span>}
+              {isLocked && <span>🔒</span>}
               <span
                 className="rounded-full shrink-0"
                 style={{ width: 6, height: 6, backgroundColor: color }}

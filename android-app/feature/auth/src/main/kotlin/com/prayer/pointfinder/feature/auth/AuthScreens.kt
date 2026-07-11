@@ -71,6 +71,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.prayer.pointfinder.core.i18n.R
+import com.prayer.pointfinder.core.designsystem.PFColors
 import kotlinx.coroutines.launch
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -78,11 +79,11 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 // Compass colours matching the web landing page
-private val CompassGreen = Color(0xFF22C55E)
-private val CompassGreenDark = Color(0xFF16A34A)
-private val CompassGreenDeep = Color(0xFF0D5F2D)
-private val CompassCenter = Color(0xFF060B06)
-private val WelcomeDarkBg = Color(0xFF0A0A0A)
+private val CompassGreen = PFColors.ActionPrimaryDark
+private val CompassGreenDark = PFColors.ActionPrimaryStrongDark
+private val CompassGreenDeep = PFColors.ActionPrimaryStrongLight
+private val CompassCenter = PFColors.SurfaceCanvasDark
+private val WelcomeDarkBg = PFColors.SurfaceCanvasDark
 
 private data class DeviceOrientation(
     val heading: Float,  // cumulative azimuth (compass heading)

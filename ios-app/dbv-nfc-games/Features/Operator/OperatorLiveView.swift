@@ -100,18 +100,7 @@ struct OperatorLiveView: View {
 
     @ViewBuilder
     private func offlineBadge(_ syncedAt: Date) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: "wifi.slash")
-                .font(.caption2)
-            Text(locale.t("operator.lastSynced", formatSyncTime(syncedAt)))
-                .font(.caption2)
-        }
-        .foregroundStyle(Color.pfTextMuted)
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(Color.pfCard)
-        .clipShape(RoundedRectangle(cornerRadius: PFRadius.small))
-        .shadow(color: .black.opacity(0.03), radius: 4, y: 1)
+        OperatorConnectivityBanner(label: locale.t("operator.lastSynced", formatSyncTime(syncedAt)))
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityIdentifier("offline-sync-badge")
     }
@@ -122,20 +111,19 @@ struct OperatorLiveView: View {
     private var statsStrip: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: PFSpacing.itemGap) {
-                LiveStatPill(
+                OperatorStatTile(
                     value: "\(teams.count)",
-                    label: "Teams",
-                    color: .pfText
+                    label: locale.t("operator.teams")
                 )
-                LiveStatPill(
+                OperatorStatTile(
                     value: "\(pendingCount)",
-                    label: "Pending",
-                    color: pendingCount > 0 ? .pfPending : .pfText
+                    label: locale.t("operator.pending"),
+                    tone: pendingCount > 0 ? .pending : .muted
                 )
-                LiveStatPill(
+                OperatorStatTile(
                     value: "\(progressPercent)%",
-                    label: "Progress",
-                    color: .pfCompleted
+                    label: locale.t("operator.progress"),
+                    tone: .success
                 )
             }
             .padding(.horizontal, 2)
@@ -163,15 +151,15 @@ struct OperatorLiveView: View {
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundStyle(Color.pfText)
-                    Text("Stage \((currentIndex ?? 0) + 1) of \(totalCount)")
+                    Text(locale.t("stages.stageNofM", (currentIndex ?? 0) + 1, totalCount))
                         .font(.caption)
                         .foregroundStyle(Color.pfTextMuted)
                 } else {
-                    Text("No active stage")
+                    Text(locale.t("stages.noActiveStage"))
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundStyle(Color.pfText)
-                    Text("\(totalCount) stage(s) configured")
+                    Text(locale.t("stages.nConfigured", totalCount))
                         .font(.caption)
                         .foregroundStyle(Color.pfTextMuted)
                 }
@@ -182,7 +170,7 @@ struct OperatorLiveView: View {
             Button {
                 showStagesManagement = true
             } label: {
-                Text("Manage →")
+                Text(locale.t("stages.manage"))
                     .font(.caption)
                     .fontWeight(.semibold)
                     .foregroundStyle(Color.pfPrimary)
@@ -245,7 +233,7 @@ struct OperatorLiveView: View {
 
             // Team color dot
             Circle()
-                .fill(Color(hex: entry.color) ?? .blue)
+                .fill(Color(hex: entry.color) ?? PFColorToken.statusCheckedIn)
                 .frame(width: 12, height: 12)
 
             // Name + completed
@@ -284,10 +272,10 @@ struct OperatorLiveView: View {
 
     private func rankColor(_ rank: Int) -> Color {
         switch rank {
-        case 1: return .yellow       // Gold
-        case 2: return Color(UIColor.systemGray)  // Silver
-        case 3: return .orange       // Bronze
-        default: return .pfText
+        case 1: return PFColorToken.statusPending
+        case 2: return PFColorToken.contentMuted
+        case 3: return PFColorToken.statusOperatorOverride
+        default: return PFColorToken.contentPrimary
         }
     }
 
@@ -337,7 +325,7 @@ struct OperatorLiveView: View {
                     // Team color dot if available
                     if let teamId = event.teamId, let colorHex = teamColorMap[teamId] {
                         Circle()
-                            .fill(Color(hex: colorHex) ?? .blue)
+                            .fill(Color(hex: colorHex) ?? PFColorToken.statusCheckedIn)
                             .frame(width: 8, height: 8)
                     }
                     Text(event.message)
@@ -404,7 +392,7 @@ struct OperatorLiveView: View {
         case "submission": return Color.pfPending
         case "approval": return Color.pfCompleted
         case "rejection": return Color.pfRejected
-        default: return .gray
+        default: return PFColorToken.statusUnknown
         }
     }
 
@@ -459,31 +447,5 @@ struct OperatorLiveView: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm"
         return formatter.string(from: date)
-    }
-}
-
-// MARK: - LiveStatPill
-
-private struct LiveStatPill: View {
-    let value: String
-    let label: String
-    let color: Color
-
-    var body: some View {
-        VStack(spacing: 2) {
-            Text(value)
-                .font(.system(.subheadline, design: .rounded))
-                .fontWeight(.bold)
-                .foregroundStyle(color)
-            Text(label)
-                .font(.system(size: 9))
-                .foregroundStyle(.pfTextMuted)
-                .textCase(.uppercase)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 8)
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .shadow(color: .black.opacity(0.05), radius: 4, y: 1)
     }
 }

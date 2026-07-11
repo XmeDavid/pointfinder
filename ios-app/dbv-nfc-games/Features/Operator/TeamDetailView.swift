@@ -64,8 +64,10 @@ struct TeamDetailView: View {
     @State private var rescueToastTask: Task<Void, Never>? = nil
 
     private let colorOptions = [
-        "#ef4444", "#f97316", "#eab308", "#22c55e", "#14b8a6", "#06b6d4",
-        "#3b82f6", "#6366f1", "#8b5cf6", "#a855f7", "#ec4899", "#f43f5e"
+        PFDataColorToken.red, PFDataColorToken.orange, PFDataColorToken.yellow,
+        PFDataColorToken.green, PFDataColorToken.teal, PFDataColorToken.cyan,
+        PFDataColorToken.blue, PFDataColorToken.indigo, PFDataColorToken.violet,
+        PFDataColorToken.purple, PFDataColorToken.pink, PFDataColorToken.rose
     ]
 
     private var token: String? {
@@ -197,7 +199,7 @@ struct TeamDetailView: View {
                             } label: {
                                 Image(systemName: "person.badge.minus")
                                     .font(.caption)
-                                    .foregroundStyle(.red)
+                                    .foregroundStyle(PFColorToken.contentDanger)
                             }
                             .buttonStyle(.plain)
                         }
@@ -261,7 +263,7 @@ struct TeamDetailView: View {
             if let errorMessage {
                 Section {
                     Text(errorMessage)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(PFColorToken.contentDanger)
                         .font(.caption)
                 }
             }
@@ -657,13 +659,13 @@ private struct BaseProgressRow: View {
         }
     }
 
-    private var statusColor: Color {
+    private var statusTone: OperatorTone {
         switch progress?.baseStatus {
-        case .completed: return .green
-        case .checkedIn: return .blue
-        case .submitted: return .orange
-        case .rejected: return .red
-        default: return .secondary
+        case .completed: return .success
+        case .checkedIn: return .info
+        case .submitted: return .pending
+        case .rejected: return .danger
+        default: return .muted
         }
     }
 
@@ -693,9 +695,7 @@ private struct BaseProgressRow: View {
                             .font(.subheadline)
                             .fontWeight(.medium)
                     }
-                    Text(statusLabel)
-                        .font(.caption)
-                        .foregroundStyle(statusColor)
+                    OperatorStatusBadge(label: statusLabel, tone: statusTone)
                 }
                 Spacer()
                 if let ov = override {
@@ -703,84 +703,50 @@ private struct BaseProgressRow: View {
                 }
             }
 
-            HStack(spacing: 8) {
+            OperatorFlowLayout(spacing: PFSpaceToken.space2) {
                 // Manual Check-In: shown when not yet checked in and not completed
                 if !isCompleted && !isCheckedIn && !isPendingSubmission {
-                    Button {
-                        onManualCheckIn()
-                    } label: {
-                        Label(locale.t("teamDetail.manualCheckIn"), systemImage: "arrow.down.to.line")
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 12)
-                            .frame(minHeight: 44)
-                            .background(Color(hex: "#f59e0b")?.opacity(0.12) ?? Color.orange.opacity(0.12))
-                            .foregroundStyle(Color(hex: "#f59e0b") ?? .orange)
-                            .clipShape(Capsule())
-                            .contentShape(Capsule())
-                    }
-                    .buttonStyle(.plain)
+                    OperatorRescueActionButton(
+                        label: locale.t("teamDetail.manualCheckIn"),
+                        systemImage: "arrow.down.to.line",
+                        tone: .override,
+                        action: onManualCheckIn
+                    )
                     .accessibilityIdentifier("manual-check-in-btn-\(base.id)")
                 }
 
                 // Mark Completed: shown when not completed and not a pending submission awaiting review
                 if !isCompleted && !isPendingSubmission {
-                    Button {
-                        onMarkCompleted()
-                    } label: {
-                        Label(locale.t("teamDetail.markCompleted"), systemImage: "checkmark.seal")
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 12)
-                            .frame(minHeight: 44)
-                            .background(Color(hex: "#f59e0b")?.opacity(0.15) ?? Color.orange.opacity(0.15))
-                            .foregroundStyle(Color(hex: "#f59e0b") ?? .orange)
-                            .clipShape(Capsule())
-                            .contentShape(Capsule())
-                    }
-                    .buttonStyle(.plain)
+                    OperatorRescueActionButton(
+                        label: locale.t("teamDetail.markCompleted"),
+                        systemImage: "checkmark.seal",
+                        tone: .override,
+                        action: onMarkCompleted
+                    )
                     .accessibilityIdentifier("mark-completed-btn-\(base.id)")
                 } else if isPendingSubmission {
                     Text(locale.t("teamDetail.pendingReviewHint"))
                         .font(.caption2)
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(PFColorToken.statusPending)
                         .italic()
                 }
 
                 if base.hidden {
                     if override == nil {
-                        Button {
-                            onGrantOverride()
-                        } label: {
-                            Label(locale.t("teamDetail.unlockOverrideAction"), systemImage: "lock.open")
-                                .font(.caption)
-                                .fontWeight(.medium)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 10)
-                                .background(Color.blue.opacity(0.12))
-                                .foregroundStyle(Color.blue)
-                                .clipShape(Capsule())
-                                .contentShape(Capsule())
-                        }
-                        .buttonStyle(.plain)
+                        OperatorRescueActionButton(
+                            label: locale.t("teamDetail.unlockOverrideAction"),
+                            systemImage: "lock.open",
+                            tone: .info,
+                            action: onGrantOverride
+                        )
                         .accessibilityIdentifier("grant-override-btn-\(base.id)")
                     } else {
-                        Button(role: .destructive) {
-                            onRemoveOverride(override!)
-                        } label: {
-                            Label(locale.t("teamDetail.unlockOverrideRemove"), systemImage: "lock")
-                                .font(.caption)
-                                .fontWeight(.medium)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 10)
-                                .background(Color.red.opacity(0.12))
-                                .foregroundStyle(Color.red)
-                                .clipShape(Capsule())
-                                .contentShape(Capsule())
-                        }
-                        .buttonStyle(.plain)
+                        OperatorRescueActionButton(
+                            label: locale.t("teamDetail.unlockOverrideRemove"),
+                            systemImage: "lock",
+                            tone: .danger,
+                            action: { onRemoveOverride(override!) }
+                        )
                         .accessibilityIdentifier("remove-override-btn-\(base.id)")
                     }
                 }
@@ -817,14 +783,7 @@ private struct OverrideBadge: View {
         } else {
             label = fmt
         }
-        return Text(label)
-            .font(.caption2)
-            .fontWeight(.semibold)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(Color.blue.opacity(0.15))
-            .foregroundStyle(Color.blue)
-            .clipShape(Capsule())
+        return OperatorOverrideBadge(label: label)
     }
 }
 
@@ -897,7 +856,7 @@ private struct MarkCompletedSheet: View {
                             Text(locale.t("teamDetail.markCompletedAction"))
                                 .fontWeight(.semibold)
                                 .frame(maxWidth: .infinity)
-                                .foregroundStyle(Color(hex: "#f59e0b") ?? .orange)
+                                .foregroundStyle(PFColorToken.statusOperatorOverride)
                         }
                     }
                     .disabled(isSubmitting)
@@ -973,7 +932,7 @@ private struct ManualCheckInSheet: View {
                             Text(locale.t("teamDetail.manualCheckInAction"))
                                 .fontWeight(.semibold)
                                 .frame(maxWidth: .infinity)
-                                .foregroundStyle(Color(hex: "#f59e0b") ?? .orange)
+                                .foregroundStyle(PFColorToken.statusOperatorOverride)
                         }
                     }
                     .disabled(isSubmitting)

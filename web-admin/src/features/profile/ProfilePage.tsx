@@ -1,11 +1,11 @@
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/lib/auth/store'
-import { cn } from '@/lib/utils'
 import { GeneralTab } from './GeneralTab'
 import { SecurityTab } from './SecurityTab'
 import { BillingTab } from './BillingTab'
 import { DangerZoneTab } from './DangerZoneTab'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 const TABS = ['general', 'security', 'billing', 'danger-zone'] as const
 type Tab = (typeof TABS)[number]
@@ -36,23 +36,11 @@ export function ProfilePage() {
         </h1>
         <p className="text-muted-foreground mt-1 mb-6">{user?.email}</p>
 
-        <div className="flex border-b border-border mb-6">
-          {TABS.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setTab(tab)}
-              className={cn(
-                'px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer',
-                activeTab === tab
-                  ? 'text-primary border-b-2 border-primary'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-              data-testid={`profile-tab-${tab}`}
-            >
-              {tabLabels[tab]}
-            </button>
-          ))}
-        </div>
+        <Tabs value={activeTab} onValueChange={(value) => setTab(value as Tab)} className="mb-6 overflow-x-auto">
+          <TabsList>
+            {TABS.map((tab) => <TabsTrigger key={tab} value={tab} data-testid={`profile-tab-${tab}`}>{tabLabels[tab]}</TabsTrigger>)}
+          </TabsList>
+        </Tabs>
 
         <div data-testid="profile-tab-content">
           {activeTab === 'general' && <GeneralTab />}

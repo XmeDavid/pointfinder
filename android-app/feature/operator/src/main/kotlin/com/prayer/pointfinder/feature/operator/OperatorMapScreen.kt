@@ -54,6 +54,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -74,6 +75,8 @@ import com.prayer.pointfinder.core.model.Team
 import com.prayer.pointfinder.core.model.TeamBaseProgressResponse
 import com.prayer.pointfinder.core.model.TeamLocationResponse
 import com.prayer.pointfinder.core.model.TileSources
+import com.prayer.pointfinder.core.designsystem.PFColors
+import com.prayer.pointfinder.core.designsystem.PFColorHexToken
 import org.maplibre.android.annotations.IconFactory
 import org.maplibre.android.annotations.MarkerOptions
 import org.maplibre.android.camera.CameraUpdateFactory
@@ -245,7 +248,7 @@ fun OperatorMapScreen(
     val density = context.resources.displayMetrics.density
 
     // Update markers and connection lines whenever data changes (incremental marker updates)
-    LaunchedEffect(map, mapStyle, bases, teamLocations, teams, baseProgress, challenges, myLocation) {
+    LaunchedEffect(map, mapStyle, bases, teamLocations, teams, baseProgress, challenges, myLocation, isDark) {
         val m = map ?: return@LaunchedEffect
         val currentMarkers = m.annotations.filterIsInstance<org.maplibre.android.annotations.Marker>()
 
@@ -269,9 +272,9 @@ fun OperatorMapScreen(
             val status = aggregateBaseStatus(base, baseProgress)
             // NFC-unlinked bases always show red (matches web behavior)
             val colorInt = if (!base.nfcLinked) {
-                android.graphics.Color.parseColor("#EF4444")
+                if (isDark) PFColors.StatusRejectedDark.toArgb() else PFColors.StatusRejectedLight.toArgb()
             } else {
-                statusColor(status)
+                statusColor(status, isDark)
             }
             val icon = iconFactory.fromBitmap(createPinMarkerBitmap(colorInt, status, density, base.hidden))
             val existingMarker = currentMarkers.firstOrNull { it.snippet == markerId }
@@ -347,7 +350,7 @@ fun OperatorMapScreen(
                 style.addSource(GeoJsonSource("unlock-lines", FeatureCollection.fromFeatures(lineFeatures)))
                 style.addLayer(
                     LineLayer("unlock-lines", "unlock-lines").withProperties(
-                        PropertyFactory.lineColor("#6b7280"),
+                        PropertyFactory.lineColor(if (isDark) PFColorHexToken.Dark.VisualizationMapRoute else PFColorHexToken.Light.VisualizationMapRoute),
                         PropertyFactory.lineWidth(2f),
                         PropertyFactory.lineOpacity(0.5f),
                         PropertyFactory.lineDasharray(arrayOf(8f, 8f)),
@@ -355,7 +358,7 @@ fun OperatorMapScreen(
                 )
 
                 // Direction arrows at midpoint
-                style.addImage("unlock-arrow", createArrowBitmap(density))
+                style.addImage("unlock-arrow", createArrowBitmap(density, isDark))
                 val arrowFeatures = connections.map { (from, to) ->
                     val midLat = (from.lat + to.lat) / 2
                     val midLng = (from.lng + to.lng) / 2
@@ -424,9 +427,9 @@ fun OperatorMapScreen(
                 PropertyFactory.circleColor(
                     Expression.step(
                         Expression.get("point_count"),
-                        Expression.color(android.graphics.Color.parseColor("#149CFF")), // brand blue: 1-4
-                        Expression.stop(5, Expression.color(android.graphics.Color.parseColor("#0A65BF"))),  // darker: 5-9
-                        Expression.stop(10, Expression.color(android.graphics.Color.parseColor("#CC7800"))), // amber: 10+
+                        Expression.color(PFColors.StatusCheckedInLight.toArgb()),
+                        Expression.stop(5, Expression.color(PFColors.ActionPrimaryStrongLight.toArgb())),
+                        Expression.stop(10, Expression.color(PFColors.StatusPendingLight.toArgb())),
                     ),
                 ),
                 PropertyFactory.circleRadius(
@@ -438,7 +441,7 @@ fun OperatorMapScreen(
                     ),
                 ),
                 PropertyFactory.circleStrokeWidth(2f),
-                PropertyFactory.circleStrokeColor("#FFFFFF"),
+                PropertyFactory.circleStrokeColor(if (isDark) PFColorHexToken.Dark.VisualizationMapMarkerStroke else PFColorHexToken.Light.VisualizationMapMarkerStroke),
                 PropertyFactory.circleOpacity(1f),
             ).withFilter(Expression.has("point_count")),
         )
@@ -447,7 +450,7 @@ fun OperatorMapScreen(
         style.addLayer(
             SymbolLayer(clusterCountLayerId, playerSourceId).withProperties(
                 PropertyFactory.textField(Expression.toString(Expression.get("point_count"))),
-                PropertyFactory.textColor("#FFFFFF"),
+                PropertyFactory.textColor(if (isDark) PFColorHexToken.Dark.VisualizationMapMarkerStroke else PFColorHexToken.Light.VisualizationMapMarkerStroke),
                 PropertyFactory.textSize(
                     Expression.step(
                         Expression.get("point_count"),
@@ -465,10 +468,10 @@ fun OperatorMapScreen(
         // Individual pin (unclustered)
         style.addLayer(
             CircleLayer(individualPinLayerId, playerSourceId).withProperties(
-                PropertyFactory.circleColor("#149CFF"),
+                PropertyFactory.circleColor(if (isDark) PFColorHexToken.Dark.VisualizationMapCurrentLocation else PFColorHexToken.Light.VisualizationMapCurrentLocation),
                 PropertyFactory.circleRadius(8f),
                 PropertyFactory.circleStrokeWidth(2f),
-                PropertyFactory.circleStrokeColor("#FFFFFF"),
+                PropertyFactory.circleStrokeColor(if (isDark) PFColorHexToken.Dark.VisualizationMapMarkerStroke else PFColorHexToken.Light.VisualizationMapMarkerStroke),
             ).withFilter(Expression.not(Expression.has("point_count"))),
         )
     }
@@ -624,24 +627,23 @@ fun OperatorMapScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     item {
-                        StatPill(
+                        OperatorStatTile(
                             value = "${teams.size}",
-                            label = "Teams",
-                            color = MaterialTheme.colorScheme.onSurface,
+                            label = stringResource(R.string.label_teams),
                         )
                     }
                     item {
-                        StatPill(
+                        OperatorStatTile(
                             value = "$pendingCount",
-                            label = "Pending",
-                            color = if (pendingCount > 0) StatusSubmitted else MaterialTheme.colorScheme.onSurfaceVariant,
+                            label = stringResource(R.string.label_pending),
+                            tone = if (pendingCount > 0) OperatorTone.PENDING else OperatorTone.MUTED,
                         )
                     }
                     item {
-                        StatPill(
+                        OperatorStatTile(
                             value = "$progressPercent%",
-                            label = "Progress",
-                            color = StatusCompleted,
+                            label = stringResource(R.string.label_progress),
+                            tone = OperatorTone.SUCCESS,
                         )
                     }
                 }
@@ -748,20 +750,19 @@ fun OperatorMapScreen(
         }
 
         // ── Status legend (bottom-centre) ─────────────────────────────────
-        Row(
+        OperatorMapLegend(
+            items = listOf(
+                OperatorMapLegendItem(stringResource(R.string.status_not_visited), OperatorTone.MUTED),
+                OperatorMapLegendItem(stringResource(R.string.status_checked_in), OperatorTone.INFO),
+                OperatorMapLegendItem(stringResource(R.string.status_submitted), OperatorTone.PENDING),
+                OperatorMapLegendItem(stringResource(R.string.status_completed), OperatorTone.SUCCESS),
+                OperatorMapLegendItem(stringResource(R.string.status_rejected), OperatorTone.DANGER),
+            ),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                .fillMaxWidth()
                 .padding(bottom = 12.dp, start = 16.dp, end = 16.dp)
-                .background(Color.Black.copy(alpha = 0.55f), shape = MaterialTheme.shapes.small)
-                .padding(horizontal = 12.dp, vertical = 6.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            LegendDot(color = Color.Gray, label = stringResource(R.string.status_not_visited))
-            LegendDot(color = StatusCheckedIn, label = stringResource(R.string.status_checked_in))
-            LegendDot(color = StatusSubmitted, label = stringResource(R.string.status_submitted))
-            LegendDot(color = StatusCompleted, label = stringResource(R.string.status_completed))
-            LegendDot(color = StatusRejected, label = stringResource(R.string.status_rejected))
-        }
+        )
     }
 
     // Edit mode bottom sheet for base actions
@@ -800,33 +801,6 @@ fun OperatorMapScreen(
 }
 
 // ── Composable helpers ────────────────────────────────────────────────────────
-
-@Composable
-private fun StatPill(value: String, label: String, color: Color) {
-    Surface(
-        shape = RoundedCornerShape(10.dp),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
-        tonalElevation = 1.dp,
-        shadowElevation = 2.dp,
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                value,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = color,
-            )
-            Text(
-                label.uppercase(),
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = androidx.compose.ui.unit.TextUnit(9f, androidx.compose.ui.unit.TextUnitType.Sp)),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
 
 @Composable
 private fun MapControlButton(
@@ -945,21 +919,21 @@ private fun aggregateBaseStatus(
     return statuses.minByOrNull { it.status.ordinal }?.status ?: BaseStatus.NOT_VISITED
 }
 
-private fun statusColor(status: BaseStatus): Int = when (status) {
-    BaseStatus.NOT_VISITED -> android.graphics.Color.GRAY
-    BaseStatus.CHECKED_IN -> android.graphics.Color.parseColor("#1565C0")
-    BaseStatus.SUBMITTED -> android.graphics.Color.parseColor("#E08A00")
-    BaseStatus.COMPLETED -> android.graphics.Color.parseColor("#2E7D32")
-    BaseStatus.REJECTED -> android.graphics.Color.parseColor("#D32F2F")
+private fun statusColor(status: BaseStatus, isDark: Boolean): Int = when (status) {
+    BaseStatus.NOT_VISITED -> if (isDark) PFColors.StatusUnknownDark.toArgb() else PFColors.StatusUnknownLight.toArgb()
+    BaseStatus.CHECKED_IN -> if (isDark) PFColors.StatusCheckedInDark.toArgb() else PFColors.StatusCheckedInLight.toArgb()
+    BaseStatus.SUBMITTED -> if (isDark) PFColors.StatusPendingDark.toArgb() else PFColors.StatusPendingLight.toArgb()
+    BaseStatus.COMPLETED -> if (isDark) PFColors.StatusCompletedDark.toArgb() else PFColors.StatusCompletedLight.toArgb()
+    BaseStatus.REJECTED -> if (isDark) PFColors.StatusRejectedDark.toArgb() else PFColors.StatusRejectedLight.toArgb()
 }
 
 
-private fun createArrowBitmap(density: Float): Bitmap {
+private fun createArrowBitmap(density: Float, isDark: Boolean): Bitmap {
     val size = (14 * density).toInt()
     val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
     val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = android.graphics.Color.parseColor("#6b7280")
+        color = if (isDark) PFColors.StatusUnknownDark.toArgb() else PFColors.StatusUnknownLight.toArgb()
         style = Paint.Style.FILL
     }
     // Triangle pointing up (north) — rotated by icon-rotate to match bearing

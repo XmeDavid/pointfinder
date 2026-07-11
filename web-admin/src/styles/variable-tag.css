@@ -3,8 +3,8 @@
 
 .variable-tag {
   display: inline-block;
-  background: #BEE3F8;
-  color: #2C5282;
+  background: var(--pf-color-editor-variableBackground);
+  color: var(--pf-color-editor-variableContent);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 0.85em;
@@ -14,18 +14,18 @@
 }
 
 .variable-tag--undefined {
-  background: #FED7D7;
-  color: #9B2C2C;
-  border: 1px dashed #C53030;
+  background: var(--pf-color-editor-invalidBackground);
+  color: var(--pf-color-editor-invalidContent);
+  border: 1px dashed var(--pf-color-editor-invalidBorder);
 }
 
 @media (prefers-color-scheme: dark) {
   .variable-tag {
-    background: #2C5282;
-    color: #BEE3F8;
+    background: var(--pf-color-editor-variableBackground);
+    color: var(--pf-color-editor-variableContent);
   }
   .variable-tag--undefined {
-    background: #742A2A;
-    color: #FED7D7;
+    background: var(--pf-color-editor-invalidBackground);
+    color: var(--pf-color-editor-invalidContent);
   }
 }

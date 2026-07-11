@@ -36,10 +36,14 @@ mkdir -p /opt/pointfinder/data/uploads /opt/pointfinder/secrets /opt/pointfinder
 cp deploy/env.example /opt/pointfinder/.env
 ```
 
-Optional push-notification files go under `/opt/pointfinder/secrets`:
+Optional push-notification files go under `/opt/pointfinder/secrets`, which is
+mounted read-only at `/app/config`:
 
-- `apns-key.p8`
+- `AuthKey_<APNS_KEY_ID>.p8`
 - `firebase-service-account.json`
+
+Set `APNS_KEY_ID` to choose which APNs key file the backend loads. For example,
+`APNS_KEY_ID=G9D86M2578` reads `/app/config/AuthKey_G9D86M2578.p8`.
 
 GitHub Actions needs these repository secrets:
 

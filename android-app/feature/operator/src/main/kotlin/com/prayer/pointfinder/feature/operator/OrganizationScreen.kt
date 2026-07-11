@@ -48,8 +48,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.prayer.pointfinder.core.i18n.R
 import com.prayer.pointfinder.core.model.EntityId
 import com.prayer.pointfinder.core.model.OrgMemberResponse
 import com.prayer.pointfinder.core.model.OrgPermission
@@ -84,6 +86,11 @@ fun OrganizationScreen(
     // Remove confirm dialog state
     var removingMember by remember { mutableStateOf<OrgMemberResponse?>(null) }
 
+    val loadMembersError = stringResource(R.string.org_load_members_failed)
+    val inviteError = stringResource(R.string.org_invite_failed)
+    val updatePermissionsError = stringResource(R.string.org_update_permissions_failed)
+    val removeMemberError = stringResource(R.string.org_remove_failed)
+
     fun refresh() {
         scope.launch {
             isLoading = true
@@ -93,7 +100,7 @@ fun OrganizationScreen(
                 members.clear()
                 members.addAll(result)
             } catch (e: Exception) {
-                errorMessage = e.message ?: "Failed to load members"
+                errorMessage = e.message ?: loadMembersError
             } finally {
                 isLoading = false
             }
@@ -111,13 +118,13 @@ fun OrganizationScreen(
                 title = { Text(org.name) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 actions = {
                     if (canInvite) {
                         IconButton(onClick = { showInviteDialog = true }) {
-                            Icon(Icons.Default.PersonAdd, contentDescription = "Invite member")
+                            Icon(Icons.Default.PersonAdd, contentDescription = stringResource(R.string.cd_invite_member))
                         }
                     }
                 },
@@ -136,72 +143,18 @@ fun OrganizationScreen(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(0.dp),
             ) {
-                // Org header card
+                // Organization context
                 item {
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        tonalElevation = 2.dp,
-                        shape = MaterialTheme.shapes.medium,
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                Text(
-                                    org.name,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                )
-                                Surface(
-                                    color = MaterialTheme.colorScheme.secondaryContainer,
-                                    shape = MaterialTheme.shapes.small,
-                                ) {
-                                    Text(
-                                        org.tier.uppercase(),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    )
-                                }
-                            }
-                            Spacer(Modifier.height(4.dp))
-                            Text(
-                                "@${org.slug}",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            Spacer(Modifier.height(8.dp))
-                            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text(
-                                        org.memberCount.toString(),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.SemiBold,
-                                    )
-                                    Text(
-                                        "Members",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                }
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text(
-                                        org.liveGames.toString(),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.SemiBold,
-                                    )
-                                    Text(
-                                        "Live Games",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                }
-                            }
-                        }
-                    }
+                    OrganizationWorkspaceSummary(
+                        name = org.name,
+                        slug = org.slug,
+                        tier = org.tier,
+                        memberCount = org.memberCount,
+                        liveGameCount = org.liveGames,
+                        membersLabel = stringResource(R.string.org_members),
+                        liveGamesLabel = stringResource(R.string.org_live_games),
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    )
                 }
 
                 // Error message
@@ -219,7 +172,7 @@ fun OrganizationScreen(
                 // Members section header
                 item {
                     Text(
-                        "Members",
+                        stringResource(R.string.org_members),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
@@ -241,7 +194,7 @@ fun OrganizationScreen(
                 } else if (members.isEmpty()) {
                     item {
                         Text(
-                            "No members yet.",
+                            stringResource(R.string.org_no_members),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
@@ -276,12 +229,12 @@ fun OrganizationScreen(
                     inviteEmail = ""
                 }
             },
-            title = { Text("Invite Member") },
+            title = { Text(stringResource(R.string.org_invite_member)) },
             text = {
                 OutlinedTextField(
                     value = inviteEmail,
                     onValueChange = { inviteEmail = it },
-                    label = { Text("Email address") },
+                    label = { Text(stringResource(R.string.org_email_address)) },
                     singleLine = true,
                     enabled = !isInviting,
                     modifier = Modifier.fillMaxWidth(),
@@ -300,7 +253,7 @@ fun OrganizationScreen(
                                 showInviteDialog = false
                                 inviteEmail = ""
                             } catch (e: Exception) {
-                                errorMessage = e.message ?: "Invite failed"
+                                errorMessage = e.message ?: inviteError
                             } finally {
                                 isInviting = false
                             }
@@ -311,7 +264,7 @@ fun OrganizationScreen(
                     if (isInviting) {
                         CircularProgressIndicator(modifier = Modifier.size(16.dp))
                     } else {
-                        Text("Invite")
+                        Text(stringResource(R.string.action_invite))
                     }
                 }
             },
@@ -322,7 +275,7 @@ fun OrganizationScreen(
                         inviteEmail = ""
                     },
                     enabled = !isInviting,
-                ) { Text("Cancel") }
+                ) { Text(stringResource(R.string.action_cancel)) }
             },
         )
     }
@@ -344,10 +297,10 @@ fun OrganizationScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     TextButton(onClick = { editingMember = null }) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.action_cancel))
                     }
                     Text(
-                        text = "Permissions for ${memberBeingEdited.name}",
+                        text = stringResource(R.string.org_permissions_for, memberBeingEdited.name),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.weight(1f),
@@ -364,11 +317,11 @@ fun OrganizationScreen(
                                     val idx = members.indexOfFirst { it.id == updated.id }
                                     if (idx >= 0) members[idx] = updated
                                 } catch (e: Exception) {
-                                    errorMessage = e.message ?: "Failed to update permissions"
+                                    errorMessage = e.message ?: updatePermissionsError
                                 }
                             }
                         },
-                    ) { Text("Save") }
+                    ) { Text(stringResource(R.string.action_save)) }
                 }
                 HorizontalDivider()
                 // Permission toggles
@@ -407,8 +360,8 @@ fun OrganizationScreen(
     if (memberToRemove != null) {
         AlertDialog(
             onDismissRequest = { removingMember = null },
-            title = { Text("Remove Member") },
-            text = { Text("Remove ${memberToRemove.name} from ${org.name}?") },
+            title = { Text(stringResource(R.string.org_remove_member)) },
+            text = { Text(stringResource(R.string.org_remove_member_message, memberToRemove.name, org.name)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -418,17 +371,17 @@ fun OrganizationScreen(
                                 removeMember(memberToRemove.userId)
                                 members.removeIf { it.id == memberToRemove.id }
                             } catch (e: Exception) {
-                                errorMessage = e.message ?: "Failed to remove member"
+                                errorMessage = e.message ?: removeMemberError
                             }
                         }
                     },
                     colors = androidx.compose.material3.ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error,
                     ),
-                ) { Text("Remove") }
+                ) { Text(stringResource(R.string.action_remove)) }
             },
             dismissButton = {
-                TextButton(onClick = { removingMember = null }) { Text("Cancel") }
+                TextButton(onClick = { removingMember = null }) { Text(stringResource(R.string.action_cancel)) }
             },
         )
     }
@@ -483,7 +436,7 @@ private fun MemberRow(
                     }
                     if (member.permissions == 0) {
                         Text(
-                            "No permissions",
+                            stringResource(R.string.org_no_permissions),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -492,13 +445,13 @@ private fun MemberRow(
             }
 
             if (canManagePerms) {
-                TextButton(onClick = onEditPerms) { Text("Perms") }
+                TextButton(onClick = onEditPerms) { Text(stringResource(R.string.org_edit_permissions_short)) }
             }
             if (canRemove) {
                 IconButton(onClick = onRemove) {
                     Icon(
                         Icons.Default.Delete,
-                        contentDescription = "Remove member",
+                        contentDescription = stringResource(R.string.cd_remove_member),
                         tint = MaterialTheme.colorScheme.error,
                         modifier = Modifier.size(20.dp),
                     )

@@ -1,0 +1,7 @@
+{
+  "name": "@pointfinder/design-system",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": { "generate": "node scripts/generate.mjs", "test": "node scripts/test.mjs", "check": "node scripts/test.mjs && node scripts/generate.mjs --check", "audit": "node scripts/audit.mjs", "audit:strict": "node scripts/audit.mjs --strict" }
+}

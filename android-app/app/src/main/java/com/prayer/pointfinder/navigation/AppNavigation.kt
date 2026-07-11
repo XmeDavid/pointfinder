@@ -1612,6 +1612,7 @@ private fun OperatorGameRoot(
                             teams = state.teams,
                             assignments = state.assignments,
                             teamVariablesIncomplete = state.teamVariablesIncomplete,
+                            onNavigateToMap = { viewModel.setTab(OperatorTab.LIVE_MAP) },
                             onNavigateToBases = { setupSubScreen = "bases_list" },
                             onNavigateToChallenges = { setupSubScreen = "challenges_list" },
                             onNavigateToTeams = { setupSubScreen = "teams_list" },

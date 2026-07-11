@@ -49,7 +49,7 @@ struct OperatorGameView: View {
 
                     // Tab 1: Setup (in setup) or Live (in live/ended)
                     if gameStatus == "setup" {
-                        OperatorSetupHubView(game: game)
+                        OperatorSetupHubView(game: game, onShowMap: { selectedTab = 0 })
                             .tabItem {
                                 Label(locale.t("operator.setup"), systemImage: "checklist")
                             }

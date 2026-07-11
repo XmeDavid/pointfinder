@@ -101,6 +101,30 @@ fun GameSettingsScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             item {
+                ManagementEditorSummary(
+                    title = stringResource(R.string.label_game_settings),
+                    metadata = listOf(
+                        ManagementMetadata(
+                            when (game.status) {
+                                GameStatus.SETUP -> stringResource(R.string.game_status_setup)
+                                GameStatus.LIVE -> stringResource(R.string.game_status_live)
+                                GameStatus.ENDED -> stringResource(R.string.game_status_ended)
+                            },
+                            when (game.status) {
+                                GameStatus.LIVE -> OperatorTone.SUCCESS
+                                GameStatus.SETUP -> OperatorTone.PENDING
+                                GameStatus.ENDED -> OperatorTone.MUTED
+                            },
+                        ),
+                        ManagementMetadata(stringResource(R.string.label_broadcast), if (broadcastEnabled) OperatorTone.INFO else OperatorTone.MUTED),
+                        ManagementMetadata(tileSource, OperatorTone.MUTED),
+                    ),
+                    validationLabel = stringResource(R.string.setup_ready_count, if (name.isNotBlank()) 1 else 0, 1),
+                    isValid = name.isNotBlank(),
+                )
+            }
+
+            item {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },

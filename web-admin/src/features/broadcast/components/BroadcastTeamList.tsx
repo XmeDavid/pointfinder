@@ -1,5 +1,7 @@
 import { useTranslation } from "react-i18next";
 import type { BroadcastTeam, BroadcastLeaderboardEntry } from "@/lib/api/broadcast";
+import { BroadcastPanel } from "@/components/broadcast/BroadcastPanel";
+import { EmptyState } from "@/components/feedback/EmptyState";
 
 interface Props {
   teams: BroadcastTeam[];
@@ -15,18 +17,17 @@ export function BroadcastTeamList({ teams, leaderboard }: Props) {
   const topPoints = leaderboard[0]?.points || 1;
 
   return (
-    <div className="flex h-full flex-col rounded-xl border border-white/10 bg-white/5 p-3 overflow-hidden">
-      <h2 className="mb-2 text-sm font-semibold text-white/70">{t("nav.teams")}</h2>
-      <div className="flex flex-1 flex-col gap-1 overflow-y-auto">
+    <BroadcastPanel title={t("nav.teams")} contentClassName="overflow-y-auto">
+      {teams.length === 0 ? <EmptyState density="compact" title={t("nav.teams")} /> : <div className="flex flex-col gap-1">
         {leaderboard.map((entry, i) => {
           const rank = i + 1;
           const widthPct = Math.max(4, (entry.points / topPoints) * 100);
           return (
             <div
               key={entry.teamId}
-              className="flex items-center gap-2 rounded-lg bg-white/[0.03] px-2.5 py-1.5"
+              className="flex items-center gap-2 rounded-md bg-muted/30 px-2.5 py-1.5"
             >
-              <span className="w-5 text-center text-xs font-bold text-white/40 shrink-0">
+              <span className="w-5 shrink-0 text-center text-xs font-bold text-muted-foreground">
                 {rank}
               </span>
               <div
@@ -35,14 +36,14 @@ export function BroadcastTeamList({ teams, leaderboard }: Props) {
               />
               <span className="text-sm font-medium flex-1 truncate">{entry.teamName}</span>
               <div className="flex-[1.5] hidden xl:block">
-                <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                   <div
                     className="h-full rounded-full transition-all duration-700"
                     style={{ width: `${widthPct}%`, backgroundColor: entry.color }}
                   />
                 </div>
               </div>
-              <span className="text-xs text-white/40 tabular-nums shrink-0">
+              <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
                 {entry.completedChallenges} {t("leaderboard.done")}
               </span>
               <span className="text-sm font-bold tabular-nums w-14 text-right shrink-0">
@@ -54,9 +55,9 @@ export function BroadcastTeamList({ teams, leaderboard }: Props) {
         {unranked.map((team) => (
           <div
             key={team.id}
-            className="flex items-center gap-2 rounded-lg bg-white/[0.02] px-2.5 py-1.5 opacity-50"
+            className="flex items-center gap-2 rounded-md bg-muted/20 px-2.5 py-1.5 opacity-60"
           >
-            <span className="w-5 text-center text-xs text-white/30 shrink-0">-</span>
+            <span className="w-5 shrink-0 text-center text-xs text-muted-foreground">-</span>
             <div
               className="h-2.5 w-2.5 rounded-full shrink-0"
               style={{ backgroundColor: team.color }}
@@ -65,7 +66,7 @@ export function BroadcastTeamList({ teams, leaderboard }: Props) {
             <span className="text-sm font-bold tabular-nums w-14 text-right shrink-0">0</span>
           </div>
         ))}
-      </div>
-    </div>
+      </div>}
+    </BroadcastPanel>
   );
 }

@@ -34,6 +34,7 @@ dependencies {
 
     implementation(project(":core:model"))
     implementation(project(":core:i18n"))
+    implementation(project(":core:designsystem"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

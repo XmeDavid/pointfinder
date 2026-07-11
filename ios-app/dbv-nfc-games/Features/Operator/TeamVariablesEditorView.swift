@@ -90,8 +90,24 @@ struct TeamVariablesEditorView: View {
         variables != baselineVariables
     }
 
+    private var totalValues: Int { variables.count * teams.count }
+    private var completedValues: Int {
+        variables.reduce(0) { total, variable in
+            total + teams.filter { !(variable.teamValues[$0.id.uuidString.lowercased()] ?? "").isEmpty }.count
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            VariableCompletenessSummary(
+                variableCount: variables.count,
+                teamCount: teams.count,
+                completedValues: completedValues,
+                totalValues: totalValues,
+                variablesLabel: locale.t("operator.variables"),
+                teamsLabel: locale.t("operator.teams"),
+                completeLabel: locale.t("operator.valuesComplete")
+            )
             if teams.isEmpty {
                 Text(locale.t("operator.noTeamsInGame"))
                     .font(.subheadline)
@@ -120,7 +136,7 @@ struct TeamVariablesEditorView: View {
                             HStack(spacing: 12) {
                                 HStack(spacing: 8) {
                                     Circle()
-                                        .fill(Color(hex: team.color) ?? .blue)
+                                        .fill(Color(hex: team.color) ?? PFColorToken.statusUnknown)
                                         .frame(width: 10, height: 10)
                                     Text(team.name)
                                         .font(.subheadline)
@@ -170,7 +186,7 @@ struct TeamVariablesEditorView: View {
                 if let keyError {
                     Text(keyError)
                         .font(.caption)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(OperatorTone.danger.color)
                 }
             }
 
@@ -188,7 +204,7 @@ struct TeamVariablesEditorView: View {
             if let errorMessage {
                 Text(errorMessage)
                     .font(.caption)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(OperatorTone.danger.color)
             }
         }
         .onChange(of: initialVariables) { _, newValue in

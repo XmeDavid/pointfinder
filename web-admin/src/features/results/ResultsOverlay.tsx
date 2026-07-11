@@ -1,10 +1,12 @@
 import { useState, useCallback } from 'react'
 import { useLeaderboard, useResultsExport } from '@/hooks/queries/useMonitoring'
 import { monitoringApi } from '@/lib/api/monitoring'
-import { cn } from '@/lib/utils'
 import Standings from './Standings'
 import TeamBreakdown from './TeamBreakdown'
 import GameStatistics from './GameStatistics'
+import { OverlayPanel } from '@/components/layout/OverlayPanel'
+import { Button } from '@/components/ui/button'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 type ResultsTab = 'standings' | 'breakdown' | 'statistics'
 
@@ -86,59 +88,47 @@ export default function ResultsOverlay({ gameId }: Props) {
   }, [gameId])
 
   return (
-    <div
-      className="absolute left-0 right-0 top-12 bottom-14 md:left-3 md:right-3 md:top-14 md:bottom-3 z-20 bg-card/95 backdrop-blur-xl border border-border rounded-none md:rounded-xl flex flex-col overflow-hidden"
+    <OverlayPanel
+      padding="none"
+      className="absolute bottom-14 left-0 right-0 top-12 z-20 flex flex-col overflow-hidden rounded-none md:bottom-3 md:left-3 md:right-3 md:top-14 md:rounded-lg"
       data-testid="results-overlay"
     >
       {/* Tab bar */}
       <div className="flex flex-wrap items-center gap-2 px-3 md:px-6 py-2 md:py-3 border-b border-border/50">
         {/* Tab pills */}
-        <div className="flex items-center gap-1">
-          {tabs.map(({ key, label }) => {
-            const isActive = activeTab === key
-            return (
-              <button
-                key={key}
-                onClick={() => setActiveTab(key)}
-                data-testid={`tab-${key}`}
-                className={cn(
-                  'px-3 py-1.5 text-sm rounded-md transition-colors cursor-pointer',
-                  isActive
-                    ? 'bg-primary/10 text-primary border border-primary/30'
-                    : 'text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {label}
-              </button>
-            )
-          })}
-        </div>
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ResultsTab)}>
+          <TabsList>
+            {tabs.map(({ key, label }) => <TabsTrigger key={key} value={key} data-testid={`tab-${key}`}>{label}</TabsTrigger>)}
+          </TabsList>
+        </Tabs>
 
         <div className="flex-1" />
 
         {/* Export buttons */}
         <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
-          <button
+          <Button
             onClick={exportStandings}
             data-testid="export-csv"
-            className="px-2 md:px-3 py-1.5 text-xs md:text-sm rounded-md bg-secondary text-muted-foreground hover:text-foreground transition-colors cursor-pointer whitespace-nowrap"
+            variant="secondary"
+            size="sm"
           >
             Export CSV
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={exportDetailed}
             data-testid="export-detailed"
-            className="px-2 md:px-3 py-1.5 text-xs md:text-sm rounded-md bg-secondary text-muted-foreground hover:text-foreground transition-colors cursor-pointer whitespace-nowrap"
+            variant="secondary"
+            size="sm"
           >
             Export Detailed
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={exportAuditLog}
             data-testid="export-audit"
-            className="px-2 md:px-3 py-1.5 text-xs md:text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer whitespace-nowrap"
+            size="sm"
           >
             Audit Log
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -148,6 +138,6 @@ export default function ResultsOverlay({ gameId }: Props) {
         {activeTab === 'breakdown' && <TeamBreakdown gameId={gameId} />}
         {activeTab === 'statistics' && <GameStatistics gameId={gameId} />}
       </div>
-    </div>
+    </OverlayPanel>
   )
 }

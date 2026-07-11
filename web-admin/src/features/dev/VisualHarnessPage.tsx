@@ -6,7 +6,7 @@ import {
   MapPinned,
   Radio,
 } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { ErrorState } from '@/components/feedback/ErrorState'
@@ -37,6 +37,10 @@ import {
   SurfacePanel,
 } from '@/components/layout'
 import type { GameStatus, SubmissionStatus } from '@/types'
+import { designSystemVersion } from '@/generated/designTokens'
+import { previewScenarios } from '@/generated/previewScenarios'
+import { ResultsStat, ResultsSummary } from '@/components/results/ResultsSummary'
+import { BroadcastPanel } from '@/components/broadcast/BroadcastPanel'
 
 const gameStatuses: GameStatus[] = ['setup', 'live', 'ended']
 const submissionStatuses: SubmissionStatus[] = [
@@ -87,20 +91,28 @@ function HarnessSection({
 }
 
 export function VisualHarnessPage() {
+  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+
   return (
-    <main className="min-h-screen overflow-auto bg-background p-4 text-foreground md:p-6">
+    <main className={`${theme === 'dark' ? 'dark' : ''} min-h-screen overflow-auto bg-background p-4 text-foreground md:p-6`}>
       <div className="mx-auto flex max-w-6xl flex-col gap-4">
-        <header className="space-y-1">
-          <p className="text-xs font-medium uppercase text-muted-foreground">
-            Development only
-          </p>
-          <h1 className="text-xl font-semibold text-foreground">
-            PointFinder Visual System Harness
-          </h1>
-          <p className="max-w-3xl text-sm text-muted-foreground">
-            Static fixtures for canonical web components. This route does not
-            fetch backend data.
-          </p>
+        <header className="flex flex-wrap items-end justify-between gap-4">
+          <div className="space-y-1">
+            <p className="text-xs font-medium uppercase text-muted-foreground">
+              Development only · system {designSystemVersion}
+            </p>
+            <h1 className="text-xl font-semibold text-foreground">
+              PointFinder Visual System Harness
+            </h1>
+            <p className="max-w-3xl text-sm text-muted-foreground">
+              Canonical, backend-free fixtures shared with native preview
+              scenarios.
+            </p>
+          </div>
+          <div className="flex gap-2" aria-label="Preview theme">
+            <Button variant={theme === 'light' ? 'default' : 'outline'} size="sm" onClick={() => setTheme('light')}>Light</Button>
+            <Button variant={theme === 'dark' ? 'default' : 'outline'} size="sm" onClick={() => setTheme('dark')}>Dark</Button>
+          </div>
         </header>
 
         <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
@@ -112,6 +124,21 @@ export function VisualHarnessPage() {
               <Button variant="ghost">Ghost</Button>
               <Button variant="destructive">Destructive</Button>
               <Button loading>Loading</Button>
+              <Button disabled>Disabled</Button>
+            </div>
+          </HarnessSection>
+
+          <HarnessSection title="Canonical Preview Scenarios">
+            <div className="grid gap-2 sm:grid-cols-2">
+              {previewScenarios.map((scenario) => (
+                <div
+                  key={scenario.id}
+                  className={`rounded-lg border p-3 ${scenario.id === 'selected' ? 'border-primary bg-primary/10' : scenario.id === 'destructive' || scenario.id === 'error' ? 'border-destructive/30 bg-destructive/10' : 'border-border bg-muted'}`}
+                >
+                  <p className="text-sm font-medium text-foreground">{scenario.label}</p>
+                  <p className="text-xs text-muted-foreground">{scenario.description}</p>
+                </div>
+              ))}
             </div>
           </HarnessSection>
 
@@ -327,6 +354,29 @@ export function VisualHarnessPage() {
                 Destructive tone fixture for failed or blocked operational
                 states.
               </p>
+            </div>
+          </HarnessSection>
+
+          <HarnessSection title="Results And Administration Summaries">
+            <ResultsSummary>
+              <ResultsStat label="Teams" value="12" />
+              <ResultsStat label="Completion" value="84%" tone="success" />
+              <ResultsStat label="Pending" value="3" tone="pending" />
+              <ResultsStat label="Storage" value="2.4 GB" />
+            </ResultsSummary>
+          </HarnessSection>
+
+          <HarnessSection title="Broadcast Panels">
+            <div className="dark grid min-h-56 gap-3 bg-background p-3 text-foreground sm:grid-cols-2">
+              <BroadcastPanel title="Leaderboard" leading={<Radio className="h-4 w-4 text-success" />}>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between"><span>North Ridge</span><strong>120</strong></div>
+                  <div className="flex justify-between"><span>River Team</span><strong>95</strong></div>
+                </div>
+              </BroadcastPanel>
+              <BroadcastPanel title="Bases">
+                <EmptyState density="compact" title="No base activity yet" />
+              </BroadcastPanel>
             </div>
           </HarnessSection>
         </div>

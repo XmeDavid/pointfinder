@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import com.prayer.pointfinder.core.i18n.R
 import com.prayer.pointfinder.core.model.PRIVACY_POLICY_URL
 import com.prayer.pointfinder.core.model.BaseStatus
+import com.prayer.pointfinder.core.designsystem.PFColors
 
 /**
  * Row model for the sync queue sheet.
@@ -82,12 +83,11 @@ enum class PlayerTab {
 
 // Semantic color constants for status, accents, and indicators
 // Values match Color.kt design tokens (StatusCheckedIn, StatusCompleted, etc.)
-internal val StatusCheckedIn = Color(0xFF3B82F6)
-internal val StatusCompleted = Color(0xFF22C55E)
-internal val StatusSubmitted = Color(0xFFF59E0B)
-internal val StatusRejected = Color(0xFFEF4444)
-internal val StarGold = Color(0xFFF59E0B)
-internal val OfflineOrange = Color(0xFFE08A00)
+internal val StatusCheckedIn = PFColors.StatusCheckedInLight
+internal val StatusCompleted = PFColors.StatusCompletedLight
+internal val StatusSubmitted = PFColors.StatusPendingLight
+internal val StatusRejected = PFColors.StatusRejectedLight
+internal val OfflineOrange = PFColors.StatusPendingLight
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -201,7 +201,7 @@ private fun SyncStatusPill(
     uploadPercent: Int? = null,
     onClick: () -> Unit,
 ) {
-    val pillColor = if (isOffline) Color(0xFFEF4444) else Color(0xFF3B82F6)
+    val pillColor = if (isOffline) PFColors.StatusRejectedLight else PFColors.StatusCheckedInLight
     val label = when {
         isOffline -> stringResource(R.string.label_offline_count, pendingActionsCount)
         uploadPercent != null -> stringResource(R.string.label_uploading_percent, uploadPercent)
@@ -321,9 +321,9 @@ private fun SyncQueueItem(
                     modifier = Modifier.weight(1f),
                 )
                 val (badgeLabel, badgeColor) = when {
-                    isOffline -> stringResource(R.string.label_no_connection) to Color(0xFFEF4444)
-                    isUploading -> stringResource(R.string.label_uploading) to Color(0xFF3B82F6)
-                    else -> stringResource(R.string.label_queued) to Color(0xFF9E9E9E)
+                    isOffline -> stringResource(R.string.label_no_connection) to PFColors.StatusRejectedLight
+                    isUploading -> stringResource(R.string.label_uploading) to PFColors.StatusCheckedInLight
+                    else -> stringResource(R.string.label_queued) to PFColors.StatusUnknownLight
                 }
                 Surface(
                     shape = RoundedCornerShape(50),
