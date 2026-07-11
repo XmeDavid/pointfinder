@@ -77,6 +77,9 @@ class OperatorRescueEndpointsTest extends IntegrationTestBase {
     private TeamService teamService;
 
     @Autowired
+    private GameService gameService;
+
+    @Autowired
     private BaseUnlockOverrideService baseUnlockOverrideService;
 
     @Autowired
@@ -178,9 +181,8 @@ class OperatorRescueEndpointsTest extends IntegrationTestBase {
 
         // A second operator who also has access to the same game.
         User secondOperator = createOperator("op2-mc-twoop@rescue.test", "password");
-        Game game = gameRepository.findById(ctx.game.getId()).orElseThrow();
-        game.getOperators().add(secondOperator);
-        gameRepository.save(game);
+        authenticateAsOperator(ctx.operator);
+        gameService.addOperator(ctx.game.getId(), secondOperator.getId());
 
         MarkCompletedRequest request = new MarkCompletedRequest();
         request.setChallengeId(ctx.challenge.getId());
