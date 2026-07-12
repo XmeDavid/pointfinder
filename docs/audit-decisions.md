@@ -18,12 +18,13 @@ Design decisions made while resolving findings from `docs/full-codebase-audit-20
 
 ## Finding 6.16 -- Remaining contentDescription = null instances
 
-**Decision:** Keep the 3 remaining `contentDescription = null` instances (PlayerGameplayScreens.kt:138, :211 and SetupHubScreen.kt:434) as-is.
+**Decision:** Fix 12 standalone/interactive icons with meaningful descriptions; keep 5 remaining `contentDescription = null` instances that are decorative icons inside labeled Buttons.
 
 **Alternatives considered:**
-- Add string resource descriptions to all Icon composables
+- Add string resource descriptions to all Icon composables (including decorative ones)
+- Leave all as null
 
-**Rationale:** All 3 are decorative icons inside Buttons that already have explicit Text labels providing the accessible name. Per Compose accessibility guidelines, setting `contentDescription = null` is the correct approach for decorative icons within labeled containers -- adding a description would cause screen readers to read redundant information (icon description + button text).
+**Rationale:** The 5 remaining instances are decorative icons inside Buttons that already have explicit Text labels providing the accessible name (OperatorLiveComponents: icon in OperatorRescueActionButton with Text; PlayerLiveComponents: preview Row icon with Text; PlayerGameplayScreens: two icons inside Button/OutlinedButton with Text; SetupBuilderComponents: PlayArrow inside Button with Text). Per Compose accessibility guidelines, setting `contentDescription = null` is the correct approach for decorative icons within labeled containers. The 12 fixed instances were standalone interactive icons or icons in non-labeled containers where the description was the only accessible name. Where possible, existing localized parameters (`title`, `label`, `openMapLabel`) were reused; inline English strings have TODO comments for string resource extraction.
 
 ---
 

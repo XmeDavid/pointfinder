@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom'
-import { useEffect, useRef, useMemo } from 'react'
+import { useEffect, useRef, useMemo, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { useGame } from '@/hooks/queries/useGames'
 import { useStages } from '@/hooks/queries/useStages'
@@ -8,10 +8,11 @@ import { useTeams } from '@/hooks/queries/useTeams'
 import { useTeamLocations } from '@/hooks/queries/useTeamLocations'
 import { useProgress } from '@/hooks/queries/useMonitoring'
 import { useWorkspaceStore } from '@/stores/workspace'
-import type { MapRef } from 'react-map-gl/maplibre'
+import type { MapMouseEvent, MapRef } from 'react-map-gl/maplibre'
 import { GameMap } from '@/components/map/GameMap'
 import { getStyleUrl } from '@/lib/tile-sources'
 import { BaseMarkers } from '@/components/map/BaseMarkers'
+import { MapActionMenu } from '@/components/map/MapActionMenu'
 import { TeamMarkers } from '@/components/map/TeamMarkers'
 import { TopBar } from './TopBar'
 import { Spinner } from '@/components/feedback/Spinner'
@@ -21,6 +22,12 @@ import GameSettingsPanel from '@/features/build/GameSettingsPanel'
 import { CommandOverlay } from '@/features/command/CommandOverlay'
 import ReviewOverlay from '@/features/review/ReviewOverlay'
 import ResultsOverlay from '@/features/results/ResultsOverlay'
+import { useCreateBase } from '@/hooks/mutations/useBaseMutations'
+
+interface PendingMapAction {
+  position: { x: number; y: number }
+  location: { lat: number; lng: number }
+}
 
 export function GameWorkspace() {
   const { id: gameId } = useParams<{ id: string }>()
@@ -30,6 +37,8 @@ export function GameWorkspace() {
   const { data: stages = [] } = useStages(gameId)
   const { data: bases = [], isLoading: basesLoading } = useBases(gameId)
   const { data: teams = [] } = useTeams(gameId)
+  const createBase = useCreateBase(gameId!)
+  const [pendingMapAction, setPendingMapAction] = useState<PendingMapAction | null>(null)
 
   // --- Map ref for programmatic control ---
   const mapRefInstance = useRef<MapRef | null>(null)
@@ -50,6 +59,7 @@ export function GameWorkspace() {
   const impersonatedTeamId = useWorkspaceStore((s) => s.impersonatedTeamId)
   const settingsPanelOpen = useWorkspaceStore((s) => s.settingsPanelOpen)
   const reset = useWorkspaceStore((s) => s.reset)
+  const closeMapActionMenu = useCallback(() => setPendingMapAction(null), [])
 
   // Fetch team locations only in command mode (perf optimization)
   const { data: locations = [] } = useTeamLocations(
@@ -132,10 +142,32 @@ export function GameWorkspace() {
     }
   }
 
-  const handleMapClick = () => {
+  const handleMapClick = (event: MapMouseEvent) => {
+    if (mode === 'build' && game.status === 'setup') {
+      setPendingMapAction({
+        position: { x: event.point.x, y: event.point.y },
+        location: { lat: event.lngLat.lat, lng: event.lngLat.lng },
+      })
+      return
+    }
     if (mode === 'command' && inspectedBaseId) {
       inspectBase(null)
     }
+  }
+
+  const handlePlaceBase = () => {
+    if (!pendingMapAction) return
+    const { lat, lng } = pendingMapAction.location
+    setPendingMapAction(null)
+    createBase.mutate(
+      {
+        name: `Base ${bases.length + 1}`,
+        description: '',
+        lat,
+        lng,
+      },
+      { onSuccess: (base) => selectBase(base.id) },
+    )
   }
 
   const handleTeamClick = (teamId: string) => {
@@ -170,6 +202,14 @@ export function GameWorkspace() {
           />
         )}
       </GameMap>
+
+      {pendingMapAction && (
+        <MapActionMenu
+          position={pendingMapAction.position}
+          onPlaceBase={handlePlaceBase}
+          onClose={closeMapActionMenu}
+        />
+      )}
 
       {/* TopBar floating above the map */}
       <TopBar game={game} stages={stages} />

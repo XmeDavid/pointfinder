@@ -106,7 +106,7 @@ internal fun PlayerSubmissionState(
     val accent = tone.color(dark)
     Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Surface(color = accent.copy(alpha = 0.13f), shape = androidx.compose.foundation.shape.CircleShape) {
-            Icon(icon, contentDescription = null, modifier = Modifier.padding(PFSpacingToken.Space6).size(52.dp), tint = accent)
+            Icon(icon, contentDescription = title, modifier = Modifier.padding(PFSpacingToken.Space6).size(52.dp), tint = accent)
         }
         Spacer(Modifier.height(PFSpacingToken.Space4))
         Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)

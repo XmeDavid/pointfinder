@@ -1160,6 +1160,8 @@
     "importBtn": "Importar"
   },
   "build": {
+    "mapActions": "Ações do mapa",
+    "placeBaseHere": "Colocar base aqui",
     "searchBases": "Procurar bases...",
     "searchBasesEmpty": "Nenhuma base corresponde à pesquisa",
     "noBasesYet": "Ainda sem bases",

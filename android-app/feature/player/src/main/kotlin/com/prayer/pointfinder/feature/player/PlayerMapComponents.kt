@@ -134,7 +134,7 @@ internal fun PlayerDetailMessage(
         verticalArrangement = Arrangement.spacedBy(PFSpacingToken.Space2),
     ) {
         Surface(color = accent.copy(alpha = 0.12f), shape = androidx.compose.foundation.shape.CircleShape) {
-            Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.padding(PFSpacingToken.Space4).size(36.dp))
+            Icon(icon, contentDescription = title, tint = accent, modifier = Modifier.padding(PFSpacingToken.Space4).size(36.dp))
         }
         Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
         if (!message.isNullOrBlank()) {

@@ -1,15 +1,34 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement, type ReactNode } from 'react'
+import { http, HttpResponse } from 'msw'
 import { GameWorkspace } from './GameWorkspace'
 import { useWorkspaceStore } from '@/stores/workspace'
+import { server } from '@/test/msw/server'
+import { createMockBase } from '@/test/factories/base'
+import { createMockGame } from '@/test/factories/game'
 
 // Mock react-map-gl/maplibre (WebGL not available in jsdom)
 vi.mock('react-map-gl/maplibre', () => ({
-  default: ({ children }: { children?: React.ReactNode }) => (
-    <div data-testid="map-container">{children}</div>
+  default: ({ children, onClick }: {
+    children?: React.ReactNode
+    onClick?: (event: {
+      point: { x: number; y: number }
+      lngLat: { lat: number; lng: number }
+    }) => void
+  }) => (
+    <div
+      data-testid="map-container"
+      onClick={() => onClick?.({
+        point: { x: 240, y: 180 },
+        lngLat: { lat: 47.3769, lng: 8.5417 },
+      })}
+    >
+      {children}
+    </div>
   ),
   Marker: ({ children }: { children?: React.ReactNode }) => <div data-testid="marker">{children}</div>,
   NavigationControl: () => null,
@@ -124,5 +143,60 @@ describe('GameWorkspace', () => {
     })
 
     expect(screen.queryByTestId('open-content-panel')).not.toBeInTheDocument()
+  })
+
+  it('opens map actions on a build-mode map click and places a base at that location', async () => {
+    const user = userEvent.setup()
+    let requestBody: Record<string, unknown> | undefined
+    server.use(
+      http.post('/api/games/:gameId/bases', async ({ request }) => {
+        requestBody = await request.json() as Record<string, unknown>
+        return HttpResponse.json(
+          createMockBase({
+            id: 'placed-base',
+            name: requestBody.name as string,
+            lat: requestBody.lat as number,
+            lng: requestBody.lng as number,
+          }),
+          { status: 201 },
+        )
+      }),
+    )
+
+    renderWorkspace()
+    const map = await screen.findByTestId('map-container')
+
+    await user.click(map)
+
+    expect(screen.getByRole('menu', { name: 'Map actions' })).toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: 'Place base here' })).toHaveFocus()
+
+    await user.click(screen.getByRole('menuitem', { name: 'Place base here' }))
+
+    await waitFor(() => {
+      expect(requestBody).toMatchObject({
+        name: 'Base 4',
+        description: '',
+        lat: 47.3769,
+        lng: 8.5417,
+      })
+      expect(useWorkspaceStore.getState().selectedBaseId).toBe('placed-base')
+      expect(useWorkspaceStore.getState().drawerOpen).toBe(true)
+    })
+    expect(screen.queryByTestId('map-action-menu')).not.toBeInTheDocument()
+  })
+
+  it('does not offer base placement after setup has ended', async () => {
+    const user = userEvent.setup()
+    server.use(
+      http.get('/api/games/:id', ({ params }) => HttpResponse.json(
+        createMockGame({ id: params.id as string, status: 'live' }),
+      )),
+    )
+
+    renderWorkspace()
+    await user.click(await screen.findByTestId('map-container'))
+
+    expect(screen.queryByTestId('map-action-menu')).not.toBeInTheDocument()
   })
 })

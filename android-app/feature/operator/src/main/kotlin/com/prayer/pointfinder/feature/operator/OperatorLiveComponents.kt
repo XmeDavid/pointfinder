@@ -85,7 +85,7 @@ internal fun OperatorSubmissionCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(teamName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 if (mediaCount > 0) {
-                    Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Icon(Icons.Default.PhotoLibrary, contentDescription = "Photo submissions", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant) // TODO: Extract to string resources
                     if (mediaCount > 1) {
                         Spacer(Modifier.width(PFSpacingToken.Space1))
                         Text(mediaCount.toString(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

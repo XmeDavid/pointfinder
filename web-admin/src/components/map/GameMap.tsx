@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import Map, { NavigationControl } from 'react-map-gl/maplibre'
-import type { MapRef } from 'react-map-gl/maplibre'
+import type { MapMouseEvent, MapRef } from 'react-map-gl/maplibre'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { DARK_STYLE_URL } from '@/lib/tile-sources'
 
@@ -15,7 +15,7 @@ interface GameMapProps {
   /** Callback to receive the map ref instance for external control (flyTo, getCenter, etc.) */
   onMapRef?: (ref: MapRef | null) => void
   /** Called when the map background is clicked (not a marker) */
-  onClick?: () => void
+  onClick?: (event: MapMouseEvent) => void
 }
 
 export function GameMap({

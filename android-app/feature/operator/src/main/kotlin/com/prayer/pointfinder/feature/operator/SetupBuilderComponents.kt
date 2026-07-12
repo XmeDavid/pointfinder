@@ -74,7 +74,7 @@ internal fun SetupReadinessPanel(
                 Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(PFSpacingToken.Space2)) {
                     Icon(
                         imageVector = if (item.ready) Icons.Default.CheckCircle else Icons.Default.Warning,
-                        contentDescription = null,
+                        contentDescription = if (item.ready) "Ready" else "Attention needed", // TODO: Extract to string resources
                         tint = if (item.ready) operatorToneColor(OperatorTone.SUCCESS) else accent,
                         modifier = Modifier.size(20.dp),
                     )
@@ -109,7 +109,7 @@ internal fun SetupSpatialSummary(
     ) {
         Column(modifier = Modifier.padding(PFSpacingToken.Space4), verticalArrangement = Arrangement.spacedBy(PFSpacingToken.Space3)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(PFSpacingToken.Space2)) {
-                Icon(Icons.Default.LocationOn, contentDescription = null, tint = tint)
+                Icon(Icons.Default.LocationOn, contentDescription = "Map location", tint = tint) // TODO: Extract to string resources
                 Column(modifier = Modifier.weight(1f)) {
                     Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -122,7 +122,7 @@ internal fun SetupSpatialSummary(
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(openMapLabel, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = tint, modifier = Modifier.weight(1f))
-                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = tint)
+                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = openMapLabel, tint = tint)
             }
         }
     }
@@ -146,13 +146,13 @@ internal fun SetupResourceRow(
     ) {
         Row(modifier = Modifier.padding(PFSpacingToken.Space3), verticalAlignment = Alignment.CenterVertically) {
             Surface(color = tint.copy(alpha = 0.12f), contentColor = tint, shape = MaterialTheme.shapes.small) {
-                Icon(icon, contentDescription = null, modifier = Modifier.padding(PFSpacingToken.Space2).size(18.dp))
+                Icon(icon, contentDescription = label, modifier = Modifier.padding(PFSpacingToken.Space2).size(18.dp))
             }
             Spacer(Modifier.width(PFSpacingToken.Space3))
             Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
             OperatorStatusBadge(value, tone)
             Spacer(Modifier.width(PFSpacingToken.Space1))
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Navigate", tint = MaterialTheme.colorScheme.onSurfaceVariant) // TODO: Extract to string resources
         }
     }
 }

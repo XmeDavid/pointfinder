@@ -60,7 +60,7 @@ internal fun ManagementResourceRow(
             if (leadingIcon != null) {
                 val accent = operatorToneColor(OperatorTone.INFO)
                 Surface(color = accent.copy(alpha = 0.11f), contentColor = accent, shape = MaterialTheme.shapes.small) {
-                    Icon(leadingIcon, contentDescription = null, modifier = Modifier.padding(PFSpacingToken.Space2).size(18.dp))
+                    Icon(leadingIcon, contentDescription = title, modifier = Modifier.padding(PFSpacingToken.Space2).size(18.dp))
                 }
                 Spacer(Modifier.width(PFSpacingToken.Space3))
             }
@@ -72,7 +72,7 @@ internal fun ManagementResourceRow(
                 }
             }
             Spacer(Modifier.width(PFSpacingToken.Space2))
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Navigate", tint = MaterialTheme.colorScheme.onSurfaceVariant) // TODO: Extract to string resources
         }
     }
 }
@@ -103,7 +103,7 @@ internal fun ManagementTeamRow(
                 if (!joinCode.isNullOrBlank()) Text(joinCode, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = joinCodeModifier)
             }
             if (onCopy != null) IconButton(onClick = onCopy) { Icon(Icons.Default.ContentCopy, contentDescription = copyLabel, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Navigate", tint = MaterialTheme.colorScheme.onSurfaceVariant) // TODO: Extract to string resources
         }
     }
 }
@@ -212,7 +212,7 @@ internal fun OrganizationWorkspaceSummary(name: String, slug: String, tier: Stri
 @Composable
 internal fun ManagementEmptyState(title: String, description: String? = null, modifier: Modifier = Modifier) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(PFSpacingToken.Space2)) {
-        Icon(Icons.Default.Inventory2, contentDescription = null, modifier = Modifier.size(40.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Icon(Icons.Default.Inventory2, contentDescription = title, modifier = Modifier.size(40.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (!description.isNullOrBlank()) Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
