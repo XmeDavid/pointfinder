@@ -9,6 +9,5 @@ public class ChangePasswordRequest {
     private String currentPassword;
     @NotBlank
     private String newPassword;
-    @NotBlank
     private String refreshToken;
 }

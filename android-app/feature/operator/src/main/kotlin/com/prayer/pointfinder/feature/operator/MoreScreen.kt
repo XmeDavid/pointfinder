@@ -198,7 +198,7 @@ fun MoreScreen(
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
                                 imageVector = Icons.Default.MoreHoriz,
-                                contentDescription = "Language",
+                                contentDescription = stringResource(R.string.label_language),
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(18.dp),
                             )
@@ -261,7 +261,7 @@ fun MoreScreen(
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
                                 imageVector = Icons.Default.Settings,
-                                contentDescription = "Theme",
+                                contentDescription = stringResource(R.string.label_theme),
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(18.dp),
                             )
@@ -484,7 +484,7 @@ private fun MoreIconRow(
 
         Icon(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-            contentDescription = "Navigate",
+            contentDescription = stringResource(R.string.cd_navigate),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(18.dp),
         )

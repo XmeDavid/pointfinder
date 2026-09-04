@@ -23,22 +23,22 @@ public final class GameResponseMapper {
                 .map(User::getId)
                 .toList();
 
-        return GameResponse.builder()
-                .id(game.getId())
-                .name(game.getName())
-                .description(game.getDescription())
-                .startDate(game.getStartDate())
-                .endDate(game.getEndDate())
-                .status(game.getStatus().name())
-                .createdBy(game.getCreatedBy().getId())
-                .operatorIds(operatorIds)
-                .uniformAssignment(game.getUniformAssignment())
-                .broadcastEnabled(game.getBroadcastEnabled())
-                .broadcastCode(game.getBroadcastCode())
-                .tileSource(game.getTileSource())
-                .unlockTrigger(game.getUnlockTrigger().name())
-                .orgId(game.getOrganization() != null ? game.getOrganization().getId() : null)
-                .orgName(game.getOrganization() != null ? game.getOrganization().getName() : null)
-                .build();
+        return new GameResponse(
+                game.getId(),
+                game.getName(),
+                game.getDescription(),
+                game.getStartDate(),
+                game.getEndDate(),
+                game.getStatus().name(),
+                game.getCreatedBy().getId(),
+                operatorIds,
+                game.getUniformAssignment(),
+                game.getBroadcastEnabled(),
+                game.getBroadcastCode(),
+                game.getTileSource(),
+                game.getUnlockTrigger().name(),
+                game.getOrganization() != null ? game.getOrganization().getId() : null,
+                game.getOrganization() != null ? game.getOrganization().getName() : null
+        );
     }
 }

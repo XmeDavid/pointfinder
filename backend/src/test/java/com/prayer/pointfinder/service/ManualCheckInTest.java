@@ -37,11 +37,11 @@ class ManualCheckInTest extends IntegrationTestBase {
         CheckInResponse response = teamService.operatorCheckIn(game.getId(), team.getId(), base.getId());
 
         assertNotNull(response);
-        assertEquals(base.getId(), response.getBaseId());
+        assertEquals(base.getId(), response.baseId());
         // P1 Phase 4 W4: CheckInResponse no longer carries baseName.
         // Operators identify the rescued base by baseId (they triggered
         // the rescue from a screen that already knew the base).
-        assertNotNull(response.getCheckedInAt());
+        assertNotNull(response.checkedInAt());
 
         // Verify persisted
         assertTrue(checkInRepository.existsByTeamIdAndBaseId(team.getId(), base.getId()));
@@ -66,7 +66,7 @@ class ManualCheckInTest extends IntegrationTestBase {
         CheckInResponse first = teamService.operatorCheckIn(game.getId(), team.getId(), base.getId());
         CheckInResponse second = teamService.operatorCheckIn(game.getId(), team.getId(), base.getId());
 
-        assertEquals(first.getCheckInId(), second.getCheckInId());
+        assertEquals(first.checkInId(), second.checkInId());
         assertEquals(1, checkInRepository.findByTeamId(team.getId()).size());
 
         org.springframework.security.core.context.SecurityContextHolder.clearContext();

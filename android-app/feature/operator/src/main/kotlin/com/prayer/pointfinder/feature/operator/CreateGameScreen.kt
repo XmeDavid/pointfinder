@@ -230,7 +230,7 @@ fun CreateGameScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             Icons.Default.CheckCircle,
-                            contentDescription = "File loaded",
+                            contentDescription = stringResource(R.string.label_file_loaded),
                             tint = Color(0xFF2E7D32),
                             modifier = Modifier.size(20.dp),
                         )

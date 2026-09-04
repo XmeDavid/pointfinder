@@ -112,7 +112,7 @@ class OperatorRescueEndpointsTest extends IntegrationTestBase {
                 ctx.game.getId(), ctx.team.getId(), ctx.base.getId(), request);
 
         assertNotNull(response);
-        Submission saved = submissionRepository.findById(response.getId()).orElseThrow();
+        Submission saved = submissionRepository.findById(response.id()).orElseThrow();
         assertEquals(SubmissionStatus.approved, saved.getStatus());
         assertEquals(ctx.challenge.getPoints(), saved.getPoints(),
                 "default points must equal challenge.points");
@@ -264,7 +264,7 @@ class OperatorRescueEndpointsTest extends IntegrationTestBase {
         SubmissionResponse response = submissionService.markCompletedByOperator(
                 ctx.game.getId(), ctx.team.getId(), ctx.base.getId(), request);
 
-        Submission saved = submissionRepository.findById(response.getId()).orElseThrow();
+        Submission saved = submissionRepository.findById(response.id()).orElseThrow();
         assertEquals(50, saved.getPoints(),
                 "pointsOverride must win over challenge.points");
         assertEquals("Partial credit — video was incomplete but effort was clear",
@@ -332,7 +332,7 @@ class OperatorRescueEndpointsTest extends IntegrationTestBase {
 
         SubmissionResponse response = submissionService.markCompletedByOperator(
                 ctx.game.getId(), ctx.team.getId(), ctx.base.getId(), request);
-        Submission saved = submissionRepository.findById(response.getId()).orElseThrow();
+        Submission saved = submissionRepository.findById(response.id()).orElseThrow();
         assertEquals("Team's phone died mid-upload", saved.getOperatorReason());
     }
 
@@ -354,12 +354,12 @@ class OperatorRescueEndpointsTest extends IntegrationTestBase {
         BaseUnlockOverrideResponse response = baseUnlockOverrideService.createOverride(
                 ctx.game.getId(), ctx.team.getId(), ctx.hiddenBase.getId(), request);
         assertNotNull(response);
-        assertNotNull(response.getId());
-        assertEquals(ctx.team.getId(), response.getTeamId());
-        assertEquals(ctx.hiddenBase.getId(), response.getBaseId());
-        assertEquals(ctx.operator.getId(), response.getCreatedByOperatorId());
-        assertEquals(ctx.operator.getName(), response.getCreatedByDisplayName());
-        assertEquals("GPS rain-out; letting them attempt the hidden base", response.getReason());
+        assertNotNull(response.id());
+        assertEquals(ctx.team.getId(), response.teamId());
+        assertEquals(ctx.hiddenBase.getId(), response.baseId());
+        assertEquals(ctx.operator.getId(), response.createdByOperatorId());
+        assertEquals(ctx.operator.getName(), response.createdByDisplayName());
+        assertEquals("GPS rain-out; letting them attempt the hidden base", response.reason());
 
         // Target team sees the hidden base in its progress.
         authenticateAsPlayer(ctx.player);
@@ -441,7 +441,7 @@ class OperatorRescueEndpointsTest extends IntegrationTestBase {
         BaseUnlockOverrideResponse second = baseUnlockOverrideService.createOverride(
                 ctx.game.getId(), ctx.team.getId(), ctx.hiddenBase.getId(), null);
 
-        assertNotEquals(first.getId(), second.getId(),
+        assertNotEquals(first.id(), second.id(),
                 "create after soft-delete must produce a NEW row, not revive the deleted one");
 
         // Total rows for this pair = 2 (the deleted history row + the fresh one).
@@ -462,7 +462,7 @@ class OperatorRescueEndpointsTest extends IntegrationTestBase {
         BaseUnlockOverrideResponse second = baseUnlockOverrideService.createOverride(
                 ctx.game.getId(), ctx.team.getId(), ctx.hiddenBase.getId(), null);
 
-        assertEquals(first.getId(), second.getId(),
+        assertEquals(first.id(), second.id(),
                 "duplicate create on the same active pair must return the existing row");
 
         long activeRows = baseUnlockOverrideRepository
@@ -504,7 +504,7 @@ class OperatorRescueEndpointsTest extends IntegrationTestBase {
         BaseUnlockOverrideResponse response = baseUnlockOverrideService.createOverride(
                 ctx.game.getId(), ctx.team.getId(), ctx.hiddenBase.getId(), null);
 
-        BaseUnlockOverride saved = baseUnlockOverrideRepository.findById(response.getId()).orElseThrow();
+        BaseUnlockOverride saved = baseUnlockOverrideRepository.findById(response.id()).orElseThrow();
         assertEquals(ctx.operator.getId(), saved.getCreatedByOperator().getId());
         assertEquals(ctx.operator.getName(), saved.getCreatedByDisplayNameSnapshot());
         assertNotNull(saved.getCreatedAt());
@@ -538,7 +538,7 @@ class OperatorRescueEndpointsTest extends IntegrationTestBase {
         List<BaseUnlockOverrideResponse> listing = baseUnlockOverrideService
                 .listActiveForTeam(ctx.game.getId(), ctx.team.getId());
         assertEquals(1, listing.size());
-        assertEquals(ctx.hiddenBase.getId(), listing.get(0).getBaseId());
+        assertEquals(ctx.hiddenBase.getId(), listing.get(0).baseId());
     }
 
     @Test

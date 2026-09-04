@@ -32,11 +32,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.prayer.pointfinder.core.designsystem.PFColors
+import com.prayer.pointfinder.core.i18n.R
 import com.prayer.pointfinder.core.designsystem.PFDimensionToken
 import com.prayer.pointfinder.core.designsystem.PFSpacingToken
 
@@ -74,7 +76,7 @@ internal fun SetupReadinessPanel(
                 Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(PFSpacingToken.Space2)) {
                     Icon(
                         imageVector = if (item.ready) Icons.Default.CheckCircle else Icons.Default.Warning,
-                        contentDescription = if (item.ready) "Ready" else "Attention needed", // TODO: Extract to string resources
+                        contentDescription = if (item.ready) stringResource(R.string.cd_checklist_ready) else stringResource(R.string.cd_checklist_attention),
                         tint = if (item.ready) operatorToneColor(OperatorTone.SUCCESS) else accent,
                         modifier = Modifier.size(20.dp),
                     )
@@ -109,7 +111,7 @@ internal fun SetupSpatialSummary(
     ) {
         Column(modifier = Modifier.padding(PFSpacingToken.Space4), verticalArrangement = Arrangement.spacedBy(PFSpacingToken.Space3)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(PFSpacingToken.Space2)) {
-                Icon(Icons.Default.LocationOn, contentDescription = "Map location", tint = tint) // TODO: Extract to string resources
+                Icon(Icons.Default.LocationOn, contentDescription = stringResource(R.string.cd_map_location), tint = tint)
                 Column(modifier = Modifier.weight(1f)) {
                     Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -152,7 +154,7 @@ internal fun SetupResourceRow(
             Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
             OperatorStatusBadge(value, tone)
             Spacer(Modifier.width(PFSpacingToken.Space1))
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Navigate", tint = MaterialTheme.colorScheme.onSurfaceVariant) // TODO: Extract to string resources
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(R.string.cd_navigate), tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -166,7 +168,7 @@ internal fun SetupLaunchButton(label: String, enabled: Boolean, onClick: () -> U
         colors = ButtonDefaults.buttonColors(containerColor = success),
         modifier = modifier.fillMaxWidth().heightIn(min = 52.dp).testTag("game-activate-btn"),
     ) {
-        Icon(Icons.Default.PlayArrow, contentDescription = null)
+        Icon(Icons.Default.PlayArrow, contentDescription = stringResource(R.string.cd_activate_game))
         Spacer(Modifier.width(PFSpacingToken.Space2))
         Text(label, fontWeight = FontWeight.Bold)
     }

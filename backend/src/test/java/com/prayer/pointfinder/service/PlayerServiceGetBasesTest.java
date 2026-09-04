@@ -114,11 +114,11 @@ class PlayerServiceGetBasesTest {
         List<PlayerBaseResponse> result = playerService.getBases(gameId, player);
 
         // The visible base must appear in results
-        assertTrue(result.stream().anyMatch(b -> b.getId().equals(visibleBase.getId())),
+        assertTrue(result.stream().anyMatch(b -> b.id().equals(visibleBase.getId())),
                 "Visible base should appear in results even when preceded by 500 hidden bases");
 
         // No hidden bases should appear
-        assertTrue(result.stream().noneMatch(b -> Boolean.TRUE.equals(b.getHidden())),
+        assertTrue(result.stream().noneMatch(b -> Boolean.TRUE.equals(b.hidden())),
                 "No hidden bases should be returned to players");
     }
 

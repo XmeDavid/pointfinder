@@ -1,5 +1,6 @@
 import { useMemo, useEffect, useState, useRef } from "react";
-import { Map as MapGL, Marker } from "react-map-gl/maplibre";
+import { Map as MapGL, Marker, Source, Layer } from "react-map-gl/maplibre";
+import type { LayerProps } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type {
   BroadcastBase,
@@ -8,12 +9,76 @@ import type {
   BroadcastProgress,
 } from "@/lib/api/broadcast";
 import { STATUS_COLORS, getAggregateStatusFlat, computeBounds } from "@/lib/map-utils";
-import { PinMarkerSvg, CircleDot } from "@/components/common/MapMarkers";
+import { PinMarkerSvg } from "@/components/common/MapMarkers";
 import { getResolvedStyleUrl, getDefaultCenter } from "@/lib/tile-sources";
 import type { MapRef } from "react-map-gl/maplibre";
 import { BroadcastPanel } from "@/components/broadcast/BroadcastPanel";
+import { lightColorValues } from "@/generated/colorValues";
 
 const STALE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
+
+// Cluster colors matching iOS/Android
+const CLUSTER_COLOR_SMALL = lightColorValues["status.checkedIn"];
+const CLUSTER_COLOR_MEDIUM = lightColorValues["action.primaryStrong"];
+const CLUSTER_COLOR_LARGE = lightColorValues["status.pending"];
+const CLUSTER_STROKE = "#ffffff";
+const STALE_STROKE = "#9ca3af";
+
+const BROADCAST_SOURCE_ID = "broadcast-team-locations";
+
+const broadcastClusterCircle: LayerProps = {
+  id: "broadcast-cluster-circle",
+  type: "circle",
+  filter: ["has", "point_count"],
+  paint: {
+    "circle-radius": ["step", ["get", "point_count"], 14, 5, 20, 10, 26],
+    "circle-color": [
+      "step",
+      ["get", "point_count"],
+      CLUSTER_COLOR_SMALL,
+      5,
+      CLUSTER_COLOR_MEDIUM,
+      10,
+      CLUSTER_COLOR_LARGE,
+    ],
+    "circle-stroke-width": 2,
+    "circle-stroke-color": CLUSTER_STROKE,
+  },
+};
+
+const broadcastClusterCount: LayerProps = {
+  id: "broadcast-cluster-count",
+  type: "symbol",
+  filter: ["has", "point_count"],
+  layout: {
+    "text-field": ["get", "point_count_abbreviated"],
+    "text-size": ["step", ["get", "point_count"], 10, 5, 11, 10, 13],
+    "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
+    "text-allow-overlap": true,
+    "text-ignore-placement": true,
+  },
+  paint: {
+    "text-color": "#ffffff",
+  },
+};
+
+const broadcastIndividualPoint: LayerProps = {
+  id: "broadcast-individual-point",
+  type: "circle",
+  filter: ["!", ["has", "point_count"]],
+  paint: {
+    "circle-radius": 7,
+    "circle-color": ["get", "color"],
+    "circle-opacity": ["case", ["==", ["get", "stale"], true], 0.4, 0.9],
+    "circle-stroke-width": 2,
+    "circle-stroke-color": [
+      "case",
+      ["==", ["get", "stale"], true],
+      STALE_STROKE,
+      CLUSTER_STROKE,
+    ],
+  },
+};
 
 interface Props {
   bases: BroadcastBase[];
@@ -85,6 +150,29 @@ export function BroadcastMap({ bases, teams, locations, progress, tileSource }: 
     return () => clearInterval(interval);
   }, []);
 
+  const teamLocationGeojson = useMemo((): GeoJSON.FeatureCollection => {
+    const features: GeoJSON.Feature<GeoJSON.Point>[] = [];
+    for (const loc of latestByTeam) {
+      const team = teamMap.get(loc.teamId);
+      if (!team) continue;
+      const isStale = now - (Date.parse(loc.updatedAt) || 0) > STALE_THRESHOLD_MS;
+      features.push({
+        type: "Feature",
+        properties: {
+          teamId: loc.teamId,
+          teamName: team.name,
+          color: team.color || CLUSTER_COLOR_SMALL,
+          stale: isStale,
+        },
+        geometry: {
+          type: "Point",
+          coordinates: [loc.lng, loc.lat],
+        },
+      });
+    }
+    return { type: "FeatureCollection", features };
+  }, [latestByTeam, teamMap, now]);
+
   return (
     <BroadcastPanel className="h-full" contentClassName="p-0">
       <MapGL
@@ -110,17 +198,18 @@ export function BroadcastMap({ bases, teams, locations, progress, tileSource }: 
           );
         })}
 
-        {latestByTeam.map((loc) => {
-          const team = teamMap.get(loc.teamId);
-          if (!team) return null;
-          const isStale = now - (Date.parse(loc.updatedAt) || 0) > STALE_THRESHOLD_MS;
-
-          return (
-            <Marker key={`team-${loc.teamId}`} longitude={loc.lng} latitude={loc.lat} anchor="center">
-              <CircleDot color={team.color} stale={isStale} />
-            </Marker>
-          );
-        })}
+        <Source
+          id={BROADCAST_SOURCE_ID}
+          type="geojson"
+          data={teamLocationGeojson}
+          cluster={true}
+          clusterRadius={50}
+          clusterMaxZoom={14}
+        >
+          <Layer {...broadcastClusterCircle} />
+          <Layer {...broadcastClusterCount} />
+          <Layer {...broadcastIndividualPoint} />
+        </Source>
       </MapGL>
     </BroadcastPanel>
   );

@@ -60,14 +60,16 @@ class InviteControllerTest {
 
     @Test
     void getGlobalInvitesReturns200WithList() throws Exception {
-        InviteResponse invite = InviteResponse.builder()
-                .id(INVITE_ID)
-                .email("scout@test.com")
-                .status("pending")
-                .invitedBy(INVITER_ID)
-                .inviterName("Admin")
-                .createdAt(Instant.now())
-                .build();
+        InviteResponse invite = new InviteResponse(
+                INVITE_ID,
+                null,
+                null,
+                "scout@test.com",
+                "pending",
+                INVITER_ID,
+                "Admin",
+                Instant.now()
+        );
 
         when(inviteService.getGlobalInvites()).thenReturn(List.of(invite));
 
@@ -92,16 +94,16 @@ class InviteControllerTest {
 
     @Test
     void getGameInvitesReturns200() throws Exception {
-        InviteResponse invite = InviteResponse.builder()
-                .id(INVITE_ID)
-                .gameId(GAME_ID)
-                .gameName("Scout Rally")
-                .email("scout@test.com")
-                .status("pending")
-                .invitedBy(INVITER_ID)
-                .inviterName("Admin")
-                .createdAt(Instant.now())
-                .build();
+        InviteResponse invite = new InviteResponse(
+                INVITE_ID,
+                GAME_ID,
+                "Scout Rally",
+                "scout@test.com",
+                "pending",
+                INVITER_ID,
+                "Admin",
+                Instant.now()
+        );
 
         when(inviteService.getGameInvites(GAME_ID)).thenReturn(List.of(invite));
 
@@ -115,16 +117,16 @@ class InviteControllerTest {
 
     @Test
     void getMyInvitesReturns200() throws Exception {
-        InviteResponse invite = InviteResponse.builder()
-                .id(INVITE_ID)
-                .gameId(GAME_ID)
-                .gameName("Scout Rally")
-                .email("me@test.com")
-                .status("pending")
-                .invitedBy(INVITER_ID)
-                .inviterName("Admin")
-                .createdAt(Instant.now())
-                .build();
+        InviteResponse invite = new InviteResponse(
+                INVITE_ID,
+                GAME_ID,
+                "Scout Rally",
+                "me@test.com",
+                "pending",
+                INVITER_ID,
+                "Admin",
+                Instant.now()
+        );
 
         when(inviteService.getMyInvites()).thenReturn(List.of(invite));
 
@@ -140,14 +142,16 @@ class InviteControllerTest {
         CreateInviteRequest request = new CreateInviteRequest();
         request.setEmail("new@test.com");
 
-        InviteResponse response = InviteResponse.builder()
-                .id(INVITE_ID)
-                .email("new@test.com")
-                .status("pending")
-                .invitedBy(INVITER_ID)
-                .inviterName("Admin")
-                .createdAt(Instant.now())
-                .build();
+        InviteResponse response = new InviteResponse(
+                INVITE_ID,
+                null,
+                null,
+                "new@test.com",
+                "pending",
+                INVITER_ID,
+                "Admin",
+                Instant.now()
+        );
 
         when(inviteService.createInvite(any(CreateInviteRequest.class), nullable(String.class))).thenReturn(response);
 
@@ -166,16 +170,16 @@ class InviteControllerTest {
         request.setEmail("scout@test.com");
         request.setGameId(GAME_ID);
 
-        InviteResponse response = InviteResponse.builder()
-                .id(INVITE_ID)
-                .gameId(GAME_ID)
-                .gameName("Scout Rally")
-                .email("scout@test.com")
-                .status("pending")
-                .invitedBy(INVITER_ID)
-                .inviterName("Admin")
-                .createdAt(Instant.now())
-                .build();
+        InviteResponse response = new InviteResponse(
+                INVITE_ID,
+                GAME_ID,
+                "Scout Rally",
+                "scout@test.com",
+                "pending",
+                INVITER_ID,
+                "Admin",
+                Instant.now()
+        );
 
         when(inviteService.createInvite(any(CreateInviteRequest.class), nullable(String.class))).thenReturn(response);
 

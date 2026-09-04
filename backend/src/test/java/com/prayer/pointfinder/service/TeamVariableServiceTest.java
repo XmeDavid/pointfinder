@@ -111,7 +111,7 @@ class TeamVariableServiceTest {
         TeamVariablesResponse response = teamVariableService.getGameVariables(gameId);
 
         verify(gameAccessService).ensureCurrentUserCanAccessGame(gameId);
-        assertTrue(response.getVariables().isEmpty());
+        assertTrue(response.variables().isEmpty());
     }
 
     @Test
@@ -126,11 +126,11 @@ class TeamVariableServiceTest {
         TeamVariablesResponse response = teamVariableService.getGameVariables(gameId);
 
         verify(gameAccessService).ensureCurrentUserCanAccessGame(gameId);
-        assertEquals(1, response.getVariables().size());
-        TeamVariablesResponse.VariableDefinition def = response.getVariables().get(0);
-        assertEquals("city", def.getKey());
-        assertEquals("Lisbon", def.getTeamValues().get(teamId1));
-        assertEquals("Porto", def.getTeamValues().get(teamId2));
+        assertEquals(1, response.variables().size());
+        TeamVariablesResponse.VariableDefinition def = response.variables().get(0);
+        assertEquals("city", def.key());
+        assertEquals("Lisbon", def.teamValues().get(teamId1));
+        assertEquals("Porto", def.teamValues().get(teamId2));
     }
 
     @Test
@@ -144,9 +144,9 @@ class TeamVariableServiceTest {
 
         TeamVariablesResponse response = teamVariableService.getGameVariables(gameId);
 
-        assertEquals(2, response.getVariables().size());
-        List<String> keys = response.getVariables().stream()
-                .map(TeamVariablesResponse.VariableDefinition::getKey).toList();
+        assertEquals(2, response.variables().size());
+        List<String> keys = response.variables().stream()
+                .map(TeamVariablesResponse.VariableDefinition::key).toList();
         assertTrue(keys.contains("city"));
         assertTrue(keys.contains("code"));
     }
@@ -307,7 +307,7 @@ class TeamVariableServiceTest {
         TeamVariablesResponse response = teamVariableService.getChallengeVariables(gameId, challengeId);
 
         verify(gameAccessService).ensureCurrentUserCanAccessGame(gameId);
-        assertTrue(response.getVariables().isEmpty());
+        assertTrue(response.variables().isEmpty());
     }
 
     @Test
@@ -323,11 +323,11 @@ class TeamVariableServiceTest {
 
         TeamVariablesResponse response = teamVariableService.getChallengeVariables(gameId, challengeId);
 
-        assertEquals(1, response.getVariables().size());
-        TeamVariablesResponse.VariableDefinition def = response.getVariables().get(0);
-        assertEquals("hint", def.getKey());
-        assertEquals("Look up", def.getTeamValues().get(teamId1));
-        assertEquals("Look down", def.getTeamValues().get(teamId2));
+        assertEquals(1, response.variables().size());
+        TeamVariablesResponse.VariableDefinition def = response.variables().get(0);
+        assertEquals("hint", def.key());
+        assertEquals("Look up", def.teamValues().get(teamId1));
+        assertEquals("Look down", def.teamValues().get(teamId2));
     }
 
     @Test

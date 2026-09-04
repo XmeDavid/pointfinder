@@ -14,13 +14,13 @@ public final class NotificationMapper {
     }
 
     public static NotificationResponse toResponse(GameNotification n) {
-        return NotificationResponse.builder()
-                .id(n.getId())
-                .gameId(n.getGame().getId())
-                .message(n.getMessage())
-                .targetTeamId(n.getTargetTeam() != null ? n.getTargetTeam().getId() : null)
-                .sentAt(n.getSentAt())
-                .sentBy(n.getSentBy() != null ? n.getSentBy().getId() : null)
-                .build();
+        return new NotificationResponse(
+                n.getId(),
+                n.getGame().getId(),
+                n.getMessage(),
+                n.getTargetTeam() != null ? n.getTargetTeam().getId() : null,
+                n.getSentAt(),
+                n.getSentBy() != null ? n.getSentBy().getId() : null
+        );
     }
 }

@@ -90,7 +90,7 @@ class AuditFoundationTest extends IntegrationTestBase {
 
         assertNotNull(response);
 
-        CheckIn persisted = checkInRepository.findById(response.getCheckInId()).orElseThrow();
+        CheckIn persisted = checkInRepository.findById(response.checkInId()).orElseThrow();
         assertEquals(ctx.player.getId(), persisted.getPlayer().getId());
         assertNull(persisted.getActorOperatorUser(), "player check-in must not populate operator actor");
         assertEquals(ctx.player.getDeviceId(), persisted.getActorDeviceIdSnapshot());
@@ -131,7 +131,7 @@ class AuditFoundationTest extends IntegrationTestBase {
         request.setIdempotencyKey(UUID.randomUUID());
         SubmissionResponse response = submissionService.createSubmission(ctx.game.getId(), request);
 
-        Submission submission = submissionRepository.findById(response.getId()).orElseThrow();
+        Submission submission = submissionRepository.findById(response.id()).orElseThrow();
         assertNotNull(submission.getSubmittedByPlayer(), "player submission must record submittedByPlayer");
         assertEquals(ctx.player.getId(), submission.getSubmittedByPlayer().getId());
         assertEquals(ctx.player.getDisplayName(), submission.getSubmittedByDisplayNameSnapshot());
@@ -163,7 +163,7 @@ class AuditFoundationTest extends IntegrationTestBase {
         CheckInResponse response = teamService.operatorCheckIn(
                 ctx.game.getId(), ctx.team.getId(), ctx.base.getId(), "Player phone broke");
 
-        CheckIn persisted = checkInRepository.findById(response.getCheckInId()).orElseThrow();
+        CheckIn persisted = checkInRepository.findById(response.checkInId()).orElseThrow();
         assertNull(persisted.getPlayer(), "manual check-in must not link a player");
         assertNotNull(persisted.getActorOperatorUser());
         assertEquals(ctx.operator.getId(), persisted.getActorOperatorUser().getId());
@@ -192,7 +192,7 @@ class AuditFoundationTest extends IntegrationTestBase {
         CheckInResponse response = teamService.operatorCheckIn(
                 ctx.game.getId(), ctx.team.getId(), ctx.base.getId(), null);
 
-        CheckIn persisted = checkInRepository.findById(response.getCheckInId()).orElseThrow();
+        CheckIn persisted = checkInRepository.findById(response.checkInId()).orElseThrow();
         assertEquals("operator_rescue", persisted.getSourceSurface());
         assertNull(persisted.getOperatorReason());
         assertEquals(ctx.operator.getId(), persisted.getActorOperatorUser().getId());
@@ -209,7 +209,7 @@ class AuditFoundationTest extends IntegrationTestBase {
         CheckInResponse response = teamService.operatorCheckIn(
                 ctx.game.getId(), ctx.team.getId(), ctx.base.getId());
 
-        CheckIn persisted = checkInRepository.findById(response.getCheckInId()).orElseThrow();
+        CheckIn persisted = checkInRepository.findById(response.checkInId()).orElseThrow();
         assertEquals("operator_rescue", persisted.getSourceSurface());
         assertNull(persisted.getOperatorReason());
         assertEquals(ctx.operator.getId(), persisted.getActorOperatorUser().getId());

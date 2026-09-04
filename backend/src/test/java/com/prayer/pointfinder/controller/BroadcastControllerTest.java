@@ -51,26 +51,24 @@ class BroadcastControllerTest {
 
     @Test
     void getBroadcastDataReturns200() throws Exception {
-        BroadcastDataResponse response = BroadcastDataResponse.builder()
-                .gameId(GAME_ID)
-                .gameName("Scout Rally")
-                .gameStatus("live")
-                .tileSource("osm-classic")
-                .leaderboard(List.of())
-                .teams(List.of(BroadcastTeamResponse.builder()
-                        .id(TEAM_ID)
-                        .name("Eagles")
-                        .color("#FF0000")
-                        .build()))
-                .bases(List.of(BroadcastBaseResponse.builder()
-                        .id(BASE_ID)
-                        .name("Base Alpha")
-                        .lat(47.3769)
-                        .lng(8.5417)
-                        .build()))
-                .locations(List.of())
-                .progress(List.of())
-                .build();
+        BroadcastDataResponse response = new BroadcastDataResponse(
+                GAME_ID,
+                "Scout Rally",
+                "live",
+                "osm-classic",
+                List.of(),
+                List.of(new BroadcastTeamResponse(
+                        TEAM_ID,
+                        "Eagles",
+                        "#FF0000")),
+                List.of(new BroadcastBaseResponse(
+                        BASE_ID,
+                        "Base Alpha",
+                        47.3769,
+                        8.5417)),
+                List.of(),
+                List.of()
+        );
 
         when(broadcastService.getBroadcastData(BROADCAST_CODE)).thenReturn(response);
 
@@ -89,11 +87,11 @@ class BroadcastControllerTest {
 
     @Test
     void getBroadcastDataPassesCodeToService() throws Exception {
-        BroadcastDataResponse response = BroadcastDataResponse.builder()
-                .gameId(GAME_ID).gameName("G").gameStatus("live")
-                .leaderboard(List.of()).teams(List.of()).bases(List.of())
-                .locations(List.of()).progress(List.of())
-                .build();
+        BroadcastDataResponse response = new BroadcastDataResponse(
+                GAME_ID, "G", "live", null,
+                List.of(), List.of(), List.of(),
+                List.of(), List.of()
+        );
 
         when(broadcastService.getBroadcastData("XYZ999")).thenReturn(response);
 
@@ -118,16 +116,17 @@ class BroadcastControllerTest {
     @Test
     void getBroadcastDataCodeIsUppercased() throws Exception {
         // The service handles toUpperCase() internally, so controller passes code as-is
-        BroadcastDataResponse response = BroadcastDataResponse.builder()
-                .gameId(GAME_ID)
-                .gameName("Scout Rally")
-                .gameStatus("live")
-                .leaderboard(List.of())
-                .teams(List.of())
-                .bases(List.of())
-                .locations(List.of())
-                .progress(List.of())
-                .build();
+        BroadcastDataResponse response = new BroadcastDataResponse(
+                GAME_ID,
+                "Scout Rally",
+                "live",
+                null,
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of()
+        );
 
         when(broadcastService.getBroadcastData("abc123")).thenReturn(response);
 
@@ -143,13 +142,12 @@ class BroadcastControllerTest {
 
     @Test
     void getLeaderboardReturns200WithEntries() throws Exception {
-        LeaderboardEntry entry = LeaderboardEntry.builder()
-                .teamId(TEAM_ID)
-                .teamName("Eagles")
-                .color("#FF0000")
-                .points(500)
-                .completedChallenges(3)
-                .build();
+        LeaderboardEntry entry = new LeaderboardEntry(
+                TEAM_ID,
+                "Eagles",
+                "#FF0000",
+                500,
+                3);
 
         when(broadcastService.getLeaderboard(BROADCAST_CODE)).thenReturn(List.of(entry));
 
@@ -185,10 +183,10 @@ class BroadcastControllerTest {
     @Test
     void getLeaderboardReturnsEntriesInResponseOrder() throws Exception {
         // Verify the controller does not re-sort — it returns whatever the service returns
-        LeaderboardEntry first = LeaderboardEntry.builder()
-                .teamId(UUID.randomUUID()).teamName("Alpha").color("#111").points(300).completedChallenges(2).build();
-        LeaderboardEntry second = LeaderboardEntry.builder()
-                .teamId(UUID.randomUUID()).teamName("Beta").color("#222").points(200).completedChallenges(1).build();
+        LeaderboardEntry first = new LeaderboardEntry(
+                UUID.randomUUID(), "Alpha", "#111", 300, 2);
+        LeaderboardEntry second = new LeaderboardEntry(
+                UUID.randomUUID(), "Beta", "#222", 200, 1);
 
         when(broadcastService.getLeaderboard(BROADCAST_CODE)).thenReturn(List.of(first, second));
 
@@ -203,14 +201,14 @@ class BroadcastControllerTest {
     @Test
     void getLocationsReturns200WithList() throws Exception {
         UUID playerId = UUID.randomUUID();
-        TeamLocationResponse location = TeamLocationResponse.builder()
-                .teamId(TEAM_ID)
-                .playerId(playerId)
-                .displayName("Scout")
-                .lat(47.3769)
-                .lng(8.5417)
-                .updatedAt(Instant.now())
-                .build();
+        TeamLocationResponse location = new TeamLocationResponse(
+                TEAM_ID,
+                playerId,
+                "Scout",
+                47.3769,
+                8.5417,
+                Instant.now()
+        );
 
         when(broadcastService.getLocations(BROADCAST_CODE)).thenReturn(List.of(location));
 
@@ -247,12 +245,14 @@ class BroadcastControllerTest {
 
     @Test
     void getProgressReturns200WithList() throws Exception {
-        TeamBaseProgressResponse progress = TeamBaseProgressResponse.builder()
-                .baseId(BASE_ID)
-                .teamId(TEAM_ID)
-                .status("checked_in")
-                .checkedInAt(Instant.now())
-                .build();
+        TeamBaseProgressResponse progress = new TeamBaseProgressResponse(
+                BASE_ID,
+                TEAM_ID,
+                "checked_in",
+                Instant.now(),
+                null,
+                null
+        );
 
         when(broadcastService.getProgress(BROADCAST_CODE)).thenReturn(List.of(progress));
 

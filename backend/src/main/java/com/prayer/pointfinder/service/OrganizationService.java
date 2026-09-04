@@ -127,17 +127,17 @@ public class OrganizationService {
 
     private OrgResponse toResponse(Organization org) {
         int memberCount = membershipRepository.countByOrganizationId(org.getId());
-        return OrgResponse.builder()
-            .id(org.getId())
-            .name(org.getName())
-            .slug(org.getSlug())
-            .createdBy(org.getCreatedBy().getId())
-            .subscriptionTier(org.getSubscriptionTier().name())
-            .subscriptionStatus(org.getSubscriptionStatus().name())
-            .memberCount(memberCount)
-            .quotaOverrides(org.getQuotaOverrides())
-            .createdAt(org.getCreatedAt())
-            .build();
+        return new OrgResponse(
+            org.getId(),
+            org.getName(),
+            org.getSlug(),
+            org.getCreatedBy().getId(),
+            org.getSubscriptionTier().name(),
+            org.getSubscriptionStatus().name(),
+            memberCount,
+            org.getQuotaOverrides(),
+            org.getCreatedAt()
+        );
     }
 
     private String generateUniqueSlug(String name) {

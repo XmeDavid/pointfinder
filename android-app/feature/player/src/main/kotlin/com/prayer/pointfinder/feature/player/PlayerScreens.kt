@@ -221,7 +221,7 @@ private fun SyncStatusPill(
             if (isOffline) {
                 Icon(
                     imageVector = Icons.Default.WifiOff,
-                    contentDescription = "Offline",
+                    contentDescription = stringResource(R.string.cd_offline),
                     tint = Color.White,
                     modifier = Modifier.size(14.dp),
                 )

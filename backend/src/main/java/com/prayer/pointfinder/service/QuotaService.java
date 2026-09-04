@@ -54,16 +54,14 @@ public class QuotaService {
             user.getId(), List.of(GameStatus.setup, GameStatus.live));
         long currentResourceBytes = resourceRepository.sumSizeBytesByCreatedByIdAndOrganizationIsNull(user.getId());
 
-        return QuotaResponse.builder()
-            .context("personal")
-            .tier(sub.getTier().name())
-            .limits(limits)
-            .usage(QuotaResponse.Usage.builder()
-                .currentActiveGames((int) activeGames)
-                .currentResourceStorageBytes(currentResourceBytes)
-                .build())
-            .overrides(sub.getQuotaOverrides())
-            .build();
+        return new QuotaResponse(
+            "personal",
+            null,
+            sub.getTier().name(),
+            limits,
+            new QuotaResponse.Usage(
+                (int) activeGames, null, null, currentResourceBytes),
+            sub.getQuotaOverrides());
     }
 
     @Transactional(readOnly = true)
@@ -83,20 +81,16 @@ public class QuotaService {
         long liveGames = gameRepository.countByOrganizationIdAndStatus(orgId, GameStatus.live);
         long currentResourceBytes = resourceRepository.sumSizeBytesByOrganizationId(orgId);
 
-        return QuotaResponse.builder()
-            .context("org")
-            .orgId(orgId)
-            .tier(org.getSubscriptionTier().name())
-            .limits(limits)
-            .usage(QuotaResponse.Usage.builder()
-                .currentActiveGames((int) (gameRepository.countByOrganizationIdAndStatusIn(
-                    orgId, List.of(GameStatus.setup, GameStatus.live))))
-                .currentMembers(memberCount)
-                .currentLiveGames((int) liveGames)
-                .currentResourceStorageBytes(currentResourceBytes)
-                .build())
-            .overrides(org.getQuotaOverrides())
-            .build();
+        return new QuotaResponse(
+            "org",
+            orgId,
+            org.getSubscriptionTier().name(),
+            limits,
+            new QuotaResponse.Usage(
+                (int) (gameRepository.countByOrganizationIdAndStatusIn(
+                    orgId, List.of(GameStatus.setup, GameStatus.live))),
+                memberCount, (int) liveGames, currentResourceBytes),
+            org.getQuotaOverrides());
     }
 
     // --- Enforcement ---
@@ -118,7 +112,7 @@ public class QuotaService {
 
     public void enforceOrgLiveGameLimit(Organization org) {
         if (!enforcementEnabled) return;
-        Integer max = resolveOrgLimits(org).getMaxLiveGames();
+        Integer max = resolveOrgLimits(org).maxLiveGames();
         if (max == null) return;
 
         long current = gameRepository.countByOrganizationIdAndStatus(org.getId(), GameStatus.live);
@@ -131,10 +125,10 @@ public class QuotaService {
         if (!enforcementEnabled) return;
         Integer max;
         if (game.getOrganization() != null) {
-            max = resolveOrgLimits(game.getOrganization()).getMaxBasesPerGame();
+            max = resolveOrgLimits(game.getOrganization()).maxBasesPerGame();
         } else {
             UserSubscription sub = userSubRepository.findByUserId(game.getCreatedBy().getId()).orElse(null);
-            max = resolvePersonalLimits(sub).getMaxBasesPerGame();
+            max = resolvePersonalLimits(sub).maxBasesPerGame();
         }
         if (max == null) return;
 
@@ -148,10 +142,10 @@ public class QuotaService {
         if (!enforcementEnabled) return;
         Integer max;
         if (game.getOrganization() != null) {
-            max = resolveOrgLimits(game.getOrganization()).getMaxOperatorsPerGame();
+            max = resolveOrgLimits(game.getOrganization()).maxOperatorsPerGame();
         } else {
             UserSubscription sub = userSubRepository.findByUserId(game.getCreatedBy().getId()).orElse(null);
-            max = resolvePersonalLimits(sub).getMaxOperatorsPerGame();
+            max = resolvePersonalLimits(sub).maxOperatorsPerGame();
         }
         if (max == null) return;
 
@@ -165,10 +159,10 @@ public class QuotaService {
         if (!enforcementEnabled) return;
         Integer max;
         if (game.getOrganization() != null) {
-            max = resolveOrgLimits(game.getOrganization()).getMaxPlayersPerGame();
+            max = resolveOrgLimits(game.getOrganization()).maxPlayersPerGame();
         } else {
             UserSubscription sub = userSubRepository.findByUserId(game.getCreatedBy().getId()).orElse(null);
-            max = resolvePersonalLimits(sub).getMaxPlayersPerGame();
+            max = resolvePersonalLimits(sub).maxPlayersPerGame();
         }
         if (max == null) return;
 
@@ -180,15 +174,15 @@ public class QuotaService {
 
     public int getMaxMembers(Organization org) {
         QuotaResponse.Limits limits = resolveOrgLimits(org);
-        return limits.getMaxMembers() != null ? limits.getMaxMembers() : Integer.MAX_VALUE;
+        return limits.maxMembers() != null ? limits.maxMembers() : Integer.MAX_VALUE;
     }
 
     public long getMaxFileSizeBytes(Game game) {
         if (game.getOrganization() != null) {
-            return resolveOrgLimits(game.getOrganization()).getMaxFileSizeBytes();
+            return resolveOrgLimits(game.getOrganization()).maxFileSizeBytes();
         }
         UserSubscription sub = userSubRepository.findByUserId(game.getCreatedBy().getId()).orElse(null);
-        return resolvePersonalLimits(sub).getMaxFileSizeBytes();
+        return resolvePersonalLimits(sub).maxFileSizeBytes();
     }
 
     public long getMaxResourceStorageBytes(Organization org) {
@@ -214,60 +208,60 @@ public class QuotaService {
 
     private QuotaResponse.Limits resolvePersonalLimits(UserSubscription sub) {
         if (sub == null || sub.getTier() == IndividualTier.free) {
-            return QuotaResponse.Limits.builder()
-                .maxActiveGames(getOverride(sub != null ? sub.getQuotaOverrides() : null, "max_active_games", 1))
-                .maxOperatorsPerGame(getOverride(sub != null ? sub.getQuotaOverrides() : null, "max_operators_per_game", 1))
-                .maxBasesPerGame(getOverride(sub != null ? sub.getQuotaOverrides() : null, "max_bases_per_game", 25))
-                .maxFileSizeBytes(getOverrideLong(sub != null ? sub.getQuotaOverrides() : null, "max_file_size_bytes", 100 * MB))
-                .maxResourceStorageBytes(getOverrideLong(sub != null ? sub.getQuotaOverrides() : null, "max_resource_storage_bytes", 0L))
-                .maxPlayersPerGame(getOverride(sub != null ? sub.getQuotaOverrides() : null, "max_players_per_game", 50))
-                .build();
+            return new QuotaResponse.Limits(
+                getOverride(sub != null ? sub.getQuotaOverrides() : null, "max_active_games", 1),
+                getOverride(sub != null ? sub.getQuotaOverrides() : null, "max_operators_per_game", 1),
+                getOverride(sub != null ? sub.getQuotaOverrides() : null, "max_bases_per_game", 25),
+                getOverrideLong(sub != null ? sub.getQuotaOverrides() : null, "max_file_size_bytes", 100 * MB),
+                null, null,
+                getOverrideLong(sub != null ? sub.getQuotaOverrides() : null, "max_resource_storage_bytes", 0L),
+                getOverride(sub != null ? sub.getQuotaOverrides() : null, "max_players_per_game", 50));
         }
         // Pro
-        return QuotaResponse.Limits.builder()
-            .maxActiveGames(getOverride(sub.getQuotaOverrides(), "max_active_games", null))
-            .maxOperatorsPerGame(getOverride(sub.getQuotaOverrides(), "max_operators_per_game", 5))
-            .maxBasesPerGame(getOverride(sub.getQuotaOverrides(), "max_bases_per_game", null))
-            .maxFileSizeBytes(getOverrideLong(sub.getQuotaOverrides(), "max_file_size_bytes", 2 * GB))
-            .maxResourceStorageBytes(getOverrideLong(sub.getQuotaOverrides(), "max_resource_storage_bytes", GB))
-            .maxPlayersPerGame(getOverride(sub.getQuotaOverrides(), "max_players_per_game", null))
-            .build();
+        return new QuotaResponse.Limits(
+            getOverride(sub.getQuotaOverrides(), "max_active_games", null),
+            getOverride(sub.getQuotaOverrides(), "max_operators_per_game", 5),
+            getOverride(sub.getQuotaOverrides(), "max_bases_per_game", null),
+            getOverrideLong(sub.getQuotaOverrides(), "max_file_size_bytes", 2 * GB),
+            null, null,
+            getOverrideLong(sub.getQuotaOverrides(), "max_resource_storage_bytes", GB),
+            getOverride(sub.getQuotaOverrides(), "max_players_per_game", null));
     }
 
     private QuotaResponse.Limits resolveOrgLimits(Organization org) {
         Map<String, Object> overrides = org.getQuotaOverrides();
         if (org.getSubscriptionTier() == OrgTier.high) {
-            return QuotaResponse.Limits.builder()
-                .maxMembers(getOverride(overrides, "max_members", 15))
-                .maxLiveGames(getOverride(overrides, "max_live_games", null))
-                .maxOperatorsPerGame(getOverride(overrides, "max_operators_per_game", null))
-                .maxBasesPerGame(getOverride(overrides, "max_bases_per_game", null))
-                .maxFileSizeBytes(getOverrideLong(overrides, "max_file_size_bytes", 2 * GB))
-                .maxResourceStorageBytes(getOverrideLong(overrides, "max_resource_storage_bytes", 25 * GB))
-                .maxPlayersPerGame(getOverride(overrides, "max_players_per_game", null))
-                .build();
+            return new QuotaResponse.Limits(
+                null,
+                getOverride(overrides, "max_operators_per_game", null),
+                getOverride(overrides, "max_bases_per_game", null),
+                getOverrideLong(overrides, "max_file_size_bytes", 2 * GB),
+                getOverride(overrides, "max_members", 15),
+                getOverride(overrides, "max_live_games", null),
+                getOverrideLong(overrides, "max_resource_storage_bytes", 25 * GB),
+                getOverride(overrides, "max_players_per_game", null));
         }
         if (org.getSubscriptionTier() == OrgTier.base) {
-            return QuotaResponse.Limits.builder()
-                .maxMembers(getOverride(overrides, "max_members", 10))
-                .maxLiveGames(getOverride(overrides, "max_live_games", 10))
-                .maxOperatorsPerGame(getOverride(overrides, "max_operators_per_game", null))
-                .maxBasesPerGame(getOverride(overrides, "max_bases_per_game", null))
-                .maxFileSizeBytes(getOverrideLong(overrides, "max_file_size_bytes", 2 * GB))
-                .maxResourceStorageBytes(getOverrideLong(overrides, "max_resource_storage_bytes", 5 * GB))
-                .maxPlayersPerGame(getOverride(overrides, "max_players_per_game", 200))
-                .build();
+            return new QuotaResponse.Limits(
+                null,
+                getOverride(overrides, "max_operators_per_game", null),
+                getOverride(overrides, "max_bases_per_game", null),
+                getOverrideLong(overrides, "max_file_size_bytes", 2 * GB),
+                getOverride(overrides, "max_members", 10),
+                getOverride(overrides, "max_live_games", 10),
+                getOverrideLong(overrides, "max_resource_storage_bytes", 5 * GB),
+                getOverride(overrides, "max_players_per_game", 200));
         }
         // Free tier — minimal limits for cancelled/downgraded orgs
-        return QuotaResponse.Limits.builder()
-            .maxMembers(getOverride(overrides, "max_members", 3))
-            .maxLiveGames(getOverride(overrides, "max_live_games", 1))
-            .maxOperatorsPerGame(getOverride(overrides, "max_operators_per_game", 1))
-            .maxBasesPerGame(getOverride(overrides, "max_bases_per_game", 25))
-            .maxFileSizeBytes(getOverrideLong(overrides, "max_file_size_bytes", 100 * MB))
-            .maxResourceStorageBytes(getOverrideLong(overrides, "max_resource_storage_bytes", 0L))
-            .maxPlayersPerGame(getOverride(overrides, "max_players_per_game", 50))
-            .build();
+        return new QuotaResponse.Limits(
+            null,
+            getOverride(overrides, "max_operators_per_game", 1),
+            getOverride(overrides, "max_bases_per_game", 25),
+            getOverrideLong(overrides, "max_file_size_bytes", 100 * MB),
+            getOverride(overrides, "max_members", 3),
+            getOverride(overrides, "max_live_games", 1),
+            getOverrideLong(overrides, "max_resource_storage_bytes", 0L),
+            getOverride(overrides, "max_players_per_game", 50));
     }
 
     private Integer getOverride(Map<String, Object> overrides, String key, Integer defaultValue) {

@@ -1,10 +1,6 @@
 package com.prayer.pointfinder.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -28,46 +24,42 @@ import java.util.UUID;
  * join on the actor FK and finally to the literal string {@code "Unknown"} if
  * no actor information is recoverable.
  */
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
 @JsonInclude(JsonInclude.Include.ALWAYS)
-public class AuditEntryDto {
+public record AuditEntryDto(
+        /** Activity event id — stable even across archive/restore cycles. */
+        UUID id,
 
-    /** Activity event id — stable even across archive/restore cycles. */
-    private UUID id;
+        /** Wall-clock timestamp of the action. Chronological export order key. */
+        Instant timestamp,
 
-    /** Wall-clock timestamp of the action. Chronological export order key. */
-    private Instant timestamp;
+        /**
+         * Action type — one of {@code check_in}, {@code submission}, {@code
+         * approval}, {@code rejection}, {@code operator_override}, {@code
+         * team_join}, {@code team_switch}. Matches
+         * {@link com.prayer.pointfinder.entity.ActivityEventType}.
+         */
+        String type,
 
-    /**
-     * Action type — one of {@code check_in}, {@code submission}, {@code
-     * approval}, {@code rejection}, {@code operator_override}, {@code
-     * team_join}, {@code team_switch}. Matches
-     * {@link com.prayer.pointfinder.entity.ActivityEventType}.
-     */
-    private String type;
+        /**
+         * Which client surface produced the event. One of {@code player_app},
+         * {@code web_admin}, {@code operator_rescue}, or {@code null} for pre-V36
+         * rows that predate source-surface capture.
+         */
+        String sourceSurface,
 
-    /**
-     * Which client surface produced the event. One of {@code player_app},
-     * {@code web_admin}, {@code operator_rescue}, or {@code null} for pre-V36
-     * rows that predate source-surface capture.
-     */
-    private String sourceSurface;
+        Actor actor,
 
-    private Actor actor;
+        Target target,
 
-    private Target target;
+        Details details,
 
-    private Details details;
-
-    /**
-     * Whether the row was preserved by a {@code resetProgress=true} reset on
-     * the game. Default exports hide archived rows; the {@code
-     * includeArchived=true} query param surfaces them for incident review.
-     */
-    private boolean archived;
+        /**
+         * Whether the row was preserved by a {@code resetProgress=true} reset on
+         * the game. Default exports hide archived rows; the {@code
+         * includeArchived=true} query param surfaces them for incident review.
+         */
+        boolean archived
+) {
 
     /**
      * Identity of who performed the action. Exactly one of {@code player},
@@ -75,82 +67,62 @@ public class AuditEntryDto {
      * wire shape stays uniform so consumers can handle all three with one
      * parser.
      */
-    @Data
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class Actor {
-        /**
-         * {@code player} for player-initiated events, {@code operator} for
-         * operator-initiated events, {@code system} for rows where no actor FK
-         * is recoverable (legacy rows and future system-emitted events).
-         */
-        private String type;
+    public record Actor(
+            /**
+             * {@code player} for player-initiated events, {@code operator} for
+             * operator-initiated events, {@code system} for rows where no actor FK
+             * is recoverable (legacy rows and future system-emitted events).
+             */
+            String type,
 
-        /**
-         * Actor UUID from the V36 FK columns ({@code actor_player_id} or
-         * {@code actor_operator_user_id}). Null for {@code system} actor or
-         * legacy rows where the FK was never populated.
-         */
-        private UUID id;
+            /**
+             * Actor UUID from the V36 FK columns ({@code actor_player_id} or
+             * {@code actor_operator_user_id}). Null for {@code system} actor or
+             * legacy rows where the FK was never populated.
+             */
+            UUID id,
 
-        /**
-         * Immutable snapshot of the actor's display name at action time.
-         * Falls back to the live join if the V36 snapshot column is null; if
-         * both are null the service emits {@code "Unknown"} rather than
-         * leaving the field empty.
-         */
-        private String displayName;
+            /**
+             * Immutable snapshot of the actor's display name at action time.
+             * Falls back to the live join if the V36 snapshot column is null; if
+             * both are null the service emits {@code "Unknown"} rather than
+             * leaving the field empty.
+             */
+            String displayName,
 
-        /**
-         * Player-only: immutable device id snapshot at action time. Answers
-         * "which device performed this action?" even after the player row is
-         * removed. Null for operator actors and pre-V36 rows.
-         */
-        private String deviceId;
-    }
+            /**
+             * Player-only: immutable device id snapshot at action time. Answers
+             * "which device performed this action?" even after the player row is
+             * removed. Null for operator actors and pre-V36 rows.
+             */
+            String deviceId
+    ) {}
 
     /**
      * The target of the action — team is always present because every
      * activity event is team-scoped, base and challenge are populated when
      * the action type naturally has them.
      */
-    @Data
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class Target {
-        private TeamRef team;
-        private BaseRef base;
-        private ChallengeRef challenge;
-    }
+    public record Target(
+            TeamRef team,
+            BaseRef base,
+            ChallengeRef challenge
+    ) {}
 
-    @Data
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class TeamRef {
-        private UUID id;
-        private String name;
-    }
+    public record TeamRef(
+            UUID id,
+            String name
+    ) {}
 
-    @Data
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class BaseRef {
-        private UUID id;
-        private String name;
-    }
+    public record BaseRef(
+            UUID id,
+            String name
+    ) {}
 
-    @Data
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class ChallengeRef {
-        private UUID id;
-        private String title;
-    }
+    public record ChallengeRef(
+            UUID id,
+            String title
+    ) {}
 
     /**
      * Free-text narration of the event. {@code message} is the existing
@@ -162,12 +134,8 @@ public class AuditEntryDto {
      * com.prayer.pointfinder.entity.Submission} or {@link
      * com.prayer.pointfinder.entity.CheckIn} row to surface it.
      */
-    @Data
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class Details {
-        private String message;
-        private String operatorReason;
-    }
+    public record Details(
+            String message,
+            String operatorReason
+    ) {}
 }

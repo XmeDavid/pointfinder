@@ -35,15 +35,15 @@ public class AdminService {
 
         return users.map(u -> {
             UserSubscription sub = userSubscriptionRepository.findByUserId(u.getId()).orElse(null);
-            return AdminUserResponse.builder()
-                    .id(u.getId())
-                    .name(u.getName())
-                    .email(u.getEmail())
-                    .role(u.getRole().name())
-                    .subscriptionTier(sub != null ? sub.getTier().name() : IndividualTier.free.name())
-                    .subscriptionStatus(sub != null ? sub.getStatus().name() : SubscriptionStatus.active.name())
-                    .createdAt(u.getCreatedAt())
-                    .build();
+            return new AdminUserResponse(
+                    u.getId(),
+                    u.getName(),
+                    u.getEmail(),
+                    u.getRole().name(),
+                    sub != null ? sub.getTier().name() : IndividualTier.free.name(),
+                    sub != null ? sub.getStatus().name() : SubscriptionStatus.active.name(),
+                    u.getCreatedAt()
+            );
         });
     }
 
@@ -57,23 +57,23 @@ public class AdminService {
         int orgCount = orgMembershipRepository.findByUserId(userId).size();
         long storageBytes = resourceRepository.sumSizeBytesByCreatedByIdAndOrganizationIsNull(userId);
 
-        return AdminUserDetailResponse.builder()
-                .id(user.getId())
-                .name(user.getName())
-                .email(user.getEmail())
-                .role(user.getRole().name())
-                .subscriptionTier(sub != null ? sub.getTier().name() : IndividualTier.free.name())
-                .subscriptionStatus(sub != null ? sub.getStatus().name() : SubscriptionStatus.active.name())
-                .billingCycle(sub != null && sub.getBillingCycle() != null ? sub.getBillingCycle().name() : null)
-                .currentPeriodEnd(sub != null ? sub.getCurrentPeriodEnd() : null)
-                .gracePeriodEnd(sub != null ? sub.getGracePeriodEnd() : null)
-                .quotaOverrides(sub != null ? sub.getQuotaOverrides() : null)
-                .adminNote(sub != null ? sub.getAdminNote() : null)
-                .gameCount(gameCount)
-                .orgCount(orgCount)
-                .resourceStorageBytes(storageBytes)
-                .createdAt(user.getCreatedAt())
-                .build();
+        return new AdminUserDetailResponse(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getRole().name(),
+                sub != null ? sub.getTier().name() : IndividualTier.free.name(),
+                sub != null ? sub.getStatus().name() : SubscriptionStatus.active.name(),
+                sub != null && sub.getBillingCycle() != null ? sub.getBillingCycle().name() : null,
+                sub != null ? sub.getCurrentPeriodEnd() : null,
+                sub != null ? sub.getGracePeriodEnd() : null,
+                sub != null ? sub.getQuotaOverrides() : null,
+                sub != null ? sub.getAdminNote() : null,
+                gameCount,
+                orgCount,
+                storageBytes,
+                user.getCreatedAt()
+        );
     }
 
     @Transactional(readOnly = true)
@@ -83,15 +83,15 @@ public class AdminService {
                 ? organizationRepository.findAll(pageable)
                 : organizationRepository.searchByName(search, pageable);
 
-        return orgs.map(o -> AdminOrgResponse.builder()
-                .id(o.getId())
-                .name(o.getName())
-                .slug(o.getSlug())
-                .subscriptionTier(o.getSubscriptionTier().name())
-                .subscriptionStatus(o.getSubscriptionStatus().name())
-                .memberCount(orgMembershipRepository.countByOrganizationId(o.getId()))
-                .createdAt(o.getCreatedAt())
-                .build());
+        return orgs.map(o -> new AdminOrgResponse(
+                o.getId(),
+                o.getName(),
+                o.getSlug(),
+                o.getSubscriptionTier().name(),
+                o.getSubscriptionStatus().name(),
+                orgMembershipRepository.countByOrganizationId(o.getId()),
+                o.getCreatedAt()
+        ));
     }
 
     @Transactional(readOnly = true)
@@ -101,14 +101,14 @@ public class AdminService {
 
         List<OrgMembership> memberships = orgMembershipRepository.findByOrganizationId(orgId);
         List<OrgMemberResponse> memberResponses = memberships.stream()
-                .map(m -> OrgMemberResponse.builder()
-                        .id(m.getId())
-                        .userId(m.getUser().getId())
-                        .name(m.getUser().getName())
-                        .email(m.getUser().getEmail())
-                        .permissions(m.getPermissions())
-                        .joinedAt(m.getJoinedAt())
-                        .build())
+                .map(m -> new OrgMemberResponse(
+                        m.getId(),
+                        m.getUser().getId(),
+                        m.getUser().getName(),
+                        m.getUser().getEmail(),
+                        m.getPermissions(),
+                        m.getJoinedAt()
+                ))
                 .toList();
 
         long gameCount = gameRepository.countByOrganizationIdAndStatusIn(
@@ -116,48 +116,48 @@ public class AdminService {
                 List.of(GameStatus.setup, GameStatus.live, GameStatus.ended));
         long storageBytes = resourceRepository.sumSizeBytesByOrganizationId(orgId);
 
-        return AdminOrgDetailResponse.builder()
-                .id(org.getId())
-                .name(org.getName())
-                .slug(org.getSlug())
-                .createdBy(org.getCreatedBy().getId())
-                .createdByName(org.getCreatedBy().getName())
-                .subscriptionTier(org.getSubscriptionTier().name())
-                .subscriptionStatus(org.getSubscriptionStatus().name())
-                .stripeCustomerId(org.getStripeCustomerId())
-                .gracePeriodEnd(org.getGracePeriodEnd())
-                .quotaOverrides(org.getQuotaOverrides())
-                .adminNote(org.getAdminNote())
-                .memberCount(memberships.size())
-                .gameCount((int) gameCount)
-                .resourceStorageBytes(storageBytes)
-                .members(memberResponses)
-                .createdAt(org.getCreatedAt())
-                .build();
+        return new AdminOrgDetailResponse(
+                org.getId(),
+                org.getName(),
+                org.getSlug(),
+                org.getCreatedBy().getId(),
+                org.getCreatedBy().getName(),
+                org.getSubscriptionTier().name(),
+                org.getSubscriptionStatus().name(),
+                org.getStripeCustomerId(),
+                org.getGracePeriodEnd(),
+                org.getQuotaOverrides(),
+                org.getAdminNote(),
+                memberships.size(),
+                (int) gameCount,
+                storageBytes,
+                memberResponses,
+                org.getCreatedAt()
+        );
     }
 
     @Transactional(readOnly = true)
     public List<GameResponse> getUserGames(UUID userId) {
         return gameRepository.findByOperatorOrCreator(userId).stream()
-                .map(g -> GameResponse.builder()
-                        .id(g.getId())
-                        .name(g.getName())
-                        .description(g.getDescription())
-                        .startDate(g.getStartDate())
-                        .endDate(g.getEndDate())
-                        .status(g.getStatus().name())
-                        .createdBy(g.getCreatedBy() != null ? g.getCreatedBy().getId() : null)
-                        .operatorIds(g.getOperators() != null
+                .map(g -> new GameResponse(
+                        g.getId(),
+                        g.getName(),
+                        g.getDescription(),
+                        g.getStartDate(),
+                        g.getEndDate(),
+                        g.getStatus().name(),
+                        g.getCreatedBy() != null ? g.getCreatedBy().getId() : null,
+                        g.getOperators() != null
                                 ? g.getOperators().stream().map(User::getId).toList()
-                                : List.of())
-                        .uniformAssignment(g.getUniformAssignment())
-                        .broadcastEnabled(g.getBroadcastEnabled())
-                        .broadcastCode(g.getBroadcastCode())
-                        .tileSource(g.getTileSource())
-                        .unlockTrigger(g.getUnlockTrigger() != null ? g.getUnlockTrigger().name() : null)
-                        .orgId(g.getOrganization() != null ? g.getOrganization().getId() : null)
-                        .orgName(g.getOrganization() != null ? g.getOrganization().getName() : null)
-                        .build())
+                                : List.of(),
+                        g.getUniformAssignment(),
+                        g.getBroadcastEnabled(),
+                        g.getBroadcastCode(),
+                        g.getTileSource(),
+                        g.getUnlockTrigger() != null ? g.getUnlockTrigger().name() : null,
+                        g.getOrganization() != null ? g.getOrganization().getId() : null,
+                        g.getOrganization() != null ? g.getOrganization().getName() : null
+                ))
                 .toList();
     }
 
@@ -169,25 +169,25 @@ public class AdminService {
         // Use the org-id-based queries on GameRepository
         List<Game> games = gameRepository.findByOrganizationIdIn(List.of(orgId));
         return games.stream()
-                .map(g -> GameResponse.builder()
-                        .id(g.getId())
-                        .name(g.getName())
-                        .description(g.getDescription())
-                        .startDate(g.getStartDate())
-                        .endDate(g.getEndDate())
-                        .status(g.getStatus().name())
-                        .createdBy(g.getCreatedBy() != null ? g.getCreatedBy().getId() : null)
-                        .operatorIds(g.getOperators() != null
+                .map(g -> new GameResponse(
+                        g.getId(),
+                        g.getName(),
+                        g.getDescription(),
+                        g.getStartDate(),
+                        g.getEndDate(),
+                        g.getStatus().name(),
+                        g.getCreatedBy() != null ? g.getCreatedBy().getId() : null,
+                        g.getOperators() != null
                                 ? g.getOperators().stream().map(User::getId).toList()
-                                : List.of())
-                        .uniformAssignment(g.getUniformAssignment())
-                        .broadcastEnabled(g.getBroadcastEnabled())
-                        .broadcastCode(g.getBroadcastCode())
-                        .tileSource(g.getTileSource())
-                        .unlockTrigger(g.getUnlockTrigger() != null ? g.getUnlockTrigger().name() : null)
-                        .orgId(g.getOrganization() != null ? g.getOrganization().getId() : null)
-                        .orgName(g.getOrganization() != null ? g.getOrganization().getName() : null)
-                        .build())
+                                : List.of(),
+                        g.getUniformAssignment(),
+                        g.getBroadcastEnabled(),
+                        g.getBroadcastCode(),
+                        g.getTileSource(),
+                        g.getUnlockTrigger() != null ? g.getUnlockTrigger().name() : null,
+                        g.getOrganization() != null ? g.getOrganization().getId() : null,
+                        g.getOrganization() != null ? g.getOrganization().getName() : null
+                ))
                 .toList();
     }
 }

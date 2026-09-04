@@ -64,8 +64,8 @@ class MonitoringServiceTest {
 
         assertEquals(1, leaderboard.size());
         // No scored submissions, so points = 0
-        assertEquals(teamId, leaderboard.get(0).getTeamId());
-        assertEquals(0, leaderboard.get(0).getPoints());
+        assertEquals(teamId, leaderboard.get(0).teamId());
+        assertEquals(0, leaderboard.get(0).points());
     }
 
     @Test
@@ -87,6 +87,6 @@ class MonitoringServiceTest {
         List<LeaderboardEntry> leaderboard = monitoringService.computeLeaderboard(gameId);
 
         assertEquals(1, leaderboard.size());
-        assertEquals(15, leaderboard.get(0).getPoints());
+        assertEquals(15, leaderboard.get(0).points());
     }
 }

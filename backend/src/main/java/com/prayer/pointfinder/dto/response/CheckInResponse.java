@@ -1,9 +1,5 @@
 package com.prayer.pointfinder.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -32,25 +28,19 @@ import java.util.UUID;
  * <p>Source spec: docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md
  * — P1 Operator Workflow and Content Model.
  */
-@Data
-@Builder
-@AllArgsConstructor
-public class CheckInResponse {
-    private UUID checkInId;
-    private UUID baseId;
-    private Instant checkedInAt;
-    private ChallengeInfo challenge;
-
-    @Data
-    @Builder
-    @AllArgsConstructor
-    public static class ChallengeInfo {
-        private UUID id;
-        private String title;
-        private String description;
-        private String content;
-        private String completionContent;
-        private String answerType;
-        private Boolean requirePresenceToSubmit;
-    }
+public record CheckInResponse(
+        UUID checkInId,
+        UUID baseId,
+        Instant checkedInAt,
+        ChallengeInfo challenge
+) {
+    public record ChallengeInfo(
+            UUID id,
+            String title,
+            String description,
+            String content,
+            String completionContent,
+            String answerType,
+            Boolean requirePresenceToSubmit
+    ) {}
 }

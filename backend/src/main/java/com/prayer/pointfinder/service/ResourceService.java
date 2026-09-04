@@ -297,22 +297,22 @@ public class ResourceService {
                 log.warn("[RESOURCE] Failed to generate presigned URL for resource {}: {}", r.getId(), e.getMessage());
             }
         }
-        return ResourceResponse.builder()
-                .id(r.getId())
-                .orgId(r.getOrganization() != null ? r.getOrganization().getId() : null)
-                .gameId(r.getGame() != null ? r.getGame().getId() : null)
-                .folderId(r.getFolder() != null ? r.getFolder().getId() : null)
-                .type(r.getType())
-                .name(r.getName())
-                .contentType(r.getContentType())
-                .content(r.getType() == ResourceType.document ? r.getContent() : null)
-                .sizeBytes(r.getSizeBytes())
-                .sharedWithPlayers(r.getSharedWithPlayers())
-                .downloadUrl(downloadUrl)
-                .createdBy(r.getCreatedBy().getId())
-                .createdByName(r.getCreatedBy().getName())
-                .createdAt(r.getCreatedAt())
-                .updatedAt(r.getUpdatedAt())
-                .build();
+        return new ResourceResponse(
+                r.getId(),
+                r.getOrganization() != null ? r.getOrganization().getId() : null,
+                r.getGame() != null ? r.getGame().getId() : null,
+                r.getFolder() != null ? r.getFolder().getId() : null,
+                r.getType(),
+                r.getName(),
+                r.getContentType(),
+                r.getType() == ResourceType.document ? r.getContent() : null,
+                r.getSizeBytes(),
+                r.getSharedWithPlayers(),
+                downloadUrl,
+                r.getCreatedBy().getId(),
+                r.getCreatedBy().getName(),
+                r.getCreatedAt(),
+                r.getUpdatedAt()
+        );
     }
 }

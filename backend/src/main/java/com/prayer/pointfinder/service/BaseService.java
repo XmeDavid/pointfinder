@@ -273,20 +273,20 @@ public class BaseService {
         List<UUID> tagIds = base.getTags().stream()
                 .map(GameTag::getId)
                 .collect(Collectors.toList());
-        return BaseResponse.builder()
-                .id(base.getId())
-                .gameId(base.getGame().getId())
-                .name(base.getName())
-                .description(base.getDescription())
-                .lat(base.getLat())
-                .lng(base.getLng())
-                .nfcLinked(base.getNfcLinked())
-                .nfcToken(base.getNfcToken())
-                .hidden(base.getHidden())
-                .fixedChallengeId(base.getFixedChallenge() != null ? base.getFixedChallenge().getId() : null)
-                .tagIds(tagIds.isEmpty() ? null : tagIds)
-                .stageId(base.getStageId())
-                .build();
+        return new BaseResponse(
+                base.getId(),
+                base.getGame().getId(),
+                base.getName(),
+                base.getDescription(),
+                base.getLat(),
+                base.getLng(),
+                base.getNfcLinked(),
+                base.getNfcToken(),
+                base.getHidden(),
+                base.getFixedChallenge() != null ? base.getFixedChallenge().getId() : null,
+                tagIds.isEmpty() ? null : tagIds,
+                base.getStageId()
+        );
     }
 
     /**

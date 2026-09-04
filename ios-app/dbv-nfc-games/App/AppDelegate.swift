@@ -1,13 +1,30 @@
 import UIKit
 import os
 import UserNotifications
+import MapLibre
 
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
 
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
+        configureOfflineMapCache()
         return true
+    }
+
+    // MARK: - Offline Map Tile Caching
+
+    /// Raises the MapLibre ambient tile cache from the default 50 MB to 100 MB so
+    /// previously-viewed tiles survive longer when players are at outdoor events
+    /// with poor connectivity (audit finding 8.12).
+    private func configureOfflineMapCache() {
+        let cacheSize: UInt = 100 * 1024 * 1024 // 100 MB
+        MLNOfflineStorage.shared.setMaximumAmbientCacheSize(cacheSize) { error in
+            if let error {
+                Logger(subsystem: "com.prayer.pointfinder", category: "MapCache")
+                    .error("Failed to set ambient cache size: \(error.localizedDescription, privacy: .public)")
+            }
+        }
     }
 
     // MARK: - Remote Notification Registration

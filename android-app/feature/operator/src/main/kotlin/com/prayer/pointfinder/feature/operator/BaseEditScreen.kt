@@ -352,7 +352,7 @@ fun BaseEditScreen(
                     ) {
                         Icon(
                             if (base?.nfcLinked == true) Icons.Default.CheckCircle else Icons.Default.Nfc,
-                            contentDescription = if (base?.nfcLinked == true) "NFC linked" else "NFC not linked",
+                            contentDescription = if (base?.nfcLinked == true) stringResource(R.string.label_nfc_linked) else stringResource(R.string.label_nfc_not_linked),
                             tint = if (base?.nfcLinked == true) StatusCompleted else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp),
                         )
@@ -450,7 +450,7 @@ fun BaseEditScreen(
                         ) {
                             Icon(
                                 Icons.Default.Star,
-                                contentDescription = "Points",
+                                contentDescription = stringResource(R.string.cd_points),
                                 tint = StarGold,
                                 modifier = Modifier.size(14.dp),
                             )

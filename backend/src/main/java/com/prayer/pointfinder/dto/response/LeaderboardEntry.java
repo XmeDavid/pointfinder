@@ -1,18 +1,11 @@
 package com.prayer.pointfinder.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-
 import java.util.UUID;
 
-@Data
-@Builder
-@AllArgsConstructor
-public class LeaderboardEntry {
-    private UUID teamId;
-    private String teamName;
-    private String color;
-    private long points;
-    private int completedChallenges;
-}
+public record LeaderboardEntry(
+        UUID teamId,
+        String teamName,
+        String color,
+        long points,
+        int completedChallenges
+) {}

@@ -79,10 +79,10 @@ class BroadcastServiceTest {
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
-        assertEquals(gameId, response.getGameId());
-        assertEquals("Scout Camporee", response.getGameName());
-        assertEquals("live", response.getGameStatus());
-        assertEquals("osm-classic", response.getTileSource());
+        assertEquals(gameId, response.gameId());
+        assertEquals("Scout Camporee", response.gameName());
+        assertEquals("live", response.gameStatus());
+        assertEquals("osm-classic", response.tileSource());
     }
 
     @Test
@@ -121,8 +121,8 @@ class BroadcastServiceTest {
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
-        assertEquals(1, response.getTeams().size());
-        BroadcastTeamResponse teamResponse = response.getTeams().get(0);
+        assertEquals(1, response.teams().size());
+        BroadcastTeamResponse teamResponse = response.teams().get(0);
         assertEquals(teamId, teamResponse.getId());
         assertEquals("Pathfinders", teamResponse.getName());
         assertEquals("#FF5733", teamResponse.getColor());
@@ -152,8 +152,8 @@ class BroadcastServiceTest {
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
-        assertEquals(1, response.getBases().size());
-        BroadcastBaseResponse baseResponse = response.getBases().get(0);
+        assertEquals(1, response.bases().size());
+        BroadcastBaseResponse baseResponse = response.bases().get(0);
         assertEquals(baseId, baseResponse.getId());
         assertEquals("Forest Base", baseResponse.getName());
         assertEquals(47.5, baseResponse.getLat());
@@ -191,8 +191,8 @@ class BroadcastServiceTest {
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
-        assertEquals(1, response.getBases().size());
-        assertEquals("Visible Base", response.getBases().get(0).getName());
+        assertEquals(1, response.bases().size());
+        assertEquals("Visible Base", response.bases().get(0).getName());
     }
 
     @Test
@@ -219,20 +219,20 @@ class BroadcastServiceTest {
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
         // null hidden is treated as false by !Boolean.TRUE.equals(null), so base should be included
-        assertEquals(1, response.getBases().size());
+        assertEquals(1, response.bases().size());
     }
 
     @Test
     void getBroadcastDataIncludesLocationsWhenGameIsLive() {
         UUID teamId = UUID.randomUUID();
-        TeamLocationResponse location = TeamLocationResponse.builder()
-                .teamId(teamId)
-                .playerId(UUID.randomUUID())
-                .displayName("Scout")
-                .lat(10.0)
-                .lng(20.0)
-                .updatedAt(Instant.now())
-                .build();
+        TeamLocationResponse location = new TeamLocationResponse(
+                teamId,
+                UUID.randomUUID(),
+                "Scout",
+                10.0,
+                20.0,
+                Instant.now()
+        );
 
         when(gameRepository.findByBroadcastCodeAndBroadcastEnabledTrue(BROADCAST_CODE))
                 .thenReturn(Optional.of(liveGame));
@@ -244,8 +244,8 @@ class BroadcastServiceTest {
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
-        assertEquals(1, response.getLocations().size());
-        assertEquals(teamId, response.getLocations().get(0).getTeamId());
+        assertEquals(1, response.locations().size());
+        assertEquals(teamId, response.locations().get(0).teamId());
         verify(monitoringService).computeLocations(gameId);
     }
 
@@ -260,7 +260,7 @@ class BroadcastServiceTest {
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
-        assertTrue(response.getLocations().isEmpty());
+        assertTrue(response.locations().isEmpty());
         verify(monitoringService, never()).computeLocations(any());
     }
 
@@ -285,20 +285,19 @@ class BroadcastServiceTest {
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
-        assertTrue(response.getLocations().isEmpty());
+        assertTrue(response.locations().isEmpty());
         verify(monitoringService, never()).computeLocations(any());
     }
 
     @Test
     void getBroadcastDataIncludesLeaderboard() {
         UUID teamId = UUID.randomUUID();
-        LeaderboardEntry entry = LeaderboardEntry.builder()
-                .teamId(teamId)
-                .teamName("Pathfinders")
-                .color("#00FF00")
-                .points(150)
-                .completedChallenges(3)
-                .build();
+        LeaderboardEntry entry = new LeaderboardEntry(
+                teamId,
+                "Pathfinders",
+                "#00FF00",
+                150,
+                3);
 
         when(gameRepository.findByBroadcastCodeAndBroadcastEnabledTrue(BROADCAST_CODE))
                 .thenReturn(Optional.of(liveGame));
@@ -310,21 +309,20 @@ class BroadcastServiceTest {
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
-        assertEquals(1, response.getLeaderboard().size());
-        assertEquals(teamId, response.getLeaderboard().get(0).getTeamId());
-        assertEquals(150, response.getLeaderboard().get(0).getPoints());
+        assertEquals(1, response.leaderboard().size());
+        assertEquals(teamId, response.leaderboard().get(0).teamId());
+        assertEquals(150, response.leaderboard().get(0).points());
     }
 
     @Test
     void getBroadcastDataTruncatesLeaderboardToFirst100Entries() {
         List<LeaderboardEntry> bigLeaderboard = IntStream.range(0, 150)
-                .mapToObj(i -> LeaderboardEntry.builder()
-                        .teamId(UUID.randomUUID())
-                        .teamName("Team " + i)
-                        .color("#000000")
-                        .points(150 - i)
-                        .completedChallenges(1)
-                        .build())
+                .mapToObj(i -> new LeaderboardEntry(
+                        UUID.randomUUID(),
+                        "Team " + i,
+                        "#000000",
+                        150 - i,
+                        1))
                 .toList();
 
         when(gameRepository.findByBroadcastCodeAndBroadcastEnabledTrue(BROADCAST_CODE))
@@ -337,19 +335,18 @@ class BroadcastServiceTest {
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
-        assertEquals(100, response.getLeaderboard().size());
+        assertEquals(100, response.leaderboard().size());
     }
 
     @Test
     void getBroadcastDataDoesNotTruncateLeaderboardWhenExactly100Entries() {
         List<LeaderboardEntry> leaderboard100 = IntStream.range(0, 100)
-                .mapToObj(i -> LeaderboardEntry.builder()
-                        .teamId(UUID.randomUUID())
-                        .teamName("Team " + i)
-                        .color("#000000")
-                        .points(100 - i)
-                        .completedChallenges(1)
-                        .build())
+                .mapToObj(i -> new LeaderboardEntry(
+                        UUID.randomUUID(),
+                        "Team " + i,
+                        "#000000",
+                        100 - i,
+                        1))
                 .toList();
 
         when(gameRepository.findByBroadcastCodeAndBroadcastEnabledTrue(BROADCAST_CODE))
@@ -362,7 +359,7 @@ class BroadcastServiceTest {
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
-        assertEquals(100, response.getLeaderboard().size());
+        assertEquals(100, response.leaderboard().size());
     }
 
     @Test
@@ -387,7 +384,7 @@ class BroadcastServiceTest {
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
-        assertEquals(500, response.getTeams().size());
+        assertEquals(500, response.teams().size());
     }
 
     @Test
@@ -415,20 +412,20 @@ class BroadcastServiceTest {
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
-        assertEquals(500, response.getBases().size());
+        assertEquals(500, response.bases().size());
     }
 
     @Test
     void getBroadcastDataTruncatesLocationsToFirst500WhenGameIsLive() {
         List<TeamLocationResponse> manyLocations = IntStream.range(0, 600)
-                .mapToObj(i -> TeamLocationResponse.builder()
-                        .teamId(UUID.randomUUID())
-                        .playerId(UUID.randomUUID())
-                        .displayName("Player " + i)
-                        .lat((double) i)
-                        .lng((double) i)
-                        .updatedAt(Instant.now())
-                        .build())
+                .mapToObj(i -> new TeamLocationResponse(
+                        UUID.randomUUID(),
+                        UUID.randomUUID(),
+                        "Player " + i,
+                        (double) i,
+                        (double) i,
+                        Instant.now()
+                ))
                 .toList();
 
         when(gameRepository.findByBroadcastCodeAndBroadcastEnabledTrue(BROADCAST_CODE))
@@ -441,19 +438,19 @@ class BroadcastServiceTest {
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
-        assertEquals(500, response.getLocations().size());
+        assertEquals(500, response.locations().size());
     }
 
     @Test
     void getBroadcastDataIncludesProgress() {
-        TeamBaseProgressResponse progressEntry = TeamBaseProgressResponse.builder()
-                .baseId(UUID.randomUUID())
-                .teamId(UUID.randomUUID())
-                .status("completed")
-                .checkedInAt(Instant.now())
-                .challengeId(UUID.randomUUID())
-                .submissionStatus("approved")
-                .build();
+        TeamBaseProgressResponse progressEntry = new TeamBaseProgressResponse(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                "completed",
+                Instant.now(),
+                UUID.randomUUID(),
+                "approved"
+        );
 
         when(gameRepository.findByBroadcastCodeAndBroadcastEnabledTrue(BROADCAST_CODE))
                 .thenReturn(Optional.of(liveGame));
@@ -465,8 +462,8 @@ class BroadcastServiceTest {
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
-        assertEquals(1, response.getProgress().size());
-        assertEquals("completed", response.getProgress().get(0).getStatus());
+        assertEquals(1, response.progress().size());
+        assertEquals("completed", response.progress().get(0).status());
     }
 
     @Test
@@ -527,13 +524,12 @@ class BroadcastServiceTest {
 
     @Test
     void getLeaderboardReturnsComputedEntriesForValidCode() {
-        LeaderboardEntry entry = LeaderboardEntry.builder()
-                .teamId(UUID.randomUUID())
-                .teamName("Eagles")
-                .color("#FFFF00")
-                .points(200)
-                .completedChallenges(5)
-                .build();
+        LeaderboardEntry entry = new LeaderboardEntry(
+                UUID.randomUUID(),
+                "Eagles",
+                "#FFFF00",
+                200,
+                5);
 
         when(gameRepository.findByBroadcastCodeAndBroadcastEnabledTrue(BROADCAST_CODE))
                 .thenReturn(Optional.of(liveGame));
@@ -542,8 +538,8 @@ class BroadcastServiceTest {
         List<LeaderboardEntry> result = broadcastService.getLeaderboard(BROADCAST_CODE);
 
         assertEquals(1, result.size());
-        assertEquals("Eagles", result.get(0).getTeamName());
-        assertEquals(200, result.get(0).getPoints());
+        assertEquals("Eagles", result.get(0).teamName());
+        assertEquals(200, result.get(0).points());
     }
 
     @Test
@@ -582,14 +578,14 @@ class BroadcastServiceTest {
     @Test
     void getLocationsReturnsComputedLocationsForValidCode() {
         UUID teamId = UUID.randomUUID();
-        TeamLocationResponse location = TeamLocationResponse.builder()
-                .teamId(teamId)
-                .playerId(UUID.randomUUID())
-                .displayName("Scout A")
-                .lat(48.0)
-                .lng(9.0)
-                .updatedAt(Instant.now())
-                .build();
+        TeamLocationResponse location = new TeamLocationResponse(
+                teamId,
+                UUID.randomUUID(),
+                "Scout A",
+                48.0,
+                9.0,
+                Instant.now()
+        );
 
         when(gameRepository.findByBroadcastCodeAndBroadcastEnabledTrue(BROADCAST_CODE))
                 .thenReturn(Optional.of(liveGame));
@@ -598,8 +594,8 @@ class BroadcastServiceTest {
         List<TeamLocationResponse> result = broadcastService.getLocations(BROADCAST_CODE);
 
         assertEquals(1, result.size());
-        assertEquals(teamId, result.get(0).getTeamId());
-        assertEquals("Scout A", result.get(0).getDisplayName());
+        assertEquals(teamId, result.get(0).teamId());
+        assertEquals("Scout A", result.get(0).displayName());
     }
 
     @Test
@@ -638,14 +634,14 @@ class BroadcastServiceTest {
     @Test
     void getProgressReturnsComputedProgressForValidCode() {
         UUID baseId = UUID.randomUUID();
-        TeamBaseProgressResponse progressEntry = TeamBaseProgressResponse.builder()
-                .baseId(baseId)
-                .teamId(UUID.randomUUID())
-                .status("checked_in")
-                .checkedInAt(Instant.now())
-                .challengeId(UUID.randomUUID())
-                .submissionStatus(null)
-                .build();
+        TeamBaseProgressResponse progressEntry = new TeamBaseProgressResponse(
+                baseId,
+                UUID.randomUUID(),
+                "checked_in",
+                Instant.now(),
+                UUID.randomUUID(),
+                null
+        );
 
         when(gameRepository.findByBroadcastCodeAndBroadcastEnabledTrue(BROADCAST_CODE))
                 .thenReturn(Optional.of(liveGame));
@@ -654,8 +650,8 @@ class BroadcastServiceTest {
         List<TeamBaseProgressResponse> result = broadcastService.getProgress(BROADCAST_CODE);
 
         assertEquals(1, result.size());
-        assertEquals(baseId, result.get(0).getBaseId());
-        assertEquals("checked_in", result.get(0).getStatus());
+        assertEquals(baseId, result.get(0).baseId());
+        assertEquals("checked_in", result.get(0).status());
     }
 
     @Test

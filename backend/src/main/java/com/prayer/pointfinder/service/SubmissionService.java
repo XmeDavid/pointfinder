@@ -29,6 +29,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -53,6 +54,7 @@ public class SubmissionService {
     private final TemplateVariableService templateVariableService;
     private final ThumbnailService thumbnailService;
     private final MonitoringService monitoringService;
+    private final UploadSessionRepository uploadSessionRepository;
 
     @org.springframework.beans.factory.annotation.Value("${app.uploads.path:/uploads}")
     private String uploadsPath;
@@ -600,21 +602,76 @@ public class SubmissionService {
                 .toList();
     }
 
+    /**
+     * Populates {@code upload_sessions.submission_id} for every completed upload
+     * whose {@code file_url} appears in the submission's file URL list and that
+     * belongs to the same (player, game).
+     *
+     * <p>This is an ALERT-FRIENDLY operation: it only links, it never modifies
+     * user-visible fields, it never deletes, and it never fails the submission.
+     * If a session is already linked to a different submission (because another
+     * player or another submission consumed the same URL), we leave it alone --
+     * the first linkage wins, and the later caller will just be a no-op.
+     *
+     * <p>Idempotency: when PlayerService.submitAnswer is retried with the same
+     * idempotency_key, SubmissionService returns the existing submission row, so
+     * {@code response.id()} is stable across retries. The sessions touched on
+     * the first successful call already carry that submission id, so subsequent
+     * calls skip them via the {@code submission == null} predicate.
+     */
+    public void linkUploadSessionsToSubmission(SubmissionResponse response, UUID gameId, UUID playerId) {
+        if (response == null || response.id() == null) {
+            return;
+        }
+        List<String> fileUrls = response.fileUrls();
+        if ((fileUrls == null || fileUrls.isEmpty()) && response.fileUrl() != null) {
+            fileUrls = List.of(response.fileUrl());
+        }
+        if (fileUrls == null || fileUrls.isEmpty()) {
+            return;
+        }
+        Set<String> fileUrlSet = fileUrls.stream()
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (fileUrlSet.isEmpty()) {
+            return;
+        }
+        List<UploadSession> candidates = uploadSessionRepository
+                .findCompletedUnlinkedByPlayerAndGame(playerId, gameId);
+        if (candidates.isEmpty()) {
+            return;
+        }
+        Submission submissionRef = submissionRepository.getReferenceById(response.id());
+        List<UploadSession> toLink = new java.util.ArrayList<>();
+        for (UploadSession session : candidates) {
+            if (session.getSubmission() != null) {
+                continue; // idempotent: already linked by a previous call
+            }
+            if (session.getFileUrl() == null || !fileUrlSet.contains(session.getFileUrl())) {
+                continue;
+            }
+            session.setSubmission(submissionRef);
+            toLink.add(session);
+        }
+        if (!toLink.isEmpty()) {
+            uploadSessionRepository.saveAll(toLink);
+        }
+    }
+
     private SubmissionResponse toResponse(Submission s) {
-        return SubmissionResponse.builder()
-                .id(s.getId())
-                .teamId(s.getTeam().getId())
-                .challengeId(s.getChallenge().getId())
-                .baseId(s.getBase().getId())
-                .answer(s.getAnswer())
-                .fileUrl(s.getFileUrl())
-                .fileUrls(s.getFileUrls())
-                .status(s.getStatus().name())
-                .submittedAt(s.getSubmittedAt())
-                .reviewedBy(s.getReviewedBy() != null ? s.getReviewedBy().getId() : null)
-                .feedback(s.getFeedback())
-                .points(s.getPoints())
-                .completionContent(s.getChallenge().getCompletionContent())
-                .build();
+        return new SubmissionResponse(
+                s.getId(),
+                s.getTeam().getId(),
+                s.getChallenge().getId(),
+                s.getBase().getId(),
+                s.getAnswer(),
+                s.getFileUrl(),
+                s.getFileUrls(),
+                s.getStatus().name(),
+                s.getSubmittedAt(),
+                s.getReviewedBy() != null ? s.getReviewedBy().getId() : null,
+                s.getFeedback(),
+                s.getPoints(),
+                s.getChallenge().getCompletionContent());
     }
 }

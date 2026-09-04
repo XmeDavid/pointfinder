@@ -63,23 +63,16 @@ public class OperatorNotificationSettingsService {
     }
 
     public OperatorNotificationSettingsResponse defaultResponse(UUID gameId, UUID userId) {
-        return OperatorNotificationSettingsResponse.builder()
-                .gameId(gameId)
-                .userId(userId)
-                .notifyPendingSubmissions(true)
-                .notifyAllSubmissions(false)
-                .notifyCheckIns(false)
-                .build();
+        return new OperatorNotificationSettingsResponse(gameId, userId, true, false, false);
     }
 
     private OperatorNotificationSettingsResponse toResponse(OperatorNotificationSettings settings) {
-        return OperatorNotificationSettingsResponse.builder()
-                .gameId(settings.getGame().getId())
-                .userId(settings.getUser().getId())
-                .notifyPendingSubmissions(Boolean.TRUE.equals(settings.getNotifyPendingSubmissions()))
-                .notifyAllSubmissions(Boolean.TRUE.equals(settings.getNotifyAllSubmissions()))
-                .notifyCheckIns(Boolean.TRUE.equals(settings.getNotifyCheckIns()))
-                .build();
+        return new OperatorNotificationSettingsResponse(
+                settings.getGame().getId(),
+                settings.getUser().getId(),
+                Boolean.TRUE.equals(settings.getNotifyPendingSubmissions()),
+                Boolean.TRUE.equals(settings.getNotifyAllSubmissions()),
+                Boolean.TRUE.equals(settings.getNotifyCheckIns()));
     }
 }
 

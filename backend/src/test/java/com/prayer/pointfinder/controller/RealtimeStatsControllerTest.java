@@ -49,17 +49,17 @@ class RealtimeStatsControllerTest {
     @Test
     void getRealtimeStatsReturnsShape() throws Exception {
         UUID gameId = UUID.randomUUID();
-        RealtimeStatsResponse response = RealtimeStatsResponse.builder()
-                .stompActiveSessions(3)
-                .mobileActiveSessions(7)
-                .totalActiveSessions(10)
-                .stompConnectsLastHour(42)
-                .mobileConnectsLastHour(128)
-                .stompDisconnectsLastHour(38)
-                .mobileDisconnectsLastHour(121)
-                .estimatedReconnectsLastHour(95)
-                .lastUpdated(Instant.parse("2026-04-08T12:34:56Z"))
-                .build();
+        RealtimeStatsResponse response = new RealtimeStatsResponse(
+                3,
+                7,
+                10,
+                42,
+                128,
+                38,
+                121,
+                95,
+                Instant.parse("2026-04-08T12:34:56Z")
+        );
 
         when(realtimeMetricsService.getStatsForGame(gameId)).thenReturn(response);
 

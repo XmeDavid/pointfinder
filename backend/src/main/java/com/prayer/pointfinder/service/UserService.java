@@ -116,10 +116,7 @@ public class UserService {
 
         userRepository.save(user);
 
-        return UpdateProfileResponse.builder()
-                .user(toResponse(user))
-                .message(message)
-                .build();
+        return new UpdateProfileResponse(toResponse(user), message);
     }
 
     private UserResponse toResponse(User user) {

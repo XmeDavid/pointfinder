@@ -107,13 +107,13 @@ public class OrgMembershipService {
 
     private OrgMemberResponse toResponse(OrgMembership membership) {
         User user = membership.getUser();
-        return OrgMemberResponse.builder()
-            .id(membership.getId())
-            .userId(user.getId())
-            .name(user.getName())
-            .email(user.getEmail())
-            .permissions(membership.getPermissions())
-            .joinedAt(membership.getJoinedAt())
-            .build();
+        return new OrgMemberResponse(
+            membership.getId(),
+            user.getId(),
+            user.getName(),
+            user.getEmail(),
+            membership.getPermissions(),
+            membership.getJoinedAt()
+        );
     }
 }

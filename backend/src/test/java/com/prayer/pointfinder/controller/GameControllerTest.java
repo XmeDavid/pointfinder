@@ -63,17 +63,22 @@ class GameControllerTest {
 
         UUID gameId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
-        GameResponse response = GameResponse.builder()
-                .id(gameId)
-                .name("Test Game")
-                .description("")
-                .status("setup")
-                .createdBy(userId)
-                .operatorIds(List.of(userId))
-                .uniformAssignment(false)
-                .broadcastEnabled(false)
-                .tileSource("osm-classic")
-                .build();
+        GameResponse response = new GameResponse(
+                gameId,
+                "Test Game",
+                "",
+                null,
+                null,
+                "setup",
+                userId,
+                List.of(userId),
+                false,
+                false,
+                null,
+                "osm-classic",
+                null,
+                null,
+                null);
 
         when(gameService.createGame(any(CreateGameRequest.class))).thenReturn(response);
 
@@ -96,11 +101,10 @@ class GameControllerTest {
 
         UUID gameId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
-        when(gameService.createGame(any(CreateGameRequest.class))).thenReturn(GameResponse.builder()
-                .id(gameId).name("Scout Rally").description("").status("setup")
-                .createdBy(userId).operatorIds(List.of(userId))
-                .uniformAssignment(true).broadcastEnabled(false).tileSource("osm-classic")
-                .build());
+        when(gameService.createGame(any(CreateGameRequest.class))).thenReturn(new GameResponse(
+                gameId, "Scout Rally", "", null, null, "setup",
+                userId, List.of(userId),
+                true, false, null, "osm-classic", null, null, null));
 
         mockMvc.perform(post("/api/games")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -146,11 +150,10 @@ class GameControllerTest {
 
         UUID gameId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
-        when(gameService.createGame(any(CreateGameRequest.class))).thenReturn(GameResponse.builder()
-                .id(gameId).name(maxName).description("").status("setup")
-                .createdBy(userId).operatorIds(List.of(userId))
-                .uniformAssignment(false).broadcastEnabled(false).tileSource("osm-classic")
-                .build());
+        when(gameService.createGame(any(CreateGameRequest.class))).thenReturn(new GameResponse(
+                gameId, maxName, "", null, null, "setup",
+                userId, List.of(userId),
+                false, false, null, "osm-classic", null, null, null));
 
         mockMvc.perform(post("/api/games")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -178,11 +181,10 @@ class GameControllerTest {
     void getGameReturns200WithFullFields() throws Exception {
         UUID gameId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
-        GameResponse response = GameResponse.builder()
-                .id(gameId).name("My Game").description("A description")
-                .status("setup").createdBy(userId).operatorIds(List.of(userId))
-                .uniformAssignment(false).broadcastEnabled(true).tileSource("osm-classic")
-                .build();
+        GameResponse response = new GameResponse(
+                gameId, "My Game", "A description", null, null, "setup",
+                userId, List.of(userId),
+                false, true, null, "osm-classic", null, null, null);
 
         when(gameService.getGame(gameId)).thenReturn(response);
 
@@ -232,11 +234,10 @@ class GameControllerTest {
 
         UUID userId = UUID.randomUUID();
         when(gameService.updateStatus(eq(gameId), eq("setup"), eq(true)))
-                .thenReturn(GameResponse.builder()
-                        .id(gameId).name("G").description("").status("setup")
-                        .createdBy(userId).operatorIds(List.of(userId))
-                        .uniformAssignment(false).broadcastEnabled(false).tileSource("osm-classic")
-                        .build());
+                .thenReturn(new GameResponse(
+                        gameId, "G", "", null, null, "setup",
+                        userId, List.of(userId),
+                        false, false, null, "osm-classic", null, null, null));
 
         mockMvc.perform(patch("/api/games/" + gameId + "/status")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -367,17 +368,22 @@ class GameControllerTest {
 
         UUID gameId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
-        GameResponse response = GameResponse.builder()
-                .id(gameId)
-                .name("Imported Game")
-                .description("desc")
-                .status("setup")
-                .createdBy(userId)
-                .operatorIds(List.of(userId))
-                .uniformAssignment(false)
-                .broadcastEnabled(false)
-                .tileSource("osm-classic")
-                .build();
+        GameResponse response = new GameResponse(
+                gameId,
+                "Imported Game",
+                "desc",
+                null,
+                null,
+                "setup",
+                userId,
+                List.of(userId),
+                false,
+                false,
+                null,
+                "osm-classic",
+                null,
+                null,
+                null);
 
         when(gameService.importGame(any(GameImportRequest.class))).thenReturn(response);
 

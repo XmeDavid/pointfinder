@@ -30,12 +30,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.prayer.pointfinder.core.designsystem.PFDimensionToken
+import com.prayer.pointfinder.core.i18n.R
 import com.prayer.pointfinder.core.designsystem.PFSpacingToken
 
 internal data class ManagementMetadata(val label: String, val tone: OperatorTone)
@@ -72,7 +74,7 @@ internal fun ManagementResourceRow(
                 }
             }
             Spacer(Modifier.width(PFSpacingToken.Space2))
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Navigate", tint = MaterialTheme.colorScheme.onSurfaceVariant) // TODO: Extract to string resources
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(R.string.cd_navigate), tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -103,7 +105,7 @@ internal fun ManagementTeamRow(
                 if (!joinCode.isNullOrBlank()) Text(joinCode, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = joinCodeModifier)
             }
             if (onCopy != null) IconButton(onClick = onCopy) { Icon(Icons.Default.ContentCopy, contentDescription = copyLabel, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Navigate", tint = MaterialTheme.colorScheme.onSurfaceVariant) // TODO: Extract to string resources
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(R.string.cd_navigate), tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

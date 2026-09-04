@@ -1,30 +1,23 @@
 package com.prayer.pointfinder.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-@Data
-@Builder
-@AllArgsConstructor
-public class GameResponse {
-    private UUID id;
-    private String name;
-    private String description;
-    private Instant startDate;
-    private Instant endDate;
-    private String status;
-    private UUID createdBy;
-    private List<UUID> operatorIds;
-    private Boolean uniformAssignment;
-    private Boolean broadcastEnabled;
-    private String broadcastCode;
-    private String tileSource;
-    private String unlockTrigger;
-    private UUID orgId;
-    private String orgName;
-}
+public record GameResponse(
+        UUID id,
+        String name,
+        String description,
+        Instant startDate,
+        Instant endDate,
+        String status,
+        UUID createdBy,
+        List<UUID> operatorIds,
+        Boolean uniformAssignment,
+        Boolean broadcastEnabled,
+        String broadcastCode,
+        String tileSource,
+        String unlockTrigger,
+        UUID orgId,
+        String orgName
+) {}

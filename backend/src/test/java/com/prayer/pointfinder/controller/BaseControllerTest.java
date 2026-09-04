@@ -56,16 +56,19 @@ class BaseControllerTest {
 
     @Test
     void getBasesReturns200WithList() throws Exception {
-        BaseResponse base = BaseResponse.builder()
-                .id(BASE_ID)
-                .gameId(GAME_ID)
-                .name("Base Alpha")
-                .description("First base")
-                .lat(47.3769)
-                .lng(8.5417)
-                .nfcLinked(false)
-                .hidden(false)
-                .build();
+        BaseResponse base = new BaseResponse(
+                BASE_ID,
+                GAME_ID,
+                "Base Alpha",
+                "First base",
+                47.3769,
+                8.5417,
+                false,
+                null,
+                false,
+                null,
+                null,
+                null);
 
         when(baseService.getBasesByGame(GAME_ID)).thenReturn(List.of(base));
 
@@ -96,16 +99,19 @@ class BaseControllerTest {
         request.setLat(47.3769);
         request.setLng(8.5417);
 
-        BaseResponse response = BaseResponse.builder()
-                .id(BASE_ID)
-                .gameId(GAME_ID)
-                .name("Base Alpha")
-                .description("First base")
-                .lat(47.3769)
-                .lng(8.5417)
-                .nfcLinked(false)
-                .hidden(false)
-                .build();
+        BaseResponse response = new BaseResponse(
+                BASE_ID,
+                GAME_ID,
+                "Base Alpha",
+                "First base",
+                47.3769,
+                8.5417,
+                false,
+                null,
+                false,
+                null,
+                null,
+                null);
 
         when(baseService.createBase(eq(GAME_ID), any(CreateBaseRequest.class))).thenReturn(response);
 
@@ -185,16 +191,19 @@ class BaseControllerTest {
         request.setLat(48.0);
         request.setLng(9.0);
 
-        BaseResponse response = BaseResponse.builder()
-                .id(BASE_ID)
-                .gameId(GAME_ID)
-                .name("Updated Base")
-                .description("Updated desc")
-                .lat(48.0)
-                .lng(9.0)
-                .nfcLinked(false)
-                .hidden(false)
-                .build();
+        BaseResponse response = new BaseResponse(
+                BASE_ID,
+                GAME_ID,
+                "Updated Base",
+                "Updated desc",
+                48.0,
+                9.0,
+                false,
+                null,
+                false,
+                null,
+                null,
+                null);
 
         when(baseService.updateBase(eq(GAME_ID), eq(BASE_ID), any(UpdateBaseRequest.class))).thenReturn(response);
 
@@ -227,15 +236,19 @@ class BaseControllerTest {
 
     @Test
     void linkNfcReturns200() throws Exception {
-        BaseResponse response = BaseResponse.builder()
-                .id(BASE_ID)
-                .gameId(GAME_ID)
-                .name("Base Alpha")
-                .lat(47.0)
-                .lng(8.0)
-                .nfcLinked(true)
-                .hidden(false)
-                .build();
+        BaseResponse response = new BaseResponse(
+                BASE_ID,
+                GAME_ID,
+                "Base Alpha",
+                null,
+                47.0,
+                8.0,
+                true,
+                null,
+                false,
+                null,
+                null,
+                null);
 
         when(baseService.setNfcLinked(GAME_ID, BASE_ID, true)).thenReturn(response);
 
@@ -278,17 +291,19 @@ class BaseControllerTest {
     void getBaseExposesTagIds() throws Exception {
         UUID tagId1 = UUID.randomUUID();
         UUID tagId2 = UUID.randomUUID();
-        BaseResponse base = BaseResponse.builder()
-                .id(BASE_ID)
-                .gameId(GAME_ID)
-                .name("Base Alpha")
-                .description("First base")
-                .lat(47.3769)
-                .lng(8.5417)
-                .nfcLinked(false)
-                .hidden(false)
-                .tagIds(List.of(tagId1, tagId2))
-                .build();
+        BaseResponse base = new BaseResponse(
+                BASE_ID,
+                GAME_ID,
+                "Base Alpha",
+                "First base",
+                47.3769,
+                8.5417,
+                false,
+                null,
+                false,
+                null,
+                List.of(tagId1, tagId2),
+                null);
 
         when(baseService.getBasesByGame(GAME_ID)).thenReturn(List.of(base));
 

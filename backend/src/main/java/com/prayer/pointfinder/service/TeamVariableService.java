@@ -125,10 +125,7 @@ public class TeamVariableService {
     public VariableCompletenessResponse checkCompleteness(UUID gameId) {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         List<String> errors = validateVariableCompleteness(gameId);
-        return VariableCompletenessResponse.builder()
-                .complete(errors.isEmpty())
-                .errors(errors)
-                .build();
+        return new VariableCompletenessResponse(errors.isEmpty(), errors);
     }
 
     public List<String> validateVariableCompleteness(UUID gameId) {
@@ -193,12 +190,9 @@ public class TeamVariableService {
                     .put(v.getTeam().getId(), v.getVariableValue());
         }
         List<TeamVariablesResponse.VariableDefinition> defs = grouped.entrySet().stream()
-                .map(e -> TeamVariablesResponse.VariableDefinition.builder()
-                        .key(e.getKey())
-                        .teamValues(e.getValue())
-                        .build())
+                .map(e -> new TeamVariablesResponse.VariableDefinition(e.getKey(), e.getValue()))
                 .toList();
-        return TeamVariablesResponse.builder().variables(defs).build();
+        return new TeamVariablesResponse(defs);
     }
 
     private TeamVariablesResponse groupChallengeVariables(List<ChallengeTeamVariable> vars) {
@@ -208,12 +202,9 @@ public class TeamVariableService {
                     .put(v.getTeam().getId(), v.getVariableValue());
         }
         List<TeamVariablesResponse.VariableDefinition> defs = grouped.entrySet().stream()
-                .map(e -> TeamVariablesResponse.VariableDefinition.builder()
-                        .key(e.getKey())
-                        .teamValues(e.getValue())
-                        .build())
+                .map(e -> new TeamVariablesResponse.VariableDefinition(e.getKey(), e.getValue()))
                 .toList();
-        return TeamVariablesResponse.builder().variables(defs).build();
+        return new TeamVariablesResponse(defs);
     }
 
     // ── Challenge-reference scanning ──

@@ -100,7 +100,7 @@ class SubmissionReviewTransitionsTest extends IntegrationTestBase {
                 HttpMethod.GET, new HttpEntity<>(opHeaders), LeaderboardEntry[].class);
         assertEquals(HttpStatus.OK, lb.getStatusCode());
         for (LeaderboardEntry entry : lb.getBody()) {
-            if (teamId.equals(entry.getTeamId())) return entry.getPoints();
+            if (teamId.equals(entry.teamId())) return entry.points();
         }
         return 0L;
     }

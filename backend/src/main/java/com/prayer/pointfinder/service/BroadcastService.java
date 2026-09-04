@@ -31,22 +31,20 @@ public class BroadcastService {
 
         List<BroadcastTeamResponse> teams = teamRepository.findByGameId(gameId).stream()
                 .limit(500)
-                .map(t -> BroadcastTeamResponse.builder()
-                        .id(t.getId())
-                        .name(t.getName())
-                        .color(t.getColor())
-                        .build())
+                .map(t -> new BroadcastTeamResponse(
+                        t.getId(),
+                        t.getName(),
+                        t.getColor()))
                 .toList();
 
         List<BroadcastBaseResponse> bases = baseRepository.findByGameId(gameId).stream()
                 .filter(b -> !Boolean.TRUE.equals(b.getHidden()))
                 .limit(500)
-                .map(b -> BroadcastBaseResponse.builder()
-                        .id(b.getId())
-                        .name(b.getName())
-                        .lat(b.getLat())
-                        .lng(b.getLng())
-                        .build())
+                .map(b -> new BroadcastBaseResponse(
+                        b.getId(),
+                        b.getName(),
+                        b.getLat(),
+                        b.getLng()))
                 .toList();
 
         List<LeaderboardEntry> leaderboard = monitoringService.computeLeaderboard(gameId);
@@ -54,19 +52,19 @@ public class BroadcastService {
             leaderboard = leaderboard.subList(0, 100);
         }
 
-        return BroadcastDataResponse.builder()
-                .gameId(gameId)
-                .gameName(game.getName())
-                .gameStatus(game.getStatus().name())
-                .tileSource(game.getTileSource())
-                .leaderboard(leaderboard)
-                .teams(teams)
-                .bases(bases)
-                .locations(game.getStatus() == GameStatus.live
+        return new BroadcastDataResponse(
+                gameId,
+                game.getName(),
+                game.getStatus().name(),
+                game.getTileSource(),
+                leaderboard,
+                teams,
+                bases,
+                game.getStatus() == GameStatus.live
                         ? monitoringService.computeLocations(gameId).stream().limit(500).toList()
-                        : java.util.Collections.emptyList())
-                .progress(monitoringService.computeProgress(gameId))
-                .build();
+                        : java.util.Collections.emptyList(),
+                monitoringService.computeProgress(gameId)
+        );
     }
 
     @Transactional(readOnly = true)

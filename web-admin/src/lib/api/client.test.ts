@@ -43,7 +43,6 @@ describe("getValidAccessToken", () => {
     useAuthStore.setState({
       user: null,
       accessToken: null,
-      refreshToken: null,
       isAuthenticated: false,
       hasHydrated: false,
     });
@@ -58,7 +57,7 @@ describe("getValidAccessToken", () => {
 
   it("returns access token when present and not near expiry", async () => {
     const futureToken = makeJwt(Date.now() / 1000 + 600); // 10 min left
-    useAuthStore.getState().setTokens(futureToken, "refresh-tok", mockUser);
+    useAuthStore.getState().setTokens(futureToken, mockUser);
 
     const token = await getValidAccessToken();
     expect(token).toBe(futureToken);
@@ -70,7 +69,6 @@ describe("getValidAccessToken", () => {
     const soonToken = makeJwt(Date.now() / 1000 + 30); // 30s left — within margin
     useAuthStore.setState({
       accessToken: soonToken,
-      refreshToken: "valid-refresh",
       isAuthenticated: true,
       user: mockUser,
     });
@@ -91,7 +89,6 @@ describe("getValidAccessToken", () => {
   it("treats malformed tokens as expired and refreshes", async () => {
     useAuthStore.setState({
       accessToken: "not-a-jwt",
-      refreshToken: "valid-refresh",
       isAuthenticated: true,
       user: mockUser,
     });
@@ -115,10 +112,9 @@ describe("getValidAccessToken", () => {
     expect(axios.post).not.toHaveBeenCalled();
   });
 
-  it("returns null when isAuthenticated is false even with refresh token", async () => {
+  it("returns null when isAuthenticated is false", async () => {
     useAuthStore.setState({
       accessToken: null,
-      refreshToken: "some-refresh",
       isAuthenticated: false,
     });
 
@@ -127,10 +123,9 @@ describe("getValidAccessToken", () => {
     expect(axios.post).not.toHaveBeenCalled();
   });
 
-  it("refreshes token when access token is null but authenticated with refresh token", async () => {
+  it("refreshes token when access token is null but authenticated (cookie-based)", async () => {
     useAuthStore.setState({
       accessToken: null,
-      refreshToken: "valid-refresh",
       isAuthenticated: true,
       user: mockUser,
     });
@@ -138,29 +133,28 @@ describe("getValidAccessToken", () => {
     (axios.post as Mock).mockResolvedValueOnce({
       data: {
         accessToken: "new-access-token",
-        refreshToken: "new-refresh-token",
+        refreshToken: "new-refresh-token", // still in response for mobile compat
         user: mockUser,
       },
     });
 
     const token = await getValidAccessToken();
     expect(token).toBe("new-access-token");
+    // Refresh token is sent via HttpOnly cookie, not in request body
     expect(axios.post).toHaveBeenCalledWith(
       expect.stringContaining("/auth/refresh"),
-      { refreshToken: "valid-refresh" },
-      { timeout: 10_000 }
+      {},
+      { withCredentials: true, timeout: 10_000 }
     );
 
-    // Verify the store was updated
+    // Verify the store was updated with accessToken (not refreshToken)
     const state = useAuthStore.getState();
     expect(state.accessToken).toBe("new-access-token");
-    expect(state.refreshToken).toBe("new-refresh-token");
   });
 
-  it("returns null when refresh token is permanently rejected (401)", async () => {
+  it("returns null when refresh cookie is permanently rejected (401)", async () => {
     useAuthStore.setState({
       accessToken: null,
-      refreshToken: "expired-refresh",
       isAuthenticated: true,
       user: mockUser,
     });
@@ -179,7 +173,6 @@ describe("getValidAccessToken", () => {
   it("throws on transient refresh failure so callers can retry", async () => {
     useAuthStore.setState({
       accessToken: null,
-      refreshToken: "valid-refresh",
       isAuthenticated: true,
       user: mockUser,
     });
@@ -192,7 +185,6 @@ describe("getValidAccessToken", () => {
   it("deduplicates concurrent refresh calls", async () => {
     useAuthStore.setState({
       accessToken: null,
-      refreshToken: "valid-refresh",
       isAuthenticated: true,
       user: mockUser,
     });
@@ -233,7 +225,6 @@ describe("getValidAccessToken", () => {
   it("allows a new refresh after the previous one completes", async () => {
     useAuthStore.setState({
       accessToken: null,
-      refreshToken: "valid-refresh",
       isAuthenticated: true,
       user: mockUser,
     });
@@ -270,7 +261,6 @@ describe("getValidAccessToken", () => {
   it("clears refresh promise after a failed refresh so retries are possible", async () => {
     useAuthStore.setState({
       accessToken: null,
-      refreshToken: "valid-refresh",
       isAuthenticated: true,
       user: mockUser,
     });

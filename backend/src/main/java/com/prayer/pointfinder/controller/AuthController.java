@@ -5,6 +5,7 @@ import com.prayer.pointfinder.dto.response.AuthResponse;
 import com.prayer.pointfinder.dto.response.InviteTokenResponse;
 import com.prayer.pointfinder.dto.response.MessageResponse;
 import com.prayer.pointfinder.dto.response.PlayerAuthResponse;
+import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.RateLimitExceededException;
 import com.prayer.pointfinder.service.AuthService;
 import com.prayer.pointfinder.service.InviteService;
@@ -15,6 +16,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,6 +34,51 @@ public class AuthController {
 
     @Value("${app.frontend-url:https://pointfinder.pt}")
     private String frontendUrl;
+
+    @Value("${app.jwt.refresh-token-expiration-ms}")
+    private long refreshTokenExpirationMs;
+
+    private static final String REFRESH_TOKEN_COOKIE = "pf_refresh";
+
+    // ---- Refresh-token cookie helpers (audit 12.1) ----
+
+    private ResponseCookie buildRefreshTokenCookie(String token) {
+        long maxAgeSeconds = refreshTokenExpirationMs / 1000;
+        boolean secure = frontendUrl.startsWith("https://");
+        return ResponseCookie.from(REFRESH_TOKEN_COOKIE, token)
+                .httpOnly(true)
+                .secure(secure)
+                .sameSite("Strict")
+                .path("/api/auth")
+                .maxAge(maxAgeSeconds)
+                .build();
+    }
+
+    private ResponseCookie clearRefreshTokenCookie() {
+        boolean secure = frontendUrl.startsWith("https://");
+        return ResponseCookie.from(REFRESH_TOKEN_COOKIE, "")
+                .httpOnly(true)
+                .secure(secure)
+                .sameSite("Strict")
+                .path("/api/auth")
+                .maxAge(0)
+                .build();
+    }
+
+    /**
+     * Resolve the refresh token from either the request body (mobile clients)
+     * or the HttpOnly cookie (web clients). Body takes precedence so mobile
+     * apps that do not use cookies keep working.
+     */
+    private String resolveRefreshToken(RefreshTokenRequest request, String cookieToken) {
+        if (request != null && request.getRefreshToken() != null && !request.getRefreshToken().isBlank()) {
+            return request.getRefreshToken();
+        }
+        if (cookieToken != null && !cookieToken.isBlank()) {
+            return cookieToken;
+        }
+        return null;
+    }
 
     @PostMapping("/player/join")
     public ResponseEntity<PlayerAuthResponse> joinTeam(
@@ -59,7 +107,10 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+        AuthResponse response = authService.login(request);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, buildRefreshTokenCookie(response.refreshToken()).toString())
+                .body(response);
     }
 
     @GetMapping("/invite/{token}")
@@ -70,7 +121,10 @@ public class AuthController {
     @PostMapping("/register/{token}")
     public ResponseEntity<AuthResponse> register(@PathVariable String token,
                                                   @Valid @RequestBody RegisterRequest request) {
-        return ResponseEntity.ok(authService.register(token, request));
+        AuthResponse response = authService.register(token, request);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, buildRefreshTokenCookie(response.refreshToken()).toString())
+                .body(response);
     }
 
     @PostMapping("/request-registration")
@@ -86,14 +140,30 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
-        return ResponseEntity.ok(authService.refreshToken(request.getRefreshToken()));
+    public ResponseEntity<AuthResponse> refresh(
+            @RequestBody(required = false) RefreshTokenRequest request,
+            @CookieValue(name = REFRESH_TOKEN_COOKIE, required = false) String cookieRefreshToken) {
+        String refreshToken = resolveRefreshToken(request, cookieRefreshToken);
+        if (refreshToken == null) {
+            throw new BadRequestException("No refresh token provided");
+        }
+        AuthResponse response = authService.refreshToken(refreshToken);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, buildRefreshTokenCookie(response.refreshToken()).toString())
+                .body(response);
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@Valid @RequestBody RefreshTokenRequest request) {
-        authService.logout(request.getRefreshToken());
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<Void> logout(
+            @RequestBody(required = false) RefreshTokenRequest request,
+            @CookieValue(name = REFRESH_TOKEN_COOKIE, required = false) String cookieRefreshToken) {
+        String refreshToken = resolveRefreshToken(request, cookieRefreshToken);
+        if (refreshToken != null) {
+            authService.logout(refreshToken);
+        }
+        return ResponseEntity.noContent()
+                .header(HttpHeaders.SET_COOKIE, clearRefreshTokenCookie().toString())
+                .build();
     }
 
     @PostMapping("/forgot-password")
@@ -112,7 +182,14 @@ public class AuthController {
     }
 
     @PostMapping("/change-password")
-    public ResponseEntity<MessageResponse> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+    public ResponseEntity<MessageResponse> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request,
+            @CookieValue(name = REFRESH_TOKEN_COOKIE, required = false) String cookieRefreshToken) {
+        // Resolve refresh token: body field takes precedence, then cookie
+        if ((request.getRefreshToken() == null || request.getRefreshToken().isBlank())
+                && cookieRefreshToken != null && !cookieRefreshToken.isBlank()) {
+            request.setRefreshToken(cookieRefreshToken);
+        }
         authService.changePassword(request);
         return ResponseEntity.ok(new MessageResponse("Password changed successfully."));
     }

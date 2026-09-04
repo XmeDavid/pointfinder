@@ -1,46 +1,31 @@
 package com.prayer.pointfinder.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-
 import java.util.UUID;
 
-@Data
-@Builder
-@AllArgsConstructor
-public class PlayerAuthResponse {
-    private String token;
-    private PlayerInfo player;
-    private TeamInfo team;
-    private GameInfo game;
+public record PlayerAuthResponse(
+        String token,
+        PlayerInfo player,
+        TeamInfo team,
+        GameInfo game
+) {
 
-    @Data
-    @Builder
-    @AllArgsConstructor
-    public static class PlayerInfo {
-        private UUID id;
-        private String displayName;
-        private String deviceId;
-    }
+    public record PlayerInfo(
+            UUID id,
+            String displayName,
+            String deviceId
+    ) {}
 
-    @Data
-    @Builder
-    @AllArgsConstructor
-    public static class TeamInfo {
-        private UUID id;
-        private String name;
-        private String color;
-    }
+    public record TeamInfo(
+            UUID id,
+            String name,
+            String color
+    ) {}
 
-    @Data
-    @Builder
-    @AllArgsConstructor
-    public static class GameInfo {
-        private UUID id;
-        private String name;
-        private String description;
-        private String status;
-        private String tileSource;
-    }
+    public record GameInfo(
+            UUID id,
+            String name,
+            String description,
+            String status,
+            String tileSource
+    ) {}
 }

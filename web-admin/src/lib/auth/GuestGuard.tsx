@@ -5,8 +5,8 @@ import { useAuthStore } from "@/lib/auth/store";
  * Wraps public-only routes (login, register).
  * If the user is already authenticated, redirects them into the platform.
  * Note: accessToken may be null after page refresh (it's in-memory only),
- * but isAuthenticated + refreshToken persisted is enough to know the user
- * has an active session.
+ * but isAuthenticated persisted in localStorage (plus the HttpOnly refresh
+ * cookie) is enough to know the user has an active session.
  */
 export function GuestGuard({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);

@@ -217,17 +217,22 @@ public class ResourceEmbedService {
                 log.warn("[EMBED] Failed presigned URL for resource {}: {}", r.getId(), e.getMessage());
             }
         }
-        return ResourceResponse.builder()
-                .id(r.getId())
-                .gameId(r.getGame() != null ? r.getGame().getId() : null)
-                .type(r.getType())
-                .name(r.getName())
-                .contentType(r.getContentType())
-                .content(r.getType() == ResourceType.document ? r.getContent() : null)
-                .sizeBytes(r.getSizeBytes())
-                .sharedWithPlayers(r.getSharedWithPlayers())
-                .downloadUrl(downloadUrl)
-                .createdAt(r.getCreatedAt())
-                .build();
+        return new ResourceResponse(
+                r.getId(),
+                null,
+                r.getGame() != null ? r.getGame().getId() : null,
+                null,
+                r.getType(),
+                r.getName(),
+                r.getContentType(),
+                r.getType() == ResourceType.document ? r.getContent() : null,
+                r.getSizeBytes(),
+                r.getSharedWithPlayers(),
+                downloadUrl,
+                null,
+                null,
+                r.getCreatedAt(),
+                null
+        );
     }
 }

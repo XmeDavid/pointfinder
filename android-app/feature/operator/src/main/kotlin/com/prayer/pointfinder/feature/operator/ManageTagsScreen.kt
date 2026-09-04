@@ -329,7 +329,7 @@ fun ManageTagsScreen(
                                         if (selected) {
                                             Icon(
                                                 Icons.Default.Check,
-                                                contentDescription = "Selected",
+                                                contentDescription = stringResource(R.string.cd_selected),
                                                 tint = contrastingTextColor(color),
                                                 modifier = Modifier.size(16.dp),
                                             )

@@ -25,17 +25,9 @@ export const authHandlers = [
     })
   }),
 
-  http.post('/api/auth/refresh', async ({ request }) => {
-    const body = (await request.json()) as Record<string, unknown>
-    const refreshToken = body.refreshToken as string | undefined
-
-    if (!refreshToken) {
-      return HttpResponse.json(
-        { message: 'Missing refresh token' },
-        { status: 400 },
-      )
-    }
-
+  http.post('/api/auth/refresh', () => {
+    // Refresh token arrives via HttpOnly cookie (not in the request body).
+    // The response still includes refreshToken for mobile backward compat.
     return HttpResponse.json({
       accessToken: 'mock-new-access-token',
       refreshToken: 'mock-new-refresh-token',

@@ -288,16 +288,16 @@ public class BaseUnlockOverrideService {
     }
 
     private BaseUnlockOverrideResponse toResponse(BaseUnlockOverride override) {
-        return BaseUnlockOverrideResponse.builder()
-                .id(override.getId())
-                .gameId(override.getGame().getId())
-                .teamId(override.getTeam().getId())
-                .baseId(override.getBase().getId())
-                .createdByOperatorId(override.getCreatedByOperator() != null
-                        ? override.getCreatedByOperator().getId() : null)
-                .createdByDisplayName(override.getCreatedByDisplayNameSnapshot())
-                .reason(override.getOperatorReason())
-                .createdAt(override.getCreatedAt())
-                .build();
+        return new BaseUnlockOverrideResponse(
+                override.getId(),
+                override.getGame().getId(),
+                override.getTeam().getId(),
+                override.getBase().getId(),
+                override.getCreatedByOperator() != null
+                        ? override.getCreatedByOperator().getId() : null,
+                override.getCreatedByDisplayNameSnapshot(),
+                override.getOperatorReason(),
+                override.getCreatedAt()
+        );
     }
 }

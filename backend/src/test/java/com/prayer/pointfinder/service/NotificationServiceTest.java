@@ -115,8 +115,8 @@ class NotificationServiceTest {
         List<NotificationResponse> result = notificationService.getNotificationsByGame(gameId);
 
         assertEquals(1, result.size());
-        assertEquals("Hello teams!", result.get(0).getMessage());
-        assertEquals(gameId, result.get(0).getGameId());
+        assertEquals("Hello teams!", result.get(0).message());
+        assertEquals(gameId, result.get(0).gameId());
         verify(gameAccessService).ensureCurrentUserCanAccessGame(gameId);
     }
 
@@ -140,9 +140,9 @@ class NotificationServiceTest {
 
         NotificationResponse response = notificationService.createNotification(gameId, request);
 
-        assertNotNull(response.getId());
-        assertEquals("Go to base 3!", response.getMessage());
-        assertEquals(teamId, response.getTargetTeamId());
+        assertNotNull(response.id());
+        assertEquals("Go to base 3!", response.message());
+        assertEquals(teamId, response.targetTeamId());
         verify(eventBroadcaster).broadcastNotification(eq(gameId), any(NotificationResponse.class));
         verify(playerRepository).findByTeamIdAndPushTokenIsNotNull(teamId);
         verify(playerRepository, never()).findByTeamGameIdAndPushTokenIsNotNull(any());
@@ -167,8 +167,8 @@ class NotificationServiceTest {
 
         NotificationResponse response = notificationService.createNotification(gameId, request);
 
-        assertNotNull(response.getId());
-        assertNull(response.getTargetTeamId());
+        assertNotNull(response.id());
+        assertNull(response.targetTeamId());
         verify(eventBroadcaster).broadcastNotification(eq(gameId), any(NotificationResponse.class));
         verify(playerRepository).findByTeamGameIdAndPushTokenIsNotNull(gameId);
         verify(playerRepository, never()).findByTeamIdAndPushTokenIsNotNull(any());

@@ -301,10 +301,7 @@ public class ChunkedUploadService {
         if (!sessions.isEmpty()) {
             meterRegistry.counter("uploads.sessions.cleared").increment(sessions.size());
         }
-        return UploadSessionClearResponse.builder()
-                .cancelledSessions(cancelledSessions)
-                .clearedSessions(sessions.size())
-                .build();
+        return new UploadSessionClearResponse(cancelledSessions, sessions.size());
     }
 
     @Transactional(timeout = 10)
@@ -574,23 +571,23 @@ public class ChunkedUploadService {
         if (session.getStatus() == UploadSessionStatus.active && !uploadedChunks.isEmpty()) {
             meterRegistry.counter("uploads.sessions.resumed").increment();
         }
-        return UploadSessionResponse.builder()
-                .sessionId(session.getId())
-                .gameId(session.getGame().getId())
-                .mediaItemKey(session.getMediaItemKey())
-                .originalFileName(session.getOriginalFileName())
-                .contentType(session.getContentType())
-                .totalSizeBytes(session.getTotalSizeBytes())
-                .chunkSizeBytes(session.getChunkSizeBytes())
-                .totalChunks(session.getTotalChunks())
-                .uploadedChunks(uploadedChunks)
-                .status(session.getStatus().name())
-                .fileUrl(session.getFileUrl())
-                .expiresAt(session.getExpiresAt())
-                .createdAt(session.getCreatedAt())
-                .updatedAt(session.getUpdatedAt())
-                .completedAt(session.getCompletedAt())
-                .build();
+        return new UploadSessionResponse(
+                session.getId(),
+                session.getGame().getId(),
+                session.getMediaItemKey(),
+                session.getOriginalFileName(),
+                session.getContentType(),
+                session.getTotalSizeBytes(),
+                session.getChunkSizeBytes(),
+                session.getTotalChunks(),
+                uploadedChunks,
+                session.getStatus().name(),
+                session.getFileUrl(),
+                session.getExpiresAt(),
+                session.getCreatedAt(),
+                session.getUpdatedAt(),
+                session.getCompletedAt()
+        );
     }
 
     private Path chunkPathFor(UUID sessionId, int chunkIndex) {

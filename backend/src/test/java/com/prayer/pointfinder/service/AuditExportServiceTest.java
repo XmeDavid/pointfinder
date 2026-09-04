@@ -122,42 +122,42 @@ class AuditExportServiceTest extends IntegrationTestBase {
                 "expected at least check_in + submission + operator_override events");
 
         AuditEntryDto checkIn = entries.stream()
-                .filter(e -> "check_in".equals(e.getType()))
+                .filter(e -> "check_in".equals(e.type()))
                 .findFirst().orElseThrow();
         assertAll("check_in row",
-                () -> assertEquals("player", checkIn.getActor().getType()),
-                () -> assertEquals(ctx.player.getId(), checkIn.getActor().getId()),
-                () -> assertEquals(ctx.player.getDisplayName(), checkIn.getActor().getDisplayName()),
-                () -> assertEquals(ctx.player.getDeviceId(), checkIn.getActor().getDeviceId()),
-                () -> assertEquals("player_app", checkIn.getSourceSurface()),
-                () -> assertEquals(ctx.team.getId(), checkIn.getTarget().getTeam().getId()),
-                () -> assertFalse(checkIn.isArchived())
+                () -> assertEquals("player", checkIn.actor().type()),
+                () -> assertEquals(ctx.player.getId(), checkIn.actor().id()),
+                () -> assertEquals(ctx.player.getDisplayName(), checkIn.actor().displayName()),
+                () -> assertEquals(ctx.player.getDeviceId(), checkIn.actor().deviceId()),
+                () -> assertEquals("player_app", checkIn.sourceSurface()),
+                () -> assertEquals(ctx.team.getId(), checkIn.target().team().id()),
+                () -> assertFalse(checkIn.archived())
         );
 
         AuditEntryDto submission = entries.stream()
-                .filter(e -> "submission".equals(e.getType()))
+                .filter(e -> "submission".equals(e.type()))
                 .findFirst().orElseThrow();
-        assertEquals("player", submission.getActor().getType());
-        assertEquals(ctx.player.getId(), submission.getActor().getId());
-        assertEquals("player_app", submission.getSourceSurface());
+        assertEquals("player", submission.actor().type());
+        assertEquals(ctx.player.getId(), submission.actor().id());
+        assertEquals("player_app", submission.sourceSurface());
 
         AuditEntryDto override = entries.stream()
-                .filter(e -> "operator_override".equals(e.getType()))
+                .filter(e -> "operator_override".equals(e.type()))
                 .findFirst().orElseThrow();
         assertAll("operator_override row",
-                () -> assertEquals("operator", override.getActor().getType()),
-                () -> assertEquals(ctx.operator.getId(), override.getActor().getId()),
-                () -> assertEquals(ctx.operator.getName(), override.getActor().getDisplayName()),
-                () -> assertNull(override.getActor().getDeviceId(),
+                () -> assertEquals("operator", override.actor().type()),
+                () -> assertEquals(ctx.operator.getId(), override.actor().id()),
+                () -> assertEquals(ctx.operator.getName(), override.actor().displayName()),
+                () -> assertNull(override.actor().deviceId(),
                         "operator actor must not carry device id"),
-                () -> assertEquals("operator_rescue", override.getSourceSurface()),
+                () -> assertEquals("operator_rescue", override.sourceSurface()),
                 () -> assertEquals("Phone died mid-submission",
-                        override.getDetails().getOperatorReason())
+                        override.details().operatorReason())
         );
 
         // Chronological ordering.
         for (int i = 1; i < entries.size(); i++) {
-            assertTrue(!entries.get(i).getTimestamp().isBefore(entries.get(i - 1).getTimestamp()),
+            assertTrue(!entries.get(i).timestamp().isBefore(entries.get(i - 1).timestamp()),
                     "export must be ordered by ascending timestamp");
         }
     }
@@ -189,8 +189,8 @@ class AuditExportServiceTest extends IntegrationTestBase {
         authenticateAsOperator(ctx.operator);
         List<AuditEntryDto> entries = exportJson(query(ctx.game.getId()).build());
 
-        boolean hasCheckIn = entries.stream().anyMatch(e -> "check_in".equals(e.getType()));
-        boolean hasSubmission = entries.stream().anyMatch(e -> "submission".equals(e.getType()));
+        boolean hasCheckIn = entries.stream().anyMatch(e -> "check_in".equals(e.type()));
+        boolean hasSubmission = entries.stream().anyMatch(e -> "submission".equals(e.type()));
         assertTrue(hasCheckIn, "default-filter export must include check_in events");
         assertTrue(hasSubmission, "default-filter export must include submission events");
     }
@@ -221,8 +221,8 @@ class AuditExportServiceTest extends IntegrationTestBase {
                 .build());
         assertFalse(filtered.isEmpty());
         for (AuditEntryDto entry : filtered) {
-            assertEquals("player", entry.getActor().getType());
-            assertEquals(ctx.player.getId(), entry.getActor().getId(),
+            assertEquals("player", entry.actor().type());
+            assertEquals(ctx.player.getId(), entry.actor().id(),
                     "playerId filter must only return events for that player");
         }
     }
@@ -249,9 +249,9 @@ class AuditExportServiceTest extends IntegrationTestBase {
 
         assertFalse(filtered.isEmpty(), "operator rescue events must be present");
         for (AuditEntryDto entry : filtered) {
-            assertEquals("operator", entry.getActor().getType(),
+            assertEquals("operator", entry.actor().type(),
                     "operatorId filter must only return operator-initiated events");
-            assertEquals(ctx.operator.getId(), entry.getActor().getId());
+            assertEquals(ctx.operator.getId(), entry.actor().id());
         }
     }
 
@@ -313,7 +313,7 @@ class AuditExportServiceTest extends IntegrationTestBase {
                 .build());
         assertFalse(filtered.isEmpty());
         for (AuditEntryDto entry : filtered) {
-            assertEquals("check_in", entry.getType());
+            assertEquals("check_in", entry.type());
         }
     }
 
@@ -337,8 +337,8 @@ class AuditExportServiceTest extends IntegrationTestBase {
                 .build());
         assertFalse(filtered.isEmpty());
         for (AuditEntryDto entry : filtered) {
-            assertTrue("check_in".equals(entry.getType()) || "submission".equals(entry.getType()),
-                    "filter must only include comma-listed types, got " + entry.getType());
+            assertTrue("check_in".equals(entry.type()) || "submission".equals(entry.type()),
+                    "filter must only include comma-listed types, got " + entry.type());
         }
     }
 
@@ -379,7 +379,7 @@ class AuditExportServiceTest extends IntegrationTestBase {
                 .build());
         assertFalse(shown.isEmpty(), "includeArchived=true must surface archived rows");
         for (AuditEntryDto entry : shown) {
-            assertTrue(entry.isArchived(), "reset rows must be flagged archived");
+            assertTrue(entry.archived(), "reset rows must be flagged archived");
         }
     }
 
@@ -545,7 +545,7 @@ class AuditExportServiceTest extends IntegrationTestBase {
         // Simulate a pre-V36 row: clear the snapshot but leave the FK.
         ActivityEvent checkInEvent = activityEventRepository.findByGameIdIncludingArchived(ctx.game.getId())
                 .stream()
-                .filter(e -> e.getType() == ActivityEventType.check_in)
+                .filter(e -> e.type() == ActivityEventType.check_in)
                 .findFirst().orElseThrow();
         checkInEvent.setActorDisplayNameSnapshot(null);
         checkInEvent.setActorDeviceIdSnapshot(null);
@@ -554,12 +554,12 @@ class AuditExportServiceTest extends IntegrationTestBase {
         authenticateAsOperator(ctx.operator);
         List<AuditEntryDto> entries = exportJson(query(ctx.game.getId()).build());
         AuditEntryDto row = entries.stream()
-                .filter(e -> "check_in".equals(e.getType()))
+                .filter(e -> "check_in".equals(e.type()))
                 .findFirst().orElseThrow();
 
-        assertEquals(ctx.player.getDisplayName(), row.getActor().getDisplayName(),
+        assertEquals(ctx.player.getDisplayName(), row.actor().displayName(),
                 "legacy null snapshot must fall back to the live player display name");
-        assertEquals(ctx.player.getDeviceId(), row.getActor().getDeviceId(),
+        assertEquals(ctx.player.getDeviceId(), row.actor().deviceId(),
                 "legacy null device snapshot must fall back to the live player device id");
     }
 
@@ -572,7 +572,7 @@ class AuditExportServiceTest extends IntegrationTestBase {
         // Detach all actor information so the service has to emit "Unknown".
         ActivityEvent checkInEvent = activityEventRepository.findByGameIdIncludingArchived(ctx.game.getId())
                 .stream()
-                .filter(e -> e.getType() == ActivityEventType.check_in)
+                .filter(e -> e.type() == ActivityEventType.check_in)
                 .findFirst().orElseThrow();
         checkInEvent.setActorPlayer(null);
         checkInEvent.setActorOperatorUser(null);
@@ -583,12 +583,12 @@ class AuditExportServiceTest extends IntegrationTestBase {
         authenticateAsOperator(ctx.operator);
         List<AuditEntryDto> entries = exportJson(query(ctx.game.getId()).build());
         AuditEntryDto row = entries.stream()
-                .filter(e -> "check_in".equals(e.getType()))
+                .filter(e -> "check_in".equals(e.type()))
                 .findFirst().orElseThrow();
 
-        assertEquals("system", row.getActor().getType());
-        assertEquals("Unknown", row.getActor().getDisplayName());
-        assertNull(row.getActor().getId());
+        assertEquals("system", row.actor().type());
+        assertEquals("Unknown", row.actor().displayName());
+        assertNull(row.actor().id());
     }
 
     // ==================================================================

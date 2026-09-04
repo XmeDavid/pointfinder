@@ -19,7 +19,6 @@ export interface UpdateProfileResponse {
 export interface ChangePasswordPayload {
   currentPassword: string
   newPassword: string
-  refreshToken: string
 }
 
 export const profileApi = {

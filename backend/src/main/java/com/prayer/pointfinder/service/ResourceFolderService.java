@@ -144,13 +144,13 @@ public class ResourceFolderService {
     }
 
     private ResourceFolderResponse toResponse(ResourceFolder f) {
-        return ResourceFolderResponse.builder()
-                .id(f.getId())
-                .orgId(f.getOrganization() != null ? f.getOrganization().getId() : null)
-                .gameId(f.getGame() != null ? f.getGame().getId() : null)
-                .parentId(f.getParent() != null ? f.getParent().getId() : null)
-                .name(f.getName())
-                .createdAt(f.getCreatedAt())
-                .build();
+        return new ResourceFolderResponse(
+                f.getId(),
+                f.getOrganization() != null ? f.getOrganization().getId() : null,
+                f.getGame() != null ? f.getGame().getId() : null,
+                f.getParent() != null ? f.getParent().getId() : null,
+                f.getName(),
+                f.getCreatedAt()
+        );
     }
 }
