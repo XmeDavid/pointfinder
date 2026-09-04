@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState, useRef } from 'react'
+import { useMemo, useEffect, useLayoutEffect, useState, useRef } from 'react'
 import { Source, Layer, useMap } from 'react-map-gl/maplibre'
 import type { LayerProps } from 'react-map-gl/maplibre'
 import type { GeoJSONSource, MapLayerMouseEvent } from 'maplibre-gl'
@@ -95,7 +95,9 @@ export function TeamMarkers({
 }: TeamMarkersProps) {
   const { current: map } = useMap()
   const callbackRef = useRef(onTeamClick)
-  callbackRef.current = onTeamClick
+  useLayoutEffect(() => {
+    callbackRef.current = onTeamClick
+  })
 
   const teamMap = useMemo(() => {
     const m = new Map<string, Team>()

@@ -1,6 +1,7 @@
 import { useMemo, useEffect, useState, useRef } from "react";
 import { Map as MapGL, Marker, Source, Layer } from "react-map-gl/maplibre";
 import type { LayerProps } from "react-map-gl/maplibre";
+import type { Feature, FeatureCollection, Point } from "geojson";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type {
   BroadcastBase,
@@ -150,8 +151,8 @@ export function BroadcastMap({ bases, teams, locations, progress, tileSource }: 
     return () => clearInterval(interval);
   }, []);
 
-  const teamLocationGeojson = useMemo((): GeoJSON.FeatureCollection => {
-    const features: GeoJSON.Feature<GeoJSON.Point>[] = [];
+  const teamLocationGeojson = useMemo((): FeatureCollection => {
+    const features: Feature<Point>[] = [];
     for (const loc of latestByTeam) {
       const team = teamMap.get(loc.teamId);
       if (!team) continue;

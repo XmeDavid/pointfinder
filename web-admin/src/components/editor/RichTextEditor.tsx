@@ -196,6 +196,8 @@ export function RichTextEditor({
   }, [onCreateVariable]);
 
   const variableExtensions = useMemo(() => {
+    // The refs are read when the editor asks for suggestions, not during render.
+    // eslint-disable-next-line react-hooks/refs
     const suggestion = makeVariableSuggestion({
       getAvailableKeys: () => variableKeysRef.current,
       onCreate: (partial) => onCreateVariableRef.current?.(partial),

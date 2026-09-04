@@ -24,10 +24,13 @@ export function SearchInput({
     onChangeRef.current = onChange;
   });
 
-  // Sync local value when the parent value changes externally
-  useEffect(() => {
+  // Sync local value when the parent value changes externally (adjust state during render,
+  // the React-recommended alternative to a setState-in-effect).
+  const [syncedValue, setSyncedValue] = useState(value);
+  if (syncedValue !== value) {
+    setSyncedValue(value);
     setLocalValue(value);
-  }, [value]);
+  }
 
   const handleChange = useCallback(
     (nextValue: string) => {
