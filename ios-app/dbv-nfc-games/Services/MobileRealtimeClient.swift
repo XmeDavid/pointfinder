@@ -134,7 +134,7 @@ final class MobileRealtimeClient {
                     let message = try await task.receive()
                     if firstMessage {
                         firstMessage = false
-                        let wasReconnecting = self?.reconnectAttempt ?? 0 > 0
+                        let wasReconnecting = (self?.reconnectAttempt ?? 0) > 0
                         self?.connectionState = .connected
                         self?.reconnectAttempt = 0
                         // Trigger data refresh if this was a reconnection

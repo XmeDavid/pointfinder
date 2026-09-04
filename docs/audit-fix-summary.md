@@ -1,6 +1,6 @@
 # Audit Fix Summary
 
-Status of all 22 findings from `docs/full-codebase-audit-2026-03-21.md`, verified 2026-06-08 (updated from 2026-06-05).
+Status of all 22 findings from `docs/full-codebase-audit-2026-03-21.md`, verified 2026-07-17 (updated from 2026-06-08).
 
 ## Key Discovery
 
@@ -13,11 +13,11 @@ Most "unfixed" findings (7 of 7) were already resolved in post-audit commits (th
 | # | Finding | Status | Action Taken |
 |---|---------|--------|--------------|
 | 1.19 | ChallengeResponse missing fixedBaseId | Already fixed | Field exists in DTO (line 40) and is mapped in ChallengeService (line 292). No action needed. |
-| 3.5 | MobileRealtimeClient receive loop MainActor awareness | Already fixed | Comment documenting MainActor serialization exists at lines 120-128 of MobileRealtimeClient.swift, referencing audit finding 3.5. |
+| 3.5 | MobileRealtimeClient receive loop MainActor awareness | **Fixed (2026-07-17)** | MainActor comment existed but latent operator precedence bug remained: `self?.reconnectAttempt ?? 0 > 0` bound as `?? (0 > 0)` due to `??` having lower precedence than `>`. Fixed by adding parentheses: `(self?.reconnectAttempt ?? 0) > 0`. |
 | 3.9 | AppState God Object (~700 lines) | Partially addressed | Split into 5 files (AppState.swift + 4 extensions). Main file is 256 lines. Tech-debt comment at lines 7-16. See audit-decisions.md. |
 | 3.14 | MapLibreMapView missing parent-child VC at call site | Already fixed | Line 433 now calls `configure(with: item.view, parentViewController: parentVC)`. |
 | 4.13 | Alt text hardcoded English in SubmissionsPage/ReviewLayout | Already fixed | Both files were restructured. Current code in SubmissionDetail.tsx uses `t('submissions.altFile', ...)` i18n keys. |
-| 6.16 | 56 instances of contentDescription = null | **Fixed** | Reduced to 5 instances, all decorative icons within labeled Buttons (correct per Compose a11y guidelines). See audit-decisions.md. |
+| 6.16 | 56 instances of contentDescription = null | **Fixed** | Reduced to 4 decorative instances within labeled Buttons (correct per Compose a11y guidelines). OperatorRescueActionButton fixed in 2026-07-23 pass. See audit-decisions.md. |
 | 10.9 | StringListJsonConverter returns null for empty JSON | **Fixed in this pass (2026-07-01)** | Added null guard after Jackson deserialization to handle JSON literal `null`. |
 | 10.11 | NotificationService treats null pushPlatform as iOS | **Fixed** | Player path was already correct (null drops from both lists). User.java default fixed in prior pass. Warning log added 2026-07-02 for observability when players have null pushPlatform. |
 | 11.2 | Android checkForFailedActions never called | **Fixed** | checkForFailedActions was already called. 2026-07-02: added reactive failedCountFlow to DAO/Repository/ViewModel and visible warning on CheckInScreen (matching iOS's red warning triangle). |
@@ -117,3 +117,12 @@ Most "unfixed" findings (7 of 7) were already resolved in post-audit commits (th
 5. **SetupBuilderComponents.kt** -- Added contentDescription for 5 icons: readiness icon uses conditional "Ready"/"Attention needed", location icon, forward arrow uses `openMapLabel`, leading icon uses `label`, chevron uses "Navigate" (finding 6.16).
 6. **docs/audit-fix-summary.md** -- Updated finding 6.16 status to fixed; added this changes section.
 7. **docs/audit-decisions.md** -- Updated finding 6.16 decision to reflect 5 remaining decorative instances.
+
+## Changes Made (2026-07-17 pass)
+
+1. **MobileRealtimeClient.swift:137** -- Fixed operator precedence bug: `self?.reconnectAttempt ?? 0 > 0` changed to `(self?.reconnectAttempt ?? 0) > 0`. Without parentheses, `??` (lower precedence than `>`) caused the expression to evaluate as `self?.reconnectAttempt ?? false`, meaning `wasReconnecting` was always `false` when `self` was nil and the reconnection callback was never triggered on first reconnect (finding 3.5).
+2. **docs/audit-fix-summary.md** -- Updated finding 3.5 status from "Already fixed" to fixed; added this changes section.
+
+## Changes Made (2026-07-23 pass)
+
+1. **OperatorLiveComponents.kt** -- Fixed `contentDescription = null` to `contentDescription = label` in `OperatorRescueActionButton` (finding 6.16). This icon is inside a clickable Surface (not a proper Button composable), so the icon description improves TalkBack clarity even though a Text label is present in the same Row.

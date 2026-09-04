@@ -121,7 +121,7 @@ internal fun OperatorRescueActionButton(
         border = BorderStroke(1.dp, accent.copy(alpha = 0.28f)),
     ) {
         Row(modifier = Modifier.padding(horizontal = PFSpacingToken.Space3, vertical = PFSpacingToken.Space2), horizontalArrangement = Arrangement.spacedBy(PFSpacingToken.Space2), verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp))
+            Icon(icon, contentDescription = label, modifier = Modifier.size(18.dp))
             Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
         }
     }

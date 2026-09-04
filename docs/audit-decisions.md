@@ -18,13 +18,13 @@ Design decisions made while resolving findings from `docs/full-codebase-audit-20
 
 ## Finding 6.16 -- Remaining contentDescription = null instances
 
-**Decision:** Fix 12 standalone/interactive icons with meaningful descriptions; keep 5 remaining `contentDescription = null` instances that are decorative icons inside labeled Buttons.
+**Decision:** Fix 13 standalone/interactive icons with meaningful descriptions; keep 4 remaining `contentDescription = null` instances that are decorative icons inside labeled Buttons.
 
 **Alternatives considered:**
 - Add string resource descriptions to all Icon composables (including decorative ones)
 - Leave all as null
 
-**Rationale:** The 5 remaining instances are decorative icons inside Buttons that already have explicit Text labels providing the accessible name (OperatorLiveComponents: icon in OperatorRescueActionButton with Text; PlayerLiveComponents: preview Row icon with Text; PlayerGameplayScreens: two icons inside Button/OutlinedButton with Text; SetupBuilderComponents: PlayArrow inside Button with Text). Per Compose accessibility guidelines, setting `contentDescription = null` is the correct approach for decorative icons within labeled containers. The 12 fixed instances were standalone interactive icons or icons in non-labeled containers where the description was the only accessible name. Where possible, existing localized parameters (`title`, `label`, `openMapLabel`) were reused; inline English strings have TODO comments for string resource extraction.
+**Rationale:** The 4 remaining instances are decorative icons inside Buttons that already have explicit Text labels providing the accessible name (PlayerLiveComponents: preview Row icon with Text; PlayerGameplayScreens: two icons inside Button/OutlinedButton with Text; SetupBuilderComponents: PlayArrow inside Button with Text). The OperatorRescueActionButton icon was fixed (2026-07-23) because its container is a clickable Surface rather than a proper Button composable, making the icon description more valuable for TalkBack clarity. Per Compose accessibility guidelines, setting `contentDescription = null` is the correct approach for decorative icons within labeled containers. The 12 fixed instances were standalone interactive icons or icons in non-labeled containers where the description was the only accessible name. Where possible, existing localized parameters (`title`, `label`, `openMapLabel`) were reused; inline English strings have TODO comments for string resource extraction.
 
 ---
 
