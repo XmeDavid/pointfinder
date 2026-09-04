@@ -26,9 +26,9 @@ jobs:
 
     steps:
       - name: Verify manual deploy branch
-        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
+        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/master'
         run: |
-          echo "Manual production deploys must run from main, got '${GITHUB_REF}'."
+          echo "Manual production deploys must run from master, got '${GITHUB_REF}'."
           exit 1
 
       - name: Trigger deployment
