@@ -203,7 +203,7 @@ class SubmissionServiceTest {
 
         SubmissionResponse response = submissionService.createSubmission(gameId, request);
 
-        assertEquals(existingSubmissionId, response.getId());
+        assertEquals(existingSubmissionId, response.id());
         verify(submissionRepository, times(2))
                 .findByTeamIdAndIdempotencyKeyWithAssociations(teamId, idempotencyKey);
     }
@@ -227,7 +227,7 @@ class SubmissionServiceTest {
         ArgumentCaptor<Submission> submissionCaptor = ArgumentCaptor.forClass(Submission.class);
         verify(submissionRepository).save(submissionCaptor.capture());
         assertEquals(rawFileUrl, submissionCaptor.getValue().getFileUrl());
-        assertEquals(createdSubmissionId, response.getId());
+        assertEquals(createdSubmissionId, response.id());
         verify(fileStorageService).validateStoredFileUrl(eq(rawFileUrl), eq(gameId));
         verify(operatorPushNotificationService).notifyOperatorsForSubmission(any(Submission.class));
     }
@@ -261,7 +261,7 @@ class SubmissionServiceTest {
         UUID createdSubmissionId = stubSubmissionSave();
 
         SubmissionResponse response = assertDoesNotThrow(() -> submissionService.createSubmission(gameId, request));
-        assertEquals(createdSubmissionId, response.getId());
+        assertEquals(createdSubmissionId, response.id());
         verify(playerRepository).findById(playerId);
     }
 
@@ -284,7 +284,7 @@ class SubmissionServiceTest {
         ArgumentCaptor<Submission> submissionCaptor = ArgumentCaptor.forClass(Submission.class);
         verify(submissionRepository).save(submissionCaptor.capture());
         assertEquals(SubmissionStatus.correct, submissionCaptor.getValue().getStatus());
-        assertEquals(SubmissionStatus.correct.name(), response.getStatus());
+        assertEquals(SubmissionStatus.correct.name(), response.status());
     }
 
     @Test
@@ -306,7 +306,7 @@ class SubmissionServiceTest {
         ArgumentCaptor<Submission> submissionCaptor = ArgumentCaptor.forClass(Submission.class);
         verify(submissionRepository).save(submissionCaptor.capture());
         assertEquals(SubmissionStatus.correct, submissionCaptor.getValue().getStatus());
-        assertEquals(SubmissionStatus.correct.name(), response.getStatus());
+        assertEquals(SubmissionStatus.correct.name(), response.status());
     }
 
     @Test
@@ -328,7 +328,7 @@ class SubmissionServiceTest {
         ArgumentCaptor<Submission> submissionCaptor = ArgumentCaptor.forClass(Submission.class);
         verify(submissionRepository).save(submissionCaptor.capture());
         assertEquals(SubmissionStatus.rejected, submissionCaptor.getValue().getStatus());
-        assertEquals(SubmissionStatus.rejected.name(), response.getStatus());
+        assertEquals(SubmissionStatus.rejected.name(), response.status());
     }
 
     @Test
@@ -350,7 +350,7 @@ class SubmissionServiceTest {
         ArgumentCaptor<Submission> submissionCaptor = ArgumentCaptor.forClass(Submission.class);
         verify(submissionRepository).save(submissionCaptor.capture());
         assertEquals(SubmissionStatus.rejected, submissionCaptor.getValue().getStatus());
-        assertEquals(SubmissionStatus.rejected.name(), response.getStatus());
+        assertEquals(SubmissionStatus.rejected.name(), response.status());
     }
 
     @Test
@@ -371,7 +371,7 @@ class SubmissionServiceTest {
         ArgumentCaptor<Submission> submissionCaptor = ArgumentCaptor.forClass(Submission.class);
         verify(submissionRepository).save(submissionCaptor.capture());
         assertEquals(SubmissionStatus.approved, submissionCaptor.getValue().getStatus());
-        assertEquals(SubmissionStatus.approved.name(), response.getStatus());
+        assertEquals(SubmissionStatus.approved.name(), response.status());
         assertEquals(challenge.getPoints(), submissionCaptor.getValue().getPoints());
     }
 
@@ -451,7 +451,7 @@ class SubmissionServiceTest {
 
         SubmissionResponse response = submissionService.createSubmission(gameId, request);
 
-        assertEquals(existingSubmissionId, response.getId());
+        assertEquals(existingSubmissionId, response.id());
         // save() should never be called since we returned early
         verify(submissionRepository, times(0)).save(any(Submission.class));
     }
@@ -475,7 +475,7 @@ class SubmissionServiceTest {
         ArgumentCaptor<Submission> submissionCaptor = ArgumentCaptor.forClass(Submission.class);
         verify(submissionRepository).save(submissionCaptor.capture());
         assertEquals(SubmissionStatus.pending, submissionCaptor.getValue().getStatus());
-        assertEquals(SubmissionStatus.pending.name(), response.getStatus());
+        assertEquals(SubmissionStatus.pending.name(), response.status());
     }
 
     @Test

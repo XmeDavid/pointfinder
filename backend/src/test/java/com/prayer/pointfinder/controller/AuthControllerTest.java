@@ -84,26 +84,12 @@ class AuthControllerTest {
         UUID teamId = UUID.randomUUID();
         UUID gameId = UUID.randomUUID();
 
-        PlayerAuthResponse response = PlayerAuthResponse.builder()
-                .token("player-jwt-token")
-                .player(PlayerAuthResponse.PlayerInfo.builder()
-                        .id(playerId)
-                        .displayName("Scout")
-                        .deviceId("device-123")
-                        .build())
-                .team(PlayerAuthResponse.TeamInfo.builder()
-                        .id(teamId)
-                        .name("Pathfinders")
-                        .color("#FF0000")
-                        .build())
-                .game(PlayerAuthResponse.GameInfo.builder()
-                        .id(gameId)
-                        .name("Test Game")
-                        .description("desc")
-                        .status("live")
-                        .tileSource("osm-classic")
-                        .build())
-                .build();
+        PlayerAuthResponse response = new PlayerAuthResponse(
+                "player-jwt-token",
+                new PlayerAuthResponse.PlayerInfo(playerId, "Scout", "device-123"),
+                new PlayerAuthResponse.TeamInfo(teamId, "Pathfinders", "#FF0000"),
+                new PlayerAuthResponse.GameInfo(gameId, "Test Game", "desc", "live", "osm-classic")
+        );
 
         when(playerService.joinTeam(any(PlayerJoinRequest.class))).thenReturn(response);
 
@@ -131,12 +117,12 @@ class AuthControllerTest {
         UUID teamId = UUID.randomUUID();
         UUID gameId = UUID.randomUUID();
         when(playerService.joinTeam(any(PlayerJoinRequest.class))).thenReturn(
-                PlayerAuthResponse.builder()
-                        .token("t")
-                        .player(PlayerAuthResponse.PlayerInfo.builder().id(playerId).displayName("Eagle").deviceId("dev-abc").build())
-                        .team(PlayerAuthResponse.TeamInfo.builder().id(teamId).name("T").color("#000").build())
-                        .game(PlayerAuthResponse.GameInfo.builder().id(gameId).name("G").description("").status("live").tileSource("osm-classic").build())
-                        .build());
+                new PlayerAuthResponse(
+                        "t",
+                        new PlayerAuthResponse.PlayerInfo(playerId, "Eagle", "dev-abc"),
+                        new PlayerAuthResponse.TeamInfo(teamId, "T", "#000"),
+                        new PlayerAuthResponse.GameInfo(gameId, "G", "", "live", "osm-classic")
+                ));
 
         mockMvc.perform(post("/api/auth/player/join")
                         .contentType(MediaType.APPLICATION_JSON)

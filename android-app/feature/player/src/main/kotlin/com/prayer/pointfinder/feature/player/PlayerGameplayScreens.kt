@@ -348,14 +348,14 @@ fun SolveScreen(
                         ) {
                             Image(
                                 bitmap = item.thumbnail.asImageBitmap(),
-                                contentDescription = "Media thumbnail",
+                                contentDescription = stringResource(R.string.cd_media_thumbnail),
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Crop,
                             )
                             if (item.isVideo) {
                                 Icon(
                                     Icons.Default.PlayCircleFilled,
-                                    contentDescription = "Video",
+                                    contentDescription = stringResource(R.string.cd_video_overlay),
                                     modifier = Modifier
                                         .size(36.dp)
                                         .align(Alignment.Center),

@@ -1,9 +1,5 @@
 package com.prayer.pointfinder.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -15,16 +11,13 @@ import java.util.UUID;
  * the IDs and the immutable display-name snapshots — so it is safe to
  * serialize without triggering lazy-load proxies.
  */
-@Data
-@Builder
-@AllArgsConstructor
-public class BaseUnlockOverrideResponse {
-    private UUID id;
-    private UUID gameId;
-    private UUID teamId;
-    private UUID baseId;
-    private UUID createdByOperatorId;
-    private String createdByDisplayName;
-    private String reason;
-    private Instant createdAt;
-}
+public record BaseUnlockOverrideResponse(
+    UUID id,
+    UUID gameId,
+    UUID teamId,
+    UUID baseId,
+    UUID createdByOperatorId,
+    String createdByDisplayName,
+    String reason,
+    Instant createdAt
+) {}

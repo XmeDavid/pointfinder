@@ -705,7 +705,7 @@ fun ChallengeEditScreen(
                 }
                 Icon(
                     imageVector = if (unlocksExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                    contentDescription = if (unlocksExpanded) "Collapse" else "Expand",
+                    contentDescription = if (unlocksExpanded) stringResource(R.string.cd_collapse) else stringResource(R.string.cd_expand),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -794,7 +794,7 @@ fun ChallengeEditScreen(
                             ) {
                                 Icon(
                                     imageVector = if (base.nfcLinked) Icons.Default.CheckCircle else Icons.Default.Nfc,
-                                    contentDescription = if (base.nfcLinked) "NFC linked" else "NFC not linked",
+                                    contentDescription = if (base.nfcLinked) stringResource(R.string.label_nfc_linked) else stringResource(R.string.label_nfc_not_linked),
                                     tint = if (base.nfcLinked) StatusCompleted else StatusSubmitted,
                                     modifier = Modifier.size(16.dp),
                                 )

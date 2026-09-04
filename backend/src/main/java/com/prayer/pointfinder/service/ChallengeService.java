@@ -275,24 +275,24 @@ public class ChallengeService {
         List<UUID> tagIds = c.getTags().stream()
                 .map(GameTag::getId)
                 .collect(Collectors.toList());
-        return ChallengeResponse.builder()
-                .id(c.getId())
-                .gameId(c.getGame().getId())
-                .title(c.getTitle())
-                .description(c.getDescription())
-                .content(c.getContent())
-                .completionContent(c.getCompletionContent())
-                .answerType(c.getAnswerType().name())
-                .autoValidate(c.getAutoValidate())
-                .correctAnswer(c.getCorrectAnswer())
-                .points(c.getPoints())
-                .locationBound(c.getLocationBound())
-                .requirePresenceToSubmit(c.getRequirePresenceToSubmit())
-                .unlocksBaseIds(unlocksBaseIds)
-                .fixedBaseId(fixedBaseId)
-                .operatorNotes(c.getOperatorNotes())
-                .tagIds(tagIds.isEmpty() ? null : tagIds)
-                .build();
+        return new ChallengeResponse(
+                c.getId(),
+                c.getGame().getId(),
+                c.getTitle(),
+                c.getDescription(),
+                c.getContent(),
+                c.getCompletionContent(),
+                c.getAnswerType().name(),
+                c.getAutoValidate(),
+                c.getCorrectAnswer(),
+                c.getPoints(),
+                c.getLocationBound(),
+                c.getRequirePresenceToSubmit(),
+                unlocksBaseIds,
+                fixedBaseId,
+                c.getOperatorNotes(),
+                tagIds.isEmpty() ? null : tagIds
+        );
     }
 
     /**

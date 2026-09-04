@@ -511,6 +511,20 @@
     <string name="cd_location">Standort</string>
     <string name="cd_camera">Kamera und Fotos</string>
     <string name="cd_submission_image">Einreichungsbild</string>
+    <string name="cd_offline">Offline</string>
+    <string name="cd_media_thumbnail">Medien-Vorschau</string>
+    <string name="cd_video_overlay">Video</string>
+    <string name="cd_scan_status">Scan-Status</string>
+    <string name="cd_photo_submissions">Foto-Einreichungen</string>
+    <string name="cd_navigate">Navigieren</string>
+    <string name="cd_points">Punkte</string>
+    <string name="cd_selected">Ausgewählt</string>
+    <string name="cd_checklist_ready">Bereit</string>
+    <string name="cd_checklist_attention">Handlungsbedarf</string>
+    <string name="cd_map_location">Kartenstandort</string>
+    <string name="cd_activate_game">Spiel aktivieren</string>
+    <string name="cd_activity_event">Aktivitätsereignis</string>
+    <string name="cd_stages_section">Stufen</string>
     <!-- Tag Management (Wave F — tags+colors unification) -->
     <string name="tags_manage">Tags verwalten</string>
     <string name="tags_manage_title">Tags verwalten</string>

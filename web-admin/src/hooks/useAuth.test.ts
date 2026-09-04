@@ -8,7 +8,6 @@ describe("useAuthStore", () => {
     useAuthStore.setState({
       user: null,
       accessToken: null,
-      refreshToken: null,
       isAuthenticated: false,
       hasHydrated: false,
     });
@@ -23,36 +22,34 @@ describe("useAuthStore", () => {
 
   it("setTokens marks authenticated", () => {
     const user = { id: "1", email: "a@b.com", name: "A", role: "operator" as const, createdAt: "" };
-    useAuthStore.getState().setTokens("access", "refresh", user);
+    useAuthStore.getState().setTokens("access", user);
 
     const state = useAuthStore.getState();
     expect(state.isAuthenticated).toBe(true);
     expect(state.accessToken).toBe("access");
-    expect(state.refreshToken).toBe("refresh");
     expect(state.user?.email).toBe("a@b.com");
   });
 
   it("clearAccessToken nulls only access token", () => {
     const user = { id: "1", email: "a@b.com", name: "A", role: "operator" as const, createdAt: "" };
-    useAuthStore.getState().setTokens("access", "refresh", user);
+    useAuthStore.getState().setTokens("access", user);
     useAuthStore.getState().clearAccessToken();
 
     const state = useAuthStore.getState();
     expect(state.accessToken).toBeNull();
-    expect(state.refreshToken).toBe("refresh");
+    // Refresh token is now in an HttpOnly cookie, not in state
     expect(state.isAuthenticated).toBe(true);
   });
 
   it("handleAuthFailure resets all auth state", () => {
     const user = { id: "1", email: "a@b.com", name: "A", role: "operator" as const, createdAt: "" };
-    useAuthStore.getState().setTokens("access", "refresh", user);
+    useAuthStore.getState().setTokens("access", user);
     useAuthStore.getState().handleAuthFailure();
 
     const state = useAuthStore.getState();
     expect(state.isAuthenticated).toBe(false);
     expect(state.user).toBeNull();
     expect(state.accessToken).toBeNull();
-    expect(state.refreshToken).toBeNull();
   });
 
   it("handleAuthFailure does not loop when already unauthenticated", () => {
@@ -63,7 +60,7 @@ describe("useAuthStore", () => {
 
   it("logout clears all state", () => {
     const user = { id: "1", email: "a@b.com", name: "A", role: "operator" as const, createdAt: "" };
-    useAuthStore.getState().setTokens("access", "refresh", user);
+    useAuthStore.getState().setTokens("access", user);
     useAuthStore.getState().logout();
 
     const state = useAuthStore.getState();
@@ -75,17 +72,16 @@ describe("useAuthStore", () => {
     const user = { id: "42", email: "test@example.com", name: "Test", role: "operator" as const, createdAt: "2026-01-01" };
 
     // Subscribe to track intermediate state changes
-    const stateSnapshots: Array<{ isAuthenticated: boolean; accessToken: string | null; refreshToken: string | null; user: unknown }> = [];
+    const stateSnapshots: Array<{ isAuthenticated: boolean; accessToken: string | null; user: unknown }> = [];
     const unsub = useAuthStore.subscribe((state) => {
       stateSnapshots.push({
         isAuthenticated: state.isAuthenticated,
         accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
         user: state.user,
       });
     });
 
-    useAuthStore.getState().setTokens("new-access", "new-refresh", user);
+    useAuthStore.getState().setTokens("new-access", user);
     unsub();
 
     // Should produce exactly one state update (atomic), not multiple partial updates
@@ -95,21 +91,19 @@ describe("useAuthStore", () => {
     const snapshot = stateSnapshots[0];
     expect(snapshot.isAuthenticated).toBe(true);
     expect(snapshot.accessToken).toBe("new-access");
-    expect(snapshot.refreshToken).toBe("new-refresh");
     expect(snapshot.user).toEqual(user);
   });
 
   it("hydrates from localStorage on store initialization", () => {
     const user = { id: "1", email: "stored@test.com", name: "Stored", role: "operator" as const, createdAt: "" };
 
-    // Simulate what zustand persist writes to localStorage
+    // Simulate what zustand persist writes to localStorage (version 1 — no refreshToken)
     const persistedState = {
       state: {
         user,
-        refreshToken: "persisted-refresh",
         isAuthenticated: true,
       },
-      version: 0,
+      version: 1,
     };
     localStorage.setItem("pointfinder-auth", JSON.stringify(persistedState));
 
@@ -118,10 +112,10 @@ describe("useAuthStore", () => {
 
     const state = useAuthStore.getState();
     expect(state.user).toEqual(user);
-    expect(state.refreshToken).toBe("persisted-refresh");
     expect(state.isAuthenticated).toBe(true);
     expect(state.hasHydrated).toBe(true);
     // Access token is NOT persisted (security: in-memory only)
+    // Refresh token is now in an HttpOnly cookie, not in state
     expect(state.accessToken).toBeNull();
   });
 });

@@ -30,7 +30,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.prayer.pointfinder.core.i18n.R
 import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.abs
@@ -358,7 +360,7 @@ private fun CenterIcon(
             ) {}
             Icon(
                 imageVector        = icon,
-                contentDescription = "Scan status",
+                contentDescription = stringResource(R.string.cd_scan_status),
                 tint               = iconTint,
                 modifier           = Modifier.size(30.dp),
             )

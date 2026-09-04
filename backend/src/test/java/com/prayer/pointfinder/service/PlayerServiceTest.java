@@ -468,12 +468,12 @@ class PlayerServiceTest {
         List<BaseProgressResponse> progress = playerService.getProgress(gameId, player);
 
         BaseProgressResponse hiddenProgress = progress.stream()
-                .filter(p -> p.getBaseId().equals(hiddenBaseId))
+                .filter(p -> p.baseId().equals(hiddenBaseId))
                 .findFirst()
                 .orElseThrow();
 
-        assertEquals("not_visited", hiddenProgress.getStatus());
-        assertTrue(progress.stream().anyMatch(p -> p.getBaseId().equals(sourceBaseId)));
+        assertEquals("not_visited", hiddenProgress.status());
+        assertTrue(progress.stream().anyMatch(p -> p.baseId().equals(sourceBaseId)));
     }
 
     @Test
@@ -572,16 +572,20 @@ class PlayerServiceTest {
         UploadSession unrelated = newCompletedUploadSession(f.gameId, f.playerId,
                 "/api/games/" + f.gameId + "/files/other.mp4");
 
-        SubmissionResponse stubResponse = SubmissionResponse.builder()
-                .id(f.submissionId)
-                .teamId(f.teamId)
-                .challengeId(f.challengeId)
-                .baseId(f.baseId)
-                .fileUrl(fileUrl)
-                .fileUrls(List.of(fileUrl))
-                .status("pending")
-                .submittedAt(Instant.now())
-                .build();
+        SubmissionResponse stubResponse = new SubmissionResponse(
+                f.submissionId,
+                f.teamId,
+                f.challengeId,
+                f.baseId,
+                null,
+                fileUrl,
+                List.of(fileUrl),
+                "pending",
+                Instant.now(),
+                null,
+                null,
+                null,
+                null);
 
         wireSubmitAnswerMocks(f, stubResponse, List.of(matching, unrelated));
 
@@ -594,7 +598,7 @@ class PlayerServiceTest {
         SubmissionResponse response = playerService.submitAnswer(f.gameId, req, f.player);
 
         assertNotNull(response);
-        assertEquals(f.submissionId, response.getId());
+        assertEquals(f.submissionId, response.id());
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Iterable<UploadSession>> captor = ArgumentCaptor.forClass(Iterable.class);
@@ -620,16 +624,20 @@ class PlayerServiceTest {
         UploadSession irrelevant = newCompletedUploadSession(f.gameId, f.playerId,
                 "/api/games/" + f.gameId + "/files/stale-video.mp4");
 
-        SubmissionResponse stubResponse = SubmissionResponse.builder()
-                .id(f.submissionId)
-                .teamId(f.teamId)
-                .challengeId(f.challengeId)
-                .baseId(f.baseId)
-                .fileUrl(url1)
-                .fileUrls(List.of(url1, url2))
-                .status("pending")
-                .submittedAt(Instant.now())
-                .build();
+        SubmissionResponse stubResponse = new SubmissionResponse(
+                f.submissionId,
+                f.teamId,
+                f.challengeId,
+                f.baseId,
+                null,
+                url1,
+                List.of(url1, url2),
+                "pending",
+                Instant.now(),
+                null,
+                null,
+                null,
+                null);
 
         wireSubmitAnswerMocks(f, stubResponse, List.of(session1, session2, irrelevant));
 
@@ -659,14 +667,20 @@ class PlayerServiceTest {
         // Legacy path: a text-only submission with no file URLs at all. No upload
         // linkage is possible; the submission must still succeed and the FK
         // population code path must be a complete no-op.
-        SubmissionResponse stubResponse = SubmissionResponse.builder()
-                .id(f.submissionId)
-                .teamId(f.teamId)
-                .challengeId(f.challengeId)
-                .baseId(f.baseId)
-                .status("pending")
-                .submittedAt(Instant.now())
-                .build();
+        SubmissionResponse stubResponse = new SubmissionResponse(
+                f.submissionId,
+                f.teamId,
+                f.challengeId,
+                f.baseId,
+                null,
+                null,
+                null,
+                "pending",
+                Instant.now(),
+                null,
+                null,
+                null,
+                null);
 
         wireSubmitAnswerMocks(f, stubResponse, List.of());
 
@@ -678,7 +692,7 @@ class PlayerServiceTest {
         SubmissionResponse response = playerService.submitAnswer(f.gameId, req, f.player);
 
         assertNotNull(response);
-        assertEquals(f.submissionId, response.getId());
+        assertEquals(f.submissionId, response.id());
         // When there is nothing to link, saveAll must not be called at all —
         // the service must not write empty batches.
         verify(uploadSessionRepository, never()).saveAll(any(Iterable.class));
@@ -691,16 +705,20 @@ class PlayerServiceTest {
 
         UploadSession matching = newCompletedUploadSession(f.gameId, f.playerId, fileUrl);
 
-        SubmissionResponse stubResponse = SubmissionResponse.builder()
-                .id(f.submissionId)
-                .teamId(f.teamId)
-                .challengeId(f.challengeId)
-                .baseId(f.baseId)
-                .fileUrl(fileUrl)
-                .fileUrls(List.of(fileUrl))
-                .status("pending")
-                .submittedAt(Instant.now())
-                .build();
+        SubmissionResponse stubResponse = new SubmissionResponse(
+                f.submissionId,
+                f.teamId,
+                f.challengeId,
+                f.baseId,
+                null,
+                fileUrl,
+                List.of(fileUrl),
+                "pending",
+                Instant.now(),
+                null,
+                null,
+                null,
+                null);
 
         // Simulate the repository view: first call sees it unlinked; subsequent
         // calls see it linked (the mock updates the candidate list dynamically).

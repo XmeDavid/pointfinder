@@ -56,18 +56,20 @@ class StageControllerTest {
 
     @Test
     void getStages_returnsStageList() throws Exception {
-        StageResponse stage = StageResponse.builder()
-                .id(STAGE_ID)
-                .gameId(GAME_ID)
-                .name("Stage 1")
-                .description("First stage")
-                .orderIndex(0)
-                .transitionType("manual")
-                .isActive(true)
-                .baseIds(List.of())
-                .createdAt(OffsetDateTime.now())
-                .updatedAt(OffsetDateTime.now())
-                .build();
+        OffsetDateTime now = OffsetDateTime.now();
+        StageResponse stage = new StageResponse(
+                STAGE_ID,
+                GAME_ID,
+                "Stage 1",
+                "First stage",
+                0,
+                "manual",
+                null,
+                null,
+                true,
+                List.of(),
+                now,
+                now);
 
         when(stageService.getStages(GAME_ID)).thenReturn(List.of(stage));
 
@@ -87,17 +89,20 @@ class StageControllerTest {
         request.setName("Stage 1");
         request.setTransitionType("manual");
 
-        StageResponse response = StageResponse.builder()
-                .id(STAGE_ID)
-                .gameId(GAME_ID)
-                .name("Stage 1")
-                .orderIndex(0)
-                .transitionType("manual")
-                .isActive(false)
-                .baseIds(List.of())
-                .createdAt(OffsetDateTime.now())
-                .updatedAt(OffsetDateTime.now())
-                .build();
+        OffsetDateTime now2 = OffsetDateTime.now();
+        StageResponse response = new StageResponse(
+                STAGE_ID,
+                GAME_ID,
+                "Stage 1",
+                null,
+                0,
+                "manual",
+                null,
+                null,
+                false,
+                List.of(),
+                now2,
+                now2);
 
         when(stageService.createStage(eq(GAME_ID), any(CreateStageRequest.class))).thenReturn(response);
 
@@ -144,17 +149,20 @@ class StageControllerTest {
         request.setName("Updated Stage");
         request.setTransitionType("scheduled");
 
-        StageResponse response = StageResponse.builder()
-                .id(STAGE_ID)
-                .gameId(GAME_ID)
-                .name("Updated Stage")
-                .orderIndex(0)
-                .transitionType("scheduled")
-                .isActive(false)
-                .baseIds(List.of())
-                .createdAt(OffsetDateTime.now())
-                .updatedAt(OffsetDateTime.now())
-                .build();
+        OffsetDateTime now3 = OffsetDateTime.now();
+        StageResponse response = new StageResponse(
+                STAGE_ID,
+                GAME_ID,
+                "Updated Stage",
+                null,
+                0,
+                "scheduled",
+                null,
+                null,
+                false,
+                List.of(),
+                now3,
+                now3);
 
         when(stageService.updateStage(eq(GAME_ID), eq(STAGE_ID), any(UpdateStageRequest.class)))
                 .thenReturn(response);

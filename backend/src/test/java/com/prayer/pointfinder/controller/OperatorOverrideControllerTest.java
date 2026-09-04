@@ -86,29 +86,33 @@ class OperatorOverrideControllerTest {
     }
 
     private SubmissionResponse sampleSubmission() {
-        return SubmissionResponse.builder()
-                .id(UUID.randomUUID())
-                .teamId(TEAM_ID)
-                .challengeId(CHALLENGE_ID)
-                .baseId(BASE_ID)
-                .answer("[Operator marked complete]")
-                .status("approved")
-                .submittedAt(Instant.now())
-                .points(100)
-                .build();
+        return new SubmissionResponse(
+                UUID.randomUUID(),
+                TEAM_ID,
+                CHALLENGE_ID,
+                BASE_ID,
+                "[Operator marked complete]",
+                null,
+                null,
+                "approved",
+                Instant.now(),
+                null,
+                null,
+                100,
+                null);
     }
 
     private BaseUnlockOverrideResponse sampleOverride() {
-        return BaseUnlockOverrideResponse.builder()
-                .id(OVERRIDE_ID)
-                .gameId(GAME_ID)
-                .teamId(TEAM_ID)
-                .baseId(BASE_ID)
-                .createdByOperatorId(OPERATOR_ID)
-                .createdByDisplayName("Alice")
-                .reason("Team got stuck")
-                .createdAt(Instant.now())
-                .build();
+        return new BaseUnlockOverrideResponse(
+                OVERRIDE_ID,
+                GAME_ID,
+                TEAM_ID,
+                BASE_ID,
+                OPERATOR_ID,
+                "Alice",
+                "Team got stuck",
+                Instant.now()
+        );
     }
 
     // ── POST mark-completed ──────────────────────────────────────────────────

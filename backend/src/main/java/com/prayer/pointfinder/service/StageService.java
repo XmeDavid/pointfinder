@@ -201,20 +201,20 @@ public class StageService {
                 .map(Base::getId)
                 .collect(Collectors.toList());
 
-        return StageResponse.builder()
-                .id(stage.getId())
-                .gameId(stage.getGame().getId())
-                .name(stage.getName())
-                .description(stage.getDescription())
-                .orderIndex(stage.getOrderIndex())
-                .transitionType(stage.getTransitionType().name())
-                .scheduledAt(stage.getScheduledAt())
-                .triggerBaseId(stage.getTriggerBaseId())
-                .isActive(stage.getIsActive())
-                .baseIds(baseIds.isEmpty() ? List.of() : baseIds)
-                .createdAt(stage.getCreatedAt())
-                .updatedAt(stage.getUpdatedAt())
-                .build();
+        return new StageResponse(
+                stage.getId(),
+                stage.getGame().getId(),
+                stage.getName(),
+                stage.getDescription(),
+                stage.getOrderIndex(),
+                stage.getTransitionType().name(),
+                stage.getScheduledAt(),
+                stage.getTriggerBaseId(),
+                stage.getIsActive(),
+                baseIds.isEmpty() ? List.of() : baseIds,
+                stage.getCreatedAt(),
+                stage.getUpdatedAt()
+        );
     }
 
     private Stage findStageOrThrow(UUID stageId) {

@@ -63,15 +63,20 @@ class SubmissionControllerTest {
         UUID challengeId = UUID.randomUUID();
         UUID baseId = UUID.randomUUID();
 
-        SubmissionResponse sub = SubmissionResponse.builder()
-                .id(submissionId)
-                .teamId(teamId)
-                .challengeId(challengeId)
-                .baseId(baseId)
-                .answer("42")
-                .status("pending")
-                .submittedAt(Instant.now())
-                .build();
+        SubmissionResponse sub = new SubmissionResponse(
+                submissionId,
+                teamId,
+                challengeId,
+                baseId,
+                "42",
+                null,
+                null,
+                "pending",
+                Instant.now(),
+                null,
+                null,
+                null,
+                null);
 
         when(submissionService.getSubmissionsByGame(gameId)).thenReturn(List.of(sub));
 
@@ -102,15 +107,20 @@ class SubmissionControllerTest {
         UUID teamId = UUID.randomUUID();
         UUID submissionId = UUID.randomUUID();
 
-        SubmissionResponse sub = SubmissionResponse.builder()
-                .id(submissionId)
-                .teamId(teamId)
-                .challengeId(UUID.randomUUID())
-                .baseId(UUID.randomUUID())
-                .answer("answer")
-                .status("pending")
-                .submittedAt(Instant.now())
-                .build();
+        SubmissionResponse sub = new SubmissionResponse(
+                submissionId,
+                teamId,
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                "answer",
+                null,
+                null,
+                "pending",
+                Instant.now(),
+                null,
+                null,
+                null,
+                null);
 
         when(submissionService.getSubmissionsByTeam(gameId, teamId)).thenReturn(List.of(sub));
 
@@ -178,10 +188,10 @@ class SubmissionControllerTest {
         request.setBaseId(baseId);
         request.setAnswer("correct answer");
 
-        SubmissionResponse response = SubmissionResponse.builder()
-                .id(submissionId).teamId(teamId).challengeId(challengeId).baseId(baseId)
-                .answer("correct answer").status("pending").submittedAt(Instant.now())
-                .build();
+        SubmissionResponse response = new SubmissionResponse(
+                submissionId, teamId, challengeId, baseId,
+                "correct answer", null, null, "pending", Instant.now(),
+                null, null, null, null);
 
         when(submissionService.createSubmission(eq(gameId), any(CreateSubmissionRequest.class)))
                 .thenReturn(response);
@@ -231,17 +241,20 @@ class SubmissionControllerTest {
         request.setStatus(ReviewStatus.approved);
         request.setPoints(50);
 
-        SubmissionResponse response = SubmissionResponse.builder()
-                .id(submissionId)
-                .teamId(teamId)
-                .challengeId(challengeId)
-                .baseId(baseId)
-                .answer("42")
-                .status("approved")
-                .submittedAt(Instant.now())
-                .reviewedBy(reviewerId)
-                .points(50)
-                .build();
+        SubmissionResponse response = new SubmissionResponse(
+                submissionId,
+                teamId,
+                challengeId,
+                baseId,
+                "42",
+                null,
+                null,
+                "approved",
+                Instant.now(),
+                reviewerId,
+                null,
+                50,
+                null);
 
         when(submissionService.reviewSubmission(eq(gameId), eq(submissionId), any(ReviewSubmissionRequest.class)))
                 .thenReturn(response);
@@ -265,10 +278,10 @@ class SubmissionControllerTest {
         request.setPoints(75);
 
         when(submissionService.reviewSubmission(eq(gameId), eq(submissionId), any(ReviewSubmissionRequest.class)))
-                .thenReturn(SubmissionResponse.builder()
-                        .id(submissionId).teamId(UUID.randomUUID()).challengeId(UUID.randomUUID())
-                        .baseId(UUID.randomUUID()).answer("a").status("approved")
-                        .submittedAt(Instant.now()).points(75).build());
+                .thenReturn(new SubmissionResponse(
+                        submissionId, UUID.randomUUID(), UUID.randomUUID(),
+                        UUID.randomUUID(), "a", null, null, "approved",
+                        Instant.now(), null, null, 75, null));
 
         mockMvc.perform(patch("/api/games/" + gameId + "/submissions/" + submissionId + "/review")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -290,16 +303,20 @@ class SubmissionControllerTest {
         request.setStatus(ReviewStatus.rejected);
         request.setFeedback("Wrong answer, try again");
 
-        SubmissionResponse response = SubmissionResponse.builder()
-                .id(submissionId)
-                .teamId(UUID.randomUUID())
-                .challengeId(UUID.randomUUID())
-                .baseId(UUID.randomUUID())
-                .answer("wrong")
-                .status("rejected")
-                .submittedAt(Instant.now())
-                .feedback("Wrong answer, try again")
-                .build();
+        SubmissionResponse response = new SubmissionResponse(
+                submissionId,
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                "wrong",
+                null,
+                null,
+                "rejected",
+                Instant.now(),
+                null,
+                "Wrong answer, try again",
+                null,
+                null);
 
         when(submissionService.reviewSubmission(eq(gameId), eq(submissionId), any(ReviewSubmissionRequest.class)))
                 .thenReturn(response);
@@ -335,10 +352,10 @@ class SubmissionControllerTest {
         request.setPoints(-1); // negative points are now allowed (commit 3b721c8)
 
         when(submissionService.reviewSubmission(eq(gameId), eq(submissionId), any(ReviewSubmissionRequest.class)))
-                .thenReturn(SubmissionResponse.builder()
-                        .id(submissionId).teamId(UUID.randomUUID()).challengeId(UUID.randomUUID())
-                        .baseId(UUID.randomUUID()).answer("a").status("approved")
-                        .submittedAt(Instant.now()).points(-1).build());
+                .thenReturn(new SubmissionResponse(
+                        submissionId, UUID.randomUUID(), UUID.randomUUID(),
+                        UUID.randomUUID(), "a", null, null, "approved",
+                        Instant.now(), null, null, -1, null));
 
         mockMvc.perform(patch("/api/games/" + gameId + "/submissions/" + submissionId + "/review")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -373,10 +390,10 @@ class SubmissionControllerTest {
         request.setPoints(100000); // exactly @Max(100000) — valid
 
         when(submissionService.reviewSubmission(eq(gameId), eq(submissionId), any(ReviewSubmissionRequest.class)))
-                .thenReturn(SubmissionResponse.builder()
-                        .id(submissionId).teamId(UUID.randomUUID()).challengeId(UUID.randomUUID())
-                        .baseId(UUID.randomUUID()).answer("a").status("approved")
-                        .submittedAt(Instant.now()).points(100000).build());
+                .thenReturn(new SubmissionResponse(
+                        submissionId, UUID.randomUUID(), UUID.randomUUID(),
+                        UUID.randomUUID(), "a", null, null, "approved",
+                        Instant.now(), null, null, 100000, null));
 
         mockMvc.perform(patch("/api/games/" + gameId + "/submissions/" + submissionId + "/review")
                         .contentType(MediaType.APPLICATION_JSON)

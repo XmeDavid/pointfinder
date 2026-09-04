@@ -207,19 +207,17 @@ public class AuditExportService {
         AuditEntryDto.Target target = resolveTarget(row);
         String operatorReason = lookupOperatorReason(row, submissionReasons, checkInReasons);
 
-        return AuditEntryDto.builder()
-                .id(row.getId())
-                .timestamp(row.getTimestamp())
-                .type(row.getType() != null ? row.getType().name() : null)
-                .sourceSurface(row.getSourceSurface())
-                .actor(actor)
-                .target(target)
-                .details(AuditEntryDto.Details.builder()
-                        .message(row.getMessage())
-                        .operatorReason(operatorReason)
-                        .build())
-                .archived(row.isArchived())
-                .build();
+        return new AuditEntryDto(
+                row.getId(),
+                row.getTimestamp(),
+                row.getType() != null ? row.getType().name() : null,
+                row.getSourceSurface(),
+                actor,
+                target,
+                new AuditEntryDto.Details(
+                        row.getMessage(),
+                        operatorReason),
+                row.isArchived());
     }
 
     private AuditEntryDto.Actor resolveActor(ActivityEvent row) {
@@ -230,34 +228,31 @@ public class AuditExportService {
         if (actorPlayer != null) {
             String name = snapshotName != null ? snapshotName : safeDisplayName(actorPlayer);
             String device = snapshotDevice != null ? snapshotDevice : safeDeviceId(actorPlayer);
-            return AuditEntryDto.Actor.builder()
-                    .type("player")
-                    .id(actorPlayer.getId())
-                    .displayName(name != null ? name : "Unknown")
-                    .deviceId(device)
-                    .build();
+            return new AuditEntryDto.Actor(
+                    "player",
+                    actorPlayer.getId(),
+                    name != null ? name : "Unknown",
+                    device);
         }
 
         User actorOperator = row.getActorOperatorUser();
         if (actorOperator != null) {
             String name = snapshotName != null ? snapshotName : safeUserName(actorOperator);
-            return AuditEntryDto.Actor.builder()
-                    .type("operator")
-                    .id(actorOperator.getId())
-                    .displayName(name != null ? name : "Unknown")
-                    .deviceId(null)
-                    .build();
+            return new AuditEntryDto.Actor(
+                    "operator",
+                    actorOperator.getId(),
+                    name != null ? name : "Unknown",
+                    null);
         }
 
         // Neither FK populated. If the snapshot still holds a name we can
         // attribute the row without knowing whether it was a player or
         // operator; fall back to "Unknown" otherwise.
-        return AuditEntryDto.Actor.builder()
-                .type("system")
-                .id(null)
-                .displayName(snapshotName != null ? snapshotName : "Unknown")
-                .deviceId(snapshotDevice)
-                .build();
+        return new AuditEntryDto.Actor(
+                "system",
+                null,
+                snapshotName != null ? snapshotName : "Unknown",
+                snapshotDevice);
     }
 
     private AuditEntryDto.Target resolveTarget(ActivityEvent row) {
@@ -265,26 +260,22 @@ public class AuditExportService {
         Base base = row.getBase();
         Challenge challenge = row.getChallenge();
 
-        return AuditEntryDto.Target.builder()
-                .team(team != null
-                        ? AuditEntryDto.TeamRef.builder()
-                                .id(team.getId())
-                                .name(team.getName())
-                                .build()
-                        : null)
-                .base(base != null
-                        ? AuditEntryDto.BaseRef.builder()
-                                .id(base.getId())
-                                .name(base.getName())
-                                .build()
-                        : null)
-                .challenge(challenge != null
-                        ? AuditEntryDto.ChallengeRef.builder()
-                                .id(challenge.getId())
-                                .title(challenge.getTitle())
-                                .build()
-                        : null)
-                .build();
+        return new AuditEntryDto.Target(
+                team != null
+                        ? new AuditEntryDto.TeamRef(
+                                team.getId(),
+                                team.getName())
+                        : null,
+                base != null
+                        ? new AuditEntryDto.BaseRef(
+                                base.getId(),
+                                base.getName())
+                        : null,
+                challenge != null
+                        ? new AuditEntryDto.ChallengeRef(
+                                challenge.getId(),
+                                challenge.getTitle())
+                        : null);
     }
 
     private String lookupOperatorReason(
@@ -573,33 +564,33 @@ public class AuditExportService {
         sb.append(CSV_HEADER).append("\r\n");
         for (AuditEntryDto e : entries) {
             List<String> columns = new ArrayList<>(16);
-            columns.add(csvCell(e.getTimestamp() != null ? e.getTimestamp().toString() : null));
-            columns.add(csvCell(e.getType()));
-            columns.add(csvCell(e.getSourceSurface()));
+            columns.add(csvCell(e.timestamp() != null ? e.timestamp().toString() : null));
+            columns.add(csvCell(e.type()));
+            columns.add(csvCell(e.sourceSurface()));
 
-            AuditEntryDto.Actor actor = e.getActor();
-            columns.add(csvCell(actor != null ? actor.getType() : null));
-            columns.add(csvCell(actor != null && actor.getId() != null ? actor.getId().toString() : null));
-            columns.add(csvCell(actor != null ? actor.getDisplayName() : null));
-            columns.add(csvCell(actor != null ? actor.getDeviceId() : null));
+            AuditEntryDto.Actor actor = e.actor();
+            columns.add(csvCell(actor != null ? actor.type() : null));
+            columns.add(csvCell(actor != null && actor.id() != null ? actor.id().toString() : null));
+            columns.add(csvCell(actor != null ? actor.displayName() : null));
+            columns.add(csvCell(actor != null ? actor.deviceId() : null));
 
-            AuditEntryDto.Target target = e.getTarget();
-            AuditEntryDto.TeamRef team = target != null ? target.getTeam() : null;
-            AuditEntryDto.BaseRef base = target != null ? target.getBase() : null;
-            AuditEntryDto.ChallengeRef challenge = target != null ? target.getChallenge() : null;
+            AuditEntryDto.Target target = e.target();
+            AuditEntryDto.TeamRef team = target != null ? target.team() : null;
+            AuditEntryDto.BaseRef base = target != null ? target.base() : null;
+            AuditEntryDto.ChallengeRef challenge = target != null ? target.challenge() : null;
 
-            columns.add(csvCell(team != null && team.getId() != null ? team.getId().toString() : null));
-            columns.add(csvCell(team != null ? team.getName() : null));
-            columns.add(csvCell(base != null && base.getId() != null ? base.getId().toString() : null));
-            columns.add(csvCell(base != null ? base.getName() : null));
-            columns.add(csvCell(challenge != null && challenge.getId() != null ? challenge.getId().toString() : null));
-            columns.add(csvCell(challenge != null ? challenge.getTitle() : null));
+            columns.add(csvCell(team != null && team.id() != null ? team.id().toString() : null));
+            columns.add(csvCell(team != null ? team.name() : null));
+            columns.add(csvCell(base != null && base.id() != null ? base.id().toString() : null));
+            columns.add(csvCell(base != null ? base.name() : null));
+            columns.add(csvCell(challenge != null && challenge.id() != null ? challenge.id().toString() : null));
+            columns.add(csvCell(challenge != null ? challenge.title() : null));
 
-            AuditEntryDto.Details details = e.getDetails();
-            columns.add(csvCell(details != null ? details.getMessage() : null));
-            columns.add(csvCell(details != null ? details.getOperatorReason() : null));
+            AuditEntryDto.Details details = e.details();
+            columns.add(csvCell(details != null ? details.message() : null));
+            columns.add(csvCell(details != null ? details.operatorReason() : null));
 
-            columns.add(csvCell(Boolean.toString(e.isArchived())));
+            columns.add(csvCell(Boolean.toString(e.archived())));
 
             sb.append(String.join(",", columns)).append("\r\n");
         }

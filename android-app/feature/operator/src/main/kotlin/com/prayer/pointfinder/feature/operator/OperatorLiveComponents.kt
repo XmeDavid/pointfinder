@@ -32,8 +32,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.prayer.pointfinder.core.designsystem.PFColors
+import com.prayer.pointfinder.core.i18n.R
 import com.prayer.pointfinder.core.designsystem.PFDimensionToken
 import com.prayer.pointfinder.core.designsystem.PFSpacingToken
 
@@ -85,7 +87,7 @@ internal fun OperatorSubmissionCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(teamName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 if (mediaCount > 0) {
-                    Icon(Icons.Default.PhotoLibrary, contentDescription = "Photo submissions", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant) // TODO: Extract to string resources
+                    Icon(Icons.Default.PhotoLibrary, contentDescription = stringResource(R.string.cd_photo_submissions), modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     if (mediaCount > 1) {
                         Spacer(Modifier.width(PFSpacingToken.Space1))
                         Text(mediaCount.toString(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

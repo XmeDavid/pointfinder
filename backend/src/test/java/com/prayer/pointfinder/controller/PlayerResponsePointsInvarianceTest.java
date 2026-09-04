@@ -141,50 +141,41 @@ class PlayerResponsePointsInvarianceTest {
         UUID baseId = UUID.randomUUID();
         UUID challengeId = UUID.randomUUID();
 
-        PlayerBaseResponse base = PlayerBaseResponse.builder()
-                .id(baseId)
-                .gameId(gameId)
-                .lat(47.3769)
-                .lng(8.5417)
-                .nfcLinked(true)
-                .hidden(false)
-                .fixedChallengeId(challengeId)
-                .build();
+        PlayerBaseResponse base = new PlayerBaseResponse(
+                baseId,
+                gameId,
+                47.3769,
+                8.5417,
+                true,
+                false,
+                challengeId
+        );
 
-        PlayerChallengeResponse challenge = PlayerChallengeResponse.builder()
-                .id(challengeId)
-                .gameId(gameId)
-                .title("Find the oldest tree")
-                .description("Stand next to the trunk and submit a photo")
-                .content("Full instructions here")
-                .completionContent("Well done!")
-                .answerType("photo")
-                .autoValidate(false)
-                .locationBound(true)
-                .requirePresenceToSubmit(true)
-                .fixedBaseId(baseId)
-                .build();
+        PlayerChallengeResponse challenge = new PlayerChallengeResponse(
+                challengeId, gameId, "Find the oldest tree",
+                "Stand next to the trunk and submit a photo",
+                "Full instructions here", "Well done!", "photo", false,
+                true, true, null, baseId
+        );
 
-        BaseProgressResponse progress = BaseProgressResponse.builder()
-                .baseId(baseId)
-                .challengeTitle("Find the oldest tree")
-                .lat(47.3769)
-                .lng(8.5417)
-                .nfcLinked(true)
-                .status("checked_in")
-                .checkedInAt(Instant.parse("2026-04-10T10:00:00Z"))
-                .challengeId(challengeId)
-                .submissionStatus(null)
-                .build();
+        BaseProgressResponse progress = new BaseProgressResponse(
+                baseId,
+                "Find the oldest tree",
+                47.3769,
+                8.5417,
+                true,
+                "checked_in",
+                Instant.parse("2026-04-10T10:00:00Z"),
+                challengeId,
+                null);
 
-        GameDataResponse response = GameDataResponse.builder()
-                .gameStatus("live")
-                .unlockTrigger("CHECK_IN")
-                .bases(List.of(base))
-                .challenges(List.of(challenge))
-                .assignments(List.of())
-                .progress(List.of(progress))
-                .build();
+        GameDataResponse response = new GameDataResponse(
+                "live",
+                "CHECK_IN",
+                List.of(base),
+                List.of(challenge),
+                List.of(),
+                List.of(progress));
 
         when(playerService.getGameData(eq(gameId), any(Player.class))).thenReturn(response);
 
@@ -203,20 +194,18 @@ class PlayerResponsePointsInvarianceTest {
         UUID baseId = UUID.randomUUID();
         UUID checkInId = UUID.randomUUID();
 
-        CheckInResponse response = CheckInResponse.builder()
-                .checkInId(checkInId)
-                .baseId(baseId)
-                .checkedInAt(Instant.parse("2026-04-10T10:15:00Z"))
-                .challenge(CheckInResponse.ChallengeInfo.builder()
-                        .id(UUID.randomUUID())
-                        .title("Find the oldest tree")
-                        .description("Stand next to the trunk")
-                        .content("instructions")
-                        .completionContent("well done")
-                        .answerType("photo")
-                        .requirePresenceToSubmit(true)
-                        .build())
-                .build();
+        CheckInResponse response = new CheckInResponse(
+                checkInId,
+                baseId,
+                Instant.parse("2026-04-10T10:15:00Z"),
+                new CheckInResponse.ChallengeInfo(
+                        UUID.randomUUID(),
+                        "Find the oldest tree",
+                        "Stand next to the trunk",
+                        "instructions",
+                        "well done",
+                        "photo",
+                        true));
 
         when(playerService.checkIn(eq(gameId), eq(baseId), any(Player.class), any()))
                 .thenReturn(response);
@@ -241,17 +230,16 @@ class PlayerResponsePointsInvarianceTest {
         UUID baseId = UUID.randomUUID();
         UUID challengeId = UUID.randomUUID();
 
-        BaseProgressResponse progress = BaseProgressResponse.builder()
-                .baseId(baseId)
-                .challengeTitle("Find the oldest tree")
-                .lat(47.3769)
-                .lng(8.5417)
-                .nfcLinked(true)
-                .status("submitted")
-                .checkedInAt(Instant.parse("2026-04-10T10:00:00Z"))
-                .challengeId(challengeId)
-                .submissionStatus("pending")
-                .build();
+        BaseProgressResponse progress = new BaseProgressResponse(
+                baseId,
+                "Find the oldest tree",
+                47.3769,
+                8.5417,
+                true,
+                "submitted",
+                Instant.parse("2026-04-10T10:00:00Z"),
+                challengeId,
+                "pending");
 
         when(playerService.getProgress(eq(gameId), any(Player.class)))
                 .thenReturn(List.of(progress));
@@ -270,15 +258,15 @@ class PlayerResponsePointsInvarianceTest {
         UUID gameId = UUID.randomUUID();
         UUID baseId = UUID.randomUUID();
 
-        PlayerBaseResponse base = PlayerBaseResponse.builder()
-                .id(baseId)
-                .gameId(gameId)
-                .lat(47.3769)
-                .lng(8.5417)
-                .nfcLinked(true)
-                .hidden(false)
-                .fixedChallengeId(UUID.randomUUID())
-                .build();
+        PlayerBaseResponse base = new PlayerBaseResponse(
+                baseId,
+                gameId,
+                47.3769,
+                8.5417,
+                true,
+                false,
+                UUID.randomUUID()
+        );
 
         when(playerService.getBases(eq(gameId), any(Player.class)))
                 .thenReturn(List.of(base));

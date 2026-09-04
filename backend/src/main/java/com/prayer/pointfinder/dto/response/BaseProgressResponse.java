@@ -1,9 +1,5 @@
 package com.prayer.pointfinder.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -25,24 +21,21 @@ import java.util.UUID;
  * <p>Source spec: docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md
  * — P1 Operator Workflow and Content Model.
  */
-@Data
-@Builder
-@AllArgsConstructor
-public class BaseProgressResponse {
-    private UUID baseId;
-    /**
-     * Title of the challenge assigned to this base for the team, or
-     * {@code null} when no challenge is assigned (e.g. a hidden base
-     * that is a check-in-only unlock target). Populated by
-     * {@code PlayerService.getProgress} via the standard assignment
-     * resolution path.
-     */
-    private String challengeTitle;
-    private Double lat;
-    private Double lng;
-    private Boolean nfcLinked;
-    private String status; // not_visited, checked_in, submitted, completed, rejected
-    private Instant checkedInAt;
-    private UUID challengeId;
-    private String submissionStatus; // null if no submission
-}
+public record BaseProgressResponse(
+        UUID baseId,
+        /**
+         * Title of the challenge assigned to this base for the team, or
+         * {@code null} when no challenge is assigned (e.g. a hidden base
+         * that is a check-in-only unlock target). Populated by
+         * {@code PlayerService.getProgress} via the standard assignment
+         * resolution path.
+         */
+        String challengeTitle,
+        Double lat,
+        Double lng,
+        Boolean nfcLinked,
+        String status, // not_visited, checked_in, submitted, completed, rejected
+        Instant checkedInAt,
+        UUID challengeId,
+        String submissionStatus // null if no submission
+) {}

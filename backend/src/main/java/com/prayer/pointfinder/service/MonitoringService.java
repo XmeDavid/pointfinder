@@ -43,16 +43,16 @@ public class MonitoringService {
         long completedSubmissions = submissionRepository.countByGameIdAndStatusIn(gameId,
                 List.of(SubmissionStatus.approved, SubmissionStatus.correct));
 
-        return DashboardResponse.builder()
-                .totalTeams(totalTeams)
-                .totalBases(totalBases)
-                .totalChallenges(totalChallenges)
-                .pendingSubmissions(pendingSubmissions)
-                .completedSubmissions(completedSubmissions)
-                .totalSubmissions(totalSubmissions)
-                .startDate(game.getStartDate())
-                .endDate(game.getEndDate())
-                .build();
+        return new DashboardResponse(
+                totalTeams,
+                totalBases,
+                totalChallenges,
+                pendingSubmissions,
+                completedSubmissions,
+                totalSubmissions,
+                game.getStartDate(),
+                game.getEndDate()
+        );
     }
 
     @Transactional(readOnly = true)
@@ -88,15 +88,14 @@ public class MonitoringService {
             long points = challengeMap.values().stream().mapToLong(ScoredSub::points).sum();
             int completed = challengeMap.size();
 
-            return LeaderboardEntry.builder()
-                    .teamId(team.getId())
-                    .teamName(team.getName())
-                    .color(team.getColor())
-                    .points(points)
-                    .completedChallenges(completed)
-                    .build();
+            return new LeaderboardEntry(
+                    team.getId(),
+                    team.getName(),
+                    team.getColor(),
+                    points,
+                    completed);
         })
-        .sorted(Comparator.comparingLong(LeaderboardEntry::getPoints).reversed())
+        .sorted(Comparator.comparingLong(LeaderboardEntry::points).reversed())
         .toList();
     }
 
@@ -108,16 +107,16 @@ public class MonitoringService {
         return activityEventRepository
                 .findRecentByGameId(gameId, PageRequest.of(0, ACTIVITY_FEED_LIMIT))
                 .stream()
-                .map(e -> ActivityEventResponse.builder()
-                        .id(e.getId())
-                        .gameId(e.getGame().getId())
-                        .type(e.getType().name())
-                        .teamId(e.getTeam().getId())
-                        .baseId(e.getBase() != null ? e.getBase().getId() : null)
-                        .challengeId(e.getChallenge() != null ? e.getChallenge().getId() : null)
-                        .message(e.getMessage())
-                        .timestamp(e.getTimestamp())
-                        .build())
+                .map(e -> new ActivityEventResponse(
+                        e.getId(),
+                        e.getGame().getId(),
+                        e.getType().name(),
+                        e.getTeam().getId(),
+                        e.getBase() != null ? e.getBase().getId() : null,
+                        e.getChallenge() != null ? e.getChallenge().getId() : null,
+                        e.getMessage(),
+                        e.getTimestamp()
+                ))
                 .toList();
     }
 
@@ -170,14 +169,14 @@ public class MonitoringService {
                 BaseStatus status = BaseStatus.compute(sub, ci);
                 String submissionStatus = sub != null ? sub.getStatus().name() : null;
 
-                result.add(TeamBaseProgressResponse.builder()
-                        .baseId(baseId)
-                        .teamId(teamId)
-                        .status(status.name())
-                        .checkedInAt(ci != null ? ci.getCheckedInAt() : null)
-                        .challengeId(challenge != null ? challenge.getId() : null)
-                        .submissionStatus(submissionStatus)
-                        .build());
+                result.add(new TeamBaseProgressResponse(
+                        baseId,
+                        teamId,
+                        status.name(),
+                        ci != null ? ci.getCheckedInAt() : null,
+                        challenge != null ? challenge.getId() : null,
+                        submissionStatus
+                ));
             }
         }
 
@@ -217,11 +216,7 @@ public class MonitoringService {
         }
 
         List<GameResultsExportResponse.ChallengeInfo> challengeInfos = challenges.stream()
-                .map(c -> GameResultsExportResponse.ChallengeInfo.builder()
-                        .id(c.getId())
-                        .title(c.getTitle())
-                        .maxPoints(c.getPoints())
-                        .build())
+                .map(c -> new GameResultsExportResponse.ChallengeInfo(c.getId(), c.getTitle(), c.getPoints()))
                 .toList();
 
         List<GameResultsExportResponse.TeamResult> teamResults = teams.stream()
@@ -233,34 +228,24 @@ public class MonitoringService {
                     }
                     long totalPoints = challengeMap.values().stream().mapToLong(ScoredSub::points).sum();
 
-                    return GameResultsExportResponse.TeamResult.builder()
-                            .teamId(team.getId())
-                            .teamName(team.getName())
-                            .color(team.getColor())
-                            .totalPoints(totalPoints)
-                            .challengePoints(challengePoints)
-                            .build();
+                    return new GameResultsExportResponse.TeamResult(team.getId(), team.getName(), team.getColor(), totalPoints, challengePoints);
                 })
-                .sorted(Comparator.comparingLong(GameResultsExportResponse.TeamResult::getTotalPoints).reversed())
+                .sorted(Comparator.comparingLong(GameResultsExportResponse.TeamResult::totalPoints).reversed())
                 .toList();
 
-        return GameResultsExportResponse.builder()
-                .gameName(game.getName())
-                .challenges(challengeInfos)
-                .teams(teamResults)
-                .build();
+        return new GameResultsExportResponse(game.getName(), challengeInfos, teamResults);
     }
 
     List<TeamLocationResponse> computeLocations(UUID gameId) {
         return playerLocationRepository.findByGameId(gameId).stream()
-                .map(pl -> TeamLocationResponse.builder()
-                        .teamId(pl.getPlayer().getTeam().getId())
-                        .playerId(pl.getPlayerId())
-                        .displayName(pl.getPlayer().getDisplayName())
-                        .lat(pl.getLat())
-                        .lng(pl.getLng())
-                        .updatedAt(pl.getUpdatedAt())
-                        .build())
+                .map(pl -> new TeamLocationResponse(
+                        pl.getPlayer().getTeam().getId(),
+                        pl.getPlayerId(),
+                        pl.getPlayer().getDisplayName(),
+                        pl.getLat(),
+                        pl.getLng(),
+                        pl.getUpdatedAt()
+                ))
                 .toList();
     }
 }

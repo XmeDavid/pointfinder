@@ -211,26 +211,26 @@ public class OrgInviteService {
     }
 
     private OrgInviteResponse toResponse(OrgInvite invite) {
-        return OrgInviteResponse.builder()
-                .id(invite.getId())
-                .orgId(invite.getOrganization().getId())
-                .orgName(invite.getOrganization().getName())
-                .email(invite.getEmail())
-                .status(invite.getStatus().name())
-                .invitedBy(invite.getInvitedBy() != null ? invite.getInvitedBy().getId() : null)
-                .inviterName(invite.getInvitedBy() != null ? invite.getInvitedBy().getName() : null)
-                .createdAt(invite.getCreatedAt())
-                .build();
+        return new OrgInviteResponse(
+                invite.getId(),
+                invite.getOrganization().getId(),
+                invite.getOrganization().getName(),
+                invite.getEmail(),
+                invite.getStatus().name(),
+                invite.getInvitedBy() != null ? invite.getInvitedBy().getId() : null,
+                invite.getInvitedBy() != null ? invite.getInvitedBy().getName() : null,
+                invite.getCreatedAt()
+        );
     }
 
     private OrgMemberResponse toMemberResponse(OrgMembership membership, User user) {
-        return OrgMemberResponse.builder()
-                .id(membership.getId())
-                .userId(user.getId())
-                .name(user.getName())
-                .email(user.getEmail())
-                .permissions(membership.getPermissions())
-                .joinedAt(membership.getJoinedAt())
-                .build();
+        return new OrgMemberResponse(
+                membership.getId(),
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                membership.getPermissions(),
+                membership.getJoinedAt()
+        );
     }
 }

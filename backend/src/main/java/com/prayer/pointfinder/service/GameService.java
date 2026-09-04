@@ -1,15 +1,12 @@
 package com.prayer.pointfinder.service;
 
-import com.prayer.pointfinder.dto.export.GameExportDto;
 import com.prayer.pointfinder.dto.request.CreateGameRequest;
-import com.prayer.pointfinder.dto.request.GameImportRequest;
 import com.prayer.pointfinder.dto.request.UpdateGameRequest;
 import com.prayer.pointfinder.dto.response.GameResponse;
 import com.prayer.pointfinder.dto.response.UserResponse;
 import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.entity.UnlockTrigger;
 import com.prayer.pointfinder.exception.BadRequestException;
-import com.prayer.pointfinder.exception.ErrorCode;
 import com.prayer.pointfinder.exception.ForbiddenException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.mapper.GameResponseMapper;
@@ -28,12 +25,13 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Core game lifecycle service: CRUD, status transitions, operator management.
  * Import/export logic is delegated to {@link GameImportExportService}.
  * Challenge assignment logic is delegated to {@link ChallengeAssignmentService}.
+ * Go-live readiness checks are delegated to {@link GameReadinessValidator}.
+ * Progress reset is delegated to {@link GameProgressResetService}.
  */
 @Service
 @Slf4j
@@ -43,21 +41,13 @@ public class GameService {
     private final GameRepository gameRepository;
     private final OrgMembershipRepository orgMembershipRepository;
     private final UserRepository userRepository;
-    private final BaseRepository baseRepository;
-    private final ChallengeRepository challengeRepository;
-    private final TeamRepository teamRepository;
     private final AssignmentRepository assignmentRepository;
-    private final CheckInRepository checkInRepository;
-    private final SubmissionRepository submissionRepository;
-    private final TeamLocationRepository teamLocationRepository;
-    private final ActivityEventRepository activityEventRepository;
-    private final UploadSessionRepository uploadSessionRepository;
     private final GameAccessService gameAccessService;
     private final FileStorageService fileStorageService;
     private final GameEventBroadcaster eventBroadcaster;
     private final ChallengeAssignmentService challengeAssignmentService;
-    private final GameImportExportService gameImportExportService;
-    private final TeamVariableService teamVariableService;
+    private final GameProgressResetService gameProgressResetService;
+    private final GameReadinessValidator gameReadinessValidator;
 
     // Public spectator broadcast codes are unauthenticated and expose live
     // team GPS, so they must resist enumeration. 10 chars over the 32-symbol
@@ -224,31 +214,13 @@ public class GameService {
 
         if (target == GameStatus.setup) {
             if (resetProgress) {
-                // V36: soft-archive audit-relevant tables instead of
-                // hard-deleting them. Spec principle: "Avoid hard deletion
-                // paths that erase audit trails." Submissions, check-ins,
-                // and activity events stay in the database with
-                // {@code archived = true}; active queries filter them out
-                // by default while the Phase 3 audit export reads the full
-                // history.
-                submissionRepository.markArchivedByGameId(id);
-                checkInRepository.markArchivedByGameId(id);
-                activityEventRepository.markArchivedByGameId(id);
-                // upload_sessions are media artifacts, not audit. Hard
-                // delete is OK because completed uploads are tracked
-                // separately via the FK on submissions (which is now
-                // archived, not deleted, so the linkage stays
-                // discoverable).
-                uploadSessionRepository.deleteByGameId(id);
-                // team_locations are transient per-event positions, not
-                // audit data. Hard delete remains the right call.
-                teamLocationRepository.deleteByGameId(id);
+                gameProgressResetService.resetProgress(id);
             }
             assignmentRepository.deleteByGameId(id);
         }
 
         if (target == GameStatus.live) {
-            validateGoLivePrerequisites(game);
+            gameReadinessValidator.validateGoLivePrerequisites(game);
 
             if (game.getStartDate() == null) {
                 game.setStartDate(Instant.now());
@@ -290,18 +262,6 @@ public class GameService {
         gameRepository.save(game);
     }
 
-    // ── Import / Export (delegated) ──────────────────────────────────
-
-    @Transactional(readOnly = true)
-    public GameExportDto exportGame(UUID gameId) {
-        return gameImportExportService.exportGame(gameId);
-    }
-
-    @Transactional(timeout = 10)
-    public GameResponse importGame(GameImportRequest request) {
-        return gameImportExportService.importGame(request);
-    }
-
     // ── Private helpers ──────────────────────────────────────────────
 
     private void validateStatusTransition(GameStatus current, GameStatus target) {
@@ -315,71 +275,6 @@ public class GameService {
         };
         if (!valid) {
             throw new BadRequestException("Cannot transition from " + current + " to " + target);
-        }
-    }
-
-    private void validateGoLivePrerequisites(Game game) {
-        if (game.getStartDate() != null && game.getStartDate().isAfter(Instant.now())) {
-            throw new BadRequestException("Cannot go live before the scheduled start date");
-        }
-
-        long baseCount = baseRepository.countByGameId(game.getId());
-        if (baseCount == 0) {
-            throw new BadRequestException("Game must have at least one base before going live");
-        }
-
-        long nfcLinkedCount = baseRepository.countByGameIdAndNfcLinkedTrue(game.getId());
-        if (nfcLinkedCount < baseCount) {
-            throw new BadRequestException(
-                    String.format("All bases must have NFC tags linked before going live. %d of %d bases linked",
-                            nfcLinkedCount, baseCount));
-        }
-
-        long teamCount = teamRepository.countByGameId(game.getId());
-        if (teamCount == 0) {
-            throw new BadRequestException("Game must have at least one team before going live");
-        }
-
-        long challengeCount = challengeRepository.countByGameId(game.getId());
-        if (challengeCount < baseCount) {
-            throw new BadRequestException(
-                    String.format("Need at least %d challenges (one per base), but only %d available.",
-                            baseCount, challengeCount));
-        }
-
-        // Ensure all team variables have values for every team and every
-        // {{key}} reference in challenge content/completionContent/correctAnswer
-        // resolves for every team (scanned by TeamVariableService).
-        List<String> variableErrors = teamVariableService.validateVariableCompleteness(game.getId());
-        if (!variableErrors.isEmpty()) {
-            throw new BadRequestException(
-                    "Team variables incomplete: " + variableErrors.get(0),
-                    ErrorCode.VARIABLE_REFERENCE_UNDEFINED);
-        }
-
-        // Ensure all location-bound challenges are assigned (via fixedChallengeId or assignment record)
-        List<Challenge> locationBoundChallenges = challengeRepository.findByGameId(game.getId()).stream()
-                .filter(c -> Boolean.TRUE.equals(c.getLocationBound()))
-                .toList();
-        if (!locationBoundChallenges.isEmpty()) {
-            List<Base> bases = baseRepository.findByGameId(game.getId());
-            Set<UUID> fixedChallengeIds = bases.stream()
-                    .map(Base::getFixedChallenge)
-                    .filter(java.util.Objects::nonNull)
-                    .map(Challenge::getId)
-                    .collect(Collectors.toSet());
-            List<Assignment> assignments = assignmentRepository.findByGameId(game.getId());
-            Set<UUID> assignedChallengeIds = assignments.stream()
-                    .map(a -> a.getChallenge().getId())
-                    .collect(Collectors.toSet());
-
-            long unassignedCount = locationBoundChallenges.stream()
-                    .filter(c -> !fixedChallengeIds.contains(c.getId()) && !assignedChallengeIds.contains(c.getId()))
-                    .count();
-            if (unassignedCount > 0) {
-                throw new BadRequestException(
-                        String.format("%d location-bound challenge(s) not assigned to any base", unassignedCount));
-            }
         }
     }
 

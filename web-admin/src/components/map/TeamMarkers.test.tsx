@@ -1,15 +1,24 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
-import { TeamMarkers } from './TeamMarkers'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { TeamMarkers, TEAM_LOCATIONS_SOURCE_ID } from './TeamMarkers'
 import type { TeamLocation, Team } from '@/types'
 
+// Capture the latest Source props for assertion
+let lastSourceProps: Record<string, unknown> = {}
+
 vi.mock('react-map-gl/maplibre', () => ({
-  default: ({ children }: { children: React.ReactNode }) => <div data-testid="map-container">{children}</div>,
-  Marker: ({ children, onClick }: { children: React.ReactNode; onClick?: (e: { originalEvent: { stopPropagation: () => void } }) => void }) => (
-    <div data-testid="marker" onClick={() => onClick?.({ originalEvent: { stopPropagation: vi.fn() } })}>
-      {children}
-    </div>
+  default: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="map-container">{children}</div>
   ),
+  Source: (props: Record<string, unknown>) => {
+    lastSourceProps = props
+    return <div data-testid="source">{props.children as React.ReactNode}</div>
+  },
+  Layer: (props: Record<string, unknown>) => (
+    <div data-testid={`layer-${props.id}`} />
+  ),
+  useMap: () => ({ current: undefined }),
+  Marker: () => null,
   NavigationControl: () => null,
 }))
 
@@ -36,8 +45,42 @@ function makeLocation(overrides: Partial<TeamLocation> = {}): TeamLocation {
   }
 }
 
+function getFeatures(): GeoJSON.Feature[] {
+  const data = lastSourceProps.data as GeoJSON.FeatureCollection | undefined
+  return data?.features ?? []
+}
+
+beforeEach(() => {
+  lastSourceProps = {}
+})
+
 describe('TeamMarkers', () => {
-  it('renders a marker for each team location', () => {
+  it('renders a Source with correct clustering config', () => {
+    const teams = [makeTeam({ id: 't1' })]
+    const locations = [makeLocation({ teamId: 't1' })]
+
+    render(<TeamMarkers locations={locations} teams={teams} />)
+
+    expect(screen.getByTestId('source')).toBeInTheDocument()
+    expect(lastSourceProps.id).toBe(TEAM_LOCATIONS_SOURCE_ID)
+    expect(lastSourceProps.type).toBe('geojson')
+    expect(lastSourceProps.cluster).toBe(true)
+    expect(lastSourceProps.clusterRadius).toBe(50)
+    expect(lastSourceProps.clusterMaxZoom).toBe(14)
+  })
+
+  it('renders three layers (cluster circle, cluster count, individual point)', () => {
+    const teams = [makeTeam({ id: 't1' })]
+    const locations = [makeLocation({ teamId: 't1' })]
+
+    render(<TeamMarkers locations={locations} teams={teams} />)
+
+    expect(screen.getByTestId('layer-team-cluster-circle')).toBeInTheDocument()
+    expect(screen.getByTestId('layer-team-cluster-count')).toBeInTheDocument()
+    expect(screen.getByTestId('layer-team-individual-point')).toBeInTheDocument()
+  })
+
+  it('creates a GeoJSON feature for each team location', () => {
     const teams = [
       makeTeam({ id: 't1' }),
       makeTeam({ id: 't2', name: 'Bravo' }),
@@ -49,38 +92,40 @@ describe('TeamMarkers', () => {
 
     render(<TeamMarkers locations={locations} teams={teams} />)
 
-    expect(screen.getByTestId('team-marker-t1')).toBeInTheDocument()
-    expect(screen.getByTestId('team-marker-t2')).toBeInTheDocument()
+    const features = getFeatures()
+    expect(features).toHaveLength(2)
+    expect(features[0].properties?.teamId).toBe('t1')
+    expect(features[1].properties?.teamId).toBe('t2')
   })
 
-  it('does not render marker for unknown team', () => {
+  it('does not create a feature for unknown team', () => {
     const teams = [makeTeam({ id: 't1' })]
     const locations = [makeLocation({ teamId: 'unknown', playerId: 'p1' })]
 
     render(<TeamMarkers locations={locations} teams={teams} />)
 
-    expect(screen.queryByTestId('team-marker-unknown')).not.toBeInTheDocument()
+    expect(getFeatures()).toHaveLength(0)
   })
 
-  it('uses correct team color via title attribute', () => {
-    const teams = [makeTeam({ id: 't1', name: 'Red Team', color: '#ef4444' })]
-    const locations = [makeLocation({ teamId: 't1', displayName: 'Scout' })]
+  it('uses correct team color in feature properties', () => {
+    const teams = [makeTeam({ id: 't1', color: '#ef4444' })]
+    const locations = [makeLocation({ teamId: 't1' })]
 
     render(<TeamMarkers locations={locations} teams={teams} />)
 
-    const marker = screen.getByTestId('team-marker-t1')
-    expect(marker.getAttribute('title')).toBe('Red Team - Scout')
+    const features = getFeatures()
+    expect(features[0].properties?.color).toBe('#ef4444')
   })
 
-  it('marks stale locations', () => {
+  it('marks stale locations in feature properties', () => {
     const teams = [makeTeam({ id: 't1' })]
     const sixMinutesAgo = new Date(Date.now() - 6 * 60 * 1000).toISOString()
     const locations = [makeLocation({ teamId: 't1', updatedAt: sixMinutesAgo })]
 
     render(<TeamMarkers locations={locations} teams={teams} />)
 
-    const marker = screen.getByTestId('team-marker-t1')
-    expect(marker.dataset.stale).toBe('true')
+    const features = getFeatures()
+    expect(features[0].properties?.stale).toBe(true)
   })
 
   it('does not mark active locations as stale', () => {
@@ -90,28 +135,29 @@ describe('TeamMarkers', () => {
 
     render(<TeamMarkers locations={locations} teams={teams} />)
 
-    const marker = screen.getByTestId('team-marker-t1')
-    expect(marker.dataset.stale).toBeUndefined()
+    const features = getFeatures()
+    expect(features[0].properties?.stale).toBe(false)
   })
 
-  it('calls onTeamClick when clicked', () => {
-    const handler = vi.fn()
-    const teams = [makeTeam({ id: 't1' })]
-    const locations = [makeLocation({ teamId: 't1' })]
-
-    render(<TeamMarkers locations={locations} teams={teams} onTeamClick={handler} />)
-
-    fireEvent.click(screen.getByTestId('marker'))
-    expect(handler).toHaveBeenCalledWith('t1')
-  })
-
-  it('shows team name as tooltip', () => {
+  it('includes team name in feature properties', () => {
     const teams = [makeTeam({ id: 't1', name: 'Charlie Team' })]
-    const locations = [makeLocation({ teamId: 't1', displayName: '' })]
+    const locations = [makeLocation({ teamId: 't1', displayName: 'Scout' })]
 
     render(<TeamMarkers locations={locations} teams={teams} />)
 
-    const marker = screen.getByTestId('team-marker-t1')
-    expect(marker.getAttribute('title')).toBe('Charlie Team')
+    const features = getFeatures()
+    expect(features[0].properties?.teamName).toBe('Charlie Team')
+    expect(features[0].properties?.displayName).toBe('Scout')
+  })
+
+  it('sets correct coordinates in feature geometry', () => {
+    const teams = [makeTeam({ id: 't1' })]
+    const locations = [makeLocation({ teamId: 't1', lat: 38.7, lng: -9.1 })]
+
+    render(<TeamMarkers locations={locations} teams={teams} />)
+
+    const features = getFeatures()
+    const coords = (features[0].geometry as GeoJSON.Point).coordinates
+    expect(coords).toEqual([-9.1, 38.7])
   })
 })

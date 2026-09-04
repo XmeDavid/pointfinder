@@ -1,9 +1,5 @@
 package com.prayer.pointfinder.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-
 import java.util.List;
 import java.util.UUID;
 
@@ -21,25 +17,22 @@ import java.util.UUID;
  * Any new player-facing endpoint that needs base data MUST use the
  * player-specific DTO, never this one.
  */
-@Data
-@Builder
-@AllArgsConstructor
-public class BaseResponse {
-    private UUID id;
-    private UUID gameId;
-    private String name;
-    private String description;
-    private Double lat;
-    private Double lng;
-    private Boolean nfcLinked;
-    private String nfcToken;
-    private Boolean hidden;
-    private UUID fixedChallengeId;
-    /**
-     * Operator-only game-scoped tag IDs. Resolved against the game's tag
-     * vocabulary ({@code GET /api/games/{gameId}/tags}). Never exposed to
-     * players — see {@code PlayerBaseResponse} for the player-safe DTO.
-     */
-    private List<UUID> tagIds;
-    private UUID stageId;
-}
+public record BaseResponse(
+        UUID id,
+        UUID gameId,
+        String name,
+        String description,
+        Double lat,
+        Double lng,
+        Boolean nfcLinked,
+        String nfcToken,
+        Boolean hidden,
+        UUID fixedChallengeId,
+        /**
+         * Operator-only game-scoped tag IDs. Resolved against the game's tag
+         * vocabulary ({@code GET /api/games/{gameId}/tags}). Never exposed to
+         * players — see {@code PlayerBaseResponse} for the player-safe DTO.
+         */
+        List<UUID> tagIds,
+        UUID stageId
+) {}

@@ -166,15 +166,15 @@ public class InviteService {
     }
 
     private InviteResponse toResponse(OperatorInvite inv) {
-        return InviteResponse.builder()
-                .id(inv.getId())
-                .gameId(inv.getGame() != null ? inv.getGame().getId() : null)
-                .gameName(inv.getGame() != null ? inv.getGame().getName() : null)
-                .email(inv.getEmail())
-                .status(inv.getStatus().name())
-                .invitedBy(inv.getInvitedBy().getId())
-                .inviterName(inv.getInvitedBy().getName())
-                .createdAt(inv.getCreatedAt())
-                .build();
+        return new InviteResponse(
+                inv.getId(),
+                inv.getGame() != null ? inv.getGame().getId() : null,
+                inv.getGame() != null ? inv.getGame().getName() : null,
+                inv.getEmail(),
+                inv.getStatus().name(),
+                inv.getInvitedBy().getId(),
+                inv.getInvitedBy().getName(),
+                inv.getCreatedAt()
+        );
     }
 }

@@ -141,16 +141,16 @@ class RealtimeMetricsServiceTest {
 
         RealtimeStatsResponse stats = metrics.getStatsForGame(gameId);
 
-        assertNotNull(stats.getLastUpdated());
-        assertEquals(2, stats.getStompActiveSessions());
-        assertEquals(3, stats.getMobileActiveSessions());
-        assertEquals(5, stats.getTotalActiveSessions());
-        assertEquals(2L, stats.getStompConnectsLastHour());
+        assertNotNull(stats.lastUpdated());
+        assertEquals(2, stats.stompActiveSessions());
+        assertEquals(3, stats.mobileActiveSessions());
+        assertEquals(5, stats.totalActiveSessions());
+        assertEquals(2L, stats.stompConnectsLastHour());
         // 3 original + 1 reconnect = 4 connects in the window
-        assertEquals(4L, stats.getMobileConnectsLastHour());
-        assertEquals(1L, stats.getMobileDisconnectsLastHour());
-        assertEquals(0L, stats.getStompDisconnectsLastHour());
-        assertEquals(1L, stats.getEstimatedReconnectsLastHour());
+        assertEquals(4L, stats.mobileConnectsLastHour());
+        assertEquals(1L, stats.mobileDisconnectsLastHour());
+        assertEquals(0L, stats.stompDisconnectsLastHour());
+        assertEquals(1L, stats.estimatedReconnectsLastHour());
     }
 
     @Test
@@ -159,15 +159,15 @@ class RealtimeMetricsServiceTest {
 
         RealtimeStatsResponse stats = metrics.getStatsForGame(gameId);
 
-        assertEquals(0, stats.getStompActiveSessions());
-        assertEquals(0, stats.getMobileActiveSessions());
-        assertEquals(0, stats.getTotalActiveSessions());
-        assertEquals(0L, stats.getStompConnectsLastHour());
-        assertEquals(0L, stats.getMobileConnectsLastHour());
-        assertEquals(0L, stats.getStompDisconnectsLastHour());
-        assertEquals(0L, stats.getMobileDisconnectsLastHour());
-        assertEquals(0L, stats.getEstimatedReconnectsLastHour());
-        assertNotNull(stats.getLastUpdated());
+        assertEquals(0, stats.stompActiveSessions());
+        assertEquals(0, stats.mobileActiveSessions());
+        assertEquals(0, stats.totalActiveSessions());
+        assertEquals(0L, stats.stompConnectsLastHour());
+        assertEquals(0L, stats.mobileConnectsLastHour());
+        assertEquals(0L, stats.stompDisconnectsLastHour());
+        assertEquals(0L, stats.mobileDisconnectsLastHour());
+        assertEquals(0L, stats.estimatedReconnectsLastHour());
+        assertNotNull(stats.lastUpdated());
     }
 
     @Test
@@ -203,7 +203,7 @@ class RealtimeMetricsServiceTest {
         RealtimeStatsResponse statsA = metrics.getStatsForGame(gameA);
         RealtimeStatsResponse statsB = metrics.getStatsForGame(gameB);
 
-        assertEquals(1, statsA.getStompActiveSessions());
-        assertEquals(2, statsB.getStompActiveSessions());
+        assertEquals(1, statsA.stompActiveSessions());
+        assertEquals(2, statsB.stompActiveSessions());
     }
 }

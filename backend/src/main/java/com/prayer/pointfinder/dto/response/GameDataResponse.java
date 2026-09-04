@@ -1,9 +1,5 @@
 package com.prayer.pointfinder.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-
 import java.util.List;
 
 /**
@@ -21,14 +17,11 @@ import java.util.List;
  * the full rationale, and {@code PlayerControllerTest} for the enforcing
  * assertions on the serialized response body.
  */
-@Data
-@Builder
-@AllArgsConstructor
-public class GameDataResponse {
-    private String gameStatus;
-    private String unlockTrigger;
-    private List<PlayerBaseResponse> bases;
-    private List<PlayerChallengeResponse> challenges;
-    private List<AssignmentResponse> assignments;
-    private List<BaseProgressResponse> progress;
-}
+public record GameDataResponse(
+        String gameStatus,
+        String unlockTrigger,
+        List<PlayerBaseResponse> bases,
+        List<PlayerChallengeResponse> challenges,
+        List<AssignmentResponse> assignments,
+        List<BaseProgressResponse> progress
+) {}

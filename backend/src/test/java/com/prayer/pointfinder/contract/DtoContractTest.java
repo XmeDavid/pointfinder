@@ -60,68 +60,68 @@ class DtoContractTest {
 
     @Test
     void playerAuthResponse_matchesSnapshot() throws IOException {
-        PlayerAuthResponse dto = PlayerAuthResponse.builder()
-                .token("eyJhbGciOiJIUzI1NiJ9.test-player-token")
-                .player(PlayerAuthResponse.PlayerInfo.builder()
-                        .id(UUID.fromString("b2c3d4e5-f6a7-8901-bcde-f12345678901"))
-                        .displayName("Scout Team Alpha")
-                        .deviceId("ios-device-abc123")
-                        .build())
-                .team(PlayerAuthResponse.TeamInfo.builder()
-                        .id(UUID.fromString("c3d4e5f6-a7b8-9012-cdef-123456789012"))
-                        .name("Eagles")
-                        .color("#FF5733")
-                        .build())
-                .game(PlayerAuthResponse.GameInfo.builder()
-                        .id(UUID.fromString("d4e5f6a7-b8c9-0123-defa-234567890123"))
-                        .name("Forest Adventure")
-                        .description("A scouting game in the forest")
-                        .status("live")
-                        .tileSource("osm-classic")
-                        .build())
-                .build();
+        PlayerAuthResponse dto = new PlayerAuthResponse(
+                "eyJhbGciOiJIUzI1NiJ9.test-player-token",
+                new PlayerAuthResponse.PlayerInfo(
+                        UUID.fromString("b2c3d4e5-f6a7-8901-bcde-f12345678901"),
+                        "Scout Team Alpha",
+                        "ios-device-abc123"
+                ),
+                new PlayerAuthResponse.TeamInfo(
+                        UUID.fromString("c3d4e5f6-a7b8-9012-cdef-123456789012"),
+                        "Eagles",
+                        "#FF5733"
+                ),
+                new PlayerAuthResponse.GameInfo(
+                        UUID.fromString("d4e5f6a7-b8c9-0123-defa-234567890123"),
+                        "Forest Adventure",
+                        "A scouting game in the forest",
+                        "live",
+                        "osm-classic"
+                )
+        );
 
         assertMatchesSnapshot("PlayerAuthResponse", dto);
     }
 
     @Test
     void gameResponse_matchesSnapshot() throws IOException {
-        GameResponse dto = GameResponse.builder()
-                .id(UUID.fromString("d4e5f6a7-b8c9-0123-defa-234567890123"))
-                .name("Forest Adventure")
-                .description("A scouting game in the forest")
-                .startDate(Instant.parse("2025-03-01T08:00:00Z"))
-                .endDate(Instant.parse("2025-03-01T18:00:00Z"))
-                .status("live")
-                .createdBy(UUID.fromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890"))
-                .operatorIds(List.of(UUID.fromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")))
-                .uniformAssignment(false)
-                .broadcastEnabled(true)
-                .broadcastCode("FOREST2025")
-                .tileSource("osm-classic")
-                .unlockTrigger("CHECK_IN")
-                .build();
+        GameResponse dto = new GameResponse(
+                UUID.fromString("d4e5f6a7-b8c9-0123-defa-234567890123"),
+                "Forest Adventure",
+                "A scouting game in the forest",
+                Instant.parse("2025-03-01T08:00:00Z"),
+                Instant.parse("2025-03-01T18:00:00Z"),
+                "live",
+                UUID.fromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890"),
+                List.of(UUID.fromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")),
+                false,
+                true,
+                "FOREST2025",
+                "osm-classic",
+                "CHECK_IN",
+                null,
+                null);
 
         assertMatchesSnapshot("GameResponse", dto);
     }
 
     @Test
     void submissionResponse_matchesSnapshot() throws IOException {
-        SubmissionResponse dto = SubmissionResponse.builder()
-                .id(UUID.fromString("e5f6a7b8-c9d0-1234-efab-345678901234"))
-                .teamId(UUID.fromString("c3d4e5f6-a7b8-9012-cdef-123456789012"))
-                .challengeId(UUID.fromString("f6a7b8c9-d0e1-2345-fabc-456789012345"))
-                .baseId(UUID.fromString("a7b8c9d0-e1f2-3456-abcd-567890123456"))
-                .answer("The answer is 42")
-                .fileUrl("/uploads/game1/photo.jpg")
-                .fileUrls(List.of("/uploads/game1/photo.jpg", "/uploads/game1/photo2.jpg"))
-                .status("approved")
-                .submittedAt(Instant.parse("2025-03-01T10:30:00Z"))
-                .reviewedBy(UUID.fromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890"))
-                .feedback("Great work!")
-                .points(100)
-                .completionContent("You found the hidden treasure!")
-                .build();
+        SubmissionResponse dto = new SubmissionResponse(
+                UUID.fromString("e5f6a7b8-c9d0-1234-efab-345678901234"),
+                UUID.fromString("c3d4e5f6-a7b8-9012-cdef-123456789012"),
+                UUID.fromString("f6a7b8c9-d0e1-2345-fabc-456789012345"),
+                UUID.fromString("a7b8c9d0-e1f2-3456-abcd-567890123456"),
+                "The answer is 42",
+                "/uploads/game1/photo.jpg",
+                List.of("/uploads/game1/photo.jpg", "/uploads/game1/photo2.jpg"),
+                "approved",
+                Instant.parse("2025-03-01T10:30:00Z"),
+                UUID.fromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890"),
+                "Great work!",
+                100,
+                "You found the hidden treasure!");
 
         assertMatchesSnapshot("SubmissionResponse", dto);
     }
@@ -132,30 +132,28 @@ class DtoContractTest {
         // challenge title instead of the base name. The snapshot was
         // regenerated when the field was renamed; mobile contract tests
         // were updated in lock-step.
-        BaseProgressResponse dto = BaseProgressResponse.builder()
-                .baseId(UUID.fromString("a7b8c9d0-e1f2-3456-abcd-567890123456"))
-                .challengeTitle("Find the tree")
-                .lat(47.3769)
-                .lng(8.5417)
-                .nfcLinked(true)
-                .status("completed")
-                .checkedInAt(Instant.parse("2025-03-01T09:15:00Z"))
-                .challengeId(UUID.fromString("f6a7b8c9-d0e1-2345-fabc-456789012345"))
-                .submissionStatus("approved")
-                .build();
+        BaseProgressResponse dto = new BaseProgressResponse(
+                UUID.fromString("a7b8c9d0-e1f2-3456-abcd-567890123456"),
+                "Find the tree",
+                47.3769,
+                8.5417,
+                true,
+                "completed",
+                Instant.parse("2025-03-01T09:15:00Z"),
+                UUID.fromString("f6a7b8c9-d0e1-2345-fabc-456789012345"),
+                "approved");
 
         assertMatchesSnapshot("BaseProgressResponse", dto);
     }
 
     @Test
     void leaderboardEntry_matchesSnapshot() throws IOException {
-        LeaderboardEntry dto = LeaderboardEntry.builder()
-                .teamId(UUID.fromString("c3d4e5f6-a7b8-9012-cdef-123456789012"))
-                .teamName("Eagles")
-                .color("#FF5733")
-                .points(350)
-                .completedChallenges(5)
-                .build();
+        LeaderboardEntry dto = new LeaderboardEntry(
+                UUID.fromString("c3d4e5f6-a7b8-9012-cdef-123456789012"),
+                "Eagles",
+                "#FF5733",
+                350,
+                5);
 
         assertMatchesSnapshot("LeaderboardEntry", dto);
     }

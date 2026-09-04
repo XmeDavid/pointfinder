@@ -246,26 +246,24 @@ public class TeamService {
             // player-/operator-facing CheckInResponse.ChallengeInfo because
             // scoring is operator-only and the check-in surface is shared
             // with the player app. See CheckInResponse javadoc.
-            challengeInfo = CheckInResponse.ChallengeInfo.builder()
-                    .id(challenge.getId())
-                    .title(challenge.getTitle())
-                    .description(challenge.getDescription())
-                    .content(challenge.getContent())
-                    .completionContent(challenge.getCompletionContent())
-                    .answerType(challenge.getAnswerType().name())
-                    .requirePresenceToSubmit(challenge.getRequirePresenceToSubmit())
-                    .build();
+            challengeInfo = new CheckInResponse.ChallengeInfo(
+                    challenge.getId(),
+                    challenge.getTitle(),
+                    challenge.getDescription(),
+                    challenge.getContent(),
+                    challenge.getCompletionContent(),
+                    challenge.getAnswerType().name(),
+                    challenge.getRequirePresenceToSubmit());
         }
 
         // P1 Phase 4 W4: CheckInResponse is shared between player and
         // operator rescue paths and no longer carries baseName. See
         // CheckInResponse javadoc for the full rationale.
-        return CheckInResponse.builder()
-                .checkInId(checkIn.getId())
-                .baseId(base.getId())
-                .checkedInAt(checkIn.getCheckedInAt())
-                .challenge(challengeInfo)
-                .build();
+        return new CheckInResponse(
+                checkIn.getId(),
+                base.getId(),
+                checkIn.getCheckedInAt(),
+                challengeInfo);
     }
 
     private String generateUniqueJoinCode() {

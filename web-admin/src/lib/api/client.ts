@@ -4,6 +4,7 @@ import { API_URL } from "@/lib/api/config";
 
 const apiClient = axios.create({
   baseURL: API_URL,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
@@ -35,20 +36,21 @@ function refreshAccessToken(): Promise<string> {
 
   refreshPromise = (async () => {
     try {
-      const refreshToken = useAuthStore.getState().refreshToken;
-      if (!refreshToken) throw new PermanentAuthError("No refresh token");
+      const { isAuthenticated } = useAuthStore.getState();
+      if (!isAuthenticated) throw new PermanentAuthError("Not authenticated");
 
       // Use raw axios to bypass apiClient interceptors and avoid loops.
+      // The refresh token is sent automatically via the HttpOnly cookie.
       const response = await axios.post(
         `${API_URL}/auth/refresh`,
-        { refreshToken },
-        { timeout: 10_000 }
+        {},
+        { withCredentials: true, timeout: 10_000 }
       );
-      const { accessToken: newAccessToken, refreshToken: newRefreshToken, user } = response.data;
-      if (!newAccessToken || !newRefreshToken) {
-        throw new Error("Invalid refresh response: missing tokens");
+      const { accessToken: newAccessToken, user } = response.data;
+      if (!newAccessToken) {
+        throw new Error("Invalid refresh response: missing access token");
       }
-      useAuthStore.getState().setTokens(newAccessToken, newRefreshToken, user);
+      useAuthStore.getState().setTokens(newAccessToken, user);
       return newAccessToken as string;
     } catch (err) {
       // 400/401/403 from refresh endpoint = token is invalid/expired → unrecoverable.
@@ -97,13 +99,13 @@ function forceLogout() {
  * - Throws on transient failure so callers can retry.
  */
 export async function getValidAccessToken(): Promise<string | null> {
-  const { accessToken, refreshToken, isAuthenticated } = useAuthStore.getState();
+  const { accessToken, isAuthenticated } = useAuthStore.getState();
 
   // Happy path: token in memory and not near expiry
   if (accessToken && !isTokenExpiringSoon(accessToken)) return accessToken;
 
   // Not authenticated at all
-  if (!isAuthenticated || !refreshToken) return null;
+  if (!isAuthenticated) return null;
 
   try {
     return await refreshAccessToken();

@@ -7,14 +7,13 @@ import { API_URL } from "@/lib/api/config";
 interface AuthState {
   user: User | null;
   accessToken: string | null;
-  refreshToken: string | null;
   isAuthenticated: boolean;
   hasHydrated: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (token: string, name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   /** Called by the API client when tokens are refreshed successfully */
-  setTokens: (accessToken: string, refreshToken: string, user: User) => void;
+  setTokens: (accessToken: string, user: User) => void;
   /** Clear in-memory access token (e.g. after a 401, before retrying via refresh) */
   clearAccessToken: () => void;
   /** Called by the API client on unrecoverable auth failure */
@@ -32,20 +31,19 @@ export const useAuthStore = create<AuthState>()(
       return {
       user: null,
       accessToken: null,
-      refreshToken: null,
       isAuthenticated: false,
       hasHydrated: false,
 
       login: async (email: string, password: string) => {
+        // withCredentials lets the browser accept the HttpOnly refresh-token cookie
         const { data } = await axios.post(`${API_URL}/auth/login`, {
           email,
           password,
-        });
+        }, { withCredentials: true });
 
         set({
           user: data.user,
           accessToken: data.accessToken,
-          refreshToken: data.refreshToken,
           isAuthenticated: true,
         });
       },
@@ -55,32 +53,27 @@ export const useAuthStore = create<AuthState>()(
           name,
           email,
           password,
-        });
+        }, { withCredentials: true });
 
         set({
           user: data.user,
           accessToken: data.accessToken,
-          refreshToken: data.refreshToken,
           isAuthenticated: true,
         });
       },
 
       logout: () => {
-        const { refreshToken } = get();
-        if (refreshToken) {
-          // Fire-and-forget logout on the server
-          axios.post(`${API_URL}/auth/logout`, { refreshToken }).catch(() => {});
-        }
+        // Fire-and-forget logout on the server; the HttpOnly cookie is sent automatically
+        axios.post(`${API_URL}/auth/logout`, {}, { withCredentials: true }).catch(() => {});
         set({
           user: null,
           accessToken: null,
-          refreshToken: null,
           isAuthenticated: false,
         });
       },
 
-      setTokens: (accessToken: string, refreshToken: string, user: User) => {
-        set({ accessToken, refreshToken, user, isAuthenticated: true });
+      setTokens: (accessToken: string, user: User) => {
+        set({ accessToken, user, isAuthenticated: true });
       },
 
       clearAccessToken: () => {
@@ -100,7 +93,6 @@ export const useAuthStore = create<AuthState>()(
           set({
             user: null,
             accessToken: null,
-            refreshToken: null,
             isAuthenticated: false,
           });
         }
@@ -108,32 +100,29 @@ export const useAuthStore = create<AuthState>()(
     }},
     {
       name: "pointfinder-auth",
+      version: 1,
+      migrate: (persistedState: unknown, version: number) => {
+        const state = persistedState as Record<string, unknown>;
+        if (version === 0) {
+          // Audit 12.1: Refresh token moved to HttpOnly cookie.
+          // Strip any leftover refresh token from localStorage.
+          delete state.refreshToken;
+        }
+        return state;
+      },
       partialize: (state) => ({
-        // SECURITY (audit 12.1): The refresh token is stored in localStorage,
-        // which is readable by any JS on the page. An XSS vulnerability would
-        // expose the 7-day refresh token. The ideal fix is migrating to an
-        // HttpOnly, Secure, SameSite=Strict cookie, which requires backend
-        // API changes (cookie-based refresh endpoint). This is deferred.
-        //
-        // Current mitigations:
-        // - Access token is in-memory only (not persisted), limiting XSS
-        //   exposure to the refresh token rather than the short-lived JWT.
-        // - V55 token-version invalidation allows revoking all user sessions.
-        // - CSP headers restrict script sources.
         user: state.user,
-        refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {
-          // Validate: if isAuthenticated but refresh token is missing, reset
-          if (state.isAuthenticated && !state.refreshToken) {
-            console.warn("[AUTH] onRehydrateStorage: isAuthenticated but no refreshToken — resetting");
+          // Validate: if isAuthenticated but user is missing, reset
+          if (state.isAuthenticated && !state.user) {
+            console.warn("[AUTH] onRehydrateStorage: isAuthenticated but no user — resetting");
             storeSet?.({
               isAuthenticated: false,
               user: null,
               accessToken: null,
-              refreshToken: null,
               hasHydrated: true,
             });
             return;
@@ -147,15 +136,14 @@ export const useAuthStore = create<AuthState>()(
   )
 );
 
-// Cross-tab auth sync: detect when another tab updates the refresh token
+// Cross-tab auth sync: detect when another tab logs in or out
 if (typeof window !== 'undefined') {
   window.addEventListener('storage', (e) => {
     if (e.key === 'pointfinder-auth' && e.newValue) {
       try {
         const { state } = JSON.parse(e.newValue);
-        if (state?.refreshToken) {
+        if (state?.isAuthenticated && state?.user) {
           useAuthStore.setState({
-            refreshToken: state.refreshToken,
             user: state.user,
             isAuthenticated: true,
           });

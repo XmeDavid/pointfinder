@@ -1,9 +1,5 @@
 package com.prayer.pointfinder.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-
 import java.util.UUID;
 
 /**
@@ -45,15 +41,12 @@ import java.util.UUID;
  * <p>Source spec: docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md
  * — P1 Operator Workflow and Content Model.
  */
-@Data
-@Builder
-@AllArgsConstructor
-public class PlayerBaseResponse {
-    private UUID id;
-    private UUID gameId;
-    private Double lat;
-    private Double lng;
-    private Boolean nfcLinked;
-    private Boolean hidden;
-    private UUID fixedChallengeId;
-}
+public record PlayerBaseResponse(
+    UUID id,
+    UUID gameId,
+    Double lat,
+    Double lng,
+    Boolean nfcLinked,
+    Boolean hidden,
+    UUID fixedChallengeId
+) {}

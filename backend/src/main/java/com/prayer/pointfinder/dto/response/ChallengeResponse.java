@@ -1,9 +1,5 @@
 package com.prayer.pointfinder.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-
 import java.util.List;
 import java.util.UUID;
 
@@ -20,33 +16,10 @@ import java.util.UUID;
  * construction. Any new player-facing endpoint that needs challenge data
  * MUST use the player-specific DTO, never this one.
  */
-@Data
-@Builder
-@AllArgsConstructor
-public class ChallengeResponse {
-    private UUID id;
-    private UUID gameId;
-    private String title;
-    private String description;
-    private String content;
-    private String completionContent;
-    private String answerType;
-    private Boolean autoValidate;
-    private List<String> correctAnswer;
-    private Integer points;
-    private Boolean locationBound;
-    private Boolean requirePresenceToSubmit;
-    private List<UUID> unlocksBaseIds;
-    private UUID fixedBaseId;
-    /**
-     * Operator-only free-text notes. Never exposed to players — see
-     * {@code PlayerChallengeResponse} for the player-safe DTO variant.
-     */
-    private String operatorNotes;
-    /**
-     * Operator-only game-scoped tag IDs. Resolved against the game's tag
-     * vocabulary ({@code GET /api/games/{gameId}/tags}). Never exposed to
-     * players — see {@code PlayerChallengeResponse} for the player-safe DTO.
-     */
-    private List<UUID> tagIds;
-}
+public record ChallengeResponse(
+    UUID id, UUID gameId, String title, String description, String content,
+    String completionContent, String answerType, Boolean autoValidate,
+    List<String> correctAnswer, Integer points, Boolean locationBound,
+    Boolean requirePresenceToSubmit, List<UUID> unlocksBaseIds, UUID fixedBaseId,
+    String operatorNotes, List<UUID> tagIds
+) {}

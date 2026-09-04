@@ -106,6 +106,16 @@ final class LocationService: NSObject, ObservableObject {
         }
     }
 
+    /// Schedule the periodic location-send timer.
+    ///
+    /// **Concurrency note (audit 8.13):** There is no timer/stopTracking race
+    /// because both `scheduleSendTimer()` and `stopTracking()` run on the main
+    /// thread (this class is `@MainActor`-isolated). `stopTracking()` invalidates
+    /// the timer *and* nils the credentials, so even if a previously-scheduled
+    /// timer callback fires before invalidation takes effect, the `[weak self]`
+    /// capture plus the nil-credential guard in `sendCurrentLocation()` prevents
+    /// any work from executing. The `isSending` flag additionally prevents
+    /// overlapping sends if `sendLocationNow()` resets the timer mid-flight.
     private func scheduleSendTimer() {
         sendTimer?.invalidate()
         guard apiClient != nil, gameId != nil, token != nil else {

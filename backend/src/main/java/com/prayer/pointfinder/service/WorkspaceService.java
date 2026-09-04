@@ -31,32 +31,20 @@ public class WorkspaceService {
         long personalActiveGames = gameRepository.countByCreatedByIdAndOrganizationIsNullAndStatusIn(
             user.getId(), List.of(GameStatus.setup, GameStatus.live));
 
-        WorkspaceResponse.PersonalWorkspace personal = WorkspaceResponse.PersonalWorkspace.builder()
-            .tier(tier)
-            .status(status)
-            .activeGames((int) personalActiveGames)
-            .build();
+        WorkspaceResponse.PersonalWorkspace personal = new WorkspaceResponse.PersonalWorkspace(
+            tier, status, (int) personalActiveGames);
 
         List<WorkspaceResponse.OrgWorkspace> orgs = membershipRepository.findByUserId(user.getId()).stream()
             .map(m -> {
                 Organization org = m.getOrganization();
                 int memberCount = membershipRepository.countByOrganizationId(org.getId());
                 long liveGames = gameRepository.countByOrganizationIdAndStatus(org.getId(), GameStatus.live);
-                return WorkspaceResponse.OrgWorkspace.builder()
-                    .id(org.getId())
-                    .name(org.getName())
-                    .slug(org.getSlug())
-                    .tier(org.getSubscriptionTier().name())
-                    .status(org.getSubscriptionStatus().name())
-                    .memberCount(memberCount)
-                    .liveGames((int) liveGames)
-                    .permissions(m.getPermissions())
-                    .build();
+                return new WorkspaceResponse.OrgWorkspace(
+                    org.getId(), org.getName(), org.getSlug(),
+                    org.getSubscriptionTier().name(), org.getSubscriptionStatus().name(),
+                    memberCount, (int) liveGames, m.getPermissions());
             }).toList();
 
-        return WorkspaceResponse.builder()
-            .personal(personal)
-            .organizations(orgs)
-            .build();
+        return new WorkspaceResponse(personal, orgs);
     }
 }

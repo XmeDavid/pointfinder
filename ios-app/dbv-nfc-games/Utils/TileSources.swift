@@ -2,8 +2,11 @@ import Foundation
 import CoreLocation
 
 enum TileSources {
+    // Audit 8.10: "osm" uses OpenFreeMap Liberty to match the web admin.
+    // "osm-classic" uses an absolute URL because mobile cannot resolve relative paths
+    // (web uses the relative "/styles/osm-classic.json" which resolves against the host).
     private static let styles: [String: String] = [
-        "osm": "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json",
+        "osm": "https://tiles.openfreemap.org/styles/liberty",
         "osm-classic": "https://pointfinder.pt/styles/osm-classic.json",
         "swisstopo": "https://vectortiles.geo.admin.ch/styles/ch.swisstopo.basemap.vt/style.json",
         "swisstopo-sat": "https://vectortiles.geo.admin.ch/styles/ch.swisstopo.imagerybasemap.vt/style.json",

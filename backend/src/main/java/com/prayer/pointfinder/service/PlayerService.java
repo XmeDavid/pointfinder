@@ -4,20 +4,16 @@ import com.prayer.pointfinder.dto.request.CheckInRequest;
 import com.prayer.pointfinder.dto.request.CreateSubmissionRequest;
 import com.prayer.pointfinder.dto.request.PlayerJoinRequest;
 import com.prayer.pointfinder.dto.request.PlayerSubmissionRequest;
-import com.prayer.pointfinder.service.QuotaService;
 import com.prayer.pointfinder.util.LazyInitHelper;
-import com.prayer.pointfinder.util.NotificationMapper;
 import com.prayer.pointfinder.dto.response.*;
 import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ErrorCode;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.*;
-import com.prayer.pointfinder.security.JwtTokenProvider;
 import com.prayer.pointfinder.websocket.GameEventBroadcaster;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +26,6 @@ import java.util.stream.Collectors;
 public class PlayerService {
 
     private final PlayerRepository playerRepository;
-    private final TeamRepository teamRepository;
     private final GameRepository gameRepository;
     private final BaseRepository baseRepository;
     private final ChallengeRepository challengeRepository;
@@ -39,97 +34,18 @@ public class PlayerService {
     private final SubmissionRepository submissionRepository;
     private final ActivityEventRepository activityEventRepository;
     private final GameEventBroadcaster eventBroadcaster;
-    private final JwtTokenProvider tokenProvider;
     private final SubmissionService submissionService;
-    private final TeamLocationRepository teamLocationRepository;
     private final PlayerLocationRepository playerLocationRepository;
     private final GameAccessService gameAccessService;
     private final OperatorPushNotificationService operatorPushNotificationService;
     private final TemplateVariableService templateVariableService;
-    private final GameNotificationRepository gameNotificationRepository;
-    private final UploadSessionRepository uploadSessionRepository;
     private final BaseUnlockOverrideRepository baseUnlockOverrideRepository;
     private final StageRepository stageRepository;
-    private final QuotaService quotaService;
+    private final PlayerJoinService playerJoinService;
+    private final PlayerNotificationQueryService playerNotificationQueryService;
 
-    @Transactional(timeout = 10)
     public PlayerAuthResponse joinTeam(PlayerJoinRequest request) {
-        Team team = teamRepository.findByJoinCode(request.getJoinCode())
-                .orElseThrow(() -> new BadRequestException("Invalid join code"));
-
-        Game game = team.getGame();
-        if (game.getStatus() == GameStatus.ended) {
-            throw new BadRequestException("Game has ended");
-        }
-
-        // Find existing player by device ID in this game, or create a new one.
-        // Device→team switching within the same game is rejected: once a device has
-        // joined a team, rejoining is only idempotent for the SAME team. A different
-        // team code means a different identity and would enable stealth takeover
-        // of another team's score/history.
-        Player player = playerRepository.findFirstByDeviceIdAndTeamGameIdOrderByCreatedAtDesc(request.getDeviceId(), game.getId())
-                .orElse(null);
-
-        if (player == null) {
-            // Enforce player limit only for new players (not rejoins)
-            quotaService.enforcePlayersPerGameLimit(game);
-            player = Player.builder()
-                    .team(team)
-                    .deviceId(request.getDeviceId())
-                    .displayName(request.getDisplayName())
-                    .build();
-        } else {
-            // Existing device in this game — must match the team they originally
-            // joined. Force initialization of the lazy team proxy before comparing.
-            UUID existingTeamId = player.getTeam() != null ? player.getTeam().getId() : null;
-            if (existingTeamId != null && !existingTeamId.equals(team.getId())) {
-                throw new BadRequestException(
-                        "This device has already joined a different team in this game",
-                        ErrorCode.DEVICE_ALREADY_IN_DIFFERENT_TEAM);
-            }
-            player.setDisplayName(request.getDisplayName());
-        }
-
-        try {
-            player = playerRepository.save(player);
-        } catch (DataIntegrityViolationException ex) {
-            // Concurrent join with same deviceId -- re-fetch the winner
-            player = playerRepository.findFirstByDeviceIdAndTeamGameIdOrderByCreatedAtDesc(
-                    request.getDeviceId(), game.getId())
-                    .orElseThrow(() -> new BadRequestException("Join failed, please try again"));
-            UUID existingTeamId = player.getTeam() != null ? player.getTeam().getId() : null;
-            if (existingTeamId != null && !existingTeamId.equals(team.getId())) {
-                throw new BadRequestException(
-                        "This device has already joined a different team in this game",
-                        ErrorCode.DEVICE_ALREADY_IN_DIFFERENT_TEAM);
-            }
-            player.setDisplayName(request.getDisplayName());
-            player = playerRepository.save(player);
-        }
-
-        // Generate JWT token using the persisted player ID
-        String jwt = tokenProvider.generatePlayerToken(player.getId(), team.getId(), game.getId());
-
-        return PlayerAuthResponse.builder()
-                .token(jwt)
-                .player(PlayerAuthResponse.PlayerInfo.builder()
-                        .id(player.getId())
-                        .displayName(player.getDisplayName())
-                        .deviceId(player.getDeviceId())
-                        .build())
-                .team(PlayerAuthResponse.TeamInfo.builder()
-                        .id(team.getId())
-                        .name(team.getName())
-                        .color(team.getColor())
-                        .build())
-                .game(PlayerAuthResponse.GameInfo.builder()
-                        .id(game.getId())
-                        .name(game.getName())
-                        .description(game.getDescription())
-                        .status(game.getStatus().name())
-                        .tileSource(game.getTileSource())
-                        .build())
-                .build();
+        return playerJoinService.joinTeam(request);
     }
 
     @Transactional(timeout = 10)
@@ -357,17 +273,16 @@ public class PlayerService {
             // field null (e.g. a hidden base that is a check-in-only
             // unlock target). The operator-facing base name is NEVER
             // included in this player DTO.
-            return BaseProgressResponse.builder()
-                    .baseId(bId)
-                    .challengeTitle(assignment != null ? assignment.getTitle() : null)
-                    .lat(base.getLat())
-                    .lng(base.getLng())
-                    .nfcLinked(base.getNfcLinked())
-                    .status(status.name())
-                    .checkedInAt(ci != null ? ci.getCheckedInAt() : null)
-                    .challengeId(assignment != null ? assignment.getId() : null)
-                    .submissionStatus(submissionStatus)
-                    .build();
+            return new BaseProgressResponse(
+                    bId,
+                    assignment != null ? assignment.getTitle() : null,
+                    base.getLat(),
+                    base.getLng(),
+                    base.getNfcLinked(),
+                    status.name(),
+                    ci != null ? ci.getCheckedInAt() : null,
+                    assignment != null ? assignment.getId() : null,
+                    submissionStatus);
         }).filter(Objects::nonNull).toList();
     }
 
@@ -395,15 +310,15 @@ public class PlayerService {
                 .filter(b -> !Boolean.TRUE.equals(b.getHidden()))
                 .filter(b -> b.getStageId() == null || activeStageIds.contains(b.getStageId()))
                 .limit(500)
-                .map(base -> PlayerBaseResponse.builder()
-                        .id(base.getId())
-                        .gameId(gameId)
-                        .lat(base.getLat())
-                        .lng(base.getLng())
-                        .nfcLinked(base.getNfcLinked())
-                        .hidden(base.getHidden())
-                        .fixedChallengeId(base.getFixedChallenge() != null ? base.getFixedChallenge().getId() : null)
-                        .build())
+                .map(base -> new PlayerBaseResponse(
+                        base.getId(),
+                        gameId,
+                        base.getLat(),
+                        base.getLng(),
+                        base.getNfcLinked(),
+                        base.getHidden(),
+                        base.getFixedChallenge() != null ? base.getFixedChallenge().getId() : null
+                ))
                 .toList();
     }
 
@@ -435,7 +350,7 @@ public class PlayerService {
 
         // Visible bases: those in progress
         List<PlayerBaseResponse> bases = allGameBases.stream()
-                .filter(b -> visibleBaseIds.contains(b.getId()))
+                .filter(b -> visibleBaseIds.contains(b.id()))
                 .toList();
 
         // Get all assignments for this game (both team-specific and global), filtered to visible bases
@@ -458,16 +373,16 @@ public class PlayerService {
             challengeIds.add(a.challengeId());
         }
         for (PlayerBaseResponse b : bases) {
-            if (b.getFixedChallengeId() != null) {
-                challengeIds.add(b.getFixedChallengeId());
+            if (b.fixedChallengeId() != null) {
+                challengeIds.add(b.fixedChallengeId());
             }
         }
 
         // Build fixedBaseId lookup: challengeId -> baseId where the challenge lives
         Map<UUID, UUID> fixedBaseByChallenge = new HashMap<>();
         for (PlayerBaseResponse b : allGameBases) {
-            if (b.getFixedChallengeId() != null) {
-                fixedBaseByChallenge.put(b.getFixedChallengeId(), b.getId());
+            if (b.fixedChallengeId() != null) {
+                fixedBaseByChallenge.put(b.fixedChallengeId(), b.id());
             }
         }
 
@@ -491,7 +406,7 @@ public class PlayerService {
         // Add hidden unlock-target bases to the bases list so clients have their metadata
         if (!hiddenUnlockTargetIds.isEmpty()) {
             List<PlayerBaseResponse> hiddenBases = allGameBases.stream()
-                    .filter(b -> hiddenUnlockTargetIds.contains(b.getId()))
+                    .filter(b -> hiddenUnlockTargetIds.contains(b.id()))
                     .toList();
             List<PlayerBaseResponse> combinedBases = new ArrayList<>(bases);
             combinedBases.addAll(hiddenBases);
@@ -508,34 +423,35 @@ public class PlayerService {
         UUID teamId = team.getId();
         List<PlayerChallengeResponse> challenges = allChallenges.stream()
                 .filter(c -> challengeIds.contains(c.getId()))
-                .map(c -> PlayerChallengeResponse.builder()
-                        .id(c.getId())
-                        .gameId(gameId)
-                        .title(c.getTitle())
-                        .description(c.getDescription())
-                        .content(templateVariableService.resolveTemplate(
-                                c.getContent(), gameId, c.getId(), teamId))
-                        .completionContent(templateVariableService.resolveTemplate(
-                                c.getCompletionContent(), gameId, c.getId(), teamId))
-                        .answerType(c.getAnswerType().name())
-                        .autoValidate(c.getAutoValidate())
+                .map(c -> {
                         // Wave F: `points` is omitted from PlayerChallengeResponse.
-                        .locationBound(c.getLocationBound())
-                        .requirePresenceToSubmit(c.getRequirePresenceToSubmit())
-                        .unlocksBaseIds(c.getUnlocksBases().isEmpty() ? null :
-                                c.getUnlocksBases().stream().map(Base::getId).toList())
-                        .fixedBaseId(fixedBaseByChallenge.get(c.getId()))
-                        .build())
+                        return new PlayerChallengeResponse(
+                                c.getId(),
+                                gameId,
+                                c.getTitle(),
+                                c.getDescription(),
+                                templateVariableService.resolveTemplate(
+                                        c.getContent(), gameId, c.getId(), teamId),
+                                templateVariableService.resolveTemplate(
+                                        c.getCompletionContent(), gameId, c.getId(), teamId),
+                                c.getAnswerType().name(),
+                                c.getAutoValidate(),
+                                c.getLocationBound(),
+                                c.getRequirePresenceToSubmit(),
+                                c.getUnlocksBases().isEmpty() ? null :
+                                        c.getUnlocksBases().stream().map(Base::getId).toList(),
+                                fixedBaseByChallenge.get(c.getId())
+                        );
+                })
                 .toList();
 
-        return GameDataResponse.builder()
-                .gameStatus(team.getGame().getStatus().name())
-                .unlockTrigger(game.getUnlockTrigger().name())
-                .bases(bases)
-                .challenges(challenges)
-                .assignments(assignments)
-                .progress(progress)
-                .build();
+        return new GameDataResponse(
+                team.getGame().getStatus().name(),
+                game.getUnlockTrigger().name(),
+                bases,
+                challenges,
+                assignments,
+                progress);
     }
 
     @Transactional(timeout = 10)
@@ -589,68 +505,16 @@ public class PlayerService {
         // submission_id (including from a previous idempotent submitAnswer) are
         // skipped without error. This runs inside the same @Transactional boundary as
         // createSubmission, so either both succeed or both roll back.
-        linkUploadSessionsToSubmission(response, gameId, player.getId());
+        submissionService.linkUploadSessionsToSubmission(response, gameId, player.getId());
 
         // Resolve {{variables}} in completionContent for this team
-        response.setCompletionContent(templateVariableService.resolveTemplate(
-                response.getCompletionContent(), gameId, request.getChallengeId(), team.getId()));
-        return response;
-    }
-
-    /**
-     * Populates {@code upload_sessions.submission_id} for every completed upload
-     * whose {@code file_url} appears in the submission's file URL list and that
-     * belongs to the same (player, game).
-     *
-     * <p>This is an ALERT-FRIENDLY operation: it only links, it never modifies
-     * user-visible fields, it never deletes, and it never fails the submission.
-     * If a session is already linked to a different submission (because another
-     * player or another submission consumed the same URL), we leave it alone —
-     * the first linkage wins, and the later caller will just be a no-op.
-     *
-     * <p>Idempotency: when PlayerService.submitAnswer is retried with the same
-     * idempotency_key, SubmissionService returns the existing submission row, so
-     * {@code response.getId()} is stable across retries. The sessions touched on
-     * the first successful call already carry that submission id, so subsequent
-     * calls skip them via the {@code submission == null} predicate.
-     */
-    private void linkUploadSessionsToSubmission(SubmissionResponse response, UUID gameId, UUID playerId) {
-        if (response == null || response.getId() == null) {
-            return;
-        }
-        List<String> fileUrls = response.getFileUrls();
-        if ((fileUrls == null || fileUrls.isEmpty()) && response.getFileUrl() != null) {
-            fileUrls = List.of(response.getFileUrl());
-        }
-        if (fileUrls == null || fileUrls.isEmpty()) {
-            return;
-        }
-        Set<String> fileUrlSet = fileUrls.stream()
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
-        if (fileUrlSet.isEmpty()) {
-            return;
-        }
-        List<UploadSession> candidates = uploadSessionRepository
-                .findCompletedUnlinkedByPlayerAndGame(playerId, gameId);
-        if (candidates.isEmpty()) {
-            return;
-        }
-        Submission submissionRef = submissionRepository.getReferenceById(response.getId());
-        List<UploadSession> toLink = new ArrayList<>();
-        for (UploadSession session : candidates) {
-            if (session.getSubmission() != null) {
-                continue; // idempotent: already linked by a previous call
-            }
-            if (session.getFileUrl() == null || !fileUrlSet.contains(session.getFileUrl())) {
-                continue;
-            }
-            session.setSubmission(submissionRef);
-            toLink.add(session);
-        }
-        if (!toLink.isEmpty()) {
-            uploadSessionRepository.saveAll(toLink);
-        }
+        String resolvedContent = templateVariableService.resolveTemplate(
+                response.completionContent(), gameId, request.getChallengeId(), team.getId());
+        return new SubmissionResponse(
+                response.id(), response.teamId(), response.challengeId(), response.baseId(),
+                response.answer(), response.fileUrl(), response.fileUrls(), response.status(),
+                response.submittedAt(), response.reviewedBy(), response.feedback(), response.points(),
+                resolvedContent);
     }
 
     @Transactional(timeout = 10)
@@ -713,38 +577,16 @@ public class PlayerService {
         eventBroadcaster.broadcastLocationUpdate(gameId, locationData);
     }
 
-    @Transactional(timeout = 10)
     public void markNotificationsSeen(Player authPlayer) {
-        Player player = loadPlayer(authPlayer);
-        player.setLastNotificationsSeenAt(Instant.now());
-        playerRepository.save(player);
+        playerNotificationQueryService.markNotificationsSeen(authPlayer);
     }
 
-    @Transactional(readOnly = true)
     public List<NotificationResponse> getNotifications(Player authPlayer) {
-        Player player = loadPlayer(authPlayer);
-        UUID gameId = player.getTeam().getGame().getId();
-        UUID teamId = player.getTeam().getId();
-        return gameNotificationRepository.findByGameIdForTeam(gameId, teamId, PageRequest.of(0, 500))
-                .stream()
-                .map(this::toNotificationResponse)
-                .toList();
+        return playerNotificationQueryService.getNotifications(authPlayer);
     }
 
-    @Transactional(readOnly = true)
     public UnseenCountResponse getUnseenNotificationCount(Player authPlayer) {
-        Player player = loadPlayer(authPlayer);
-        UUID gameId = player.getTeam().getGame().getId();
-        UUID teamId = player.getTeam().getId();
-        Instant since = player.getLastNotificationsSeenAt() != null
-                ? player.getLastNotificationsSeenAt()
-                : Instant.EPOCH;
-        long count = gameNotificationRepository.countUnseenForTeam(gameId, teamId, since);
-        return new UnseenCountResponse(count);
-    }
-
-    private NotificationResponse toNotificationResponse(GameNotification n) {
-        return NotificationMapper.toResponse(n);
+        return playerNotificationQueryService.getUnseenNotificationCount(authPlayer);
     }
 
     /**
@@ -765,30 +607,28 @@ public class PlayerService {
 
         CheckInResponse.ChallengeInfo challengeInfo = null;
         if (challenge != null) {
-            challengeInfo = CheckInResponse.ChallengeInfo.builder()
-                    .id(challenge.getId())
-                    .title(challenge.getTitle())
-                    .description(challenge.getDescription())
-                    .content(templateVariableService.resolveTemplate(
-                            challenge.getContent(), gameId, challenge.getId(), team.getId()))
-                    .completionContent(templateVariableService.resolveTemplate(
-                            challenge.getCompletionContent(), gameId, challenge.getId(), team.getId()))
-                    .answerType(challenge.getAnswerType().name())
-                    // Wave F: `points` is omitted from CheckInResponse.ChallengeInfo.
-                    .requirePresenceToSubmit(challenge.getRequirePresenceToSubmit())
-                    .build();
+            // Wave F: `points` is omitted from CheckInResponse.ChallengeInfo.
+            challengeInfo = new CheckInResponse.ChallengeInfo(
+                    challenge.getId(),
+                    challenge.getTitle(),
+                    challenge.getDescription(),
+                    templateVariableService.resolveTemplate(
+                            challenge.getContent(), gameId, challenge.getId(), team.getId()),
+                    templateVariableService.resolveTemplate(
+                            challenge.getCompletionContent(), gameId, challenge.getId(), team.getId()),
+                    challenge.getAnswerType().name(),
+                    challenge.getRequirePresenceToSubmit());
         }
 
         // P1 Phase 4 W4: player-facing naming contract — CheckInResponse
         // no longer carries baseName. The player already knows which
         // base they scanned, and the relevant post-check-in label is
         // the challenge title which lives on ChallengeInfo below.
-        return CheckInResponse.builder()
-                .checkInId(checkIn.getId())
-                .baseId(base.getId())
-                .checkedInAt(checkIn.getCheckedInAt())
-                .challenge(challengeInfo)
-                .build();
+        return new CheckInResponse(
+                checkIn.getId(),
+                base.getId(),
+                checkIn.getCheckedInAt(),
+                challengeInfo);
     }
 
     private void ensureGameIsLiveForPlayerActions(Team team) {

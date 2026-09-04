@@ -56,17 +56,11 @@ class ChallengeControllerTest {
 
     @Test
     void getChallengesReturns200WithList() throws Exception {
-        ChallengeResponse challenge = ChallengeResponse.builder()
-                .id(CHALLENGE_ID)
-                .gameId(GAME_ID)
-                .title("Find the flag")
-                .description("Locate the hidden flag")
-                .answerType("text")
-                .points(100)
-                .locationBound(false)
-                .autoValidate(false)
-                .requirePresenceToSubmit(false)
-                .build();
+        ChallengeResponse challenge = new ChallengeResponse(
+                CHALLENGE_ID, GAME_ID, "Find the flag", "Locate the hidden flag",
+                null, null, "text", false, null, 100, false, false,
+                null, null, null, null
+        );
 
         when(challengeService.getChallengesByGame(GAME_ID)).thenReturn(List.of(challenge));
 
@@ -97,17 +91,11 @@ class ChallengeControllerTest {
         request.setAnswerType("text");
         request.setPoints(100);
 
-        ChallengeResponse response = ChallengeResponse.builder()
-                .id(CHALLENGE_ID)
-                .gameId(GAME_ID)
-                .title("Find the flag")
-                .description("Locate the hidden flag")
-                .answerType("text")
-                .points(100)
-                .locationBound(false)
-                .autoValidate(false)
-                .requirePresenceToSubmit(false)
-                .build();
+        ChallengeResponse response = new ChallengeResponse(
+                CHALLENGE_ID, GAME_ID, "Find the flag", "Locate the hidden flag",
+                null, null, "text", false, null, 100, false, false,
+                null, null, null, null
+        );
 
         when(challengeService.createChallenge(eq(GAME_ID), any(CreateChallengeRequest.class))).thenReturn(response);
 
@@ -200,16 +188,11 @@ class ChallengeControllerTest {
         request.setAnswerType("photo");
         request.setPoints(200);
 
-        ChallengeResponse response = ChallengeResponse.builder()
-                .id(CHALLENGE_ID)
-                .gameId(GAME_ID)
-                .title("Updated challenge")
-                .answerType("photo")
-                .points(200)
-                .locationBound(false)
-                .autoValidate(false)
-                .requirePresenceToSubmit(false)
-                .build();
+        ChallengeResponse response = new ChallengeResponse(
+                CHALLENGE_ID, GAME_ID, "Updated challenge", null,
+                null, null, "photo", false, null, 200, false, false,
+                null, null, null, null
+        );
 
         when(challengeService.updateChallenge(eq(GAME_ID), eq(CHALLENGE_ID), any(UpdateChallengeRequest.class)))
                 .thenReturn(response);
@@ -263,18 +246,11 @@ class ChallengeControllerTest {
 
     @Test
     void getChallengesExposesOperatorNotesInOperatorFacingResponse() throws Exception {
-        ChallengeResponse challenge = ChallengeResponse.builder()
-                .id(CHALLENGE_ID)
-                .gameId(GAME_ID)
-                .title("Find the flag")
-                .description("Locate the hidden flag")
-                .answerType("text")
-                .points(100)
-                .locationBound(false)
-                .autoValidate(false)
-                .requirePresenceToSubmit(false)
-                .operatorNotes("Radio the trail lead before starting")
-                .build();
+        ChallengeResponse challenge = new ChallengeResponse(
+                CHALLENGE_ID, GAME_ID, "Find the flag", "Locate the hidden flag",
+                null, null, "text", false, null, 100, false, false,
+                null, null, "Radio the trail lead before starting", null
+        );
 
         when(challengeService.getChallengesByGame(GAME_ID)).thenReturn(List.of(challenge));
 
@@ -291,17 +267,11 @@ class ChallengeControllerTest {
         request.setPoints(100);
         request.setOperatorNotes("Equipment: blue flag, 30m rope");
 
-        ChallengeResponse response = ChallengeResponse.builder()
-                .id(CHALLENGE_ID)
-                .gameId(GAME_ID)
-                .title("Find the flag")
-                .answerType("text")
-                .points(100)
-                .locationBound(false)
-                .autoValidate(false)
-                .requirePresenceToSubmit(false)
-                .operatorNotes("Equipment: blue flag, 30m rope")
-                .build();
+        ChallengeResponse response = new ChallengeResponse(
+                CHALLENGE_ID, GAME_ID, "Find the flag", null,
+                null, null, "text", false, null, 100, false, false,
+                null, null, "Equipment: blue flag, 30m rope", null
+        );
 
         when(challengeService.createChallenge(eq(GAME_ID), any(CreateChallengeRequest.class))).thenReturn(response);
 
@@ -333,18 +303,11 @@ class ChallengeControllerTest {
     void getChallengeExposesTagIds() throws Exception {
         UUID tagId1 = UUID.randomUUID();
         UUID tagId2 = UUID.randomUUID();
-        ChallengeResponse challenge = ChallengeResponse.builder()
-                .id(CHALLENGE_ID)
-                .gameId(GAME_ID)
-                .title("Find the flag")
-                .description("Locate the hidden flag")
-                .answerType("text")
-                .points(100)
-                .locationBound(false)
-                .autoValidate(false)
-                .requirePresenceToSubmit(false)
-                .tagIds(List.of(tagId1, tagId2))
-                .build();
+        ChallengeResponse challenge = new ChallengeResponse(
+                CHALLENGE_ID, GAME_ID, "Find the flag", "Locate the hidden flag",
+                null, null, "text", false, null, 100, false, false,
+                null, null, null, List.of(tagId1, tagId2)
+        );
 
         when(challengeService.getChallengesByGame(GAME_ID)).thenReturn(List.of(challenge));
 

@@ -7,6 +7,7 @@ import com.prayer.pointfinder.dto.request.UpdateGameRequest;
 import com.prayer.pointfinder.dto.request.UpdateGameStatusRequest;
 import com.prayer.pointfinder.dto.response.GameResponse;
 import com.prayer.pointfinder.dto.response.UserResponse;
+import com.prayer.pointfinder.service.GameImportExportService;
 import com.prayer.pointfinder.service.GameService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import java.util.UUID;
 public class GameController {
 
     private final GameService gameService;
+    private final GameImportExportService gameImportExportService;
 
     @GetMapping
     public ResponseEntity<List<GameResponse>> getAllGames() {
@@ -77,7 +79,7 @@ public class GameController {
 
     @GetMapping("/{id}/export")
     public ResponseEntity<GameExportDto> exportGame(@PathVariable UUID id) {
-        GameExportDto export = gameService.exportGame(id);
+        GameExportDto export = gameImportExportService.exportGame(id);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,
                         "attachment; filename=\"game-" + id + ".json\"")
@@ -86,7 +88,7 @@ public class GameController {
 
     @PostMapping("/import")
     public ResponseEntity<GameResponse> importGame(@Valid @RequestBody GameImportRequest request) {
-        GameResponse game = gameService.importGame(request);
+        GameResponse game = gameImportExportService.importGame(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(game);
     }
 }

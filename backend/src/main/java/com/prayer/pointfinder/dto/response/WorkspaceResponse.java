@@ -1,39 +1,26 @@
 package com.prayer.pointfinder.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-
 import java.util.List;
 import java.util.UUID;
 
-@Data
-@Builder
-@AllArgsConstructor
-public class WorkspaceResponse {
-    private PersonalWorkspace personal;
-    private List<OrgWorkspace> organizations;
+public record WorkspaceResponse(
+    PersonalWorkspace personal,
+    List<OrgWorkspace> organizations
+) {
+    public record PersonalWorkspace(
+        String tier,
+        String status,
+        int activeGames
+    ) {}
 
-    @Data
-    @Builder
-    @AllArgsConstructor
-    public static class PersonalWorkspace {
-        private String tier;
-        private String status;
-        private int activeGames;
-    }
-
-    @Data
-    @Builder
-    @AllArgsConstructor
-    public static class OrgWorkspace {
-        private UUID id;
-        private String name;
-        private String slug;
-        private String tier;
-        private String status;
-        private int memberCount;
-        private int liveGames;
-        private Integer permissions;
-    }
+    public record OrgWorkspace(
+        UUID id,
+        String name,
+        String slug,
+        String tier,
+        String status,
+        int memberCount,
+        int liveGames,
+        Integer permissions
+    ) {}
 }

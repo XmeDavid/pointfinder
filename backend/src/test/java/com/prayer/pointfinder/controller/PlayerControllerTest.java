@@ -96,18 +96,18 @@ class PlayerControllerTest {
         UUID baseId = UUID.randomUUID();
         UUID checkInId = UUID.randomUUID();
 
-        CheckInResponse response = CheckInResponse.builder()
-                .checkInId(checkInId)
-                .baseId(baseId)
-                .checkedInAt(Instant.parse("2025-03-01T09:15:00Z"))
-                .challenge(CheckInResponse.ChallengeInfo.builder()
-                        .id(UUID.randomUUID())
-                        .title("Find the tree")
-                        .description("desc")
-                        .content("content")
-                        .answerType("text")
-                        .build())
-                .build();
+        CheckInResponse response = new CheckInResponse(
+                checkInId,
+                baseId,
+                Instant.parse("2025-03-01T09:15:00Z"),
+                new CheckInResponse.ChallengeInfo(
+                        UUID.randomUUID(),
+                        "Find the tree",
+                        "desc",
+                        "content",
+                        null,
+                        "text",
+                        null));
 
         when(playerService.checkIn(eq(gameId), eq(baseId), any(Player.class), any())).thenReturn(response);
 
@@ -134,13 +134,12 @@ class PlayerControllerTest {
         UUID gameId = UUID.randomUUID();
         UUID baseId = UUID.randomUUID();
 
-        CheckInResponse response = CheckInResponse.builder()
-                .checkInId(UUID.randomUUID()).baseId(baseId)
-                .checkedInAt(Instant.now())
-                .challenge(CheckInResponse.ChallengeInfo.builder()
-                        .id(UUID.randomUUID()).title("T").description("d").content("c")
-                        .answerType("text").build())
-                .build();
+        CheckInResponse response = new CheckInResponse(
+                UUID.randomUUID(), baseId,
+                Instant.now(),
+                new CheckInResponse.ChallengeInfo(
+                        UUID.randomUUID(), "T", "d", "c",
+                        null, "text", null));
 
         when(playerService.checkIn(eq(gameId), eq(baseId), any(Player.class), any())).thenReturn(response);
 
@@ -202,15 +201,20 @@ class PlayerControllerTest {
         request.setChallengeId(challengeId);
         request.setAnswer("42");
 
-        SubmissionResponse response = SubmissionResponse.builder()
-                .id(submissionId)
-                .teamId(UUID.randomUUID())
-                .challengeId(challengeId)
-                .baseId(baseId)
-                .answer("42")
-                .status("pending")
-                .submittedAt(Instant.now())
-                .build();
+        SubmissionResponse response = new SubmissionResponse(
+                submissionId,
+                UUID.randomUUID(),
+                challengeId,
+                baseId,
+                "42",
+                null,
+                null,
+                "pending",
+                Instant.now(),
+                null,
+                null,
+                null,
+                null);
 
         when(playerService.submitAnswer(eq(gameId), any(PlayerSubmissionRequest.class), any(Player.class)))
                 .thenReturn(response);
@@ -238,11 +242,11 @@ class PlayerControllerTest {
         request.setAnswer("my answer");
 
         when(playerService.submitAnswer(eq(gameId), any(PlayerSubmissionRequest.class), any(Player.class)))
-                .thenReturn(SubmissionResponse.builder()
-                        .id(UUID.randomUUID()).teamId(UUID.randomUUID())
-                        .challengeId(challengeId).baseId(baseId)
-                        .answer("my answer").status("pending").submittedAt(Instant.now())
-                        .build());
+                .thenReturn(new SubmissionResponse(
+                        UUID.randomUUID(), UUID.randomUUID(),
+                        challengeId, baseId,
+                        "my answer", null, null, "pending", Instant.now(),
+                        null, null, null, null));
 
         mockMvc.perform(post("/api/player/games/" + gameId + "/submissions")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -309,17 +313,16 @@ class PlayerControllerTest {
         // to the player on the map and base list) instead of baseName
         // (operator-only setup metadata). The last two assertions are
         // the W4 privacy guardrail.
-        BaseProgressResponse progress = BaseProgressResponse.builder()
-                .baseId(baseId)
-                .challengeTitle("Find the tree")
-                .lat(47.3769)
-                .lng(8.5417)
-                .nfcLinked(true)
-                .status("completed")
-                .checkedInAt(Instant.parse("2025-03-01T09:15:00Z"))
-                .challengeId(UUID.randomUUID())
-                .submissionStatus("approved")
-                .build();
+        BaseProgressResponse progress = new BaseProgressResponse(
+                baseId,
+                "Find the tree",
+                47.3769,
+                8.5417,
+                true,
+                "completed",
+                Instant.parse("2025-03-01T09:15:00Z"),
+                UUID.randomUUID(),
+                "approved");
 
         when(playerService.getProgress(eq(gameId), any(Player.class)))
                 .thenReturn(List.of(progress));
@@ -347,16 +350,16 @@ class PlayerControllerTest {
         // hidden base that is a check-in-only unlock target, or a base
         // whose assignment was cleared by the operator). The player UI
         // must tolerate a missing title.
-        BaseProgressResponse progress = BaseProgressResponse.builder()
-                .baseId(baseId)
-                .challengeTitle(null)
-                .lat(47.3769)
-                .lng(8.5417)
-                .nfcLinked(true)
-                .status("not_visited")
-                .challengeId(null)
-                .submissionStatus(null)
-                .build();
+        BaseProgressResponse progress = new BaseProgressResponse(
+                baseId,
+                null,
+                47.3769,
+                8.5417,
+                true,
+                "not_visited",
+                null,
+                null,
+                null);
 
         when(playerService.getProgress(eq(gameId), any(Player.class)))
                 .thenReturn(List.of(progress));
@@ -412,27 +415,20 @@ class PlayerControllerTest {
         // never appears in the serialized body, so a future regression
         // that reintroduces ChallengeResponse into GameDataResponse
         // would fail loudly.
-        PlayerChallengeResponse safeChallenge = PlayerChallengeResponse.builder()
-                .id(challengeId)
-                .gameId(gameId)
-                .title("Find the tree")
-                .description("Locate the oldest tree in the grove")
-                .content("Full instructions here")
-                .completionContent("Well done!")
-                .answerType("text")
-                .autoValidate(false)
-                .locationBound(false)
-                .requirePresenceToSubmit(false)
-                .build();
+        PlayerChallengeResponse safeChallenge = new PlayerChallengeResponse(
+                challengeId, gameId, "Find the tree",
+                "Locate the oldest tree in the grove",
+                "Full instructions here", "Well done!", "text", false,
+                false, false, null, null
+        );
 
-        GameDataResponse response = GameDataResponse.builder()
-                .gameStatus("live")
-                .unlockTrigger("CHECK_IN")
-                .bases(List.of())
-                .challenges(List.of(safeChallenge))
-                .assignments(List.of())
-                .progress(List.of())
-                .build();
+        GameDataResponse response = new GameDataResponse(
+                "live",
+                "CHECK_IN",
+                List.of(),
+                List.of(safeChallenge),
+                List.of(),
+                List.of());
 
         when(playerService.getGameData(eq(gameId), any(Player.class))).thenReturn(response);
 
@@ -455,27 +451,19 @@ class PlayerControllerTest {
         UUID gameId = UUID.randomUUID();
         UUID challengeId = UUID.randomUUID();
 
-        PlayerChallengeResponse safeChallenge = PlayerChallengeResponse.builder()
-                .id(challengeId)
-                .gameId(gameId)
-                .title("Find the tree")
-                .description("desc")
-                .content("content")
-                .completionContent("done")
-                .answerType("text")
-                .autoValidate(false)
-                .locationBound(false)
-                .requirePresenceToSubmit(false)
-                .build();
+        PlayerChallengeResponse safeChallenge = new PlayerChallengeResponse(
+                challengeId, gameId, "Find the tree", "desc",
+                "content", "done", "text", false,
+                false, false, null, null
+        );
 
-        GameDataResponse response = GameDataResponse.builder()
-                .gameStatus("live")
-                .unlockTrigger("CHECK_IN")
-                .bases(List.of())
-                .challenges(List.of(safeChallenge))
-                .assignments(List.of())
-                .progress(List.of())
-                .build();
+        GameDataResponse response = new GameDataResponse(
+                "live",
+                "CHECK_IN",
+                List.of(),
+                List.of(safeChallenge),
+                List.of(),
+                List.of());
 
         when(playerService.getGameData(eq(gameId), any(Player.class))).thenReturn(response);
 
@@ -514,37 +502,29 @@ class PlayerControllerTest {
         // that the fields never appear in the serialized body, so a
         // future regression that reintroduces BaseResponse into
         // GameDataResponse would fail loudly.
-        PlayerBaseResponse safeBase = PlayerBaseResponse.builder()
-                .id(baseId)
-                .gameId(gameId)
-                .lat(47.3769)
-                .lng(8.5417)
-                .nfcLinked(true)
-                .hidden(false)
-                .fixedChallengeId(challengeId)
-                .build();
+        PlayerBaseResponse safeBase = new PlayerBaseResponse(
+                baseId,
+                gameId,
+                47.3769,
+                8.5417,
+                true,
+                false,
+                challengeId
+        );
 
-        PlayerChallengeResponse safeChallenge = PlayerChallengeResponse.builder()
-                .id(challengeId)
-                .gameId(gameId)
-                .title("Find the tree")
-                .description("Locate the oldest tree")
-                .content("Full instructions")
-                .completionContent("Well done!")
-                .answerType("text")
-                .autoValidate(false)
-                .locationBound(false)
-                .requirePresenceToSubmit(false)
-                .build();
+        PlayerChallengeResponse safeChallenge = new PlayerChallengeResponse(
+                challengeId, gameId, "Find the tree", "Locate the oldest tree",
+                "Full instructions", "Well done!", "text", false,
+                false, false, null, null
+        );
 
-        GameDataResponse response = GameDataResponse.builder()
-                .gameStatus("live")
-                .unlockTrigger("CHECK_IN")
-                .bases(List.of(safeBase))
-                .challenges(List.of(safeChallenge))
-                .assignments(List.of())
-                .progress(List.of())
-                .build();
+        GameDataResponse response = new GameDataResponse(
+                "live",
+                "CHECK_IN",
+                List.of(safeBase),
+                List.of(safeChallenge),
+                List.of(),
+                List.of());
 
         when(playerService.getGameData(eq(gameId), any(Player.class))).thenReturn(response);
 
@@ -569,37 +549,29 @@ class PlayerControllerTest {
         UUID baseId = UUID.randomUUID();
         UUID challengeId = UUID.randomUUID();
 
-        PlayerBaseResponse safeBase = PlayerBaseResponse.builder()
-                .id(baseId)
-                .gameId(gameId)
-                .lat(47.3769)
-                .lng(8.5417)
-                .nfcLinked(false)
-                .hidden(false)
-                .fixedChallengeId(null)
-                .build();
+        PlayerBaseResponse safeBase = new PlayerBaseResponse(
+                baseId,
+                gameId,
+                47.3769,
+                8.5417,
+                false,
+                false,
+                null
+        );
 
-        PlayerChallengeResponse safeChallenge = PlayerChallengeResponse.builder()
-                .id(challengeId)
-                .gameId(gameId)
-                .title("Find the tree")
-                .description("desc")
-                .content("content")
-                .completionContent("done")
-                .answerType("text")
-                .autoValidate(false)
-                .locationBound(false)
-                .requirePresenceToSubmit(false)
-                .build();
+        PlayerChallengeResponse safeChallenge = new PlayerChallengeResponse(
+                challengeId, gameId, "Find the tree", "desc",
+                "content", "done", "text", false,
+                false, false, null, null
+        );
 
-        GameDataResponse response = GameDataResponse.builder()
-                .gameStatus("live")
-                .unlockTrigger("CHECK_IN")
-                .bases(List.of(safeBase))
-                .challenges(List.of(safeChallenge))
-                .assignments(List.of())
-                .progress(List.of())
-                .build();
+        GameDataResponse response = new GameDataResponse(
+                "live",
+                "CHECK_IN",
+                List.of(safeBase),
+                List.of(safeChallenge),
+                List.of(),
+                List.of());
 
         when(playerService.getGameData(eq(gameId), any(Player.class))).thenReturn(response);
 
@@ -648,50 +620,43 @@ class PlayerControllerTest {
         // never appears in the serialized body, so a future regression
         // that reintroduces BaseResponse into GameDataResponse would
         // fail loudly.
-        PlayerBaseResponse safeBase = PlayerBaseResponse.builder()
-                .id(baseId)
-                .gameId(gameId)
-                .lat(47.3769)
-                .lng(8.5417)
-                .nfcLinked(true)
-                .hidden(false)
-                .fixedChallengeId(challengeId)
-                .build();
+        PlayerBaseResponse safeBase = new PlayerBaseResponse(
+                baseId,
+                gameId,
+                47.3769,
+                8.5417,
+                true,
+                false,
+                challengeId
+        );
 
         // Player-facing progress rows carry challengeTitle, not
         // baseName. The progress list below is what the player sees on
         // the map and base list.
-        BaseProgressResponse safeProgress = BaseProgressResponse.builder()
-                .baseId(baseId)
-                .challengeTitle("Find the tree")
-                .lat(47.3769)
-                .lng(8.5417)
-                .nfcLinked(true)
-                .status("not_visited")
-                .challengeId(challengeId)
-                .build();
+        BaseProgressResponse safeProgress = new BaseProgressResponse(
+                baseId,
+                "Find the tree",
+                47.3769,
+                8.5417,
+                true,
+                "not_visited",
+                null,
+                challengeId,
+                null);
 
-        PlayerChallengeResponse safeChallenge = PlayerChallengeResponse.builder()
-                .id(challengeId)
-                .gameId(gameId)
-                .title("Find the tree")
-                .description("Locate the oldest tree")
-                .content("Full instructions")
-                .completionContent("Well done!")
-                .answerType("text")
-                .autoValidate(false)
-                .locationBound(false)
-                .requirePresenceToSubmit(false)
-                .build();
+        PlayerChallengeResponse safeChallenge = new PlayerChallengeResponse(
+                challengeId, gameId, "Find the tree", "Locate the oldest tree",
+                "Full instructions", "Well done!", "text", false,
+                false, false, null, null
+        );
 
-        GameDataResponse response = GameDataResponse.builder()
-                .gameStatus("live")
-                .unlockTrigger("CHECK_IN")
-                .bases(List.of(safeBase))
-                .challenges(List.of(safeChallenge))
-                .assignments(List.of())
-                .progress(List.of(safeProgress))
-                .build();
+        GameDataResponse response = new GameDataResponse(
+                "live",
+                "CHECK_IN",
+                List.of(safeBase),
+                List.of(safeChallenge),
+                List.of(),
+                List.of(safeProgress));
 
         when(playerService.getGameData(eq(gameId), any(Player.class))).thenReturn(response);
 
@@ -718,47 +683,40 @@ class PlayerControllerTest {
         UUID baseId = UUID.randomUUID();
         UUID challengeId = UUID.randomUUID();
 
-        PlayerBaseResponse safeBase = PlayerBaseResponse.builder()
-                .id(baseId)
-                .gameId(gameId)
-                .lat(47.3769)
-                .lng(8.5417)
-                .nfcLinked(true)
-                .hidden(false)
-                .fixedChallengeId(challengeId)
-                .build();
+        PlayerBaseResponse safeBase = new PlayerBaseResponse(
+                baseId,
+                gameId,
+                47.3769,
+                8.5417,
+                true,
+                false,
+                challengeId
+        );
 
-        BaseProgressResponse safeProgress = BaseProgressResponse.builder()
-                .baseId(baseId)
-                .challengeTitle("Find the tree")
-                .lat(47.3769)
-                .lng(8.5417)
-                .nfcLinked(true)
-                .status("not_visited")
-                .challengeId(challengeId)
-                .build();
+        BaseProgressResponse safeProgress = new BaseProgressResponse(
+                baseId,
+                "Find the tree",
+                47.3769,
+                8.5417,
+                true,
+                "not_visited",
+                null,
+                challengeId,
+                null);
 
-        PlayerChallengeResponse safeChallenge = PlayerChallengeResponse.builder()
-                .id(challengeId)
-                .gameId(gameId)
-                .title("Find the tree")
-                .description("desc")
-                .content("content")
-                .completionContent("done")
-                .answerType("text")
-                .autoValidate(false)
-                .locationBound(false)
-                .requirePresenceToSubmit(false)
-                .build();
+        PlayerChallengeResponse safeChallenge = new PlayerChallengeResponse(
+                challengeId, gameId, "Find the tree", "desc",
+                "content", "done", "text", false,
+                false, false, null, null
+        );
 
-        GameDataResponse response = GameDataResponse.builder()
-                .gameStatus("live")
-                .unlockTrigger("CHECK_IN")
-                .bases(List.of(safeBase))
-                .challenges(List.of(safeChallenge))
-                .assignments(List.of())
-                .progress(List.of(safeProgress))
-                .build();
+        GameDataResponse response = new GameDataResponse(
+                "live",
+                "CHECK_IN",
+                List.of(safeBase),
+                List.of(safeChallenge),
+                List.of(),
+                List.of(safeProgress));
 
         when(playerService.getGameData(eq(gameId), any(Player.class))).thenReturn(response);
 

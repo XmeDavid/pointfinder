@@ -113,29 +113,29 @@ public class GameSnapshotService {
 
         long memberCount = playerRepository.countByTeamId(team.getId());
 
-        return PlayerSnapshotResponse.builder()
-                .stateVersion(stateVersion)
-                .serverTime(now)
-                .game(PlayerSnapshotResponse.GameInfo.builder()
-                        .id(game.getId())
-                        .name(game.getName())
-                        .description(game.getDescription())
-                        .status(game.getStatus().name())
-                        .unlockTrigger(game.getUnlockTrigger().name())
-                        .tileSource(game.getTileSource())
-                        .startDate(game.getStartDate())
-                        .endDate(game.getEndDate())
-                        .build())
-                .team(PlayerSnapshotResponse.TeamInfo.builder()
-                        .id(team.getId())
-                        .name(team.getName())
-                        .color(team.getColor())
-                        .memberCount((int) memberCount)
-                        .build())
-                .progress(progress)
-                .submissions(submissionSummaries)
-                .uploadSessions(uploadSessions)
-                .build();
+        return new PlayerSnapshotResponse(
+                stateVersion,
+                now,
+                new PlayerSnapshotResponse.GameInfo(
+                        game.getId(),
+                        game.getName(),
+                        game.getDescription(),
+                        game.getStatus().name(),
+                        game.getUnlockTrigger().name(),
+                        game.getTileSource(),
+                        game.getStartDate(),
+                        game.getEndDate()
+                ),
+                new PlayerSnapshotResponse.TeamInfo(
+                        team.getId(),
+                        team.getName(),
+                        team.getColor(),
+                        (int) memberCount
+                ),
+                progress,
+                submissionSummaries,
+                uploadSessions
+        );
     }
 
     /**
@@ -159,18 +159,18 @@ public class GameSnapshotService {
         List<OperatorSnapshotResponse.TeamInfo> teamInfos = teams.stream()
                 .map(team -> {
                     long score = leaderboard.stream()
-                            .filter(entry -> entry.getTeamId().equals(team.getId()))
-                            .mapToLong(LeaderboardEntry::getPoints)
+                            .filter(entry -> entry.teamId().equals(team.getId()))
+                            .mapToLong(LeaderboardEntry::points)
                             .findFirst()
                             .orElse(0L);
                     long memberCount = playerRepository.countByTeamId(team.getId());
-                    return OperatorSnapshotResponse.TeamInfo.builder()
-                            .id(team.getId())
-                            .name(team.getName())
-                            .color(team.getColor())
-                            .score(score)
-                            .memberCount((int) memberCount)
-                            .build();
+                    return new OperatorSnapshotResponse.TeamInfo(
+                            team.getId(),
+                            team.getName(),
+                            team.getColor(),
+                            score,
+                            (int) memberCount
+                    );
                 })
                 .toList();
 
@@ -181,28 +181,28 @@ public class GameSnapshotService {
                 now.minus(Duration.ofMinutes(needsAttentionThresholdMinutes))
         );
 
-        return OperatorSnapshotResponse.builder()
-                .stateVersion(stateVersion)
-                .serverTime(now)
-                .game(OperatorSnapshotResponse.GameInfo.builder()
-                        .id(game.getId())
-                        .name(game.getName())
-                        .description(game.getDescription())
-                        .status(game.getStatus().name())
-                        .unlockTrigger(game.getUnlockTrigger().name())
-                        .tileSource(game.getTileSource())
-                        .startDate(game.getStartDate())
-                        .endDate(game.getEndDate())
-                        .uniformAssignment(game.getUniformAssignment())
-                        .broadcastEnabled(game.getBroadcastEnabled())
-                        .broadcastCode(game.getBroadcastCode())
-                        .build())
-                .teams(teamInfos)
-                .leaderboard(leaderboard)
-                .pendingReviews((int) pendingReviews)
-                .activeUploads((int) activeUploads)
-                .needsAttention((int) needsAttention)
-                .build();
+        return new OperatorSnapshotResponse(
+                stateVersion,
+                now,
+                new OperatorSnapshotResponse.GameInfo(
+                        game.getId(),
+                        game.getName(),
+                        game.getDescription(),
+                        game.getStatus().name(),
+                        game.getUnlockTrigger().name(),
+                        game.getTileSource(),
+                        game.getStartDate(),
+                        game.getEndDate(),
+                        game.getUniformAssignment(),
+                        game.getBroadcastEnabled(),
+                        game.getBroadcastCode()
+                ),
+                teamInfos,
+                leaderboard,
+                (int) pendingReviews,
+                (int) activeUploads,
+                (int) needsAttention
+        );
     }
 
     /**
@@ -220,15 +220,15 @@ public class GameSnapshotService {
 
     private PlayerSnapshotResponse.PlayerSubmissionSummary toPlayerSubmissionSummary(Submission submission) {
         // Deliberately NOT setting points. Players do not see scores.
-        return PlayerSnapshotResponse.PlayerSubmissionSummary.builder()
-                .id(submission.getId())
-                .baseId(submission.getBase() != null ? submission.getBase().getId() : null)
-                .challengeId(submission.getChallenge() != null ? submission.getChallenge().getId() : null)
-                .status(submission.getStatus() != null ? submission.getStatus().name() : null)
-                .submittedAt(submission.getSubmittedAt())
-                .fileUrl(submission.getFileUrl())
-                .fileUrls(submission.getFileUrls())
-                .build();
+        return new PlayerSnapshotResponse.PlayerSubmissionSummary(
+                submission.getId(),
+                submission.getBase() != null ? submission.getBase().getId() : null,
+                submission.getChallenge() != null ? submission.getChallenge().getId() : null,
+                submission.getStatus() != null ? submission.getStatus().name() : null,
+                submission.getSubmittedAt(),
+                submission.getFileUrl(),
+                submission.getFileUrls()
+        );
     }
 
     /**
@@ -268,22 +268,22 @@ public class GameSnapshotService {
         List<Integer> uploadedChunks = session.getStatus() == UploadSessionStatus.completed
                 ? IntStream.range(0, session.getTotalChunks()).boxed().toList()
                 : List.of();
-        return UploadSessionResponse.builder()
-                .sessionId(session.getId())
-                .gameId(session.getGame().getId())
-                .mediaItemKey(session.getMediaItemKey())
-                .originalFileName(session.getOriginalFileName())
-                .contentType(session.getContentType())
-                .totalSizeBytes(session.getTotalSizeBytes())
-                .chunkSizeBytes(session.getChunkSizeBytes())
-                .totalChunks(session.getTotalChunks())
-                .uploadedChunks(uploadedChunks)
-                .status(session.getStatus().name())
-                .fileUrl(session.getFileUrl())
-                .expiresAt(session.getExpiresAt())
-                .createdAt(session.getCreatedAt())
-                .updatedAt(session.getUpdatedAt())
-                .completedAt(session.getCompletedAt())
-                .build();
+        return new UploadSessionResponse(
+                session.getId(),
+                session.getGame().getId(),
+                session.getMediaItemKey(),
+                session.getOriginalFileName(),
+                session.getContentType(),
+                session.getTotalSizeBytes(),
+                session.getChunkSizeBytes(),
+                session.getTotalChunks(),
+                uploadedChunks,
+                session.getStatus().name(),
+                session.getFileUrl(),
+                session.getExpiresAt(),
+                session.getCreatedAt(),
+                session.getUpdatedAt(),
+                session.getCompletedAt()
+        );
     }
 }

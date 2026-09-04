@@ -1,10 +1,6 @@
 package com.prayer.pointfinder.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 import java.util.List;
@@ -24,82 +20,66 @@ import java.util.UUID;
  * <p>Source spec: docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md
  * (P0 Track 2 Slice 1).
  */
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class PlayerSnapshotResponse {
+public record PlayerSnapshotResponse(
+        /**
+         * Monotonically-increasing state version. Bumped by
+         * {@code GameEventBroadcaster} on every state-mutating, snapshot-relevant
+         * broadcast. Realtime listeners compare this against their last seen
+         * version on reconnect to decide whether to replace cached state wholesale.
+         */
+        long stateVersion,
 
-    /**
-     * Monotonically-increasing state version. Bumped by
-     * {@code GameEventBroadcaster} on every state-mutating, snapshot-relevant
-     * broadcast. Realtime listeners compare this against their last seen
-     * version on reconnect to decide whether to replace cached state wholesale.
-     */
-    private long stateVersion;
+        /** Server-side wall clock at the moment the snapshot was built. */
+        Instant serverTime,
 
-    /** Server-side wall clock at the moment the snapshot was built. */
-    private Instant serverTime;
+        GameInfo game,
+        TeamInfo team,
+        List<BaseProgressResponse> progress,
+        List<PlayerSubmissionSummary> submissions,
+        List<UploadSessionResponse> uploadSessions
+) {
 
-    private GameInfo game;
-    private TeamInfo team;
-    private List<BaseProgressResponse> progress;
-    private List<PlayerSubmissionSummary> submissions;
-    private List<UploadSessionResponse> uploadSessions;
-
-    @Data
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class GameInfo {
-        private UUID id;
-        private String name;
-        private String description;
-        /** Canonical game status: {@code setup}, {@code live}, or {@code ended}. */
-        private String status;
-        /** {@code CHECK_IN}, {@code SUBMISSION}, or {@code COMPLETED}. */
-        private String unlockTrigger;
-        private String tileSource;
-        private Instant startDate;
-        private Instant endDate;
-    }
+    public record GameInfo(
+            UUID id,
+            String name,
+            String description,
+            /** Canonical game status: {@code setup}, {@code live}, or {@code ended}. */
+            String status,
+            /** {@code CHECK_IN}, {@code SUBMISSION}, or {@code COMPLETED}. */
+            String unlockTrigger,
+            String tileSource,
+            Instant startDate,
+            Instant endDate
+    ) {}
 
-    @Data
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class TeamInfo {
-        private UUID id;
-        private String name;
-        private String color;
-        private int memberCount;
-        // NO score field. Players do not see scores.
-    }
+    public record TeamInfo(
+            UUID id,
+            String name,
+            String color,
+            int memberCount
+            // NO score field. Players do not see scores.
+    ) {}
 
     /**
      * Player-facing submission summary. Deliberately excludes
      * {@code points} — the submission has a status only, not a score, from
      * the player's perspective.
      */
-    @Data
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class PlayerSubmissionSummary {
-        private UUID id;
-        private UUID baseId;
-        private UUID challengeId;
-        /**
-         * One of {@code pending}, {@code approved}, {@code rejected},
-         * {@code correct}, {@code incorrect}. NO points.
-         */
-        private String status;
-        private Instant submittedAt;
-        private String fileUrl;
-        private List<String> fileUrls;
-    }
+    public record PlayerSubmissionSummary(
+            UUID id,
+            UUID baseId,
+            UUID challengeId,
+            /**
+             * One of {@code pending}, {@code approved}, {@code rejected},
+             * {@code correct}, {@code incorrect}. NO points.
+             */
+            String status,
+            Instant submittedAt,
+            String fileUrl,
+            List<String> fileUrls
+    ) {}
 }

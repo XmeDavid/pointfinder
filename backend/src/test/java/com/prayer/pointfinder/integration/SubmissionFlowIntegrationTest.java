@@ -152,8 +152,8 @@ class SubmissionFlowIntegrationTest extends IntegrationTestBase {
         assertTrue(leaderboardResp.getBody().length > 0);
 
         LeaderboardEntry entry = leaderboardResp.getBody()[0];
-        assertEquals(team.getId(), entry.getTeamId());
-        assertEquals(100, entry.getPoints());
-        assertEquals(1, entry.getCompletedChallenges());
+        assertEquals(team.getId(), entry.teamId());
+        assertEquals(100, entry.points());
+        assertEquals(1, entry.completedChallenges());
     }
 }

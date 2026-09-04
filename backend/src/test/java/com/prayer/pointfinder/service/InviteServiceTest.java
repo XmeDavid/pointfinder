@@ -100,8 +100,8 @@ class InviteServiceTest {
         List<InviteResponse> result = inviteService.getGlobalInvites();
 
         assertEquals(1, result.size());
-        assertNull(result.get(0).getGameId());
-        assertEquals("invitee@example.com", result.get(0).getEmail());
+        assertNull(result.get(0).gameId());
+        assertEquals("invitee@example.com", result.get(0).email());
         verify(gameAccessService).ensureCurrentUserIsAdmin();
     }
 
@@ -123,7 +123,7 @@ class InviteServiceTest {
         List<InviteResponse> result = inviteService.getGameInvites(gameId);
 
         assertEquals(1, result.size());
-        assertEquals(gameId, result.get(0).getGameId());
+        assertEquals(gameId, result.get(0).gameId());
         verify(gameAccessService).ensureCurrentUserCanAccessGame(gameId);
     }
 
@@ -146,7 +146,7 @@ class InviteServiceTest {
         List<InviteResponse> result = inviteService.getMyInvites();
 
         assertEquals(1, result.size());
-        assertEquals(adminUser.getEmail(), result.get(0).getEmail());
+        assertEquals(adminUser.getEmail(), result.get(0).email());
     }
 
     // --- createInvite (global) ---
@@ -167,10 +167,10 @@ class InviteServiceTest {
 
         InviteResponse response = inviteService.createInvite(request, "pointfinder.pt");
 
-        assertNotNull(response.getId());
-        assertEquals("new@example.com", response.getEmail());
-        assertNull(response.getGameId());
-        assertEquals("pending", response.getStatus());
+        assertNotNull(response.id());
+        assertEquals("new@example.com", response.email());
+        assertNull(response.gameId());
+        assertEquals("pending", response.status());
         verify(gameAccessService).ensureCurrentUserIsAdmin();
         verify(emailService).sendRegistrationInvite(eq("new@example.com"), any(String.class), eq("Admin"), eq("pointfinder.pt"));
         verify(emailService, never()).sendGameInvite(any(), any(), any(), any());
@@ -218,9 +218,9 @@ class InviteServiceTest {
 
         InviteResponse response = inviteService.createInvite(request, "pointfinder.pt");
 
-        assertNotNull(response.getId());
-        assertEquals(gameId, response.getGameId());
-        assertEquals("target@example.com", response.getEmail());
+        assertNotNull(response.id());
+        assertEquals(gameId, response.gameId());
+        assertEquals("target@example.com", response.email());
         verify(emailService).sendGameInvite(eq("target@example.com"), eq("Test Game"), eq("Admin"), eq("pointfinder.pt"));
         verify(emailService, never()).sendRegistrationInvite(any(), any(), any(), any());
     }

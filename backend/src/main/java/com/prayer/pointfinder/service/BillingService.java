@@ -99,10 +99,7 @@ public class BillingService {
             log.info("[BILLING] operation=createCheckout user={} plan={} cycle={} orgId={}",
                 currentUser.getId(), request.getPlan(), request.getCycle(), request.getOrgId());
 
-            return CheckoutResponse.builder()
-                .url(session.getUrl())
-                .sessionId(session.getId())
-                .build();
+            return new CheckoutResponse(session.getUrl(), session.getId());
         } catch (Exception e) {
             log.error("[BILLING] Stripe checkout creation failed: {}", e.getMessage(), e);
             throw new BadRequestException("Failed to create checkout session: " + e.getMessage());
@@ -166,15 +163,15 @@ public class BillingService {
         UserSubscription sub = userSubRepository.findByUserId(currentUser.getId())
             .orElse(UserSubscription.builder().tier(IndividualTier.free).status(SubscriptionStatus.active).build());
 
-        return UserSubscriptionResponse.builder()
-            .id(sub.getId())
-            .tier(sub.getTier().name())
-            .status(sub.getStatus().name())
-            .billingCycle(sub.getBillingCycle() != null ? sub.getBillingCycle().name() : null)
-            .currentPeriodEnd(sub.getCurrentPeriodEnd())
-            .gracePeriodEnd(sub.getGracePeriodEnd())
-            .quotaOverrides(sub.getQuotaOverrides())
-            .build();
+        return new UserSubscriptionResponse(
+            sub.getId(),
+            sub.getTier().name(),
+            sub.getStatus().name(),
+            sub.getBillingCycle() != null ? sub.getBillingCycle().name() : null,
+            sub.getCurrentPeriodEnd(),
+            sub.getGracePeriodEnd(),
+            sub.getQuotaOverrides()
+        );
     }
 
     @Transactional
@@ -210,10 +207,7 @@ public class BillingService {
             log.info("[BILLING] operation=createOrgCheckout user={} orgName={} plan={} cycle={}",
                 currentUser.getId(), orgName, plan, cycle);
 
-            return CheckoutResponse.builder()
-                .url(session.getUrl())
-                .sessionId(session.getId())
-                .build();
+            return new CheckoutResponse(session.getUrl(), session.getId());
         } catch (StripeException e) {
             log.error("[BILLING] Stripe org checkout creation failed: {}", e.getMessage());
             throw new BadRequestException("Failed to create checkout session: " + e.getMessage());
@@ -250,10 +244,7 @@ public class BillingService {
         if (customerId == null) {
             log.info("[BILLING] operation=getInvoices user={} orgId={} result=no_customer",
                 currentUser.getId(), orgId);
-            return InvoiceListResponse.builder()
-                .invoices(Collections.emptyList())
-                .hasMore(false)
-                .build();
+            return new InvoiceListResponse(Collections.emptyList(), false);
         }
 
         try {
@@ -275,10 +266,7 @@ public class BillingService {
             log.info("[BILLING] operation=getInvoices user={} orgId={} count={} hasMore={}",
                 currentUser.getId(), orgId, invoices.size(), collection.getHasMore());
 
-            return InvoiceListResponse.builder()
-                .invoices(invoices)
-                .hasMore(Boolean.TRUE.equals(collection.getHasMore()))
-                .build();
+            return new InvoiceListResponse(invoices, Boolean.TRUE.equals(collection.getHasMore()));
         } catch (StripeException e) {
             log.error("[BILLING] Stripe invoice list failed: {}", e.getMessage());
             throw new BadRequestException("Failed to retrieve invoices: " + e.getMessage());
@@ -310,29 +298,28 @@ public class BillingService {
                 planName = rawLines.get(0).getDescription();
             }
             lineItems = rawLines.stream()
-                .map(li -> InvoiceLineItemResponse.builder()
-                    .description(li.getDescription())
-                    .amount(li.getAmount() != null ? li.getAmount() : 0L)
-                    .quantity(li.getQuantity() != null ? li.getQuantity() : 0L)
-                    .build())
+                .map(li -> new InvoiceLineItemResponse(
+                    li.getDescription(),
+                    li.getAmount() != null ? li.getAmount() : 0L,
+                    li.getQuantity() != null ? li.getQuantity() : 0L))
                 .collect(Collectors.toList());
         }
 
-        return InvoiceResponse.builder()
-            .id(invoice.getId())
-            .date(invoice.getCreated() != null ? Instant.ofEpochSecond(invoice.getCreated()) : null)
-            .amount(invoice.getAmountPaid() != null ? invoice.getAmountPaid() : 0L)
-            .currency(invoice.getCurrency())
-            .status(invoice.getStatus())
-            .planName(planName)
-            .billingPeriodStart(invoice.getPeriodStart() != null ? Instant.ofEpochSecond(invoice.getPeriodStart()) : null)
-            .billingPeriodEnd(invoice.getPeriodEnd() != null ? Instant.ofEpochSecond(invoice.getPeriodEnd()) : null)
-            .paymentMethodLast4(last4)
-            .paymentMethodBrand(brand)
-            .lineItems(lineItems)
-            .tax(invoice.getTax() != null ? invoice.getTax() : 0L)
-            .refundedAmount(refundedAmount)
-            .pdfUrl(invoice.getInvoicePdf())
-            .build();
+        return new InvoiceResponse(
+            invoice.getId(),
+            invoice.getCreated() != null ? Instant.ofEpochSecond(invoice.getCreated()) : null,
+            invoice.getAmountPaid() != null ? invoice.getAmountPaid() : 0L,
+            invoice.getCurrency(),
+            invoice.getStatus(),
+            planName,
+            invoice.getPeriodStart() != null ? Instant.ofEpochSecond(invoice.getPeriodStart()) : null,
+            invoice.getPeriodEnd() != null ? Instant.ofEpochSecond(invoice.getPeriodEnd()) : null,
+            last4,
+            brand,
+            lineItems,
+            invoice.getTax() != null ? invoice.getTax() : 0L,
+            refundedAmount,
+            invoice.getInvoicePdf()
+        );
     }
 }

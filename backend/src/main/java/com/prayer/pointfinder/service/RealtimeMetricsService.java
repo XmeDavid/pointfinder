@@ -218,17 +218,17 @@ public class RealtimeMetricsService {
         long stompReconnects = countSince(stompReconnectEvents, gameId, cutoff);
         long mobileReconnects = countSince(mobileReconnectEvents, gameId, cutoff);
 
-        return RealtimeStatsResponse.builder()
-                .stompActiveSessions(stompActive)
-                .mobileActiveSessions(mobileActive)
-                .totalActiveSessions(stompActive + mobileActive)
-                .stompConnectsLastHour(stompConnects)
-                .mobileConnectsLastHour(mobileConnects)
-                .stompDisconnectsLastHour(stompDisconnects)
-                .mobileDisconnectsLastHour(mobileDisconnects)
-                .estimatedReconnectsLastHour(stompReconnects + mobileReconnects)
-                .lastUpdated(now)
-                .build();
+        return new RealtimeStatsResponse(
+                stompActive,
+                mobileActive,
+                stompActive + mobileActive,
+                stompConnects,
+                mobileConnects,
+                stompDisconnects,
+                mobileDisconnects,
+                stompReconnects + mobileReconnects,
+                now
+        );
     }
 
     // ───────────────────────────── internals ────────────────────────────
