@@ -17,8 +17,8 @@ import type { MouseEvent, ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { buttonVariants } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@pointfinder/core/ui/button";
+import { Badge } from "@pointfinder/core/ui/badge";
 import { cn } from "@/lib/utils";
 
 const CONTACT_EMAIL = "info@pointfinder.pt";

@@ -1,0 +1,67 @@
+{
+  "name": "@pointfinder/core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PointFinder core UI: the base components every web and mobile screen composes, documented in Storybook.",
+  "type": "module",
+  "types": "./src/index.ts",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./ui/*": {
+      "types": "./src/ui/*.tsx",
+      "import": "./src/ui/*.tsx",
+      "default": "./src/ui/*.tsx"
+    },
+    "./hooks/*": {
+      "types": "./src/hooks/*.ts",
+      "import": "./src/hooks/*.ts",
+      "default": "./src/hooks/*.ts"
+    },
+    "./theme.css": "./src/theme/theme.css",
+    "./map/*": {
+      "types": "./src/map/*.ts",
+      "import": "./src/map/*.ts",
+      "default": "./src/map/*.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
+  },
+  "dependencies": {
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.563.0",
+    "tailwind-merge": "^3.4.0",
+    "zustand": "^5.0.0"
+  },
+  "peerDependencies": {
+    "i18next": ">=25",
+    "react": "^19",
+    "react-dom": "^19",
+    "react-i18next": ">=15"
+  },
+  "devDependencies": {
+    "@storybook/addon-a11y": "^10.6.0",
+    "@storybook/addon-docs": "^10.6.0",
+    "@storybook/react-vite": "^10.6.0",
+    "@tailwindcss/vite": "^4.1.18",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "i18next": "^25.8.4",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-i18next": "^16.5.4",
+    "storybook": "^10.6.0",
+    "tailwindcss": "^4.1.18",
+    "typescript": "~5.9",
+    "vite": "^7.2.4"
+  }
+}

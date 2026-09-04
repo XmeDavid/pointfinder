@@ -3,7 +3,7 @@ import { useWorkspaceContext } from '../../stores/workspaceContext'
 import { useQuota } from '../../hooks/queries/useQuota'
 import { useBillingStatus } from '../../hooks/queries/useBillingStatus'
 import { useCreateCheckout, useCreatePortal, useCreateOrgPortal } from '../../hooks/mutations/useBillingMutations'
-import { Button } from '@/components/ui/button'
+import { Button } from '@pointfinder/core/ui/button'
 import { SurfacePanel } from '@/components/layout/SurfacePanel'
 import { StatusBadge } from '@/components/status'
 

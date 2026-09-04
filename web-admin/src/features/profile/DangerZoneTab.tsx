@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/lib/auth/store'
 import { useDeleteAccount } from '@/hooks/mutations/useProfileMutations'
-import { useToast } from '@/hooks/useToast'
+import { useToast } from '@pointfinder/core/hooks/useToast'
 
 export function DangerZoneTab() {
   const { t } = useTranslation()

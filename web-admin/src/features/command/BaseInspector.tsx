@@ -8,7 +8,7 @@ import {
   NfcStatusBadge,
   StatusBadge,
 } from '@/components/status'
-import { Button } from '@/components/ui/button'
+import { Button } from '@pointfinder/core/ui/button'
 import { useAssignments } from '@/hooks/queries/useAssignments'
 import { useBases } from '@/hooks/queries/useBases'
 import { useChallenges } from '@/hooks/queries/useChallenges'

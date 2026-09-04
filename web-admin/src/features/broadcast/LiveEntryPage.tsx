@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Radio } from "lucide-react";
 import { SurfacePanel } from "@/components/layout/SurfacePanel";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Input } from "@pointfinder/core/ui/input";
+import { Button } from "@pointfinder/core/ui/button";
 
 export function LiveEntryPage() {
   const { t } = useTranslation();

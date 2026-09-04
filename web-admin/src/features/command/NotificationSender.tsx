@@ -7,8 +7,8 @@ import { useTeams } from '@/hooks/queries/useTeams'
 import { useNotifications } from '@/hooks/queries/useNotifications'
 import { useSendNotification } from '@/hooks/mutations/useNotificationMutations'
 import { relativeTime } from '@/lib/utils/dates'
-import { Button } from '@/components/ui/button'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Button } from '@pointfinder/core/ui/button'
+import { Tabs, TabsList, TabsTrigger } from '@pointfinder/core/ui/tabs'
 import { StatusBadge } from '@/components/status'
 
 export function NotificationSender({ gameId }: { gameId: string }) {

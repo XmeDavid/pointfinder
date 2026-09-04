@@ -1,0 +1,27 @@
+use serde::{ser::Serializer, Serialize};
+
+pub type Result<T> = std::result::Result<T, Error>;
+
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+  #[error("unavailable")]
+  Unavailable,
+  #[error(transparent)]
+  Io(#[from] std::io::Error),
+  #[cfg(mobile)]
+  #[error(transparent)]
+  PluginInvoke(#[from] tauri::plugin::mobile::PluginInvokeError),
+  #[error("{0}")]
+  Other(String),
+}
+
+impl Serialize for Error {
+  fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    // Native code rejects with short codes ("cancelled", "timeout", ...).
+    // Surface them verbatim so the JS side can switch on them.
+    serializer.serialize_str(self.to_string().as_ref())
+  }
+}

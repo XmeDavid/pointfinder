@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NFCReaderUsageDescription</key>
+	<string>PointFinder reads the tag at each base to check your team in, and lets operators write tags.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>During a live game your team's position is shown to the game operators on their map.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Take a photo to answer a photo challenge, or scan a QR code to join a game.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Choose an existing photo to answer a photo challenge.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+</dict>
+</plist>

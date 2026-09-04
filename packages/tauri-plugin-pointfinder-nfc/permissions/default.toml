@@ -1,0 +1,13 @@
+[default]
+description = "Read and write NDEF URL tags, listen for taps, and receive tag events."
+permissions = [
+  "allow-is-available",
+  "allow-start-listening",
+  "allow-stop-listening",
+  "allow-scan",
+  "allow-cancel-scan",
+  "allow-write",
+  "allow-consume-pending-tag",
+  "allow-register-listener",
+  "allow-remove-listener",
+]

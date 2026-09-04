@@ -1,0 +1,346 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0285C6F3BFEFF634A556B34E /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2937C3977B6C8E07262BF41 /* QuartzCore.framework */; };
+		1AC62D7981D83D75281216D9 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4505B1DCB4EABEACF6D48238 /* main.mm */; };
+		2957991FFFB1FEBEB8060E56 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A371A277380ADDB738099C8E /* UIKit.framework */; };
+		67FEF9357CD8D88A474D366F /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CF5729635ABEBDCF865B2262 /* MetalKit.framework */; };
+		8EA2AD31ADD2B2DA02871A13 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DB2EB3C8A1C6F1FF7E79622C /* WebKit.framework */; };
+		92511691E2B6E0AEF8CA22DB /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E6C8A1388B651A7E83EA5176 /* Metal.framework */; };
+		9DA97AA7038E1C0192DAF61D /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 40CE146F7AA1D48A6AD97269 /* CoreGraphics.framework */; };
+		A9C5C99AC05EB71F2B73D3C1 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3F53B04F94FBC52BFC152777 /* Security.framework */; };
+		AC3171F348F584B4C571E6A0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 350BC73C9DE2ED66A2B689D1 /* Assets.xcassets */; };
+		D7EFF494E6006331AA91E5E6 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1E9694A1B6564D573CD46078 /* LaunchScreen.storyboard */; };
+		ED081EE28A9B51B1127A1B2F /* libapp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E20EC233E289D1AAFCE32F53 /* libapp.a */; };
+		FA23500C52A2FACA8DD6AAA0 /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 6C365D803CA0952821C7E24D /* assets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		1E9694A1B6564D573CD46078 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		350BC73C9DE2ED66A2B689D1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		3F53B04F94FBC52BFC152777 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		40CE146F7AA1D48A6AD97269 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		4505B1DCB4EABEACF6D48238 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
+		46315E9E98DDFAA28F43DAAB /* bindings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bindings.h; sourceTree = "<group>"; };
+		5C0AA1E641DE3DF56EBF9592 /* pointfinder-mobile_iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "pointfinder-mobile_iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		649DD45692637A13B5BE9BCD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		6C365D803CA0952821C7E24D /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; path = assets; sourceTree = SOURCE_ROOT; };
+		8BE8AA1A7FC81CE052B50734 /* main.rs */ = {isa = PBXFileReference; path = main.rs; sourceTree = "<group>"; };
+		91435CE24D26DB5F8AF2FB08 /* pointfinder-mobile_iOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "pointfinder-mobile_iOS.entitlements"; sourceTree = "<group>"; };
+		A371A277380ADDB738099C8E /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		CF5729635ABEBDCF865B2262 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
+		DB2EB3C8A1C6F1FF7E79622C /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
+		E20EC233E289D1AAFCE32F53 /* libapp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libapp.a; sourceTree = "<group>"; };
+		E2937C3977B6C8E07262BF41 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		E58AD5D597FFB36E248C141E /* lib.rs */ = {isa = PBXFileReference; path = lib.rs; sourceTree = "<group>"; };
+		E6C8A1388B651A7E83EA5176 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		72549FBCE48BD663824BC147 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				ED081EE28A9B51B1127A1B2F /* libapp.a in Frameworks */,
+				9DA97AA7038E1C0192DAF61D /* CoreGraphics.framework in Frameworks */,
+				92511691E2B6E0AEF8CA22DB /* Metal.framework in Frameworks */,
+				67FEF9357CD8D88A474D366F /* MetalKit.framework in Frameworks */,
+				0285C6F3BFEFF634A556B34E /* QuartzCore.framework in Frameworks */,
+				A9C5C99AC05EB71F2B73D3C1 /* Security.framework in Frameworks */,
+				2957991FFFB1FEBEB8060E56 /* UIKit.framework in Frameworks */,
+				8EA2AD31ADD2B2DA02871A13 /* WebKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		058628668809A5F0F07D1E2C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5C0AA1E641DE3DF56EBF9592 /* pointfinder-mobile_iOS.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		31FFE090C2861EC2C45C2325 /* pointfinder-mobile */ = {
+			isa = PBXGroup;
+			children = (
+				4505B1DCB4EABEACF6D48238 /* main.mm */,
+				F519AA208E46F9828DCA0C10 /* bindings */,
+			);
+			path = "pointfinder-mobile";
+			sourceTree = "<group>";
+		};
+		56B9B48EFD430CBE9313B222 /* pointfinder-mobile_iOS */ = {
+			isa = PBXGroup;
+			children = (
+				649DD45692637A13B5BE9BCD /* Info.plist */,
+				91435CE24D26DB5F8AF2FB08 /* pointfinder-mobile_iOS.entitlements */,
+			);
+			path = "pointfinder-mobile_iOS";
+			sourceTree = "<group>";
+		};
+		6799A629D9AF517B622E0731 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				31FFE090C2861EC2C45C2325 /* pointfinder-mobile */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		7DDD359F87FB0A17080ED8B2 /* Externals */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Externals;
+			sourceTree = "<group>";
+		};
+		A68089D539E188241CE2AE4A = {
+			isa = PBXGroup;
+			children = (
+				6C365D803CA0952821C7E24D /* assets */,
+				350BC73C9DE2ED66A2B689D1 /* Assets.xcassets */,
+				1E9694A1B6564D573CD46078 /* LaunchScreen.storyboard */,
+				7DDD359F87FB0A17080ED8B2 /* Externals */,
+				56B9B48EFD430CBE9313B222 /* pointfinder-mobile_iOS */,
+				6799A629D9AF517B622E0731 /* Sources */,
+				AE7C1C3501571297C36E1898 /* src */,
+				F7C97E376C7C9A4AFA2E5CE3 /* Frameworks */,
+				058628668809A5F0F07D1E2C /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		AE7C1C3501571297C36E1898 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				E58AD5D597FFB36E248C141E /* lib.rs */,
+				8BE8AA1A7FC81CE052B50734 /* main.rs */,
+			);
+			name = src;
+			path = ../../src;
+			sourceTree = "<group>";
+		};
+		F519AA208E46F9828DCA0C10 /* bindings */ = {
+			isa = PBXGroup;
+			children = (
+				46315E9E98DDFAA28F43DAAB /* bindings.h */,
+			);
+			path = bindings;
+			sourceTree = "<group>";
+		};
+		F7C97E376C7C9A4AFA2E5CE3 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				40CE146F7AA1D48A6AD97269 /* CoreGraphics.framework */,
+				E20EC233E289D1AAFCE32F53 /* libapp.a */,
+				E6C8A1388B651A7E83EA5176 /* Metal.framework */,
+				CF5729635ABEBDCF865B2262 /* MetalKit.framework */,
+				E2937C3977B6C8E07262BF41 /* QuartzCore.framework */,
+				3F53B04F94FBC52BFC152777 /* Security.framework */,
+				A371A277380ADDB738099C8E /* UIKit.framework */,
+				DB2EB3C8A1C6F1FF7E79622C /* WebKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		179F9ED19A6A1F5979BB452A /* pointfinder-mobile_iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D5E5B8734858C15E4764471F /* Build configuration list for PBXNativeTarget "pointfinder-mobile_iOS" */;
+			buildPhases = (
+				FD6B2CAFFF7C76035C4527A9 /* Build Rust Code */,
+				66711FF982EBF984E6A6623E /* Sources */,
+				D31C98CA8E7AFE668E44E448 /* Resources */,
+				72549FBCE48BD663824BC147 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "pointfinder-mobile_iOS";
+			packageProductDependencies = (
+			);
+			productName = "pointfinder-mobile_iOS";
+			productReference = 5C0AA1E641DE3DF56EBF9592 /* pointfinder-mobile_iOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		CF397352955FBC6CA65B6C3E /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					179F9ED19A6A1F5979BB452A = {
+						DevelopmentTeam = ZQ6CKMW9NA;
+					};
+				};
+			};
+			buildConfigurationList = 4E7FAD42FC76A6FE70028EE7 /* Build configuration list for PBXProject "pointfinder-mobile" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = A68089D539E188241CE2AE4A;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 058628668809A5F0F07D1E2C /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				179F9ED19A6A1F5979BB452A /* pointfinder-mobile_iOS */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		D31C98CA8E7AFE668E44E448 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AC3171F348F584B4C571E6A0 /* Assets.xcassets in Resources */,
+				D7EFF494E6006331AA91E5E6 /* LaunchScreen.storyboard in Resources */,
+				FA23500C52A2FACA8DD6AAA0 /* assets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		FD6B2CAFFF7C76035C4527A9 /* Build Rust Code */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Build Rust Code";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/Externals/x86_64/${CONFIGURATION}/libapp.a",
+				"$(SRCROOT)/Externals/arm64/${CONFIGURATION}/libapp.a",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "bun tauri ios xcode-script -v --platform ${PLATFORM_DISPLAY_NAME:?} --sdk-root ${SDKROOT:?} --framework-search-paths \"${FRAMEWORK_SEARCH_PATHS:?}\" --header-search-paths \"${HEADER_SEARCH_PATHS:?}\" --gcc-preprocessor-definitions \"${GCC_PREPROCESSOR_DEFINITIONS:-}\" --configuration ${CONFIGURATION:?} ${FORCE_COLOR} ${ARCHS:?}";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		66711FF982EBF984E6A6623E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1AC62D7981D83D75281216D9 /* main.mm in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		1A2B05450B5CE14885B0FDCE /* release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				SDKROOT = iphoneos;
+			};
+			name = release;
+		};
+		3DE99BF7F7D99167B5880447 /* debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				SDKROOT = iphoneos;
+			};
+			name = debug;
+		};
+		5FEBC861DB8D899F7E18A097 /* debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ARCHS = (
+					arm64,
+				);
+				CODE_SIGN_ENTITLEMENTS = "pointfinder-mobile_iOS/pointfinder-mobile_iOS.entitlements";
+				DEVELOPMENT_TEAM = "ZQ6CKMW9NA";
+				ENABLE_BITCODE = NO;
+				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\".\"",
+				);
+				INFOPLIST_FILE = "pointfinder-mobile_iOS/Info.plist";
+				"LIBRARY_SEARCH_PATHS[arch=arm64]" = "$(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
+				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = "$(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.prayer.pointfinder;
+				PRODUCT_NAME = "PointFinder";
+				VALID_ARCHS = arm64;
+			};
+			name = debug;
+		};
+		C420448674A8CD513D1A9A4E /* release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ARCHS = (
+					arm64,
+				);
+				CODE_SIGN_ENTITLEMENTS = "pointfinder-mobile_iOS/pointfinder-mobile_iOS.entitlements";
+				DEVELOPMENT_TEAM = "ZQ6CKMW9NA";
+				ENABLE_BITCODE = NO;
+				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\".\"",
+				);
+				INFOPLIST_FILE = "pointfinder-mobile_iOS/Info.plist";
+				"LIBRARY_SEARCH_PATHS[arch=arm64]" = "$(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
+				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = "$(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.prayer.pointfinder;
+				PRODUCT_NAME = "PointFinder";
+				VALID_ARCHS = arm64;
+			};
+			name = release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		4E7FAD42FC76A6FE70028EE7 /* Build configuration list for PBXProject "pointfinder-mobile" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3DE99BF7F7D99167B5880447 /* debug */,
+				1A2B05450B5CE14885B0FDCE /* release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = debug;
+		};
+		D5E5B8734858C15E4764471F /* Build configuration list for PBXNativeTarget "pointfinder-mobile_iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5FEBC861DB8D899F7E18A097 /* debug */,
+				C420448674A8CD513D1A9A4E /* release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = CF397352955FBC6CA65B6C3E /* Project object */;
+}

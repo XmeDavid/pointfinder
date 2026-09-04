@@ -10,7 +10,7 @@ import { EmptyState } from '@/components/feedback/EmptyState'
 import { useWorkspaceContext } from '@/stores/workspaceContext'
 import { useQuota } from '@/hooks/queries/useQuota'
 import { useTranslation } from 'react-i18next'
-import { Tooltip } from '@/components/ui/tooltip'
+import { Tooltip } from '@pointfinder/core/ui/tooltip'
 import { PendingOrgInvites } from './PendingOrgInvites'
 import { PendingGameInvites } from './PendingGameInvites'
 export function DashboardPage() {

@@ -7,9 +7,9 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+} from '@pointfinder/core/ui/dialog'
+import { Button } from '@pointfinder/core/ui/button'
+import { Input } from '@pointfinder/core/ui/input'
 import {
   useSaveGameVariables,
   useSaveChallengeVariables,

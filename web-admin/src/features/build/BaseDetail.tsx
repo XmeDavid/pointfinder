@@ -12,7 +12,7 @@ import { useTeams } from '@/hooks/queries/useTeams'
 import { LocationPicker } from '@/components/map/LocationPicker'
 import { useGame } from '@/hooks/queries/useGames'
 import { getStyleUrl } from '@/lib/tile-sources'
-import { ConfirmDeleteDialog } from '@/components/ui/confirm-dialog'
+import { ConfirmDeleteDialog } from '@pointfinder/core/ui/confirm-dialog'
 import type { Assignment, Challenge, Team } from '@/types'
 import { NfcStatusBadge, StatusBadge, type StatusBadgeTone } from '@/components/status'
 

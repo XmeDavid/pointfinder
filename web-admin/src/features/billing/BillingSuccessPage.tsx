@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import { CheckCircle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@pointfinder/core/ui/button'
 import { SurfacePanel } from '@/components/layout/SurfacePanel'
 
 export function BillingSuccessPage() {

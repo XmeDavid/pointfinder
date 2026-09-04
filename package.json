@@ -1,0 +1,17 @@
+{
+  "name": "pointfinder",
+  "private": true,
+  "workspaces": [
+    "mobile",
+    "web-admin",
+    "packages/*",
+    "components/*"
+  ],
+  "scripts": {
+    "typecheck": "bun run --filter \"*\" typecheck"
+  },
+  "devDependencies": {
+    "typescript": "~5.9",
+    "vitest": "^4"
+  }
+}

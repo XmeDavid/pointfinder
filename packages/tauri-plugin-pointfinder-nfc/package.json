@@ -1,0 +1,28 @@
+{
+  "name": "tauri-plugin-pointfinder-nfc-api",
+  "version": "0.1.0",
+  "author": "David Batista",
+  "description": "NDEF URL tag support for PointFinder",
+  "type": "module",
+  "types": "./guest-js/index.ts",
+  "main": "./guest-js/index.ts",
+  "module": "./guest-js/index.ts",
+  "exports": {
+    "types": "./guest-js/index.ts",
+    "import": "./guest-js/index.ts",
+    "default": "./guest-js/index.ts"
+  },
+  "files": [
+    "guest-js",
+    "README.md"
+  ],
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}

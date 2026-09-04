@@ -1,0 +1,10 @@
+[default]
+description = "Ask for notification permission, register for push, and receive notification events."
+permissions = [
+  "allow-permission-status",
+  "allow-request-permission",
+  "allow-register",
+  "allow-consume-launch-tap",
+  "allow-register-listener",
+  "allow-remove-listener",
+]

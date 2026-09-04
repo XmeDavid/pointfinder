@@ -1,5 +1,5 @@
 import { AlertTriangle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@pointfinder/core/ui/button'
 import { cn } from '@/lib/utils'
 
 export interface ErrorStateProps {

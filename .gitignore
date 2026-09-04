@@ -45,3 +45,25 @@ screenshots/
 # Cached MapLibre dSYMs (downloaded by ios-app/scripts/fetch-maplibre-dsyms.sh)
 ios-app/.maplibre-dsyms/
 ios-app/build/
+
+# Tauri mobile
+mobile/src-tauri/target/
+mobile/src-tauri/gen/schemas/
+mobile/src-tauri/gen/android/app/google-services.json
+mobile/src-tauri/gen/android/keystore.properties
+mobile/src-tauri/gen/android/.gradle/
+mobile/src-tauri/gen/android/**/build/
+mobile/src-tauri/gen/apple/build/
+mobile/src-tauri/gen/apple/**/xcuserdata/
+packages/*/target/
+packages/*/android/build/
+packages/*/android/.gradle/
+packages/*/ios/.build/
+packages/*/ios/.tauri/
+*.jks
+*.p8
+mobile/src-tauri/gen/apple/Externals/
+node_modules/
+
+# Storybook build output
+components/core/storybook-static/

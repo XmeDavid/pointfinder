@@ -7,7 +7,7 @@ import {
 } from "react-router-dom";
 import { useAuthStore } from "@/lib/auth/store";
 import { ErrorBoundary, AppErrorFallback } from "@/components/feedback/ErrorBoundary";
-import { Toaster } from "@/components/ui/toast";
+import { Toaster } from "@pointfinder/core/ui/toast";
 import { AuthGuard } from "@/lib/auth/AuthGuard";
 import { GuestGuard } from "@/lib/auth/GuestGuard";
 import { IconRail } from "@/components/layout/IconRail";

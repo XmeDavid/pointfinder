@@ -1,0 +1,139 @@
+{
+  "app": {
+    "name": "PointFinder"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "continue": "Continue",
+    "retry": "Retry",
+    "done": "Done",
+    "back": "Back",
+    "ok": "OK",
+    "close": "Close",
+    "offline": "Offline",
+    "unknownError": "Something went wrong."
+  },
+  "welcome": {
+    "title": "PointFinder",
+    "subtitle": "Explore, discover, and complete challenges with your team.",
+    "joinGame": "Join a game",
+    "operatorLogin": "I'm an operator"
+  },
+  "join": {
+    "title": "Join your team",
+    "subtitle": "Scan the QR code from your leader, or type the code.",
+    "scanQr": "Scan QR code",
+    "enterCode": "Enter the code instead",
+    "codeLabel": "Team code",
+    "nameTitle": "What should we call you?",
+    "nameLabel": "Your name",
+    "join": "Join",
+    "invalidCode": "That code doesn't match any team.",
+    "gameNotActive": "This game hasn't started yet. Ask your operator.",
+    "deviceInOtherTeam": "This phone already belongs to another team in this game."
+  },
+  "login": {
+    "title": "Operator sign in",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "invalid": "Wrong email or password."
+  },
+  "nfc": {
+    "holdToRead": "Hold your phone near the tag",
+    "holdToWrite": "Hold your phone near the tag to write",
+    "tagRead": "Tag read",
+    "tagWritten": "Tag written",
+    "readyToScan": "Ready to scan",
+    "unavailable": "This phone has no NFC.",
+    "disabled": "NFC is switched off. Turn it on in settings.",
+    "cancelled": "Scan cancelled.",
+    "timeout": "No tag found.",
+    "invalid": "This tag has no readable data.",
+    "wrongBase": "That's the tag for {{name}}, not this one.",
+    "needsRewrite": "This tag is from an older version. Ask an operator to rewrite it.",
+    "notWritable": "This tag is read-only.",
+    "verifyMismatch": "The tag didn't verify. Try again."
+  },
+  "checkIn": {
+    "title": "Check in",
+    "tapTag": "Tap the tag at the base",
+    "scanning": "Looking for the tag…",
+    "success": "You're in!",
+    "alreadyCheckedIn": "Your team already checked in here.",
+    "queuedOffline": "Saved. It will sync when you're back online."
+  },
+  "sync": {
+    "pending_one": "{{count}} action waiting to sync",
+    "pending_other": "{{count}} actions waiting to sync",
+    "failed_one": "{{count}} action needs attention",
+    "failed_other": "{{count}} actions need attention",
+    "syncing": "Syncing…",
+    "upToDate": "Everything is synced",
+    "offline": "Offline. Showing what we have.",
+    "syncFailed": "Some actions couldn't be sent. Tap to see.",
+    "retry": "Retry",
+    "discard": "Discard",
+    "needsLogin": "Your session expired. Join again to sync."
+  },
+  "status": {
+    "not_visited": "Not visited",
+    "checked_in": "Checked in",
+    "submitted": "Submitted",
+    "completed": "Completed",
+    "rejected": "Try again"
+  },
+  "logbook": {
+    "progress": "{{done}} of {{total}} done",
+    "locked": "Locked",
+    "lockedHint": "Something is here. Keep going to unlock it.",
+    "nextUp": "Next up",
+    "empty": "No bases yet. Ask your operator.",
+    "tapAny": "Tap a base tag",
+    "notLive": "The game isn't live right now.",
+    "ended": "This game has ended. Thanks for playing!",
+    "leave": "Leave game",
+    "leaveConfirm": "Leave this game? You can rejoin with the team code."
+  },
+  "base": {
+    "checkedInAt": "Checked in {{time}}",
+    "tapToCheckIn": "Tap the tag at this base",
+    "wrongTag": "That tag belongs to a different base.",
+    "unknownTag": "That tag isn't part of your game.",
+    "noNfc": "This base has no tag. Ask your operator how to check in.",
+    "queued": "Saved offline. It will sync when you're back online.",
+    "unlocked_one": "You unlocked {{count}} new base!",
+    "unlocked_other": "You unlocked {{count}} new bases!"
+  },
+  "challenge": {
+    "answerLabel": "Your answer",
+    "answerPlaceholder": "Type your answer",
+    "send": "Send answer",
+    "sendPhoto": "Send photo",
+    "markDone": "Mark as done",
+    "photoSoon": "Photo answers are coming in the next update.",
+    "pending": "Sent. Waiting for the operator to review.",
+    "correct": "Correct!",
+    "approved": "Approved!",
+    "rejected": "Not accepted. Try again.",
+    "rejectedWith": "Not accepted: {{reason}}",
+    "done": "Completed",
+    "noChallenge": "No challenge here. You're checked in."
+  },
+  "operator": {
+    "games": "Your games",
+    "signOut": "Sign out",
+    "teams": "Teams",
+    "pendingReviews": "Pending reviews",
+    "noGames": "No games yet. Create one on the web."
+  },
+  "map": {
+    "title": "Map",
+    "list": "List",
+    "legend": "Legend",
+    "locate": "Show my position",
+    "locationOff": "Location is off. Operators can't see your team on their map.",
+    "noBases": "No bases on the map yet.",
+    "open": "Open"
+  }
+}

@@ -338,3 +338,7 @@ Location: `ios-app/dbv-nfc-games/Components/ResourceManagementComponents.swift`,
 Modes: Organization management
 States: tier, member count, no/live games, long name/slug
 Notes: Permissions, invitations, removal confirmation, and membership APIs remain screen-owned.
+
+## Shared base primitives (2026-09-04)
+
+The base primitives (Button, Badge, Alert, Card, Input, Textarea, Label, FormLabel, Select, Switch, Tabs, Dialog, ConfirmDeleteDialog, DropdownMenu, Collapsible, Tooltip, Skeleton, Toast) now live in `components/core` (`@pointfinder/core`) and are indexed in Storybook (`bun run storybook` in `components/core`). Web-admin and the Tauri mobile app import them from the package; the semantic Tailwind theme they rely on is `components/core/src/theme/theme.css`, generated from `design-system/tokens.json`. Product components (status badges, sync banners, panels) still live in each app and should move into core once both apps need them.

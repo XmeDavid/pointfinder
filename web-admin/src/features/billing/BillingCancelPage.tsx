@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { XCircle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@pointfinder/core/ui/button'
 import { SurfacePanel } from '@/components/layout/SurfacePanel'
 
 export function BillingCancelPage() {

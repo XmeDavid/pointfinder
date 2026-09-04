@@ -11,7 +11,7 @@ import { BroadcastTeamList } from "./components/BroadcastTeamList";
 import { BroadcastBasesList } from "./components/BroadcastBasesList";
 import { LoadingState } from "@/components/feedback/LoadingState";
 import { EmptyState } from "@/components/feedback/EmptyState";
-import { Button } from "@/components/ui/button";
+import { Button } from "@pointfinder/core/ui/button";
 
 const BROADCAST_REFETCH_MS = 15000;
 

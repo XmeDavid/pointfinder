@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useChangePassword } from '@/hooks/mutations/useProfileMutations'
-import { useToast } from '@/hooks/useToast'
+import { useToast } from '@pointfinder/core/hooks/useToast'
 
 export function SecurityTab() {
   const { t } = useTranslation()

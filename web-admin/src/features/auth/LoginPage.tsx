@@ -2,11 +2,11 @@ import { useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { Compass } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { FormLabel } from "@/components/ui/form-label";
-import { Alert } from "@/components/ui/alert";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@pointfinder/core/ui/button";
+import { Input } from "@pointfinder/core/ui/input";
+import { FormLabel } from "@pointfinder/core/ui/form-label";
+import { Alert } from "@pointfinder/core/ui/alert";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@pointfinder/core/ui/card";
 import { useAuthStore } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 

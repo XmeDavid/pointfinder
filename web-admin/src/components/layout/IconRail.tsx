@@ -24,7 +24,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
+} from "@pointfinder/core/ui/dropdown-menu";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { useWorkspaceContext } from "@/stores/workspaceContext";
 import { useAuthStore } from "@/lib/auth/store";

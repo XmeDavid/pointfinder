@@ -5,7 +5,7 @@ import { GeneralTab } from './GeneralTab'
 import { SecurityTab } from './SecurityTab'
 import { BillingTab } from './BillingTab'
 import { DangerZoneTab } from './DangerZoneTab'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger } from '@pointfinder/core/ui/tabs'
 
 const TABS = ['general', 'security', 'billing', 'danger-zone'] as const
 type Tab = (typeof TABS)[number]

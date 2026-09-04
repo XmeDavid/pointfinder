@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-consume-launch-tap"
+description = "Enables the consume_launch_tap command without any pre-configured scope."
+commands.allow = ["consume_launch_tap"]
+
+[[permission]]
+identifier = "deny-consume-launch-tap"
+description = "Denies the consume_launch_tap command without any pre-configured scope."
+commands.deny = ["consume_launch_tap"]

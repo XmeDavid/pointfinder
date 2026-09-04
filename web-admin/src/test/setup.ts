@@ -1,3 +1,5 @@
+// Initialise the app's i18n instance explicitly. Screens used to get it by accident through '@/lib/utils'.
+import '@/i18n'
 import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
 import { afterAll, afterEach, beforeAll } from 'vitest'

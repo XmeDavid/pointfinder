@@ -39,21 +39,19 @@ jobs:
   frontend:
     name: Frontend Lint & Tests
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: web-admin
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: web-admin/package-lock.json
+          bun-version: latest
 
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run test
+      - run: bun install --frozen-lockfile
+      - run: bun run --filter @pointfinder/core typecheck
+      - run: bun run --filter @pointfinder/core test
+      - run: cd web-admin && bun run lint
+      - run: cd web-admin && bun run typecheck
+      - run: cd web-admin && bun run test
 
   android:
     name: Android Checks

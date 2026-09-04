@@ -26,7 +26,7 @@ import { FileEmbedExtension } from "./FileEmbedExtension";
 import { VariableMention } from "./extensions/VariableMention";
 import { makeVariableSuggestion } from "./variableSuggestion";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/useToast";
+import { useToast } from "@pointfinder/core/hooks/useToast";
 import { useTranslation } from "react-i18next";
 
 const MAX_DIMENSION = 1200;

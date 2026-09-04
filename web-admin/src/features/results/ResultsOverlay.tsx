@@ -5,8 +5,8 @@ import Standings from './Standings'
 import TeamBreakdown from './TeamBreakdown'
 import GameStatistics from './GameStatistics'
 import { OverlayPanel } from '@/components/layout/OverlayPanel'
-import { Button } from '@/components/ui/button'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Button } from '@pointfinder/core/ui/button'
+import { Tabs, TabsList, TabsTrigger } from '@pointfinder/core/ui/tabs'
 
 type ResultsTab = 'standings' | 'breakdown' | 'statistics'
 

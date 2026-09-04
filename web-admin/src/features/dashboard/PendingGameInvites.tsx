@@ -5,8 +5,8 @@ import { Gamepad2 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { invitesApi } from '@/lib/api/invites'
 import { useAuthStore } from '@/lib/auth/store'
-import { ConfirmDeleteDialog } from '@/components/ui/confirm-dialog'
-import { useToast } from '@/hooks/useToast'
+import { ConfirmDeleteDialog } from '@pointfinder/core/ui/confirm-dialog'
+import { useToast } from '@pointfinder/core/hooks/useToast'
 
 export function PendingGameInvites() {
   const { t } = useTranslation()

@@ -9,6 +9,8 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+    // Shared workspace packages must use this app's React instance.
+    dedupe: ['react', 'react-dom'],
   },
   define: {
     global: 'globalThis',

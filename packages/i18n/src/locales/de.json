@@ -1,0 +1,139 @@
+{
+  "app": {
+    "name": "PointFinder"
+  },
+  "common": {
+    "cancel": "Abbrechen",
+    "continue": "Weiter",
+    "retry": "Erneut versuchen",
+    "done": "Fertig",
+    "back": "Zurück",
+    "ok": "OK",
+    "close": "Schließen",
+    "offline": "Offline",
+    "unknownError": "Etwas ist schiefgelaufen."
+  },
+  "welcome": {
+    "title": "PointFinder",
+    "subtitle": "Erkunde, entdecke und löse Aufgaben mit deinem Team.",
+    "joinGame": "Einem Spiel beitreten",
+    "operatorLogin": "Ich bin Operator"
+  },
+  "join": {
+    "title": "Tritt deinem Team bei",
+    "subtitle": "Scanne den QR-Code deines Leiters oder gib den Code ein.",
+    "scanQr": "QR-Code scannen",
+    "enterCode": "Code stattdessen eingeben",
+    "codeLabel": "Teamcode",
+    "nameTitle": "Wie sollen wir dich nennen?",
+    "nameLabel": "Dein Name",
+    "join": "Beitreten",
+    "invalidCode": "Dieser Code passt zu keinem Team.",
+    "gameNotActive": "Dieses Spiel hat noch nicht begonnen. Frag deinen Operator.",
+    "deviceInOtherTeam": "Dieses Telefon gehört in diesem Spiel bereits zu einem anderen Team."
+  },
+  "login": {
+    "title": "Operator-Anmeldung",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "signIn": "Anmelden",
+    "invalid": "Falsche E-Mail oder falsches Passwort."
+  },
+  "nfc": {
+    "holdToRead": "Halte dein Telefon an den Tag",
+    "holdToWrite": "Halte dein Telefon zum Schreiben an den Tag",
+    "tagRead": "Tag gelesen",
+    "tagWritten": "Tag geschrieben",
+    "readyToScan": "Bereit zum Scannen",
+    "unavailable": "Dieses Telefon hat kein NFC.",
+    "disabled": "NFC ist ausgeschaltet. Schalte es in den Einstellungen ein.",
+    "cancelled": "Scan abgebrochen.",
+    "timeout": "Kein Tag gefunden.",
+    "invalid": "Dieser Tag enthält keine lesbaren Daten.",
+    "wrongBase": "Das ist der Tag von {{name}}, nicht dieser Station.",
+    "needsRewrite": "Dieser Tag stammt aus einer älteren Version. Bitte einen Operator, ihn neu zu schreiben.",
+    "notWritable": "Dieser Tag ist schreibgeschützt.",
+    "verifyMismatch": "Der Tag konnte nicht bestätigt werden. Versuch es erneut."
+  },
+  "checkIn": {
+    "title": "Einchecken",
+    "tapTag": "Tippe auf den Tag an der Station",
+    "scanning": "Suche den Tag…",
+    "success": "Du bist drin!",
+    "alreadyCheckedIn": "Dein Team hat hier bereits eingecheckt.",
+    "queuedOffline": "Gespeichert. Wird synchronisiert, sobald du wieder online bist."
+  },
+  "sync": {
+    "pending_one": "{{count}} Aktion wartet auf Synchronisierung",
+    "pending_other": "{{count}} Aktionen warten auf Synchronisierung",
+    "failed_one": "{{count}} Aktion braucht Aufmerksamkeit",
+    "failed_other": "{{count}} Aktionen brauchen Aufmerksamkeit",
+    "syncing": "Synchronisiere…",
+    "upToDate": "Alles synchronisiert",
+    "offline": "Offline. Zeige, was wir haben.",
+    "syncFailed": "Einige Aktionen konnten nicht gesendet werden. Tippen zum Anzeigen.",
+    "retry": "Erneut versuchen",
+    "discard": "Verwerfen",
+    "needsLogin": "Deine Sitzung ist abgelaufen. Tritt erneut bei, um zu synchronisieren."
+  },
+  "status": {
+    "not_visited": "Nicht besucht",
+    "checked_in": "Eingecheckt",
+    "submitted": "Eingereicht",
+    "completed": "Abgeschlossen",
+    "rejected": "Nochmal versuchen"
+  },
+  "logbook": {
+    "progress": "{{done}} von {{total}} geschafft",
+    "locked": "Gesperrt",
+    "lockedHint": "Hier ist etwas. Mach weiter, um es freizuschalten.",
+    "nextUp": "Als Nächstes",
+    "empty": "Noch keine Stationen. Frag deinen Operator.",
+    "tapAny": "Tippe auf einen Stations-Tag",
+    "notLive": "Das Spiel läuft gerade nicht.",
+    "ended": "Dieses Spiel ist vorbei. Danke fürs Mitspielen!",
+    "leave": "Spiel verlassen",
+    "leaveConfirm": "Dieses Spiel verlassen? Mit dem Teamcode kannst du wieder beitreten."
+  },
+  "base": {
+    "checkedInAt": "Eingecheckt um {{time}}",
+    "tapToCheckIn": "Tippe auf den Tag an dieser Station",
+    "wrongTag": "Dieser Tag gehört zu einer anderen Station.",
+    "unknownTag": "Dieser Tag gehört nicht zu deinem Spiel.",
+    "noNfc": "Diese Station hat keinen Tag. Frag deinen Operator, wie du eincheckst.",
+    "queued": "Offline gespeichert. Wird synchronisiert, sobald du wieder Netz hast.",
+    "unlocked_one": "Du hast {{count}} neue Station freigeschaltet!",
+    "unlocked_other": "Du hast {{count}} neue Stationen freigeschaltet!"
+  },
+  "challenge": {
+    "answerLabel": "Deine Antwort",
+    "answerPlaceholder": "Antwort eingeben",
+    "send": "Antwort senden",
+    "sendPhoto": "Foto senden",
+    "markDone": "Als erledigt markieren",
+    "photoSoon": "Foto-Antworten kommen mit dem nächsten Update.",
+    "pending": "Gesendet. Wartet auf die Prüfung durch den Operator.",
+    "correct": "Richtig!",
+    "approved": "Angenommen!",
+    "rejected": "Nicht angenommen. Versuch es nochmal.",
+    "rejectedWith": "Nicht angenommen: {{reason}}",
+    "done": "Abgeschlossen",
+    "noChallenge": "Hier gibt es keine Aufgabe. Du bist eingecheckt."
+  },
+  "operator": {
+    "games": "Deine Spiele",
+    "signOut": "Abmelden",
+    "teams": "Teams",
+    "pendingReviews": "Offene Prüfungen",
+    "noGames": "Noch keine Spiele. Erstelle eines im Web."
+  },
+  "map": {
+    "title": "Karte",
+    "list": "Liste",
+    "legend": "Legende",
+    "locate": "Meine Position anzeigen",
+    "locationOff": "Standort ist aus. Operatoren sehen dein Team nicht auf ihrer Karte.",
+    "noBases": "Noch keine Stationen auf der Karte.",
+    "open": "Öffnen"
+  }
+}

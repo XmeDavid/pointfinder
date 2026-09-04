@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from 'react'
 import { CheckCircle, XCircle, Download, ChevronDown, Activity } from 'lucide-react'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { OverlayPanel } from '@/components/layout/OverlayPanel'
-import { Button } from '@/components/ui/button'
+import { Button } from '@pointfinder/core/ui/button'
 import {
   ActivityEventBadge,
   StatusBadge,

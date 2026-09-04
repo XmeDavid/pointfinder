@@ -1,0 +1,3 @@
+[default]
+description = "Read and write the app's own secure store"
+permissions = ["allow-get", "allow-set", "allow-remove", "allow-clear", "allow-keys"]

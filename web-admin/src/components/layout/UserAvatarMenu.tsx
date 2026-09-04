@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-} from '@/components/ui/dropdown-menu'
+} from '@pointfinder/core/ui/dropdown-menu'
 
 function getInitials(name: string): string {
   return name

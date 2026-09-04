@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Pencil, Check, X } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth/store'
-import { useToast } from '@/hooks/useToast'
+import { useToast } from '@pointfinder/core/hooks/useToast'
 import { useUpdateProfile } from '@/hooks/mutations/useProfileMutations'
 
 export function GeneralTab() {

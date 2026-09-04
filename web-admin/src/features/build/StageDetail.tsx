@@ -7,7 +7,7 @@ import { useBases } from '@/hooks/queries/useBases'
 import { useUpdateBase } from '@/hooks/mutations/useBaseMutations'
 import { useAssignments } from '@/hooks/queries/useAssignments'
 import { useWorkspaceStore } from '@/stores/workspace'
-import { ConfirmDeleteDialog } from '@/components/ui/confirm-dialog'
+import { ConfirmDeleteDialog } from '@pointfinder/core/ui/confirm-dialog'
 import type { TransitionType } from '@/types/stage'
 import type { Base } from '@/types/base'
 

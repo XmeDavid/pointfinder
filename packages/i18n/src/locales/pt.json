@@ -1,0 +1,139 @@
+{
+  "app": {
+    "name": "PointFinder"
+  },
+  "common": {
+    "cancel": "Cancelar",
+    "continue": "Continuar",
+    "retry": "Tentar de novo",
+    "done": "Concluído",
+    "back": "Voltar",
+    "ok": "OK",
+    "close": "Fechar",
+    "offline": "Sem ligação",
+    "unknownError": "Algo correu mal."
+  },
+  "welcome": {
+    "title": "PointFinder",
+    "subtitle": "Explora, descobre e completa desafios com a tua equipa.",
+    "joinGame": "Entrar num jogo",
+    "operatorLogin": "Sou operador"
+  },
+  "join": {
+    "title": "Entra na tua equipa",
+    "subtitle": "Lê o código QR do teu líder, ou escreve o código.",
+    "scanQr": "Ler código QR",
+    "enterCode": "Escrever o código",
+    "codeLabel": "Código da equipa",
+    "nameTitle": "Como te devemos chamar?",
+    "nameLabel": "O teu nome",
+    "join": "Entrar",
+    "invalidCode": "Esse código não corresponde a nenhuma equipa.",
+    "gameNotActive": "Este jogo ainda não começou. Fala com o teu operador.",
+    "deviceInOtherTeam": "Este telemóvel já pertence a outra equipa neste jogo."
+  },
+  "login": {
+    "title": "Entrar como operador",
+    "email": "Email",
+    "password": "Palavra-passe",
+    "signIn": "Entrar",
+    "invalid": "Email ou palavra-passe errados."
+  },
+  "nfc": {
+    "holdToRead": "Aproxima o telemóvel da etiqueta",
+    "holdToWrite": "Aproxima o telemóvel da etiqueta para gravar",
+    "tagRead": "Etiqueta lida",
+    "tagWritten": "Etiqueta gravada",
+    "readyToScan": "Pronto para ler",
+    "unavailable": "Este telemóvel não tem NFC.",
+    "disabled": "O NFC está desligado. Liga-o nas definições.",
+    "cancelled": "Leitura cancelada.",
+    "timeout": "Nenhuma etiqueta encontrada.",
+    "invalid": "Esta etiqueta não tem dados legíveis.",
+    "wrongBase": "Essa é a etiqueta de {{name}}, não desta base.",
+    "needsRewrite": "Esta etiqueta é de uma versão antiga. Pede a um operador para a regravar.",
+    "notWritable": "Esta etiqueta é só de leitura.",
+    "verifyMismatch": "A etiqueta não verificou. Tenta de novo."
+  },
+  "checkIn": {
+    "title": "Check-in",
+    "tapTag": "Toca na etiqueta da base",
+    "scanning": "À procura da etiqueta…",
+    "success": "Estás dentro!",
+    "alreadyCheckedIn": "A tua equipa já fez check-in aqui.",
+    "queuedOffline": "Guardado. Vai sincronizar quando voltares a ter ligação."
+  },
+  "sync": {
+    "pending_one": "{{count}} ação à espera de sincronizar",
+    "pending_other": "{{count}} ações à espera de sincronizar",
+    "failed_one": "{{count}} ação precisa de atenção",
+    "failed_other": "{{count}} ações precisam de atenção",
+    "syncing": "A sincronizar…",
+    "upToDate": "Tudo sincronizado",
+    "offline": "Sem ligação. A mostrar o que temos.",
+    "syncFailed": "Algumas ações não foram enviadas. Toca para ver.",
+    "retry": "Tentar de novo",
+    "discard": "Descartar",
+    "needsLogin": "A tua sessão expirou. Entra de novo para sincronizar."
+  },
+  "status": {
+    "not_visited": "Por visitar",
+    "checked_in": "Check-in feito",
+    "submitted": "Enviado",
+    "completed": "Concluído",
+    "rejected": "Tenta de novo"
+  },
+  "logbook": {
+    "progress": "{{done}} de {{total}} feitas",
+    "locked": "Bloqueada",
+    "lockedHint": "Há algo aqui. Continua para desbloquear.",
+    "nextUp": "A seguir",
+    "empty": "Ainda não há bases. Fala com o teu operador.",
+    "tapAny": "Toca numa etiqueta de base",
+    "notLive": "O jogo não está a decorrer neste momento.",
+    "ended": "Este jogo terminou. Obrigado por jogares!",
+    "leave": "Sair do jogo",
+    "leaveConfirm": "Sair deste jogo? Podes voltar a entrar com o código da equipa."
+  },
+  "base": {
+    "checkedInAt": "Check-in às {{time}}",
+    "tapToCheckIn": "Toca na etiqueta desta base",
+    "wrongTag": "Essa etiqueta é de outra base.",
+    "unknownTag": "Essa etiqueta não faz parte do teu jogo.",
+    "noNfc": "Esta base não tem etiqueta. Pergunta ao operador como fazer check-in.",
+    "queued": "Guardado sem ligação. Vai sincronizar quando voltares a ter rede.",
+    "unlocked_one": "Desbloqueaste {{count}} base nova!",
+    "unlocked_other": "Desbloqueaste {{count}} bases novas!"
+  },
+  "challenge": {
+    "answerLabel": "A tua resposta",
+    "answerPlaceholder": "Escreve a tua resposta",
+    "send": "Enviar resposta",
+    "sendPhoto": "Enviar foto",
+    "markDone": "Marcar como feito",
+    "photoSoon": "As respostas com foto chegam na próxima atualização.",
+    "pending": "Enviado. À espera da revisão do operador.",
+    "correct": "Certo!",
+    "approved": "Aprovado!",
+    "rejected": "Não aceite. Tenta de novo.",
+    "rejectedWith": "Não aceite: {{reason}}",
+    "done": "Concluído",
+    "noChallenge": "Não há desafio aqui. Já fizeste check-in."
+  },
+  "operator": {
+    "games": "Os teus jogos",
+    "signOut": "Sair",
+    "teams": "Equipas",
+    "pendingReviews": "Revisões pendentes",
+    "noGames": "Ainda não há jogos. Cria um na web."
+  },
+  "map": {
+    "title": "Mapa",
+    "list": "Lista",
+    "legend": "Legenda",
+    "locate": "Mostrar a minha posição",
+    "locationOff": "A localização está desligada. Os operadores não veem a tua equipa no mapa.",
+    "noBases": "Ainda não há bases no mapa.",
+    "open": "Abrir"
+  }
+}

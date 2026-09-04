@@ -7,7 +7,7 @@ import {
   Radio,
 } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@pointfinder/core/ui/button'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { ErrorState } from '@/components/feedback/ErrorState'
 import { LoadingState } from '@/components/feedback/LoadingState'

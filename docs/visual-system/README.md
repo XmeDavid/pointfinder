@@ -28,6 +28,10 @@ operator modes, floating control panels, and a restrained green-led palette. The
 public landing page may be more editorial, but authenticated product UI should
 stay practical.
 
+## Where The Code Lives
+
+Base primitives shared by web-admin and the mobile app: `components/core` (Storybook: `bun run storybook` there). Tokens: `design-system/tokens.json`, generated into `components/core/src/generated/`.
+
 ## Foundation Documents
 
 - [Principles](principles.md): core design principles and quality bar.

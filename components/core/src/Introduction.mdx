@@ -1,0 +1,16 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="Core/Introduction" />
+
+# PointFinder core components
+
+The primitives every PointFinder screen is composed from, on the web admin and in the mobile app alike.
+They are styled only with the semantic Tailwind theme in `src/theme/theme.css`, which maps the generated
+design tokens (`design-system/tokens.json`) to classes like `bg-card`, `text-muted-foreground` and `text-warning`.
+
+Rules of the road:
+
+- Screens compose these primitives and the product components built on them. Nothing re-implements a button.
+- Status colors mean one thing: green done, blue checked in, amber pending, red rejected, gray inactive.
+- Every component must read well in both themes (use the toolbar toggle) and with long Portuguese or German labels.
+- `FormLabel` and `ConfirmDeleteDialog` read `common.required`, `common.optional`, `common.cancel` and `common.delete` from the host app's i18n.
