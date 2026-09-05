@@ -62,6 +62,12 @@ Without it the app runs and `register()` reports `unavailable`.
 
 ## Things the generator does not know
 
+The Xcode "Build Rust Code" phase calls `scripts/ios-xcode-build.sh` to locate
+Bun/Rust when Xcode starts from Finder and to run from the mobile workspace.
+Keep this phase in both `gen/apple/project.yml` and the generated `.xcodeproj`
+after regenerating the iOS project. Start device builds with `bun run tauri ios dev`
+from this directory, so Tauri prepares the frontend and native dependencies.
+
 The generated Android manifest carries an `NDEF_DISCOVERED` intent filter for
 both tag hosts so a tap can cold-start the app. Re-running `tauri android init`
 would drop it. Keep customisations in `tauri.conf.json`, the two plist files,

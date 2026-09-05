@@ -13,6 +13,7 @@ import com.prayer.pointfinder.exception.GlobalExceptionHandler;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.security.JwtAuthenticationFilter;
 import com.prayer.pointfinder.service.GameService;
+import com.prayer.pointfinder.service.GameImportExportService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +48,9 @@ class GameControllerTest {
 
     @MockitoBean
     private GameService gameService;
+
+    @MockitoBean
+    private GameImportExportService gameImportExportService;
 
     @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -328,7 +332,7 @@ class GameControllerTest {
                 .assignments(List.of())
                 .build();
 
-        when(gameService.exportGame(gameId)).thenReturn(export);
+        when(gameImportExportService.exportGame(gameId)).thenReturn(export);
 
         mockMvc.perform(get("/api/games/" + gameId + "/export"))
                 .andExpect(status().isOk())
@@ -341,7 +345,7 @@ class GameControllerTest {
     @Test
     void exportUnknownGameReturns404() throws Exception {
         UUID unknownId = UUID.randomUUID();
-        when(gameService.exportGame(unknownId))
+        when(gameImportExportService.exportGame(unknownId))
                 .thenThrow(new ResourceNotFoundException("Game not found: " + unknownId));
 
         mockMvc.perform(get("/api/games/" + unknownId + "/export"))
@@ -385,7 +389,7 @@ class GameControllerTest {
                 null,
                 null);
 
-        when(gameService.importGame(any(GameImportRequest.class))).thenReturn(response);
+        when(gameImportExportService.importGame(any(GameImportRequest.class))).thenReturn(response);
 
         mockMvc.perform(post("/api/games/import")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -405,7 +409,7 @@ class GameControllerTest {
                 .bases(List.of()).challenges(List.of()).assignments(List.of())
                 .build());
 
-        when(gameService.importGame(any(GameImportRequest.class)))
+        when(gameImportExportService.importGame(any(GameImportRequest.class)))
                 .thenThrow(new ConflictException("A game with this name already exists"));
 
         mockMvc.perform(post("/api/games/import")

@@ -280,19 +280,19 @@ class ChunkedUploadServiceTest {
                 });
 
         UploadSessionResponse created = chunkedUploadService.createSession(gameId, authPlayer, request);
-        UUID sessionId = created.getSessionId();
+        UUID sessionId = created.sessionId();
         chunkedUploadService.uploadChunk(gameId, sessionId, 1, "BBBB".getBytes(), authPlayer);
         chunkedUploadService.uploadChunk(gameId, sessionId, 0, "AAAA".getBytes(), authPlayer);
         UploadSessionResponse completed = chunkedUploadService.completeSession(gameId, sessionId, authPlayer);
         UploadSessionResponse completedAgain = chunkedUploadService.completeSession(gameId, sessionId, authPlayer);
         UploadSessionResponse recoveredCompleted = chunkedUploadService.createSession(gameId, authPlayer, request);
 
-        assertEquals("completed", completed.getStatus());
-        assertEquals("/api/games/" + gameId + "/files/final.mp4", completed.getFileUrl());
-        assertEquals(List.of(0, 1), completed.getUploadedChunks());
-        assertEquals("completed", completedAgain.getStatus());
-        assertEquals(sessionId, recoveredCompleted.getSessionId());
-        assertEquals("/api/games/" + gameId + "/files/final.mp4", recoveredCompleted.getFileUrl());
+        assertEquals("completed", completed.status());
+        assertEquals("/api/games/" + gameId + "/files/final.mp4", completed.fileUrl());
+        assertEquals(List.of(0, 1), completed.uploadedChunks());
+        assertEquals("completed", completedAgain.status());
+        assertEquals(sessionId, recoveredCompleted.sessionId());
+        assertEquals("/api/games/" + gameId + "/files/final.mp4", recoveredCompleted.fileUrl());
         assertEquals(1, storeCalls.get());
         verify(uploadSessionChunkRepository).deleteBySessionId(sessionId);
     }
@@ -311,9 +311,9 @@ class ChunkedUploadServiceTest {
         UploadSessionResponse created = chunkedUploadService.createSession(gameId, authPlayer, request);
         UploadSessionResponse resumed = chunkedUploadService.createSession(gameId, authPlayer, request);
 
-        assertEquals(created.getSessionId(), resumed.getSessionId());
-        assertEquals("active", resumed.getStatus());
-        assertEquals("field-video-1", resumed.getMediaItemKey());
+        assertEquals(created.sessionId(), resumed.sessionId());
+        assertEquals("active", resumed.status());
+        assertEquals("field-video-1", resumed.mediaItemKey());
         assertEquals(1, sessions.size());
     }
 
@@ -328,12 +328,12 @@ class ChunkedUploadServiceTest {
         doNothing().when(gameAccessService).ensurePlayerBelongsToGame(any(Player.class), eq(gameId));
 
         UploadSessionResponse stale = chunkedUploadService.createSession(gameId, authPlayer, uploadRequest("stale"));
-        sessions.get(stale.getSessionId()).setExpiresAt(Instant.now().minusSeconds(5));
+        sessions.get(stale.sessionId()).setExpiresAt(Instant.now().minusSeconds(5));
 
         UploadSessionResponse replacement = chunkedUploadService.createSession(gameId, authPlayer, uploadRequest("replacement"));
 
-        assertEquals(UploadSessionStatus.expired, sessions.get(stale.getSessionId()).getStatus());
-        assertEquals("active", replacement.getStatus());
+        assertEquals(UploadSessionStatus.expired, sessions.get(stale.sessionId()).getStatus());
+        assertEquals("active", replacement.status());
     }
 
     @Test
@@ -369,23 +369,23 @@ class ChunkedUploadServiceTest {
 
         UploadSessionResponse active = chunkedUploadService.createSession(gameId, authPlayer, uploadRequest("active"));
         UploadSessionResponse expired = chunkedUploadService.createSession(gameId, authPlayer, uploadRequest("expired"));
-        sessions.get(expired.getSessionId()).setExpiresAt(Instant.now().minusSeconds(5));
+        sessions.get(expired.sessionId()).setExpiresAt(Instant.now().minusSeconds(5));
 
         UploadSessionInitRequest completedRequest = uploadRequest("completed");
         UploadSessionResponse completed = chunkedUploadService.createSession(gameId, authPlayer, completedRequest);
         when(fileStorageService.storeAssembledUpload(any(Path.class), eq(gameId), eq("video/mp4"), eq(8L)))
                 .thenReturn("/api/games/" + gameId + "/files/completed.mp4");
-        chunkedUploadService.uploadChunk(gameId, completed.getSessionId(), 0, "AAAA".getBytes(), authPlayer);
-        chunkedUploadService.uploadChunk(gameId, completed.getSessionId(), 1, "BBBB".getBytes(), authPlayer);
-        chunkedUploadService.completeSession(gameId, completed.getSessionId(), authPlayer);
+        chunkedUploadService.uploadChunk(gameId, completed.sessionId(), 0, "AAAA".getBytes(), authPlayer);
+        chunkedUploadService.uploadChunk(gameId, completed.sessionId(), 1, "BBBB".getBytes(), authPlayer);
+        chunkedUploadService.completeSession(gameId, completed.sessionId(), authPlayer);
 
         List<UploadSessionResponse> recoverable = chunkedUploadService.listRecoverableSessions(gameId, authPlayer);
 
-        assertTrue(recoverable.stream().anyMatch(session -> session.getSessionId().equals(active.getSessionId())));
-        assertTrue(recoverable.stream().anyMatch(session -> session.getSessionId().equals(completed.getSessionId())
-                && ("/api/games/" + gameId + "/files/completed.mp4").equals(session.getFileUrl())));
-        assertTrue(recoverable.stream().noneMatch(session -> session.getSessionId().equals(expired.getSessionId())));
-        assertEquals(UploadSessionStatus.expired, sessions.get(expired.getSessionId()).getStatus());
+        assertTrue(recoverable.stream().anyMatch(session -> session.sessionId().equals(active.sessionId())));
+        assertTrue(recoverable.stream().anyMatch(session -> session.sessionId().equals(completed.sessionId())
+                && ("/api/games/" + gameId + "/files/completed.mp4").equals(session.fileUrl())));
+        assertTrue(recoverable.stream().noneMatch(session -> session.sessionId().equals(expired.sessionId())));
+        assertEquals(UploadSessionStatus.expired, sessions.get(expired.sessionId()).getStatus());
     }
 
     @Test
@@ -401,16 +401,16 @@ class ChunkedUploadServiceTest {
         UploadSessionResponse completed = chunkedUploadService.createSession(gameId, authPlayer, uploadRequest("completed"));
         when(fileStorageService.storeAssembledUpload(any(Path.class), eq(gameId), eq("video/mp4"), eq(8L)))
                 .thenReturn("/api/games/" + gameId + "/files/completed.mp4");
-        chunkedUploadService.uploadChunk(gameId, completed.getSessionId(), 0, "AAAA".getBytes(), authPlayer);
-        chunkedUploadService.uploadChunk(gameId, completed.getSessionId(), 1, "BBBB".getBytes(), authPlayer);
-        chunkedUploadService.completeSession(gameId, completed.getSessionId(), authPlayer);
+        chunkedUploadService.uploadChunk(gameId, completed.sessionId(), 0, "AAAA".getBytes(), authPlayer);
+        chunkedUploadService.uploadChunk(gameId, completed.sessionId(), 1, "BBBB".getBytes(), authPlayer);
+        chunkedUploadService.completeSession(gameId, completed.sessionId(), authPlayer);
 
         UploadSessionClearResponse clear = chunkedUploadService.clearAbandonedSessions(gameId, authPlayer, null);
 
-        assertEquals(1, clear.getCancelledSessions());
-        assertEquals(1, clear.getClearedSessions());
-        assertEquals(UploadSessionStatus.cancelled, sessions.get(active.getSessionId()).getStatus());
-        assertEquals(UploadSessionStatus.completed, sessions.get(completed.getSessionId()).getStatus());
+        assertEquals(1, clear.cancelledSessions());
+        assertEquals(1, clear.clearedSessions());
+        assertEquals(UploadSessionStatus.cancelled, sessions.get(active.sessionId()).getStatus());
+        assertEquals(UploadSessionStatus.completed, sessions.get(completed.sessionId()).getStatus());
     }
 
     @Test
@@ -431,7 +431,7 @@ class ChunkedUploadServiceTest {
         UploadSessionResponse created = chunkedUploadService.createSession(
                 gameId, authPlayer, uploadRequest("no-link-media-item")
         );
-        UUID sessionId = created.getSessionId();
+        UUID sessionId = created.sessionId();
 
         when(fileStorageService.storeAssembledUpload(any(Path.class), eq(gameId), eq("video/mp4"), eq(8L)))
                 .thenReturn("/api/games/" + gameId + "/files/no-link.mp4");
@@ -440,7 +440,7 @@ class ChunkedUploadServiceTest {
         chunkedUploadService.uploadChunk(gameId, sessionId, 1, "BBBB".getBytes(), authPlayer);
         UploadSessionResponse completed = chunkedUploadService.completeSession(gameId, sessionId, authPlayer);
 
-        assertEquals("completed", completed.getStatus());
+        assertEquals("completed", completed.status());
         UploadSession stored = sessions.get(sessionId);
         assertEquals(UploadSessionStatus.completed, stored.getStatus());
         assertNull(stored.getSubmission(),
@@ -471,7 +471,7 @@ class ChunkedUploadServiceTest {
 
         assertThrows(
                 BadRequestException.class,
-                () -> chunkedUploadService.getSession(gameId, created.getSessionId(), otherAuth)
+                () -> chunkedUploadService.getSession(gameId, created.sessionId(), otherAuth)
         );
     }
 
@@ -490,7 +490,7 @@ class ChunkedUploadServiceTest {
         request.setOriginalFileName("epic-base-video.mp4");
         UploadSessionResponse created = chunkedUploadService.createSession(gameId, authPlayer, request);
 
-        UploadSession stored = sessions.get(created.getSessionId());
+        UploadSession stored = sessions.get(created.sessionId());
         stored.setExpiresAt(Instant.now().minusSeconds(60));
 
         int expired = chunkedUploadService.expireStaleSessions();
@@ -518,11 +518,11 @@ class ChunkedUploadServiceTest {
         doNothing().when(gameAccessService).ensurePlayerBelongsToGame(any(Player.class), eq(gameId));
 
         UploadSessionResponse created = chunkedUploadService.createSession(gameId, authPlayer, uploadRequest("stuck"));
-        sessions.get(created.getSessionId()).setExpiresAt(Instant.now().minusSeconds(60));
+        sessions.get(created.sessionId()).setExpiresAt(Instant.now().minusSeconds(60));
 
         chunkedUploadService.expireStaleSessions();
 
-        assertEquals(UploadSessionStatus.expired, sessions.get(created.getSessionId()).getStatus());
+        assertEquals(UploadSessionStatus.expired, sessions.get(created.sessionId()).getStatus());
         verify(fcmPushService, times(1)).sendPush(
                 eq(List.of("fcm-token-12345")),
                 eq("Game"),
@@ -544,7 +544,7 @@ class ChunkedUploadServiceTest {
         doNothing().when(gameAccessService).ensurePlayerBelongsToGame(any(Player.class), eq(gameId));
 
         UploadSessionResponse created = chunkedUploadService.createSession(gameId, authPlayer, uploadRequest("doomed"));
-        UploadSession stored = sessions.get(created.getSessionId());
+        UploadSession stored = sessions.get(created.sessionId());
         stored.setExpiresAt(Instant.now().minusSeconds(60));
 
         doThrow(new RuntimeException("APNs unreachable"))
@@ -573,7 +573,7 @@ class ChunkedUploadServiceTest {
         doNothing().when(gameAccessService).ensurePlayerBelongsToGame(any(Player.class), eq(gameId));
 
         UploadSessionResponse created = chunkedUploadService.createSession(gameId, authPlayer, uploadRequest("silent"));
-        UploadSession stored = sessions.get(created.getSessionId());
+        UploadSession stored = sessions.get(created.sessionId());
         stored.setExpiresAt(Instant.now().minusSeconds(60));
 
         int expired = chunkedUploadService.expireStaleSessions();

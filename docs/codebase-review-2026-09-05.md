@@ -1,5 +1,8 @@
 # Consolidated codebase integration review — 2026-09-05
 
+Follow-up: the [backend test repair](backend-test-repair-2026-09-05.md) resolves
+the compilation blocker below and records the subsequent local test results.
+
 Reviewed the combined, uncommitted platform and feature work in the shared
 checkout: route/role boundaries, player answers and recovery, operator auth,
 native adapters and capabilities, rich content, workspace/build/deploy paths,

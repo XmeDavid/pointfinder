@@ -39,7 +39,7 @@ class GameStatusTransitionsTest extends IntegrationTestBase {
                 "/api/games", HttpMethod.POST,
                 new HttpEntity<>(req, opHeaders), GameResponse.class);
         assertEquals(HttpStatus.CREATED, resp.getStatusCode());
-        UUID gameId = resp.getBody().getId();
+        UUID gameId = resp.getBody().id();
 
         Game game = gameRepository.findById(gameId).orElseThrow();
         createBase(game, "Base " + suffix);
@@ -83,7 +83,7 @@ class GameStatusTransitionsTest extends IntegrationTestBase {
         ResponseEntity<GameResponse> resp = transition(ctx, "live");
 
         assertEquals(HttpStatus.OK, resp.getStatusCode());
-        assertEquals("live", resp.getBody().getStatus());
+        assertEquals("live", resp.getBody().status());
     }
 
     @Test
@@ -94,7 +94,7 @@ class GameStatusTransitionsTest extends IntegrationTestBase {
         ResponseEntity<GameResponse> resp = transition(ctx, "ended");
 
         assertEquals(HttpStatus.OK, resp.getStatusCode());
-        assertEquals("ended", resp.getBody().getStatus());
+        assertEquals("ended", resp.getBody().status());
     }
 
     @Test
@@ -106,7 +106,7 @@ class GameStatusTransitionsTest extends IntegrationTestBase {
         ResponseEntity<GameResponse> resp = transition(ctx, "setup");
 
         assertEquals(HttpStatus.OK, resp.getStatusCode());
-        assertEquals("setup", resp.getBody().getStatus());
+        assertEquals("setup", resp.getBody().status());
     }
 
     @Test
@@ -151,7 +151,7 @@ class GameStatusTransitionsTest extends IntegrationTestBase {
         ResponseEntity<GameResponse> resp = transitionWithReset(ctx, "setup", true);
 
         assertEquals(HttpStatus.OK, resp.getStatusCode());
-        assertEquals("setup", resp.getBody().getStatus());
+        assertEquals("setup", resp.getBody().status());
 
         // Verify submissions and check-ins were cleared
         assertEquals(0, submissionRepository.findByTeamId(team.getId()).size());
@@ -168,7 +168,7 @@ class GameStatusTransitionsTest extends IntegrationTestBase {
         ResponseEntity<GameResponse> resp = transition(ctx, "live");
 
         assertEquals(HttpStatus.OK, resp.getStatusCode());
-        assertEquals("live", resp.getBody().getStatus());
+        assertEquals("live", resp.getBody().status());
     }
 
     @Test
@@ -179,7 +179,7 @@ class GameStatusTransitionsTest extends IntegrationTestBase {
         ResponseEntity<GameResponse> resp = transition(ctx, "setup");
 
         assertEquals(HttpStatus.OK, resp.getStatusCode());
-        assertEquals("setup", resp.getBody().getStatus());
+        assertEquals("setup", resp.getBody().status());
     }
 
     // ── Invalid transitions ──────────────────────────────────────────

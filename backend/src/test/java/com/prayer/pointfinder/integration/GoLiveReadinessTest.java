@@ -43,7 +43,7 @@ class GoLiveReadinessTest extends IntegrationTestBase {
                 "/api/games", HttpMethod.POST,
                 new HttpEntity<>(req, opHeaders), GameResponse.class);
         assertEquals(HttpStatus.CREATED, resp.getStatusCode());
-        return new GameContext(resp.getBody().getId(), opHeaders);
+        return new GameContext(resp.getBody().id(), opHeaders);
     }
 
     private ResponseEntity<String> tryGoLive(GameContext ctx) {
@@ -202,7 +202,7 @@ class GoLiveReadinessTest extends IntegrationTestBase {
                 GameResponse.class);
 
         assertEquals(HttpStatus.OK, resp.getStatusCode());
-        assertEquals("live", resp.getBody().getStatus());
+        assertEquals("live", resp.getBody().status());
     }
 
     @Test

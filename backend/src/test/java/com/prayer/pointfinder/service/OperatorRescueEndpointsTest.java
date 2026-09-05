@@ -157,7 +157,7 @@ class OperatorRescueEndpointsTest extends IntegrationTestBase {
         SubmissionResponse second = submissionService.markCompletedByOperator(
                 ctx.game.getId(), ctx.team.getId(), ctx.base.getId(), request);
 
-        assertEquals(first.getId(), second.getId(),
+        assertEquals(first.id(), second.id(),
                 "re-call for the same (team, base, challenge) must return the same row");
 
         long count = submissionRepository.findByTeamId(ctx.team.getId()).stream()
@@ -196,7 +196,7 @@ class OperatorRescueEndpointsTest extends IntegrationTestBase {
         SubmissionResponse second = submissionService.markCompletedByOperator(
                 ctx.game.getId(), ctx.team.getId(), ctx.base.getId(), request);
 
-        assertEquals(first.getId(), second.getId(),
+        assertEquals(first.id(), second.id(),
                 "a second operator must collapse to the same approved row");
 
         long approvedCount = submissionRepository.findByTeamId(ctx.team.getId()).stream()
@@ -365,7 +365,7 @@ class OperatorRescueEndpointsTest extends IntegrationTestBase {
         authenticateAsPlayer(ctx.player);
         List<BaseProgressResponse> progress = playerService.getProgress(ctx.game.getId(), ctx.player);
         boolean visibleForTarget = progress.stream()
-                .anyMatch(p -> p.getBaseId().equals(ctx.hiddenBase.getId()));
+                .anyMatch(p -> p.baseId().equals(ctx.hiddenBase.getId()));
         assertTrue(visibleForTarget,
                 "hidden base must be visible to the team that has the active override");
 
@@ -373,7 +373,7 @@ class OperatorRescueEndpointsTest extends IntegrationTestBase {
         authenticateAsPlayer(otherPlayer);
         List<BaseProgressResponse> otherProgress = playerService.getProgress(ctx.game.getId(), otherPlayer);
         boolean visibleForOther = otherProgress.stream()
-                .anyMatch(p -> p.getBaseId().equals(ctx.hiddenBase.getId()));
+                .anyMatch(p -> p.baseId().equals(ctx.hiddenBase.getId()));
         assertFalse(visibleForOther,
                 "override must NOT leak to other teams in the same game");
     }
@@ -389,7 +389,7 @@ class OperatorRescueEndpointsTest extends IntegrationTestBase {
         // Verify base is visible before soft-delete.
         authenticateAsPlayer(ctx.player);
         assertTrue(playerService.getProgress(ctx.game.getId(), ctx.player).stream()
-                .anyMatch(p -> p.getBaseId().equals(ctx.hiddenBase.getId())));
+                .anyMatch(p -> p.baseId().equals(ctx.hiddenBase.getId())));
 
         // Remove override.
         authenticateAsOperator(ctx.operator);
@@ -423,7 +423,7 @@ class OperatorRescueEndpointsTest extends IntegrationTestBase {
         // Base must be hidden again for the player.
         authenticateAsPlayer(ctx.player);
         assertFalse(playerService.getProgress(ctx.game.getId(), ctx.player).stream()
-                        .anyMatch(p -> p.getBaseId().equals(ctx.hiddenBase.getId())),
+                        .anyMatch(p -> p.baseId().equals(ctx.hiddenBase.getId())),
                 "base must be hidden again after the override is removed");
     }
 

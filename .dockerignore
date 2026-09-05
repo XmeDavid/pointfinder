@@ -4,6 +4,10 @@
 **/dist
 **/dist-native
 **/build
+!web/build/
+!web/build/**
+!web/src/features/build/
+!web/src/features/build/**
 **/.gradle
 **/storybook-static
 **/test-results

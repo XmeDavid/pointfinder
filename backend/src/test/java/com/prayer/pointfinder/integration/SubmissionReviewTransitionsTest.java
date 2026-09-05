@@ -36,7 +36,7 @@ class SubmissionReviewTransitionsTest extends IntegrationTestBase {
                 "/api/games", HttpMethod.POST,
                 new HttpEntity<>(createGame, opHeaders), GameResponse.class);
         assertEquals(HttpStatus.CREATED, gameResp.getStatusCode());
-        UUID gameId = gameResp.getBody().getId();
+        UUID gameId = gameResp.getBody().id();
 
         // Create entities directly (faster than API)
         Game game = gameRepository.findById(gameId).orElseThrow();
@@ -60,7 +60,7 @@ class SubmissionReviewTransitionsTest extends IntegrationTestBase {
         ResponseEntity<PlayerAuthResponse> joinResp = restTemplate.postForEntity(
                 "/api/auth/player/join", joinReq, PlayerAuthResponse.class);
         assertEquals(HttpStatus.OK, joinResp.getStatusCode());
-        String playerAuth = "Bearer " + joinResp.getBody().getToken();
+        String playerAuth = "Bearer " + joinResp.getBody().token();
         HttpHeaders playerHeaders = headersWithAuth(playerAuth);
 
         // Player checks in
@@ -77,9 +77,9 @@ class SubmissionReviewTransitionsTest extends IntegrationTestBase {
                 "/api/player/games/" + gameId + "/submissions", HttpMethod.POST,
                 new HttpEntity<>(submitReq, playerHeaders), SubmissionResponse.class);
         assertEquals(HttpStatus.CREATED, submitResp.getStatusCode());
-        assertEquals("pending", submitResp.getBody().getStatus());
+        assertEquals("pending", submitResp.getBody().status());
 
-        return new TestContext(gameId, team.getId(), submitResp.getBody().getId(), operator, opHeaders);
+        return new TestContext(gameId, team.getId(), submitResp.getBody().id(), operator, opHeaders);
     }
 
     private SubmissionResponse review(UUID gameId, UUID submissionId, HttpHeaders opHeaders,
@@ -114,9 +114,9 @@ class SubmissionReviewTransitionsTest extends IntegrationTestBase {
         SubmissionResponse result = review(ctx.gameId, ctx.submissionId, ctx.opHeaders,
                 ReviewStatus.approved, 100);
 
-        assertEquals("approved", result.getStatus());
-        assertEquals(100, result.getPoints());
-        assertEquals(ctx.operator.getId(), result.getReviewedBy());
+        assertEquals("approved", result.status());
+        assertEquals(100, result.points());
+        assertEquals(ctx.operator.getId(), result.reviewedBy());
     }
 
     @Test
@@ -126,8 +126,8 @@ class SubmissionReviewTransitionsTest extends IntegrationTestBase {
         SubmissionResponse result = review(ctx.gameId, ctx.submissionId, ctx.opHeaders,
                 ReviewStatus.rejected, null);
 
-        assertEquals("rejected", result.getStatus());
-        assertNull(result.getPoints());
+        assertEquals("rejected", result.status());
+        assertNull(result.points());
     }
 
     @Test
@@ -141,8 +141,8 @@ class SubmissionReviewTransitionsTest extends IntegrationTestBase {
         SubmissionResponse result = review(ctx.gameId, ctx.submissionId, ctx.opHeaders,
                 ReviewStatus.approved, 75);
 
-        assertEquals("approved", result.getStatus());
-        assertEquals(75, result.getPoints());
+        assertEquals("approved", result.status());
+        assertEquals(75, result.points());
     }
 
     @Test
@@ -156,7 +156,7 @@ class SubmissionReviewTransitionsTest extends IntegrationTestBase {
         SubmissionResponse result = review(ctx.gameId, ctx.submissionId, ctx.opHeaders,
                 ReviewStatus.rejected, null);
 
-        assertEquals("rejected", result.getStatus());
+        assertEquals("rejected", result.status());
     }
 
     @Test
@@ -192,7 +192,7 @@ class SubmissionReviewTransitionsTest extends IntegrationTestBase {
         ResponseEntity<GameResponse> gameResp = restTemplate.exchange(
                 "/api/games", HttpMethod.POST,
                 new HttpEntity<>(createGame, opHeaders), GameResponse.class);
-        UUID gameId = gameResp.getBody().getId();
+        UUID gameId = gameResp.getBody().id();
 
         Game game = gameRepository.findById(gameId).orElseThrow();
         Base base = createBase(game, "Auto Base");
@@ -220,7 +220,7 @@ class SubmissionReviewTransitionsTest extends IntegrationTestBase {
                 "/api/games/" + gameId + "/status", HttpMethod.PATCH,
                 new HttpEntity<>(goLive, opHeaders), GameResponse.class);
         assertEquals(HttpStatus.OK, liveResp.getStatusCode(), "Go-live should succeed");
-        assertEquals("live", liveResp.getBody().getStatus());
+        assertEquals("live", liveResp.getBody().status());
 
         PlayerJoinRequest joinReq = new PlayerJoinRequest();
         joinReq.setJoinCode("AUT001");
@@ -228,14 +228,14 @@ class SubmissionReviewTransitionsTest extends IntegrationTestBase {
         joinReq.setDeviceId("device-auto-1");
         ResponseEntity<PlayerAuthResponse> joinResp = restTemplate.postForEntity(
                 "/api/auth/player/join", joinReq, PlayerAuthResponse.class);
-        HttpHeaders playerHeaders = headersWithAuth("Bearer " + joinResp.getBody().getToken());
+        HttpHeaders playerHeaders = headersWithAuth("Bearer " + joinResp.getBody().token());
 
         // Check in — get the assigned challenge from the check-in response
         ResponseEntity<CheckInResponse> checkInResp = restTemplate.exchange(
                 "/api/player/games/" + gameId + "/bases/" + base.getId() + "/check-in",
                 HttpMethod.POST, new HttpEntity<>(checkInRequestFor(base), playerHeaders), CheckInResponse.class);
         assertEquals(HttpStatus.OK, checkInResp.getStatusCode());
-        UUID assignedChallengeId = checkInResp.getBody().getChallenge().getId();
+        UUID assignedChallengeId = checkInResp.getBody().challenge().id();
 
         PlayerSubmissionRequest submitReq = new PlayerSubmissionRequest();
         submitReq.setBaseId(base.getId());
@@ -247,11 +247,11 @@ class SubmissionReviewTransitionsTest extends IntegrationTestBase {
 
         assertEquals(HttpStatus.CREATED, submitResp.getStatusCode());
         // Auto-validated correct answer → "correct" status (not pending), points awarded immediately
-        assertEquals("correct", submitResp.getBody().getStatus());
-        assertEquals(80, submitResp.getBody().getPoints());
+        assertEquals("correct", submitResp.getBody().status());
+        assertEquals(80, submitResp.getBody().points());
 
         // "correct" submissions can be re-reviewed by operators (e.g. to override auto-validation)
-        UUID submissionId = submitResp.getBody().getId();
+        UUID submissionId = submitResp.getBody().id();
         ReviewSubmissionRequest reviewReq = new ReviewSubmissionRequest();
         reviewReq.setStatus(ReviewStatus.approved);
         reviewReq.setPoints(80);

@@ -50,6 +50,12 @@ class SecurityRulesTest {
     private MockMvc mockMvc;
 
     @MockitoBean
+    private com.prayer.pointfinder.service.PushTokenService pushTokenService;
+
+    @MockitoBean
+    private com.prayer.pointfinder.service.GameImportExportService gameImportExportService;
+
+    @MockitoBean
     private JwtTokenProvider tokenProvider;
 
     @MockitoBean

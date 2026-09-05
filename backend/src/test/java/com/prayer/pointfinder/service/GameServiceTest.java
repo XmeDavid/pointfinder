@@ -113,24 +113,13 @@ class GameServiceTest {
         );
 
         gameService = new GameService(
-                gameRepository,
-                orgMembershipRepository,
-                userRepository,
-                baseRepository,
-                challengeRepository,
-                teamRepository,
-                assignmentRepository,
-                checkInRepository,
-                submissionRepository,
-                teamLocationRepository,
-                activityEventRepository,
-                uploadSessionRepository,
-                gameAccessService,
-                fileStorageService,
-                eventBroadcaster,
-                challengeAssignmentService,
-                gameImportExportService,
-                teamVariableService
+                gameRepository, orgMembershipRepository, userRepository,
+                assignmentRepository, gameAccessService, fileStorageService,
+                eventBroadcaster, challengeAssignmentService,
+                new GameProgressResetService(submissionRepository, checkInRepository,
+                        activityEventRepository, uploadSessionRepository, teamLocationRepository),
+                new GameReadinessValidator(baseRepository, challengeRepository,
+                        teamRepository, assignmentRepository, teamVariableService)
         );
 
         // Default stub: exportGame calls this to build the tags section
@@ -175,7 +164,7 @@ class GameServiceTest {
         when(teamRepository.findByGameId(gameId)).thenReturn(List.of());
         when(assignmentRepository.findByGameId(gameId)).thenReturn(List.of());
 
-        GameExportDto exported = gameService.exportGame(gameId);
+        GameExportDto exported = gameImportExportService.exportGame(gameId);
 
         assertEquals(1, exported.getChallenges().size());
         assertTrue(exported.getChallenges().get(0).getRequirePresenceToSubmit());
@@ -231,7 +220,7 @@ class GameServiceTest {
                 .teams(List.of())
                 .build());
 
-        GameResponse imported = gameService.importGame(request);
+        GameResponse imported = gameImportExportService.importGame(request);
 
         ArgumentCaptor<Base> baseCaptor = ArgumentCaptor.forClass(Base.class);
         verify(baseRepository).save(baseCaptor.capture());
@@ -248,7 +237,7 @@ class GameServiceTest {
         assertFalse(savedChallenge.getLocationBound());
         assertTrue(savedChallenge.getRequirePresenceToSubmit());
 
-        assertEquals(importedGameId, imported.getId());
+        assertEquals(importedGameId, imported.id());
     }
 
     @Test
@@ -264,7 +253,7 @@ class GameServiceTest {
                 .assignments(List.of())
                 .build());
 
-        BadRequestException ex = assertThrows(BadRequestException.class, () -> gameService.importGame(request));
+        BadRequestException ex = assertThrows(BadRequestException.class, () -> gameImportExportService.importGame(request));
         assertTrue(ex.getMessage().contains("Unsupported export version"));
         verify(gameRepository, never()).save(any(Game.class));
     }
@@ -295,7 +284,7 @@ class GameServiceTest {
                 .teams(List.of())
                 .build());
 
-        BadRequestException ex = assertThrows(BadRequestException.class, () -> gameService.importGame(request));
+        BadRequestException ex = assertThrows(BadRequestException.class, () -> gameImportExportService.importGame(request));
         assertEquals("challenges[0].points is required", ex.getMessage());
         verify(gameRepository, never()).save(any(Game.class));
     }
@@ -339,7 +328,7 @@ class GameServiceTest {
                 .teams(List.of())
                 .build());
 
-        BadRequestException ex = assertThrows(BadRequestException.class, () -> gameService.importGame(request));
+        BadRequestException ex = assertThrows(BadRequestException.class, () -> gameImportExportService.importGame(request));
         assertTrue(ex.getMessage().contains("hidden base"));
         verify(gameRepository, never()).save(any(Game.class));
     }
@@ -402,7 +391,7 @@ class GameServiceTest {
                 .teams(List.of())
                 .build());
 
-        BadRequestException ex = assertThrows(BadRequestException.class, () -> gameService.importGame(request));
+        BadRequestException ex = assertThrows(BadRequestException.class, () -> gameImportExportService.importGame(request));
         assertTrue(ex.getMessage().contains("Multiple challenges cannot unlock the same base"));
         verify(gameRepository, never()).save(any(Game.class));
     }
@@ -438,7 +427,7 @@ class GameServiceTest {
                 .teams(List.of())
                 .build());
 
-        BadRequestException ex = assertThrows(BadRequestException.class, () -> gameService.importGame(request));
+        BadRequestException ex = assertThrows(BadRequestException.class, () -> gameImportExportService.importGame(request));
         assertTrue(ex.getMessage().contains("cannot unlock its own fixed base"));
         verify(gameRepository, never()).save(any(Game.class));
     }

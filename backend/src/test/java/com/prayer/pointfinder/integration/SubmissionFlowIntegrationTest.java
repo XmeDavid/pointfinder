@@ -41,8 +41,8 @@ class SubmissionFlowIntegrationTest extends IntegrationTestBase {
 
         assertEquals(HttpStatus.CREATED, gameResp.getStatusCode());
         assertNotNull(gameResp.getBody());
-        UUID gameId = gameResp.getBody().getId();
-        assertEquals("setup", gameResp.getBody().getStatus());
+        UUID gameId = gameResp.getBody().id();
+        assertEquals("setup", gameResp.getBody().status());
 
         // Create base
         Game game = gameRepository.findById(gameId).orElseThrow();
@@ -67,7 +67,7 @@ class SubmissionFlowIntegrationTest extends IntegrationTestBase {
                 GameResponse.class);
 
         assertEquals(HttpStatus.OK, liveResp.getStatusCode());
-        assertEquals("live", liveResp.getBody().getStatus());
+        assertEquals("live", liveResp.getBody().status());
 
         // ── Step 3: Player joins ────────────────────────────────────
         PlayerJoinRequest joinReq = new PlayerJoinRequest();
@@ -80,12 +80,12 @@ class SubmissionFlowIntegrationTest extends IntegrationTestBase {
 
         assertEquals(HttpStatus.OK, joinResp.getStatusCode());
         assertNotNull(joinResp.getBody());
-        assertNotNull(joinResp.getBody().getToken());
-        assertEquals("Pathfinders", joinResp.getBody().getTeam().getName());
+        assertNotNull(joinResp.getBody().token());
+        assertEquals("Pathfinders", joinResp.getBody().team().name());
 
-        String playerAuth = "Bearer " + joinResp.getBody().getToken();
+        String playerAuth = "Bearer " + joinResp.getBody().token();
         HttpHeaders playerHeaders = headersWithAuth(playerAuth);
-        UUID playerId = joinResp.getBody().getPlayer().getId();
+        UUID playerId = joinResp.getBody().player().id();
 
         // ── Step 4: Player checks in at base ────────────────────────
         ResponseEntity<CheckInResponse> checkInResp = restTemplate.exchange(
@@ -96,14 +96,14 @@ class SubmissionFlowIntegrationTest extends IntegrationTestBase {
 
         assertEquals(HttpStatus.OK, checkInResp.getStatusCode());
         assertNotNull(checkInResp.getBody());
-        assertEquals(base.getId(), checkInResp.getBody().getBaseId());
+        assertEquals(base.getId(), checkInResp.getBody().baseId());
         // P1 Phase 4 W4: CheckInResponse no longer carries baseName —
         // players see the challenge title (on ChallengeInfo below), not
         // the operator-oriented base name.
         // Challenge should be assigned
-        assertNotNull(checkInResp.getBody().getChallenge());
+        assertNotNull(checkInResp.getBody().challenge());
 
-        UUID assignedChallengeId = checkInResp.getBody().getChallenge().getId();
+        UUID assignedChallengeId = checkInResp.getBody().challenge().id();
 
         // ── Step 5: Player submits answer ───────────────────────────
         PlayerSubmissionRequest submitReq = new PlayerSubmissionRequest();
@@ -119,9 +119,9 @@ class SubmissionFlowIntegrationTest extends IntegrationTestBase {
 
         assertEquals(HttpStatus.CREATED, submitResp.getStatusCode());
         assertNotNull(submitResp.getBody());
-        assertEquals("pending", submitResp.getBody().getStatus());
-        assertEquals("42", submitResp.getBody().getAnswer());
-        UUID submissionId = submitResp.getBody().getId();
+        assertEquals("pending", submitResp.getBody().status());
+        assertEquals("42", submitResp.getBody().answer());
+        UUID submissionId = submitResp.getBody().id();
 
         // ── Step 6: Operator reviews and approves ───────────────────
         ReviewSubmissionRequest reviewReq = new ReviewSubmissionRequest();
@@ -136,9 +136,9 @@ class SubmissionFlowIntegrationTest extends IntegrationTestBase {
 
         assertEquals(HttpStatus.OK, reviewResp.getStatusCode());
         assertNotNull(reviewResp.getBody());
-        assertEquals("approved", reviewResp.getBody().getStatus());
-        assertEquals(100, reviewResp.getBody().getPoints());
-        assertEquals(operator.getId(), reviewResp.getBody().getReviewedBy());
+        assertEquals("approved", reviewResp.getBody().status());
+        assertEquals(100, reviewResp.getBody().points());
+        assertEquals(operator.getId(), reviewResp.getBody().reviewedBy());
 
         // ── Step 7: Verify leaderboard reflects the points ──────────
         ResponseEntity<LeaderboardEntry[]> leaderboardResp = restTemplate.exchange(

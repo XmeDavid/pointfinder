@@ -759,7 +759,7 @@ class GameImportExportServiceTest {
 
         GameResponse response = service.importGame(buildMinimalRequest());
 
-        assertEquals(savedGameId, response.getId());
+        assertEquals(savedGameId, response.id());
     }
 
     @Test

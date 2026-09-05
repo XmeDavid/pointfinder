@@ -485,8 +485,8 @@ class TeamVariableServiceTest {
         VariableCompletenessResponse response = teamVariableService.checkCompleteness(gameId);
 
         verify(gameAccessService).ensureCurrentUserCanAccessGame(gameId);
-        assertTrue(response.isComplete());
-        assertTrue(response.getErrors().isEmpty());
+        assertTrue(response.complete());
+        assertTrue(response.errors().isEmpty());
     }
 
     @Test
@@ -499,8 +499,8 @@ class TeamVariableServiceTest {
 
         VariableCompletenessResponse response = teamVariableService.checkCompleteness(gameId);
 
-        assertTrue(response.isComplete());
-        assertTrue(response.getErrors().isEmpty());
+        assertTrue(response.complete());
+        assertTrue(response.errors().isEmpty());
     }
 
     @Test
@@ -513,9 +513,9 @@ class TeamVariableServiceTest {
 
         VariableCompletenessResponse response = teamVariableService.checkCompleteness(gameId);
 
-        assertFalse(response.isComplete());
-        assertEquals(1, response.getErrors().size());
-        String error = response.getErrors().get(0);
+        assertFalse(response.complete());
+        assertEquals(1, response.errors().size());
+        String error = response.errors().get(0);
         assertTrue(error.contains("city"));
         assertTrue(error.contains("1 team(s)"));
     }
@@ -532,9 +532,9 @@ class TeamVariableServiceTest {
 
         VariableCompletenessResponse response = teamVariableService.checkCompleteness(gameId);
 
-        assertFalse(response.isComplete());
-        assertEquals(1, response.getErrors().size());
-        String error = response.getErrors().get(0);
+        assertFalse(response.complete());
+        assertEquals(1, response.errors().size());
+        String error = response.errors().get(0);
         assertTrue(error.contains("Challenge One"));
         assertTrue(error.contains("clue"));
         assertTrue(error.contains("1 team(s)"));
@@ -552,8 +552,8 @@ class TeamVariableServiceTest {
 
         VariableCompletenessResponse response = teamVariableService.checkCompleteness(gameId);
 
-        assertFalse(response.isComplete());
-        assertEquals(2, response.getErrors().size());
+        assertFalse(response.complete());
+        assertEquals(2, response.errors().size());
     }
 
     @Test
@@ -584,8 +584,8 @@ class TeamVariableServiceTest {
 
         VariableCompletenessResponse response = teamVariableService.checkCompleteness(gameId);
 
-        assertFalse(response.isComplete());
-        String error = response.getErrors().get(0);
+        assertFalse(response.complete());
+        String error = response.errors().get(0);
         assertTrue(error.contains("Unknown"));
     }
 

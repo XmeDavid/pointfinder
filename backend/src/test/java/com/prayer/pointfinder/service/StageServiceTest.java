@@ -74,11 +74,11 @@ class StageServiceTest {
         List<StageResponse> result = stageService.getStages(gameId);
 
         assertEquals(2, result.size());
-        assertEquals("Stage 1", result.get(0).getName());
-        assertEquals(0, result.get(0).getOrderIndex());
+        assertEquals("Stage 1", result.get(0).name());
+        assertEquals(0, result.get(0).orderIndex());
         assertTrue(result.get(0).isActive());
-        assertEquals("Stage 2", result.get(1).getName());
-        assertEquals(1, result.get(1).getOrderIndex());
+        assertEquals("Stage 2", result.get(1).name());
+        assertEquals(1, result.get(1).orderIndex());
         assertFalse(result.get(1).isActive());
 
         verify(gameAccessService).ensureCurrentUserCanAccessGame(gameId);
@@ -163,7 +163,7 @@ class StageServiceTest {
         StageResponse response = stageService.createStage(gameId, request);
 
         assertFalse(response.isActive());
-        assertEquals(2, response.getOrderIndex());
+        assertEquals(2, response.orderIndex());
         // Should NOT auto-assign bases for subsequent stages
         verify(baseRepository, never()).setStageIdForAllInGame(any(), any());
     }
@@ -253,9 +253,9 @@ class StageServiceTest {
 
         StageResponse response = stageService.updateStage(gameId, stageId, request);
 
-        assertEquals("Stage 1 Updated", response.getName());
-        assertEquals("trigger", response.getTransitionType());
-        assertEquals(triggerBaseId, response.getTriggerBaseId());
+        assertEquals("Stage 1 Updated", response.name());
+        assertEquals("trigger", response.transitionType());
+        assertEquals(triggerBaseId, response.triggerBaseId());
     }
 
     // ── reorderStages ────────────────────────────────────────────────

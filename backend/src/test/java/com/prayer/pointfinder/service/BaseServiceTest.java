@@ -92,7 +92,7 @@ class BaseServiceTest {
 
         BaseResponse response = baseService.updateBase(gameId, baseId, request);
 
-        assertEquals(false, response.getHidden());
+        assertEquals(false, response.hidden());
         assertTrue(unlocker.getUnlocksBases().isEmpty());
     }
 
@@ -267,9 +267,9 @@ class BaseServiceTest {
         BaseResponse response = baseService.createBase(gameId, request);
 
         assertNotNull(response);
-        assertNotNull(response.getTagIds());
-        assertEquals(2, response.getTagIds().size());
-        assertTrue(response.getTagIds().containsAll(List.of(tagId1, tagId2)));
+        assertNotNull(response.tagIds());
+        assertEquals(2, response.tagIds().size());
+        assertTrue(response.tagIds().containsAll(List.of(tagId1, tagId2)));
     }
 
     @Test
@@ -299,8 +299,8 @@ class BaseServiceTest {
 
         BaseResponse response = baseService.updateBase(gameId, baseId, request);
 
-        assertNotNull(response.getTagIds());
-        assertTrue(response.getTagIds().contains(tagId));
+        assertNotNull(response.tagIds());
+        assertTrue(response.tagIds().contains(tagId));
     }
 
     @Test
@@ -322,6 +322,6 @@ class BaseServiceTest {
 
         BaseResponse response = baseService.createBase(gameId, request);
 
-        assertNull(response.getTagIds());
+        assertNull(response.tagIds());
     }
 }

@@ -1,5 +1,9 @@
 # Native platform parity: implementation and validation
 
+Follow-up: backend test compilation has been repaired; see
+[backend test migration](backend-test-repair-2026-09-05.md) for current results
+and the iOS build-wrapper correction.
+
 Recorded 2026-09-05. Platform and feature work share the same checkout and the
 [handoff contract](native-platform-handoff.md). The legacy applications remain
 the reference for device journeys; this is not a declaration of store-release parity.

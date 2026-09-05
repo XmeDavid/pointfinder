@@ -123,9 +123,9 @@ class BroadcastServiceTest {
 
         assertEquals(1, response.teams().size());
         BroadcastTeamResponse teamResponse = response.teams().get(0);
-        assertEquals(teamId, teamResponse.getId());
-        assertEquals("Pathfinders", teamResponse.getName());
-        assertEquals("#FF5733", teamResponse.getColor());
+        assertEquals(teamId, teamResponse.id());
+        assertEquals("Pathfinders", teamResponse.name());
+        assertEquals("#FF5733", teamResponse.color());
     }
 
     @Test
@@ -154,10 +154,10 @@ class BroadcastServiceTest {
 
         assertEquals(1, response.bases().size());
         BroadcastBaseResponse baseResponse = response.bases().get(0);
-        assertEquals(baseId, baseResponse.getId());
-        assertEquals("Forest Base", baseResponse.getName());
-        assertEquals(47.5, baseResponse.getLat());
-        assertEquals(8.3, baseResponse.getLng());
+        assertEquals(baseId, baseResponse.id());
+        assertEquals("Forest Base", baseResponse.name());
+        assertEquals(47.5, baseResponse.lat());
+        assertEquals(8.3, baseResponse.lng());
     }
 
     @Test
@@ -192,7 +192,7 @@ class BroadcastServiceTest {
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
         assertEquals(1, response.bases().size());
-        assertEquals("Visible Base", response.bases().get(0).getName());
+        assertEquals("Visible Base", response.bases().get(0).name());
     }
 
     @Test

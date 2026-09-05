@@ -63,8 +63,8 @@ class UpdateProfileTest {
 
             assertThat(testUser.getName()).isEqualTo("New Name");
             verify(userRepository).save(testUser);
-            assertThat(response.getUser().name()).isEqualTo("New Name");
-            assertThat(response.getMessage()).isNull();
+            assertThat(response.user().name()).isEqualTo("New Name");
+            assertThat(response.message()).isNull();
             verifyNoInteractions(emailChangeTokenRepository, emailService);
         }
     }
@@ -95,7 +95,7 @@ class UpdateProfileTest {
                     eq("pointfinder.pt")
             );
 
-            assertThat(response.getMessage()).isEqualTo("A verification email has been sent to the new address.");
+            assertThat(response.message()).isEqualTo("A verification email has been sent to the new address.");
             verify(userRepository).save(testUser);
         }
     }

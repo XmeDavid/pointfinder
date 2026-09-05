@@ -55,6 +55,9 @@ class PlayerControllerTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
+    private com.prayer.pointfinder.service.PushTokenService pushTokenService;
+
+    @MockitoBean
     private PlayerService playerService;
 
     @MockitoBean

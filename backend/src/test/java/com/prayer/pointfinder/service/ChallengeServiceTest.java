@@ -101,7 +101,7 @@ class ChallengeServiceTest {
 
         ChallengeResponse response = challengeService.updateChallenge(gameId, challengeId, request);
 
-        assertTrue(response.getUnlocksBaseIds().contains(unlockTargetId));
+        assertTrue(response.unlocksBaseIds().contains(unlockTargetId));
         assertTrue(challenge.getUnlocksBases().stream().anyMatch(b -> b.getId().equals(unlockTargetId)));
     }
 
@@ -129,9 +129,9 @@ class ChallengeServiceTest {
 
         ChallengeResponse response = challengeService.updateChallenge(gameId, challengeId, request);
 
-        assertEquals(2, response.getUnlocksBaseIds().size());
-        assertTrue(response.getUnlocksBaseIds().contains(unlockTargetId1));
-        assertTrue(response.getUnlocksBaseIds().contains(unlockTargetId2));
+        assertEquals(2, response.unlocksBaseIds().size());
+        assertTrue(response.unlocksBaseIds().contains(unlockTargetId1));
+        assertTrue(response.unlocksBaseIds().contains(unlockTargetId2));
         assertEquals(2, challenge.getUnlocksBases().size());
     }
 
@@ -194,7 +194,7 @@ class ChallengeServiceTest {
 
         ChallengeResponse response = challengeService.updateChallenge(gameId, challengeId, request);
 
-        assertTrue(response.getUnlocksBaseIds().isEmpty());
+        assertTrue(response.unlocksBaseIds().isEmpty());
         assertTrue(challenge.getUnlocksBases().isEmpty());
     }
 
@@ -326,8 +326,8 @@ class ChallengeServiceTest {
 
         ChallengeResponse response = challengeService.updateChallenge(gameId, challengeId, request);
 
-        assertEquals(1, response.getUnlocksBaseIds().size());
-        assertTrue(response.getUnlocksBaseIds().contains(newUnlockId));
+        assertEquals(1, response.unlocksBaseIds().size());
+        assertTrue(response.unlocksBaseIds().contains(newUnlockId));
         assertNotNull(challenge.getUnlocksBases());
         assertEquals(1, challenge.getUnlocksBases().size());
         assertTrue(challenge.getUnlocksBases().stream().anyMatch(b -> b.getId().equals(newUnlockId)));
@@ -370,7 +370,7 @@ class ChallengeServiceTest {
         assertNotNull(response);
         assertEquals(
                 "Key is under the third rock. Tell the scouts only in person.",
-                response.getOperatorNotes()
+                response.operatorNotes()
         );
     }
 
@@ -392,7 +392,7 @@ class ChallengeServiceTest {
 
         ChallengeResponse response = challengeService.createChallenge(gameId, request);
 
-        assertNull(response.getOperatorNotes());
+        assertNull(response.operatorNotes());
     }
 
     @Test
@@ -413,7 +413,7 @@ class ChallengeServiceTest {
 
         ChallengeResponse response = challengeService.updateChallenge(gameId, challengeId, request);
 
-        assertEquals("Fresh replacement notes for the operator team", response.getOperatorNotes());
+        assertEquals("Fresh replacement notes for the operator team", response.operatorNotes());
         assertEquals("Fresh replacement notes for the operator team", challenge.getOperatorNotes());
     }
 
@@ -435,7 +435,7 @@ class ChallengeServiceTest {
 
         ChallengeResponse response = challengeService.updateChallenge(gameId, challengeId, request);
 
-        assertNull(response.getOperatorNotes());
+        assertNull(response.operatorNotes());
         assertNull(challenge.getOperatorNotes());
     }
 
@@ -460,8 +460,8 @@ class ChallengeServiceTest {
 
         ChallengeResponse response = challengeService.updateChallenge(gameId, challengeId, request);
 
-        assertNotNull(response.getOperatorNotes());
-        assertFalse(response.getOperatorNotes().isBlank());
+        assertNotNull(response.operatorNotes());
+        assertFalse(response.operatorNotes().isBlank());
     }
 
     private UpdateChallengeRequest baseRequest() {
@@ -513,9 +513,9 @@ class ChallengeServiceTest {
         ChallengeResponse response = challengeService.createChallenge(gameId, request);
 
         assertNotNull(response);
-        assertNotNull(response.getTagIds());
-        assertEquals(2, response.getTagIds().size());
-        assertTrue(response.getTagIds().containsAll(List.of(tagId1, tagId2)));
+        assertNotNull(response.tagIds());
+        assertEquals(2, response.tagIds().size());
+        assertTrue(response.tagIds().containsAll(List.of(tagId1, tagId2)));
     }
 
     @Test
@@ -538,8 +538,8 @@ class ChallengeServiceTest {
 
         ChallengeResponse response = challengeService.updateChallenge(gameId, challengeId, request);
 
-        assertNotNull(response.getTagIds());
-        assertTrue(response.getTagIds().contains(tagId));
+        assertNotNull(response.tagIds());
+        assertTrue(response.tagIds().contains(tagId));
     }
 
     @Test
@@ -561,6 +561,6 @@ class ChallengeServiceTest {
 
         ChallengeResponse response = challengeService.createChallenge(gameId, request);
 
-        assertNull(response.getTagIds());
+        assertNull(response.tagIds());
     }
 }

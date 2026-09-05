@@ -545,7 +545,7 @@ class AuditExportServiceTest extends IntegrationTestBase {
         // Simulate a pre-V36 row: clear the snapshot but leave the FK.
         ActivityEvent checkInEvent = activityEventRepository.findByGameIdIncludingArchived(ctx.game.getId())
                 .stream()
-                .filter(e -> e.type() == ActivityEventType.check_in)
+                .filter(e -> e.getType() == ActivityEventType.check_in)
                 .findFirst().orElseThrow();
         checkInEvent.setActorDisplayNameSnapshot(null);
         checkInEvent.setActorDeviceIdSnapshot(null);
@@ -572,7 +572,7 @@ class AuditExportServiceTest extends IntegrationTestBase {
         // Detach all actor information so the service has to emit "Unknown".
         ActivityEvent checkInEvent = activityEventRepository.findByGameIdIncludingArchived(ctx.game.getId())
                 .stream()
-                .filter(e -> e.type() == ActivityEventType.check_in)
+                .filter(e -> e.getType() == ActivityEventType.check_in)
                 .findFirst().orElseThrow();
         checkInEvent.setActorPlayer(null);
         checkInEvent.setActorOperatorUser(null);

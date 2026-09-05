@@ -77,7 +77,7 @@ class WaveBSecurityIntegrationTest extends IntegrationTestBase {
         ResponseEntity<PlayerAuthResponse> joinResp = restTemplate.postForEntity(
                 "/api/auth/player/join", join, PlayerAuthResponse.class);
         assertEquals(HttpStatus.OK, joinResp.getStatusCode());
-        String playerToken = joinResp.getBody().getToken();
+        String playerToken = joinResp.getBody().token();
 
         // Check in WITHOUT nfcToken: @Valid should fire, producing 400
         HttpHeaders headers = new HttpHeaders();
@@ -118,7 +118,7 @@ class WaveBSecurityIntegrationTest extends IntegrationTestBase {
         join.setDeviceId("nfc-ok-dev-1");
         ResponseEntity<PlayerAuthResponse> joinResp = restTemplate.postForEntity(
                 "/api/auth/player/join", join, PlayerAuthResponse.class);
-        String playerToken = joinResp.getBody().getToken();
+        String playerToken = joinResp.getBody().token();
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + playerToken);
@@ -151,7 +151,7 @@ class WaveBSecurityIntegrationTest extends IntegrationTestBase {
         ResponseEntity<PlayerAuthResponse> firstResp = restTemplate.postForEntity(
                 "/api/auth/player/join", first, PlayerAuthResponse.class);
         assertEquals(HttpStatus.OK, firstResp.getStatusCode());
-        assertEquals(teamA.getId(), firstResp.getBody().getTeam().getId());
+        assertEquals(teamA.getId(), firstResp.getBody().team().id());
 
         // Same device tries to switch to team B -- rejected.
         PlayerJoinRequest second = new PlayerJoinRequest();
@@ -179,13 +179,13 @@ class WaveBSecurityIntegrationTest extends IntegrationTestBase {
         ResponseEntity<PlayerAuthResponse> first = restTemplate.postForEntity(
                 "/api/auth/player/join", join, PlayerAuthResponse.class);
         assertEquals(HttpStatus.OK, first.getStatusCode());
-        UUID firstPlayerId = first.getBody().getPlayer().getId();
+        UUID firstPlayerId = first.getBody().player().id();
 
         // Rejoin on same team must succeed and return the same player row.
         ResponseEntity<PlayerAuthResponse> second = restTemplate.postForEntity(
                 "/api/auth/player/join", join, PlayerAuthResponse.class);
         assertEquals(HttpStatus.OK, second.getStatusCode());
-        assertEquals(firstPlayerId, second.getBody().getPlayer().getId());
+        assertEquals(firstPlayerId, second.getBody().player().id());
     }
 
     // ── 3) Rate limit ──────────────────────────────────────────────────
