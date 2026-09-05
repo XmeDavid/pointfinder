@@ -133,7 +133,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="safe-area flex h-dvh overflow-hidden">
       <IconRail showModes={false} />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="min-w-0 flex-1 flex flex-col overflow-hidden">
         <BillingWarningBanner />
         <main className="flex-1 relative overflow-hidden pb-14 md:pb-0">
           <FrozenBlocker>{children}</FrozenBlocker>
@@ -147,7 +147,7 @@ function GameLayout({ children, map = false }: { children: React.ReactNode; map?
   return (
     <div className={`flex h-dvh overflow-hidden ${map ? 'edge-to-edge-layout' : 'safe-area'}`}>
       <IconRail showModes={true} />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="min-w-0 flex-1 flex flex-col overflow-hidden">
         <BillingWarningBanner />
         <main className={`min-h-0 flex-1 relative overflow-hidden ${map ? '' : 'pb-14 md:pb-0'}`}>
           <FrozenBlocker>{children}</FrozenBlocker>
@@ -175,7 +175,7 @@ useAuthStore.subscribe((state, prevState) => {
 // ---------------------------------------------------------------------------
 // Router
 // ---------------------------------------------------------------------------
-const router = createBrowserRouter([{ element: <><PushIntake /><TagIntake /></>, children: [
+const router = createBrowserRouter([{ errorElement: <AppErrorFallback />, element: <><PushIntake /><TagIntake /></>, children: [
   ...playerRoutes,
   { path: "/tag/*", element: null },
   // ── Public routes ──────────────────────────────────────────────────────

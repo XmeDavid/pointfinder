@@ -248,3 +248,14 @@ left/right insets for landscape. Geometry checks and screenshots for portrait
 iPhone, Android three-button navigation, and landscape iPhone live in
 `web/e2e/operator-mobile.spec.ts`. These simulate inset values; physical device
 testing remains required for OS/WebView integration.
+
+### Phone operator workspace
+
+The mobile bar divides its available width evenly among dashboard, modes, native
+NFC, and profile. Language selection lives inside the profile menu, which opens
+outside the scrolling rail and clamps to the viewport safe area. Setup readiness
+and the content-panel action share a stacked layout on phones so they cannot
+overlap. Drawer actions wrap separately from its scrollable tab row. Bases,
+challenges, teams, and stages use `ListDetailLayout` to show one pane at a time on
+phones and preserve the split view on desktop. Include a setup-game fixture with
+the native NFC button; a browser-only live-game fixture misses these states.

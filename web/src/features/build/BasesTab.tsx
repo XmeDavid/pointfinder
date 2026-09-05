@@ -1,3 +1,4 @@
+import { ListDetailLayout } from '@/components/layout/ListDetailLayout'
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -107,9 +108,8 @@ export function BasesTab({ gameId }: BasesTabProps) {
   }, [bases, search])
 
   return (
-    <div className="flex flex-1 min-h-0">
-      {/* Left panel -- base list */}
-      <div className="w-56 border-r border-border flex flex-col shrink-0">
+    <ListDetailLayout selected={!!selectedBaseId} onBack={() => selectBase(null)} list={<>
+
         {/* Search */}
         <div className="p-2 border-b border-border">
           <SearchInput
@@ -149,10 +149,8 @@ export function BasesTab({ gameId }: BasesTabProps) {
             </div>
           )}
         </div>
-      </div>
+    </>}>
 
-      {/* Right panel -- detail */}
-      <div className="flex-1 overflow-y-auto">
         {selectedBaseId ? (
           <BaseDetail baseId={selectedBaseId} gameId={gameId} />
         ) : (
@@ -160,7 +158,6 @@ export function BasesTab({ gameId }: BasesTabProps) {
             {t('build.selectBasePrompt')}
           </div>
         )}
-      </div>
-    </div>
+    </ListDetailLayout>
   )
 }

@@ -1,3 +1,4 @@
+import { ListDetailLayout } from '@/components/layout/ListDetailLayout'
 import { useMemo } from 'react'
 import { GripVertical, Plus, Layers } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -133,9 +134,8 @@ export default function StagesTab({ gameId }: { gameId: string }) {
   }
 
   return (
-    <div className="flex flex-1 min-h-0" data-testid="stages-tab">
-      {/* Left panel -- stage list */}
-      <div className="w-56 border-r border-border flex flex-col shrink-0">
+    <ListDetailLayout data-testid="stages-tab" selected={!!selectedStageId} onBack={() => selectStage(null)} list={<>
+
         <div className="flex-1 overflow-y-auto p-1.5 space-y-0.5">
           {stages.map((stage) => (
             <StageListItem
@@ -165,10 +165,8 @@ export default function StagesTab({ gameId }: { gameId: string }) {
             New Stage
           </button>
         </div>
-      </div>
+    </>}>
 
-      {/* Right panel -- detail */}
-      <div className="flex-1 overflow-y-auto">
         {selectedStageId ? (
           <StageDetail stageId={selectedStageId} gameId={gameId} />
         ) : (
@@ -179,7 +177,6 @@ export default function StagesTab({ gameId }: { gameId: string }) {
             </div>
           </div>
         )}
-      </div>
-    </div>
+    </ListDetailLayout>
   )
 }

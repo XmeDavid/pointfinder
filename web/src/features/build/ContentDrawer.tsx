@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Plus, Shuffle, X } from 'lucide-react'
 import { useWorkspaceStore, type DrawerTab } from '@/stores/workspace'
 import { useCreateBase } from '@/hooks/mutations/useBaseMutations'
@@ -15,10 +16,10 @@ import { TeamsTab } from './TeamsTab'
 import StagesTab from './StagesTab'
 
 const tabs: Array<{ key: DrawerTab; label: string; newLabel: string }> = [
-  { key: 'bases', label: 'Bases', newLabel: 'New Base' },
-  { key: 'challenges', label: 'Challenges', newLabel: 'New Challenge' },
-  { key: 'teams', label: 'Teams', newLabel: 'New Team' },
-  { key: 'stages', label: 'Stages', newLabel: 'New Stage' },
+  { key: 'bases', label: 'bases', newLabel: 'newBase' },
+  { key: 'challenges', label: 'challenges', newLabel: 'newChallenge' },
+  { key: 'teams', label: 'teams', newLabel: 'newTeam' },
+  { key: 'stages', label: 'stages', newLabel: 'newStage' },
 ]
 
 interface ContentDrawerProps {
@@ -26,6 +27,7 @@ interface ContentDrawerProps {
 }
 
 export function ContentDrawer({ gameId }: ContentDrawerProps) {
+  const { t } = useTranslation()
   const drawerOpen = useWorkspaceStore((s) => s.drawerOpen)
   const drawerTab = useWorkspaceStore((s) => s.drawerTab)
   const setDrawerTab = useWorkspaceStore((s) => s.setDrawerTab)
@@ -99,9 +101,9 @@ export function ContentDrawer({ gameId }: ContentDrawerProps) {
       width="md:w-[70vw]"
     >
       {/* Header with tabs */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-border shrink-0">
+      <div className="flex min-w-0 flex-wrap items-center gap-2 px-3 py-3 border-b border-border shrink-0">
         {/* Tab group */}
-        <div className="flex items-center gap-1 bg-muted rounded-lg p-1" data-testid="drawer-tabs">
+        <div className="order-2 flex w-full min-w-0 items-center overflow-x-auto gap-1 bg-muted rounded-lg p-1 md:order-none md:w-auto" data-testid="drawer-tabs">
           {tabs.map(({ key, label }) => {
             const isActive = drawerTab === key
             return (
@@ -109,13 +111,13 @@ export function ContentDrawer({ gameId }: ContentDrawerProps) {
                 key={key}
                 onClick={() => setDrawerTab(key)}
                 data-testid={`tab-${key}`}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                className={`min-h-11 flex-1 shrink-0 whitespace-nowrap px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
                   isActive
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {label}
+                {t(`build.drawer.${label}`)}
               </button>
             )
           })}
@@ -128,10 +130,10 @@ export function ContentDrawer({ gameId }: ContentDrawerProps) {
           <button
             onClick={handleAutoAssign}
             data-testid="auto-assign-btn"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-muted text-muted-foreground hover:text-foreground border border-border transition-colors cursor-pointer"
+            className="inline-flex min-h-11 items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-muted text-muted-foreground hover:text-foreground border border-border transition-colors cursor-pointer"
           >
             <Shuffle className="h-3.5 w-3.5" />
-            Auto-assign
+            {t('build.drawer.autoAssign')}
           </button>
         )}
 
@@ -140,10 +142,10 @@ export function ContentDrawer({ gameId }: ContentDrawerProps) {
           <button
             onClick={handleNew}
             data-testid="new-entity-btn"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer"
+            className="inline-flex min-h-11 items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer"
           >
             <Plus className="h-3.5 w-3.5" />
-            {currentTabMeta.newLabel}
+            {t(`build.drawer.${currentTabMeta.newLabel}`)}
           </button>
         )}
 
@@ -151,14 +153,15 @@ export function ContentDrawer({ gameId }: ContentDrawerProps) {
         <button
           onClick={closeDrawer}
           data-testid="drawer-close"
-          className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+          aria-label={t('playerApp.common.close')}
+          className="h-11 w-11 shrink-0 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
         >
           <X className="h-4 w-4" />
         </button>
       </div>
 
       {/* Body */}
-      <div className="flex-1 flex min-h-0">
+      <div className="min-w-0 flex-1 flex min-h-0">
         <TabContent tab={drawerTab} gameId={gameId} />
       </div>
     </SlideDrawer>

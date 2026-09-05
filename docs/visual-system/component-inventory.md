@@ -349,3 +349,13 @@ repository root. Both browser and Tauri targets use these same components and
 `web/src/theme/theme.css`; generated variables come from
 `web/src/generated/design-tokens.css`. Product components live in the same
 frontend and should be reused across features.
+## Phone drawer list/detail (2026-09-05)
+
+Component: ListDetailLayout
+Status: canonical
+Location: `web/src/components/layout/ListDetailLayout.tsx`
+Modes: Operator Setup
+States: list, selected detail, empty/loading/error list content, desktop split view
+Notes: Phones show one pane at a time with a localized Back action. Desktop keeps
+the list beside the detail. Selection and mutations remain feature-owned. Used
+by bases, challenges, teams, and stages. Preview: `/dev/visual-system`.

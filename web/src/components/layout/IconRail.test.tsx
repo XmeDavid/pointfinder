@@ -1,26 +1,38 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { render, screen, within } from "@testing-library/react";
+import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { IconRail } from "./IconRail";
 import { useWorkspaceStore } from "@/stores/workspace";
+const platform = vi.hoisted(() => ({ native: false }));
+vi.mock('@/platform/runtime', () => ({ isNative: () => platform.native }));
 
 // Wrap in router + query client since IconRail uses useNavigate / useLocation and react-query
 function renderWithRouter(ui: React.ReactNode) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>{ui}</MemoryRouter>
+      <MemoryRouter initialEntries={['/game/g']}><Routes><Route path="/game/:id" element={ui} /></Routes></MemoryRouter>
     </QueryClientProvider>,
   );
 }
 
 describe("IconRail", () => {
   beforeEach(() => {
+    platform.native = false;
     useWorkspaceStore.setState({
       mode: "build",
       settingsPanelOpen: false,
     });
+  });
+
+  it('keeps native phone navigation to seven items with language inside profile', () => {
+    platform.native = true;
+    renderWithRouter(<IconRail showModes={true} />);
+    const nav = within(screen.getByTestId('icon-rail-mobile'));
+    expect(nav.getByTestId('nfc-tags-btn')).toBeInTheDocument();
+    expect(nav.getAllByRole('button')).toHaveLength(7);
+    expect(nav.queryByTestId('language-picker-btn')).not.toBeInTheDocument();
   });
 
   it("renders PF logo", () => {

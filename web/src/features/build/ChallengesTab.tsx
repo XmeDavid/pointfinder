@@ -1,3 +1,4 @@
+import { ListDetailLayout } from '@/components/layout/ListDetailLayout'
 import { useState, useMemo } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -150,9 +151,8 @@ export function ChallengesTab({ gameId }: ChallengesTabProps) {
   }, [challenges, search])
 
   return (
-    <div className="flex flex-1 min-h-0" data-testid="challenges-tab">
-      {/* Left panel -- challenge list */}
-      <div className="w-56 border-r border-border flex flex-col shrink-0">
+    <ListDetailLayout data-testid="challenges-tab" selected={!!selectedChallengeId} onBack={() => selectChallenge(null)} list={<>
+
         {/* Search */}
         <div className="p-2 border-b border-border">
           <SearchInput
@@ -195,10 +195,8 @@ export function ChallengesTab({ gameId }: ChallengesTabProps) {
             </div>
           )}
         </div>
-      </div>
+    </>}>
 
-      {/* Right panel -- detail */}
-      <div className="flex-1 overflow-y-auto">
         {selectedChallengeId ? (
           <ChallengeDetail
             challengeId={selectedChallengeId}
@@ -209,7 +207,6 @@ export function ChallengesTab({ gameId }: ChallengesTabProps) {
             {t('build.selectChallengePrompt')}
           </div>
         )}
-      </div>
-    </div>
+    </ListDetailLayout>
   )
 }

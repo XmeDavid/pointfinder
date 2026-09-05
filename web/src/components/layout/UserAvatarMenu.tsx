@@ -1,6 +1,7 @@
+import { cn } from '@/lib/utils'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { User, LogOut } from 'lucide-react'
+import { User, LogOut, Check, Globe } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth/store'
 import {
   DropdownMenu,
@@ -20,7 +21,7 @@ function getInitials(name: string): string {
 
 export function UserAvatarMenu({ className }: { className?: string }) {
   const navigate = useNavigate()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
 
@@ -29,13 +30,13 @@ export function UserAvatarMenu({ className }: { className?: string }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className={`w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-[11px] cursor-pointer hover:opacity-90 transition-opacity ${className ?? ''}`}
+        className={cn('w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-[11px] cursor-pointer hover:opacity-90 transition-opacity', className)}
         aria-label={t('profile.title', 'Profile')}
         data-testid="user-avatar-btn"
       >
         {initials}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="bottom-full mb-2 mt-0">
+      <DropdownMenuContent portal>
         <DropdownMenuItem
           onClick={() => navigate('/profile')}
           className="flex items-center gap-2"
@@ -44,6 +45,17 @@ export function UserAvatarMenu({ className }: { className?: string }) {
           <User size={14} />
           {t('profile.title', 'Profile')}
         </DropdownMenuItem>
+
+        <div className="h-px bg-border my-1" />
+
+        <div className="flex items-center gap-2 px-2 py-2 text-xs text-muted-foreground" data-testid="language-picker-btn">
+          <Globe size={14} aria-hidden />{t('playerApp.settings.language')}
+        </div>
+        {([{ code: 'en', label: 'English' }, { code: 'pt', label: 'Português' }, { code: 'de', label: 'Deutsch' }] as const).map(({ code, label }) => (
+          <DropdownMenuItem key={code} onClick={() => { void i18n.changeLanguage(code) }} className="min-h-11 justify-between gap-3">
+            {label}{(i18n.resolvedLanguage ?? i18n.language).startsWith(code) && <Check size={14} aria-hidden />}
+          </DropdownMenuItem>
+        ))}
 
         <div className="h-px bg-border my-1" />
 

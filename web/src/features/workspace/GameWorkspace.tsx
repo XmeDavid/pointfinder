@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
 import { useEffect, useRef, useMemo, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
@@ -30,6 +31,7 @@ interface PendingMapAction {
 }
 
 export function GameWorkspace() {
+  const { t } = useTranslation()
   const { id: gameId } = useParams<{ id: string }>()
 
   // --- Data queries ---
@@ -226,16 +228,18 @@ export function GameWorkspace() {
               exit={{ opacity: 0 }}
             >
               <ContentDrawer gameId={gameId!} />
-              <ReadinessIndicator gameId={gameId!} gameStatus={game.status} />
-              {!drawerOpen && (
-                <button
-                  onClick={() => openDrawer()}
-                  data-testid="open-content-panel"
-                  className="absolute bottom-20 md:bottom-4 right-16 z-20 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-lg hover:bg-primary/90 transition-colors cursor-pointer"
-                >
-                  Open Content Panel
-                </button>
-              )}
+              <div className="absolute bottom-20 md:bottom-4 left-3 right-16 z-20 flex max-h-[calc(100%-5rem)] flex-col items-start gap-2 overflow-y-auto md:flex-row md:items-end md:justify-between">
+                <ReadinessIndicator gameId={gameId!} gameStatus={game.status} />
+                {!drawerOpen && (
+                  <button
+                    onClick={() => openDrawer()}
+                    data-testid="open-content-panel"
+                    className="w-full shrink-0 md:ml-auto md:w-auto px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-lg hover:bg-primary/90 transition-colors cursor-pointer"
+                  >
+                    {t('build.openContent')}
+                  </button>
+                )}
+              </div>
             </motion.div>
           )}
           {mode === 'command' && (

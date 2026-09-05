@@ -49,7 +49,7 @@ export class ErrorBoundary extends Component<Props, State> {
  */
 export function AppErrorFallback() {
   return (
-    <div className="flex h-screen flex-col items-center justify-center gap-4 bg-background text-foreground">
+    <div className="safe-page flex min-h-dvh flex-col items-center justify-center gap-4 bg-background text-foreground text-center" role="alert" data-testid="app-error-fallback">
       <h1 className="text-2xl font-semibold">{i18n.t("errors.somethingWentWrong")}</h1>
       <p className="text-muted-foreground">{i18n.t("errors.unexpectedError")}</p>
       <button
@@ -58,6 +58,7 @@ export function AppErrorFallback() {
       >
         {i18n.t("errors.reload")}
       </button>
+      <a href="/" className="text-primary underline">{i18n.t('common.back')}</a>
     </div>
   );
 }

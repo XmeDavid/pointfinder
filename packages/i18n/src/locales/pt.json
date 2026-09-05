@@ -1160,6 +1160,20 @@
     "importBtn": "Importar"
   },
   "build": {
+    "openContent": "Abrir painel de conteúdo",
+    "mapLoading": "A carregar o mapa…",
+    "mapUnavailable": "Não foi possível carregar o mapa. Verifica a ligação e tenta novamente.",
+    "drawer": {
+      "bases": "Bases",
+      "challenges": "Desafios",
+      "teams": "Equipas",
+      "stages": "Etapas",
+      "newBase": "Nova base",
+      "newChallenge": "Novo desafio",
+      "newTeam": "Nova equipa",
+      "newStage": "Nova etapa",
+      "autoAssign": "Atribuir automaticamente"
+    },
     "mapActions": "Ações do mapa",
     "placeBaseHere": "Colocar base aqui",
     "searchBases": "Procurar bases...",

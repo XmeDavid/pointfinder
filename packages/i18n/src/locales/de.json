@@ -1160,6 +1160,20 @@
     "importBtn": "Importieren"
   },
   "build": {
+    "openContent": "Inhaltsbereich öffnen",
+    "mapLoading": "Karte wird geladen…",
+    "mapUnavailable": "Die Karte konnte nicht geladen werden. Prüfe deine Verbindung und versuche es erneut.",
+    "drawer": {
+      "bases": "Stationen",
+      "challenges": "Aufgaben",
+      "teams": "Teams",
+      "stages": "Etappen",
+      "newBase": "Neue Station",
+      "newChallenge": "Neue Aufgabe",
+      "newTeam": "Neues Team",
+      "newStage": "Neue Etappe",
+      "autoAssign": "Automatisch zuweisen"
+    },
     "mapActions": "Kartenaktionen",
     "placeBaseHere": "Station hier platzieren",
     "searchBases": "Basen suchen...",

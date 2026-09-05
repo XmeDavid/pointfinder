@@ -1,3 +1,4 @@
+import { ListDetailLayout } from '@/components/layout/ListDetailLayout'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTeams } from '@/hooks/queries/useTeams'
@@ -58,9 +59,8 @@ export function TeamsTab({ gameId }: TeamsTabProps) {
   )
 
   return (
-    <div className="flex flex-1 min-h-0" data-testid="teams-tab">
-      {/* Left panel -- team list */}
-      <div className="w-56 border-r border-border flex flex-col shrink-0">
+    <ListDetailLayout data-testid="teams-tab" selected={!!selectedTeamId} onBack={() => selectTeam(null)} list={<>
+
         <div className="flex-1 overflow-y-auto p-1.5 space-y-0.5">
           {isLoading && <Spinner />}
           {!isLoading && isError && (
@@ -88,10 +88,8 @@ export function TeamsTab({ gameId }: TeamsTabProps) {
             </div>
           )}
         </div>
-      </div>
+    </>}>
 
-      {/* Right panel -- detail */}
-      <div className="flex-1 overflow-y-auto">
         {selectedTeamId ? (
           <TeamDetail teamId={selectedTeamId} gameId={gameId} />
         ) : (
@@ -99,7 +97,6 @@ export function TeamsTab({ gameId }: TeamsTabProps) {
             {t('build.selectTeamPrompt')}
           </div>
         )}
-      </div>
-    </div>
+    </ListDetailLayout>
   )
 }

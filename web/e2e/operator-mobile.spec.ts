@@ -49,9 +49,108 @@ async function expectSafeControls(page: Page, selector: string, profile: typeof 
     expect(box!.y).toBeGreaterThanOrEqual(profile.top)
     expect(box!.y + box!.height).toBeLessThanOrEqual(profile.height - profile.bottom + 1)
     expect(box!.x).toBeGreaterThanOrEqual(profile.left)
-    expect(box!.x + box!.width).toBeLessThanOrEqual(profile.width - profile.right + 1)
+    await expect.poll(async () => {
+      const bounds = await control.boundingBox()
+      return bounds ? bounds.x + bounds.width : Infinity
+    }).toBeLessThanOrEqual(profile.width - profile.right + 1)
   }
 }
+
+async function setupOperator(page: Page, gameStatus: string, getBases = () => bases) {
+  await page.route('**/api/**', (route) => {
+    const path = new URL(route.request().url()).pathname
+    if (path.startsWith('/api/auth/')) return route.fulfill({ json: { accessToken: token, user } })
+    if (path === '/api/workspaces') return route.fulfill({ json: { personal: { tier: 'free', status: 'active', activeGames: 1 }, organizations: [] } })
+    if (path.startsWith('/api/quota/')) return route.fulfill({ json: { limits: { maxActiveGames: 10 }, usage: { currentActiveGames: 1 } } })
+    if (path === '/api/games/g') return route.fulfill({ json: { ...game, status: gameStatus } })
+    if (path === '/api/games') return route.fulfill({ json: [{ ...game, status: gameStatus }] })
+    if (path === '/api/games/g/bases') return route.fulfill({ json: getBases() })
+    if (path === '/api/games/g/bases/b1') return route.fulfill({ json: bases[0] })
+    return route.fulfill({ json: [] })
+  })
+  await page.goto('/login')
+  await page.getByTestId('login-email').fill(user.email)
+  await page.getByTestId('login-password').fill('test-password')
+  await page.getByTestId('login-submit').click()
+  await expect(page).toHaveURL(/\/dashboard$/)
+  await page.goto('/game/g')
+  await expect(page.getByTestId('icon-rail-mobile')).toBeVisible()
+}
+
+test('setup controls, native NFC navigation, profile languages and the drawer fit a phone', async ({ page }, info) => {
+  test.skip(info.project.name !== 'native-shell', 'Phone layout uses the native artifact')
+  let currentBases: typeof bases = []
+  await setupOperator(page, 'setup', () => currentBases)
+  await expect(page.getByTestId('readiness-indicator')).toBeVisible()
+  const nav = page.getByTestId('icon-rail-mobile')
+  // Services are browser-backed in this harness. Enable only native presentation
+  // after bootstrap to include the extra NFC button; this is not an IPC test.
+  await page.evaluate(() => Object.defineProperty(window, '__TAURI_INTERNALS__', { configurable: true, value: {
+    invoke: async () => ({}), transformCallback: () => 0, unregisterCallback: () => {},
+  } }))
+  await nav.getByRole('button', { name: 'Build', exact: true }).click()
+  await expect(page.getByTestId('nfc-tags-btn')).toBeVisible()
+  await page.evaluate(() => Reflect.deleteProperty(window, '__TAURI_INTERNALS__'))
+  for (const width of [360, 390]) {
+    const profile = { ...safeProfiles[0], width }
+    await simulateSafeArea(page, profile)
+    await expectSafeControls(page, '[data-testid="icon-rail-mobile"] button', profile)
+    const readiness = await page.getByTestId('readiness-indicator').boundingBox()
+    const action = await page.getByTestId('open-content-panel').boundingBox()
+    expect(readiness!.y + readiness!.height).toBeLessThanOrEqual(action!.y)
+    expect(readiness!.x).toBeGreaterThanOrEqual(0)
+    expect(action!.x + action!.width).toBeLessThanOrEqual(width)
+    await page.screenshot({ path: `test-results/phone-setup-${width}.png` })
+  }
+  await nav.getByTestId('user-avatar-btn').click()
+  await expect(page.getByText('Deutsch', { exact: true })).toBeVisible()
+  await expectSafeControls(page, '[data-dropdown] button', safeProfiles[0])
+  await page.getByRole('button', { name: 'Deutsch', exact: true }).click()
+  await expect(page.locator('html')).toHaveAttribute('lang', 'de')
+  await nav.getByTestId('user-avatar-btn').click()
+  await page.screenshot({ path: 'test-results/phone-profile-languages.png' })
+  await page.getByRole('button', { name: 'English', exact: true }).click()
+  await page.getByTestId('open-content-panel').click()
+  await expectSafeControls(page, '[data-testid="slide-drawer"] button', safeProfiles[0])
+  await expect(page.getByText('No bases yet', { exact: true })).toBeVisible()
+  await expect(page.getByText('Select a base to view details', { exact: true })).not.toBeVisible()
+  await noSidewaysScroll(page)
+  await page.screenshot({ path: 'test-results/phone-empty-drawer.png' })
+  await page.getByTestId('drawer-close').click()
+
+  currentBases = bases
+  await page.reload()
+  await simulateSafeArea(page, safeProfiles[0])
+  await page.getByTestId('open-content-panel').click()
+  await page.getByTestId('base-item-b1').click()
+  await expect(page.getByTestId('base-list')).not.toBeVisible()
+  await expect(page.getByTestId('detail-back')).toBeVisible()
+  await noSidewaysScroll(page)
+  await page.screenshot({ path: 'test-results/phone-base-detail.png' })
+  await page.getByTestId('detail-back').click()
+  await expect(page.getByTestId('base-item-b1')).toBeVisible()
+})
+
+test('failed map and route imports provide recovery instead of a blank or developer screen', async ({ page }, info) => {
+  test.skip(info.project.name !== 'native-shell', 'Native artifact recovery check')
+  let failMap = true
+  await page.route('https://tiles.openfreemap.org/styles/liberty', (route) => failMap ? route.abort() : route.fulfill({ json: {
+    version: 8, sources: {}, layers: [{ id: 'background', type: 'background', paint: { 'background-color': '#e5e7eb' } }],
+  } }))
+  await setupOperator(page, 'setup')
+  await simulateSafeArea(page, safeProfiles[0])
+  await expect(page.getByTestId('map-load-status')).toContainText('The map could not load')
+  failMap = false
+  await page.getByTestId('map-load-status').getByRole('button', { name: 'Retry' }).click()
+  await expect(page.getByTestId('map-load-status')).toHaveCount(0)
+  await page.route('**/assets/ProfilePage-*.js', (route) => route.abort())
+  await page.getByTestId('icon-rail-mobile').getByTestId('user-avatar-btn').click()
+  await page.getByTestId('menu-profile').click()
+  await expect(page.getByTestId('app-error-fallback')).toBeVisible()
+  await expect(page.getByTestId('app-error-fallback').getByRole('button', { name: 'Reload' })).toBeVisible()
+  await expect(page.getByText(/Hey developer/)).toHaveCount(0)
+  await expectSafeControls(page, '[data-testid="app-error-fallback"] button, [data-testid="app-error-fallback"] a', safeProfiles[0])
+})
 
 test('operator dashboard, workspace and NFC page fit a phone', async ({ page }, info) => {
   test.skip(info.project.name !== 'native-shell', 'Phone audit runs against the native artifact project')

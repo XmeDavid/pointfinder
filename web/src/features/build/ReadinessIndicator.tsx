@@ -97,19 +97,20 @@ export default function ReadinessIndicator({
 
   return (
     <div
-      className="absolute bottom-20 md:bottom-4 left-4 md:left-16 z-20"
+      className="w-full min-w-0 md:w-auto md:max-w-sm"
       data-testid="readiness-indicator"
     >
       <GlassPanel>
         <motion.div
           layout
-          className="rounded-xl overflow-hidden cursor-pointer"
-          style={{ width: expanded ? 300 : 200 }}
+          className="w-full rounded-xl overflow-hidden md:w-72"
           transition={{ duration: 0.25, ease: 'easeInOut' }}
         >
           {/* Collapsed header -- always visible */}
-          <div
-            className="flex items-center gap-3 px-3 py-3"
+          <button
+            type="button"
+            aria-expanded={expanded}
+            className="flex w-full items-center gap-3 px-3 py-3 text-left"
             onClick={() => setExpanded((prev) => !prev)}
             data-testid="readiness-toggle"
           >
@@ -158,7 +159,7 @@ export default function ReadinessIndicator({
                 ? 'Ready to launch'
                 : `${total - passed} items remaining`}
             </span>
-          </div>
+          </button>
 
           {/* Expanded checklist */}
           <AnimatePresence initial={false}>

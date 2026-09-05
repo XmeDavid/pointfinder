@@ -1160,6 +1160,20 @@
     "importBtn": "Import"
   },
   "build": {
+    "openContent": "Open Content Panel",
+    "mapLoading": "Loading map…",
+    "mapUnavailable": "The map could not load. Check your connection and try again.",
+    "drawer": {
+      "bases": "Bases",
+      "challenges": "Challenges",
+      "teams": "Teams",
+      "stages": "Stages",
+      "newBase": "New Base",
+      "newChallenge": "New Challenge",
+      "newTeam": "New Team",
+      "newStage": "New Stage",
+      "autoAssign": "Auto-assign"
+    },
     "mapActions": "Map actions",
     "placeBaseHere": "Place base here",
     "searchBases": "Search bases...",

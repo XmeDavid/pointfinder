@@ -9,8 +9,6 @@ import {
   Settings,
   Sun,
   Moon,
-  Globe,
-  Check,
   FolderOpen,
   Shield,
   Nfc,
@@ -20,12 +18,6 @@ import {
   type GameMode,
 } from "@/stores/workspace";
 import { cn } from "@/lib/utils";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { useWorkspaceContext } from "@/stores/workspaceContext";
 import { useAuthStore } from "@/lib/auth/store";
@@ -33,51 +25,6 @@ import { UserAvatarMenu } from "./UserAvatarMenu";
 
 import { isNative } from "@/platform";
 const THEME_KEY = "pointfinder-theme";
-
-const LANGUAGES = [
-  { code: "en", label: "English" },
-  { code: "pt", label: "Português" },
-  { code: "de", label: "Deutsch" },
-] as const;
-
-function LanguagePicker() {
-  const { i18n } = useTranslation();
-  const currentLang = (i18n.resolvedLanguage ?? i18n.language ?? "en").slice(
-    0,
-    2,
-  );
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        className="w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer text-muted-foreground hover:text-foreground hover:bg-accent"
-        aria-label="Change language"
-        data-testid="language-picker-btn"
-      >
-        <div className="relative">
-          <Globe size={18} />
-          <span className="absolute -bottom-1 -right-1.5 text-[8px] font-bold leading-none">
-            {currentLang.toUpperCase()}
-          </span>
-        </div>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        {LANGUAGES.map((lang) => (
-          <DropdownMenuItem
-            key={lang.code}
-            onClick={() => i18n.changeLanguage(lang.code)}
-            className="flex items-center justify-between gap-4"
-          >
-            {lang.label}
-            {currentLang === lang.code && (
-              <Check size={14} className="text-primary" />
-            )}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
 
 function useThemeToggle() {
   const [isDark, setIsDark] = useState(() => {
@@ -219,9 +166,6 @@ export function IconRail({ showModes }: IconRailProps) {
           </button>
         )}
 
-        {/* Language picker */}
-        <LanguagePicker />
-
         {/* Dark/light mode toggle */}
         <button
           onClick={toggleTheme}
@@ -260,13 +204,13 @@ export function IconRail({ showModes }: IconRailProps) {
 
       {/* Mobile: bottom tab bar */}
       <div
-        className="safe-bottom-nav md:hidden fixed bottom-0 left-0 right-0 flex flex-row items-center justify-center z-50 bg-card border-t border-border gap-3"
+        className="safe-bottom-nav md:hidden fixed bottom-0 left-0 right-0 grid grid-flow-col auto-cols-fr items-center z-50 bg-card border-t border-border"
         data-testid="icon-rail-mobile"
       >
         {/* PF Logo */}
         <button
           onClick={() => navigate("/dashboard")}
-          className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs shrink-0 hover:opacity-90 transition-opacity cursor-pointer"
+          className="mx-auto w-11 h-11 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs shrink-0 hover:opacity-90 transition-opacity cursor-pointer"
           aria-label="Dashboard"
         >
           PF
@@ -275,9 +219,6 @@ export function IconRail({ showModes }: IconRailProps) {
         {/* Mode icons -- only when showModes is true */}
         {showModes && (
           <>
-            {/* Separator */}
-            <div className="h-6 w-px bg-border" />
-
             {modeIcons.map(({ mode, Icon, label }) => (
               <ModeButton
                 key={mode}
@@ -285,7 +226,7 @@ export function IconRail({ showModes }: IconRailProps) {
                 label={label}
                 isActive={store.mode === mode}
                 onClick={() => store.setMode(mode)}
-                sizeClass="w-10 h-10"
+                sizeClass="w-full h-11"
               />
             ))}
           </>
@@ -296,7 +237,7 @@ export function IconRail({ showModes }: IconRailProps) {
           <button
             type="button"
             onClick={() => navigate(`/game/${encodeURIComponent(routeGameId)}/nfc`)}
-            className="w-10 h-10 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent"
+            className="w-full h-11 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent"
             aria-label={t("playerApp.nfcWrite.title")}
             data-testid="nfc-tags-btn"
           >
@@ -304,14 +245,8 @@ export function IconRail({ showModes }: IconRailProps) {
           </button>
         )}
 
-        {/* Push remaining icons to the right */}
-        <div className="flex-1" />
-
-        {/* Language picker */}
-        <LanguagePicker />
-
         {/* User avatar menu (profile + logout) */}
-        <UserAvatarMenu />
+        <UserAvatarMenu className="mx-auto w-11 h-11" />
       </div>
     </>
   );

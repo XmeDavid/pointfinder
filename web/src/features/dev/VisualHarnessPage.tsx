@@ -41,6 +41,7 @@ import { designSystemVersion } from '@/generated/designTokens'
 import { previewScenarios } from '@/generated/previewScenarios'
 import { ResultsStat, ResultsSummary } from '@/components/results/ResultsSummary'
 import { BroadcastPanel } from '@/components/broadcast/BroadcastPanel'
+import { ListDetailLayout } from '@/components/layout/ListDetailLayout'
 
 const gameStatuses: GameStatus[] = ['setup', 'live', 'ended']
 const submissionStatuses: SubmissionStatus[] = [
@@ -97,6 +98,19 @@ function SafeAreaPreview() {
   )
 }
 
+function ListDetailPreview() {
+  const [selected, setSelected] = useState(false)
+  return (
+    <div className="flex h-80 overflow-hidden rounded-lg border border-border">
+      <ListDetailLayout selected={selected} onBack={() => setSelected(false)} list={
+        <Button variant="ghost" className="m-2" onClick={() => setSelected(true)}>Forest checkpoint</Button>
+      }>
+        <div className="p-4 text-sm">{selected ? 'Selected checkpoint details use the full phone width. Back returns to the list.' : 'Select a checkpoint to view details.'}</div>
+      </ListDetailLayout>
+    </div>
+  )
+}
+
 function HarnessSection({
   title,
   children,
@@ -140,6 +154,9 @@ export function VisualHarnessPage() {
         <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
           <HarnessSection title="Native safe areas">
             <SafeAreaPreview />
+          </HarnessSection>
+          <HarnessSection title="Phone list and detail navigation">
+            <ListDetailPreview />
           </HarnessSection>
           <HarnessSection title="Buttons">
             <div className="flex flex-wrap items-center gap-2">
