@@ -6,6 +6,7 @@ import { useAuthStore } from '@/lib/auth/store'
 import { listenForTags } from '@/platform/nfc'
 import { listenForLinks } from '@/platform/deepLinks'
 import { kv } from '@/platform'
+import { ArrivalToast } from '@/features/player/components/ArrivalToast'
 
 const PENDING_TAG = 'pending-tag'
 export function TagIntake() {
@@ -42,5 +43,5 @@ export function TagIntake() {
     }
     return () => { disposed = true; controller.abort(); unsubs.forEach((off) => off()) }
   }, [auth.kind, operator, navigate, location.pathname, location.search])
-  return <Outlet />
+  return <><ArrivalToast /><Outlet /></>
 }

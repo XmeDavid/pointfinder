@@ -343,8 +343,8 @@ Component: QrScannerOverlay
 Status: canonical
 Location: `web/src/features/player/components/QrScannerOverlay.tsx`
 Modes: Auth / Onboarding, Player Field
-States: scanning, cancel
-Notes: Tauri windowed-camera chrome with a safe-area-aware Back action and transparent scan target. Camera permission and scanner lifecycle remain in the platform boundary.
+States: scanning, cancel, join caption, base check-in caption
+Notes: Tauri windowed-camera chrome with a safe-area-aware Back action and transparent scan target. The caller supplies `caption` and an optional `testId`; the default test id stays `player-qr-scanner` and the Back action keeps `player-join-scan-back-btn`. Camera permission and scanner lifecycle remain in the platform boundary.
 
 Component: NfcLinkControl
 Status: canonical
@@ -447,3 +447,30 @@ States: no radius, radius ring, unplaced base (no ring)
 Notes: The check-in radius is drawn as a faint info-toned fill and line from a
 GeoJSON polygon approximation. Geometry is a pure, tested function; the map
 component stays a thin renderer.
+
+## Player check-in methods (2026-09-05)
+
+Component: LocationCheckInPanel
+Status: canonical
+Location: `web/src/features/player/components/LocationCheckInPanel.tsx`
+Modes: Player Field
+States: locating, permission denied with open-settings, far (distance), near but
+inexact (accuracy), arrived, sensor unavailable, claim disabled with hint, claim
+enabled, claim busy, long localized copy
+Notes: Reads the shared player location store; it never starts a watch of its own.
+The panel reports, it does not check in: the runtime arrival detector owns the
+automatic proof. "I'm here" sends a claimed geo proof with the dwell buffer and is
+disabled until the dwell rule passes. Test ids `player-location-panel` and
+`player-im-here-btn`. See `docs/specs/2026-09-05-check-in-methods-design.md`.
+
+Component: ArrivalToast
+Status: canonical
+Location: `web/src/features/player/components/ArrivalToast.tsx`
+Modes: Player Field
+States: synced named base, synced hidden base discovered, queued offline without a
+name, several notices stacked, dismissed, long localized copy
+Notes: Rendered once above the router outlet in `TagIntake`, so an arrival that
+happens on the map, in the logbook, or at another base is never missed. Notices
+come from `web/src/app/player/arrivalNotices.ts`; the component holds no timers and
+adds no entrance animation, so reduced-motion behaviour is unchanged. Test id
+`player-arrival-notice`.

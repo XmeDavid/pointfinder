@@ -54,3 +54,22 @@ export async function watchLocation(onPosition: (position: LocationPosition) => 
   void start()
   return () => { alive = false; off(); pause() }
 }
+
+/**
+ * Take the player to the OS screen where location permission can be restored.
+ *
+ * `@tauri-apps/plugin-geolocation` exposes only `checkPermissions`,
+ * `requestPermissions`, `watchPosition`, `getCurrentPosition` and `clearWatch`;
+ * it has no settings entry point. The barcode-scanner plugin's `openAppSettings`
+ * opens this application's own system settings page, which is the same screen
+ * that lists location permission on both iOS and Android, so we reuse it here.
+ * Failures are swallowed: the panel already tells the player what to do.
+ */
+export async function openLocationSettings(): Promise<void> {
+  if (!isNative()) return
+  try {
+    await (await import('@tauri-apps/plugin-barcode-scanner')).openAppSettings()
+  } catch {
+    /* No settings screen is reachable; the denied copy stays on screen. */
+  }
+}

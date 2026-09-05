@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, screen, waitFor } from '@testing-library/react'
 import { useNavigate } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
@@ -6,6 +6,9 @@ import { http, HttpResponse } from 'msw'
 import { server } from '@/test/msw/server'
 import { renderPlayer } from '@/features/player/test/renderPlayer'
 import BaseScreen from './BaseScreen'
+import * as platform from '@/platform'
+import * as nfc from '@/platform/nfc'
+import * as geolocation from '@/platform/geolocation'
 
 const NOT_VISITED = { baseId: 'b1', challengeTitle: 'The old mill', lat: 40.09, lng: -8.87, nfcLinked: true, checkInMethod: 'NFC', checkInRadiusM: 15, status: 'not_visited', checkedInAt: null, challengeId: 'c1', submissionStatus: null }
 
@@ -289,4 +292,132 @@ it('allows a fresh route check-in even when its answer is already queued', async
   })
   await waitFor(() => expect(screen.getAllByRole('status').some((s) => s.textContent?.includes("You're in!"))).toBe(true))
   expect((await services.queue.list()).filter((a) => a.type === 'check_in')).toEqual([])
+})
+
+describe('BaseScreen check-in methods', () => {
+  // The services provider starts the player runtime, which owns the real watch;
+  // jsdom has no geolocation, so keep that watch inert here.
+  beforeEach(() => {
+    vi.spyOn(geolocation, 'watchLocation').mockResolvedValue(() => {})
+  })
+  afterEach(() => vi.restoreAllMocks())
+
+  /** Same stateful fixture as above, with the method fields the player DTO now carries. */
+  function methodOverride(method: 'NFC' | 'QR' | 'LOCATION', baseId = 'b1') {
+    const progress = [{ ...NOT_VISITED, baseId, checkInMethod: method, checkInRadiusM: 20 }]
+    server.use(
+      http.get('/api/player/games/:gameId/data', () => HttpResponse.json({
+        gameStatus: 'live', unlockTrigger: 'CHECK_IN',
+        bases: [{ id: baseId, gameId: 'g1', lat: 40.09, lng: -8.87, nfcLinked: method === 'NFC', hidden: false, fixedChallengeId: null, checkInMethod: method, checkInRadiusM: 20 }],
+        challenges: [{ id: 'c1', gameId: 'g1', title: 'The old mill', description: 'Count the wheels', content: '<p>How many wheels?</p>', answerType: 'text', points: 10 }],
+        assignments: [{ id: 'a1', gameId: 'g1', baseId, challengeId: 'c1', teamId: null }],
+        progress,
+      })),
+      http.get('/api/games/:gameId/snapshot', () => HttpResponse.json({
+        stateVersion: 1, serverTime: '2026-09-05T10:30:00Z', game: { id: 'g1', name: 'Serra da Estrela', status: 'live' },
+        team: { id: 'team1', name: 'Falcons', memberCount: 4 }, progress, submissions: [], uploadSessions: [],
+      })),
+    )
+  }
+
+  const QR_BASE = '00000000-0000-4000-8000-0000000000b1'
+
+  it('sends a qr proof for the scanned code at a QR base', async () => {
+    methodOverride('QR', QR_BASE)
+    const bodies: Array<Record<string, unknown>> = []
+    server.use(http.post('/api/player/games/:gameId/bases/:baseId/check-in', async ({ params, request }) => {
+      bodies.push((await request.json()) as Record<string, unknown>)
+      return HttpResponse.json({ checkInId: 'ci-qr', baseId: params.baseId, checkedInAt: '2026-09-05T10:45:00Z' })
+    }))
+    vi.spyOn(platform, 'isNative').mockReturnValue(true)
+    const qr = await import('@/platform/qr')
+    vi.spyOn(qr, 'scanQr').mockResolvedValue(`https://pointfinder.pt/tag/${QR_BASE}?t=code1`)
+    await renderPlayer(<BaseScreen />, { route: `/base/${QR_BASE}`, path: '/base/:baseId' })
+
+    await userEvent.click(await screen.findByTestId('player-scan-qr-btn'))
+    await waitFor(() => expect(bodies).toHaveLength(1))
+    expect(bodies[0]).toEqual({ method: 'qr', token: 'code1' })
+  })
+
+  it('refuses a code printed for another base', async () => {
+    methodOverride('QR', QR_BASE)
+    const sent = vi.fn()
+    server.use(http.post('/api/player/games/:gameId/bases/:baseId/check-in', () => { sent(); return HttpResponse.json({}) }))
+    vi.spyOn(platform, 'isNative').mockReturnValue(true)
+    const qr = await import('@/platform/qr')
+    vi.spyOn(qr, 'scanQr').mockResolvedValue('https://pointfinder.pt/tag/00000000-0000-4000-8000-0000000000b9?t=other')
+    await renderPlayer(<BaseScreen />, { route: `/base/${QR_BASE}`, path: '/base/:baseId' })
+
+    await userEvent.click(await screen.findByTestId('player-scan-qr-btn'))
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('That code belongs to a different base.'))
+    expect(sent).not.toHaveBeenCalled()
+  })
+
+  it('shows the live location panel instead of a tag button at a location base', async () => {
+    methodOverride('LOCATION')
+    vi.spyOn(platform, 'isNative').mockReturnValue(true)
+    const { useLocationStore } = await import('@/app/player/locationStore')
+    useLocationStore.setState({ fix: { lat: 40.098, lng: -8.87, accuracy: 8, capturedAt: Date.now() }, heading: null, status: 'watching', claimable: {}, dwell: {} })
+    await renderPlayer(<BaseScreen />, { route: '/base/b1', path: '/base/:baseId' })
+
+    expect(await screen.findByTestId('player-location-panel')).toHaveTextContent(/About \d+ m away/)
+    expect(screen.queryByTestId('player-tap-nfc-btn')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('player-scan-qr-btn')).not.toBeInTheDocument()
+  })
+
+  it('sends a claimed geo proof with the dwell buffer when the player says they are here', async () => {
+    methodOverride('LOCATION')
+    const bodies: Array<Record<string, unknown>> = []
+    server.use(http.post('/api/player/games/:gameId/bases/:baseId/check-in', async ({ params, request }) => {
+      bodies.push((await request.json()) as Record<string, unknown>)
+      return HttpResponse.json({ checkInId: 'ci-claim', baseId: params.baseId, checkedInAt: '2026-09-05T10:45:00Z' })
+    }))
+    vi.spyOn(platform, 'isNative').mockReturnValue(true)
+    const { useLocationStore } = await import('@/app/player/locationStore')
+    const dwell = [
+      { lat: 40.0903, lng: -8.87, accuracy: 80, capturedAt: 1_700_000_000_000 },
+      { lat: 40.0903, lng: -8.87, accuracy: 80, capturedAt: 1_700_000_020_000 },
+      { lat: 40.0903, lng: -8.87, accuracy: 80, capturedAt: 1_700_000_040_000 },
+      { lat: 40.0903, lng: -8.87, accuracy: 80, capturedAt: 1_700_000_070_000 },
+    ]
+    useLocationStore.setState({
+      fix: { lat: 40.0903, lng: -8.87, accuracy: 80, capturedAt: 1_700_000_070_000 },
+      heading: null, status: 'watching', claimable: { b1: true }, dwell: { b1: dwell },
+    })
+    await renderPlayer(<BaseScreen />, { route: '/base/b1', path: '/base/:baseId' })
+
+    await userEvent.click(await screen.findByTestId('player-im-here-btn'))
+    await waitFor(() => expect(bodies).toHaveLength(1))
+    expect(bodies[0]).toMatchObject({ method: 'geo', claimed: true, lat: 40.0903, lng: -8.87, accuracy: 80 })
+    expect((bodies[0] as { dwell: unknown[] }).dwell).toHaveLength(4)
+  })
+
+  it('keeps the NFC button and its behaviour at an NFC base', async () => {
+    methodOverride('NFC')
+    const bodies: Array<Record<string, unknown>> = []
+    server.use(http.post('/api/player/games/:gameId/bases/:baseId/check-in', async ({ params, request }) => {
+      bodies.push((await request.json()) as Record<string, unknown>)
+      return HttpResponse.json({ checkInId: 'ci-nfc', baseId: params.baseId, checkedInAt: '2026-09-05T10:45:00Z' })
+    }))
+    vi.spyOn(platform, 'isNative').mockReturnValue(true)
+    vi.spyOn(nfc, 'scanTag').mockResolvedValue({ tag: { baseId: 'b1', token: 'tag1' }, raw: { id: null, url: null, records: [] } } as never)
+    await renderPlayer(<BaseScreen />, { route: '/base/b1', path: '/base/:baseId' })
+
+    await userEvent.click(await screen.findByTestId('player-tap-nfc-btn'))
+    await waitFor(() => expect(bodies).toHaveLength(1))
+    expect(bodies[0]).toEqual({ method: 'nfc', token: 'tag1' })
+  })
+
+  it('uses the base method for a check-in arriving from a scanned link', async () => {
+    methodOverride('QR')
+    const bodies: Array<Record<string, unknown>> = []
+    server.use(http.post('/api/player/games/:gameId/bases/:baseId/check-in', async ({ params, request }) => {
+      bodies.push((await request.json()) as Record<string, unknown>)
+      return HttpResponse.json({ checkInId: 'ci-link', baseId: params.baseId, checkedInAt: '2026-09-05T10:45:00Z' })
+    }))
+    await renderPlayer(<BaseScreen />, { route: '/base/b1?token=linked', path: '/base/:baseId' })
+
+    await waitFor(() => expect(bodies).toHaveLength(1))
+    expect(bodies[0]).toEqual({ method: 'qr', token: 'linked' })
+  })
 })

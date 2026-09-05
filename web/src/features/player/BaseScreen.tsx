@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
-import { ChevronLeft, Nfc } from 'lucide-react'
-import { missingPreviousBase, proofTypeForMethod, type CheckInProof } from '@pointfinder/game-core'
+import { ChevronLeft, Nfc, QrCode } from 'lucide-react'
+import { insideWideRing, missingPreviousBase, parseTagUrl, proofTypeForMethod, type CheckInProof } from '@pointfinder/game-core'
 import { BaseSequenceBadge } from '@/components/status/BaseSequenceBadge'
 import { BaseRouteNotice } from './components/BaseRouteNotice'
 import type { SubmissionResponse } from '@pointfinder/api'
@@ -10,6 +10,7 @@ import { Alert, Button, Card, CardContent, CardDescription, CardHeader, CardTitl
 import { usePlayerGame, type ActionResult } from '@/features/player/usePlayerGame'
 import { challengeForBase } from '@/features/player/logbook'
 import { nfcErrorMessage, scanTag } from '@/platform/nfc'
+import { scanQr } from '@/platform/qr'
 import { isNative } from '@/platform'
 import { Screen } from '@/features/player/components/Screen'
 import { BaseStatusBadge } from '@/features/player/components/BaseStatusBadge'
@@ -17,8 +18,11 @@ import { RichContent } from '@/features/player/components/RichContent'
 import { SubmissionResult, type SubmissionOutcome } from '@/features/player/components/SubmissionResult'
 import { MediaAnswer } from '@/features/player/components/MediaAnswer'
 import { SyncBanner } from '@/features/player/components/SyncBanner'
+import { LocationCheckInPanel } from '@/features/player/components/LocationCheckInPanel'
+import { QrScannerOverlay } from '@/features/player/components/QrScannerOverlay'
 import { describeError } from '@/app/player/errors'
 import { useAuth } from '@/app/player/services'
+import { useLocationStore } from '@/app/player/locationStore'
 
 type Notice = { tone: 'success' | 'info' | 'warning' | 'destructive'; text: string }
 
@@ -47,11 +51,19 @@ function BaseContent() {
   const [lastSubmission, setLastSubmission] = useState<SubmissionResponse | null>(null)
   const [outcome, setOutcome] = useState<SubmissionOutcome | null>(null)
   const autoToken = useRef<string | null>(null)
+  const [scanning, setScanning] = useState(false)
+  const scanAbort = useRef<AbortController | null>(null)
+  const fix = useLocationStore((s) => s.fix)
+  const claimable = useLocationStore((s) => s.claimable[baseId] === true)
+  const dwell = useLocationStore((s) => s.dwell[baseId])
+  useEffect(() => () => scanAbort.current?.abort(), [])
 
   const entry = game.logbook?.entries.find((e) => e.baseId === baseId) ?? null
   const view = entry?.kind === 'open' ? entry.view : null
   const challenge = game.data && game.teamId ? challengeForBase(game.data, baseId, game.teamId) : null
   const status = view?.effectiveStatus ?? 'not_visited'
+  const method = view?.checkInMethod ?? 'NFC'
+  const radiusM = view?.checkInRadiusM ?? 15
   const needsCheckIn = status === 'not_visited' || Boolean(game.route?.enabled && !view?.checkedInAt && !game.pending.some((a) => a.type === 'check_in' && a.baseId === baseId && a.state !== 'failed'))
   const gameStatus = game.snapshot?.game.status ?? 'live'
   const gameLive = gameStatus === 'live'
@@ -113,9 +125,10 @@ function BaseContent() {
     if (token === null || scanKey === autoToken.current || !view || !needsCheckIn || !gameLive) return
     // A token in the link proves the tag or the printed code; the base says which.
     const mode = proofTypeForMethod(view.checkInMethod)
-    if (mode === 'geo') return
     autoToken.current = scanKey
     setParams({}, { replace: true })
+    // A location base has no token proof; the detector owns its check-in.
+    if (mode === 'geo') return
     // Kick the check-in off after this render commits rather than inside the effect body.
     const proof: CheckInProof = { type: mode, token }
     void Promise.resolve().then(() => checkInWith(proof))
@@ -144,9 +157,64 @@ function BaseContent() {
     }
   }
 
+  /** QR bases carry the same payload as the tag, read through the windowed camera. */
+  async function scanCode(): Promise<{ token: string } | null> {
+    scanAbort.current?.abort()
+    const controller = new AbortController()
+    scanAbort.current = controller
+    setScanning(true)
+    try {
+      // Let React paint the transparent overlay before the camera takes the webview.
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+      const text = await scanQr({ signal: controller.signal, windowed: true })
+      if (text === null) return null
+      const tag = parseTagUrl(text)
+      if (!tag) { setNotice({ tone: 'destructive', text: t('base.unknownTag') }); return null }
+      if (tag.baseId !== baseId) { setNotice({ tone: 'destructive', text: t('checkIn.wrongCode') }); return null }
+      return { token: tag.token ?? '' }
+    } catch (err) {
+      const code = (err as { code?: string }).code ?? 'failed'
+      setNotice({ tone: 'destructive', text: code === 'denied' ? t('join.cameraDisabled') : code === 'unavailable' ? t('join.scanUnavailable') : t('common.unknownError') })
+      return null
+    } finally {
+      if (scanAbort.current === controller) scanAbort.current = null
+      setScanning(false)
+    }
+  }
+
+  async function checkInByCode() {
+    setNotice(null)
+    const scanned = await scanCode()
+    if (scanned) await checkInWith({ type: 'qr', token: scanned.token })
+  }
+
+  /** The dwell-gated claim: accepted by the server but recorded as CLAIMED, not VERIFIED. */
+  async function claimPresence() {
+    setNotice(null)
+    if (!fix) return setNotice({ tone: 'warning', text: t('location.locating') })
+    await checkInWith({
+      type: 'geo',
+      lat: fix.lat,
+      lng: fix.lng,
+      accuracy: fix.accuracy,
+      capturedAt: new Date(fix.capturedAt).toISOString(),
+      claimed: true,
+      dwell: (dwell ?? []).map((f) => ({ lat: f.lat, lng: f.lng, accuracy: f.accuracy, capturedAt: new Date(f.capturedAt).toISOString() })),
+    })
+  }
+
   /** Challenges flagged requirePresenceToSubmit make the team tap the base tag again before sending. */
   async function confirmPresence(): Promise<boolean> {
     if (!needsPresence) return true
+    if (method === 'LOCATION') {
+      if (fix && view && insideWideRing(fix, { lat: view.lat, lng: view.lng }, radiusM)) return true
+      setNotice({ tone: 'destructive', text: t('solve.wrongBase', { name: entry?.kind === 'open' ? entry.title : '' }) })
+      return false
+    }
+    if (method === 'QR') {
+      const scanned = await scanCode()
+      return scanned !== null
+    }
     try {
       const { tag } = await scanTag(t, { baseTitle: entry?.kind === 'open' ? entry.title : undefined })
       if (!tag) { setNotice({ tone: 'destructive', text: t('nfc.invalid') }); return false }
@@ -199,6 +267,8 @@ function BaseContent() {
   const unlockedCount = game.unlocked.length
   const routeBlock = game.route ? missingPreviousBase(game.route, view ?? undefined) : null
 
+  if (scanning) return <QrScannerOverlay onBack={() => scanAbort.current?.abort()} caption={t('checkIn.scanQr')} testId="player-base-qr-scanner" />
+
   return (
     <Screen>
       <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground" onClick={() => game.clearUnlocked()}>
@@ -234,13 +304,31 @@ function BaseContent() {
             <Card>
               <CardHeader>
                 <CardTitle>{t('checkIn.title')}</CardTitle>
-                <CardDescription>{view.nfcLinked ? t('base.tapToCheckIn') : t('base.noNfc')}</CardDescription>
+                <CardDescription>
+                  {method === 'LOCATION' ? t('location.locating') : method === 'QR' ? t('checkIn.scanQr') : view.nfcLinked ? t('base.tapToCheckIn') : t('base.noNfc')}
+                </CardDescription>
               </CardHeader>
-              {view.nfcLinked && isNative() && gameLive && (
-                <CardContent>
-                  <Button size="lg" className="w-full text-base" disabled={busy} onClick={tapTag}>
-                    <Nfc className="mr-2 h-5 w-5" aria-hidden /> {busy ? t('checkIn.scanning') : t('checkIn.tapTag')}
-                  </Button>
+              {isNative() && gameLive && (
+                <CardContent className="flex flex-col gap-3">
+                  {method === 'NFC' && view.nfcLinked && (
+                    <Button size="lg" className="w-full text-base" disabled={busy} onClick={tapTag} data-testid="player-tap-nfc-btn">
+                      <Nfc className="mr-2 h-5 w-5" aria-hidden /> {busy ? t('checkIn.scanning') : t('checkIn.tapTag')}
+                    </Button>
+                  )}
+                  {method === 'QR' && (
+                    <Button size="lg" className="w-full text-base" disabled={busy} onClick={() => void checkInByCode()} data-testid="player-scan-qr-btn">
+                      <QrCode className="mr-2 h-5 w-5" aria-hidden /> {busy ? t('checkIn.scanning') : t('checkIn.scanQr')}
+                    </Button>
+                  )}
+                  {method === 'LOCATION' && (
+                    <LocationCheckInPanel
+                      baseId={baseId}
+                      base={{ lat: view.lat, lng: view.lng, radiusM }}
+                      onClaim={() => void claimPresence()}
+                      claimable={claimable}
+                      busy={busy}
+                    />
+                  )}
                 </CardContent>
               )}
             </Card>

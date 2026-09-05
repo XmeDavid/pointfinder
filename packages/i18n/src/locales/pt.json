@@ -1269,7 +1269,8 @@
       "invalidQr": "Esse código QR não é um código de entrada do PointFinder.",
       "scanUnavailable": "Ler códigos QR precisa da app no telemóvel. Escreve o código.",
       "openSettings": "Abrir definições",
-      "orEnterCode": "Ou introduz o código manualmente"
+      "orEnterCode": "Ou introduz o código manualmente",
+      "cameraDisabled": "O acesso à câmara está desligado. Ativa-o nas definições para ler códigos."
     },
     "login": {
       "title": "Entrar como operador",
@@ -1300,7 +1301,33 @@
       "scanning": "À procura da etiqueta…",
       "success": "Estás dentro!",
       "alreadyCheckedIn": "A tua equipa já fez check-in aqui.",
-      "queuedOffline": "Guardado. Vai sincronizar quando voltares a ter ligação."
+      "queuedOffline": "Guardado. Vai sincronizar quando voltares a ter ligação.",
+      "scanQr": "Ler código",
+      "wrongCode": "Esse código pertence a outra base.",
+      "imHere": "Estou aqui",
+      "imHereHint": "Fica perto da base durante um minuto para ativar isto.",
+      "arrived": "Chegaste a {{name}}",
+      "found": "Encontraste {{name}}",
+      "foundUnknown": "Encontraste uma base",
+      "claimed": "Check-in feito por proximidade. O teu operador consegue ver."
+    },
+    "location": {
+      "locating": "A procurar a tua posição…",
+      "denied": "A localização está desligada, esta base não pode abrir.",
+      "openSettings": "Abrir definições",
+      "far": "Cerca de {{meters}} m de distância",
+      "near": "Estás perto. Precisão do GPS ±{{accuracy}} m, sai para um sítio aberto",
+      "arrived": "Estás na base.",
+      "unavailable": "Este telemóvel não consegue indicar a posição agora.",
+      "basesWontUnlock": "A localização está desligada. As bases que abrem por posição não vão abrir."
+    },
+    "errors": {
+      "CHECK_IN_METHOD_MISMATCH": "Esta base usa outra forma de check-in.",
+      "CHECK_IN_TOKEN_INVALID": "Esse código não pertence a esta base.",
+      "CHECK_IN_FIX_TOO_COARSE": "O sinal de GPS está fraco. Sai para um sítio aberto e tenta outra vez.",
+      "CHECK_IN_FIX_STALE": "Essa posição é demasiado antiga. Espera por uma leitura de GPS recente.",
+      "CHECK_IN_OUT_OF_RANGE": "Estás a cerca de {{distance}} m. Aproxima-te até {{allowed}} m da base.",
+      "CHECK_IN_CLAIM_NOT_DWELLED": "Fica mais um pouco perto da base e tenta outra vez."
     },
     "sync": {
       "pending_one": "{{count}} ação à espera de sincronizar",
@@ -1475,11 +1502,11 @@
       "title": "Antes de Começar",
       "subtitle": "O PointFinder precisa de algumas permissões para a tua experiência de jogo.",
       "locationTitle": "Localização",
-      "locationDetail": "Mostra a tua equipa no mapa ao vivo para os operadores monitorizarem o jogo.",
+      "locationDetail": "Mostra a tua equipa no mapa ao vivo e abre bases que se desbloqueiam quando lá chegas.",
       "notificationsTitle": "Notificações",
       "notificationsDetail": "Envia atualizações de jogo e mensagens do operador.",
       "cameraTitle": "Câmara e Fotos",
-      "cameraDetail": "Lê códigos QR para entrar e submete fotos para desafios.",
+      "cameraDetail": "Lê códigos QR para entrar e fazer check-in nas bases, e submete fotos para desafios.",
       "footer": "Podes alterar estas permissões mais tarde nas Definições.",
       "continue": "Continuar"
     },

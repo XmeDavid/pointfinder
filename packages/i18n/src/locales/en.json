@@ -1269,7 +1269,8 @@
       "invalidQr": "That QR code isn't a PointFinder join code.",
       "scanUnavailable": "QR scanning needs the phone app. Type the code instead.",
       "openSettings": "Open settings",
-      "orEnterCode": "Or enter the code manually"
+      "orEnterCode": "Or enter the code manually",
+      "cameraDisabled": "Camera access is off. Enable it in settings to scan codes."
     },
     "login": {
       "title": "Operator sign in",
@@ -1300,7 +1301,33 @@
       "scanning": "Looking for the tag…",
       "success": "You're in!",
       "alreadyCheckedIn": "Your team already checked in here.",
-      "queuedOffline": "Saved. It will sync when you're back online."
+      "queuedOffline": "Saved. It will sync when you're back online.",
+      "scanQr": "Scan code",
+      "wrongCode": "That code belongs to a different base.",
+      "imHere": "I'm here",
+      "imHereHint": "Stay near the base for a minute to enable this.",
+      "arrived": "Arrived at {{name}}",
+      "found": "You found {{name}}",
+      "foundUnknown": "You found a base",
+      "claimed": "Checked in from nearby. Your operator can see it."
+    },
+    "location": {
+      "locating": "Finding your position…",
+      "denied": "Location is off, so this base can't unlock.",
+      "openSettings": "Open settings",
+      "far": "About {{meters}} m away",
+      "near": "You're close. GPS accuracy ±{{accuracy}} m, move into the open",
+      "arrived": "You're at the base.",
+      "unavailable": "This phone can't report a position right now.",
+      "basesWontUnlock": "Location is off. Bases that unlock by position will not open."
+    },
+    "errors": {
+      "CHECK_IN_METHOD_MISMATCH": "This base uses a different way to check in.",
+      "CHECK_IN_TOKEN_INVALID": "That code doesn't belong to this base.",
+      "CHECK_IN_FIX_TOO_COARSE": "Your GPS signal is too weak. Move into the open and try again.",
+      "CHECK_IN_FIX_STALE": "That position is too old. Wait for a fresh GPS reading.",
+      "CHECK_IN_OUT_OF_RANGE": "You're about {{distance}} m away. Get within {{allowed}} m of the base.",
+      "CHECK_IN_CLAIM_NOT_DWELLED": "Stay near the base a little longer, then try again."
     },
     "sync": {
       "pending_one": "{{count}} action waiting to sync",
@@ -1475,11 +1502,11 @@
       "title": "Before You Start",
       "subtitle": "PointFinder needs a few permissions to run your game experience.",
       "locationTitle": "Location",
-      "locationDetail": "Shows your team on the live map so operators can monitor the game.",
+      "locationDetail": "Shows your team on the live map and unlocks bases that open when you reach them.",
       "notificationsTitle": "Notifications",
       "notificationsDetail": "Delivers game updates and messages from your operator.",
       "cameraTitle": "Camera & Photos",
-      "cameraDetail": "Scan QR codes to join and submit photos for challenges.",
+      "cameraDetail": "Scan QR codes to join, check in at bases, and submit photos for challenges.",
       "footer": "You can change these permissions later in Settings.",
       "continue": "Continue"
     },

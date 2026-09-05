@@ -88,7 +88,7 @@ export default function Join() {
 
   if (disclosure === 'unknown') return <Screen>{null}</Screen>
   if (disclosure === 'show') return <PermissionDisclosure onContinue={() => void acceptDisclosure()} />
-  if (scanning) return <QrScannerOverlay onBack={() => scanAbort.current?.abort()} />
+  if (scanning) return <QrScannerOverlay onBack={() => scanAbort.current?.abort()} caption={t('join.scanQr')} />
 
   return (
     <Screen>

@@ -1,56 +1,35 @@
-import { useEffect, useRef, useState } from 'react'
-import { watchLocation, type LocationPosition } from '@/platform/geolocation'
+import { useEffect, useRef } from 'react'
 import { DEFAULT_SEND_POLICY, decideSend, type Fix } from '@pointfinder/game-core'
 import { useServices } from '@/app/player/services'
+import { useLocationStore, type LocationStatus } from '@/app/player/locationStore'
 
-export type LocationStatus = 'idle' | 'requesting' | 'watching' | 'denied' | 'unavailable'
+export type { LocationStatus }
 
 /**
- * Follows the phone while a game is live and reports the team's position to the operators.
- * Only fixes worth sending go out (accuracy, movement, heartbeat), so the operator map gets
- * one honest dot per team instead of the scatter the old apps produced.
+ * Reports the team's position to the operators from the shared location store.
+ * The watch itself belongs to the player runtime; this hook only decides which
+ * fixes are worth sending (accuracy, movement, heartbeat), so the operator map
+ * gets one honest dot per team instead of the scatter the old apps produced.
  */
 export function useTeamLocation(gameId: string | null, enabled: boolean) {
   const { client } = useServices()
-  const [fix, setFix] = useState<Fix | null>(null)
-  const [heading, setHeading] = useState<number | null>(null)
-  const [status, setStatus] = useState<LocationStatus>('idle')
+  const fix = useLocationStore((s) => s.fix)
+  const heading = useLocationStore((s) => s.heading)
+  const status = useLocationStore((s) => s.status)
   const lastSent = useRef<{ fix: Fix; at: number } | null>(null)
 
+  useEffect(() => { lastSent.current = null }, [gameId, enabled])
+
   useEffect(() => {
-    if (!gameId || !enabled) return
-    let stop: (() => void) | undefined
-    let cancelled = false
-
-    const onPosition = (p: LocationPosition | null, error?: string) => {
-      if (cancelled) return
-      if (!p) {
-        if (error) setStatus('unavailable')
-        return
-      }
-      const f: Fix = { lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy, capturedAt: p.timestamp }
-      setFix(f)
-      setHeading(p.coords.heading)
-      const now = Date.now()
-      const decision = decideSend(f, lastSent.current?.fix ?? null, lastSent.current?.at ?? null, now, DEFAULT_SEND_POLICY)
-      if (!decision.send) return
-      lastSent.current = { fix: f, at: now }
-      client.api.player
-        .updateLocation(gameId, { lat: f.lat, lng: f.lng, accuracy: f.accuracy, capturedAt: new Date(f.capturedAt).toISOString() })
-        .catch(() => { lastSent.current = null })
-    }
-
-    lastSent.current = null
-    void watchLocation(onPosition, (state) => { if (!cancelled) setStatus(state) }).then((off) => {
-      if (cancelled) off()
-      else stop = off
-    }).catch(() => { if (!cancelled) setStatus('unavailable') })
-
-    return () => {
-      cancelled = true
-      stop?.()
-    }
-  }, [client, gameId, enabled])
+    if (!gameId || !enabled || !fix) return
+    const now = Date.now()
+    const decision = decideSend(fix, lastSent.current?.fix ?? null, lastSent.current?.at ?? null, now, DEFAULT_SEND_POLICY)
+    if (!decision.send) return
+    lastSent.current = { fix, at: now }
+    client.api.player
+      .updateLocation(gameId, { lat: fix.lat, lng: fix.lng, accuracy: fix.accuracy, capturedAt: new Date(fix.capturedAt).toISOString() })
+      .catch(() => { lastSent.current = null })
+  }, [client, gameId, enabled, fix])
 
   return { fix, heading, status }
 }

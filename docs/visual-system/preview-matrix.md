@@ -10,6 +10,9 @@ Canonical scenarios come from `design-system/scenarios.json`: default, selected,
 | Semantic status and sync | yes | pending | pending |
 | Player field banners and submission states | pending | yes | yes |
 | Player onboarding and QR scanner chrome | partial | n/a | n/a |
+| Player location check-in panel: locating, denied, far, near, arrived, claim gating | pending | n/a | n/a |
+| Player arrival notice: named base, hidden base found, queued offline | pending | n/a | n/a |
+| Player map check-in radius rings and method-aware scan control | pending | n/a | n/a |
 | Player map chrome and detail states | pending | yes | yes |
 | Operator stats, review cards, and rescue actions | partial | yes | yes |
 | Operator setup readiness, resources, and launch | partial | yes | yes |

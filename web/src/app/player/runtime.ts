@@ -8,6 +8,8 @@ import { useAuthStore } from '@/lib/auth/store'
 import { HttpClient } from '@pointfinder/api'
 import { platformFetch } from '@/platform/http'
 import { apiOrigin } from '@/platform/config'
+import { refreshLocationWatch, startLocationStore } from './locationStore'
+import { playerGameIsLive, startArrivalDetector } from './arrival'
 
 /** App-level recovery continues even when no player gameplay screen is mounted. */
 export function startPlayerRuntime(services: AppServices, queries: QueryClient): () => void {
@@ -27,9 +29,16 @@ export function startPlayerRuntime(services: AppServices, queries: QueryClient):
     void queries.invalidateQueries({ refetchType: 'active' })
     void sync()
   }
-  const offForeground = onForeground(resume)
-  const offAuth = services.client.session.subscribe(() => { void sync() })
+  const offForeground = onForeground(() => { resume(); refreshLocationWatch() })
+  const offAuth = services.client.session.subscribe(() => { void sync(); refreshLocationWatch() })
   const offQueue = services.queue.onChange(() => { void sync() })
+  // The foreground watch belongs to the app, not the map screen: operators rely on
+  // team positions in every live game and arrivals must fire from any screen.
+  const offLocation = startLocationStore(() => playerGameIsLive(services, queries))
+  const offArrival = startArrivalDetector(services, queries)
+  const offCache = queries.getQueryCache().subscribe((event) => {
+    if (event.query.queryKey[0] === 'snapshot') refreshLocationWatch()
+  })
   window.addEventListener('online', resume)
   const timer = window.setInterval(() => void sync(), 15_000)
   const offPush = isNative() ? startPushRegistration({
@@ -74,5 +83,5 @@ export function startPlayerRuntime(services: AppServices, queries: QueryClient):
     void queries.invalidateQueries({ queryKey: ['player-notifications'] })
   }).then((off) => { if (alive) offNotification = off; else off() }).catch(() => {})
   void sync()
-  return () => { alive = false; offForeground(); offAuth(); offQueue(); offPush(); offNotification?.(); window.clearInterval(timer); window.removeEventListener('online', resume) }
+  return () => { alive = false; offForeground(); offAuth(); offQueue(); offPush(); offNotification?.(); offArrival(); offLocation(); offCache(); window.clearInterval(timer); window.removeEventListener('online', resume) }
 }

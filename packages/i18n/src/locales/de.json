@@ -1269,7 +1269,8 @@
       "invalidQr": "Dieser QR-Code ist kein PointFinder-Beitrittscode.",
       "scanUnavailable": "QR-Scannen braucht die Telefon-App. Gib stattdessen den Code ein.",
       "openSettings": "Einstellungen öffnen",
-      "orEnterCode": "Oder den Code manuell eingeben"
+      "orEnterCode": "Oder den Code manuell eingeben",
+      "cameraDisabled": "Kamerazugriff ist aus. Aktiviere ihn in den Einstellungen, um Codes zu scannen."
     },
     "login": {
       "title": "Operator-Anmeldung",
@@ -1300,7 +1301,33 @@
       "scanning": "Suche den Tag…",
       "success": "Du bist drin!",
       "alreadyCheckedIn": "Dein Team hat hier bereits eingecheckt.",
-      "queuedOffline": "Gespeichert. Wird synchronisiert, sobald du wieder online bist."
+      "queuedOffline": "Gespeichert. Wird synchronisiert, sobald du wieder online bist.",
+      "scanQr": "Code scannen",
+      "wrongCode": "Dieser Code gehört zu einer anderen Station.",
+      "imHere": "Ich bin hier",
+      "imHereHint": "Bleib eine Minute in der Nähe der Station, um das freizuschalten.",
+      "arrived": "Angekommen bei {{name}}",
+      "found": "Du hast {{name}} gefunden",
+      "foundUnknown": "Du hast eine Station gefunden",
+      "claimed": "Aus der Nähe eingecheckt. Dein Operator sieht das."
+    },
+    "location": {
+      "locating": "Suche deine Position…",
+      "denied": "Standort ist aus, diese Station kann nicht freigeschaltet werden.",
+      "openSettings": "Einstellungen öffnen",
+      "far": "Etwa {{meters}} m entfernt",
+      "near": "Du bist nah dran. GPS-Genauigkeit ±{{accuracy}} m, geh ins Freie",
+      "arrived": "Du bist an der Station.",
+      "unavailable": "Dieses Telefon kann gerade keine Position melden.",
+      "basesWontUnlock": "Standort ist aus. Stationen, die sich per Position öffnen, bleiben zu."
+    },
+    "errors": {
+      "CHECK_IN_METHOD_MISMATCH": "Diese Station wird auf andere Weise eingecheckt.",
+      "CHECK_IN_TOKEN_INVALID": "Dieser Code gehört nicht zu dieser Station.",
+      "CHECK_IN_FIX_TOO_COARSE": "Dein GPS-Signal ist zu schwach. Geh ins Freie und versuch es erneut.",
+      "CHECK_IN_FIX_STALE": "Diese Position ist zu alt. Warte auf eine frische GPS-Messung.",
+      "CHECK_IN_OUT_OF_RANGE": "Du bist etwa {{distance}} m entfernt. Komm auf {{allowed}} m an die Station heran.",
+      "CHECK_IN_CLAIM_NOT_DWELLED": "Bleib noch etwas länger in der Nähe der Station und versuch es dann erneut."
     },
     "sync": {
       "pending_one": "{{count}} Aktion wartet auf Synchronisierung",
@@ -1475,11 +1502,11 @@
       "title": "Bevor du startest",
       "subtitle": "PointFinder benötigt einige Berechtigungen für dein Spielerlebnis.",
       "locationTitle": "Standort",
-      "locationDetail": "Zeigt dein Team auf der Live-Karte, damit Operatoren das Spiel überwachen können.",
+      "locationDetail": "Zeigt dein Team auf der Live-Karte und schaltet Stationen frei, die sich beim Erreichen öffnen.",
       "notificationsTitle": "Benachrichtigungen",
       "notificationsDetail": "Liefert Spiel-Updates und Nachrichten von deinem Operator.",
       "cameraTitle": "Kamera & Fotos",
-      "cameraDetail": "QR-Codes scannen und Fotos für Challenges einreichen.",
+      "cameraDetail": "QR-Codes scannen, um beizutreten und an Stationen einzuchecken, sowie Fotos für Challenges einreichen.",
       "footer": "Du kannst diese Berechtigungen später in den Einstellungen ändern.",
       "continue": "Weiter"
     },

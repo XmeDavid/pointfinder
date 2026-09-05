@@ -180,3 +180,33 @@ only adjusted the landscape rail and content-panel button position; those were
 verified in the built-artifact layout tests. No account/game data was changed.
 iOS compilation and actual iPhone rotation/keyboard/device appearance remain
 unverified on this Linux host. Simulated safe areas do not establish iOS parity.
+
+# Check-in methods: manual device validation (2026-09-05)
+
+The programmatic tests carry the check-in logic; the product owner validates the
+experience on a device. These scenarios are the release gate for QR and
+location bases. Legacy iOS and Android builds cannot complete a game that has any
+non-NFC base, so run these on the Tauri player build only.
+
+- [ ] **QR base, scanned in the app.** Open the base screen at a QR base, tap
+  "Scan code", and read the printed code. The check-in is accepted and the
+  challenge appears. Read a code printed for a different base and confirm the
+  refusal names a different base and queues nothing.
+- [ ] **QR base, scanned with the phone's camera app.** Scan the printed code from
+  the OS camera. The universal link opens the app at that base and checks in with
+  the base's own method; no second scan is required.
+- [ ] **Location base, walked into with the app open.** Approach a location base
+  with the app in the foreground and any screen showing. The base unlocks without
+  a tap and an arrival notice names it. Confirm the operator feed shows the
+  check-in as verified.
+- [ ] **Location base in airplane mode.** Repeat the walk-in with the radio off.
+  The proof queues with its captured fix and the logbook shows the queued state.
+  Re-enable the network and confirm the check-in syncs with the captured time, not
+  the reconnect time.
+- [ ] **Hidden location base.** Walk into a hidden location base that never
+  appeared on the map. Confirm the map never drew it or its radius before arrival,
+  and that the notice reads "You found <name>" once the name arrives.
+- [ ] **Dwell-gated claim.** At a location base where GPS will not converge,
+  confirm "I'm here" stays disabled with its hint until a full minute inside the
+  wider ring has passed, then produces a claimed row that the operator feed shows
+  with the claimed badge and the teammate snapshot.

@@ -3,7 +3,16 @@ import { ArrowLeft, QrCode } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components'
 
-export function QrScannerOverlay({ onBack }: { onBack: () => void }) {
+/**
+ * Chrome drawn over the Tauri windowed camera. The webview goes transparent while
+ * the scanner runs, so this owns the only visible controls: a safe-area Back action
+ * and a caption naming what the caller wants scanned.
+ */
+export function QrScannerOverlay({ onBack, caption, testId = 'player-qr-scanner' }: {
+  onBack: () => void
+  caption: string
+  testId?: string
+}) {
   const { t } = useTranslation(undefined, { keyPrefix: 'playerApp' })
 
   useEffect(() => {
@@ -12,7 +21,7 @@ export function QrScannerOverlay({ onBack }: { onBack: () => void }) {
   }, [])
 
   return (
-    <main className="fixed inset-0 z-50 flex flex-col bg-transparent text-foreground" data-testid="player-qr-scanner">
+    <main className="fixed inset-0 z-50 flex flex-col bg-transparent text-foreground" data-testid={testId}>
       <div className="safe-gutter flex justify-start pt-[calc(var(--safe-top)+0.75rem)]">
         <Button type="button" variant="secondary" size="lg" onClick={onBack} data-testid="player-join-scan-back-btn">
           <ArrowLeft className="mr-2 h-5 w-5" aria-hidden />
@@ -25,7 +34,7 @@ export function QrScannerOverlay({ onBack }: { onBack: () => void }) {
       <div className="safe-gutter pb-[calc(var(--safe-bottom)+1rem)] text-center">
         <span className="inline-flex items-center gap-2 rounded-md bg-card/95 px-3 py-2 text-sm font-medium text-card-foreground">
           <QrCode className="h-5 w-5" aria-hidden />
-          {t('join.scanQr')}
+          {caption}
         </span>
       </div>
     </main>
