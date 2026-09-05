@@ -1,4 +1,4 @@
-import { autoAccepts, dwellSatisfied, insideWideRing, pushDwellSample } from './geofence'
+import { DWELL_BUFFER_MAX_MS, autoAccepts, dwellSatisfied, insideWideRing, pushDwellSample } from './geofence'
 import type { Fix } from './location'
 
 /**
@@ -44,8 +44,20 @@ export interface ArrivalEvaluation {
 }
 
 export function evaluateArrival(fix: Fix, candidates: ArrivalCandidate[], state: ArrivalState, now: number): ArrivalEvaluation {
-  const attemptedAt: Record<string, number> = { ...state.attemptedAt }
-  const dwell: Record<string, Fix[]> = {}
+  // Attempts only matter inside the retry window; forget the rest so the map never grows.
+  const attemptedAt: Record<string, number> = Object.fromEntries(
+    Object.entries(state.attemptedAt).filter(([, at]) => now - at < ARRIVAL_RETRY_MS),
+  )
+  // A base missing from this evaluation (a snapshot refetch, a transient route
+  // block) keeps its buffer while the samples are still fresh, so the team does
+  // not have to stand still for another full minute when it reappears.
+  const present = new Set(candidates.map((c) => c.baseId))
+  const dwell: Record<string, Fix[]> = Object.fromEntries(
+    Object.entries(state.dwell).filter(([baseId, buffer]) => {
+      const last = buffer[buffer.length - 1]
+      return !present.has(baseId) && last !== undefined && now - last.capturedAt <= DWELL_BUFFER_MAX_MS
+    }),
+  )
   const fire: ArrivalCandidate[] = []
   const claimable: string[] = []
   for (const candidate of candidates) {

@@ -15,6 +15,11 @@ describe('buildLogbook', () => {
     expect(lb.nextUp.map((e) => e.baseId)).toEqual(['b'])
   })
 
+  it('never lists a hidden location geofence, which exists only for the arrival detector', () => {
+    const lb = buildLogbook([p('a', 'not_visited')], [{ id: 'a', hidden: false }, { id: 'secret', hidden: true, checkInMethod: 'LOCATION' }], [])
+    expect(lb.entries.map((e) => `${e.kind}:${e.baseId}`)).toEqual(['open:a'])
+  })
+
   it('does not lock a hidden base the team already unlocked', () => {
     const lb = buildLogbook([p('h', 'checked_in')], [{ id: 'h', hidden: true }], [])
     expect(lb.entries).toHaveLength(1)

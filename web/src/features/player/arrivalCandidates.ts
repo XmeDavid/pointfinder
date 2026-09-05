@@ -1,8 +1,5 @@
 import type { Base, BaseProgress } from '@pointfinder/api'
-import { baseRoute, missingPreviousBase, type ArrivalCandidate, type PendingAction } from '@pointfinder/game-core'
-
-/** Server default when a base row carries no resolved radius (older cached game data). */
-const FALLBACK_RADIUS_M = 15
+import { DEFAULT_CHECK_IN_RADIUS_M, baseRoute, missingPreviousBase, type ArrivalCandidate, type PendingAction } from '@pointfinder/game-core'
 
 export type ArrivalBaseRow = Pick<Base, 'id' | 'lat' | 'lng' | 'hidden' | 'checkInMethod' | 'checkInRadiusM'>
 
@@ -31,7 +28,7 @@ export function buildCandidates({ bases, progress, pending, game }: CandidateInp
     // null means the route allows this base now; a number or undefined means it does not.
     if (missingPreviousBase(route, row) !== null) continue
     if (!Number.isFinite(b.lat) || !Number.isFinite(b.lng)) continue
-    const radiusM = typeof b.checkInRadiusM === 'number' && b.checkInRadiusM > 0 ? b.checkInRadiusM : FALLBACK_RADIUS_M
+    const radiusM = typeof b.checkInRadiusM === 'number' && b.checkInRadiusM > 0 ? b.checkInRadiusM : DEFAULT_CHECK_IN_RADIUS_M
     candidates.push({ baseId: b.id, lat: b.lat, lng: b.lng, radiusM, hidden: b.hidden === true })
   }
   return candidates

@@ -121,6 +121,10 @@ class CheckInGeoProofTest {
                 () -> service.verify(locationBase(20, 15), team(), geo(latOffset(1), Double.NaN, now), now))
                 .getErrorCode());
 
+        assertEquals(ErrorCode.CHECK_IN_FIX_TOO_COARSE, assertThrows(BadRequestException.class,
+                () -> service.verify(locationBase(20, 15), team(), geo(latOffset(1), 0.0, now), now))
+                .getErrorCode());
+
         CheckInRequest noAccuracy = geo(latOffset(1), 5.0, now);
         noAccuracy.setAccuracy(null);
         assertEquals(ErrorCode.CHECK_IN_FIX_TOO_COARSE, assertThrows(BadRequestException.class,

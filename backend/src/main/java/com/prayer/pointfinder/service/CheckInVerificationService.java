@@ -25,6 +25,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 
 /**
  * Single home for every check-in proof rule.
@@ -92,9 +94,10 @@ public class CheckInVerificationService {
 
     /**
      * Verifies the submitted proof against the base's configured method.
-     * Called after the live-game, team and base guards, after the dedup, and
-     * after the base-order rule — so a team blocked by the route never learns
-     * whether its proof would have been good.
+     * Called after the live-game, team and base guards, after the dedup (a
+     * repeat returns the existing row whatever proof was sent), and after the
+     * base-order rule — so a team blocked by the route never learns whether
+     * its proof would have been good.
      */
     public VerifiedProof verify(Base base, Team team, CheckInRequest request, Instant now) {
         CheckInMethod baseMethod = base.getCheckInMethod() != null
@@ -230,7 +233,7 @@ public class CheckInVerificationService {
             }
             Double sampleAccuracy = sample.getAccuracy();
             if (sampleAccuracy == null || !Double.isFinite(sampleAccuracy)
-                    || sampleAccuracy < 0 || sampleAccuracy > CLAIM_ACCURACY_CAP_M) {
+                    || sampleAccuracy <= 0 || sampleAccuracy > CLAIM_ACCURACY_CAP_M) {
                 throw claimNotDwelled("fix_too_coarse");
             }
             if (sample.getLat() == null || sample.getLng() == null
@@ -285,15 +288,20 @@ public class CheckInVerificationService {
                 : List.of();
         List<Map<String, Object>> entries = new ArrayList<>(players.size());
         int inRing = 0;
+        Map<UUID, PlayerLocation> locations = new LinkedHashMap<>();
+        List<UUID> playerIds = players.stream().map(Player::getId).filter(Objects::nonNull).toList();
+        if (!playerIds.isEmpty()) {
+            for (PlayerLocation location : playerLocationRepository.findAllById(playerIds)) {
+                locations.put(location.getPlayerId(), location);
+            }
+        }
 
         for (Player player : players) {
             Map<String, Object> entry = new LinkedHashMap<>();
             entry.put("playerId", player.getId() != null ? player.getId().toString() : null);
             entry.put("displayName", player.getDisplayName());
 
-            PlayerLocation location = player.getId() != null
-                    ? playerLocationRepository.findById(player.getId()).orElse(null)
-                    : null;
+            PlayerLocation location = player.getId() != null ? locations.get(player.getId()) : null;
             if (location == null || location.getLat() == null || location.getLng() == null) {
                 entry.put("lat", null);
                 entry.put("lng", null);
@@ -334,7 +342,8 @@ public class CheckInVerificationService {
     // ── Shared fix validation ────────────────────────────────────────────
 
     private double requireAccuracy(Double accuracy, double capM) {
-        if (accuracy == null || !Double.isFinite(accuracy) || accuracy < 0 || accuracy > capM) {
+        // A zero accuracy is not a measurement, it is a mock; the phone refuses it as well.
+        if (accuracy == null || !Double.isFinite(accuracy) || accuracy <= 0 || accuracy > capM) {
             throw new BadRequestException("The GPS fix is not accurate enough to confirm this base",
                     ErrorCode.CHECK_IN_FIX_TOO_COARSE);
         }

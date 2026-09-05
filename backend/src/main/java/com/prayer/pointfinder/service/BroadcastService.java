@@ -63,7 +63,7 @@ public class BroadcastService {
                 game.getStatus() == GameStatus.live
                         ? monitoringService.computeLocations(gameId).stream().limit(500).toList()
                         : java.util.Collections.emptyList(),
-                monitoringService.computeProgress(gameId)
+                monitoringService.computeProgress(gameId, false)
         );
     }
 
@@ -87,7 +87,7 @@ public class BroadcastService {
     @Transactional(readOnly = true)
     public List<TeamBaseProgressResponse> getProgress(String code) {
         Game game = resolveGame(code);
-        return monitoringService.computeProgress(game.getId());
+        return monitoringService.computeProgress(game.getId(), false);
     }
 
     private Game resolveGame(String code) {

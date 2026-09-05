@@ -62,4 +62,21 @@ describe('arrival detection', () => {
     const result = evaluateArrival(at(0, 8, 1_000), [], emptyArrivalState(), 1_000)
     expect(result).toMatchObject({ fire: [], claimable: [] })
   })
+
+  it('keeps a fresh dwell buffer for a base momentarily missing from the candidates', () => {
+    const inside = evaluateArrival(at(44, 90, 0), [mill], emptyArrivalState(), 0)
+    const withoutMill = evaluateArrival(at(44, 90, 20_000), [chapel], inside.state, 20_000)
+    expect(withoutMill.state.dwell.b1).toHaveLength(1)
+    const back = evaluateArrival(at(44, 90, 40_000), [mill], withoutMill.state, 40_000)
+    expect(back.state.dwell.b1).toHaveLength(2)
+  })
+
+  it('drops a stale buffer and old attempts instead of keeping them forever', () => {
+    const inside = evaluateArrival(at(44, 90, 0), [mill], emptyArrivalState(), 0)
+    const fired = evaluateArrival(at(0, 8, 1_000), [mill], inside.state, 1_000)
+    expect(fired.fire.map((c) => c.baseId)).toEqual(['b1'])
+    const later = evaluateArrival(at(44, 90, 400_000), [chapel], fired.state, 400_000)
+    expect(later.state.dwell.b1).toBeUndefined()
+    expect(later.state.attemptedAt.b1).toBeUndefined()
+  })
 })

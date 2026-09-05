@@ -1585,6 +1585,11 @@
     "verificationOperator": "Operador"
   },
   "readiness": {
+    "atLeastOneBase": "Pelo menos uma base",
+    "atLeastOneChallenge": "Pelo menos um desafio",
+    "atLeastOneTeam": "Pelo menos uma equipa",
+    "assignmentsValid": "Todas as atribuições válidas",
+    "variablesComplete": "Variáveis completas",
     "nfcLinked": "Bases NFC ligadas ({{linked}}/{{total}})",
     "locationCoords": "Bases de localização têm coordenadas ({{ok}}/{{total}})",
     "locationRadius": "Raios de localização entre 5 e 200 m ({{ok}}/{{total}})",

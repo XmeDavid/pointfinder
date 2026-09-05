@@ -20,7 +20,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -106,6 +105,10 @@ class CheckInClaimProofTest {
         when(playerRepository.findByTeamId(team.getId())).thenReturn(List.of(players));
     }
 
+    private void stubLocations(PlayerLocation... locations) {
+        when(playerLocationRepository.findAllById(any())).thenReturn(List.of(locations));
+    }
+
     private Player player(Team team, String name) {
         return Player.builder().id(UUID.randomUUID()).team(team).displayName(name).build();
     }
@@ -116,12 +119,11 @@ class CheckInClaimProofTest {
         Player near = player(team, "Ana");
         Player far = player(team, "Bruno");
         stubTeam(team, near, far);
-        when(playerLocationRepository.findById(near.getId())).thenReturn(Optional.of(PlayerLocation.builder()
-                .player(near).lat(latOffset(30)).lng(BASE_LNG).accuracyM(12.0)
-                .capturedAt(now.minus(30, ChronoUnit.SECONDS)).build()));
-        when(playerLocationRepository.findById(far.getId())).thenReturn(Optional.of(PlayerLocation.builder()
-                .player(far).lat(latOffset(500)).lng(BASE_LNG).accuracyM(9.0)
-                .capturedAt(now.minus(60, ChronoUnit.SECONDS)).build()));
+        stubLocations(
+                PlayerLocation.builder().playerId(near.getId()).player(near).lat(latOffset(30)).lng(BASE_LNG).accuracyM(12.0)
+                        .capturedAt(now.minus(30, ChronoUnit.SECONDS)).build(),
+                PlayerLocation.builder().playerId(far.getId()).player(far).lat(latOffset(500)).lng(BASE_LNG).accuracyM(9.0)
+                        .capturedAt(now.minus(60, ChronoUnit.SECONDS)).build());
 
         var proof = service.verify(locationBase(), team, claim(40, 60.0, goodBuffer()), now);
 
@@ -144,7 +146,7 @@ class CheckInClaimProofTest {
         Team team = team();
         Player unknown = player(team, "Carla");
         stubTeam(team, unknown);
-        when(playerLocationRepository.findById(any())).thenReturn(Optional.empty());
+        stubLocations();
 
         var proof = service.verify(locationBase(), team, claim(40, 60.0, goodBuffer()), now);
 

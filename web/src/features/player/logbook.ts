@@ -5,7 +5,8 @@ import { mergeProgress, summarize, type BaseView, type PendingAction, type Progr
  * One row in the team's logbook.
  * `open` rows are bases the backend lets this team see, merged with the local queue.
  * `locked` rows are hidden bases the backend included only as unlock targets: the team
- * knows something is there, but not what. Truly hidden bases never reach the client.
+ * knows something is there, but not what. Hidden location bases also reach the client,
+ * as bare geofences for the arrival detector, and those must stay invisible here.
  */
 export type LogbookEntry =
   | { kind: 'open'; baseId: string; title: string; view: BaseView; nfcLinked: boolean }
@@ -18,7 +19,7 @@ export interface Logbook {
   nextUp: LogbookEntry[]
 }
 
-export function buildLogbook(progress: BaseProgress[], bases: Pick<Base, 'id' | 'hidden'>[], pending: PendingAction[]): Logbook {
+export function buildLogbook(progress: BaseProgress[], bases: Pick<Base, 'id' | 'hidden' | 'checkInMethod'>[], pending: PendingAction[]): Logbook {
   const views = mergeProgress(progress, pending).sort((a, b) =>
     typeof a.sequenceNumber === 'number' && typeof b.sequenceNumber === 'number' ? a.sequenceNumber - b.sequenceNumber : 0,
   )
@@ -31,7 +32,7 @@ export function buildLogbook(progress: BaseProgress[], bases: Pick<Base, 'id' | 
     nfcLinked: view.nfcLinked,
   }))
   const locked: LogbookEntry[] = bases
-    .filter((b) => b.hidden && !visible.has(b.id))
+    .filter((b) => b.hidden && !visible.has(b.id) && b.checkInMethod !== 'LOCATION')
     .map((b) => ({ kind: 'locked', baseId: b.id }))
   const entries = [...open, ...locked]
   return {

@@ -59,7 +59,7 @@ export const playerHandlers = [
     const body = (await request.json()) as { method?: string; token?: string; nfcToken?: string }
     const token = body.token ?? body.nfcToken
     if (body.method !== 'geo' && !token) return HttpResponse.json({ status: 400, message: 'NFC token required', code: 'NFC_TOKEN_REQUIRED' }, { status: 400 })
-    if (token === 'wrong') return HttpResponse.json({ status: 403, message: 'Invalid tag', code: 'NFC_TOKEN_MISMATCH' }, { status: 403 })
+    if (token === 'wrong') return HttpResponse.json({ status: 400, message: 'Invalid check-in token', code: 'CHECK_IN_TOKEN_INVALID' }, { status: 400 })
     const method = body.method === 'geo' ? 'LOCATION' : body.method === 'qr' ? 'QR' : 'NFC'
     return HttpResponse.json({ checkInId: 'ci-1', baseId: params.baseId, checkedInAt: '2026-09-05T10:45:00Z', method, verification: 'VERIFIED' })
   }),

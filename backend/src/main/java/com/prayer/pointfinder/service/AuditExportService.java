@@ -240,17 +240,14 @@ public class AuditExportService {
      */
     private Map<UUID, CheckInAudit> buildCheckInAuditIndex(UUID gameId) {
         List<CheckIn> checkIns = checkInRepository.findByGameIdIncludingArchived(gameId);
-        Map<ReasonKey, CheckInAudit> byTuple = new HashMap<>();
+        Map<ReasonKey, List<CheckIn>> byTuple = new HashMap<>();
         for (CheckIn ci : checkIns) {
             UUID teamId = ci.getTeam() != null ? ci.getTeam().getId() : null;
             UUID baseId = ci.getBase() != null ? ci.getBase().getId() : null;
             if (teamId == null || baseId == null) {
                 continue;
             }
-            byTuple.put(new ReasonKey(teamId, baseId), new CheckInAudit(
-                    ci.getMethod() != null ? ci.getMethod().name() : CheckInMethod.NFC.name(),
-                    ci.getVerification() != null ? ci.getVerification().name() : null,
-                    renderProof(ci)));
+            byTuple.computeIfAbsent(new ReasonKey(teamId, baseId), k -> new ArrayList<>()).add(ci);
         }
         if (byTuple.isEmpty()) {
             return Map.of();
@@ -260,10 +257,35 @@ public class AuditExportService {
             if (ev.getType() != ActivityEventType.check_in || ev.getTeam() == null || ev.getBase() == null) {
                 continue;
             }
-            CheckInAudit audit = byTuple.get(new ReasonKey(ev.getTeam().getId(), ev.getBase().getId()));
-            if (audit != null) {
-                byEventId.put(ev.getId(), audit);
+            List<CheckIn> candidates = byTuple.get(new ReasonKey(ev.getTeam().getId(), ev.getBase().getId()));
+            if (candidates == null) {
+                continue;
             }
+            // A reset archives a team's check-in together with its event, and a
+            // later rescue writes a fresh pair. Match archived state first, then
+            // the row whose timestamp sits closest to the event, so each event
+            // exports the proof of the visit it actually describes.
+            CheckIn best = null;
+            long bestGap = Long.MAX_VALUE;
+            for (CheckIn ci : candidates) {
+                if (ci.isArchived() != ev.isArchived()) {
+                    continue;
+                }
+                long gap = ci.getCheckedInAt() != null && ev.getTimestamp() != null
+                        ? Math.abs(ci.getCheckedInAt().toEpochMilli() - ev.getTimestamp().toEpochMilli())
+                        : Long.MAX_VALUE - 1;
+                if (gap < bestGap) {
+                    best = ci;
+                    bestGap = gap;
+                }
+            }
+            if (best == null) {
+                best = candidates.get(candidates.size() - 1);
+            }
+            byEventId.put(ev.getId(), new CheckInAudit(
+                    best.getMethod() != null ? best.getMethod().name() : CheckInMethod.NFC.name(),
+                    best.getVerification() != null ? best.getVerification().name() : null,
+                    renderProof(best)));
         }
         return byEventId;
     }

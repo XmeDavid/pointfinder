@@ -75,7 +75,7 @@ class BroadcastServiceTest {
         when(baseRepository.findByGameId(gameId)).thenReturn(List.of());
         when(monitoringService.computeLeaderboard(gameId)).thenReturn(List.of());
         when(monitoringService.computeLocations(gameId)).thenReturn(List.of());
-        when(monitoringService.computeProgress(gameId)).thenReturn(List.of());
+        when(monitoringService.computeProgress(gameId, false)).thenReturn(List.of());
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
@@ -93,7 +93,7 @@ class BroadcastServiceTest {
         when(baseRepository.findByGameId(gameId)).thenReturn(List.of());
         when(monitoringService.computeLeaderboard(gameId)).thenReturn(List.of());
         when(monitoringService.computeLocations(gameId)).thenReturn(List.of());
-        when(monitoringService.computeProgress(gameId)).thenReturn(List.of());
+        when(monitoringService.computeProgress(gameId, false)).thenReturn(List.of());
 
         broadcastService.getBroadcastData("abc123");
 
@@ -117,7 +117,7 @@ class BroadcastServiceTest {
         when(baseRepository.findByGameId(gameId)).thenReturn(List.of());
         when(monitoringService.computeLeaderboard(gameId)).thenReturn(List.of());
         when(monitoringService.computeLocations(gameId)).thenReturn(List.of());
-        when(monitoringService.computeProgress(gameId)).thenReturn(List.of());
+        when(monitoringService.computeProgress(gameId, false)).thenReturn(List.of());
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
@@ -148,7 +148,7 @@ class BroadcastServiceTest {
         when(baseRepository.findByGameId(gameId)).thenReturn(List.of(base));
         when(monitoringService.computeLeaderboard(gameId)).thenReturn(List.of());
         when(monitoringService.computeLocations(gameId)).thenReturn(List.of());
-        when(monitoringService.computeProgress(gameId)).thenReturn(List.of());
+        when(monitoringService.computeProgress(gameId, false)).thenReturn(List.of());
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
@@ -187,7 +187,7 @@ class BroadcastServiceTest {
         when(baseRepository.findByGameId(gameId)).thenReturn(List.of(hiddenBase, visibleBase));
         when(monitoringService.computeLeaderboard(gameId)).thenReturn(List.of());
         when(monitoringService.computeLocations(gameId)).thenReturn(List.of());
-        when(monitoringService.computeProgress(gameId)).thenReturn(List.of());
+        when(monitoringService.computeProgress(gameId, false)).thenReturn(List.of());
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
@@ -214,7 +214,7 @@ class BroadcastServiceTest {
         when(baseRepository.findByGameId(gameId)).thenReturn(List.of(baseWithNullHidden));
         when(monitoringService.computeLeaderboard(gameId)).thenReturn(List.of());
         when(monitoringService.computeLocations(gameId)).thenReturn(List.of());
-        when(monitoringService.computeProgress(gameId)).thenReturn(List.of());
+        when(monitoringService.computeProgress(gameId, false)).thenReturn(List.of());
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
@@ -240,7 +240,7 @@ class BroadcastServiceTest {
         when(baseRepository.findByGameId(gameId)).thenReturn(List.of());
         when(monitoringService.computeLeaderboard(gameId)).thenReturn(List.of());
         when(monitoringService.computeLocations(gameId)).thenReturn(List.of(location));
-        when(monitoringService.computeProgress(gameId)).thenReturn(List.of());
+        when(monitoringService.computeProgress(gameId, false)).thenReturn(List.of());
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
@@ -256,7 +256,7 @@ class BroadcastServiceTest {
         when(teamRepository.findByGameId(gameId)).thenReturn(List.of());
         when(baseRepository.findByGameId(gameId)).thenReturn(List.of());
         when(monitoringService.computeLeaderboard(gameId)).thenReturn(List.of());
-        when(monitoringService.computeProgress(gameId)).thenReturn(List.of());
+        when(monitoringService.computeProgress(gameId, false)).thenReturn(List.of());
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
@@ -281,7 +281,7 @@ class BroadcastServiceTest {
         when(teamRepository.findByGameId(gameId)).thenReturn(List.of());
         when(baseRepository.findByGameId(gameId)).thenReturn(List.of());
         when(monitoringService.computeLeaderboard(gameId)).thenReturn(List.of());
-        when(monitoringService.computeProgress(gameId)).thenReturn(List.of());
+        when(monitoringService.computeProgress(gameId, false)).thenReturn(List.of());
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
@@ -305,7 +305,7 @@ class BroadcastServiceTest {
         when(baseRepository.findByGameId(gameId)).thenReturn(List.of());
         when(monitoringService.computeLeaderboard(gameId)).thenReturn(List.of(entry));
         when(monitoringService.computeLocations(gameId)).thenReturn(List.of());
-        when(monitoringService.computeProgress(gameId)).thenReturn(List.of());
+        when(monitoringService.computeProgress(gameId, false)).thenReturn(List.of());
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
@@ -331,7 +331,7 @@ class BroadcastServiceTest {
         when(baseRepository.findByGameId(gameId)).thenReturn(List.of());
         when(monitoringService.computeLeaderboard(gameId)).thenReturn(bigLeaderboard);
         when(monitoringService.computeLocations(gameId)).thenReturn(List.of());
-        when(monitoringService.computeProgress(gameId)).thenReturn(List.of());
+        when(monitoringService.computeProgress(gameId, false)).thenReturn(List.of());
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
@@ -355,7 +355,7 @@ class BroadcastServiceTest {
         when(baseRepository.findByGameId(gameId)).thenReturn(List.of());
         when(monitoringService.computeLeaderboard(gameId)).thenReturn(leaderboard100);
         when(monitoringService.computeLocations(gameId)).thenReturn(List.of());
-        when(monitoringService.computeProgress(gameId)).thenReturn(List.of());
+        when(monitoringService.computeProgress(gameId, false)).thenReturn(List.of());
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
@@ -380,7 +380,7 @@ class BroadcastServiceTest {
         when(baseRepository.findByGameId(gameId)).thenReturn(List.of());
         when(monitoringService.computeLeaderboard(gameId)).thenReturn(List.of());
         when(monitoringService.computeLocations(gameId)).thenReturn(List.of());
-        when(monitoringService.computeProgress(gameId)).thenReturn(List.of());
+        when(monitoringService.computeProgress(gameId, false)).thenReturn(List.of());
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
@@ -408,7 +408,7 @@ class BroadcastServiceTest {
         when(baseRepository.findByGameId(gameId)).thenReturn(manyBases);
         when(monitoringService.computeLeaderboard(gameId)).thenReturn(List.of());
         when(monitoringService.computeLocations(gameId)).thenReturn(List.of());
-        when(monitoringService.computeProgress(gameId)).thenReturn(List.of());
+        when(monitoringService.computeProgress(gameId, false)).thenReturn(List.of());
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
@@ -434,7 +434,7 @@ class BroadcastServiceTest {
         when(baseRepository.findByGameId(gameId)).thenReturn(List.of());
         when(monitoringService.computeLeaderboard(gameId)).thenReturn(List.of());
         when(monitoringService.computeLocations(gameId)).thenReturn(manyLocations);
-        when(monitoringService.computeProgress(gameId)).thenReturn(List.of());
+        when(monitoringService.computeProgress(gameId, false)).thenReturn(List.of());
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
@@ -458,7 +458,7 @@ class BroadcastServiceTest {
         when(baseRepository.findByGameId(gameId)).thenReturn(List.of());
         when(monitoringService.computeLeaderboard(gameId)).thenReturn(List.of());
         when(monitoringService.computeLocations(gameId)).thenReturn(List.of());
-        when(monitoringService.computeProgress(gameId)).thenReturn(List.of(progressEntry));
+        when(monitoringService.computeProgress(gameId, false)).thenReturn(List.of(progressEntry));
 
         BroadcastDataResponse response = broadcastService.getBroadcastData(BROADCAST_CODE);
 
@@ -645,7 +645,7 @@ class BroadcastServiceTest {
 
         when(gameRepository.findByBroadcastCodeAndBroadcastEnabledTrue(BROADCAST_CODE))
                 .thenReturn(Optional.of(liveGame));
-        when(monitoringService.computeProgress(gameId)).thenReturn(List.of(progressEntry));
+        when(monitoringService.computeProgress(gameId, false)).thenReturn(List.of(progressEntry));
 
         List<TeamBaseProgressResponse> result = broadcastService.getProgress(BROADCAST_CODE);
 
@@ -658,7 +658,7 @@ class BroadcastServiceTest {
     void getProgressReturnsEmptyListWhenNoProgressRecorded() {
         when(gameRepository.findByBroadcastCodeAndBroadcastEnabledTrue(BROADCAST_CODE))
                 .thenReturn(Optional.of(liveGame));
-        when(monitoringService.computeProgress(gameId)).thenReturn(List.of());
+        when(monitoringService.computeProgress(gameId, false)).thenReturn(List.of());
 
         List<TeamBaseProgressResponse> result = broadcastService.getProgress(BROADCAST_CODE);
 
@@ -669,7 +669,7 @@ class BroadcastServiceTest {
     void getProgressNormalizesCodeToUpperCase() {
         when(gameRepository.findByBroadcastCodeAndBroadcastEnabledTrue("ABC123"))
                 .thenReturn(Optional.of(liveGame));
-        when(monitoringService.computeProgress(gameId)).thenReturn(List.of());
+        when(monitoringService.computeProgress(gameId, false)).thenReturn(List.of());
 
         broadcastService.getProgress("abc123");
 

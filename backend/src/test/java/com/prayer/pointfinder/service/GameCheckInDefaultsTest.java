@@ -100,6 +100,29 @@ class GameCheckInDefaultsTest extends IntegrationTestBase {
     }
 
     @Test
+    void defaultsAreLockedOnceTheGameIsLive() {
+        authenticate("gamedefault-f@test.com");
+        CreateGameRequest create = new CreateGameRequest();
+        create.setName("Live Game");
+        create.setDefaultCheckInMethod("QR");
+        GameResponse created = gameService.createGame(create);
+        com.prayer.pointfinder.entity.Game game = gameRepository.findById(created.id()).orElseThrow();
+        game.setStatus(com.prayer.pointfinder.entity.GameStatus.live);
+        gameRepository.save(game);
+
+        UpdateGameRequest update = new UpdateGameRequest();
+        update.setName("Live Game");
+        update.setDefaultCheckInMethod("LOCATION");
+        assertThrows(BadRequestException.class, () -> gameService.updateGame(created.id(), update));
+
+        // Re-sending the current value is not a change and stays allowed.
+        UpdateGameRequest same = new UpdateGameRequest();
+        same.setName("Live Game renamed");
+        same.setDefaultCheckInMethod("QR");
+        assertEquals("QR", gameService.updateGame(created.id(), same).defaultCheckInMethod());
+    }
+
+    @Test
     void anUnknownDefaultMethodIsRejected() {
         authenticate("gamedefault-e@test.com");
         CreateGameRequest request = new CreateGameRequest();

@@ -4,6 +4,8 @@ import com.prayer.pointfinder.dto.response.*;
 import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.*;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -127,7 +129,31 @@ public class MonitoringService {
         return computeProgress(gameId);
     }
 
+    /** Operator view: rows carry the check-in proof. */
     List<TeamBaseProgressResponse> computeProgress(UUID gameId) {
+        return computeProgress(gameId, true);
+    }
+
+    /** Plain JSON parsing only; the snapshot column is written by us and holds no dates. */
+    private static final ObjectMapper SNAPSHOT_MAPPER = new ObjectMapper();
+    private static final TypeReference<List<Map<String, Object>>> SNAPSHOT_TYPE = new TypeReference<>() {};
+
+    private static List<Map<String, Object>> parseSnapshot(String json) {
+        if (json == null || json.isBlank()) {
+            return null;
+        }
+        try {
+            return SNAPSHOT_MAPPER.readValue(json, SNAPSHOT_TYPE);
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    /**
+     * @param includeProof false for the public broadcast, which must not see how
+     *                     a team proved presence or where its players stood
+     */
+    List<TeamBaseProgressResponse> computeProgress(UUID gameId, boolean includeProof) {
         List<Team> teams = teamRepository.findByGameId(gameId);
         List<Base> bases = baseRepository.findByGameId(gameId);
         List<CheckIn> checkIns = checkInRepository.findByGameIdWithRelations(gameId);
@@ -170,14 +196,31 @@ public class MonitoringService {
                 BaseStatus status = BaseStatus.compute(sub, ci);
                 String submissionStatus = sub != null ? sub.getStatus().name() : null;
 
-                result.add(new TeamBaseProgressResponse(
-                        baseId,
-                        teamId,
-                        status.name(),
-                        ci != null ? ci.getCheckedInAt() : null,
-                        challenge != null ? challenge.getId() : null,
-                        submissionStatus
-                ));
+                if (includeProof && ci != null) {
+                    result.add(new TeamBaseProgressResponse(
+                            baseId,
+                            teamId,
+                            status.name(),
+                            ci.getCheckedInAt(),
+                            challenge != null ? challenge.getId() : null,
+                            submissionStatus,
+                            ci.getMethod() != null ? ci.getMethod().name() : null,
+                            ci.getVerification() != null ? ci.getVerification().name() : null,
+                            ci.getProofDistanceM(),
+                            ci.getProofAccuracyM(),
+                            ci.getProofCapturedAt(),
+                            parseSnapshot(ci.getTeamPositionsSnapshot())
+                    ));
+                } else {
+                    result.add(new TeamBaseProgressResponse(
+                            baseId,
+                            teamId,
+                            status.name(),
+                            ci != null ? ci.getCheckedInAt() : null,
+                            challenge != null ? challenge.getId() : null,
+                            submissionStatus
+                    ));
+                }
             }
         }
 

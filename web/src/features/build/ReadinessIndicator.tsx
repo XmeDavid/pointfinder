@@ -45,9 +45,10 @@ function useReadinessChecks(gameId: string): ReadinessSummary {
     const baseIds = new Set(baseList.map((b) => b.id))
     const challengeIds = new Set(challengeList.map((c) => c.id))
 
-    // NFC bases must carry a written tag. QR bases always pass — the code is
+    // Every NFC base must carry a written tag, hidden ones included, exactly as
+    // the server's go-live check counts them. QR bases always pass — the code is
     // generated, not provisioned.
-    const nfcBases = baseList.filter((b) => b.checkInMethod === 'NFC' && !b.hidden)
+    const nfcBases = baseList.filter((b) => b.checkInMethod === 'NFC')
     const nfcLinkedCount = nfcBases.filter((b) => b.nfcLinked).length
 
     const locationBases = baseList.filter((b) => b.checkInMethod === 'LOCATION')
@@ -73,15 +74,15 @@ function useReadinessChecks(gameId: string): ReadinessSummary {
     }
 
     const checks: ReadinessCheck[] = [
-      { label: 'At least one base', passed: baseList.length > 0 },
-      { label: 'At least one challenge', passed: challengeList.length > 0 },
-      { label: 'At least one team', passed: teamList.length > 0 },
+      { label: t('readiness.atLeastOneBase'), passed: baseList.length > 0 },
+      { label: t('readiness.atLeastOneChallenge'), passed: challengeList.length > 0 },
+      { label: t('readiness.atLeastOneTeam'), passed: teamList.length > 0 },
       {
         label: t('readiness.nfcLinked', { linked: nfcLinkedCount, total: nfcBases.length }),
         passed: nfcLinkedCount === nfcBases.length,
       },
       {
-        label: 'All assignments valid',
+        label: t('readiness.assignmentsValid'),
         passed: assignmentList.every(
           (a) => baseIds.has(a.baseId) && challengeIds.has(a.challengeId),
         ),
@@ -95,7 +96,7 @@ function useReadinessChecks(gameId: string): ReadinessSummary {
         passed: radiusOkCount === locationBases.length,
       },
       { label: t('readiness.locationOverlap'), passed: !overlapping },
-      { label: 'Variables complete', passed: completeness?.complete ?? true },
+      { label: t('readiness.variablesComplete'), passed: completeness?.complete ?? true },
     ]
 
     return {

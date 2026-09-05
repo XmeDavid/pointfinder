@@ -1585,6 +1585,11 @@
     "verificationOperator": "Betreiber"
   },
   "readiness": {
+    "atLeastOneBase": "Mindestens eine Basis",
+    "atLeastOneChallenge": "Mindestens eine Challenge",
+    "atLeastOneTeam": "Mindestens ein Team",
+    "assignmentsValid": "Alle Zuweisungen gültig",
+    "variablesComplete": "Variablen vollständig",
     "nfcLinked": "NFC-Basen verknüpft ({{linked}}/{{total}})",
     "locationCoords": "Standort-Basen haben Koordinaten ({{ok}}/{{total}})",
     "locationRadius": "Standortradien zwischen 5 und 200 m ({{ok}}/{{total}})",

@@ -28,7 +28,7 @@ export function useTeamLocation(gameId: string | null, enabled: boolean) {
     lastSent.current = { fix, at: now }
     client.api.player
       .updateLocation(gameId, { lat: fix.lat, lng: fix.lng, accuracy: fix.accuracy, capturedAt: new Date(fix.capturedAt).toISOString() })
-      .catch(() => { lastSent.current = null })
+      .catch(() => { if (lastSent.current?.fix === fix) lastSent.current = null })
   }, [client, gameId, enabled, fix])
 
   return { fix, heading, status }

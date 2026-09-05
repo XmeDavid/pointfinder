@@ -19,7 +19,7 @@ function progressOverride(initial: Array<Record<string, unknown>>, gameStatus: '
     http.post('/api/player/games/:gameId/bases/:baseId/check-in', async ({ params, request }) => {
       const body = (await request.json()) as { method?: string; token?: string }
       if (body.method !== 'nfc') return HttpResponse.json({ status: 400, message: 'Wrong method', code: 'CHECK_IN_METHOD_MISMATCH' }, { status: 400 })
-      if (body.token === 'wrong') return HttpResponse.json({ status: 403, message: 'Invalid tag', code: 'NFC_TOKEN_MISMATCH' }, { status: 403 })
+      if (body.token === 'wrong') return HttpResponse.json({ status: 400, message: 'Invalid check-in token', code: 'CHECK_IN_TOKEN_INVALID' }, { status: 400 })
       progress = progress.map((p) => (p.baseId === params.baseId ? { ...p, status: 'checked_in', checkedInAt: '2026-09-05T10:45:00Z' } : p))
       return HttpResponse.json({ checkInId: 'ci-1', baseId: params.baseId, checkedInAt: '2026-09-05T10:45:00Z' })
     }),
@@ -52,7 +52,8 @@ describe('BaseScreen', () => {
   it('rejects a foreign tag with the server reason', async () => {
     progressOverride([NOT_VISITED])
     await renderPlayer(<BaseScreen />, { route: '/base/b1?token=wrong', path: '/base/:baseId' })
-    expect(await screen.findByRole('status')).toHaveTextContent('Invalid tag')
+    // The server code is translated for the player rather than echoed.
+    expect(await screen.findByRole('status')).toHaveTextContent("That code doesn't belong to this base.")
     expect(screen.queryByText('How many wheels?')).not.toBeInTheDocument()
   })
 

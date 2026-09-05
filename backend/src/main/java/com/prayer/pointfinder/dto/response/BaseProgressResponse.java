@@ -38,9 +38,17 @@ public record BaseProgressResponse(
         Instant checkedInAt,
         UUID challengeId,
         String submissionStatus, // null if no submission
-        Integer sequenceNumber
+        Integer sequenceNumber,
+        /** Resolved check-in method: {@code NFC}, {@code QR}, or {@code LOCATION}. Never null. */
+        String checkInMethod,
+        /** Resolved radius in metres (base override, else the game default). Never null. */
+        Integer checkInRadiusM
 ) {
     public BaseProgressResponse(UUID baseId, String challengeTitle, Double lat, Double lng, Boolean nfcLinked, String status, Instant checkedInAt, UUID challengeId, String submissionStatus) {
-        this(baseId, challengeTitle, lat, lng, nfcLinked, status, checkedInAt, challengeId, submissionStatus, null);
+        this(baseId, challengeTitle, lat, lng, nfcLinked, status, checkedInAt, challengeId, submissionStatus, null, "NFC", 15);
+    }
+
+    public BaseProgressResponse(UUID baseId, String challengeTitle, Double lat, Double lng, Boolean nfcLinked, String status, Instant checkedInAt, UUID challengeId, String submissionStatus, Integer sequenceNumber) {
+        this(baseId, challengeTitle, lat, lng, nfcLinked, status, checkedInAt, challengeId, submissionStatus, sequenceNumber, "NFC", 15);
     }
 }

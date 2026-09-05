@@ -125,6 +125,25 @@ class BaseCheckInMethodServiceTest extends IntegrationTestBase {
     }
 
     @Test
+    void sendingTheMethodWithABlankRadiusClearsTheOverride() {
+        Game game = gameWithDefault("clear", CheckInMethod.LOCATION, 15);
+        CreateBaseRequest request = create("Clearing", 41.1, -8.6);
+        request.setCheckInRadiusM(45);
+        BaseResponse created = baseService.createBase(game.getId(), request);
+        assertEquals(45, created.checkInRadiusM());
+
+        UpdateBaseRequest update = new UpdateBaseRequest();
+        update.setName("Clearing");
+        update.setLat(41.1);
+        update.setLng(-8.6);
+        update.setCheckInMethod("LOCATION");
+        update.setCheckInRadiusM(null);
+
+        assertNull(baseService.updateBase(game.getId(), created.id(), update).checkInRadiusM(),
+                "the editor sends null for a blank field, which must inherit the game default again");
+    }
+
+    @Test
     void anUnknownMethodStringIsRejected() {
         Game game = gameWithDefault("unknown", CheckInMethod.NFC, 15);
         CreateBaseRequest request = create("Odd", 41.1, -8.6);

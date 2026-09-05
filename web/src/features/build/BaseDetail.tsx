@@ -317,7 +317,7 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
                 )
               })}
             </div>
-            {base.checkInMethod === game?.defaultCheckInMethod && (
+            {localMethod === game?.defaultCheckInMethod && (
               <p data-testid="base-checkin-inherits" className="mt-1 text-xs text-muted-foreground">
                 {t('checkIn.inheritsDefault')}
               </p>

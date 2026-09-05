@@ -20,7 +20,7 @@ import { MediaAnswer } from '@/features/player/components/MediaAnswer'
 import { SyncBanner } from '@/features/player/components/SyncBanner'
 import { LocationCheckInPanel } from '@/features/player/components/LocationCheckInPanel'
 import { QrScannerOverlay } from '@/features/player/components/QrScannerOverlay'
-import { describeError } from '@/app/player/errors'
+import { describeError, describeFailedAction } from '@/app/player/errors'
 import { useAuth } from '@/app/player/services'
 import { useLocationStore } from '@/app/player/locationStore'
 
@@ -87,7 +87,7 @@ function BaseContent() {
         }
         return setNotice({ tone: 'warning', text: result.error })
       }
-      return setNotice({ tone: 'destructive', text: result.code === 'ROUTE_STATE_UNAVAILABLE' ? t('baseOrder.unknownRoute') : result.code === 'PREVIOUS_CHECK_IN_FAILED' ? t('baseOrder.dependencyFailed') : result.error })
+      return setNotice({ tone: 'destructive', text: result.code === 'ROUTE_STATE_UNAVAILABLE' ? t('baseOrder.unknownRoute') : result.code === 'PREVIOUS_CHECK_IN_FAILED' ? t('baseOrder.dependencyFailed') : describeFailedAction(result.code, result.details, result.error, t) })
     }
     if (result.state === 'auth') return setNotice({ tone: 'destructive', text: t('sync.needsLogin') })
     if (kind === 'check_in') {

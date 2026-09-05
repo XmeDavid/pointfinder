@@ -306,7 +306,9 @@ public class PlayerService {
                     ci != null ? ci.getCheckedInAt() : null,
                     assignment != null ? assignment.getId() : null,
                     submissionStatus,
-                    sequenceNumbers.get(bId));
+                    sequenceNumbers.get(bId),
+                    base.getCheckInMethod() != null ? base.getCheckInMethod().name() : CheckInMethod.NFC.name(),
+                    base.resolvedCheckInRadiusM());
         }).filter(Objects::nonNull).toList();
     }
 

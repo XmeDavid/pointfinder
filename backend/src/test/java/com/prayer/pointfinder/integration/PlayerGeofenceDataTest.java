@@ -120,5 +120,14 @@ class PlayerGeofenceDataTest extends IntegrationTestBase {
         assertEquals(80, bases.stream().filter(b -> b.id().equals(overrides.getId()))
                 .findFirst().orElseThrow().checkInRadiusM());
         assertEquals("LOCATION", bases.get(0).checkInMethod());
+
+        // The progress rows the logbook renders from carry the same resolution.
+        var progress = playerService.getProgress(game.getId(), player);
+        assertEquals("LOCATION", progress.stream().filter(p -> p.baseId().equals(inherits.getId()))
+                .findFirst().orElseThrow().checkInMethod());
+        assertEquals(25, progress.stream().filter(p -> p.baseId().equals(inherits.getId()))
+                .findFirst().orElseThrow().checkInRadiusM());
+        assertEquals(80, progress.stream().filter(p -> p.baseId().equals(overrides.getId()))
+                .findFirst().orElseThrow().checkInRadiusM());
     }
 }

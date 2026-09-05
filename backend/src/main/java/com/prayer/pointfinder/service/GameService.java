@@ -165,10 +165,18 @@ public class GameService {
             game.setUnlockTrigger(validateUnlockTrigger(request.getUnlockTrigger()));
         }
         if (request.getDefaultCheckInMethod() != null) {
-            game.setDefaultCheckInMethod(validateCheckInMethod(request.getDefaultCheckInMethod()));
+            CheckInMethod method = validateCheckInMethod(request.getDefaultCheckInMethod());
+            if (method != game.getDefaultCheckInMethod() && game.getStatus() != GameStatus.setup) {
+                throw new BadRequestException("Check-in settings can only be changed during setup");
+            }
+            game.setDefaultCheckInMethod(method);
         }
         if (request.getDefaultCheckInRadiusM() != null) {
-            game.setDefaultCheckInRadiusM(clampDefaultRadius(request.getDefaultCheckInRadiusM()));
+            Integer radius = clampDefaultRadius(request.getDefaultCheckInRadiusM());
+            if (!radius.equals(game.getDefaultCheckInRadiusM()) && game.getStatus() != GameStatus.setup) {
+                throw new BadRequestException("Check-in settings can only be changed during setup");
+            }
+            game.setDefaultCheckInRadiusM(radius);
         }
         if (request.getBroadcastEnabled() != null) {
             boolean wasEnabled = Boolean.TRUE.equals(game.getBroadcastEnabled());

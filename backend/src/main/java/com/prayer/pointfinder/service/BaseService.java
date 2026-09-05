@@ -155,9 +155,11 @@ public class BaseService {
         base.setLat(request.getLat());
         base.setLng(request.getLng());
         if (request.getCheckInMethod() != null) {
+            // A client that sends the method knows about radii too, so its
+            // radius is authoritative: null means "inherit the game default".
             base.setCheckInMethod(parseCheckInMethod(request.getCheckInMethod()));
-        }
-        if (request.getCheckInRadiusM() != null) {
+            base.setCheckInRadiusM(clampRadius(request.getCheckInRadiusM()));
+        } else if (request.getCheckInRadiusM() != null) {
             base.setCheckInRadiusM(clampRadius(request.getCheckInRadiusM()));
         }
         requireUsableCoordinates(base.getCheckInMethod(), request.getLat(), request.getLng());
