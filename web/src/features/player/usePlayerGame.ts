@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ApiError, type CheckInResponse, type GameDataResponse, type PlayerSnapshotResponse, type SubmissionResponse } from '@pointfinder/api'
-import { baseRoute, missingPreviousBase, type PendingAction, type SyncOutcome } from '@pointfinder/game-core'
+import { baseRoute, missingPreviousBase, type CheckInProof, type PendingAction, type SyncOutcome } from '@pointfinder/game-core'
 import { useAuth, useServices } from '@/app/player/services'
 import { gameCache } from '@/platform'
 import { buildLogbook, newlyUnlocked, type Logbook } from '@/features/player/logbook'
@@ -154,7 +154,7 @@ export function usePlayerGame() {
 
   const route = useMemo(() => baseRoute(snapshot.data?.game ?? data.data, snapshot.data?.progress ?? data.data?.progress ?? [], pending), [snapshot.data, data.data, pending])
 
-  const checkIn = useCallback(async (baseId: string, nfcToken: string): Promise<ActionResult> => {
+  const checkIn = useCallback(async (baseId: string, proof: CheckInProof): Promise<ActionResult> => {
     if (!gameId) return { state: 'auth' }
     // Refresh team-wide progress before deciding: another teammate may have visited the prerequisite.
     const currentSnapshot = route.enabled && navigator.onLine !== false ? (await snapshot.refetch()).data ?? snapshot.data : snapshot.data
@@ -170,7 +170,7 @@ export function usePlayerGame() {
       const prior = currentSnapshot?.progress.find((p) => p.baseId === proof?.baseId)
       return typeof prior?.sequenceNumber === 'number' && typeof base?.sequenceNumber === 'number' && prior.sequenceNumber < base.sequenceNumber
     })
-    const action = await queue.enqueueCheckIn({ id: crypto.randomUUID(), gameId, baseId, nfcToken, prerequisiteCheckInIds })
+    const action = await queue.enqueueCheckIn({ id: crypto.randomUUID(), gameId, baseId, proof, prerequisiteCheckInIds })
     const report = await sync()
     const remaining = (await queue.list()).find((a) => a.id === action.id)
     const r = remaining?.state === 'failed'

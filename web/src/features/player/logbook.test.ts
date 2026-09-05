@@ -4,7 +4,7 @@ import type { PendingAction } from '@pointfinder/game-core'
 import { buildLogbook, challengeForBase, newlyUnlocked } from '@/features/player/logbook'
 
 const p = (baseId: string, status: BaseProgress['status'], title: string | null = 'T'): BaseProgress => ({
-  baseId, challengeTitle: title, lat: 0, lng: 0, nfcLinked: true, status,
+  baseId, challengeTitle: title, lat: 0, lng: 0, nfcLinked: true, checkInMethod: 'NFC', status,
 })
 
 describe('buildLogbook', () => {
@@ -22,7 +22,7 @@ describe('buildLogbook', () => {
   })
 
   it('reflects a queued check-in', () => {
-    const pending: PendingAction = { type: 'check_in', id: 'q', gameId: 'g', baseId: 'b', nfcToken: 't', createdAt: '', attempts: 0, nextAttemptAt: 0, state: 'pending' }
+    const pending: PendingAction = { type: 'check_in', id: 'q', gameId: 'g', baseId: 'b', proof: { type: 'nfc', token: 't' }, createdAt: '', attempts: 0, nextAttemptAt: 0, state: 'pending' }
     const lb = buildLogbook([p('b', 'not_visited')], [], [pending])
     const e = lb.entries[0]!
     expect(e.kind === 'open' && e.view.effectiveStatus).toBe('checked_in')

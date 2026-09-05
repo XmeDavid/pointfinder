@@ -7,11 +7,12 @@ const bp = (baseId: string, status: 'not_visited' | 'checked_in' | 'submitted' |
   lat: 0,
   lng: 0,
   nfcLinked: true,
+  checkInMethod: 'NFC' as const,
   status,
 })
 
 const act = (over: Partial<PendingAction> & { baseId: string; type: PendingAction['type'] }): PendingAction =>
-  ({ id: 'x', gameId: 'g', createdAt: '2026-01-01T00:00:00Z', attempts: 0, nextAttemptAt: 0, state: 'pending', nfcToken: 't', challengeId: 'c', answer: '', ...over }) as unknown as PendingAction
+  ({ id: 'x', gameId: 'g', createdAt: '2026-01-01T00:00:00Z', attempts: 0, nextAttemptAt: 0, state: 'pending', proof: { type: 'nfc', token: 't' }, challengeId: 'c', answer: '', ...over }) as unknown as PendingAction
 
 describe('progress merging', () => {
   it('never lets a lower stage overwrite a higher one', () => {
@@ -44,5 +45,18 @@ describe('progress merging', () => {
     expect(statusFromSubmission('correct')).toBe('completed')
     expect(statusFromSubmission('rejected')).toBe('rejected')
     expect(statusFromSubmission('pending')).toBe('submitted')
+  })
+})
+
+describe('the check-in method a base screen must render', () => {
+  it('carries the base method and its resolved radius onto the view', () => {
+    const [view] = mergeProgress([{ ...bp('a', 'not_visited'), checkInMethod: 'LOCATION' as const, checkInRadiusM: 40 }], [])
+    expect(view).toMatchObject({ checkInMethod: 'LOCATION', checkInRadiusM: 40 })
+  })
+
+  it('falls back to a tag and the default radius for progress cached before methods existed', () => {
+    const stale = { baseId: 'a', lat: 0, lng: 0, nfcLinked: true, status: 'not_visited' as const } as Parameters<typeof mergeProgress>[0][number]
+    const [view] = mergeProgress([stale], [])
+    expect(view).toMatchObject({ checkInMethod: 'NFC', checkInRadiusM: 15 })
   })
 })

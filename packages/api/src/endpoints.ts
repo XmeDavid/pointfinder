@@ -6,6 +6,7 @@ import type {
   BaseProgress,
   BaseUnlockOverrideResponse,
   Challenge,
+  CheckInRequest,
   CheckInResponse,
   CreateAssignmentRequest,
   CreateGameRequest,
@@ -80,8 +81,9 @@ export function createApi(http: HttpClient) {
     bases: (gameId: EntityId) => http.get<Base[]>(`${p(gameId)}/bases`),
     /** Canonical state for the player's team. Compare `stateVersion` with the realtime client's. */
     snapshot: (gameId: EntityId) => http.get<PlayerSnapshotResponse>(`${g(gameId)}/snapshot`),
-    checkIn: (gameId: EntityId, baseId: EntityId, nfcToken: string) =>
-      http.post<CheckInResponse>(`${p(gameId)}/bases/${encodeURIComponent(baseId)}/check-in`, { nfcToken }),
+    /** The body is a typed proof; the base's own method decides which variant is valid. */
+    checkIn: (gameId: EntityId, baseId: EntityId, body: CheckInRequest) =>
+      http.post<CheckInResponse>(`${p(gameId)}/bases/${encodeURIComponent(baseId)}/check-in`, body),
     submit: (gameId: EntityId, body: PlayerSubmissionRequest) => http.post<SubmissionResponse>(`${p(gameId)}/submissions`, body),
     updateLocation: (gameId: EntityId, body: LocationUpdateRequest) => http.post<void>(`${p(gameId)}/location`, body),
     registerPushToken: (body: PushTokenRequest) => http.put<void>('/api/player/push-token', body),

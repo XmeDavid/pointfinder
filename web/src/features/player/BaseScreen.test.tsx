@@ -7,21 +7,22 @@ import { server } from '@/test/msw/server'
 import { renderPlayer } from '@/features/player/test/renderPlayer'
 import BaseScreen from './BaseScreen'
 
-const NOT_VISITED = { baseId: 'b1', challengeTitle: 'The old mill', lat: 40.09, lng: -8.87, nfcLinked: true, status: 'not_visited', checkedInAt: null, challengeId: 'c1', submissionStatus: null }
+const NOT_VISITED = { baseId: 'b1', challengeTitle: 'The old mill', lat: 40.09, lng: -8.87, nfcLinked: true, checkInMethod: 'NFC', checkInRadiusM: 15, status: 'not_visited', checkedInAt: null, challengeId: 'c1', submissionStatus: null }
 
 /** Stateful fixture: a check-in moves the base to checked_in, like the real server. */
 function progressOverride(initial: Array<Record<string, unknown>>, gameStatus: 'setup' | 'live' | 'ended' = 'live', answerType = 'text', presence = false) {
   let progress = initial
   server.use(
     http.post('/api/player/games/:gameId/bases/:baseId/check-in', async ({ params, request }) => {
-      const body = (await request.json()) as { nfcToken?: string }
-      if (body.nfcToken === 'wrong') return HttpResponse.json({ status: 403, message: 'Invalid tag', code: 'NFC_TOKEN_MISMATCH' }, { status: 403 })
+      const body = (await request.json()) as { method?: string; token?: string }
+      if (body.method !== 'nfc') return HttpResponse.json({ status: 400, message: 'Wrong method', code: 'CHECK_IN_METHOD_MISMATCH' }, { status: 400 })
+      if (body.token === 'wrong') return HttpResponse.json({ status: 403, message: 'Invalid tag', code: 'NFC_TOKEN_MISMATCH' }, { status: 403 })
       progress = progress.map((p) => (p.baseId === params.baseId ? { ...p, status: 'checked_in', checkedInAt: '2026-09-05T10:45:00Z' } : p))
       return HttpResponse.json({ checkInId: 'ci-1', baseId: params.baseId, checkedInAt: '2026-09-05T10:45:00Z' })
     }),
     http.get('/api/player/games/:gameId/data', () => HttpResponse.json({
       gameStatus: 'live', unlockTrigger: 'CHECK_IN',
-      bases: [{ id: 'b1', gameId: 'g1', lat: 40.09, lng: -8.87, nfcLinked: true, hidden: false, fixedChallengeId: null }, { id: 'b2', gameId: 'g1', lat: 40.091, lng: -8.871, nfcLinked: true, hidden: false, fixedChallengeId: null }],
+      bases: [{ id: 'b1', gameId: 'g1', lat: 40.09, lng: -8.87, nfcLinked: true, checkInMethod: 'NFC', checkInRadiusM: 15, hidden: false, fixedChallengeId: null }, { id: 'b2', gameId: 'g1', lat: 40.091, lng: -8.871, nfcLinked: true, checkInMethod: 'NFC', checkInRadiusM: 15, hidden: false, fixedChallengeId: null }],
       challenges: [
         { id: 'c1', gameId: 'g1', title: 'The old mill', description: 'Count the wheels', content: '<p>How many wheels?</p>', answerType, points: 10 },
         { id: 'c2', gameId: 'g1', title: 'Granite boulder', description: 'Team photo', content: '', answerType: 'file', requirePresenceToSubmit: presence, points: 20 },
@@ -282,7 +283,7 @@ it('allows a fresh route check-in even when its answer is already queued', async
   const { services } = await renderPlayer(<BaseScreen />, {
     route: '/base/b1?token=proof', path: '/base/:baseId',
     pending: [
-      { type: 'check_in', id: 'failed', gameId: 'g1', baseId: 'b1', nfcToken: 'old', createdAt: '', state: 'failed', attempts: 1, nextAttemptAt: 0, lastErrorCode: 'PREVIOUS_CHECK_IN_FAILED' },
+      { type: 'check_in', id: 'failed', gameId: 'g1', baseId: 'b1', proof: { type: 'nfc', token: 'old' }, createdAt: '', state: 'failed', attempts: 1, nextAttemptAt: 0, lastErrorCode: 'PREVIOUS_CHECK_IN_FAILED' },
       { type: 'submission', id: 'answer', gameId: 'g1', baseId: 'b1', challengeId: 'c1', answer: '7', createdAt: '', state: 'pending', attempts: 0, nextAttemptAt: Date.now() + 60_000 },
     ],
   })

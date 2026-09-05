@@ -28,7 +28,7 @@ describe('SettingsScreen', () => {
 
   it('warns about unsynced actions before leaving', async () => {
     await renderPlayer(<SettingsScreen />, {
-      pending: [{ type: 'check_in', id: 'q1', gameId: 'g1', baseId: 'b2', nfcToken: 't', createdAt: '2026-09-05T09:00:00Z', attempts: 0, nextAttemptAt: Date.now() + 60_000, state: 'pending' }],
+      pending: [{ type: 'check_in', id: 'q1', gameId: 'g1', baseId: 'b2', proof: { type: 'nfc', token: 't' }, createdAt: '2026-09-05T09:00:00Z', attempts: 0, nextAttemptAt: Date.now() + 60_000, state: 'pending' }],
     })
     await waitFor(() => expect(screen.getByTestId('settings-pending-actions')).toHaveTextContent('1'))
     await userEvent.click(screen.getByRole('button', { name: 'Leave Game' }))

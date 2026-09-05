@@ -4,7 +4,7 @@ import { baseRoute, missingPreviousBase } from './baseOrder'
 import type { PendingAction } from './queue'
 
 const bases = [1, 2, 3].map((n) => ({ baseId: `b${n}`, sequenceNumber: n, status: 'not_visited', checkedInAt: null })) as BaseProgress[]
-const proof = (n: number, extra = {}): PendingAction => ({ id: `q${n}`, type: 'check_in', baseId: `b${n}`, gameId: 'g', nfcToken: 'proof', state: 'pending', createdAt: '', attempts: 0, nextAttemptAt: 0, ...extra })
+const proof = (n: number, extra = {}): PendingAction => ({ id: `q${n}`, type: 'check_in', baseId: `b${n}`, gameId: 'g', proof: { type: 'nfc', token: 'proof' }, state: 'pending', createdAt: '', attempts: 0, nextAttemptAt: 0, ...extra })
 const game = { enforceBaseOrder: true, nextRequiredBaseNumber: 1 }
 
 describe('ordered route progression', () => {

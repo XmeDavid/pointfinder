@@ -6,9 +6,9 @@ export const playerFixtures = {
   playerId: 'p1',
   teamId: 'team1',
   bases: [
-    { id: 'b1', gameId: 'g1', lat: 40.09, lng: -8.87, nfcLinked: true, hidden: false, fixedChallengeId: null },
-    { id: 'b2', gameId: 'g1', lat: 40.091, lng: -8.871, nfcLinked: true, hidden: false, fixedChallengeId: null },
-    { id: 'b3', gameId: 'g1', lat: 40.092, lng: -8.872, nfcLinked: false, hidden: false, fixedChallengeId: null },
+    { id: 'b1', gameId: 'g1', lat: 40.09, lng: -8.87, nfcLinked: true, checkInMethod: 'NFC', checkInRadiusM: 15, hidden: false, fixedChallengeId: null },
+    { id: 'b2', gameId: 'g1', lat: 40.091, lng: -8.871, nfcLinked: true, checkInMethod: 'NFC', checkInRadiusM: 15, hidden: false, fixedChallengeId: null },
+    { id: 'b3', gameId: 'g1', lat: 40.092, lng: -8.872, nfcLinked: false, checkInMethod: 'NFC', checkInRadiusM: 15, hidden: false, fixedChallengeId: null },
   ],
   challenges: [
     { id: 'c1', gameId: 'g1', title: 'The old mill', description: 'Count the wheels', content: '<p>How many wheels?</p>', answerType: 'text', points: 10, completionContent: '<p>Well done, the mill dates from 1850.</p>' },
@@ -21,9 +21,9 @@ export const playerFixtures = {
     { id: 'a3', gameId: 'g1', baseId: 'b3', challengeId: 'c3', teamId: null },
   ],
   progress: [
-    { baseId: 'b1', challengeTitle: 'The old mill', lat: 40.09, lng: -8.87, nfcLinked: true, status: 'completed', checkedInAt: '2026-09-05T09:00:00Z', challengeId: 'c1', submissionStatus: 'correct' },
-    { baseId: 'b2', challengeTitle: 'Granite boulder', lat: 40.091, lng: -8.871, nfcLinked: true, status: 'checked_in', checkedInAt: '2026-09-05T09:30:00Z', challengeId: 'c2', submissionStatus: null },
-    { baseId: 'b3', challengeTitle: 'Chapel', lat: 40.092, lng: -8.872, nfcLinked: false, status: 'submitted', checkedInAt: '2026-09-05T09:40:00Z', challengeId: 'c3', submissionStatus: 'pending' },
+    { baseId: 'b1', challengeTitle: 'The old mill', lat: 40.09, lng: -8.87, nfcLinked: true, checkInMethod: 'NFC', checkInRadiusM: 15, status: 'completed', checkedInAt: '2026-09-05T09:00:00Z', challengeId: 'c1', submissionStatus: 'correct' },
+    { baseId: 'b2', challengeTitle: 'Granite boulder', lat: 40.091, lng: -8.871, nfcLinked: true, checkInMethod: 'NFC', checkInRadiusM: 15, status: 'checked_in', checkedInAt: '2026-09-05T09:30:00Z', challengeId: 'c2', submissionStatus: null },
+    { baseId: 'b3', challengeTitle: 'Chapel', lat: 40.092, lng: -8.872, nfcLinked: false, checkInMethod: 'NFC', checkInRadiusM: 15, status: 'submitted', checkedInAt: '2026-09-05T09:40:00Z', challengeId: 'c3', submissionStatus: 'pending' },
   ],
   notifications: [
     { id: 'n1', gameId: 'g1', message: 'Lunch is at the chapel at 12:30.', targetTeamId: null, sentAt: '2026-09-05T10:00:00Z', sentBy: 'op1' },
@@ -56,10 +56,12 @@ export const playerHandlers = [
   http.delete('/api/player/me', () => new HttpResponse(null, { status: 204 })),
 
   http.post('/api/player/games/:gameId/bases/:baseId/check-in', async ({ params, request }) => {
-    const body = (await request.json()) as { nfcToken?: string }
-    if (!body.nfcToken) return HttpResponse.json({ status: 400, message: 'NFC token required', code: 'NFC_TOKEN_REQUIRED' }, { status: 400 })
-    if (body.nfcToken === 'wrong') return HttpResponse.json({ status: 403, message: 'Invalid tag', code: 'NFC_TOKEN_MISMATCH' }, { status: 403 })
-    return HttpResponse.json({ checkInId: 'ci-1', baseId: params.baseId, checkedInAt: '2026-09-05T10:45:00Z' })
+    const body = (await request.json()) as { method?: string; token?: string; nfcToken?: string }
+    const token = body.token ?? body.nfcToken
+    if (body.method !== 'geo' && !token) return HttpResponse.json({ status: 400, message: 'NFC token required', code: 'NFC_TOKEN_REQUIRED' }, { status: 400 })
+    if (token === 'wrong') return HttpResponse.json({ status: 403, message: 'Invalid tag', code: 'NFC_TOKEN_MISMATCH' }, { status: 403 })
+    const method = body.method === 'geo' ? 'LOCATION' : body.method === 'qr' ? 'QR' : 'NFC'
+    return HttpResponse.json({ checkInId: 'ci-1', baseId: params.baseId, checkedInAt: '2026-09-05T10:45:00Z', method, verification: 'VERIFIED' })
   }),
   http.post('/api/player/games/:gameId/submissions', async ({ request }) => {
     const body = (await request.json()) as { baseId: string; challengeId: string; answer: string; fileUrls?: string[]; idempotencyKey?: string }

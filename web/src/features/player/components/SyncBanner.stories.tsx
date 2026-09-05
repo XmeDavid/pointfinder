@@ -3,7 +3,7 @@ import type { PendingAction } from "@pointfinder/game-core";
 import { SyncBanner } from "./SyncBanner";
 
 const pending = (over: Partial<PendingAction>): PendingAction =>
-  ({ type: "check_in", id: "a1", gameId: "g", baseId: "b", nfcToken: "t", createdAt: "2026-09-05T09:00:00Z", attempts: 0, nextAttemptAt: 0, state: "pending", ...over }) as PendingAction;
+  ({ type: "check_in", id: "a1", gameId: "g", baseId: "b", proof: { type: "nfc", token: "t" }, createdAt: "2026-09-05T09:00:00Z", attempts: 0, nextAttemptAt: 0, state: "pending", ...over }) as PendingAction;
 
 const meta: Meta<typeof SyncBanner> = {
   title: "Player/SyncBanner",

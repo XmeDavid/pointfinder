@@ -174,7 +174,7 @@ export function VisualHarnessPage() {
           </HarnessSection>
           <HarnessSection title="Player route guidance and hidden destination">
             <BaseRouteNotice route={{ enabled: true, nextRequiredBaseNumber: 2, provisionalCheckInIds: [] }}
-              logbook={buildLogbook([{ baseId: 'preview-base', sequenceNumber: 2, challengeTitle: 'Find the inscription beside the old forest bridge', lat: 0, lng: 0, nfcLinked: true, status: 'not_visited' }], [], [])} />
+              logbook={buildLogbook([{ baseId: 'preview-base', sequenceNumber: 2, challengeTitle: 'Find the inscription beside the old forest bridge', lat: 0, lng: 0, nfcLinked: true, checkInMethod: 'NFC', status: 'not_visited' }], [], [])} />
             <BaseRouteNotice route={{ enabled: true, nextRequiredBaseNumber: 2, provisionalCheckInIds: [] }}
               logbook={null} missingNumber={2} />
             <BaseRouteNotice route={{ enabled: true, nextRequiredBaseNumber: null, provisionalCheckInIds: [] }}

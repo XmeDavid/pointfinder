@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
 import { ChevronLeft, Nfc } from 'lucide-react'
-import { missingPreviousBase } from '@pointfinder/game-core'
+import { missingPreviousBase, proofTypeForMethod, type CheckInProof } from '@pointfinder/game-core'
 import { BaseSequenceBadge } from '@/components/status/BaseSequenceBadge'
 import { BaseRouteNotice } from './components/BaseRouteNotice'
 import type { SubmissionResponse } from '@pointfinder/api'
@@ -93,12 +93,12 @@ function BaseContent() {
     }
   }
 
-  async function checkInWith(token: string) {
+  async function checkInWith(proof: CheckInProof) {
     setBusy(true)
     setNotice(null)
     setMissingNumber(null)
     try {
-      report(await game.checkIn(baseId, token), 'check_in')
+      report(await game.checkIn(baseId, proof), 'check_in')
     } catch (err) {
       setNotice({ tone: 'destructive', text: describeError(err, t) })
     } finally {
@@ -111,9 +111,14 @@ function BaseContent() {
     const token = params.get('token')
     const scanKey = `${location.key}:${token}`
     if (token === null || scanKey === autoToken.current || !view || !needsCheckIn || !gameLive) return
+    // A token in the link proves the tag or the printed code; the base says which.
+    const mode = proofTypeForMethod(view.checkInMethod)
+    if (mode === 'geo') return
     autoToken.current = scanKey
     setParams({}, { replace: true })
-    void checkInWith(token)
+    // Kick the check-in off after this render commits rather than inside the effect body.
+    const proof: CheckInProof = { type: mode, token }
+    void Promise.resolve().then(() => checkInWith(proof))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, needsCheckIn, params, gameLive, location.key])
 
@@ -133,7 +138,7 @@ function BaseContent() {
       const { tag } = await scanTag(t, { baseTitle: entry?.kind === 'open' ? entry.title : undefined })
       if (!tag) return setNotice({ tone: 'destructive', text: t('nfc.invalid') })
       if (tag.baseId !== baseId) return setNotice({ tone: 'destructive', text: t('base.wrongTag') })
-      await checkInWith(tag.token ?? '')
+      await checkInWith({ type: 'nfc', token: tag.token ?? '' })
     } catch (err) {
       setNotice({ tone: 'destructive', text: nfcErrorMessage(err, t) })
     }

@@ -1,4 +1,5 @@
 import type { ApiError, CheckInResponse, EntityId, SubmissionResponse } from '@pointfinder/api'
+import type { CheckInProof } from './proof'
 
 /**
  * Offline action queue for the player.
@@ -32,7 +33,8 @@ export interface PendingActionBase {
 
 export interface PendingCheckIn extends PendingActionBase {
   type: 'check_in'
-  nfcToken: string
+  /** The whole proof, so a queued arrival replays exactly the fix that was taken. */
+  proof: CheckInProof
   /** Pending earlier route check-ins that must sync before this proof. */
   prerequisiteCheckInIds?: string[]
 }
@@ -106,26 +108,31 @@ export class OfflineQueue {
     this.now = options.now ?? (() => Date.now())
   }
 
+  /** Every read of the durable store goes through here, so old rows arrive in today's shape. */
+  private async stored(): Promise<PendingAction[]> {
+    return (await this.options.store.list()).map(normalizeAction)
+  }
+
   onChange(listener: () => void): () => void {
     this.listeners.add(listener)
     return () => this.listeners.delete(listener)
   }
 
   async list(): Promise<PendingAction[]> {
-    return sortForSync(await this.options.store.list())
+    return sortForSync(await this.stored())
   }
 
   async pendingCount(): Promise<number> {
-    return (await this.options.store.list()).filter((a) => a.state !== 'failed').length
+    return (await this.stored()).filter((a) => a.state !== 'failed').length
   }
 
   async failedCount(): Promise<number> {
-    return (await this.options.store.list()).filter((a) => a.state === 'failed').length
+    return (await this.stored()).filter((a) => a.state === 'failed').length
   }
 
-  async enqueueCheckIn(input: { id: string; gameId: EntityId; baseId: EntityId; nfcToken: string; prerequisiteCheckInIds?: string[] }): Promise<PendingCheckIn> {
+  async enqueueCheckIn(input: { id: string; gameId: EntityId; baseId: EntityId; proof: CheckInProof; prerequisiteCheckInIds?: string[] }): Promise<PendingCheckIn> {
     const owner = this.options.owner?.()
-    const actions = await this.options.store.list()
+    const actions = await this.stored()
     const existing = actions.find(
       (a): a is PendingCheckIn => a.type === 'check_in' && a.gameId === input.gameId && a.baseId === input.baseId && a.state !== 'failed',
     )
@@ -155,7 +162,7 @@ export class OfflineQueue {
     media?: PendingMedia[]
   }): Promise<PendingSubmission> {
     const owner = this.options.owner?.()
-    const existing = (await this.options.store.list()).find((a) => a.id === input.id)
+    const existing = (await this.stored()).find((a) => a.id === input.id)
     this.requireSameOwner(owner)
     if (existing?.type === 'submission') return existing
     const action: PendingSubmission = { type: 'submission', ...input, ...fresh(this.now()), ...(owner ? { playerId: owner } : {}) }
@@ -166,14 +173,14 @@ export class OfflineQueue {
 
   /** Put a failed action back in line, e.g. after the player fixed the cause. */
   async retry(id: string): Promise<void> {
-    const a = (await this.options.store.list()).find((x) => x.id === id)
+    const a = (await this.stored()).find((x) => x.id === id)
     if (!a || requiresRescan(a)) return
     await this.options.store.upsert({ ...a, state: 'pending', attempts: 0, nextAttemptAt: 0, lastError: null, lastErrorCode: null })
     this.emit()
   }
 
   async discard(id: string): Promise<void> {
-    const action = (await this.options.store.list()).find((a) => a.id === id)
+    const action = (await this.stored()).find((a) => a.id === id)
     if (!action) return
     if (this.syncing && action.state === 'in_flight') throw new Error('Cannot discard an action while it is syncing')
     // A discarded prerequisite did not reach the server; its later proofs must be rescanned.
@@ -185,7 +192,7 @@ export class OfflineQueue {
 
   /** Upload progress is persisted before notifying subscribers. */
   async updateMedia(id: string, media: PendingMedia[]): Promise<void> {
-    const action = (await this.options.store.list()).find((a) => a.id === id)
+    const action = (await this.stored()).find((a) => a.id === id)
     if (!action || action.type !== 'submission') throw new Error('Submission is no longer available')
     await this.options.store.upsert({ ...action, media })
     this.emit()
@@ -206,11 +213,11 @@ export class OfflineQueue {
 
   private async run(): Promise<SyncReport> {
     const outcomes: SyncOutcome[] = []
-    const actions = sortForSync(await this.options.store.list())
+    const actions = sortForSync(await this.stored())
     const now = this.now()
     for (const action of actions) {
       if (action.type === 'check_in' && action.prerequisiteCheckInIds?.length) {
-        const remaining = await this.options.store.list()
+        const remaining = await this.stored()
         const dependencies = remaining.filter((a) => action.prerequisiteCheckInIds?.includes(a.id))
         if (dependencies.some((a) => a.state === 'failed')) {
           await this.failRouteDependents(dependencies.find((a) => a.state === 'failed')!.id)
@@ -219,8 +226,8 @@ export class OfflineQueue {
         if (dependencies.length) continue
       }
       // A check-in failure must not let its dependent submission run ahead.
-      if (action.type === 'submission' && (await this.options.store.list()).some((a) => a.type === 'check_in' && a.gameId === action.gameId && a.baseId === action.baseId)) continue
-      if (!(await this.options.store.list()).some((a) => a.id === action.id && a.state !== 'failed')) continue
+      if (action.type === 'submission' && (await this.stored()).some((a) => a.type === 'check_in' && a.gameId === action.gameId && a.baseId === action.baseId)) continue
+      if (!(await this.stored()).some((a) => a.id === action.id && a.state !== 'failed')) continue
       if (action.state === 'failed') continue
       if (action.nextAttemptAt > now) continue
       await this.options.store.upsert({ ...action, state: 'in_flight' })
@@ -241,7 +248,7 @@ export class OfflineQueue {
       }
       const cls = classify(error, this.options.alreadyDoneCodes ?? DEFAULT_ALREADY_DONE)
       // Preserve upload checkpoints written by the executor during this attempt.
-      const current = (await this.options.store.list()).find((a) => a.id === action.id) ?? action
+      const current = (await this.stored()).find((a) => a.id === action.id) ?? action
       if (cls.kind === 'already_done') {
         await this.options.store.remove(action.id)
         await this.options.onRemoved?.(action).catch(() => {})
@@ -286,7 +293,7 @@ export class OfflineQueue {
   }
 
   private async failRouteDependents(id: string): Promise<void> {
-    const actions = await this.options.store.list()
+    const actions = await this.stored()
     for (const a of actions) {
       if (a.type !== 'check_in' || a.state === 'failed' || !a.prerequisiteCheckInIds?.includes(id)) continue
       await this.options.store.upsert({ ...a, state: 'failed', lastErrorCode: 'PREVIOUS_CHECK_IN_FAILED', lastError: 'A previous check-in could not sync. Scan this tag again after resolving it.' })
@@ -358,4 +365,17 @@ export class MemoryQueueStore implements QueueStore {
 /** A refused route proof may only be replaced by a fresh scan at the base. */
 export function requiresRescan(action: PendingAction): boolean {
   return action.type === 'check_in' && ['PREVIOUS_BASE_REQUIRED', 'PREVIOUS_CHECK_IN_FAILED'].includes(action.lastErrorCode ?? '')
+}
+
+/**
+ * Rows written before proofs were typed carry `nfcToken` and no `proof`.
+ * They were all tag taps, so that is what they become. Reading is enough:
+ * the row is rewritten in today's shape the next time anything touches it.
+ */
+export function normalizeAction(action: PendingAction): PendingAction {
+  if (action.type !== 'check_in') return action
+  const legacy = action as PendingCheckIn & { nfcToken?: unknown }
+  if (legacy.proof || typeof legacy.nfcToken !== 'string') return action
+  const { nfcToken, ...rest } = legacy
+  return { ...rest, proof: { type: 'nfc', token: nfcToken } }
 }

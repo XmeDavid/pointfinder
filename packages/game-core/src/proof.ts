@@ -1,48 +1,57 @@
 /**
  * Proof of presence at a base.
  *
- * Today the backend accepts one kind: the token written on the base's NFC
- * tag. QR codes will carry the same token, and proximity will send a fix.
- * Modelling the proof now means the check-in flow, the queue, and the API
- * request never have to change shape when those modes arrive.
+ * A base declares how a team proves it arrived: tap the tag written for it,
+ * scan the printed code, or let the phone's own fix speak. Every route
+ * produces one of these proofs, and the server verifies it against the
+ * base's declared method — a QR code will not open an NFC base.
  */
+
+/** One GPS sample as the wire carries it. `capturedAt` is ISO 8601. */
+export interface DwellFix {
+  lat: number
+  lng: number
+  accuracy: number
+  capturedAt: string
+}
 
 export type CheckInProof =
   | { type: 'nfc'; token: string }
   | { type: 'qr'; token: string }
-  | { type: 'geo'; lat: number; lng: number; accuracy: number; capturedAt: string }
+  | { type: 'geo'; lat: number; lng: number; accuracy: number; capturedAt: string; claimed: false }
+  | { type: 'geo'; lat: number; lng: number; accuracy: number; capturedAt: string; claimed: true; dwell: DwellFix[] }
 
 export type CheckInMode = CheckInProof['type']
 
-/** What the backend's check-in endpoint accepts today. */
-export interface CheckInRequestBody {
-  nfcToken: string
-}
+/** How the server names a base's check-in method. */
+export type CheckInMethod = 'NFC' | 'QR' | 'LOCATION'
 
-export class UnsupportedProofError extends Error {
-  constructor(readonly mode: CheckInMode) {
-    super(`Check-in mode "${mode}" is not supported by the backend yet`)
-    this.name = 'UnsupportedProofError'
-  }
-}
+/** What the check-in endpoint accepts. */
+export type CheckInRequestBody =
+  | { method: 'nfc' | 'qr'; token: string }
+  | { method: 'geo'; lat: number; lng: number; accuracy: number; capturedAt: string; claimed: boolean; dwell?: DwellFix[] }
 
-/** Map a proof to the request body. Throws for modes the backend cannot verify yet. */
+/** Map a proof onto the request body. Every variant is supported. */
 export function toCheckInRequest(proof: CheckInProof): CheckInRequestBody {
   switch (proof.type) {
     case 'nfc':
     case 'qr':
-      return { nfcToken: proof.token }
+      return { method: proof.type, token: proof.token }
     case 'geo':
-      throw new UnsupportedProofError('geo')
+      return proof.claimed
+        ? { method: 'geo', lat: proof.lat, lng: proof.lng, accuracy: proof.accuracy, capturedAt: proof.capturedAt, claimed: true, dwell: proof.dwell }
+        : { method: 'geo', lat: proof.lat, lng: proof.lng, accuracy: proof.accuracy, capturedAt: proof.capturedAt, claimed: false }
   }
 }
 
-/**
- * Something that can obtain a proof for a base: the NFC sheet, a QR
- * scanner, or the location service. The UI picks one per base mode.
- */
-export interface PresenceProvider {
-  readonly mode: CheckInMode
-  /** Resolve with a proof, or reject with `cancelled` / a provider error. */
-  acquire(baseId: string, signal?: AbortSignal): Promise<CheckInProof>
+/** The proof a base of this method asks for. */
+export function proofTypeForMethod(method: CheckInMethod): 'nfc' | 'qr' | 'geo' {
+  switch (method) {
+    case 'NFC':
+      return 'nfc'
+    case 'QR':
+      return 'qr'
+    case 'LOCATION':
+      return 'geo'
+  }
 }

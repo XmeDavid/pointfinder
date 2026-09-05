@@ -17,6 +17,10 @@ export type AnswerType = 'text' | 'file' | 'none'
 export type UnlockTrigger = 'CHECK_IN' | 'SUBMISSION' | 'APPROVAL'
 export type UserRole = 'admin' | 'operator'
 export type PushPlatform = 'ios' | 'android'
+/** How a team proves it reached a base. Server enum names. */
+export type CheckInMethod = 'NFC' | 'QR' | 'LOCATION'
+/** How much the server trusts a check-in row. */
+export type CheckInVerification = 'VERIFIED' | 'CLAIMED' | 'OPERATOR'
 
 // ---------------------------------------------------------------- auth
 
@@ -80,6 +84,10 @@ export interface Game {
   broadcastEnabled?: boolean
   broadcastCode?: string | null
   unlockTrigger?: UnlockTrigger
+  /** Copied onto bases created after this point. Changing it never rewrites existing bases. */
+  defaultCheckInMethod: CheckInMethod
+  /** Metres. Used by every location base that does not override it. */
+  defaultCheckInRadiusM: number
   orgId?: EntityId | null
   orgName?: string | null
 }
@@ -102,6 +110,10 @@ export interface Base {
   lat: number
   lng: number
   nfcLinked: boolean
+  /** How a team proves it reached this base. */
+  checkInMethod: CheckInMethod
+  /** Metres. Null on operator DTOs means "inherit the game default"; player DTOs always resolve it. */
+  checkInRadiusM?: number | null
   /** One-based route position; absent when base order is not enforced. */
   sequenceNumber?: number | null
   hidden?: boolean
@@ -165,15 +177,31 @@ export interface BaseProgress {
   lat: number
   lng: number
   nfcLinked: boolean
+  /** How a team proves it reached this base. */
+  checkInMethod: CheckInMethod
+  /** Metres, already resolved against the game default. */
+  checkInRadiusM?: number | null
   status: BaseStatus
   checkedInAt?: IsoDateTime | null
   challengeId?: EntityId | null
   submissionStatus?: string | null
 }
 
-export interface CheckInRequest {
-  nfcToken: string
+/** One GPS sample as the wire carries it. */
+export interface CheckInFix {
+  lat: number
+  lng: number
+  accuracy: number
+  capturedAt: IsoDateTime
 }
+
+/**
+ * A typed proof of presence. The legacy body `{ nfcToken }` is still accepted
+ * by the server at NFC bases, but nothing in this repo sends it any more.
+ */
+export type CheckInRequest =
+  | { method: 'nfc' | 'qr'; token: string }
+  | { method: 'geo'; lat: number; lng: number; accuracy: number; capturedAt: IsoDateTime; claimed: boolean; dwell?: CheckInFix[] }
 
 export interface CheckInChallengeInfo {
   id: EntityId
@@ -190,6 +218,8 @@ export interface CheckInResponse {
   checkInId: EntityId
   baseId: EntityId
   checkedInAt: IsoDateTime
+  method: CheckInMethod
+  verification: CheckInVerification
   challenge?: CheckInChallengeInfo | null
 }
 
@@ -426,6 +456,8 @@ export interface CreateGameRequest {
   uniformAssignment?: boolean
   enforceBaseOrder?: boolean
   tileSource?: string | null
+  defaultCheckInMethod?: CheckInMethod | null
+  defaultCheckInRadiusM?: number | null
 }
 
 export interface UpdateGameRequest extends CreateGameRequest {
@@ -444,6 +476,10 @@ export interface UpsertBaseRequest {
   lng: number
   fixedChallengeId?: EntityId | null
   hidden?: boolean
+  /** Null on create means "copy the game default"; null on update means "leave unchanged". */
+  checkInMethod?: CheckInMethod | null
+  /** Metres, 5..200. Null inherits the game default. */
+  checkInRadiusM?: number | null
   tagIds?: EntityId[] | null
 }
 

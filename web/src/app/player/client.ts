@@ -1,5 +1,5 @@
 import { createClient, type PointFinderClient } from '@pointfinder/api'
-import { OfflineQueue, uploadSubmissionMedia, type QueueStore, type PendingAction } from '@pointfinder/game-core'
+import { OfflineQueue, toCheckInRequest, uploadSubmissionMedia, type QueueStore, type PendingAction } from '@pointfinder/game-core'
 import { createPlatformServices } from '@/platform'
 import { apiOrigin } from '@/platform/config'
 import type { PlatformServices } from '@/platform/contracts'
@@ -64,7 +64,7 @@ export async function createServices(platform?: PlatformServices): Promise<AppSe
     owner: playerId,
     store: playerQueueStore(p.queue, playerId),
     executor: {
-      checkIn: (a) => { requireOwner(a); return client.api.player.checkIn(a.gameId, a.baseId, a.nfcToken) },
+      checkIn: (a) => { requireOwner(a); return client.api.player.checkIn(a.gameId, a.baseId, toCheckInRequest(a.proof)) },
       submit: async (a) => {
         requireOwner(a)
         const original = client.session.current

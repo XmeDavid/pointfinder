@@ -1,12 +1,12 @@
 import { expect, it } from 'vitest'
-import { MemoryQueueStore } from '@pointfinder/game-core'
+import { MemoryQueueStore, type PendingAction } from '@pointfinder/game-core'
 import type { StoredAuth } from '@pointfinder/api'
 import { createServices } from './client'
 import type { CachedSnapshot, PlatformServices } from '@/platform/contracts'
 
 it('migrates the existing player’s unowned native queue and cached snapshots before new sessions can join', async () => {
   const queue = new MemoryQueueStore()
-  await queue.upsert({ id: 'old-action', type: 'check_in', gameId: 'g', baseId: 'b', nfcToken: 'proof', createdAt: '', attempts: 0, nextAttemptAt: 0, state: 'pending' })
+  await queue.upsert({ id: 'old-action', type: 'check_in', gameId: 'g', baseId: 'b', nfcToken: 'proof', createdAt: '', attempts: 0, nextAttemptAt: 0, state: 'pending' } as unknown as PendingAction)
   const cache = new Map<string, CachedSnapshot<unknown>>([['snapshot:g', { stateVersion: 5, fetchedAt: '', snapshot: { team: 'own-team' } }]])
   const auth: StoredAuth = { kind: 'player', token: 'token', playerId: 'p', teamId: 't', gameId: 'g', displayName: 'Scout', teamName: 'Team', teamColor: '', gameName: 'Game', gameStatus: 'live' }
   const platform: PlatformServices = {
@@ -22,7 +22,7 @@ it('migrates the existing player’s unowned native queue and cached snapshots b
     socketFactory: async () => { throw new Error('No network during restoration') },
   }
   const services = await createServices(platform)
-  expect(await services.queue.list()).toMatchObject([{ id: 'old-action', playerId: 'p' }])
+  expect(await services.queue.list()).toMatchObject([{ id: 'old-action', playerId: 'p', proof: { type: 'nfc', token: 'proof' } }])
   expect(cache.get('snapshot:p:g')).toMatchObject({ stateVersion: 5, snapshot: { team: 'own-team' } })
   expect(cache.has('snapshot:g')).toBe(false)
 })

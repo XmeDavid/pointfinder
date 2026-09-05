@@ -1,4 +1,6 @@
 import type { BaseProgress, BaseStatus, SubmissionStatus } from '@pointfinder/api'
+import { DEFAULT_CHECK_IN_RADIUS_M } from './geofence'
+import type { CheckInMethod } from './proof'
 import type { PendingAction } from './queue'
 
 /**
@@ -14,6 +16,10 @@ export interface BaseView extends BaseProgress {
   pendingSync: boolean
   /** Set when a local action for this base was refused by the server. */
   syncError?: string | null
+  /** How this base is entered. Always answered, so a screen never has to guess. */
+  checkInMethod: CheckInMethod
+  /** Metres, already resolved: the base's own radius or the game default. */
+  checkInRadiusM: number
 }
 
 const ORDER: Record<BaseStatus, number> = { not_visited: 0, checked_in: 1, rejected: 2, submitted: 3, completed: 4 }
@@ -43,7 +49,16 @@ export function mergeProgress(progress: BaseProgress[], pending: PendingAction[]
       pendingSync = true
       status = mergeStatus(status, a.type === 'check_in' ? 'checked_in' : 'submitted')
     }
-    return { ...p, effectiveStatus: status, pendingSync, syncError }
+    // A snapshot cached before methods existed has neither field; it was a tag base.
+    const stored: { checkInMethod?: CheckInMethod | null; checkInRadiusM?: number | null } = p
+    return {
+      ...p,
+      effectiveStatus: status,
+      pendingSync,
+      syncError,
+      checkInMethod: stored.checkInMethod ?? 'NFC',
+      checkInRadiusM: stored.checkInRadiusM ?? DEFAULT_CHECK_IN_RADIUS_M,
+    }
   })
 }
 
