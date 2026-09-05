@@ -56,6 +56,8 @@ mobile/src-tauri/gen/android/**/build/
 mobile/src-tauri/gen/apple/build/
 mobile/src-tauri/gen/apple/**/xcuserdata/
 packages/*/target/
+packages/tauri-plugin-*/.tauri/
+packages/tauri-plugin-*/ios/Package.resolved
 packages/*/android/build/
 packages/*/android/.gradle/
 packages/*/android/.tauri/

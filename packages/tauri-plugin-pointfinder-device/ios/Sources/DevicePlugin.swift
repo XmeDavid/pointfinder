@@ -46,7 +46,7 @@ class DevicePlugin: Plugin {
     private func publishInsets() {
         guard let insets = hostView?.safeAreaInsets, insets != lastInsets else { return }
         lastInsets = insets
-        trigger("safeAreaChanged", data: insetData())
+        try? trigger("safeAreaChanged", data: insetData())
     }
 
     @objc public func safeAreaInsets(_ invoke: Invoke) {
