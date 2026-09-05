@@ -502,7 +502,11 @@ class GameServiceTest {
         // All structural readiness checks must pass so that validation
         // reaches the variable-completeness check.
         when(baseRepository.countByGameId(gameId)).thenReturn(1L);
-        when(baseRepository.countByGameIdAndNfcLinkedTrue(gameId)).thenReturn(1L);
+        // Readiness now walks the bases per check-in method; a linked NFC base
+        // keeps the structural checks green.
+        when(baseRepository.findByGameId(gameId)).thenReturn(List.of(
+                Base.builder().id(UUID.randomUUID()).game(game).name("B").lat(41.1).lng(-8.6)
+                        .nfcLinked(true).build()));
         when(teamRepository.countByGameId(gameId)).thenReturn(1L);
         when(challengeRepository.countByGameId(gameId)).thenReturn(1L);
         // Challenge content "Find {{missing}}" with no team variable named

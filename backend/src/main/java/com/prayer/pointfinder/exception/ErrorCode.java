@@ -76,6 +76,27 @@ public enum ErrorCode {
     // ── Player join & check-in ───────────────────────────────────────────
     /** Player check-in missing required nfcToken; client must scan the base NFC tag. */
     NFC_TOKEN_REQUIRED,
+
+    // ── Check-in ─────────────────────────────────────────────────────────
+    /** The submitted proof type does not match the base's configured method. */
+    CHECK_IN_METHOD_MISMATCH,
+    /** The NFC or QR token does not match the base token. */
+    CHECK_IN_TOKEN_INVALID,
+    /** GPS accuracy is missing, non-finite, or worse than the cap for this proof. */
+    CHECK_IN_FIX_TOO_COARSE,
+    /** The fix's capturedAt is more than 10 min ahead or more than 24 h behind now. */
+    CHECK_IN_FIX_STALE,
+    /**
+     * An automatic geo proof landed outside the accepted distance. Details
+     * carry {@code distanceM} and {@code allowedM}, both rounded to metres.
+     */
+    CHECK_IN_OUT_OF_RANGE,
+    /**
+     * An "I'm here" claim failed the dwell rule. Details carry {@code reason}:
+     * {@code too_few_fixes}, {@code span_too_short}, {@code outside_ring},
+     * {@code fix_too_coarse}, or {@code buffer_stale}.
+     */
+    CHECK_IN_CLAIM_NOT_DWELLED,
     PREVIOUS_BASE_REQUIRED,
     BASE_ORDER_LOCKED,
     BASE_ORDER_DISABLED,

@@ -84,6 +84,10 @@ public class GameImportExportService {
                 .tileSource(game.getTileSource())
                 .unlockTrigger(game.getUnlockTrigger() != null ? game.getUnlockTrigger().name() : null)
                 .broadcastEnabled(game.getBroadcastEnabled())
+                .defaultCheckInMethod(game.getDefaultCheckInMethod() != null
+                        ? game.getDefaultCheckInMethod().name() : CheckInMethod.NFC.name())
+                .defaultCheckInRadiusM(game.getDefaultCheckInRadiusM() != null
+                        ? game.getDefaultCheckInRadiusM() : 15)
                 .broadcastCode(game.getBroadcastCode())
                 .build();
 
@@ -113,6 +117,9 @@ public class GameImportExportService {
                             .lat(base.getLat())
                             .lng(base.getLng())
                             .hidden(base.getHidden())
+                            .checkInMethod(base.getCheckInMethod() != null
+                                    ? base.getCheckInMethod().name() : CheckInMethod.NFC.name())
+                            .checkInRadiusM(base.getCheckInRadiusM())
                             .fixedChallengeTempId(base.getFixedChallenge() != null ?
                                     challengeIdMap.get(base.getFixedChallenge().getId()) : null)
                             .tagLabels(tagLabels.isEmpty() ? null : tagLabels)
@@ -244,6 +251,15 @@ public class GameImportExportService {
                 .tileSource(data.getGame().getTileSource() != null ? data.getGame().getTileSource() : "osm-classic")
                 .unlockTrigger(data.getGame().getUnlockTrigger() != null ? UnlockTrigger.valueOf(data.getGame().getUnlockTrigger()) : UnlockTrigger.CHECK_IN)
                 .broadcastEnabled(data.getGame().getBroadcastEnabled() != null ? data.getGame().getBroadcastEnabled() : false)
+                // Templates exported before check-in methods existed carry no
+                // method at all; those games were NFC-only, so that is the
+                // honest default rather than a guess.
+                .defaultCheckInMethod(data.getGame().getDefaultCheckInMethod() != null
+                        ? CheckInMethod.valueOf(data.getGame().getDefaultCheckInMethod())
+                        : CheckInMethod.NFC)
+                .defaultCheckInRadiusM(data.getGame().getDefaultCheckInRadiusM() != null
+                        ? CheckInVerificationService.clampRadiusM(data.getGame().getDefaultCheckInRadiusM())
+                        : 15)
                 .status(GameStatus.setup)
                 .createdBy(currentUser)
                 .build();
@@ -324,6 +340,12 @@ public class GameImportExportService {
                     .lng(baseDto.getLng())
                     .nfcLinked(false)
                     .hidden(baseDto.getHidden() != null ? baseDto.getHidden() : false)
+                    .checkInMethod(baseDto.getCheckInMethod() != null
+                            ? CheckInMethod.valueOf(baseDto.getCheckInMethod())
+                            : CheckInMethod.NFC)
+                    .checkInRadiusM(baseDto.getCheckInRadiusM() != null
+                            ? CheckInVerificationService.clampRadiusM(baseDto.getCheckInRadiusM())
+                            : null)
                     .fixedChallenge(fixedChallenge)
                     .orderIndex(importedBaseOrder++)
                     .build();

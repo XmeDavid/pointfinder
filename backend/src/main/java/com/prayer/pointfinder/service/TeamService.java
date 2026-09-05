@@ -200,6 +200,12 @@ public class TeamService {
                 .base(base)
                 .player(null)
                 .checkedInAt(Instant.now())
+                // A rescue proves nothing about presence; record the base's
+                // own method so the audit shows what was bypassed, and mark
+                // the row OPERATOR so it never reads as a player arrival.
+                .method(base.getCheckInMethod() != null
+                        ? base.getCheckInMethod() : com.prayer.pointfinder.entity.CheckInMethod.NFC)
+                .verification(com.prayer.pointfinder.entity.CheckInVerification.OPERATOR)
                 // ── audit foundation snapshot ─────────────────────────────
                 .actorOperatorUser(operator)
                 .actorDisplayNameSnapshot(operatorDisplayName)
@@ -225,6 +231,11 @@ public class TeamService {
                 .actorOperatorUser(operator)
                 .actorDisplayNameSnapshot(operatorDisplayName)
                 .sourceSurface("operator_rescue")
+                .metadata(java.util.Map.of(
+                        "method", base.getCheckInMethod() != null
+                                ? base.getCheckInMethod().name()
+                                : com.prayer.pointfinder.entity.CheckInMethod.NFC.name(),
+                        "verification", com.prayer.pointfinder.entity.CheckInVerification.OPERATOR.name()))
                 .build();
         activityEventRepository.save(event);
 
@@ -263,7 +274,13 @@ public class TeamService {
                 checkIn.getId(),
                 base.getId(),
                 checkIn.getCheckedInAt(),
-                challengeInfo);
+                challengeInfo,
+                checkIn.getMethod() != null
+                        ? checkIn.getMethod().name()
+                        : com.prayer.pointfinder.entity.CheckInMethod.NFC.name(),
+                checkIn.getVerification() != null
+                        ? checkIn.getVerification().name()
+                        : com.prayer.pointfinder.entity.CheckInVerification.VERIFIED.name());
     }
 
     private String generateUniqueJoinCode() {

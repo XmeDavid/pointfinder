@@ -8,7 +8,7 @@
 ## Table of Contents
 
 1. [Game Lifecycle](#1-game-lifecycle)
-2. [NFC & Check-In Flow](#2-nfc--check-in-flow)
+2. [Check-In Methods](#2-check-in-methods)
 3. [Challenge & Submission Flow](#3-challenge--submission-flow)
 4. [State Snapshot and Version Contract](#4-state-snapshot-and-version-contract)
 4a. [Audit Trail Foundation](#4a-audit-trail-foundation)
@@ -106,7 +106,25 @@ Source spec: `docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow
 
 ---
 
-## 2. NFC & Check-In Flow
+## 2. Check-In Methods
+
+Every base declares **how** a team proves it got there. The method is chosen per
+base and seeded from the game's default at creation; changing the game default
+later does not rewrite bases that already exist.
+
+| Method | Proof | Go-live requirement |
+|---|---|---|
+| `NFC` | Tap the tag written for the base | The tag must be linked |
+| `QR` | Scan the printed code, which carries the same token as the tag | None — the code prints from the token |
+| `LOCATION` | A GPS fix inside the base radius, verified server-side | Real coordinates (not 0,0), radius 5–200 m, no two location rings overlapping |
+
+Per-base fields: `check_in_method` and `check_in_radius_m` (null inherits the
+game default). Game fields: `default_check_in_method` and
+`default_check_in_radius_m` (default 15 m). Legacy iOS and Android apps only
+support `NFC` bases; a game containing a `QR` or `LOCATION` base cannot be
+completed on them.
+
+Source spec: `docs/specs/2026-09-05-check-in-methods-design.md`.
 
 ### NFC Tag Format
 
@@ -142,9 +160,60 @@ After writing, the operator calls `PATCH /api/games/{gameId}/bases/{baseId}/nfc-
 
 ### Check-In Rules
 
-1. **Game must be live**: Backend rejects check-in if `game.status != live`.
-2. **One check-in per team per base**: Enforced by `UNIQUE INDEX idx_check_ins_team_base ON check_ins (team_id, base_id)`. Duplicate check-ins return a 409 with "Team already checked in at this base." The operation is idempotent on the client side — both iOS and Android treat a duplicate-check-in 409 as a success and continue.
-3. **Team must belong to game**: Backend validates team membership in `PlayerService.checkIn()`.
+`POST /api/player/games/{gameId}/bases/{baseId}/check-in` takes a discriminated proof:
+
+```json
+{ "method": "nfc", "token": "ab12cd34" }
+{ "method": "qr",  "token": "ab12cd34" }
+{ "method": "geo", "lat": 41.1, "lng": -8.6, "accuracy": 8.5,
+  "capturedAt": "2026-09-05T10:00:00Z", "claimed": false }
+{ "method": "geo", "lat": 41.1, "lng": -8.6, "accuracy": 22.0,
+  "capturedAt": "2026-09-05T10:00:00Z", "claimed": true, "dwell": [ /* 4+ fixes */ ] }
+```
+
+The legacy body `{"nfcToken": "ab12cd34"}` stays accepted and means `method: "nfc"`.
+It is only valid at `NFC` bases.
+
+Checks run in this order, in `PlayerService.checkIn`:
+
+1. **Guards** — the player belongs to the game, the game is `live`, the base belongs to the game.
+2. **Idempotency** — one active row per `(team, base)` (partial unique index `idx_check_ins_team_base` on `archived = false`). A repeat returns the existing row unchanged, whatever proof was sent and whoever created the original row (including an operator rescue).
+3. **Base order** — when `enforce_base_order` is on, a later base is rejected with `PREVIOUS_BASE_REQUIRED`. This runs *before* verification, so a blocked team never learns whether its proof would have passed.
+4. **Verification** — `CheckInVerificationService.verify` against the base's own method.
+
+**Verification rules**
+
+| Rule | Value |
+|---|---|
+| Method match | Proof type must equal the base method; legacy bodies only at `NFC` |
+| Token proofs | Constant-time compare against the base token |
+| Auto geo accuracy | Finite and ≤ 50 m |
+| Auto geo acceptance | `distance ≤ radius + min(accuracy, 30)`, haversine, Earth radius 6 371 000 m |
+| Fix staleness | `capturedAt` within `[now − 24 h, now + 10 min]` |
+| Claim accuracy | ≤ 100 m |
+| Claim ring | `R = max(3 × radius, 50)`; the main fix must be inside it |
+| Claim dwell | ≥ 4 fixes, all inside `R`, all ≤ 100 m accuracy, first-to-last span ≥ 60 s, last fix within 2 min of the main fix |
+
+Failures carry a machine-readable code: `CHECK_IN_METHOD_MISMATCH`,
+`CHECK_IN_TOKEN_INVALID`, `CHECK_IN_FIX_TOO_COARSE`, `CHECK_IN_FIX_STALE`,
+`CHECK_IN_OUT_OF_RANGE` (details `distanceM`, `allowedM`), and
+`CHECK_IN_CLAIM_NOT_DWELLED` (details `reason`).
+
+**What the row records.** `method` and `verification` (`VERIFIED`, `CLAIMED`, or
+`OPERATOR`), plus the raw proof for geo rows: `proof_lat`, `proof_lng`,
+`proof_accuracy_m`, `proof_distance_m`, `proof_captured_at`. For `VERIFIED` geo
+rows `checked_in_at` is the proof's `capturedAt`, so a check-in queued offline
+and synced hours later still records when the team arrived; for `CLAIMED` rows
+it is receipt time, because nothing proves where the team was at capture time.
+Activity events carry the same `method` and `verification` in their `metadata`
+column, and claimed events add `teammatesInRing` / `teammatesTotal`.
+
+**Claims.** A claim is always accepted into the game — a team under heavy canopy
+must not be stranded — but it is marked `CLAIMED` and the server snapshots every
+teammate's latest known position with distance and age into
+`team_positions_snapshot`. The activity event reports how many teammates were
+inside `R`. Operators see the claim in the feed with a badge and the summary,
+and the audit export carries the raw proof as a JSON column.
 
 > **Note**: Check-in does NOT validate that an assignment exists for the team-base pair. A player can check in at any base belonging to the game. Assignment validation occurs later during submission creation.
 
@@ -180,17 +249,24 @@ iOS devices iPhone 6s and earlier, and all iPad models, lack NFC hardware. When 
 
 ### Location-Bound Assignments
 
-When a challenge has `location_bound = true` and is assigned to a base:
-- The base **must** have non-null `lat` and `lng` coordinates (validated at go-live).
-- The player's device location is reported via `POST /api/player/games/{gameId}/location` on a 30-second interval (both iOS and Android).
-- The backend enforces proximity before allowing check-in for location-bound challenges.
+`location_bound = true` on a challenge means the challenge lives at a specific
+base. At go-live the backend requires every location-bound challenge to be
+assigned to a base (via `fixedChallengeId` or an assignment row).
 
-**Platform coverage**:
-- Backend: location validation added in `fix(backend): validate location-bound assignments before go-live` (commit `329ced0`)
-- iOS: `LocationService` sends location every 30 seconds, immediately after check-in/submission
-- Android: `PlayerLocationService` (FusedLocationProviderClient) sends every 30 seconds
+The player's device reports its position via
+`POST /api/player/games/{gameId}/location` on a throttled schedule; the request
+carries `lat`, `lng`, and — since the check-in methods wave — `accuracy` and
+`capturedAt`, all of which are stored on `player_locations`.
 
-**Note**: Android lists location-bound challenge validation as "Incomplete" in the audit — the full proximity enforcement at check-in time is a backend concern; the Android client sends location but does not pre-validate before attempting check-in.
+**The backend does not enforce proximity for `location_bound` challenges.** That
+flag is a content-placement rule, not a geofence. Proximity is enforced only by
+`LOCATION` check-in method verification, described above, and only at check-in
+time.
+
+**`requirePresenceToSubmit` is client-side.** The re-proof before submitting —
+re-tap for `NFC`, re-scan for `QR`, currently inside the wider ring for
+`LOCATION` — is performed by the player app. The backend accepts the submission
+either way, so this is a UX guardrail, not a security boundary.
 
 ---
 

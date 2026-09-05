@@ -39,7 +39,11 @@ public final class GameResponseMapper {
                 game.getUnlockTrigger().name(),
                 game.getOrganization() != null ? game.getOrganization().getId() : null,
                 game.getOrganization() != null ? game.getOrganization().getName() : null,
-                Boolean.TRUE.equals(game.getEnforceBaseOrder())
+                Boolean.TRUE.equals(game.getEnforceBaseOrder()),
+                game.getDefaultCheckInMethod() != null
+                        ? game.getDefaultCheckInMethod().name()
+                        : com.prayer.pointfinder.entity.CheckInMethod.NFC.name(),
+                game.getDefaultCheckInRadiusM() != null ? game.getDefaultCheckInRadiusM() : 15
         );
     }
 }

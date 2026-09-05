@@ -11,5 +11,11 @@ public record ActivityEventResponse(
     UUID baseId,
     UUID challengeId,
     String message,
-    Instant timestamp
+    Instant timestamp,
+    /**
+     * Structured extras. For check-ins: {@code method}, {@code verification},
+     * and for claims {@code teammatesInRing} / {@code teammatesTotal}. Null
+     * for events that carry nothing beyond the message.
+     */
+    java.util.Map<String, Object> metadata
 ) {}

@@ -16,5 +16,7 @@
   "unlockTrigger": "CHECK_IN",
   "orgId": null,
   "orgName": null,
-  "enforceBaseOrder": false
+  "enforceBaseOrder": false,
+  "defaultCheckInMethod": "NFC",
+  "defaultCheckInRadiusM": 15
 }

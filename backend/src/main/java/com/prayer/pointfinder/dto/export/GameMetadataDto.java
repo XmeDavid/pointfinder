@@ -18,4 +18,9 @@ public class GameMetadataDto {
     private String unlockTrigger;
     private Boolean broadcastEnabled;
     private String broadcastCode;
+
+    /** {@code NFC}, {@code QR}, or {@code LOCATION}. Null on pre-V60 templates. */
+    private String defaultCheckInMethod;
+    /** Default location radius in metres. Null on pre-V60 templates. */
+    private Integer defaultCheckInRadiusM;
 }

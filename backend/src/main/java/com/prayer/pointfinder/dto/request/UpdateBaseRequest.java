@@ -1,5 +1,7 @@
 package com.prayer.pointfinder.dto.request;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
@@ -44,4 +46,12 @@ public class UpdateBaseRequest {
 
     /** Stage assignment. Null keeps current value; explicit JSON null clears it. */
     private UUID stageId;
+
+    /** Null leaves the base's current method untouched. */
+    private String checkInMethod;
+
+    /** Null leaves the current radius override untouched. */
+    @Min(value = 5, message = "Check-in radius must be at least 5 m")
+    @Max(value = 200, message = "Check-in radius must be at most 200 m")
+    private Integer checkInRadiusM;
 }

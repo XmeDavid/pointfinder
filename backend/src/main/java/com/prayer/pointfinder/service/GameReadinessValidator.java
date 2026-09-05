@@ -2,6 +2,7 @@ package com.prayer.pointfinder.service;
 
 import com.prayer.pointfinder.entity.Assignment;
 import com.prayer.pointfinder.entity.Base;
+import com.prayer.pointfinder.entity.CheckInMethod;
 import com.prayer.pointfinder.entity.Challenge;
 import com.prayer.pointfinder.entity.Game;
 import com.prayer.pointfinder.exception.BadRequestException;
@@ -49,12 +50,24 @@ public class GameReadinessValidator {
             throw new BadRequestException("Game must have at least one base before going live");
         }
 
-        long nfcLinkedCount = baseRepository.countByGameIdAndNfcLinkedTrue(game.getId());
-        if (nfcLinkedCount < baseCount) {
+        List<Base> allBases = baseRepository.findByGameId(game.getId());
+
+        // Only NFC bases need a written tag. A QR base is printed from the
+        // same token and is always ready; a location base has no tag at all.
+        long nfcBaseCount = allBases.stream()
+                .filter(b -> b.getCheckInMethod() == CheckInMethod.NFC)
+                .count();
+        long nfcLinkedCount = allBases.stream()
+                .filter(b -> b.getCheckInMethod() == CheckInMethod.NFC)
+                .filter(b -> Boolean.TRUE.equals(b.getNfcLinked()))
+                .count();
+        if (nfcLinkedCount < nfcBaseCount) {
             throw new BadRequestException(
-                    String.format("All bases must have NFC tags linked before going live. %d of %d bases linked",
-                            nfcLinkedCount, baseCount));
+                    String.format("All NFC bases must have tags linked before going live. %d of %d bases linked",
+                            nfcLinkedCount, nfcBaseCount));
         }
+
+        validateLocationBases(allBases);
 
         long teamCount = teamRepository.countByGameId(game.getId());
         if (teamCount == 0) {
@@ -90,7 +103,7 @@ public class GameReadinessValidator {
                 .filter(c -> Boolean.TRUE.equals(c.getLocationBound()))
                 .toList();
         if (!locationBoundChallenges.isEmpty()) {
-            List<Base> bases = baseRepository.findByGameId(game.getId());
+            List<Base> bases = allBases;
             Set<UUID> fixedChallengeIds = bases.stream()
                     .map(Base::getFixedChallenge)
                     .filter(Objects::nonNull)
@@ -107,6 +120,52 @@ public class GameReadinessValidator {
             if (unassignedCount > 0) {
                 throw new BadRequestException(
                         String.format("%d location-bound challenge(s) not assigned to any base", unassignedCount));
+            }
+        }
+    }
+
+    /**
+     * Location bases carry the whole burden of proof themselves, so a
+     * misconfigured one is not a cosmetic problem — it is a base nobody can
+     * ever reach, or two bases that unlock from one spot. Both are caught
+     * here rather than discovered by a team standing in a field.
+     */
+    private void validateLocationBases(List<Base> allBases) {
+        List<Base> locationBases = allBases.stream()
+                .filter(b -> b.getCheckInMethod() == CheckInMethod.LOCATION)
+                .toList();
+        if (locationBases.isEmpty()) {
+            return;
+        }
+
+        for (Base base : locationBases) {
+            if (base.getLat() == null || base.getLng() == null
+                    || (base.getLat() == 0.0 && base.getLng() == 0.0)) {
+                throw new BadRequestException(String.format(
+                        "Location base \"%s\" needs real coordinates before going live", base.getName()));
+            }
+            int radiusM = base.resolvedCheckInRadiusM();
+            if (radiusM < CheckInVerificationService.MIN_RADIUS_M
+                    || radiusM > CheckInVerificationService.MAX_RADIUS_M) {
+                throw new BadRequestException(String.format(
+                        "Location base \"%s\" has a check-in radius of %d m; it must be between %d and %d m",
+                        base.getName(), radiusM,
+                        CheckInVerificationService.MIN_RADIUS_M, CheckInVerificationService.MAX_RADIUS_M));
+            }
+        }
+
+        for (int i = 0; i < locationBases.size(); i++) {
+            for (int j = i + 1; j < locationBases.size(); j++) {
+                Base a = locationBases.get(i);
+                Base b = locationBases.get(j);
+                double distanceM = CheckInVerificationService.haversineMeters(
+                        a.getLat(), a.getLng(), b.getLat(), b.getLng());
+                double combinedRadiiM = a.resolvedCheckInRadiusM() + b.resolvedCheckInRadiusM();
+                if (distanceM < combinedRadiiM) {
+                    throw new BadRequestException(String.format(
+                            "Location bases \"%s\" and \"%s\" have overlapping rings (%.0f m apart, %.0f m combined radius)",
+                            a.getName(), b.getName(), distanceM, combinedRadiiM));
+                }
             }
         }
     }

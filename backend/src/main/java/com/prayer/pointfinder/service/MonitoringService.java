@@ -115,7 +115,8 @@ public class MonitoringService {
                         e.getBase() != null ? e.getBase().getId() : null,
                         e.getChallenge() != null ? e.getChallenge().getId() : null,
                         e.getMessage(),
-                        e.getTimestamp()
+                        e.getTimestamp(),
+                        e.getMetadata()
                 ))
                 .toList();
     }

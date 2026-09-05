@@ -2,8 +2,11 @@ package com.prayer.pointfinder.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 
 @Entity
@@ -42,6 +45,16 @@ public class ActivityEvent {
 
     @Column(nullable = false)
     private Instant timestamp;
+
+    /**
+     * Structured payload beside the free-text {@link #message}. Check-in
+     * events carry {@code method} and {@code verification}; claimed check-ins
+     * additionally carry {@code teammatesInRing} and {@code teammatesTotal}.
+     * Null for every event type that has nothing structured to add.
+     */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "metadata", columnDefinition = "jsonb")
+    private Map<String, Object> metadata;
 
     // ── Audit Foundation (V36) ─────────────────────────────────────────
     //

@@ -8,6 +8,7 @@ import com.prayer.pointfinder.entity.ActivityEventType;
 import com.prayer.pointfinder.entity.Base;
 import com.prayer.pointfinder.entity.Challenge;
 import com.prayer.pointfinder.entity.CheckIn;
+import com.prayer.pointfinder.entity.CheckInMethod;
 import com.prayer.pointfinder.entity.Player;
 import com.prayer.pointfinder.entity.Submission;
 import com.prayer.pointfinder.entity.Team;
@@ -28,6 +29,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Objects;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -180,9 +183,11 @@ public class AuditExportService {
         // does not preserve.
         Map<UUID, String> submissionReasonsByActivityKey = buildSubmissionReasonIndex(query.gameId());
         Map<UUID, String> checkInReasonsByActivityKey = buildCheckInReasonIndex(query.gameId());
+        Map<UUID, CheckInAudit> checkInAuditByActivityKey = buildCheckInAuditIndex(query.gameId());
 
         List<AuditEntryDto> entries = rows.stream()
-                .map(row -> toDto(row, submissionReasonsByActivityKey, checkInReasonsByActivityKey))
+                .map(row -> toDto(row, submissionReasonsByActivityKey, checkInReasonsByActivityKey,
+                        checkInAuditByActivityKey))
                 .toList();
 
         return render(entries, format, query.gameId());
@@ -201,11 +206,13 @@ public class AuditExportService {
     private AuditEntryDto toDto(
             ActivityEvent row,
             Map<UUID, String> submissionReasons,
-            Map<UUID, String> checkInReasons
+            Map<UUID, String> checkInReasons,
+            Map<UUID, CheckInAudit> checkInAudits
     ) {
         AuditEntryDto.Actor actor = resolveActor(row);
         AuditEntryDto.Target target = resolveTarget(row);
         String operatorReason = lookupOperatorReason(row, submissionReasons, checkInReasons);
+        CheckInAudit audit = checkInAudits.get(row.getId());
 
         return new AuditEntryDto(
                 row.getId(),
@@ -216,8 +223,69 @@ public class AuditExportService {
                 target,
                 new AuditEntryDto.Details(
                         row.getMessage(),
-                        operatorReason),
+                        operatorReason,
+                        audit != null ? audit.method() : null,
+                        audit != null ? audit.verification() : null,
+                        audit != null ? audit.proofJson() : null),
                 row.isArchived());
+    }
+
+    private record CheckInAudit(String method, String verification, String proofJson) {}
+
+    /**
+     * Projects the check-in rows' proof fields onto their activity events, on
+     * the same {@code (teamId, baseId)} tuple the operator-reason enrichment
+     * already uses. Kept separate from that index because it applies to every
+     * check-in, not only the ones an operator justified.
+     */
+    private Map<UUID, CheckInAudit> buildCheckInAuditIndex(UUID gameId) {
+        List<CheckIn> checkIns = checkInRepository.findByGameIdIncludingArchived(gameId);
+        Map<ReasonKey, CheckInAudit> byTuple = new HashMap<>();
+        for (CheckIn ci : checkIns) {
+            UUID teamId = ci.getTeam() != null ? ci.getTeam().getId() : null;
+            UUID baseId = ci.getBase() != null ? ci.getBase().getId() : null;
+            if (teamId == null || baseId == null) {
+                continue;
+            }
+            byTuple.put(new ReasonKey(teamId, baseId), new CheckInAudit(
+                    ci.getMethod() != null ? ci.getMethod().name() : CheckInMethod.NFC.name(),
+                    ci.getVerification() != null ? ci.getVerification().name() : null,
+                    renderProof(ci)));
+        }
+        if (byTuple.isEmpty()) {
+            return Map.of();
+        }
+        Map<UUID, CheckInAudit> byEventId = new HashMap<>();
+        for (ActivityEvent ev : activityEventRepository.findByGameIdIncludingArchived(gameId)) {
+            if (ev.getType() != ActivityEventType.check_in || ev.getTeam() == null || ev.getBase() == null) {
+                continue;
+            }
+            CheckInAudit audit = byTuple.get(new ReasonKey(ev.getTeam().getId(), ev.getBase().getId()));
+            if (audit != null) {
+                byEventId.put(ev.getId(), audit);
+            }
+        }
+        return byEventId;
+    }
+
+    /** Null when the row carries no geo proof at all, so the column stays empty. */
+    private String renderProof(CheckIn ci) {
+        Map<String, Object> proof = new LinkedHashMap<>();
+        proof.put("lat", ci.getProofLat());
+        proof.put("lng", ci.getProofLng());
+        proof.put("accuracyM", ci.getProofAccuracyM());
+        proof.put("distanceM", ci.getProofDistanceM());
+        proof.put("capturedAt", ci.getProofCapturedAt() != null ? ci.getProofCapturedAt().toString() : null);
+        proof.put("teamPositions", ci.getTeamPositionsSnapshot());
+        if (proof.values().stream().allMatch(Objects::isNull)) {
+            return null;
+        }
+        try {
+            return objectMapper.writeValueAsString(proof);
+        } catch (JsonProcessingException ex) {
+            log.warn("Failed to serialize check-in proof for audit export: {}", ex.getMessage());
+            return null;
+        }
     }
 
     private AuditEntryDto.Actor resolveActor(ActivityEvent row) {
@@ -538,6 +606,11 @@ public class AuditExportService {
      * CSV header order is fixed and documented in the API reference. Any
      * change to the column list should bump the {@code audit-export} section
      * of {@code docs/api-reference.md} at the same time, because external
+     * consumers parse by position. The three trailing columns
+     * ({@code check_in_method}, {@code check_in_verification},
+     * {@code check_in_proof}) were appended by the check-in methods wave and
+     * are empty for every row that is not a check-in.
+     * Earlier note on the same contract: external
      * consumers parse by position.
      */
     private static final String CSV_HEADER = String.join(",", List.of(
@@ -556,14 +629,17 @@ public class AuditExportService {
             "challenge_title",
             "message",
             "operator_reason",
-            "archived"
+            "archived",
+            "check_in_method",
+            "check_in_verification",
+            "check_in_proof"
     ));
 
     private String renderCsv(List<AuditEntryDto> entries) {
         StringBuilder sb = new StringBuilder();
         sb.append(CSV_HEADER).append("\r\n");
         for (AuditEntryDto e : entries) {
-            List<String> columns = new ArrayList<>(16);
+            List<String> columns = new ArrayList<>(19);
             columns.add(csvCell(e.timestamp() != null ? e.timestamp().toString() : null));
             columns.add(csvCell(e.type()));
             columns.add(csvCell(e.sourceSurface()));
@@ -591,6 +667,9 @@ public class AuditExportService {
             columns.add(csvCell(details != null ? details.operatorReason() : null));
 
             columns.add(csvCell(Boolean.toString(e.archived())));
+            columns.add(csvCell(details != null ? details.checkInMethod() : null));
+            columns.add(csvCell(details != null ? details.checkInVerification() : null));
+            columns.add(csvCell(details != null ? details.checkInProof() : null));
 
             sb.append(String.join(",", columns)).append("\r\n");
         }

@@ -180,7 +180,8 @@ public class PlayerController {
     public ResponseEntity<Void> updateLocation(@PathVariable UUID gameId,
                                                 @Valid @RequestBody UpdateLocationRequest request) {
         Player player = SecurityUtils.getCurrentPlayer();
-        playerService.updateLocation(gameId, player, request.getLat(), request.getLng());
+        playerService.updateLocation(gameId, player, request.getLat(), request.getLng(),
+                request.getAccuracy(), request.getCapturedAt());
         return ResponseEntity.noContent().build();
     }
 

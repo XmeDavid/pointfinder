@@ -49,9 +49,23 @@ public record PlayerBaseResponse(
     Boolean nfcLinked,
     Boolean hidden,
     UUID fixedChallengeId,
-        Integer sequenceNumber
+    Integer sequenceNumber,
+    /**
+     * Resolved check-in method: {@code NFC}, {@code QR}, or {@code LOCATION}.
+     * Never null — the phone branches its whole check-in UI on this.
+     */
+    String checkInMethod,
+    /**
+     * Resolved radius in metres (base override, else the game default). Never
+     * null, so the arrival detector never has to guess.
+     */
+    Integer checkInRadiusM
 ) {
     public PlayerBaseResponse(UUID id, UUID gameId, Double lat, Double lng, Boolean nfcLinked, Boolean hidden, UUID fixedChallengeId) {
-        this(id, gameId, lat, lng, nfcLinked, hidden, fixedChallengeId, null);
+        this(id, gameId, lat, lng, nfcLinked, hidden, fixedChallengeId, null, "NFC", 15);
+    }
+
+    public PlayerBaseResponse(UUID id, UUID gameId, Double lat, Double lng, Boolean nfcLinked, Boolean hidden, UUID fixedChallengeId, Integer sequenceNumber) {
+        this(id, gameId, lat, lng, nfcLinked, hidden, fixedChallengeId, sequenceNumber, "NFC", 15);
     }
 }

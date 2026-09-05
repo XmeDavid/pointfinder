@@ -32,8 +32,17 @@ public record CheckInResponse(
         UUID checkInId,
         UUID baseId,
         Instant checkedInAt,
-        ChallengeInfo challenge
+        ChallengeInfo challenge,
+        /** {@code NFC}, {@code QR}, or {@code LOCATION} — how this visit was proved. */
+        String method,
+        /** {@code VERIFIED}, {@code CLAIMED}, or {@code OPERATOR}. */
+        String verification
 ) {
+    /** Pre-check-in-methods shape; assumes a verified NFC tap. */
+    public CheckInResponse(UUID checkInId, UUID baseId, Instant checkedInAt, ChallengeInfo challenge) {
+        this(checkInId, baseId, checkedInAt, challenge, "NFC", "VERIFIED");
+    }
+
     public record ChallengeInfo(
             UUID id,
             String title,

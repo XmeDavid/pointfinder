@@ -136,6 +136,17 @@ public record AuditEntryDto(
      */
     public record Details(
             String message,
-            String operatorReason
+            String operatorReason,
+            /** {@code NFC}, {@code QR}, {@code LOCATION}; null for non-check-in rows. */
+            String checkInMethod,
+            /** {@code VERIFIED}, {@code CLAIMED}, {@code OPERATOR}; null otherwise. */
+            String checkInVerification,
+            /**
+             * The geo proof and teammate snapshot as one JSON blob, so an
+             * incident reviewer sees exactly what the phone reported rather
+             * than a verdict derived from it. Null for token proofs and
+             * operator rescues, which have no fix to show.
+             */
+            String checkInProof
     ) {}
 }

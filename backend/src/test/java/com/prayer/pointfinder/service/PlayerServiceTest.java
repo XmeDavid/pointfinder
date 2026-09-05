@@ -115,6 +115,9 @@ class PlayerServiceTest {
     @Mock
     private QuotaService quotaService;
 
+    @Mock
+    private CheckInVerificationService checkInVerificationService;
+
     @InjectMocks
     private PlayerService playerService;
 
@@ -295,8 +298,18 @@ class PlayerServiceTest {
         assertTrue(progress.stream().anyMatch(p -> p.baseId().equals(sourceBaseId)));
     }
 
+    /** PlayerService now delegates proof checking; stub a plain NFC pass. */
+    private void stubVerifiedNfcProof() {
+        when(checkInVerificationService.verify(any(), any(), any(), any()))
+                .thenAnswer(inv -> new CheckInVerificationService.VerifiedProof(
+                        com.prayer.pointfinder.entity.CheckInMethod.NFC,
+                        com.prayer.pointfinder.entity.CheckInVerification.VERIFIED,
+                        null, null, null, null, null, null, java.time.Instant.now(), null, null));
+    }
+
     @Test
     void checkInNotifiesOperatorsAfterSuccessfulCheckIn() {
+        stubVerifiedNfcProof();
         UUID gameId = UUID.randomUUID();
         UUID teamId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
@@ -416,6 +429,7 @@ class PlayerServiceTest {
 
     @Test
     void enforcedRouteRejectsLaterScanButAllowsTeamSpecificChallengeAfterPriorCheckIn() {
+        stubVerifiedNfcProof();
         Game game = Game.builder().id(UUID.randomUUID()).status(GameStatus.live).enforceBaseOrder(true).build();
         Team team = Team.builder().id(UUID.randomUUID()).name("A").game(game).build();
         Player player = Player.builder().id(UUID.randomUUID()).team(team).build();
@@ -451,8 +465,19 @@ class PlayerServiceTest {
                 .thenReturn(Optional.of(CheckIn.builder().id(response.checkInId()).base(second).checkedInAt(Instant.now()).build()));
         when(checkInRepository.findByGameIdAndTeamId(game.getId(), team.getId())).thenReturn(List.of());
         assertEquals(response.checkInId(), playerService.checkIn(game.getId(), second.getId(), player, request).checkInId());
+
+        // With no existing row, a refused proof surfaces the verifier's error
+        // (the dedup lookup runs before verification, so it must be empty here).
+        when(checkInRepository.findByTeamIdAndBaseId(team.getId(), second.getId())).thenReturn(Optional.empty());
+        when(checkInRepository.findByGameIdAndTeamId(game.getId(), team.getId()))
+                .thenReturn(List.of(CheckIn.builder().base(first).build()));
+        when(checkInVerificationService.verify(any(), any(), any(), any()))
+                .thenThrow(new BadRequestException("Invalid check-in token",
+                        com.prayer.pointfinder.exception.ErrorCode.CHECK_IN_TOKEN_INVALID));
         request.setNfcToken("wrong");
-        assertThrows(BadRequestException.class, () -> playerService.checkIn(game.getId(), second.getId(), player, request));
+        BadRequestException refused = assertThrows(BadRequestException.class,
+                () -> playerService.checkIn(game.getId(), second.getId(), player, request));
+        assertEquals(com.prayer.pointfinder.exception.ErrorCode.CHECK_IN_TOKEN_INVALID, refused.getErrorCode());
     }
 
 }

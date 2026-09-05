@@ -75,6 +75,7 @@ public class GameEventBroadcaster {
         data.put("challengeId", event.getChallenge() != null ? event.getChallenge().getId() : null);
         data.put("message", event.getMessage());
         data.put("timestamp", event.getTimestamp().toString());
+        data.put("metadata", event.getMetadata());
         broadcast(gameId, "activity", data, true);
     }
 

@@ -1,6 +1,8 @@
 package com.prayer.pointfinder.dto.request;
 
 import com.prayer.pointfinder.util.ValidFiniteNumber;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
@@ -42,4 +44,16 @@ public class CreateBaseRequest {
      */
     @Size(max = 20, message = "A base can have at most 20 tags")
     private List<UUID> tagIds;
+
+    /**
+     * {@code NFC}, {@code QR}, or {@code LOCATION}, case-insensitive. Null
+     * means "use the game default", which is what the operator sees as the
+     * pre-selected option in the base editor.
+     */
+    private String checkInMethod;
+
+    /** Per-base radius override in metres. Null inherits the game default. */
+    @Min(value = 5, message = "Check-in radius must be at least 5 m")
+    @Max(value = 200, message = "Check-in radius must be at most 200 m")
+    private Integer checkInRadiusM;
 }

@@ -2,6 +2,8 @@ package com.prayer.pointfinder.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -35,6 +37,59 @@ public class CheckIn {
 
     @Column(name = "checked_in_at", nullable = false)
     private Instant checkedInAt;
+
+    /**
+     * Which method proved this visit. Copied from the base at check-in time so
+     * a later method change on the base does not rewrite history.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "method", nullable = false, length = 16)
+    @Builder.Default
+    private CheckInMethod method = CheckInMethod.NFC;
+
+    /**
+     * Strength of the proof: token/geo verified, player-claimed after a dwell,
+     * or an operator rescue with no player proof at all.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "verification", nullable = false, length = 16)
+    @Builder.Default
+    private CheckInVerification verification = CheckInVerification.VERIFIED;
+
+    /** Latitude reported by the phone for a geo proof. Null for token proofs. */
+    @Column(name = "proof_lat")
+    private Double proofLat;
+
+    /** Longitude reported by the phone for a geo proof. */
+    @Column(name = "proof_lng")
+    private Double proofLng;
+
+    /** Reported horizontal accuracy of the fix, in metres. */
+    @Column(name = "proof_accuracy_m")
+    private Double proofAccuracyM;
+
+    /** Server-computed haversine distance from the fix to the base, in metres. */
+    @Column(name = "proof_distance_m")
+    private Double proofDistanceM;
+
+    /**
+     * When the phone captured the fix. For VERIFIED geo rows this is also
+     * {@link #checkedInAt}, so an offline queue replayed hours later still
+     * records the moment the team actually arrived.
+     */
+    @Column(name = "proof_captured_at")
+    private Instant proofCapturedAt;
+
+    /**
+     * JSON array snapshotting every teammate's latest known position at claim
+     * time: {@code playerId}, {@code displayName}, {@code lat}, {@code lng},
+     * {@code accuracyM}, {@code ageSeconds}, {@code distanceM}. Only populated
+     * for {@link CheckInVerification#CLAIMED} rows — it is the evidence an
+     * operator reviews when deciding whether a claim was honest.
+     */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "team_positions_snapshot", columnDefinition = "jsonb")
+    private String teamPositionsSnapshot;
 
     // ── Audit Foundation (V36) ─────────────────────────────────────────
     //

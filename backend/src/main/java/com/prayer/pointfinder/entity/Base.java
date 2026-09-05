@@ -47,6 +47,22 @@ public class Base {
     @Builder.Default
     private Boolean hidden = false;
 
+    /**
+     * How a team proves it reached this base. Copied from the game's
+     * {@code defaultCheckInMethod} at creation; independent afterwards.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "check_in_method", nullable = false, length = 16)
+    @Builder.Default
+    private CheckInMethod checkInMethod = CheckInMethod.NFC;
+
+    /**
+     * Per-base radius override in metres for {@link CheckInMethod#LOCATION}.
+     * Null means "use the game default". Writes are clamped to 5..200.
+     */
+    @Column(name = "check_in_radius_m")
+    private Integer checkInRadiusM;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "fixed_challenge_id")
     private Challenge fixedChallenge;
@@ -82,6 +98,20 @@ public class Base {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
+
+    /**
+     * Effective check-in radius in metres: the base override when set, else
+     * the owning game's default, else the product default of 15 m. The final
+     * fallback keeps detached or partially-built entities usable in tests and
+     * in the import path, where the game association may not be loaded yet.
+     */
+    public int resolvedCheckInRadiusM() {
+        if (checkInRadiusM != null) {
+            return checkInRadiusM;
+        }
+        Integer gameDefault = game != null ? game.getDefaultCheckInRadiusM() : null;
+        return gameDefault != null ? gameDefault : 15;
+    }
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 

@@ -1874,6 +1874,114 @@ class GameImportExportServiceTest {
 
     // ── Helper builders ───────────────────────────────────────────────
 
+    // ── Check-in methods travel with the template ────────────────────
+
+    @Test
+    void exportGame_carriesCheckInMethodAndRadius() {
+        UUID gameId = UUID.randomUUID();
+        Game game = buildGame(gameId, "Trail Game");
+        game.setDefaultCheckInMethod(CheckInMethod.LOCATION);
+        game.setDefaultCheckInRadiusM(35);
+
+        Base base = Base.builder()
+                .id(UUID.randomUUID())
+                .game(game)
+                .name("Clearing")
+                .description("Under the oak")
+                .lat(41.1)
+                .lng(-8.6)
+                .hidden(false)
+                .nfcLinked(false)
+                .checkInMethod(CheckInMethod.QR)
+                .checkInRadiusM(60)
+                .build();
+
+        when(gameAccessService.getAccessibleGame(gameId)).thenReturn(game);
+        when(baseRepository.findByGameId(gameId)).thenReturn(List.of(base));
+        when(challengeRepository.findByGameId(gameId)).thenReturn(List.of());
+        when(teamRepository.findByGameId(gameId)).thenReturn(List.of());
+        when(assignmentRepository.findByGameId(gameId)).thenReturn(List.of());
+
+        GameExportDto export = service.exportGame(gameId);
+
+        assertEquals("LOCATION", export.getGame().getDefaultCheckInMethod());
+        assertEquals(35, export.getGame().getDefaultCheckInRadiusM());
+        assertEquals("QR", export.getBases().get(0).getCheckInMethod());
+        assertEquals(60, export.getBases().get(0).getCheckInRadiusM());
+    }
+
+    private void stubImportSaves() {
+        when(userRepository.findById(authenticatedUser.getId())).thenReturn(Optional.of(authenticatedUser));
+        when(gameRepository.save(any(Game.class))).thenAnswer(inv -> {
+            Game g = inv.getArgument(0);
+            if (g.getId() == null) g.setId(UUID.randomUUID());
+            return g;
+        });
+        when(baseRepository.save(any(Base.class))).thenAnswer(inv -> {
+            Base b = inv.getArgument(0);
+            if (b.getId() == null) b.setId(UUID.randomUUID());
+            return b;
+        });
+    }
+
+    @Test
+    void importGame_restoresCheckInMethodAndRadius() {
+        stubImportSaves();
+
+        GameImportRequest request = buildMinimalRequest();
+        request.getGameData().getGame().setDefaultCheckInMethod("LOCATION");
+        request.getGameData().getGame().setDefaultCheckInRadiusM(35);
+        request.getGameData().getBases().add(BaseExportDto.builder()
+                .tempId("base_1")
+                .name("Clearing")
+                .description("Under the oak")
+                .lat(41.1)
+                .lng(-8.6)
+                .hidden(false)
+                .checkInMethod("QR")
+                .checkInRadiusM(60)
+                .build());
+
+        service.importGame(request);
+
+        ArgumentCaptor<Game> gameCaptor = ArgumentCaptor.forClass(Game.class);
+        verify(gameRepository, atLeastOnce()).save(gameCaptor.capture());
+        assertEquals(CheckInMethod.LOCATION, gameCaptor.getAllValues().get(0).getDefaultCheckInMethod());
+        assertEquals(35, gameCaptor.getAllValues().get(0).getDefaultCheckInRadiusM());
+
+        ArgumentCaptor<Base> baseCaptor = ArgumentCaptor.forClass(Base.class);
+        verify(baseRepository, atLeastOnce()).save(baseCaptor.capture());
+        Base savedBase = baseCaptor.getAllValues().get(0);
+        assertEquals(CheckInMethod.QR, savedBase.getCheckInMethod());
+        assertEquals(60, savedBase.getCheckInRadiusM());
+    }
+
+    @Test
+    void importGame_defaultsMissingCheckInFieldsToNfcAndInherit() {
+        stubImportSaves();
+
+        GameImportRequest request = buildMinimalRequest();
+        request.getGameData().getBases().add(BaseExportDto.builder()
+                .tempId("base_1")
+                .name("Old Template Base")
+                .description("")
+                .lat(41.1)
+                .lng(-8.6)
+                .build());
+
+        service.importGame(request);
+
+        ArgumentCaptor<Game> gameCaptor = ArgumentCaptor.forClass(Game.class);
+        verify(gameRepository, atLeastOnce()).save(gameCaptor.capture());
+        assertEquals(CheckInMethod.NFC, gameCaptor.getAllValues().get(0).getDefaultCheckInMethod());
+        assertEquals(15, gameCaptor.getAllValues().get(0).getDefaultCheckInRadiusM());
+
+        ArgumentCaptor<Base> baseCaptor = ArgumentCaptor.forClass(Base.class);
+        verify(baseRepository, atLeastOnce()).save(baseCaptor.capture());
+        assertEquals(CheckInMethod.NFC, baseCaptor.getAllValues().get(0).getCheckInMethod());
+        assertNull(baseCaptor.getAllValues().get(0).getCheckInRadiusM());
+    }
+
     private Game buildGame(UUID id, String name) {
         return Game.builder()
                 .id(id)

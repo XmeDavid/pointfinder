@@ -125,6 +125,8 @@ public class GameService {
                 .enforceBaseOrder(Boolean.TRUE.equals(request.getEnforceBaseOrder()))
                 .tileSource(validateTileSource(request.getTileSource()))
                 .unlockTrigger(validateUnlockTrigger(request.getUnlockTrigger()))
+                .defaultCheckInMethod(validateCheckInMethod(request.getDefaultCheckInMethod()))
+                .defaultCheckInRadiusM(clampDefaultRadius(request.getDefaultCheckInRadiusM()))
                 .status(GameStatus.setup)
                 .createdBy(currentUser)
                 .build();
@@ -161,6 +163,12 @@ public class GameService {
         }
         if (request.getUnlockTrigger() != null) {
             game.setUnlockTrigger(validateUnlockTrigger(request.getUnlockTrigger()));
+        }
+        if (request.getDefaultCheckInMethod() != null) {
+            game.setDefaultCheckInMethod(validateCheckInMethod(request.getDefaultCheckInMethod()));
+        }
+        if (request.getDefaultCheckInRadiusM() != null) {
+            game.setDefaultCheckInRadiusM(clampDefaultRadius(request.getDefaultCheckInRadiusM()));
         }
         if (request.getBroadcastEnabled() != null) {
             boolean wasEnabled = Boolean.TRUE.equals(game.getBroadcastEnabled());
@@ -300,6 +308,26 @@ public class GameService {
             throw new BadRequestException("Invalid tile source: " + tileSource + ". Valid values: " + VALID_TILE_SOURCES);
         }
         return tileSource;
+    }
+
+    /**
+     * Null means "keep the product default of NFC", which is what an older
+     * client that does not know about check-in methods will send.
+     */
+    private CheckInMethod validateCheckInMethod(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return CheckInMethod.NFC;
+        }
+        try {
+            return CheckInMethod.valueOf(raw.trim().toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            throw new BadRequestException(
+                    "Invalid check-in method: " + raw + ". Must be one of: NFC, QR, LOCATION");
+        }
+    }
+
+    private Integer clampDefaultRadius(Integer raw) {
+        return raw == null ? 15 : CheckInVerificationService.clampRadiusM(raw);
     }
 
     private UnlockTrigger validateUnlockTrigger(String unlockTrigger) {

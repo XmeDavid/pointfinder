@@ -1029,6 +1029,7 @@ The JSON form is a single top-level array. Each element has the uniform `AuditEn
 - `actor.deviceId` is populated for player actors only; always `null` for operators and `system`.
 - `details.operatorReason` is the Phase 2 rescue explanation copied from `submissions.operator_reason` or `check_ins.operator_reason`; `null` for organic player actions.
 - `archived` is `true` only when `includeArchived=true` was requested AND the row was preserved by a `resetProgress=true` reset.
+- `details.checkInMethod` (`NFC`, `QR`, `LOCATION`) and `details.checkInVerification` (`VERIFIED`, `CLAIMED`, `OPERATOR`) are populated for `check_in` rows only. `details.checkInProof` is a JSON string with the raw geo proof (`lat`, `lng`, `accuracyM`, `distanceM`, `capturedAt`) and, for claims, the `teamPositions` snapshot; `null` for token proofs and rescues.
 
 Response headers:
 
@@ -1044,15 +1045,15 @@ The CSV form uses a stable column order documented below. Parsers should read th
 Column order:
 
 ```
-timestamp,type,source_surface,actor_type,actor_id,actor_display_name,actor_device_id,team_id,team_name,base_id,base_name,challenge_id,challenge_title,message,operator_reason,archived
+timestamp,type,source_surface,actor_type,actor_id,actor_display_name,actor_device_id,team_id,team_name,base_id,base_name,challenge_id,challenge_title,message,operator_reason,archived,check_in_method,check_in_verification,check_in_proof
 ```
 
 Example rows (header + two entries):
 
 ```csv
-timestamp,type,source_surface,actor_type,actor_id,actor_display_name,actor_device_id,team_id,team_name,base_id,base_name,challenge_id,challenge_title,message,operator_reason,archived
-2026-03-15T14:30:00Z,check_in,player_app,player,22222222-2222-2222-2222-222222222222,Scout Alpha,device-abc-123,33333333-3333-3333-3333-333333333333,Red Falcons,44444444-4444-4444-4444-444444444444,Clock Tower,,"Team Red Falcons checked in at Clock Tower",,false
-2026-03-15T14:45:10Z,operator_override,operator_rescue,operator,66666666-6666-6666-6666-666666666666,Operator Sam,,33333333-3333-3333-3333-333333333333,Red Falcons,44444444-4444-4444-4444-444444444444,Clock Tower,77777777-7777-7777-7777-777777777777,Bell-ringing riddle,"Operator Sam marked Clock Tower completed",Phone died mid-submission,false
+timestamp,type,source_surface,actor_type,actor_id,actor_display_name,actor_device_id,team_id,team_name,base_id,base_name,challenge_id,challenge_title,message,operator_reason,archived,check_in_method,check_in_verification,check_in_proof
+2026-03-15T14:30:00Z,check_in,player_app,player,22222222-2222-2222-2222-222222222222,Scout Alpha,device-abc-123,33333333-3333-3333-3333-333333333333,Red Falcons,44444444-4444-4444-4444-444444444444,Clock Tower,,"Team Red Falcons checked in at Clock Tower",,false,NFC,VERIFIED,
+2026-03-15T14:45:10Z,operator_override,operator_rescue,operator,66666666-6666-6666-6666-666666666666,Operator Sam,,33333333-3333-3333-3333-333333333333,Red Falcons,44444444-4444-4444-4444-444444444444,Clock Tower,77777777-7777-7777-7777-777777777777,Bell-ringing riddle,"Operator Sam marked Clock Tower completed",Phone died mid-submission,false,,,
 ```
 
 A player display name like `Scout "Nickname", Jr.` is quoted and escaped as `"Scout ""Nickname"", Jr."`.

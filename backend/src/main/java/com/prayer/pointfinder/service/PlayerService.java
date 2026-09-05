@@ -44,6 +44,7 @@ public class PlayerService {
     private final BaseUnlockOverrideRepository baseUnlockOverrideRepository;
     private final StageRepository stageRepository;
     private final PlayerJoinService playerJoinService;
+    private final CheckInVerificationService checkInVerificationService;
     private final PlayerNotificationQueryService playerNotificationQueryService;
 
     public PlayerAuthResponse joinTeam(PlayerJoinRequest request) {
@@ -68,29 +69,23 @@ public class PlayerService {
             throw new BadRequestException("Base does not belong to this game");
         }
 
-        // NFC token is required: clients MUST scan the physical NFC tag at the
-        // base before checking in. A missing token means either the client is
-        // out-of-date or someone is attempting to bypass the physical proof of
-        // presence. The @Valid annotation on the controller already rejects
-        // null/blank values, but we keep this server-side guard for defense in
-        // depth (e.g. if a caller bypasses bean validation).
-        if (request == null || request.getNfcToken() == null || request.getNfcToken().isBlank()) {
-            throw new BadRequestException("NFC token is required for check-in", ErrorCode.NFC_TOKEN_REQUIRED);
-        }
-        if (!request.getNfcToken().equals(base.getNfcToken())) {
-            throw new BadRequestException("Invalid NFC verification token");
-        }
-
-        // Check if already checked in
+        // Idempotency first: a team that already owns this base gets its
+        // existing row back no matter what proof the phone re-sent. This runs
+        // before verification so a repeat tap from inside a building, or a
+        // rescue the operator already granted, never turns into an error.
         Optional<CheckIn> existing = checkInRepository.findByTeamIdAndBaseId(team.getId(), baseId);
         if (existing.isPresent()) {
-            // Return the existing check-in with challenge info
             return buildCheckInResponse(existing.get(), base, team, gameId);
         }
 
+        // Route order before proof: a team blocked by the route must not learn
+        // whether its proof for a later base would have been accepted.
         if (Boolean.TRUE.equals(base.getGame().getEnforceBaseOrder())) {
             baseOrderService.requirePreviousBases(base.getGame(), team.getId(), baseId);
         }
+
+        CheckInVerificationService.VerifiedProof proof =
+                checkInVerificationService.verify(base, team, request, Instant.now());
 
         // Create new check-in.
         // V36 audit foundation: snapshot the player's device id (the player
@@ -103,7 +98,15 @@ public class PlayerService {
                 .team(team)
                 .base(base)
                 .player(player)
-                .checkedInAt(Instant.now())
+                .checkedInAt(proof.checkedInAt())
+                .method(proof.method())
+                .verification(proof.verification())
+                .proofLat(proof.proofLat())
+                .proofLng(proof.proofLng())
+                .proofAccuracyM(proof.proofAccuracyM())
+                .proofDistanceM(proof.proofDistanceM())
+                .proofCapturedAt(proof.proofCapturedAt())
+                .teamPositionsSnapshot(proof.teamPositionsSnapshotJson())
                 .actorDeviceIdSnapshot(player.getDeviceId())
                 .actorDisplayNameSnapshot(player.getDisplayName())
                 .sourceSurface("player_app")
@@ -118,6 +121,17 @@ public class PlayerService {
         }
 
         // Create activity event with full player actor capture (V36).
+        // Structured twin of the feed message. The operator UI reads these to
+        // draw the method icon and the "claimed" badge; the free-text message
+        // stays the human sentence and is not parsed by anyone.
+        Map<String, Object> eventMetadata = new LinkedHashMap<>();
+        eventMetadata.put("method", proof.method().name());
+        eventMetadata.put("verification", proof.verification().name());
+        if (proof.verification() == CheckInVerification.CLAIMED) {
+            eventMetadata.put("teammatesInRing", proof.teammatesInRing());
+            eventMetadata.put("teammatesTotal", proof.teammatesTotal());
+        }
+
         ActivityEvent event = ActivityEvent.builder()
                 .game(base.getGame())
                 .type(ActivityEventType.check_in)
@@ -129,6 +143,7 @@ public class PlayerService {
                 .actorDisplayNameSnapshot(player.getDisplayName())
                 .actorDeviceIdSnapshot(player.getDeviceId())
                 .sourceSurface("player_app")
+                .metadata(eventMetadata)
                 .build();
         activityEventRepository.save(event);
 
@@ -329,7 +344,9 @@ public class PlayerService {
                         base.getNfcLinked(),
                         base.getHidden(),
                         base.getFixedChallenge() != null ? base.getFixedChallenge().getId() : null,
-                        sequenceNumbers.get(base.getId())
+                        sequenceNumbers.get(base.getId()),
+                        base.getCheckInMethod() != null ? base.getCheckInMethod().name() : CheckInMethod.NFC.name(),
+                        base.resolvedCheckInRadiusM()
                 ))
                 .toList();
     }
@@ -423,6 +440,38 @@ public class PlayerService {
             List<PlayerBaseResponse> combinedBases = new ArrayList<>(bases);
             combinedBases.addAll(hiddenBases);
             bases = combinedBases;
+        }
+
+        // Hidden LOCATION bases the team has not found yet ship as bare
+        // geometry — id, coordinates, method, radius — and nothing else. The
+        // arrival detector has to work offline and cannot ask the server
+        // "am I near something?", so the ring has to be on the phone; but the
+        // name, challenge and content stay behind until the base is earned.
+        Set<UUID> alreadySent = bases.stream().map(PlayerBaseResponse::id).collect(Collectors.toSet());
+        Set<UUID> visitedBaseIds = checkInRepository.findByGameIdAndTeamId(gameId, player.getTeam().getId()).stream()
+                .map(ci -> ci.getBase().getId())
+                .collect(Collectors.toSet());
+        List<PlayerBaseResponse> geofenceOnly = baseRepository.findByGameId(gameId).stream()
+                .filter(b -> Boolean.TRUE.equals(b.getHidden()))
+                .filter(b -> b.getCheckInMethod() == CheckInMethod.LOCATION)
+                .filter(b -> !alreadySent.contains(b.getId()))
+                .filter(b -> !visitedBaseIds.contains(b.getId()))
+                .map(b -> new PlayerBaseResponse(
+                        b.getId(),
+                        gameId,
+                        b.getLat(),
+                        b.getLng(),
+                        false,
+                        true,
+                        null,
+                        null,
+                        CheckInMethod.LOCATION.name(),
+                        b.resolvedCheckInRadiusM()))
+                .toList();
+        if (!geofenceOnly.isEmpty()) {
+            List<PlayerBaseResponse> withGeofences = new ArrayList<>(bases);
+            withGeofences.addAll(geofenceOnly);
+            bases = withGeofences;
         }
 
         // Load all relevant challenges, resolving {{variables}} for this team.
@@ -551,12 +600,24 @@ public class PlayerService {
         playerRepository.delete(player);
     }
 
+    /** Backwards-compatible overload for callers with no fix metadata. */
     @Transactional(timeout = 10)
     public void updateLocation(UUID gameId, Player authPlayer, Double lat, Double lng) {
+        updateLocation(gameId, authPlayer, lat, lng, null, null);
+    }
+
+    @Transactional(timeout = 10)
+    public void updateLocation(UUID gameId, Player authPlayer, Double lat, Double lng,
+                               Double accuracy, Instant capturedAt) {
         if (lat == null || lng == null || !Double.isFinite(lat) || !Double.isFinite(lng)
                 || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
             throw new BadRequestException("Invalid coordinates");
         }
+
+        // A garbage accuracy reading is not a reason to drop a good position:
+        // keep the coordinates, forget the metadata.
+        Double storedAccuracy = accuracy != null && Double.isFinite(accuracy) && accuracy >= 0
+                ? accuracy : null;
 
         Player player = loadPlayer(authPlayer);
 
@@ -572,10 +633,14 @@ public class PlayerService {
                     .player(player)
                     .lat(lat)
                     .lng(lng)
+                    .accuracyM(storedAccuracy)
+                    .capturedAt(capturedAt)
                     .build();
         } else {
             location.setLat(lat);
             location.setLng(lng);
+            location.setAccuracyM(storedAccuracy);
+            location.setCapturedAt(capturedAt);
         }
         playerLocationRepository.save(location);
 
@@ -585,6 +650,8 @@ public class PlayerService {
         locationData.put("displayName", player.getDisplayName());
         locationData.put("lat", lat);
         locationData.put("lng", lng);
+        locationData.put("accuracyM", storedAccuracy);
+        locationData.put("capturedAt", capturedAt != null ? capturedAt.toString() : null);
         locationData.put("updatedAt", Instant.now().toString());
         eventBroadcaster.broadcastLocationUpdate(gameId, locationData);
     }
@@ -640,7 +707,10 @@ public class PlayerService {
                 checkIn.getId(),
                 base.getId(),
                 checkIn.getCheckedInAt(),
-                challengeInfo);
+                challengeInfo,
+                checkIn.getMethod() != null ? checkIn.getMethod().name() : CheckInMethod.NFC.name(),
+                checkIn.getVerification() != null
+                        ? checkIn.getVerification().name() : CheckInVerification.VERIFIED.name());
     }
 
     private void ensureGameIsLiveForPlayerActions(Team team) {

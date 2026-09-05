@@ -5,6 +5,15 @@ services:
     command: ./gradlew test --no-daemon
     mem_limit: 2g
     cpus: 2
+    environment:
+      # Testcontainers runs inside this container and publishes Postgres on the
+      # host. Reach it through the host gateway instead of the bridge address,
+      # which Docker Desktop does not route; without this every integration
+      # test silently skips as "Docker is not available".
+      TESTCONTAINERS_HOST_OVERRIDE: host.docker.internal
+      TESTCONTAINERS_RYUK_DISABLED: "true"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./backend:/workspace/backend
       - ./contract-snapshots:/workspace/contract-snapshots

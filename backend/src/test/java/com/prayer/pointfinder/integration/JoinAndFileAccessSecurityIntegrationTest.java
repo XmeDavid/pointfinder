@@ -92,8 +92,8 @@ class WaveBSecurityIntegrationTest extends IntegrationTestBase {
         assertNotNull(resp.getBody());
         // Either the bean-validation path (errors.nfcToken) OR the service-layer
         // guard (code == NFC_TOKEN_REQUIRED) must catch it.
-        boolean beanValidation = resp.getBody().containsKey("errors")
-                && ((Map<?, ?>) resp.getBody().get("errors")).containsKey("nfcToken");
+        boolean beanValidation = resp.getBody().get("errors") instanceof Map<?, ?> fieldErrors
+                && fieldErrors.containsKey("nfcToken");
         boolean serviceGuard = "NFC_TOKEN_REQUIRED".equals(resp.getBody().get("code"));
         assertTrue(beanValidation || serviceGuard,
                 "Expected NFC_TOKEN_REQUIRED at bean-validation or service layer, got: " + resp.getBody());

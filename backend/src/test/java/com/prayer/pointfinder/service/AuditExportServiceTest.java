@@ -407,7 +407,7 @@ class AuditExportServiceTest extends IntegrationTestBase {
         assertEquals(
                 "timestamp,type,source_surface,actor_type,actor_id,actor_display_name,actor_device_id," +
                 "team_id,team_name,base_id,base_name,challenge_id,challenge_title,message," +
-                "operator_reason,archived",
+                "operator_reason,archived,check_in_method,check_in_verification,check_in_proof",
                 lines[0]);
 
         // Find the check_in data row and verify the critical columns.
@@ -423,8 +423,10 @@ class AuditExportServiceTest extends IntegrationTestBase {
                 "check_in row must carry player id");
         assertTrue(checkInRow.contains(ctx.team.getId().toString()),
                 "check_in row must carry team id");
-        assertTrue(checkInRow.endsWith(",false"),
-                "archived column must be the last column and equal false");
+        // archived is followed by the three check-in columns; an NFC tap has a
+        // method and verification but no geo proof, so the last cell is empty.
+        assertTrue(checkInRow.endsWith(",false,NFC,VERIFIED,"),
+                "archived must be false, followed by method, verification and an empty proof");
     }
 
     // ==================================================================
@@ -529,7 +531,7 @@ class AuditExportServiceTest extends IntegrationTestBase {
         // Expected: header + trailing empty element after final \r\n split.
         assertEquals("timestamp,type,source_surface,actor_type,actor_id,actor_display_name," +
                 "actor_device_id,team_id,team_name,base_id,base_name,challenge_id,challenge_title," +
-                "message,operator_reason,archived", lines[0]);
+                "message,operator_reason,archived,check_in_method,check_in_verification,check_in_proof", lines[0]);
     }
 
     // ==================================================================

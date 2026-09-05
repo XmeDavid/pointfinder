@@ -35,9 +35,21 @@ public record BaseResponse(
          */
         List<UUID> tagIds,
         UUID stageId,
-        Integer sequenceNumber
+        Integer sequenceNumber,
+        /** {@code NFC}, {@code QR}, or {@code LOCATION}. */
+        String checkInMethod,
+        /**
+         * Raw per-base radius override in metres, or null when the base
+         * inherits the game default. The operator UI shows the inherited value
+         * as a hint, so it needs to know the difference.
+         */
+        Integer checkInRadiusM
 ) {
     public BaseResponse(UUID id, UUID gameId, String name, String description, Double lat, Double lng, Boolean nfcLinked, String nfcToken, Boolean hidden, UUID fixedChallengeId, List<UUID> tagIds, UUID stageId) {
-        this(id, gameId, name, description, lat, lng, nfcLinked, nfcToken, hidden, fixedChallengeId, tagIds, stageId, null);
+        this(id, gameId, name, description, lat, lng, nfcLinked, nfcToken, hidden, fixedChallengeId, tagIds, stageId, null, "NFC", null);
+    }
+
+    public BaseResponse(UUID id, UUID gameId, String name, String description, Double lat, Double lng, Boolean nfcLinked, String nfcToken, Boolean hidden, UUID fixedChallengeId, List<UUID> tagIds, UUID stageId, Integer sequenceNumber) {
+        this(id, gameId, name, description, lat, lng, nfcLinked, nfcToken, hidden, fixedChallengeId, tagIds, stageId, sequenceNumber, "NFC", null);
     }
 }

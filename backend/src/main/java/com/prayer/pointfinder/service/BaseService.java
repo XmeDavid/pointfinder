@@ -6,6 +6,7 @@ import com.prayer.pointfinder.dto.request.UpdateBaseRequest;
 import com.prayer.pointfinder.dto.response.BaseResponse;
 import com.prayer.pointfinder.entity.Base;
 import com.prayer.pointfinder.entity.Challenge;
+import com.prayer.pointfinder.entity.CheckInMethod;
 import com.prayer.pointfinder.entity.Game;
 import com.prayer.pointfinder.entity.GameTag;
 import com.prayer.pointfinder.exception.BadRequestException;
@@ -23,6 +24,7 @@ import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -97,6 +99,12 @@ public class BaseService {
             ensureChallengeBelongsToGame(fixedChallenge, gameId);
         }
 
+        CheckInMethod checkInMethod = request.getCheckInMethod() != null
+                ? parseCheckInMethod(request.getCheckInMethod())
+                : (game.getDefaultCheckInMethod() != null ? game.getDefaultCheckInMethod() : CheckInMethod.NFC);
+        Integer checkInRadiusM = clampRadius(request.getCheckInRadiusM());
+        requireUsableCoordinates(checkInMethod, request.getLat(), request.getLng());
+
         Base base = Base.builder()
                 .game(game)
                 .orderIndex(baseRepository.findByGameId(gameId).stream()
@@ -109,6 +117,8 @@ public class BaseService {
                 .nfcToken(generateNfcToken())
                 .hidden(request.getHidden() != null ? request.getHidden() : false)
                 .fixedChallenge(fixedChallenge)
+                .checkInMethod(checkInMethod)
+                .checkInRadiusM(checkInRadiusM)
                 .build();
 
         base = baseRepository.save(base);
@@ -144,6 +154,13 @@ public class BaseService {
         base.setDescription(request.getDescription() != null ? request.getDescription() : "");
         base.setLat(request.getLat());
         base.setLng(request.getLng());
+        if (request.getCheckInMethod() != null) {
+            base.setCheckInMethod(parseCheckInMethod(request.getCheckInMethod()));
+        }
+        if (request.getCheckInRadiusM() != null) {
+            base.setCheckInRadiusM(clampRadius(request.getCheckInRadiusM()));
+        }
+        requireUsableCoordinates(base.getCheckInMethod(), request.getLat(), request.getLng());
 
         if (request.getNfcLinked() != null) {
             base.setNfcLinked(request.getNfcLinked());
@@ -326,8 +343,40 @@ public class BaseService {
                 base.getFixedChallenge() != null ? base.getFixedChallenge().getId() : null,
                 tagIds.isEmpty() ? null : tagIds,
                 base.getStageId(),
-                sequenceNumber
+                sequenceNumber,
+                base.getCheckInMethod() != null ? base.getCheckInMethod().name() : CheckInMethod.NFC.name(),
+                base.getCheckInRadiusM()
         );
+    }
+
+    private CheckInMethod parseCheckInMethod(String raw) {
+        try {
+            return CheckInMethod.valueOf(raw.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException | NullPointerException ex) {
+            throw new BadRequestException(
+                    "Invalid check-in method: " + raw + ". Must be one of: NFC, QR, LOCATION");
+        }
+    }
+
+    /** Null keeps the inherit-from-game behaviour; a value is clamped to 5..200. */
+    private Integer clampRadius(Integer raw) {
+        return raw == null ? null : CheckInVerificationService.clampRadiusM(raw);
+    }
+
+    /**
+     * A location base at exactly 0,0 is never real — it is what a failed
+     * coordinate parse used to produce. Since the ring is the only way to
+     * reach such a base, saving one silently strands the whole game, so the
+     * write is refused here as well as at go-live.
+     */
+    private void requireUsableCoordinates(CheckInMethod method, Double lat, Double lng) {
+        if (method != CheckInMethod.LOCATION) {
+            return;
+        }
+        if (lat == null || lng == null || (lat == 0.0 && lng == 0.0)) {
+            throw new BadRequestException(
+                    "A location base needs real coordinates — pick the spot on the map");
+        }
     }
 
     /**

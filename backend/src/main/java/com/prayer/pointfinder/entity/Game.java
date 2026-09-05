@@ -88,6 +88,23 @@ public class Game {
     private UnlockTrigger unlockTrigger = UnlockTrigger.CHECK_IN;
 
     /**
+     * Check-in method copied onto every base created in this game. Editable
+     * during setup, read-only once the game is live.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "default_check_in_method", nullable = false, length = 16)
+    @Builder.Default
+    private CheckInMethod defaultCheckInMethod = CheckInMethod.NFC;
+
+    /**
+     * Default radius in metres for location bases that do not override it.
+     * Clamped to 5..200 on write.
+     */
+    @Column(name = "default_check_in_radius_m", nullable = false)
+    @Builder.Default
+    private Integer defaultCheckInRadiusM = 15;
+
+    /**
      * Monotonically-increasing state version for the snapshot / realtime
      * recovery contract (P0 Track 2 Slice 1).
      *
