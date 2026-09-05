@@ -88,7 +88,7 @@ Most "unfixed" findings (7 of 7) were already resolved in post-audit commits (th
    - 12.3: Marked mitigated (nginx broadcast_limit zone at 10r/m)
    - 5.18: Marked mitigated (CI job disabled)
 2. **BroadcastController.java** -- Added comment documenting nginx rate limiting for the unauthenticated endpoint (finding 12.3).
-3. **web-admin/src/lib/auth/store.ts** -- Added security comment documenting the localStorage XSS risk, current mitigations, and deferred HttpOnly cookie migration (finding 12.1).
+3. **web/src/lib/auth/store.ts** -- Added security comment documenting the localStorage XSS risk, current mitigations, and deferred HttpOnly cookie migration (finding 12.1).
 4. **docs/audit-decisions.md** -- Added decision for finding 12.3 broadcast code mitigation approach.
 5. Updated deferred findings table: 8.11 marked resolved (getAggregateStatus refactored to Map-indexed lookup).
 

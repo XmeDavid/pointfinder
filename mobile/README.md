@@ -3,22 +3,21 @@
 One codebase for the player and operator apps on iOS and Android. Ships under
 the existing store identities: `com.prayer.pointfinder` on both platforms.
 
-Status: spike. `src/App.tsx` is a checklist screen that exercises every native
-capability with its pass criterion written next to it.
+The frontend lives entirely in `../web`: shared player and operator routes, UI,
+translations and platform adapters. This directory has no React source or Vite
+configuration. Tauri starts `web` on port 1420 and embeds `web/dist-native`.
+
+See [frontend architecture and rollout](../docs/frontend-consolidation.md).
+See [native platform validation](../docs/native-platform-validation.md) for the
+implemented capabilities, device smoke test and remaining release checks.
 
 ## Layout
 
+```text
+mobile/src-tauri/             Rust shell, permissions, signing and generated projects
+web/src/                     the application for browser and mobile
+packages/tauri-plugin-*/      NFC, push, secure-store, sharing and lifecycle plugins
 ```
-mobile/                      this app (React + Vite front end, Tauri shell)
-  src-tauri/                 Rust shell, tauri.conf.json, capabilities, gen/ projects
-  src-tauri/Info.ios.plist   iOS usage strings, merged into the generated Info.plist
-  src-tauri/Entitlements.plist  NFC, push, associated domains
-packages/tauri-plugin-pointfinder-nfc    own NFC plugin (Kotlin, Swift, Rust, TS)
-packages/tauri-plugin-pointfinder-push   own push plugin (FCM, APNs)
-```
-
-Official plugins in use: `deep-link` (universal links and app links for
-`/tag/` and `/dashboard` on both hosts), `geolocation`, `os`, `opener`.
 
 ## Toolchains
 
@@ -39,7 +38,7 @@ and `xcodegen` under `~/.local/bin`.
 
 ```bash
 bun install                                   # from the repo root, links the local plugins
-bun run typecheck                             # front end
+bun run --cwd ../web typecheck                # shared front end
 cargo check --manifest-path src-tauri/Cargo.toml   # Rust shell and plugins, desktop target
 bun run tauri dev                             # desktop window, native calls report unavailable
 bun run tauri android dev                     # device or emulator via adb
@@ -56,8 +55,9 @@ Tauri release must ship at 20 or higher on both.
 Android release signing reads `src-tauri/gen/android/keystore.properties`,
 which points at the existing upload keystore. Never commit it.
 
-Firebase: place `google-services.json` in `src-tauri/gen/android/app/` and
-apply the Google Services Gradle plugin in `gen/android/app/build.gradle.kts`.
+Firebase: place the environment's `google-services.json` in
+`src-tauri/gen/android/app/`. The Google Services Gradle plugin is applied
+automatically when that file (or a configured build-type copy) exists.
 Without it the app runs and `register()` reports `unavailable`.
 
 ## Things the generator does not know

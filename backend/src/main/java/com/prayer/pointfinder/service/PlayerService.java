@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 public class PlayerService {
 
     private final PlayerRepository playerRepository;
+    private final PushTokenService pushTokenService;
     private final GameRepository gameRepository;
     private final BaseRepository baseRepository;
     private final ChallengeRepository challengeRepository;
@@ -342,7 +343,7 @@ public class PlayerService {
 
         // Collect visible base IDs from progress to filter other lists
         Set<UUID> visibleBaseIds = progress.stream()
-                .map(BaseProgressResponse::getBaseId)
+                .map(BaseProgressResponse::baseId)
                 .collect(Collectors.toSet());
 
         // Get all bases for the game
@@ -519,10 +520,7 @@ public class PlayerService {
 
     @Transactional(timeout = 10)
     public void updatePushToken(Player authPlayer, String pushToken, PushPlatform platform) {
-        Player player = loadPlayer(authPlayer);
-        player.setPushToken(pushToken);
-        player.setPushPlatform(platform);
-        playerRepository.save(player);
+        pushTokenService.registerPlayer(authPlayer.getId(), pushToken, platform);
     }
 
     /**

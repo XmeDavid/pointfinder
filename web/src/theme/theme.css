@@ -1,0 +1,92 @@
+/* PointFinder semantic theme for Tailwind v4. Shared by web, mobile and Storybook.
+   Apps import "tailwindcss" first, then this file. Dark mode is the `.dark` class on <html>. */
+@import "../generated/design-tokens.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-background: var(--pf-color-surface-canvas);
+  --color-foreground: var(--pf-color-content-primary);
+  --color-card: var(--pf-color-surface-panel);
+  --color-card-foreground: var(--pf-color-content-primary);
+  --color-popover: var(--pf-color-surface-panel);
+  --color-popover-foreground: var(--pf-color-content-primary);
+  --color-primary: var(--pf-color-action-primary);
+  --color-primary-foreground: var(--pf-color-action-onPrimary);
+  --color-secondary: var(--pf-color-action-secondary);
+  --color-secondary-foreground: var(--pf-color-action-onSecondary);
+  --color-muted: var(--pf-color-surface-subtle);
+  --color-muted-foreground: var(--pf-color-content-muted);
+  --color-accent: var(--pf-color-surface-subtle);
+  --color-accent-foreground: var(--pf-color-content-primary);
+  --color-destructive: var(--pf-color-status-rejected);
+  --color-destructive-foreground: var(--pf-color-action-onPrimary);
+  --color-border: var(--pf-color-border-default);
+  --color-input: var(--pf-color-border-default);
+  --color-ring: var(--pf-color-focus-ring);
+  --color-warning: var(--pf-color-status-pending);
+  --color-warning-foreground: var(--pf-color-surface-inverse);
+  --color-success: var(--pf-color-status-completed);
+  --color-success-foreground: var(--pf-color-action-onPrimary);
+  --color-info: var(--pf-color-status-checkedIn);
+  --color-info-foreground: var(--pf-color-action-onPrimary);
+  --color-override: var(--pf-color-status-operatorOverride);
+  --color-override-foreground: var(--pf-color-action-onPrimary);
+  --color-chart-1: var(--pf-color-visualization-chart1);
+  --color-chart-2: var(--pf-color-visualization-chart2);
+  --color-chart-3: var(--pf-color-visualization-chart3);
+  --color-chart-4: var(--pf-color-visualization-chart4);
+  --shadow-panel: var(--pf-elevation-panel);
+  --shadow-overlay: var(--pf-elevation-overlay);
+  --shadow-modal: var(--pf-elevation-modal);
+  --radius-sm: var(--pf-radius-xs);
+  --radius-md: var(--pf-radius-sm);
+  --radius-lg: var(--pf-radius-md);
+  --radius-xl: var(--pf-radius-lg);
+
+  --color-sidebar: var(--pf-color-surface-panel);
+  --color-sidebar-foreground: var(--pf-color-content-primary);
+  --color-sidebar-border: var(--pf-color-border-default);
+  --color-sidebar-accent: var(--pf-color-action-primary);
+  --color-sidebar-accent-foreground: var(--pf-color-action-onPrimary);
+}
+
+.dark {
+  --color-background: var(--pf-color-surface-canvas);
+  --color-foreground: var(--pf-color-content-primary);
+  --color-card: var(--pf-color-surface-panel);
+  --color-card-foreground: var(--pf-color-content-primary);
+  --color-popover: var(--pf-color-surface-panel);
+  --color-popover-foreground: var(--pf-color-content-primary);
+  --color-primary: var(--pf-color-action-primary);
+  --color-primary-foreground: var(--pf-color-action-onPrimary);
+  --color-secondary: var(--pf-color-action-secondary);
+  --color-secondary-foreground: var(--pf-color-action-onSecondary);
+  --color-muted: var(--pf-color-surface-subtle);
+  --color-muted-foreground: var(--pf-color-content-muted);
+  --color-accent: var(--pf-color-surface-subtle);
+  --color-accent-foreground: var(--pf-color-content-primary);
+  --color-destructive: var(--pf-color-status-rejected);
+  --color-destructive-foreground: var(--pf-color-content-primary);
+  --color-border: var(--pf-color-border-default);
+  --color-input: var(--pf-color-border-default);
+  --color-ring: var(--pf-color-focus-ring);
+  --color-warning: var(--pf-color-status-pending);
+  --color-warning-foreground: var(--pf-color-surface-canvas);
+  --color-success: var(--pf-color-status-completed);
+  --color-success-foreground: var(--pf-color-surface-canvas);
+  --color-info: var(--pf-color-status-checkedIn);
+  --color-info-foreground: var(--pf-color-surface-canvas);
+  --color-override: var(--pf-color-status-operatorOverride);
+  --color-override-foreground: var(--pf-color-surface-canvas);
+  --color-chart-1: var(--pf-color-visualization-chart1);
+  --color-chart-2: var(--pf-color-visualization-chart2);
+  --color-chart-3: var(--pf-color-visualization-chart3);
+  --color-chart-4: var(--pf-color-visualization-chart4);
+
+  --color-sidebar: var(--pf-color-surface-panel);
+  --color-sidebar-foreground: var(--pf-color-content-primary);
+  --color-sidebar-border: var(--pf-color-border-default);
+  --color-sidebar-accent: var(--pf-color-action-primary);
+  --color-sidebar-accent-foreground: var(--pf-color-action-onPrimary);
+}

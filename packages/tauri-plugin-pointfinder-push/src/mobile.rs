@@ -23,6 +23,9 @@ pub fn init<R: Runtime, C: DeserializeOwned>(
 pub struct PointfinderPush<R: Runtime>(PluginHandle<R>);
 
 impl<R: Runtime> PointfinderPush<R> {
+  pub fn unregister(&self) -> crate::Result<()> {
+    self.0.run_mobile_plugin::<serde_json::Value>("unregister", ()).map(|_| ()).map_err(Into::into)
+  }
   pub fn permission_status(&self) -> crate::Result<PermissionStatus> {
     self.0.run_mobile_plugin("permissionStatus", ()).map_err(Into::into)
   }

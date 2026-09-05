@@ -35,7 +35,7 @@ Before refactoring large authenticated web surfaces, complete these items:
 2. Add canonical examples for buttons, status badges, panels, empty states, and map markers.
 3. Create or normalize `StatusBadge` components for game, submission, base progress, sync, and NFC states.
 4. Create or normalize shared panel components for standard panels, floating map overlays, and inspectors.
-5. Add a small token gap pass in `web-admin/src/index.css` so documented semantic classes exist.
+5. Add a small token gap pass in `web/src/index.css` so documented semantic classes exist.
 6. Add a short component inventory listing which existing components are canonical and which are legacy.
 
 These are the practical guardrails that keep a refactor from becoming another
@@ -88,7 +88,7 @@ Use this lightweight format when auditing components:
 ```text
 Component: StatusBadge
 Status: canonical | needs refactor | legacy
-Location: web-admin/src/components/status/StatusBadge.tsx
+Location: web/src/components/status/StatusBadge.tsx
 Modes: Operator Command, Review, Player Field
 States: live, setup, ended, pending, completed, rejected, unknown
 Notes: Uses semantic Tailwind tokens only.

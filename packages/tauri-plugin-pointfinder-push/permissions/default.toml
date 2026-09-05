@@ -4,6 +4,7 @@ permissions = [
   "allow-permission-status",
   "allow-request-permission",
   "allow-register",
+  "allow-unregister",
   "allow-consume-launch-tap",
   "allow-register-listener",
   "allow-remove-listener",

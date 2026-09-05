@@ -112,3 +112,22 @@ describe('AuthSession', () => {
     expect(seen).toEqual(['operator', 'none'])
   })
 })
+
+describe('session changes during asynchronous restoration and refresh', () => {
+  it.each([200, 401])('does not restore or clear a newer login when old refresh returns %s', async (status) => {
+    let finish!: (response: Response) => void
+    let onStarted!: () => void
+    const started = new Promise<void>((resolve) => { onStarted = resolve })
+    const fetchRefresh = () => { onStarted(); return new Promise<Response>((resolve) => { finish = resolve }) }
+    // The fetch starts only once getToken is called below.
+    const { session, store } = sessionWith(() => fetchRefresh())
+    await session.setOperator(operatorAuth(jwt(0)))
+    const pending = session.getToken().catch((error) => error)
+    await started
+    await session.setOperator({ ...operatorAuth(jwt(9_999_999)), user: { id: 'other', name: 'Other', email: 'other@x', role: 'operator' } })
+    finish(new Response(JSON.stringify(status === 200 ? operatorAuth(jwt(9_999_998)) : { message: 'Rejected' }), { status, headers: { 'content-type': 'application/json' } }))
+    await pending
+    expect(session.current).toMatchObject({ kind: 'operator', userId: 'other' })
+    expect(await store.load()).toMatchObject({ kind: 'operator', userId: 'other' })
+  })
+})

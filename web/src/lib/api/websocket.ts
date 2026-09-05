@@ -1,0 +1,152 @@
+import { Client } from "@stomp/stompjs";
+import { getValidAccessToken } from "@/lib/api/client";
+import { useAuthStore } from "@/hooks/useAuth";
+import i18n from "@/i18n";
+
+import { brokerUrl } from '@/platform/config';
+import { prepareStompTransport } from '@/platform/stomp';
+
+let stompClient: Client | null = null;
+
+export function connectWebSocket(
+  gameId: string,
+  onMessage: (payload: { type: string; data: unknown }) => void,
+  onError?: (message: string) => void,
+  onReconnect?: () => void,
+  /**
+   * Optional refresh hook invoked before every reconnect attempt (i.e. every
+   * `beforeConnect` call after the first successful `onConnect`). Should
+   * return a freshly minted operator access token, or `null` if the refresh
+   * token is also expired / unavailable. On `null`, the STOMP client falls
+   * back to the standard `getValidAccessToken()` path, which in turn
+   * surfaces auth failure via `onStompError` → `handleAuthFailure`.
+   *
+   * This covers the P0 Track 2 Slice 4 gap: operator access tokens are
+   * 15 minutes; without refresh-on-reconnect, an idle operator whose tab
+   * is backgrounded past expiry would reconnect with a stale JWT, hit an
+   * auth failure on every STOMP frame, and see no live updates until they
+   * manually reloaded. Mirrors the iOS `tokenProvider` pattern in
+   * `MobileRealtimeClient.swift`.
+   */
+  tokenProvider?: () => Promise<string | null>
+): Client {
+  // Disconnect existing client if any
+  if (stompClient) {
+    stompClient.deactivate();
+  }
+
+  // Track whether we've already seen a successful onConnect for this client.
+  // STOMP.js calls onConnect both on the first connection and on every
+  // subsequent reconnect, so we need to distinguish the two ourselves.
+  // Only a *re*-connect should trigger snapshot refresh — the first connect
+  // happens at mount time, when React Query has already fetched fresh data.
+  let hasConnectedOnce = false;
+
+  const client = new Client({
+    brokerURL: brokerUrl(),
+    // connectHeaders are set dynamically in beforeConnect
+    connectHeaders: {},
+    beforeConnect: async () => {
+      // On reconnect (second-and-subsequent beforeConnect), force a token
+      // refresh so the new socket carries a fresh JWT. On the first connect
+      // we defer to `getValidAccessToken()` which happily returns whatever's
+      // already in memory (React Query has just fetched with that token, so
+      // it's guaranteed to be live).
+      let token: string | null = null;
+      if (hasConnectedOnce && tokenProvider) {
+        try {
+          token = await tokenProvider();
+        } catch {
+          token = null;
+        }
+      }
+      if (!token) {
+        try {
+          token = await getValidAccessToken();
+        } catch {
+          // Transient refresh failure — STOMP.js will retry via reconnectDelay.
+          // Don't throw into STOMP internals.
+          token = null;
+        }
+      }
+      await prepareStompTransport(client, token ? { Authorization: `Bearer ${token}` } : {});
+      if (token) {
+        client.connectHeaders = { Authorization: `Bearer ${token}` };
+      } else {
+        client.connectHeaders = {};
+      }
+    },
+    reconnectDelay: 5000,
+    heartbeatIncoming: 10000,
+    heartbeatOutgoing: 10000,
+    onConnect: () => {
+      // Legacy per-game channel carries activity, location, presence,
+      // notification, game_status, game_config, stage_unlock — everything
+      // that does NOT leak scoring or private review metadata.
+      const handle = (message: { body: string }) => {
+        try {
+          const payload = JSON.parse(message.body);
+          onMessage(payload);
+        } catch (e) {
+          console.error("Failed to parse WebSocket message:", e);
+        }
+      };
+      client.subscribe(`/topic/games/${gameId}`, handle);
+      // Operator-only sub-topics (post-audit Wave A): submission_status
+      // (full payload with points/feedback) and leaderboard are fenced off
+      // from players by server-side subscribe-auth. Web-admin is operator
+      // surface, so always subscribe to both.
+      client.subscribe(
+        `/topic/games/${gameId}/operator/submission_status`,
+        handle
+      );
+      client.subscribe(
+        `/topic/games/${gameId}/operator/leaderboard`,
+        handle
+      );
+
+      // Fire the reconnect hook on every connect *after* the first. This is
+      // the web equivalent of iOS `MobileRealtimeClient.onReconnect`
+      // and Android's `ON_RESUME` wiring — the canonical recovery pattern
+      // from docs/realtime-and-mobile.md §7 "State Snapshot Contract".
+      if (hasConnectedOnce) {
+        try {
+          onReconnect?.();
+        } catch (e) {
+          console.error("onReconnect callback failed:", e);
+        }
+      } else {
+        hasConnectedOnce = true;
+      }
+    },
+    onStompError: (frame) => {
+      const raw = frame.headers["message"] || "WebSocket connection error";
+      const errorCode = frame.headers["error-code"];
+      console.error("STOMP error:", raw, errorCode ? `(${errorCode})` : "");
+
+      // Clear in-memory access token so the next reconnect triggers a
+      // proactive refresh via beforeConnect → getValidAccessToken().
+      // NEVER call handleAuthFailure() here — that wipes the refresh token
+      // from localStorage and logs the user out. The HTTP layer (client.ts)
+      // is the single authority on auth state; WebSocket errors should not
+      // independently decide to logout.
+      useAuthStore.getState().clearAccessToken();
+      onError?.(i18n.t("errors.liveUpdatesRetrying"));
+    },
+    onWebSocketError: () => {
+      console.error("WebSocket transport error");
+      onError?.(i18n.t("errors.liveUpdatesRetrying"));
+    },
+  });
+
+  client.activate();
+  stompClient = client;
+  return client;
+}
+
+export function disconnectWebSocket(): void {
+  if (stompClient) {
+    stompClient.deactivate();
+    stompClient = null;
+  }
+}

@@ -2,7 +2,7 @@
 
 > **Updated 2026-03-21 (post-fix cleanup):** Verified all 58 findings against source code. Fixed findings removed. 22 findings remain (7 unfixed gaps + 15 acknowledged deferrals).
 
-12 specialized agents performed a comprehensive audit of the PointFinder codebase across backend, web-admin, Android, iOS, infrastructure, and cross-platform concerns.
+12 specialized agents performed a comprehensive audit of the PointFinder codebase across backend, web, Android, iOS, infrastructure, and cross-platform concerns.
 
 ---
 
@@ -100,10 +100,10 @@
 
 ### HIGH
 
-**4.1** `web-admin/src/features/monitoring/MapPage.tsx` (567 lines) — **Oversized component.** Manages 5 parallel queries, 5 state variables, 8 `useMemo`/`useCallback` hooks, renders all map/list content inline. Inline popups (80+ lines each) and sidebar panels should be extracted.
+**4.1** `web/src/features/monitoring/MapPage.tsx` (567 lines) — **Oversized component.** Manages 5 parallel queries, 5 state variables, 8 `useMemo`/`useCallback` hooks, renders all map/list content inline. Inline popups (80+ lines each) and sidebar panels should be extracted.
 [DEFERRED: MapPage refactoring documented; large component extraction deferred]
 
-**4.2** `web-admin/src/features/game-detail/ChallengesPage.tsx` (510 lines) — **Oversized component.** Dialog form (~270 lines) mixed with listing page.
+**4.2** `web/src/features/game-detail/ChallengesPage.tsx` (510 lines) — **Oversized component.** Dialog form (~270 lines) mixed with listing page.
 [DEFERRED: ChallengesPage refactoring documented; large component extraction deferred]
 
 ### MEDIUM

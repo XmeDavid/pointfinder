@@ -3,6 +3,22 @@
 NFC-based gaming platform for scouting organisations (Pathfinders / Desbravadores).
 Teams scan NFC tags at physical locations to unlock challenges, while operators manage games and monitor progress in real time.
 
+## Frontend development
+
+The browser and Tauri apps share one React application in `web/`. Its components,
+theme and Storybook live there too. `mobile/` contains only the native Tauri shell;
+`ios-app/` and `android-app/` remain available for maintenance during rollout.
+
+```sh
+bun install
+bun run dev                         # browser
+bun run --cwd mobile tauri android dev
+bun run --cwd mobile tauri ios dev   # macOS
+```
+
+See [frontend ownership, builds and rollout](docs/frontend-consolidation.md) for
+platform boundaries, offline behavior, validation and remaining device checks.
+
 ## Architecture
 
 ```
@@ -13,7 +29,7 @@ Teams scan NFC tags at physical locations to unlock challenges, while operators 
               ┌────────────────┼────────────────┐
               ▼                ▼                ▼
      ┌────────────────┐ ┌───────────┐ ┌──────────────┐
-     │  Web Admin     │ │  REST API │ │  WebSocket   │
+     │  Web / Player  │ │  REST API │ │  WebSocket   │
      │  React SPA     │ │  /api/*   │ │  /ws/*       │
      │  (static)      │ └─────┬─────┘ └──────┬───────┘
      └────────────────┘       │               │
@@ -31,7 +47,7 @@ Teams scan NFC tags at physical locations to unlock challenges, while operators 
 
    ┌───────────────┐          ┌───────────────┐
    │   iOS App     │          │  Android App  │
-   │   Swift / NFC │          │  Kotlin / NFC │
+   │   Tauri / NFC │          │  Tauri / NFC  │
    └───────────────┘          └───────────────┘
 ```
 
@@ -39,9 +55,12 @@ Teams scan NFC tags at physical locations to unlock challenges, while operators 
 
 ```
 backend/          Spring Boot API (Java 21, Gradle)
-web-admin/        React 19 + TypeScript operator dashboard
-android-app/      Kotlin multi-module Android app
-ios-app/          Swift iOS app (Xcode project)
+web/              Shared React frontend, components, Storybook and platform adapters
+mobile/           Tauri shell embedding web/dist-native
+packages/         API, game logic, translations and native plugins
+design-system/    Canonical tokens and generators
+android-app/      Legacy Kotlin app (maintenance during Tauri rollout)
+ios-app/          Legacy Swift app (maintenance during Tauri rollout)
 nginx/            Reverse-proxy config & Dockerfile
 e2e/              End-to-end tests (Playwright + Maestro)
 scripts/          Utility scripts (e.g. create-admin.sh)
@@ -56,9 +75,9 @@ Makefile                    One-command test runners
 | Layer | Stack |
 |---|---|
 | **Backend** | Spring Boot 3.4.1 · Java 21 · PostgreSQL 16 · Flyway · JWT (jjwt) · WebSocket (STOMP) · Resend SMTP · APNs (Pushy) · FCM (firebase-admin) · Prometheus metrics |
-| **Web Admin** | React 19 · TypeScript · Vite 7 · Tailwind CSS 4 · Zustand · TanStack Query · MapLibre GL · TipTap rich-text editor · i18next (EN / PT / DE) · SSR pre-rendering |
-| **Android** | Kotlin 2 · Jetpack Compose · Hilt · Retrofit / OkHttp · Room · Google Maps · NFC · Firebase Cloud Messaging |
-| **iOS** | Swift · SwiftUI · Core NFC · Core Location · APNs · URLSession |
+| **Shared frontend** | React 19 · TypeScript · Vite 7 · Tailwind CSS 4 · Zustand · TanStack Query · MapLibre GL · TipTap rich-text editor · i18next (EN / PT / DE) |
+| **Legacy Android** | Kotlin 2 · Jetpack Compose · Hilt · Retrofit / OkHttp · Room · Google Maps · NFC · Firebase Cloud Messaging |
+| **Legacy iOS** | Swift · SwiftUI · Core NFC · Core Location · APNs · URLSession |
 | **Infra** | Docker Compose · nginx · Let's Encrypt (Certbot) · GitHub Actions CI |
 
 ## Getting started
@@ -67,7 +86,7 @@ Makefile                    One-command test runners
 
 - **Docker + Docker Compose** — runs the full stack
 - **Java 21** — backend local dev
-- **Node.js 22** — web-admin local dev
+- **Node.js 22** — web local dev
 - **Xcode** — iOS development (macOS only)
 - **Android SDK (API 35)** + JDK 17/21 — Android development
 
@@ -88,7 +107,7 @@ docker compose up -d
 ```
 
 > **Note:** The nginx container expects TLS certificates under `certbot/conf/`.
-> For local dev without SSL, run the backend and web-admin individually (see below).
+> For local dev without SSL, run the backend and web individually (see below).
 
 ### Run individual services for development
 
@@ -100,9 +119,9 @@ cd backend
 # API at http://localhost:8080
 ```
 
-**Web Admin**
+**Shared frontend**
 ```bash
-cd web-admin
+cd web
 npm install
 npm run dev
 # Dev server at http://localhost:5173
@@ -129,7 +148,7 @@ All test targets are available via the root **Makefile**:
 
 | Command | What it runs |
 |---|---|
-| `make test-docker` | Backend + web-admin tests in Docker containers |
+| `make test-docker` | Backend + web tests in Docker containers |
 | `make test-backend-docker` | Backend unit tests only (Docker) |
 | `make test-frontend-docker` | Web-admin lint + tests (Docker) |
 | `make test-android` | Android unit tests via Gradle on host |
@@ -148,7 +167,7 @@ See [`e2e/README.md`](e2e/README.md) for setup and the full command table.
 
 ### CI
 
-GitHub Actions (`.github/workflows/ci.yml`) runs backend, web-admin, and Android checks on every push / PR to `main`.
+GitHub Actions (`.github/workflows/ci.yml`) runs backend, web, and Android checks on every push / PR to `main`.
 
 ## Configuration
 
@@ -170,7 +189,7 @@ GitHub Actions (`.github/workflows/ci.yml`) runs backend, web-admin, and Android
 | `FCM_CREDENTIALS_PATH` / `FCM_PROJECT_ID` | FCM credentials | — |
 | `APP_UPLOADS_PATH` | File upload directory | `/uploads` |
 
-### Web Admin
+### Shared frontend
 
 | Variable | Purpose |
 |---|---|

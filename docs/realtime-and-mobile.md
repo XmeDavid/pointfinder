@@ -32,7 +32,7 @@ Two hooks manage WebSocket subscriptions:
 
 - **`useGameWebSocket`**: Subscribes to game topics with JWT auth. On message receipt, triggers React Query cache invalidation so UI data refreshes automatically. Also passes an `onReconnect` callback to `connectWebSocket` that fires the snapshot-supersede invalidation on every reconnect after the first (Slice 3 — see §7).
 - **`useBroadcastWebSocket`**: Public broadcast for spectator/broadcast games. Uses `X-Broadcast-Code` header instead of JWT (no authentication required).
-- **`useGameSnapshot` / `useVisibilityRefresh`**: Canonical recovery hooks for the operator dashboard. `useVisibilityRefresh(gameId)` is mounted at the game-detail root (`GameShell`) and invalidates the snapshot-supersede query key set whenever `document.visibilityState` flips to `visible` — the web-admin equivalent of iOS `scenePhase == .active` and Android `ON_RESUME` wiring. See §7.
+- **`useGameSnapshot` / `useVisibilityRefresh`**: Canonical recovery hooks for the operator dashboard. `useVisibilityRefresh(gameId)` is mounted at the game-detail root (`GameShell`) and invalidates the snapshot-supersede query key set whenever `document.visibilityState` flips to `visible` — the web equivalent of iOS `scenePhase == .active` and Android `ON_RESUME` wiring. See §7.
 
 ### iOS (Native WebSocket)
 
@@ -419,7 +419,7 @@ See `docs/api-reference.md` for full field-by-field examples.
 | Platform | Snapshot wired? | JWT refresh on WS reconnect? | Realtime Health Observability (Slice 5)? |
 |---|---|---|---|
 | Backend | Yes | N/A (serves `/api/auth/refresh`) | **Slice 5: complete** — `backend/src/main/java/com/prayer/pointfinder/websocket/StompSessionMetricsListener.java` — STOMP connect/disconnect/reconnect counters; `backend/src/main/java/com/prayer/pointfinder/websocket/MobileRealtimeHub.java:102` — mobile session gauge; `backend/src/main/java/com/prayer/pointfinder/service/RealtimeMetricsService.java` — rolling-hour aggregation; `backend/src/main/java/com/prayer/pointfinder/controller/RealtimeStatsController.java` — `GET /api/games/{gameId}/realtime-stats` endpoint |
-| Web admin | **Slice 3: complete** | **Slice 4: complete** | **Slice 5: complete** — `web-admin/src/components/RealtimeHealthWidget.tsx` — mounts on DashboardPage, polls `/realtime-stats` every 30s, renders health indicator; `web-admin/src/lib/api/monitoring.ts:16` — `getRealtimeStats(gameId)` function; `web-admin/src/lib/realtimeHealth.ts` — `classifyHealth()` health status classifier |
+| Web admin | **Slice 3: complete** | **Slice 4: complete** | **Slice 5: complete** — `web/src/components/RealtimeHealthWidget.tsx` — mounts on DashboardPage, polls `/realtime-stats` every 30s, renders health indicator; `web/src/lib/api/monitoring.ts:16` — `getRealtimeStats(gameId)` function; `web/src/lib/realtimeHealth.ts` — `classifyHealth()` health status classifier |
 | iOS | **Slice 2: complete** | **Shipped in earlier waves** | N/A (player app only; observability is operator feature) |
 | Android | **Slice 2: complete** | **Slice 4: complete** | N/A (player app only; observability is operator feature) |
 
@@ -428,7 +428,7 @@ Slice 1 is strictly backend. Slices 2 and 3 wire the snapshot clients. Slice 4 c
 ### JWT refresh on WebSocket reconnect (Slice 4 detail)
 
 Operator access JWTs are 15 minutes; refresh tokens are 7 days. Before
-Slice 4, the realtime client on web-admin and Android would happily
+Slice 4, the realtime client on web and Android would happily
 reconnect forever with whatever token it was given at login time — and
 because the backend rejects expired tokens during the STOMP/WebSocket
 handshake, every reconnect attempt past minute 15 would fail silently.
@@ -453,7 +453,7 @@ contract on the other two clients:
   failure it fires a one-shot `triggerForcedLogout()` so the dashboard
   does not loop forever on a dead session.
 
-- **Web admin** (`web-admin/src/lib/api/websocket.ts`): `connectWebSocket`
+- **Web admin** (`web/src/lib/api/websocket.ts`): `connectWebSocket`
   gains an optional fifth parameter `tokenProvider?: () => Promise<string | null>`.
   The existing `hasConnectedOnce` flag (introduced in Slice 3) doubles as
   the "is this a reconnect?" gate: on the first connect we keep using
@@ -482,7 +482,7 @@ the same "invalidate the snapshot-supersede query key set" behaviour:
    `document.visibilitychange` and, when the tab transitions to
    `visible`, invalidates the snapshot-supersede set. React Query then
    refetches each key lazily as widgets read it. This matters because
-   `staleTime: 30s` (the web-admin default) only marks data as stale for
+   `staleTime: 30s` (the web default) only marks data as stale for
    the *next* access — it never auto-refetches a backgrounded tab. A tab
    that sits behind another window for 30 minutes previously drifted
    silently until the next inbound broadcast, which may never arrive if

@@ -7,9 +7,12 @@ Before UI work, read `docs/visual-system/README.md`, `agent-checklist.md`, `comp
 ## Architecture
 
 - `design-system/`: canonical DTCG tokens, icon meanings, preview scenarios, generators, and audits.
-- `web-admin/`: React/Tailwind; semantic classes and shared components only.
-- `ios-app/`: SwiftUI; generated tokens plus native navigation, sheets, permissions, and SF Symbols.
-- `android-app/`: Compose; generated tokens plus Material-native behavior.
+- `web/`: the single React/Tailwind frontend for browser and Tauri, including canonical components and Storybook.
+- `mobile/`: Tauri shell only; consumes `web/dist-native`. No separate frontend or source symlink.
+- `web/src/platform/`: browser/native boundaries; features must not import native plugins directly.
+- `packages/i18n/`: single English/Portuguese/German catalog.
+- `ios-app/`: legacy SwiftUI maintained until Tauri device parity is verified; generated tokens plus native navigation, sheets, permissions, and SF Symbols.
+- `android-app/`: legacy Compose maintained until Tauri device parity is verified; generated tokens plus Material-native behavior.
 - `backend/`: Spring Boot contracts and audited domain behavior.
 
 Generated files say “Do not edit.” Change their source and run `make design-system-generate`. Record justified exceptions in `design-system/decisions.md`. Audits are advisory unless `STRICT=1` is explicitly requested.

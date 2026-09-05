@@ -14,6 +14,25 @@ function make(executor: Partial<QueueExecutor> = {}, nowMs = 1_000_000) {
 }
 
 describe('OfflineQueue', () => {
+  it('holds a submission behind its failed check-in without sending it', async () => {
+    const { queue, exec } = make({ checkIn: async () => { throw ApiError.fromResponse(400, { code: 'INVALID_TOKEN' }) } })
+    await queue.enqueueCheckIn({ id: 'check-in', gameId: 'g', baseId: 'b', nfcToken: 'proof' })
+    await queue.enqueueSubmission({ id: 'submit', gameId: 'g', baseId: 'b', challengeId: 'c', answer: 'answer' })
+    await queue.sync()
+    expect(exec.submit).not.toHaveBeenCalled()
+    expect(await queue.list()).toMatchObject([{ state: 'failed' }, { state: 'pending' }])
+  })
+
+  it('does not attribute an action to a new account if ownership changes during enqueue', async () => {
+    let owner = 'alice'
+    const store = new MemoryQueueStore()
+    store.list = async () => { owner = 'bob'; return [] }
+    const queue = new OfflineQueue({ store, owner: () => owner, executor: { checkIn: vi.fn(), submit: vi.fn() } })
+    const write = vi.spyOn(store, 'upsert')
+    await expect(queue.enqueueSubmission({ id: 'submit', gameId: 'g', baseId: 'b', challengeId: 'c', answer: 'Alice’s answer' })).rejects.toMatchObject({ status: 401 })
+    expect(write).not.toHaveBeenCalled()
+  })
+
   it('orders check-ins before submissions, oldest first', () => {
     const mk = (type: PendingAction['type'], createdAt: string, id: string) =>
       ({ type, id, gameId: 'g', baseId: 'b', createdAt, attempts: 0, nextAttemptAt: 0, state: 'pending', nfcToken: 't', challengeId: 'c', answer: '' }) as PendingAction

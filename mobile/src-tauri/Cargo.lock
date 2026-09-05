@@ -3113,6 +3113,7 @@ dependencies = [
  "tauri-plugin-http",
  "tauri-plugin-opener",
  "tauri-plugin-os",
+ "tauri-plugin-pointfinder-device",
  "tauri-plugin-pointfinder-nfc",
  "tauri-plugin-pointfinder-push",
  "tauri-plugin-pointfinder-secure-store",
@@ -4819,6 +4820,17 @@ dependencies = [
  "serde_json",
  "serialize-to-javascript",
  "sys-locale",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.20",
+]
+
+[[package]]
+name = "tauri-plugin-pointfinder-device"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
  "tauri",
  "tauri-plugin",
  "thiserror 2.0.20",

@@ -28,7 +28,7 @@ alwaysApply: true
 ```bash
 # ❌ Don't run directly on host
 cd backend && ./gradlew test
-cd web-admin && npm test
+cd web && npm test
 
 # ✅ Use Docker instead
 make test-backend-docker

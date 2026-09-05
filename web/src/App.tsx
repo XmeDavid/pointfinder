@@ -1,0 +1,400 @@
+import { Home, playerRoutes } from '@/app/player/routes';
+import { TagIntake } from '@/app/player/TagIntake';
+import { PushIntake } from '@/features/player/PushIntake';
+import { ServicesProvider } from '@/app/player/services';
+import type { AppServices } from '@/app/player/client';
+import { lazy, Suspense } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  createBrowserRouter,
+  Navigate,
+  RouterProvider,
+} from "react-router-dom";
+import { useAuthStore } from "@/lib/auth/store";
+import { ErrorBoundary, AppErrorFallback } from "@/components/feedback/ErrorBoundary";
+import { Toaster } from "@/components/ui/toast";
+import { AuthGuard } from "@/lib/auth/AuthGuard";
+import { GuestGuard } from "@/lib/auth/GuestGuard";
+import { IconRail } from "@/components/layout/IconRail";
+import { FrozenBlocker } from "@/components/feedback/FrozenBlocker";
+import { BillingWarningBanner } from "@/components/feedback/BillingWarningBanner";
+
+// ---------------------------------------------------------------------------
+// Lazy-loaded feature pages
+// ---------------------------------------------------------------------------
+const DashboardPage = lazy(() =>
+  import("@/features/dashboard/DashboardPage").then((m) => ({
+    default: m.DashboardPage,
+  })),
+);
+
+const GameWorkspace = lazy(() =>
+  import("@/features/workspace/GameWorkspace").then((m) => ({
+    default: m.GameWorkspace,
+  })),
+);
+const NfcTagsPage = lazy(() => import('@/features/build/NfcTagsPage'));
+
+const LoginPage = lazy(() =>
+  import("@/features/auth/LoginPage").then((m) => ({ default: m.LoginPage })),
+);
+
+const RegisterPage = lazy(() =>
+  import("@/features/auth/RegisterPage").then((m) => ({
+    default: m.RegisterPage,
+  })),
+);
+
+const ForgotPasswordPage = lazy(() =>
+  import("@/features/auth/ForgotPasswordPage").then((m) => ({
+    default: m.ForgotPasswordPage,
+  })),
+);
+
+const ResetPasswordPage = lazy(() =>
+  import("@/features/auth/ResetPasswordPage").then((m) => ({
+    default: m.ResetPasswordPage,
+  })),
+);
+
+const FaqPage = lazy(() =>
+  import("@/features/public/FaqPage").then((m) => ({ default: m.FaqPage })),
+);
+
+const PrivacyPage = lazy(() =>
+  import("@/features/public/PrivacyPage").then((m) => ({
+    default: m.PrivacyPage,
+  })),
+);
+
+const LiveBroadcastPage = lazy(() =>
+  import("@/features/broadcast/LiveBroadcastPage").then((m) => ({
+    default: m.LiveBroadcastPage,
+  })),
+);
+
+const LiveEntryPage = lazy(() =>
+  import("@/features/broadcast/LiveEntryPage").then((m) => ({
+    default: m.LiveEntryPage,
+  })),
+);
+
+const OrgMembersPage = lazy(() =>
+  import("@/features/org/OrgMembersPage").then((m) => ({
+    default: m.OrgMembersPage,
+  })),
+);
+
+const ProfilePage = lazy(() =>
+  import("@/features/profile/ProfilePage").then((m) => ({
+    default: m.ProfilePage,
+  })),
+);
+
+const CreateOrgPage = lazy(() =>
+  import("@/features/org/CreateOrgPage").then((m) => ({
+    default: m.CreateOrgPage,
+  })),
+);
+
+const AdminPanelLazy = lazy(() =>
+  import("@/features/admin/AdminPanel").then((m) => ({
+    default: m.AdminPanel,
+  })),
+);
+
+const devRoutes = import.meta.env.DEV
+  ? [
+      {
+        path: "/dev/visual-system",
+        lazy: () =>
+          import("@/features/dev/VisualHarnessPage").then((m) => ({
+            Component: m.VisualHarnessPage,
+          })),
+      },
+    ]
+  : [];
+
+// ---------------------------------------------------------------------------
+// Spinner shown while lazy chunks load
+// ---------------------------------------------------------------------------
+function PageSpinner() {
+  return (
+    <div className="flex h-screen items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Layout wrappers
+// ---------------------------------------------------------------------------
+function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex h-dvh overflow-hidden pt-[var(--safe-top)] pb-[var(--safe-bottom)]">
+      <IconRail showModes={false} />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <BillingWarningBanner />
+        <main className="flex-1 relative overflow-hidden pb-14 md:pb-0">
+          <FrozenBlocker>{children}</FrozenBlocker>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+function GameLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex h-dvh overflow-hidden pt-[var(--safe-top)] pb-[var(--safe-bottom)]">
+      <IconRail showModes={true} />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <BillingWarningBanner />
+        <main className="flex-1 relative overflow-hidden pb-14 md:pb-0">
+          <FrozenBlocker>{children}</FrozenBlocker>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Query client
+// ---------------------------------------------------------------------------
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { staleTime: 30_000, retry: false } },
+});
+
+// Clear all cached query data when the user logs out, so the next
+// login never shows stale data from a different account.
+useAuthStore.subscribe((state, prevState) => {
+  if ((prevState.isAuthenticated && !state.isAuthenticated) || prevState.user?.id !== state.user?.id) {
+    queryClient.clear();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Router
+// ---------------------------------------------------------------------------
+const router = createBrowserRouter([{ element: <><PushIntake /><TagIntake /></>, children: [
+  ...playerRoutes,
+  { path: "/tag/*", element: null },
+  // ── Public routes ──────────────────────────────────────────────────────
+  {
+    path: "/",
+    element: <Home />,
+  },
+  {
+    path: "/login",
+    element: (
+      <GuestGuard>
+        <Suspense fallback={<PageSpinner />}>
+          <LoginPage />
+        </Suspense>
+      </GuestGuard>
+    ),
+  },
+  {
+    path: "/register/:token?",
+    element: (
+      <GuestGuard>
+        <Suspense fallback={<PageSpinner />}>
+          <RegisterPage />
+        </Suspense>
+      </GuestGuard>
+    ),
+  },
+  {
+    path: "/forgot-password",
+    element: (
+      <GuestGuard>
+        <Suspense fallback={<PageSpinner />}>
+          <ForgotPasswordPage />
+        </Suspense>
+      </GuestGuard>
+    ),
+  },
+  {
+    path: "/reset-password/:token",
+    element: (
+      <GuestGuard>
+        <Suspense fallback={<PageSpinner />}>
+          <ResetPasswordPage />
+        </Suspense>
+      </GuestGuard>
+    ),
+  },
+  {
+    path: "/faq",
+    element: (
+      <Suspense fallback={<PageSpinner />}>
+        <FaqPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: "/privacy",
+    element: (
+      <Suspense fallback={<PageSpinner />}>
+        <PrivacyPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: "/broadcast/:code",
+    element: (
+      <Suspense fallback={<PageSpinner />}>
+        <LiveBroadcastPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: "/live",
+    element: (
+      <Suspense fallback={<PageSpinner />}>
+        <LiveEntryPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: "/live/:code",
+    element: (
+      <Suspense fallback={<PageSpinner />}>
+        <LiveEntryPage />
+      </Suspense>
+    ),
+  },
+
+  // ── Authenticated routes ────────────────────────────────────────────────
+  {
+    path: "/dashboard",
+    element: (
+      <AuthGuard>
+        <AppLayout>
+          <Suspense fallback={<PageSpinner />}>
+            <DashboardPage />
+          </Suspense>
+        </AppLayout>
+      </AuthGuard>
+    ),
+  },
+  {
+    path: "/game/:id",
+    element: (
+      <AuthGuard>
+        <GameLayout>
+          <Suspense fallback={<PageSpinner />}>
+            <GameWorkspace />
+          </Suspense>
+        </GameLayout>
+      </AuthGuard>
+    ),
+  },
+  {
+    path: "/game/:id/nfc",
+    element: (
+      <AuthGuard>
+        <GameLayout>
+          <Suspense fallback={<PageSpinner />}>
+            <NfcTagsPage />
+          </Suspense>
+        </GameLayout>
+      </AuthGuard>
+    ),
+  },
+  {
+    path: "/org/members",
+    element: (
+      <AuthGuard>
+        <AppLayout>
+          <Suspense fallback={<PageSpinner />}>
+            <OrgMembersPage />
+          </Suspense>
+        </AppLayout>
+      </AuthGuard>
+    ),
+  },
+  {
+    path: "/org/resources",
+    lazy: () =>
+      import("@/features/org/OrgResourcesPage").then((m) => ({
+        Component: m.OrgResourcesPage,
+      })),
+  },
+  {
+    path: "/org/create",
+    element: (
+      <AuthGuard>
+        <AppLayout>
+          <Suspense fallback={<PageSpinner />}>
+            <CreateOrgPage />
+          </Suspense>
+        </AppLayout>
+      </AuthGuard>
+    ),
+  },
+  {
+    path: "/profile",
+    element: (
+      <AuthGuard>
+        <AppLayout>
+          <Suspense fallback={<PageSpinner />}>
+            <ProfilePage />
+          </Suspense>
+        </AppLayout>
+      </AuthGuard>
+    ),
+  },
+  {
+    path: "/billing",
+    element: <Navigate to="/profile?tab=billing" replace />,
+  },
+  {
+    path: "/billing/success",
+    lazy: () =>
+      import("@/features/billing/BillingSuccessPage").then((m) => ({
+        Component: m.BillingSuccessPage,
+      })),
+  },
+  {
+    path: "/billing/cancel",
+    lazy: () =>
+      import("@/features/billing/BillingCancelPage").then((m) => ({
+        Component: m.BillingCancelPage,
+      })),
+  },
+  {
+    path: "/admin",
+    element: (
+      <AuthGuard>
+        <AppLayout>
+          <Suspense fallback={<PageSpinner />}>
+            <AdminPanelLazy />
+          </Suspense>
+        </AppLayout>
+      </AuthGuard>
+    ),
+  },
+  ...devRoutes,
+
+  // ── Catch-all ──────────────────────────────────────────────────────────
+  {
+    path: "*",
+    element: <Navigate to="/" replace />,
+  },
+]}]);
+
+// ---------------------------------------------------------------------------
+// App root
+// ---------------------------------------------------------------------------
+export default function App({ services }: { services: AppServices }) {
+  return (
+    <ErrorBoundary fallback={<AppErrorFallback />}>
+      <QueryClientProvider client={queryClient}>
+        <ServicesProvider services={services}>
+          <RouterProvider router={router} />
+        </ServicesProvider>
+        <Toaster />
+      </QueryClientProvider>
+    </ErrorBoundary>
+  );
+}

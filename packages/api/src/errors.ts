@@ -61,13 +61,13 @@ export class ApiError extends Error {
     this.code = init.code
     this.fieldErrors = init.fieldErrors ?? {}
     this.body = init.body
-    this.retryable =
+    this.retryable = (typeof init.body?.retryable === 'boolean' ? init.body.retryable : undefined) ?? (
       init.status === 0 ||
       init.status >= 500 ||
       init.status === 429 ||
       init.code === 'RATE_LIMITED' ||
       init.code === 'NETWORK' ||
-      init.code === 'TIMEOUT'
+      init.code === 'TIMEOUT')
   }
 
   /** The request was refused for lack of a valid session. */

@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/player")
 @RequiredArgsConstructor
 public class PlayerController {
+    private final com.prayer.pointfinder.service.PushTokenService pushTokenService;
 
     private final PlayerService playerService;
     private final ChunkedUploadService chunkedUploadService;
@@ -187,6 +188,12 @@ public class PlayerController {
     public ResponseEntity<Void> updatePushToken(@Valid @RequestBody UpdatePushTokenRequest request) {
         Player player = SecurityUtils.getCurrentPlayer();
         playerService.updatePushToken(player, request.getPushToken(), request.resolvePlatform());
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/push-token")
+    public ResponseEntity<Void> removePushToken(@Valid @RequestBody UpdatePushTokenRequest request) {
+        pushTokenService.unregisterPlayer(SecurityUtils.getCurrentPlayer().getId(), request.getPushToken(), request.resolvePlatform());
         return ResponseEntity.noContent().build();
     }
 

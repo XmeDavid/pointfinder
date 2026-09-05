@@ -14,6 +14,8 @@ export type PendingActionType = 'check_in' | 'submission'
 export type PendingActionState = 'pending' | 'in_flight' | 'failed'
 
 export interface PendingActionBase {
+  /** Owner of persisted work. Optional only for migration of pre-consolidation records. */
+  playerId?: EntityId
   /** UUID. Also the idempotency key for submissions. */
   id: string
   gameId: EntityId
@@ -37,6 +39,18 @@ export interface PendingSubmission extends PendingActionBase {
   challengeId: EntityId
   answer: string
   fileUrls?: string[] | null
+  media?: PendingMedia[]
+}
+
+/** The bytes live in app-owned storage; only recoverable metadata goes in the queue. */
+export interface PendingMedia {
+  id: string
+  name: string
+  contentType: string
+  size: number
+  uploadedBytes: number
+  sessionId?: string
+  fileUrl?: string
 }
 
 export type PendingAction = PendingCheckIn | PendingSubmission
@@ -73,6 +87,9 @@ export interface OfflineQueueOptions {
   maxBackoffMs?: number
   /** Error codes that mean the server already has this action. Treated as synced. */
   alreadyDoneCodes?: readonly string[]
+  /** Best-effort cleanup after the action has been durably removed. */
+  onRemoved?: (action: PendingAction) => Promise<void>
+  owner?: () => string | null
 }
 
 const DEFAULT_ALREADY_DONE: readonly string[] = ['MANUAL_CHECKIN_ALREADY_CHECKED_IN']
@@ -104,11 +121,13 @@ export class OfflineQueue {
   }
 
   async enqueueCheckIn(input: { id: string; gameId: EntityId; baseId: EntityId; nfcToken: string }): Promise<PendingCheckIn> {
+    const owner = this.options.owner?.()
     const existing = (await this.options.store.list()).find(
       (a): a is PendingCheckIn => a.type === 'check_in' && a.gameId === input.gameId && a.baseId === input.baseId && a.state !== 'failed',
     )
+    this.requireSameOwner(owner)
     if (existing) return existing
-    const action: PendingCheckIn = { type: 'check_in', ...input, ...fresh(this.now()) }
+    const action: PendingCheckIn = { type: 'check_in', ...input, ...fresh(this.now()), ...(owner ? { playerId: owner } : {}) }
     await this.options.store.upsert(action)
     this.emit()
     return action
@@ -121,8 +140,13 @@ export class OfflineQueue {
     challengeId: EntityId
     answer: string
     fileUrls?: string[] | null
+    media?: PendingMedia[]
   }): Promise<PendingSubmission> {
-    const action: PendingSubmission = { type: 'submission', ...input, ...fresh(this.now()) }
+    const owner = this.options.owner?.()
+    const existing = (await this.options.store.list()).find((a) => a.id === input.id)
+    this.requireSameOwner(owner)
+    if (existing?.type === 'submission') return existing
+    const action: PendingSubmission = { type: 'submission', ...input, ...fresh(this.now()), ...(owner ? { playerId: owner } : {}) }
     await this.options.store.upsert(action)
     this.emit()
     return action
@@ -137,7 +161,19 @@ export class OfflineQueue {
   }
 
   async discard(id: string): Promise<void> {
+    const action = (await this.options.store.list()).find((a) => a.id === id)
+    if (!action) return
+    if (this.syncing && action.state === 'in_flight') throw new Error('Cannot discard an action while it is syncing')
     await this.options.store.remove(id)
+    await this.options.onRemoved?.(action).catch(() => {})
+    this.emit()
+  }
+
+  /** Upload progress is persisted before notifying subscribers. */
+  async updateMedia(id: string, media: PendingMedia[]): Promise<void> {
+    const action = (await this.options.store.list()).find((a) => a.id === id)
+    if (!action || action.type !== 'submission') throw new Error('Submission is no longer available')
+    await this.options.store.upsert({ ...action, media })
     this.emit()
   }
 
@@ -159,6 +195,9 @@ export class OfflineQueue {
     const actions = sortForSync(await this.options.store.list())
     const now = this.now()
     for (const action of actions) {
+      // A check-in failure must not let its dependent submission run ahead.
+      if (action.type === 'submission' && (await this.options.store.list()).some((a) => a.type === 'check_in' && a.gameId === action.gameId && a.baseId === action.baseId)) continue
+      if (!(await this.options.store.list()).some((a) => a.id === action.id)) continue
       if (action.state === 'failed') continue
       if (action.nextAttemptAt > now) continue
       await this.options.store.upsert({ ...action, state: 'in_flight' })
@@ -172,19 +211,23 @@ export class OfflineQueue {
       }
       if (error === null) {
         await this.options.store.remove(action.id)
+        await this.options.onRemoved?.(action).catch(() => {})
         outcomes.push({ id: action.id, result: 'synced', response })
         this.emit()
         continue
       }
       const cls = classify(error, this.options.alreadyDoneCodes ?? DEFAULT_ALREADY_DONE)
+      // Preserve upload checkpoints written by the executor during this attempt.
+      const current = (await this.options.store.list()).find((a) => a.id === action.id) ?? action
       if (cls.kind === 'already_done') {
         await this.options.store.remove(action.id)
+        await this.options.onRemoved?.(action).catch(() => {})
         outcomes.push({ id: action.id, result: 'synced' })
         this.emit()
         continue
       }
       if (cls.kind === 'auth') {
-        await this.options.store.upsert({ ...action, state: 'pending' })
+        await this.options.store.upsert({ ...current, state: 'pending' })
         outcomes.push({ id: action.id, result: 'auth_required' })
         this.emit()
         return { ran: true, outcomes, authRequired: true }
@@ -193,7 +236,7 @@ export class OfflineQueue {
       if (cls.kind === 'retry') {
         const inMs = backoffMs(attempts, this.options.maxBackoffMs)
         await this.options.store.upsert({
-          ...action,
+          ...current,
           state: 'pending',
           attempts,
           nextAttemptAt: this.now() + inMs,
@@ -203,7 +246,7 @@ export class OfflineQueue {
         outcomes.push({ id: action.id, result: 'retry_later', inMs, error: cls.message })
       } else {
         await this.options.store.upsert({
-          ...action,
+          ...current,
           state: 'failed',
           attempts,
           lastError: cls.message,
@@ -218,6 +261,12 @@ export class OfflineQueue {
 
   private emit() {
     for (const l of this.listeners) l()
+  }
+
+  private requireSameOwner(owner: string | null | undefined) {
+    if (this.options.owner && (!owner || owner !== this.options.owner())) {
+      throw Object.assign(new Error('Player session changed while queuing an action'), { status: 401, code: 'UNAUTHENTICATED' })
+    }
   }
 }
 

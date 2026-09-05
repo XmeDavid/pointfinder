@@ -138,7 +138,7 @@ feat: broadcast game_config events from all operator-facing service mutations
 ### Task 3: Web Admin — Handle `game_config` event in `useGameWebSocket`
 
 **Files:**
-- Modify: `web-admin/src/hooks/useGameWebSocket.ts`
+- Modify: `web/src/hooks/useGameWebSocket.ts`
 
 - [ ] **Step 1: Add `game_config` case to the switch statement**
 
@@ -182,7 +182,7 @@ This uses the existing `scheduleInvalidate()` helper which batches invalidations
 
 - [ ] **Step 2: Verify frontend builds**
 
-Run: `cd web-admin && npm run build`
+Run: `cd web && npm run build`
 Expected: Build succeeds with no errors
 
 - [ ] **Step 3: Commit**
@@ -376,7 +376,7 @@ Expected: All existing tests pass (no behavior changed for existing events)
 
 - [ ] **Step 2: Run web admin build + lint**
 
-Run: `cd web-admin && npm run build && npm run lint`
+Run: `cd web && npm run build && npm run lint`
 Expected: No errors
 
 - [ ] **Step 3: Run Android build**

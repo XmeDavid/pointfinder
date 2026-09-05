@@ -10,6 +10,8 @@
 	<string>Take a photo to answer a photo challenge, or scan a QR code to join a game.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Choose an existing photo to answer a photo challenge.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Record sound when taking a video for a challenge.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

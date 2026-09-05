@@ -60,6 +60,9 @@ export function register(): Promise<Registration> {
   return call('register')
 }
 
+/** Stop delivery after logout; registering again obtains/reactivates a token. */
+export function unregister(): Promise<void> { return call('unregister') }
+
 /** The notification tap that launched the app, once. */
 export async function consumeLaunchTap(): Promise<NotificationTap | null> {
   return (await call<{ tap: NotificationTap | null }>('consume_launch_tap')).tap

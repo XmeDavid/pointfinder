@@ -1,6 +1,7 @@
 export * from './tags'
 export * from './proof'
 export * from './queue'
+export * from './media'
 export * from './progress'
 export * from './location'
 export * from './snapshot'

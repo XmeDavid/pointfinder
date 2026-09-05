@@ -6,7 +6,7 @@
 
 **Architecture:** Pure UX + safety layer over the already-working backend variable resolution (`TemplateVariableService`). Wire format (`{{key}}`) is unchanged. Each client tokenizes `{{key}}` into atomic pills on load and serializes pills back to `{{key}}` on save. The autocomplete popover + toolbar picker + chip input + preview toggle are added per-platform. Backend extends `validateVariableCompleteness` to scan challenge references and emits a new `VARIABLE_REFERENCE_UNDEFINED` error at go-live.
 
-**Tech Stack:** Spring Boot 3 / Java 21 (backend). React 19 + TipTap v3 + Vitest + MSW (web-admin). Swift + SwiftUI + WKWebView (iOS). Kotlin + Compose + WebView (Android). Existing `TeamVariableService` / `TemplateVariableService` unchanged except for readiness extension.
+**Tech Stack:** Spring Boot 3 / Java 21 (backend). React 19 + TipTap v3 + Vitest + MSW (web). Swift + SwiftUI + WKWebView (iOS). Kotlin + Compose + WebView (Android). Existing `TeamVariableService` / `TemplateVariableService` unchanged except for readiness extension.
 
 **Spec:** `docs/superpowers/specs/2026-04-17-variable-autocomplete-and-auto-validation-ux-design.md`
 
@@ -383,40 +383,40 @@ Wave A.4 — matches Wave A.1–A.3 backend changes."
 
 ## Wave B — Web-admin: TipTap mention + chip input + preview
 
-**Owner:** one web-admin agent. All tasks touch `web-admin/` only.
+**Owner:** one web agent. All tasks touch `web/` only.
 
 **Files:**
-- Modify: `web-admin/package.json`
-- Create: `web-admin/src/lib/variables/resolveTemplate.ts`
-- Create: `web-admin/src/lib/variables/scanReferences.ts`
-- Create: `web-admin/src/lib/variables/resolveTemplate.test.ts`
-- Create: `web-admin/src/lib/variables/scanReferences.test.ts`
-- Create: `web-admin/src/components/editor/extensions/VariableMention.ts`
-- Create: `web-admin/src/components/editor/VariableSuggestionList.tsx`
-- Create: `web-admin/src/components/editor/CreateVariableInlineDialog.tsx`
-- Create: `web-admin/src/components/inputs/VariableAwareChipInput.tsx`
-- Create: `web-admin/src/components/inputs/VariableAwareChipInput.test.tsx`
-- Modify: `web-admin/src/components/editor/RichTextEditor.tsx`
-- Modify: `web-admin/src/features/build/ChallengeDetail.tsx`
-- Modify: `web-admin/src/features/build/ChallengeDetail.test.tsx`
-- Modify: `web-admin/src/features/review/SubmissionDetail.tsx`
-- Create or modify: `web-admin/src/styles/variable-tag.css` (or inline in index.css)
+- Modify: `web/package.json`
+- Create: `web/src/lib/variables/resolveTemplate.ts`
+- Create: `web/src/lib/variables/scanReferences.ts`
+- Create: `web/src/lib/variables/resolveTemplate.test.ts`
+- Create: `web/src/lib/variables/scanReferences.test.ts`
+- Create: `web/src/components/editor/extensions/VariableMention.ts`
+- Create: `web/src/components/editor/VariableSuggestionList.tsx`
+- Create: `web/src/components/editor/CreateVariableInlineDialog.tsx`
+- Create: `web/src/components/inputs/VariableAwareChipInput.tsx`
+- Create: `web/src/components/inputs/VariableAwareChipInput.test.tsx`
+- Modify: `web/src/components/editor/RichTextEditor.tsx`
+- Modify: `web/src/features/build/ChallengeDetail.tsx`
+- Modify: `web/src/features/build/ChallengeDetail.test.tsx`
+- Modify: `web/src/features/review/SubmissionDetail.tsx`
+- Create or modify: `web/src/styles/variable-tag.css` (or inline in index.css)
 
 ### Task B.1: Install TipTap Mention + Suggestion
 
 **Files:**
-- Modify: `web-admin/package.json`
+- Modify: `web/package.json`
 
 - [ ] **Step 1: Install the packages**
 
 ```bash
-cd /Users/xmedavid/dev/dbvnfc/web-admin && npm install @tiptap/extension-mention@^3.19.0 @tiptap/suggestion@^3.19.0
+cd /Users/xmedavid/dev/dbvnfc/web && npm install @tiptap/extension-mention@^3.19.0 @tiptap/suggestion@^3.19.0
 ```
 
 - [ ] **Step 2: Verify types resolve**
 
 ```bash
-cd web-admin && npx tsc --noEmit
+cd web && npx tsc --noEmit
 ```
 
 Expected: no new errors (the install adds type defs via the packages themselves).
@@ -424,7 +424,7 @@ Expected: no new errors (the install adds type defs via the packages themselves)
 - [ ] **Step 3: Commit**
 
 ```bash
-git add web-admin/package.json web-admin/package-lock.json
+git add web/package.json web/package-lock.json
 git commit -m "chore(web): add @tiptap/extension-mention + @tiptap/suggestion
 
 Wave B.1 — dependencies for VariableMention extension."
@@ -433,12 +433,12 @@ Wave B.1 — dependencies for VariableMention extension."
 ### Task B.2: Client-side resolver utility — TDD
 
 **Files:**
-- Create: `web-admin/src/lib/variables/resolveTemplate.ts`
-- Create: `web-admin/src/lib/variables/resolveTemplate.test.ts`
+- Create: `web/src/lib/variables/resolveTemplate.ts`
+- Create: `web/src/lib/variables/resolveTemplate.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `web-admin/src/lib/variables/resolveTemplate.test.ts`:
+Create `web/src/lib/variables/resolveTemplate.test.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest'
@@ -481,14 +481,14 @@ describe('resolveTemplate', () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 ```bash
-cd web-admin && npx vitest run src/lib/variables/resolveTemplate.test.ts
+cd web && npx vitest run src/lib/variables/resolveTemplate.test.ts
 ```
 
 Expected: FAIL — module not found.
 
 - [ ] **Step 3: Write minimal implementation**
 
-Create `web-admin/src/lib/variables/resolveTemplate.ts`:
+Create `web/src/lib/variables/resolveTemplate.ts`:
 
 ```ts
 export type VariableMap = Map<string, string>
@@ -510,7 +510,7 @@ export function resolveTemplate(
 - [ ] **Step 4: Run test to verify it passes**
 
 ```bash
-cd web-admin && npx vitest run src/lib/variables/resolveTemplate.test.ts
+cd web && npx vitest run src/lib/variables/resolveTemplate.test.ts
 ```
 
 Expected: all 6 tests pass.
@@ -518,7 +518,7 @@ Expected: all 6 tests pass.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add web-admin/src/lib/variables/resolveTemplate.ts web-admin/src/lib/variables/resolveTemplate.test.ts
+git add web/src/lib/variables/resolveTemplate.ts web/src/lib/variables/resolveTemplate.test.ts
 git commit -m "feat(web): add resolveTemplate utility for per-team preview
 
 Wave B.2 — client-side {{key}} substitution matching backend regex."
@@ -527,8 +527,8 @@ Wave B.2 — client-side {{key}} substitution matching backend regex."
 ### Task B.3: Reference scanner utility — TDD
 
 **Files:**
-- Create: `web-admin/src/lib/variables/scanReferences.ts`
-- Create: `web-admin/src/lib/variables/scanReferences.test.ts`
+- Create: `web/src/lib/variables/scanReferences.ts`
+- Create: `web/src/lib/variables/scanReferences.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
@@ -574,7 +574,7 @@ describe('findUndefinedReferences', () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 ```bash
-cd web-admin && npx vitest run src/lib/variables/scanReferences.test.ts
+cd web && npx vitest run src/lib/variables/scanReferences.test.ts
 ```
 
 Expected: FAIL.
@@ -608,7 +608,7 @@ export function findUndefinedReferences(
 - [ ] **Step 4: Run test to verify it passes**
 
 ```bash
-cd web-admin && npx vitest run src/lib/variables/scanReferences.test.ts
+cd web && npx vitest run src/lib/variables/scanReferences.test.ts
 ```
 
 Expected: all tests pass.
@@ -616,7 +616,7 @@ Expected: all tests pass.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add web-admin/src/lib/variables/scanReferences.ts web-admin/src/lib/variables/scanReferences.test.ts
+git add web/src/lib/variables/scanReferences.ts web/src/lib/variables/scanReferences.test.ts
 git commit -m "feat(web): add scanReferences + findUndefinedReferences utilities
 
 Wave B.3 — undefined-key safety scan used by editor + save-time guard."
@@ -625,13 +625,13 @@ Wave B.3 — undefined-key safety scan used by editor + save-time guard."
 ### Task B.4: Add shared `.variable-tag` CSS
 
 **Files:**
-- Create: `web-admin/src/styles/variable-tag.css`
-- Modify: `web-admin/src/main.tsx` (or wherever global styles are imported)
+- Create: `web/src/styles/variable-tag.css`
+- Modify: `web/src/main.tsx` (or wherever global styles are imported)
 
 - [ ] **Step 1: Create the stylesheet**
 
 ```css
-/* web-admin/src/styles/variable-tag.css */
+/* web/src/styles/variable-tag.css */
 .variable-tag {
   display: inline-block;
   background: #BEE3F8;
@@ -664,7 +664,7 @@ Wave B.3 — undefined-key safety scan used by editor + save-time guard."
 
 - [ ] **Step 2: Import it**
 
-Locate `web-admin/src/main.tsx` (or wherever `index.css` / `app.css` is imported). Add:
+Locate `web/src/main.tsx` (or wherever `index.css` / `app.css` is imported). Add:
 
 ```tsx
 import './styles/variable-tag.css'
@@ -673,7 +673,7 @@ import './styles/variable-tag.css'
 - [ ] **Step 3: Verify**
 
 ```bash
-cd web-admin && npx tsc --noEmit && npm run lint
+cd web && npx tsc --noEmit && npm run lint
 ```
 
 Expected: no errors.
@@ -681,7 +681,7 @@ Expected: no errors.
 - [ ] **Step 4: Commit**
 
 ```bash
-git add web-admin/src/styles/variable-tag.css web-admin/src/main.tsx
+git add web/src/styles/variable-tag.css web/src/main.tsx
 git commit -m "feat(web): shared .variable-tag pill styles
 
 Wave B.4 — matches iOS/Android palette; dark-mode aware;
@@ -691,8 +691,8 @@ undefined-reference variant for safety warning."
 ### Task B.5: `VariableMention` TipTap extension — TDD
 
 **Files:**
-- Create: `web-admin/src/components/editor/extensions/VariableMention.ts`
-- Create: `web-admin/src/components/editor/extensions/VariableMention.test.ts`
+- Create: `web/src/components/editor/extensions/VariableMention.ts`
+- Create: `web/src/components/editor/extensions/VariableMention.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
@@ -742,7 +742,7 @@ describe('VariableMention', () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 ```bash
-cd web-admin && npx vitest run src/components/editor/extensions/VariableMention.test.ts
+cd web && npx vitest run src/components/editor/extensions/VariableMention.test.ts
 ```
 
 Expected: FAIL — module not found.
@@ -750,7 +750,7 @@ Expected: FAIL — module not found.
 - [ ] **Step 3: Write minimal implementation**
 
 ```ts
-// web-admin/src/components/editor/extensions/VariableMention.ts
+// web/src/components/editor/extensions/VariableMention.ts
 import { Node, mergeAttributes } from '@tiptap/core'
 
 export interface VariableMentionOptions {
@@ -816,7 +816,7 @@ export const VariableMention = Node.create<VariableMentionOptions>({
 - [ ] **Step 4: Run test to verify it passes**
 
 ```bash
-cd web-admin && npx vitest run src/components/editor/extensions/VariableMention.test.ts
+cd web && npx vitest run src/components/editor/extensions/VariableMention.test.ts
 ```
 
 Expected: all 3 tests pass.
@@ -824,7 +824,7 @@ Expected: all 3 tests pass.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add web-admin/src/components/editor/extensions/VariableMention.ts web-admin/src/components/editor/extensions/VariableMention.test.ts
+git add web/src/components/editor/extensions/VariableMention.ts web/src/components/editor/extensions/VariableMention.test.ts
 git commit -m "feat(web): VariableMention TipTap extension
 
 Wave B.5 — atomic pill node that round-trips with the shared
@@ -834,13 +834,13 @@ Wave B.5 — atomic pill node that round-trips with the shared
 ### Task B.6: `VariableSuggestionList` popover + suggestion plugin wiring
 
 **Files:**
-- Create: `web-admin/src/components/editor/VariableSuggestionList.tsx`
-- Create: `web-admin/src/components/editor/variableSuggestion.ts`
+- Create: `web/src/components/editor/VariableSuggestionList.tsx`
+- Create: `web/src/components/editor/variableSuggestion.ts`
 
 - [ ] **Step 1: Create the popover component**
 
 ```tsx
-// web-admin/src/components/editor/VariableSuggestionList.tsx
+// web/src/components/editor/VariableSuggestionList.tsx
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react'
 
 export interface SuggestionItem {
@@ -915,7 +915,7 @@ VariableSuggestionList.displayName = 'VariableSuggestionList'
 - [ ] **Step 2: Create the suggestion plugin config**
 
 ```ts
-// web-admin/src/components/editor/variableSuggestion.ts
+// web/src/components/editor/variableSuggestion.ts
 import { ReactRenderer } from '@tiptap/react'
 import type { SuggestionOptions } from '@tiptap/suggestion'
 import tippy, { type Instance as TippyInstance } from 'tippy.js'
@@ -1008,13 +1008,13 @@ export function makeVariableSuggestion(
 Note: this uses `tippy.js` — verify it's already in the project's `package.json` (TipTap v3 lists it as optional peer). If missing, install:
 
 ```bash
-cd web-admin && npm install tippy.js
+cd web && npm install tippy.js
 ```
 
 - [ ] **Step 3: Build to verify**
 
 ```bash
-cd web-admin && npx tsc --noEmit
+cd web && npx tsc --noEmit
 ```
 
 Expected: no errors.
@@ -1022,7 +1022,7 @@ Expected: no errors.
 - [ ] **Step 4: Commit**
 
 ```bash
-git add web-admin/src/components/editor/VariableSuggestionList.tsx web-admin/src/components/editor/variableSuggestion.ts web-admin/package.json web-admin/package-lock.json
+git add web/src/components/editor/VariableSuggestionList.tsx web/src/components/editor/variableSuggestion.ts web/package.json web/package-lock.json
 git commit -m "feat(web): VariableSuggestionList + {{-triggered suggestion plugin
 
 Wave B.6 — keyboard-navigable popover; Create-new as last item when
@@ -1032,11 +1032,11 @@ the typed partial doesn't match an existing key."
 ### Task B.7: Wire `RichTextEditor.tsx` with VariableMention
 
 **Files:**
-- Modify: `web-admin/src/components/editor/RichTextEditor.tsx`
+- Modify: `web/src/components/editor/RichTextEditor.tsx`
 
 - [ ] **Step 1: Read the existing editor component**
 
-Open `web-admin/src/components/editor/RichTextEditor.tsx` lines 160-200 to see the current `useEditor` call. Note the existing extension list: `StarterKit`, `TiptapImage`, `Placeholder`, `AudioExtension`, `FileEmbedExtension`.
+Open `web/src/components/editor/RichTextEditor.tsx` lines 160-200 to see the current `useEditor` call. Note the existing extension list: `StarterKit`, `TiptapImage`, `Placeholder`, `AudioExtension`, `FileEmbedExtension`.
 
 - [ ] **Step 2: Extend the component props**
 
@@ -1100,7 +1100,7 @@ The `insertContent('{{')` triggers the suggestion plugin at the current caret.
 - [ ] **Step 5: Run type-check + lint**
 
 ```bash
-cd web-admin && npx tsc --noEmit && npm run lint
+cd web && npx tsc --noEmit && npm run lint
 ```
 
 Expected: no errors.
@@ -1108,7 +1108,7 @@ Expected: no errors.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add web-admin/src/components/editor/RichTextEditor.tsx
+git add web/src/components/editor/RichTextEditor.tsx
 git commit -m "feat(web): wire VariableMention + suggestion into RichTextEditor
 
 Wave B.7 — {{-trigger autocomplete + toolbar button; pills render
@@ -1118,8 +1118,8 @@ atomically."
 ### Task B.8: `VariableAwareChipInput` component — TDD
 
 **Files:**
-- Create: `web-admin/src/components/inputs/VariableAwareChipInput.tsx`
-- Create: `web-admin/src/components/inputs/VariableAwareChipInput.test.tsx`
+- Create: `web/src/components/inputs/VariableAwareChipInput.tsx`
+- Create: `web/src/components/inputs/VariableAwareChipInput.test.tsx`
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1196,7 +1196,7 @@ describe('VariableAwareChipInput', () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 ```bash
-cd web-admin && npx vitest run src/components/inputs/VariableAwareChipInput.test.tsx
+cd web && npx vitest run src/components/inputs/VariableAwareChipInput.test.tsx
 ```
 
 Expected: FAIL.
@@ -1204,7 +1204,7 @@ Expected: FAIL.
 - [ ] **Step 3: Write minimal implementation**
 
 ```tsx
-// web-admin/src/components/inputs/VariableAwareChipInput.tsx
+// web/src/components/inputs/VariableAwareChipInput.tsx
 import { useState, type KeyboardEvent } from 'react'
 
 const REF_RE = /\{\{([a-zA-Z][a-zA-Z0-9_]*)\}\}/g
@@ -1305,7 +1305,7 @@ Note: the autocomplete popover on the add-input is a follow-up enhancement (a si
 - [ ] **Step 4: Run test to verify it passes**
 
 ```bash
-cd web-admin && npx vitest run src/components/inputs/VariableAwareChipInput.test.tsx
+cd web && npx vitest run src/components/inputs/VariableAwareChipInput.test.tsx
 ```
 
 Expected: all 5 tests pass.
@@ -1313,7 +1313,7 @@ Expected: all 5 tests pass.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add web-admin/src/components/inputs/VariableAwareChipInput.tsx web-admin/src/components/inputs/VariableAwareChipInput.test.tsx
+git add web/src/components/inputs/VariableAwareChipInput.tsx web/src/components/inputs/VariableAwareChipInput.test.tsx
 git commit -m "feat(web): VariableAwareChipInput for correctAnswer field
 
 Wave B.8 — chip array with inline pill rendering; mixed literal+
@@ -1323,8 +1323,8 @@ variable content supported; undefined-key warning styling."
 ### Task B.9: Wire ChallengeDetail — chip input, preview toggle, save-time guard
 
 **Files:**
-- Modify: `web-admin/src/features/build/ChallengeDetail.tsx`
-- Modify: `web-admin/src/features/build/ChallengeDetail.test.tsx`
+- Modify: `web/src/features/build/ChallengeDetail.tsx`
+- Modify: `web/src/features/build/ChallengeDetail.test.tsx`
 
 - [ ] **Step 1: Load variables in ChallengeDetail**
 
@@ -1334,7 +1334,7 @@ In `ChallengeDetail.tsx`, import the existing hooks:
 import { useGameVariables, useChallengeVariables } from '@/hooks/queries/useVariables'
 ```
 
-(Confirm hook names by reading `web-admin/src/hooks/queries/useVariables.ts` first — adjust to actual export names.) Add these calls near the existing queries:
+(Confirm hook names by reading `web/src/hooks/queries/useVariables.ts` first — adjust to actual export names.) Add these calls near the existing queries:
 
 ```tsx
 const { data: gameVars = [] } = useGameVariables(gameId)
@@ -1499,7 +1499,7 @@ it('renders correctAnswer chips instead of comma-separated input', async () => {
 - [ ] **Step 7: Run tests + type-check + lint**
 
 ```bash
-cd web-admin && npx vitest run src/features/build/ChallengeDetail.test.tsx && npx tsc --noEmit && npm run lint
+cd web && npx vitest run src/features/build/ChallengeDetail.test.tsx && npx tsc --noEmit && npm run lint
 ```
 
 Expected: all tests pass, no type errors, no lint errors.
@@ -1507,7 +1507,7 @@ Expected: all tests pass, no type errors, no lint errors.
 - [ ] **Step 8: Commit**
 
 ```bash
-git add web-admin/src/features/build/ChallengeDetail.tsx web-admin/src/features/build/ChallengeDetail.test.tsx
+git add web/src/features/build/ChallengeDetail.tsx web/src/features/build/ChallengeDetail.test.tsx
 git commit -m "feat(web): chip input + preview toggle + save-time guard in ChallengeDetail
 
 Wave B.9 — replaces comma-separated correctAnswer input with chips;
@@ -1518,7 +1518,7 @@ confirmation."
 ### Task B.10: Wire SubmissionDetail — resolved expected answer
 
 **Files:**
-- Modify: `web-admin/src/features/review/SubmissionDetail.tsx`
+- Modify: `web/src/features/review/SubmissionDetail.tsx`
 
 - [ ] **Step 1: Load variables for the submission's team**
 
@@ -1572,7 +1572,7 @@ Replace the current correctAnswer display (~line 320-326) with:
 
 - [ ] **Step 3: Add test**
 
-Append to `web-admin/src/features/review/SubmissionDetail.test.tsx` (create if missing, follow the same pattern as ChallengeDetail.test.tsx):
+Append to `web/src/features/review/SubmissionDetail.test.tsx` (create if missing, follow the same pattern as ChallengeDetail.test.tsx):
 
 ```tsx
 it('shows team-resolved expected answer next to raw template', async () => {
@@ -1587,7 +1587,7 @@ it('shows team-resolved expected answer next to raw template', async () => {
 - [ ] **Step 4: Run tests + type-check**
 
 ```bash
-cd web-admin && npx vitest run src/features/review/SubmissionDetail.test.tsx && npx tsc --noEmit
+cd web && npx vitest run src/features/review/SubmissionDetail.test.tsx && npx tsc --noEmit
 ```
 
 Expected: tests pass, no type errors.
@@ -1595,7 +1595,7 @@ Expected: tests pass, no type errors.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add web-admin/src/features/review/SubmissionDetail.tsx web-admin/src/features/review/SubmissionDetail.test.tsx
+git add web/src/features/review/SubmissionDetail.tsx web/src/features/review/SubmissionDetail.test.tsx
 git commit -m "feat(web): show team-resolved expected answer in SubmissionDetail
 
 Wave B.10 — debugging aid when auto-validation rejects a submission."

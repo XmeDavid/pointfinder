@@ -12,20 +12,23 @@ services:
       - gradle-cache:/root/.gradle
 
   frontend-test:
-    image: node:22-alpine
-    working_dir: /workspace/web-admin
-    command: sh -lc "npm ci && npm run test"
-    mem_limit: 1g
-    cpus: 1
+    image: oven/bun:1-alpine
+    working_dir: /workspace
+    command: sh -lc "bun install --frozen-lockfile && bun run --cwd web test"
+    mem_limit: 3g
+    cpus: 2
     environment:
       CI: "true"
     volumes:
-      - ./web-admin:/workspace/web-admin
-      - ./contract-snapshots:/workspace/contract-snapshots
-      - npm-cache:/root/.npm
-      - web-node-modules:/workspace/web-admin/node_modules
+      - .:/workspace
+      - bun-cache:/root/.bun
+      - workspace-node-modules:/workspace/node_modules
+      - web-node-modules:/workspace/web/node_modules
+      - mobile-node-modules:/workspace/mobile/node_modules
 
 volumes:
   gradle-cache:
-  npm-cache:
+  bun-cache:
+  workspace-node-modules:
   web-node-modules:
+  mobile-node-modules:

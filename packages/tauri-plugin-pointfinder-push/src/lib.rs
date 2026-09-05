@@ -43,6 +43,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
       commands::permission_status,
       commands::request_permission,
       commands::register,
+      commands::unregister,
       commands::consume_launch_tap,
     ])
     .setup(|app, api| {

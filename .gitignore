@@ -17,7 +17,7 @@ android-app/app/release/
 
 # Ad-hoc / generated reports
 appstore.copy
-web-admin/lighthose.report
+web/lighthose.report
 
 # Local upload data
 /data/
@@ -58,6 +58,7 @@ mobile/src-tauri/gen/apple/**/xcuserdata/
 packages/*/target/
 packages/*/android/build/
 packages/*/android/.gradle/
+packages/*/android/.tauri/
 packages/*/ios/.build/
 packages/*/ios/.tauri/
 *.jks
@@ -66,4 +67,8 @@ mobile/src-tauri/gen/apple/Externals/
 node_modules/
 
 # Storybook build output
-components/core/storybook-static/
+web/storybook-static/
+
+web/dist-native/
+web/test-results/
+web/playwright-report/

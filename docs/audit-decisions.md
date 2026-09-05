@@ -209,8 +209,8 @@ Design decisions made while resolving findings from `docs/full-codebase-audit-20
 **Changes:**
 - `AuthController.java`: Login/register set `pf_refresh` HttpOnly cookie (Secure, SameSite=Strict, Path=/api/auth). Refresh endpoint reads from cookie with body fallback. Logout clears cookie.
 - `RefreshTokenRequest.java`, `ChangePasswordRequest.java`: Removed @NotBlank on refreshToken field (web clients send empty body).
-- `web-admin/src/lib/auth/store.ts`: Removed refreshToken from state. Zustand persist version bump (0->1) strips leftover refreshToken from localStorage.
-- `web-admin/src/lib/api/client.ts`: Added `withCredentials: true`. Refresh sends empty body (cookie sent automatically).
+- `web/src/lib/auth/store.ts`: Removed refreshToken from state. Zustand persist version bump (0->1) strips leftover refreshToken from localStorage.
+- `web/src/lib/api/client.ts`: Added `withCredentials: true`. Refresh sends empty body (cookie sent automatically).
 - Frontend test files updated to match new API.
 
 **Alternatives considered:**

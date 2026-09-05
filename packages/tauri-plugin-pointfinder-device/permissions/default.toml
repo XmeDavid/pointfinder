@@ -1,0 +1,3 @@
+[default]
+description = "Share an app-owned export through the native system sheet"
+permissions = ["allow-share-file", "allow-register-listener", "allow-remove-listener"]

@@ -5,7 +5,7 @@ component code. Raw values belong only in theme/token files.
 
 The current code already has partial token sets:
 
-- Web: `web-admin/src/index.css`
+- Web: `web/src/index.css`
 - iOS: `ios-app/dbv-nfc-games/App/Theme/DesignTokens.swift`
 - Android: `android-app/app/src/main/java/com/prayer/pointfinder/ui/theme/`
 

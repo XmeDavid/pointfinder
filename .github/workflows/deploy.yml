@@ -22,7 +22,7 @@ jobs:
           - service: pointfinder-backend
             touched_path: backend/
           - service: pointfinder-frontend
-            touched_path: web-admin/
+            touched_path: web/
 
     steps:
       - name: Verify manual deploy branch

@@ -322,7 +322,7 @@ Validation lives on the request DTOs (`CreateBaseRequest`, `UpdateBaseRequest`, 
 
 The service normalizers (`BaseService.normalizeTags` / `normalizeColor`, `ChallengeService.normalizeTags` / `normalizeColor`) collapse empty lists and blank strings to `NULL`, so there is exactly one canonical "no tags / no color" representation in the database.
 
-The web admin enforces a 12-swatch palette (red, orange, amber, yellow, lime, green, teal, cyan, blue, violet, pink, slate — see `web-admin/src/lib/colorPalette.ts`) for visual consistency. The server deliberately accepts any valid hex so a future migration to a different palette does not require any DTO change.
+The web admin enforces a 12-swatch palette (red, orange, amber, yellow, lime, green, teal, cyan, blue, violet, pink, slate — see `web/src/lib/colorPalette.ts`) for visual consistency. The server deliberately accepts any valid hex so a future migration to a different palette does not require any DTO change.
 
 **Privacy contract (non-negotiable)**: `tags` and `color` MUST NEVER be returned on a player-facing endpoint, for either bases or challenges. The backend enforces this by splitting the DTOs at the type level:
 
@@ -477,7 +477,7 @@ A second property `app.uploads.stalled-threshold-minutes` (default `2`) is regis
 
 **Operator visibility (Wave D)**
 
-The operator-facing endpoints, WebSocket broadcast topics, and web-admin UI for needs-attention uploads are scoped to Wave D and not part of this wave. The schema, FK linkage, and detector are landing first so that Wave D has clean data to surface.
+The operator-facing endpoints, WebSocket broadcast topics, and web UI for needs-attention uploads are scoped to Wave D and not part of this wave. The schema, FK linkage, and detector are landing first so that Wave D has clean data to surface.
 
 ---
 
@@ -795,7 +795,7 @@ Both formats return the same rows in the same chronological order (`timestamp AS
 
 ## 4d. Stages
 
-Source migration: `backend/src/main/resources/db/migration/V46__stages.sql`. Backend: `StageService`, `StageController`, `Stage` entity. Frontend: `web-admin/src/features/build/StagesTab.tsx`, `StageDetail.tsx`, `features/workspace/StageStrip.tsx`.
+Source migration: `backend/src/main/resources/db/migration/V46__stages.sql`. Backend: `StageService`, `StageController`, `Stage` entity. Frontend: `web/src/features/build/StagesTab.tsx`, `StageDetail.tsx`, `features/workspace/StageStrip.tsx`.
 
 ### Purpose
 

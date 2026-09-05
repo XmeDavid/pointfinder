@@ -2,13 +2,17 @@
   "name": "pointfinder",
   "private": true,
   "workspaces": [
+    "web",
     "mobile",
-    "web-admin",
-    "packages/*",
-    "components/*"
+    "packages/*"
   ],
   "scripts": {
-    "typecheck": "bun run --filter \"*\" typecheck"
+    "typecheck": "bun run --filter \"*\" typecheck",
+    "dev": "bun run --cwd web dev",
+    "build": "bun run --cwd web build",
+    "build:native": "bun run --cwd web build:native",
+    "storybook": "bun run --cwd web storybook",
+    "test:web": "bun run --cwd web test"
   },
   "devDependencies": {
     "typescript": "~5.9",

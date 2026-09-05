@@ -55,6 +55,21 @@ class PushPlugin: Plugin, UNUserNotificationCenterDelegate {
         pendingRegister = invoke
         DispatchQueue.main.async {
             UIApplication.shared.registerForRemoteNotifications()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 30) { [weak self, weak invoke] in
+                guard let self, let invoke, self.pendingRegister === invoke else { return }
+                self.pendingRegister = nil
+                invoke.reject("timeout: Push registration timed out")
+            }
+        }
+    }
+
+    @objc public func unregister(_ invoke: Invoke) {
+        DispatchQueue.main.async {
+            self.pendingRegister?.reject("cancelled")
+            self.pendingRegister = nil
+            self.lastToken = nil
+            UIApplication.shared.unregisterForRemoteNotifications()
+            invoke.resolve()
         }
     }
 

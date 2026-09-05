@@ -19,7 +19,7 @@ Seven services compose the production stack. Start order is enforced via `depend
 |---------|-----------|---------------|---------|
 | `postgres` | `pointfinder-db` | `postgres:16` | Primary database — internal only, no published ports |
 | `backend` | `pointfinder-api` | `./backend` (multi-stage JDK → JRE) | Spring Boot API on port 8080 (internal) |
-| `frontend` | `pointfinder-web` | `./web-admin` (multi-stage Node → Alpine) | Builds Vite SPA into `frontend_dist` volume, then idles |
+| `frontend` | `pointfinder-web` | `./web` (multi-stage Node → Alpine) | Builds Vite SPA into `frontend_dist` volume, then idles |
 | `nginx` | `pointfinder-nginx` | `./nginx` (nginx:alpine) | Reverse proxy; only container with published ports 80/443 |
 | `certbot` | `pointfinder-certbot` | `certbot/certbot` | Let's Encrypt certificate renewal loop |
 | `prometheus` | — | `prom/prometheus:v2.53.0` | Metrics collection, port 127.0.0.1:9090 (host-only) |
@@ -107,17 +107,17 @@ Enable by setting `FCM_ENABLED=true` and placing `firebase-service-account.json`
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `VITE_WS_URL` | `/ws-native` | Raw STOMP WebSocket endpoint for web-admin real-time updates. Build-time argument passed to Vite during Docker image compilation. Change requires rebuilding both `web-admin` and `nginx` containers. See §3 "WebSocket proxy" and `docs/realtime-and-mobile.md` for endpoint routing details. |
+| `VITE_WS_URL` | `/ws-native` | Raw STOMP WebSocket endpoint for web real-time updates. Build-time argument passed to Vite during Docker image compilation. Change requires rebuilding both `web` and `nginx` containers. See §3 "WebSocket proxy" and `docs/realtime-and-mobile.md` for endpoint routing details. |
 
 **Deployment after changing VITE_WS_URL:**
 
 ```bash
 docker compose build nginx
-docker compose build web-admin
-docker compose up -d nginx web-admin
+docker compose build web
+docker compose up -d nginx web
 ```
 
-The nginx config bakes the routing rules into the image at build time (location blocks for `/ws` and `/ws-native` proxied to the backend). If you update `VITE_WS_URL`, you must rebuild both the web-admin image (to embed the new URL in the Vite bundle) and the nginx image (to ensure routing is in sync).
+The nginx config bakes the routing rules into the image at build time (location blocks for `/ws` and `/ws-native` proxied to the backend). If you update `VITE_WS_URL`, you must rebuild both the web image (to embed the new URL in the Vite bundle) and the nginx image (to ensure routing is in sync).
 
 ### Other
 
@@ -178,8 +178,8 @@ Two endpoints are exposed for WebSocket connections:
 
 | Endpoint | Protocol | Client | Purpose |
 |----------|----------|--------|---------|
-| `/ws` | SockJS + STOMP | Browser (web-admin) | Legacy fallback; SockJS allows connections in restricted networks via HTTP polling. |
-| `/ws-native` | Raw STOMP over WebSocket | Browser (web-admin with `VITE_WS_URL=/ws-native`) | Direct WebSocket STOMP; lower latency than SockJS. Set via `VITE_WS_URL` at build time. |
+| `/ws` | SockJS + STOMP | Browser (web) | Legacy fallback; SockJS allows connections in restricted networks via HTTP polling. |
+| `/ws-native` | Raw STOMP over WebSocket | Browser (web with `VITE_WS_URL=/ws-native`) | Direct WebSocket STOMP; lower latency than SockJS. Set via `VITE_WS_URL` at build time. |
 
 Both routes are proxied to the backend via a single location block:
 

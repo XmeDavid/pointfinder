@@ -47,11 +47,20 @@ jobs:
           bun-version: latest
 
       - run: bun install --frozen-lockfile
-      - run: bun run --filter @pointfinder/core typecheck
-      - run: bun run --filter @pointfinder/core test
-      - run: cd web-admin && bun run lint
-      - run: cd web-admin && bun run typecheck
-      - run: cd web-admin && bun run test
+      - run: cd web && bun run lint
+      - run: cd web && bun run typecheck
+      - run: cd web && bun run test
+      - run: bun run build
+      - run: bun run build:native
+      - run: bun run --filter "@pointfinder/*" typecheck
+      - run: make design-system-check
+      - run: bun run --cwd web build-storybook
+      - run: cd web && bun x playwright install --with-deps chromium
+      - run: bun run --cwd web test:e2e
+      - run: bun run --cwd packages/api test
+      - run: bun run --cwd packages/game-core test
+      - run: bun run --cwd packages/i18n test
+      - run: docker build -f web/Dockerfile -t pointfinder-web:ci .
 
   android:
     name: Android Checks

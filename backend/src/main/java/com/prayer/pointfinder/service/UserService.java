@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PushTokenService pushTokenService;
     private final RefreshTokenRepository refreshTokenRepository;
     private final GameRepository gameRepository;
     private final EmailChangeTokenRepository emailChangeTokenRepository;
@@ -51,14 +52,7 @@ public class UserService {
 
     @Transactional(timeout = 10)
     public void updateCurrentUserPushToken(String pushToken, PushPlatform platform) {
-        User currentUser = SecurityUtils.getCurrentUser();
-        UUID userId = currentUser.getId();
-        User managedUser = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
-
-        managedUser.setPushToken(pushToken);
-        managedUser.setPushPlatform(platform);
-        userRepository.save(managedUser);
+        pushTokenService.registerOperator(SecurityUtils.getCurrentUser().getId(), pushToken, platform);
     }
 
     @Transactional(timeout = 10)

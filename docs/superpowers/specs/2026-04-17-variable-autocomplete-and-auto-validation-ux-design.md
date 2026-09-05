@@ -2,7 +2,7 @@
 
 **Date:** 2026-04-17
 **Status:** Draft — awaiting user review
-**Scope:** web-admin + iOS operator + Android operator
+**Scope:** web + iOS operator + Android operator
 **Author:** David (via brainstorming session)
 
 ## Summary
@@ -36,7 +36,7 @@ The backend already resolves `{{key}}` references per team at submission time (`
 ### Key references
 
 - Backend: `backend/src/main/java/com/prayer/pointfinder/service/SubmissionService.java:132-146`, `service/TemplateVariableService.java`, `service/TeamVariableService.java:132-167`, `entity/Challenge.java:41-50`.
-- Web: `web-admin/src/components/editor/RichTextEditor.tsx:169-187`, `features/build/ChallengeDetail.tsx:81-186,309-340,605-640`, `features/review/SubmissionDetail.tsx:320-326`.
+- Web: `web/src/components/editor/RichTextEditor.tsx:169-187`, `features/build/ChallengeDetail.tsx:81-186,309-340,605-640`, `features/review/SubmissionDetail.tsx:320-326`.
 - iOS: `ios-app/dbv-nfc-games/Features/Operator/RichTextEditorView.swift:160-200,489-641`, `Features/Operator/ChallengeEditView.swift:24,70,163-181,342-358`.
 - Android: `android-app/feature/operator/src/main/kotlin/com/prayer/pointfinder/feature/operator/RichTextEditorScreen.kt:208-453,545-549`, `feature/operator/.../ChallengeEditScreen.kt:106-181,428-456,760-789`.
 - Docs: `docs/business-logic.md:203-235,882-927`, `docs/api-reference.md:368-386,1159-1200`.
@@ -71,8 +71,8 @@ The backend already resolves `{{key}}` references per team at submission time (`
 
 #### 2.1 Web — TipTap Mention extension
 
-- Install `@tiptap/extension-mention` + `@tiptap/suggestion` in `web-admin/package.json`.
-- Define a `VariableMention` extension in `web-admin/src/components/editor/extensions/VariableMention.ts`:
+- Install `@tiptap/extension-mention` + `@tiptap/suggestion` in `web/package.json`.
+- Define a `VariableMention` extension in `web/src/components/editor/extensions/VariableMention.ts`:
   - `char: '{{'` (TipTap supports multi-character triggers via custom matcher).
   - `HTMLAttributes: { class: 'variable-tag' }` (reuse the shared pill CSS class).
   - `renderHTML` / `parseHTML` round-trip: the node renders as `<span class="variable-tag" data-variable-key="secret">{{secret}}</span>`; serialization to plain text yields `{{secret}}` (via TipTap's `renderText`).
@@ -160,7 +160,7 @@ Result:                          rejected
 - `GameServiceTest`: go-live transition fails with `VARIABLE_REFERENCE_UNDEFINED` when a challenge references an undefined key.
 - E2E smoke (`e2e/api`): operator defines `{{secret}}` per team, creates challenge with `correctAnswer = ["{{secret}}"]`, each team's submission auto-validates against its own value.
 
-### Web (`web-admin/src/**/*.test.tsx`)
+### Web (`web/src/**/*.test.tsx`)
 - `RichTextEditor.test.tsx`: mention suggestion list renders; `{{` triggers popover; pill serializes to `{{key}}` on save; `{{key}}` in initial content parses to pill; undefined-key pill renders with warning state.
 - `ChallengeDetail.test.tsx`: chip array renders correctAnswer; add-chip autocomplete; save-time undefined-key warning modal; preview toggle switches pill tokens to resolved strings for selected team; mixed literal+pill chip renders + persists.
 - `SubmissionDetail.test.tsx`: resolved-expected-answer row appears; shows `⚠ Variable ... not defined for this team` when team lacks a key.

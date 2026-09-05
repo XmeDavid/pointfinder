@@ -1,7 +1,7 @@
 # PointFinder Gap Analysis Report
 
 **Date**: 2026-03-14 (original audit), 2026-03-21 (last updated), 2026-04-08 (Wave 2 documentation refresh)
-**Scope**: Cross-platform analysis of backend, web-admin, Android, and iOS
+**Scope**: Cross-platform analysis of backend, web, Android, and iOS
 **Method**: Exhaustive codebase audit followed by cross-referencing actual source code
 **Status**: Post-pilot Wave 2 — Game Tags feature documented, ErrorCode reference added, TTL clarified, rescue actions already documented
 
@@ -32,7 +32,7 @@
 - **Platforms**: iOS
 - **Severity**: Minor
 - **Description**: iOS `GameSettingsView` allows go-live without any pre-flight UI validation. Relies entirely on backend 400 response.
-- **Impact**: Acceptable since backend enforces all rules, but UX is worse than web-admin and Android.
+- **Impact**: Acceptable since backend enforces all rules, but UX is worse than web and Android.
 - **Fix**: Optional — add readiness summary before go-live confirmation dialog.
 
 #### ~~GAP-BL-3: iOS player submissions not pre-blocked when game not live~~ FIXED
@@ -175,7 +175,7 @@
 <!-- IGNORE FOR NOW #### GAP-F-1: Broadcast mode missing on mobile
 - **Platforms**: Android, iOS
 - **Severity**: Critical
-- **Description**: Public broadcast mode (spectator screens via 6-char code) is only available on web-admin. Backend supports it, mobile clients don't implement it.
+- **Description**: Public broadcast mode (spectator screens via 6-char code) is only available on web. Backend supports it, mobile clients don't implement it.
 - **Endpoints unused**: `GET /broadcast/{code}`, `/broadcast/{code}/leaderboard`, `/broadcast/{code}/locations`, `/broadcast/{code}/progress`
 - **Fix**: Add broadcast viewer screens to both mobile apps. -->
 
@@ -186,12 +186,12 @@
 - **Endpoints unused by mobile UI**: `POST /games/{gameId}/operators/{userId}`, `DELETE /games/{gameId}/operators/{userId}`
 - **Fix**: Add add/remove buttons to operator management screens on both mobile apps.
 
-<!-- IGNORE FOR NOW #### GAP-F-3: Operator notification settings missing on web-admin
+<!-- IGNORE FOR NOW #### GAP-F-3: Operator notification settings missing on web
 - **Platforms**: Web-admin
 - **Severity**: Critical
 - **Description**: Web-admin operators cannot configure push notification preferences. Only mobile apps have this feature.
 - **Endpoints unused by web**: `GET/PUT /games/{gameId}/operator-notification-settings/me`, `PUT /users/me/push-token`
-- **Fix**: Add notification settings page to web-admin game settings. -->
+- **Fix**: Add notification settings page to web game settings. -->
 
 ### Important Gaps
 <!-- IGNORE FOR NOW #### GAP-F-4: Dashboard monitoring stats missing on mobile
@@ -253,7 +253,7 @@ trunk landing commit for each client.
 **Scope guard notes.**
 - The editor autocomplete and `correctAnswer` chip input are authoring-time only; no run-time player-facing UX changed.
 - The go-live rejection path re-uses the existing `BadRequestException` + `ErrorCode` carrier — no response shape changes for clients.
-- E2E smoke exercises the backend contract end-to-end; web-admin / iOS / Android UX is covered by each wave's unit + component tests.
+- E2E smoke exercises the backend contract end-to-end; web / iOS / Android UX is covered by each wave's unit + component tests.
 
 ---
 
@@ -342,13 +342,13 @@ trunk landing commit for each client.
 **Short-term (next sprint):**
 5. Add requirePresenceToSubmit enforcement on Android (GAP-BL-4)
 6. Add operator management UI on mobile (GAP-F-2)
-7. Fix web-admin 409/403 error handling (GAP-E-3, GAP-E-4)
-8. Add form validation to web-admin (GAP-V-4 through GAP-V-9)
+7. Fix web 409/403 error handling (GAP-E-3, GAP-E-4)
+8. Add form validation to web (GAP-V-4 through GAP-V-9)
 9. Add Android go-live readiness checks (GAP-BL-1)
 
 **Medium-term:**
 10. Add broadcast mode to mobile apps (GAP-F-1)
-11. Add notification settings to web-admin (GAP-F-3)
+11. Add notification settings to web (GAP-F-3)
 12. Complete NFC writing on Android (GAP-F-5)
 13. Standardize cross-platform terminology (GAP-L-7)
 14. Fix Portuguese accent marks in web frontend (GAP-L-5)

@@ -26,6 +26,7 @@ import java.util.List;
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
+    private final com.prayer.pointfinder.service.PushTokenService pushTokenService;
 
     private final UserService userService;
 
@@ -52,6 +53,12 @@ public class UserController {
     public ResponseEntity<Void> updateCurrentUserPushToken(@Valid @RequestBody UpdatePushTokenRequest request) {
         userService.updateCurrentUserPushToken(request.getPushToken(), request.resolvePlatform());
         return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/me/push-token")
+    public ResponseEntity<Void> removeCurrentUserPushToken(@Valid @RequestBody UpdatePushTokenRequest request) {
+        pushTokenService.unregisterOperator(SecurityUtils.getCurrentUser().getId(), request.getPushToken(), request.resolvePlatform());
+        return ResponseEntity.noContent().build();
     }
 
     /**

@@ -92,7 +92,8 @@ Use this mapping when translating visual-system tokens to Tailwind classes.
 | `color.status.unknown` | `text-muted-foreground`, `bg-muted`, `border-border` |
 
 If a Tailwind class does not exist for a visual token, add the token to
-`web-admin/src/index.css` before using it.
+`web/src/theme/theme.css` before using it. Change canonical token values in
+`design-system/tokens.json` and run `make design-system-generate`.
 
 ## Status Styling Must Be Centralized
 
@@ -225,28 +226,30 @@ when corresponding tokens/utilities exist.
 
 Token definitions:
 
-- `web-admin/src/index.css`
+- `design-system/tokens.json` (source)
+- `web/src/generated/design-tokens.css` (generated; do not edit)
+- `web/src/theme/theme.css` (semantic Tailwind mappings)
 
 Primitive components:
 
-- `web-admin/src/components/ui/`
+- `web/src/components/ui/`
 
 Layout components:
 
-- `web-admin/src/components/layout/`
+- `web/src/components/layout/`
 
 Map components:
 
-- `web-admin/src/components/map/`
+- `web/src/components/map/`
 
 Shared status/product components:
 
-- `web-admin/src/components/status/`
-- `web-admin/src/components/patterns/`
+- `web/src/components/status/`
+- `web/src/components/patterns/`
 
 Feature-only components:
 
-- `web-admin/src/features/*/components/`
+- `web/src/features/*/components/`
 
 Do not add cross-feature visual components directly inside a feature folder.
 

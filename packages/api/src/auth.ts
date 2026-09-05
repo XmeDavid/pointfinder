@@ -57,6 +57,9 @@ export interface AuthSessionOptions {
 export class AuthSession {
   private state: AuthState = { kind: 'none' }
   private loaded = false
+  private restorePromise: Promise<AuthState> | null = null
+  private revision = 0
+  private writes: Promise<void> = Promise.resolve()
   private refreshPromise: Promise<string> | null = null
   private readonly listeners = new Set<(s: AuthState) => void>()
   private readonly now: () => number
@@ -69,13 +72,20 @@ export class AuthSession {
 
   /** Load persisted state. Safe to call more than once. */
   async restore(): Promise<AuthState> {
-    if (!this.loaded) {
-      const stored = await this.options.store.load()
-      this.state = stored ?? { kind: 'none' }
-      this.loaded = true
-      this.emit()
+    if (this.loaded) return this.state
+    if (!this.restorePromise) {
+      const revision = this.revision
+      this.restorePromise = (async () => {
+        const stored = await this.options.store.load()
+        if (revision === this.revision) {
+          this.state = stored ?? { kind: 'none' }
+          this.loaded = true
+          this.emit()
+        }
+        return this.state
+      })().finally(() => { this.restorePromise = null })
     }
-    return this.state
+    return this.restorePromise
   }
 
   get current(): AuthState {
@@ -88,6 +98,8 @@ export class AuthSession {
   }
 
   async setPlayer(auth: PlayerAuthResponse): Promise<void> {
+    this.revision++
+    this.refreshPromise = null
     await this.persist({
       kind: 'player',
       token: auth.token,
@@ -104,6 +116,8 @@ export class AuthSession {
   }
 
   async setOperator(auth: OperatorAuthResponse): Promise<void> {
+    this.revision++
+    this.refreshPromise = null
     await this.persist({
       kind: 'operator',
       accessToken: auth.accessToken,
@@ -122,10 +136,12 @@ export class AuthSession {
   }
 
   async logout(reason: 'explicit' | 'server_revoked' | 'refresh_rejected' = 'explicit'): Promise<void> {
+    this.revision++
+    this.loaded = true
     this.state = { kind: 'none' }
     this.refreshPromise = null
-    await this.options.store.clear()
     this.emit()
+    await this.write(() => this.options.store.clear())
     this.options.onLogout?.(reason)
   }
 
@@ -166,6 +182,7 @@ export class AuthSession {
 
   private refresh(): Promise<string> {
     if (this.refreshPromise) return this.refreshPromise
+    const revision = this.revision
     this.refreshPromise = (async () => {
       try {
         const s = this.state
@@ -180,7 +197,7 @@ export class AuthSession {
         } catch (e) {
           // 400/401/403 mean the refresh token itself is dead.
           if (e instanceof ApiError && (e.status === 400 || e.status === 401 || e.status === 403)) {
-            await this.logout('refresh_rejected')
+            if (revision === this.revision) await this.logout('refresh_rejected')
             throw new ApiError({ status: e.status, message: 'Session expired', code: 'UNAUTHENTICATED', cause: e })
           }
           throw e
@@ -188,20 +205,32 @@ export class AuthSession {
         if (!res?.accessToken || !res.refreshToken) {
           throw new ApiError({ status: 0, message: 'Invalid refresh response', code: 'INVALID_RESPONSE' })
         }
-        await this.persist({ ...s, accessToken: res.accessToken, refreshToken: res.refreshToken })
+        if (revision !== this.revision) throw new ApiError({ status: 401, code: 'UNAUTHENTICATED', message: 'Session changed during refresh' })
+        await this.persist({ ...s, accessToken: res.accessToken, refreshToken: res.refreshToken }, revision)
+        if (revision !== this.revision) throw new ApiError({ status: 401, code: 'UNAUTHENTICATED', message: 'Session changed during refresh' })
         return res.accessToken
       } finally {
-        this.refreshPromise = null
+        if (revision === this.revision) this.refreshPromise = null
       }
     })()
     return this.refreshPromise
   }
 
-  private async persist(next: StoredAuth): Promise<void> {
-    this.state = next
-    this.loaded = true
-    await this.options.store.save(next)
-    this.emit()
+  private async persist(next: StoredAuth, revision = this.revision): Promise<void> {
+    await this.write(async () => {
+      if (revision !== this.revision) return
+      await this.options.store.save(next)
+      if (revision !== this.revision) return
+      this.state = next
+      this.loaded = true
+      this.emit()
+    })
+  }
+
+  private write(operation: () => Promise<void>): Promise<void> {
+    const result = this.writes.then(operation)
+    this.writes = result.catch(() => {})
+    return result
   }
 
   private emit() {

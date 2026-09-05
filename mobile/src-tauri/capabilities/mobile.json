@@ -10,6 +10,7 @@
     "main"
   ],
   "permissions": [
+    "pointfinder-device:default",
     "geolocation:allow-check-permissions",
     "geolocation:allow-request-permissions",
     "geolocation:allow-get-current-position",

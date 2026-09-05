@@ -248,6 +248,8 @@ export interface UnseenCountResponse {
 // ---------------------------------------------------------------- media uploads
 
 export interface UploadSessionInitRequest {
+  /** Stable per local attachment, so a lost start response recovers the same session. */
+  mediaItemKey?: string | null
   originalFileName?: string | null
   contentType: string
   totalSizeBytes: number
@@ -257,6 +259,8 @@ export interface UploadSessionInitRequest {
 export interface UploadSessionResponse {
   sessionId: EntityId
   gameId: EntityId
+  mediaItemKey?: string | null
+  originalFileName?: string | null
   contentType: string
   totalSizeBytes: number
   chunkSizeBytes: number
@@ -565,6 +569,7 @@ export interface RealtimeEnvelope<T = unknown> {
 // ---------------------------------------------------------------- errors
 
 export interface ApiErrorBody {
+  retryable?: boolean
   status?: number
   message?: string
   code?: string

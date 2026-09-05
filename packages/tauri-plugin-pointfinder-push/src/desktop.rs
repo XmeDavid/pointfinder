@@ -14,6 +14,7 @@ pub fn init<R: Runtime, C: DeserializeOwned>(
 pub struct PointfinderPush<R: Runtime>(AppHandle<R>);
 
 impl<R: Runtime> PointfinderPush<R> {
+  pub fn unregister(&self) -> crate::Result<()> { Ok(()) }
   pub fn permission_status(&self) -> crate::Result<PermissionStatus> {
     Ok(PermissionStatus { status: "denied".into() })
   }

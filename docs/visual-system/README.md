@@ -30,7 +30,7 @@ stay practical.
 
 ## Where The Code Lives
 
-Base primitives shared by web-admin and the mobile app: `components/core` (Storybook: `bun run storybook` there). Tokens: `design-system/tokens.json`, generated into `components/core/src/generated/`.
+All browser and Tauri UI lives in `web/`. Canonical primitives: `web/src/components/ui/`; Storybook: `bun run storybook` from the repository root. Tokens: `design-system/tokens.json`, generated into `web/src/generated/`.
 
 ## Foundation Documents
 
@@ -72,9 +72,9 @@ Before adding or changing UI:
 These files are useful references, but this visual system has authority when
 they disagree:
 
-- Web tokens and primitives: `web-admin/src/index.css`, `web-admin/src/components/ui/`
-- Web workspace shell: `web-admin/src/features/workspace/GameWorkspace.tsx`
-- Web map/control components: `web-admin/src/components/map/`, `web-admin/src/features/command/`
+- Web tokens and primitives: `web/src/index.css`, `web/src/components/ui/`
+- Web workspace shell: `web/src/features/workspace/GameWorkspace.tsx`
+- Web map/control components: `web/src/components/map/`, `web/src/features/command/`
 - iOS tokens: `ios-app/dbv-nfc-games/App/Theme/DesignTokens.swift`
 - Android tokens: `android-app/app/src/main/java/com/prayer/pointfinder/ui/theme/`
 

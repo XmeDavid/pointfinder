@@ -6,6 +6,7 @@ import java.util.UUID;
 /**
  * Operator-facing tag DTO. Never exposed to players.
  */
+@lombok.Builder
 public record TagResponse(
         UUID id,
         UUID gameId,

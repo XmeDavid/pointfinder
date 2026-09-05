@@ -367,10 +367,22 @@
           "markdownDescription": "Denies the request_permission command without any pre-configured scope."
         },
         {
-          "description": "Ask for notification permission, register for push, and receive notification events.\n#### This default permission set includes:\n\n- `allow-permission-status`\n- `allow-request-permission`\n- `allow-register`\n- `allow-consume-launch-tap`\n- `allow-register-listener`\n- `allow-remove-listener`",
+          "description": "Enables the unregister command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-unregister",
+          "markdownDescription": "Enables the unregister command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the unregister command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-unregister",
+          "markdownDescription": "Denies the unregister command without any pre-configured scope."
+        },
+        {
+          "description": "Ask for notification permission, register for push, and receive notification events.\n#### This default permission set includes:\n\n- `allow-permission-status`\n- `allow-request-permission`\n- `allow-register`\n- `allow-unregister`\n- `allow-consume-launch-tap`\n- `allow-register-listener`\n- `allow-remove-listener`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Ask for notification permission, register for push, and receive notification events.\n#### This default permission set includes:\n\n- `allow-permission-status`\n- `allow-request-permission`\n- `allow-register`\n- `allow-consume-launch-tap`\n- `allow-register-listener`\n- `allow-remove-listener`"
+          "markdownDescription": "Ask for notification permission, register for push, and receive notification events.\n#### This default permission set includes:\n\n- `allow-permission-status`\n- `allow-request-permission`\n- `allow-register`\n- `allow-unregister`\n- `allow-consume-launch-tap`\n- `allow-register-listener`\n- `allow-remove-listener`"
         }
       ]
     }

@@ -30,7 +30,13 @@ export function createClient(options: ClientOptions): PointFinderClient {
     baseUrl: options.baseUrl,
     fetch: options.fetch,
     getToken: () => session.getToken(),
-    onUnauthorized: async () => (await session.refreshAfterRejection()) !== null,
+    onUnauthorized: async (_error, rejectedToken) => {
+      const auth = session.current
+      const currentToken = auth.kind === 'player' ? auth.token : auth.kind === 'operator' ? auth.accessToken : null
+      // An old request must not revoke or retry under a newly joined account.
+      if (!rejectedToken || rejectedToken !== currentToken) return false
+      return (await session.refreshAfterRejection()) !== null
+    },
   })
   const realtime = new RealtimeClient({
     baseUrl: options.baseUrl,

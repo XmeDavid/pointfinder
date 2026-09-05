@@ -113,13 +113,13 @@ The current web folder is already close in places. Future work should move
 toward this shape:
 
 ```text
-web-admin/src/components/ui/          primitives
-web-admin/src/components/layout/      shells, rails, bars, drawers, panels
-web-admin/src/components/map/         maps, markers, overlays
-web-admin/src/components/status/      status badges, sync, readiness, live state
-web-admin/src/components/patterns/    reusable composed patterns
-web-admin/src/features/*/components/  feature-only components
-web-admin/src/features/*/             screens and feature entry points
+web/src/components/ui/          primitives
+web/src/components/layout/      shells, rails, bars, drawers, panels
+web/src/components/map/         maps, markers, overlays
+web/src/components/status/      status badges, sync, readiness, live state
+web/src/components/patterns/    reusable composed patterns
+web/src/features/*/components/  feature-only components
+web/src/features/*/             screens and feature entry points
 ```
 
 Do not create a new cross-feature component inside a feature folder. Promote it.

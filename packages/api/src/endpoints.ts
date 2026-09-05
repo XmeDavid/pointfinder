@@ -85,6 +85,7 @@ export function createApi(http: HttpClient) {
     submit: (gameId: EntityId, body: PlayerSubmissionRequest) => http.post<SubmissionResponse>(`${p(gameId)}/submissions`, body),
     updateLocation: (gameId: EntityId, body: LocationUpdateRequest) => http.post<void>(`${p(gameId)}/location`, body),
     registerPushToken: (body: PushTokenRequest) => http.put<void>('/api/player/push-token', body),
+    unregisterPushToken: (body: PushTokenRequest) => http.delete('/api/player/push-token', { body }),
     notifications: () => http.get<PlayerNotificationResponse[]>('/api/player/notifications'),
     unseenNotificationCount: () => http.get<UnseenCountResponse>('/api/player/notifications/unseen-count'),
     markNotificationsSeen: () => http.post<void>('/api/player/notifications/mark-seen'),
@@ -218,6 +219,7 @@ export function createApi(http: HttpClient) {
     updateMySettings: (gameId: EntityId, body: UpdateOperatorNotificationSettingsRequest) =>
       http.put<OperatorNotificationSettings>(`${g(gameId)}/operator-notification-settings/me`, body),
     registerOperatorPushToken: (body: PushTokenRequest) => http.put<void>('/api/users/me/push-token', body),
+    unregisterOperatorPushToken: (body: PushTokenRequest) => http.delete('/api/users/me/push-token', { body }),
   }
 
   const invites = {

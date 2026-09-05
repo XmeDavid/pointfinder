@@ -4,7 +4,7 @@
 **Status:** Approved (design). Local-only spec (not committed per repo convention).
 **Supersedes:** the current opacity-only landing→register crossfade
 (`.topo-register-transition*` layers + `topoTransition*` keyframes in
-`web-admin/src/index.css`).
+`web/src/index.css`).
 
 ## Goal
 
@@ -89,11 +89,11 @@ or native dep added to the repo.
 
 ## Files touched
 
-- `web-admin/src/index.css` — rewrite `.topo-register-transition*` + keyframes;
+- `web/src/index.css` — rewrite `.topo-register-transition*` + keyframes;
   unify `.register-atlas-screen__backdrop::after`.
-- `web-admin/src/features/public/LandingPage.tsx` — `TopoRegisterTransition`
+- `web/src/features/public/LandingPage.tsx` — `TopoRegisterTransition`
   markup (new layers); nav timeout 620→1200; preload-on-hover for register + textures.
-- `web-admin/public/landing/topo-terrain-dark.webp`, `topo-terrain-light.webp` — new assets.
+- `web/public/landing/topo-terrain-dark.webp`, `topo-terrain-light.webp` — new assets.
 - Remove now-unused `topography-contours-green.svg` if nothing else references it.
 
 ## Verification

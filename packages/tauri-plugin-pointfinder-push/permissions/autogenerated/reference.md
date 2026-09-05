@@ -7,6 +7,7 @@ Ask for notification permission, register for push, and receive notification eve
 - `allow-permission-status`
 - `allow-request-permission`
 - `allow-register`
+- `allow-unregister`
 - `allow-consume-launch-tap`
 - `allow-register-listener`
 - `allow-remove-listener`
@@ -172,6 +173,32 @@ Enables the request_permission command without any pre-configured scope.
 <td>
 
 Denies the request_permission command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`pointfinder-push:allow-unregister`
+
+</td>
+<td>
+
+Enables the unregister command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`pointfinder-push:deny-unregister`
+
+</td>
+<td>
+
+Denies the unregister command without any pre-configured scope.
 
 </td>
 </tr>

@@ -81,6 +81,7 @@ class PushPlugin(private val activity: Activity) : Plugin(activity) {
     @Command
     fun register(invoke: Invoke) {
         try {
+            FirebaseMessaging.getInstance().isAutoInitEnabled = true
             FirebaseMessaging.getInstance().token
                 .addOnSuccessListener { token ->
                     invoke.resolve(JSObject().apply {
@@ -93,6 +94,16 @@ class PushPlugin(private val activity: Activity) : Plugin(activity) {
             // Firebase not initialised: no google-services.json in this build.
             invoke.reject("unavailable")
         }
+    }
+
+    @Command
+    fun unregister(invoke: Invoke) {
+        try {
+            FirebaseMessaging.getInstance().isAutoInitEnabled = false
+            FirebaseMessaging.getInstance().deleteToken()
+                .addOnSuccessListener { invoke.resolve() }
+                .addOnFailureListener { error -> invoke.reject("registrationFailed: ${error.message}") }
+        } catch (_: Exception) { invoke.resolve() }
     }
 
     /** The notification tap that launched the app, once. */

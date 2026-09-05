@@ -13,6 +13,11 @@ val tauriProperties = Properties().apply {
     }
 }
 
+// Use the same optional Firebase configuration convention as the legacy app.
+if (listOf("google-services.json", "src/main/google-services.json", "src/debug/google-services.json", "src/release/google-services.json").any { file(it).exists() }) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 android {
     compileSdk = 36
     namespace = "com.prayer.pointfinder"

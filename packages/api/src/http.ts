@@ -27,7 +27,7 @@ export interface HttpClientOptions {
    * Called once when a request comes back 401. Return true to retry the
    * request once with a fresh token (the session presumably refreshed).
    */
-  onUnauthorized?: (error: ApiError) => Promise<boolean>
+  onUnauthorized?: (error: ApiError, rejectedToken?: string) => Promise<boolean>
   defaultTimeoutMs?: number
 }
 
@@ -84,6 +84,7 @@ export class HttpClient {
     const timer = setTimeout(() => controller.abort(new DOMException('timeout', 'TimeoutError')), timeoutMs)
     const onOuterAbort = () => controller.abort(o.signal?.reason)
     o.signal?.addEventListener('abort', onOuterAbort, { once: true })
+    if (o.signal?.aborted) controller.abort(o.signal.reason)
 
     let response: Response
     try {
@@ -103,7 +104,7 @@ export class HttpClient {
 
     if (response.status === 401 && !retried && !o.anonymous && this.options.onUnauthorized) {
       const err = ApiError.fromResponse(401, await safeJson(response))
-      const retry = await this.options.onUnauthorized(err)
+      const retry = await this.options.onUnauthorized(err, headers.Authorization?.replace(/^Bearer /, ''))
       if (retry) return this.request<T>(method, path, o, true)
       throw err
     }

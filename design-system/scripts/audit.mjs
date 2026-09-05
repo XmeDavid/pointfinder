@@ -6,10 +6,10 @@ import { readdirSync, readFileSync } from 'node:fs'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const strict = process.argv.includes('--strict')
 const checks = [
-  ['raw colors', '#[0-9a-fA-F]{6,8}', ['web-admin/src', 'ios-app/dbv-nfc-games', 'android-app/app/src', 'android-app/feature']],
-  ['raw Tailwind palettes', '(bg|text|border|fill|stroke)-(red|green|blue|amber|yellow|purple|slate|zinc|neutral)-[0-9]{2,3}', ['web-admin/src']],
-  ['direct screen styling', '(shadow-(xl|2xl)|rounded-(2xl|3xl)|backdrop-blur)', ['web-admin/src/features']],
-  ['unapproved web icon packages', 'from ["\\\'](@heroicons|react-icons|@mui/icons-material)', ['web-admin/src']],
+  ['raw colors', '#[0-9a-fA-F]{6,8}', ['web/src', 'ios-app/dbv-nfc-games', 'android-app/app/src', 'android-app/feature']],
+  ['raw Tailwind palettes', '(bg|text|border|fill|stroke)-(red|green|blue|amber|yellow|purple|slate|zinc|neutral)-[0-9]{2,3}', ['web/src']],
+  ['direct screen styling', '(shadow-(xl|2xl)|rounded-(2xl|3xl)|backdrop-blur)', ['web/src/features']],
+  ['unapproved web icon packages', 'from ["\\\'](@heroicons|react-icons|@mui/icons-material)', ['web/src']],
 ]
 
 const commonGlobs = [
@@ -38,7 +38,7 @@ for (const [label, pattern, paths] of checks) {
 function walk(path) {
   return readdirSync(path, { withFileTypes: true }).flatMap((entry) => entry.isDirectory() ? walk(resolve(path, entry.name)) : [resolve(path, entry.name)])
 }
-const componentFiles = walk(resolve(root, 'web-admin/src/components')).filter((file) => /\.(tsx|ts)$/.test(file) && !file.endsWith('.test.tsx') && !file.endsWith('/index.ts'))
+const componentFiles = walk(resolve(root, 'web/src/components')).filter((file) => /\.(tsx|ts)$/.test(file) && !file.endsWith('.test.tsx') && !file.endsWith('/index.ts'))
 const byName = new Map()
 for (const file of componentFiles) {
   const name = file.split('/').at(-1)

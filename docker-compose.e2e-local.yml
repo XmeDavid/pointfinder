@@ -69,8 +69,8 @@ services:
 
   frontend:
     build:
-      context: ./web-admin
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: web/Dockerfile
       args:
         VITE_API_URL: /api
         VITE_WS_URL: /ws-native
