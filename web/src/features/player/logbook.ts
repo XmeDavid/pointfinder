@@ -19,7 +19,9 @@ export interface Logbook {
 }
 
 export function buildLogbook(progress: BaseProgress[], bases: Pick<Base, 'id' | 'hidden'>[], pending: PendingAction[]): Logbook {
-  const views = mergeProgress(progress, pending)
+  const views = mergeProgress(progress, pending).sort((a, b) =>
+    typeof a.sequenceNumber === 'number' && typeof b.sequenceNumber === 'number' ? a.sequenceNumber - b.sequenceNumber : 0,
+  )
   const visible = new Set(views.map((v) => v.baseId))
   const open: LogbookEntry[] = views.map((view) => ({
     kind: 'open',

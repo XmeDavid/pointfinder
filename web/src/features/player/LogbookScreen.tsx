@@ -1,3 +1,5 @@
+import { BaseSequenceBadge } from '@/components/status/BaseSequenceBadge'
+import { BaseRouteNotice } from './components/BaseRouteNotice'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
@@ -62,6 +64,7 @@ export default function LogbookScreen() {
       </header>
 
       <SyncBanner fromCache={game.fromCache} pending={game.pending} needsAuth={game.needsAuth} onRetry={(id) => void game.retry(id)} onDiscard={(id) => void game.discard(id)} />
+      <BaseRouteNotice route={game.route} logbook={logbook} />
       {scanError && <Alert variant="destructive">{scanError}</Alert>}
       {status === 'setup' && <Alert variant="info">{t('logbook.notLive')}</Alert>}
       {status === 'ended' && <Alert variant="info">{t('logbook.ended')}</Alert>}
@@ -73,7 +76,7 @@ export default function LogbookScreen() {
         </div>
       )}
 
-      {logbook && logbook.entries.length > 1 && logbook.nextUp[0] && logbook.nextUp[0].kind === 'open' && (
+      {!game.route?.enabled && logbook && logbook.entries.length > 1 && logbook.nextUp[0] && logbook.nextUp[0].kind === 'open' && (
         <section aria-label={t('logbook.nextUp')}>
           <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">{t('logbook.nextUp')}</p>
           <Link to={`/base/${encodeURIComponent(logbook.nextUp[0].baseId)}`} className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg">
@@ -120,7 +123,7 @@ function LogbookRow({ entry }: { entry: LogbookEntry }) {
         to={`/base/${encodeURIComponent(entry.baseId)}`}
         className="flex min-h-14 items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:bg-muted"
       >
-        <span className="font-medium leading-snug">{entry.title || t('challenge.noChallenge')}</span>
+        <span className="flex items-center gap-2 font-medium leading-snug"><BaseSequenceBadge sequenceNumber={entry.view.sequenceNumber} />{entry.title || t('challenge.noChallenge')}</span>
         <BaseStatusBadge status={entry.view.effectiveStatus} pendingSync={entry.view.pendingSync} />
       </Link>
     </li>

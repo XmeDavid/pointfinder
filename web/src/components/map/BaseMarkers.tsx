@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { Marker } from 'react-map-gl/maplibre'
+import { BaseSequenceBadge } from '@/components/status/BaseSequenceBadge'
 import { cn } from '@/lib/utils'
 import {
   baseStatusMarkerTone,
@@ -97,6 +98,7 @@ export function BaseMarkers({
             }}
           >
             <div
+              className="relative"
               data-testid={`base-marker-${base.id}`}
               data-mode={mode}
               data-selected={base.id === selectedBaseId || undefined}
@@ -136,6 +138,7 @@ export function BaseMarkers({
                   strokeDasharray={style.dashArray}
                 />
               </svg>
+              <BaseSequenceBadge sequenceNumber={base.sequenceNumber} className="absolute left-full top-1/2 -translate-y-1/2" />
             </div>
           </Marker>
         )

@@ -119,7 +119,7 @@ class GameServiceTest {
                 new GameProgressResetService(submissionRepository, checkInRepository,
                         activityEventRepository, uploadSessionRepository, teamLocationRepository),
                 new GameReadinessValidator(baseRepository, challengeRepository,
-                        teamRepository, assignmentRepository, teamVariableService)
+                        teamRepository, assignmentRepository, teamVariableService, stageRepository)
         );
 
         // Default stub: exportGame calls this to build the tags section
@@ -536,4 +536,25 @@ class GameServiceTest {
         verify(gameRepository).findByIdForUpdate(gameId);
         assertTrue(ex.getMessage().contains("at least one base"));
     }
+
+    @Test
+    void enforceBaseOrderCannotChangeAfterSetupButUnchangedValueIsAccepted() {
+        UUID id = UUID.randomUUID();
+        User creator = User.builder().id(UUID.randomUUID()).build();
+        Game game = Game.builder().id(id).createdBy(creator).status(GameStatus.live).enforceBaseOrder(true).build();
+        when(gameRepository.findByIdForUpdate(id)).thenReturn(Optional.of(game));
+        var request = new com.prayer.pointfinder.dto.request.UpdateGameRequest();
+        request.setName("Game");
+        request.setEnforceBaseOrder(false);
+        assertEquals(com.prayer.pointfinder.exception.ErrorCode.BASE_ORDER_LOCKED,
+                assertThrows(BadRequestException.class, () -> gameService.updateGame(id, request)).getErrorCode());
+        assertTrue(game.getEnforceBaseOrder());
+        request.setEnforceBaseOrder(true);
+        when(gameRepository.save(game)).thenReturn(game);
+        assertTrue(gameService.updateGame(id, request).enforceBaseOrder());
+        game.setStatus(GameStatus.setup);
+        request.setEnforceBaseOrder(false);
+        org.junit.jupiter.api.Assertions.assertFalse(gameService.updateGame(id, request).enforceBaseOrder());
+    }
+
 }

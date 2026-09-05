@@ -13,6 +13,7 @@ public class GameMetadataDto {
     private String name;
     private String description;
     private Boolean uniformAssignment;
+    private Boolean enforceBaseOrder;
     private String tileSource;
     private String unlockTrigger;
     private Boolean broadcastEnabled;

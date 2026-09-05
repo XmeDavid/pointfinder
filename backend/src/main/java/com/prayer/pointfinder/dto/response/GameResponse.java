@@ -19,5 +19,10 @@ public record GameResponse(
         String tileSource,
         String unlockTrigger,
         UUID orgId,
-        String orgName
-) {}
+        String orgName,
+        Boolean enforceBaseOrder
+) {
+    public GameResponse(UUID id, String name, String description, Instant startDate, Instant endDate, String status, UUID createdBy, List<UUID> operatorIds, Boolean uniformAssignment, Boolean broadcastEnabled, String broadcastCode, String tileSource, String unlockTrigger, UUID orgId, String orgName) {
+        this(id, name, description, startDate, endDate, status, createdBy, operatorIds, uniformAssignment, broadcastEnabled, broadcastCode, tileSource, unlockTrigger, orgId, orgName, false);
+    }
+}

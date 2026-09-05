@@ -25,4 +25,6 @@ public class UpdateGameRequest {
     private String tileSource;
 
     private String unlockTrigger;
+
+    private Boolean enforceBaseOrder;
 }

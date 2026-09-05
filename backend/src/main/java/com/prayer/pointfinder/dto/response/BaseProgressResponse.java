@@ -37,5 +37,10 @@ public record BaseProgressResponse(
         String status, // not_visited, checked_in, submitted, completed, rejected
         Instant checkedInAt,
         UUID challengeId,
-        String submissionStatus // null if no submission
-) {}
+        String submissionStatus, // null if no submission
+        Integer sequenceNumber
+) {
+    public BaseProgressResponse(UUID baseId, String challengeTitle, Double lat, Double lng, Boolean nfcLinked, String status, Instant checkedInAt, UUID challengeId, String submissionStatus) {
+        this(baseId, challengeTitle, lat, lng, nfcLinked, status, checkedInAt, challengeId, submissionStatus, null);
+    }
+}

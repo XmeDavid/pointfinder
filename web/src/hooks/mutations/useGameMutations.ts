@@ -23,6 +23,7 @@ export function useUpdateGame(gameId: string) {
             startDate: current.startDate ?? undefined,
             endDate: current.endDate ?? undefined,
             uniformAssignment: current.uniformAssignment,
+            enforceBaseOrder: current.enforceBaseOrder,
             broadcastEnabled: current.broadcastEnabled,
             tileSource: current.tileSource,
             unlockTrigger: current.unlockTrigger,
@@ -32,6 +33,7 @@ export function useUpdateGame(gameId: string) {
       return gamesApi.update(gameId, merged)
     },
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['bases', gameId] })
       qc.invalidateQueries({ queryKey: ['game', gameId] })
       qc.invalidateQueries({ queryKey: ['games'] })
     },
@@ -52,6 +54,7 @@ export function useUpdateGameStatus(gameId: string) {
     mutationFn: ({ status, resetProgress }: { status: GameStatus; resetProgress?: boolean }) =>
       gamesApi.updateStatus(gameId, status, resetProgress),
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['bases', gameId] })
       qc.invalidateQueries({ queryKey: ['game', gameId] })
       qc.invalidateQueries({ queryKey: ['games'] })
     },

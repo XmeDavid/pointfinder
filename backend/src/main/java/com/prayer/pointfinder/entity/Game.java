@@ -67,6 +67,10 @@ public class Game {
     @Builder.Default
     private Boolean uniformAssignment = false;
 
+    @Column(name = "enforce_base_order", nullable = false)
+    @Builder.Default
+    private Boolean enforceBaseOrder = false;
+
     @Column(name = "broadcast_enabled", nullable = false)
     @Builder.Default
     private Boolean broadcastEnabled = false;

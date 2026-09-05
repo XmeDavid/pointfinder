@@ -23,5 +23,10 @@ public record GameDataResponse(
         List<PlayerBaseResponse> bases,
         List<PlayerChallengeResponse> challenges,
         List<AssignmentResponse> assignments,
-        List<BaseProgressResponse> progress
-) {}
+        List<BaseProgressResponse> progress,
+        Boolean enforceBaseOrder, Integer nextRequiredBaseNumber
+) {
+    public GameDataResponse(String gameStatus, String unlockTrigger, List<PlayerBaseResponse> bases, List<PlayerChallengeResponse> challenges, List<AssignmentResponse> assignments, List<BaseProgressResponse> progress) {
+        this(gameStatus, unlockTrigger, bases, challenges, assignments, progress, false, null);
+    }
+}

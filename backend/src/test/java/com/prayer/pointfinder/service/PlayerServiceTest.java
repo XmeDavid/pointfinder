@@ -7,6 +7,7 @@ import com.prayer.pointfinder.entity.Base;
 import com.prayer.pointfinder.entity.Challenge;
 import com.prayer.pointfinder.entity.CheckIn;
 import com.prayer.pointfinder.entity.Game;
+import com.prayer.pointfinder.entity.Assignment;
 import com.prayer.pointfinder.entity.GameStatus;
 import com.prayer.pointfinder.entity.Player;
 import com.prayer.pointfinder.entity.UnlockTrigger;
@@ -412,4 +413,46 @@ class PlayerServiceTest {
         assertEquals(requestId, submitted.getValue().getIdempotencyKey());
         assertEquals(List.of(fileUrl), submitted.getValue().getFileUrls());
     }
+
+    @Test
+    void enforcedRouteRejectsLaterScanButAllowsTeamSpecificChallengeAfterPriorCheckIn() {
+        Game game = Game.builder().id(UUID.randomUUID()).status(GameStatus.live).enforceBaseOrder(true).build();
+        Team team = Team.builder().id(UUID.randomUUID()).name("A").game(game).build();
+        Player player = Player.builder().id(UUID.randomUUID()).team(team).build();
+        Base first = Base.builder().id(UUID.randomUUID()).game(game).orderIndex(0).hidden(true).build();
+        Base second = Base.builder().id(UUID.randomUUID()).game(game).orderIndex(1).nfcToken("scan-token").build();
+        Challenge challenge = Challenge.builder().id(UUID.randomUUID()).title("Team A challenge")
+                .answerType(com.prayer.pointfinder.entity.AnswerType.text).build();
+        Assignment assignment = Assignment.builder().id(UUID.randomUUID()).team(team).game(game)
+                .base(second).challenge(challenge).build();
+        when(playerRepository.findById(player.getId())).thenReturn(Optional.of(player));
+        when(baseRepository.findById(second.getId())).thenReturn(Optional.of(second));
+        when(baseRepository.findByGameIdOrderByOrderIndexAscCreatedAtAsc(game.getId())).thenReturn(List.of(first, second));
+        when(assignmentRepository.findByBaseId(second.getId())).thenReturn(List.of(assignment));
+        org.springframework.test.util.ReflectionTestUtils.setField(playerService, "baseOrderService",
+                new BaseOrderService(baseRepository, checkInRepository));
+        var request = new com.prayer.pointfinder.dto.request.CheckInRequest();
+        request.setNfcToken("scan-token");
+        BadRequestException error = assertThrows(BadRequestException.class,
+                () -> playerService.checkIn(game.getId(), second.getId(), player, request));
+        assertEquals(com.prayer.pointfinder.exception.ErrorCode.PREVIOUS_BASE_REQUIRED, error.getErrorCode());
+        verify(checkInRepository, never()).save(any());
+        when(checkInRepository.findByGameIdAndTeamId(game.getId(), team.getId()))
+                .thenReturn(List.of(CheckIn.builder().base(first).build()));
+        when(checkInRepository.save(any(CheckIn.class))).thenAnswer(inv -> {
+            CheckIn ci = inv.getArgument(0); ci.setId(UUID.randomUUID()); return ci;
+        });
+        var response = playerService.checkIn(game.getId(), second.getId(), player, request);
+        assertEquals(challenge.getId(), response.challenge().id());
+        verify(submissionRepository, never()).findByTeamId(any());
+
+        // An existing team check-in remains idempotent even if an earlier visit is absent (operator rescue).
+        when(checkInRepository.findByTeamIdAndBaseId(team.getId(), second.getId()))
+                .thenReturn(Optional.of(CheckIn.builder().id(response.checkInId()).base(second).checkedInAt(Instant.now()).build()));
+        when(checkInRepository.findByGameIdAndTeamId(game.getId(), team.getId())).thenReturn(List.of());
+        assertEquals(response.checkInId(), playerService.checkIn(game.getId(), second.getId(), player, request).checkInId());
+        request.setNfcToken("wrong");
+        assertThrows(BadRequestException.class, () -> playerService.checkIn(game.getId(), second.getId(), player, request));
+    }
+
 }

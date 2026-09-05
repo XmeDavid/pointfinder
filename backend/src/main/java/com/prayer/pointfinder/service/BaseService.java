@@ -43,6 +43,8 @@ public class BaseService {
     }
 
     private final BaseRepository baseRepository;
+    private final com.prayer.pointfinder.repository.GameRepository gameRepository;
+    private final BaseOrderService baseOrderService;
     private final ChallengeRepository challengeRepository;
     private final SubmissionRepository submissionRepository;
     private final GameAccessService gameAccessService;
@@ -53,15 +55,30 @@ public class BaseService {
     @Transactional(readOnly = true)
     public List<BaseResponse> getBasesByGame(UUID gameId) {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
-        return baseRepository.findByGameIdOrderByOrderIndexAscCreatedAtAsc(gameId).stream()
-                .map(this::toResponse)
-                .toList();
+        List<Base> bases = baseRepository.findByGameIdOrderByOrderIndexAscCreatedAtAsc(gameId).stream()
+                .sorted(BaseOrderService.ROUTE_ORDER).toList();
+        java.util.Map<UUID, Integer> numbers = new java.util.HashMap<>();
+        if (!bases.isEmpty() && Boolean.TRUE.equals(bases.getFirst().getGame().getEnforceBaseOrder())) {
+            for (int i = 0; i < bases.size(); i++) numbers.put(bases.get(i).getId(), i + 1);
+        }
+        return bases.stream().map(base -> toResponse(base, numbers.get(base.getId()))).toList();
     }
 
     @Transactional(timeout = 10)
     public void reorderBases(UUID gameId, ReorderRequest request) {
-        gameAccessService.ensureCurrentUserCanAccessGame(gameId);
+        Game game = lockAccessibleGame(gameId);
+        requireSetup(game);
+        if (!Boolean.TRUE.equals(game.getEnforceBaseOrder())) {
+            throw new BadRequestException("Enable base order before arranging the route",
+                    com.prayer.pointfinder.exception.ErrorCode.BASE_ORDER_DISABLED);
+        }
         List<UUID> ids = request.getIds();
+        Set<UUID> expected = baseRepository.findByGameId(gameId).stream()
+                .map(Base::getId).collect(Collectors.toSet());
+        if (ids == null || ids.size() != expected.size() || !new HashSet<>(ids).equals(expected)) {
+            throw new BadRequestException("Route must contain every game base exactly once",
+                    com.prayer.pointfinder.exception.ErrorCode.BASE_ORDER_INVALID);
+        }
         for (int i = 0; i < ids.size(); i++) {
             baseRepository.updateOrderIndex(ids.get(i), gameId, i);
         }
@@ -70,7 +87,8 @@ public class BaseService {
 
     @Transactional(timeout = 10)
     public BaseResponse createBase(UUID gameId, CreateBaseRequest request) {
-        Game game = gameAccessService.getAccessibleGame(gameId);
+        Game game = lockAccessibleGame(gameId);
+        if (Boolean.TRUE.equals(game.getEnforceBaseOrder())) requireSetup(game);
 
         Challenge fixedChallenge = null;
         if (request.getFixedChallengeId() != null) {
@@ -81,6 +99,8 @@ public class BaseService {
 
         Base base = Base.builder()
                 .game(game)
+                .orderIndex(baseRepository.findByGameId(gameId).stream()
+                        .mapToInt(Base::getOrderIndex).max().orElse(-1) + 1)
                 .name(request.getName())
                 .description(request.getDescription() != null ? request.getDescription() : "")
                 .lat(request.getLat())
@@ -203,7 +223,8 @@ public class BaseService {
 
     @Transactional(timeout = 10)
     public void deleteBase(UUID gameId, UUID baseId) {
-        gameAccessService.ensureCurrentUserCanAccessGame(gameId);
+        Game game = lockAccessibleGame(gameId);
+        if (Boolean.TRUE.equals(game.getEnforceBaseOrder())) requireSetup(game);
         Base base = baseRepository.findById(baseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Base", baseId));
         ensureBaseBelongsToGame(base, gameId);
@@ -224,6 +245,20 @@ public class BaseService {
             enforceChallengeUnlockGuardrails(fixedChallengeId);
         }
         eventBroadcaster.broadcastGameConfig(gameId, "bases", "deleted");
+    }
+
+    private Game lockAccessibleGame(UUID gameId) {
+        Game game = gameRepository.findByIdForUpdate(gameId)
+                .orElseThrow(() -> new ResourceNotFoundException("Game", gameId));
+        gameAccessService.ensureCurrentUserCanAccessGame(game);
+        return game;
+    }
+
+    private void requireSetup(Game game) {
+        if (game.getStatus() != com.prayer.pointfinder.entity.GameStatus.setup) {
+            throw new BadRequestException("Base order can only be changed during setup",
+                    com.prayer.pointfinder.exception.ErrorCode.BASE_ORDER_LOCKED);
+        }
     }
 
     private void clearUnlockTarget(UUID targetBaseId) {
@@ -270,6 +305,11 @@ public class BaseService {
     }
 
     private BaseResponse toResponse(Base base) {
+        return toResponse(base, Boolean.TRUE.equals(base.getGame().getEnforceBaseOrder())
+                ? baseOrderService.sequenceNumbers(base.getGame()).get(base.getId()) : null);
+    }
+
+    private BaseResponse toResponse(Base base, Integer sequenceNumber) {
         List<UUID> tagIds = base.getTags().stream()
                 .map(GameTag::getId)
                 .collect(Collectors.toList());
@@ -285,7 +325,8 @@ public class BaseService {
                 base.getHidden(),
                 base.getFixedChallenge() != null ? base.getFixedChallenge().getId() : null,
                 tagIds.isEmpty() ? null : tagIds,
-                base.getStageId()
+                base.getStageId(),
+                sequenceNumber
         );
     }
 

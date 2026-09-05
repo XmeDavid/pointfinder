@@ -1,4 +1,8 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Switch } from '@/components/ui/switch'
+import { Button } from '@/components/ui/button'
+import { ErrorState } from '@/components/feedback/ErrorState'
 import { exportFile } from '@/lib/exportFile'
 import { useNavigate } from 'react-router-dom'
 import { SlideDrawer } from '@/components/layout/SlideDrawer'
@@ -77,6 +81,10 @@ export default function GameSettingsPanel({
 }: {
   gameId: string
 }) {
+  const { t } = useTranslation()
+  const [baseOrderError, setBaseOrderError] = useState(false)
+  const openDrawer = useWorkspaceStore((s) => s.openDrawer)
+  const selectBase = useWorkspaceStore((s) => s.selectBase)
   const settingsPanelOpen = useWorkspaceStore((s) => s.settingsPanelOpen)
   const toggleSettingsPanel = useWorkspaceStore((s) => s.toggleSettingsPanel)
   const navigate = useNavigate()
@@ -132,7 +140,7 @@ export default function GameSettingsPanel({
     <SlideDrawer
       open={settingsPanelOpen}
       onClose={toggleSettingsPanel}
-      width="w-[400px]"
+      width="md:w-[400px]"
       title="Game Settings"
     >
       <div
@@ -281,6 +289,31 @@ export default function GameSettingsPanel({
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Progression
           </h3>
+          <div className="space-y-2" data-testid="base-order-setting">
+            <div className="flex items-center justify-between gap-3">
+              <label htmlFor="enforce-base-order" className="text-sm font-medium text-foreground">
+                {t('baseOrder.enforce', { defaultValue: 'Enforce base order' })}
+              </label>
+              <Switch id="enforce-base-order" checked={game.enforceBaseOrder ?? false}
+                disabled={game.status !== 'setup' || updateGame.isPending}
+                onCheckedChange={(enforceBaseOrder) => {
+                  setBaseOrderError(false)
+                  updateGame.mutate({ enforceBaseOrder }, { onError: () => setBaseOrderError(true) })
+                }} />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {t('baseOrder.description', { defaultValue: 'Teams must check in at bases in the configured order.' })}
+            </p>
+            {game.status !== 'setup' && <p className="text-xs text-muted-foreground">
+              {t('baseOrder.setupOnly', { defaultValue: 'Base order can only be changed during setup.' })}
+            </p>}
+            {baseOrderError && <ErrorState className="h-auto p-2"
+              title={t('baseOrder.settingsError', { defaultValue: 'Could not update base order. Try again.' })} />}
+            {game.enforceBaseOrder && <Button variant="outline" size="sm" className="h-auto min-h-9 whitespace-normal"
+              onClick={() => { toggleSettingsPanel(); selectBase(null); openDrawer('bases') }}>
+              {t('baseOrder.arrange', { defaultValue: 'Arrange route' })}
+            </Button>}
+          </div>
           <div className="space-y-1.5">
             <label className="text-sm text-muted-foreground">
               Unlock Trigger

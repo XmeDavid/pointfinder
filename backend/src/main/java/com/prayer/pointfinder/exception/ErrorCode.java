@@ -76,6 +76,11 @@ public enum ErrorCode {
     // ── Player join & check-in ───────────────────────────────────────────
     /** Player check-in missing required nfcToken; client must scan the base NFC tag. */
     NFC_TOKEN_REQUIRED,
+    PREVIOUS_BASE_REQUIRED,
+    BASE_ORDER_LOCKED,
+    BASE_ORDER_DISABLED,
+    BASE_ORDER_INVALID,
+    BASE_ORDER_DEPENDENCY_CONFLICT,
     /** The device already joined this game on a different team; switching teams mid-game is not allowed. */
     DEVICE_ALREADY_IN_DIFFERENT_TEAM,
     /** Too many join attempts for this IP or device in the current window. */

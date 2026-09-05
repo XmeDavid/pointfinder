@@ -2,6 +2,11 @@ import type { ApiErrorBody } from './types'
 
 /** Backend error codes. Must stay in sync with `ErrorCode.java`. */
 export type ErrorCode =
+  | 'PREVIOUS_BASE_REQUIRED'
+  | 'BASE_ORDER_LOCKED'
+  | 'BASE_ORDER_DISABLED'
+  | 'BASE_ORDER_INVALID'
+  | 'BASE_ORDER_DEPENDENCY_CONFLICT'
   | 'MARK_COMPLETED_REQUIRES_CHECKIN'
   | 'MARK_COMPLETED_ALREADY_COMPLETED'
   | 'MANUAL_CHECKIN_ALREADY_CHECKED_IN'

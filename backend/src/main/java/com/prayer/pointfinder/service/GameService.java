@@ -122,6 +122,7 @@ public class GameService {
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .uniformAssignment(request.getUniformAssignment() != null ? request.getUniformAssignment() : false)
+                .enforceBaseOrder(Boolean.TRUE.equals(request.getEnforceBaseOrder()))
                 .tileSource(validateTileSource(request.getTileSource()))
                 .unlockTrigger(validateUnlockTrigger(request.getUnlockTrigger()))
                 .status(GameStatus.setup)
@@ -135,7 +136,18 @@ public class GameService {
 
     @Transactional(timeout = 10)
     public GameResponse updateGame(UUID id, UpdateGameRequest request) {
-        Game game = gameAccessService.getAccessibleGame(id);
+        Game game = gameRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Game", id));
+        gameAccessService.ensureCurrentUserCanAccessGame(game);
+
+        if (request.getEnforceBaseOrder() != null) {
+            if (!request.getEnforceBaseOrder().equals(game.getEnforceBaseOrder())
+                    && game.getStatus() != GameStatus.setup) {
+                throw new BadRequestException("Base order can only be changed during setup",
+                        com.prayer.pointfinder.exception.ErrorCode.BASE_ORDER_LOCKED);
+            }
+            game.setEnforceBaseOrder(request.getEnforceBaseOrder());
+        }
 
         game.setName(request.getName());
         game.setDescription(request.getDescription() != null ? request.getDescription() : "");

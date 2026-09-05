@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ApiError, type CheckInResponse, type GameDataResponse, type PlayerSnapshotResponse, type SubmissionResponse } from '@pointfinder/api'
-import type { PendingAction, SyncOutcome } from '@pointfinder/game-core'
+import { baseRoute, missingPreviousBase, type PendingAction, type SyncOutcome } from '@pointfinder/game-core'
 import { useAuth, useServices } from '@/app/player/services'
 import { gameCache } from '@/platform'
 import { buildLogbook, newlyUnlocked, type Logbook } from '@/features/player/logbook'
@@ -13,7 +13,7 @@ const DATA_EVENTS = new Set(['game_config', 'stage_unlock', 'game_status'])
 export type ActionResult =
   | { state: 'synced'; response?: unknown }
   | { state: 'queued' }
-  | { state: 'failed'; error: string; code?: string | null }
+  | { state: 'failed'; error: string; code?: string | null; details?: Record<string, string> }
   | { state: 'auth' }
 
 function fromOutcome(o: SyncOutcome | undefined): ActionResult {
@@ -21,7 +21,7 @@ function fromOutcome(o: SyncOutcome | undefined): ActionResult {
   switch (o.result) {
     case 'synced': return { state: 'synced', response: o.response }
     case 'retry_later': return { state: 'queued' }
-    case 'failed': return { state: 'failed', error: o.error, code: o.code }
+    case 'failed': return { state: 'failed', error: o.error, code: o.code, details: o.details }
     case 'auth_required': return { state: 'auth' }
   }
 }
@@ -75,6 +75,7 @@ export function usePlayerGame() {
     queryFn: () => cached(`snapshot:${auth.kind === 'player' ? auth.playerId : ''}:${gameId}`, () => client.api.player.snapshot(gameId!), (s: PlayerSnapshotResponse) => s.stateVersion),
     enabled: gameId !== null,
     staleTime: 15_000,
+    retry: false,
   })
 
   const invalidate = useCallback(() => {
@@ -95,9 +96,27 @@ export function usePlayerGame() {
   const sync = useCallback(async () => {
     const report = await queue.sync()
     if (report.authRequired) setNeedsAuth(true)
-    if (report.outcomes.some((o) => o.result === 'synced')) invalidate()
+    if (report.outcomes.some((o) => o.result === 'synced')) {
+      // Keep accepted check-ins in the durable snapshot before a possibly-offline
+      // refresh. Removing a queued proof must never regress the local route.
+      const receipts = report.outcomes.flatMap((o) => {
+        const response = o.result === 'synced' ? o.response as Partial<CheckInResponse> | undefined : undefined
+        return response?.checkInId && response.baseId && response.checkedInAt ? [response as CheckInResponse] : []
+      })
+      if (receipts.length) {
+        const updated = qc.setQueryData<PlayerSnapshotResponse>(['snapshot', gameId], (current) => current ? {
+          ...current,
+          progress: current.progress.map((p) => {
+            const receipt = receipts.find((r) => r.baseId === p.baseId)
+            return receipt ? { ...p, checkedInAt: p.checkedInAt ?? receipt.checkedInAt, status: p.status === 'not_visited' ? 'checked_in' as const : p.status } : p
+          }),
+        } : current)
+        if (updated && auth.kind === 'player') await gameCache.save(`snapshot:${auth.playerId}:${gameId}`, updated.stateVersion, updated).catch(() => {})
+      }
+      invalidate()
+    }
     return report
-  }, [queue, invalidate])
+  }, [queue, invalidate, qc, gameId, auth])
 
   useEffect(() => {
     const initialSync = window.setTimeout(() => void sync(), 0)
@@ -133,13 +152,32 @@ export function usePlayerGame() {
     if (fresh.length) setUnlocked(fresh)
   }, [logbook])
 
+  const route = useMemo(() => baseRoute(snapshot.data?.game ?? data.data, snapshot.data?.progress ?? data.data?.progress ?? [], pending), [snapshot.data, data.data, pending])
+
   const checkIn = useCallback(async (baseId: string, nfcToken: string): Promise<ActionResult> => {
     if (!gameId) return { state: 'auth' }
-    const action = await queue.enqueueCheckIn({ id: crypto.randomUUID(), gameId, baseId, nfcToken })
+    // Refresh team-wide progress before deciding: another teammate may have visited the prerequisite.
+    const currentSnapshot = route.enabled && navigator.onLine !== false ? (await snapshot.refetch()).data ?? snapshot.data : snapshot.data
+    const actions = (await queue.list()).filter((a) => a.gameId === gameId)
+    const currentRoute = baseRoute(currentSnapshot?.game ?? data.data, currentSnapshot?.progress ?? data.data?.progress ?? [], actions)
+    const missing = missingPreviousBase(currentRoute, currentSnapshot?.progress.find((p) => p.baseId === baseId))
+    if (missing !== null) return missing === undefined
+      ? { state: 'failed', error: 'Connect to refresh the base order before checking in.', code: 'ROUTE_STATE_UNAVAILABLE' }
+      : { state: 'failed', error: `Visit Base ${missing} first`, code: 'PREVIOUS_BASE_REQUIRED', details: { nextRequiredBaseNumber: String(missing) } }
+    const base = currentSnapshot?.progress.find((p) => p.baseId === baseId)
+    const prerequisiteCheckInIds = base?.checkedInAt ? [] : currentRoute.provisionalCheckInIds.filter((id) => {
+      const proof = actions.find((a) => a.id === id)
+      const prior = currentSnapshot?.progress.find((p) => p.baseId === proof?.baseId)
+      return typeof prior?.sequenceNumber === 'number' && typeof base?.sequenceNumber === 'number' && prior.sequenceNumber < base.sequenceNumber
+    })
+    const action = await queue.enqueueCheckIn({ id: crypto.randomUUID(), gameId, baseId, nfcToken, prerequisiteCheckInIds })
     const report = await sync()
-    const r = fromOutcome(report.outcomes.find((o) => o.id === action.id))
+    const remaining = (await queue.list()).find((a) => a.id === action.id)
+    const r = remaining?.state === 'failed'
+      ? { state: 'failed' as const, error: remaining.lastError ?? '', code: remaining.lastErrorCode, details: remaining.lastErrorDetails }
+      : fromOutcome(report.outcomes.find((o) => o.id === action.id))
     return r.state === 'synced' ? { state: 'synced', response: r.response as CheckInResponse | undefined } : r
-  }, [gameId, queue, sync])
+  }, [gameId, queue, sync, route.enabled, snapshot, data.data])
 
   const submit = useCallback(async (baseId: string, challengeId: string, answer: string, fileUrls?: string[]): Promise<ActionResult> => {
     if (!gameId) return { state: 'auth' }
@@ -164,6 +202,7 @@ export function usePlayerGame() {
     data: data.data as GameDataResponse | undefined,
     snapshot: snapshot.data,
     logbook,
+    route,
     pending,
     isLoading: data.isLoading || snapshot.isLoading,
     error: (data.error ?? snapshot.error) as Error | null,

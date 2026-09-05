@@ -339,7 +339,40 @@ Modes: Organization management
 States: tier, member count, no/live games, long name/slug
 Notes: Permissions, invitations, removal confirmation, and membership APIs remain screen-owned.
 
+Component: QrScannerOverlay
+Status: canonical
+Location: `web/src/features/player/components/QrScannerOverlay.tsx`
+Modes: Auth / Onboarding, Player Field
+States: scanning, cancel
+Notes: Tauri windowed-camera chrome with a safe-area-aware Back action and transparent scan target. Camera permission and scanner lifecycle remain in the platform boundary.
+
+Component: NfcLinkControl
+Status: canonical
+Location: `web/src/components/nfc/NfcLinkControl.tsx`
+Modes: Operator Setup
+States: unlinked, linked, writing, success, write failure, audit-link failure
+Notes: Reusable Tauri NFC write-and-link action used by the NFC content tab and individual base details. Native writing stays in the platform boundary and the server link remains audited.
+
 ## Shared base primitives (2026-09-04)
+
+Component: BaseSequenceBadge
+Status: canonical
+Location: `web/src/components/status/BaseSequenceBadge.tsx`
+Modes: Operator Setup, Operator Command, Player Field
+States: numbered, unnumbered, long route number, light/dark, localized accessible label
+Notes: A base's one-based route number is separate from its progress or NFC state.
+Used beside existing status components in lists, details, and map markers.
+Preview: `/dev/visual-system`. See `docs/specs/2026-09-05-enforced-base-order.md`.
+
+Component: BaseRouteNotice
+Status: canonical
+Location: `web/src/features/player/components/BaseRouteNotice.tsx`
+Modes: Player Field
+States: next base, previous base required, completed route, hidden destination,
+provisional offline frontier, unavailable route authority, long localized copy
+Notes: Recovery links and titles use visible player progress only. Hidden bases
+can be referenced by route number without disclosing their identity or location.
+Preview: `/dev/visual-system`.
 
 The base primitives (Button, Badge, Alert, Card, Input, Textarea, Label, FormLabel,
 Select, Switch, Tabs, Dialog, ConfirmDeleteDialog, DropdownMenu, Collapsible,

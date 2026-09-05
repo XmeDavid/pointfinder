@@ -34,5 +34,10 @@ public record BaseResponse(
          * players — see {@code PlayerBaseResponse} for the player-safe DTO.
          */
         List<UUID> tagIds,
-        UUID stageId
-) {}
+        UUID stageId,
+        Integer sequenceNumber
+) {
+    public BaseResponse(UUID id, UUID gameId, String name, String description, Double lat, Double lng, Boolean nfcLinked, String nfcToken, Boolean hidden, UUID fixedChallengeId, List<UUID> tagIds, UUID stageId) {
+        this(id, gameId, name, description, lat, lng, nfcLinked, nfcToken, hidden, fixedChallengeId, tagIds, stageId, null);
+    }
+}

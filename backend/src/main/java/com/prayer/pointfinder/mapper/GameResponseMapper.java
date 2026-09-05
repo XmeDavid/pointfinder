@@ -38,7 +38,8 @@ public final class GameResponseMapper {
                 game.getTileSource(),
                 game.getUnlockTrigger().name(),
                 game.getOrganization() != null ? game.getOrganization().getId() : null,
-                game.getOrganization() != null ? game.getOrganization().getName() : null
+                game.getOrganization() != null ? game.getOrganization().getName() : null,
+                Boolean.TRUE.equals(game.getEnforceBaseOrder())
         );
     }
 }

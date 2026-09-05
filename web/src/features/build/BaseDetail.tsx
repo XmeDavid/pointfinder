@@ -15,6 +15,9 @@ import { getStyleUrl } from '@/lib/tile-sources'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-dialog'
 import type { Assignment, Challenge, Team } from '@/types'
 import { NfcStatusBadge, StatusBadge, type StatusBadgeTone } from '@/components/status'
+import { BaseSequenceBadge } from '@/components/status/BaseSequenceBadge'
+import { NfcLinkControl } from '@/components/nfc/NfcLinkControl'
+import { isNative } from '@/platform'
 
 interface BaseDetailProps {
   baseId: string
@@ -142,6 +145,7 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
     )
   }
 
+  const baseRouteLocked = !!game?.enforceBaseOrder && game.status !== 'setup'
   const cascadeCount = baseAssignments.length
   const deleteDescription =
     t('common.confirm.deleteBaseDescription') +
@@ -151,6 +155,10 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
 
   return (
     <div className="p-4 space-y-0" data-testid="base-detail">
+      {game?.enforceBaseOrder && <div className="flex items-center gap-2 pb-3">
+        <BaseSequenceBadge sequenceNumber={base.sequenceNumber} />
+        <span className="text-xs text-muted-foreground">{t('baseOrder.baseNumber', { number: base.sequenceNumber, defaultValue: 'Base {{number}}' })}</span>
+      </div>}
       {/* Identity section */}
       <section>
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
@@ -194,7 +202,10 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
           </div>
           <div>
             <label className="block text-xs text-muted-foreground mb-1">NFC</label>
-            <NfcStatusBadge status={base.nfcLinked ? 'linked' : 'missing'} />
+            <div className="flex flex-col gap-2">
+              <NfcStatusBadge status={base.nfcLinked ? 'linked' : 'missing'} />
+              {isNative() && <NfcLinkControl base={base} gameId={gameId} />}
+            </div>
           </div>
         </div>
       </section>
@@ -362,10 +373,12 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
         <button
           onClick={() => setConfirmDeleteOpen(true)}
           data-testid="delete-base-btn"
-          className="text-xs text-destructive hover:underline cursor-pointer"
+          disabled={baseRouteLocked}
+          className="disabled:cursor-not-allowed disabled:opacity-50 text-xs text-destructive hover:underline cursor-pointer"
         >
           Delete base
         </button>
+        {baseRouteLocked && <p className="mt-2 text-xs text-muted-foreground">{t('baseOrder.setupOnly', { defaultValue: 'Base order can only be changed during setup.' })}</p>}
       </div>
 
       <ConfirmDeleteDialog
@@ -373,6 +386,7 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
         onCancel={() => setConfirmDeleteOpen(false)}
         onConfirm={() => {
           setConfirmDeleteOpen(false)
+          if (baseRouteLocked) return
           deleteBase.mutate(baseId, { onSuccess: () => selectBase(null) })
         }}
         title={t('common.confirm.deleteBaseTitle')}

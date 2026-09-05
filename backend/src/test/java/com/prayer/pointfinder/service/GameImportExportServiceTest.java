@@ -128,6 +128,7 @@ class GameImportExportServiceTest {
                 .name("Scout Game")
                 .description("A great game")
                 .uniformAssignment(true)
+                .enforceBaseOrder(true)
                 .tileSource("osm-classic")
                 .status(GameStatus.setup)
                 .createdBy(authenticatedUser)
@@ -144,6 +145,7 @@ class GameImportExportServiceTest {
         assertEquals("Scout Game", result.getGame().getName());
         assertEquals("A great game", result.getGame().getDescription());
         assertTrue(result.getGame().getUniformAssignment());
+        assertTrue(result.getGame().getEnforceBaseOrder());
         assertEquals("osm-classic", result.getGame().getTileSource());
     }
 
@@ -429,6 +431,7 @@ class GameImportExportServiceTest {
         request.setEndDate(Instant.parse("2026-06-10T00:00:00Z"));
         request.getGameData().getGame().setDescription("My description");
         request.getGameData().getGame().setUniformAssignment(true);
+        request.getGameData().getGame().setEnforceBaseOrder(true);
         request.getGameData().getGame().setTileSource("custom-tile");
 
         service.importGame(request);
@@ -442,6 +445,7 @@ class GameImportExportServiceTest {
         assertEquals(Instant.parse("2026-06-01T00:00:00Z"), saved.getStartDate());
         assertEquals(Instant.parse("2026-06-10T00:00:00Z"), saved.getEndDate());
         assertTrue(saved.getUniformAssignment());
+        assertTrue(saved.getEnforceBaseOrder());
         assertEquals("custom-tile", saved.getTileSource());
         assertEquals(GameStatus.setup, saved.getStatus());
         assertEquals(authenticatedUser, saved.getCreatedBy());
@@ -473,6 +477,7 @@ class GameImportExportServiceTest {
         ArgumentCaptor<Game> captor = ArgumentCaptor.forClass(Game.class);
         verify(gameRepository).save(captor.capture());
         assertFalse(captor.getValue().getUniformAssignment());
+        assertFalse(captor.getValue().getEnforceBaseOrder());
     }
 
     @Test

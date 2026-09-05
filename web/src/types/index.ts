@@ -39,6 +39,7 @@ export interface Game {
   broadcastCode: string | null;
   tileSource: string;
   unlockTrigger: string;
+  enforceBaseOrder?: boolean;
   /**
    * Game-scoped tag vocabulary. Operator-only.
    * Populated by GET /api/games/{gameId}/tags — NOT embedded in GameResponse
@@ -57,6 +58,7 @@ export interface Base {
   lat: number;
   lng: number;
   nfcLinked: boolean;
+  sequenceNumber?: number | null;
   hidden: boolean;
   fixedChallengeId?: string;
   /**
@@ -224,6 +226,7 @@ export interface OperatorSnapshotGameInfo {
   status: GameStatus;
   /** "CHECK_IN", "SUBMISSION", or "COMPLETED". */
   unlockTrigger: string;
+  enforceBaseOrder?: boolean;
   tileSource: string;
   startDate: string | null;
   endDate: string | null;
@@ -270,6 +273,7 @@ export interface PlayerSnapshotGameInfo {
   description: string;
   status: GameStatus;
   unlockTrigger: string;
+  enforceBaseOrder?: boolean;
   tileSource: string;
   startDate: string | null;
   endDate: string | null;

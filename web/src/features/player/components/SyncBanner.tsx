@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Alert, Button } from '@/components'
-import type { PendingAction } from '@pointfinder/game-core'
+import { requiresRescan, type PendingAction } from '@pointfinder/game-core'
 
 /** Offline, queued and failed states, always visible on player screens. */
 export function SyncBanner({ fromCache, pending, needsAuth, onRetry, onDiscard }: {
@@ -22,9 +22,9 @@ export function SyncBanner({ fromCache, pending, needsAuth, onRetry, onDiscard }
       {failed.map((a) => (
         <Alert key={a.id} variant="destructive">
           <div className="flex flex-col gap-2">
-            <span>{a.lastError ?? t('common.unknownError')}</span>
+            <span>{a.lastErrorCode === 'PREVIOUS_BASE_REQUIRED' ? `${t('baseOrder.visitFirst', { number: a.lastErrorDetails?.nextRequiredBaseNumber ?? '?' })}. ${t('baseOrder.rescan')}` : a.lastErrorCode === 'PREVIOUS_CHECK_IN_FAILED' ? t('baseOrder.dependencyFailed') : a.lastError ?? t('common.unknownError')}</span>
             <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => onRetry(a.id)}>{t('sync.retry')}</Button>
+              {!requiresRescan(a) && <Button size="sm" variant="outline" onClick={() => onRetry(a.id)}>{t('sync.retry')}</Button>}
               <Button size="sm" variant="ghost" onClick={() => onDiscard(a.id)}>{t('sync.discard')}</Button>
             </div>
           </div>

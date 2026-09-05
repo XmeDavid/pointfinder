@@ -70,6 +70,7 @@ public class GameSnapshotService {
     private final SubmissionRepository submissionRepository;
     private final UploadSessionRepository uploadSessionRepository;
     private final PlayerService playerService;
+    private final BaseOrderService baseOrderService;
     private final MonitoringService monitoringService;
     private final GameAccessService gameAccessService;
 
@@ -124,7 +125,10 @@ public class GameSnapshotService {
                         game.getUnlockTrigger().name(),
                         game.getTileSource(),
                         game.getStartDate(),
-                        game.getEndDate()
+                        game.getEndDate(),
+                        Boolean.TRUE.equals(game.getEnforceBaseOrder()),
+                        Boolean.TRUE.equals(game.getEnforceBaseOrder())
+                                ? baseOrderService.nextRequiredBaseNumber(game, team.getId()) : null
                 ),
                 new PlayerSnapshotResponse.TeamInfo(
                         team.getId(),
@@ -195,7 +199,8 @@ public class GameSnapshotService {
                         game.getEndDate(),
                         game.getUniformAssignment(),
                         game.getBroadcastEnabled(),
-                        game.getBroadcastCode()
+                        game.getBroadcastCode(),
+                        Boolean.TRUE.equals(game.getEnforceBaseOrder())
                 ),
                 teamInfos,
                 leaderboard,

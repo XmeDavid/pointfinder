@@ -6,6 +6,7 @@ import { useCreateChallenge } from '@/hooks/mutations/useChallengeMutations'
 import { useCreateTeam } from '@/hooks/mutations/useTeamMutations'
 import { useCreateStage } from '@/hooks/mutations/useStageMutations'
 import { useSetAssignments } from '@/hooks/mutations/useAssignmentMutations'
+import { useGame } from '@/hooks/queries/useGames'
 import { useBases } from '@/hooks/queries/useBases'
 import { useChallenges } from '@/hooks/queries/useChallenges'
 import { useAssignments } from '@/hooks/queries/useAssignments'
@@ -14,12 +15,15 @@ import { BasesTab } from './BasesTab'
 import { ChallengesTab } from './ChallengesTab'
 import { TeamsTab } from './TeamsTab'
 import StagesTab from './StagesTab'
+import { NfcTagsManager } from './NfcTagsPage'
+import { isNativeEntry } from '@/platform/runtime'
 
 const tabs: Array<{ key: DrawerTab; label: string; newLabel: string }> = [
   { key: 'bases', label: 'bases', newLabel: 'newBase' },
   { key: 'challenges', label: 'challenges', newLabel: 'newChallenge' },
   { key: 'teams', label: 'teams', newLabel: 'newTeam' },
   { key: 'stages', label: 'stages', newLabel: 'newStage' },
+  { key: 'nfc', label: 'nfcTags', newLabel: '' },
 ]
 
 interface ContentDrawerProps {
@@ -39,16 +43,20 @@ export function ContentDrawer({ gameId }: ContentDrawerProps) {
   const createStage = useCreateStage(gameId)
   const setAssignments = useSetAssignments(gameId)
 
+  const { data: game } = useGame(gameId)
+  const baseRouteLocked = !!game?.enforceBaseOrder && game.status !== 'setup'
   const { data: bases = [] } = useBases(gameId)
   const { data: challenges = [] } = useChallenges(gameId)
   // Keep the query alive so child tabs share the cache
   useAssignments(gameId)
 
   const currentTabMeta = tabs.find((t) => t.key === drawerTab)
+  const visibleTabs = tabs.filter((tab) => tab.key !== 'nfc' || isNativeEntry())
 
   const handleNew = () => {
     switch (drawerTab) {
       case 'bases':
+        if (baseRouteLocked) return
         createBase.mutate({
           name: `Base ${bases.length + 1}`,
           description: '',
@@ -104,7 +112,7 @@ export function ContentDrawer({ gameId }: ContentDrawerProps) {
       <div className="flex min-w-0 flex-wrap items-center gap-2 px-3 py-3 border-b border-border shrink-0">
         {/* Tab group */}
         <div className="order-2 flex w-full min-w-0 items-center overflow-x-auto gap-1 bg-muted rounded-lg p-1 md:order-none md:w-auto" data-testid="drawer-tabs">
-          {tabs.map(({ key, label }) => {
+          {visibleTabs.map(({ key, label }) => {
             const isActive = drawerTab === key
             return (
               <button
@@ -138,11 +146,13 @@ export function ContentDrawer({ gameId }: ContentDrawerProps) {
         )}
 
         {/* "+ New" button */}
-        {currentTabMeta && (
+        {currentTabMeta?.newLabel && (
           <button
             onClick={handleNew}
             data-testid="new-entity-btn"
-            className="inline-flex min-h-11 items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer"
+            disabled={drawerTab === 'bases' && baseRouteLocked}
+            title={drawerTab === 'bases' && baseRouteLocked ? t('baseOrder.setupOnly', { defaultValue: 'Base order can only be changed during setup.' }) : undefined}
+            className="disabled:cursor-not-allowed disabled:opacity-50 inline-flex min-h-11 items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer"
           >
             <Plus className="h-3.5 w-3.5" />
             {t(`build.drawer.${currentTabMeta.newLabel}`)}
@@ -178,5 +188,7 @@ function TabContent({ tab, gameId }: { tab: DrawerTab; gameId: string }) {
       return <TeamsTab gameId={gameId} />
     case 'stages':
       return <StagesTab gameId={gameId} />
+    case 'nfc':
+      return <NfcTagsManager gameId={gameId} />
   }
 }

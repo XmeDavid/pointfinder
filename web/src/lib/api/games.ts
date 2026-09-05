@@ -13,6 +13,7 @@ export interface CreateGameDto {
   description: string;
   startDate?: string;
   endDate?: string;
+  enforceBaseOrder?: boolean;
   uniformAssignment?: boolean;
   broadcastEnabled?: boolean;
   broadcastCode?: string;
@@ -29,6 +30,7 @@ export interface GameImportData {
 export interface GameMetadataExportDto {
   name: string;
   description: string;
+  enforceBaseOrder?: boolean;
   uniformAssignment?: boolean;
   tileSource?: string;
   unlockTrigger?: string;

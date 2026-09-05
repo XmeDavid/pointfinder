@@ -1168,6 +1168,7 @@
       "challenges": "Desafios",
       "teams": "Equipas",
       "stages": "Etapas",
+      "nfcTags": "NFC",
       "newBase": "Nova base",
       "newChallenge": "Novo desafio",
       "newTeam": "Nova equipa",
@@ -1498,6 +1499,30 @@
       "noBases": "Este jogo ainda não tem bases.",
       "unavailable": "Escrever etiquetas NFC precisa da app no telemóvel.",
       "linkFailed": "A etiqueta foi escrita mas não foi possível marcá-la como ligada. Tenta de novo quando tiveres ligação."
+    },
+    "baseOrder": {
+      "next": "Próxima: Base {{number}}",
+      "complete": "Check-in feito em todas as bases",
+      "visitFirst": "Visita primeiro a Base {{number}}",
+      "explanation": "A tua equipa tem de fazer check-in na Base {{number}} antes de fazer check-in aqui.",
+      "showBase": "Mostrar Base {{number}}",
+      "rescan": "Visita a base necessária, depois regressa e lê esta etiqueta novamente.",
+      "dependencyFailed": "Não foi possível sincronizar um check-in anterior. Resolve o problema, depois regressa e lê esta etiqueta novamente.",
+      "unknownRoute": "Liga-te à internet para atualizar a ordem das bases antes de fazer check-in."
     }
+  },
+  "baseOrder": {
+    "enforce": "Obrigar a seguir a ordem das bases",
+    "description": "As equipas têm de fazer check-in nas bases pela ordem definida.",
+    "arrange": "Ordenar percurso",
+    "setupOnly": "A ordem das bases só pode ser alterada durante a configuração.",
+    "saveError": "Não foi possível guardar o percurso. As tuas alterações foram mantidas; tenta guardar novamente.",
+    "settingsError": "Não foi possível atualizar a ordem das bases. Tenta novamente.",
+    "routeDescription": "Um percurso para todas as equipas. Os desafios podem variar por equipa. Arrasta as bases ou usa as setas e guarda.",
+    "moveUp": "Mover {{name}} para cima",
+    "moveDown": "Mover {{name}} para baixo",
+    "drag": "Arrastar {{name}} para reordenar",
+    "routeChanged": "O percurso foi alterado enquanto o editavas. Cancela e volta a abrir para usar o percurso mais recente.",
+    "baseNumber": "Base {{number}}"
   }
 }

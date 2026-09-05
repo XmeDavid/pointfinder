@@ -75,6 +75,8 @@ export interface Game {
   createdBy?: EntityId | null
   operatorIds?: EntityId[] | null
   uniformAssignment?: boolean
+  /** Teams check in at bases in one shared sequence, independently of assignments. */
+  enforceBaseOrder?: boolean
   broadcastEnabled?: boolean
   broadcastCode?: string | null
   unlockTrigger?: UnlockTrigger
@@ -100,6 +102,8 @@ export interface Base {
   lat: number
   lng: number
   nfcLinked: boolean
+  /** One-based route position; absent when base order is not enforced. */
+  sequenceNumber?: number | null
   hidden?: boolean
   fixedChallengeId?: EntityId | null
   /** Operator-only. Written into the tag URL and verified at check-in. */
@@ -156,6 +160,7 @@ export interface PlayerResponse {
 /** Per-base progress row for the player's team. Players see challenge titles, not base names. */
 export interface BaseProgress {
   baseId: EntityId
+  sequenceNumber?: number | null
   challengeTitle?: string | null
   lat: number
   lng: number
@@ -225,6 +230,9 @@ export interface LocationUpdateRequest {
 
 export interface GameDataResponse {
   gameStatus?: GameStatus | null
+  enforceBaseOrder?: boolean
+  /** Earliest base without a team check-in, including hidden bases; null when finished. */
+  nextRequiredBaseNumber?: number | null
   unlockTrigger?: UnlockTrigger | null
   bases: Base[]
   challenges: Challenge[]
@@ -278,6 +286,8 @@ export interface PlayerSnapshotGameInfo {
   name: string
   description?: string | null
   status: GameStatus
+  enforceBaseOrder?: boolean
+  nextRequiredBaseNumber?: number | null
   unlockTrigger?: UnlockTrigger | null
   tileSource?: string | null
   startDate?: IsoDateTime | null
@@ -414,6 +424,7 @@ export interface CreateGameRequest {
   startDate?: IsoDateTime | null
   endDate?: IsoDateTime | null
   uniformAssignment?: boolean
+  enforceBaseOrder?: boolean
   tileSource?: string | null
 }
 

@@ -18,6 +18,7 @@ export interface Game {
   status: GameStatus
   createdBy: string
   operatorIds: string[]
+  enforceBaseOrder?: boolean
   uniformAssignment: boolean
   broadcastEnabled: boolean
   broadcastCode: string | null

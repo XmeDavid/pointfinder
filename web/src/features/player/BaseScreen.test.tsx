@@ -187,3 +187,105 @@ describe('BaseScreen', () => {
     expect(enqueue).not.toHaveBeenCalled()
   })
 })
+
+
+describe('BaseScreen ordered route', () => {
+  function orderedProgress(progress: Array<Record<string, unknown>>, nextRequiredBaseNumber: number | null) {
+    progressOverride(progress)
+    server.use(http.get('/api/games/:gameId/snapshot', () => HttpResponse.json({
+      stateVersion: 1, serverTime: '2026-09-05T10:30:00Z',
+      game: { id: 'g1', name: 'Serra da Estrela', status: 'live', enforceBaseOrder: true, nextRequiredBaseNumber },
+      team: { id: 'team1', name: 'Falcons', memberCount: 4 }, progress, submissions: [], uploadSessions: [],
+    })))
+  }
+
+  it('rejects a premature scan without queuing and links only to the visible missing base', async () => {
+    orderedProgress([{ ...NOT_VISITED, sequenceNumber: 1 }, { ...NOT_VISITED, baseId: 'b2', sequenceNumber: 2 }], 1)
+    const sent = vi.fn()
+    server.use(http.post('/api/player/games/:gameId/bases/:baseId/check-in', () => { sent(); return HttpResponse.json({}) }))
+    const { services } = await renderPlayer(<BaseScreen />, { route: '/base/b2?token=proof', path: '/base/:baseId' })
+    expect(await screen.findByTestId('player-base-route')).toHaveTextContent('Visit Base 1 first')
+    expect(screen.getByRole('link', { name: 'Show Base 1' })).toHaveAttribute('href', '/base/b1')
+    await screen.findByText('Visit the required base, then return and scan this tag again.')
+    expect(sent).not.toHaveBeenCalled()
+    expect(await services.queue.list()).toEqual([])
+  })
+
+  it('never links or discloses a hidden missing base', async () => {
+    orderedProgress([{ ...NOT_VISITED, baseId: 'b2', sequenceNumber: 2 }], 1)
+    await renderPlayer(<BaseScreen />, { route: '/base/b2?token=proof', path: '/base/:baseId' })
+    expect(await screen.findByTestId('player-base-route')).toHaveTextContent('Visit Base 1 first')
+    expect(screen.queryByRole('link', { name: 'Show Base 1' })).not.toBeInTheDocument()
+  })
+
+  it('renders server refusal with the missing base number and disables retrying the tag proof', async () => {
+    orderedProgress([{ ...NOT_VISITED, sequenceNumber: 1 }, { ...NOT_VISITED, baseId: 'b2', sequenceNumber: 2 }], 2)
+    server.use(http.post('/api/player/games/:gameId/bases/:baseId/check-in', () => HttpResponse.json({
+      code: 'PREVIOUS_BASE_REQUIRED', message: 'Out of order', errors: { nextRequiredBaseNumber: '1' },
+    }, { status: 400 })))
+    const { services } = await renderPlayer(<BaseScreen />, { route: '/base/b2?token=proof', path: '/base/:baseId' })
+    expect(await screen.findByTestId('player-base-route')).toHaveTextContent('Visit Base 1 first')
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument()
+    await waitFor(async () => expect((await services.queue.list())[0]).toMatchObject({ state: 'failed', lastErrorDetails: { nextRequiredBaseNumber: '1' } }))
+  })
+})
+
+it('accepts a fresh scan of the same tag after a teammate visits the missing base', async () => {
+  let next = 1
+  const progress = [{ ...NOT_VISITED, sequenceNumber: 1 }, { ...NOT_VISITED, baseId: 'b2', sequenceNumber: 2 }]
+  progressOverride(progress)
+  server.use(http.get('/api/games/:gameId/snapshot', () => HttpResponse.json({
+    stateVersion: 1, game: { id: 'g1', status: 'live', enforceBaseOrder: true, nextRequiredBaseNumber: next },
+    progress, submissions: [], uploadSessions: [],
+  })))
+  function Journey() {
+    const navigate = useNavigate()
+    return <><button onClick={() => { next = 2; navigate('/base/b2?token=proof') }}>Scan again</button><BaseScreen /></>
+  }
+  await renderPlayer(<Journey />, { route: '/base/b2?token=proof', path: '/base/:baseId' })
+  await screen.findByText('Visit the required base, then return and scan this tag again.')
+  await userEvent.click(screen.getByRole('button', { name: 'Scan again' }))
+  await waitFor(() => expect(screen.getAllByRole('status').some((s) => s.textContent?.includes("You're in!"))).toBe(true))
+})
+
+it('keeps accepted check-in evidence when refreshing the snapshot goes offline', async () => {
+  let disconnected = false
+  progressOverride([{ ...NOT_VISITED, sequenceNumber: 1 }, { ...NOT_VISITED, baseId: 'b2', sequenceNumber: 2 }])
+  server.use(
+    http.get('/api/games/:gameId/snapshot', () => disconnected ? HttpResponse.error() : HttpResponse.json({
+      stateVersion: 1, game: { id: 'g1', status: 'live', enforceBaseOrder: true, nextRequiredBaseNumber: 1 },
+      progress: [{ ...NOT_VISITED, sequenceNumber: 1 }, { ...NOT_VISITED, baseId: 'b2', sequenceNumber: 2 }], submissions: [], uploadSessions: [],
+    })),
+    http.post('/api/player/games/:gameId/bases/:baseId/check-in', ({ params }) => {
+      if (disconnected) return HttpResponse.error()
+      disconnected = true
+      return HttpResponse.json({ checkInId: 'ci', baseId: params.baseId, checkedInAt: '2026-09-05T10:45:00Z' })
+    }),
+  )
+  function Journey() {
+    const navigate = useNavigate()
+    return <><button onClick={() => navigate('/base/b2?token=proof2')}>Scan next</button><BaseScreen /></>
+  }
+  const { services } = await renderPlayer(<Journey />, { route: '/base/b1?token=proof1', path: '/base/:baseId' })
+  await waitFor(() => expect(screen.getAllByRole('status').some((s) => s.textContent?.includes("You're in!"))).toBe(true))
+  await userEvent.click(screen.getByRole('button', { name: 'Scan next' }))
+  await waitFor(async () => expect(await services.queue.list()).toMatchObject([{ type: 'check_in', baseId: 'b2', state: 'pending' }]))
+  expect(screen.queryByText('Visit Base 1 first')).not.toBeInTheDocument()
+})
+
+it('allows a fresh route check-in even when its answer is already queued', async () => {
+  progressOverride([{ ...NOT_VISITED, sequenceNumber: 1 }])
+  server.use(http.get('/api/games/:gameId/snapshot', () => HttpResponse.json({
+    stateVersion: 1, game: { id: 'g1', status: 'live', enforceBaseOrder: true, nextRequiredBaseNumber: 1 },
+    progress: [{ ...NOT_VISITED, sequenceNumber: 1 }], submissions: [], uploadSessions: [],
+  })))
+  const { services } = await renderPlayer(<BaseScreen />, {
+    route: '/base/b1?token=proof', path: '/base/:baseId',
+    pending: [
+      { type: 'check_in', id: 'failed', gameId: 'g1', baseId: 'b1', nfcToken: 'old', createdAt: '', state: 'failed', attempts: 1, nextAttemptAt: 0, lastErrorCode: 'PREVIOUS_CHECK_IN_FAILED' },
+      { type: 'submission', id: 'answer', gameId: 'g1', baseId: 'b1', challengeId: 'c1', answer: '7', createdAt: '', state: 'pending', attempts: 0, nextAttemptAt: Date.now() + 60_000 },
+    ],
+  })
+  await waitFor(() => expect(screen.getAllByRole('status').some((s) => s.textContent?.includes("You're in!"))).toBe(true))
+  expect((await services.queue.list()).filter((a) => a.type === 'check_in')).toEqual([])
+})

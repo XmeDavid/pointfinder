@@ -199,3 +199,10 @@ describe('BaseMarkers', () => {
     expect(screen.getByTestId('base-marker-base-1').getAttribute('title')).toBeNull()
   })
 })
+
+
+it('shows route numbers alongside existing NFC and progress marker semantics', () => {
+  render(<BaseMarkers bases={[makeBase({ sequenceNumber: 2, nfcLinked: false })]} mode="build" selectedBaseId={null} selectedStageId={null} />)
+  expect(screen.getByLabelText('Base 2')).toHaveTextContent('2')
+  expect(screen.getByTestId('base-marker-base-1')).toHaveAttribute('data-nfc', 'missing')
+})

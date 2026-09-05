@@ -1168,6 +1168,7 @@
       "challenges": "Aufgaben",
       "teams": "Teams",
       "stages": "Etappen",
+      "nfcTags": "NFC",
       "newBase": "Neue Station",
       "newChallenge": "Neue Aufgabe",
       "newTeam": "Neues Team",
@@ -1498,6 +1499,30 @@
       "noBases": "Dieses Spiel hat noch keine Stationen.",
       "unavailable": "NFC-Tags schreiben braucht die Telefon-App.",
       "linkFailed": "Der Tag wurde beschrieben, konnte aber nicht als verknüpft markiert werden. Versuch es erneut, wenn du online bist."
+    },
+    "baseOrder": {
+      "next": "Als Nächstes: Basis {{number}}",
+      "complete": "An allen Basen eingecheckt",
+      "visitFirst": "Besuche zuerst Basis {{number}}",
+      "explanation": "Dein Team muss bei Basis {{number}} einchecken, bevor es hier einchecken kann.",
+      "showBase": "Basis {{number}} anzeigen",
+      "rescan": "Besuche die erforderliche Basis. Kehre dann zurück und scanne diesen Tag erneut.",
+      "dependencyFailed": "Ein vorheriger Check-in konnte nicht synchronisiert werden. Behebe das Problem, kehre dann zurück und scanne diesen Tag erneut.",
+      "unknownRoute": "Verbinde dich mit dem Internet, um die Reihenfolge der Basen vor dem Check-in zu aktualisieren."
     }
+  },
+  "baseOrder": {
+    "enforce": "Reihenfolge der Basen vorgeben",
+    "description": "Teams müssen in der festgelegten Reihenfolge bei den Basen einchecken.",
+    "arrange": "Route anordnen",
+    "setupOnly": "Die Reihenfolge der Basen kann nur während der Einrichtung geändert werden.",
+    "saveError": "Die Route konnte nicht gespeichert werden. Deine Änderungen bleiben erhalten. Versuche es erneut.",
+    "settingsError": "Die Reihenfolge der Basen konnte nicht aktualisiert werden. Versuche es erneut.",
+    "routeDescription": "Eine Route für alle Teams. Aufgaben können je nach Team variieren. Ziehe die Basen oder nutze die Pfeile und speichere dann.",
+    "moveUp": "{{name}} nach oben verschieben",
+    "moveDown": "{{name}} nach unten verschieben",
+    "drag": "{{name}} zum Anordnen ziehen",
+    "routeChanged": "Die Route wurde während deiner Bearbeitung geändert. Brich ab und öffne sie erneut, um die aktuelle Route zu verwenden.",
+    "baseNumber": "Basis {{number}}"
   }
 }

@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 public class PlayerService {
 
     private final PlayerRepository playerRepository;
+    private final BaseOrderService baseOrderService;
     private final PushTokenService pushTokenService;
     private final GameRepository gameRepository;
     private final BaseRepository baseRepository;
@@ -85,6 +86,10 @@ public class PlayerService {
         if (existing.isPresent()) {
             // Return the existing check-in with challenge info
             return buildCheckInResponse(existing.get(), base, team, gameId);
+        }
+
+        if (Boolean.TRUE.equals(base.getGame().getEnforceBaseOrder())) {
+            baseOrderService.requirePreviousBases(base.getGame(), team.getId(), baseId);
         }
 
         // Create new check-in.
@@ -148,6 +153,8 @@ public class PlayerService {
         UnlockTrigger unlockTrigger = game.getUnlockTrigger();
 
         List<Base> bases = baseRepository.findByGameId(gameId);
+        Map<UUID, Integer> sequenceNumbers = Boolean.TRUE.equals(game.getEnforceBaseOrder())
+                ? baseOrderService.sequenceNumbers(game) : Map.of();
         List<CheckIn> checkIns = checkInRepository.findByGameIdAndTeamId(gameId, team.getId());
         List<Submission> submissions = submissionRepository.findByTeamId(team.getId());
         List<Assignment> assignments = assignmentRepository.findByGameIdAndTeamId(gameId, team.getId());
@@ -283,7 +290,8 @@ public class PlayerService {
                     status.name(),
                     ci != null ? ci.getCheckedInAt() : null,
                     assignment != null ? assignment.getId() : null,
-                    submissionStatus);
+                    submissionStatus,
+                    sequenceNumbers.get(bId));
         }).filter(Objects::nonNull).toList();
     }
 
@@ -307,6 +315,8 @@ public class PlayerService {
                 .map(Stage::getId)
                 .collect(Collectors.toSet());
 
+        Map<UUID, Integer> sequenceNumbers = Boolean.TRUE.equals(player.getTeam().getGame().getEnforceBaseOrder())
+                ? baseOrderService.sequenceNumbers(player.getTeam().getGame()) : Map.of();
         return baseRepository.findByGameId(gameId).stream()
                 .filter(b -> !Boolean.TRUE.equals(b.getHidden()))
                 .filter(b -> b.getStageId() == null || activeStageIds.contains(b.getStageId()))
@@ -318,7 +328,8 @@ public class PlayerService {
                         base.getLng(),
                         base.getNfcLinked(),
                         base.getHidden(),
-                        base.getFixedChallenge() != null ? base.getFixedChallenge().getId() : null
+                        base.getFixedChallenge() != null ? base.getFixedChallenge().getId() : null,
+                        sequenceNumbers.get(base.getId())
                 ))
                 .toList();
     }
@@ -452,7 +463,10 @@ public class PlayerService {
                 bases,
                 challenges,
                 assignments,
-                progress);
+                progress,
+                Boolean.TRUE.equals(game.getEnforceBaseOrder()),
+                Boolean.TRUE.equals(game.getEnforceBaseOrder())
+                        ? baseOrderService.nextRequiredBaseNumber(game, team.getId()) : null);
     }
 
     @Transactional(timeout = 10)

@@ -1,3 +1,5 @@
+import { BaseSequenceBadge } from '@/components/status/BaseSequenceBadge'
+import { BaseRouteNotice } from './components/BaseRouteNotice'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
@@ -83,7 +85,8 @@ export default function PlayerMap() {
       >
         {open.map((e) => (
           <Marker key={e.baseId} longitude={e.view.lng} latitude={e.view.lat} anchor="center" onClick={(ev) => { ev.originalEvent.stopPropagation(); setSelected(e.baseId) }}>
-            <button type="button" className="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`${e.title || t('challenge.noChallenge')}: ${t(`status.${e.view.effectiveStatus}`)}`}>
+            <button type="button" className="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`${e.view.sequenceNumber ? `${t('baseOrder.baseNumber', { number: e.view.sequenceNumber, keyPrefix: '' })} · ` : ''}${e.title || t('challenge.noChallenge')}: ${t(`status.${e.view.effectiveStatus}`)}`}>
+              <BaseSequenceBadge sequenceNumber={e.view.sequenceNumber} />
               <StatusMarker tone={baseStatusMarkerTone[e.view.effectiveStatus]} size={e.baseId === selected ? 18 : 14} selected={e.baseId === selected} label={e.title || undefined} />
             </button>
           </Marker>
@@ -115,6 +118,7 @@ export default function PlayerMap() {
         <div className="pointer-events-auto">
           <SyncBanner fromCache={game.fromCache} pending={game.pending} needsAuth={game.needsAuth} onRetry={(id) => void game.retry(id)} onDiscard={(id) => void game.discard(id)} />
         </div>
+        <div className="pointer-events-auto"><BaseRouteNotice route={game.route} logbook={game.logbook} /></div>
         {scanError && <Alert variant="destructive" className="pointer-events-auto">{scanError}</Alert>}
         {game.error && !game.logbook && <Alert variant="destructive" className="pointer-events-auto">{game.error.message}</Alert>}
         {game.logbook && open.length === 0 && <Alert variant="info" className="pointer-events-auto">{t('map.noBases')}</Alert>}
@@ -135,7 +139,7 @@ export default function PlayerMap() {
         {selectedEntry && (
           <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card/95 p-3 shadow-overlay backdrop-blur" role="dialog" aria-label={selectedEntry.title}>
             <div className="min-w-0">
-              <p className="truncate font-semibold">{selectedEntry.title || t('challenge.noChallenge')}</p>
+              <p className="flex items-center gap-2 font-semibold"><BaseSequenceBadge sequenceNumber={selectedEntry.view.sequenceNumber} />{selectedEntry.title || t('challenge.noChallenge')}</p>
               <BaseStatusBadge status={selectedEntry.view.effectiveStatus} pendingSync={selectedEntry.view.pendingSync} />
             </div>
             <Link to={`/base/${encodeURIComponent(selectedEntry.baseId)}`} className={cn(buttonVariants({ size: 'sm' }))}>{t('map.open')}</Link>

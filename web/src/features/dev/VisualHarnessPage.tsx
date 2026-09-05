@@ -42,6 +42,10 @@ import { previewScenarios } from '@/generated/previewScenarios'
 import { ResultsStat, ResultsSummary } from '@/components/results/ResultsSummary'
 import { BroadcastPanel } from '@/components/broadcast/BroadcastPanel'
 import { ListDetailLayout } from '@/components/layout/ListDetailLayout'
+import { NfcLinkControl } from '@/components/nfc/NfcLinkControl'
+import { BaseSequenceBadge } from '@/components/status/BaseSequenceBadge'
+import { BaseRouteNotice } from '@/features/player/components/BaseRouteNotice'
+import { buildLogbook } from '@/features/player/logbook'
 
 const gameStatuses: GameStatus[] = ['setup', 'live', 'ended']
 const submissionStatuses: SubmissionStatus[] = [
@@ -152,6 +156,30 @@ export function VisualHarnessPage() {
         </header>
 
         <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
+          <HarnessSection title="Base route numbers preserve progress meaning">
+            <div className="space-y-3">
+              {baseProgressStatuses.map((status, index) => (
+                <div key={status} className="flex flex-wrap items-center gap-2">
+                  <BaseSequenceBadge sequenceNumber={index + 1} />
+                  <span className="min-w-0 flex-1 text-sm break-words">{index === 2 ? 'The checkpoint beside the old wooden bridge at the forest entrance' : `Checkpoint ${index + 1}`}</span>
+                  <BaseProgressBadge status={status} />
+                </div>
+              ))}
+              <div className="flex flex-wrap items-center gap-2">
+                <BaseSequenceBadge sequenceNumber={99} />
+                <SyncStatusBadge status="sync_pending" />
+                <Button variant="outline" disabled>Arrange route · setup only</Button>
+              </div>
+            </div>
+          </HarnessSection>
+          <HarnessSection title="Player route guidance and hidden destination">
+            <BaseRouteNotice route={{ enabled: true, nextRequiredBaseNumber: 2, provisionalCheckInIds: [] }}
+              logbook={buildLogbook([{ baseId: 'preview-base', sequenceNumber: 2, challengeTitle: 'Find the inscription beside the old forest bridge', lat: 0, lng: 0, nfcLinked: true, status: 'not_visited' }], [], [])} />
+            <BaseRouteNotice route={{ enabled: true, nextRequiredBaseNumber: 2, provisionalCheckInIds: [] }}
+              logbook={null} missingNumber={2} />
+            <BaseRouteNotice route={{ enabled: true, nextRequiredBaseNumber: null, provisionalCheckInIds: [] }}
+              logbook={null} />
+          </HarnessSection>
           <HarnessSection title="Native safe areas">
             <SafeAreaPreview />
           </HarnessSection>
@@ -227,6 +255,25 @@ export function VisualHarnessPage() {
               ))}
               <OverrideBadge />
               <OverrideBadge label="Unlock override" />
+            </div>
+          </HarnessSection>
+
+          <HarnessSection title="Operator NFC Link Controls">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-2">
+                <NfcStatusBadge status="missing" />
+                <NfcLinkControl
+                  gameId="preview-game"
+                  base={{ id: 'preview-unlinked', gameId: 'preview-game', name: 'Forest gate', description: '', lat: 0, lng: 0, nfcLinked: false, nfcToken: 'preview-token', hidden: false }}
+                />
+              </div>
+              <div className="space-y-2">
+                <NfcStatusBadge status="linked" />
+                <NfcLinkControl
+                  gameId="preview-game"
+                  base={{ id: 'preview-linked', gameId: 'preview-game', name: 'Old mill', description: '', lat: 0, lng: 0, nfcLinked: true, nfcToken: 'preview-token', hidden: false }}
+                />
+              </div>
             </div>
           </HarnessSection>
 

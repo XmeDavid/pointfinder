@@ -7,5 +7,6 @@
   "status": "completed",
   "checkedInAt": "2025-03-01T09:15:00Z",
   "challengeId": "f6a7b8c9-d0e1-2345-fabc-456789012345",
-  "submissionStatus": "approved"
+  "submissionStatus": "approved",
+  "sequenceNumber": null
 }

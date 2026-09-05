@@ -48,5 +48,10 @@ public record PlayerBaseResponse(
     Double lng,
     Boolean nfcLinked,
     Boolean hidden,
-    UUID fixedChallengeId
-) {}
+    UUID fixedChallengeId,
+        Integer sequenceNumber
+) {
+    public PlayerBaseResponse(UUID id, UUID gameId, Double lat, Double lng, Boolean nfcLinked, Boolean hidden, UUID fixedChallengeId) {
+        this(id, gameId, lat, lng, nfcLinked, hidden, fixedChallengeId, null);
+    }
+}

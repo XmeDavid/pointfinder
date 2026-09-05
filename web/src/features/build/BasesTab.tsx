@@ -3,6 +3,10 @@ import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useBases } from '@/hooks/queries/useBases'
+import { useGame } from '@/hooks/queries/useGames'
+import { BaseSequenceBadge } from '@/components/status/BaseSequenceBadge'
+import { Button } from '@/components/ui/button'
+import { BaseRouteEditor } from './BaseRouteEditor'
 import { useAssignments } from '@/hooks/queries/useAssignments'
 import { SearchInput } from '@/components/data/SearchInput'
 import { Spinner } from '@/components/feedback/Spinner'
@@ -67,9 +71,10 @@ interface BaseListItemProps {
   isSelected: boolean
   onSelect: () => void
   subtitle: string
+  numbered: boolean
 }
 
-function BaseListItem({ base, isSelected, onSelect, subtitle }: BaseListItemProps) {
+function BaseListItem({ base, isSelected, onSelect, subtitle, numbered }: BaseListItemProps) {
   return (
     <button
       onClick={onSelect}
@@ -81,6 +86,7 @@ function BaseListItem({ base, isSelected, onSelect, subtitle }: BaseListItemProp
       }`}
     >
       <div className="flex items-center gap-2">
+        {numbered && <BaseSequenceBadge sequenceNumber={base.sequenceNumber} />}
         <BaseStatusDot base={base} />
         <span className="text-sm font-medium text-foreground truncate">
           {base.name}
@@ -96,20 +102,40 @@ export function BasesTab({ gameId }: BasesTabProps) {
   const selectedBaseId = useWorkspaceStore((s) => s.selectedBaseId)
   const selectBase = useWorkspaceStore((s) => s.selectBase)
 
+  const { data: game } = useGame(gameId)
+  const [arranging, setArranging] = useState(false)
   const { data: bases = [], isLoading, isError, refetch } = useBases(gameId)
   const { data: assignments = [] } = useAssignments(gameId)
 
   const [search, setSearch] = useState('')
 
+  const orderedBases = useMemo(() => game?.enforceBaseOrder
+    ? [...bases].sort((a, b) => (a.sequenceNumber ?? Number.MAX_SAFE_INTEGER) - (b.sequenceNumber ?? Number.MAX_SAFE_INTEGER))
+    : bases, [bases, game?.enforceBaseOrder])
+
   const filteredBases = useMemo(() => {
-    if (!search.trim()) return bases
+    if (!search.trim()) return orderedBases
     const q = search.toLowerCase()
-    return bases.filter((b) => b.name.toLowerCase().includes(q))
-  }, [bases, search])
+    return orderedBases.filter((b) => b.name.toLowerCase().includes(q))
+  }, [orderedBases, search])
+
+  const routeEditorOpen = arranging && !!game?.enforceBaseOrder
+
+  if (routeEditorOpen) {
+    return <BaseRouteEditor gameId={gameId} bases={orderedBases}
+      editable={game?.status === 'setup'} onClose={() => setArranging(false)} />
+  }
 
   return (
     <ListDetailLayout selected={!!selectedBaseId} onBack={() => selectBase(null)} list={<>
-
+        {game?.enforceBaseOrder && <div className="space-y-2 border-b border-border p-3">
+          <p className="text-xs text-muted-foreground">{t('baseOrder.description', { defaultValue: 'Teams must check in at bases in the configured order.' })}</p>
+          <Button variant="outline" size="sm" className="h-auto min-h-9 whitespace-normal" disabled={game.status !== 'setup' || isLoading || isError || bases.length < 2}
+            onClick={() => { selectBase(null); setArranging(true) }}>
+            {t('baseOrder.arrange', { defaultValue: 'Arrange route' })}
+          </Button>
+          {game.status !== 'setup' && <p className="text-xs text-muted-foreground">{t('baseOrder.setupOnly', { defaultValue: 'Base order can only be changed during setup.' })}</p>}
+        </div>}
         {/* Search */}
         <div className="p-2 border-b border-border">
           <SearchInput
@@ -141,6 +167,7 @@ export function BasesTab({ gameId }: BasesTabProps) {
               isSelected={selectedBaseId === base.id}
               onSelect={() => selectBase(base.id)}
               subtitle={getBaseSubtitle(base, assignments)}
+              numbered={!!game?.enforceBaseOrder}
             />
           ))}
           {!isLoading && !isError && filteredBases.length === 0 && (

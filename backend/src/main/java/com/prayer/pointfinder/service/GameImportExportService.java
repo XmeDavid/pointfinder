@@ -49,7 +49,7 @@ public class GameImportExportService {
     public GameExportDto exportGame(UUID gameId) {
         Game game = gameAccessService.getAccessibleGame(gameId);
 
-        List<Base> bases = baseRepository.findByGameId(gameId);
+        List<Base> bases = baseRepository.findByGameId(gameId).stream().sorted(BaseOrderService.ROUTE_ORDER).toList();
         List<Challenge> challenges = challengeRepository.findByGameId(gameId);
         List<Team> teams = teamRepository.findByGameId(gameId);
         List<Assignment> assignments = assignmentRepository.findByGameId(gameId);
@@ -80,6 +80,7 @@ public class GameImportExportService {
                 .name(game.getName())
                 .description(game.getDescription())
                 .uniformAssignment(game.getUniformAssignment())
+                .enforceBaseOrder(Boolean.TRUE.equals(game.getEnforceBaseOrder()))
                 .tileSource(game.getTileSource())
                 .unlockTrigger(game.getUnlockTrigger() != null ? game.getUnlockTrigger().name() : null)
                 .broadcastEnabled(game.getBroadcastEnabled())
@@ -239,6 +240,7 @@ public class GameImportExportService {
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .uniformAssignment(data.getGame().getUniformAssignment() != null ? data.getGame().getUniformAssignment() : false)
+                .enforceBaseOrder(Boolean.TRUE.equals(data.getGame().getEnforceBaseOrder()))
                 .tileSource(data.getGame().getTileSource() != null ? data.getGame().getTileSource() : "osm-classic")
                 .unlockTrigger(data.getGame().getUnlockTrigger() != null ? UnlockTrigger.valueOf(data.getGame().getUnlockTrigger()) : UnlockTrigger.CHECK_IN)
                 .broadcastEnabled(data.getGame().getBroadcastEnabled() != null ? data.getGame().getBroadcastEnabled() : false)
@@ -303,7 +305,9 @@ public class GameImportExportService {
             challengeEntityMap.put(chDto.getTempId(), challenge);
         }
 
-        for (BaseExportDto baseDto : data.getBases()) {
+        int importedBaseOrder = 0;
+        for (BaseExportDto baseDto : data.getBases().stream()
+                .sorted(java.util.Comparator.comparing(dto -> dto.getOrderIndex() != null ? dto.getOrderIndex() : 0)).toList()) {
             Challenge fixedChallenge = null;
             if (baseDto.getFixedChallengeTempId() != null) {
                 fixedChallenge = challengeEntityMap.get(baseDto.getFixedChallengeTempId());
@@ -321,7 +325,7 @@ public class GameImportExportService {
                     .nfcLinked(false)
                     .hidden(baseDto.getHidden() != null ? baseDto.getHidden() : false)
                     .fixedChallenge(fixedChallenge)
-                    .orderIndex(baseDto.getOrderIndex() != null ? baseDto.getOrderIndex() : 0)
+                    .orderIndex(importedBaseOrder++)
                     .build();
             base = baseRepository.save(base);
 

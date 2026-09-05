@@ -34,6 +34,7 @@ public class GameReadinessValidator {
     private final TeamRepository teamRepository;
     private final AssignmentRepository assignmentRepository;
     private final TeamVariableService teamVariableService;
+    private final com.prayer.pointfinder.repository.StageRepository stageRepository;
 
     /**
      * Throws {@link BadRequestException} if the game cannot go live.
@@ -65,6 +66,13 @@ public class GameReadinessValidator {
             throw new BadRequestException(
                     String.format("Need at least %d challenges (one per base), but only %d available.",
                             baseCount, challengeCount));
+        }
+
+        if (Boolean.TRUE.equals(game.getEnforceBaseOrder())) {
+            BaseOrderService.validateDependencies(game, baseRepository.findByGameId(game.getId()),
+                    challengeRepository.findByGameId(game.getId()),
+                    stageRepository.findByGameIdOrderByOrderIndexAsc(game.getId()),
+                    assignmentRepository.findByGameId(game.getId()));
         }
 
         // Ensure all team variables have values for every team and every

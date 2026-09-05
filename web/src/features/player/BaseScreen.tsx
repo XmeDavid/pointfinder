@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
 import { ChevronLeft, Nfc } from 'lucide-react'
+import { missingPreviousBase } from '@pointfinder/game-core'
+import { BaseSequenceBadge } from '@/components/status/BaseSequenceBadge'
+import { BaseRouteNotice } from './components/BaseRouteNotice'
 import type { SubmissionResponse } from '@pointfinder/api'
 import { Alert, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Label, Skeleton, Textarea } from '@/components'
 import { usePlayerGame, type ActionResult } from '@/features/player/usePlayerGame'
@@ -35,7 +38,9 @@ function BaseContent() {
   const { t } = useTranslation(undefined, { keyPrefix: 'playerApp' })
   const { baseId = '' } = useParams()
   const [params, setParams] = useSearchParams()
+  const location = useLocation()
   const game = usePlayerGame()
+  const [missingNumber, setMissingNumber] = useState<number | null>(null)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<Notice | null>(null)
   const [answer, setAnswer] = useState('')
@@ -47,6 +52,7 @@ function BaseContent() {
   const view = entry?.kind === 'open' ? entry.view : null
   const challenge = game.data && game.teamId ? challengeForBase(game.data, baseId, game.teamId) : null
   const status = view?.effectiveStatus ?? 'not_visited'
+  const needsCheckIn = status === 'not_visited' || Boolean(game.route?.enabled && !view?.checkedInAt && !game.pending.some((a) => a.type === 'check_in' && a.baseId === baseId && a.state !== 'failed'))
   const gameStatus = game.snapshot?.game.status ?? 'live'
   const gameLive = gameStatus === 'live'
   const needsPresence = Boolean(challenge?.requirePresenceToSubmit) && isNative()
@@ -60,7 +66,17 @@ function BaseContent() {
     : submissionOutcome(serverSubmission?.status) ?? (outcome === 'queued' ? null : outcome)
 
   function report(result: ActionResult, kind: 'check_in' | 'submit') {
-    if (result.state === 'failed') return setNotice({ tone: 'destructive', text: result.error })
+    if (result.state === 'failed') {
+      if (result.code === 'PREVIOUS_BASE_REQUIRED') {
+        const number = Number(result.details?.nextRequiredBaseNumber)
+        if (Number.isInteger(number) && number > 0) {
+          setMissingNumber(number)
+          return setNotice(null)
+        }
+        return setNotice({ tone: 'warning', text: result.error })
+      }
+      return setNotice({ tone: 'destructive', text: result.code === 'ROUTE_STATE_UNAVAILABLE' ? t('baseOrder.unknownRoute') : result.code === 'PREVIOUS_CHECK_IN_FAILED' ? t('baseOrder.dependencyFailed') : result.error })
+    }
     if (result.state === 'auth') return setNotice({ tone: 'destructive', text: t('sync.needsLogin') })
     if (kind === 'check_in') {
       if (result.state === 'queued') return setNotice({ tone: 'warning', text: t('base.queued') })
@@ -80,6 +96,7 @@ function BaseContent() {
   async function checkInWith(token: string) {
     setBusy(true)
     setNotice(null)
+    setMissingNumber(null)
     try {
       report(await game.checkIn(baseId, token), 'check_in')
     } catch (err) {
@@ -92,12 +109,13 @@ function BaseContent() {
   // Arrived straight from a tag: check in without another tap.
   useEffect(() => {
     const token = params.get('token')
-    if (token === null || token === autoToken.current || !view || status !== 'not_visited' || !gameLive) return
-    autoToken.current = token
+    const scanKey = `${location.key}:${token}`
+    if (token === null || scanKey === autoToken.current || !view || !needsCheckIn || !gameLive) return
+    autoToken.current = scanKey
     setParams({}, { replace: true })
     void checkInWith(token)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, status, params, gameLive])
+  }, [view, needsCheckIn, params, gameLive, location.key])
 
   // Check-in-only challenges complete themselves once the team is checked in (old app behaviour).
   const autoSubmitted = useRef(false)
@@ -174,6 +192,7 @@ function BaseContent() {
   }
 
   const unlockedCount = game.unlocked.length
+  const routeBlock = game.route ? missingPreviousBase(game.route, view ?? undefined) : null
 
   return (
     <Screen>
@@ -189,9 +208,13 @@ function BaseContent() {
       {game.logbook && !entry && <Alert variant="destructive">{t('base.unknownTag')}</Alert>}
       {entry?.kind === 'locked' && <Alert variant="info">{t('logbook.lockedHint')}</Alert>}
 
+      {!view && game.logbook && <BaseRouteNotice route={game.route} logbook={game.logbook} />}
+      {(missingNumber ?? routeBlock) != null && <BaseRouteNotice route={game.route} logbook={game.logbook} missingNumber={missingNumber ?? routeBlock} rescanRequired={missingNumber != null} />}
+
       {view && (
         <>
           <header className="flex flex-col gap-2">
+            <BaseSequenceBadge sequenceNumber={view.sequenceNumber} />
             <h1 className="text-2xl font-semibold leading-tight text-balance">{entry?.kind === 'open' ? entry.title || t('challenge.noChallenge') : ''}</h1>
             <div className="flex items-center gap-2">
               <BaseStatusBadge status={status} pendingSync={view.pendingSync} />
@@ -202,7 +225,7 @@ function BaseContent() {
           {notice && <Alert variant={notice.tone === 'success' ? 'info' : notice.tone} className={notice.tone === 'success' ? 'bg-success/10 text-success' : undefined} role="status">{notice.text}</Alert>}
           {unlockedCount > 0 && !outcome && <Alert variant="info" className="bg-success/10 text-success">{t('base.unlocked', { count: unlockedCount })}</Alert>}
 
-          {status === 'not_visited' && (
+          {needsCheckIn && (
             <Card>
               <CardHeader>
                 <CardTitle>{t('checkIn.title')}</CardTitle>
@@ -222,7 +245,7 @@ function BaseContent() {
             <SubmissionResult outcome={displayedOutcome} feedback={!serverSubmission || serverSubmission.status === lastSubmission?.status ? lastSubmission?.feedback : undefined} completionContent={lastSubmission?.completionContent ?? challenge?.completionContent} unlockedCount={unlockedCount} />
           )}
 
-          {status !== 'not_visited' && challenge && (!displayedOutcome || displayedOutcome === 'rejected') && (
+          {!needsCheckIn && challenge && (!displayedOutcome || displayedOutcome === 'rejected') && (
             <Card>
               <CardHeader>
                 <CardTitle>{challenge.title}</CardTitle>
@@ -265,7 +288,7 @@ function BaseContent() {
             </Card>
           )}
 
-          {status !== 'not_visited' && !challenge && <Alert variant="info">{t('challenge.noChallenge')}</Alert>}
+          {!needsCheckIn && !challenge && <Alert variant="info">{t('challenge.noChallenge')}</Alert>}
         </>
       )}
     </Screen>

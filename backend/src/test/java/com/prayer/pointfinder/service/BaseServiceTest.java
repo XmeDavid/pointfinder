@@ -35,6 +35,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class BaseServiceTest {
 
+    @Mock private com.prayer.pointfinder.repository.GameRepository gameRepository;
+    @Mock private BaseOrderService baseOrderService;
     @Mock
     private BaseRepository baseRepository;
     @Mock
@@ -59,7 +61,8 @@ class BaseServiceTest {
     @BeforeEach
     void setUp() {
         gameId = UUID.randomUUID();
-        game = Game.builder().id(gameId).name("Game").description("Desc").build();
+        game = Game.builder().id(gameId).name("Game").description("Desc").status(com.prayer.pointfinder.entity.GameStatus.setup).build();
+        org.mockito.Mockito.lenient().when(gameRepository.findByIdForUpdate(gameId)).thenReturn(Optional.of(game));
     }
 
     @Test
@@ -255,7 +258,6 @@ class BaseServiceTest {
         request.setHidden(false);
         request.setTagIds(List.of(tagId1, tagId2));
 
-        when(gameAccessService.getAccessibleGame(gameId)).thenReturn(game);
         when(gameTagRepository.findById(tagId1)).thenReturn(Optional.of(tag1));
         when(gameTagRepository.findById(tagId2)).thenReturn(Optional.of(tag2));
         when(baseRepository.save(any(Base.class))).thenAnswer(invocation -> {
@@ -313,7 +315,6 @@ class BaseServiceTest {
         request.setHidden(false);
         // tagIds not set — null clears all tags
 
-        when(gameAccessService.getAccessibleGame(gameId)).thenReturn(game);
         when(baseRepository.save(any(Base.class))).thenAnswer(invocation -> {
             Base saved = invocation.getArgument(0);
             saved.setId(UUID.randomUUID());
@@ -324,4 +325,44 @@ class BaseServiceTest {
 
         assertNull(response.tagIds());
     }
+
+    @Test
+    void orderedRouteRejectsStructuralChangesOutsideSetup() {
+        game.setEnforceBaseOrder(true);
+        for (var status : List.of(com.prayer.pointfinder.entity.GameStatus.live,
+                com.prayer.pointfinder.entity.GameStatus.ended)) {
+            game.setStatus(status);
+            assertEquals(com.prayer.pointfinder.exception.ErrorCode.BASE_ORDER_LOCKED,
+                    assertThrows(BadRequestException.class, () -> baseService.createBase(gameId, new CreateBaseRequest())).getErrorCode());
+            assertEquals(com.prayer.pointfinder.exception.ErrorCode.BASE_ORDER_LOCKED,
+                    assertThrows(BadRequestException.class, () -> baseService.deleteBase(gameId, UUID.randomUUID())).getErrorCode());
+            assertEquals(com.prayer.pointfinder.exception.ErrorCode.BASE_ORDER_LOCKED,
+                    assertThrows(BadRequestException.class, () -> baseService.reorderBases(gameId, new com.prayer.pointfinder.dto.request.ReorderRequest())).getErrorCode());
+        }
+        verify(baseRepository, never()).save(any());
+        verify(baseRepository, never()).delete(any());
+    }
+
+    @Test
+    void routeRejectsDuplicatesForeignAndMissingBasesBeforeWritingAnything() {
+        game.setEnforceBaseOrder(true);
+        UUID one = UUID.randomUUID(), two = UUID.randomUUID();
+        when(baseRepository.findByGameId(gameId)).thenReturn(List.of(
+                Base.builder().id(one).build(), Base.builder().id(two).build()));
+        for (List<UUID> ids : List.of(List.of(one, one), List.of(one), List.of(one, UUID.randomUUID()))) {
+            var request = new com.prayer.pointfinder.dto.request.ReorderRequest();
+            request.setIds(ids);
+            assertEquals(com.prayer.pointfinder.exception.ErrorCode.BASE_ORDER_INVALID,
+                    assertThrows(BadRequestException.class, () -> baseService.reorderBases(gameId, request)).getErrorCode());
+        }
+        verify(baseRepository, never()).updateOrderIndex(any(), any(), org.mockito.ArgumentMatchers.anyInt());
+    }
+
+    @Test
+    void routeArrangementRequiresModeEnabled() {
+        assertEquals(com.prayer.pointfinder.exception.ErrorCode.BASE_ORDER_DISABLED,
+                assertThrows(BadRequestException.class, () -> baseService.reorderBases(gameId,
+                        new com.prayer.pointfinder.dto.request.ReorderRequest())).getErrorCode());
+    }
+
 }

@@ -323,3 +323,53 @@ describe('GameSettingsPanel', () => {
     expect(useWorkspaceStore.getState().settingsPanelOpen).toBe(false)
   })
 })
+
+
+describe('enforced base order settings', () => {
+  it('saves the setting independently of per-team challenge assignment and opens the Bases tab', async () => {
+    const user = userEvent.setup()
+    useWorkspaceStore.getState().toggleSettingsPanel()
+    let game = createMockGame({ id: 'game-1', enforceBaseOrder: false, uniformAssignment: false })
+    const requests: Record<string, unknown>[] = []
+    server.use(
+      http.get('/api/games/game-1', () => HttpResponse.json(game)),
+      http.put('/api/games/game-1', async ({ request }) => {
+        const body = await request.json() as Record<string, unknown>
+        requests.push(body)
+        game = { ...game, enforceBaseOrder: body.enforceBaseOrder as boolean }
+        return HttpResponse.json(game)
+      }),
+    )
+    render(createElement(GameSettingsPanel, { gameId: 'game-1' }), { wrapper: createWrapper() })
+    const toggle = await screen.findByRole('switch', { name: 'Enforce base order' })
+    expect(toggle).toHaveAttribute('aria-checked', 'false')
+    await user.click(toggle)
+    await waitFor(() => expect(toggle).toHaveAttribute('aria-checked', 'true'))
+    expect(requests[0]).toMatchObject({ enforceBaseOrder: true, uniformAssignment: false })
+    await user.click(screen.getByRole('button', { name: 'Arrange route' }))
+    expect(useWorkspaceStore.getState()).toMatchObject({ drawerOpen: true, drawerTab: 'bases', settingsPanelOpen: false, selectedBaseId: null })
+  })
+
+  it('keeps the previous setting and shows an error if saving fails', async () => {
+    const user = userEvent.setup()
+    useWorkspaceStore.getState().toggleSettingsPanel()
+    server.use(
+      http.get('/api/games/game-1', () => HttpResponse.json(createMockGame({ enforceBaseOrder: false }))),
+      http.put('/api/games/game-1', () => HttpResponse.json({ message: 'Unavailable' }, { status: 503 })),
+    )
+    render(createElement(GameSettingsPanel, { gameId: 'game-1' }), { wrapper: createWrapper() })
+    const toggle = await screen.findByRole('switch', { name: 'Enforce base order' })
+    await user.click(toggle)
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not update base order')
+    expect(toggle).toHaveAttribute('aria-checked', 'false')
+    expect(toggle).toBeEnabled()
+  })
+
+  it.each(['live', 'ended'] as const)('locks the setting in %s games', async (status) => {
+    useWorkspaceStore.getState().toggleSettingsPanel()
+    server.use(http.get('/api/games/game-1', () => HttpResponse.json(createMockGame({ enforceBaseOrder: true, status }))))
+    render(createElement(GameSettingsPanel, { gameId: 'game-1' }), { wrapper: createWrapper() })
+    expect(await screen.findByRole('switch', { name: 'Enforce base order' })).toBeDisabled()
+    expect(screen.getByText('Base order can only be changed during setup.')).toBeInTheDocument()
+  })
+})

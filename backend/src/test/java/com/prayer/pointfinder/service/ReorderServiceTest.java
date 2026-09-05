@@ -22,6 +22,8 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class ReorderServiceTest {
 
+    @Mock com.prayer.pointfinder.repository.GameRepository gameRepository;
+    @Mock BaseOrderService baseOrderService;
     @Mock BaseRepository baseRepository;
     @Mock ChallengeRepository challengeRepository;
     @Mock SubmissionRepository submissionRepository;
@@ -46,8 +48,13 @@ class ReorderServiceTest {
 
         @BeforeEach
         void init() {
+            game.setStatus(com.prayer.pointfinder.entity.GameStatus.setup);
+            game.setEnforceBaseOrder(true);
+            when(gameRepository.findByIdForUpdate(gameId)).thenReturn(java.util.Optional.of(game));
             baseService = new BaseService(
                     baseRepository,
+                    gameRepository,
+                    baseOrderService,
                     challengeRepository,
                     submissionRepository,
                     gameAccessService,
@@ -65,6 +72,8 @@ class ReorderServiceTest {
 
             ReorderRequest req = new ReorderRequest();
             req.setIds(List.of(id0, id1, id2));
+            when(baseRepository.findByGameId(gameId)).thenReturn(List.of(id0, id1, id2).stream()
+                    .map(id -> com.prayer.pointfinder.entity.Base.builder().id(id).game(game).build()).toList());
 
             baseService.reorderBases(gameId, req);
 

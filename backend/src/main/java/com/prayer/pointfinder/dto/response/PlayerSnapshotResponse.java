@@ -51,8 +51,15 @@ public record PlayerSnapshotResponse(
             String unlockTrigger,
             String tileSource,
             Instant startDate,
-            Instant endDate
-    ) {}
+            Instant endDate,
+            Boolean enforceBaseOrder,
+            @JsonInclude(JsonInclude.Include.ALWAYS) Integer nextRequiredBaseNumber
+    ) {
+        public GameInfo(UUID id, String name, String description, String status, String unlockTrigger,
+                String tileSource, Instant startDate, Instant endDate) {
+            this(id, name, description, status, unlockTrigger, tileSource, startDate, endDate, false, null);
+        }
+    }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record TeamInfo(

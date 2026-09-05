@@ -67,8 +67,16 @@ public record OperatorSnapshotResponse(
             Instant endDate,
             Boolean uniformAssignment,
             Boolean broadcastEnabled,
-            String broadcastCode
-    ) {}
+            String broadcastCode,
+            Boolean enforceBaseOrder
+    ) {
+        public GameInfo(UUID id, String name, String description, String status, String unlockTrigger,
+                String tileSource, Instant startDate, Instant endDate, Boolean uniformAssignment,
+                Boolean broadcastEnabled, String broadcastCode) {
+            this(id, name, description, status, unlockTrigger, tileSource, startDate, endDate,
+                    uniformAssignment, broadcastEnabled, broadcastCode, false);
+        }
+    }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record TeamInfo(

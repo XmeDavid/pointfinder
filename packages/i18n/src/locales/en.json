@@ -1168,6 +1168,7 @@
       "challenges": "Challenges",
       "teams": "Teams",
       "stages": "Stages",
+      "nfcTags": "NFC",
       "newBase": "New Base",
       "newChallenge": "New Challenge",
       "newTeam": "New Team",
@@ -1498,6 +1499,30 @@
       "noBases": "This game has no bases yet.",
       "unavailable": "NFC writing needs the phone app.",
       "linkFailed": "The tag was written but could not be marked as linked. Try again when you're online."
+    },
+    "baseOrder": {
+      "next": "Next: Base {{number}}",
+      "complete": "All bases checked in",
+      "visitFirst": "Visit Base {{number}} first",
+      "explanation": "Your team must check in at Base {{number}} before checking in here.",
+      "showBase": "Show Base {{number}}",
+      "rescan": "Visit the required base, then return and scan this tag again.",
+      "dependencyFailed": "A previous check-in could not sync. Return and scan this tag again after resolving it.",
+      "unknownRoute": "Connect to refresh the base order before checking in."
     }
+  },
+  "baseOrder": {
+    "enforce": "Enforce base order",
+    "description": "Teams must check in at bases in the configured order.",
+    "arrange": "Arrange route",
+    "setupOnly": "Base order can only be changed during setup.",
+    "saveError": "Could not save the route. Your changes are still here; try saving again.",
+    "settingsError": "Could not update base order. Try again.",
+    "routeDescription": "One route for all teams. Challenges can differ per team. Drag bases or use the arrows, then save.",
+    "moveUp": "Move {{name}} up",
+    "moveDown": "Move {{name}} down",
+    "drag": "Drag {{name}} to reorder",
+    "routeChanged": "The route changed while you were editing. Cancel and reopen to use the latest route.",
+    "baseNumber": "Base {{number}}"
   }
 }

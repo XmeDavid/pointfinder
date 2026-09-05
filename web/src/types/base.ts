@@ -5,6 +5,8 @@ export interface Base {
   description: string
   lat: number
   lng: number
+  /** One-based route position; absent when base order is not enforced. */
+  sequenceNumber?: number | null
   nfcLinked: boolean
   nfcToken?: string
   hidden: boolean
