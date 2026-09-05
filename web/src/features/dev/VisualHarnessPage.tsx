@@ -46,6 +46,10 @@ import { NfcLinkControl } from '@/components/nfc/NfcLinkControl'
 import { BaseSequenceBadge } from '@/components/status/BaseSequenceBadge'
 import { BaseRouteNotice } from '@/features/player/components/BaseRouteNotice'
 import { buildLogbook } from '@/features/player/logbook'
+import { CheckInMethodBadge, CheckInVerificationBadge } from '@/components/status'
+import { QrCodeSvg } from '@/components/common/QrCodeSvg'
+import { CHECK_IN_METHODS } from '@/types/checkIn'
+import type { CheckInVerification } from '@/types/checkIn'
 
 const gameStatuses: GameStatus[] = ['setup', 'live', 'ended']
 const submissionStatuses: SubmissionStatus[] = [
@@ -68,6 +72,7 @@ const syncStatuses: SyncStatus[] = [
   'sync_failed',
 ]
 const nfcStatuses: NfcStatus[] = ['linked', 'missing']
+const checkInVerifications: CheckInVerification[] = ['VERIFIED', 'CLAIMED', 'OPERATOR']
 const activityEventStatuses: ActivityEventStatus[] = [
   'check_in',
   'submission',
@@ -197,6 +202,29 @@ export function VisualHarnessPage() {
               <Button disabled>Disabled</Button>
             </div>
           </HarnessSection>
+          <HarnessSection title="Check-in methods, claims and printable codes">
+            <div className="space-y-3" data-testid="harness-checkin-methods">
+              <div className="flex flex-wrap items-center gap-2">
+                {CHECK_IN_METHODS.map((method) => (
+                  <CheckInMethodBadge key={method} method={method} />
+                ))}
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {checkInVerifications.map((verification) => (
+                  <CheckInVerificationBadge key={verification} verification={verification} />
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                2 of 4 teammates within 60 m
+              </p>
+              <QrCodeSvg
+                value="https://pointfinder.pt/tag/0d2f1c9e-0000-4000-8000-000000000001?t=ab12cd34"
+                size={128}
+                title="Preview code"
+                data-testid="harness-qr"
+              />
+            </div>
+          </HarnessSection>
 
           <HarnessSection title="Canonical Preview Scenarios">
             <div className="grid gap-2 sm:grid-cols-2">
@@ -264,14 +292,14 @@ export function VisualHarnessPage() {
                 <NfcStatusBadge status="missing" />
                 <NfcLinkControl
                   gameId="preview-game"
-                  base={{ id: 'preview-unlinked', gameId: 'preview-game', name: 'Forest gate', description: '', lat: 0, lng: 0, nfcLinked: false, nfcToken: 'preview-token', hidden: false }}
+                  base={{ id: 'preview-unlinked', gameId: 'preview-game', name: 'Forest gate', description: '', lat: 0, lng: 0, nfcLinked: false, nfcToken: 'preview-token', hidden: false, checkInMethod: 'NFC' }}
                 />
               </div>
               <div className="space-y-2">
                 <NfcStatusBadge status="linked" />
                 <NfcLinkControl
                   gameId="preview-game"
-                  base={{ id: 'preview-linked', gameId: 'preview-game', name: 'Old mill', description: '', lat: 0, lng: 0, nfcLinked: true, nfcToken: 'preview-token', hidden: false }}
+                  base={{ id: 'preview-linked', gameId: 'preview-game', name: 'Old mill', description: '', lat: 0, lng: 0, nfcLinked: true, nfcToken: 'preview-token', hidden: false, checkInMethod: 'NFC' }}
                 />
               </div>
             </div>

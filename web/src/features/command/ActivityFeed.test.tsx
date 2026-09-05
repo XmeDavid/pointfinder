@@ -7,6 +7,7 @@ import { http, HttpResponse } from 'msw'
 import { server } from '@/test/msw/server'
 import type { ActivityEvent } from '@/types'
 import { ActivityFeed } from './ActivityFeed'
+import { createMockBase } from '@/test/factories/base'
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -169,5 +170,100 @@ describe('ActivityFeed', () => {
     await waitFor(() => {
       expect(screen.getByTestId('export-csv')).toBeInTheDocument()
     })
+  })
+})
+
+describe('ActivityFeed check-in methods', () => {
+  it('marks each check-in with its method icon', async () => {
+    server.use(
+      http.get('/api/games/:gameId/monitoring/activity', () =>
+        HttpResponse.json([
+          {
+            id: 'event-qr',
+            gameId: 'game-1',
+            type: 'check_in',
+            teamId: 'team-1',
+            baseId: 'base-1',
+            message: 'Team Alpha checked in at Base 1',
+            timestamp: new Date().toISOString(),
+            metadata: { method: 'QR', verification: 'VERIFIED' },
+          },
+        ] satisfies ActivityEvent[]),
+      ),
+    )
+
+    render(createElement(ActivityFeed, { gameId: 'game-1' }), { wrapper: createWrapper() })
+
+    const icon = await screen.findByTestId('activity-method-event-qr')
+    expect(icon).toHaveAttribute('aria-label', 'QR code')
+    expect(screen.queryByTestId('activity-claimed-badge')).not.toBeInTheDocument()
+  })
+
+  it('flags a claimed check-in with the teammate summary for the wide ring', async () => {
+    server.use(
+      http.get('/api/games/:gameId/bases', () =>
+        HttpResponse.json([
+          createMockBase({
+            id: 'base-1',
+            checkInMethod: 'LOCATION',
+            checkInRadiusM: 20,
+            lat: 38.7,
+            lng: -9.1,
+          }),
+        ]),
+      ),
+      http.get('/api/games/:gameId/monitoring/activity', () =>
+        HttpResponse.json([
+          {
+            id: 'event-claim',
+            gameId: 'game-1',
+            type: 'check_in',
+            teamId: 'team-1',
+            baseId: 'base-1',
+            message: 'Team Alpha claimed Base 1',
+            timestamp: new Date().toISOString(),
+            metadata: {
+              method: 'LOCATION',
+              verification: 'CLAIMED',
+              teammatesInRing: 2,
+              teammatesTotal: 4,
+            },
+          },
+        ] satisfies ActivityEvent[]),
+      ),
+    )
+
+    render(createElement(ActivityFeed, { gameId: 'game-1' }), { wrapper: createWrapper() })
+
+    expect(await screen.findByTestId('activity-claimed-badge')).toHaveTextContent('Claimed')
+    // wideRingM(20) === max(60, 50) === 60
+    await waitFor(() => {
+      expect(screen.getByTestId('activity-teammates-event-claim')).toHaveTextContent(
+        '2 of 4 teammates within 60 m',
+      )
+    })
+  })
+
+  it('renders a pre-feature check-in without a method icon', async () => {
+    server.use(
+      http.get('/api/games/:gameId/monitoring/activity', () =>
+        HttpResponse.json([
+          {
+            id: 'event-legacy',
+            gameId: 'game-1',
+            type: 'check_in',
+            teamId: 'team-1',
+            baseId: 'base-1',
+            message: 'Team Alpha checked in at Base 1',
+            timestamp: new Date().toISOString(),
+          },
+        ] satisfies ActivityEvent[]),
+      ),
+    )
+
+    render(createElement(ActivityFeed, { gameId: 'game-1' }), { wrapper: createWrapper() })
+
+    await screen.findByText('Team Alpha checked in at Base 1')
+    expect(screen.queryByTestId('activity-method-event-legacy')).not.toBeInTheDocument()
   })
 })

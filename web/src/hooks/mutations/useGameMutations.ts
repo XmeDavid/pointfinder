@@ -27,6 +27,8 @@ export function useUpdateGame(gameId: string) {
             broadcastEnabled: current.broadcastEnabled,
             tileSource: current.tileSource,
             unlockTrigger: current.unlockTrigger,
+            defaultCheckInMethod: current.defaultCheckInMethod,
+            defaultCheckInRadiusM: current.defaultCheckInRadiusM,
             ...dto,
           }
         : dto

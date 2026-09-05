@@ -17,6 +17,8 @@ export function createMockBase(overrides?: Partial<Base>): Base {
     fixedChallengeId: undefined,
     tagIds: [],
     stageId: null,
+    checkInMethod: 'NFC' as const,
+    checkInRadiusM: null,
     ...overrides,
   }
 }

@@ -16,7 +16,6 @@ import { ChallengesTab } from './ChallengesTab'
 import { TeamsTab } from './TeamsTab'
 import StagesTab from './StagesTab'
 import { NfcTagsManager } from './NfcTagsPage'
-import { isNativeEntry } from '@/platform/runtime'
 
 const tabs: Array<{ key: DrawerTab; label: string; newLabel: string }> = [
   { key: 'bases', label: 'bases', newLabel: 'newBase' },
@@ -51,7 +50,9 @@ export function ContentDrawer({ gameId }: ContentDrawerProps) {
   useAssignments(gameId)
 
   const currentTabMeta = tabs.find((t) => t.key === drawerTab)
-  const visibleTabs = tabs.filter((tab) => tab.key !== 'nfc' || isNativeEntry())
+  // Tags & codes is no longer phone-only: QR codes are generated and printed
+  // in the browser. The NFC write control inside the tab stays native-gated.
+  const visibleTabs = tabs
 
   const handleNew = () => {
     switch (drawerTab) {

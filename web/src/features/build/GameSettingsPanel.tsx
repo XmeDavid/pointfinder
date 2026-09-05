@@ -15,7 +15,15 @@ import { gamesApi } from '@/lib/api/games'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { TileSource, UnlockTrigger } from '@/types/game'
 import type { GameStatus } from '@/types'
-import { GameStatusBadge } from '@/components/status'
+import { GameStatusBadge, useCheckInMethodLabel } from '@/components/status'
+import { Input } from '@/components/ui/input'
+import {
+  CHECK_IN_METHODS,
+  MAX_CHECK_IN_RADIUS_M,
+  MIN_CHECK_IN_RADIUS_M,
+  parseCheckInRadiusInput,
+} from '@/types/checkIn'
+import type { CheckInMethod } from '@/types/checkIn'
 
 const tileSources: Array<{ value: TileSource; label: string }> = [
   { value: 'osm', label: 'OpenStreetMap' },
@@ -130,9 +138,15 @@ export default function GameSettingsPanel({
   // Optimistic local state for toggles
   const [localUniform, setLocalUniform] = useState<boolean | null>(null)
   const [localBroadcast, setLocalBroadcast] = useState<boolean | null>(null)
+  const methodLabel = useCheckInMethodLabel()
+  const [radiusDraft, setRadiusDraft] = useState<string | null>(null)
+  const [radiusError, setRadiusError] = useState(false)
 
   const uniformValue = localUniform ?? game?.uniformAssignment ?? false
   const broadcastValue = localBroadcast ?? game?.broadcastEnabled ?? false
+  const checkInLocked = game?.status !== 'setup'
+  const defaultMethod: CheckInMethod = game?.defaultCheckInMethod ?? 'NFC'
+  const defaultRadiusValue = radiusDraft ?? String(game?.defaultCheckInRadiusM ?? 15)
 
   if (!game) return null
 
@@ -348,6 +362,103 @@ export default function GameSettingsPanel({
               ))}
             </div>
           </div>
+        </section>
+
+        {/* Check-in */}
+        <section className="space-y-3">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            {t('checkIn.group')}
+          </h3>
+          <div className="space-y-1.5">
+            <label className="text-sm text-muted-foreground" id="checkin-default-method-label">
+              {t('checkIn.defaultMethod')}
+            </label>
+            <div
+              className="flex gap-1 rounded-lg bg-muted p-1"
+              role="group"
+              aria-labelledby="checkin-default-method-label"
+              data-testid="checkin-default-method"
+            >
+              {CHECK_IN_METHODS.map((method) => {
+                const isActive = defaultMethod === method
+                return (
+                  <button
+                    key={method}
+                    type="button"
+                    disabled={checkInLocked || updateGame.isPending}
+                    aria-pressed={isActive}
+                    data-testid={`checkin-default-method-${method.toLowerCase()}`}
+                    onClick={() => updateGame.mutate({ defaultCheckInMethod: method })}
+                    className={`min-h-11 flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                      isActive
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {methodLabel(method)}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {defaultMethod === 'LOCATION' && (
+            <div className="space-y-1.5">
+              <label htmlFor="checkin-default-radius" className="text-sm text-muted-foreground">
+                {t('checkIn.defaultRadius')}
+              </label>
+              <Input
+                id="checkin-default-radius"
+                data-testid="checkin-default-radius"
+                type="number"
+                inputMode="numeric"
+                min={MIN_CHECK_IN_RADIUS_M}
+                max={MAX_CHECK_IN_RADIUS_M}
+                disabled={checkInLocked || updateGame.isPending}
+                aria-invalid={radiusError}
+                aria-describedby={radiusError ? 'checkin-default-radius-error' : undefined}
+                value={defaultRadiusValue}
+                onChange={(e) => {
+                  setRadiusDraft(e.target.value)
+                  setRadiusError(false)
+                }}
+                onBlur={() => {
+                  if (radiusDraft === null) return
+                  const parsed = parseCheckInRadiusInput(radiusDraft)
+                  if (!parsed.ok || parsed.value === null) {
+                    setRadiusError(true)
+                    return
+                  }
+                  setRadiusError(false)
+                  if (parsed.value === game?.defaultCheckInRadiusM) {
+                    setRadiusDraft(null)
+                    return
+                  }
+                  updateGame.mutate(
+                    { defaultCheckInRadiusM: parsed.value },
+                    { onSettled: () => setRadiusDraft(null) },
+                  )
+                }}
+              />
+              {radiusError ? (
+                <p
+                  id="checkin-default-radius-error"
+                  data-testid="checkin-default-radius-error"
+                  className="text-xs text-destructive"
+                >
+                  {t('checkIn.radiusInvalid')}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  {t('checkIn.radiusHint', { meters: game?.defaultCheckInRadiusM ?? 15 })}
+                </p>
+              )}
+            </div>
+          )}
+
+          {checkInLocked && (
+            <p className="text-xs text-muted-foreground">{t('checkIn.setupOnly')}</p>
+          )}
         </section>
 
         {/* Assignment Mode */}

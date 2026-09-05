@@ -1,26 +1,40 @@
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { CheckCircle, XCircle } from 'lucide-react'
+import { CheckCircle, Info, XCircle } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { distanceM } from '@pointfinder/game-core'
 import { GlassPanel } from '@/components/layout/GlassPanel'
 import { useBases } from '@/hooks/queries/useBases'
 import { useChallenges } from '@/hooks/queries/useChallenges'
+import { useGame } from '@/hooks/queries/useGames'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { useAssignments } from '@/hooks/queries/useAssignments'
 import { useVariableCompleteness } from '@/hooks/queries/useVariables'
 import { useUpdateGameStatus } from '@/hooks/mutations/useGameMutations'
 import { useWorkspaceStore } from '@/stores/workspace'
+import { isValidCheckInRadiusM, resolveCheckInRadiusM } from '@/types/checkIn'
 
 interface ReadinessCheck {
   label: string
   passed: boolean
 }
 
-function useReadinessChecks(gameId: string): ReadinessCheck[] {
+interface ReadinessSummary {
+  checks: ReadinessCheck[]
+  /** True when any base uses a method the legacy Swift/Compose apps cannot play. */
+  legacyNote: boolean
+}
+
+function useReadinessChecks(gameId: string): ReadinessSummary {
+  const { t } = useTranslation()
+  const { data: game } = useGame(gameId)
   const { data: bases } = useBases(gameId)
   const { data: challenges } = useChallenges(gameId)
   const { data: teams } = useTeams(gameId)
   const { data: assignments } = useAssignments(gameId)
   const { data: completeness } = useVariableCompleteness(gameId)
+
+  const defaultRadius = game?.defaultCheckInRadiusM
 
   return useMemo(() => {
     const baseList = bases ?? []
@@ -31,24 +45,40 @@ function useReadinessChecks(gameId: string): ReadinessCheck[] {
     const baseIds = new Set(baseList.map((b) => b.id))
     const challengeIds = new Set(challengeList.map((c) => c.id))
 
-    return [
+    // NFC bases must carry a written tag. QR bases always pass — the code is
+    // generated, not provisioned.
+    const nfcBases = baseList.filter((b) => b.checkInMethod === 'NFC' && !b.hidden)
+    const nfcLinkedCount = nfcBases.filter((b) => b.nfcLinked).length
+
+    const locationBases = baseList.filter((b) => b.checkInMethod === 'LOCATION')
+    const locatedCount = locationBases.filter((b) => b.lat !== 0 || b.lng !== 0).length
+    const radiusOkCount = locationBases.filter((b) =>
+      isValidCheckInRadiusM(resolveCheckInRadiusM(b.checkInRadiusM, defaultRadius)),
+    ).length
+
+    // Two rings overlap when the bases are closer than the sum of their radii;
+    // a player standing in the overlap could unlock either base.
+    let overlapping = false
+    for (let i = 0; i < locationBases.length && !overlapping; i++) {
+      for (let j = i + 1; j < locationBases.length; j++) {
+        const a = locationBases[i]
+        const b = locationBases[j]
+        const ra = resolveCheckInRadiusM(a.checkInRadiusM, defaultRadius)
+        const rb = resolveCheckInRadiusM(b.checkInRadiusM, defaultRadius)
+        if (distanceM(a, b) < ra + rb) {
+          overlapping = true
+          break
+        }
+      }
+    }
+
+    const checks: ReadinessCheck[] = [
+      { label: 'At least one base', passed: baseList.length > 0 },
+      { label: 'At least one challenge', passed: challengeList.length > 0 },
+      { label: 'At least one team', passed: teamList.length > 0 },
       {
-        label: 'At least one base',
-        passed: baseList.length > 0,
-      },
-      {
-        label: 'At least one challenge',
-        passed: challengeList.length > 0,
-      },
-      {
-        label: 'At least one team',
-        passed: teamList.length > 0,
-      },
-      {
-        label: 'All bases have NFC',
-        passed:
-          baseList.length > 0 &&
-          baseList.filter((b) => !b.hidden).every((b) => b.nfcLinked),
+        label: t('readiness.nfcLinked', { linked: nfcLinkedCount, total: nfcBases.length }),
+        passed: nfcLinkedCount === nfcBases.length,
       },
       {
         label: 'All assignments valid',
@@ -57,15 +87,22 @@ function useReadinessChecks(gameId: string): ReadinessCheck[] {
         ),
       },
       {
-        label: 'Location-bound have coordinates',
-        passed: true, // bases always have lat/lng
+        label: t('readiness.locationCoords', { ok: locatedCount, total: locationBases.length }),
+        passed: locatedCount === locationBases.length,
       },
       {
-        label: 'Variables complete',
-        passed: completeness?.complete ?? true,
+        label: t('readiness.locationRadius', { ok: radiusOkCount, total: locationBases.length }),
+        passed: radiusOkCount === locationBases.length,
       },
+      { label: t('readiness.locationOverlap'), passed: !overlapping },
+      { label: 'Variables complete', passed: completeness?.complete ?? true },
     ]
-  }, [bases, challenges, teams, assignments, completeness])
+
+    return {
+      checks,
+      legacyNote: baseList.some((b) => b.checkInMethod !== 'NFC'),
+    }
+  }, [bases, challenges, teams, assignments, completeness, defaultRadius, t])
 }
 
 export default function ReadinessIndicator({
@@ -76,7 +113,8 @@ export default function ReadinessIndicator({
   gameStatus?: string
 }) {
   const [expanded, setExpanded] = useState(false)
-  const checks = useReadinessChecks(gameId)
+  const { t } = useTranslation()
+  const { checks, legacyNote } = useReadinessChecks(gameId)
   const updateStatus = useUpdateGameStatus(gameId)
   const setMode = useWorkspaceStore((s) => s.setMode)
 
@@ -198,6 +236,18 @@ export default function ReadinessIndicator({
                       </span>
                     </div>
                   ))}
+
+                  {legacyNote && (
+                    <div
+                      className="flex items-start gap-2 pt-1"
+                      data-testid="readiness-legacy-note"
+                    >
+                      <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                      <span className="text-xs text-muted-foreground">
+                        {t('readiness.legacyAppsNote')}
+                      </span>
+                    </div>
+                  )}
 
                   {allPassed && (
                     <button

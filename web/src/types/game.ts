@@ -1,3 +1,4 @@
+import type { CheckInMethod } from './checkIn'
 export type GameStatus = 'setup' | 'live' | 'ended'
 
 export type TileSource =
@@ -27,4 +28,6 @@ export interface Game {
   tags?: import('./tag').GameTag[]
   orgId?: string | null
   orgName?: string | null
+  defaultCheckInMethod: CheckInMethod
+  defaultCheckInRadiusM: number
 }

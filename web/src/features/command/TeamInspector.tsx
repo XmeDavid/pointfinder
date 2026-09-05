@@ -1,14 +1,15 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { CheckCircle, MapPin, Unlock } from 'lucide-react'
 import { InspectorPanel } from '@/components/layout/InspectorPanel'
-import { OverrideBadge, StatusBadge } from '@/components/status'
+import { CheckInMethodBadge, CheckInVerificationBadge, OverrideBadge, StatusBadge } from '@/components/status'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { useIsMobile } from '@/hooks/ui/useMediaQuery'
 import { useBases } from '@/hooks/queries/useBases'
 import { useChallenges } from '@/hooks/queries/useChallenges'
 import { useTeams } from '@/hooks/queries/useTeams'
-import { useLeaderboard } from '@/hooks/queries/useMonitoring'
+import { useLeaderboard, useProgress } from '@/hooks/queries/useMonitoring'
 import {
   useManualCheckIn,
   useMarkCompleted,
@@ -29,6 +30,14 @@ export function TeamInspector({ gameId }: { gameId: string }) {
   const { data: bases = [] } = useBases(gameId)
   const { data: challenges = [] } = useChallenges(gameId)
   const { data: leaderboard = [] } = useLeaderboard(gameId)
+  const { t } = useTranslation()
+  const { data: progress = [] } = useProgress(gameId)
+
+  const proofRows = useMemo(
+    () =>
+      progress.filter((row) => row.teamId === inspectedTeamId && row.checkInMethod !== undefined),
+    [progress, inspectedTeamId],
+  )
 
   const isMobile = useIsMobile()
 
@@ -124,6 +133,74 @@ export function TeamInspector({ gameId }: { gameId: string }) {
               />
             )}
           </div>
+
+          {proofRows.length > 0 && (
+            <div className="space-y-2" data-testid="team-checkin-proof">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {t('checkIn.proofTitle')}
+              </p>
+              {proofRows.map((row) => {
+                const base = bases.find((b) => b.id === row.baseId)
+                const snapshot = row.teamPositionsSnapshot ?? []
+                return (
+                  <div
+                    key={row.baseId}
+                    data-testid={`team-checkin-proof-${row.baseId}`}
+                    className="space-y-1 rounded-lg border border-border/50 px-2 py-1.5"
+                  >
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="min-w-0 flex-1 truncate text-xs text-foreground">
+                        {base?.name ?? row.baseId}
+                      </span>
+                      {row.checkInMethod && <CheckInMethodBadge method={row.checkInMethod} size="sm" />}
+                      {row.verification && (
+                        <CheckInVerificationBadge verification={row.verification} size="sm" />
+                      )}
+                    </div>
+                    {typeof row.proofDistanceM === 'number' && (
+                      <p className="text-[11px] text-muted-foreground">
+                        {t('checkIn.proofDistance', { meters: Math.round(row.proofDistanceM) })}
+                      </p>
+                    )}
+                    {typeof row.proofAccuracyM === 'number' && (
+                      <p className="text-[11px] text-muted-foreground">
+                        {t('checkIn.proofAccuracy', { meters: Math.round(row.proofAccuracyM) })}
+                      </p>
+                    )}
+                    {row.verification === 'CLAIMED' && (
+                      <>
+                        <p className="text-[11px] font-medium text-muted-foreground">
+                          {t('checkIn.proofTeammates')}
+                        </p>
+                        {snapshot.length === 0 ? (
+                          <p className="text-[11px] text-muted-foreground">
+                            {t('checkIn.proofNoSnapshot')}
+                          </p>
+                        ) : (
+                          <ul className="space-y-0.5">
+                            {snapshot.map((entry) => (
+                              <li
+                                key={entry.playerId}
+                                data-testid={`proof-teammate-${entry.playerId}`}
+                                className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground"
+                              >
+                                <span className="min-w-0 truncate">{entry.displayName}</span>
+                                <span className="shrink-0 tabular-nums">
+                                  {typeof entry.distanceM === 'number'
+                                    ? `${Math.round(entry.distanceM)} m`
+                                    : '—'}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
 
           <RescueActionSection
             action="checkin"

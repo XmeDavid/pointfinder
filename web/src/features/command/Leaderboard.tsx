@@ -8,7 +8,9 @@ import {
   type LocationSignalStatus,
 } from '@/components/status'
 import { cn } from '@/lib/utils'
-import { useLeaderboard } from '@/hooks/queries/useMonitoring'
+import { useLeaderboard, useProgress } from '@/hooks/queries/useMonitoring'
+import { CheckInMethodIcon } from '@/components/status'
+import type { CheckInMethod } from '@/types/checkIn'
 import { useTeamLocations } from '@/hooks/queries/useTeamLocations'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useIsMobile } from '@/hooks/ui/useMediaQuery'
@@ -58,6 +60,22 @@ export function Leaderboard({ gameId }: { gameId: string }) {
     }
     return map
   }, [locations])
+
+  const { data: progress = [] } = useProgress(gameId)
+
+  // Method of each team's most recent check-in, so an operator can see at a
+  // glance how a team is proving arrival.
+  const teamLastMethod = useMemo(() => {
+    const best = new Map<string, { method: CheckInMethod; at: string }>()
+    for (const row of progress) {
+      if (!row.checkInMethod || !row.checkedInAt) continue
+      const current = best.get(row.teamId)
+      if (!current || row.checkedInAt > current.at) {
+        best.set(row.teamId, { method: row.checkInMethod, at: row.checkedInAt })
+      }
+    }
+    return best
+  }, [progress])
 
   return (
     <OverlayPanel
@@ -122,6 +140,13 @@ export function Leaderboard({ gameId }: { gameId: string }) {
                   <span className="text-sm flex-1 truncate">
                     {entry.teamName}
                   </span>
+                  {teamLastMethod.get(entry.teamId) && (
+                    <CheckInMethodIcon
+                      method={teamLastMethod.get(entry.teamId)!.method}
+                      className="h-3 w-3 shrink-0 text-muted-foreground"
+                      data-testid={`leaderboard-method-${entry.teamId}`}
+                    />
+                  )}
                   <span
                     className={cn(
                       'h-1.5 w-1.5 shrink-0 rounded-full',

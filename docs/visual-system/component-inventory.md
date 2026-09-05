@@ -392,3 +392,58 @@ States: list, selected detail, empty/loading/error list content, desktop split v
 Notes: Phones show one pane at a time with a localized Back action. Desktop keeps
 the list beside the detail. Selection and mutations remain feature-owned. Used
 by bases, challenges, teams, and stages. Preview: `/dev/visual-system`.
+
+## Check-in methods (2026-09-05)
+
+Component: CheckInMethodBadge
+Status: canonical
+Location: `web/src/components/status/CheckInMethodBadge.tsx`
+Modes: Operator Setup, Operator Command
+States: NFC, QR, LOCATION; badge and icon-only variants; small and medium sizes
+Notes: New status meaning for this slice — NFC is info/blue (tag and base signal),
+QR is override/indigo (secondary category), LOCATION is success/green (presence
+proven). Icons are lucide `Nfc`, `QrCode` and `MapPin`; they are intentionally
+not added to `design-system/icons.json`, whose generators also feed the legacy
+Swift and Compose apps that cannot play QR or location bases. Icon-only usage
+always carries a localized `aria-label`. Preview: `/dev/visual-system`.
+See `docs/specs/2026-09-05-check-in-methods-design.md`.
+
+Component: CheckInVerificationBadge
+Status: canonical
+Location: `web/src/components/status/CheckInMethodBadge.tsx`
+Modes: Operator Command
+States: claimed (warning/amber), operator (override/indigo); verified renders nothing
+Notes: A VERIFIED row is the norm and would add noise to every feed line, so only
+the exceptional verifications are shown. Sits beside `ActivityEventBadge` in the
+live feed and beside the method badge in the team inspector proof block.
+Preview: `/dev/visual-system`.
+
+Component: QrCodeSvg
+Status: canonical
+Location: `web/src/components/common/QrCodeSvg.tsx`
+Modes: Operator Setup
+States: encoded, unencodable value (renders nothing), sized, titled/decorative
+Notes: Drawn as real SVG elements from the `qrcode` package's synchronous bit
+matrix, so nothing is injected as raw HTML and codes render offline. Paints
+literal black on white rather than semantic tokens because a QR code must stay
+dark-on-light in both themes and on paper — recorded in
+`design-system/decisions.md`. Preview: `/dev/visual-system`.
+
+Component: CodesPrintSheet
+Status: canonical
+Location: `web/src/components/common/CodesPrintSheet.tsx`
+Modes: Operator Setup
+States: closed, open with one page per code, empty code list, Escape/close chrome
+Notes: Body-level portal with a scoped print rule so a single sheet can hide the
+rest of the operator workspace without touching the global stylesheet. One page
+per code carrying the base name, the code, and the game name. Used by the base
+detail (single code) and the Tags & codes tab (all QR bases).
+
+Component: LocationPicker radius ring
+Status: canonical
+Location: `web/src/components/map/LocationPicker.tsx`, `web/src/components/map/circleGeoJson.ts`
+Modes: Operator Setup
+States: no radius, radius ring, unplaced base (no ring)
+Notes: The check-in radius is drawn as a faint info-toned fill and line from a
+GeoJSON polygon approximation. Geometry is a pure, tested function; the map
+component stays a thin renderer.

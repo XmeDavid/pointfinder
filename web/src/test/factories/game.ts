@@ -14,6 +14,8 @@ const defaults: Game = {
   broadcastCode: null,
   tileSource: 'openstreetmap',
   unlockTrigger: 'CHECK_IN',
+  defaultCheckInMethod: 'NFC',
+  defaultCheckInRadiusM: 15,
 }
 
 export function createMockGame(overrides?: Partial<Game>): Game {

@@ -1,4 +1,4 @@
-import type { Base } from "@/types";
+import type { Base, CheckInMethod } from "@/types";
 import apiClient from "./client";
 
 export interface CreateBaseDto {
@@ -17,6 +17,10 @@ export interface CreateBaseDto {
   tagIds?: string[];
   /** Stage this base belongs to (v2 stages feature) */
   stageId?: string | null;
+  /** Omit on create to inherit the game default; explicit on update. */
+  checkInMethod?: CheckInMethod;
+  /** null clears the override so the base inherits the game default. */
+  checkInRadiusM?: number | null;
 }
 
 export const basesApi = {

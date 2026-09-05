@@ -66,10 +66,13 @@ describe('ContentDrawer', () => {
     expect(screen.getByTestId('tab-stages')).toBeInTheDocument()
   })
 
-  it('puts NFC management in the native content panel', () => {
-    platform.native = true
+  it('offers tags and codes in the browser as well as the phone app', () => {
     renderDrawer()
-    expect(screen.getByTestId('tab-nfc')).toBeInTheDocument()
+    expect(screen.getByTestId('tab-nfc')).toHaveTextContent('Tags & codes')
+
+    platform.native = true
+    const { container } = renderDrawer()
+    expect(container.querySelector('[data-testid="tab-nfc"]')).toBeInTheDocument()
   })
 
   it('clicking a tab calls setDrawerTab', async () => {

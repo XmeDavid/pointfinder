@@ -66,6 +66,7 @@ export const monitoringHandlers = [
         baseId: 'base-1',
         message: 'Team Alpha checked in at Base 1',
         timestamp: new Date().toISOString(),
+        metadata: { method: 'NFC', verification: 'VERIFIED' },
       },
       {
         id: 'event-2',
@@ -90,6 +91,8 @@ export const monitoringHandlers = [
         checkedInAt: new Date().toISOString(),
         challengeId: 'challenge-1',
         submissionStatus: 'approved',
+        checkInMethod: 'NFC',
+        verification: 'VERIFIED',
       },
       {
         baseId: 'base-2',

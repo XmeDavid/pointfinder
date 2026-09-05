@@ -1,5 +1,6 @@
 import type {
   AnswerType,
+  CheckInMethod,
   Game,
   GameStatus,
   OperatorSnapshotResponse,
@@ -19,6 +20,8 @@ export interface CreateGameDto {
   broadcastCode?: string;
   tileSource?: string;
   unlockTrigger?: string;
+  defaultCheckInMethod?: CheckInMethod;
+  defaultCheckInRadiusM?: number;
 }
 
 export interface GameImportData {
@@ -36,6 +39,8 @@ export interface GameMetadataExportDto {
   unlockTrigger?: string;
   broadcastEnabled?: boolean;
   broadcastCode?: string;
+  defaultCheckInMethod?: CheckInMethod;
+  defaultCheckInRadiusM?: number;
 }
 
 export interface BaseExportDto {
@@ -49,6 +54,8 @@ export interface BaseExportDto {
   tagLabels?: string[];
   stageTempId?: string | null;
   orderIndex?: number;
+  checkInMethod?: CheckInMethod;
+  checkInRadiusM?: number | null;
 }
 
 export interface ChallengeExportDto {

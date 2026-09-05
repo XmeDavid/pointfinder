@@ -18,6 +18,20 @@ import { NfcStatusBadge, StatusBadge, type StatusBadgeTone } from '@/components/
 import { BaseSequenceBadge } from '@/components/status/BaseSequenceBadge'
 import { NfcLinkControl } from '@/components/nfc/NfcLinkControl'
 import { isNative } from '@/platform'
+import { printableTagUrl } from '@/lib/tagUrl'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { QrCodeSvg } from '@/components/common/QrCodeSvg'
+import { CodesPrintSheet } from '@/components/common/CodesPrintSheet'
+import { useCheckInMethodLabel } from '@/components/status'
+import {
+  CHECK_IN_METHODS,
+  MAX_CHECK_IN_RADIUS_M,
+  MIN_CHECK_IN_RADIUS_M,
+  parseCheckInRadiusInput,
+  resolveCheckInRadiusM,
+} from '@/types/checkIn'
+import type { CheckInMethod } from '@/types/checkIn'
 
 interface BaseDetailProps {
   baseId: string
@@ -52,11 +66,17 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
   const base = bases.find((b) => b.id === baseId)
 
   // Local form state
+  const methodLabel = useCheckInMethodLabel()
   const [localName, setLocalName] = useState(base?.name ?? '')
   const [localDescription, setLocalDescription] = useState(base?.description ?? '')
   const [localLat, setLocalLat] = useState(base?.lat?.toString() ?? '')
   const [localLng, setLocalLng] = useState(base?.lng?.toString() ?? '')
   const [localHidden, setLocalHidden] = useState(base?.hidden ?? false)
+  const [localMethod, setLocalMethod] = useState<CheckInMethod>(base?.checkInMethod ?? 'NFC')
+  const [localRadius, setLocalRadius] = useState(
+    base?.checkInRadiusM != null ? String(base.checkInRadiusM) : '',
+  )
+  const [printOpen, setPrintOpen] = useState(false)
 
   // Reset local state when base changes
   useEffect(() => {
@@ -66,7 +86,18 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
     setLocalLat(base?.lat?.toString() ?? '')
     setLocalLng(base?.lng?.toString() ?? '')
     setLocalHidden(base?.hidden ?? false)
-  }, [baseId, base?.name, base?.description, base?.lat, base?.lng, base?.hidden])
+    setLocalMethod(base?.checkInMethod ?? 'NFC')
+    setLocalRadius(base?.checkInRadiusM != null ? String(base.checkInRadiusM) : '')
+  }, [
+    baseId,
+    base?.name,
+    base?.description,
+    base?.lat,
+    base?.lng,
+    base?.hidden,
+    base?.checkInMethod,
+    base?.checkInRadiusM,
+  ])
 
   // Derived data
   const baseAssignments = useMemo(
@@ -114,25 +145,49 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
     [base, challenges],
   )
 
+  const parsedLat = Number.parseFloat(localLat)
+  const parsedLng = Number.parseFloat(localLng)
+  const coordinatesValid =
+    Number.isFinite(parsedLat) &&
+    Number.isFinite(parsedLng) &&
+    parsedLat >= -90 &&
+    parsedLat <= 90 &&
+    parsedLng >= -180 &&
+    parsedLng <= 180
+  const parsedRadius = parseCheckInRadiusInput(localRadius)
+  const radiusValid = parsedRadius.ok
+
+  const gameDefaultRadius = game?.defaultCheckInRadiusM
+  const effectiveRadius = resolveCheckInRadiusM(
+    parsedRadius.ok ? parsedRadius.value : (base?.checkInRadiusM ?? null),
+    gameDefaultRadius,
+  )
+
   const isDirty =
     localName !== (base?.name ?? '') ||
     localDescription !== (base?.description ?? '') ||
     localLat !== (base?.lat?.toString() ?? '') ||
     localLng !== (base?.lng?.toString() ?? '') ||
-    localHidden !== (base?.hidden ?? false)
+    localHidden !== (base?.hidden ?? false) ||
+    localMethod !== (base?.checkInMethod ?? 'NFC') ||
+    localRadius !== (base?.checkInRadiusM != null ? String(base.checkInRadiusM) : '')
+
+  const canSave = coordinatesValid && radiusValid && !updateBase.isPending
 
   const handleSave = () => {
-    if (!base) return
+    if (!base || !canSave || !parsedRadius.ok) return
     updateBase.mutate({
       baseId: base.id,
       dto: {
         name: localName,
         description: localDescription,
-        lat: parseFloat(localLat) || 0,
-        lng: parseFloat(localLng) || 0,
+        lat: parsedLat,
+        lng: parsedLng,
         hidden: localHidden,
         tagIds: base.tagIds,
         fixedChallengeId: base.fixedChallengeId,
+        checkInMethod: localMethod,
+        checkInRadiusM: localMethod === 'LOCATION' ? parsedRadius.value : null,
       },
     })
   }
@@ -186,27 +241,156 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
               className="w-full px-3 py-2 text-sm rounded-md bg-background border border-border text-foreground resize-none"
             />
           </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label htmlFor="base-lat" className="block text-xs text-muted-foreground mb-1">
+                {t('bases.latitude')}
+              </label>
+              <Input
+                id="base-lat"
+                data-testid="base-lat-input"
+                value={localLat}
+                inputMode="decimal"
+                aria-invalid={!coordinatesValid}
+                onChange={(e) => setLocalLat(e.target.value)}
+                className="h-8"
+              />
+            </div>
+            <div>
+              <label htmlFor="base-lng" className="block text-xs text-muted-foreground mb-1">
+                {t('bases.longitude')}
+              </label>
+              <Input
+                id="base-lng"
+                data-testid="base-lng-input"
+                value={localLng}
+                inputMode="decimal"
+                aria-invalid={!coordinatesValid}
+                onChange={(e) => setLocalLng(e.target.value)}
+                className="h-8"
+              />
+            </div>
+          </div>
+          {!coordinatesValid && (
+            <p data-testid="base-coordinates-error" className="text-xs text-destructive">
+              {t('checkIn.coordinatesInvalid')}
+            </p>
+          )}
           <LocationPicker
-            lat={parseFloat(localLat) || 0}
-            lng={parseFloat(localLng) || 0}
+            lat={coordinatesValid ? parsedLat : 0}
+            lng={coordinatesValid ? parsedLng : 0}
+            radiusM={localMethod === 'LOCATION' ? effectiveRadius : null}
             mapStyle={game?.tileSource ? getStyleUrl(game.tileSource) : undefined}
             onChange={(newLat, newLng) => {
               setLocalLat(newLat.toString())
               setLocalLng(newLng.toString())
             }}
           />
-          <div className="flex gap-2 mt-1">
-            <span className="text-xs text-muted-foreground font-mono">
-              {(parseFloat(localLat) || 0).toFixed(4)}, {(parseFloat(localLng) || 0).toFixed(4)}
-            </span>
-          </div>
+
           <div>
-            <label className="block text-xs text-muted-foreground mb-1">NFC</label>
-            <div className="flex flex-col gap-2">
-              <NfcStatusBadge status={base.nfcLinked ? 'linked' : 'missing'} />
-              {isNative() && <NfcLinkControl base={base} gameId={gameId} />}
+            <label className="block text-xs text-muted-foreground mb-1" id="base-checkin-method-label">
+              {t('checkIn.method')}
+            </label>
+            <div
+              className="flex gap-1 rounded-lg bg-muted p-1"
+              role="group"
+              aria-labelledby="base-checkin-method-label"
+              data-testid="base-checkin-method"
+            >
+              {CHECK_IN_METHODS.map((method) => {
+                const isActive = localMethod === method
+                return (
+                  <button
+                    key={method}
+                    type="button"
+                    aria-pressed={isActive}
+                    data-testid={`base-checkin-method-${method.toLowerCase()}`}
+                    onClick={() => setLocalMethod(method)}
+                    className={`min-h-11 flex-1 cursor-pointer rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
+                      isActive
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {methodLabel(method)}
+                  </button>
+                )
+              })}
             </div>
+            {base.checkInMethod === game?.defaultCheckInMethod && (
+              <p data-testid="base-checkin-inherits" className="mt-1 text-xs text-muted-foreground">
+                {t('checkIn.inheritsDefault')}
+              </p>
+            )}
           </div>
+
+          {localMethod === 'LOCATION' && (
+            <div>
+              <label htmlFor="base-checkin-radius" className="block text-xs text-muted-foreground mb-1">
+                {t('checkIn.radius')}
+              </label>
+              <Input
+                id="base-checkin-radius"
+                data-testid="base-checkin-radius"
+                type="number"
+                inputMode="numeric"
+                min={MIN_CHECK_IN_RADIUS_M}
+                max={MAX_CHECK_IN_RADIUS_M}
+                value={localRadius}
+                aria-invalid={!radiusValid}
+                aria-describedby={radiusValid ? undefined : 'base-checkin-radius-error'}
+                onChange={(e) => setLocalRadius(e.target.value)}
+                className="h-8"
+              />
+              {radiusValid ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t('checkIn.radiusHint', { meters: gameDefaultRadius ?? 15 })}
+                </p>
+              ) : (
+                <p
+                  id="base-checkin-radius-error"
+                  data-testid="base-checkin-radius-error"
+                  className="mt-1 text-xs text-destructive"
+                >
+                  {t('checkIn.radiusInvalid')}
+                </p>
+              )}
+            </div>
+          )}
+
+          {localMethod === 'QR' && (
+            <div className="flex flex-col items-start gap-2">
+              <QrCodeSvg
+                value={printableTagUrl(base.id, base.nfcToken)}
+                size={144}
+                title={printableTagUrl(base.id, base.nfcToken)}
+                data-testid="base-qr-code"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                data-testid="base-qr-print"
+                onClick={() => setPrintOpen(true)}
+              >
+                {t('checkIn.printCode')}
+              </Button>
+            </div>
+          )}
+
+          {localMethod === 'NFC' && (
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1">NFC</label>
+              <div className="flex flex-col gap-2">
+                <NfcStatusBadge status={base.nfcLinked ? 'linked' : 'missing'} />
+                {isNative() && <NfcLinkControl base={base} gameId={gameId} />}
+              </div>
+            </div>
+          )}
+
+          {localMethod === 'LOCATION' && (
+            <p className="text-xs text-muted-foreground">{t('checkIn.noTagNeeded')}</p>
+          )}
         </div>
       </section>
 
@@ -358,7 +542,7 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
         <div className="border-t border-border pt-4 mt-4">
           <button
             onClick={handleSave}
-            disabled={updateBase.isPending}
+            disabled={!canSave}
             data-testid="save-base-btn"
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer"
           >
@@ -381,6 +565,12 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
         {baseRouteLocked && <p className="mt-2 text-xs text-muted-foreground">{t('baseOrder.setupOnly', { defaultValue: 'Base order can only be changed during setup.' })}</p>}
       </div>
 
+      <CodesPrintSheet
+        open={printOpen}
+        gameName={game?.name ?? ''}
+        onClose={() => setPrintOpen(false)}
+        codes={[{ id: base.id, name: base.name, value: printableTagUrl(base.id, base.nfcToken) }]}
+      />
       <ConfirmDeleteDialog
         open={confirmDeleteOpen}
         onCancel={() => setConfirmDeleteOpen(false)}

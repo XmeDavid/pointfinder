@@ -18,6 +18,12 @@ import { useReviewSubmission } from '@/hooks/mutations/useSubmissionMutations'
 import { useIsMobile } from '@/hooks/ui/useMediaQuery'
 import { relativeTime } from '@/lib/utils/dates'
 import type { ActivityEvent } from '@/types'
+import { useTranslation } from 'react-i18next'
+import { wideRingM } from '@pointfinder/game-core'
+import { CheckInMethodIcon, CheckInVerificationBadge } from '@/components/status'
+import { useBases } from '@/hooks/queries/useBases'
+import { useGame } from '@/hooks/queries/useGames'
+import { resolveCheckInRadiusM } from '@/types/checkIn'
 
 type EventType = ActivityEvent['type']
 
@@ -26,10 +32,14 @@ const allEventTypes: EventType[] = ['check_in', 'submission', 'approval', 'rejec
 function EventCard({
   event,
   gameId,
+  ringMeters,
 }: {
   event: ActivityEvent
   gameId: string
+  /** Wide-ring radius for this event's base, used by the claim summary. */
+  ringMeters: number | null
 }) {
+  const { t } = useTranslation()
   const [acted, setActed] = useState(false)
   const { data: submissions } = useSubmissions(gameId)
   const reviewMutation = useReviewSubmission(gameId)
@@ -46,6 +56,8 @@ function EventCard({
   }, [submissions, event])
 
   const showActions = matchingPending && !acted
+  const meta = event.type === 'check_in' ? event.metadata : null
+  const claimed = meta?.verification === 'CLAIMED'
 
   return (
     <div
@@ -53,7 +65,23 @@ function EventCard({
       className={`border-b border-l-2 border-border/30 px-3 py-2 ${activityEventBorderClass[event.type]}`}
     >
       <div className="flex items-center justify-between gap-2">
-        <ActivityEventBadge status={event.type} />
+        <div className="flex min-w-0 items-center gap-1.5">
+          <ActivityEventBadge status={event.type} />
+          {meta?.method && (
+            <CheckInMethodIcon
+              method={meta.method}
+              className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+              data-testid={`activity-method-${event.id}`}
+            />
+          )}
+          {meta?.verification && meta.verification !== 'VERIFIED' && (
+            <CheckInVerificationBadge
+              verification={meta.verification}
+              size="sm"
+              data-testid={claimed ? 'activity-claimed-badge' : undefined}
+            />
+          )}
+        </div>
         <span className="text-xs text-muted-foreground whitespace-nowrap">
           {relativeTime(event.timestamp)}
         </span>
@@ -61,6 +89,18 @@ function EventCard({
       <p className="text-sm text-muted-foreground mt-0.5 leading-snug">
         {event.message}
       </p>
+      {claimed && typeof meta?.teammatesTotal === 'number' && ringMeters !== null && (
+        <p
+          data-testid={`activity-teammates-${event.id}`}
+          className="mt-0.5 text-xs text-warning leading-snug"
+        >
+          {t('checkIn.teammatesInRing', {
+            inside: meta.teammatesInRing ?? 0,
+            total: meta.teammatesTotal,
+            meters: ringMeters,
+          })}
+        </p>
+      )}
       {showActions && (
         <div className="flex items-center gap-2 mt-1.5">
           <Button
@@ -120,6 +160,20 @@ export function ActivityFeed({
 }) {
   const { data: events = [] } = useActivityFeed(gameId)
   const { data: teams = [] } = useTeams(gameId)
+  const { data: bases = [] } = useBases(gameId)
+  const { data: game } = useGame(gameId)
+
+  // The server accepts a claim inside max(3 * radius, 50) m; mirror it here so
+  // the operator sees the same number the player was judged against.
+  const ringByBaseId = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const base of bases) {
+      if (base.checkInMethod !== 'LOCATION') continue
+      const radius = resolveCheckInRadiusM(base.checkInRadiusM, game?.defaultCheckInRadiusM)
+      map.set(base.id, Math.round(wideRingM(radius)))
+    }
+    return map
+  }, [bases, game?.defaultCheckInRadiusM])
   const isMobile = useIsMobile()
   const [uncontrolledMobileExpanded, setUncontrolledMobileExpanded] = useState(false)
   const mobileExpanded = controlledMobileExpanded ?? uncontrolledMobileExpanded
@@ -311,7 +365,12 @@ export function ActivityFeed({
           />
         ) : (
           filteredEvents.map((event) => (
-            <EventCard key={event.id} event={event} gameId={gameId} />
+            <EventCard
+              key={event.id}
+              event={event}
+              gameId={gameId}
+              ringMeters={event.baseId ? (ringByBaseId.get(event.baseId) ?? null) : null}
+            />
           ))
         )}
       </div>

@@ -36,3 +36,17 @@ export {
   locationSignalTone,
 } from './locationSignalStatus'
 export type { LocationSignalStatus } from './locationSignalStatus'
+
+export {
+  CheckInMethodBadge,
+  CheckInMethodIcon,
+  CheckInVerificationBadge,
+  checkInMethodIcons,
+  checkInMethodTone,
+  useCheckInMethodLabel,
+} from './CheckInMethodBadge'
+export type {
+  CheckInMethodBadgeProps,
+  CheckInMethodIconProps,
+  CheckInVerificationBadgeProps,
+} from './CheckInMethodBadge'

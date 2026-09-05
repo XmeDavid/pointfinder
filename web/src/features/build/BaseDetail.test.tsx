@@ -3,6 +3,10 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BaseDetail } from './BaseDetail'
+import { http, HttpResponse } from 'msw'
+import { server } from '@/test/msw/server'
+import { createMockBase } from '@/test/factories/base'
+import { createMockGame } from '@/test/factories/game'
 
 const platform = vi.hoisted(() => ({ native: false }))
 vi.mock('@/platform', () => ({ isNative: () => platform.native }))
@@ -22,8 +26,10 @@ vi.mock('@/stores/workspace', () => ({
 
 // Mock LocationPicker to avoid WebGL initialization in jsdom
 vi.mock('@/components/map/LocationPicker', () => ({
-  LocationPicker: ({ lat, lng }: { lat: number; lng: number }) => (
-    <div data-testid="location-picker-mock">{lat}, {lng}</div>
+  LocationPicker: ({ lat, lng, radiusM }: { lat: number; lng: number; radiusM?: number | null }) => (
+    <div data-testid="location-picker-mock" data-radius={radiusM ?? ''}>
+      {lat}, {lng}
+    </div>
   ),
 }))
 
@@ -37,6 +43,8 @@ function renderBaseDetail(baseId = 'base-1') {
     </QueryClientProvider>,
   )
 }
+
+const QR_BASE_ID = '0d2f1c9e-0000-4000-8000-000000000001'
 
 describe('BaseDetail', () => {
   beforeEach(() => {
@@ -136,4 +144,101 @@ describe('BaseDetail', () => {
       expect(screen.getByText('Fixed Challenge')).toBeInTheDocument()
     })
   })
+
+  it('lets the operator switch the base to QR and shows the printable code', async () => {
+    const user = userEvent.setup()
+    server.use(
+      http.get('/api/games/:gameId/bases', () =>
+        HttpResponse.json([
+          // Codes encode the tag URL, which needs a real base UUID.
+          createMockBase({ id: QR_BASE_ID, name: 'Base Alpha', nfcToken: 'ab12cd34', checkInMethod: 'QR' }),
+        ]),
+      ),
+    )
+    renderBaseDetail(QR_BASE_ID)
+
+    const qr = await screen.findByTestId('base-qr-code')
+    expect(qr.querySelector('title')?.textContent).toContain(QR_BASE_ID)
+    expect(screen.getByTestId('base-qr-print')).toBeInTheDocument()
+
+    await user.click(screen.getByTestId('base-checkin-method-nfc'))
+    expect(screen.queryByTestId('base-qr-code')).not.toBeInTheDocument()
+  })
+
+  it('shows the radius field and draws the ring for a location base', async () => {
+    server.use(
+      http.get('/api/games/:id', () =>
+        HttpResponse.json(createMockGame({ id: 'game-1', defaultCheckInMethod: 'LOCATION', defaultCheckInRadiusM: 25 })),
+      ),
+      http.get('/api/games/:gameId/bases', () =>
+        HttpResponse.json([
+          createMockBase({
+            id: 'base-1',
+            name: 'Base Alpha',
+            checkInMethod: 'LOCATION',
+            checkInRadiusM: null,
+          }),
+        ]),
+      ),
+    )
+    renderBaseDetail()
+
+    await waitFor(() => {
+      expect(screen.getByTestId('base-checkin-radius')).toHaveValue(null)
+    })
+    expect(screen.getByTestId('base-checkin-inherits')).toBeInTheDocument()
+    expect(screen.getByTestId('location-picker-mock')).toHaveAttribute('data-radius', '25')
+  })
+
+  it('sends the method and radius when saving', async () => {
+    const user = userEvent.setup()
+    let body: Record<string, unknown> = {}
+    server.use(
+      http.get('/api/games/:gameId/bases', () =>
+        HttpResponse.json([
+          createMockBase({ id: 'base-1', name: 'Base Alpha', checkInMethod: 'LOCATION' }),
+        ]),
+      ),
+      http.put('/api/games/:gameId/bases/:baseId', async ({ request }) => {
+        body = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json(createMockBase({ id: 'base-1' }))
+      }),
+    )
+    renderBaseDetail()
+
+    const radius = await screen.findByTestId('base-checkin-radius')
+    await user.clear(radius)
+    await user.type(radius, '60')
+    await user.click(await screen.findByTestId('save-base-btn'))
+
+    await waitFor(() => {
+      expect(body.checkInMethod).toBe('LOCATION')
+    })
+    expect(body.checkInRadiusM).toBe(60)
+  })
+
+  it('refuses to save unparseable coordinates instead of falling back to 0,0', async () => {
+    const user = userEvent.setup()
+    let putCalls = 0
+    server.use(
+      http.get('/api/games/:gameId/bases', () =>
+        HttpResponse.json([createMockBase({ id: 'base-1', name: 'Base Alpha' })]),
+      ),
+      http.put('/api/games/:gameId/bases/:baseId', () => {
+        putCalls += 1
+        return HttpResponse.json(createMockBase({ id: 'base-1' }))
+      }),
+    )
+    renderBaseDetail()
+
+    const latInput = await screen.findByTestId('base-lat-input')
+    await user.clear(latInput)
+    await user.type(latInput, 'not-a-number')
+
+    expect(await screen.findByTestId('base-coordinates-error')).toBeInTheDocument()
+    expect(screen.getByTestId('save-base-btn')).toBeDisabled()
+    await user.click(screen.getByTestId('save-base-btn'))
+    expect(putCalls).toBe(0)
+  })
+
 })

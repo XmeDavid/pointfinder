@@ -1,4 +1,25 @@
 export type UserRole = "admin" | "operator";
+export type {
+  ActivityCheckInMetadata,
+  CheckInMethod,
+  CheckInVerification,
+  TeamPositionSnapshotEntry,
+} from "./checkIn";
+export {
+  CHECK_IN_METHODS,
+  DEFAULT_CHECK_IN_RADIUS_M,
+  MAX_CHECK_IN_RADIUS_M,
+  MIN_CHECK_IN_RADIUS_M,
+  isValidCheckInRadiusM,
+  parseCheckInRadiusInput,
+  resolveCheckInRadiusM,
+} from "./checkIn";
+import type {
+  ActivityCheckInMetadata,
+  CheckInMethod,
+  CheckInVerification,
+  TeamPositionSnapshotEntry,
+} from "./checkIn";
 
 export interface User {
   id: string;
@@ -48,6 +69,10 @@ export interface Game {
   tags?: Tag[];
   orgId?: string | null;
   orgName?: string | null;
+  /** Method copied onto new bases. Changing it never rewrites existing bases. */
+  defaultCheckInMethod: CheckInMethod;
+  /** Fallback radius for LOCATION bases that do not override it. */
+  defaultCheckInRadiusM: number;
 }
 
 export interface Base {
@@ -58,6 +83,8 @@ export interface Base {
   lat: number;
   lng: number;
   nfcLinked: boolean;
+  /** Operator-only. Written into the tag URL and printed into the QR code. */
+  nfcToken?: string;
   sequenceNumber?: number | null;
   hidden: boolean;
   fixedChallengeId?: string;
@@ -71,6 +98,10 @@ export interface Base {
   tagIds?: string[];
   /** Stage this base belongs to (v2 stages feature) */
   stageId?: string | null;
+  /** How a team proves it reached this base. */
+  checkInMethod: CheckInMethod;
+  /** Raw operator value; null means "use the game default". */
+  checkInRadiusM?: number | null;
 }
 
 export type AnswerType = "text" | "file" | "none";
@@ -190,6 +221,16 @@ export interface TeamBaseProgress {
   checkedInAt?: string;
   challengeId?: string;
   submissionStatus?: string;
+  /** Method the accepted check-in used. Absent for pre-feature rows. */
+  checkInMethod?: CheckInMethod;
+  verification?: CheckInVerification;
+  /** Metres between the accepted fix and the base. */
+  proofDistanceM?: number | null;
+  /** Horizontal accuracy of the accepted fix, in metres. */
+  proofAccuracyM?: number | null;
+  proofCapturedAt?: string | null;
+  /** Only filled for CLAIMED rows. */
+  teamPositionsSnapshot?: TeamPositionSnapshotEntry[] | null;
 }
 
 export interface ActivityEvent {
@@ -201,6 +242,8 @@ export interface ActivityEvent {
   challengeId?: string;
   message: string;
   timestamp: string;
+  /** Structured payload; check-ins carry method, verification and claim counts. */
+  metadata?: ActivityCheckInMetadata | null;
 }
 
 // ─── State Snapshot Contract (P0 Track 2 Slices 1-3) ─────────────────────────

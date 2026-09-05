@@ -372,4 +372,133 @@ describe('enforced base order settings', () => {
     expect(await screen.findByRole('switch', { name: 'Enforce base order' })).toBeDisabled()
     expect(screen.getByText('Base order can only be changed during setup.')).toBeInTheDocument()
   })
+
+  it('offers the three check-in methods and saves the chosen default', async () => {
+    const user = userEvent.setup()
+    useWorkspaceStore.getState().toggleSettingsPanel()
+    let body: Record<string, unknown> = {}
+
+    server.use(
+      http.get('/api/games/:id', () =>
+        HttpResponse.json(createMockGame({ id: 'game-1', status: 'setup' })),
+      ),
+      http.put('/api/games/:id', async ({ request }) => {
+        body = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json(
+          createMockGame({ id: 'game-1', defaultCheckInMethod: 'LOCATION' }),
+        )
+      }),
+    )
+
+    render(createElement(GameSettingsPanel, { gameId: 'game-1' }), {
+      wrapper: createWrapper(),
+    })
+
+    await waitFor(() => {
+      expect(screen.getByTestId('checkin-default-method')).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByTestId('checkin-default-method-location'))
+
+    await waitFor(() => {
+      expect(body.defaultCheckInMethod).toBe('LOCATION')
+    })
+  })
+
+  it('shows the default radius only for the location method', async () => {
+    useWorkspaceStore.getState().toggleSettingsPanel()
+    server.use(
+      http.get('/api/games/:id', () =>
+        HttpResponse.json(createMockGame({ id: 'game-1', defaultCheckInMethod: 'NFC' })),
+      ),
+    )
+
+    const { unmount } = render(createElement(GameSettingsPanel, { gameId: 'game-1' }), {
+      wrapper: createWrapper(),
+    })
+
+    await waitFor(() => {
+      expect(screen.getByTestId('checkin-default-method')).toBeInTheDocument()
+    })
+    expect(screen.queryByTestId('checkin-default-radius')).not.toBeInTheDocument()
+    unmount()
+
+    server.use(
+      http.get('/api/games/:id', () =>
+        HttpResponse.json(
+          createMockGame({
+            id: 'game-1',
+            defaultCheckInMethod: 'LOCATION',
+            defaultCheckInRadiusM: 30,
+          }),
+        ),
+      ),
+    )
+
+    render(createElement(GameSettingsPanel, { gameId: 'game-1' }), {
+      wrapper: createWrapper(),
+    })
+
+    await waitFor(() => {
+      expect(screen.getByTestId('checkin-default-radius')).toHaveValue(30)
+    })
+  })
+
+  it('rejects a radius outside the 5..200 clamp without calling the API', async () => {
+    const user = userEvent.setup()
+    useWorkspaceStore.getState().toggleSettingsPanel()
+    let putCalls = 0
+
+    server.use(
+      http.get('/api/games/:id', () =>
+        HttpResponse.json(
+          createMockGame({
+            id: 'game-1',
+            defaultCheckInMethod: 'LOCATION',
+            defaultCheckInRadiusM: 15,
+          }),
+        ),
+      ),
+      http.put('/api/games/:id', () => {
+        putCalls += 1
+        return HttpResponse.json(createMockGame({ id: 'game-1' }))
+      }),
+    )
+
+    render(createElement(GameSettingsPanel, { gameId: 'game-1' }), {
+      wrapper: createWrapper(),
+    })
+
+    const input = await screen.findByTestId('checkin-default-radius')
+    await user.clear(input)
+    await user.type(input, '900')
+    await user.tab()
+
+    expect(await screen.findByTestId('checkin-default-radius-error')).toBeInTheDocument()
+    expect(putCalls).toBe(0)
+  })
+
+  it('locks the check-in group once the game is live', async () => {
+    useWorkspaceStore.getState().toggleSettingsPanel()
+    server.use(
+      http.get('/api/games/:id', () =>
+        HttpResponse.json(
+          createMockGame({ id: 'game-1', status: 'live', defaultCheckInMethod: 'LOCATION' }),
+        ),
+      ),
+    )
+
+    render(createElement(GameSettingsPanel, { gameId: 'game-1' }), {
+      wrapper: createWrapper(),
+    })
+
+    await waitFor(() => {
+      expect(screen.getByTestId('checkin-default-method-qr')).toBeDisabled()
+    })
+    expect(screen.getByTestId('checkin-default-radius')).toBeDisabled()
+    expect(
+      screen.getByText('Check-in settings can only be changed during setup.'),
+    ).toBeInTheDocument()
+  })
+
 })
