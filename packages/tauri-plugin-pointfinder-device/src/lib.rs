@@ -17,6 +17,17 @@ struct ShareArgs { path: String, content_type: String }
 #[derive(serde::Deserialize)]
 struct ShareResult { result: String }
 
+#[derive(serde::Serialize, serde::Deserialize)]
+struct SafeAreaInsets { top: f64, right: f64, bottom: f64, left: f64 }
+
+#[tauri::command]
+async fn safe_area_insets<R: Runtime>(app: tauri::AppHandle<R>) -> Result<SafeAreaInsets, String> {
+    #[cfg(not(mobile))]
+    { let _ = app; Err("unavailable: Mobile safe areas only".into()) }
+    #[cfg(mobile)]
+    { app.state::<Device<R>>().0.run_mobile_plugin("safeAreaInsets", ()).map_err(|e| e.to_string()) }
+}
+
 #[tauri::command]
 async fn share_file<R: Runtime>(app: tauri::AppHandle<R>, id: String, name: String, content_type: String) -> Result<String, String> {
     #[cfg(not(mobile))]
@@ -50,7 +61,7 @@ async fn share_file<R: Runtime>(app: tauri::AppHandle<R>, id: String, name: Stri
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("pointfinder-device")
-        .invoke_handler(tauri::generate_handler![share_file])
+        .invoke_handler(tauri::generate_handler![share_file, safe_area_insets])
         .setup(|_app, _api| {
             #[cfg(target_os = "android")]
             let handle = _api.register_android_plugin("com.prayer.pointfinder.device", "DevicePlugin")?;

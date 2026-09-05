@@ -225,3 +225,26 @@ Rules:
 - Buttons must not clip text.
 - Tables/lists should truncate secondary text, not primary identity, unless unavoidable.
 - Dynamic values should use tabular numbers where scan speed matters.
+
+## Native safe areas
+
+Player Field and Operator Setup/Command maps paint to the viewport edges. Keep
+their controls in a separate inset layer: player map header/footer use the shared
+safe gutters; operator overlays use `workspace-controls`. Reserve the 56px mobile
+navigation row above the bottom inset. Do not pad the map or give an inner
+workspace another viewport height after its parent has already reserved space.
+
+`web/src/platform/safeArea.ts` initializes the four `--native-safe-*` measurements
+from the device plugin and updates them on native layout changes, resize, and
+foreground. The shared `--safe-*` CSS variables fall back to browser `env()` values.
+UIKit scroll auto-insetting is disabled so CSS consumes the insets once; Android
+reports only system-bar/cutout overlap with the WebView, in CSS pixels. Do not use
+fixed estimates of notch or navigation-bar heights, or treat the keyboard as a
+hardware safe area.
+
+Ordinary full-page content uses `safe-area` or `safe-page`; fixed navigation uses
+`safe-bottom-nav`; full-screen drawers and dialogs own their own insets. Include
+left/right insets for landscape. Geometry checks and screenshots for portrait
+iPhone, Android three-button navigation, and landscape iPhone live in
+`web/e2e/operator-mobile.spec.ts`. These simulate inset values; physical device
+testing remains required for OS/WebView integration.

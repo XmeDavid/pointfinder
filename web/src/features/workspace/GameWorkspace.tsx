@@ -177,8 +177,9 @@ export function GameWorkspace() {
   }
 
   return (
-    <div className="h-[100dvh] w-full relative overflow-hidden">
+    <div className="h-full w-full relative overflow-hidden">
       <GameMap
+        className="workspace-map h-full w-full"
         mapStyle={getStyleUrl(game.tileSource)}
         initialCenter={bases.length > 0 ? [bases[0].lng, bases[0].lat] : undefined}
         initialZoom={bases.length > 0 ? 15 : 3}
@@ -212,67 +213,69 @@ export function GameWorkspace() {
       )}
 
       {/* TopBar floating above the map */}
-      <TopBar game={game} stages={stages} />
+      <div className="workspace-controls">
+        <TopBar game={game} stages={stages} />
 
-      {/* Mode overlays */}
-      <AnimatePresence>
-        {mode === 'build' && (
-          <motion.div
-            key="build"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <ContentDrawer gameId={gameId!} />
-            <ReadinessIndicator gameId={gameId!} gameStatus={game.status} />
-            {!drawerOpen && (
-              <button
-                onClick={() => openDrawer()}
-                data-testid="open-content-panel"
-                className="absolute bottom-20 md:bottom-4 right-4 z-20 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-lg hover:bg-primary/90 transition-colors cursor-pointer"
-              >
-                Open Content Panel
-              </button>
-            )}
-          </motion.div>
-        )}
-        {mode === 'command' && (
-          <motion.div
-            key="command"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-          >
-            <CommandOverlay gameId={gameId!} />
-          </motion.div>
-        )}
-        {mode === 'review' && (
-          <motion.div
-            key="review"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-          >
-            <ReviewOverlay gameId={gameId!} />
-          </motion.div>
-        )}
-        {mode === 'results' && (
-          <motion.div
-            key="results"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-          >
-            <ResultsOverlay gameId={gameId!} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+        {/* Mode overlays */}
+        <AnimatePresence>
+          {mode === 'build' && (
+            <motion.div
+              key="build"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <ContentDrawer gameId={gameId!} />
+              <ReadinessIndicator gameId={gameId!} gameStatus={game.status} />
+              {!drawerOpen && (
+                <button
+                  onClick={() => openDrawer()}
+                  data-testid="open-content-panel"
+                  className="absolute bottom-20 md:bottom-4 right-16 z-20 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-lg hover:bg-primary/90 transition-colors cursor-pointer"
+                >
+                  Open Content Panel
+                </button>
+              )}
+            </motion.div>
+          )}
+          {mode === 'command' && (
+            <motion.div
+              key="command"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <CommandOverlay gameId={gameId!} />
+            </motion.div>
+          )}
+          {mode === 'review' && (
+            <motion.div
+              key="review"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <ReviewOverlay gameId={gameId!} />
+            </motion.div>
+          )}
+          {mode === 'results' && (
+            <motion.div
+              key="results"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <ResultsOverlay gameId={gameId!} />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-      {/* Settings panel -- accessible in any mode */}
-      {settingsPanelOpen && <GameSettingsPanel gameId={gameId!} />}
+        {/* Settings panel -- accessible in any mode */}
+        {settingsPanelOpen && <GameSettingsPanel gameId={gameId!} />}
+      </div>
     </div>
   )
 }

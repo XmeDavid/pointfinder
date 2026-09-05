@@ -1,3 +1,3 @@
 [default]
-description = "Share an app-owned export through the native system sheet"
-permissions = ["allow-share-file", "allow-register-listener", "allow-remove-listener"]
+description = "Share app-owned exports and observe native layout and lifecycle"
+permissions = ["allow-share-file", "allow-safe-area-insets", "allow-register-listener", "allow-remove-listener"]

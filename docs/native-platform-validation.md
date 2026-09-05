@@ -157,3 +157,26 @@ and removes that file. If interrupted, retain the file and rerun verification.
 - Finish signing/store checks and web hosting path migration described in
   [frontend consolidation](frontend-consolidation.md). No production deployment
   or store release was performed by this work.
+# Safe-area follow-up (2026-09-05)
+
+The device bridge now supplies safe-area measurements to the shared frontend.
+Map canvases remain full size; operator/player controls, bottom navigation,
+drawers, dialogs, and authentication pages use the shared safe-area utilities.
+The operator workspace no longer nests a viewport-height surface inside an
+already constrained parent. Short landscape sidebars scroll within the safe area.
+
+Validation: web typecheck/lint, both production builds, 42 focused Vitest tests,
+Rust `cargo check`, Android plugin Kotlin compilation, and a Tauri arm64 debug APK
+build passed. Browser E2E passed (6 applicable cases); native artifact E2E passed
+(6 applicable cases), including portrait iPhone, Android three-button navigation,
+and landscape iPhone inset geometry. The final targeted layout run passed both
+cases and checks canvas bounds and map pointer access as well as control bounds.
+Design-system generation checks passed; the advisory audit reports 10 findings.
+
+The APK was installed on the connected Samsung S22. A read-only WebView check
+confirmed native `{top: 27, right: 0, bottom: 48, left: 0}` and identical applied
+CSS values at a 360×780 CSS-pixel viewport. The final subsequent frontend change
+only adjusted the landscape rail and content-panel button position; those were
+verified in the built-artifact layout tests. No account/game data was changed.
+iOS compilation and actual iPhone rotation/keyboard/device appearance remain
+unverified on this Linux host. Simulated safe areas do not establish iOS parity.

@@ -6,7 +6,7 @@ import {
   MapPinned,
   Radio,
 } from 'lucide-react'
-import { useState, type ReactNode } from 'react'
+import { useState, type CSSProperties, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { ErrorState } from '@/components/feedback/ErrorState'
@@ -75,6 +75,28 @@ const locationSignalStatuses: LocationSignalStatus[] = [
   'unknown',
 ]
 
+function SafeAreaPreview() {
+  const [landscape, setLandscape] = useState(false)
+  const insets = {
+    '--safe-top': landscape ? '0px' : '59px',
+    '--safe-bottom': landscape ? '21px' : '34px',
+    '--safe-left': landscape ? '44px' : '0px',
+    '--safe-right': landscape ? '44px' : '0px',
+  } as CSSProperties
+  return (
+    <div className="space-y-3">
+      <Button variant="outline" onClick={() => setLandscape(!landscape)}>{landscape ? 'Portrait' : 'Landscape'}</Button>
+      <div className="relative h-80 overflow-hidden rounded-lg border border-border bg-muted" style={insets}>
+        <div className="absolute inset-0 grid place-items-center text-muted-foreground">Edge-to-edge map surface</div>
+        <div className="workspace-controls">
+          <OverlayPanel className="absolute inset-x-2 top-2" padding="sm">Game controls inside the safe area</OverlayPanel>
+          <Button className="absolute bottom-3 left-1/2 -translate-x-1/2">Scan a tag</Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function HarnessSection({
   title,
   children,
@@ -116,6 +138,9 @@ export function VisualHarnessPage() {
         </header>
 
         <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
+          <HarnessSection title="Native safe areas">
+            <SafeAreaPreview />
+          </HarnessSection>
           <HarnessSection title="Buttons">
             <div className="flex flex-wrap items-center gap-2">
               <Button>Default</Button>

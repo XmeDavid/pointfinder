@@ -92,7 +92,7 @@ export function RegisterPage() {
   if (!token) {
     return (
       <div
-        className={`register-atlas-screen flex min-h-screen items-center justify-center bg-muted/30 p-4 ${
+        className={`register-atlas-screen safe-page flex min-h-dvh items-center justify-center bg-muted/30 ${
           arrivedFromLanding ? "register-atlas-screen--arrived" : ""
         }`}
       >
@@ -145,7 +145,7 @@ export function RegisterPage() {
   // Token present — full registration form
   return (
     <div
-      className={`register-atlas-screen flex min-h-screen items-center justify-center bg-muted/30 p-4 ${
+      className={`register-atlas-screen safe-page flex min-h-dvh items-center justify-center bg-muted/30 ${
         arrivedFromLanding ? "register-atlas-screen--arrived" : ""
       }`}
     >

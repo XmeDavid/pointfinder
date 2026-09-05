@@ -96,7 +96,7 @@ export default function PlayerMap() {
       </Map>
 
       {/* Header */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 flex flex-col gap-2 px-3 pt-[calc(var(--safe-top)+8px)]">
+      <div className="safe-gutter pointer-events-none absolute inset-x-0 top-0 flex flex-col gap-2 pt-[calc(var(--safe-top)+8px)]">
         <div className="pointer-events-auto flex items-center justify-between gap-3 rounded-lg border border-border bg-card/95 px-4 py-2.5 shadow-overlay backdrop-blur">
           <div className="min-w-0">
             <h1 className="truncate text-base font-semibold leading-tight">{game.snapshot?.game.name ?? auth.gameName}</h1>
@@ -131,7 +131,7 @@ export default function PlayerMap() {
       )}
 
       {/* Bottom: selected base card, legend, actions */}
-      <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 px-3 pb-[calc(var(--safe-bottom)+12px)]">
+      <div className="safe-gutter absolute inset-x-0 bottom-0 flex flex-col gap-2 pb-[calc(var(--safe-bottom)+12px)]">
         {selectedEntry && (
           <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card/95 p-3 shadow-overlay backdrop-blur" role="dialog" aria-label={selectedEntry.title}>
             <div className="min-w-0">

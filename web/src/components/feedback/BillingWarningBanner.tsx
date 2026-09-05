@@ -35,7 +35,7 @@ export function BillingWarningBanner() {
         )
 
   return (
-    <div className="flex items-center gap-3 border-b border-warning/30 bg-warning/10 px-4 py-2.5 text-warning" role="status">
+    <div className="billing-warning-banner flex items-center gap-3 border-b border-warning/30 bg-warning/10 px-4 py-2.5 text-warning" role="status">
       <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
       <p className="flex-1 text-sm text-foreground">{message}</p>
       <button

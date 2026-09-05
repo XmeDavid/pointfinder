@@ -5,12 +5,28 @@ import WebKit
 
 private struct ShareArgs: Decodable { let path: String; let contentType: String }
 
+// Observe UIKit layout without replacing WKWebView's scroll/navigation delegates.
+private class SafeAreaObserver: UIView {
+    var changed: (() -> Void)?
+    override func safeAreaInsetsDidChange() { super.safeAreaInsetsDidChange(); changed?() }
+    override func layoutSubviews() { super.layoutSubviews(); changed?() }
+}
+
 class DevicePlugin: Plugin {
     private var observers: [NSObjectProtocol] = []
     private weak var hostView: WKWebView?
+    private var lastInsets: UIEdgeInsets?
 
     @objc public override func load(webview: WKWebView) {
         hostView = webview
+        // CSS owns the control insets; UIKit must not shift the entire map too.
+        webview.scrollView.contentInsetAdjustmentBehavior = .never
+        webview.scrollView.contentInset = .zero
+        let observer = SafeAreaObserver(frame: webview.bounds)
+        observer.isUserInteractionEnabled = false
+        observer.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        observer.changed = { [weak self] in self?.publishInsets() }
+        webview.addSubview(observer)
         let center = NotificationCenter.default
         observers.append(center.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
             self?.trigger("foreground", data: ["active": true])
@@ -21,6 +37,27 @@ class DevicePlugin: Plugin {
     }
 
     deinit { for observer in observers { NotificationCenter.default.removeObserver(observer) } }
+
+    private func insetData() -> [String: CGFloat] {
+        let insets = hostView?.safeAreaInsets ?? .zero
+        return ["top": insets.top, "right": insets.right, "bottom": insets.bottom, "left": insets.left]
+    }
+
+    private func publishInsets() {
+        guard let insets = hostView?.safeAreaInsets, insets != lastInsets else { return }
+        lastInsets = insets
+        trigger("safeAreaChanged", data: insetData())
+    }
+
+    @objc public func safeAreaInsets(_ invoke: Invoke) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.hostView?.window != nil else {
+                invoke.reject("unavailable: No active window")
+                return
+            }
+            invoke.resolve(self.insetData())
+        }
+    }
 
     @objc public func shareFile(_ invoke: Invoke) throws {
         let args = try invoke.parseArgs(ShareArgs.self)

@@ -131,7 +131,7 @@ function PageSpinner() {
 // ---------------------------------------------------------------------------
 function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-dvh overflow-hidden pt-[var(--safe-top)] pb-[var(--safe-bottom)]">
+    <div className="safe-area flex h-dvh overflow-hidden">
       <IconRail showModes={false} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <BillingWarningBanner />
@@ -143,13 +143,13 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
-function GameLayout({ children }: { children: React.ReactNode }) {
+function GameLayout({ children, map = false }: { children: React.ReactNode; map?: boolean }) {
   return (
-    <div className="flex h-dvh overflow-hidden pt-[var(--safe-top)] pb-[var(--safe-bottom)]">
+    <div className={`flex h-dvh overflow-hidden ${map ? 'edge-to-edge-layout' : 'safe-area'}`}>
       <IconRail showModes={true} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <BillingWarningBanner />
-        <main className="flex-1 relative overflow-hidden pb-14 md:pb-0">
+        <main className={`min-h-0 flex-1 relative overflow-hidden ${map ? '' : 'pb-14 md:pb-0'}`}>
           <FrozenBlocker>{children}</FrozenBlocker>
         </main>
       </div>
@@ -281,7 +281,7 @@ const router = createBrowserRouter([{ element: <><PushIntake /><TagIntake /></>,
     path: "/game/:id",
     element: (
       <AuthGuard>
-        <GameLayout>
+        <GameLayout map>
           <Suspense fallback={<PageSpinner />}>
             <GameWorkspace />
           </Suspense>

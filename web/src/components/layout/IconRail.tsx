@@ -165,7 +165,7 @@ export function IconRail({ showModes }: IconRailProps) {
     <>
       {/* Desktop: vertical left sidebar */}
       <div
-        className="hidden md:flex w-12 bg-card border-r border-border flex-col items-center py-3 gap-2 shrink-0 z-40"
+        className="operator-rail hidden md:flex w-12 bg-card border-r border-border flex-col items-center py-3 gap-2 shrink-0 z-40"
         data-testid="icon-rail-desktop"
       >
         {/* Workspace Switcher (includes personal + org buttons + create) */}
@@ -260,7 +260,7 @@ export function IconRail({ showModes }: IconRailProps) {
 
       {/* Mobile: bottom tab bar */}
       <div
-        className="md:hidden fixed bottom-0 left-0 right-0 flex flex-row items-center justify-center h-14 z-50 bg-card border-t border-border gap-3 px-4"
+        className="safe-bottom-nav md:hidden fixed bottom-0 left-0 right-0 flex flex-row items-center justify-center z-50 bg-card border-t border-border gap-3"
         data-testid="icon-rail-mobile"
       >
         {/* PF Logo */}

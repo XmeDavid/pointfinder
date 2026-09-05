@@ -22,6 +22,37 @@ async function noSidewaysScroll(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true)
 }
 
+const safeProfiles = [
+  { name: 'iphone', width: 390, height: 844, top: 59, bottom: 34, left: 0, right: 0 },
+  { name: 'android-buttons', width: 390, height: 844, top: 24, bottom: 48, left: 0, right: 0 },
+  { name: 'iphone-landscape', width: 844, height: 390, top: 0, bottom: 21, left: 59, right: 59 },
+]
+
+async function simulateSafeArea(page: Page, profile: typeof safeProfiles[number]) {
+  await page.setViewportSize({ width: profile.width, height: profile.height })
+  await page.evaluate((p) => {
+    for (const edge of ['top', 'right', 'bottom', 'left'] as const) {
+      document.documentElement.style.setProperty(`--native-safe-${edge}`, `${p[edge]}px`)
+    }
+  }, profile)
+}
+
+async function expectSafeControls(page: Page, selector: string, profile: typeof safeProfiles[number]) {
+  const controls = page.locator(selector)
+  expect(await controls.count()).toBeGreaterThan(0)
+  for (const control of await controls.all()) {
+    if (!await control.isVisible()) continue
+    // The desktop rail can scroll on short landscape windows.
+    if (await control.evaluate((element) => !!element.closest('.operator-rail'))) await control.scrollIntoViewIfNeeded()
+    const box = await control.boundingBox()
+    expect(box).not.toBeNull()
+    expect(box!.y).toBeGreaterThanOrEqual(profile.top)
+    expect(box!.y + box!.height).toBeLessThanOrEqual(profile.height - profile.bottom + 1)
+    expect(box!.x).toBeGreaterThanOrEqual(profile.left)
+    expect(box!.x + box!.width).toBeLessThanOrEqual(profile.width - profile.right + 1)
+  }
+}
+
 test('operator dashboard, workspace and NFC page fit a phone', async ({ page }, info) => {
   test.skip(info.project.name !== 'native-shell', 'Phone audit runs against the native artifact project')
   const errors: string[] = []
@@ -51,6 +82,39 @@ test('operator dashboard, workspace and NFC page fit a phone', async ({ page }, 
   await page.screenshot({ path: 'test-results/mobile-operator-workspace.png' })
   await noSidewaysScroll(page)
 
+  // Exercise the actual built layout with nonzero insets; a phone viewport alone
+  // does not emulate a notch or system navigation bar in desktop Chromium.
+  for (const profile of safeProfiles) {
+    await simulateSafeArea(page, profile)
+    await page.emulateMedia({ colorScheme: profile.name === 'android-buttons' ? 'dark' : 'light', reducedMotion: 'reduce' })
+    // Operator theme is an explicit saved preference, independent of the OS theme.
+    await page.evaluate((dark) => {
+      localStorage.setItem('pointfinder-theme', dark ? 'dark' : 'light')
+      window.dispatchEvent(new StorageEvent('storage', { key: 'pointfinder-theme' }))
+    }, profile.name === 'android-buttons')
+    await expectSafeControls(page, '[data-testid="icon-rail-mobile"] button, [data-testid="icon-rail-desktop"] button, .workspace-controls > div:first-child button', profile)
+    const map = await page.getByTestId('map-wrapper').boundingBox()
+    expect(map!.y).toBe(0)
+    expect(map!.height).toBe(profile.height)
+    const canvas = await page.locator('.maplibregl-canvas').boundingBox()
+    expect(canvas!.y).toBe(0)
+    expect(canvas!.height).toBe(profile.height)
+    const nav = page.getByTestId(profile.width < 768 ? 'icon-rail-mobile' : 'icon-rail-desktop')
+    await nav.getByRole('button', { name: 'Review', exact: true }).click()
+    await expect(page.getByTestId('review-overlay')).toBeVisible()
+    const review = await page.getByTestId('review-overlay').boundingBox()
+    expect(review!.y).toBeGreaterThanOrEqual(profile.top)
+    expect(review!.y + review!.height).toBeLessThanOrEqual(profile.height - profile.bottom - (profile.width < 768 ? 56 : 0))
+    await nav.getByRole('button', { name: 'Build', exact: true }).click()
+    await expect(page.getByTestId('review-overlay')).toHaveCount(0)
+    expect(await page.evaluate(() => !!document.elementFromPoint(innerWidth / 2, innerHeight / 2)?.closest('.maplibregl-map'))).toBe(true)
+    await page.screenshot({ path: `test-results/safe-area-operator-${profile.name}.png` })
+  }
+  await simulateSafeArea(page, safeProfiles[0])
+  await page.getByTestId('open-content-panel').click()
+  await expect(page.getByTestId('slide-drawer')).toBeVisible()
+  await expectSafeControls(page, '[data-testid="drawer-tabs"] button', safeProfiles[0])
+
   await page.goto('/game/g/nfc')
   await expect(page.getByTestId('nfc-tags-page')).toBeVisible()
   await expect(page.getByTestId('nfc-base-b2')).toBeVisible()
@@ -77,6 +141,22 @@ test('player settings, inbox and base fit a phone in both themes and in Portugue
   await expect(page.getByRole('button', { name: 'Leave Game' })).toBeVisible()
   await page.screenshot({ path: 'test-results/mobile-player-settings.png', fullPage: true })
   await noSidewaysScroll(page)
+
+  await page.goto('/')
+  await expect(page.getByTestId('player-settings-btn')).toBeVisible()
+  for (const profile of safeProfiles) {
+    await simulateSafeArea(page, profile)
+    await page.emulateMedia({ colorScheme: profile.name === 'android-buttons' ? 'dark' : 'light', reducedMotion: 'reduce' })
+    await expectSafeControls(page, '[data-testid="player-settings-btn"], [data-testid="player-inbox-btn"], button[aria-label="My location"]', profile)
+    const map = await page.locator('.maplibregl-map').boundingBox()
+    expect(map).toMatchObject({ x: 0, y: 0, width: profile.width, height: profile.height })
+    // Bottom controls must also clear the home indicator / Android buttons.
+    const bottom = await page.locator('.safe-gutter').last().locator('button').last().boundingBox()
+    expect(bottom).not.toBeNull()
+    expect(bottom!.y + bottom!.height).toBeLessThanOrEqual(profile.height - profile.bottom - 12)
+    await page.screenshot({ path: `test-results/safe-area-player-${profile.name}.png` })
+  }
+  await simulateSafeArea(page, safeProfiles[0])
 
   await page.goto('/inbox')
   await expect(page.getByText(/Lunch at the chapel/)).toBeVisible()

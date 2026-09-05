@@ -97,7 +97,7 @@ export default function ReadinessIndicator({
 
   return (
     <div
-      className="absolute bottom-4 left-16 z-20"
+      className="absolute bottom-20 md:bottom-4 left-4 md:left-16 z-20"
       data-testid="readiness-indicator"
     >
       <GlassPanel>
