@@ -10,6 +10,7 @@ import { isNative, kv } from '@/platform'
 import { openScannerSettings, qrAvailable, scanQr } from '@/platform/qr'
 import { Screen } from '@/features/player/components/Screen'
 import { PermissionDisclosure } from '@/features/player/components/PermissionDisclosure'
+import { QrScannerOverlay } from '@/features/player/components/QrScannerOverlay'
 import { parseJoinCode } from '@/features/player/joinCode'
 
 const DISCLOSURE_KEY = 'disclosureSeen'
@@ -26,6 +27,7 @@ export default function Join() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [scanError, setScanError] = useState<ScanError | null>(null)
+  const [scanning, setScanning] = useState(false)
   const [disclosure, setDisclosure] = useState<'unknown' | 'show' | 'done'>(() => (isNative() ? 'unknown' : 'done'))
   const scanAbort = useRef<AbortController | null>(null)
 
@@ -49,8 +51,12 @@ export default function Join() {
     scanAbort.current?.abort()
     const controller = new AbortController()
     scanAbort.current = controller
+    setScanning(true)
     try {
-      const text = await scanQr({ signal: controller.signal })
+      // Let React replace the opaque join screen before the native camera makes
+      // the webview transparent and starts delivering frames underneath it.
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+      const text = await scanQr({ signal: controller.signal, windowed: true })
       if (text === null) return
       const code = parseJoinCode(text)
       if (!code) return setScanError({ code: 'invalid', message: t('join.invalidQr') })
@@ -58,6 +64,9 @@ export default function Join() {
     } catch (err) {
       const code = (err as { code?: string }).code ?? 'failed'
       setScanError({ code, message: code === 'denied' ? t('join.cameraDisabled') : code === 'unavailable' ? t('join.scanUnavailable') : t('common.unknownError') })
+    } finally {
+      if (scanAbort.current === controller) scanAbort.current = null
+      setScanning(false)
     }
   }
 
@@ -79,6 +88,7 @@ export default function Join() {
 
   if (disclosure === 'unknown') return <Screen>{null}</Screen>
   if (disclosure === 'show') return <PermissionDisclosure onContinue={() => void acceptDisclosure()} />
+  if (scanning) return <QrScannerOverlay onBack={() => scanAbort.current?.abort()} />
 
   return (
     <Screen>

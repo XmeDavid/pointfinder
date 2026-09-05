@@ -4,9 +4,12 @@ Canonical scenarios come from `design-system/scenarios.json`: default, selected,
 
 | Fixture | Web `/dev/visual-system` | SwiftUI preview | Compose preview |
 |---|---:|---:|---:|
+| Base route numbering with progress, queued, long copy, disabled | yes | pending | pending |
+| Player next/required base, hidden destination, route completed | yes | pending | pending |
 | Core controls and feedback | yes | pending | pending |
 | Semantic status and sync | yes | pending | pending |
 | Player field banners and submission states | pending | yes | yes |
+| Player onboarding and QR scanner chrome | partial | n/a | n/a |
 | Player map chrome and detail states | pending | yes | yes |
 | Operator stats, review cards, and rescue actions | partial | yes | yes |
 | Operator setup readiness, resources, and launch | partial | yes | yes |

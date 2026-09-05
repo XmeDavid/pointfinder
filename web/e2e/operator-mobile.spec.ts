@@ -13,6 +13,10 @@ const bases = [
   { id: 'b1', gameId: 'g', name: 'Oak tree', description: '', lat: 40.09, lng: -8.87, nfcLinked: true, nfcToken: 'tok1', hidden: false, fixedChallengeId: null },
   { id: 'b2', gameId: 'g', name: 'Old mill', description: '', lat: 40.091, lng: -8.871, nfcLinked: false, nfcToken: 'tok2', hidden: false, fixedChallengeId: null },
 ]
+const stages = [
+  { id: 's1', gameId: 'g', name: 'Opening', description: null, orderIndex: 0, transitionType: 'manual', scheduledAt: null, triggerBaseId: null, isActive: true, baseIds: ['b1'], createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+  { id: 's2', gameId: 'g', name: 'Final', description: null, orderIndex: 1, transitionType: 'manual', scheduledAt: null, triggerBaseId: null, isActive: false, baseIds: ['b2'], createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+]
 const player = { kind: 'player', token: 'header.eyJ0ZWFtSWQiOiJ0In0.signature', playerId: 'p', teamId: 't', gameId: 'g', displayName: 'Scout', teamName: 'Falcons', teamColor: '#22c55e', gameName: 'Forest game', gameStatus: 'live' }
 const snapshot = { stateVersion: 1, serverTime: '2026-09-05T00:00:00Z', game: { id: 'g', name: 'Forest game', status: 'live' }, team: { id: 't', name: 'Falcons', memberCount: 4 }, progress: [{ baseId: 'b1', status: 'checked_in', challengeTitle: 'Find the clue', lat: 40.09, lng: -8.87, nfcLinked: true, challengeId: 'c' }], submissions: [], uploadSessions: [] }
 const data = { gameStatus: 'live', bases: [bases[0]], challenges: [{ id: 'c', title: 'Find the clue', description: 'Look near the roots', answerType: 'text', content: '<p>What is carved on the trunk?</p>', completionContent: '' }], assignments: [{ id: 'a', baseId: 'b1', challengeId: 'c', teamId: null }], progress: [] }
@@ -66,6 +70,7 @@ async function setupOperator(page: Page, gameStatus: string, getBases = () => ba
     if (path === '/api/games') return route.fulfill({ json: [{ ...game, status: gameStatus }] })
     if (path === '/api/games/g/bases') return route.fulfill({ json: getBases() })
     if (path === '/api/games/g/bases/b1') return route.fulfill({ json: bases[0] })
+    if (path === '/api/games/g/stages') return route.fulfill({ json: gameStatus === 'live' ? stages : [] })
     return route.fulfill({ json: [] })
   })
   await page.goto('/login')
@@ -77,20 +82,17 @@ async function setupOperator(page: Page, gameStatus: string, getBases = () => ba
   await expect(page.getByTestId('icon-rail-mobile')).toBeVisible()
 }
 
-test('setup controls, native NFC navigation, profile languages and the drawer fit a phone', async ({ page }, info) => {
+test('setup controls, settings, account navigation and the drawer fit a phone', async ({ page }, info) => {
   test.skip(info.project.name !== 'native-shell', 'Phone layout uses the native artifact')
   let currentBases: typeof bases = []
   await setupOperator(page, 'setup', () => currentBases)
   await expect(page.getByTestId('readiness-indicator')).toBeVisible()
   const nav = page.getByTestId('icon-rail-mobile')
-  // Services are browser-backed in this harness. Enable only native presentation
-  // after bootstrap to include the extra NFC button; this is not an IPC test.
-  await page.evaluate(() => Object.defineProperty(window, '__TAURI_INTERNALS__', { configurable: true, value: {
-    invoke: async () => ({}), transformCallback: () => 0, unregisterCallback: () => {},
-  } }))
   await nav.getByRole('button', { name: 'Build', exact: true }).click()
-  await expect(page.getByTestId('nfc-tags-btn')).toBeVisible()
-  await page.evaluate(() => Reflect.deleteProperty(window, '__TAURI_INTERNALS__'))
+  await expect(nav.getByTestId('settings-btn')).toBeVisible()
+  await nav.getByTestId('settings-btn').click()
+  await expect(page.getByTestId('game-settings-panel')).toBeVisible()
+  await page.getByTestId('slide-drawer-close').click()
   for (const width of [360, 390]) {
     const profile = { ...safeProfiles[0], width }
     await simulateSafeArea(page, profile)
@@ -103,6 +105,7 @@ test('setup controls, native NFC navigation, profile languages and the drawer fi
     await page.screenshot({ path: `test-results/phone-setup-${width}.png` })
   }
   await nav.getByTestId('user-avatar-btn').click()
+  await expect(page.getByTestId('menu-dashboard')).toBeVisible()
   await expect(page.getByText('Deutsch', { exact: true })).toBeVisible()
   await expectSafeControls(page, '[data-dropdown] button', safeProfiles[0])
   await page.getByRole('button', { name: 'Deutsch', exact: true }).click()
@@ -111,6 +114,10 @@ test('setup controls, native NFC navigation, profile languages and the drawer fi
   await page.screenshot({ path: 'test-results/phone-profile-languages.png' })
   await page.getByRole('button', { name: 'English', exact: true }).click()
   await page.getByTestId('open-content-panel').click()
+  await expect(page.getByTestId('tab-nfc')).toBeVisible()
+  await page.getByTestId('tab-nfc').click()
+  await expect(page.getByTestId('nfc-tags-page')).toBeVisible()
+  await page.getByTestId('tab-bases').click()
   await expectSafeControls(page, '[data-testid="slide-drawer"] button', safeProfiles[0])
   await expect(page.getByText('No bases yet', { exact: true })).toBeVisible()
   await expect(page.getByText('Select a base to view details', { exact: true })).not.toBeVisible()
@@ -164,6 +171,7 @@ test('operator dashboard, workspace and NFC page fit a phone', async ({ page }, 
     if (path === '/api/games/g') return route.fulfill({ json: game })
     if (path === '/api/games') return route.fulfill({ json: [game] })
     if (path === '/api/games/g/bases') return route.fulfill({ json: bases })
+    if (path === '/api/games/g/stages') return route.fulfill({ json: stages })
     return route.fulfill({ json: [] })
   })
   await page.goto('/login')
@@ -177,6 +185,9 @@ test('operator dashboard, workspace and NFC page fit a phone', async ({ page }, 
 
   await page.goto('/game/g')
   await expect(page.getByTestId('icon-rail-mobile')).toBeVisible()
+  const topBarPrimary = await page.getByTestId('top-bar-primary').boundingBox()
+  const stageStrip = await page.getByTestId('stage-strip').boundingBox()
+  expect(stageStrip!.y).toBeGreaterThanOrEqual(topBarPrimary!.y + topBarPrimary!.height)
   await page.waitForTimeout(1500)
   await page.screenshot({ path: 'test-results/mobile-operator-workspace.png' })
   await noSidewaysScroll(page)
@@ -199,6 +210,28 @@ test('operator dashboard, workspace and NFC page fit a phone', async ({ page }, 
     expect(canvas!.y).toBe(0)
     expect(canvas!.height).toBe(profile.height)
     const nav = page.getByTestId(profile.width < 768 ? 'icon-rail-mobile' : 'icon-rail-desktop')
+    if (profile.width < 768) {
+      await nav.getByRole('button', { name: 'Command', exact: true }).click()
+      const leaderboard = await page.getByTestId('leaderboard').boundingBox()
+      const statsBar = page.getByTestId('stats-bar')
+      const stats = await statsBar.boundingBox()
+      expect(leaderboard).not.toBeNull()
+      expect(stats).not.toBeNull()
+      expect(leaderboard!.y + leaderboard!.height).toBeLessThanOrEqual(stats!.y)
+      await expect(statsBar.getByTestId('mobile-activity-btn')).toBeVisible()
+      const dockLayout = await statsBar.evaluate((element) => ({
+        fits: element.scrollWidth <= element.clientWidth + 1,
+        rows: new Set(Array.from(element.children, (child) => (child as HTMLElement).offsetTop)).size,
+      }))
+      expect(dockLayout).toEqual({ fits: true, rows: 2 })
+      await statsBar.getByTestId('mobile-activity-btn').click()
+      await expect(page.getByTestId('activity-feed')).toBeVisible()
+      await expect(page.getByTestId('stats-bar')).toHaveCount(0)
+      const activity = await page.getByTestId('activity-feed').boundingBox()
+      expect(activity!.y + activity!.height).toBeLessThanOrEqual(profile.height - profile.bottom - 56)
+      await page.getByTestId('activity-feed-collapse').click()
+      await expect(page.getByTestId('stats-bar')).toBeVisible()
+    }
     await nav.getByRole('button', { name: 'Review', exact: true }).click()
     await expect(page.getByTestId('review-overlay')).toBeVisible()
     const review = await page.getByTestId('review-overlay').boundingBox()

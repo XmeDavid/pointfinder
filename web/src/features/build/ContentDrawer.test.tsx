@@ -4,6 +4,9 @@ import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ContentDrawer } from './ContentDrawer'
 
+const platform = vi.hoisted(() => ({ native: false }))
+vi.mock('@/platform/runtime', () => ({ isNative: () => platform.native, isNativeEntry: () => platform.native }))
+
 // Mock workspace store
 const mockStore = {
   drawerOpen: true,
@@ -48,6 +51,7 @@ function renderDrawer() {
 
 describe('ContentDrawer', () => {
   beforeEach(() => {
+    platform.native = false
     mockStore.drawerOpen = true
     mockStore.drawerTab = 'bases'
     mockStore.setDrawerTab.mockClear()
@@ -60,6 +64,12 @@ describe('ContentDrawer', () => {
     expect(screen.getByTestId('tab-challenges')).toBeInTheDocument()
     expect(screen.getByTestId('tab-teams')).toBeInTheDocument()
     expect(screen.getByTestId('tab-stages')).toBeInTheDocument()
+  })
+
+  it('puts NFC management in the native content panel', () => {
+    platform.native = true
+    renderDrawer()
+    expect(screen.getByTestId('tab-nfc')).toBeInTheDocument()
   })
 
   it('clicking a tab calls setDrawerTab', async () => {

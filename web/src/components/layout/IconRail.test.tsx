@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { IconRail } from "./IconRail";
 import { useWorkspaceStore } from "@/stores/workspace";
 const platform = vi.hoisted(() => ({ native: false }));
-vi.mock('@/platform/runtime', () => ({ isNative: () => platform.native }));
+vi.mock('@/platform/runtime', () => ({ isNative: () => platform.native, isNativeEntry: () => platform.native }));
 
 // Wrap in router + query client since IconRail uses useNavigate / useLocation and react-query
 function renderWithRouter(ui: React.ReactNode) {
@@ -26,20 +26,21 @@ describe("IconRail", () => {
     });
   });
 
-  it('keeps native phone navigation to seven items with language inside profile', () => {
+  it('uses six native phone items with settings and a combined home/account entry', () => {
     platform.native = true;
     renderWithRouter(<IconRail showModes={true} />);
     const nav = within(screen.getByTestId('icon-rail-mobile'));
-    expect(nav.getByTestId('nfc-tags-btn')).toBeInTheDocument();
-    expect(nav.getAllByRole('button')).toHaveLength(7);
+    expect(nav.queryByTestId('nfc-tags-btn')).not.toBeInTheDocument();
+    expect(nav.getByTestId('settings-btn')).toBeInTheDocument();
+    expect(nav.getAllByRole('button')).toHaveLength(6);
     expect(nav.queryByTestId('language-picker-btn')).not.toBeInTheDocument();
   });
 
-  it("renders PF logo", () => {
+  it("removes the separate mobile PF button in favor of the account menu", () => {
     renderWithRouter(<IconRail showModes={true} />);
-    const logos = screen.getAllByLabelText("Dashboard");
-    expect(logos.length).toBeGreaterThan(0);
-    expect(logos[0].textContent).toBe("PF");
+    const nav = within(screen.getByTestId('icon-rail-mobile'));
+    expect(nav.queryByLabelText('Dashboard')).not.toBeInTheDocument();
+    expect(nav.getByTestId('user-avatar-btn')).toBeInTheDocument();
   });
 
   it("shows mode icons when showModes is true", () => {

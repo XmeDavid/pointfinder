@@ -113,6 +113,15 @@ describe('TopBar', () => {
     expect(screen.getByText('Stage B')).toBeDefined()
   })
 
+  it('moves live stages to a full-width second row on phones', () => {
+    const stages = [
+      makeStage({ id: 's1', name: 'Stage A', orderIndex: 0, isActive: true }),
+      makeStage({ id: 's2', name: 'Stage B', orderIndex: 1 }),
+    ]
+    render(<TopBar game={makeGame({ status: 'live' })} stages={stages} />)
+    expect(screen.getByTestId('stage-strip')).toHaveClass('max-md:basis-full', 'max-md:w-full')
+  })
+
   it('shows divider only when stages are present', () => {
     const { container: noStages } = render(<TopBar game={makeGame()} stages={[]} />)
     // No divider (w-px h-5 bg-border)

@@ -4,6 +4,9 @@ import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BaseDetail } from './BaseDetail'
 
+const platform = vi.hoisted(() => ({ native: false }))
+vi.mock('@/platform', () => ({ isNative: () => platform.native }))
+
 // Mock workspace store
 const mockStore = {
   selectChallenge: vi.fn(),
@@ -37,6 +40,7 @@ function renderBaseDetail(baseId = 'base-1') {
 
 describe('BaseDetail', () => {
   beforeEach(() => {
+    platform.native = false
     mockStore.selectChallenge.mockClear()
   })
 
@@ -52,6 +56,12 @@ describe('BaseDetail', () => {
     await waitFor(() => {
       expect(screen.getByText('NFC linked')).toBeInTheDocument()
     })
+  })
+
+  it('can link the selected base to an NFC tag in the native app', async () => {
+    platform.native = true
+    renderBaseDetail()
+    expect(await screen.findByTestId('nfc-write-base-1')).toBeInTheDocument()
   })
 
   it('renders visibility toggle', async () => {

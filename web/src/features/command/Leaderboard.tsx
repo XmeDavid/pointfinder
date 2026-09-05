@@ -66,7 +66,7 @@ export function Leaderboard({ gameId }: { gameId: string }) {
       shape={isMobile ? 'sheet' : 'default'}
       className={
         isMobile
-          ? 'absolute bottom-16 left-0 right-0 z-20 overflow-hidden'
+          ? 'absolute bottom-44 left-0 right-0 z-20 overflow-hidden'
           : 'absolute bottom-3 right-[266px] z-20 overflow-hidden'
       }
     >

@@ -8,7 +8,7 @@ export async function openScannerSettings(): Promise<void> {
 }
 
 /** Raw text only: the join/tag feature validates its own accepted payloads. */
-export async function scanQr(options: { signal?: AbortSignal } = {}): Promise<string | null> {
+export async function scanQr(options: { signal?: AbortSignal; windowed?: boolean } = {}): Promise<string | null> {
   if (options.signal?.aborted) return null
   if (!isNative()) throw Object.assign(new Error('Camera scanning is unavailable'), { code: 'unavailable' })
   if (scanning) throw Object.assign(new Error('A scanner is already open'), { code: 'busy' })
@@ -23,7 +23,11 @@ export async function scanQr(options: { signal?: AbortSignal } = {}): Promise<st
     if (permission !== 'granted') throw Object.assign(new Error('Camera permission was denied'), { code: 'denied' })
     cancel = () => { void scanner.cancel().catch(() => {}) }
     options.signal?.addEventListener('abort', cancel, { once: true })
-    const result = await scanner.scan({ formats: [scanner.Format.QRCode], cameraDirection: 'back', windowed: false })
+    const result = await scanner.scan({
+      formats: [scanner.Format.QRCode],
+      cameraDirection: 'back',
+      windowed: options.windowed ?? false,
+    })
     return options.signal?.aborted ? null : result.content
   } catch (error) {
     if (options.signal?.aborted || /cancel/i.test(String(error))) return null

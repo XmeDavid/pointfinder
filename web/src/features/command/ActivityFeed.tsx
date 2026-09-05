@@ -109,11 +109,21 @@ function EventCard({
   )
 }
 
-export function ActivityFeed({ gameId }: { gameId: string }) {
+export function ActivityFeed({
+  gameId,
+  mobileExpanded: controlledMobileExpanded,
+  onMobileExpandedChange,
+}: {
+  gameId: string
+  mobileExpanded?: boolean
+  onMobileExpandedChange?: (expanded: boolean) => void
+}) {
   const { data: events = [] } = useActivityFeed(gameId)
   const { data: teams = [] } = useTeams(gameId)
   const isMobile = useIsMobile()
-  const [mobileExpanded, setMobileExpanded] = useState(false)
+  const [uncontrolledMobileExpanded, setUncontrolledMobileExpanded] = useState(false)
+  const mobileExpanded = controlledMobileExpanded ?? uncontrolledMobileExpanded
+  const setMobileExpanded = onMobileExpandedChange ?? setUncontrolledMobileExpanded
   const [typeFilter, setTypeFilter] = useState<Set<EventType>>(new Set())
   const [teamFilter, setTeamFilter] = useState<string | null>(null)
   const [timeFilter, setTimeFilter] = useState<number>(0)
@@ -161,6 +171,8 @@ export function ActivityFeed({ gameId }: { gameId: string }) {
 
   // Mobile: collapsed badge to toggle bottom sheet
   if (isMobile && !mobileExpanded) {
+    if (onMobileExpandedChange) return null
+
     return (
       <OverlayPanel
         as="button"
@@ -186,7 +198,7 @@ export function ActivityFeed({ gameId }: { gameId: string }) {
       shape={isMobile ? 'sheet' : 'default'}
       className={
         isMobile
-          ? 'absolute left-0 right-0 bottom-14 max-h-[50vh] z-20 flex flex-col overflow-hidden'
+          ? 'absolute bottom-16 left-0 right-0 z-30 flex max-h-[50vh] flex-col overflow-hidden'
           : 'absolute top-14 right-3 bottom-3 w-[250px] z-20 flex flex-col overflow-hidden'
       }
     >

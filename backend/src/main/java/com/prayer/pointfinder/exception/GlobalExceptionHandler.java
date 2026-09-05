@@ -65,7 +65,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ErrorResponse> handleBadRequest(BadRequestException ex) {
-        return jsonError(HttpStatus.BAD_REQUEST, ex.getMessage(), null, null,
+        return jsonError(HttpStatus.BAD_REQUEST, ex.getMessage(), ex.getErrors(), null,
                 ex.getErrorCode() != null ? ex.getErrorCode().name() : null, null);
     }
 

@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -11,7 +11,6 @@ import {
   Moon,
   FolderOpen,
   Shield,
-  Nfc,
 } from "lucide-react";
 import {
   useWorkspaceStore,
@@ -23,7 +22,6 @@ import { useWorkspaceContext } from "@/stores/workspaceContext";
 import { useAuthStore } from "@/lib/auth/store";
 import { UserAvatarMenu } from "./UserAvatarMenu";
 
-import { isNative } from "@/platform";
 const THEME_KEY = "pointfinder-theme";
 
 function useThemeToggle() {
@@ -103,8 +101,6 @@ export function IconRail({ showModes }: IconRailProps) {
   const { active } = useWorkspaceContext();
   const { t } = useTranslation();
   const user = useAuthStore(s => s.user);
-  const { id: routeGameId } = useParams<{ id: string }>();
-
   const isSettingsActive = store.settingsPanelOpen;
   const isOrgWorkspace = active.type === 'org';
 
@@ -207,15 +203,6 @@ export function IconRail({ showModes }: IconRailProps) {
         className="safe-bottom-nav md:hidden fixed bottom-0 left-0 right-0 grid grid-flow-col auto-cols-fr items-center z-50 bg-card border-t border-border"
         data-testid="icon-rail-mobile"
       >
-        {/* PF Logo */}
-        <button
-          onClick={() => navigate("/dashboard")}
-          className="mx-auto w-11 h-11 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs shrink-0 hover:opacity-90 transition-opacity cursor-pointer"
-          aria-label="Dashboard"
-        >
-          PF
-        </button>
-
         {/* Mode icons -- only when showModes is true */}
         {showModes && (
           <>
@@ -232,21 +219,26 @@ export function IconRail({ showModes }: IconRailProps) {
           </>
         )}
 
-        {/* NFC tag writing lives on the phone */}
-        {showModes && routeGameId && isNative() && (
+        {/* General game settings -- available in every game mode */}
+        {showModes && (
           <button
             type="button"
-            onClick={() => navigate(`/game/${encodeURIComponent(routeGameId)}/nfc`)}
-            className="w-full h-11 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent"
-            aria-label={t("playerApp.nfcWrite.title")}
-            data-testid="nfc-tags-btn"
+            onClick={() => store.toggleSettingsPanel()}
+            className={cn(
+              "w-full h-11 flex items-center justify-center rounded-md transition-colors cursor-pointer",
+              isSettingsActive
+                ? "bg-primary/10 border border-primary/30"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent",
+            )}
+            aria-label={t("common.settings", "Settings")}
+            data-testid="settings-btn"
           >
-            <Nfc size={20} />
+            <Settings size={20} className={isSettingsActive ? "text-primary" : ""} />
           </button>
         )}
 
-        {/* User avatar menu (profile + logout) */}
-        <UserAvatarMenu className="mx-auto w-11 h-11" />
+        {/* Combined home/account entry */}
+        <UserAvatarMenu className="mx-auto w-11 h-11" showDashboard />
       </div>
     </>
   );

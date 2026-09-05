@@ -1,10 +1,16 @@
-import { Bell, MapPin } from 'lucide-react'
+import { Activity, Bell, MapPin } from 'lucide-react'
 import { OverlayPanel } from '@/components/layout/OverlayPanel'
 import { useDashboardStats } from '@/hooks/queries/useMonitoring'
 import { useElapsedTimer } from '@/hooks/ui/useElapsedTimer'
 import { useWorkspaceStore } from '@/stores/workspace'
 
-export function StatsBar({ gameId }: { gameId: string }) {
+export function StatsBar({
+  gameId,
+  onOpenActivity,
+}: {
+  gameId: string
+  onOpenActivity?: () => void
+}) {
   const { data: stats } = useDashboardStats(gameId)
   const toggleNotificationSender = useWorkspaceStore((s) => s.toggleNotificationSender)
   const toggleTeamLocations = useWorkspaceStore((s) => s.toggleTeamLocations)
@@ -24,7 +30,7 @@ export function StatsBar({ gameId }: { gameId: string }) {
   return (
     <div
       data-testid="stats-bar"
-      className="absolute bottom-16 md:bottom-3 left-2 md:left-3 z-20 flex gap-1.5 md:gap-2 overflow-x-auto scrollbar-none max-w-[calc(100vw-16px)] md:max-w-none"
+      className="absolute bottom-16 left-2 right-2 z-20 grid grid-cols-4 gap-1.5 [&>*]:min-w-0 md:bottom-3 md:left-3 md:right-auto md:flex md:max-w-none md:gap-2"
     >
       {/* Active teams */}
       <OverlayPanel padding="none" className="shrink-0 px-2 py-1.5 md:px-3 md:py-2">
@@ -57,7 +63,7 @@ export function StatsBar({ gameId }: { gameId: string }) {
 
       {/* Elapsed */}
       <OverlayPanel padding="none" className="shrink-0 px-2 py-1.5 md:px-3 md:py-2">
-        <div data-testid="stat-elapsed" className="text-sm md:text-lg font-bold font-mono">
+        <div data-testid="stat-elapsed" className="text-xs font-bold font-mono md:text-lg">
           {elapsed}
         </div>
         <div className="text-[10px] md:text-xs text-muted-foreground">Elapsed</div>
@@ -94,6 +100,21 @@ export function StatsBar({ gameId }: { gameId: string }) {
         </div>
         <div className="text-[10px] md:text-xs text-muted-foreground">Notify</div>
       </OverlayPanel>
+
+      {onOpenActivity && (
+        <OverlayPanel
+          as="button"
+          data-testid="mobile-activity-btn"
+          onClick={onOpenActivity}
+          padding="none"
+          className="min-w-0 cursor-pointer px-2 py-1.5 transition-colors hover:bg-muted"
+        >
+          <div className="flex items-center justify-center">
+            <Activity size={18} className="text-primary" />
+          </div>
+          <div className="truncate text-[10px] text-muted-foreground">Activity</div>
+        </OverlayPanel>
+      )}
     </div>
   )
 }

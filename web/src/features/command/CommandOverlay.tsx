@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { useGameStream } from '@/hooks/subscriptions/useGameStream'
+import { useIsMobile } from '@/hooks/ui/useMediaQuery'
 import { OverlayPanel } from '@/components/layout/OverlayPanel'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { ActivityFeed } from './ActivityFeed'
@@ -13,6 +15,8 @@ export function CommandOverlay({ gameId }: { gameId: string }) {
   const inspectedTeamId = useWorkspaceStore((s) => s.inspectedTeamId)
   const inspectedBaseId = useWorkspaceStore((s) => s.inspectedBaseId)
   const notificationSenderOpen = useWorkspaceStore((s) => s.notificationSenderOpen)
+  const isMobile = useIsMobile()
+  const [mobileActivityOpen, setMobileActivityOpen] = useState(false)
 
   return (
     <>
@@ -25,9 +29,20 @@ export function CommandOverlay({ gameId }: { gameId: string }) {
           Connection issue: {connectionError}
         </OverlayPanel>
       )}
-      <ActivityFeed gameId={gameId} />
-      <StatsBar gameId={gameId} />
-      <Leaderboard gameId={gameId} />
+      <ActivityFeed
+        gameId={gameId}
+        mobileExpanded={isMobile ? mobileActivityOpen : undefined}
+        onMobileExpandedChange={isMobile ? setMobileActivityOpen : undefined}
+      />
+      {(!isMobile || !mobileActivityOpen) && (
+        <>
+          <StatsBar
+            gameId={gameId}
+            onOpenActivity={isMobile ? () => setMobileActivityOpen(true) : undefined}
+          />
+          <Leaderboard gameId={gameId} />
+        </>
+      )}
       {inspectedTeamId && <TeamInspector gameId={gameId} />}
       {inspectedBaseId && <BaseInspector gameId={gameId} />}
       {notificationSenderOpen && <NotificationSender gameId={gameId} />}

@@ -1,5 +1,6 @@
 import type { Stage, GameStatus } from '@/types/v2'
 import { dataColors } from '@/generated/colorValues'
+import { cn } from '@/lib/utils'
 
 const STAGE_COLOR_PALETTE = [
   dataColors.blue,
@@ -30,9 +31,10 @@ export interface StageStripProps {
   onSelectStage: (id: string | null) => void
   gameStatus: GameStatus
   onCreateStage?: () => void
+  className?: string
 }
 
-export function StageStrip({ stages, selectedStageId, onSelectStage, gameStatus, onCreateStage }: StageStripProps) {
+export function StageStrip({ stages, selectedStageId, onSelectStage, gameStatus, onCreateStage, className }: StageStripProps) {
   if (stages.length < 2) return null
 
   const sorted = [...stages].sort((a, b) => a.orderIndex - b.orderIndex)
@@ -46,7 +48,10 @@ export function StageStrip({ stages, selectedStageId, onSelectStage, gameStatus,
     : -1
 
   return (
-    <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none min-w-0">
+    <div
+      className={cn('flex min-w-0 items-center gap-1.5 overflow-x-auto scrollbar-none', className)}
+      data-testid="stage-strip"
+    >
       {/* "All" button */}
       <button
         onClick={() => onSelectStage(null)}

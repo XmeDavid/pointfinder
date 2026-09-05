@@ -6,6 +6,7 @@ import i18n from './i18n'
 import { restoreNativeOperator } from './lib/auth/store'
 import { getServices } from './app/player/client'
 import { isNative, kv } from './platform'
+import { configureNativeViewport } from './platform/runtime'
 import { resolveLanguage } from '@pointfinder/i18n'
 import { ErrorBoundary, AppErrorFallback } from './components/feedback/ErrorBoundary'
 import { LoadingState } from './components/feedback/LoadingState'
@@ -30,6 +31,7 @@ async function start() {
   try {
     if (isNative()) {
       document.documentElement.classList.add('native-app')
+      configureNativeViewport()
       await safeAreaReady
       const language = await kv.get('language')
       if (language) await i18n.changeLanguage(resolveLanguage(language))

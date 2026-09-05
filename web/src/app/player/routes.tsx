@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { useAuth } from './services'
 import { useAuthStore } from '@/lib/auth/store'
-import { isNative } from '@/platform/runtime'
+import { isNativeEntry } from '@/platform/runtime'
 import { LoadingState } from '@/components/feedback/LoadingState'
 
 const PlayerMap = lazy(() => import('@/features/player/PlayerMap'))
@@ -17,7 +17,7 @@ const Landing = lazy(() => import('@/features/public/LandingPage').then((m) => (
 export function Home() {
   const auth = useAuth()
   const operator = useAuthStore((s) => s.isAuthenticated)
-  const nativeEntry = isNative() || import.meta.env.VITE_NATIVE_BUILD
+  const nativeEntry = isNativeEntry()
   let page = <Landing />
   if (operator && nativeEntry) page = <Navigate to="/dashboard" replace />
   else if (!operator && auth.kind === 'player') page = <PlayerMap />

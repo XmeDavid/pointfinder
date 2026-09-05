@@ -43,6 +43,15 @@ describe('native capability boundaries', () => {
     expect(qr.cancel).toHaveBeenCalledTimes(1)
   })
 
+  it('can keep the webview above the camera for app-owned scanner controls', async () => {
+    native.enabled = true
+    qr.checkPermissions.mockResolvedValue('granted')
+    qr.scan.mockResolvedValue({ content: 'TEAM123' })
+    const { scanQr } = await import('./qr')
+    await expect(scanQr({ windowed: true })).resolves.toBe('TEAM123')
+    expect(qr.scan).toHaveBeenCalledWith(expect.objectContaining({ windowed: true }))
+  })
+
   it('never reports an unverified NFC write as linked', async () => {
     native.enabled = true
     nfc.writeTag.mockResolvedValue({ verified: false, id: null })

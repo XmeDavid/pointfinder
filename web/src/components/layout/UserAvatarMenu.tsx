@@ -1,8 +1,9 @@
 import { cn } from '@/lib/utils'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { User, LogOut, Check, Globe } from 'lucide-react'
+import { User, LogOut, Check, Globe, LayoutDashboard } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth/store'
+import { isNativeEntry } from '@/platform/runtime'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -19,7 +20,7 @@ function getInitials(name: string): string {
     .toUpperCase()
 }
 
-export function UserAvatarMenu({ className }: { className?: string }) {
+export function UserAvatarMenu({ className, showDashboard = false }: { className?: string; showDashboard?: boolean }) {
   const navigate = useNavigate()
   const { t, i18n } = useTranslation()
   const user = useAuthStore((s) => s.user)
@@ -37,6 +38,16 @@ export function UserAvatarMenu({ className }: { className?: string }) {
         {initials}
       </DropdownMenuTrigger>
       <DropdownMenuContent portal>
+        {showDashboard && (
+          <DropdownMenuItem
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-2"
+            data-testid="menu-dashboard"
+          >
+            <LayoutDashboard size={14} />
+            {t('common.dashboard', 'Dashboard')}
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem
           onClick={() => navigate('/profile')}
           className="flex items-center gap-2"
@@ -60,7 +71,10 @@ export function UserAvatarMenu({ className }: { className?: string }) {
         <div className="h-px bg-border my-1" />
 
         <DropdownMenuItem
-          onClick={() => { logout(); navigate('/login') }}
+          onClick={() => {
+            logout()
+            navigate(isNativeEntry() ? '/' : '/login')
+          }}
           className="flex items-center gap-2 text-destructive"
           data-testid="menu-logout"
         >

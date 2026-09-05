@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -71,6 +71,18 @@ describe('StatsBar', () => {
     expect(useWorkspaceStore.getState().notificationSenderOpen).toBe(false)
     await user.click(screen.getByTestId('rescue-btn'))
     expect(useWorkspaceStore.getState().notificationSenderOpen).toBe(true)
+  })
+
+  it('opens mobile activity from the integrated dock control', async () => {
+    const user = userEvent.setup()
+    const onOpenActivity = vi.fn()
+
+    render(createElement(StatsBar, { gameId: 'game-1', onOpenActivity }), {
+      wrapper: createWrapper(),
+    })
+
+    await user.click(await screen.findByTestId('mobile-activity-btn'))
+    expect(onOpenActivity).toHaveBeenCalledOnce()
   })
 
   it('displays elapsed timer', async () => {

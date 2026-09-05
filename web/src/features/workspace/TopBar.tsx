@@ -3,6 +3,7 @@ import { GameStatusBadge } from '@/components/status'
 import { useElapsedTimer } from '@/hooks/ui/useElapsedTimer'
 import { useWorkspaceStore, type GameMode } from '@/stores/workspace'
 import { useCreateStage } from '@/hooks/mutations/useStageMutations'
+import { cn } from '@/lib/utils'
 import type { Game, Stage } from '@/types/v2'
 import { StageStrip } from './StageStrip'
 
@@ -27,6 +28,7 @@ export function TopBar({ game, stages }: TopBarProps) {
   const createStage = useCreateStage(game.id)
 
   const hasStages = stages.length >= 2
+  const useMobileStageRow = game.status === 'live' && hasStages
 
   const handleCreateStage = () => {
     const nextIndex = stages.length
@@ -38,49 +40,52 @@ export function TopBar({ game, stages }: TopBarProps) {
 
   return (
     <FloatingBar>
-      {/* Left: Game name + status badge */}
-      <div className="flex items-center gap-2 md:gap-3 shrink-0 min-w-0">
-        <span className="font-bold text-foreground text-sm truncate max-w-[120px] md:max-w-none">{game.name}</span>
-        <GameStatusBadge
-          status={game.status}
-          elapsed={elapsed}
-          labelCase="upper"
+      <div className={cn('flex w-full min-w-0 items-center gap-2', useMobileStageRow && 'max-md:flex-wrap max-md:gap-y-1')}>
+        {/* Left: Game name + status badge */}
+        <div className="flex items-center gap-2 md:gap-3 shrink-0 min-w-0" data-testid="top-bar-primary">
+          <span className="font-bold text-foreground text-sm truncate max-w-[120px] md:max-w-none">{game.name}</span>
+          <GameStatusBadge
+            status={game.status}
+            elapsed={elapsed}
+            labelCase="upper"
+          />
+        </div>
+
+        {/* Divider — only when stage strip is visible */}
+        {hasStages && <div className={cn('w-px h-5 bg-border shrink-0', useMobileStageRow && 'max-md:hidden')} />}
+
+        {/* Stage strip */}
+        <StageStrip
+          stages={stages}
+          selectedStageId={selectedStageId}
+          onSelectStage={selectStage}
+          gameStatus={game.status}
+          onCreateStage={handleCreateStage}
+          className={useMobileStageRow ? 'max-md:order-last max-md:basis-full max-md:w-full max-md:pt-1' : undefined}
         />
-      </div>
 
-      {/* Divider — only when stage strip is visible */}
-      {hasStages && <div className="w-px h-5 bg-border shrink-0" />}
+        {/* Spacer */}
+        <div className="flex-1 min-w-0" />
 
-      {/* Stage strip */}
-      <StageStrip
-        stages={stages}
-        selectedStageId={selectedStageId}
-        onSelectStage={selectStage}
-        gameStatus={game.status}
-        onCreateStage={handleCreateStage}
-      />
-
-      {/* Spacer */}
-      <div className="flex-1 min-w-0" />
-
-      {/* Mode tabs — xl only */}
-      <div className="hidden xl:flex items-center gap-1 shrink-0">
-        {modeLabels.map(({ mode: m, label }) => {
-          const isActive = mode === m
-          return (
-            <button
-              key={m}
-              onClick={() => setMode(m)}
-              className={`px-3 py-1.5 text-sm rounded-md transition-colors cursor-pointer whitespace-nowrap ${
-                isActive
-                  ? 'bg-primary/10 text-primary border border-primary/30'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {label}
-            </button>
-          )
-        })}
+        {/* Mode tabs — xl only */}
+        <div className="hidden xl:flex items-center gap-1 shrink-0">
+          {modeLabels.map(({ mode: m, label }) => {
+            const isActive = mode === m
+            return (
+              <button
+                key={m}
+                onClick={() => setMode(m)}
+                className={`px-3 py-1.5 text-sm rounded-md transition-colors cursor-pointer whitespace-nowrap ${
+                  isActive
+                    ? 'bg-primary/10 text-primary border border-primary/30'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {label}
+              </button>
+            )
+          })}
+        </div>
       </div>
     </FloatingBar>
   )
