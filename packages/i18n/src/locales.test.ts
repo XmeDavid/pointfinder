@@ -58,9 +58,9 @@ describe('check-in method vocabulary', () => {
     for (const key of contractKeys) expect(paths.has(key)).toBe(true)
   })
 
-  it('renames the drawer tab to "Tags & codes"', () => {
+  it('keeps the drawer tab label short enough for five tabs on a phone', () => {
     expect(
       (resources.en.translation as { build: { drawer: { nfcTags: string } } }).build.drawer.nfcTags,
-    ).toBe('Tags & codes')
+    ).toBe('Tags')
   })
 })

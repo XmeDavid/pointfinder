@@ -68,7 +68,7 @@ describe('ContentDrawer', () => {
 
   it('offers tags and codes in the browser as well as the phone app', () => {
     renderDrawer()
-    expect(screen.getByTestId('tab-nfc')).toHaveTextContent('Tags & codes')
+    expect(screen.getByTestId('tab-nfc')).toHaveTextContent('Tags')
 
     platform.native = true
     const { container } = renderDrawer()
