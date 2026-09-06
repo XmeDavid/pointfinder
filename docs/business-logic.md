@@ -17,6 +17,7 @@
 6. [Authentication & Authorization](#6-authentication--authorization)
 7. [Push Notifications](#7-push-notifications)
 8. [Broadcast Mode](#8-broadcast-mode)
+9. [Operator Onboarding and Tutorials](#9-operator-onboarding-and-tutorials)
 
 ---
 
@@ -103,24 +104,6 @@ Editing a pair opens a single dialog that writes the base and challenge via **tw
 The legacy `BasesPage`, `ChallengesPage`, and `AssignmentsPage` remain available for advanced workflows (random assignments, team-specific overrides, unlocks configuration, rich-text content, team variables, etc.) and are linked from the header of the unified view as "Manage bases", "Manage challenges", and "Advanced assignments".
 
 Source spec: `docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md` § "P1: Operator Workflow and Content Model" (Principle 5 — "Build a unified operator view as an aggregate over the existing model first. Do not collapse the underlying base/challenge/assignment model until the product behavior is proven").
-
-### Onboarding: the guided first game
-
-A new operator's dashboard shows a welcome card offering the `first-game` tutorial. The card
-appears only when all three of these hold: the **personal** workspace is active, the operator has
-**no games**, and there is **no tutorial-progress row** for `first-game`. Start runs the scenario
-as coach marks over the operator's own game. Skip writes a `skipped` row and the card never
-returns; the scenario itself stays available from the tutorials library.
-
-The tutorial never creates or changes domain data. It reads state the app already holds, may open
-a drawer tab, switch workspace mode or expand the readiness panel to reveal the element it is
-pointing at, and advances only when the operator's own action changes real state. Going live,
-reverting to setup and every save are the operator's own actions, audited exactly as they would be
-outside the tutorial. The scrim dims but never intercepts clicks, so the operator can always leave
-the guided path.
-
-Because `Game` carries no creation timestamp, "the game the operator just created" is resolved
-against a snapshot of the games list taken when the run started, not against a timestamp.
 
 ---
 
@@ -1219,6 +1202,64 @@ A separate WebSocket client connects to `/ws` with an `X-Broadcast-Code` header 
 - Submission details beyond status
 
 ---
+
+## 9. Operator Onboarding and Tutorials
+
+Guided tutorials teach an operator by doing, on their own real game. The engine
+never creates or changes anything: it spotlights the next control, explains what
+it does, and waits for the operator's own action.
+
+### The guided first game
+
+A new operator's dashboard shows a welcome card offering the `first-game` tutorial. The card
+appears only when all three of these hold: the **personal** workspace is active, the operator has
+**no games**, and there is **no tutorial-progress row** for `first-game`. Start runs the scenario
+as coach marks over the operator's own game. Skip writes a `skipped` row and the card never
+returns; the scenario itself stays available from the tutorials library.
+
+The tutorial never creates or changes domain data. It reads state the app already holds, may open
+a drawer tab, switch workspace mode or expand the readiness panel to reveal the element it is
+pointing at, and advances only when the operator's own action changes real state. Going live,
+reverting to setup and every save are the operator's own actions, audited exactly as they would be
+outside the tutorial. The scrim dims but never intercepts clicks, so the operator can always leave
+the guided path.
+
+Because `Game` carries no creation timestamp, "the game the operator just created" is resolved
+against a snapshot of the games list taken when the run started, not against a timestamp.
+
+### Progress is per account, not per device
+
+Progress lives in `user_tutorial_progress`, one row per `(operator, scenario)`.
+No row means the operator has never started that scenario. A row carries the
+status (`in_progress`, `completed`, `skipped`), the step id the operator is on,
+and — for `setup-game` scenarios — the game the run is bound to.
+
+Because progress is server-side, a reload, a second browser, or the Tauri shell
+all resume the same run, and a completed tutorial stays completed everywhere.
+The web client hydrates the map once on mount and writes every change back
+debounced by 500 ms, flushing the last write on unmount and on logout. A row
+counts as synced only once its write succeeds; a failed write is retried by the
+next change.
+
+### First-run rule
+
+The dashboard shows the tutorial welcome card only when the personal workspace
+has zero games, no `first-game` run is active, **and** there is no progress row
+for `first-game`. "Skip for now" writes a `skipped` row and hides the card
+permanently; the scenario stays available from the tutorials library at
+`/tutorials`. The card is never shown in an organization workspace.
+
+### Restart, not delete
+
+There is no delete endpoint. Restarting a tutorial is a PUT with
+`status: in_progress` and `currentStep: null`, which resets `started_at` and
+clears `completed_at`. Scenario ids are validated against a server-side
+allowlist (`first-game`, `fixed-route`, `exploration`).
+
+### Not audited
+
+Tutorial progress is UI preference. It touches no game, team, submission, or
+score, so it writes no activity event and never appears in the audit export.
 
 ## Appendix: Platform Implementation Matrix
 

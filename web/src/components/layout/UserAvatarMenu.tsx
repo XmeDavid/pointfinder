@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { User, LogOut, Check, Globe, LayoutDashboard } from 'lucide-react'
+import { User, LogOut, Check, Globe, LayoutDashboard, GraduationCap } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth/store'
 import { isNativeEntry } from '@/platform/runtime'
 import {
@@ -55,6 +55,14 @@ export function UserAvatarMenu({ className, showDashboard = false }: { className
         >
           <User size={14} />
           {t('profile.title', 'Profile')}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => navigate('/tutorials')}
+          className="flex items-center gap-2"
+          data-testid="menu-tutorials"
+        >
+          <GraduationCap size={14} />
+          {t('tutorials.menu', 'Tutorials')}
         </DropdownMenuItem>
 
         <div className="h-px bg-border my-1" />

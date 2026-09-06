@@ -10,6 +10,7 @@ import { getScenario } from './scenarios'
 import { useTourStore } from './store'
 import { useTourActions } from './useTourActions'
 import { useTourState } from './useTourState'
+import { useProgressHydration, useProgressWriteThrough } from './progressSync'
 import type { Scenario, TourActions, TourState } from './types'
 
 /** Typing settles for this long before DOM-reading predicates re-run, so the bubble never jumps mid-word. */
@@ -24,6 +25,11 @@ export function TourHost() {
   const activeScenario = useTourStore((s) => s.activeScenario)
   const role = useAuthStore((s) => s.user?.role)
   const scenario = activeScenario ? getScenario(activeScenario) : undefined
+
+  // Both sync hooks live here, above the early returns: progress is written
+  // when no run is active too (the welcome card's Skip, a completed row).
+  useProgressHydration()
+  useProgressWriteThrough()
 
   if (!scenario) return null
   if (role !== 'operator' && role !== 'admin') return null

@@ -105,6 +105,11 @@ ON CONFLICT (email) DO UPDATE SET
   name = EXCLUDED.name,
   password_hash = EXCLUDED.password_hash,
   role = 'admin';
+-- The free tier allows one active game, and the smoke suite keeps a live
+-- fixture game while creating more, so the local operator runs on pro.
+INSERT INTO user_subscriptions (id, user_id, tier, status)
+SELECT gen_random_uuid(), id, 'pro', 'active' FROM users WHERE email = '${OPERATOR_EMAIL}'
+ON CONFLICT (user_id) DO UPDATE SET tier = 'pro', status = 'active';
 SQL
 }
 

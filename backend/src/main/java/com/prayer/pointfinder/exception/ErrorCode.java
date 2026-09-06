@@ -132,4 +132,10 @@ public enum ErrorCode {
      * are missing a value for that key.
      */
     VARIABLE_REFERENCE_UNDEFINED,
+
+    // ── Tutorials ─────────────────────────────────────────────────────────
+    /** The tutorial scenario id is not on the server-side allowlist. Details carry {@code scenarioId}. */
+    TUTORIAL_SCENARIO_UNKNOWN,
+    /** The tutorial status is not one of {@code in_progress|completed|skipped}. Details carry {@code status}. */
+    TUTORIAL_STATUS_UNKNOWN,
 }

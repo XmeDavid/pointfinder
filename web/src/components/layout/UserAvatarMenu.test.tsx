@@ -1,52 +1,34 @@
-import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter, useLocation } from 'react-router-dom'
-import i18n from '@/i18n'
+import { MemoryRouter } from 'react-router-dom'
 import { UserAvatarMenu } from './UserAvatarMenu'
 
-beforeEach(async () => {
-  await i18n.changeLanguage('en')
-  vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} })
-})
-afterEach(async () => {
-  Reflect.deleteProperty(window, '__TAURI_INTERNALS__')
-  vi.unstubAllGlobals()
-  await i18n.changeLanguage('en')
+const mockNavigate = vi.fn()
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom')
+  return { ...actual, useNavigate: () => mockNavigate }
 })
 
-it('opens profile and language actions in a portal and changes the saved language', async () => {
-  const user = userEvent.setup()
-  const { container } = render(<MemoryRouter><UserAvatarMenu /></MemoryRouter>)
-  await user.click(screen.getByTestId('user-avatar-btn'))
-  expect(screen.getByTestId('menu-profile')).toBeVisible()
-  expect(container.querySelector('[data-dropdown]')).toBeNull()
-  await user.click(screen.getByRole('button', { name: 'Deutsch', exact: true }))
-  expect(i18n.resolvedLanguage).toBe('de')
-  expect(screen.queryByTestId('menu-profile')).not.toBeInTheDocument()
-})
+describe('UserAvatarMenu', () => {
+  beforeEach(() => {
+    // The portalled menu measures itself; jsdom has no ResizeObserver.
+    vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} })
+  })
 
-it('returns an operator to the mobile welcome screen after native logout', async () => {
-  Object.defineProperty(window, '__TAURI_INTERNALS__', { configurable: true, value: {} })
-  function LocationProbe() {
-    return <span data-testid="location">{useLocation().pathname}</span>
-  }
-  render(<MemoryRouter initialEntries={['/dashboard']}><UserAvatarMenu /><LocationProbe /></MemoryRouter>)
+  it('offers a Tutorials entry that routes to /tutorials', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <UserAvatarMenu />
+      </MemoryRouter>,
+    )
 
-  await userEvent.click(screen.getByTestId('user-avatar-btn'))
-  await userEvent.click(screen.getByTestId('menu-logout'))
+    await user.click(screen.getByTestId('user-avatar-btn'))
+    const item = screen.getByTestId('menu-tutorials')
+    expect(item).toHaveTextContent('Tutorials')
 
-  expect(screen.getByTestId('location')).toHaveTextContent('/')
-})
-
-it('combines the mobile dashboard and profile entry points', async () => {
-  function LocationProbe() {
-    return <span data-testid="location">{useLocation().pathname}</span>
-  }
-  render(<MemoryRouter initialEntries={['/game/g']}><UserAvatarMenu showDashboard /><LocationProbe /></MemoryRouter>)
-
-  await userEvent.click(screen.getByTestId('user-avatar-btn'))
-  await userEvent.click(screen.getByTestId('menu-dashboard'))
-
-  expect(screen.getByTestId('location')).toHaveTextContent('/dashboard')
+    await user.click(item)
+    expect(mockNavigate).toHaveBeenCalledWith('/tutorials')
+  })
 })

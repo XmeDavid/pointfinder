@@ -94,6 +94,12 @@ const ProfilePage = lazy(() =>
   })),
 );
 
+const TutorialsPage = lazy(() =>
+  import("@/features/tutorials/TutorialsPage").then((m) => ({
+    default: m.TutorialsPage,
+  })),
+);
+
 const CreateOrgPage = lazy(() =>
   import("@/features/org/CreateOrgPage").then((m) => ({
     default: m.CreateOrgPage,
@@ -346,6 +352,18 @@ const router = createBrowserRouter([{ errorElement: <AppErrorFallback />, elemen
         <AppLayout>
           <Suspense fallback={<PageSpinner />}>
             <ProfilePage />
+          </Suspense>
+        </AppLayout>
+      </AuthGuard>
+    ),
+  },
+  {
+    path: "/tutorials",
+    element: (
+      <AuthGuard>
+        <AppLayout>
+          <Suspense fallback={<PageSpinner />}>
+            <TutorialsPage />
           </Suspense>
         </AppLayout>
       </AuthGuard>

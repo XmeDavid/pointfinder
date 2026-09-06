@@ -1632,6 +1632,27 @@
       "resume": "Fortsetzen",
       "pillLabel": "Tutorial · Schritt {{n}} von {{total}}"
     },
+    "library": {
+      "title": "Tutorials",
+      "subtitle": "Geführte Rundgänge in deinem eigenen Spiel. Es wird nichts automatisch angelegt oder geändert.",
+      "stepCount": "{{count}} Schritte",
+      "start": "Starten",
+      "resume": "Fortsetzen",
+      "restart": "Neu starten",
+      "loadFailed": "Dein Tutorial-Fortschritt konnte nicht geladen werden.",
+      "retry": "Erneut versuchen",
+      "status": {
+        "notStarted": "Nicht begonnen",
+        "inProgress": "Läuft",
+        "completed": "Abgeschlossen",
+        "skipped": "Übersprungen"
+      },
+      "pickGame": {
+        "title": "Spiel in Einrichtung wählen",
+        "create": "Neues Spiel erstellen",
+        "empty": "Keine Spiele in Einrichtung. Erstelle eines, um dieses Tutorial zu starten."
+      }
+    },
     "scenarios": {
       "firstGame": {
         "title": "Dein erstes Spiel durchspielen",

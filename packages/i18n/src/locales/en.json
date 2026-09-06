@@ -1632,6 +1632,27 @@
       "resume": "Resume",
       "pillLabel": "Tutorial · step {{n}} of {{total}}"
     },
+    "library": {
+      "title": "Tutorials",
+      "subtitle": "Guided walkthroughs you run on your own game. Nothing is created or changed for you.",
+      "stepCount": "{{count}} steps",
+      "start": "Start",
+      "resume": "Resume",
+      "restart": "Restart",
+      "loadFailed": "We could not load your tutorial progress.",
+      "retry": "Try again",
+      "status": {
+        "notStarted": "Not started",
+        "inProgress": "In progress",
+        "completed": "Completed",
+        "skipped": "Skipped"
+      },
+      "pickGame": {
+        "title": "Pick a game in setup",
+        "create": "Create a new game",
+        "empty": "No games in setup. Create one to run this tutorial."
+      }
+    },
     "scenarios": {
       "firstGame": {
         "title": "Run your first game",

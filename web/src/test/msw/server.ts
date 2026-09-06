@@ -13,6 +13,7 @@ import { assignmentsHandlers } from './handlers/assignments'
 import { submissionsHandlers } from './handlers/submissions'
 import { rescueHandlers } from './handlers/rescue'
 import { notificationsHandlers } from './handlers/notifications'
+import { tutorialsHandlers } from './handlers/tutorials'
 
 export const server = setupServer(
   ...authHandlers,
@@ -29,4 +30,5 @@ export const server = setupServer(
   ...submissionsHandlers,
   ...rescueHandlers,
   ...notificationsHandlers,
+  ...tutorialsHandlers,
 )

@@ -356,6 +356,29 @@ export async function getBroadcastLeaderboard(code: string) {
 
 // --- User ---
 
+// --- Tutorials ---
+
+export async function getTutorialProgress(token: string) {
+  const res = await request('GET', '/api/users/me/tutorials', { token });
+  return { status: res.status, data: await json(res) };
+}
+
+export async function putTutorialProgress(
+  token: string,
+  scenarioId: string,
+  body: { status: string; currentStep?: string | null; gameId?: string | null },
+) {
+  const res = await request('PUT', `/api/users/me/tutorials/${scenarioId}`, {
+    body: {
+      status: body.status,
+      currentStep: body.currentStep ?? null,
+      gameId: body.gameId ?? null,
+    },
+    token,
+  });
+  return { status: res.status, data: await json(res) };
+}
+
 export async function getMe(token: string) {
   const res = await request('GET', '/api/users/me', { token });
   return { status: res.status, data: await json(res) };

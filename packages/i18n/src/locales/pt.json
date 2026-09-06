@@ -1632,6 +1632,27 @@
       "resume": "Retomar",
       "pillLabel": "Tutorial · passo {{n}} de {{total}}"
     },
+    "library": {
+      "title": "Tutoriais",
+      "subtitle": "Percursos guiados que corres no teu próprio jogo. Nada é criado nem alterado automaticamente.",
+      "stepCount": "{{count}} passos",
+      "start": "Começar",
+      "resume": "Retomar",
+      "restart": "Recomeçar",
+      "loadFailed": "Não foi possível carregar o teu progresso nos tutoriais.",
+      "retry": "Tentar de novo",
+      "status": {
+        "notStarted": "Por começar",
+        "inProgress": "Em curso",
+        "completed": "Concluído",
+        "skipped": "Ignorado"
+      },
+      "pickGame": {
+        "title": "Escolhe um jogo em configuração",
+        "create": "Criar um novo jogo",
+        "empty": "Não há jogos em configuração. Cria um para correr este tutorial."
+      }
+    },
     "scenarios": {
       "firstGame": {
         "title": "Faz o teu primeiro jogo",

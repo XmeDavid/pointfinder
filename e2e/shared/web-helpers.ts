@@ -138,19 +138,30 @@ async function waitForPersistedOperatorSession(page: Page) {
     try {
       const parsed = JSON.parse(raw) as {
         state?: {
-          refreshToken?: string | null;
+          user?: { id?: string } | null;
           isAuthenticated?: boolean;
         };
       };
 
-      return Boolean(parsed.state?.refreshToken && parsed.state?.isAuthenticated);
+      // The refresh token lives in an HttpOnly cookie (Audit 12.1), so the
+      // persisted session carries only the user and the authenticated flag.
+      return Boolean(parsed.state?.user?.id && parsed.state?.isAuthenticated);
     } catch {
       return false;
     }
   }, { timeout: 10_000 });
 }
 
+/**
+ * Refresh tokens live in an HttpOnly cookie (Audit 12.1) and the access token is
+ * memory-only, so a session injected into localStorage cannot survive the next
+ * full navigation: the app finds no token, tries to refresh without a cookie,
+ * and logs out. Only the real login form sets the cookie, so injection is off.
+ */
+const STORED_SESSION_INJECTION = false;
+
 async function injectStoredOperatorSession(page: Page) {
+  if (!STORED_SESSION_INJECTION) return false;
   try {
     const accessToken = getOperatorToken();
     const refreshToken = getOperatorRefreshToken();
@@ -257,7 +268,7 @@ export async function loginAsOperator(page: Page) {
     const resp = await loginResponsePromise;
 
     if (resp.status() === 200) {
-      await expect(page).toHaveURL(/\/app\/dashboard/, { timeout: 10_000 });
+      await expect(page).toHaveURL(/\/(app\/)?dashboard/, { timeout: 10_000 });
       await waitForPersistedOperatorSession(page);
       await syncSessionFromBrowser(page);
       loggedIn = true;

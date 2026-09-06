@@ -75,6 +75,10 @@ services:
         VITE_API_URL: /api
         VITE_WS_URL: /ws-native
     container_name: pointfinder-web-local-e2e
+    # The image's own nginx targets the production upstream, which does not
+    # exist on this network. Here the container only hands the freshly built
+    # app to the local nginx through the shared volume, refreshed on every start.
+    command: ["sh", "-c", "rm -rf /app/dist/* && cp -r /usr/share/nginx/html/. /app/dist/ && exec sleep infinity"]
     volumes:
       - frontend_dist_local_e2e:/app/dist
     healthcheck:

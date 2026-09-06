@@ -1245,11 +1245,49 @@ Per-game, per-operator push notification preferences.
 | GET | `/users` | Admin only | List all users |
 | GET | `/users/me` | Operator | Get current authenticated user |
 | PUT | `/users/me/push-token` | Operator | Register operator push token |
+| GET | `/users/me/tutorials` | Operator | List the caller's guided-tutorial progress |
+| PUT | `/users/me/tutorials/:scenarioId` | Operator | Upsert progress for one tutorial scenario |
 
 **PUT /users/me/push-token**
 ```json
 { "pushToken": "string", "platform": "ios | android" }
 ```
+
+**GET /users/me/tutorials**
+
+Returns one row per tutorial the operator has started, skipped, or completed.
+A scenario with no row has never been started. Progress is per account, so it
+follows the operator across the browser and the Tauri shell.
+
+```json
+[
+  {
+    "scenarioId": "first-game",
+    "status": "in_progress",
+    "currentStep": "go-live",
+    "gameId": "8b0f1a2c-...",
+    "startedAt": "2026-09-06T09:12:00Z",
+    "completedAt": null
+  }
+]
+```
+
+**PUT /users/me/tutorials/:scenarioId** (UpdateTutorialProgressRequest)
+
+```json
+{ "status": "in_progress", "currentStep": "go-live", "gameId": "8b0f1a2c-..." }
+```
+
+| Field | Description |
+|-------|-------------|
+| `status` | `in_progress`, `completed`, or `skipped`. Required. |
+| `currentStep` | The scenario step id the operator is on. Optional; `null` with `in_progress` **restarts** the scenario (resets `startedAt`, clears `completedAt`). |
+| `gameId` | The game a `setup-game` scenario is bound to, so Resume returns to it. Optional. Nulled if that game is deleted. |
+
+`scenarioId` must be one of `first-game`, `fixed-route`, `exploration`; anything
+else returns `400 TUTORIAL_SCENARIO_UNKNOWN`. An unrecognised `status` returns
+`400 TUTORIAL_STATUS_UNKNOWN`. Returns the stored row. Not audited — this is UI
+preference, not domain state.
 
 ### Invites
 
@@ -1390,6 +1428,13 @@ All error responses include a machine-readable `code` field in addition to the h
 | Code | HTTP Status | Meaning | Typical cause | Recovery |
 |---|---|---|---|---|
 | `VARIABLE_REFERENCE_UNDEFINED` | 400 Bad Request | A challenge body (`content`, `completionContent`) or auto-validated `correctAnswer` references `{{key}}` where `key` has no variable value defined for at least one team. Emitted at `setup → live`. | Operator referenced a variable that was never defined, or defined the variable for only some teams. | Define the variable for every team (game scope or challenge scope), or remove the `{{key}}` reference. |
+
+### Tutorial Error Codes
+
+| Code | HTTP | Meaning |
+|------|------|---------|
+| `TUTORIAL_SCENARIO_UNKNOWN` | 400 | The scenario id is not on the server allowlist. Details carry `scenarioId`. |
+| `TUTORIAL_STATUS_UNKNOWN` | 400 | The status is not `in_progress`, `completed`, or `skipped`. Details carry `status`. |
 
 ### WebSocket Error Codes
 

@@ -1,13 +1,20 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCreateGame } from '@/hooks/mutations/useGameMutations'
+import type { Game } from '@/types'
 
 export function CreateGameDialog({
   open,
   onClose,
+  onCreated,
 }: {
   open: boolean
   onClose: () => void
+  /**
+   * Called instead of navigating to the new game. The tutorials library needs
+   * the game to bind a scenario to before it decides where to go.
+   */
+  onCreated?: (game: Game) => void
 }) {
   const navigate = useNavigate()
   const createGame = useCreateGame()
@@ -24,6 +31,10 @@ export function CreateGameDialog({
       description: description.trim(),
     })
     onClose()
+    if (onCreated) {
+      onCreated(game)
+      return
+    }
     navigate(`/game/${game.id}`)
   }
 
