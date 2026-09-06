@@ -3,6 +3,10 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { http, HttpResponse } from 'msw'
+import { server } from '@/test/msw/server'
+import { useTourStore } from '@/features/tutorials/store'
+import { useWorkspaceContext } from '@/stores/workspaceContext'
 import { DashboardPage } from './DashboardPage'
 
 const mockNavigate = vi.fn()
@@ -98,5 +102,32 @@ describe('DashboardPage', () => {
 
     await user.click(screen.getByText('Test Game 1'))
     expect(mockNavigate).toHaveBeenCalledWith('/game/game-1')
+  })
+})
+
+describe('DashboardPage tutorial welcome card', () => {
+  beforeEach(() => {
+    useTourStore.getState().reset()
+    useWorkspaceContext.setState({ active: { type: 'personal' } })
+  })
+
+  it('shows the tutorial welcome card when the operator has no games', async () => {
+    server.use(http.get('/api/games', () => HttpResponse.json([])))
+
+    renderPage()
+
+    await waitFor(() => {
+      expect(screen.getByTestId('tutorial-welcome-card')).toBeInTheDocument()
+    })
+    expect(screen.getByTestId('dashboard-empty-state')).toBeInTheDocument()
+  })
+
+  it('hides the tutorial welcome card once games exist', async () => {
+    renderPage()
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Game 1')).toBeInTheDocument()
+    })
+    expect(screen.queryByTestId('tutorial-welcome-card')).not.toBeInTheDocument()
   })
 })

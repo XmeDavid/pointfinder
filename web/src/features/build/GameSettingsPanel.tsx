@@ -686,12 +686,12 @@ export default function GameSettingsPanel({
         {(game.status === 'live' || game.status === 'ended') && (
           <section className="space-y-3">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Game State
+              {t('lifecycle.revert.sectionTitle')}
             </h3>
             <div className="space-y-3 rounded-lg border border-warning/30 p-3">
               <div className="flex items-center gap-2 px-1">
                 <span className="text-xs text-muted-foreground">
-                  Current status:
+                  {t('lifecycle.revert.currentStatus')}
                 </span>
                 <GameStatusBadge status={game.status} />
               </div>
@@ -706,10 +706,10 @@ export default function GameSettingsPanel({
                     data-testid="revert-to-live-btn"
                     className="w-full cursor-pointer rounded-lg border border-warning/40 px-3 py-2 text-sm font-medium text-warning transition-colors hover:bg-warning/10"
                   >
-                    Revert to Live
+                    {t('lifecycle.revert.toLive')}
                   </button>
                   <p className="text-xs text-muted-foreground mt-1.5 px-1">
-                    Resume the game. All progress is kept.
+                    {t('lifecycle.revert.toLiveHint')}
                   </p>
                 </div>
               )}
@@ -723,10 +723,10 @@ export default function GameSettingsPanel({
                   data-testid="revert-to-setup-btn"
                   className="w-full cursor-pointer rounded-lg border border-warning/40 px-3 py-2 text-sm font-medium text-warning transition-colors hover:bg-warning/10"
                 >
-                  Revert to Setup
+                  {t('lifecycle.revert.toSetup')}
                 </button>
                 <p className="text-xs text-muted-foreground mt-1.5 px-1">
-                  Return game to setup mode for editing.
+                  {t('lifecycle.revert.toSetupHint')}
                 </p>
               </div>
 
@@ -734,13 +734,17 @@ export default function GameSettingsPanel({
               {stateTarget && (
                 <div className="space-y-3 rounded-lg border border-warning/30 bg-warning/10 p-3">
                   <p className="text-sm font-medium text-foreground">
-                    Revert to {stateTarget}?
+                    {t(
+                      stateTarget === 'setup'
+                        ? 'lifecycle.revert.confirmToSetup'
+                        : 'lifecycle.revert.confirmToLive',
+                    )}
                   </p>
 
                   {stateTarget === 'setup' ? (
                     <>
                       <p className="text-xs text-muted-foreground">
-                        What should happen to player progress?
+                        {t('lifecycle.revert.progressQuestion')}
                       </p>
                       <div className="space-y-2">
                         <button
@@ -752,9 +756,9 @@ export default function GameSettingsPanel({
                               : 'border-border text-muted-foreground hover:bg-muted'
                           }`}
                         >
-                          <span className="font-medium">Keep progress</span>
+                          <span className="font-medium">{t('lifecycle.revert.keep')}</span>
                           <p className="text-xs text-muted-foreground mt-0.5">
-                            Submissions, check-ins and scores are preserved
+                            {t('lifecycle.revert.keepHint')}
                           </p>
                         </button>
                         <button
@@ -766,16 +770,16 @@ export default function GameSettingsPanel({
                               : 'border-border text-muted-foreground hover:bg-muted'
                           }`}
                         >
-                          <span className="font-medium">Erase progress</span>
+                          <span className="font-medium">{t('lifecycle.revert.erase')}</span>
                           <p className="text-xs text-muted-foreground mt-0.5">
-                            All submissions, check-ins and scores are deleted
+                            {t('lifecycle.revert.eraseHint')}
                           </p>
                         </button>
                       </div>
                     </>
                   ) : (
                     <p className="text-xs text-muted-foreground">
-                      The game will resume. All progress is kept.
+                      {t('lifecycle.revert.resumeHint')}
                     </p>
                   )}
 
@@ -787,7 +791,7 @@ export default function GameSettingsPanel({
                       }}
                       className="flex-1 px-3 py-2 rounded-lg border border-border text-sm text-muted-foreground font-medium cursor-pointer hover:bg-muted transition-colors"
                     >
-                      Cancel
+                      {t('common.cancel')}
                     </button>
                     <button
                       onClick={() => {
@@ -823,7 +827,9 @@ export default function GameSettingsPanel({
                             : 'bg-primary text-primary-foreground cursor-pointer hover:bg-primary/90'
                       }`}
                     >
-                      {updateStatus.isPending ? 'Reverting…' : 'Confirm'}
+                      {updateStatus.isPending
+                        ? t('lifecycle.revert.reverting')
+                        : t('lifecycle.revert.confirm')}
                     </button>
                   </div>
                 </div>

@@ -94,12 +94,20 @@ export function CoachBubble({
   }, [onClose])
 
   const sheet = !inline && !isDesktop
+  // On a phone the workspace keeps its controls at the bottom, so a sheet that
+  // would cover the anchor — or the whole map — moves to the top instead.
+  const sheetOnTop =
+    sheet &&
+    !!anchorRect &&
+    typeof window !== 'undefined' &&
+    (anchorRect.top + anchorRect.height / 2 > window.innerHeight / 2 || anchorRect.height > window.innerHeight / 2)
 
   const content = (
     <motion.div
       ref={ref}
       data-testid="tour-bubble"
       data-variant={inline ? 'inline' : isDesktop ? 'floating' : 'sheet'}
+      data-side={sheet ? (sheetOnTop ? 'top' : 'bottom') : undefined}
       role="dialog"
       aria-labelledby={titleId}
       aria-live="polite"
@@ -119,7 +127,9 @@ export function CoachBubble({
             ? anchorRect
               ? { left: placement.left, top: placement.top }
               : undefined
-            : { bottom: 'calc(var(--safe-bottom) + 56px)' }
+            : sheetOnTop
+              ? { top: 'var(--safe-top)' }
+              : { bottom: 'calc(var(--safe-bottom) + 56px)' }
       }
       initial={reduced ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
@@ -128,7 +138,7 @@ export function CoachBubble({
     >
       <OverlayPanel
         padding="md"
-        shape={sheet ? 'sheet' : 'default'}
+        shape={sheet && !sheetOnTop ? 'sheet' : 'default'}
         className="max-h-[45dvh] overflow-y-auto md:max-h-[70dvh]"
       >
         <div className="flex items-start gap-2">

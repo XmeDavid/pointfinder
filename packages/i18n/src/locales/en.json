@@ -211,7 +211,25 @@
     "goLiveConfirmDescription": "This will make the game visible to all {{teams}} teams. {{bases}} bases and {{challenges}} challenges are ready. Are you sure?",
     "endGame": "End Game",
     "endGameConfirmTitle": "End Game?",
-    "endGameConfirmDescription": "This will end the game for all {{teams}} teams. Players will no longer be able to scan bases or submit answers."
+    "endGameConfirmDescription": "This will end the game for all {{teams}} teams. Players will no longer be able to scan bases or submit answers.",
+    "revert": {
+      "sectionTitle": "Game state",
+      "currentStatus": "Current status:",
+      "toLive": "Revert to live",
+      "toLiveHint": "Resume the game. All progress is kept.",
+      "toSetup": "Revert to setup",
+      "toSetupHint": "Return the game to setup so you can edit it.",
+      "confirmToLive": "Revert to live?",
+      "confirmToSetup": "Revert to setup?",
+      "progressQuestion": "What should happen to player progress?",
+      "keep": "Keep progress",
+      "keepHint": "Submissions, check-ins and scores stay exactly as they are.",
+      "erase": "Erase progress",
+      "eraseHint": "Submissions, check-ins and events are archived out of the game. Nothing is removed — the audit trail keeps every row.",
+      "resumeHint": "The game will resume. All progress is kept.",
+      "confirm": "Confirm",
+      "reverting": "Reverting…"
+    }
   },
   "overview": {
     "nfcLinked": "NFC Linked",
@@ -1597,6 +1615,14 @@
     "legacyAppsNote": "The legacy iOS and Android apps cannot complete QR or location bases."
   },
   "tutorials": {
+    "menu": "Tutorials",
+    "welcome": {
+      "title": "Build your first game, guided",
+      "body": "A short walkthrough on a real game of your own. We highlight the next thing to do and explain what each screen offers. Nothing is created for you, and you can stop at any time.",
+      "duration": "About 15 minutes",
+      "start": "Start the tutorial",
+      "skip": "Skip for now"
+    },
     "common": {
       "stepOf": "Step {{n}} of {{total}}",
       "next": "Next",
@@ -1605,6 +1631,174 @@
       "close": "Close tutorial",
       "resume": "Resume",
       "pillLabel": "Tutorial · step {{n}} of {{total}}"
+    },
+    "scenarios": {
+      "firstGame": {
+        "title": "Run your first game",
+        "blurb": "From an empty dashboard to a live game and back to setup: bases, challenges, teams, assignments and go-live."
+      },
+      "fixedRoute": {
+        "title": "Make a fixed route",
+        "blurb": "Bases unlock one at a time in an order you arrange, so every team follows the same path."
+      },
+      "exploration": {
+        "title": "Hide bases for exploration",
+        "blurb": "Keep bases off the player map until a team finds them, and use completion text to hand out the clues."
+      }
+    },
+    "firstGame": {
+      "create-game": {
+        "title": "Start with a game",
+        "body": "Every event lives inside a game, and a new game always begins in setup. Give it a name and create it — renaming, dates and importing a finished game all live on this screen too."
+      },
+      "orient": {
+        "title": "Your readiness checklist",
+        "body": "The map is your canvas: bases sit on it and everything else hangs off them. This pill counts what is still missing before the game can go live. Open it any time for the full list.",
+        "aside": "It only appears while the game is in setup."
+      },
+      "place-base": {
+        "title": "Place your first base",
+        "body": "Tap the map where players should go, then choose Place base here. You can drag the marker later to move it, or add bases from the content panel if you would rather type coordinates."
+      },
+      "base-name": {
+        "title": "Name the base",
+        "body": "Players see this name on their map and in their list, so name it after the place: \"Old mill\", \"Chapel steps\". It is prefilled — change it to something a stranger could find."
+      },
+      "base-description": {
+        "title": "Describe it (optional)",
+        "body": "A sentence of context for players — what the spot looks like, where to stand. Leave it empty when the name is enough on its own."
+      },
+      "base-coords": {
+        "title": "Check the coordinates",
+        "body": "These came from where you tapped. Drag the marker on the small map to adjust them, or type exact values if you already have them from a survey."
+      },
+      "base-method": {
+        "title": "How players check in",
+        "body": "Tap how a team proves it arrived: an NFC tag you write, a QR code you print, or GPS location. The current choice is highlighted — tap one to confirm it. The game-wide default lives in settings."
+      },
+      "base-radius": {
+        "title": "Set the GPS radius",
+        "body": "Location bases unlock inside this ring. Too small and phones with poor accuracy struggle; too large and neighbouring bases overlap. The readiness list warns you when two rings touch.",
+        "aside": "Leave it empty to inherit the game default."
+      },
+      "base-visibility": {
+        "title": "Visible or hidden",
+        "body": "Visible bases show on the player map from the start. Hidden ones stay off it until a team finds them — the basis of exploration games, which have their own tutorial."
+      },
+      "base-link": {
+        "title": "Pin one challenge",
+        "body": "A base can hold one fixed challenge, so the same task always waits there. You have no challenges yet — assignments come later and can differ per team."
+      },
+      "base-save": {
+        "title": "Save the base",
+        "body": "Save writes the base to the server. Nothing is live yet: teams see none of this until you go live, so edit as freely as you like."
+      },
+      "base-qr": {
+        "title": "Print the QR code",
+        "body": "This base unlocks by QR code. Print it and put it at the location, weatherproofed if it lives outdoors. The Tags & codes tab prints every code on one sheet."
+      },
+      "base-nfc": {
+        "title": "Write the NFC tag",
+        "body": "This base needs a tag written to it. Hold a blank NFC tag against the phone and write it. No tag with you right now? Do it later — the Tags tab lists every unlinked base.",
+        "aside": "On a computer, open the Tags & codes tab and write the tag from the phone app.",
+        "later": "I'll do it later"
+      },
+      "second-base": {
+        "title": "Add a second base",
+        "body": "One base is not a route. Place another far enough away that the two do not overlap, then save it. Later bases skip this field-by-field walkthrough."
+      },
+      "new-challenge": {
+        "title": "Create a challenge",
+        "body": "Challenges are the tasks teams answer. The content panel holds bases, challenges, teams, stages, and tags & codes — New adds one to whichever tab you are on."
+      },
+      "challenge-title": {
+        "title": "Title the challenge",
+        "body": "This is what players see in their list before they open it, so keep it short and concrete. It is prefilled — replace it. Required."
+      },
+      "challenge-type": {
+        "title": "Choose an answer type",
+        "body": "Text for a typed answer, File for a photo or recording, None when reaching the base is the whole task. Text is preselected."
+      },
+      "challenge-content": {
+        "title": "Write the task",
+        "body": "This is the challenge itself, shown once a team unlocks it. Formatting, embedded files and per-team variables all work, so one challenge can hand each team a different clue."
+      },
+      "challenge-description": {
+        "title": "Short summary (optional)",
+        "body": "One line shown in lists next to the title. Handy when several challenges look alike; skip it otherwise."
+      },
+      "challenge-autovalidate": {
+        "title": "Who checks the answer",
+        "body": "On, the app compares the answer to the one you set and accepts it instantly. Off, the submission waits for you in Review mode — which is what file answers need."
+      },
+      "challenge-answer": {
+        "title": "Set the correct answer",
+        "body": "Auto-validate needs something to compare against. Matching ignores capitals and surrounding spaces, so type the answer the way a player would write it."
+      },
+      "challenge-points": {
+        "title": "Points",
+        "body": "The scoring weight of this challenge. Players never see points or a leaderboard — scoring is yours alone, in Results mode."
+      },
+      "challenge-completion": {
+        "title": "After they finish",
+        "body": "Optional text shown to the team the moment this challenge is done. Good for a thank-you, the next hint, or the clue to a hidden base."
+      },
+      "challenge-location-bound": {
+        "title": "Require being there",
+        "body": "On, the challenge can only be answered at its base. Off, a team can answer from anywhere once it is unlocked — useful for research or photo tasks."
+      },
+      "challenge-notes": {
+        "title": "Notes for your team",
+        "body": "Private notes for you and your fellow operators: the expected answer, safety warnings, who looks after this base. Players never receive this field."
+      },
+      "challenge-save": {
+        "title": "Save the challenge",
+        "body": "Save it. Everything above stays editable while the game is in setup, and most of it stays editable while the game is running."
+      },
+      "more-challenges": {
+        "title": "One per base",
+        "body": "Add challenges until every base has at least one. Duplicating your first one and editing it is usually faster than starting from scratch."
+      },
+      "assign": {
+        "title": "Link challenges to bases",
+        "body": "Assignments decide which challenge waits at which base. Auto-assign gives every base every challenge; open a base to pick by hand, or assign per team for split routes."
+      },
+      "new-team": {
+        "title": "Create a team",
+        "body": "Players never join alone — they join a team. Create one now; you can add more, rename them, recolour them and set team variables at any time."
+      },
+      "team-code": {
+        "title": "The join code",
+        "body": "Players type this code in the app to join, or scan the QR beside it. Codes stay valid for the whole game, so you can print them on a handout."
+      },
+      "go-live": {
+        "title": "Go live",
+        "body": "Every check has passed. Going live fixes the route, hands the challenges to the teams and opens check-ins. You can come back to setup afterwards.",
+        "branch": {
+          "nfcPending": "One NFC base still has no tag written, and that is the only thing left. Write it from the Tags & codes tab, or switch that base to a QR code or GPS instead.",
+          "notReady": "Some checks are still red. Open the checklist to see which — usually a base with no challenge, a missing team, or an NFC tag that has not been written yet."
+        }
+      },
+      "modes": {
+        "title": "The four modes",
+        "body": "Build is where you have been. Command watches teams live on the map, Review handles submissions waiting for you, and Results holds scoring and the export."
+      },
+      "revert": {
+        "title": "Back to setup",
+        "body": "Need a change mid-event? Revert to setup. Keep progress and everything teams did stays; erase it and their submissions, check-ins and events are archived aside, never removed."
+      },
+      "edit": {
+        "title": "Edit anything",
+        "body": "In setup everything is editable again — open this challenge and change its points, its text, anything at all. Save it and the change is ready for the next go-live."
+      },
+      "go-live-again": {
+        "title": "Go live again",
+        "body": "Reopen the game. Teams pick up where they left off if you kept progress, or start clean if you erased it."
+      },
+      "finish": {
+        "title": "That is your first game",
+        "body": "You built a game, ran it, changed it and ran it again. Two more tutorials cover fixed routes, where bases unlock one at a time, and exploration games with hidden bases."
+      }
     }
   }
 }

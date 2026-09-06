@@ -156,12 +156,12 @@ describe('tour store lifecycle', () => {
 })
 
 describe('scenario registry', () => {
-  it('is empty until a scenario registers itself', () => {
-    expect(scenarioList()).toEqual([])
+  it('lists bundled scenarios in library order and accepts registrations', () => {
+    expect(scenarioList().map((s) => s.id)).toEqual(['first-game'])
     expect(getScenario('fixed-route')).toBeUndefined()
 
     registerScenario(probe)
     expect(getScenario('fixed-route')).toBe(probe)
-    expect(scenarioList()).toEqual([probe])
+    expect(scenarioList().map((s) => s.id)).toEqual(['first-game', 'fixed-route'])
   })
 })

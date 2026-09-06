@@ -119,6 +119,23 @@ describe('CoachBubble', () => {
     // the shared test setup stubs matchMedia to always report matches: false
     renderBubble()
     expect(screen.getByTestId('tour-bubble')).toHaveAttribute('data-variant', 'sheet')
+    expect(screen.getByTestId('tour-bubble')).toHaveAttribute('data-side', 'bottom')
+  })
+
+  it('moves the phone sheet to the top when the anchor sits low or fills the screen', () => {
+    const low = { top: window.innerHeight - 60, left: 0, width: 200, height: 40 } as DOMRect
+    renderBubble({ anchorRect: low })
+    expect(screen.getByTestId('tour-bubble')).toHaveAttribute('data-side', 'top')
+
+    cleanup()
+    const tall = { top: 0, left: 0, width: 390, height: window.innerHeight } as DOMRect
+    renderBubble({ anchorRect: tall })
+    expect(screen.getByTestId('tour-bubble')).toHaveAttribute('data-side', 'top')
+
+    cleanup()
+    const high = { top: 10, left: 0, width: 200, height: 40 } as DOMRect
+    renderBubble({ anchorRect: high })
+    expect(screen.getByTestId('tour-bubble')).toHaveAttribute('data-side', 'bottom')
   })
 
   it('survives long German copy without dropping the controls', () => {

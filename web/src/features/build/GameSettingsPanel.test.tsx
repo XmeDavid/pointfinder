@@ -251,11 +251,35 @@ describe('GameSettingsPanel', () => {
     })
 
     await waitFor(() => {
-      expect(screen.getByText('Game State')).toBeInTheDocument()
+      expect(screen.getByText('Game state')).toBeInTheDocument()
     })
 
     expect(screen.getByTestId('revert-to-setup-btn')).toBeInTheDocument()
     expect(screen.queryByTestId('revert-to-live-btn')).not.toBeInTheDocument()
+  })
+
+  it('tells the operator that erasing progress archives rather than removes', async () => {
+    const user = userEvent.setup()
+    useWorkspaceStore.getState().toggleSettingsPanel()
+
+    server.use(
+      http.get('/api/games/:id', () =>
+        HttpResponse.json(createMockGame({ id: 'game-1', status: 'live' })),
+      ),
+    )
+
+    render(createElement(GameSettingsPanel, { gameId: 'game-1' }), {
+      wrapper: createWrapper(),
+    })
+
+    await waitFor(() => {
+      expect(screen.getByTestId('revert-to-setup-btn')).toBeInTheDocument()
+    })
+    await user.click(screen.getByTestId('revert-to-setup-btn'))
+
+    expect(screen.getByText(/archived out of the game/i)).toBeInTheDocument()
+    expect(screen.queryByText(/are deleted/i)).not.toBeInTheDocument()
+    expect(screen.getByText('Return the game to setup so you can edit it.')).toBeInTheDocument()
   })
 
   it('reverts to setup with erase progress', async () => {

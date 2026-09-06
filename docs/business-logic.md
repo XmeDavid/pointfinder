@@ -104,6 +104,24 @@ The legacy `BasesPage`, `ChallengesPage`, and `AssignmentsPage` remain available
 
 Source spec: `docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md` § "P1: Operator Workflow and Content Model" (Principle 5 — "Build a unified operator view as an aggregate over the existing model first. Do not collapse the underlying base/challenge/assignment model until the product behavior is proven").
 
+### Onboarding: the guided first game
+
+A new operator's dashboard shows a welcome card offering the `first-game` tutorial. The card
+appears only when all three of these hold: the **personal** workspace is active, the operator has
+**no games**, and there is **no tutorial-progress row** for `first-game`. Start runs the scenario
+as coach marks over the operator's own game. Skip writes a `skipped` row and the card never
+returns; the scenario itself stays available from the tutorials library.
+
+The tutorial never creates or changes domain data. It reads state the app already holds, may open
+a drawer tab, switch workspace mode or expand the readiness panel to reveal the element it is
+pointing at, and advances only when the operator's own action changes real state. Going live,
+reverting to setup and every save are the operator's own actions, audited exactly as they would be
+outside the tutorial. The scrim dims but never intercepts clicks, so the operator can always leave
+the guided path.
+
+Because `Game` carries no creation timestamp, "the game the operator just created" is resolved
+against a snapshot of the games list taken when the run started, not against a timestamp.
+
 ---
 
 ## 2. Check-In Methods

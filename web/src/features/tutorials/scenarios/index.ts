@@ -1,11 +1,12 @@
 import type { Scenario, ScenarioId } from '../types'
+import { firstGame } from './firstGame'
 
-/** Library display order. Each scenario module registers itself as it is imported. */
+/** Library display order. Scenario modules are imported and registered at the bottom of this file. */
 export const SCENARIO_ORDER: readonly ScenarioId[] = ['first-game', 'fixed-route', 'exploration'] as const
 
 /**
- * Deliberately partial: scenarios are registered by their own module as it is
- * imported, so a phase that has not shipped a scenario yet simply has no entry.
+ * Deliberately partial: a scenario that has not shipped yet simply has no entry,
+ * and every consumer already handles "scenario not bundled".
  */
 export const SCENARIOS: Partial<Record<ScenarioId, Scenario>> = {}
 
@@ -20,3 +21,7 @@ export function getScenario(id: ScenarioId): Scenario | undefined {
 export function scenarioList(): Scenario[] {
   return SCENARIO_ORDER.map((id) => SCENARIOS[id]).filter((scenario): scenario is Scenario => Boolean(scenario))
 }
+
+// Bundled scenarios. Registering here (not in the scenario files) keeps the
+// import graph one-directional and guarantees the app actually loads them.
+registerScenario(firstGame)

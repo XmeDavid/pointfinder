@@ -211,7 +211,25 @@
     "goLiveConfirmDescription": "Das Spiel wird für alle {{teams}} Teams sichtbar. {{bases}} Stationen und {{challenges}} Challenges sind bereit. Bist du sicher?",
     "endGame": "Spiel beenden",
     "endGameConfirmTitle": "Spiel beenden?",
-    "endGameConfirmDescription": "Das Spiel wird für alle {{teams}} Teams beendet. Spieler können keine Stationen mehr scannen oder Antworten einreichen."
+    "endGameConfirmDescription": "Das Spiel wird für alle {{teams}} Teams beendet. Spieler können keine Stationen mehr scannen oder Antworten einreichen.",
+    "revert": {
+      "sectionTitle": "Spielstatus",
+      "currentStatus": "Aktueller Status:",
+      "toLive": "Zurück auf live",
+      "toLiveHint": "Das Spiel läuft weiter. Der gesamte Fortschritt bleibt erhalten.",
+      "toSetup": "Zurück in die Einrichtung",
+      "toSetupHint": "Das Spiel zum Bearbeiten in die Einrichtung zurücksetzen.",
+      "confirmToLive": "Zurück auf live?",
+      "confirmToSetup": "Zurück in die Einrichtung?",
+      "progressQuestion": "Was soll mit dem Fortschritt der Spieler passieren?",
+      "keep": "Fortschritt behalten",
+      "keepHint": "Einreichungen, Check-ins und Punkte bleiben unverändert.",
+      "erase": "Fortschritt löschen",
+      "eraseHint": "Einreichungen, Check-ins und Ereignisse werden aus dem Spiel archiviert. Nichts verschwindet – das Auditprotokoll behält jede Zeile.",
+      "resumeHint": "Das Spiel läuft weiter. Der gesamte Fortschritt bleibt erhalten.",
+      "confirm": "Bestätigen",
+      "reverting": "Wird zurückgesetzt…"
+    }
   },
   "overview": {
     "nfcLinked": "NFC verknüpft",
@@ -1597,6 +1615,14 @@
     "legacyAppsNote": "Die alten iOS- und Android-Apps können QR- und Standort-Basen nicht abschließen."
   },
   "tutorials": {
+    "menu": "Tutorials",
+    "welcome": {
+      "title": "Bau dein erstes Spiel – Schritt für Schritt",
+      "body": "Ein kurzer Rundgang an einem echten eigenen Spiel. Wir heben den nächsten Schritt hervor und erklären, was jeder Bildschirm sonst noch kann. Wir legen nichts für dich an, und du kannst jederzeit aufhören.",
+      "duration": "Etwa 15 Minuten",
+      "start": "Tutorial starten",
+      "skip": "Später"
+    },
     "common": {
       "stepOf": "Schritt {{n}} von {{total}}",
       "next": "Weiter",
@@ -1605,6 +1631,174 @@
       "close": "Tutorial schließen",
       "resume": "Fortsetzen",
       "pillLabel": "Tutorial · Schritt {{n}} von {{total}}"
+    },
+    "scenarios": {
+      "firstGame": {
+        "title": "Dein erstes Spiel durchspielen",
+        "blurb": "Vom leeren Dashboard bis zum laufenden Spiel und zurück in die Einrichtung: Stationen, Challenges, Teams, Zuordnungen und der Start."
+      },
+      "fixedRoute": {
+        "title": "Eine feste Route bauen",
+        "blurb": "Stationen gehen nacheinander in der Reihenfolge auf, die du festlegst, damit alle Teams denselben Weg gehen."
+      },
+      "exploration": {
+        "title": "Stationen für Erkundung verstecken",
+        "blurb": "Halte Stationen von der Spielerkarte fern, bis ein Team sie findet, und gib die Hinweise über den Abschlusstext."
+      }
+    },
+    "firstGame": {
+      "create-game": {
+        "title": "Fang mit einem Spiel an",
+        "body": "Jede Veranstaltung lebt in einem Spiel, und ein neues Spiel beginnt immer in der Einrichtung. Gib ihm einen Namen und lege es an – umbenennen, Termine setzen und fertige Spiele importieren geht ebenfalls hier."
+      },
+      "orient": {
+        "title": "Deine Startbereitschaft",
+        "body": "Die Karte ist deine Arbeitsfläche: Stationen liegen darauf, alles andere hängt an ihnen. Diese Anzeige zählt, was bis zum Start noch fehlt. Öffne sie jederzeit für die vollständige Liste.",
+        "aside": "Sie erscheint nur, solange das Spiel in der Einrichtung ist."
+      },
+      "place-base": {
+        "title": "Setze deine erste Station",
+        "body": "Tippe auf die Karte, wo die Spieler hinsollen, und wähle Station hier setzen. Später verschiebst du sie per Marker, oder du legst Stationen im Inhaltsbereich an, wenn du Koordinaten lieber tippst."
+      },
+      "base-name": {
+        "title": "Benenne die Station",
+        "body": "Spieler sehen diesen Namen auf ihrer Karte und in ihrer Liste, also benenne sie nach dem Ort: „Alte Mühle“, „Kapellentreppe“. Der Name ist vorbelegt – ändere ihn in etwas, das Fremde finden."
+      },
+      "base-description": {
+        "title": "Beschreibung (optional)",
+        "body": "Ein Satz Kontext für die Spieler – wie der Ort aussieht, wo man stehen muss. Lass es leer, wenn der Name allein reicht."
+      },
+      "base-coords": {
+        "title": "Prüfe die Koordinaten",
+        "body": "Sie stammen von deinem Tipp auf die Karte. Zieh den Marker auf der kleinen Karte, um sie anzupassen, oder tippe genaue Werte ein, wenn du sie schon hast."
+      },
+      "base-method": {
+        "title": "So checken Teams ein",
+        "body": "Tippe an, wie ein Team seine Ankunft belegt: NFC-Tag zum Beschreiben, QR-Code zum Drucken oder GPS-Standort. Die aktuelle Wahl ist hervorgehoben – tippe eine an, um sie zu bestätigen. Die Vorgabe liegt in den Einstellungen."
+      },
+      "base-radius": {
+        "title": "Setze den GPS-Radius",
+        "body": "Standort-Stationen öffnen sich innerhalb dieses Rings. Zu klein, und ungenaue Handys scheitern; zu groß, und Nachbarstationen überlappen. Die Startbereitschaft warnt dich, wenn sich zwei Ringe berühren.",
+        "aside": "Leer lassen, um die Vorgabe des Spiels zu übernehmen."
+      },
+      "base-visibility": {
+        "title": "Sichtbar oder versteckt",
+        "body": "Sichtbare Stationen stehen von Anfang an auf der Spielerkarte. Versteckte bleiben unsichtbar, bis ein Team sie findet – die Grundlage von Erkundungsspielen, für die es ein eigenes Tutorial gibt."
+      },
+      "base-link": {
+        "title": "Eine feste Challenge",
+        "body": "Eine Station kann eine feste Challenge tragen, damit dort immer dieselbe Aufgabe wartet. Du hast noch keine – Zuordnungen kommen später und können je Team verschieden sein."
+      },
+      "base-save": {
+        "title": "Station speichern",
+        "body": "Speichern schreibt die Station auf den Server. Live ist noch nichts: Teams sehen davon nichts, bis du startest, also ändere ruhig weiter."
+      },
+      "base-qr": {
+        "title": "QR-Code drucken",
+        "body": "Diese Station öffnet sich per QR-Code. Drucke ihn und bringe ihn vor Ort an, wetterfest, wenn er draußen hängt. Der Reiter Tags und Codes druckt alle Codes auf einem Blatt."
+      },
+      "base-nfc": {
+        "title": "NFC-Tag beschreiben",
+        "body": "Diese Station braucht ein beschriebenes Tag. Halte ein leeres NFC-Tag an das Telefon und schreibe es. Gerade keins dabei? Mach es später – der Reiter Tags listet jede offene Station.",
+        "aside": "Am Computer öffnest du den Reiter Tags und Codes und beschreibst das Tag mit der Telefon-App.",
+        "later": "Mache ich später"
+      },
+      "second-base": {
+        "title": "Setze eine zweite Station",
+        "body": "Eine Station ist noch keine Route. Setze eine weitere weit genug entfernt, damit sich nichts überlappt, und speichere sie. Weitere Stationen überspringen diesen Feld-für-Feld-Rundgang."
+      },
+      "new-challenge": {
+        "title": "Lege eine Challenge an",
+        "body": "Challenges sind die Aufgaben, die Teams beantworten. Der Inhaltsbereich hält Stationen, Challenges, Teams, Etappen sowie Tags und Codes bereit – Neu ergänzt den Reiter, auf dem du gerade bist."
+      },
+      "challenge-title": {
+        "title": "Titel der Challenge",
+        "body": "Das sehen Spieler in ihrer Liste, bevor sie die Challenge öffnen, also kurz und konkret. Der Titel ist vorbelegt – ersetze ihn. Pflichtfeld."
+      },
+      "challenge-type": {
+        "title": "Antworttyp wählen",
+        "body": "Text für eine getippte Antwort, Datei für Foto oder Aufnahme, Keine, wenn das Erreichen der Station schon die ganze Aufgabe ist. Text ist vorausgewählt."
+      },
+      "challenge-content": {
+        "title": "Schreib die Aufgabe",
+        "body": "Das ist die Challenge selbst, sichtbar sobald ein Team sie freischaltet. Formatierung, Dateien und Teamvariablen funktionieren hier, damit dieselbe Challenge jedem Team einen eigenen Hinweis gibt."
+      },
+      "challenge-description": {
+        "title": "Kurzfassung (optional)",
+        "body": "Eine Zeile, die in Listen neben dem Titel steht. Praktisch, wenn sich mehrere Challenges ähneln; sonst überspringen."
+      },
+      "challenge-autovalidate": {
+        "title": "Wer prüft die Antwort",
+        "body": "An: Die App vergleicht mit deiner Lösung und nimmt sofort an. Aus: Die Einreichung wartet im Modus Prüfen auf dich – genau das brauchen Dateiantworten."
+      },
+      "challenge-answer": {
+        "title": "Richtige Antwort festlegen",
+        "body": "Die automatische Prüfung braucht einen Vergleichswert. Groß- und Kleinschreibung sowie Leerzeichen am Rand werden ignoriert, also schreibe die Antwort so, wie ein Spieler sie tippt."
+      },
+      "challenge-points": {
+        "title": "Punkte",
+        "body": "Das Gewicht dieser Challenge in der Wertung. Spieler sehen weder Punkte noch eine Rangliste – die Wertung gehört dir allein, im Modus Ergebnisse."
+      },
+      "challenge-completion": {
+        "title": "Nach dem Abschluss",
+        "body": "Optionaler Text, den das Team direkt nach dieser Challenge sieht. Gut für ein Dankeschön, den nächsten Hinweis oder die Spur zu einer versteckten Station."
+      },
+      "challenge-location-bound": {
+        "title": "Anwesenheit verlangen",
+        "body": "An: Die Challenge lässt sich nur an ihrer Station beantworten. Aus: Ein Team antwortet von überall, sobald sie freigeschaltet ist – gut für Recherche- oder Fotoaufgaben."
+      },
+      "challenge-notes": {
+        "title": "Notizen für dein Team",
+        "body": "Private Notizen für dich und die anderen Operatoren: erwartete Antwort, Sicherheitshinweise, wer diese Station betreut. Spieler bekommen dieses Feld nie zu sehen."
+      },
+      "challenge-save": {
+        "title": "Challenge speichern",
+        "body": "Speichere sie. Alles darüber bleibt in der Einrichtung änderbar, und das meiste bleibt es auch, während das Spiel läuft."
+      },
+      "more-challenges": {
+        "title": "Eine je Station",
+        "body": "Lege Challenges an, bis jede Station eine hat. Die erste zu duplizieren und anzupassen ist meist schneller, als neu zu beginnen."
+      },
+      "assign": {
+        "title": "Challenges zuordnen",
+        "body": "Zuordnungen entscheiden, welche Challenge an welcher Station wartet. Automatisch zuordnen gibt jeder Station jede Challenge; öffne eine Station für die Handauswahl, oder ordne je Team zu."
+      },
+      "new-team": {
+        "title": "Lege ein Team an",
+        "body": "Spieler treten nie allein bei – sie treten einem Team bei. Lege jetzt eins an; weitere Teams, Namen, Farben und Teamvariablen kannst du jederzeit ändern."
+      },
+      "team-code": {
+        "title": "Der Beitrittscode",
+        "body": "Spieler tippen diesen Code in der App ein oder scannen den QR-Code daneben. Codes bleiben das ganze Spiel über gültig, du kannst sie also auf ein Handout drucken."
+      },
+      "go-live": {
+        "title": "Live schalten",
+        "body": "Alle Prüfungen sind grün. Der Start fixiert die Route, übergibt die Challenges an die Teams und öffnet die Check-ins. Zurück in die Einrichtung kommst du danach jederzeit.",
+        "branch": {
+          "nfcPending": "Einer NFC-Station fehlt noch das beschriebene Tag, und das ist das Einzige. Schreibe es im Reiter Tags und Codes, oder stelle die Station auf QR-Code oder GPS um.",
+          "notReady": "Einige Prüfungen sind noch rot. Öffne die Liste, um zu sehen welche – meist eine Station ohne Challenge, ein fehlendes Team oder ein noch nicht beschriebenes NFC-Tag."
+        }
+      },
+      "modes": {
+        "title": "Die vier Modi",
+        "body": "Bauen kennst du jetzt. Kommando verfolgt die Teams live auf der Karte, Prüfen bearbeitet wartende Einreichungen, und Ergebnisse hält Wertung und Export bereit."
+      },
+      "revert": {
+        "title": "Zurück in die Einrichtung",
+        "body": "Mitten im Event etwas ändern? Geh zurück in die Einrichtung. Mit behaltenem Fortschritt bleibt alles; beim Löschen werden Einreichungen, Check-ins und Ereignisse archiviert, nie entfernt."
+      },
+      "edit": {
+        "title": "Ändere, was du willst",
+        "body": "In der Einrichtung ist wieder alles änderbar – öffne diese Challenge und ändere ihre Punkte, ihren Text, was auch immer. Speichern, und die Änderung steht beim nächsten Start bereit."
+      },
+      "go-live-again": {
+        "title": "Noch einmal live",
+        "body": "Öffne das Spiel wieder. Teams machen dort weiter, wo sie aufgehört haben, wenn du den Fortschritt behalten hast – sonst starten sie sauber neu."
+      },
+      "finish": {
+        "title": "Dein erstes Spiel steht",
+        "body": "Du hast ein Spiel gebaut, gestartet, geändert und erneut gestartet. Zwei weitere Tutorials zeigen feste Routen, bei denen Stationen nacheinander aufgehen, und Erkundungsspiele mit versteckten Stationen."
+      }
     }
   }
 }

@@ -42,5 +42,6 @@ Canonical scenarios come from `design-system/scenarios.json`: default, selected,
 | Operator check-in radius ring on the location picker | partial | n/a | n/a |
 | Operator readiness rows per check-in method | partial | pending | pending |
 | Guided tutorial coach bubble, spotlight and collapsed pill | yes | n/a | n/a |
+| Operator guided first game: welcome card, per-step coach marks, method branches, go-live branch copy, mobile bottom sheet | partial | n/a | n/a |
 
 Required screenshot widths for migrated web journeys: 390, 768, 1280, and 1600 pixels. A row moves to `yes` only when its canonical states render without backend data and the relevant accessibility labels are present. Check-in method rows are marked `n/a` for the legacy Swift and Compose apps: those apps keep working for NFC bases only and receive no QR or location UI. Guided tutorials are marked `n/a` for the legacy apps too: the operator tutorial engine ships once in `web/` for the browser and the Tauri shell.

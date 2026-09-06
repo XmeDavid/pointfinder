@@ -211,7 +211,25 @@
     "goLiveConfirmDescription": "Isto tornará o jogo visível para as {{teams}} equipas. {{bases}} bases e {{challenges}} desafios estão prontos. Tens a certeza?",
     "endGame": "Terminar Jogo",
     "endGameConfirmTitle": "Terminar Jogo?",
-    "endGameConfirmDescription": "Isto terminará o jogo para as {{teams}} equipas. Os jogadores não poderão mais digitalizar bases ou enviar respostas."
+    "endGameConfirmDescription": "Isto terminará o jogo para as {{teams}} equipas. Os jogadores não poderão mais digitalizar bases ou enviar respostas.",
+    "revert": {
+      "sectionTitle": "Estado do jogo",
+      "currentStatus": "Estado atual:",
+      "toLive": "Voltar a decorrer",
+      "toLiveHint": "Retomar o jogo. Todo o progresso é mantido.",
+      "toSetup": "Voltar à configuração",
+      "toSetupHint": "Devolver o jogo à configuração para poderes editá-lo.",
+      "confirmToLive": "Voltar a decorrer?",
+      "confirmToSetup": "Voltar à configuração?",
+      "progressQuestion": "O que deve acontecer ao progresso dos jogadores?",
+      "keep": "Manter progresso",
+      "keepHint": "Submissões, check-ins e pontuações ficam exatamente como estão.",
+      "erase": "Apagar progresso",
+      "eraseHint": "Submissões, check-ins e eventos são arquivados fora do jogo. Nada desaparece — o registo de auditoria guarda tudo.",
+      "resumeHint": "O jogo vai retomar. Todo o progresso é mantido.",
+      "confirm": "Confirmar",
+      "reverting": "A reverter…"
+    }
   },
   "overview": {
     "nfcLinked": "NFC Ligado",
@@ -1597,6 +1615,14 @@
     "legacyAppsNote": "As apps antigas de iOS e Android não conseguem concluir bases QR ou de localização."
   },
   "tutorials": {
+    "menu": "Tutoriais",
+    "welcome": {
+      "title": "Cria o teu primeiro jogo, passo a passo",
+      "body": "Um percurso curto sobre um jogo teu, a sério. Destacamos o passo seguinte e explicamos o que cada ecrã oferece. Não criamos nada por ti e podes parar quando quiseres.",
+      "duration": "Cerca de 15 minutos",
+      "start": "Começar o tutorial",
+      "skip": "Agora não"
+    },
     "common": {
       "stepOf": "Passo {{n}} de {{total}}",
       "next": "Seguinte",
@@ -1605,6 +1631,174 @@
       "close": "Fechar tutorial",
       "resume": "Retomar",
       "pillLabel": "Tutorial · passo {{n}} de {{total}}"
+    },
+    "scenarios": {
+      "firstGame": {
+        "title": "Faz o teu primeiro jogo",
+        "blurb": "Do painel vazio até um jogo a decorrer e de volta à configuração: bases, desafios, equipas, atribuições e arranque."
+      },
+      "fixedRoute": {
+        "title": "Cria um percurso fixo",
+        "blurb": "As bases desbloqueiam uma a uma pela ordem que definires, para todas as equipas seguirem o mesmo caminho."
+      },
+      "exploration": {
+        "title": "Esconde bases para exploração",
+        "blurb": "Mantém bases fora do mapa dos jogadores até serem encontradas e usa o texto de conclusão para dar as pistas."
+      }
+    },
+    "firstGame": {
+      "create-game": {
+        "title": "Começa por um jogo",
+        "body": "Cada evento vive dentro de um jogo, e um jogo novo começa sempre em configuração. Dá-lhe um nome e cria-o — mudar o nome, definir datas e importar um jogo pronto também se faz neste ecrã."
+      },
+      "orient": {
+        "title": "A tua lista de prontidão",
+        "body": "O mapa é a tua tela: as bases assentam nele e tudo o resto depende delas. Esta pastilha conta o que ainda falta para o jogo arrancar. Abre-a quando quiseres a lista completa.",
+        "aside": "Só aparece enquanto o jogo está em configuração."
+      },
+      "place-base": {
+        "title": "Coloca a primeira base",
+        "body": "Toca no mapa onde os jogadores devem chegar e escolhe Colocar base aqui. Depois podes arrastar o marcador para a mover, ou criar bases pelo painel de conteúdos se preferires escrever coordenadas."
+      },
+      "base-name": {
+        "title": "Dá nome à base",
+        "body": "Os jogadores veem este nome no mapa e na lista, por isso usa o nome do sítio: \"Moinho velho\", \"Escadas da capela\". Já vem preenchido — troca-o por algo que um estranho consiga encontrar."
+      },
+      "base-description": {
+        "title": "Descreve-a (opcional)",
+        "body": "Uma frase de contexto para os jogadores — o aspeto do sítio, onde se devem colocar. Deixa vazio quando o nome já chega."
+      },
+      "base-coords": {
+        "title": "Confirma as coordenadas",
+        "body": "Vieram do sítio onde tocaste. Arrasta o marcador no mapa pequeno para as ajustar, ou escreve os valores exatos se já os tiveres de um levantamento."
+      },
+      "base-method": {
+        "title": "Como fazem check-in",
+        "body": "Toca em como uma equipa prova que chegou: etiqueta NFC que gravas, código QR que imprimes, ou localização GPS. A opção atual está destacada — toca numa para a confirmar. O padrão do jogo está nas definições."
+      },
+      "base-radius": {
+        "title": "Define o raio de GPS",
+        "body": "As bases por localização desbloqueiam dentro deste círculo. Pequeno demais e telemóveis pouco precisos falham; grande demais e as bases vizinhas sobrepõem-se. A lista de prontidão avisa-te.",
+        "aside": "Deixa vazio para herdar o valor padrão do jogo."
+      },
+      "base-visibility": {
+        "title": "Visível ou escondida",
+        "body": "As bases visíveis aparecem no mapa dos jogadores desde o início. As escondidas ficam de fora até uma equipa as encontrar — a base dos jogos de exploração, que têm tutorial próprio."
+      },
+      "base-link": {
+        "title": "Fixa um desafio",
+        "body": "Uma base pode ter um desafio fixo, para que a mesma tarefa esteja sempre ali à espera. Ainda não tens desafios — as atribuições vêm depois e podem variar por equipa."
+      },
+      "base-save": {
+        "title": "Guarda a base",
+        "body": "Guardar envia a base para o servidor. Ainda nada está no ar: as equipas não veem nada disto até arrancares, por isso edita à vontade."
+      },
+      "base-qr": {
+        "title": "Imprime o código QR",
+        "body": "Esta base desbloqueia por código QR. Imprime-o e coloca-o no local, protegido da chuva se ficar ao ar livre. O separador Etiquetas e códigos imprime todos os códigos numa folha."
+      },
+      "base-nfc": {
+        "title": "Grava a etiqueta NFC",
+        "body": "Esta base precisa de uma etiqueta gravada. Encosta uma etiqueta NFC virgem ao telemóvel e grava-a. Não tens nenhuma à mão? Faz depois — o separador Etiquetas lista todas as bases por ligar.",
+        "aside": "No computador, abre o separador Etiquetas e códigos e grava a etiqueta pela app do telemóvel.",
+        "later": "Faço isto depois"
+      },
+      "second-base": {
+        "title": "Acrescenta uma segunda base",
+        "body": "Uma base não é um percurso. Coloca outra suficientemente longe para não se sobreporem e guarda-a. As bases seguintes já não passam por este passo a passo dos campos."
+      },
+      "new-challenge": {
+        "title": "Cria um desafio",
+        "body": "Os desafios são as tarefas que as equipas respondem. O painel de conteúdos tem bases, desafios, equipas, etapas e etiquetas e códigos — Novo acrescenta ao separador onde estiveres."
+      },
+      "challenge-title": {
+        "title": "Dá título ao desafio",
+        "body": "É o que os jogadores veem na lista antes de o abrirem, por isso curto e concreto. Já vem preenchido — substitui-o. Obrigatório."
+      },
+      "challenge-type": {
+        "title": "Escolhe o tipo de resposta",
+        "body": "Texto para uma resposta escrita, Ficheiro para uma foto ou gravação, Nenhuma quando chegar à base já é a tarefa toda. Texto vem selecionado."
+      },
+      "challenge-content": {
+        "title": "Escreve a tarefa",
+        "body": "É o desafio em si, mostrado assim que a equipa o desbloqueia. Formatação, ficheiros e variáveis por equipa funcionam aqui, para o mesmo desafio dar a cada equipa uma pista diferente."
+      },
+      "challenge-description": {
+        "title": "Resumo curto (opcional)",
+        "body": "Uma linha mostrada nas listas ao lado do título. Útil quando vários desafios se parecem; salta se não for o caso."
+      },
+      "challenge-autovalidate": {
+        "title": "Quem valida a resposta",
+        "body": "Ligado, a app compara com a resposta que definiste e aceita logo. Desligado, a submissão fica à tua espera no modo Revisão — que é o que as respostas por ficheiro precisam."
+      },
+      "challenge-answer": {
+        "title": "Define a resposta certa",
+        "body": "A validação automática precisa de algo com que comparar. A comparação ignora maiúsculas e espaços à volta, por isso escreve a resposta como um jogador a escreveria."
+      },
+      "challenge-points": {
+        "title": "Pontos",
+        "body": "O peso deste desafio na pontuação. Os jogadores nunca veem pontos nem classificação — a pontuação é só tua, no modo Resultados."
+      },
+      "challenge-completion": {
+        "title": "Depois de terminarem",
+        "body": "Texto opcional mostrado à equipa mal termina este desafio. Bom para um agradecimento, a pista seguinte, ou a dica para uma base escondida."
+      },
+      "challenge-location-bound": {
+        "title": "Obrigar a estar lá",
+        "body": "Ligado, o desafio só pode ser respondido na sua base. Desligado, a equipa responde de onde quiser depois de o desbloquear — útil para tarefas de pesquisa ou de fotografia."
+      },
+      "challenge-notes": {
+        "title": "Notas para a tua equipa",
+        "body": "Notas privadas para ti e para os outros operadores: a resposta esperada, avisos de segurança, quem trata desta base. Os jogadores nunca recebem este campo."
+      },
+      "challenge-save": {
+        "title": "Guarda o desafio",
+        "body": "Guarda-o. Tudo o que está acima continua editável enquanto o jogo estiver em configuração, e quase tudo continua editável com o jogo a decorrer."
+      },
+      "more-challenges": {
+        "title": "Um por base",
+        "body": "Cria desafios até cada base ter pelo menos um. Duplicar o primeiro e editá-lo costuma ser mais rápido do que começar do zero."
+      },
+      "assign": {
+        "title": "Liga desafios às bases",
+        "body": "As atribuições decidem que desafio espera em que base. A atribuição automática dá todos os desafios a todas as bases; abre uma base para escolher à mão, ou atribui por equipa."
+      },
+      "new-team": {
+        "title": "Cria uma equipa",
+        "body": "Os jogadores nunca entram sozinhos — entram numa equipa. Cria uma agora; podes acrescentar mais, mudar nomes, cores e variáveis de equipa quando quiseres."
+      },
+      "team-code": {
+        "title": "O código de entrada",
+        "body": "Os jogadores escrevem este código na app para entrar, ou leem o QR ao lado. Os códigos ficam válidos durante todo o jogo, por isso podes imprimi-los num folheto."
+      },
+      "go-live": {
+        "title": "Arranca o jogo",
+        "body": "Passaram todas as verificações. Arrancar fixa o percurso, entrega os desafios às equipas e abre os check-ins. Podes voltar à configuração depois.",
+        "branch": {
+          "nfcPending": "Falta gravar a etiqueta de uma base NFC, e é a única coisa em falta. Grava-a no separador Etiquetas e códigos, ou muda essa base para código QR ou GPS.",
+          "notReady": "Ainda há verificações a vermelho. Abre a lista para veres quais — normalmente uma base sem desafio, uma equipa em falta, ou uma etiqueta NFC por gravar."
+        }
+      },
+      "modes": {
+        "title": "Os quatro modos",
+        "body": "Construir é onde estiveste. Comando acompanha as equipas no mapa em tempo real, Revisão trata das submissões à tua espera, e Resultados guarda a pontuação e a exportação."
+      },
+      "revert": {
+        "title": "Voltar à configuração",
+        "body": "Precisas de mudar algo a meio do evento? Volta à configuração. Se mantiveres o progresso, fica tudo; se o apagares, submissões, check-ins e eventos são arquivados de lado, nunca desaparecem."
+      },
+      "edit": {
+        "title": "Edita o que quiseres",
+        "body": "Em configuração volta tudo a ser editável — abre este desafio e muda os pontos, o texto, o que for. Guarda e a alteração fica pronta para o próximo arranque."
+      },
+      "go-live-again": {
+        "title": "Arranca outra vez",
+        "body": "Reabre o jogo. As equipas continuam de onde ficaram se mantiveste o progresso, ou começam de novo se o apagaste."
+      },
+      "finish": {
+        "title": "O teu primeiro jogo está feito",
+        "body": "Construíste um jogo, puseste-o a correr, mudaste-o e voltaste a pô-lo a correr. Há mais dois tutoriais: percursos fixos, com bases a desbloquear uma a uma, e jogos de exploração com bases escondidas."
+      }
     }
   }
 }

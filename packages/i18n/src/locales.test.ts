@@ -89,3 +89,52 @@ describe('tutorial chrome vocabulary', () => {
     expect(bundle.tutorials.common.pillLabel).toContain('{{total}}')
   })
 })
+
+describe('operator tutorial vocabulary', () => {
+  const contractKeys = [
+    'tutorials.menu',
+    'tutorials.welcome.title',
+    'tutorials.scenarios.firstGame.title',
+    'tutorials.scenarios.fixedRoute.title',
+    'tutorials.scenarios.exploration.title',
+  ]
+
+  it.each(['en', 'pt', 'de'] as const)('%s carries every tutorial contract key', (lang) => {
+    const paths = new Set(keyPaths(resources[lang].translation as Record<string, unknown>))
+    for (const key of contractKeys) expect(paths.has(key)).toBe(true)
+  })
+
+  const firstGameSteps = [
+    'create-game', 'orient', 'place-base', 'base-name', 'base-description', 'base-coords',
+    'base-method', 'base-radius', 'base-visibility', 'base-link', 'base-save', 'base-qr',
+    'base-nfc', 'second-base', 'new-challenge', 'challenge-title', 'challenge-type',
+    'challenge-content', 'challenge-description', 'challenge-autovalidate', 'challenge-answer',
+    'challenge-points', 'challenge-completion', 'challenge-location-bound', 'challenge-notes',
+    'challenge-save', 'more-challenges', 'assign', 'new-team', 'team-code', 'go-live', 'modes',
+    'revert', 'edit', 'go-live-again', 'finish',
+  ]
+
+  it.each(['en', 'pt', 'de'] as const)('%s carries a title and body for every first-game step', (lang) => {
+    const paths = new Set(keyPaths(resources[lang].translation as Record<string, unknown>))
+    for (const step of firstGameSteps) {
+      expect(paths.has(`tutorials.firstGame.${step}.title`), `${lang} ${step}.title`).toBe(true)
+      expect(paths.has(`tutorials.firstGame.${step}.body`), `${lang} ${step}.body`).toBe(true)
+    }
+  })
+
+  it.each(['en', 'pt', 'de'] as const)('%s keeps bubble bodies short enough for a 20rem bubble', (lang) => {
+    const bundle = resources[lang].translation as Record<string, Record<string, Record<string, string>>>
+    for (const [step, copy] of Object.entries(bundle.tutorials.firstGame)) {
+      expect(copy.body.split(/\s+/).length, `${lang} ${step}.body word count`).toBeLessThanOrEqual(50)
+    }
+  })
+})
+
+describe('revert copy', () => {
+  it.each(['en', 'pt', 'de'] as const)('%s says progress is archived, never deleted', (lang) => {
+    const revert = (resources[lang].translation as { lifecycle: { revert: Record<string, string> } })
+      .lifecycle.revert
+    expect(revert.eraseHint).toBeTruthy()
+    expect(revert.eraseHint.toLowerCase()).not.toMatch(/deleted|eliminad|gelöscht wird alles/)
+  })
+})

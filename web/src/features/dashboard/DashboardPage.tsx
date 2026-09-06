@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next'
 import { Tooltip } from '@/components/ui/tooltip'
 import { PendingOrgInvites } from './PendingOrgInvites'
 import { PendingGameInvites } from './PendingGameInvites'
+import { WelcomeCard } from '@/features/tutorials/WelcomeCard'
 export function DashboardPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -52,6 +53,9 @@ export function DashboardPage() {
       {/* Pending invites */}
       <PendingOrgInvites />
       <PendingGameInvites />
+
+      {/* First-run tutorial offer */}
+      <WelcomeCard games={games} />
 
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">

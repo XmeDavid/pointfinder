@@ -25,9 +25,9 @@ export function stepIndexOf(scenario: Scenario, s: TourState, stepId: string | n
 /**
  * Id of the first open step at (or, with `exclusive`, strictly after)
  * `fromStepId` in the effective list, or null when the scenario is finished.
- * Only `predicate` steps are skipped: an operator who did things out of order
- * is not asked to redo them, but an explanation the operator has not read yet
- * is never jumped over.
+ * Steps that are already done are skipped: an operator who did things out of
+ * order is not asked to redo them, but an explanation the operator has not
+ * read yet is never jumped over.
  *
  * A `fromStepId` whose guard has since turned false is no longer in the
  * effective list; the walk then starts at the first effective step that comes
@@ -56,7 +56,8 @@ export function advance(
   }
   while (index < steps.length) {
     const step = steps[index]
-    if (step.done.kind !== 'predicate') return step.id
+    // An unread explanation or an unclicked control is open by definition, so
+    // `isStepDone` already keeps ack and click steps from being jumped over.
     if (!isStepDone(step, s, clicked)) return step.id
     index += 1
   }

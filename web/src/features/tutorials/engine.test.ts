@@ -113,6 +113,17 @@ describe('advance', () => {
     expect(advance(scenario, makeTourState(), NONE, 'base-qr')).toBe('base-qr')
   })
 
+  it('walks past ack and click steps the operator already dealt with', () => {
+    const scenario = scenarioOf([
+      predicateStep('a', () => true),
+      ackStep('orient'),
+      clickStep('base-method'),
+      predicateStep('d', () => false),
+    ])
+    const state = makeTourState({ ackedSteps: new Set(['orient']) })
+    expect(advance(scenario, state, new Set(['base-method']), null)).toBe('d')
+  })
+
   it('moves to the next later step when the current step drops out of the effective list', () => {
     const scenario = scenarioOf([
       predicateStep('a', () => true),
@@ -131,9 +142,10 @@ describe('advance', () => {
       predicateStep('b', () => true),
       ackStep('c'),
     ])
-    const acked = makeTourState({ ackedSteps: new Set(['orient']) })
-    expect(advance(scenario, acked, NONE, 'orient')).toBe('orient')
-    expect(advance(scenario, acked, NONE, 'orient', true)).toBe('c')
+    expect(advance(scenario, makeTourState(), NONE, 'orient')).toBe('orient')
+    expect(advance(scenario, makeTourState(), NONE, 'orient', true)).toBe('c')
+    // Once acknowledged the inclusive walk moves past it too.
+    expect(advance(scenario, makeTourState({ ackedSteps: new Set(['orient']) }), NONE, 'orient')).toBe('c')
   })
 
   it('returns null when everything is done', () => {
